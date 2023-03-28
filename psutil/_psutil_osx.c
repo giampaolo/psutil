@@ -405,18 +405,24 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 /*
  * Return process environment as a Python string.
+ * On Big Sur this function returns an empty string unless:
+ * * kernel is DEVELOPMENT || DEBUG
+ * * target process is same as current_proc()
+ * * target process is not cs_restricted
+ * * SIP is off
+ * * caller has an entitlement
  */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
     pid_t pid;
-    PyObject *py_retdict = NULL;
+    PyObject *py_str = NULL;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     // get the environment block, defined in arch/osx/process_info.c
-    py_retdict = psutil_get_environ(pid);
-    return py_retdict;
+    py_str = psutil_get_environ(pid);
+    return py_str;
 }
 
 
@@ -830,6 +836,52 @@ error:
 }
 
 
+static PyObject *
+psutil_disk_usage_used(PyObject *self, PyObject *args) {
+    PyObject *py_default_value;
+    PyObject *py_mount_point_bytes = NULL;
+    char* mount_point;
+
+#if PY_MAJOR_VERSION >= 3
+    if (!PyArg_ParseTuple(args, "O&O", PyUnicode_FSConverter, &py_mount_point_bytes, &py_default_value)) {
+        return NULL;
+    }
+    mount_point = PyBytes_AsString(py_mount_point_bytes);
+    if (NULL == mount_point) {
+        Py_XDECREF(py_mount_point_bytes);
+        return NULL;
+    }
+#else
+    if (!PyArg_ParseTuple(args, "sO", &mount_point, &py_default_value)) {
+        return NULL;
+    }
+#endif
+
+#ifdef ATTR_VOL_SPACEUSED
+    /* Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info. */
+    int ret;
+    struct {
+        uint32_t size;
+        uint64_t spaceused;
+    } __attribute__((aligned(4), packed)) attrbuf = {0};
+    struct attrlist attrs = {0};
+
+    attrs.bitmapcount = ATTR_BIT_MAP_COUNT;
+    attrs.volattr = ATTR_VOL_INFO | ATTR_VOL_SPACEUSED;
+    Py_BEGIN_ALLOW_THREADS
+    ret = getattrlist(mount_point, &attrs, &attrbuf, sizeof(attrbuf), 0);
+    Py_END_ALLOW_THREADS
+    if (ret == 0) {
+        Py_XDECREF(py_mount_point_bytes);
+        return PyLong_FromUnsignedLongLong(attrbuf.spaceused);
+    }
+    psutil_debug("getattrlist(ATTR_VOL_SPACEUSED) failed, fall-back to default value");
+#endif
+    Py_XDECREF(py_mount_point_bytes);
+    Py_INCREF(py_default_value);
+    return py_default_value;
+}
+
 /*
  * Return process threads
  */
@@ -955,6 +1007,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
+    // see: https://github.com/giampaolo/psutil/issues/2116
+    if (pid == 0)
+        return py_retlist;
+
     fds_pointer = psutil_proc_list_fds(pid, &num_fds);
     if (fds_pointer == NULL)
         goto error;
@@ -1046,6 +1102,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                            &py_type_filter)) {
         goto error;
     }
+
+    // see: https://github.com/giampaolo/psutil/issues/2116
+    if (pid == 0)
+        return py_retlist;
 
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
@@ -1645,69 +1705,39 @@ error:
  */
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
-
-    {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
-     "Return multiple process info."},
-    {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS,
-     "Return multiple process info."},
-    {"proc_name", psutil_proc_name, METH_VARARGS,
-     "Return process name"},
-    {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
-     "Return process cmdline as a list of cmdline arguments"},
-    {"proc_environ", psutil_proc_environ, METH_VARARGS,
-     "Return process environment data"},
-    {"proc_exe", psutil_proc_exe, METH_VARARGS,
-     "Return path of the process executable"},
-    {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
-     "Return process current working directory."},
-    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
-     "Return process USS memory"},
-    {"proc_threads", psutil_proc_threads, METH_VARARGS,
-     "Return process threads as a list of tuples"},
-    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
-     "Return files opened by process as a list of tuples"},
-    {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
-     "Return the number of fds opened by process."},
-    {"proc_connections", psutil_proc_connections, METH_VARARGS,
-     "Get process TCP and UDP connections as a list of tuples"},
+    {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS},
+    {"proc_connections", psutil_proc_connections, METH_VARARGS},
+    {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS},
+    {"proc_exe", psutil_proc_exe, METH_VARARGS},
+    {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS},
+    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
+    {"proc_name", psutil_proc_name, METH_VARARGS},
+    {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS},
+    {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
+    {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS},
+    {"proc_threads", psutil_proc_threads, METH_VARARGS},
 
     // --- system-related functions
-
-    {"pids", psutil_pids, METH_VARARGS,
-     "Returns a list of PIDs currently running on the system"},
-    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
-     "Return number of logical CPUs on the system"},
-    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
-     "Return number of CPU cores on the system"},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
-     "Return system virtual memory stats"},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS,
-     "Return stats about swap memory, in bytes"},
-    {"cpu_times", psutil_cpu_times, METH_VARARGS,
-     "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
-    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
-     "Return system per-cpu times as a list of tuples"},
-    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
-     "Return cpu current frequency"},
-    {"boot_time", psutil_boot_time, METH_VARARGS,
-     "Return the system boot time expressed in seconds since the epoch."},
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-     "Return a list of tuples including device, mount point and "
-     "fs type for all partitions mounted on the system."},
-    {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
-     "Return dict of tuples of networks I/O information."},
-    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
-     "Return dict of tuples of disks I/O information."},
-    {"users", psutil_users, METH_VARARGS,
-     "Return currently connected users as a list of tuples"},
-    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
-     "Return CPU statistics"},
-    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
-     "Return battery information."},
+    {"boot_time", psutil_boot_time, METH_VARARGS},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS},
+    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
+    {"cpu_times", psutil_cpu_times, METH_VARARGS},
+    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"disk_usage_used", psutil_disk_usage_used, METH_VARARGS},
+    {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
+    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
+    {"pids", psutil_pids, METH_VARARGS},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
+    {"swap_mem", psutil_swap_mem, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
+    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- others
-    {"set_debug", psutil_set_debug, METH_VARARGS,
-     "Enable or disable PSUTIL_DEBUG messages"},
+    {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
 };

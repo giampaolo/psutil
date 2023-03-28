@@ -237,7 +237,8 @@ def net_if_stats():
     names = set([x[0] for x in net_if_addrs()])
     ret = {}
     for name in names:
-        isup, mtu = cext.net_if_stats(name)
+        mtu = cext_posix.net_if_mtu(name)
+        flags = cext_posix.net_if_flags(name)
 
         # try to get speed and duplex
         # TODO: rewrite this in C (entstat forks, so use truss -f to follow.
@@ -257,8 +258,10 @@ def net_if_stats():
                 speed = int(re_result.group(1))
                 duplex = re_result.group(2)
 
+        output_flags = ','.join(flags)
+        isup = 'running' in flags
         duplex = duplex_map.get(duplex, NIC_DUPLEX_UNKNOWN)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu, output_flags)
     return ret
 
 

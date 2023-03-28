@@ -227,7 +227,7 @@ is_ptr_dereference_possible(psinfo_t info) {
 
 /*
  * Return pointer size according to psinfo_t structure
- * @param info a ponter to process info (psinfo_t) structure of the
+ * @param info a pointer to process info (psinfo_t) structure of the
  *             interesting process.
  * @return pointer size (4 or 8).
  */
@@ -284,9 +284,9 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
 
 
 /*
- * Derefence and read array of strings by psinfo_t.pr_argv pointer from
+ * Dereference and read array of strings by psinfo_t.pr_argv pointer from
  * remote process.
- * @param info a ponter to process info (psinfo_t) structure of the
+ * @param info a pointer to process info (psinfo_t) structure of the
  *             interesting process
  * @param procfs_path a cstring with path to mounted procfs filesystem.
  * @param count a pointer to variable where to store amount of elements in
@@ -333,7 +333,7 @@ psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
 /*
  * Dereference and read array of strings by psinfo_t.pr_envp pointer
  * from remote process.
- * @param info a ponter to process info (psinfo_t) structure of the
+ * @param info a pointer to process info (psinfo_t) structure of the
  *             interesting process.
  * @param procfs_path a cstring with path to mounted procfs filesystem.
  * @param count a pointer to variable where to store amount of elements in

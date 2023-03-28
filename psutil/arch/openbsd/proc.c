@@ -3,8 +3,6 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Platform-specific module methods for OpenBSD.
  */
 
 #include <Python.h>
@@ -19,21 +17,14 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/proc.h>
-#include <sys/mount.h>  // for VFS_*
-#include <sys/swap.h>  // for swap_mem
-#include <sys/vmmeter.h>  // for vmtotal struct
 #include <signal.h>
 #include <kvm.h>
-// connection stuff
 #include <netdb.h>  // for NI_MAXHOST
 #include <sys/socket.h>
-#include <sys/sched.h>  // for CPUSTATES & CP_*
 #define _KERNEL  // for DTYPE_*
 #include <sys/file.h>
 #undef _KERNEL
-#include <sys/disk.h>  // struct diskstats
 #include <arpa/inet.h> // for inet_ntoa()
-#include <err.h> // for warn() & err()
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
@@ -282,106 +273,6 @@ error:
     Py_DECREF(py_retlist);
     if (kd != NULL)
         kvm_close(kd);
-    return NULL;
-}
-
-
-PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    int64_t total_physmem;
-    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
-    int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
-    int physmem_mib[] = {CTL_HW, HW_PHYSMEM64};
-    int vmmeter_mib[] = {CTL_VM, VM_METER};
-    size_t size;
-    struct uvmexp uvmexp;
-    struct bcachestats bcstats;
-    struct vmtotal vmdata;
-    long pagesize = psutil_getpagesize();
-
-    size = sizeof(total_physmem);
-    if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    size = sizeof(uvmexp);
-    if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    size = sizeof(bcstats);
-    if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    size = sizeof(vmdata);
-    if (sysctl(vmmeter_mib, 2, &vmdata, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue("KKKKKKKK",
-        // Note: many programs calculate total memory as
-        // "uvmexp.npages * pagesize" but this is incorrect and does not
-        // match "sysctl | grep hw.physmem".
-        (unsigned long long) total_physmem,
-        (unsigned long long) uvmexp.free * pagesize,
-        (unsigned long long) uvmexp.active * pagesize,
-        (unsigned long long) uvmexp.inactive * pagesize,
-        (unsigned long long) uvmexp.wired * pagesize,
-        // this is how "top" determines it
-        (unsigned long long) bcstats.numbufpages * pagesize,  // cached
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) vmdata.t_vmshr + vmdata.t_rmshr  // shared
-    );
-}
-
-
-PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    uint64_t swap_total, swap_free;
-    struct swapent *swdev;
-    int nswap, i;
-
-    if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    // Total things up.
-    swap_total = swap_free = 0;
-    for (i = 0; i < nswap; i++) {
-        if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
-            swap_total += swdev[i].se_nblks;
-        }
-    }
-
-    free(swdev);
-    return Py_BuildValue("(LLLII)",
-                         swap_total * DEV_BSIZE,
-                         (swap_total - swap_free) * DEV_BSIZE,
-                         swap_free * DEV_BSIZE,
-                         // swap in / swap out is not supported as the
-                         // swapent struct does not provide any info
-                         // about it.
-                         0, 0);
-
-error:
-    free(swdev);
     return NULL;
 }
 
@@ -639,148 +530,4 @@ error:
     if (tcplist != NULL)
         free(tcplist);
     return NULL;
-}
-
-
-PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    int mib[3];
-    int ncpu;
-    size_t len;
-    size_t size;
-    int i;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-
-
-    // retrieve the number of cpus
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    uint64_t cpu_time[CPUSTATES];
-
-    for (i = 0; i < ncpu; i++) {
-        // per-cpu info
-        mib[0] = CTL_KERN;
-        mib[1] = KERN_CPTIME2;
-        mib[2] = i;
-        size = sizeof(cpu_time);
-        if (sysctl(mib, 3, &cpu_time, &size, NULL, 0) == -1) {
-            warn("failed to get kern.cptime2");
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
-
-        py_cputime = Py_BuildValue(
-            "(ddddd)",
-            (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC);
-        if (!py_cputime)
-            goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_DECREF(py_cputime);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cputime);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
-
-
-PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    int i, dk_ndrive, mib[3];
-    size_t len;
-    struct diskstats *stats = NULL;
-
-    PyObject *py_retdict = PyDict_New();
-    PyObject *py_disk_info = NULL;
-    if (py_retdict == NULL)
-        return NULL;
-
-    mib[0] = CTL_HW;
-    mib[1] = HW_DISKSTATS;
-    len = 0;
-    if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
-        warn("can't get hw.diskstats size");
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    dk_ndrive = (int)(len / sizeof(struct diskstats));
-
-    stats = malloc(len);
-    if (stats == NULL) {
-        warn("can't malloc");
-        PyErr_NoMemory();
-        goto error;
-    }
-    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
-        warn("could not read hw.diskstats");
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < dk_ndrive; i++) {
-        py_disk_info = Py_BuildValue(
-            "(KKKK)",
-            stats[i].ds_rxfer,  // num reads
-            stats[i].ds_wxfer,  // num writes
-            stats[i].ds_rbytes,  // read bytes
-            stats[i].ds_wbytes  // write bytes
-        );
-        if (!py_disk_info)
-            goto error;
-        if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))
-            goto error;
-        Py_DECREF(py_disk_info);
-    }
-
-    free(stats);
-    return py_retdict;
-
-error:
-    Py_XDECREF(py_disk_info);
-    Py_DECREF(py_retdict);
-    if (stats != NULL)
-        free(stats);
-    return NULL;
-}
-
-
-PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    size_t size;
-    struct uvmexp uv;
-    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
-
-    size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue(
-        "IIIIIII",
-        uv.swtch,  // ctx switches
-        uv.intrs,  // interrupts - XXX always 0, will be determined via /proc
-        uv.softs,  // soft interrupts
-        uv.syscalls,  // syscalls - XXX always 0
-        uv.traps,  // traps
-        uv.faults,  // faults
-        uv.forks  // forks
-    );
 }

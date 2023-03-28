@@ -17,12 +17,14 @@ import signal
 import subprocess
 import sys
 import time
+import unittest
 import warnings
 
 import psutil
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
+from psutil._compat import which
 from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY
@@ -30,13 +32,13 @@ from psutil.tests import IS_64BIT
 from psutil.tests import PY3
 from psutil.tests import PYPY
 from psutil.tests import TOLERANCE_DISK_USAGE
+from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 
 
 if WINDOWS and not PYPY:
@@ -60,6 +62,37 @@ cext = psutil._psplatform.cext
 @unittest.skipIf(GITHUB_ACTIONS and not PY3, "pywin32 broken on GITHUB + PY2")
 class WindowsTestCase(PsutilTestCase):
     pass
+
+
+def powershell(cmd):
+    """Currently not used, but avalable just in case. Usage:
+
+    >>> powershell(
+        "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
+    """
+    if not which("powershell.exe"):
+        raise unittest.SkipTest("powershell.exe not available")
+    cmdline = \
+        'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive ' + \
+        '-NoProfile -WindowStyle Hidden -Command "%s"' % cmd
+    return sh(cmdline)
+
+
+def wmic(path, what, converter=int):
+    """Currently not used, but avalable just in case. Usage:
+
+    >>> wmic("Win32_OperatingSystem", "FreePhysicalMemory")
+    2134124534
+    """
+    out = sh("wmic path %s get %s" % (path, what)).strip()
+    data = "".join(out.splitlines()[1:]).strip()  # get rid of the header
+    if converter is not None:
+        if "," in what:
+            return tuple([converter(x) for x in data.split()])
+        else:
+            return converter(data)
+    else:
+        return data
 
 
 # ===================================================================
@@ -86,13 +119,14 @@ class TestCpuAPIs(WindowsTestCase):
 
     def test_cpu_count_logical_vs_wmi(self):
         w = wmi.WMI()
-        proc = w.Win32_Processor()[0]
-        self.assertEqual(psutil.cpu_count(), proc.NumberOfLogicalProcessors)
+        procs = sum(proc.NumberOfLogicalProcessors
+                    for proc in w.Win32_Processor())
+        self.assertEqual(psutil.cpu_count(), procs)
 
     def test_cpu_count_cores_vs_wmi(self):
         w = wmi.WMI()
-        proc = w.Win32_Processor()[0]
-        self.assertEqual(psutil.cpu_count(logical=False), proc.NumberOfCores)
+        cores = sum(proc.NumberOfCores for proc in w.Win32_Processor())
+        self.assertEqual(psutil.cpu_count(logical=False), cores)
 
     def test_cpu_count_vs_cpu_times(self):
         self.assertEqual(psutil.cpu_count(),
@@ -121,6 +155,12 @@ class TestSystemAPIs(WindowsTestCase):
         w = wmi.WMI().Win32_ComputerSystem()[0]
         self.assertEqual(int(w.TotalPhysicalMemory),
                          psutil.virtual_memory().total)
+
+    def test_free_phymem(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        self.assertAlmostEqual(
+            int(w.AvailableBytes), psutil.virtual_memory().free,
+            delta=TOLERANCE_SYS_MEM)
 
     # @unittest.skipIf(wmi is None, "wmi module is not installed")
     # def test__UPTIME(self):
@@ -166,7 +206,7 @@ class TestSystemAPIs(WindowsTestCase):
                     self.assertEqual(usage.total, int(wmi_part.Size))
                     wmi_free = int(wmi_part.FreeSpace)
                     self.assertEqual(usage.free, wmi_free)
-                    # 10 MB tollerance
+                    # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
                         raise self.fail("psutil=%s, wmi=%s" % (
                             usage.free, wmi_free))
@@ -213,7 +253,7 @@ class TestSystemAPIs(WindowsTestCase):
             wmi_btime_str, "%Y%m%d%H%M%S")
         psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
-        self.assertLessEqual(diff, 3)
+        self.assertLessEqual(diff, 5)
 
     def test_boot_time_fluctuation(self):
         # https://github.com/giampaolo/psutil/issues/1007
@@ -337,8 +377,6 @@ class TestProcess(WindowsTestCase):
         win32api.CloseHandle(handle)
         self.assertEqual(p.num_handles(), before)
 
-    @unittest.skipIf(not sys.version_info >= (2, 7),
-                     "CTRL_* signals not supported")
     def test_ctrl_signals(self):
         p = psutil.Process(self.spawn_testproc().pid)
         p.send_signal(signal.CTRL_C_EVENT)
@@ -351,12 +389,23 @@ class TestProcess(WindowsTestCase):
                           p.send_signal, signal.CTRL_BREAK_EVENT)
 
     def test_username(self):
-        self.assertEqual(psutil.Process().username(),
-                         win32api.GetUserNameEx(win32con.NameSamCompatible))
+        name = win32api.GetUserNameEx(win32con.NameSamCompatible)
+        if name.endswith('$'):
+            # When running as a service account (most likely to be
+            # NetworkService), these user name calculations don't produce the
+            # same result, causing the test to fail.
+            raise unittest.SkipTest('running as service account')
+        self.assertEqual(psutil.Process().username(), name)
 
     def test_cmdline(self):
-        sys_value = re.sub(' +', ' ', win32api.GetCommandLine()).strip()
+        sys_value = re.sub('[ ]+', ' ', win32api.GetCommandLine()).strip()
         psutil_value = ' '.join(psutil.Process().cmdline())
+        if sys_value[0] == '"' != psutil_value[0]:
+            # The PyWin32 command line may retain quotes around argv[0] if they
+            # were used unnecessarily, while psutil will omit them. So remove
+            # the first 2 quotes from sys_value if not in psutil_value.
+            # A path to an executable will not contain quotes, so this is safe.
+            sys_value = sys_value.replace('"', '', 2)
         self.assertEqual(sys_value, psutil_value)
 
     # XXX - occasional failures

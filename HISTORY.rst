@@ -1,7 +1,102 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.5 (IN DEVELOPMENT)
+======================
+
+**Enhancements**
+
+- 2196_: in case of exception, display a cleaner error traceback by hiding the
+  `KeyError` bit deriving from a missed cache hit.
+- 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
+  is raised.
+
+**Bug fixes**
+
+- 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
+- 2186_, [FreeBSD]: compilation fails with Clang 15.  (patch by Po-Chuan Hsieh)
+- 2191_, [Linux]: `disk_partitions()`_: do not unnecessarily read
+  /proc/filesystems and raise `AccessDenied`_ unless user specified `all=False`
+  argument.
+- 2216_, [Windows]: fix tests when running in a virtual environment (patch by
+  Matthieu Darbois)
+
+5.9.4
+=====
+
+2022-11-07
+
+**Enhancements**
+
+- 2102_: use Limited API when building wheels with CPython 3.6+ on Linux,
+  macOS and Windows. This allows to use pre-built wheels in all future versions
+  of cPython 3.  (patch by Matthieu Darbois)
+
+**Bug fixes**
+
+- 2077_, [Windows]: Use system-level values for `virtual_memory()`_. (patch by
+  Daniel Widdis)
+- 2156_, [Linux]: compilation may fail on very old gcc compilers due to missing
+  ``SPEED_UNKNOWN`` definition.  (patch by Amir Rossert)
+- 2010_, [macOS]: on MacOS, arm64 ``IFM_1000_TX`` and ``IFM_1000_T`` are the
+  same value, causing a build failure.  (patch by Lawrence D'Anna)
+
+5.9.3
+=====
+
+2022-10-18
+
+**Enhancements**
+
+- 2040_, [macOS]: provide wheels for arm64 architecture.  (patch by Matthieu
+  Darbois)
+
+**Bug fixes**
+
+- 2116_, [macOS], [critical]: `psutil.net_connections`_ fails with RuntimeError.
+- 2135_, [macOS]: `Process.environ()`_ may contain garbage data. Fix
+  out-of-bounds read around ``sysctl_procargs``.  (patch by Bernhard Urban-Forster)
+- 2138_, [Linux], **[critical]**: can't compile psutil on Android due to
+  undefined ``ethtool_cmd_speed`` symbol.
+- 2142_, [POSIX]: `net_if_stats()`_ 's ``flags`` on Python 2 returned unicode
+  instead of str.  (patch by Matthieu Darbois)
+- 2147_, [macOS] Fix disk usage report on macOS 12+.  (patch by Matthieu Darbois)
+- 2150_, [Linux] `Process.threads()`_ may raise ``NoSuchProcess``. Fix race
+  condition.  (patch by Daniel Li)
+- 2153_, [macOS] Fix race condition in test_posix.TestProcess.test_cmdline.
+  (patch by Matthieu Darbois)
+
+5.9.2
+=====
+
+2022-09-04
+
+**Bug fixes**
+
+- 2093_, [FreeBSD], **[critical]**: `pids()`_ may fail with ENOMEM. Dynamically
+  increase the ``malloc()`` buffer size until it's big enough.
+- 2095_, [Linux]: `net_if_stats()`_ returns incorrect interface speed for
+  100GbE network cards.
+- 2113_, [FreeBSD], **[critical]**: `virtual_memory()`_ may raise ENOMEM due to
+  missing ``#include <sys/param.h>`` directive.  (patch by Peter Jeremy)
+- 2128_, [NetBSD]: `swap_memory()`_ was miscalculated.  (patch by Thomas Klausner)
+
 5.9.1
 =====
+
+2022-05-20
+
+**Enhancements**
+
+- 1053_: drop Python 2.6 support.  (patches by Matthieu Darbois and Hugo van
+  Kemenade)
+- 2037_: Add additional flags to net_if_stats.
+- 2050_, [Linux]: increase ``read(2)`` buffer size from 1k to 32k when reading
+  ``/proc`` pseudo files line by line. This should help having more consistent
+  results.
+- 2057_, [OpenBSD]: add support for `cpu_freq()`_.
+- 2107_, [Linux]: `Process.memory_full_info()`_ (reporting process USS/PSS/Swap
+  memory) now reads ``/proc/pid/smaps_rollup`` instead of ``/proc/pids/smaps``,
+  which makes it 5 times faster.
 
 **Bug fixes**
 
@@ -11,8 +106,10 @@
   CLI utility.
 - 2048_: ``AttributeError`` is raised if ``psutil.Error`` class is raised
   manually and passed through ``str``.
-- 2049_, [Linux]: `cpu_freq`_ erroneously returns ``curr`` value in GHz while
+- 2049_, [Linux]: `cpu_freq()`_ erroneously returns ``curr`` value in GHz while
   ``min`` and ``max`` are in MHz.
+- 2050_, [Linux]: `virtual_memory()`_ may raise ``ValueError`` if running in a
+  LCX container.
 
 5.9.0
 =====
@@ -306,7 +403,7 @@
 - 1276_, [AIX]: can't get whole `Process.cmdline()`_.  (patch by Arnon Yaari)
 - 1501_, [Windows]: `Process.cmdline()`_ and `Process.exe()`_ raise unhandled
   "WinError 1168 element not found" exceptions for "Registry" and
-  "Memory Compression" psuedo processes on Windows 10.
+  "Memory Compression" pseudo processes on Windows 10.
 - 1526_, [NetBSD], **[critical]**: `Process.cmdline()`_ could raise
   ``MemoryError``.  (patch by Kamil Rytarowski)
 
@@ -345,9 +442,9 @@
 - 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
   ``SystemError``.  (patch by Daniel Beer)
 - 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
-- 1474_: fix formatting of ``psutil.tests()`` which mimicks ``ps aux`` output.
+- 1474_: fix formatting of ``psutil.tests()`` which mimics ``ps aux`` output.
 - 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
-  properly checked resuling in ``WindowsError(ERROR_ACCESS_DENIED)`` being
+  properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)`` being
   raised instead of `AccessDenied`_.
 - 1477_, [Windows]: wrong or absent error handling for private ``NTSTATUS``
   Windows APIs. Different process methods were affected by this.
@@ -1311,7 +1408,7 @@
 **Bug fixes**
 
 - 340_, [Windows], **[critical]**: `Process.open_files()`_ no longer hangs.
-  Instead it uses a thred which times out and skips the file handle in case it's
+  Instead it uses a thread which times out and skips the file handle in case it's
   taking too long to be retrieved.  (patch by Jeff Tang)
 - 627_, [Windows]: `Process.name()`_ no longer raises `AccessDenied`_ for pids
   owned by another user.
@@ -1320,7 +1417,7 @@
   affect ``os.getpid()`` 's process group and not PID 0.
 - 639_, [Linux]: `Process.cmdline()`_ can be truncated.
 - 640_, [Linux]: ``*connections`` functions may swallow errors and return an
-  incomplete list of connnections.
+  incomplete list of connections.
 - 642_: ``repr()`` of exceptions is incorrect.
 - 653_, [Windows]: add ``inet_ntop()`` function for Windows XP to support IPv6.
 - 641_, [Windows]: replace deprecated string functions with safe equivalents.
@@ -1391,7 +1488,7 @@
 
 **Bug fixes**
 
-- 572_, [Linux]: fix "ValueError: ambiguos inode with multiple PIDs references"
+- 572_, [Linux]: fix "ValueError: ambiguous inode with multiple PIDs references"
   for `Process.connections()`_. (patch by Bruno Binet)
 
 2.2.0
@@ -1835,7 +1932,7 @@ In most cases accessing the old names will work but it will cause a
   the PPID to 1 in case of a zombie process.
 - 323_, [macOS]: `disk_io_counters()`_ ``read_time`` and ``write_time``
   parameters were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
-- 331_: `Process.cmdline()`_ is no longer cached after first acces as it may
+- 331_: `Process.cmdline()`_ is no longer cached after first access as it may
   change.
 - 333_, [macOS]: leak of Mach ports (patch by rsesek@google.com)
 - 337_, [Linux], **[critical]**: `Process`_ methods not working because of a
@@ -2192,7 +2289,7 @@ In most cases accessing the old names will work but it will cause a
 - 113_: exception messages now include `Process.name()`_ and `Process.pid`_.
 - 114_, [Windows]: `Process.username()`_ has been rewritten in pure C and no
   longer uses WMI resulting in a big speedup. Also, pywin32 is no longer
-  required as a third-party dependancy. (patch by wj32)
+  required as a third-party dependency. (patch by wj32)
 - 117_, [Windows]: added support for Windows 2000.
 - 123_: `cpu_percent()`_ and `Process.cpu_percent()`_ accept a
   new ``interval`` parameter.

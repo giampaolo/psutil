@@ -1,3 +1,0 @@
-This directory contains support scripts for Travis and Appveyor continuous
-integration services.
-Travis is used to run tests on Linux and macOS, Appveyor runs tests on Windows.

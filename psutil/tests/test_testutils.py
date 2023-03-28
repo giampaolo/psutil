@@ -16,6 +16,7 @@ import os
 import socket
 import stat
 import subprocess
+import unittest
 
 import psutil
 import psutil.tests
@@ -26,8 +27,10 @@ from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
+from psutil.tests import COVERAGE
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
 from psutil.tests import TestMemoryLeak
 from psutil.tests import bind_socket
@@ -48,7 +51,6 @@ from psutil.tests import serialrun
 from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
-from psutil.tests import unittest
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
@@ -259,7 +261,8 @@ class TestProcessUtils(PsutilTestCase):
         terminate(p)
         # by psutil.Popen
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
-        p = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         env=PYTHON_EXE_ENV)
         terminate(p)
         self.assertProcessGone(p)
         terminate(p)
@@ -368,6 +371,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     @retry_on_failure()
     @unittest.skipIf(CI_TESTING, "skipped on CI")
+    @unittest.skipIf(COVERAGE, "skipped during test coverage")
     def test_leak_mem(self):
         ls = []
 

@@ -10,6 +10,7 @@
  */
 
 #include <Python.h>
+#include <sys/param.h>
 #include <sys/user.h>
 #include <sys/file.h>
 #include <sys/socketvar.h>    // for struct xsocket
@@ -61,7 +62,7 @@ psutil_populate_xfiles(void) {
 
 
 struct xfile *
-psutil_get_file_from_sock(void *sock) {
+psutil_get_file_from_sock(kvaddr_t sock) {
     struct xfile *xf;
     int n;
 

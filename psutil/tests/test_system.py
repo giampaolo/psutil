@@ -10,12 +10,14 @@ import contextlib
 import datetime
 import errno
 import os
+import platform
 import pprint
 import shutil
 import signal
 import socket
 import sys
 import time
+import unittest
 
 import psutil
 from psutil import AIX
@@ -43,6 +45,7 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import IS_64BIT
+from psutil.tests import MACOS_12PLUS
 from psutil.tests import PYPY
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
@@ -50,7 +53,6 @@ from psutil.tests import check_net_address
 from psutil.tests import enum
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
-from psutil.tests import unittest
 
 
 # ===================================================================
@@ -184,7 +186,7 @@ class TestProcessAPIs(PsutilTestCase):
                 # in case the process disappeared in meantime fail only
                 # if it is no longer in psutil.pids()
                 time.sleep(.1)
-                self.assertIn(pid, psutil.pids())
+                self.assertNotIn(pid, psutil.pids())
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
@@ -510,7 +512,10 @@ class TestCpuAPIs(PsutilTestCase):
             if not AIX and name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
-    @unittest.skipIf(not HAS_CPU_FREQ, "not suported")
+    # TODO: remove this once 1892 is fixed
+    @unittest.skipIf(MACOS and platform.machine() == 'arm64',
+                     "skipped due to #1892")
+    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         def check_ls(ls):
             for nt in ls:
@@ -561,8 +566,10 @@ class TestDiskAPIs(PsutilTestCase):
             self.assertEqual(usage.total, shutil_usage.total)
             self.assertAlmostEqual(usage.free, shutil_usage.free,
                                    delta=tolerance)
-            self.assertAlmostEqual(usage.used, shutil_usage.used,
-                                   delta=tolerance)
+            if not MACOS_12PLUS:
+                # see https://github.com/giampaolo/psutil/issues/2147
+                self.assertAlmostEqual(usage.used, shutil_usage.used,
+                                       delta=tolerance)
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
@@ -808,12 +815,13 @@ class TestNetAPIs(PsutilTestCase):
                         psutil.NIC_DUPLEX_UNKNOWN)
         for name, stats in nics.items():
             self.assertIsInstance(name, str)
-            isup, duplex, speed, mtu = stats
+            isup, duplex, speed, mtu, flags = stats
             self.assertIsInstance(isup, bool)
             self.assertIn(duplex, all_duplexes)
             self.assertIn(duplex, all_duplexes)
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
+            self.assertIsInstance(flags, str)
 
     @unittest.skipIf(not (LINUX or BSD or MACOS),
                      "LINUX or BSD or MACOS specific")

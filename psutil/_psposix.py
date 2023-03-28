@@ -10,6 +10,7 @@ import signal
 import sys
 import time
 
+from ._common import MACOS
 from ._common import TimeoutExpired
 from ._common import memoize
 from ._common import sdiskusage
@@ -21,6 +22,10 @@ from ._compat import InterruptedError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import unicode
+
+
+if MACOS:
+    from . import _psutil_osx
 
 
 if sys.version_info >= (3, 4):
@@ -193,6 +198,9 @@ def disk_usage(path):
     avail_to_user = (st.f_bavail * st.f_frsize)
     # Total space being used in general.
     used = (total - avail_to_root)
+    if MACOS:
+        # see: https://github.com/giampaolo/psutil/pull/2152
+        used = _psutil_osx.disk_usage_used(path, used)
     # Total space which is available to user (same as 'total' but
     # for the user).
     total_user = used + avail_to_user

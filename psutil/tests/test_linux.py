@@ -20,6 +20,7 @@ import socket
 import struct
 import textwrap
 import time
+import unittest
 import warnings
 
 import psutil
@@ -46,7 +47,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import unittest
 from psutil.tests import which
 
 
@@ -112,21 +112,26 @@ def get_ipv4_broadcast(ifname):
                         struct.pack('256s', ifname))[20:24])
 
 
-def get_ipv6_address(ifname):
+def get_ipv6_addresses(ifname):
     with open("/proc/net/if_inet6", 'rt') as f:
+        all_fields = []
         for line in f.readlines():
             fields = line.split()
             if fields[-1] == ifname:
-                break
-        else:
+                all_fields.append(fields)
+
+        if len(all_fields) == 0:
             raise ValueError("could not find interface %r" % ifname)
-    unformatted = fields[0]
-    groups = []
-    for i in range(0, len(unformatted), 4):
-        groups.append(unformatted[i:i + 4])
-    formatted = ":".join(groups)
-    packed = socket.inet_pton(socket.AF_INET6, formatted)
-    return socket.inet_ntop(socket.AF_INET6, packed)
+
+    for i in range(0, len(all_fields)):
+        unformatted = all_fields[i][0]
+        groups = []
+        for j in range(0, len(unformatted), 4):
+            groups.append(unformatted[j:j + 4])
+        formatted = ":".join(groups)
+        packed = socket.inet_pton(socket.AF_INET6, formatted)
+        all_fields[i] = socket.inet_ntop(socket.AF_INET6, packed)
+    return all_fields
 
 
 def get_mac_address(ifname):
@@ -714,8 +719,8 @@ class TestSystemCPUCountLogical(PsutilTestCase):
             self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
             assert m.called
 
-            # Let's have open() return emtpy data and make sure None is
-            # returned ('cause we mimick os.cpu_count()).
+            # Let's have open() return empty data and make sure None is
+            # returned ('cause we mimic os.cpu_count()).
             with mock.patch('psutil._common.open', create=True) as m:
                 self.assertIsNone(psutil._pslinux.cpu_count_logical())
                 self.assertEqual(m.call_count, 2)
@@ -966,7 +971,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     # That is the "zone id" portion, which usually is the name
                     # of the network interface.
                     address = addr.address.split('%')[0]
-                    self.assertEqual(address, get_ipv6_address(name))
+                    self.assertIn(address, get_ipv6_addresses(name))
 
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @unittest.skipIf(not which('ip'), "'ip' utility not available")
@@ -987,6 +992,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIfStats(PsutilTestCase):
 
+    @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -1003,10 +1009,41 @@ class TestSystemNetIfStats(PsutilTestCase):
             with open("/sys/class/net/%s/mtu" % name, "rt") as f:
                 self.assertEqual(stats.mtu, int(f.read().strip()))
 
+    @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
+    def test_flags(self):
+        # first line looks like this:
+        # "eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500"
+        matches_found = 0
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                match = re.search(r"flags=(\d+)?<(.*?)>", out)
+                if match and len(match.groups()) >= 2:
+                    matches_found += 1
+                    ifconfig_flags = set(match.group(2).lower().split(","))
+                    psutil_flags = set(stats.flags.split(","))
+                    self.assertEqual(ifconfig_flags, psutil_flags)
+                else:
+                    # ifconfig has a different output on CentOS 6
+                    # let's try that
+                    match = re.search(r"(.*)  MTU:(\d+)  Metric:(\d+)", out)
+                    if match and len(match.groups()) >= 3:
+                        matches_found += 1
+                        ifconfig_flags = set(match.group(1).lower().split())
+                        psutil_flags = set(stats.flags.split(","))
+                        self.assertEqual(ifconfig_flags, psutil_flags)
+
+        if not matches_found:
+            raise self.fail("no matches were found")
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
 
+    @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     @retry_on_failure()
     def test_against_ifconfig(self):
         def ifconfig(nic):
@@ -1786,28 +1823,19 @@ class TestSensorsFans(PsutilTestCase):
 class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
-    def test_memory_full_info(self):
-        testfn = self.get_testfn()
-        src = textwrap.dedent("""
-            import time
-            with open("%s", "w") as f:
-                time.sleep(10)
-            """ % testfn)
-        sproc = self.pyrun(src)
-        call_until(lambda: os.listdir('.'), "'%s' not in ret" % testfn)
-        p = psutil.Process(sproc.pid)
-        time.sleep(.1)
-        mem = p.memory_full_info()
-        maps = p.memory_maps(grouped=False)
+    def test_parse_smaps_vs_memory_maps(self):
+        sproc = self.spawn_testproc()
+        uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
+        maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         self.assertAlmostEqual(
-            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]),
+            uss, sum([x.private_dirty + x.private_clean for x in maps]),
             delta=4096)
         self.assertAlmostEqual(
-            mem.pss, sum([x.pss for x in maps]), delta=4096)
+            pss, sum([x.pss for x in maps]), delta=4096)
         self.assertAlmostEqual(
-            mem.swap, sum([x.swap for x in maps]), delta=4096)
+            swap, sum([x.swap for x in maps]), delta=4096)
 
-    def test_memory_full_info_mocked(self):
+    def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
         with mock_open_content(
             "/proc/%s/smaps" % os.getpid(),
@@ -1834,12 +1862,12 @@ class TestProcess(PsutilTestCase):
                 Locked:                19 kB
                 VmFlags: rd ex
                 """).encode()) as m:
-            p = psutil.Process()
-            mem = p.memory_full_info()
+            p = psutil._pslinux.Process(os.getpid())
+            uss, pss, swap = p._parse_smaps()
             assert m.called
-            self.assertEqual(mem.uss, (6 + 7 + 14) * 1024)
-            self.assertEqual(mem.pss, 3 * 1024)
-            self.assertEqual(mem.swap, 15 * 1024)
+            self.assertEqual(uss, (6 + 7 + 14) * 1024)
+            self.assertEqual(pss, 3 * 1024)
+            self.assertEqual(swap, 15 * 1024)
 
     # On PYPY file descriptors are not closed fast enough.
     @unittest.skipIf(PYPY, "unreliable on PYPY")
@@ -1927,9 +1955,10 @@ class TestProcess(PsutilTestCase):
             patch_point = 'psutil._pslinux.os.readlink'
             with mock.patch(patch_point,
                             side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
-                files = p.open_files()
-                assert not files
-                assert m.called
+                with mock.patch("psutil._pslinux.debug"):
+                    files = p.open_files()
+                    assert not files
+                    assert m.called
 
     # --- mocked tests
 
@@ -2171,8 +2200,9 @@ class TestProcess(PsutilTestCase):
         with mock.patch('psutil._pslinux.os.readlink',
                         side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
             p = psutil.Process()
-            assert not p.connections()
-            assert m.called
+            with mock.patch("psutil._pslinux.debug"):
+                assert not p.connections()
+                assert m.called
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -2265,15 +2295,6 @@ class TestUtils(PsutilTestCase):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             self.assertEqual(psutil._psplatform.readlink("bar"), "foo")
             assert m.called
-
-    def test_cat(self):
-        testfn = self.get_testfn()
-        with open(testfn, "wt") as f:
-            f.write("foo ")
-        self.assertEqual(psutil._psplatform.cat(testfn, binary=False), "foo")
-        self.assertEqual(psutil._psplatform.cat(testfn, binary=True), b"foo")
-        self.assertEqual(
-            psutil._psplatform.cat(testfn + '??', fallback="bar"), "bar")
 
 
 if __name__ == '__main__':

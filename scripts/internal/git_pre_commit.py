@@ -109,14 +109,14 @@ def main():
                 print("%s:%s %r" % (path, lineno, line))
                 return exit("space at end of line")
             line = line.rstrip()
-            # pdb
-            if "pdb.set_trace" in line:
-                print("%s:%s %s" % (path, lineno, line))
-                return exit("you forgot a pdb in your python code")
-            # bare except clause
-            if "except:" in line and not line.endswith("# NOQA"):
-                print("%s:%s %s" % (path, lineno, line))
-                return exit("bare except clause")
+            # # pdb (now provided by flake8-debugger plugin)
+            # if "pdb.set_trace" in line:
+            #     print("%s:%s %s" % (path, lineno, line))
+            #     return exit("you forgot a pdb in your python code")
+            # # bare except clause (now provided by flake8-blind-except plugin)
+            # if "except:" in line and not line.endswith("# NOQA"):
+            #     print("%s:%s %s" % (path, lineno, line))
+            #     return exit("bare except clause")
 
     # Python linters
     if py_files:
@@ -128,8 +128,7 @@ def main():
             return exit("python code didn't pass 'flake8' style check; "
                         "try running 'make fix-flake8'")
         # isort
-        assert os.path.exists('.isort.cfg')
-        cmd = "%s -m isort --settings=.isort.cfg --check-only %s" % (
+        cmd = "%s -m isort --check-only %s" % (
             PYTHON, " ".join(py_files))
         ret = subprocess.call(shlex.split(cmd))
         if ret != 0:

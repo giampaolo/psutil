@@ -17,12 +17,15 @@ import os
 import pickle
 import socket
 import stat
+import unittest
 
 import psutil
 import psutil.tests
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import bcat
+from psutil._common import cat
 from psutil._common import debug
 from psutil._common import isfile_strict
 from psutil._common import memoize
@@ -31,6 +34,7 @@ from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
 from psutil._compat import PY3
+from psutil._compat import FileNotFoundError
 from psutil._compat import redirect_stderr
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
@@ -41,14 +45,12 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYTHON_EXE
-from psutil.tests import ROOT_DIR
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
-from psutil.tests import import_module_by_path
 from psutil.tests import mock
 from psutil.tests import reload_module
 from psutil.tests import sh
-from psutil.tests import unittest
 
 
 # ===================================================================
@@ -247,15 +249,15 @@ class TestMisc(PsutilTestCase):
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
 
-    # XXX: https://github.com/pypa/setuptools/pull/2896
-    @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
-    def test_setup_script(self):
-        setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        if CI_TESTING and not os.path.exists(setup_py):
-            return self.skipTest("can't find setup.py")
-        module = import_module_by_path(setup_py)
-        self.assertRaises(SystemExit, module.setup)
-        self.assertEqual(module.get_version(), psutil.__version__)
+    # # XXX: https://github.com/pypa/setuptools/pull/2896
+    # @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
+    # def test_setup_script(self):
+    #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
+    #     if CI_TESTING and not os.path.exists(setup_py):
+    #         return self.skipTest("can't find setup.py")
+    #     module = import_module_by_path(setup_py)
+    #     self.assertRaises(SystemExit, module.setup)
+    #     self.assertEqual(module.get_version(), psutil.__version__)
 
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case
@@ -288,12 +290,111 @@ class TestMisc(PsutilTestCase):
 # ===================================================================
 
 
-class TestCommonModule(PsutilTestCase):
+class TestMemoizeDecorator(PsutilTestCase):
 
-    def test_memoize(self):
+    def setUp(self):
+        self.calls = []
+
+    tearDown = setUp
+
+    def run_against(self, obj, expected_retval=None):
+        # no args
+        for x in range(2):
+            ret = obj()
+            self.assertEqual(self.calls, [((), {})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # with args
+        for x in range(2):
+            ret = obj(1)
+            self.assertEqual(self.calls, [((), {}), ((1, ), {})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # with args + kwargs
+        for x in range(2):
+            ret = obj(1, bar=2)
+            self.assertEqual(
+                self.calls, [((), {}), ((1, ), {}), ((1, ), {'bar': 2})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # clear cache
+        self.assertEqual(len(self.calls), 3)
+        obj.cache_clear()
+        ret = obj()
+        if expected_retval is not None:
+            self.assertEqual(ret, expected_retval)
+        self.assertEqual(len(self.calls), 4)
+        # docstring
+        self.assertEqual(obj.__doc__, "my docstring")
+
+    def test_function(self):
         @memoize
         def foo(*args, **kwargs):
-            "foo docstring"
+            """my docstring"""
+            baseclass.calls.append((args, kwargs))
+            return 22
+
+        baseclass = self
+        self.run_against(foo, expected_retval=22)
+
+    def test_class(self):
+        @memoize
+        class Foo:
+            """my docstring"""
+
+            def __init__(self, *args, **kwargs):
+                baseclass.calls.append((args, kwargs))
+
+            def bar(self):
+                return 22
+
+        baseclass = self
+        self.run_against(Foo, expected_retval=None)
+        self.assertEqual(Foo().bar(), 22)
+
+    def test_class_singleton(self):
+        # @memoize can be used against classes to create singletons
+        @memoize
+        class Bar:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        self.assertIs(Bar(), Bar())
+        self.assertEqual(id(Bar()), id(Bar()))
+        self.assertEqual(id(Bar(1)), id(Bar(1)))
+        self.assertEqual(id(Bar(1, foo=3)), id(Bar(1, foo=3)))
+        self.assertNotEqual(id(Bar(1)), id(Bar(2)))
+
+    def test_staticmethod(self):
+        class Foo:
+            @staticmethod
+            @memoize
+            def bar(*args, **kwargs):
+                """my docstring"""
+                baseclass.calls.append((args, kwargs))
+                return 22
+
+        baseclass = self
+        self.run_against(Foo().bar, expected_retval=22)
+
+    def test_classmethod(self):
+        class Foo:
+            @classmethod
+            @memoize
+            def bar(cls, *args, **kwargs):
+                """my docstring"""
+                baseclass.calls.append((args, kwargs))
+                return 22
+
+        baseclass = self
+        self.run_against(Foo().bar, expected_retval=22)
+
+    def test_original(self):
+        # This was the original test before I made it dynamic to test it
+        # against different types. Keeping it anyway.
+        @memoize
+        def foo(*args, **kwargs):
+            """foo docstring"""
             calls.append(None)
             return (args, kwargs)
 
@@ -324,6 +425,9 @@ class TestCommonModule(PsutilTestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+
+class TestCommonModule(PsutilTestCase):
 
     def test_memoize_when_activated(self):
         class Foo:
@@ -399,7 +503,7 @@ class TestCommonModule(PsutilTestCase):
                 supports_ipv6.cache_clear()
                 assert s.called
         else:
-            with self.assertRaises(Exception):
+            with self.assertRaises(socket.error):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
                 try:
                     sock.bind(("::1", 0))
@@ -450,6 +554,17 @@ class TestCommonModule(PsutilTestCase):
         msg = f.getvalue()
         self.assertIn("no such file", msg)
         self.assertIn("/foo", msg)
+
+    def test_cat_bcat(self):
+        testfn = self.get_testfn()
+        with open(testfn, "wt") as f:
+            f.write("foo")
+        self.assertEqual(cat(testfn), "foo")
+        self.assertEqual(bcat(testfn), b"foo")
+        self.assertRaises(FileNotFoundError, cat, testfn + '-invalid')
+        self.assertRaises(FileNotFoundError, bcat, testfn + '-invalid')
+        self.assertEqual(cat(testfn + '-invalid', fallback="bar"), "bar")
+        self.assertEqual(bcat(testfn + '-invalid', fallback="bar"), "bar")
 
 
 # ===================================================================
@@ -706,6 +821,7 @@ class TestScripts(PsutilTestCase):
 
     @staticmethod
     def assert_stdout(exe, *args, **kwargs):
+        kwargs.setdefault("env", PYTHON_EXE_ENV)
         exe = '%s' % os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe]
         for arg in args:

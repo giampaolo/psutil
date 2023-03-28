@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions from 2.6 to 3.4+.
+Works with Python versions 2.7 and 3.4+.
 """
 
 from __future__ import division
@@ -211,7 +211,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.9.0"
+__version__ = "5.9.5"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -228,7 +228,7 @@ _SENTINEL = object()
 if (int(__version__.replace('.', '')) !=
         getattr(_psplatform.cext, 'version', None)):
     msg = "version conflict: %r C extension module was built for another " \
-          "version of psutil" % getattr(_psplatform.cext, "__file__")
+          "version of psutil" % _psplatform.cext.__file__
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
             '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
@@ -325,7 +325,7 @@ class Process(object):
      - use is_running() before querying the process
      - if you're continuously iterating over a set of Process
        instances use process_iter() which pre-emptively checks
-     process identity for every yielded instance
+       process identity for every yielded instance
     """
 
     def __init__(self, pid=None):
@@ -373,17 +373,14 @@ class Process(object):
                 raise NoSuchProcess(pid, msg='process PID not found')
             else:
                 self._gone = True
-        # This pair is supposed to indentify a Process instance
+        # This pair is supposed to identify a Process instance
         # univocally over time (the PID alone is not enough as
         # it might refer to a process whose PID has been reused).
         # This will be used later in __eq__() and is_running().
         self._ident = (self.pid, self._create_time)
 
     def __str__(self):
-        try:
-            info = collections.OrderedDict()
-        except AttributeError:  # pragma: no cover
-            info = {}  # Python 2.6
+        info = collections.OrderedDict()
         info["pid"] = self.pid
         if self._name:
             info['name'] = self._name
@@ -1054,7 +1051,7 @@ class Process(object):
         """Return a namedtuple with variable fields depending on the
         platform, representing memory information about the process.
 
-        The "portable" fields available on all plaforms are `rss` and `vms`.
+        The "portable" fields available on all platforms are `rss` and `vms`.
 
         All numbers are expressed in bytes.
         """
@@ -1208,7 +1205,7 @@ class Process(object):
     def suspend(self):
         """Suspend process execution with SIGSTOP pre-emptively checking
         whether PID has been reused.
-        On Windows this has the effect ot suspending all process threads.
+        On Windows this has the effect of suspending all process threads.
         """
         if POSIX:
             self._send_signal(signal.SIGSTOP)
@@ -2075,7 +2072,7 @@ def disk_io_counters(perdisk=False, nowrap=True):
             rawdict[disk] = nt(*fields)
         return rawdict
     else:
-        return nt(*[sum(x) for x in zip(*rawdict.values())])
+        return nt(*(sum(x) for x in zip(*rawdict.values())))
 
 
 disk_io_counters.cache_clear = functools.partial(

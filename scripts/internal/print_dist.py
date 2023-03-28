@@ -4,10 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Nicely print wheels print in dist/ directory."""
+"""List and pretty print tarball & wheel files in the dist/ directory."""
 
+import argparse
 import collections
-import glob
 import os
 
 from psutil._common import bytes2human
@@ -21,8 +21,9 @@ class Wheel:
         self._name = os.path.basename(path)
 
     def __repr__(self):
-        return "<Wheel(name=%s, plat=%s, arch=%s, pyver=%s)>" % (
-            self.name, self.platform(), self.arch(), self.pyver())
+        return "<%s(name=%s, plat=%s, arch=%s, pyver=%s)>" % (
+            self.__class__.__name__, self.name, self.platform(), self.arch(),
+            self.pyver())
 
     __str__ = __repr__
 
@@ -55,7 +56,11 @@ class Wheel:
     def arch(self):
         if self.name.endswith(('x86_64.whl', 'amd64.whl')):
             return '64'
-        return '32'
+        if self.name.endswith(("i686.whl", "win32.whl")):
+            return '32'
+        if self.name.endswith("arm64.whl"):
+            return 'arm64'
+        return '?'
 
     def pyver(self):
         pyver = 'pypy' if self.name.split('-')[3].startswith('pypy') else 'py'
@@ -66,30 +71,54 @@ class Wheel:
         return os.path.getsize(self._path)
 
 
+class Tarball(Wheel):
+
+    def platform(self):
+        return "source"
+
+    def arch(self):
+        return "-"
+
+    def pyver(self):
+        return "-"
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('dir', nargs="?", default="dist",
+                        help='directory containing tar.gz or wheel files')
+    args = parser.parse_args()
+
     groups = collections.defaultdict(list)
-    for path in glob.glob('dist/*.whl'):
-        wheel = Wheel(path)
-        groups[wheel.platform()].append(wheel)
+    ls = sorted(os.listdir(args.dir), key=lambda x: x.endswith("tar.gz"))
+    for name in ls:
+        path = os.path.join(args.dir, name)
+        if path.endswith(".whl"):
+            pkg = Wheel(path)
+        elif path.endswith(".tar.gz"):
+            pkg = Tarball(path)
+        else:
+            raise ValueError("invalid package %r", path)
+        groups[pkg.platform()].append(pkg)
 
     tot_files = 0
     tot_size = 0
     templ = "%-100s %7s %7s %7s"
-    for platf, wheels in groups.items():
-        ppn = "%s (total = %s)" % (platf, len(wheels))
+    for platf, pkgs in groups.items():
+        ppn = "%s (%s)" % (platf, len(pkgs))
         s = templ % (ppn, "size", "arch", "pyver")
         print_color('\n' + s, color=None, bold=True)
-        for wheel in sorted(wheels, key=lambda x: x.name):
+        for pkg in sorted(pkgs, key=lambda x: x.name):
             tot_files += 1
-            tot_size += wheel.size()
-            s = templ % (wheel.name, bytes2human(wheel.size()), wheel.arch(),
-                         wheel.pyver())
-            if 'pypy' in wheel.pyver():
+            tot_size += pkg.size()
+            s = templ % ("  " + pkg.name, bytes2human(pkg.size()), pkg.arch(),
+                         pkg.pyver())
+            if 'pypy' in pkg.pyver():
                 print_color(s, color='violet')
             else:
                 print_color(s, color='brown')
 
-    print_color("\ntotals: files=%s, size=%s" % (
+    print_color("\n\ntotals: files=%s, size=%s" % (
         tot_files, bytes2human(tot_size)), bold=True)
 
 

@@ -7,7 +7,7 @@
 """
 Script which downloads wheel files hosted on AppVeyor:
 https://ci.appveyor.com/project/giampaolo/psutil
-Readapted from the original recipe of Ibarra Corretge'
+Re-adapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:
 http://code.saghul.net/index.php/2015/09/09/
 """
@@ -28,7 +28,7 @@ from psutil._common import print_color
 USER = "giampaolo"
 PROJECT = "psutil"
 BASE_URL = 'https://ci.appveyor.com/api'
-PY_VERSIONS = ['2.7', '3.7', '3.8', '3.9', '3.10']
+PY_VERSIONS = ['2.7']
 TIMEOUT = 30
 
 

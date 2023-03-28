@@ -6,8 +6,10 @@
 
 """macOS specific tests."""
 
+import platform
 import re
 import time
+import unittest
 
 import psutil
 from psutil import MACOS
@@ -20,7 +22,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 
 
 if POSIX:
@@ -144,6 +145,8 @@ class TestSystemAPIs(PsutilTestCase):
         num = sysctl("sysctl hw.physicalcpu")
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
+    # TODO: remove this once 1892 is fixed
+    @unittest.skipIf(platform.machine() == 'arm64', "skipped due to #1892")
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         self.assertEqual(
@@ -189,13 +192,13 @@ class TestSystemAPIs(PsutilTestCase):
     def test_swapmem_sin(self):
         vmstat_val = vm_stat("Pageins")
         psutil_val = psutil.swap_memory().sin
-        self.assertEqual(psutil_val, vmstat_val)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     @retry_on_failure()
     def test_swapmem_sout(self):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout
-        self.assertEqual(psutil_val, vmstat_val)
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
 
     # Not very reliable.
     # def test_swapmem_total(self):

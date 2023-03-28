@@ -41,6 +41,7 @@ Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 
 from __future__ import print_function
 
+import argparse
 import concurrent.futures
 import functools
 import os
@@ -227,13 +228,14 @@ def parallel_validator(urls):
 
 
 def main():
-    files = sys.argv[1:]
-    if not files:
-        print("usage: %s <FILES...>" % sys.argv[0], file=sys.stderr)
-        return sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('files', nargs="+")
+    parser.parse_args()
+    args = parser.parse_args()
 
     all_urls = []
-    for fname in files:
+    for fname in args.files:
         urls = get_urls(fname)
         if urls:
             print("%4s %s" % (len(urls), fname))

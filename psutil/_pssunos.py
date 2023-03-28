@@ -293,7 +293,7 @@ def net_if_stats():
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu, '')
     return ret
 
 

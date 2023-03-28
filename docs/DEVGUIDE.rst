@@ -32,7 +32,7 @@ Once you have a compiler installed:
     make uninstall
     make help
 
-- if you're working on a new feature and you whish to compile & test it "on the
+- if you're working on a new feature and you wish to compile & test it "on the
   fly" from a test script, this is a quick & dirty way to do it:
 
 .. code-block:: bash
@@ -115,7 +115,7 @@ Unit tests are automatically run on every ``git push`` on **Linux**, **macOS**,
 .. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
 
-OpenBSD, NetBSD, AIX and Solaris does not have continuos test integration.
+OpenBSD, NetBSD, AIX and Solaris does not have continuous test integration.
 
 Documentation
 -------------

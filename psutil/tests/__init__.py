@@ -18,9 +18,11 @@ import functools
 import gc
 import inspect
 import os
+import platform
 import random
 import re
 import select
+import shlex
 import shutil
 import signal
 import socket
@@ -31,6 +33,7 @@ import tempfile
 import textwrap
 import threading
 import time
+import unittest
 import warnings
 from socket import AF_INET
 from socket import AF_INET6
@@ -38,13 +41,13 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import bytes2human
+from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
@@ -56,11 +59,6 @@ from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
-
-if PY3:
-    import unittest
-else:
-    import unittest2 as unittest  # requires "pip install unittest2"
 
 try:
     from unittest import mock  # py3
@@ -81,13 +79,14 @@ if POSIX:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO",
+    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO", "MACOS_11PLUS",
+    "MACOS_12PLUS", "COVERAGE",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -128,8 +127,38 @@ PYPY = '__pypy__' in sys.builtin_module_names
 APPVEYOR = 'APPVEYOR' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = APPVEYOR or GITHUB_ACTIONS
+COVERAGE = 'COVERAGE_RUN' in os.environ
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
+
+
+@memoize
+def macos_version():
+    version_str = platform.mac_ver()[0]
+    version = tuple(map(int, version_str.split(".")[:2]))
+    if version == (10, 16):
+        # When built against an older macOS SDK, Python will report
+        # macOS 10.16 instead of the real version.
+        version_str = subprocess.check_output(
+            [
+                sys.executable,
+                "-sS",
+                "-c",
+                "import platform; print(platform.mac_ver()[0])",
+            ],
+            env={"SYSTEM_VERSION_COMPAT": "0"},
+            universal_newlines=True,
+        )
+        version = tuple(map(int, version_str.split(".")[:2]))
+    return version
+
+
+if MACOS:
+    MACOS_11PLUS = macos_version() > (10, 15)
+    MACOS_12PLUS = macos_version() >= (12, 0)
+else:
+    MACOS_11PLUS = False
+    MACOS_12PLUS = False
 
 
 # --- configurable defaults
@@ -145,7 +174,7 @@ GLOBAL_TIMEOUT = 5
 if CI_TESTING:
     NO_RETRIES *= 3
     GLOBAL_TIMEOUT *= 3
-    TOLERANCE_SYS_MEM *= 3
+    TOLERANCE_SYS_MEM *= 4
     TOLERANCE_DISK_USAGE *= 3
 
 # --- file names
@@ -168,7 +197,10 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 ROOT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', '..'))
-SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
+SCRIPTS_DIR = os.environ.get(
+    "PSUTIL_SCRIPTS_DIR",
+    os.path.join(ROOT_DIR, 'scripts')
+)
 HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
@@ -207,13 +239,21 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_ACTIONS:
-        if PYPY:
-            return which("pypy3") if PY3 else which("pypy")
-        elif FREEBSD:
-            return os.path.realpath(sys.executable)
-        else:
-            return which('python')
+    env = os.environ.copy()
+
+    # On Windows, starting with python 3.7, virtual environments use a
+    # venv launcher startup process. This does not play well when
+    # counting spawned processes, or when relying on the PID of the
+    # spawned process to do some checks, e.g. connections check per PID.
+    # Let's use the base python in this case.
+    base = getattr(sys, "_base_executable", None)
+    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+        # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
+        # base python executable to know about the environment.
+        env["__PYVENV_LAUNCHER__"] = sys.executable
+        return base, env
+    elif GITHUB_ACTIONS:
+        return sys.executable, env
     elif MACOS:
         exe = \
             attempt(sys.executable) or \
@@ -222,14 +262,14 @@ def _get_py_exe():
             attempt(psutil.Process().exe())
         if not exe:
             raise ValueError("can't find python exe real abspath")
-        return exe
+        return exe, env
     else:
         exe = os.path.realpath(sys.executable)
         assert os.path.exists(exe), exe
-        return exe
+        return exe, env
 
 
-PYTHON_EXE = _get_py_exe()
+PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
 atexit.register(DEVNULL.close)
 
@@ -311,14 +351,14 @@ def spawn_testproc(cmd=None, **kwds):
     return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
     By default stdin and stdout are redirected to /dev/null.
-    It also attemps to make sure the process is in a reasonably
+    It also attempts to make sure the process is in a reasonably
     initialized state.
     The process is registered for cleanup on reap_children().
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     kwds.setdefault("cwd", os.getcwd())
-    kwds.setdefault("env", os.environ)
+    kwds.setdefault("env", PYTHON_EXE_ENV)
     if WINDOWS:
         # Prevents the subprocess to open error dialogs. This will also
         # cause stderr to be suppressed, which is suboptimal in order
@@ -454,14 +494,14 @@ def sh(cmd, **kwds):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    shell = True if isinstance(cmd, (str, unicode)) else False
     # Prevents subprocess to open error dialogs in case of error.
-    flags = 0x8000000 if WINDOWS and shell else 0
-    kwds.setdefault("shell", shell)
+    flags = 0x8000000 if WINDOWS else 0
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
     kwds.setdefault("universal_newlines", True)
     kwds.setdefault("creationflags", flags)
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, **kwds)
     _subprocesses_started.add(p)
     if PY3:
@@ -509,7 +549,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             proc.send_signal(signal.SIGCONT)
         proc.send_signal(sig)
 
-    def term_subproc(proc, timeout):
+    def term_subprocess_proc(proc, timeout):
         try:
             sendsig(proc, sig)
         except OSError as err:
@@ -519,7 +559,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
                 raise
         return wait(proc, timeout)
 
-    def term_psproc(proc, timeout):
+    def term_psutil_proc(proc, timeout):
         try:
             sendsig(proc, sig)
         except psutil.NoSuchProcess:
@@ -534,7 +574,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
             if POSIX:
                 return wait_pid(pid, timeout)
         else:
-            return term_psproc(proc, timeout)
+            return term_psutil_proc(proc, timeout)
 
     def flush_popen(proc):
         if proc.stdout:
@@ -550,9 +590,9 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         if isinstance(p, int):
             return term_pid(p, wait_timeout)
         elif isinstance(p, (psutil.Process, psutil.Popen)):
-            return term_psproc(p, wait_timeout)
+            return term_psutil_proc(p, wait_timeout)
         elif isinstance(p, subprocess.Popen):
-            return term_subproc(p, wait_timeout)
+            return term_subprocess_proc(p, wait_timeout)
         else:
             raise TypeError("wrong type %r" % p)
     finally:
@@ -566,7 +606,7 @@ def reap_children(recursive=False):
     """Terminate and wait() any subprocess started by this test suite
     and any children currently running, ensuring that no processes stick
     around to hog resources.
-    If resursive is True it also tries to terminate and wait()
+    If recursive is True it also tries to terminate and wait()
     all grandchildren started by this process.
     """
     # Get the children here before terminating them, as in case of
@@ -743,7 +783,7 @@ def call_until(fun, expr):
 
 
 def safe_rmpath(path):
-    "Convenience function for removing temporary test files or dirs"
+    """Convenience function for removing temporary test files or dirs."""
     def retry_fun(fun):
         # On Windows it could happen that the file or directory has
         # open handles or references preventing the delete operation
@@ -776,7 +816,7 @@ def safe_rmpath(path):
 
 
 def safe_mkdir(dir):
-    "Convenience function for creating a directory"
+    """Convenience function for creating a directory."""
     try:
         os.mkdir(dir)
     except FileExistsError:
@@ -785,7 +825,7 @@ def safe_mkdir(dir):
 
 @contextlib.contextmanager
 def chdir(dirname):
-    "Context manager which temporarily changes the current directory."
+    """Context manager which temporarily changes the current directory."""
     curdir = os.getcwd()
     try:
         os.chdir(dirname)
@@ -861,6 +901,11 @@ class TestCase(unittest.TestCase):
     if not PY3:
         def runTest(self):
             pass
+
+        @contextlib.contextmanager
+        def subTest(self, *args, **kw):
+            # fake it for python 2.7
+            yield
 
 
 # monkey patch default unittest.TestCase
@@ -1001,7 +1046,7 @@ class TestMemoryLeak(PsutilTestCase):
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
-        called fun repeadetly, and return the memory difference.
+        called fun repeatedly, and return the memory difference.
         """
         gc.collect(generation=1)
         mem1 = self._get_mem()
@@ -1692,7 +1737,7 @@ def import_module_by_path(path):
 
 def warn(msg):
     """Raise a warning msg."""
-    warnings.warn(msg, UserWarning)
+    warnings.warn(msg, UserWarning, stacklevel=2)
 
 
 def is_namedtuple(x):

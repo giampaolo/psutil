@@ -189,6 +189,8 @@ def virtual_memory():
                     buffers = int(line.split()[1]) * 1024
                 elif line.startswith(b'MemShared:'):
                     shared = int(line.split()[1]) * 1024
+                elif line.startswith(b'Cached:'):
+                    cached = int(line.split()[1]) * 1024
     avail = inactive + cached + free
     used = active + wired + cached
     percent = usage_percent((total - avail), total, round_=1)
@@ -310,6 +312,36 @@ def cpu_stats():
     return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
 
 
+if FREEBSD:
+    def cpu_freq():
+        """Return frequency metrics for CPUs. As of Dec 2018 only
+        CPU 0 appears to be supported by FreeBSD and all other cores
+        match the frequency of CPU 0.
+        """
+        ret = []
+        num_cpus = cpu_count_logical()
+        for cpu in range(num_cpus):
+            try:
+                current, available_freq = cext.cpu_freq(cpu)
+            except NotImplementedError:
+                continue
+            if available_freq:
+                try:
+                    min_freq = int(available_freq.split(" ")[-1].split("/")[0])
+                except (IndexError, ValueError):
+                    min_freq = None
+                try:
+                    max_freq = int(available_freq.split(" ")[0].split("/")[0])
+                except (IndexError, ValueError):
+                    max_freq = None
+            ret.append(_common.scpufreq(current, min_freq, max_freq))
+        return ret
+elif OPENBSD:
+    def cpu_freq():
+        curr = float(cext.cpu_freq())
+        return [_common.scpufreq(curr, 0.0, 0.0)]
+
+
 # =====================================================================
 # --- disks
 # =====================================================================
@@ -351,7 +383,7 @@ def net_if_stats():
     for name in names:
         try:
             mtu = cext_posix.net_if_mtu(name)
-            isup = cext_posix.net_if_is_running(name)
+            flags = cext_posix.net_if_flags(name)
             duplex, speed = cext_posix.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -360,7 +392,10 @@ def net_if_stats():
         else:
             if hasattr(_common, 'NicDuplex'):
                 duplex = _common.NicDuplex(duplex)
-            ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+            output_flags = ','.join(flags)
+            isup = 'running' in flags
+            ret[name] = _common.snicstats(isup, duplex, speed, mtu,
+                                          output_flags)
     return ret
 
 
@@ -423,7 +458,7 @@ if FREEBSD:
         return _common.sbattery(percent, secsleft, power_plugged)
 
     def sensors_temperatures():
-        "Return CPU cores temperatures if available, else an empty dict."
+        """Return CPU cores temperatures if available, else an empty dict."""
         ret = defaultdict(list)
         num_cpus = cpu_count_logical()
         for cpu in range(num_cpus):
@@ -437,30 +472,6 @@ if FREEBSD:
             except NotImplementedError:
                 pass
 
-        return ret
-
-    def cpu_freq():
-        """Return frequency metrics for CPUs. As of Dec 2018 only
-        CPU 0 appears to be supported by FreeBSD and all other cores
-        match the frequency of CPU 0.
-        """
-        ret = []
-        num_cpus = cpu_count_logical()
-        for cpu in range(num_cpus):
-            try:
-                current, available_freq = cext.cpu_frequency(cpu)
-            except NotImplementedError:
-                continue
-            if available_freq:
-                try:
-                    min_freq = int(available_freq.split(" ")[-1].split("/")[0])
-                except(IndexError, ValueError):
-                    min_freq = None
-                try:
-                    max_freq = int(available_freq.split(" ")[0].split("/")[0])
-                except(IndexError, ValueError):
-                    max_freq = None
-            ret.append(_common.scpufreq(current, min_freq, max_freq))
         return ret
 
 

@@ -116,14 +116,14 @@ psutil_sysctl_argmax() {
 
 // Read process argument space.
 static int
-psutil_sysctl_procargs(pid_t pid, char *procargs, size_t argmax) {
+psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     int mib[3];
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
 
-    if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
+    if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("psutil_pid_exists -> 0");
             return 1;
@@ -188,7 +188,7 @@ psutil_get_cmdline(pid_t pid) {
         goto error;
     }
 
-    if (psutil_sysctl_procargs(pid, procargs, argmax) != 0)
+    if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
         goto error;
 
     arg_end = &procargs[argmax];
@@ -241,7 +241,14 @@ error:
 }
 
 
-// return process environment as a python string
+// Return process environment as a python string.
+// On Big Sur this function returns an empty string unless:
+// * kernel is DEVELOPMENT || DEBUG
+// * target process is same as current_proc()
+// * target process is not cs_restricted
+// * SIP is off
+// * caller has an entitlement
+// See: https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321
 PyObject *
 psutil_get_environ(pid_t pid) {
     int nargs;
@@ -268,7 +275,7 @@ psutil_get_environ(pid_t pid) {
         goto error;
     }
 
-    if (psutil_sysctl_procargs(pid, procargs, argmax) != 0)
+    if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
         goto error;
 
     arg_end = &procargs[argmax];

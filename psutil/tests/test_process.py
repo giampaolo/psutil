@@ -19,6 +19,7 @@ import sys
 import textwrap
 import time
 import types
+import unittest
 
 import psutil
 from psutil import AIX
@@ -48,8 +49,10 @@ from psutil.tests import HAS_PROC_CPU_NUM
 from psutil.tests import HAS_PROC_IO_COUNTERS
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_THREADS
+from psutil.tests import MACOS_11PLUS
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
@@ -62,7 +65,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import unittest
 from psutil.tests import wait_for_pid
 
 
@@ -700,7 +702,7 @@ class TestProcess(PsutilTestCase):
                     self.assertEqual(exe.replace(ver, ''),
                                      PYTHON_EXE.replace(ver, ''))
                 except AssertionError:
-                    # Tipically MACOS. Really not sure what to do here.
+                    # Typically MACOS. Really not sure what to do here.
                     pass
 
         out = sh([exe, "-c", "import os; print('hey')"])
@@ -799,19 +801,29 @@ class TestProcess(PsutilTestCase):
         init = p.nice()
         try:
             if WINDOWS:
-                for prio in [psutil.NORMAL_PRIORITY_CLASS,
-                             psutil.IDLE_PRIORITY_CLASS,
+                # A CI runner may limit our maximum priority, which will break
+                # this test. Instead, we test in order of increasing priority,
+                # and match either the expected value or the highest so far.
+                highest_prio = None
+                for prio in [psutil.IDLE_PRIORITY_CLASS,
                              psutil.BELOW_NORMAL_PRIORITY_CLASS,
-                             psutil.REALTIME_PRIORITY_CLASS,
+                             psutil.NORMAL_PRIORITY_CLASS,
+                             psutil.ABOVE_NORMAL_PRIORITY_CLASS,
                              psutil.HIGH_PRIORITY_CLASS,
-                             psutil.ABOVE_NORMAL_PRIORITY_CLASS]:
+                             psutil.REALTIME_PRIORITY_CLASS]:
                     with self.subTest(prio=prio):
                         try:
                             p.nice(prio)
                         except psutil.AccessDenied:
                             pass
                         else:
-                            self.assertEqual(p.nice(), prio)
+                            new_prio = p.nice()
+                            if CI_TESTING:
+                                if new_prio == prio or highest_prio is None:
+                                    highest_prio = prio
+                                self.assertEqual(new_prio, highest_prio)
+                            else:
+                                self.assertEqual(new_prio, prio)
             else:
                 try:
                     if hasattr(os, "getpriority"):
@@ -846,7 +858,13 @@ class TestProcess(PsutilTestCase):
         username = p.username()
         if WINDOWS:
             domain, username = username.split('\\')
-            self.assertEqual(username, getpass.getuser())
+            getpass_user = getpass.getuser()
+            if getpass_user.endswith('$'):
+                # When running as a service account (most likely to be
+                # NetworkService), these user name calculations don't produce
+                # the same result, causing the test to fail.
+                raise unittest.SkipTest('running as service account')
+            self.assertEqual(username, getpass_user)
             if 'USERDOMAIN' in os.environ:
                 self.assertEqual(domain, os.environ['USERDOMAIN'])
         else:
@@ -1410,6 +1428,10 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     @unittest.skipIf(not POSIX, "POSIX only")
+    @unittest.skipIf(
+        MACOS_11PLUS,
+        "macOS 11+ can't get another process environment, issue #2084"
+    )
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
         code = textwrap.dedent("""
@@ -1476,7 +1498,7 @@ if POSIX and os.getuid() == 0:
 
                 def test_(self):
                     try:
-                        meth()
+                        meth()  # noqa
                     except psutil.AccessDenied:
                         pass
                 setattr(self, attr, types.MethodType(test_, self))
@@ -1518,11 +1540,11 @@ class TestPopen(PsutilTestCase):
 
     def test_misc(self):
         # XXX this test causes a ResourceWarning on Python 3 because
-        # psutil.__subproc instance doesn't get propertly freed.
+        # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as proc:
+                          stderr=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.name()
             proc.cpu_times()
             proc.stdin
@@ -1538,7 +1560,7 @@ class TestPopen(PsutilTestCase):
         with psutil.Popen([PYTHON_EXE, "-V"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE,
-                          stdin=subprocess.PIPE) as proc:
+                          stdin=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.communicate()
         assert proc.stdout.closed
         assert proc.stderr.closed
@@ -1551,14 +1573,14 @@ class TestPopen(PsutilTestCase):
         # diverges from that.
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
         with psutil.Popen(cmd, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as proc:
+                          stderr=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.terminate()
             proc.wait()
             self.assertRaises(psutil.NoSuchProcess, proc.terminate)
             self.assertRaises(psutil.NoSuchProcess, proc.kill)
             self.assertRaises(psutil.NoSuchProcess, proc.send_signal,
                               signal.SIGTERM)
-            if WINDOWS and sys.version_info >= (2, 7):
+            if WINDOWS:
                 self.assertRaises(psutil.NoSuchProcess, proc.send_signal,
                                   signal.CTRL_C_EVENT)
                 self.assertRaises(psutil.NoSuchProcess, proc.send_signal,

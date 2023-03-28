@@ -14,6 +14,7 @@ import datetime
 import os
 import re
 import time
+import unittest
 
 import psutil
 from psutil import BSD
@@ -27,7 +28,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 from psutil.tests import which
 
 
@@ -115,7 +115,7 @@ class BSDTestCase(PsutilTestCase):
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(part.device, dev)
             self.assertEqual(usage.total, total)
-            # 10 MB tollerance
+            # 10 MB tolerance
             if abs(usage.free - free) > 10 * 1024 * 1024:
                 raise self.fail("psutil=%s, df=%s" % (usage.free, free))
             if abs(usage.used - used) > 10 * 1024 * 1024:
