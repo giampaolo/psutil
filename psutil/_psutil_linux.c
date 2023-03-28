@@ -314,7 +314,14 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
-        return PyErr_Format(PyExc_TypeError, "sequence argument expected, got %R", Py_TYPE(py_cpu_set));
+        return PyErr_Format(
+            PyExc_TypeError,
+#if PY_MAJOR_VERSION >= 3
+            "sequence argument expected, got %R", Py_TYPE(py_cpu_set)
+#else
+            "sequence argument expected, got %s", Py_TYPE(py_cpu_set)->tp_name
+#endif
+        );
     }
 
     seq_len = PySequence_Size(py_cpu_set);
