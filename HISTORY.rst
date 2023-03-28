@@ -12,6 +12,10 @@
 
 **Bug fixes**
 
+- 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
+  ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
+  calculate an approximation for ``available`` memory which matches "free"
+  CLI utility.
 - 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
 - 2186_, [FreeBSD]: compilation fails with Clang 15.  (patch by Po-Chuan Hsieh)
 - 2191_, [Linux]: `disk_partitions()`_: do not unnecessarily read
@@ -100,10 +104,6 @@
 
 **Bug fixes**
 
-- 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
-  ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
-  calculate an approximation for ``available`` memory which matches "free"
-  CLI utility.
 - 2048_: ``AttributeError`` is raised if ``psutil.Error`` class is raised
   manually and passed through ``str``.
 - 2049_, [Linux]: `cpu_freq()`_ erroneously returns ``curr`` value in GHz while
