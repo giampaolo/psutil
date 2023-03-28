@@ -7,6 +7,8 @@
 
 - 2196_: in case of exception, display a cleaner error traceback by hiding the
   `KeyError` bit deriving from a missed cache hit.
+- 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
+  is raised.
 
 **Bug fixes**
 
