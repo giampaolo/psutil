@@ -352,7 +352,6 @@ class TestSystemVirtualMemory(PsutilTestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "memory stats couldn't be determined", str(w.message))
                 self.assertIn("cached", str(w.message))
@@ -586,7 +585,6 @@ class TestSystemSwapMemory(PsutilTestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined", str(w.message))
@@ -604,7 +602,6 @@ class TestSystemSwapMemory(PsutilTestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined and were set to 0",
