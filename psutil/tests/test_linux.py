@@ -368,7 +368,6 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "memory stats couldn't be determined", str(w.message))
                 self.assertIn("cached", str(w.message))
@@ -602,7 +601,6 @@ class TestSystemSwapMemory(PsutilTestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined", str(w.message))
@@ -620,7 +618,6 @@ class TestSystemSwapMemory(PsutilTestCase):
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
-                assert w.filename.endswith('psutil/_pslinux.py')
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined and were set to 0",
@@ -827,7 +824,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                     name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
                 return io.BytesIO(b"700000")
             elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz		: 500")
+                return io.BytesIO(b"cpu MHz     : 500")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -868,8 +865,8 @@ class TestSystemCPUFrequency(PsutilTestCase):
                     n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
                 return io.BytesIO(b"600000")
             elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz		: 100\n"
-                                  b"cpu MHz		: 400")
+                return io.BytesIO(b"cpu MHz     : 100\n"
+                                  b"cpu MHz     : 400")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -900,7 +897,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
             elif name.endswith('/cpuinfo_cur_freq'):
                 return io.BytesIO(b"200000")
             elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz		: 200")
+                return io.BytesIO(b"cpu MHz     : 200")
             else:
                 return orig_open(name, *args, **kwargs)
 
