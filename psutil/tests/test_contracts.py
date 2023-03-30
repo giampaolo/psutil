@@ -175,8 +175,10 @@ class TestAvailProcessAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 
     def test_io_counters(self):
+        not_on_linux = (LINUX and not os.path.exists('/proc/1/io'))
         hasit = hasattr(psutil.Process, "io_counters")
-        self.assertEqual(hasit, False if MACOS or SUNOS else True)
+        self.assertEqual(hasit,
+                         False if MACOS or SUNOS or not_on_linux else True)
 
     def test_num_fds(self):
         self.assertEqual(hasattr(psutil.Process, "num_fds"), POSIX)
