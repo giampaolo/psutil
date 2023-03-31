@@ -327,7 +327,8 @@ except ImportError:
                     pid, resource_, ctypes.byref(new), ctypes.byref(current))
 
             if ret != 0:
-                raise OSError(errno, os.strerror(ctypes.get_errno()))
+                errno_ = ctypes.get_errno()
+                raise OSError(errno_, os.strerror(errno_))
             return (current.rlim_cur, current.rlim_max)
 
 
@@ -1836,7 +1837,7 @@ class Process(object):
                 )
             except KeyError as err:
                 raise ValueError("%r field was not found in %s; found fields "
-                                 "are %r" % (err[0], fname, fields))
+                                 "are %r" % (err.args[0], fname, fields))
 
     @wrap_exceptions
     def cpu_times(self):

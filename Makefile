@@ -193,16 +193,16 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 flake8:  ## Run flake8 linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8 --jobs=${NUM_WORKERS}
 
 isort:  ## Run isort linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only
-
-c-linter:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
 
 pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
+
+c-linter:  ## Run C linter.
+	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
 lint-all:  ## Run all linters
 	${MAKE} flake8
@@ -214,11 +214,11 @@ lint-all:  ## Run all linters
 # ===================================================================
 
 fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
-	@git ls-files '*.py' | xargs $(PYTHON) -m autopep8 --in-place --jobs 0 --global-config=.flake8
-	@git ls-files '*.py' | xargs $(PYTHON) -m autoflake --in-place --jobs 0 --remove-all-unused-imports --remove-unused-variables --remove-duplicate-keys
+	@git ls-files '*.py' | xargs $(PYTHON) -m autopep8 --in-place --jobs=${NUM_WORKERS} --global-config=.flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m autoflake --in-place --jobs=${NUM_WORKERS} --remove-all-unused-imports --remove-unused-variables --remove-duplicate-keys
 
 fix-imports:  ## Fix imports with isort.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-flake8

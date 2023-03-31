@@ -123,7 +123,7 @@ class TestProcessAPIs(PsutilTestCase):
             self.assertFalse(hasattr(p, 'returncode'))
 
         @retry_on_failure(30)
-        def test(procs, callback):
+        def test_1(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
             self.assertEqual(len(gone), 1)
@@ -131,7 +131,7 @@ class TestProcessAPIs(PsutilTestCase):
             return gone, alive
 
         sproc3.terminate()
-        gone, alive = test(procs, callback)
+        gone, alive = test_1(procs, callback)
         self.assertIn(sproc3.pid, [x.pid for x in gone])
         if POSIX:
             self.assertEqual(gone.pop().returncode, -signal.SIGTERM)
@@ -142,7 +142,7 @@ class TestProcessAPIs(PsutilTestCase):
             self.assertFalse(hasattr(p, 'returncode'))
 
         @retry_on_failure(30)
-        def test(procs, callback):
+        def test_2(procs, callback):
             gone, alive = psutil.wait_procs(procs, timeout=0.03,
                                             callback=callback)
             self.assertEqual(len(gone), 3)
@@ -151,7 +151,7 @@ class TestProcessAPIs(PsutilTestCase):
 
         sproc1.terminate()
         sproc2.terminate()
-        gone, alive = test(procs, callback)
+        gone, alive = test_2(procs, callback)
         self.assertEqual(set(pids), set([sproc1.pid, sproc2.pid, sproc3.pid]))
         for p in gone:
             self.assertTrue(hasattr(p, 'returncode'))
@@ -165,7 +165,7 @@ class TestProcessAPIs(PsutilTestCase):
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         for p in procs:
             p.terminate()
-        gone, alive = psutil.wait_procs(procs)
+        psutil.wait_procs(procs)
 
     def test_pid_exists(self):
         sproc = self.spawn_testproc()
@@ -449,7 +449,7 @@ class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_percent(self):
         last = psutil.cpu_percent(interval=0.001)
-        for x in range(100):
+        for _ in range(100):
             new = psutil.cpu_percent(interval=None)
             self._test_cpu_percent(new, last, new)
             last = new
@@ -459,7 +459,7 @@ class TestCpuAPIs(PsutilTestCase):
     def test_per_cpu_percent(self):
         last = psutil.cpu_percent(interval=0.001, percpu=True)
         self.assertEqual(len(last), psutil.cpu_count())
-        for x in range(100):
+        for _ in range(100):
             new = psutil.cpu_percent(interval=None, percpu=True)
             for percent in new:
                 self._test_cpu_percent(percent, last, new)
@@ -469,7 +469,7 @@ class TestCpuAPIs(PsutilTestCase):
 
     def test_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001)
-        for x in range(100):
+        for _ in range(100):
             new = psutil.cpu_times_percent(interval=None)
             for percent in new:
                 self._test_cpu_percent(percent, last, new)
@@ -481,7 +481,7 @@ class TestCpuAPIs(PsutilTestCase):
     def test_per_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001, percpu=True)
         self.assertEqual(len(last), psutil.cpu_count())
-        for x in range(100):
+        for _ in range(100):
             new = psutil.cpu_times_percent(interval=None, percpu=True)
             for cpu in new:
                 for percent in cpu:

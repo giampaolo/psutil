@@ -36,7 +36,7 @@ if BSD:
 
     PAGESIZE = getpagesize()
     # muse requires root privileges
-    MUSE_AVAILABLE = True if os.getuid() == 0 and which('muse') else False
+    MUSE_AVAILABLE = os.getuid() == 0 and which('muse')
 else:
     PAGESIZE = None
     MUSE_AVAILABLE = False

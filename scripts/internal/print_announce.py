@@ -89,7 +89,7 @@ def get_changes():
             break
     lines.pop(0)
 
-    for i, line in enumerate(lines):
+    for line in lines:
         line = lines.pop(0)
         line = line.rstrip()
         if re.match(r"^- \d+_", line):

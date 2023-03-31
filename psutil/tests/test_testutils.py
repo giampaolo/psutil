@@ -406,16 +406,16 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertEqual(len(ls), times + 1)
 
     def test_execute_w_exc(self):
-        def fun():
+        def fun_1():
             1 / 0
-        self.execute_w_exc(ZeroDivisionError, fun)
+        self.execute_w_exc(ZeroDivisionError, fun_1)
         with self.assertRaises(ZeroDivisionError):
-            self.execute_w_exc(OSError, fun)
+            self.execute_w_exc(OSError, fun_1)
 
-        def fun():
+        def fun_2():
             pass
         with self.assertRaises(AssertionError):
-            self.execute_w_exc(ZeroDivisionError, fun)
+            self.execute_w_exc(ZeroDivisionError, fun_2)
 
 
 class TestTestingUtils(PsutilTestCase):

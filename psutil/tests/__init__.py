@@ -85,22 +85,19 @@ __all__ = [
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO", "MACOS_11PLUS",
+    "HAS_SENSORS_TEMPERATURES", "MACOS_11PLUS",
     "MACOS_12PLUS", "COVERAGE",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
     # threads
-    'ThreadTask'
+    'ThreadTask',
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace', 'print_sysinfo',
-    # install utils
-    'install_pip', 'install_test_deps',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
-    'get_testfn',
+    'chdir', 'safe_rmpath', 'create_exe', 'get_testfn',
     # os
     'get_winver', 'kernel_version',
     # sync primitives
@@ -628,7 +625,7 @@ def reap_children(recursive=False):
     if children:
         for p in children:
             terminate(p, wait_timeout=None)
-        gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
+        _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
             terminate(p, sig=signal.SIGKILL)
@@ -683,7 +680,7 @@ def get_winver():
 # ===================================================================
 
 
-class retry:
+class retry(object):
     """A retry decorator."""
 
     def __init__(self,
@@ -999,7 +996,7 @@ class TestMemoryLeak(PsutilTestCase):
     retries = 10 if CI_TESTING else 5
     verbose = True
     _thisproc = psutil.Process()
-    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG', 0))
+    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG'))
 
     @classmethod
     def setUpClass(cls):
@@ -1059,7 +1056,7 @@ class TestMemoryLeak(PsutilTestCase):
         diff = mem2 - mem1  # can also be negative
         return diff
 
-    def _check_mem(self, fun, times, warmup_times, retries, tolerance):
+    def _check_mem(self, fun, times, retries, tolerance):
         messages = []
         prev_mem = 0
         increase = times
@@ -1104,8 +1101,7 @@ class TestMemoryLeak(PsutilTestCase):
 
         self._call_ntimes(fun, warmup_times)  # warm up
         self._check_fds(fun)
-        self._check_mem(fun, times=times, warmup_times=warmup_times,
-                        retries=retries, tolerance=tolerance)
+        self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
@@ -1122,7 +1118,6 @@ def print_sysinfo():
     import datetime
     import getpass
     import locale
-    import platform
     import pprint
     try:
         import pip
@@ -1165,7 +1160,7 @@ def print_sysinfo():
     if psutil.POSIX:
         if which('gcc'):
             out = sh(['gcc', '--version'])
-            info['gcc'] = str(out).split('\n')[0]
+            info['gcc'] = str(out).split('\n', maxsplit=1)[0]
         else:
             info['gcc'] = 'not installed'
         s = platform.libc_ver()[1]
@@ -1616,7 +1611,7 @@ def check_net_address(addr, family):
     elif family == psutil.AF_LINK:
         assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
-        raise ValueError("unknown family %r", family)
+        raise ValueError("unknown family %r" % family)
 
 
 def check_connection_ntuple(conn):

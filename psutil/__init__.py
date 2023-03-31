@@ -231,7 +231,7 @@ if (int(__version__.replace('.', '')) !=
           "version of psutil" % _psplatform.cext.__file__
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
-            '.'.join(str(_psplatform.cext.version)), __version__)
+            '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
     else:
         msg += " (different than %s)" % __version__
     msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
@@ -516,7 +516,7 @@ class Process(object):
                     "s" if len(invalid_names) > 1 else "",
                     ", ".join(map(repr, invalid_names))))
 
-        retdict = dict()
+        retdict = {}
         ls = attrs or valid_names
         with self.oneshot():
             for name in ls:

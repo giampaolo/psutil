@@ -82,7 +82,7 @@ DEFAULT_COLOR = 7
 # ===================================================================
 
 
-def safe_print(text, file=sys.stdout, flush=False):
+def safe_print(text, file=sys.stdout):
     """Prints a (unicode) string to the console, encoded depending on
     the stdout/file encoding (eg. cp437 on Windows). This is to avoid
     encoding errors in case of funky path names.
@@ -228,7 +228,7 @@ def build():
     # order to allow "import psutil" when using the interactive interpreter
     # from within psutil root directory.
     cmd = [PYTHON, "setup.py", "build_ext", "-i"]
-    if sys.version_info[:2] >= (3, 6) and os.cpu_count() or 1 > 1:
+    if sys.version_info[:2] >= (3, 6) and (os.cpu_count() or 1) > 1:
         cmd += ['--parallel', str(os.cpu_count())]
     # Print coloured warnings in real time.
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -547,8 +547,7 @@ def get_python(path):
             return pypath
 
 
-def main():
-    global PYTHON
+def parse_args():
     parser = argparse.ArgumentParser()
     # option shared by all commands
     parser.add_argument(
@@ -587,8 +586,19 @@ def main():
 
     for p in (test, test_by_name):
         p.add_argument('arg', type=str, nargs='?', default="", help="arg")
+
     args = parser.parse_args()
 
+    if not args.command or args.command == 'help':
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    return args
+
+
+def main():
+    global PYTHON
+    args = parse_args()
     # set python exe
     PYTHON = get_python(args.python)
     if not PYTHON:
@@ -596,10 +606,6 @@ def main():
             "can't find any python installation matching %r" % args.python)
     os.putenv('PYTHON', PYTHON)
     win_colorprint("using " + PYTHON)
-
-    if not args.command or args.command == 'help':
-        parser.print_help(sys.stderr)
-        sys.exit(1)
 
     fname = args.command.replace('-', '_')
     fun = getattr(sys.modules[__name__], fname)  # err if fun not defined

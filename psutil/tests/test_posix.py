@@ -63,6 +63,8 @@ def ps(fmt, pid=None):
             cmd.append('ax')
 
     if SUNOS:
+        # XXX: set() has not get() method so this cannot work; not sure
+        # what I meant in here.
         fmt_map = set(('command', 'comm', 'start', 'stime'))
         fmt = fmt_map.get(fmt, fmt)
 
@@ -408,8 +410,7 @@ class TestSystemAPIs(PsutilTestCase):
                         "raw devices not supported" in err or \
                         "permission denied" in err:
                     continue
-                else:
-                    raise
+                raise
             else:
                 self.assertAlmostEqual(usage.total, total, delta=tolerance)
                 self.assertAlmostEqual(usage.used, used, delta=tolerance)
