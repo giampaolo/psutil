@@ -22,6 +22,7 @@ PY3_DEPS = \
 	flake8-quotes \
 	isort \
 	pep8-naming \
+	pylint \
 	pyperf \
 	pypinfo \
 	requests \
@@ -36,6 +37,7 @@ PY2_DEPS = \
 	mock
 PY_DEPS = `$(PYTHON) -c \
 	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')"`
+NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
 	"import sys, os; \
@@ -199,8 +201,8 @@ isort:  ## Run isort linter.
 c-linter:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-pylint:  ## Python files linting (via pylint)
-	$(PYTHON) -m pylint --rcfile=pyproject.toml psutil/tests/__init__.py
+pylint:  ## Python pylint (not mandatory, just run it from time to time)
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
 lint-all:  ## Run all linters
 	${MAKE} flake8
