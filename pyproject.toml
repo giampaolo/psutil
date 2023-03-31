@@ -34,6 +34,26 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 
+[tool.pylint.messages_control]
+disable = [
+    "C0103",  # Variable name "..." doesn't conform to snake_case naming style (invalid-name)
+    "C0116",  # Missing function or method docstring (missing-function-docstring)
+    "C0209",  # Formatting a regular string which could be a f-string (consider-using-f-string)
+    "C0302",  # Too many lines in module (N/N) (too-many-lines)
+    "C0415",  # Import outside toplevel
+    "E0401",  # Unable to import '...' (import-error)
+    "R0914",  # Too many local variables (16/15) (too-many-locals)
+    "R1710",  # Either all return statements in a function should return an expression, or none of them should. (inconsistent-return-statements)
+    "R1718",  # Consider using a set comprehension (consider-using-set-comprehension)
+    "R1725",  # Consider using Python 3 style super() without arguments (super-with-arguments)
+    "W0511",  # XXX (fixme)
+    "W0603",  # Using the global statement (global-statement)
+    "W0703",  # Catching too general exception Exception (broad-except)
+    "W0707",  # Consider explicitly re-raising using the 'from' keyword (raise-missing-from)
+    "R0904",  # Too many public methods (45/20) (too-many-public-methods)
+    "C0115",  # Missing class docstring (missing-class-docstring)
+]
+
 [build-system]
 requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"

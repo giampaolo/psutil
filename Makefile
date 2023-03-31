@@ -200,7 +200,7 @@ c-linter:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
 pylint:  ## Python files linting (via pylint)
-	$(PYTHON) -m pylint --rcfile=.pylint psutil/tests/__init__.py
+	$(PYTHON) -m pylint --rcfile=pyproject.toml psutil/tests/__init__.py
 
 lint-all:  ## Run all linters
 	${MAKE} flake8
