@@ -1160,7 +1160,7 @@ def print_sysinfo():
     if psutil.POSIX:
         if which('gcc'):
             out = sh(['gcc', '--version'])
-            info['gcc'] = str(out).split('\n', maxsplit=1)[0]
+            info['gcc'] = str(out).split('\n')[0]
         else:
             info['gcc'] = 'not installed'
         s = platform.libc_ver()[1]
