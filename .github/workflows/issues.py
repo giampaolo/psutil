@@ -10,6 +10,8 @@ is created. Assign labels, provide replies, closes issues, etc. depending
 on the situation.
 """
 
+from __future__ import print_function
+
 import functools
 import json
 import os
@@ -194,9 +196,9 @@ def get_issue():
 
 def log(msg):
     if '\n' in msg or "\r\n" in msg:
-        print(">>>\n%s\n<<<" % msg)
+        print(">>>\n%s\n<<<" % msg, flush=True)
     else:
-        print(">>> %s <<<" % msg)
+        print(">>> %s <<<" % msg, flush=True)
 
 
 def add_label(issue, label):
@@ -221,6 +223,7 @@ def add_label(issue, label):
 
 
 def _guess_labels_from_text(issue, text):
+    assert isinstance(text, str), text
     for label, keywords in LABELS_MAP.items():
         for keyword in keywords:
             if keyword.lower() in text.lower():
@@ -228,11 +231,13 @@ def _guess_labels_from_text(issue, text):
 
 
 def add_labels_from_text(issue, text):
+    assert isinstance(text, str), text
     for label, keyword in _guess_labels_from_text(issue, text):
         add_label(issue, label)
 
 
 def add_labels_from_new_body(issue, text):
+    assert isinstance(text, str), text
     log("start searching for template lines in new issue/PR body")
     # add os label
     r = re.search(r"\* OS:.*?\n", text)
@@ -288,14 +293,21 @@ def add_labels_from_new_body(issue, text):
 
 def on_new_issue(issue):
     def has_text(text):
-        return text in issue.title.lower() or text in issue.body.lower()
+        return text in issue.title.lower() or \
+            (issue.body and text in issue.body.lower())
+
+    def body_mentions_python_h():
+        if not issue.body:
+            return False
+        body = issue.body.replace(' ', '')
+        return "#include<Python.h>\n^~~~" in body or \
+            "#include<Python.h>\r\n^~~~" in body
 
     log("searching for missing Python.h")
     if has_text("missing python.h") or \
             has_text("python.h: no such file or directory") or \
-            "#include<Python.h>\n^~~~" in issue.body.replace(' ', '') or \
-            "#include<Python.h>\r\n^~~~" in issue.body.replace(' ', ''):
-        log("found")
+            body_mentions_python_h():
+        log("found mention of Python.h")
         issue.create_comment(REPLY_MISSING_PYTHON_HEADERS)
         issue.edit(state='closed')
         return
@@ -317,12 +329,14 @@ def main():
     if is_event_new_issue():
         log("created new issue %s" % issue)
         add_labels_from_text(issue, issue.title)
-        add_labels_from_new_body(issue, issue.body)
+        if issue.body:
+            add_labels_from_new_body(issue, issue.body)
         on_new_issue(issue)
     elif is_event_new_pr():
         log("created new PR %s" % issue)
         add_labels_from_text(issue, issue.title)
-        add_labels_from_new_body(issue, issue.body)
+        if issue.body:
+            add_labels_from_new_body(issue, issue.body)
         on_new_pr(issue)
     else:
         log("unhandled event")

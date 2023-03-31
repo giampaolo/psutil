@@ -1,4 +1,4 @@
-/* Refrences:
+/* References:
  * https://lists.samba.org/archive/samba-technical/2009-February/063079.html
  * http://stackoverflow.com/questions/4139405/#4139811
  * https://github.com/steve-o/openpgm/blob/master/openpgm/pgm/getifaddrs.c

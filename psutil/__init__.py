@@ -17,10 +17,11 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions from 2.6 to 3.4+.
+Works with Python versions 2.7 and 3.4+.
 """
 
 from __future__ import division
+
 import collections
 import contextlib
 import datetime
@@ -31,25 +32,16 @@ import subprocess
 import sys
 import threading
 import time
+
+
 try:
     import pwd
 except ImportError:
     pwd = None
 
 from . import _common
-from ._common import AccessDenied
-from ._common import Error
-from ._common import memoize_when_activated
-from ._common import NoSuchProcess
-from ._common import TimeoutExpired
-from ._common import wrap_numbers as _wrap_numbers
-from ._common import ZombieProcess
-from ._compat import long
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
-from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
-from ._compat import PY3 as _PY3
-
+from ._common import AIX
+from ._common import BSD
 from ._common import CONN_CLOSE
 from ._common import CONN_CLOSE_WAIT
 from ._common import CONN_CLOSING
@@ -62,9 +54,16 @@ from ._common import CONN_NONE
 from ._common import CONN_SYN_RECV
 from ._common import CONN_SYN_SENT
 from ._common import CONN_TIME_WAIT
+from ._common import FREEBSD  # NOQA
+from ._common import LINUX
+from ._common import MACOS
+from ._common import NETBSD  # NOQA
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import OPENBSD  # NOQA
+from ._common import OSX  # deprecated alias
+from ._common import POSIX  # NOQA
 from ._common import POWER_TIME_UNKNOWN
 from ._common import POWER_TIME_UNLIMITED
 from ._common import STATUS_DEAD
@@ -79,18 +78,21 @@ from ._common import STATUS_TRACING_STOP
 from ._common import STATUS_WAITING
 from ._common import STATUS_WAKING
 from ._common import STATUS_ZOMBIE
-
-from ._common import AIX
-from ._common import BSD
-from ._common import FREEBSD  # NOQA
-from ._common import LINUX
-from ._common import MACOS
-from ._common import NETBSD  # NOQA
-from ._common import OPENBSD  # NOQA
-from ._common import OSX  # deprecated alias
-from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
+from ._common import AccessDenied
+from ._common import Error
+from ._common import NoSuchProcess
+from ._common import TimeoutExpired
+from ._common import ZombieProcess
+from ._common import memoize_when_activated
+from ._common import wrap_numbers as _wrap_numbers
+from ._compat import PY3 as _PY3
+from ._compat import PermissionError
+from ._compat import ProcessLookupError
+from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
+from ._compat import long
+
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -98,7 +100,6 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-
     from ._pslinux import IOPRIO_CLASS_BE  # NOQA
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
@@ -113,10 +114,10 @@ elif WINDOWS:
     from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
-    from ._pswindows import IOPRIO_VERYLOW  # NOQA
+    from ._pswindows import IOPRIO_HIGH  # NOQA
     from ._pswindows import IOPRIO_LOW  # NOQA
     from ._pswindows import IOPRIO_NORMAL  # NOQA
-    from ._pswindows import IOPRIO_HIGH  # NOQA
+    from ._pswindows import IOPRIO_VERYLOW  # NOQA
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -210,7 +211,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.8.1"
+__version__ = "5.9.5"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -227,7 +228,7 @@ _SENTINEL = object()
 if (int(__version__.replace('.', '')) !=
         getattr(_psplatform.cext, 'version', None)):
     msg = "version conflict: %r C extension module was built for another " \
-          "version of psutil" % getattr(_psplatform.cext, "__file__")
+          "version of psutil" % _psplatform.cext.__file__
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
             '.'.join(str(_psplatform.cext.version)), __version__)
@@ -324,7 +325,7 @@ class Process(object):
      - use is_running() before querying the process
      - if you're continuously iterating over a set of Process
        instances use process_iter() which pre-emptively checks
-     process identity for every yielded instance
+       process identity for every yielded instance
     """
 
     def __init__(self, pid=None):
@@ -372,17 +373,14 @@ class Process(object):
                 raise NoSuchProcess(pid, msg='process PID not found')
             else:
                 self._gone = True
-        # This pair is supposed to indentify a Process instance
+        # This pair is supposed to identify a Process instance
         # univocally over time (the PID alone is not enough as
         # it might refer to a process whose PID has been reused).
         # This will be used later in __eq__() and is_running().
         self._ident = (self.pid, self._create_time)
 
     def __str__(self):
-        try:
-            info = collections.OrderedDict()
-        except AttributeError:  # pragma: no cover
-            info = {}  # Python 2.6
+        info = collections.OrderedDict()
         info["pid"] = self.pid
         if self._name:
             info['name'] = self._name
@@ -1053,7 +1051,7 @@ class Process(object):
         """Return a namedtuple with variable fields depending on the
         platform, representing memory information about the process.
 
-        The "portable" fields available on all plaforms are `rss` and `vms`.
+        The "portable" fields available on all platforms are `rss` and `vms`.
 
         All numbers are expressed in bytes.
         """
@@ -1207,7 +1205,7 @@ class Process(object):
     def suspend(self):
         """Suspend process execution with SIGSTOP pre-emptively checking
         whether PID has been reused.
-        On Windows this has the effect ot suspending all process threads.
+        On Windows this has the effect of suspending all process threads.
         """
         if POSIX:
             self._send_signal(signal.SIGSTOP)
@@ -2074,7 +2072,7 @@ def disk_io_counters(perdisk=False, nowrap=True):
             rawdict[disk] = nt(*fields)
         return rawdict
     else:
-        return nt(*[sum(x) for x in zip(*rawdict.values())])
+        return nt(*(sum(x) for x in zip(*rawdict.values())))
 
 
 disk_io_counters.cache_clear = functools.partial(
@@ -2343,6 +2341,15 @@ if WINDOWS:
 
 
 # =====================================================================
+
+
+def _set_debug(value):
+    """Enable or disable PSUTIL_DEBUG option, which prints debugging
+    messages to stderr.
+    """
+    import psutil._common
+    psutil._common.PSUTIL_DEBUG = bool(value)
+    _psplatform.cext.set_debug(bool(value))
 
 
 def test():  # pragma: no cover

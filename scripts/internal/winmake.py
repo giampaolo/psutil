@@ -12,6 +12,7 @@ that they should be deemed illegal!
 """
 
 from __future__ import print_function
+
 import argparse
 import atexit
 import ctypes
@@ -40,17 +41,21 @@ PYPY = '__pypy__' in sys.builtin_module_names
 DEPS = [
     "coverage",
     "flake8",
+    "flake8-blind-except",
+    "flake8-debugger",
+    "flake8-print",
     "nose",
     "pdbpp",
     "pip",
     "pyperf",
     "pyreadline",
+    "requests",
     "setuptools",
     "wheel",
-    "requests"
 ]
-if sys.version_info[:2] <= (2, 7):
-    DEPS.append('unittest2')
+
+if sys.version_info[:2] >= (3, 5):
+    DEPS.append('flake8-bugbear')
 if sys.version_info[:2] <= (2, 7):
     DEPS.append('mock')
 if sys.version_info[:2] <= (3, 2):
@@ -155,11 +160,11 @@ def rm(pattern, directory=False):
             safe_remove(pattern)
         return
 
-    for root, subdirs, subfiles in os.walk('.'):
+    for root, dirs, files in os.walk('.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
-        found = fnmatch.filter(subdirs if directory else subfiles, pattern)
+        found = fnmatch.filter(dirs if directory else files, pattern)
         for name in found:
             path = os.path.join(root, name)
             if directory:
@@ -194,15 +199,15 @@ def safe_rmtree(path):
 
 def recursive_rm(*patterns):
     """Recursively remove a file or matching a list of patterns."""
-    for root, subdirs, subfiles in os.walk(u'.'):
+    for root, dirs, files in os.walk(u'.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
-        for file in subfiles:
+        for file in files:
             for pattern in patterns:
                 if fnmatch.fnmatch(file, pattern):
                     safe_remove(os.path.join(root, file))
-        for dir in subdirs:
+        for dir in dirs:
             for pattern in patterns:
                 if fnmatch.fnmatch(dir, pattern):
                     safe_rmtree(os.path.join(root, dir))
@@ -378,7 +383,7 @@ def setup_dev_env():
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-def lint():
+def flake8():
     """Run flake8 against all py files"""
     py_files = subprocess.check_output("git ls-files")
     if PY3:
@@ -560,7 +565,7 @@ def main():
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
     sp.add_parser('install-pip', help="install pip")
-    sp.add_parser('lint', help="run flake8 against all py files")
+    sp.add_parser('flake8', help="run flake8 against all py files")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
     sp.add_parser('setup-dev-env', help="install deps")

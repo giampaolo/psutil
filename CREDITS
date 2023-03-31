@@ -85,7 +85,7 @@ I: 18
 N: Thomas Klausner
 W: https://github.com/0-wiz-0
 D: NetBSD implementation (co-author).
-I: 557
+I: 557, 2128
 
 N: Ryo Onodera
 W: https://github.com/ryoon
@@ -691,7 +691,7 @@ I: 1616
 N: Po-Chuan Hsieh
 W: https://github.com/sunpoet
 C: Taiwan
-I: 1646
+I: 1646, 2186
 
 N: Javad Karabi
 W: https://github.com/karabijavad
@@ -770,3 +770,46 @@ I: 1948
 N: Saeed Rasooli
 W: https://github.com/ilius
 I: 1996
+
+N: PetrPospisil
+W: https://github.com/PetrPospisil
+I: 1980
+
+N: Olivier Dormond
+W: https://github.com/odormond
+I: 1956
+
+N: Matthieu Darbois
+W: https://github.com/mayeut
+I: 2039, 2142, 2147, 2153, 2040, 2102, 2216
+
+N: Hugo van Kemenade
+W: https://github.com/hugovk
+I: 2099
+
+N: Torsten Blum
+I: 2114
+
+N: Chris Lalancette
+W: https://github.com/clalancette
+I: 2037
+
+N: Bernhard Urban-Forster
+C: Austria
+W: https://github.com/lewurm
+I: 2135
+
+N: Daniel Li
+I: 2150
+
+N: Daniel Widdis
+W: https://github.com/dbwiddis
+I: 2077
+
+N: Amir Rossert
+W: https://github.com/arossert
+I: 2156
+
+N: Lawrence D'Anna
+W: https://github.com/smoofra
+I: 2010

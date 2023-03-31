@@ -13,6 +13,7 @@ import os
 import re
 import subprocess
 import time
+import unittest
 
 import psutil
 from psutil import AIX
@@ -23,17 +24,17 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil.tests import CI_TESTING
-from psutil.tests import spawn_testproc
 from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import mock
-from psutil.tests import PsutilTestCase
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PsutilTestCase
+from psutil.tests import mock
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
+from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import unittest
 from psutil.tests import which
+
 
 if POSIX:
     import mmap
@@ -270,6 +271,12 @@ class TestProcess(PsutilTestCase):
             adjusted_ps_pathname = ps_pathname[:len(ps_pathname)]
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
+    # On macOS the official python installer exposes a python wrapper that
+    # executes a python executable hidden inside an application bundle inside
+    # the Python framework.
+    # There's a race condition between the ps call & the psutil call below
+    # depending on the completion of the execve call so let's retry on failure
+    @retry_on_failure()
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
@@ -307,7 +314,7 @@ class TestSystemAPIs(PsutilTestCase):
         if len(pids_ps) - len(pids_psutil) > 1:
             difference = [x for x in pids_psutil if x not in pids_ps] + \
                          [x for x in pids_ps if x not in pids_psutil]
-            self.fail("difference: " + str(difference))
+            raise self.fail("difference: " + str(difference))
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
@@ -321,7 +328,7 @@ class TestSystemAPIs(PsutilTestCase):
                 if line.startswith(nic):
                     break
             else:
-                self.fail(
+                raise self.fail(
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 

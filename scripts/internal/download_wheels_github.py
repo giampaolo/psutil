@@ -18,9 +18,10 @@ https://developer.github.com/v3/actions/artifacts/
 import argparse
 import json
 import os
-import requests
 import sys
 import zipfile
+
+import requests
 
 from psutil import __version__ as PSUTIL_VERSION
 from psutil._common import bytes2human

@@ -7,7 +7,8 @@
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
 
-from __future__ import division, print_function
+from __future__ import division
+from __future__ import print_function
 
 import collections
 import contextlib
@@ -23,6 +24,7 @@ from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+
 
 try:
     from socket import AF_INET6
@@ -41,6 +43,8 @@ else:
 
 # can't take it from _common.py as this script is imported by setup.py
 PY3 = sys.version_info[0] == 3
+PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG', 0))
+_DEFAULT = object()
 
 __all__ = [
     # OS constants
@@ -67,6 +71,7 @@ __all__ = [
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
+    'open_text', 'open_binary', 'cat', 'bcat',
     'bytes2human', 'conn_to_ntuple', 'debug',
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
@@ -194,7 +199,8 @@ sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
 snicaddr = namedtuple('snicaddr',
                       ['family', 'address', 'netmask', 'broadcast', 'ptp'])
 # psutil.net_if_stats()
-snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
+snicstats = namedtuple('snicstats',
+                       ['isup', 'duplex', 'speed', 'mtu', 'flags'])
 # psutil.cpu_stats()
 scpustats = namedtuple(
     'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
@@ -276,13 +282,12 @@ class Error(Exception):
     __module__ = 'psutil'
 
     def _infodict(self, attrs):
-        try:
-            info = collections.OrderedDict()
-        except AttributeError:  # pragma: no cover
-            info = {}  # Python 2.6
+        info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
             if value:
+                info[name] = value
+            elif name == "pid" and value == 0:
                 info[name] = value
         return info
 
@@ -294,7 +299,7 @@ class Error(Exception):
                 ["%s=%r" % (k, v) for k, v in info.items()])
         else:
             details = None
-        return " ".join([x for x in (self.msg, details) if x])
+        return " ".join([x for x in (getattr(self, "msg", ""), details) if x])
 
     def __repr__(self):
         # invoked on `repr(Error)`
@@ -361,6 +366,25 @@ class TimeoutExpired(Error):
 # ===================================================================
 
 
+# This should be in _compat.py rather than here, but does not work well
+# with setup.py importing this module via a sys.path trick.
+if PY3:
+    if isinstance(__builtins__, dict):  # cpython
+        exec_ = __builtins__["exec"]
+    else:  # pypy
+        exec_ = getattr(__builtins__, "exec")  # noqa
+
+    exec_("""def raise_from(value, from_value):
+    try:
+        raise value from from_value
+    finally:
+        value = None
+    """)
+else:
+    def raise_from(value, from_value):
+        raise value
+
+
 def usage_percent(used, total, round_=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
@@ -386,6 +410,15 @@ def memoize(fun):
     1
     >>> foo.cache_clear()
     >>>
+
+    It supports:
+     - functions
+     - classes (acts as a @singleton)
+     - staticmethods
+     - classmethods
+
+    It does NOT support:
+     - methods
     """
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
@@ -393,7 +426,10 @@ def memoize(fun):
         try:
             return cache[key]
         except KeyError:
-            ret = cache[key] = fun(*args, **kwargs)
+            try:
+                ret = cache[key] = fun(*args, **kwargs)
+            except Exception as err:
+                raise raise_from(err, None)
             return ret
 
     def cache_clear():
@@ -438,11 +474,17 @@ def memoize_when_activated(fun):
             ret = self._cache[fun]
         except AttributeError:
             # case 2: we never entered oneshot() ctx
-            return fun(self)
+            try:
+                return fun(self)
+            except Exception as err:
+                raise raise_from(err, None)
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
-            ret = fun(self)
+            try:
+                ret = fun(self)
+            except Exception as err:
+                raise raise_from(err, None)
             try:
                 self._cache[fun] = ret
             except AttributeError:
@@ -704,22 +746,71 @@ wrap_numbers.cache_clear = _wn.cache_clear
 wrap_numbers.cache_info = _wn.cache_info
 
 
-def open_binary(fname, **kwargs):
-    return open(fname, "rb", **kwargs)
+# The read buffer size for open() builtin. This (also) dictates how
+# much data we read(2) when iterating over file lines as in:
+#   >>> with open(file) as f:
+#   ...    for line in f:
+#   ...        ...
+# Default per-line buffer size for binary files is 1K. For text files
+# is 8K. We use a bigger buffer (32K) in order to have more consistent
+# results when reading /proc pseudo files on Linux, see:
+# https://github.com/giampaolo/psutil/issues/2050
+# On Python 2 this also speeds up the reading of big files:
+# (namely /proc/{pid}/smaps and /proc/net/*):
+# https://github.com/giampaolo/psutil/issues/708
+FILE_READ_BUFFER_SIZE = 32 * 1024
 
 
-def open_text(fname, **kwargs):
+def open_binary(fname):
+    return open(fname, "rb", buffering=FILE_READ_BUFFER_SIZE)
+
+
+def open_text(fname):
     """On Python 3 opens a file in text mode by using fs encoding and
     a proper en/decoding errors handler.
     On Python 2 this is just an alias for open(name, 'rt').
     """
-    if PY3:
-        # See:
-        # https://github.com/giampaolo/psutil/issues/675
-        # https://github.com/giampaolo/psutil/pull/733
-        kwargs.setdefault('encoding', ENCODING)
-        kwargs.setdefault('errors', ENCODING_ERRS)
-    return open(fname, "rt", **kwargs)
+    if not PY3:
+        return open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE)
+
+    # See:
+    # https://github.com/giampaolo/psutil/issues/675
+    # https://github.com/giampaolo/psutil/pull/733
+    fobj = open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE,
+                encoding=ENCODING, errors=ENCODING_ERRS)
+    try:
+        # Dictates per-line read(2) buffer size. Defaults is 8k. See:
+        # https://github.com/giampaolo/psutil/issues/2050#issuecomment-1013387546
+        fobj._CHUNK_SIZE = FILE_READ_BUFFER_SIZE
+    except AttributeError:
+        pass
+    except Exception:
+        fobj.close()
+        raise
+
+    return fobj
+
+
+def cat(fname, fallback=_DEFAULT, _open=open_text):
+    """Read entire file content and return it as a string. File is
+    opened in text mode. If specified, `fallback` is the value
+    returned in case of error, either if the file does not exist or
+    it can't be read().
+    """
+    if fallback is _DEFAULT:
+        with _open(fname) as f:
+            return f.read()
+    else:
+        try:
+            with _open(fname) as f:
+                return f.read()
+        except (IOError, OSError):
+            return fallback
+
+
+def bcat(fname, fallback=_DEFAULT):
+    """Same as above but opens file in binary mode."""
+    return cat(fname, fallback=fallback, _open=open_binary)
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
@@ -829,11 +920,10 @@ def print_color(
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
 
-if bool(os.getenv('PSUTIL_DEBUG', 0)):
-    import inspect
-
-    def debug(msg):
-        """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+def debug(msg):
+    """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
+    if PSUTIL_DEBUG:
+        import inspect
         fname, lineno, func_name, lines, index = inspect.getframeinfo(
             inspect.currentframe().f_back)
         if isinstance(msg, Exception):
@@ -844,6 +934,3 @@ if bool(os.getenv('PSUTIL_DEBUG', 0)):
                 msg = "ignoring %r" % msg
         print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
               file=sys.stderr)
-else:
-    def debug(msg):
-        pass

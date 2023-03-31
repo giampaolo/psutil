@@ -8,6 +8,7 @@
  */
 
 #include <Python.h>
+#include <sys/param.h>
 #include <sys/user.h>
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>

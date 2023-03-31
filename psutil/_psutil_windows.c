@@ -338,8 +338,8 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
     NTSTATUS status;
-    PVOID buffer;
-    ULONG bufferSize = 0x100;
+    PVOID buffer = NULL;
+    ULONG bufferSize = 0x104 * 2; // WIN_MAX_PATH * sizeof(wchar_t)
     SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
     PyObject *py_exe;
 
@@ -350,8 +350,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return AccessDenied("automatically set for PID 0");
 
     buffer = MALLOC_ZERO(bufferSize);
-    if (! buffer)
-        return PyErr_NoMemory();
+    if (! buffer) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
     processIdInfo.ProcessId = (HANDLE)(ULONG_PTR)pid;
     processIdInfo.ImageName.Length = 0;
     processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
@@ -363,12 +366,41 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         sizeof(SYSTEM_PROCESS_ID_INFORMATION),
         NULL);
 
-    if (status == STATUS_INFO_LENGTH_MISMATCH) {
+    if ((status == STATUS_INFO_LENGTH_MISMATCH) &&
+            (processIdInfo.ImageName.MaximumLength <= bufferSize))
+    {
+        // Required length was NOT stored in MaximumLength (WOW64 issue).
+        ULONG maxBufferSize = 0x7FFF * 2;  // NTFS_MAX_PATH * sizeof(wchar_t)
+        do {
+            // Iteratively double the size of the buffer up to maxBufferSize
+            bufferSize *= 2;
+            FREE(buffer);
+            buffer = MALLOC_ZERO(bufferSize);
+            if (! buffer) {
+                PyErr_NoMemory();
+                return NULL;
+            }
+
+            processIdInfo.ImageName.MaximumLength = (USHORT)bufferSize;
+            processIdInfo.ImageName.Buffer = buffer;
+
+            status = NtQuerySystemInformation(
+                SystemProcessIdInformation,
+                &processIdInfo,
+                sizeof(SYSTEM_PROCESS_ID_INFORMATION),
+                NULL);
+        } while ((status == STATUS_INFO_LENGTH_MISMATCH) &&
+                    (bufferSize <= maxBufferSize));
+    }
+    else if (status == STATUS_INFO_LENGTH_MISMATCH) {
         // Required length is stored in MaximumLength.
         FREE(buffer);
         buffer = MALLOC_ZERO(processIdInfo.ImageName.MaximumLength);
-        if (! buffer)
-            return PyErr_NoMemory();
+        if (! buffer) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
         processIdInfo.ImageName.Buffer = buffer;
 
         status = NtQuerySystemInformation(
@@ -578,20 +610,25 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+    unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
+    PERFORMANCE_INFORMATION perfInfo;
 
-    if (! GlobalMemoryStatusEx(&memInfo)) {
+    if (! GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    return Py_BuildValue("(LLLLLL)",
-                         memInfo.ullTotalPhys,      // total
-                         memInfo.ullAvailPhys,      // avail
-                         memInfo.ullTotalPageFile,  // total page file
-                         memInfo.ullAvailPageFile,  // avail page file
-                         memInfo.ullTotalVirtual,   // total virtual
-                         memInfo.ullAvailVirtual);  // avail virtual
+    // values are size_t, widen (if needed) to long long
+    pageSize = perfInfo.PageSize;
+    totalPhys = perfInfo.PhysicalTotal * pageSize;
+    availPhys = perfInfo.PhysicalAvailable * pageSize;
+    totalSys = perfInfo.CommitLimit * pageSize;
+    availSys = totalSys - perfInfo.CommitTotal * pageSize;
+    return Py_BuildValue(
+        "(LLLL)",
+        totalPhys,
+        availPhys,
+        totalSys,
+        availSys);
 }
 
 
@@ -1523,127 +1560,71 @@ static PyMethodDef
 PsutilMethods[] = {
     // --- per-process functions
     {"proc_cmdline", (PyCFunction)(void(*)(void))psutil_proc_cmdline,
-        METH_VARARGS | METH_KEYWORDS,
-     "Return process cmdline as a list of cmdline arguments"},
-    {"proc_environ", psutil_proc_environ, METH_VARARGS,
-     "Return process environment data"},
-    {"proc_exe", psutil_proc_exe, METH_VARARGS,
-     "Return path of the process executable"},
-    {"proc_kill", psutil_proc_kill, METH_VARARGS,
-     "Kill the process identified by the given PID"},
-    {"proc_times", psutil_proc_times, METH_VARARGS,
-     "Return tuple of user/kern time for the given PID"},
-    {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
-     "Return a tuple of process memory information"},
-    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
-     "Return the USS of the process"},
-    {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
-     "Return process current working directory"},
-    {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS,
-     "Suspend or resume a process"},
-    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
-     "Return files opened by process"},
-    {"proc_username", psutil_proc_username, METH_VARARGS,
-     "Return the username of a process"},
-    {"proc_threads", psutil_proc_threads, METH_VARARGS,
-     "Return process threads information as a list of tuple"},
-    {"proc_wait", psutil_proc_wait, METH_VARARGS,
-     "Wait for process to terminate and return its exit code."},
-    {"proc_priority_get", psutil_proc_priority_get, METH_VARARGS,
-     "Return process priority."},
-    {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS,
-     "Set process priority."},
-    {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS,
-     "Return process IO priority."},
-    {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS,
-     "Set process IO priority."},
-    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
-     "Return process CPU affinity as a bitmask."},
-    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
-     "Set process CPU affinity."},
-    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
-     "Get process I/O counters."},
-    {"proc_is_suspended", psutil_proc_is_suspended, METH_VARARGS,
-     "Return True if one of the process threads is in a suspended state"},
-    {"proc_num_handles", psutil_proc_num_handles, METH_VARARGS,
-     "Return the number of handles opened by process."},
-    {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
-     "Return a list of process's memory mappings"},
+     METH_VARARGS | METH_KEYWORDS},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
+    {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS},
+    {"proc_exe", psutil_proc_exe, METH_VARARGS},
+    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS},
+    {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS},
+    {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS},
+    {"proc_is_suspended", psutil_proc_is_suspended, METH_VARARGS},
+    {"proc_kill", psutil_proc_kill, METH_VARARGS},
+    {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS},
+    {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},
+    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
+    {"proc_num_handles", psutil_proc_num_handles, METH_VARARGS},
+    {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
+    {"proc_priority_get", psutil_proc_priority_get, METH_VARARGS},
+    {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS},
+    {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS},
+    {"proc_threads", psutil_proc_threads, METH_VARARGS},
+    {"proc_times", psutil_proc_times, METH_VARARGS},
+    {"proc_username", psutil_proc_username, METH_VARARGS},
+    {"proc_wait", psutil_proc_wait, METH_VARARGS},
 
     // --- alternative pinfo interface
-    {"proc_info", psutil_proc_info, METH_VARARGS,
-     "Various process information"},
+    {"proc_info", psutil_proc_info, METH_VARARGS},
 
     // --- system-related functions
-    {"pids", psutil_pids, METH_VARARGS,
-     "Returns a list of PIDs currently running on the system"},
-    {"ppid_map", psutil_ppid_map, METH_VARARGS,
-     "Return a {pid:ppid, ...} dict for all running processes"},
-    {"pid_exists", psutil_pid_exists, METH_VARARGS,
-     "Determine if the process exists in the current process list."},
-    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
-     "Returns the number of logical CPUs on the system"},
-    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS,
-     "Returns the number of CPU cores on the system"},
-    {"boot_time", psutil_boot_time, METH_VARARGS,
-     "Return the system boot time expressed in seconds since the epoch."},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
-     "Return the total amount of physical memory, in bytes"},
-    {"cpu_times", psutil_cpu_times, METH_VARARGS,
-     "Return system cpu times as a list"},
-    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
-     "Return system per-cpu times as a list of tuples"},
-    {"disk_usage", psutil_disk_usage, METH_VARARGS,
-     "Return path's disk total and free as a Python tuple."},
-    {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
-     "Return dict of tuples of networks I/O information."},
-    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
-     "Return dict of tuples of disks I/O information."},
-    {"users", psutil_users, METH_VARARGS,
-     "Return a list of currently connected users."},
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-     "Return disk partitions."},
-    {"net_connections", psutil_net_connections, METH_VARARGS,
-     "Return system-wide connections"},
-    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
-     "Return NICs addresses."},
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
-     "Return NICs stats."},
-    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
-     "Return NICs stats."},
-    {"cpu_freq", psutil_cpu_freq, METH_VARARGS,
-     "Return CPU frequency."},
-    {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter,
-     METH_VARARGS,
-     "Initializes the emulated load average calculator."},
-    {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS,
-     "Returns the emulated POSIX-like load average."},
-    {"sensors_battery", psutil_sensors_battery, METH_VARARGS,
-     "Return battery metrics usage."},
-    {"getpagesize", psutil_getpagesize, METH_VARARGS,
-     "Return system memory page size."},
+    {"boot_time", psutil_boot_time, METH_VARARGS},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS},
+    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
+    {"cpu_times", psutil_cpu_times, METH_VARARGS},
+    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"disk_usage", psutil_disk_usage, METH_VARARGS},
+    {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
+    {"getpagesize", psutil_getpagesize, METH_VARARGS},
+    {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter, METH_VARARGS},
+    {"net_connections", psutil_net_connections, METH_VARARGS},
+    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
+    {"net_if_stats", psutil_net_if_stats, METH_VARARGS},
+    {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
+    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
+    {"pid_exists", psutil_pid_exists, METH_VARARGS},
+    {"pids", psutil_pids, METH_VARARGS},
+    {"ppid_map", psutil_ppid_map, METH_VARARGS},
+    {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
+    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- windows services
-    {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,
-     "List all services"},
-    {"winservice_query_config", psutil_winservice_query_config, METH_VARARGS,
-     "Return service config"},
-    {"winservice_query_status", psutil_winservice_query_status, METH_VARARGS,
-     "Return service config"},
-    {"winservice_query_descr", psutil_winservice_query_descr, METH_VARARGS,
-     "Return the description of a service"},
-    {"winservice_start", psutil_winservice_start, METH_VARARGS,
-     "Start a service"},
-    {"winservice_stop", psutil_winservice_stop, METH_VARARGS,
-     "Stop a service"},
+    {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS},
+    {"winservice_query_config", psutil_winservice_query_config, METH_VARARGS},
+    {"winservice_query_descr", psutil_winservice_query_descr, METH_VARARGS},
+    {"winservice_query_status", psutil_winservice_query_status, METH_VARARGS},
+    {"winservice_start", psutil_winservice_start, METH_VARARGS},
+    {"winservice_stop", psutil_winservice_stop, METH_VARARGS},
 
     // --- windows API bindings
-    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS,
-     "QueryDosDevice binding"},
+    {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
 
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
 };
@@ -1703,8 +1684,6 @@ void init_psutil_windows(void)
         INITERROR;
 
     if (psutil_setup() != 0)
-        INITERROR;
-    if (psutil_load_globals() != 0)
         INITERROR;
     if (psutil_set_se_debug() != 0)
         INITERROR;

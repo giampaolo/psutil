@@ -1,52 +1,174 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.8.1 (IN DEVELOPMENT)
+5.9.5 (IN DEVELOPMENT)
 ======================
-
-XXXX-XX-XX
 
 **Enhancements**
 
-- 1851_: [Linux] cpu_freq() is slow on systems with many CPUs. Read current
-  frequency values for all CPUs from /proc/cpuinfo instead of opening many
-  files in /sys fs.  (patch by marxin)
-- 1992_: NoSuchProcess message now specifies if the PID has been reused.
-- 1992_: error classes (NoSuchProcess, AccessDenied, etc.) now have a better
-  formatted and separated `__repr__` and `__str__` implementations.
-- 1996_: add support for MidnightBSD.  (patch by Saeed Rasooli)
-- 1999_: [Linux] disk_partitions(): convert "/dev/root" device (an alias used
-  on some Linux distros) to real root device path.
+- 2196_: in case of exception, display a cleaner error traceback by hiding the
+  `KeyError` bit deriving from a missed cache hit.
+- 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
+  is raised.
 
 **Bug fixes**
 
-- 1456_: [macOS] psutil.cpu_freq()'s min and max are set to 0 if can't be
-  determined (instead of crashing).
-- 1512_: [macOS] sometimes Process.connections() will crash with EOPNOTSUPP
-  for one connection; this is now ignored.
-- 1598_: [Windows] psutil.disk_partitions() only returns mountpoints on drives
-  where it first finds one
-- 1874_: [Solaris] swap output error due to incorrect range.
-- 1892_: [macOS] psutil.cpu_freq() broken on Apple M1.
-- 1901_: [macOS] different functions, especially process' open_files() and
-  connections() methods, could randomly raise AccessDenied because the internal
-  buffer of `proc_pidinfo(PROC_PIDLISTFDS)` syscall was not big enough. We now
-  dynamically increase the buffer size until it's big enough instead of giving
-  up and raising AccessDenied, which was a fallback to avoid crashing.
-- 1904_: [Windows] OpenProcess fails with ERROR_SUCCESS due to GetLastError()
-  called after sprintf().  (patch by alxchk)
-- 1913_: [Linux] wait_procs seemingly ignoring timeout, TimeoutExpired thrown
-- 1919_: [Linux] sensors_battery() can raise TypeError on PureOS.
-- 1921_: [Windows] psutil.swap_memory() shows committed memory instead of swap
-- 1940_: [Linux] psutil does not handle ENAMETOOLONG when accessing process
+- 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
+  ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
+  calculate an approximation for ``available`` memory which matches "free"
+  CLI utility.
+- 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
+- 2186_, [FreeBSD]: compilation fails with Clang 15.  (patch by Po-Chuan Hsieh)
+- 2191_, [Linux]: `disk_partitions()`_: do not unnecessarily read
+  /proc/filesystems and raise `AccessDenied`_ unless user specified `all=False`
+  argument.
+- 2216_, [Windows]: fix tests when running in a virtual environment (patch by
+  Matthieu Darbois)
+
+5.9.4
+=====
+
+2022-11-07
+
+**Enhancements**
+
+- 2102_: use Limited API when building wheels with CPython 3.6+ on Linux,
+  macOS and Windows. This allows to use pre-built wheels in all future versions
+  of cPython 3.  (patch by Matthieu Darbois)
+
+**Bug fixes**
+
+- 2077_, [Windows]: Use system-level values for `virtual_memory()`_. (patch by
+  Daniel Widdis)
+- 2156_, [Linux]: compilation may fail on very old gcc compilers due to missing
+  ``SPEED_UNKNOWN`` definition.  (patch by Amir Rossert)
+- 2010_, [macOS]: on MacOS, arm64 ``IFM_1000_TX`` and ``IFM_1000_T`` are the
+  same value, causing a build failure.  (patch by Lawrence D'Anna)
+
+5.9.3
+=====
+
+2022-10-18
+
+**Enhancements**
+
+- 2040_, [macOS]: provide wheels for arm64 architecture.  (patch by Matthieu
+  Darbois)
+
+**Bug fixes**
+
+- 2116_, [macOS], [critical]: `psutil.net_connections`_ fails with RuntimeError.
+- 2135_, [macOS]: `Process.environ()`_ may contain garbage data. Fix
+  out-of-bounds read around ``sysctl_procargs``.  (patch by Bernhard Urban-Forster)
+- 2138_, [Linux], **[critical]**: can't compile psutil on Android due to
+  undefined ``ethtool_cmd_speed`` symbol.
+- 2142_, [POSIX]: `net_if_stats()`_ 's ``flags`` on Python 2 returned unicode
+  instead of str.  (patch by Matthieu Darbois)
+- 2147_, [macOS] Fix disk usage report on macOS 12+.  (patch by Matthieu Darbois)
+- 2150_, [Linux] `Process.threads()`_ may raise ``NoSuchProcess``. Fix race
+  condition.  (patch by Daniel Li)
+- 2153_, [macOS] Fix race condition in test_posix.TestProcess.test_cmdline.
+  (patch by Matthieu Darbois)
+
+5.9.2
+=====
+
+2022-09-04
+
+**Bug fixes**
+
+- 2093_, [FreeBSD], **[critical]**: `pids()`_ may fail with ENOMEM. Dynamically
+  increase the ``malloc()`` buffer size until it's big enough.
+- 2095_, [Linux]: `net_if_stats()`_ returns incorrect interface speed for
+  100GbE network cards.
+- 2113_, [FreeBSD], **[critical]**: `virtual_memory()`_ may raise ENOMEM due to
+  missing ``#include <sys/param.h>`` directive.  (patch by Peter Jeremy)
+- 2128_, [NetBSD]: `swap_memory()`_ was miscalculated.  (patch by Thomas Klausner)
+
+5.9.1
+=====
+
+2022-05-20
+
+**Enhancements**
+
+- 1053_: drop Python 2.6 support.  (patches by Matthieu Darbois and Hugo van
+  Kemenade)
+- 2037_: Add additional flags to net_if_stats.
+- 2050_, [Linux]: increase ``read(2)`` buffer size from 1k to 32k when reading
+  ``/proc`` pseudo files line by line. This should help having more consistent
+  results.
+- 2057_, [OpenBSD]: add support for `cpu_freq()`_.
+- 2107_, [Linux]: `Process.memory_full_info()`_ (reporting process USS/PSS/Swap
+  memory) now reads ``/proc/pid/smaps_rollup`` instead of ``/proc/pids/smaps``,
+  which makes it 5 times faster.
+
+**Bug fixes**
+
+- 2048_: ``AttributeError`` is raised if ``psutil.Error`` class is raised
+  manually and passed through ``str``.
+- 2049_, [Linux]: `cpu_freq()`_ erroneously returns ``curr`` value in GHz while
+  ``min`` and ``max`` are in MHz.
+- 2050_, [Linux]: `virtual_memory()`_ may raise ``ValueError`` if running in a
+  LCX container.
+
+5.9.0
+=====
+
+2021-12-29
+
+**Enhancements**
+
+- 1851_, [Linux]: `cpu_freq()`_ is slow on systems with many CPUs. Read current
+  frequency values for all CPUs from ``/proc/cpuinfo`` instead of opening many
+  files in ``/sys`` fs.  (patch by marxin)
+- 1992_: `NoSuchProcess`_ message now specifies if the PID has been reused.
+- 1992_: error classes (`NoSuchProcess`_, `AccessDenied`_, etc.) now have a better
+  formatted and separated ``__repr__`` and ``__str__`` implementations.
+- 1996_, [BSD]: add support for MidnightBSD.  (patch by Saeed Rasooli)
+- 1999_, [Linux]: `disk_partitions()`_: convert ``/dev/root`` device (an alias
+  used on some Linux distros) to real root device path.
+- 2005_: ``PSUTIL_DEBUG`` mode now prints file name and line number of the debug
+  messages coming from C extension modules.
+- 2042_: rewrite HISTORY.rst to use hyperlinks pointing to psutil API doc.
+
+**Bug fixes**
+
+- 1456_, [macOS], **[critical]**: `cpu_freq()`_ ``min`` and ``max`` are set to
+  0 if can't be determined (instead of crashing).
+- 1512_, [macOS]: sometimes `Process.connections()`_ will crash with
+  ``EOPNOTSUPP`` for one connection; this is now ignored.
+- 1598_, [Windows]: `disk_partitions()`_ only returns mountpoints on drives
+  where it first finds one.
+- 1874_, [SunOS]: swap output error due to incorrect range.
+- 1892_, [macOS]: `cpu_freq()`_ broken on Apple M1.
+- 1901_, [macOS]: different functions, especially `Process.open_files()`_ and
+  `Process.connections()`_, could randomly raise `AccessDenied`_ because the
+  internal buffer of ``proc_pidinfo(PROC_PIDLISTFDS)`` syscall was not big enough.
+  We now dynamically increase the buffer size until it's big enough instead of
+  giving up and raising `AccessDenied`_, which was a fallback to avoid crashing.
+- 1904_, [Windows]: ``OpenProcess`` fails with ``ERROR_SUCCESS`` due to
+  ``GetLastError()`` called after ``sprintf()``.  (patch by alxchk)
+- 1913_, [Linux]: `wait_procs()`_ should catch ``subprocess.TimeoutExpired``
+  exception.
+- 1919_, [Linux]: `sensors_battery()`_ can raise ``TypeError`` on PureOS.
+- 1921_, [Windows]: `swap_memory()`_ shows committed memory instead of swap.
+- 1940_, [Linux]: psutil does not handle ``ENAMETOOLONG`` when accessing process
   file descriptors in procfs.  (patch by Nikita Radchenko)
-- 1948_: Process' memoize_when_activated decorator was not thread-safe.  (patch
-  by Xuehai Pan)
-- 1953_: [Windows] disk_partitions() crashes due to insufficient buffer len.
-  (patch by MaWe2019)
-- 1965_: [Windows] fix "Fatal Python error: deallocating None" when calling
-  psutil.users() multiple times.
-- 1991_: process_iter() can raise TypeError if invoked from multiple threads
-  (not thread-safe).
+- 1948_, **[critical]**: ``memoize_when_activated`` decorator is not thread-safe.
+  (patch by Xuehai Pan)
+- 1953_, [Windows], **[critical]**: `disk_partitions()`_ crashes due to
+  insufficient buffer len. (patch by MaWe2019)
+- 1965_, [Windows], **[critical]**: fix "Fatal Python error: deallocating None"
+  when calling `users()`_ multiple times.
+- 1980_, [Windows]: 32bit / WoW64 processes fails to read `Process.name()`_ longer
+  than 128 characters resulting in `AccessDenied`_. This is now fixed.  (patch
+  by PetrPospisil)
+- 1991_, **[critical]**: `process_iter()`_ is not thread safe and can raise
+  ``TypeError`` if invoked from multiple threads.
+- 1956_, [macOS]: `Process.cpu_times()`_ reports incorrect timings on M1 machines.
+  (patch by Olivier Dormond)
+- 2023_, [Linux]: `cpu_freq()`_ return order is wrong on systems with more than
+  9 CPUs.
 
 5.8.0
 =====
@@ -55,9 +177,9 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1863_: `disk_partitions()` exposes 2 extra fields: `maxfile` and `maxpath`,
+- 1863_: `disk_partitions()`_ exposes 2 extra fields: ``maxfile`` and ``maxpath``,
   which are the maximum file name and path name length.
-- 1872_: [Windows] added support for PyPy 2.7.
+- 1872_, [Windows]: added support for PyPy 2.7.
 - 1879_: provide pre-compiled wheels for Linux and macOS (yey!).
 - 1880_: get rid of Travis and Cirrus CI services (they are no longer free).
   CI testing is now done by GitHub Actions on Linux, macOS and FreeBSD (yes).
@@ -65,20 +187,25 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1708_: [Linux] get rid of sensors_temperatures() duplicates.  (patch by Tim
+- 1708_, [Linux]: get rid of `sensors_temperatures()`_ duplicates.  (patch by Tim
   Schlueter).
-- 1839_: [Windows] always raise AccessDenied when failing to query 64 processes
-  from 32 bit ones (NtWoW64 APIs).
-- 1866_: [Windows] process exe(), cmdline(), environ() may raise "invalid
-  access to memory location" on Python 3.9.
-- 1874_: [Solaris] wrong swap output given when encrypted column is present.
-- 1875_: [Windows] process username() may raise ERROR_NONE_MAPPED if the SID
-  has no corresponding account name. In this case AccessDenied is now raised.
-- 1877_: [Windows] OpenProcess may fail with ERROR_SUCCESS. Turn it into
-  AccessDenied or NoSuchProcess depending on whether the PID is alive.
-- 1886_: [macOS] EIO error may be raised on cmdline() and environment(). Now
-  it gets translated into AccessDenied.
-- 1891_: [macOS] get rid of deprecated getpagesize().
+- 1839_, [Windows], **[critical]**: always raise `AccessDenied`_ instead of
+  ``WindowsError`` when failing to query 64 processes from 32 bit ones by using
+  ``NtWoW64`` APIs.
+- 1866_, [Windows], **[critical]**: `Process.exe()`_, `Process.cmdline()`_,
+  `Process.environ()`_ may raise "[WinError 998] Invalid access to memory
+  location" on Python 3.9 / VS 2019.
+- 1874_, [SunOS]: wrong swap output given when encrypted column is present.
+- 1875_, [Windows], **[critical]**: `Process.username()`_ may raise
+  ``ERROR_NONE_MAPPED`` if the SID has no corresponding account name. In this
+  case `AccessDenied`_ is now raised.
+- 1886_, [macOS]: ``EIO`` error may be raised on `Process.cmdline()`_ and
+  `Process.environ()`_. Now it gets translated into `AccessDenied`_.
+- 1887_, [Windows], **[critical]**: ``OpenProcess`` may fail with
+  "[WinError 0] The operation completed successfully"."
+  Turn it into `AccessDenied`_ or `NoSuchProcess`_ depending on whether the
+  PID is alive.
+- 1891_, [macOS]: get rid of deprecated ``getpagesize()``.
 
 5.7.3
 =====
@@ -87,24 +214,24 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 809_: [FreeBSD] add support for `Process.rlimit()`.
-- 893_: [BSD] add support for `Process.environ()` (patch by Armin Gruner)
-- 1830_: [UNIX] `net_if_stats()`'s `isup` also checks whether the NIC is
+- 809_, [FreeBSD]: add support for `Process.rlimit()`_.
+- 893_, [BSD]: add support for `Process.environ()`_ (patch by Armin Gruner)
+- 1830_, [POSIX]: `net_if_stats()`_ ``isup`` also checks whether the NIC is
   running (meaning Wi-Fi or ethernet cable is connected).  (patch by Chris Burger)
-- 1837_: [Linux] improved battery detection and charge "secsleft" calculation
+- 1837_, [Linux]: improved battery detection and charge ``secsleft`` calculation
   (patch by aristocratos)
 
 **Bug fixes**
 
-- 1620_: [Linux] cpu_count(logical=False) result is incorrect on systems with
-  more than one CPU socket.  (patch by Vincent A. Arcila)
-- 1738_: [macOS] Process.exe() may raise FileNotFoundError if process is still
+- 1620_, [Linux]: `cpu_count()`_ with ``logical=False`` result is incorrect on
+  systems with more than one CPU socket.  (patch by Vincent A. Arcila)
+- 1738_, [macOS]: `Process.exe()`_ may raise ``FileNotFoundError`` if process is still
   alive but the exe file which launched it got deleted.
-- 1791_: [macOS] fix missing include for getpagesize().
-- 1823_: [Windows] Process.open_files() may cause a segfault due to a NULL
-  pointer.
-- 1838_: [Linux] sensors_battery(): if `percent` can be determined but not
-  the remaining values, still return a result instead of None.
+- 1791_, [macOS]: fix missing include for ``getpagesize()``.
+- 1823_, [Windows], **[critical]**: `Process.open_files()`_ may cause a segfault
+  due to a NULL pointer.
+- 1838_, [Linux]: `sensors_battery()`_: if `percent` can be determined but not
+  the remaining values, still return a result instead of ``None``.
   (patch by aristocratos)
 
 5.7.2
@@ -123,35 +250,28 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1729_: parallel tests on UNIX (make test-parallel). They're twice as fast!
-- 1741_: "make build/install" is now run in parallel and it's about 15% faster
-  on UNIX.
-- 1747_: `Process.wait()` on POSIX returns an enum, showing the negative signal
-  which was used to terminate the process::
-    >>> import psutil
-    >>> p = psutil.Process(9891)
-    >>> p.terminate()
-    >>> p.wait()
-    <Negsignal.SIGTERM: -15>
-- 1747_: `Process.wait()` return value is cached so that the exit code can be
+- 1729_: parallel tests on POSIX (``make test-parallel``). They're twice as fast!
+- 1741_, [POSIX]: ``make build`` now runs in parallel on Python >= 3.6 and
+  it's about 15% faster.
+- 1747_: `Process.wait()`_ return value is cached so that the exit code can be
   retrieved on then next call.
-- 1747_: Process provides more info about the process on str() and repr()
-  (status and exit code)::
-    >>> proc
-    psutil.Process(pid=12739, name='python3', status='terminated',
-                   exitcode=<Negsigs.SIGTERM: -15>, started='15:08:20')
+- 1747_, [POSIX]: `Process.wait()`_ on POSIX now returns an enum, showing the
+  negative signal which was used to terminate the process. It returns something
+  like ``<Negsignal.SIGTERM: -15>``.
+- 1747_: `Process`_ class provides more info about the process on ``str()``
+  and ``repr()`` (status and exit code).
 - 1757_: memory leak tests are now stable.
-- 1768_: [Windows] added support for Windows Nano Server. (contributed by
+- 1768_, [Windows]: added support for Windows Nano Server. (contributed by
   Julien Lebot)
 
 **Bug fixes**
 
-- 1726_: [Linux] cpu_freq() parsing should use spaces instead of tabs on ia64.
+- 1726_, [Linux]: `cpu_freq()`_ parsing should use spaces instead of tabs on ia64.
   (patch by Michał Górny)
-- 1760_: [Linux] Process.rlimit() does not handle long long type properly.
-- 1766_: [macOS] NoSuchProcess may be raised instead of ZombieProcess.
-- 1781_: fix signature of callback function for getloadavg().  (patch by
-  Ammar Askar)
+- 1760_, [Linux]: `Process.rlimit()`_ does not handle long long type properly.
+- 1766_, [macOS]: `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
+- 1781_, **[critical]**: `getloadavg()`_ can crash the Python interpreter.
+  (patch by Ammar Askar)
 
 5.7.0
 =====
@@ -160,42 +280,44 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1637_: [SunOS] add partial support for old SunOS 5.10 Update 0 to 3.
-- 1648_: [Linux] sensors_temperatures() looks into an additional /sys/device/
-  directory for additional data.  (patch by Javad Karabi)
-- 1652_: [Windows] dropped support for Windows XP and Windows Server 2003.
+- 1637_, [SunOS]: add partial support for old SunOS 5.10 Update 0 to 3.
+- 1648_, [Linux]: `sensors_temperatures()`_ looks into an additional
+  ``/sys/device/`` directory for additional data.  (patch by Javad Karabi)
+- 1652_, [Windows]: dropped support for Windows XP and Windows Server 2003.
   Minimum supported Windows version now is Windows Vista.
-- 1671_: [FreeBSD] add CI testing/service for FreeBSD (Cirrus CI).
-- 1677_: [Windows] process exe() will succeed for all process PIDs (instead of
-  raising AccessDenied).
-- 1679_: [Windows] net_connections() and Process.connections() are 10% faster.
-- 1682_: [PyPy] added CI / test integration for PyPy via Travis.
-- 1686_: [Windows] added support for PyPy on Windows.
-- 1693_: [Windows] boot_time(), Process.create_time() and users()'s login time
-  now have 1 micro second precision (before the precision was of 1 second).
+- 1671_, [FreeBSD]: add CI testing/service for FreeBSD (Cirrus CI).
+- 1677_, [Windows]: `Process.exe()`_ will succeed for all process PIDs (instead of
+  raising `AccessDenied`_).
+- 1679_, [Windows]: `net_connections()`_ and `Process.connections()`_ are 10% faster.
+- 1682_, [PyPy]: added CI / test integration for PyPy via Travis.
+- 1686_, [Windows]: added support for PyPy on Windows.
+- 1693_, [Windows]: `boot_time()`_, `Process.create_time()`_ and `users()`_'s
+  login time now have 1 micro second precision (before the precision was of 1
+  second).
 
 **Bug fixes**
 
-- 1538_: [NetBSD] process cwd() may return ENOENT instead of NoSuchProcess.
-- 1627_: [Linux] Process.memory_maps() can raise KeyError.
-- 1642_: [SunOS] querying basic info for PID 0 results in FileNotFoundError.
-- 1646_: [FreeBSD] many Process methods may cause a segfault on FreeBSD 12.0
-  due to a backward incompatible change in a C type introduced in 12.0.
-- 1656_: [Windows] Process.memory_full_info() raises AccessDenied even for the
+- 1538_, [NetBSD]: `Process.cwd()`_ may return ``ENOENT`` instead of `NoSuchProcess`_.
+- 1627_, [Linux]: `Process.memory_maps()`_ can raise ``KeyError``.
+- 1642_, [SunOS]: querying basic info for PID 0 results in ``FileNotFoundError``.
+- 1646_, [FreeBSD], **[critical]**: many `Process`_ methods may cause a segfault
+  due to a backward incompatible change in a C type on FreeBSD 12.0.
+- 1656_, [Windows]: `Process.memory_full_info()`_ raises `AccessDenied`_ even for the
   current user and os.getpid().
-- 1660_: [Windows] Process.open_files() complete rewrite + check of errors.
-- 1662_: [Windows] process exe() may raise WinError 0.
-- 1665_: [Linux] disk_io_counters() does not take into account extra fields
+- 1660_, [Windows]: `Process.open_files()`_ complete rewrite + check of errors.
+- 1662_, [Windows], **[critical]**: `Process.exe()`_ may raise "[WinError 0]
+  The operation completed successfully".
+- 1665_, [Linux]: `disk_io_counters()`_ does not take into account extra fields
   added to recent kernels.  (patch by Mike Hommey)
 - 1672_: use the right C type when dealing with PIDs (int or long). Thus far
   (long) was almost always assumed, which is wrong on most platforms.
-- 1673_: [OpenBSD] Process connections(), num_fds() and threads() returned
-  improper exception if process is gone.
-- 1674_: [SunOS] disk_partitions() may raise OSError.
-- 1684_: [Linux] disk_io_counters() may raise ValueError on systems not
-  having /proc/diskstats.
-- 1695_: [Linux] could not compile on kernels <= 2.6.13 due to
-  PSUTIL_HAVE_IOPRIO not being defined.  (patch by Anselm Kruis)
+- 1673_, [OpenBSD]: `Process.connections()`_, `Process.num_fds()`_ and
+  `Process.threads()`_ returned improper exception if process is gone.
+- 1674_, [SunOS]: `disk_partitions()`_ may raise ``OSError``.
+- 1684_, [Linux]: `disk_io_counters()`_ may raise ``ValueError`` on systems not
+  having ``/proc/diskstats``.
+- 1695_, [Linux]: could not compile on kernels <= 2.6.13 due to
+  ``PSUTIL_HAVE_IOPRIO`` not being defined.  (patch by Anselm Kruis)
 
 5.6.7
 =====
@@ -204,7 +326,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1630_: [Windows] can't compile source distribution due to C syntax error.
+- 1630_, [Windows], **[critical]**: can't compile source distribution due to C
+  syntax error.
 
 5.6.6
 =====
@@ -213,14 +336,14 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1179_: [Linux] Process cmdline() now takes into account misbehaving processes
+- 1179_, [Linux]: `Process.cmdline()`_ now takes into account misbehaving processes
   renaming the command line and using inappropriate chars to separate args.
-- 1616_: use of Py_DECREF instead of Py_CLEAR will result in double free and
-  segfault
+- 1616_, **[critical]**: use of ``Py_DECREF`` instead of ``Py_CLEAR`` will
+  result in double ``free()`` and segfault
   (`CVE-2019-18874 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-18874>`__).
   (patch by Riccardo Schirone)
-- 1619_: [OpenBSD] compilation fails due to C syntax error.  (patch by Nathan
-  Houghton)
+- 1619_, [OpenBSD], **[critical]**: compilation fails due to C syntax error.
+  (patch by Nathan Houghton)
 
 5.6.5
 =====
@@ -229,7 +352,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1615_: remove pyproject.toml as it was causing installation issues.
+- 1615_: remove ``pyproject.toml`` as it was causing installation issues.
 
 5.6.4
 =====
@@ -238,31 +361,33 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1527_: [Linux] added Process.cpu_times().iowait counter, which is the time
-  spent waiting for blocking I/O to complete.
+- 1527_, [Linux]: added `Process.cpu_times()`_ ``iowait`` counter, which is the
+  time spent waiting for blocking I/O to complete.
 - 1565_: add PEP 517/8 build backend and requirements specification for better
   pip integration.  (patch by Bernát Gábor)
 
 **Bug fixes**
 
-- 875_: [Windows] Process' cmdline(), environ() or cwd() may occasionally fail
-  with ERROR_PARTIAL_COPY which now gets translated to AccessDenied.
-- 1126_: [Linux] cpu_affinity() segfaults on CentOS 5 / manylinux.
-  cpu_affinity() support for CentOS 5 was removed.
-- 1528_: [AIX] compilation error on AIX 7.2 due to 32 vs 64 bit differences.
-  (patch by Arnon Yaari)
-- 1535_: 'type' and 'family' fields returned by net_connections() are not
+- 875_, [Windows], **[critical]**: `Process.cmdline()`_, `Process.environ()`_ or
+  `Process.cwd()`_ may occasionally fail with ``ERROR_PARTIAL_COPY`` which now
+  gets translated to `AccessDenied`_.
+- 1126_, [Linux], **[critical]**: `Process.cpu_affinity()`_ segfaults on CentOS
+  5 / manylinux. `Process.cpu_affinity()`_ support for CentOS 5 was removed.
+- 1528_, [AIX], **[critical]**: compilation error on AIX 7.2 due to 32 vs 64
+  bit differences. (patch by Arnon Yaari)
+- 1535_: ``type`` and ``family`` fields returned by `net_connections()`_ are not
   always turned into enums.
-- 1536_: [NetBSD] process cmdline() erroneously raise ZombieProcess error if
+- 1536_, [NetBSD]: `Process.cmdline()`_ erroneously raise `ZombieProcess`_ error if
   cmdline has non encodable chars.
 - 1546_: usage percent may be rounded to 0 on Python 2.
-- 1552_: [Windows] getloadavg() math for calculating 5 and 15 mins values is
+- 1552_, [Windows]: `getloadavg()`_ math for calculating 5 and 15 mins values is
   incorrect.
-- 1568_: [Linux] use CC compiler env var if defined.
-- 1570_: [Windows] `NtWow64*` syscalls fail to raise the proper error code
-- 1585_: [OSX] calling close() (in C) on possible negative integers.  (patch
-  by Athos Ribeiro)
-- 1606_: [SunOS] compilation fails on SunOS 5.10.  (patch by vser1)
+- 1568_, [Linux]: use CC compiler env var if defined.
+- 1570_, [Windows]: ``NtWow64*`` syscalls fail to raise the proper error code
+- 1585_, [OSX]: avoid calling ``close()`` (in C) on possible negative integers.
+  (patch by Athos Ribeiro)
+- 1606_, [SunOS], **[critical]**: compilation fails on SunOS 5.10.
+  (patch by vser1)
 
 5.6.3
 =====
@@ -271,16 +396,16 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1494_: [AIX] added support for Process.environ().  (patch by Arnon Yaari)
+- 1494_, [AIX]: added support for `Process.environ()`_.  (patch by Arnon Yaari)
 
 **Bug fixes**
 
-- 1276_: [AIX] can't get whole cmdline().  (patch by Arnon Yaari)
-- 1501_: [Windows] Process cmdline() and exe() raise unhandled "WinError 1168
-  element not found" exceptions for "Registry" and "Memory Compression" psuedo
-  processes on Windows 10.
-- 1526_: [NetBSD] process cmdline() could raise MemoryError.  (patch by
-  Kamil Rytarowski)
+- 1276_, [AIX]: can't get whole `Process.cmdline()`_.  (patch by Arnon Yaari)
+- 1501_, [Windows]: `Process.cmdline()`_ and `Process.exe()`_ raise unhandled
+  "WinError 1168 element not found" exceptions for "Registry" and
+  "Memory Compression" pseudo processes on Windows 10.
+- 1526_, [NetBSD], **[critical]**: `Process.cmdline()`_ could raise
+  ``MemoryError``.  (patch by Kamil Rytarowski)
 
 5.6.2
 =====
@@ -289,44 +414,48 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 604_: [Windows, Windows] add new psutil.getloadavg(), returning system load
-  average calculation, including on Windows (emulated).  (patch by Ammar Askar)
-- 1404_: [Linux] cpu_count(logical=False) uses a second method (read from
-  `/sys/devices/system/cpu/cpu[0-9]/topology/core_id`) in order to determine
-  the number of CPU cores in case /proc/cpuinfo does not provide this info.
-- 1458_: provide coloured test output. Also show failures on KeyboardInterrupt.
-- 1464_: various docfixes (always point to python3 doc, fix links, etc.).
-- 1476_: [Windows] it is now possible to set process high I/O priority
-  (ionice()).Also, I/O priority values are now exposed as 4 new constants:
-  IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH.
+- 604_, [Windows]: add new `getloadavg()`_, returning system load average
+  calculation, including on Windows (emulated).  (patch by Ammar Askar)
+- 1404_, [Linux]: `cpu_count()`_ with ``logical=False`` uses a second method
+  (read from ``/sys/devices/system/cpu/cpu[0-9]/topology/core_id``) in order to
+  determine the number of CPU cores in case ``/proc/cpuinfo`` does not provide this
+  info.
+- 1458_: provide coloured test output. Also show failures on
+  ``KeyboardInterrupt``.
+- 1464_: various docfixes (always point to Python 3 doc, fix links, etc.).
+- 1476_, [Windows]: it is now possible to set process high I/O priority
+  (`Process.ionice()`_). Also, I/O priority values are now exposed as 4 new
+  constants: ``IOPRIO_VERYLOW``, ``IOPRIO_LOW``, ``IOPRIO_NORMAL``,
+  ``IOPRIO_HIGH``.
 - 1478_: add make command to re-run tests failed on last run.
 
 **Bug fixes**
 
-- 1223_: [Windows] boot_time() may return value on Windows XP.
-- 1456_: [Linux] cpu_freq() returns None instead of 0.0 when min/max not
-  available (patch by Alex Manuskin)
-- 1462_: [Linux] (tests) make tests invariant to LANG setting (patch by
+- 1223_, [Windows]: `boot_time()`_ may return incorrect value on Windows XP.
+- 1456_, [Linux]: `cpu_freq()`_ returns ``None`` instead of 0.0 when ``min``
+  and ``max`` fields can't be determined. (patch by Alex Manuskin)
+- 1462_, [Linux]: (tests) make tests invariant to ``LANG`` setting (patch by
   Benjamin Drung)
-- 1463_: cpu_distribution.py script was broken.
-- 1470_: [Linux] disk_partitions(): fix corner case when /etc/mtab doesn't
-  exist.  (patch by Cedric Lamoriniere)
-- 1471_: [SunOS] Process name() and cmdline() can return SystemError.  (patch
-  by Daniel Beer)
-- 1472_: [Linux] cpu_freq() does not return all CPUs on Rasbperry-pi 3.
-- 1474_: fix formatting of psutil.tests() which mimicks 'ps aux' output.
-- 1475_: [Windows] OSError.winerror attribute wasn't properly checked resuling
-  in WindowsError being raised instead of AccessDenied.
-- 1477_: [Windows] wrong or absent error handling for private NTSTATUS Windows
-  APIs. Different process methods were affected by this.
-- 1480_: [Windows] psutil.cpu_count(logical=False) could cause a crash due to
-  fixed read violation.  (patch by Samer Masterson)
-- 1486_: [AIX, SunOS] AttributeError when interacting with Process methods
-  involved into oneshot() context.
-- 1491_: [SunOS] net_if_addrs(): free() ifap struct on error.  (patch by
-  Agnewee)
-- 1493_: [Linux] cpu_freq(): handle the case where
-  /sys/devices/system/cpu/cpufreq/ exists but is empty.
+- 1463_: `cpu_distribution.py`_ script was broken.
+- 1470_, [Linux]: `disk_partitions()`_: fix corner case when ``/etc/mtab``
+  doesn't exist.  (patch by Cedric Lamoriniere)
+- 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
+  ``SystemError``.  (patch by Daniel Beer)
+- 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
+- 1474_: fix formatting of ``psutil.tests()`` which mimics ``ps aux`` output.
+- 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
+  properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)`` being
+  raised instead of `AccessDenied`_.
+- 1477_, [Windows]: wrong or absent error handling for private ``NTSTATUS``
+  Windows APIs. Different process methods were affected by this.
+- 1480_, [Windows], **[critical]**: `cpu_count()`_ with ``logical=False`` could
+  cause a crash due to fixed read violation.  (patch by Samer Masterson)
+- 1486_, [AIX], [SunOS]: ``AttributeError`` when interacting with `Process`_
+  methods involved into `Process.oneshot()`_ context.
+- 1491_, [SunOS]: `net_if_addrs()`_: use ``free()`` against ``ifap`` struct
+  on error.  (patch by Agnewee)
+- 1493_, [Linux]: `cpu_freq()`_: handle the case where
+  ``/sys/devices/system/cpu/cpufreq/`` exists but it's empty.
 
 5.6.1
 =====
@@ -335,11 +464,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1329_: [AIX] psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
-- 1448_: [Windows] crash on import due to rtlIpv6AddressToStringA not available
-  on Wine.
-- 1451_: [Windows] Process.memory_full_info() segfaults. NtQueryVirtualMemory
-  is now used instead of QueryWorkingSet to calculate USS memory.
+- 1329_, [AIX]: psutil doesn't compile on AIX 6.1.  (patch by Arnon Yaari)
+- 1448_, [Windows], **[critical]**: crash on import due to ``rtlIpv6AddressToStringA``
+  not available on Wine.
+- 1451_, [Windows], **[critical]**: `Process.memory_full_info()`_ segfaults.
+  ``NtQueryVirtualMemory`` is now used instead of ``QueryWorkingSet`` to
+  calculate USS memory.
 
 5.6.0
 =====
@@ -348,48 +478,51 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1379_: [Windows] Process suspend() and resume() now use NtSuspendProcess
-  and NtResumeProcess instead of stopping/resuming all threads of a process.
-  This is faster and more reliable (aka this is what ProcessHacker does).
-- 1420_: [Windows] in case of exception disk_usage() now also shows the path
+- 1379_, [Windows]: `Process.suspend()`_ and `Process.resume()`_ now use
+  ``NtSuspendProcess`` and ``NtResumeProcess`` instead of stopping/resuming all
+  threads of a process. This is faster and more reliable (aka this is what
+  ProcessHacker does).
+- 1420_, [Windows]: in case of exception `disk_usage()`_ now also shows the path
   name.
-- 1422_: [Windows] Windows APIs requiring to be dynamically loaded from DLL
+- 1422_, [Windows]: Windows APIs requiring to be dynamically loaded from DLL
   libraries are now loaded only once on startup (instead of on per function
   call) significantly speeding up different functions and methods.
-- 1426_: [Windows] PAGESIZE and number of processors is now calculated on
+- 1426_, [Windows]: ``PAGESIZE`` and number of processors is now calculated on
   startup.
 - 1428_: in case of error, the traceback message now shows the underlying C
   function called which failed.
-- 1433_: new Process.parents() method.  (idea by Ghislain Le Meur)
-- 1437_: pids() are returned in sorted order.
-- 1442_: python3 is now the default interpreter used by Makefile.
+- 1433_: new `Process.parents()`_ method.  (idea by Ghislain Le Meur)
+- 1437_: `pids()`_ are returned in sorted order.
+- 1442_: Python 3 is now the default interpreter used by Makefile.
 
 **Bug fixes**
 
-- 1353_: process_iter() is now thread safe (it rarely raised TypeError).
-- 1394_: [Windows] Process name() and exe() may erroneously return "Registry".
-  QueryFullProcessImageNameW is now used instead of GetProcessImageFileNameW
-  in order to prevent that.
-- 1411_: [BSD] lack of Py_DECREF could cause segmentation fault on process
+- 1353_: `process_iter()`_ is now thread safe (it rarely raised ``TypeError``).
+- 1394_, [Windows], **[critical]**: `Process.name()`_ and `Process.exe()`_ may
+  erroneously return "Registry" or fail with "[Error 0] The operation completed
+  successfully".
+  ``QueryFullProcessImageNameW`` is now used instead of
+  ``GetProcessImageFileNameW`` in order to prevent that.
+- 1411_, [BSD]: lack of ``Py_DECREF`` could cause segmentation fault on process
   instantiation.
-- 1419_: [Windows] Process.environ() raises NotImplementedError when querying
-  a 64-bit process in 32-bit-WoW mode. Now it raises AccessDenied.
-- 1427_: [OSX] Process cmdline() and environ() may erroneously raise OSError
-  on failed malloc().
-- 1429_: [Windows] SE DEBUG was not properly set for current process. It is
-  now, and it should result in less AccessDenied exceptions for low-pid
+- 1419_, [Windows]: `Process.environ()`_ raises ``NotImplementedError`` when
+  querying a 64-bit process in 32-bit-WoW mode. Now it raises `AccessDenied`_.
+- 1427_, [OSX]: `Process.cmdline()`_ and `Process.environ()`_ may erroneously
+  raise ``OSError`` on failed ``malloc()``.
+- 1429_, [Windows]: ``SE DEBUG`` was not properly set for current process. It is
+  now, and it should result in less `AccessDenied`_ exceptions for low PID
   processes.
-- 1432_: [Windows] Process.memory_info_ex()'s USS memory is miscalculated
-  because we're not using the actual system PAGESIZE.
-- 1439_: [NetBSD] Process.connections() may return incomplete results if using
-  oneshot().
-- 1447_: original exception wasn't turned into NSP/AD exceptions when using
-  Process.oneshot() ctx manager.
+- 1432_, [Windows]: `Process.memory_info_ex()`_'s USS memory is miscalculated
+  because we're not using the actual system ``PAGESIZE``.
+- 1439_, [NetBSD]: `Process.connections()`_ may return incomplete results if using
+  `Process.oneshot()`_.
+- 1447_: original exception wasn't turned into `NoSuchProcess`_ / `AccessDenied`_
+  exceptions when using `Process.oneshot()`_ context manager.
 
 **Incompatible API changes**
 
-- 1291_: [OSX] Process.memory_maps() was removed because inherently broken
-  (segfault) for years.
+- 1291_, [OSX], **[critical]**: `Process.memory_maps()`_ was removed because
+  inherently broken (segfault) for years.
 
 5.5.1
 =====
@@ -398,17 +531,17 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1348_: [Windows] on Windows >= 8.1 if Process.cmdline() fails due to
-  ERROR_ACCESS_DENIED attempt using NtQueryInformationProcess +
-  ProcessCommandLineInformation. (patch by EccoTheFlintstone)
+- 1348_, [Windows]: on Windows >= 8.1 if `Process.cmdline()`_ fails due to
+  ``ERROR_ACCESS_DENIED`` attempt using ``NtQueryInformationProcess`` +
+  ``ProcessCommandLineInformation``. (patch by EccoTheFlintstone)
 
 **Bug fixes**
 
-- 1394_: [Windows] Process.exe() returns "[Error 0] The operation completed
+- 1394_, [Windows]: `Process.exe()`_ returns "[Error 0] The operation completed
   successfully" when Python process runs in "Virtual Secure Mode".
-- 1402_: psutil exceptions' repr() show the internal private module path.
-- 1408_: [AIX] psutil won't compile on AIX 7.1 due to missing header.  (patch
-  by Arnon Yaari)
+- 1402_: psutil exceptions' ``repr()`` show the internal private module path.
+- 1408_, [AIX], **[critical]**: psutil won't compile on AIX 7.1 due to missing
+  header.  (patch by Arnon Yaari)
 
 5.5.0
 =====
@@ -417,27 +550,27 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1350_: [FreeBSD] added support for sensors_temperatures().  (patch by Alex
+- 1350_, [FreeBSD]: added support for `sensors_temperatures()`_.  (patch by Alex
   Manuskin)
-- 1352_: [FreeBSD] added support for CPU frequency.  (patch by Alex Manuskin)
+- 1352_, [FreeBSD]: added support for `cpu_freq()`_.  (patch by Alex Manuskin)
 
 **Bug fixes**
 
-- 1111_: Process.oneshot() is now thread safe.
-- 1354_: [Linux] disk_io_counters() fails on Linux kernel 4.18+.
-- 1357_: [Linux] Process' memory_maps() and io_counters() method are no longer
-  exposed if not supported by the kernel.
-- 1368_: [Windows] fix psutil.Process().ionice(...) mismatch.  (patch by
+- 1111_: `Process.oneshot()`_ is now thread safe.
+- 1354_, [Linux]: `disk_io_counters()`_ fails on Linux kernel 4.18+.
+- 1357_, [Linux]: `Process.memory_maps()`_ and `Process.io_counters()`_ methods
+  are no longer exposed if not supported by the kernel.
+- 1368_, [Windows]: fix `Process.ionice()`_ mismatch.  (patch by
   EccoTheFlintstone)
-- 1370_: [Windows] improper usage of CloseHandle() may lead to override the
+- 1370_, [Windows]: improper usage of ``CloseHandle()`` may lead to override the
   original error code when raising an exception.
-- 1373_: incorrect handling of cache in Process.oneshot() context causes
-  Process instances to return incorrect results.
-- 1376_: [Windows] OpenProcess() now uses PROCESS_QUERY_LIMITED_INFORMATION
-  access rights wherever possible, resulting in less AccessDenied exceptions
+- 1373_, **[critical]**: incorrect handling of cache in `Process.oneshot()`_
+  context causes `Process`_ instances to return incorrect results.
+- 1376_, [Windows]: ``OpenProcess`` now uses ``PROCESS_QUERY_LIMITED_INFORMATION``
+  access rights wherever possible, resulting in less `AccessDenied`_ exceptions
   being thrown for system processes.
-- 1376_: [Windows] check if variable is NULL before free()ing it.  (patch by
-  EccoTheFlintstone)
+- 1376_, [Windows]: check if variable is ``NULL`` before ``free()`` ing it.
+  (patch by EccoTheFlintstone)
 
 5.4.8
 =====
@@ -446,28 +579,28 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1197_: [Linux] cpu_freq() is now implemented by parsing /proc/cpuinfo in case
-  /sys/devices/system/cpu/* filesystem is not available.
-- 1310_: [Linux] psutil.sensors_temperatures() now parses /sys/class/thermal
-  in case /sys/class/hwmon fs is not available (e.g. Raspberry Pi).  (patch
+- 1197_, [Linux]: `cpu_freq()`_ is now implemented by parsing ``/proc/cpuinfo``
+  in case ``/sys/devices/system/cpu/*`` filesystem is not available.
+- 1310_, [Linux]: `sensors_temperatures()`_ now parses ``/sys/class/thermal``
+  in case ``/sys/class/hwmon`` fs is not available (e.g. Raspberry Pi).  (patch
   by Alex Manuskin)
-- 1320_: [Posix] better compilation support when using g++ instead of gcc.
+- 1320_, [POSIX]: better compilation support when using g++ instead of GCC.
   (patch by Jaime Fullaondo)
 
 **Bug fixes**
 
-- 715_: do not print exception on import time in case cpu_times() fails.
-- 1004_: [Linux] Process.io_counters() may raise ValueError.
-- 1277_: [OSX] available and used memory (psutil.virtual_memory()) metrics are
+- 715_: do not print exception on import time in case `cpu_times()`_ fails.
+- 1004_, [Linux]: `Process.io_counters()`_ may raise ``ValueError``.
+- 1277_, [OSX]: available and used memory (`virtual_memory()`_) metrics are
   not accurate.
-- 1294_: [Windows] psutil.Process().connections() may sometimes fail with
-  intermittent 0xC0000001.  (patch by Sylvain Duchesne)
-- 1307_: [Linux] disk_partitions() does not honour PROCFS_PATH.
-- 1320_: [AIX] system CPU times (psutil.cpu_times()) were being reported with
+- 1294_, [Windows]: `Process.connections()`_ may sometimes fail with
+  intermittent ``0xC0000001``.  (patch by Sylvain Duchesne)
+- 1307_, [Linux]: `disk_partitions()`_ does not honour `PROCFS_PATH`_.
+- 1320_, [AIX]: system CPU times (`cpu_times()`_) were being reported with
   ticks unit as opposed to seconds.  (patch by Jaime Fullaondo)
-- 1332_: [OSX] psutil debug messages are erroneously printed all the time.
+- 1332_, [OSX]: psutil debug messages are erroneously printed all the time.
   (patch by Ilya Yanok)
-- 1346_: [SunOS] net_connections() returns an empty list.  (patch by Oleksii
+- 1346_, [SunOS]: `net_connections()`_ returns an empty list.  (patch by Oleksii
   Shevchuk)
 
 5.4.7
@@ -477,28 +610,28 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1286_: [macOS] psutil.OSX constant is now deprecated in favor of new
-  psutil.MACOS.
-- 1309_: [Linux] added psutil.STATUS_PARKED constant for Process.status().
-- 1321_: [Linux] add disk_io_counters() dual implementation relying on
-  /sys/block filesystem in case /proc/diskstats is not available. (patch by
-  Lawrence Ye)
+- 1286_, [macOS]: ``psutil.OSX`` constant is now deprecated in favor of new
+  ``psutil.MACOS``.
+- 1309_, [Linux]: added ``psutil.STATUS_PARKED`` constant for `Process.status()`_.
+- 1321_, [Linux]: add `disk_io_counters()`_ dual implementation relying on
+  ``/sys/block`` filesystem in case ``/proc/diskstats`` is not available.
+  (patch by Lawrence Ye)
 
 **Bug fixes**
 
-- 1209_: [macOS] Process.memory_maps() may fail with EINVAL due to poor
-  task_for_pid() syscall. AccessDenied is now raised instead.
-- 1278_: [macOS] Process.threads() incorrectly return microseconds instead of
+- 1209_, [macOS]: `Process.memory_maps()`_ may fail with ``EINVAL`` due to poor
+  ``task_for_pid()`` syscall. `AccessDenied`_ is now raised instead.
+- 1278_, [macOS]: `Process.threads()`_ incorrectly return microseconds instead of
   seconds. (patch by Nikhil Marathe)
-- 1279_: [Linux, macOS, BSD] net_if_stats() may return ENODEV.
-- 1294_: [Windows] psutil.Process().connections() may sometime fail with
-  MemoryError.  (patch by sylvainduchesne)
-- 1305_: [Linux] disk_io_stats() may report inflated r/w bytes values.
-- 1309_: [Linux] Process.status() is unable to recognize "idle" and "parked"
-  statuses (returns '?').
-- 1313_: [Linux] disk_io_counters() can report inflated IO counters due to
-  erroneously counting base disk device and its partition(s) twice.
-- 1323_: [Linux] sensors_temperatures() may fail with ValueError.
+- 1279_, [Linux], [macOS], [BSD]: `net_if_stats()`_ may return ``ENODEV``.
+- 1294_, [Windows]: `Process.connections()`_ may sometime fail with
+  ``MemoryError``.  (patch by sylvainduchesne)
+- 1305_, [Linux]: `disk_io_counters()`_ may report inflated r/w bytes values.
+- 1309_, [Linux]: `Process.status()`_ is unable to recognize ``"idle"`` and
+  ``"parked"`` statuses (returns ``"?"``).
+- 1313_, [Linux]: `disk_io_counters()`_ can report inflated values due to
+  counting base disk device and its partition(s) twice.
+- 1323_, [Linux]: `sensors_temperatures()`_ may fail with ``ValueError``.
 
 5.4.6
 =====
@@ -507,12 +640,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1258_: [Windows] Process.username() may cause a segfault (Python interpreter
-  crash).  (patch by Jean-Luc Migot)
-- 1273_: net_if_addr() namedtuple's name has been renamed from "snic" to
-  "snicaddr".
-- 1274_: [Linux] there was a small chance Process.children() may swallow
-  AccessDenied exceptions.
+- 1258_, [Windows], **[critical]**: `Process.username()`_ may cause a segfault
+  (Python interpreter crash).  (patch by Jean-Luc Migot)
+- 1273_: `net_if_addrs()`_ namedtuple's name has been renamed from ``snic`` to
+  ``snicaddr``.
+- 1274_, [Linux]: there was a small chance `Process.children()`_ may swallow
+  `AccessDenied`_ exceptions.
 
 5.4.5
 =====
@@ -521,7 +654,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1268_: setup.py's extra_require parameter requires latest setuptools version,
+- 1268_: setup.py's ``extra_require`` parameter requires latest setuptools version,
   breaking quite a lot of installations.
 
 5.4.4
@@ -531,47 +664,47 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1239_: [Linux] expose kernel "slab" memory for psutil.virtual_memory().
+- 1239_, [Linux]: expose kernel ``slab`` memory field for `virtual_memory()`_.
   (patch by Maxime Mouial)
 
 **Bug fixes**
 
-- 694_: [SunOS] cmdline() could be truncated at the 15th character when
-  reading it from /proc. An extra effort is made by reading it from process
+- 694_, [SunOS]: `Process.cmdline()`_ could be truncated at the 15th character when
+  reading it from ``/proc``. An extra effort is made by reading it from process
   address space first.  (patch by Georg Sauthoff)
-- 771_: [Windows] cpu_count() (both logical and cores) return a wrong
+- 771_, [Windows]: `cpu_count()`_ (both logical and cores) return a wrong
   (smaller) number on systems using process groups (> 64 cores).
-- 771_: [Windows] cpu_times(percpu=True) return fewer CPUs on systems using
-  process groups (> 64 cores).
-- 771_: [Windows] cpu_stats() and cpu_freq() may return incorrect results on
+- 771_, [Windows]: `cpu_times()`_ with ``percpu=True`` return fewer CPUs on
   systems using process groups (> 64 cores).
-- 1193_: [SunOS] Return uid/gid from /proc/pid/psinfo if there aren't
-  enough permissions for /proc/pid/cred.  (patch by Georg Sauthoff)
-- 1194_: [SunOS] Return nice value from psinfo as getpriority() doesn't
+- 771_, [Windows]: `cpu_stats()`_ and `cpu_freq()`_ may return incorrect results on
+  systems using process groups (> 64 cores).
+- 1193_, [SunOS]: return uid/gid from ``/proc/pid/psinfo`` if there aren't
+  enough permissions for ``/proc/pid/cred``.  (patch by Georg Sauthoff)
+- 1194_, [SunOS]: return nice value from ``psinfo`` as ``getpriority()`` doesn't
   support real-time processes.  (patch by Georg Sauthoff)
-- 1194_: [SunOS] Fix double free in psutil_proc_cpu_num().  (patch by Georg
+- 1194_, [SunOS]: fix double ``free()`` in `Process.cpu_num()`_.  (patch by Georg
   Sauthoff)
-- 1194_: [SunOS] Fix undefined behavior related to strict-aliasing rules
+- 1194_, [SunOS]: fix undefined behavior related to strict-aliasing rules
   and warnings.  (patch by Georg Sauthoff)
-- 1210_: [Linux] cpu_percent() steal time may remain stuck at 100% due to Linux
+- 1210_, [Linux]: `cpu_percent()`_ steal time may remain stuck at 100% due to Linux
   erroneously reporting a decreased steal time between calls. (patch by Arnon
   Yaari)
-- 1216_: fix compatibility with python 2.6 on Windows (patch by Dan Vinakovsky)
-- 1222_: [Linux] Process.memory_full_info() was erroneously summing "Swap:" and
+- 1216_: fix compatibility with Python 2.6 on Windows (patch by Dan Vinakovsky)
+- 1222_, [Linux]: `Process.memory_full_info()`_ was erroneously summing "Swap:" and
   "SwapPss:". Same for "Pss:" and "SwapPss". Not anymore.
-- 1224_: [Windows] Process.wait() may erroneously raise TimeoutExpired.
-- 1238_: [Linux] sensors_battery() may return None in case battery is not
-  listed as "BAT0" under /sys/class/power_supply.
-- 1240_: [Windows] cpu_times() float loses accuracy in a long running system.
+- 1224_, [Windows]: `Process.wait()`_ may erroneously raise `TimeoutExpired`_.
+- 1238_, [Linux]: `sensors_battery()`_ may return ``None`` in case battery is not
+  listed as "BAT0" under ``/sys/class/power_supply``.
+- 1240_, [Windows]: `cpu_times()`_ float loses accuracy in a long running system.
   (patch by stswandering)
-- 1245_: [Linux] sensors_temperatures() may fail with IOError "no such file".
-- 1255_: [FreeBSD] swap_memory() stats were erroneously represented in KB.
+- 1245_, [Linux]: `sensors_temperatures()`_ may fail with ``IOError`` "no such file".
+- 1255_, [FreeBSD]: `swap_memory()`_ stats were erroneously represented in KB.
   (patch by Denis Krienbühl)
 
 **Backward compatibility**
 
-- 771_: [Windows] cpu_count(logical=False) on Windows XP and Vista is no
-  longer supported and returns None.
+- 771_, [Windows]: `cpu_count()`_ with ``logical=False`` on Windows XP and Vista
+  is no longer supported and returns ``None``.
 
 5.4.3
 =====
@@ -580,11 +713,11 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 775_: disk_partitions() on Windows return mount points.
+- 775_: `disk_partitions()`_ on Windows return mount points.
 
 **Bug fixes**
 
-- 1193_: pids() may return False on macOS.
+- 1193_: `pids()`_ may return ``False`` on macOS.
 
 5.4.2
 =====
@@ -593,24 +726,24 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1173_: introduced PSUTIL_DEBUG environment variable which can be set in order
+- 1173_: introduced ``PSUTIL_DEBUG`` environment variable which can be set in order
   to print useful debug messages on stderr (useful in case of nasty errors).
-- 1177_: added support for sensors_battery() on macOS.  (patch by Arnon Yaari)
-- 1183_: Process.children() is 2x faster on UNIX and 2.4x faster on Linux.
-- 1188_: deprecated method Process.memory_info_ex() now warns by using
-  FutureWarning instead of DeprecationWarning.
+- 1177_, [macOS]: added support for `sensors_battery()`_.  (patch by Arnon Yaari)
+- 1183_: `Process.children()`_ is 2x faster on POSIX and 2.4x faster on Linux.
+- 1188_: deprecated method `Process.memory_info_ex()`_ now warns by using
+  ``FutureWarning`` instead of ``DeprecationWarning``.
 
 **Bug fixes**
 
-- 1152_: [Windows] disk_io_counters() may return an empty dict.
-- 1169_: [Linux] users() "hostname" returns username instead.  (patch by
+- 1152_, [Windows]: `disk_io_counters()`_ may return an empty dict.
+- 1169_, [Linux]: `users()`_ ``hostname`` returns username instead.  (patch by
   janderbrain)
-- 1172_: [Windows] `make test` does not work.
-- 1179_: [Linux] Process.cmdline() is now able to splits cmdline args for
-  misbehaving processes which overwrite /proc/pid/cmdline and use spaces
+- 1172_, [Windows]: ``make test`` does not work.
+- 1179_, [Linux]: `Process.cmdline()`_ is now able to split cmdline args for
+  misbehaving processes which overwrite ``/proc/pid/cmdline`` and use spaces
   instead of null bytes as args separator.
-- 1181_: [macOS] Process.memory_maps() may raise ENOENT.
-- 1187_: [macOS] pids() does not return PID 0 on recent macOS versions.
+- 1181_, [macOS]: `Process.memory_maps()`_ may raise ``ENOENT``.
+- 1187_, [macOS]: `pids()`_ does not return PID 0 on recent macOS versions.
 
 5.4.1
 =====
@@ -619,18 +752,19 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1164_: [AIX] add support for Process.num_ctx_switches().  (patch by Arnon
+- 1164_, [AIX]: add support for `Process.num_ctx_switches()`_.  (patch by Arnon
   Yaari)
-- 1053_: abandon Python 3.3 support (psutil still works but it's no longer
+- 1053_: drop Python 3.3 support (psutil still works but it's no longer
   tested).
 
 **Bug fixes**
 
-- 1150_: [Windows] when a process is terminate()d now the exit code is set to
-  SIGTERM instead of 0.  (patch by Akos Kiss)
-- 1151_: python -m psutil.tests fail
-- 1154_: [AIX] psutil won't compile on AIX 6.1.0.  (patch by Arnon Yaari)
-- 1167_: [Windows] net_io_counter() packets count now include also non-unicast
+- 1150_, [Windows]: when a process is terminated now the exit code is set to
+  ``SIGTERM`` instead of ``0``.  (patch by Akos Kiss)
+- 1151_: ``python -m psutil.tests`` fail.
+- 1154_, [AIX], **[critical]**: psutil won't compile on AIX 6.1.0.
+  (patch by Arnon Yaari)
+- 1167_, [Windows]: `net_io_counters()`_ packets count now include also non-unicast
   packets.  (patch by Matthew Long)
 
 5.4.0
@@ -640,22 +774,21 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 1123_: [AIX] added support for AIX platform.  (patch by Arnon Yaari)
+- 1123_, [AIX]: added support for AIX platform.  (patch by Arnon Yaari)
 
 **Bug fixes**
 
-- 1009_: [Linux] sensors_temperatures() may crash with IOError.
-- 1012_: [Windows] disk_io_counters()'s read_time and write_time were expressed
-  in tens of micro seconds instead of milliseconds.
-- 1127_: [macOS] invalid reference counting in Process.open_files() may lead to
-  segfault.  (patch by Jakub Bacic)
-- 1129_: [Linux] sensors_fans() may crash with IOError.  (patch by Sebastian
-  Saip)
-- 1131_: [SunOS] fix compilation warnings.  (patch by Arnon Yaari)
-- 1133_: [Windows] can't compile on newer versions of Visual Studio 2017 15.4.
+- 1009_, [Linux]: `sensors_temperatures()`_ may crash with ``IOError``.
+- 1012_, [Windows]: `disk_io_counters()`_ ``read_time`` and ``write_time``
+  were expressed in tens of micro seconds instead of milliseconds.
+- 1127_, [macOS], **[critical]**: invalid reference counting in
+  `Process.open_files()`_ may lead to segfault.  (patch by Jakub Bacic)
+- 1129_, [Linux]: `sensors_fans()`_ may crash with ``IOError``.  (patch by
+  Sebastian Saip)
+- 1131_, [SunOS]: fix compilation warnings.  (patch by Arnon Yaari)
+- 1133_, [Windows]: can't compile on newer versions of Visual Studio 2017 15.4.
   (patch by Max Bélanger)
-- 1138_: [Linux] can't compile on CentOS 5.0 and RedHat 5.0.
-  (patch by Prodesire)
+- 1138_, [Linux]: can't compile on CentOS 5.0 and RedHat 5.0. (patch by Prodesire)
 
 5.3.1
 =====
@@ -668,13 +801,13 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1105_: [FreeBSD] psutil does not compile on FreeBSD 12.
-- 1125_: [BSD] net_connections() raises TypeError.
+- 1105_, [FreeBSD]: psutil does not compile on FreeBSD 12.
+- 1125_, [BSD]: `net_connections()`_ raises ``TypeError``.
 
 **Compatibility notes**
 
-- 1120_: .exe files for Windows are no longer uploaded on PyPI as per PEP-527;
-  only wheels are provided.
+- 1120_: ``.exe`` files for Windows are no longer uploaded on PyPI as per
+  PEP-527. Only wheels are provided.
 
 5.3.0
 =====
@@ -683,104 +816,99 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 802_: disk_io_counters() and net_io_counters() numbers no longer wrap
-  (restart from 0). Introduced a new "nowrap" argument.
-- 928_: psutil.net_connections() and psutil.Process.connections() "laddr" and
-  "raddr" are now named tuples.
-- 1015_: swap_memory() now relies on /proc/meminfo instead of sysinfo() syscall
-  so that it can be used in conjunction with PROCFS_PATH in order to retrieve
-  memory info about Linux containers such as Docker and Heroku.
-- 1022_: psutil.users() provides a new "pid" field.
-- 1025_: process_iter() accepts two new parameters in order to invoke
-  Process.as_dict(): "attrs" and "ad_value". With this you can iterate over all
-  processes in one shot without needing to catch NoSuchProcess and do list/dict
-  comprehensions.
+- 802_: `disk_io_counters()`_ and `net_io_counters()`_ numbers no longer wrap
+  (restart from 0). Introduced a new ``nowrap`` argument.
+- 928_: `net_connections()`_ and `Process.connections()`_ ``laddr`` and
+  ``raddr`` are now named tuples.
+- 1015_: `swap_memory()`_ now relies on ``/proc/meminfo`` instead of ``sysinfo()``
+  syscall so that it can be used in conjunction with `PROCFS_PATH`_ in order to
+  retrieve memory info about Linux containers such as Docker and Heroku.
+- 1022_: `users()`_ provides a new ``pid`` field.
+- 1025_: `process_iter()`_ accepts two new parameters in order to invoke
+  `Process.as_dict()`_: ``attrs`` and ``ad_value``. With these you can iterate
+  over all processes in one shot without needing to catch `NoSuchProcess`_ and
+  do list/dict comprehensions.
 - 1040_: implemented full unicode support.
-- 1051_: disk_usage() on Python 3 is now able to accept bytes.
+- 1051_: `disk_usage()`_ on Python 3 is now able to accept bytes.
 - 1058_: test suite now enables all warnings by default.
 - 1060_: source distribution is dynamically generated so that it only includes
   relevant files.
-- 1079_: [FreeBSD] net_connections()'s fd number is now being set for real
-  (instead of -1).  (patch by Gleb Smirnoff)
-- 1091_: [SunOS] implemented Process.environ().  (patch by Oleksii Shevchuk)
+- 1079_, [FreeBSD]: `net_connections()`_ ``fd`` number is now being set for real
+  (instead of ``-1``).  (patch by Gleb Smirnoff)
+- 1091_, [SunOS]: implemented `Process.environ()`_.  (patch by Oleksii Shevchuk)
 
 **Bug fixes**
 
-- 989_: [Windows] boot_time() may return a negative value.
-- 1007_: [Windows] boot_time() can have a 1 sec fluctuation between calls; the
-  value of the first call is now cached so that boot_time() always returns the
-  same value if fluctuation is <= 1 second.
-- 1013_: [FreeBSD] psutil.net_connections() may return incorrect PID.  (patch
+- 989_, [Windows]: `boot_time()`_ may return a negative value.
+- 1007_, [Windows]: `boot_time()`_ can have a 1 sec fluctuation between calls.
+  The value of the first call is now cached so that `boot_time()`_ always
+  returns the same value if fluctuation is <= 1 second.
+- 1013_, [FreeBSD]: `net_connections()`_ may return incorrect PID.  (patch
   by Gleb Smirnoff)
-- 1014_: [Linux] Process class can mask legitimate ENOENT exceptions as
-  NoSuchProcess.
-- 1016_: disk_io_counters() raises RuntimeError on a system with no disks.
-- 1017_: net_io_counters() raises RuntimeError on a system with no network
+- 1014_, [Linux]: `Process`_ class can mask legitimate ``ENOENT`` exceptions as
+  `NoSuchProcess`_.
+- 1016_: `disk_io_counters()`_ raises ``RuntimeError`` on a system with no disks.
+- 1017_: `net_io_counters()`_ raises ``RuntimeError`` on a system with no network
   cards installed.
-- 1021_: [Linux] open_files() may erroneously raise NoSuchProcess instead of
-  skipping a file which gets deleted while open files are retrieved.
-- 1029_: [macOS, FreeBSD] Process.connections('unix') on Python 3 doesn't
-  properly handle unicode paths and may raise UnicodeDecodeError.
-- 1033_: [macOS, FreeBSD] memory leak for net_connections() and
-  Process.connections() when retrieving UNIX sockets (kind='unix').
-- 1040_: fixed many unicode related issues such as UnicodeDecodeError on
-  Python 3 + UNIX and invalid encoded data on Windows.
-- 1042_: [FreeBSD] psutil won't compile on FreeBSD 12.
-- 1044_: [macOS] different Process methods incorrectly raise AccessDenied for
-  zombie processes.
-- 1046_: [Windows] disk_partitions() on Windows overrides user's SetErrorMode.
-- 1047_: [Windows] Process username(): memory leak in case exception is thrown.
-- 1048_: [Windows] users()'s host field report an invalid IP address.
-- 1050_: [Windows] Process.memory_maps memory() leaks memory.
-- 1055_: cpu_count() is no longer cached; this is useful on systems such as
+- 1021_, [Linux]: `Process.open_files()`_ may erroneously raise `NoSuchProcess`_
+  instead of skipping a file which gets deleted while open files are retrieved.
+- 1029_, [macOS], [FreeBSD]: `Process.connections()`_ with ``family=unix`` on Python
+  3 doesn't properly handle unicode paths and may raise ``UnicodeDecodeError``.
+- 1033_, [macOS], [FreeBSD]: memory leak for `net_connections()`_ and
+  `Process.connections()`_ when retrieving UNIX sockets (``kind='unix'``).
+- 1040_: fixed many unicode related issues such as ``UnicodeDecodeError`` on
+  Python 3 + POSIX and invalid encoded data on Windows.
+- 1042_, [FreeBSD], **[critical]**: psutil won't compile on FreeBSD 12.
+- 1044_, [macOS]: different `Process`_ methods incorrectly raise `AccessDenied`_
+  for zombie processes.
+- 1046_, [Windows]: `disk_partitions()`_ on Windows overrides user's ``SetErrorMode``.
+- 1047_, [Windows]: `Process.username()`_: memory leak in case exception is thrown.
+- 1048_, [Windows]: `users()`_ ``host`` field report an invalid IP address.
+- 1050_, [Windows]: `Process.memory_maps()`_ leaks memory.
+- 1055_: `cpu_count()`_ is no longer cached. This is useful on systems such as
   Linux where CPUs can be disabled at runtime. This also reflects on
-  Process.cpu_percent() which no longer uses the cache.
+  `Process.cpu_percent()`_ which no longer uses the cache.
 - 1058_: fixed Python warnings.
-- 1062_: disk_io_counters() and net_io_counters() raise TypeError if no disks
-  or NICs are installed on the system.
-- 1063_: [NetBSD] net_connections() may list incorrect sockets.
-- 1064_: [NetBSD] swap_memory() may segfault in case of error.
-- 1065_: [OpenBSD] Process.cmdline() may raise SystemError.
-- 1067_: [NetBSD] Process.cmdline() leaks memory if process has terminated.
-- 1069_: [FreeBSD] Process.cpu_num() may return 255 for certain kernel
+- 1062_: `disk_io_counters()`_ and `net_io_counters()`_ raise ``TypeError`` if
+  no disks or NICs are installed on the system.
+- 1063_, [NetBSD]: `net_connections()`_ may list incorrect sockets.
+- 1064_, [NetBSD], **[critical]**: `swap_memory()`_ may segfault in case of error.
+- 1065_, [OpenBSD], **[critical]**: `Process.cmdline()`_ may raise ``SystemError``.
+- 1067_, [NetBSD]: `Process.cmdline()`_ leaks memory if process has terminated.
+- 1069_, [FreeBSD]: `Process.cpu_num()`_ may return 255 for certain kernel
   processes.
-- 1071_: [Linux] cpu_freq() may raise IOError on old RedHat distros.
-- 1074_: [FreeBSD] sensors_battery() raises OSError in case of no battery.
-- 1075_: [Windows] net_if_addrs(): inet_ntop() return value is not checked.
-- 1077_: [SunOS] net_if_addrs() shows garbage addresses on SunOS 5.10.
+- 1071_, [Linux]: `cpu_freq()`_ may raise ``IOError`` on old RedHat distros.
+- 1074_, [FreeBSD]: `sensors_battery()`_ raises ``OSError`` in case of no battery.
+- 1075_, [Windows]: `net_if_addrs()`_: ``inet_ntop()`` return value is not checked.
+- 1077_, [SunOS]: `net_if_addrs()`_ shows garbage addresses on SunOS 5.10.
   (patch by Oleksii Shevchuk)
-- 1077_: [SunOS] net_connections() does not work on SunOS 5.10. (patch by
+- 1077_, [SunOS]: `net_connections()`_ does not work on SunOS 5.10. (patch by
   Oleksii Shevchuk)
-- 1079_: [FreeBSD] net_connections() didn't list locally connected sockets.
+- 1079_, [FreeBSD]: `net_connections()`_ didn't list locally connected sockets.
   (patch by Gleb Smirnoff)
-- 1085_: cpu_count() return value is now checked and forced to None if <= 1.
-- 1087_: Process.cpu_percent() guard against cpu_count() returning None and
-  assumes 1 instead.
-- 1093_: [SunOS] memory_maps() shows wrong 64 bit addresses.
-- 1094_: [Windows] psutil.pid_exists() may lie. Also, all process APIs relying
-  on OpenProcess Windows API now check whether the PID is actually running.
-- 1098_: [Windows] Process.wait() may erroneously return sooner, when the PID
+- 1085_: `cpu_count()`_ return value is now checked and forced to ``None`` if <= 1.
+- 1087_: `Process.cpu_percent()`_ guard against `cpu_count()`_ returning ``None``
+  and assumes 1 instead.
+- 1093_, [SunOS]: `Process.memory_maps()`_ shows wrong 64 bit addresses.
+- 1094_, [Windows]: `pid_exists()`_ may lie. Also, all process APIs relying
+  on ``OpenProcess`` Windows API now check whether the PID is actually running.
+- 1098_, [Windows]: `Process.wait()`_ may erroneously return sooner, when the PID
   is still alive.
-- 1099_: [Windows] Process.terminate() may raise AccessDenied even if the
+- 1099_, [Windows]: `Process.terminate()`_ may raise `AccessDenied`_ even if the
   process already died.
-- 1101_: [Linux] sensors_temperatures() may raise ENODEV.
+- 1101_, [Linux]: `sensors_temperatures()`_ may raise ``ENODEV``.
 
 **Porting notes**
 
-- 1039_: returned types consolidation:
-  - Windows / Process.cpu_times(): fields #3 and #4 were int instead of float
-  - Linux / FreeBSD: connections('unix'): raddr is now set to "" instead of
-    None
-  - OpenBSD: connections('unix'): laddr and raddr are now set to "" instead of
-    None
+- 1039_: returned types consolidation. 1) Windows / `Process.cpu_times()`_:
+  fields #3 and #4 were int instead of float. 2) Linux / FreeBSD / OpenBSD:
+  `Process.connections()`_ ``raddr`` is now set to  ``""`` instead of ``None``
+  when retrieving UNIX sockets.
 - 1040_: all strings are encoded by using OS fs encoding.
 - 1040_: the following Windows APIs on Python 2 now return a string instead of
-  unicode:
-  - Process.memory_maps().path
-  - WindowsService.bin_path()
-  - WindowsService.description()
-  - WindowsService.display_name()
-  - WindowsService.username()
+  unicode: ``Process.memory_maps().path``, ``WindowsService.bin_path()``,
+  ``WindowsService.description()``, ``WindowsService.display_name()``,
+  ``WindowsService.username()``.
 
 5.2.2
 =====
@@ -790,13 +918,13 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 1000_: fixed some setup.py warnings.
-- 1002_: [SunOS] remove C macro which will not be available on new Solaris
+- 1002_, [SunOS]: remove C macro which will not be available on new Solaris
   versions. (patch by Danek Duvall)
-- 1004_: [Linux] Process.io_counters() may raise ValueError.
-- 1006_: [Linux] cpu_freq() may return None on some Linux versions does not
-  support the function; now the function is not declared instead.
-- 1009_: [Linux] sensors_temperatures() may raise OSError.
-- 1010_: [Linux] virtual_memory() may raise ValueError on Ubuntu 14.04.
+- 1004_, [Linux]: `Process.io_counters()`_ may raise ``ValueError``.
+- 1006_, [Linux]: `cpu_freq()`_ may return ``None`` on some Linux versions does not
+  support the function. Let's not make the function available instead.
+- 1009_, [Linux]: `sensors_temperatures()`_ may raise ``OSError``.
+- 1010_, [Linux]: `virtual_memory()`_ may raise ``ValueError`` on Ubuntu 14.04.
 
 5.2.1
 =====
@@ -805,12 +933,12 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 981_: [Linux] cpu_freq() may return an empty list.
-- 993_: [Windows] Process.memory_maps() on Python 3 may raise
-  UnicodeDecodeError.
-- 996_: [Linux] sensors_temperatures() may not show all temperatures.
-- 997_: [FreeBSD] virtual_memory() may fail due to missing sysctl parameter on
-  FreeBSD 12.
+- 981_, [Linux]: `cpu_freq()`_ may return an empty list.
+- 993_, [Windows]: `Process.memory_maps()`_ on Python 3 may raise
+  ``UnicodeDecodeError``.
+- 996_, [Linux]: `sensors_temperatures()`_ may not show all temperatures.
+- 997_, [FreeBSD]: `virtual_memory()`_ may fail due to missing ``sysctl``
+  parameter on FreeBSD 12.
 
 5.2.0
 =====
@@ -819,26 +947,26 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 971_: [Linux] Add psutil.sensors_fans() function.  (patch by Nicolas Hennion)
-- 976_: [Windows] Process.io_counters() has 2 new fields: *other_count* and
-  *other_bytes*.
-- 976_: [Linux] Process.io_counters() has 2 new fields: *read_chars* and
-  *write_chars*.
+- 971_, [Linux]: Add `sensors_fans()`_ function.  (patch by Nicolas Hennion)
+- 976_, [Windows]: `Process.io_counters()`_ has 2 new fields: ``other_count`` and
+  ``other_bytes``.
+- 976_, [Linux]: `Process.io_counters()`_ has 2 new fields: ``read_chars`` and
+  ``write_chars``.
 
 **Bug fixes**
 
-- 872_: [Linux] can now compile on Linux by using MUSL C library.
-- 985_: [Windows] Fix a crash in `Process.open_files` when the worker thread
-  for `NtQueryObject` times out.
-- 986_: [Linux] Process.cwd() may raise NoSuchProcess instead of ZombieProcess.
+- 872_, [Linux]: can now compile on Linux by using MUSL C library.
+- 985_, [Windows]: Fix a crash in `Process.open_files()`_ when the worker thread
+  for ``NtQueryObject`` times out.
+- 986_, [Linux]: `Process.cwd()`_ may raise `NoSuchProcess`_ instead of `ZombieProcess`_.
 
 5.1.3
 =====
 
 **Bug fixes**
 
-- 971_: [Linux] sensors_temperatures() didn't work on CentOS 7.
-- 973_: cpu_percent() may raise ZeroDivisionError.
+- 971_, [Linux]: `sensors_temperatures()`_ didn't work on CentOS 7.
+- 973_, **[critical]**: `cpu_percent()`_ may raise ``ZeroDivisionError``.
 
 5.1.2
 =====
@@ -847,11 +975,11 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 966_: [Linux] sensors_battery().power_plugged may erroneously return None on
-  Python 3.
-- 968_: [Linux] disk_io_counters() raises TypeError on python 3.
-- 970_: [Linux] sensors_battery()'s name and label fields on Python 3 are bytes
-  instead of str.
+- 966_, [Linux]: `sensors_battery()`_ ``power_plugged`` may erroneously return
+  ``None`` on Python 3.
+- 968_, [Linux]: `disk_io_counters()`_ raises ``TypeError`` on Python 3.
+- 970_, [Linux]: `sensors_battery()`_ ``name`` and ``label`` fields on Python 3
+  are bytes instead of str.
 
 5.1.1
 =====
@@ -860,16 +988,16 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 966_: [Linux] sensors_battery().percent is a float and is more precise.
+- 966_, [Linux]: `sensors_battery()`_ ``percent`` is a float and is more precise.
 
 **Bug fixes**
 
-- 964_: [Windows] Process.username() and psutil.users() may return badly
-  decoding character on Python 3.
-- 965_: [Linux] disk_io_counters() may miscalculate sector size and report the
-  wrong number of bytes read and written.
-- 966_: [Linux] sensors_battery() may fail with "no such file error".
-- 966_: [Linux] sensors_battery().power_plugged may lie.
+- 964_, [Windows]: `Process.username()`_ and `users()`_ may return badly
+  decoded character on Python 3.
+- 965_, [Linux]: `disk_io_counters()`_ may miscalculate sector size and report
+  the wrong number of bytes read and written.
+- 966_, [Linux]: `sensors_battery()`_ may fail with ``FileNotFoundError``.
+- 966_, [Linux]: `sensors_battery()`_ ``power_plugged`` may lie.
 
 5.1.0
 =====
@@ -878,26 +1006,26 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 357_: added psutil.Process.cpu_num() (what CPU a process is on).
-- 371_: added psutil.sensors_temperatures() (Linux only).
-- 941_: added psutil.cpu_freq() (CPU frequency).
-- 955_: added psutil.sensors_battery() (Linux, Windows, only).
-- 956_: cpu_affinity([]) can now be used as an alias to set affinity against
-  all eligible CPUs.
+- 357_: added `Process.cpu_num()`_ (what CPU a process is on).
+- 371_: added `sensors_temperatures()`_ (Linux only).
+- 941_: added `cpu_freq()`_ (CPU frequency).
+- 955_: added `sensors_battery()`_ (Linux, Windows, only).
+- 956_: `Process.cpu_affinity()`_ can now be passed ``[]`` argument as an
+  alias to set affinity against all eligible CPUs.
 
 **Bug fixes**
 
-- 687_: [Linux] pid_exists() no longer returns True if passed a process thread
-  ID.
-- 948_: cannot install psutil with PYTHONOPTIMIZE=2.
-- 950_: [Windows] Process.cpu_percent() was calculated incorrectly and showed
+- 687_, [Linux]: `pid_exists()`_ no longer returns ``True`` if passed a process
+  thread ID.
+- 948_: cannot install psutil with ``PYTHONOPTIMIZE=2``.
+- 950_, [Windows]: `Process.cpu_percent()`_ was calculated incorrectly and showed
   higher number than real usage.
-- 951_: [Windows] the uploaded wheels for Python 3.6 64 bit didn't work.
+- 951_, [Windows]: the uploaded wheels for Python 3.6 64 bit didn't work.
 - 959_: psutil exception objects could not be pickled.
-- 960_: Popen.wait() did not return the correct negative exit status if process
-  is ``kill()``ed by a signal.
-- 961_: [Windows] WindowsService.description() may fail with
-  ERROR_MUI_FILE_NOT_FOUND.
+- 960_: `psutil.Popen`_ ``wait()`` did not return the correct negative exit
+  status if process is killed by a signal.
+- 961_, [Windows]: ``WindowsService.description()`` method may fail with
+  ``ERROR_MUI_FILE_NOT_FOUND``.
 
 5.0.1
 =====
@@ -907,17 +1035,17 @@ XXXX-XX-XX
 **Enhancements**
 
 - 939_: tar.gz distribution went from 1.8M to 258K.
-- 811_: [Windows] provide a more meaningful error message if trying to use
+- 811_, [Windows]: provide a more meaningful error message if trying to use
   psutil on unsupported Windows XP.
 
 **Bug fixes**
 
-- 609_: [SunOS] psutil does not compile on Solaris 10.
-- 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
-- 940_: [Linux] cpu_percent() and cpu_times_percent() was calculated
-  incorrectly as "iowait", "guest" and "guest_nice" times were not properly
-  taken into account.
-- 944_: [OpenBSD] psutil.pids() was omitting PID 0.
+- 609_, [SunOS], **[critical]**: psutil does not compile on Solaris 10.
+- 936_, [Windows]: fix compilation error on VS 2013 (patch by Max Bélanger).
+- 940_, [Linux]: `cpu_percent()`_ and `cpu_times_percent()`_ was calculated
+  incorrectly as ``iowait``, ``guest`` and ``guest_nice`` times were not
+  properly taken into account.
+- 944_, [OpenBSD]: `pids()`_ was omitting PID 0.
 
 5.0.0
 =====
@@ -926,15 +1054,16 @@ XXXX-XX-XX
 
 **Enhncements**
 
-- 799_: new Process.oneshot() context manager making Process methods around
+- 799_: new `Process.oneshot()`_ context manager making `Process`_ methods around
   +2x faster in general and from +2x to +6x faster on Windows.
 - 943_: better error message in case of version conflict on import.
 
 **Bug fixes**
 
-- 932_: [NetBSD] net_connections() and Process.connections() may fail without
-  raising an exception.
-- 933_: [Windows] memory leak in cpu_stats() and WindowsService.description().
+- 932_, [NetBSD]: `net_connections()`_ and `Process.connections()`_ may fail
+  without raising an exception.
+- 933_, [Windows]: memory leak in `cpu_stats()`_ and
+  ``WindowsService.description()`` method.
 
 4.4.2
 =====
@@ -943,7 +1072,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 931_: psutil no longer compiles on Solaris.
+- 931_, **[critical]**: psutil no longer compiles on Solaris.
 
 4.4.1
 =====
@@ -952,7 +1081,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 927_: ``Popen.__del__`` may cause maximum recursion depth error.
+- 927_, **[critical]**: `psutil.Popen`_ ``__del__`` may cause maximum recursion
+  depth error.
 
 4.4.0
 =====
@@ -961,34 +1091,34 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 874_: [Windows] net_if_addrs() returns also the netmask.
-- 887_: [Linux] virtual_memory()'s 'available' and 'used' values are more
-  precise and match "free" cmdline utility.  "available" also takes into
-  account LCX containers preventing "available" to overflow "total".
-- 891_: procinfo.py script has been updated and provides a lot more info.
+- 874_, [Windows]: make `net_if_addrs()`_ also return the ``netmask``.
+- 887_, [Linux]: `virtual_memory()`_ ``available`` and ``used`` values are more
+  precise and match ``free`` cmdline utility.  ``available`` also takes into
+  account LCX containers preventing ``available`` to overflow ``total``.
+- 891_: `procinfo.py`_ script has been updated and provides a lot more info.
 
 **Bug fixes**
 
-- 514_: [macOS] possibly fix Process.memory_maps() segfault (critical!).
-- 783_: [macOS] Process.status() may erroneously return "running" for zombie
-  processes.
-- 798_: [Windows] Process.open_files() returns and empty list on Windows 10.
-- 825_: [Linux] cpu_affinity; fix possible double close and use of unopened
-  socket.
-- 880_: [Windows] Handle race condition inside psutil_net_connections.
-- 885_: ValueError is raised if a negative integer is passed to cpu_percent()
+- 514_, [macOS], **[critical]**: `Process.memory_maps()`_ can segfault.
+- 783_, [macOS]: `Process.status()`_ may erroneously return ``"running"`` for
+  zombie processes.
+- 798_, [Windows]: `Process.open_files()`_ returns and empty list on Windows 10.
+- 825_, [Linux]: `Process.cpu_affinity()`_: fix possible double close and use of
+  unopened socket.
+- 880_, [Windows]: fix race condition inside `net_connections()`_.
+- 885_: ``ValueError`` is raised if a negative integer is passed to `cpu_percent()`_
   functions.
-- 892_: [Linux] Process.cpu_affinity([-1]) raise SystemError with no error
-  set; now ValueError is raised.
-- 906_: [BSD] disk_partitions(all=False) returned an empty list. Now the
-  argument is ignored and all partitions are always returned.
-- 907_: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
-- 908_: [macOS, BSD] different process methods could errounesuly mask the real
-  error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
-  instead of OSError and RuntimeError.
-- 909_: [macOS] Process open_files() and connections() methods may raise
-  OSError with no exception set if process is gone.
-- 916_: [macOS] fix many compilation warnings.
+- 892_, [Linux], **[critical]**: `Process.cpu_affinity()`_ with ``[-1]`` as arg
+  raises ``SystemError`` with no error set; now ``ValueError`` is raised.
+- 906_, [BSD]: `disk_partitions()`_ with ``all=False`` returned an empty list.
+  Now the argument is ignored and all partitions are always returned.
+- 907_, [FreeBSD]: `Process.exe()`_ may fail with ``OSError(ENOENT)``.
+- 908_, [macOS], [BSD]: different process methods could errounesuly mask the real
+  error for high-privileged PIDs and raise `NoSuchProcess`_ and `AccessDenied`_
+  instead of ``OSError`` and ``RuntimeError``.
+- 909_, [macOS]: `Process.open_files()`_ and `Process.connections()`_ methods
+  may raise ``OSError`` with no exception set if process is gone.
+- 916_, [macOS]: fix many compilation warnings.
 
 4.3.1
 =====
@@ -997,22 +1127,23 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 881_: "make install" now works also when using a virtual env.
+- 881_: ``make install`` now works also when using a virtual env.
 
 **Bug fixes**
 
-- 854_: Process.as_dict() raises ValueError if passed an erroneous attrs name.
-- 857_: [SunOS] Process cpu_times(), cpu_percent(), threads() amd memory_maps()
-  may raise RuntimeError if attempting to query a 64bit process with a 32bit
-  python. "Null" values are returned as a fallback.
-- 858_: Process.as_dict() should not return memory_info_ex() because it's
-  deprecated.
-- 863_: [Windows] memory_map truncates addresses above 32 bits
-- 866_: [Windows] win_service_iter() and services in general are not able to
+- 854_: `Process.as_dict()`_ raises ``ValueError`` if passed an erroneous attrs name.
+- 857_, [SunOS]: `Process.cpu_times()`_, `Process.cpu_percent()`_,
+  `Process.threads()`_ and `Process.memory_maps()`_ may raise ``RuntimeError`` if
+  attempting to query a 64bit process with a 32bit Python. "Null" values are
+  returned as a fallback.
+- 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`_
+  because it's deprecated.
+- 863_, [Windows]: `Process.memory_maps()`_ truncates addresses above 32 bits.
+- 866_, [Windows]: `win_service_iter()`_ and services in general are not able to
   handle unicode service names / descriptions.
-- 869_: [Windows] Process.wait() may raise TimeoutExpired with wrong timeout
+- 869_, [Windows]: `Process.wait()`_ may raise `TimeoutExpired`_ with wrong timeout
   unit (ms instead of sec).
-- 870_: [Windows] Handle leak inside psutil_get_process_data.
+- 870_, [Windows]: handle leak inside ``psutil_get_process_data``.
 
 4.3.0
 =====
@@ -1021,20 +1152,20 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 819_: [Linux] different speedup improvements:
-  Process.ppid() is 20% faster
-  Process.status() is 28% faster
-  Process.name() is 25% faster
-  Process.num_threads is 20% faster on Python 3
+- 819_, [Linux]: different speedup improvements:
+  `Process.ppid()`_ +20% faster.
+  `Process.status()`_ +28% faster.
+  `Process.name()`_ +25% faster.
+  `Process.num_threads()`_ +20% faster on Python 3.
 
 **Bug fixes**
 
-- 810_: [Windows] Windows wheels are incompatible with pip 7.1.2.
-- 812_: [NetBSD] fix compilation on NetBSD-5.x.
-- 823_: [NetBSD] virtual_memory() raises TypeError on Python 3.
-- 829_: [UNIX] psutil.disk_usage() percent field takes root reserved space
+- 810_, [Windows]: Windows wheels are incompatible with pip 7.1.2.
+- 812_, [NetBSD], **[critical]**: fix compilation on NetBSD-5.x.
+- 823_, [NetBSD]: `virtual_memory()`_ raises ``TypeError`` on Python 3.
+- 829_, [POSIX]: `disk_usage()`_ ``percent`` field takes root reserved space
   into account.
-- 816_: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
+- 816_, [Windows]: fixed `net_io_counters()`_ values wrapping after 4.3GB in
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
 
 4.2.0
@@ -1044,20 +1175,20 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 795_: [Windows] new APIs to deal with Windows services: win_service_iter()
-  and win_service_get().
-- 800_: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
-- 819_: [Linux] speedup /proc parsing:
-  - Process.ppid() is 20% faster
-  - Process.status() is 28% faster
-  - Process.name() is 25% faster
-  - Process.num_threads is 20% faster on Python 3
+- 795_, [Windows]: new APIs to deal with Windows services: `win_service_iter()`_
+  and `win_service_get()`_.
+- 800_, [Linux]: `virtual_memory()`_ returns a new ``shared`` memory field.
+- 819_, [Linux]: speedup ``/proc`` parsing:
+  `Process.ppid()`_ +20% faster.
+  `Process.status()`_ +28% faster.
+  `Process.name()`_ +25% faster.
+  `Process.num_threads()`_ +20% faster on Python 3.
 
 **Bug fixes**
 
-- 797_: [Linux] net_if_stats() may raise OSError for certain NIC cards.
-- 813_: Process.as_dict() should ignore extraneous attribute names which gets
-  attached to the Process instance.
+- 797_, [Linux]: `net_if_stats()`_ may raise ``OSError`` for certain NIC cards.
+- 813_: `Process.as_dict()`_ should ignore extraneous attribute names which gets
+  attached to the `Process`_ instance.
 
 4.1.0
 =====
@@ -1066,25 +1197,26 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 777_: [Linux] Process.open_files() on Linux return 3 new fields: position,
-  mode and flags.
-- 779_: Process.cpu_times() returns two new fields, 'children_user' and
-  'children_system' (always set to 0 on macOS and Windows).
-- 789_: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
-  "dpc". Same for psutil.cpu_times_percent().
-- 792_: new psutil.cpu_stats() function returning number of CPU ctx switches
-  interrupts, soft interrupts and syscalls.
+- 777_, [Linux]: `Process.open_files()`_ on Linux return 3 new fields:
+  ``position``, ``mode`` and ``flags``.
+- 779_: `Process.cpu_times()`_ returns two new fields, ``children_user`` and
+  ``children_system`` (always set to 0 on macOS and Windows).
+- 789_, [Windows]: `cpu_times()`_ return two new fields: ``interrupt`` and
+  ``dpc``. Same for `cpu_times_percent()`_.
+- 792_: new `cpu_stats()`_ function returning number of CPU ``ctx_switches``,
+  ``interrupts``, ``soft_interrupts`` and ``syscalls``.
 
 **Bug fixes**
 
-- 774_: [FreeBSD] net_io_counters() dropout is no longer set to 0 if the kernel
+- 774_, [FreeBSD]: `net_io_counters()`_ dropout is no longer set to 0 if the kernel
   provides it.
-- 776_: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
+- 776_, [Linux]: `Process.cpu_affinity()`_ may erroneously raise `NoSuchProcess`_.
   (patch by wxwright)
-- 780_: [macOS] psutil does not compile with some gcc versions.
-- 786_: net_if_addrs() may report incomplete MAC addresses.
-- 788_: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
-- 790_: [macOS] psutil won't compile on macOS 10.4.
+- 780_, [macOS]: psutil does not compile with some GCC versions.
+- 786_: `net_if_addrs()`_ may report incomplete MAC addresses.
+- 788_, [NetBSD]: `virtual_memory()`_ ``buffers`` and ``shared`` values were
+  set to 0.
+- 790_, [macOS], **[critical]**: psutil won't compile on macOS 10.4.
 
 4.0.0
 =====
@@ -1093,41 +1225,43 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 523_: [Linux, FreeBSD] disk_io_counters() return a new "busy_time" field.
-- 660_: [Windows] make.bat is smarter in finding alternative VS install
+- 523_, [Linux], [FreeBSD]: `disk_io_counters()`_ return a new ``busy_time`` field.
+- 660_, [Windows]: make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
-- 732_: Process.environ().  (patch by Frank Benkstein)
-- 753_: [Linux, macOS, Windows] Process USS and PSS (Linux) "real" memory stats.
-  (patch by Eric Rahm)
-- 755_: Process.memory_percent() "memtype" parameter.
+- 732_: `Process.environ()`_.  (patch by Frank Benkstein)
+- 753_, [Linux], [macOS], [Windows]: process USS and PSS (Linux) "real" memory
+  stats. (patch by Eric Rahm)
+- 755_: `Process.memory_percent()`_ ``memtype`` parameter.
 - 758_: tests now live in psutil namespace.
-- 760_: expose OS constants (psutil.LINUX, psutil.macOS, etc.)
-- 756_: [Linux] disk_io_counters() return 2 new fields: read_merged_count and
-  write_merged_count.
-- 762_: new scripts/procsmem.py script.
+- 760_: expose OS constants (``psutil.LINUX``, ``psutil.OSX``, etc.)
+- 756_, [Linux]: `disk_io_counters()`_ return 2 new fields: ``read_merged_count``
+  and ``write_merged_count``.
+- 762_: new `procsmem.py`_ script.
 
 **Bug fixes**
 
-- 685_: [Linux] virtual_memory() provides wrong results on systems with a lot
+- 685_, [Linux]: `virtual_memory()`_ provides wrong results on systems with a lot
   of physical memory.
-- 704_: [Solaris] psutil does not compile on Solaris sparc.
-- 734_: on Python 3 invalid UTF-8 data is not correctly handled for process
-  name(), cwd(), exe(), cmdline() and open_files() methods resulting in
-  UnicodeDecodeError exceptions. 'surrogateescape' error handler is now
-  used as a workaround for replacing the corrupted data.
-- 737_: [Windows] when the bitness of psutil and the target process was
-  different cmdline() and cwd() could return a wrong result or incorrectly
-  report an AccessDenied error.
-- 741_: [OpenBSD] psutil does not compile on mips64.
-- 751_: [Linux] fixed call to Py_DECREF on possible Null object.
-- 754_: [Linux] cmdline() can be wrong in case of zombie process.
-- 759_: [Linux] Process.memory_maps() may return paths ending with " (deleted)"
-- 761_: [Windows] psutil.boot_time() wraps to 0 after 49 days.
-- 764_: [NetBSD] fix compilation on NetBSD-6.x.
-- 766_: [Linux] net_connections() can't handle malformed /proc/net/unix file.
-- 767_: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
+- 704_, [SunOS]: psutil does not compile on Solaris sparc.
+- 734_: on Python 3 invalid UTF-8 data is not correctly handled for
+  `Process.name()`_, `Process.cwd()`_, `Process.exe()`_, `Process.cmdline()`_
+  and `Process.open_files()`_ methods resulting in ``UnicodeDecodeError``
+  exceptions. ``'surrogateescape'`` error handler is now used as a workaround for
+  replacing the corrupted data.
+- 737_, [Windows]: when the bitness of psutil and the target process was
+  different, `Process.cmdline()`_ and `Process.cwd()`_ could return a wrong
+  result or incorrectly report an `AccessDenied`_ error.
+- 741_, [OpenBSD]: psutil does not compile on mips64.
+- 751_, [Linux]: fixed call to ``Py_DECREF`` on possible ``NULL`` object.
+- 754_, [Linux]: `Process.cmdline()`_ can be wrong in case of zombie process.
+- 759_, [Linux]: `Process.memory_maps()`_ may return paths ending with ``" (deleted)"``.
+- 761_, [Windows]: `boot_time()`_ wraps to 0 after 49 days.
+- 764_, [NetBSD]: fix compilation on NetBSD-6.x.
+- 766_, [Linux]: `net_connections()`_ can't handle malformed ``/proc/net/unix``
+  file.
+- 767_, [Linux]: `disk_io_counters()`_ may raise ``ValueError`` on 2.6 kernels and it's
   broken on 2.4 kernels.
-- 770_: [NetBSD] disk_io_counters() metrics didn't update.
+- 770_, [NetBSD]: `disk_io_counters()`_ metrics didn't update.
 
 3.4.2
 =====
@@ -1136,13 +1270,14 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 728_: [Solaris] exposed psutil.PROCFS_PATH constant to change the default
-  location of /proc filesystem.
+- 728_, [SunOS]: exposed `PROCFS_PATH`_ constant to change the default
+  location of ``/proc`` filesystem.
 
 **Bug fixes**
 
-- 724_: [FreeBSD] psutil.virtual_memory().total is incorrect.
-- 730_: [FreeBSD] psutil.virtual_memory() crashes.
+- 724_, [FreeBSD]: `virtual_memory()`_ ``total`` is incorrect.
+- 730_, [FreeBSD], **[critical]**: `virtual_memory()`_ crashes with
+  "OSError: [Errno 12] Cannot allocate memory".
 
 3.4.1
 =====
@@ -1151,21 +1286,22 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 557_: [NetBSD] added NetBSD support.  (contributed by Ryo Onodera and
+- 557_, [NetBSD]: added NetBSD support.  (contributed by Ryo Onodera and
   Thomas Klausner)
-- 708_: [Linux] psutil.net_connections() and Process.connections() on Python 2
+- 708_, [Linux]: `net_connections()`_ and `Process.connections()`_ on Python 2
   can be up to 3x faster in case of many connections.
-  Also psutil.Process.memory_maps() is slightly faster.
-- 718_: process_iter() is now thread safe.
+  Also `Process.memory_maps()`_ is slightly faster.
+- 718_: `process_iter()`_ is now thread safe.
 
 **Bug fixes**
 
-- 714_: [OpenBSD] virtual_memory().cached value was always set to 0.
-- 715_: don't crash at import time if cpu_times() fail for some reason.
-- 717_: [Linux] Process.open_files fails if deleted files still visible.
-- 722_: [Linux] swap_memory() no longer crashes if sin/sout can't be determined
-  due to missing /proc/vmstat.
-- 724_: [FreeBSD] virtual_memory().total is slightly incorrect.
+- 714_, [OpenBSD]: `virtual_memory()`_ ``cached`` value was always set to 0.
+- 715_, **[critical]**: don't crash at import time if `cpu_times()`_ fail for
+  some reason.
+- 717_, [Linux]: `Process.open_files()`_ fails if deleted files still visible.
+- 722_, [Linux]: `swap_memory()`_ no longer crashes if ``sin`` / ``sout`` can't
+  be determined due to missing ``/proc/vmstat``.
+- 724_, [FreeBSD]: `virtual_memory()`_ ``total`` is slightly incorrect.
 
 3.3.0
 =====
@@ -1174,13 +1310,13 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 558_: [Linux] exposed psutil.PROCFS_PATH constant to change the default
-  location of /proc filesystem.
-- 615_: [OpenBSD] added OpenBSD support.  (contributed by Landry Breuil)
+- 558_, [Linux]: exposed `PROCFS_PATH`_ constant to change the default
+  location of ``/proc`` filesystem.
+- 615_, [OpenBSD]: added OpenBSD support.  (contributed by Landry Breuil)
 
 **Bug fixes**
 
-- 692_: [UNIX] Process.name() is no longer cached as it may change.
+- 692_, [POSIX]: `Process.name()`_ is no longer cached as it may change.
 
 3.2.2
 =====
@@ -1189,15 +1325,15 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 517_: [SunOS] net_io_counters failed to detect network interfaces
+- 517_, [SunOS]: `net_io_counters()`_ failed to detect network interfaces
   correctly on Solaris 10
-- 541_: [FreeBSD] disk_io_counters r/w times were expressed in seconds instead
+- 541_, [FreeBSD]: `disk_io_counters()`_ r/w times were expressed in seconds instead
   of milliseconds.  (patch by dasumin)
-- 610_: [SunOS] fix build and tests on Solaris 10
-- 623_: [Linux] process or system connections raises ValueError if IPv6 is not
+- 610_, [SunOS]: fix build and tests on Solaris 10
+- 623_, [Linux]: process or system connections raises ``ValueError`` if IPv6 is not
   supported by the system.
-- 678_: [Linux] can't install psutil due to bug in setup.py.
-- 688_: [Windows] compilation fails with MSVC 2015, Python 3.5. (patch by
+- 678_, [Linux], **[critical]**: can't install psutil due to bug in setup.py.
+- 688_, [Windows]: compilation fails with MSVC 2015, Python 3.5. (patch by
   Mike Sarahan)
 
 3.2.1
@@ -1207,7 +1343,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 677_: [Linux] can't install psutil due to bug in setup.py.
+- 677_, [Linux], **[critical]**: can't install psutil due to bug in setup.py.
 
 3.2.0
 =====
@@ -1216,37 +1352,32 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 644_: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
-  to use with Process.send_signal().
+- 644_, [Windows]: added support for ``CTRL_C_EVENT`` and ``CTRL_BREAK_EVENT``
+  signals to use with `Process.send_signal()`_.
 - 648_: CI test integration for macOS. (patch by Jeff Tang)
-- 663_: [UNIX] net_if_addrs() now returns point-to-point (VPNs) addresses.
-- 655_: [Windows] different issues regarding unicode handling were fixed. On
+- 663_, [POSIX]: `net_if_addrs()`_ now returns point-to-point (VPNs) addresses.
+- 655_, [Windows]: different issues regarding unicode handling were fixed. On
   Python 2 all APIs returning a string will now return an encoded version of it
   by using sys.getfilesystemencoding() codec. The APIs involved are:
-  - psutil.net_if_addrs()
-  - psutil.net_if_stats()
-  - psutil.net_io_counters()
-  - psutil.Process.cmdline()
-  - psutil.Process.name()
-  - psutil.Process.username()
-  - psutil.users()
+  `net_if_addrs()`_, `net_if_stats()`_, `net_io_counters()`_,
+  `Process.cmdline()`_, `Process.name()`_, `Process.username()`_, `users()`_.
 
 **Bug fixes**
 
-- 513_: [Linux] fixed integer overflow for RLIM_INFINITY.
-- 641_: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
-- 652_: [Windows] net_if_addrs() UnicodeDecodeError in case of non-ASCII NIC
+- 513_, [Linux]: fixed integer overflow for ``RLIM_INFINITY``.
+- 641_, [Windows]: fixed many compilation warnings.  (patch by Jeff Tang)
+- 652_, [Windows]: `net_if_addrs()`_ ``UnicodeDecodeError`` in case of non-ASCII NIC
   names.
-- 655_: [Windows] net_if_stats() UnicodeDecodeError in case of non-ASCII NIC
+- 655_, [Windows]: `net_if_stats()`_ ``UnicodeDecodeError`` in case of non-ASCII NIC
   names.
-- 659_: [Linux] compilation error on Suse 10. (patch by maozguttman)
-- 664_: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
-- 670_: [Windows] segfgault of net_if_addrs() in case of non-ASCII NIC names.
+- 659_, [Linux]: compilation error on Suse 10. (patch by maozguttman)
+- 664_, [Linux]: compilation error on Alpine Linux. (patch by Bart van Kleef)
+- 670_, [Windows]: segfgault of `net_if_addrs()`_ in case of non-ASCII NIC names.
   (patch by sk6249)
-- 672_: [Windows] compilation fails if using Windows SDK v8.0. (patch by
+- 672_, [Windows]: compilation fails if using Windows SDK v8.0. (patch by
   Steven Winfield)
-- 675_: [Linux] net_connections(); UnicodeDecodeError may occur when listing
-  UNIX sockets.
+- 675_, [Linux]: `net_connections()`_: ``UnicodeDecodeError`` may occur when
+  listing UNIX sockets.
 
 3.1.1
 =====
@@ -1255,9 +1386,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 603_: [Linux] ionice_set value range is incorrect.  (patch by spacewander)
-- 645_: [Linux] psutil.cpu_times_percent() may produce negative results.
-- 656_: 'from psutil import *' does not work.
+- 603_, [Linux]: `Process.ionice()`_ set value range is incorrect.
+  (patch by spacewander)
+- 645_, [Linux]: `cpu_times_percent()`_ may produce negative results.
+- 656_: ``from psutil import *`` does not work.
 
 3.1.0
 =====
@@ -1266,8 +1398,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 534_: [Linux] disk_partitions() added support for ZFS filesystems.
-- 646_: continuous tests integration for Windows with
+- 534_, [Linux]: `disk_partitions()`_ added support for ZFS filesystems.
+- 646_, [Windows]: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
 - 647_: new dev guide:
   https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
@@ -1275,20 +1407,20 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 340_: [Windows] Process.open_files() no longer hangs. Instead it uses a
-  thred which times out and skips the file handle in case it's taking too long
-  to be retrieved.  (patch by Jeff Tang, PR #597)
-- 627_: [Windows] Process.name() no longer raises AccessDenied for pids owned
-  by another user.
-- 636_: [Windows] Process.memory_info() raise AccessDenied.
-- 637_: [UNIX] raise exception if trying to send signal to Process PID 0 as it
-  will affect os.getpid()'s process group instead of PID 0.
-- 639_: [Linux] Process.cmdline() can be truncated.
-- 640_: [Linux] *connections functions may swallow errors and return an
-  incomplete list of connnections.
-- 642_: repr() of exceptions is incorrect.
-- 653_: [Windows] Add inet_ntop function for Windows XP to support IPv6.
-- 641_: [Windows] Replace deprecated string functions with safe equivalents.
+- 340_, [Windows], **[critical]**: `Process.open_files()`_ no longer hangs.
+  Instead it uses a thread which times out and skips the file handle in case it's
+  taking too long to be retrieved.  (patch by Jeff Tang)
+- 627_, [Windows]: `Process.name()`_ no longer raises `AccessDenied`_ for pids
+  owned by another user.
+- 636_, [Windows]: `Process.memory_info()`_ raise `AccessDenied`_.
+- 637_, [POSIX]: raise exception if trying to send signal to PID 0 as it will
+  affect ``os.getpid()`` 's process group and not PID 0.
+- 639_, [Linux]: `Process.cmdline()`_ can be truncated.
+- 640_, [Linux]: ``*connections`` functions may swallow errors and return an
+  incomplete list of connections.
+- 642_: ``repr()`` of exceptions is incorrect.
+- 653_, [Windows]: add ``inet_ntop()`` function for Windows XP to support IPv6.
+- 641_, [Windows]: replace deprecated string functions with safe equivalents.
 
 3.0.1
 =====
@@ -1297,10 +1429,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 632_: [Linux] better error message if cannot parse process UNIX connections.
-- 634_: [Linux] Proces.cmdline() does not include empty string arguments.
-- 635_: [UNIX] crash on module import if 'enum' package is installed on python
-  < 3.4.
+- 632_, [Linux]: better error message if cannot parse process UNIX connections.
+- 634_, [Linux]: `Process.cmdline()`_ does not include empty string arguments.
+- 635_, [POSIX], **[critical]**: crash on module import if ``enum`` package is
+  installed on Python < 3.4.
 
 3.0.0
 =====
@@ -1309,45 +1441,45 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 250_: new psutil.net_if_stats() returning NIC statistics (isup, duplex,
-  speed, MTU).
-- 376_: new psutil.net_if_addrs() returning all NIC addresses a-la ifconfig.
+- 250_: new `net_if_stats()`_ returning NIC statistics (``isup``, ``duplex``,
+  ``speed``, ``mtu``).
+- 376_: new `net_if_addrs()`_ returning all NIC addresses a-la ``ifconfig``.
 - 469_: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
-  returned by psutil.Process' ionice() and nice() methods are enums instead of
+  returned by `Process.ionice()`_ and `Process.nice()`_ are enums instead of
   plain integers.
-- 581_: add .gitignore. (patch by Gabi Davar)
-- 582_: connection constants returned by psutil.net_connections() and
-  psutil.Process.connections() were turned from int to enums on Python > 3.4.
-- 587_: Move native extension into the package.
-- 589_: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
+- 581_: add ``.gitignore``. (patch by Gabi Davar)
+- 582_: connection constants returned by `net_connections()`_ and
+  `Process.connections()`_ were turned from int to enums on Python > 3.4.
+- 587_: move native extension into the package.
+- 589_: `Process.cpu_affinity()`_ accepts any kind of iterable (set, tuple, ...),
   not only lists.
 - 594_: all deprecated APIs were removed.
-- 599_: [Windows] process name() can now be determined for all processes even
+- 599_, [Windows]: `Process.name()`_ can now be determined for all processes even
   when running as a limited user.
 - 602_: pre-commit GIT hook.
-- 629_: enhanced support for py.test and nose test discovery and tests run.
-- 616_: [Windows] Add inet_ntop function for Windows XP.
+- 629_: enhanced support for ``pytest`` and ``nose`` test runners.
+- 616_, [Windows]: add ``inet_ntop()`` function for Windows XP.
 
 **Bug fixes**
 
-- 428_: [all UNIXes except Linux] correct handling of zombie processes;
-  introduced new ZombieProcess exception class.
-- 512_: [BSD] fix segfault in net_connections().
-- 555_: [Linux] psutil.users() correctly handles ":0" as an alias for
-  "localhost"
-- 579_: [Windows] Fixed open_files() for PID>64K.
-- 579_: [Windows] fixed many compiler warnings.
-- 585_: [FreeBSD] net_connections() may raise KeyError.
-- 586_: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU
-  number is provided.
-- 593_: [FreeBSD] Process().memory_maps() segfaults.
-- 606_: Process.parent() may swallow NoSuchProcess exceptions.
-- 611_: [SunOS] net_io_counters has send and received swapped
-- 614_: [Linux]: cpu_count(logical=False) return the number of sockets instead
-  of cores.
-- 618_: [SunOS] swap tests fail on Solaris when run as normal user
-- 628_: [Linux] Process.name() truncates process name in case it contains
-  spaces or parentheses.
+- 428_, [POSIX], **[critical]**: correct handling of zombie processes on POSIX.
+  Introduced new `ZombieProcess`_ exception class.
+- 512_, [BSD], **[critical]**: fix segfault in `net_connections()`_.
+- 555_, [Linux]: `users()`_ correctly handles ``":0"`` as an alias for
+  ``"localhost"``.
+- 579_, [Windows]: fixed `Process.open_files()`_ for PID > 64K.
+- 579_, [Windows]: fixed many compiler warnings.
+- 585_, [FreeBSD]: `net_connections()`_ may raise ``KeyError``.
+- 586_, [FreeBSD], **[critical]**: `Process.cpu_affinity()`_ segfaults on set
+  in case an invalid CPU number is provided.
+- 593_, [FreeBSD], **[critical]**: `Process.memory_maps()`_ segfaults.
+- 606_: `Process.parent()`_ may swallow `NoSuchProcess`_ exceptions.
+- 611_, [SunOS]: `net_io_counters()`_ has send and received swapped
+- 614_, [Linux]:: `cpu_count()`_ with ``logical=False`` return the number of
+  sockets instead of cores.
+- 618_, [SunOS]: swap tests fail on Solaris when run as normal user.
+- 628_, [Linux]: `Process.name()`_ truncates string in case it contains spaces
+  or parentheses.
 
 2.2.1
 =====
@@ -1356,8 +1488,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 496_: [Linux] fix "ValueError: ambiguos inode with multiple PIDs references"
-  (patch by Bruno Binet)
+- 572_, [Linux]: fix "ValueError: ambiguous inode with multiple PIDs references"
+  for `Process.connections()`_. (patch by Bruno Binet)
 
 2.2.0
 =====
@@ -1367,34 +1499,35 @@ XXXX-XX-XX
 **Enhancements**
 
 - 521_: drop support for Python 2.4 and 2.5.
-- 553_: new examples/pstree.py script.
+- 553_: new `pstree.py`_ script.
 - 564_: C extension version mismatch in case the user messed up with psutil
   installation or with sys.path is now detected at import time.
-- 568_: New examples/pidof.py script.
-- 569_: [FreeBSD] add support for process CPU affinity.
+- 568_: new `pidof.py`_ script.
+- 569_, [FreeBSD]: add support for `Process.cpu_affinity`_ on FreeBSD.
 
 **Bug fixes**
 
-- 496_: [Solaris] can't import psutil.
-- 547_: [UNIX] Process.username() may raise KeyError if UID can't be resolved.
-- 551_: [Windows] get rid of the unicode hack for net_io_counters() NIC names.
-- 556_: [Linux] lots of file handles were left open.
-- 561_: [Linux] net_connections() might skip some legitimate UNIX sockets.
+- 496_, [SunOS], **[critical]**: can't import psutil.
+- 547_, [POSIX]: `Process.username()`_ may raise ``KeyError`` if UID can't be resolved.
+- 551_, [Windows]: get rid of the unicode hack for `net_io_counters()`_ NIC names.
+- 556_, [Linux]: lots of file handles were left open.
+- 561_, [Linux]: `net_connections()`_ might skip some legitimate UNIX sockets.
   (patch by spacewander)
-- 565_: [Windows] use proper encoding for psutil.Process.username() and
-  psutil.users(). (patch by Sylvain Mouquet)
-- 567_: [Linux] in the alternative implementation of CPU affinity PyList_Append
-  and Py_BuildValue return values are not checked.
-- 569_: [FreeBSD] fix memory leak in psutil.cpu_count(logical=False).
-- 571_: [Linux] Process.open_files() might swallow AccessDenied exceptions and
-  return an incomplete list of open files.
+- 565_, [Windows]: use proper encoding for `Process.username()`_ and `users()`_.
+  (patch by Sylvain Mouquet)
+- 567_, [Linux]: in the alternative implementation of `Process.cpu_affinity`_
+  ``PyList_Append`` and ``Py_BuildValue`` return values are not checked.
+- 569_, [FreeBSD]: fix memory leak in `cpu_count()`_ with ``logical=False``.
+- 571_, [Linux]: `Process.open_files()`_ might swallow `AccessDenied`_
+  exceptions and return an incomplete list of open files.
 
 2.1.3
 =====
 
 *2014-09-26*
 
-- 536_: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
+- 536_, [Linux], **[critical]**: fix "undefined symbol: CPU_ALLOC" compilation
+  error.
 
 2.1.2
 =====
@@ -1405,26 +1538,27 @@ XXXX-XX-XX
 
 - 407_: project moved from Google Code to Github; code moved from Mercurial
   to Git.
-- 492_: use tox to run tests on multiple python versions.  (patch by msabramo)
-- 505_: [Windows] distribution as wheel packages.
-- 511_: new examples/ps.py sample code.
+- 492_: use ``tox`` to run tests on multiple Python versions.  (patch by msabramo)
+- 505_, [Windows]: distribution as wheel packages.
+- 511_: add `ps.py`_ script.
 
 **Bug fixes**
 
-- 340_: [Windows] Process.get_open_files() no longer hangs.  (patch by
+- 340_, [Windows]: `Process.open_files()`_ no longer hangs.  (patch by
   Jeff Tang)
-- 501_: [Windows] disk_io_counters() may return negative values.
-- 503_: [Linux] in rare conditions Process exe(), open_files() and
-  connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
-- 504_: [Linux] can't build RPM packages via setup.py
-- 506_: [Linux] python 2.4 support was broken.
-- 522_: [Linux] Process.cpu_affinity() might return EINVAL.  (patch by David
+- 501_, [Windows]: `disk_io_counters()`_ may return negative values.
+- 503_, [Linux]: in rare conditions `Process.exe()`_, `Process.open_files()`_ and
+  `Process.connections()`_ can raise ``OSError(ESRCH)`` instead of `NoSuchProcess`_.
+- 504_, [Linux]: can't build RPM packages via setup.py
+- 506_, [Linux], **[critical]**: Python 2.4 support was broken.
+- 522_, [Linux]: `Process.cpu_affinity()`_ might return ``EINVAL``.  (patch by David
   Daeschler)
-- 529_: [Windows] Process.exe() may raise unhandled WindowsError exception
+- 529_, [Windows]: `Process.exe()`_ may raise unhandled ``WindowsError`` exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
-- 530_: [Linux] psutil.disk_io_counters() may crash on old Linux distros
+- 530_, [Linux]: `disk_io_counters()`_ may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
-- 533_: [Linux] Process.memory_maps() may raise TypeError on old Linux distros.
+- 533_, [Linux]: `Process.memory_maps()`_ may raise ``TypeError`` on old Linux
+  distros.
 
 2.1.1
 =====
@@ -1433,10 +1567,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 446_: [Windows] fix encoding error when using net_io_counters() on Python 3.
+- 446_, [Windows]: fix encoding error when using `net_io_counters()`_ on Python 3.
   (patch by Szigeti Gabor Niif)
-- 460_: [Windows] net_io_counters() wraps after 4G.
-- 491_: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
+- 460_, [Windows]: `net_io_counters()`_ wraps after 4G.
+- 491_, [Linux]: `net_connections()`_ exceptions. (patch by Alexander Grothe)
 
 2.1.0
 =====
@@ -1445,13 +1579,13 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 387_: system-wide open connections a-la netstat.
+- 387_: system-wide open connections a-la ``netstat`` (add `net_connections()`_).
 
 **Bug fixes**
 
-- 421_: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
-  Roudsari)
-- 489_: [Linux] psutil.disk_partitions() return an empty list.
+- 421_, [SunOS], **[critical]**: psutil does not compile on SunOS 5.10.
+  (patch by Naveed Roudsari)
+- 489_, [Linux]: `disk_partitions()`_ return an empty list.
 
 2.0.0
 =====
@@ -1460,75 +1594,75 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 424_: [Windows] installer for Python 3.X 64 bit.
-- 427_: number of logical CPUs and physical cores (psutil.cpu_count()).
-- 447_: psutil.wait_procs() timeout parameter is now optional.
-- 452_: make Process instances hashable and usable with set()s.
-- 453_: tests on Python < 2.7 require unittest2 module.
-- 459_: add a make file for running tests and other repetitive tasks (also
+- 424_, [Windows]: installer for Python 3.X 64 bit.
+- 427_: number of logical CPUs and physical cores (`cpu_count()`_).
+- 447_: `wait_procs()`_ ``timeout`` parameter is now optional.
+- 452_: make `Process`_ instances hashable and usable with ``set()`` s.
+- 453_: tests on Python < 2.7 require ``unittest2`` module.
+- 459_: add a Makefile for running tests and other repetitive tasks (also
   on Windows).
-- 463_: make timeout parameter of cpu_percent* functions default to 0.0 'cause
-  it's a common trap to introduce slowdowns.
+- 463_: make timeout parameter of ``cpu_percent*`` functions default to ``0.0``
+  'cause it's a common trap to introduce slowdowns.
 - 468_: move documentation to readthedocs.com.
-- 477_: process cpu_percent() is about 30% faster.  (suggested by crusaderky)
-- 478_: [Linux] almost all APIs are about 30% faster on Python 3.X.
-- 479_: long deprecated psutil.error module is gone; exception classes now
-  live in "psutil" namespace only.
+- 477_: `Process.cpu_percent()`_ is about 30% faster.  (suggested by crusaderky)
+- 478_, [Linux]: almost all APIs are about 30% faster on Python 3.X.
+- 479_: long deprecated ``psutil.error`` module is gone; exception classes now
+  live in psutil namespace only.
 
 **Bug fixes**
 
-- 193_: psutil.Popen constructor can throw an exception if the spawned process
+- 193_: `psutil.Popen`_ constructor can throw an exception if the spawned process
   terminates quickly.
-- 340_: [Windows] process get_open_files() no longer hangs.  (patch by
+- 340_, [Windows]: `Process.open_files()`_ no longer hangs.  (patch by
   jtang@vahna.net)
-- 443_: [Linux] fix a potential overflow issue for Process.set_cpu_affinity()
-  on systems with more than 64 CPUs.
-- 448_: [Windows] get_children() and ppid() memory leak (patch by Ulrich
-  Klank).
-- 457_: [POSIX] pid_exists() always returns True for PID 0.
+- 443_, [Linux]: fix a potential overflow issue for `Process.cpu_affinity()`_
+  (set) on systems with more than 64 CPUs.
+- 448_, [Windows]: `Process.children()`_ and `Process.ppid()`_ memory leak (patch
+  by Ulrich Klank).
+- 457_, [POSIX]: `pid_exists()`_ always returns ``True`` for PID 0.
 - 461_: namedtuples are not pickle-able.
-- 466_: [Linux] process exe improper null bytes handling.  (patch by
+- 466_, [Linux]: `Process.exe()`_ improper null bytes handling.  (patch by
   Gautam Singh)
-- 470_: wait_procs() might not wait.  (patch by crusaderky)
-- 471_: [Windows] process exe improper unicode handling. (patch by
+- 470_: `wait_procs()`_ might not wait.  (patch by crusaderky)
+- 471_, [Windows]: `Process.exe()`_ improper unicode handling. (patch by
   alex@mroja.net)
-- 473_: psutil.Popen.wait() does not set returncode attribute.
-- 474_: [Windows] Process.cpu_percent() is no longer capped at 100%.
-- 476_: [Linux] encoding error for process name and cmdline.
+- 473_: `psutil.Popen`_ ``wait()`` method does not set returncode attribute.
+- 474_, [Windows]: `Process.cpu_percent()`_ is no longer capped at 100%.
+- 476_, [Linux]: encoding error for `Process.name()`_ and `Process.cmdline()`_.
 
 **API changes**
 
 For the sake of consistency a lot of psutil APIs have been renamed.
 In most cases accessing the old names will work but it will cause a
-DeprecationWarning.
+``DeprecationWarning``.
 
-- psutil.* module level constants have being replaced by functions:
+- ``psutil.*`` module level constants have being replaced by functions:
 
-  +-----------------------+-------------------------------+
-  | Old name              | Replacement                   |
-  +=======================+===============================+
-  | psutil.NUM_CPUS       | psutil.cpu_cpunt()            |
-  +-----------------------+-------------------------------+
-  | psutil.BOOT_TIME      | psutil.boot_time()            |
-  +-----------------------+-------------------------------+
-  | psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
-  +-----------------------+-------------------------------+
+  +-----------------------+----------------------------------+
+  | Old name              | Replacement                      |
+  +=======================+==================================+
+  | psutil.NUM_CPUS       | psutil.cpu_count()               |
+  +-----------------------+----------------------------------+
+  | psutil.BOOT_TIME      | psutil.boot_time()               |
+  +-----------------------+----------------------------------+
+  | psutil.TOTAL_PHYMEM   | virtual_memory.total             |
+  +-----------------------+----------------------------------+
 
-- Renamed psutil.* functions:
+- Renamed ``psutil.*`` functions:
 
-  +--------------------------+-------------------------------+
-  | Old name                 | Replacement                   |
-  +==========================+===============================+
-  | - psutil.get_pid_list()  | psutil.pids()                 |
-  +--------------------------+-------------------------------+
-  | - psutil.get_users()     | psutil.users()                |
-  +--------------------------+-------------------------------+
-  | - psutil.get_boot_time() | psutil.boot_time()            |
-  +--------------------------+-------------------------------+
+  +------------------------+-------------------------------+
+  | Old name               | Replacement                   |
+  +========================+===============================+
+  | psutil.get_pid_list()  | psutil.pids()                 |
+  +------------------------+-------------------------------+
+  | psutil.get_users()     | psutil.users()                |
+  +------------------------+-------------------------------+
+  | psutil.get_boot_time() | psutil.boot_time()            |
+  +------------------------+-------------------------------+
 
-- All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
-  get_ext_memory_info() renamed to memory_info_ex().
-  Assuming "p = psutil.Process()":
+- All `Process`_ ``get_*`` methods lost the ``get_`` prefix.
+  E.g. ``get_ext_memory_info()`` was renamed to ``memory_info_ex()``.
+  Assuming ``p = psutil.Process()``:
 
   +--------------------------+----------------------+
   | Old name                 | Replacement          |
@@ -1572,8 +1706,8 @@ DeprecationWarning.
   | p.getcwd()               | p.cwd()              |
   +--------------------------+----------------------+
 
-- All psutil.Process ``set_*`` methods lost the ``set_`` prefix.
-  Assuming "p = psutil.Process()":
+- All `Process`_ ``set_*`` methods lost the ``set_`` prefix.
+  Assuming ``p = psutil.Process()``:
 
   +----------------------+---------------------------------+
   | Old name             | Replacement                     |
@@ -1587,9 +1721,9 @@ DeprecationWarning.
   | p.set_rlimit()       | p.rlimit(resource, limits=None) |
   +----------------------+---------------------------------+
 
-- Except for 'pid' all psutil.Process class properties have been turned into
+- Except for ``pid``, all `Process`_ class properties have been turned into
   methods. This is the only case which there are no aliases.
-  Assuming "p = psutil.Process()":
+  Assuming ``p = psutil.Process()``:
 
   +---------------+-----------------+
   | Old name      | Replacement     |
@@ -1615,11 +1749,11 @@ DeprecationWarning.
   | p.create_time | p.create_time() |
   +---------------+-----------------+
 
-- timeout parameter of cpu_percent* functions defaults to 0.0 instead of 0.1.
-- long deprecated psutil.error module is gone; exception classes now live in
+- timeout parameter of ``cpu_percent*`` functions defaults to 0.0 instead of 0.1.
+- long deprecated ``psutil.error`` module is gone; exception classes now live in
   "psutil" namespace only.
-- Process instances' "retcode" attribute returned by psutil.wait_procs() has
-  been renamed to "returncode" for consistency with subprocess.Popen.
+- `Process`_ instances' ``retcode`` attribute returned by `wait_procs()`_ has
+  been renamed to ``returncode`` for consistency with ``subprocess.Popen``.
 
 1.2.1
 =====
@@ -1628,10 +1762,12 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 348_: [Windows XP] fixed "ImportError: DLL load failed" occurring on module
-  import.
-- 425_: [Solaris] crash on import due to failure at determining BOOT_TIME.
-- 443_: [Linux] can't set CPU affinity on systems with more than 64 cores.
+- 348_, [Windows], **[critical]**: fixed "ImportError: DLL load failed" occurring
+  on module import on Windows XP.
+- 425_, [SunOS], **[critical]**: crash on import due to failure at determining
+  ``BOOT_TIME``.
+- 443_, [Linux]: `Process.cpu_affinity()`_ can't set affinity on systems with
+  more than 64 cores.
 
 1.2.0
 =====
@@ -1640,15 +1776,15 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 439_: assume os.getpid() if no argument is passed to psutil.Process
+- 439_: assume ``os.getpid()`` if no argument is passed to `Process`_ class
   constructor.
-- 440_: new psutil.wait_procs() utility function which waits for multiple
+- 440_: new `wait_procs()`_ utility function which waits for multiple
   processes to terminate.
 
 **Bug fixes**
 
-- 348_: [Windows XP/Vista] fix "ImportError: DLL load failed" occurring on
-  module import.
+- 348_, [Windows]: fix "ImportError: DLL load failed" occurring on module
+  import on Windows XP / Vista.
 
 1.1.3
 =====
@@ -1657,8 +1793,8 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 442_: [Linux] psutil won't compile on certain version of Linux because of
-  missing prlimit(2) syscall.
+- 442_, [Linux], **[critical]**: psutil won't compile on certain version of
+  Linux because of missing ``prlimit(2)`` syscall.
 
 1.1.2
 =====
@@ -1667,8 +1803,8 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 442_: [Linux] psutil won't compile on Debian 6.0 because of missing
-  prlimit(2) syscall.
+- 442_, [Linux], **[critical]**: psutil won't compile on Debian 6.0 because of
+  missing ``prlimit(2)`` syscall.
 
 1.1.1
 =====
@@ -1677,8 +1813,8 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 442_: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
-  prlimit(2) syscall.
+- 442_, [Linux], **[critical]**: psutil won't compile on kernels < 2.6.36 due
+  to missing ``prlimit(2)`` syscall.
 
 1.1.0
 =====
@@ -1687,28 +1823,28 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 410_: host tar.gz and windows binary files are on PyPI.
-- 412_: [Linux] get/set process resource limits.
-- 415_: [Windows] Process.get_children() is an order of magnitude faster.
-- 426_: [Windows] Process.name is an order of magnitude faster.
-- 431_: [UNIX] Process.name is slightly faster because it unnecessarily
-  retrieved also process cmdline.
+- 410_: host tar.gz and Windows binary files are on PyPI.
+- 412_, [Linux]: get/set process resource limits (`Process.rlimit()`_).
+- 415_, [Windows]: `Process.children()`_ is an order of magnitude faster.
+- 426_, [Windows]: `Process.name()`_ is an order of magnitude faster.
+- 431_, [POSIX]: `Process.name()`_ is slightly faster because it unnecessarily
+  retrieved also `Process.cmdline()`_.
 
 **Bug fixes**
 
-- 391_: [Windows] psutil.cpu_times_percent() returns negative percentages.
-- 408_: STATUS_* and CONN_* constants don't properly serialize on JSON.
-- 411_: [Windows] examples/disk_usage.py may pop-up a GUI error.
-- 413_: [Windows] Process.get_memory_info() leaks memory.
-- 414_: [Windows] Process.exe on Windows XP may raise ERROR_INVALID_PARAMETER.
-- 416_: psutil.disk_usage() doesn't work well with unicode path names.
-- 430_: [Linux] process IO counters report wrong number of r/w syscalls.
-- 435_: [Linux] psutil.net_io_counters() might report erreneous NIC names.
-- 436_: [Linux] psutil.net_io_counters() reports a wrong 'dropin' value.
+- 391_, [Windows]: `cpu_times_percent()`_ returns negative percentages.
+- 408_: ``STATUS_*`` and ``CONN_*`` constants don't properly serialize on JSON.
+- 411_, [Windows]: `disk_usage.py`_ may pop-up a GUI error.
+- 413_, [Windows]: `Process.memory_info()`_ leaks memory.
+- 414_, [Windows]: `Process.exe()`_ on Windows XP may raise ``ERROR_INVALID_PARAMETER``.
+- 416_: `disk_usage()`_ doesn't work well with unicode path names.
+- 430_, [Linux]: `Process.io_counters()`_ report wrong number of r/w syscalls.
+- 435_, [Linux]: `net_io_counters()`_ might report erreneous NIC names.
+- 436_, [Linux]: `net_io_counters()`_ reports a wrong ``dropin`` value.
 
 **API changes**
 
-- 408_: turn STATUS_* and CONN_* constants into plain Python strings.
+- 408_: turn ``STATUS_*`` and ``CONN_*`` constants into plain Python strings.
 
 1.0.1
 =====
@@ -1717,7 +1853,7 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 405_: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
+- 405_: `net_io_counters()`_ ``pernic=True`` no longer works as intended in 1.0.0.
 
 1.0.0
 =====
@@ -1726,27 +1862,28 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 18_:  Solaris support (yay!)  (thanks Justin Venus)
-- 367_: Process.get_connections() 'status' strings are now constants.
+- 18_, [SunOS]: add Solaris support (yay!)  (thanks Justin Venus)
+- 367_: `Process.connections()`_ ``status`` strings are now constants.
 - 380_: test suite exits with non-zero on failure.  (patch by floppymaster)
 - 391_: introduce unittest2 facilities and provide workarounds if unittest2
-  is not installed (python < 2.7).
+  is not installed (Python < 2.7).
 
 **Bug fixes**
 
-- 374_: [Windows] negative memory usage reported if process uses a lot of
+- 374_, [Windows]: negative memory usage reported if process uses a lot of
   memory.
-- 379_: [Linux] Process.get_memory_maps() may raise ValueError.
-- 394_: [macOS] Mapped memory regions report incorrect file name.
-- 404_: [Linux] sched_*affinity() are implicitly declared. (patch by Arfrever)
+- 379_, [Linux]: `Process.memory_maps()`_ may raise ``ValueError``.
+- 394_, [macOS]: mapped memory regions of `Process.memory_maps()`_ report
+  incorrect file name.
+- 404_, [Linux]: ``sched_*affinity()`` are implicitly declared. (patch by Arfrever)
 
 **API changes**
 
-- Process.get_connections() 'status' field is no longer a string but a
-  constant object (psutil.CONN_*).
-- Process.get_connections() 'local_address' and 'remote_address' fields
-  renamed to 'laddr' and 'raddr'.
-- psutil.network_io_counters() renamed to psutil.net_io_counters().
+- `Process.connections()`_ ``status`` field is no longer a string but a
+  constant object (``psutil.CONN_*``).
+- `Process.connections()`_ ``local_address`` and ``remote_address`` fields
+  renamed to ``laddr`` and ``raddr``.
+- psutil.network_io_counters() renamed to `net_io_counters()`_.
 
 0.7.1
 =====
@@ -1755,11 +1892,11 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 325_: [BSD] psutil.virtual_memory() can raise SystemError.
+- 325_, [BSD], **[critical]**: `virtual_memory()`_ can raise ``SystemError``.
   (patch by Jan Beich)
-- 370_: [BSD] Process.get_connections() requires root.  (patch by John Baldwin)
-- 372_: [BSD] different process methods raise NoSuchProcess instead of
-  AccessDenied.
+- 370_, [BSD]: `Process.connections()`_ requires root.  (patch by John Baldwin)
+- 372_, [BSD]: different process methods raise `NoSuchProcess`_ instead of
+  `AccessDenied`_.
 
 0.7.0
 =====
@@ -1770,59 +1907,63 @@ DeprecationWarning.
 
 - 233_: code migrated to Mercurial (yay!)
 - 246_: psutil.error module is deprecated and scheduled for removal.
-- 328_: [Windows] process IO nice/priority support.
-- 359_: psutil.get_boot_time()
-- 361_: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
-  'guest_nice' fields available on recent Linux kernels.
-  Also, psutil.cpu_percent() is more accurate.
-- 362_: cpu_times_percent() (per-CPU-time utilization as a percentage)
+- 328_, [Windows]: `Process.ionice()`_ support.
+- 359_: add `boot_time()`_ as a substitute of ``psutil.BOOT_TIME`` since the
+  latter cannot reflect system clock updates.
+- 361_, [Linux]: `cpu_times()`_ now includes new ``steal``, ``guest`` and
+  ``guest_nice`` fields available on recent Linux kernels. Also, `cpu_percent()`_
+  is more accurate.
+- 362_: add `cpu_times_percent()`_ (per-CPU-time utilization as a percentage).
 
 **Bug fixes**
 
-- 234_: [Windows] disk_io_counters() fails to list certain disks.
-- 264_: [Windows] use of psutil.disk_partitions() may cause a message box to
+- 234_, [Windows]: `disk_io_counters()`_ fails to list certain disks.
+- 264_, [Windows]: use of `disk_partitions()`_ may cause a message box to
   appear.
-- 313_: [Linux] psutil.virtual_memory() and psutil.swap_memory() can crash on
-  certain exotic Linux flavors having an incomplete /proc interface.
-  If that's the case we now set the unretrievable stats to 0 and raise a
-  RuntimeWarning.
-- 315_: [macOS] fix some compilation warnings.
-- 317_: [Windows] cannot set process CPU affinity above 31 cores.
-- 319_: [Linux] process get_memory_maps() raises KeyError 'Anonymous' on Debian
+- 313_, [Linux], **[critical]**: `virtual_memory()`_ and `swap_memory()`_ can
+  crash on certain exotic Linux flavors having an incomplete ``/proc`` interface.
+  If that's the case we now set the unretrievable stats to ``0`` and raise
+  ``RuntimeWarning`` instead.
+- 315_, [macOS]: fix some compilation warnings.
+- 317_, [Windows]: cannot set process CPU affinity above 31 cores.
+- 319_, [Linux]: `Process.memory_maps()`_ raises ``KeyError`` 'Anonymous' on Debian
   squeeze.
-- 321_: [UNIX] Process.ppid property is no longer cached as the kernel may set
-  the ppid to 1 in case of a zombie process.
-- 323_: [macOS] disk_io_counters()'s read_time and write_time parameters were
-  reporting microseconds not milliseconds.  (patch by Gregory Szorc)
-- 331_: Process cmdline is no longer cached after first acces as it may change.
-- 333_: [macOS] Leak of Mach ports on macOS (patch by rsesek@google.com)
-- 337_: [Linux] process methods not working because of a poor /proc
-  implementation will raise NotImplementedError rather than RuntimeError
-  and Process.as_dict() will not blow up.  (patch by Curtin1060)
-- 338_: [Linux] disk_io_counters() fails to find some disks.
-- 339_: [FreeBSD] get_pid_list() can allocate all the memory on system.
-- 341_: [Linux] psutil might crash on import due to error in retrieving system
-  terminals map.
-- 344_: [FreeBSD] swap_memory() might return incorrect results due to
-  kvm_open(3) not being called. (patch by Jean Sebastien)
-- 338_: [Linux] disk_io_counters() fails to find some disks.
-- 351_: [Windows] if psutil is compiled with mingw32 (provided installers for
-  py2.4 and py2.5 are) disk_io_counters() will fail. (Patch by m.malycha)
-- 353_: [macOS] get_users() returns an empty list on macOS 10.8.
-- 356_: Process.parent now checks whether parent PID has been reused in which
-  case returns None.
-- 365_: Process.set_nice() should check PID has not been reused by another
+- 321_, [POSIX]: `Process.ppid()`_ property is no longer cached as the kernel may set
+  the PPID to 1 in case of a zombie process.
+- 323_, [macOS]: `disk_io_counters()`_ ``read_time`` and ``write_time``
+  parameters were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
+- 331_: `Process.cmdline()`_ is no longer cached after first access as it may
+  change.
+- 333_, [macOS]: leak of Mach ports (patch by rsesek@google.com)
+- 337_, [Linux], **[critical]**: `Process`_ methods not working because of a
+  poor ``/proc`` implementation will raise ``NotImplementedError`` rather than
+  ``RuntimeError`` and `Process.as_dict()`_ will not blow up.
+  (patch by Curtin1060)
+- 338_, [Linux]: `disk_io_counters()`_ fails to find some disks.
+- 339_, [FreeBSD]: ``get_pid_list()`` can allocate all the memory on system.
+- 341_, [Linux], **[critical]**: psutil might crash on import due to error in
+  retrieving system terminals map.
+- 344_, [FreeBSD]: `swap_memory()`_ might return incorrect results due to
+  ``kvm_open(3)`` not being called. (patch by Jean Sebastien)
+- 338_, [Linux]: `disk_io_counters()`_ fails to find some disks.
+- 351_, [Windows]: if psutil is compiled with MinGW32 (provided installers for
+  py2.4 and py2.5 are) `disk_io_counters()`_ will fail. (Patch by m.malycha)
+- 353_, [macOS]: `users()`_ returns an empty list on macOS 10.8.
+- 356_: `Process.parent()`_ now checks whether parent PID has been reused in which
+  case returns ``None``.
+- 365_: `Process.nice()`_ (set) should check PID has not been reused by another
   process.
-- 366_: [FreeBSD] get_memory_maps(), get_num_fds(), get_open_files() and
-  getcwd() Process methods raise RuntimeError instead of AccessDenied.
+- 366_, [FreeBSD], **[critical]**: `Process.memory_maps()`_, `Process.num_fds()`_,
+  `Process.open_files()`_ and `Process.cwd()`_ methods raise ``RuntimeError``
+  instead of `AccessDenied`_.
 
 **API changes**
 
-- Process.cmdline property is no longer cached after first access.
-- Process.ppid property is no longer cached after first access.
-- [Linux] Process methods not working because of a poor /proc implementation
-  will raise NotImplementedError instead of RuntimeError.
-- psutil.error module is deprecated and scheduled for removal.
+- `Process.cmdline()`_ property is no longer cached after first access.
+- `Process.ppid()`_ property is no longer cached after first access.
+- [Linux] `Process`_ methods not working because of a poor ``/proc``
+  implementation will raise ``NotImplementedError`` instead of ``RuntimeError``.
+- ``psutil.error`` module is deprecated and scheduled for removal.
 
 0.6.1
 =====
@@ -1831,18 +1972,18 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 316_: process cmdline property now makes a better job at guessing the process
-  executable from the cmdline.
+- 316_: `Process.cmdline()`_ property now makes a better job at guessing the
+  process executable from the cmdline.
 
 **Bug fixes**
 
-- 316_: process exe was resolved in case it was a symlink.
-- 318_: python 2.4 compatibility was broken.
+- 316_: `Process.exe()`_ was resolved in case it was a symlink.
+- 318_, **[critical]**: Python 2.4 compatibility was broken.
 
 **API changes**
 
-- process exe can now return an empty string instead of raising AccessDenied.
-- process exe is no longer resolved in case it's a symlink.
+- `Process.exe()`_ can now return an empty string instead of raising `AccessDenied`_.
+- `Process.exe()`_ is no longer resolved in case it's a symlink.
 
 0.6.0
 =====
@@ -1851,87 +1992,62 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 216_: [POSIX] get_connections() UNIX sockets support.
-- 220_: [FreeBSD] get_connections() has been rewritten in C and no longer
-  requires lsof.
-- 222_: [macOS] add support for process cwd.
-- 261_: process extended memory info.
-- 295_: [macOS] process executable path is now determined by asking the OS
-  instead of being guessed from process cmdline.
-- 297_: [macOS] the Process methods below were always raising AccessDenied for
-  any process except the current one. Now this is no longer true. Also
-  they are 2.5x faster.
-  - name
-  - get_memory_info()
-  - get_memory_percent()
-  - get_cpu_times()
-  - get_cpu_percent()
-  - get_num_threads()
-- 300_: examples/pmap.py script.
-- 301_: process_iter() now yields processes sorted by their PIDs.
-- 302_: process number of voluntary and involuntary context switches.
-- 303_: [Windows] the Process methods below were always raising AccessDenied
+- 216_, [POSIX]: `Process.connections()`_ UNIX sockets support.
+- 220_, [FreeBSD]: ``get_connections()`` has been rewritten in C and no longer
+  requires ``lsof``.
+- 222_, [macOS]: add support for `Process.cwd()`_.
+- 261_: per-process extended memory info (`Process.memory_info_ex()`_).
+- 295_, [macOS]: `Process.exe()`_ path is now determined by asking the OS
+  instead of being guessed from `Process.cmdline()`_.
+- 297_, [macOS]: the `Process`_ methods below were always raising `AccessDenied`_
+  for any process except the current one. Now this is no longer true. Also
+  they are 2.5x faster. `Process.name()`_, `Process.memory_info()`_,
+  `Process.memory_percent()`_, `Process.cpu_times()`_, `Process.cpu_percent()`_,
+  `Process.num_threads()`_.
+- 300_: add `pmap.py`_ script.
+- 301_: `process_iter()`_ now yields processes sorted by their PIDs.
+- 302_: per-process number of voluntary and involuntary context switches
+  (`Process.num_ctx_switches()`_).
+- 303_, [Windows]: the `Process`_ methods below were always raising `AccessDenied`_
   for any process not owned by current user. Now this is no longer true:
-  - create_time
-  - get_cpu_times()
-  - get_cpu_percent()
-  - get_memory_info()
-  - get_memory_percent()
-  - get_num_handles()
-  - get_io_counters()
-- 305_: add examples/netstat.py script.
+  `Process.create_time()`_, `Process.cpu_times()`_, `Process.cpu_percent()`_,
+  `Process.memory_info()`_, `Process.memory_percent()`_, `Process.num_handles()`_,
+  `Process.io_counters()`_.
+- 305_: add `netstat.py`_ script.
 - 311_: system memory functions has been refactorized and rewritten and now
   provide a more detailed and consistent representation of the system
-  memory. New psutil.virtual_memory() function provides the following
-  memory amounts:
-  - total
-  - available
-  - percent
-  - used
-  - active [POSIX]
-  - inactive [POSIX]
-  - buffers (BSD, Linux)
-  - cached (BSD, macOS)
-  - wired (macOS, BSD)
-  - shared [FreeBSD]
-  New psutil.swap_memory() provides:
-  - total
-  - used
-  - free
-  - percent
-  - sin (no. of bytes the system has swapped in from disk (cumulative))
-  - sout (no. of bytes the system has swapped out from disk (cumulative))
-  All old memory-related functions are deprecated.
-  Also two new example scripts were added:  free.py and meminfo.py.
-- 312_: psutil.network_io_counters() namedtuple includes 4 new fields:
-  errin, errout dropin and dropout, reflecting the number of packets
-  dropped and with errors.
+  memory. Added new `virtual_memory()`_ and `swap_memory()`_ functions.
+  All old memory-related functions are deprecated. Also two new example scripts
+  were added:  `free.py`_ and `meminfo.py`_.
+- 312_: ``net_io_counters()`` namedtuple includes 4 new fields:
+  ``errin``, ``errout``, ``dropin`` and ``dropout``, reflecting the number of
+  packets dropped and with errors.
 
 **Bug fixes**
 
-- 298_: [macOS and BSD] memory leak in get_num_fds().
-- 299_: potential memory leak every time PyList_New(0) is used.
-- 303_: [Windows] potential heap corruption in get_num_threads() and
-  get_status() Process methods.
-- 305_: [FreeBSD] psutil can't compile on FreeBSD 9 due to removal of utmp.h.
-- 306_: at C level, errors are not checked when invoking Py* functions which
-  create or manipulate Python objects leading to potential memory related
-  errors and/or segmentation faults.
-- 307_: [FreeBSD] values returned by psutil.network_io_counters() are wrong.
-- 308_: [BSD / Windows] psutil.virtmem_usage() wasn't actually returning
-  information about swap memory usage as it was supposed to do. It does
-  now.
-- 309_: get_open_files() might not return files which can not be accessed
-  due to limited permissions. AccessDenied is now raised instead.
+- 298_, [macOS], [BSD]: memory leak in `Process.num_fds()`_.
+- 299_: potential memory leak every time ``PyList_New(0)`` is used.
+- 303_, [Windows], **[critical]**: potential heap corruption in
+  `Process.num_threads()`_ and `Process.status()`_ methods.
+- 305_, [FreeBSD], **[critical]**: can't compile on FreeBSD 9 due to removal of
+  ``utmp.h``.
+- 306_, **[critical]**: at C level, errors are not checked when invoking ``Py*``
+  functions which create or manipulate Python objects leading to potential
+  memory related errors and/or segmentation faults.
+- 307_, [FreeBSD]: values returned by `net_io_counters()`_ are wrong.
+- 308_, [BSD], [Windows]: ``psutil.virtmem_usage()`` wasn't actually returning
+  information about swap memory usage as it was supposed to do. It does now.
+- 309_: `Process.open_files()`_ might not return files which can not be accessed
+  due to limited permissions. `AccessDenied`_ is now raised instead.
 
 **API changes**
 
-- psutil.phymem_usage() is deprecated       (use psutil.virtual_memory())
-- psutil.virtmem_usage() is deprecated      (use psutil.swap_memory())
-- psutil.phymem_buffers() on Linux is deprecated  (use psutil.virtual_memory())
-- psutil.cached_phymem() on Linux is deprecated   (use psutil.virtual_memory())
-- [Windows and BSD] psutil.virtmem_usage() now returns information about swap
-  memory instead of virtual memory.
+- ``psutil.phymem_usage()`` is deprecated (use `virtual_memory()`_)
+- ``psutil.virtmem_usage()`` is deprecated (use `swap_memory()`_)
+- [Linux]: ``psutil.phymem_buffers()`` is deprecated (use `virtual_memory()`_)
+- [Linux]: ``psutil.cached_phymem()`` is deprecated (use `virtual_memory()`_)
+- [Windows], [BSD]: ``psutil.virtmem_usage()`` now returns information about
+  swap memory instead of virtual memory.
 
 0.5.1
 =====
@@ -1940,13 +2056,14 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 293_: [Windows] process executable path is now determined by asking the OS
-  instead of being guessed from process cmdline.
+- 293_, [Windows]: `Process.exe()`_ path is now determined by asking the OS
+  instead of being guessed from `Process.cmdline()`_.
 
 **Bug fixes**
 
-- 292_: [Linux] race condition in process files/threads/connections.
-- 294_: [Windows] Process CPU affinity is only able to set CPU #0.
+- 292_, [Linux]: race condition in process `Process.open_files()`_,
+  `Process.connections()`_, `Process.threads()`_.
+- 294_, [Windows]: `Process.cpu_affinity()`_ is only able to set CPU #0.
 
 0.5.0
 =====
@@ -1955,67 +2072,69 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 195_: [Windows] number of handles opened by process.
-- 209_: psutil.disk_partitions() now provides also mount options.
-- 229_: list users currently connected on the system (psutil.get_users()).
-- 238_: [Linux, Windows] process CPU affinity (get and set).
-- 242_: Process.get_children(recursive=True): return all process
+- 195_, [Windows]: number of handles opened by process (`Process.num_handles()`_).
+- 209_: `disk_partitions()`_ now provides also mount options.
+- 229_: list users currently connected on the system (`users()`_).
+- 238_, [Linux], [Windows]: process CPU affinity (get and set,
+  `Process.cpu_affinity()`_).
+- 242_: add ``recursive=True`` to `Process.children()`_: return all process
   descendants.
-- 245_: [POSIX] Process.wait() incrementally consumes less CPU cycles.
-- 257_: [Windows] removed Windows 2000 support.
-- 258_: [Linux] Process.get_memory_info() is now 0.5x faster.
+- 245_, [POSIX]: `Process.wait()`_ incrementally consumes less CPU cycles.
+- 257_, [Windows]: removed Windows 2000 support.
+- 258_, [Linux]: `Process.memory_info()`_ is now 0.5x faster.
 - 260_: process's mapped memory regions. (Windows patch by wj32.64, macOS patch
   by Jeremy Whitlock)
-- 262_: [Windows] psutil.disk_partitions() was slow due to inspecting the
-  floppy disk drive also when "all" argument was False.
-- 273_: psutil.get_process_list() is deprecated.
-- 274_: psutil no longer requires 2to3 at installation time in order to work
+- 262_, [Windows]: `disk_partitions()`_ was slow due to inspecting the
+  floppy disk drive also when parameter is ``all=False``.
+- 273_: ``psutil.get_process_list()`` is deprecated.
+- 274_: psutil no longer requires ``2to3`` at installation time in order to work
   with Python 3.
-- 278_: new Process.as_dict() method.
-- 281_: ppid, name, exe, cmdline and create_time properties of Process class
+- 278_: new `Process.as_dict()`_ method.
+- 281_: `Process.ppid()`_, `Process.name()`_, `Process.exe()`_,
+  `Process.cmdline()`_ and `Process.create_time()`_ properties of `Process`_ class
   are now cached after being accessed.
-- 282_: psutil.STATUS_* constants can now be compared by using their string
+- 282_: ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
-- 283_: speedup Process.is_running() by caching its return value in case the
+- 283_: speedup `Process.is_running()`_ by caching its return value in case the
   process is terminated.
-- 284_: [POSIX] per-process number of opened file descriptors.
-- 287_: psutil.process_iter() now caches Process instances between calls.
-- 290_: Process.nice property is deprecated in favor of new get_nice() and
-  set_nice() methods.
+- 284_, [POSIX]: per-process number of opened file descriptors (`Process.num_fds`_).
+- 287_: `process_iter()`_ now caches `Process`_ instances between calls.
+- 290_: `Process.nice()`_ property is deprecated in favor of new ``get_nice()``
+  and ``set_nice()`` methods.
 
 **Bug fixes**
 
-- 193_: psutil.Popen constructor can throw an exception if the spawned process
+- 193_: `psutil.Popen`_ constructor can throw an exception if the spawned process
   terminates quickly.
-- 240_: [macOS] incorrect use of free() for Process.get_connections().
-- 244_: [POSIX] Process.wait() can hog CPU resources if called against a
+- 240_, [macOS]: incorrect use of ``free()`` for `Process.connections()`_.
+- 244_, [POSIX]: `Process.wait()`_ can hog CPU resources if called against a
   process which is not our children.
-- 248_: [Linux] psutil.network_io_counters() might return erroneous NIC names.
-- 252_: [Windows] process getcwd() erroneously raise NoSuchProcess for
-  processes owned by another user.  It now raises AccessDenied instead.
-- 266_: [Windows] psutil.get_pid_list() only shows 1024 processes.
+- 248_, [Linux]: `net_io_counters()`_ might return erroneous NIC names.
+- 252_, [Windows]: `Process.cwd()`_ erroneously raise `NoSuchProcess`_ for
+  processes owned by another user.  It now raises `AccessDenied`_ instead.
+- 266_, [Windows]: ``psutil.get_pid_list()`` only shows 1024 processes.
   (patch by Amoser)
-- 267_: [macOS] Process.get_connections() - an erroneous remote address was
-  returned. (Patch by Amoser)
-- 272_: [Linux] Porcess.get_open_files() - potential race condition can lead to
-  unexpected NoSuchProcess exception.  Also, we can get incorrect reports
+- 267_, [macOS]: `Process.connections()`_ returns wrong remote address.
+  (Patch by Amoser)
+- 272_, [Linux]: `Process.open_files()`_ potential race condition can lead to
+  unexpected `NoSuchProcess`_ exception. Also, we can get incorrect reports
   of not absolutized path names.
-- 275_: [Linux] Process.get_io_counters() erroneously raise NoSuchProcess on
-  old Linux versions. Where not available it now raises
-  NotImplementedError.
-- 286_: Process.is_running() doesn't actually check whether PID has been
+- 275_, [Linux]: ``Process.io_counters()`` erroneously raise `NoSuchProcess`_ on
+  old Linux versions. Where not available it now raises ``NotImplementedError``.
+- 286_: `Process.is_running()`_ doesn't actually check whether PID has been
   reused.
-- 314_: Process.get_children() can sometimes return non-children.
+- 314_: `Process.children()`_ can sometimes return non-children.
 
 **API changes**
 
-- Process.nice property is deprecated in favor of new get_nice() and set_nice()
-  methods.
-- psutil.get_process_list() is deprecated.
-- ppid, name, exe, cmdline and create_time properties of Process class are now
-  cached after being accessed, meaning NoSuchProcess will no longer be raised
-  in case the process is gone in the meantime.
-- psutil.STATUS_* constants can now be compared by using their string
+- ``Process.nice`` property is deprecated in favor of new ``get_nice()`` and
+  ``set_nice()`` methods.
+- ``psutil.get_process_list()`` is deprecated.
+- `Process.ppid()`_, `Process.name()`_, `Process.exe()`_, `Process.cmdline()`_
+  and `Process.create_time()`_ properties of `Process`_ class are now cached after
+  being accessed, meaning `NoSuchProcess`_ will no longer be raised in case the
+  process is gone in the meantime.
+- ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 
 0.4.1
@@ -2025,12 +2144,12 @@ DeprecationWarning.
 
 **Bug fixes**
 
-- 228_: some example scripts were not working with python 3.
-- 230_: [Windows / macOS] memory leak in Process.get_connections().
-- 232_: [Linux] psutil.phymem_usage() can report erroneous values which are
-  different than "free" command.
-- 236_: [Windows] memory/handle leak in Process's get_memory_info(),
-  suspend() and resume() methods.
+- 228_: some example scripts were not working with Python 3.
+- 230_, [Windows], [macOS]: fix memory leak in `Process.connections()`_.
+- 232_, [Linux]: ``psutil.phymem_usage()`` can report erroneous values which are
+  different than ``free`` command.
+- 236_, [Windows]: fix memory/handle leak in `Process.memory_info()`_,
+  `Process.suspend()`_ and `Process.resume()`_ methods.
 
 0.4.0
 =====
@@ -2039,38 +2158,40 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 150_: network I/O counters. (macOS and Windows patch by Jeremy Whitlock)
-- 154_: [FreeBSD] add support for process getcwd()
-- 157_: [Windows] provide installer for Python 3.2 64-bit.
-- 198_: Process.wait(timeout=0) can now be used to make wait() return
-  immediately.
-- 206_: disk I/O counters. (macOS and Windows patch by Jeremy Whitlock)
-- 213_: examples/iotop.py script.
-- 217_: Process.get_connections() now has a "kind" argument to filter
+- 150_: network I/O counters (`net_io_counters()`_). (macOS and Windows patch
+  by Jeremy Whitlock)
+- 154_, [FreeBSD]: add support for `Process.cwd()`_.
+- 157_, [Windows]: provide installer for Python 3.2 64-bit.
+- 198_: `Process.wait()`_ with ``timeout=0`` can now be used to make the
+  function return immediately.
+- 206_: disk I/O counters (`disk_io_counters()`_). (macOS and Windows patch by
+  Jeremy Whitlock)
+- 213_: add `iotop.py`_ script.
+- 217_: `Process.connections()`_ now has a ``kind`` argument to filter
   for connections with different criteria.
-- 221_: [FreeBSD] Process.get_open_files has been rewritten in C and no longer
-  relies on lsof.
-- 223_: examples/top.py script.
-- 227_: examples/nettop.py script.
+- 221_, [FreeBSD]: `Process.open_files()`_ has been rewritten in C and no longer
+  relies on ``lsof``.
+- 223_: add `top.py`_ script.
+- 227_: add `nettop.py`_ script.
 
 **Bug fixes**
 
-- 135_: [macOS] psutil cannot create Process object.
-- 144_: [Linux] no longer support 0 special PID.
-- 188_: [Linux] psutil import error on Linux ARM architectures.
-- 194_: [POSIX] psutil.Process.get_cpu_percent() now reports a percentage over
+- 135_, [macOS]: psutil cannot create `Process`_ object.
+- 144_, [Linux]: no longer support 0 special PID.
+- 188_, [Linux]: psutil import error on Linux ARM architectures.
+- 194_, [POSIX]: `Process.cpu_percent()`_ now reports a percentage over
   100 on multicore processors.
-- 197_: [Linux] Process.get_connections() is broken on platforms not
+- 197_, [Linux]: `Process.connections()`_ is broken on platforms not
   supporting IPv6.
-- 200_: [Linux] psutil.NUM_CPUS not working on armel and sparc architectures
-  and causing crash on module import.
-- 201_: [Linux] Process.get_connections() is broken on big-endian
+- 200_, [Linux], **[critical]**: ``psutil.NUM_CPUS`` not working on armel and
+  sparc architectures and causing crash on module import.
+- 201_, [Linux]: `Process.connections()`_ is broken on big-endian
   architectures.
-- 211_: Process instance can unexpectedly raise NoSuchProcess if tested for
-  equality with another object.
-- 218_: [Linux] crash at import time on Debian 64-bit because of a missing
-  line in /proc/meminfo.
-- 226_: [FreeBSD] crash at import time on FreeBSD 7 and minor.
+- 211_: `Process`_ instance can unexpectedly raise `NoSuchProcess`_ if tested
+  for equality with another object.
+- 218_, [Linux], **[critical]**: crash at import time on Debian 64-bit because
+  of a missing line in ``/proc/meminfo``.
+- 226_, [FreeBSD], **[critical]**: crash at import time on FreeBSD 7 and minor.
 
 0.3.0
 =====
@@ -2079,27 +2200,29 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 125_: system per-cpu percentage utilization and times.
-- 163_: per-process associated terminal (TTY).
-- 171_: added get_phymem() and get_virtmem() functions returning system
-  memory information (total, used, free) and memory percent usage.
-  total_* avail_* and used_* memory functions are deprecated.
-- 172_: disk usage statistics.
-- 174_: mounted disk partitions.
+- 125_: system per-cpu percentage utilization and times (`Process.cpu_times()`_,
+  `Process.cpu_percent()`_).
+- 163_: per-process associated terminal / TTY (`Process.terminal()`_).
+- 171_: added ``get_phymem()`` and ``get_virtmem()`` functions returning system
+  memory information (``total``, ``used``, ``free``) and memory percent usage.
+  ``total_*``, ``avail_*`` and ``used_*`` memory functions are deprecated.
+- 172_: disk usage statistics (`disk_usage()`_).
+- 174_: mounted disk partitions (`disk_partitions()`_).
 - 179_: setuptools is now used in setup.py
 
 **Bug fixes**
 
-- 159_: SetSeDebug() does not close handles or unset impersonation on return.
-- 164_: [Windows] wait function raises a TimeoutException when a process
-  returns -1 .
-- 165_: process.status raises an unhandled exception.
-- 166_: get_memory_info() leaks handles hogging system resources.
-- 168_: psutil.cpu_percent() returns erroneous results when used in
+- 159_, [Windows]: ``SetSeDebug()`` does not close handles or unset
+  impersonation on return.
+- 164_, [Windows]: wait function raises a ``TimeoutException`` when a process
+  returns ``-1``.
+- 165_: `Process.status()`_ raises an unhandled exception.
+- 166_: `Process.memory_info()`_ leaks handles hogging system resources.
+- 168_: `cpu_percent()`_ returns erroneous results when used in
   non-blocking mode.  (patch by Philip Roberts)
-- 178_: macOS - Process.get_threads() leaks memory
-- 180_: [Windows] Process's get_num_threads() and get_threads() methods can
-  raise NoSuchProcess exception while process still exists.
+- 178_, [macOS]: `Process.threads()`_ leaks memory.
+- 180_, [Windows]: `Process.num_threads()`_ and `Process.threads()`_ methods
+  can raise `NoSuchProcess`_ exception while process still exists.
 
 0.2.1
 =====
@@ -2108,40 +2231,41 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 64_: per-process I/O counters.
-- 116_: per-process wait() (wait for process to terminate and return its exit
-  code).
-- 134_: per-process get_threads() returning information (id, user and kernel
-  times) about threads opened by process.
-- 136_: process executable path on FreeBSD is now determined by asking the
+- 64_: per-process I/O counters (`Process.io_counters()`_).
+- 116_: per-process `Process.wait()`_ (wait for process to terminate and return
+  its exit code).
+- 134_: per-process threads (`Process.threads()`_).
+- 136_: `Process.exe()`_ path on FreeBSD is now determined by asking the
   kernel instead of guessing it from cmdline[0].
-- 137_: per-process real, effective and saved user and group ids.
-- 140_: system boot time.
-- 142_: per-process get and set niceness (priority).
-- 143_: per-process status.
-- 147_: per-process I/O nice (priority) - Linux only.
-- 148_: psutil.Popen class which tidies up subprocess.Popen and psutil.Process
-  in a unique interface.
-- 152_: [macOS] get_process_open_files() implementation has been rewritten
-  in C and no longer relies on lsof resulting in a 3x speedup.
-- 153_: [macOS] get_process_connection() implementation has been rewritten
-  in C and no longer relies on lsof resulting in a 3x speedup.
+- 137_: per-process real, effective and saved user and group ids
+  (`Process.gids()`_).
+- 140_: system boot time (`boot_time()`_).
+- 142_: per-process get and set niceness (priority) (`Process.nice()`_).
+- 143_: per-process status (`Process.status()`_).
+- 147_ [Linux]: per-process I/O niceness / priority (`Process.ionice()`_).
+- 148_: `psutil.Popen`_ class which tidies up ``subprocess.Popen`` and `Process`_
+  class in a single interface.
+- 152_, [macOS]: `Process.open_files()`_ implementation has been rewritten
+  in C and no longer relies on ``lsof`` resulting in a 3x speedup.
+- 153_, [macOS]: `Process.connections()`_ implementation has been rewritten
+  in C and no longer relies on ``lsof`` resulting in a 3x speedup.
 
 **Bug fixes**
 
-- 83_:  process cmdline is empty on macOS 64-bit.
-- 130_: a race condition can cause IOError exception be raised on
-  Linux if process disappears between open() and subsequent read() calls.
-- 145_: WindowsError was raised instead of psutil.AccessDenied when using
-  process resume() or suspend() on Windows.
-- 146_: 'exe' property on Linux can raise TypeError if path contains NULL
-  bytes.
-- 151_: exe and getcwd() for PID 0 on Linux return inconsistent data.
+- 83_, [macOS]:  `Process.cmdline()`_ is empty on macOS 64-bit.
+- 130_, [Linux]: a race condition can cause ``IOError`` exception be raised on
+  if process disappears between ``open()`` and the subsequent ``read()`` call.
+- 145_, [Windows], **[critical]**: ``WindowsError`` was raised instead of
+  `AccessDenied`_ when using `Process.resume()`_ or `Process.suspend()`_.
+- 146_, [Linux]: `Process.exe()`_ property can raise ``TypeError`` if path
+  contains NULL bytes.
+- 151_, [Linux]: `Process.exe()`_ and `Process.cwd()`_ for PID 0 return
+  inconsistent data.
 
 **API changes**
 
-- Process "uid" and "gid" properties are deprecated in favor of "uids" and
-  "gids" properties.
+- `Process`_ ``uid`` and ``gid`` properties are deprecated in favor of ``uids``
+  and ``gids`` properties.
 
 0.2.0
 =====
@@ -2150,59 +2274,62 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 79_: per-process open files.
+- 79_: per-process open files (`Process.open_files()`_).
 - 88_: total system physical cached memory.
 - 88_: total system physical memory buffers used by the kernel.
-- 91_: per-process send_signal() and terminate() methods.
-- 95_: NoSuchProcess and AccessDenied exception classes now provide "pid",
-  "name" and "msg" attributes.
-- 97_: per-process children.
-- 98_: Process.get_cpu_times() and Process.get_memory_info now return
+- 91_: add `Process.send_signal()`_ and `Process.terminate()`_ methods.
+- 95_: `NoSuchProcess`_ and `AccessDenied`_ exception classes now provide
+  ``pid``, ``name`` and ``msg`` attributes.
+- 97_: per-process children (`Process.children()`_).
+- 98_: `Process.cpu_times()`_ and `Process.memory_info()`_ now return
   a namedtuple instead of a tuple.
-- 103_: per-process opened TCP and UDP connections.
-- 107_: add support for Windows 64 bit. (patch by cjgohlke)
-- 111_: per-process executable name.
-- 113_: exception messages now include process name and pid.
-- 114_: process username Windows implementation has been rewritten in pure
-  C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
-  longer required as a third-party dependancy. (patch by wj32)
-- 117_: added support for Windows 2000.
-- 123_: psutil.cpu_percent() and psutil.Process.cpu_percent() accept a
-  new 'interval' parameter.
-- 129_: per-process number of threads.
+- 103_: per-process opened TCP and UDP connections (`Process.connections()`_).
+- 107_, [Windows]: add support for Windows 64 bit. (patch by cjgohlke)
+- 111_: per-process executable name (`Process.exe()`_).
+- 113_: exception messages now include `Process.name()`_ and `Process.pid`_.
+- 114_, [Windows]: `Process.username()`_ has been rewritten in pure C and no
+  longer uses WMI resulting in a big speedup. Also, pywin32 is no longer
+  required as a third-party dependency. (patch by wj32)
+- 117_, [Windows]: added support for Windows 2000.
+- 123_: `cpu_percent()`_ and `Process.cpu_percent()`_ accept a
+  new ``interval`` parameter.
+- 129_: per-process threads (`Process.threads()`_).
 
 **Bug fixes**
 
 - 80_: fixed warnings when installing psutil with easy_install.
-- 81_: psutil fails to compile with Visual Studio.
-- 94_: suspend() raises OSError instead of AccessDenied.
-- 86_: psutil didn't compile against FreeBSD 6.x.
-- 102_: orphaned process handles obtained by using OpenProcess in C were
-  left behind every time Process class was instantiated.
-- 111_: path and name Process properties report truncated or erroneous
-  values on UNIX.
-- 120_: cpu_percent() always returning 100% on macOS.
-- 112_: uid and gid properties don't change if process changes effective
+- 81_, [Windows]: psutil fails to compile with Visual Studio.
+- 94_: `Process.suspend()`_ raises ``OSError`` instead of `AccessDenied`_.
+- 86_, [FreeBSD]: psutil didn't compile against FreeBSD 6.x.
+- 102_, [Windows]: orphaned process handles obtained by using ``OpenProcess``
+  in C were left behind every time `Process`_ class was instantiated.
+- 111_, [POSIX]: ``path`` and ``name`` `Process`_ properties report truncated
+  or erroneous values on POSIX.
+- 120_, [macOS]: `cpu_percent()`_ always returning 100%.
+- 112_: ``uid`` and ``gid`` properties don't change if process changes effective
   user/group id at some point.
-- 126_: ppid, uid, gid, name, exe, cmdline and create_time properties are
-  no longer cached and correctly raise NoSuchProcess exception if the process
-  disappears.
+- 126_: `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
+  `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
+  properties are no longer cached and correctly raise `NoSuchProcess`_ exception
+  if the process disappears.
 
 **API changes**
 
-- psutil.Process.path property is deprecated and works as an alias for "exe"
-  property.
-- psutil.Process.kill(): signal argument was removed - to send a signal to the
-  process use send_signal(signal) method instead.
-- psutil.Process.get_memory_info() returns a nametuple instead of a tuple.
-- psutil.cpu_times() returns a nametuple instead of a tuple.
-- New psutil.Process methods: get_open_files(), get_connections(),
-  send_signal() and terminate().
-- ppid, uid, gid, name, exe, cmdline and create_time properties are no longer
-  cached and raise NoSuchProcess exception if process disappears.
-- psutil.cpu_percent() no longer returns immediately (see issue 123).
-- psutil.Process.get_cpu_percent() and psutil.cpu_percent() no longer returns
-  immediately by default (see issue 123).
+- ``psutil.Process.path`` property is deprecated and works as an alias for
+  ``psutil.Process.exe`` property.
+- `Process.kill()`_: signal argument was removed - to send a signal to the
+  process use `Process.send_signal()`_ method instead.
+- `Process.memory_info()`_ returns a nametuple instead of a tuple.
+- `cpu_times()`_ returns a nametuple instead of a tuple.
+- New `Process`_ methods: `Process.open_files()`_, `Process.connections()`_,
+  `Process.send_signal()`_ and `Process.terminate()`_.
+- `Process.ppid()`_, `Process.uids()`_, `Process.gids()`_, `Process.name()`_,
+  `Process.exe()`_, `Process.cmdline()`_ and `Process.create_time()`_
+  properties are no longer cached and raise `NoSuchProcess`_ exception if process
+  disappears.
+- `cpu_percent()`_ no longer returns immediately (see issue 123).
+- `Process.cpu_percent()`_ and `cpu_percent()`_ no longer returns immediately
+  by default (see issue 123_).
 
 0.1.3
 =====
@@ -2211,28 +2338,29 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 14_: per-process username
-- 51_: per-process current working directory (Windows and Linux only)
-- 59_: Process.is_running() is now 10 times faster
-- 61_: added supoprt for FreeBSD 64 bit
-- 71_: implemented suspend/resume process
-- 75_: python 3 support
+- 14_: `Process.username()`_.
+- 51_, [Linux], [Windows]: per-process current working directory (`Process.cwd()`_).
+- 59_: `Process.is_running()`_ is now 10 times faster.
+- 61_, [FreeBSD]: added supoprt for FreeBSD 64 bit.
+- 71_: per-process suspend and resume (`Process.suspend()`_ and `Process.resume()`_).
+- 75_: Python 3 support.
 
 **Bug fixes**
 
-- 36_: process cpu_times() and memory_info() functions succeeded also for dead
-  processes while a NoSuchProcess exception is supposed to be raised.
-- 48_: incorrect size for mib array defined in getcmdargs for BSD
-- 49_: possible memory leak due to missing free() on error condition on
-- 50_: fixed getcmdargs() memory fragmentation on BSD
-- 55_: test_pid_4 was failing on Windows Vista
+- 36_: `Process.cpu_times()`_ and `Process.memory_info()`_ functions succeeded.
+  also for dead processes while a `NoSuchProcess`_ exception is supposed to be raised.
+- 48_, [FreeBSD]: incorrect size for MIB array defined in ``getcmdargs``.
+- 49_, [FreeBSD]: possible memory leak due to missing ``free()`` on error
+  condition in ``getcmdpath()``.
+- 50_, [BSD]: fixed ``getcmdargs()`` memory fragmentation.
+- 55_, [Windows]: ``test_pid_4`` was failing on Windows Vista.
 - 57_: some unit tests were failing on systems where no swap memory is
-  available
-- 58_: is_running() is now called before kill() to make sure we are going
-  to kill the correct process.
-- 73_: virtual memory size reported on macOS includes shared library size
-- 77_: NoSuchProcess wasn't raised on Process.create_time if kill() was
-  used first.
+  available.
+- 58_: `Process.is_running()`_ is now called before `Process.kill()`_ to make
+  sure we are going to kill the correct process.
+- 73_, [macOS]: virtual memory size reported on includes shared library size.
+- 77_: `NoSuchProcess`_ wasn't raised on `Process.create_time()`_ if `Process.kill()`_
+  was used first.
 
 0.1.2
 =====
@@ -2241,21 +2369,21 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 32_: Per-process CPU user/kernel times
-- 33_: Process create time
-- 34_: Per-process CPU utilization percentage
-- 38_: Per-process memory usage (bytes)
-- 41_: Per-process memory utilization (percent)
-- 39_: System uptime
-- 43_: Total system virtual memory
-- 46_: Total system physical memory
-- 44_: Total system used/free virtual and physical memory
+- 32_: Per-process CPU user/kernel times (`Process.cpu_times()`_).
+- 33_: Per-process create time (`Process.create_time()`_).
+- 34_: Per-process CPU utilization percentage (`Process.cpu_percent()`_).
+- 38_: Per-process memory usage (bytes) (`Process.memory_info()`_).
+- 41_: Per-process memory percent (`Process.memory_percent()`_).
+- 39_: System uptime (`boot_time()`_).
+- 43_: Total system virtual memory.
+- 46_: Total system physical memory.
+- 44_: Total system used/free virtual and physical memory.
 
 **Bug fixes**
 
-- 36_: [Windows] NoSuchProcess not raised when accessing timing methods.
-- 40_: test_get_cpu_times() failing on FreeBSD and macOS.
-- 42_: [Windows] get_memory_percent() raises AccessDenied.
+- 36_, [Windows]: `NoSuchProcess`_ not raised when accessing timing methods.
+- 40_, [FreeBSD], [macOS]: fix ``test_get_cpu_times`` failures.
+- 42_, [Windows]: `Process.memory_percent()`_ raises `AccessDenied`_.
 
 0.1.1
 =====
@@ -2264,33 +2392,141 @@ DeprecationWarning.
 
 **Enhancements**
 
-- 4_: FreeBSD support for all functions of psutil
-- 9_: Process.uid and Process.gid now retrieve process UID and GID.
-- 11_: Support for parent/ppid - Process.parent property returns a
-  Process object representing the parent process, and Process.ppid returns
-  the parent PID.
-- 12_ & 15:
-  NoSuchProcess exception now raised when creating an object
+- 4_, [FreeBSD]: support for all functions of psutil.
+- 9_, [macOS], [Windows]: add ``Process.uid`` and ``Process.gid``, returning
+  process UID and GID.
+- 11_: per-process parent object: `Process.parent()`_ property returns a
+  `Process`_ object representing the parent process, and `Process.ppid()`_
+  returns the parent PID.
+- 12_, 15_:
+  `NoSuchProcess`_ exception now raised when creating an object
   for a nonexistent process, or when retrieving information about a process
   that has gone away.
-- 21_: AccessDenied exception created for raising access denied errors
-  from OSError or WindowsError on individual platforms.
-- 26_: psutil.process_iter() function to iterate over processes as
-  Process objects with a generator.
-- Process objects can now also be compared with == operator for equality
+- 21_, [Windows]: `AccessDenied`_ exception created for raising access denied
+  errors from ``OSError`` or ``WindowsError`` on individual platforms.
+- 26_: `process_iter()`_ function to iterate over processes as
+  `Process`_ objects with a generator.
+- `Process`_ objects can now also be compared with == operator for equality
   (PID, name, command line are compared).
 
 **Bug fixes**
 
-- 16_: [Windows] Special case for "System Idle Process" (PID 0) which
+- 16_, [Windows]: Special case for "System Idle Process" (PID 0) which
   otherwise would return an "invalid parameter" exception.
-- 17_: get_process_list() ignores NoSuchProcess and AccessDenied
+- 17_: get_process_list() ignores `NoSuchProcess`_ and `AccessDenied`_
   exceptions during building of the list.
-- 22_: [Windows] Process(0).kill() was failing with an unset exception.
-- 23_: Special case for pid_exists(0)
-- 24_: [Windows] Process(0).kill() now raises AccessDenied exception instead
-  of WindowsError.
-- 30_: psutil.get_pid_list() was returning two ins
+- 22_, [Windows]: `Process.kill()`_ for PID 0 was failing with an unset exception.
+- 23_, [Linux], [macOS]: create special case for `pid_exists()`_ with PID 0.
+- 24_, [Windows], **[critical]**: `Process.kill()`_ for PID 0 now raises
+  `AccessDenied`_ exception instead of ``WindowsError``.
+- 30_: psutil.get_pid_list() was returning two 0 PIDs.
+
+
+.. _`PROCFS_PATH`: https://psutil.readthedocs.io/en/latest/#psutil.PROCFS_PATH
+
+.. _`boot_time()`: https://psutil.readthedocs.io/en/latest/#psutil.boot_time
+.. _`cpu_count()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_count
+.. _`cpu_freq()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_freq
+.. _`cpu_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
+.. _`cpu_stats()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_stats
+.. _`cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_times
+.. _`cpu_times_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.cpu_times_percent
+.. _`disk_io_counters()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_io_counters
+.. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
+.. _`disk_usage()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_usage
+.. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
+.. _`net_connections()`: https://psutil.readthedocs.io/en/latest/#psutil.net_connections
+.. _`net_if_addrs()`: https://psutil.readthedocs.io/en/latest/#psutil.net_if_addrs
+.. _`net_if_stats()`: https://psutil.readthedocs.io/en/latest/#psutil.net_if_stats
+.. _`net_io_counters()`: https://psutil.readthedocs.io/en/latest/#psutil.net_io_counters
+.. _`pid_exists()`: https://psutil.readthedocs.io/en/latest/#psutil.pid_exists
+.. _`pids()`: https://psutil.readthedocs.io/en/latest/#psutil.pids
+.. _`process_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.process_iter
+.. _`sensors_battery()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_battery
+.. _`sensors_fans()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_fans
+.. _`sensors_temperatures()`: https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
+.. _`swap_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.swap_memory
+.. _`users()`: https://psutil.readthedocs.io/en/latest/#psutil.users
+.. _`virtual_memory()`: https://psutil.readthedocs.io/en/latest/#psutil.virtual_memory
+.. _`wait_procs()`: https://psutil.readthedocs.io/en/latest/#psutil.wait_procs
+.. _`win_service_get()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_get
+.. _`win_service_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_iter
+
+
+.. _`Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
+.. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
+.. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
+
+
+.. _`AccessDenied`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
+.. _`NoSuchProcess`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
+.. _`TimeoutExpired`: https://psutil.readthedocs.io/en/latest/#psutil.TimeoutExpired
+.. _`ZombieProcess`: https://psutil.readthedocs.io/en/latest/#psutil.ZombieProcess
+
+
+.. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
+.. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
+.. _`Process.cmdline()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
+.. _`Process.connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.connections
+.. _`Process.cpu_affinity()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_affinity
+.. _`Process.cpu_num()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_num
+.. _`Process.cpu_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_percent
+.. _`Process.cpu_times()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_times
+.. _`Process.create_time()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.create_time
+.. _`Process.cwd()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.cwd
+.. _`Process.environ()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.environ
+.. _`Process.exe()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.exe
+.. _`Process.gids()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.gids
+.. _`Process.io_counters()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.io_counters
+.. _`Process.ionice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.ionice
+.. _`Process.is_running()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.is_running
+.. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
+.. _`Process.memory_full_info()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_full_info
+.. _`Process.memory_info()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_info
+.. _`Process.memory_info_ex()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_info_ex
+.. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
+.. _`Process.memory_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_percent
+.. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
+.. _`Process.nice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.nice
+.. _`Process.num_ctx_switches()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_ctx_switches
+.. _`Process.num_fds()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_fds
+.. _`Process.num_handles()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_handles
+.. _`Process.num_threads()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_threads
+.. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
+.. _`Process.open_files()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.open_files
+.. _`Process.parent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.parent
+.. _`Process.parents()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.parents
+.. _`Process.pid`: https://psutil.readthedocs.io/en/latest/#psutil.Process.pid
+.. _`Process.ppid()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.ppid
+.. _`Process.resume()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.resume
+.. _`Process.rlimit()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.rlimit
+.. _`Process.send_signal()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.send_signal
+.. _`Process.status()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.status
+.. _`Process.suspend()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.suspend
+.. _`Process.terminal()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.terminal
+.. _`Process.terminate()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.terminate
+.. _`Process.threads()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.threads
+.. _`Process.uids()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.uids
+.. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
+.. _`Process.wait()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.wait
+
+
+.. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`free.py`: https://github.com/giampaolo/psutil/blob/master/scripts/free.py
+.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
+.. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+.. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
+.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
+.. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
+.. _`pidof.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pidof.py
+.. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
+.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
+.. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`ps.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ps.py
+.. _`pstree.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pstree.py
+.. _`top.py`: https://github.com/giampaolo/psutil/blob/master/scripts/top.py
+
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
 .. _2: https://github.com/giampaolo/psutil/issues/2
@@ -4292,3 +4528,1003 @@ DeprecationWarning.
 .. _1998: https://github.com/giampaolo/psutil/issues/1998
 .. _1999: https://github.com/giampaolo/psutil/issues/1999
 .. _2000: https://github.com/giampaolo/psutil/issues/2000
+.. _2001: https://github.com/giampaolo/psutil/issues/2001
+.. _2002: https://github.com/giampaolo/psutil/issues/2002
+.. _2003: https://github.com/giampaolo/psutil/issues/2003
+.. _2004: https://github.com/giampaolo/psutil/issues/2004
+.. _2005: https://github.com/giampaolo/psutil/issues/2005
+.. _2006: https://github.com/giampaolo/psutil/issues/2006
+.. _2007: https://github.com/giampaolo/psutil/issues/2007
+.. _2008: https://github.com/giampaolo/psutil/issues/2008
+.. _2009: https://github.com/giampaolo/psutil/issues/2009
+.. _2010: https://github.com/giampaolo/psutil/issues/2010
+.. _2011: https://github.com/giampaolo/psutil/issues/2011
+.. _2012: https://github.com/giampaolo/psutil/issues/2012
+.. _2013: https://github.com/giampaolo/psutil/issues/2013
+.. _2014: https://github.com/giampaolo/psutil/issues/2014
+.. _2015: https://github.com/giampaolo/psutil/issues/2015
+.. _2016: https://github.com/giampaolo/psutil/issues/2016
+.. _2017: https://github.com/giampaolo/psutil/issues/2017
+.. _2018: https://github.com/giampaolo/psutil/issues/2018
+.. _2019: https://github.com/giampaolo/psutil/issues/2019
+.. _2020: https://github.com/giampaolo/psutil/issues/2020
+.. _2021: https://github.com/giampaolo/psutil/issues/2021
+.. _2022: https://github.com/giampaolo/psutil/issues/2022
+.. _2023: https://github.com/giampaolo/psutil/issues/2023
+.. _2024: https://github.com/giampaolo/psutil/issues/2024
+.. _2025: https://github.com/giampaolo/psutil/issues/2025
+.. _2026: https://github.com/giampaolo/psutil/issues/2026
+.. _2027: https://github.com/giampaolo/psutil/issues/2027
+.. _2028: https://github.com/giampaolo/psutil/issues/2028
+.. _2029: https://github.com/giampaolo/psutil/issues/2029
+.. _2030: https://github.com/giampaolo/psutil/issues/2030
+.. _2031: https://github.com/giampaolo/psutil/issues/2031
+.. _2032: https://github.com/giampaolo/psutil/issues/2032
+.. _2033: https://github.com/giampaolo/psutil/issues/2033
+.. _2034: https://github.com/giampaolo/psutil/issues/2034
+.. _2035: https://github.com/giampaolo/psutil/issues/2035
+.. _2036: https://github.com/giampaolo/psutil/issues/2036
+.. _2037: https://github.com/giampaolo/psutil/issues/2037
+.. _2038: https://github.com/giampaolo/psutil/issues/2038
+.. _2039: https://github.com/giampaolo/psutil/issues/2039
+.. _2040: https://github.com/giampaolo/psutil/issues/2040
+.. _2041: https://github.com/giampaolo/psutil/issues/2041
+.. _2042: https://github.com/giampaolo/psutil/issues/2042
+.. _2043: https://github.com/giampaolo/psutil/issues/2043
+.. _2044: https://github.com/giampaolo/psutil/issues/2044
+.. _2045: https://github.com/giampaolo/psutil/issues/2045
+.. _2046: https://github.com/giampaolo/psutil/issues/2046
+.. _2047: https://github.com/giampaolo/psutil/issues/2047
+.. _2048: https://github.com/giampaolo/psutil/issues/2048
+.. _2049: https://github.com/giampaolo/psutil/issues/2049
+.. _2050: https://github.com/giampaolo/psutil/issues/2050
+.. _2051: https://github.com/giampaolo/psutil/issues/2051
+.. _2052: https://github.com/giampaolo/psutil/issues/2052
+.. _2053: https://github.com/giampaolo/psutil/issues/2053
+.. _2054: https://github.com/giampaolo/psutil/issues/2054
+.. _2055: https://github.com/giampaolo/psutil/issues/2055
+.. _2056: https://github.com/giampaolo/psutil/issues/2056
+.. _2057: https://github.com/giampaolo/psutil/issues/2057
+.. _2058: https://github.com/giampaolo/psutil/issues/2058
+.. _2059: https://github.com/giampaolo/psutil/issues/2059
+.. _2060: https://github.com/giampaolo/psutil/issues/2060
+.. _2061: https://github.com/giampaolo/psutil/issues/2061
+.. _2062: https://github.com/giampaolo/psutil/issues/2062
+.. _2063: https://github.com/giampaolo/psutil/issues/2063
+.. _2064: https://github.com/giampaolo/psutil/issues/2064
+.. _2065: https://github.com/giampaolo/psutil/issues/2065
+.. _2066: https://github.com/giampaolo/psutil/issues/2066
+.. _2067: https://github.com/giampaolo/psutil/issues/2067
+.. _2068: https://github.com/giampaolo/psutil/issues/2068
+.. _2069: https://github.com/giampaolo/psutil/issues/2069
+.. _2070: https://github.com/giampaolo/psutil/issues/2070
+.. _2071: https://github.com/giampaolo/psutil/issues/2071
+.. _2072: https://github.com/giampaolo/psutil/issues/2072
+.. _2073: https://github.com/giampaolo/psutil/issues/2073
+.. _2074: https://github.com/giampaolo/psutil/issues/2074
+.. _2075: https://github.com/giampaolo/psutil/issues/2075
+.. _2076: https://github.com/giampaolo/psutil/issues/2076
+.. _2077: https://github.com/giampaolo/psutil/issues/2077
+.. _2078: https://github.com/giampaolo/psutil/issues/2078
+.. _2079: https://github.com/giampaolo/psutil/issues/2079
+.. _2080: https://github.com/giampaolo/psutil/issues/2080
+.. _2081: https://github.com/giampaolo/psutil/issues/2081
+.. _2082: https://github.com/giampaolo/psutil/issues/2082
+.. _2083: https://github.com/giampaolo/psutil/issues/2083
+.. _2084: https://github.com/giampaolo/psutil/issues/2084
+.. _2085: https://github.com/giampaolo/psutil/issues/2085
+.. _2086: https://github.com/giampaolo/psutil/issues/2086
+.. _2087: https://github.com/giampaolo/psutil/issues/2087
+.. _2088: https://github.com/giampaolo/psutil/issues/2088
+.. _2089: https://github.com/giampaolo/psutil/issues/2089
+.. _2090: https://github.com/giampaolo/psutil/issues/2090
+.. _2091: https://github.com/giampaolo/psutil/issues/2091
+.. _2092: https://github.com/giampaolo/psutil/issues/2092
+.. _2093: https://github.com/giampaolo/psutil/issues/2093
+.. _2094: https://github.com/giampaolo/psutil/issues/2094
+.. _2095: https://github.com/giampaolo/psutil/issues/2095
+.. _2096: https://github.com/giampaolo/psutil/issues/2096
+.. _2097: https://github.com/giampaolo/psutil/issues/2097
+.. _2098: https://github.com/giampaolo/psutil/issues/2098
+.. _2099: https://github.com/giampaolo/psutil/issues/2099
+.. _2100: https://github.com/giampaolo/psutil/issues/2100
+.. _2101: https://github.com/giampaolo/psutil/issues/2101
+.. _2102: https://github.com/giampaolo/psutil/issues/2102
+.. _2103: https://github.com/giampaolo/psutil/issues/2103
+.. _2104: https://github.com/giampaolo/psutil/issues/2104
+.. _2105: https://github.com/giampaolo/psutil/issues/2105
+.. _2106: https://github.com/giampaolo/psutil/issues/2106
+.. _2107: https://github.com/giampaolo/psutil/issues/2107
+.. _2108: https://github.com/giampaolo/psutil/issues/2108
+.. _2109: https://github.com/giampaolo/psutil/issues/2109
+.. _2110: https://github.com/giampaolo/psutil/issues/2110
+.. _2111: https://github.com/giampaolo/psutil/issues/2111
+.. _2112: https://github.com/giampaolo/psutil/issues/2112
+.. _2113: https://github.com/giampaolo/psutil/issues/2113
+.. _2114: https://github.com/giampaolo/psutil/issues/2114
+.. _2115: https://github.com/giampaolo/psutil/issues/2115
+.. _2116: https://github.com/giampaolo/psutil/issues/2116
+.. _2117: https://github.com/giampaolo/psutil/issues/2117
+.. _2118: https://github.com/giampaolo/psutil/issues/2118
+.. _2119: https://github.com/giampaolo/psutil/issues/2119
+.. _2120: https://github.com/giampaolo/psutil/issues/2120
+.. _2121: https://github.com/giampaolo/psutil/issues/2121
+.. _2122: https://github.com/giampaolo/psutil/issues/2122
+.. _2123: https://github.com/giampaolo/psutil/issues/2123
+.. _2124: https://github.com/giampaolo/psutil/issues/2124
+.. _2125: https://github.com/giampaolo/psutil/issues/2125
+.. _2126: https://github.com/giampaolo/psutil/issues/2126
+.. _2127: https://github.com/giampaolo/psutil/issues/2127
+.. _2128: https://github.com/giampaolo/psutil/issues/2128
+.. _2129: https://github.com/giampaolo/psutil/issues/2129
+.. _2130: https://github.com/giampaolo/psutil/issues/2130
+.. _2131: https://github.com/giampaolo/psutil/issues/2131
+.. _2132: https://github.com/giampaolo/psutil/issues/2132
+.. _2133: https://github.com/giampaolo/psutil/issues/2133
+.. _2134: https://github.com/giampaolo/psutil/issues/2134
+.. _2135: https://github.com/giampaolo/psutil/issues/2135
+.. _2136: https://github.com/giampaolo/psutil/issues/2136
+.. _2137: https://github.com/giampaolo/psutil/issues/2137
+.. _2138: https://github.com/giampaolo/psutil/issues/2138
+.. _2139: https://github.com/giampaolo/psutil/issues/2139
+.. _2140: https://github.com/giampaolo/psutil/issues/2140
+.. _2141: https://github.com/giampaolo/psutil/issues/2141
+.. _2142: https://github.com/giampaolo/psutil/issues/2142
+.. _2143: https://github.com/giampaolo/psutil/issues/2143
+.. _2144: https://github.com/giampaolo/psutil/issues/2144
+.. _2145: https://github.com/giampaolo/psutil/issues/2145
+.. _2146: https://github.com/giampaolo/psutil/issues/2146
+.. _2147: https://github.com/giampaolo/psutil/issues/2147
+.. _2148: https://github.com/giampaolo/psutil/issues/2148
+.. _2149: https://github.com/giampaolo/psutil/issues/2149
+.. _2150: https://github.com/giampaolo/psutil/issues/2150
+.. _2151: https://github.com/giampaolo/psutil/issues/2151
+.. _2152: https://github.com/giampaolo/psutil/issues/2152
+.. _2153: https://github.com/giampaolo/psutil/issues/2153
+.. _2154: https://github.com/giampaolo/psutil/issues/2154
+.. _2155: https://github.com/giampaolo/psutil/issues/2155
+.. _2156: https://github.com/giampaolo/psutil/issues/2156
+.. _2157: https://github.com/giampaolo/psutil/issues/2157
+.. _2158: https://github.com/giampaolo/psutil/issues/2158
+.. _2159: https://github.com/giampaolo/psutil/issues/2159
+.. _2160: https://github.com/giampaolo/psutil/issues/2160
+.. _2161: https://github.com/giampaolo/psutil/issues/2161
+.. _2162: https://github.com/giampaolo/psutil/issues/2162
+.. _2163: https://github.com/giampaolo/psutil/issues/2163
+.. _2164: https://github.com/giampaolo/psutil/issues/2164
+.. _2165: https://github.com/giampaolo/psutil/issues/2165
+.. _2166: https://github.com/giampaolo/psutil/issues/2166
+.. _2167: https://github.com/giampaolo/psutil/issues/2167
+.. _2168: https://github.com/giampaolo/psutil/issues/2168
+.. _2169: https://github.com/giampaolo/psutil/issues/2169
+.. _2170: https://github.com/giampaolo/psutil/issues/2170
+.. _2171: https://github.com/giampaolo/psutil/issues/2171
+.. _2172: https://github.com/giampaolo/psutil/issues/2172
+.. _2173: https://github.com/giampaolo/psutil/issues/2173
+.. _2174: https://github.com/giampaolo/psutil/issues/2174
+.. _2175: https://github.com/giampaolo/psutil/issues/2175
+.. _2176: https://github.com/giampaolo/psutil/issues/2176
+.. _2177: https://github.com/giampaolo/psutil/issues/2177
+.. _2178: https://github.com/giampaolo/psutil/issues/2178
+.. _2179: https://github.com/giampaolo/psutil/issues/2179
+.. _2180: https://github.com/giampaolo/psutil/issues/2180
+.. _2181: https://github.com/giampaolo/psutil/issues/2181
+.. _2182: https://github.com/giampaolo/psutil/issues/2182
+.. _2183: https://github.com/giampaolo/psutil/issues/2183
+.. _2184: https://github.com/giampaolo/psutil/issues/2184
+.. _2185: https://github.com/giampaolo/psutil/issues/2185
+.. _2186: https://github.com/giampaolo/psutil/issues/2186
+.. _2187: https://github.com/giampaolo/psutil/issues/2187
+.. _2188: https://github.com/giampaolo/psutil/issues/2188
+.. _2189: https://github.com/giampaolo/psutil/issues/2189
+.. _2190: https://github.com/giampaolo/psutil/issues/2190
+.. _2191: https://github.com/giampaolo/psutil/issues/2191
+.. _2192: https://github.com/giampaolo/psutil/issues/2192
+.. _2193: https://github.com/giampaolo/psutil/issues/2193
+.. _2194: https://github.com/giampaolo/psutil/issues/2194
+.. _2195: https://github.com/giampaolo/psutil/issues/2195
+.. _2196: https://github.com/giampaolo/psutil/issues/2196
+.. _2197: https://github.com/giampaolo/psutil/issues/2197
+.. _2198: https://github.com/giampaolo/psutil/issues/2198
+.. _2199: https://github.com/giampaolo/psutil/issues/2199
+.. _2200: https://github.com/giampaolo/psutil/issues/2200
+.. _2201: https://github.com/giampaolo/psutil/issues/2201
+.. _2202: https://github.com/giampaolo/psutil/issues/2202
+.. _2203: https://github.com/giampaolo/psutil/issues/2203
+.. _2204: https://github.com/giampaolo/psutil/issues/2204
+.. _2205: https://github.com/giampaolo/psutil/issues/2205
+.. _2206: https://github.com/giampaolo/psutil/issues/2206
+.. _2207: https://github.com/giampaolo/psutil/issues/2207
+.. _2208: https://github.com/giampaolo/psutil/issues/2208
+.. _2209: https://github.com/giampaolo/psutil/issues/2209
+.. _2210: https://github.com/giampaolo/psutil/issues/2210
+.. _2211: https://github.com/giampaolo/psutil/issues/2211
+.. _2212: https://github.com/giampaolo/psutil/issues/2212
+.. _2213: https://github.com/giampaolo/psutil/issues/2213
+.. _2214: https://github.com/giampaolo/psutil/issues/2214
+.. _2215: https://github.com/giampaolo/psutil/issues/2215
+.. _2216: https://github.com/giampaolo/psutil/issues/2216
+.. _2217: https://github.com/giampaolo/psutil/issues/2217
+.. _2218: https://github.com/giampaolo/psutil/issues/2218
+.. _2219: https://github.com/giampaolo/psutil/issues/2219
+.. _2220: https://github.com/giampaolo/psutil/issues/2220
+.. _2221: https://github.com/giampaolo/psutil/issues/2221
+.. _2222: https://github.com/giampaolo/psutil/issues/2222
+.. _2223: https://github.com/giampaolo/psutil/issues/2223
+.. _2224: https://github.com/giampaolo/psutil/issues/2224
+.. _2225: https://github.com/giampaolo/psutil/issues/2225
+.. _2226: https://github.com/giampaolo/psutil/issues/2226
+.. _2227: https://github.com/giampaolo/psutil/issues/2227
+.. _2228: https://github.com/giampaolo/psutil/issues/2228
+.. _2229: https://github.com/giampaolo/psutil/issues/2229
+.. _2230: https://github.com/giampaolo/psutil/issues/2230
+.. _2231: https://github.com/giampaolo/psutil/issues/2231
+.. _2232: https://github.com/giampaolo/psutil/issues/2232
+.. _2233: https://github.com/giampaolo/psutil/issues/2233
+.. _2234: https://github.com/giampaolo/psutil/issues/2234
+.. _2235: https://github.com/giampaolo/psutil/issues/2235
+.. _2236: https://github.com/giampaolo/psutil/issues/2236
+.. _2237: https://github.com/giampaolo/psutil/issues/2237
+.. _2238: https://github.com/giampaolo/psutil/issues/2238
+.. _2239: https://github.com/giampaolo/psutil/issues/2239
+.. _2240: https://github.com/giampaolo/psutil/issues/2240
+.. _2241: https://github.com/giampaolo/psutil/issues/2241
+.. _2242: https://github.com/giampaolo/psutil/issues/2242
+.. _2243: https://github.com/giampaolo/psutil/issues/2243
+.. _2244: https://github.com/giampaolo/psutil/issues/2244
+.. _2245: https://github.com/giampaolo/psutil/issues/2245
+.. _2246: https://github.com/giampaolo/psutil/issues/2246
+.. _2247: https://github.com/giampaolo/psutil/issues/2247
+.. _2248: https://github.com/giampaolo/psutil/issues/2248
+.. _2249: https://github.com/giampaolo/psutil/issues/2249
+.. _2250: https://github.com/giampaolo/psutil/issues/2250
+.. _2251: https://github.com/giampaolo/psutil/issues/2251
+.. _2252: https://github.com/giampaolo/psutil/issues/2252
+.. _2253: https://github.com/giampaolo/psutil/issues/2253
+.. _2254: https://github.com/giampaolo/psutil/issues/2254
+.. _2255: https://github.com/giampaolo/psutil/issues/2255
+.. _2256: https://github.com/giampaolo/psutil/issues/2256
+.. _2257: https://github.com/giampaolo/psutil/issues/2257
+.. _2258: https://github.com/giampaolo/psutil/issues/2258
+.. _2259: https://github.com/giampaolo/psutil/issues/2259
+.. _2260: https://github.com/giampaolo/psutil/issues/2260
+.. _2261: https://github.com/giampaolo/psutil/issues/2261
+.. _2262: https://github.com/giampaolo/psutil/issues/2262
+.. _2263: https://github.com/giampaolo/psutil/issues/2263
+.. _2264: https://github.com/giampaolo/psutil/issues/2264
+.. _2265: https://github.com/giampaolo/psutil/issues/2265
+.. _2266: https://github.com/giampaolo/psutil/issues/2266
+.. _2267: https://github.com/giampaolo/psutil/issues/2267
+.. _2268: https://github.com/giampaolo/psutil/issues/2268
+.. _2269: https://github.com/giampaolo/psutil/issues/2269
+.. _2270: https://github.com/giampaolo/psutil/issues/2270
+.. _2271: https://github.com/giampaolo/psutil/issues/2271
+.. _2272: https://github.com/giampaolo/psutil/issues/2272
+.. _2273: https://github.com/giampaolo/psutil/issues/2273
+.. _2274: https://github.com/giampaolo/psutil/issues/2274
+.. _2275: https://github.com/giampaolo/psutil/issues/2275
+.. _2276: https://github.com/giampaolo/psutil/issues/2276
+.. _2277: https://github.com/giampaolo/psutil/issues/2277
+.. _2278: https://github.com/giampaolo/psutil/issues/2278
+.. _2279: https://github.com/giampaolo/psutil/issues/2279
+.. _2280: https://github.com/giampaolo/psutil/issues/2280
+.. _2281: https://github.com/giampaolo/psutil/issues/2281
+.. _2282: https://github.com/giampaolo/psutil/issues/2282
+.. _2283: https://github.com/giampaolo/psutil/issues/2283
+.. _2284: https://github.com/giampaolo/psutil/issues/2284
+.. _2285: https://github.com/giampaolo/psutil/issues/2285
+.. _2286: https://github.com/giampaolo/psutil/issues/2286
+.. _2287: https://github.com/giampaolo/psutil/issues/2287
+.. _2288: https://github.com/giampaolo/psutil/issues/2288
+.. _2289: https://github.com/giampaolo/psutil/issues/2289
+.. _2290: https://github.com/giampaolo/psutil/issues/2290
+.. _2291: https://github.com/giampaolo/psutil/issues/2291
+.. _2292: https://github.com/giampaolo/psutil/issues/2292
+.. _2293: https://github.com/giampaolo/psutil/issues/2293
+.. _2294: https://github.com/giampaolo/psutil/issues/2294
+.. _2295: https://github.com/giampaolo/psutil/issues/2295
+.. _2296: https://github.com/giampaolo/psutil/issues/2296
+.. _2297: https://github.com/giampaolo/psutil/issues/2297
+.. _2298: https://github.com/giampaolo/psutil/issues/2298
+.. _2299: https://github.com/giampaolo/psutil/issues/2299
+.. _2300: https://github.com/giampaolo/psutil/issues/2300
+.. _2301: https://github.com/giampaolo/psutil/issues/2301
+.. _2302: https://github.com/giampaolo/psutil/issues/2302
+.. _2303: https://github.com/giampaolo/psutil/issues/2303
+.. _2304: https://github.com/giampaolo/psutil/issues/2304
+.. _2305: https://github.com/giampaolo/psutil/issues/2305
+.. _2306: https://github.com/giampaolo/psutil/issues/2306
+.. _2307: https://github.com/giampaolo/psutil/issues/2307
+.. _2308: https://github.com/giampaolo/psutil/issues/2308
+.. _2309: https://github.com/giampaolo/psutil/issues/2309
+.. _2310: https://github.com/giampaolo/psutil/issues/2310
+.. _2311: https://github.com/giampaolo/psutil/issues/2311
+.. _2312: https://github.com/giampaolo/psutil/issues/2312
+.. _2313: https://github.com/giampaolo/psutil/issues/2313
+.. _2314: https://github.com/giampaolo/psutil/issues/2314
+.. _2315: https://github.com/giampaolo/psutil/issues/2315
+.. _2316: https://github.com/giampaolo/psutil/issues/2316
+.. _2317: https://github.com/giampaolo/psutil/issues/2317
+.. _2318: https://github.com/giampaolo/psutil/issues/2318
+.. _2319: https://github.com/giampaolo/psutil/issues/2319
+.. _2320: https://github.com/giampaolo/psutil/issues/2320
+.. _2321: https://github.com/giampaolo/psutil/issues/2321
+.. _2322: https://github.com/giampaolo/psutil/issues/2322
+.. _2323: https://github.com/giampaolo/psutil/issues/2323
+.. _2324: https://github.com/giampaolo/psutil/issues/2324
+.. _2325: https://github.com/giampaolo/psutil/issues/2325
+.. _2326: https://github.com/giampaolo/psutil/issues/2326
+.. _2327: https://github.com/giampaolo/psutil/issues/2327
+.. _2328: https://github.com/giampaolo/psutil/issues/2328
+.. _2329: https://github.com/giampaolo/psutil/issues/2329
+.. _2330: https://github.com/giampaolo/psutil/issues/2330
+.. _2331: https://github.com/giampaolo/psutil/issues/2331
+.. _2332: https://github.com/giampaolo/psutil/issues/2332
+.. _2333: https://github.com/giampaolo/psutil/issues/2333
+.. _2334: https://github.com/giampaolo/psutil/issues/2334
+.. _2335: https://github.com/giampaolo/psutil/issues/2335
+.. _2336: https://github.com/giampaolo/psutil/issues/2336
+.. _2337: https://github.com/giampaolo/psutil/issues/2337
+.. _2338: https://github.com/giampaolo/psutil/issues/2338
+.. _2339: https://github.com/giampaolo/psutil/issues/2339
+.. _2340: https://github.com/giampaolo/psutil/issues/2340
+.. _2341: https://github.com/giampaolo/psutil/issues/2341
+.. _2342: https://github.com/giampaolo/psutil/issues/2342
+.. _2343: https://github.com/giampaolo/psutil/issues/2343
+.. _2344: https://github.com/giampaolo/psutil/issues/2344
+.. _2345: https://github.com/giampaolo/psutil/issues/2345
+.. _2346: https://github.com/giampaolo/psutil/issues/2346
+.. _2347: https://github.com/giampaolo/psutil/issues/2347
+.. _2348: https://github.com/giampaolo/psutil/issues/2348
+.. _2349: https://github.com/giampaolo/psutil/issues/2349
+.. _2350: https://github.com/giampaolo/psutil/issues/2350
+.. _2351: https://github.com/giampaolo/psutil/issues/2351
+.. _2352: https://github.com/giampaolo/psutil/issues/2352
+.. _2353: https://github.com/giampaolo/psutil/issues/2353
+.. _2354: https://github.com/giampaolo/psutil/issues/2354
+.. _2355: https://github.com/giampaolo/psutil/issues/2355
+.. _2356: https://github.com/giampaolo/psutil/issues/2356
+.. _2357: https://github.com/giampaolo/psutil/issues/2357
+.. _2358: https://github.com/giampaolo/psutil/issues/2358
+.. _2359: https://github.com/giampaolo/psutil/issues/2359
+.. _2360: https://github.com/giampaolo/psutil/issues/2360
+.. _2361: https://github.com/giampaolo/psutil/issues/2361
+.. _2362: https://github.com/giampaolo/psutil/issues/2362
+.. _2363: https://github.com/giampaolo/psutil/issues/2363
+.. _2364: https://github.com/giampaolo/psutil/issues/2364
+.. _2365: https://github.com/giampaolo/psutil/issues/2365
+.. _2366: https://github.com/giampaolo/psutil/issues/2366
+.. _2367: https://github.com/giampaolo/psutil/issues/2367
+.. _2368: https://github.com/giampaolo/psutil/issues/2368
+.. _2369: https://github.com/giampaolo/psutil/issues/2369
+.. _2370: https://github.com/giampaolo/psutil/issues/2370
+.. _2371: https://github.com/giampaolo/psutil/issues/2371
+.. _2372: https://github.com/giampaolo/psutil/issues/2372
+.. _2373: https://github.com/giampaolo/psutil/issues/2373
+.. _2374: https://github.com/giampaolo/psutil/issues/2374
+.. _2375: https://github.com/giampaolo/psutil/issues/2375
+.. _2376: https://github.com/giampaolo/psutil/issues/2376
+.. _2377: https://github.com/giampaolo/psutil/issues/2377
+.. _2378: https://github.com/giampaolo/psutil/issues/2378
+.. _2379: https://github.com/giampaolo/psutil/issues/2379
+.. _2380: https://github.com/giampaolo/psutil/issues/2380
+.. _2381: https://github.com/giampaolo/psutil/issues/2381
+.. _2382: https://github.com/giampaolo/psutil/issues/2382
+.. _2383: https://github.com/giampaolo/psutil/issues/2383
+.. _2384: https://github.com/giampaolo/psutil/issues/2384
+.. _2385: https://github.com/giampaolo/psutil/issues/2385
+.. _2386: https://github.com/giampaolo/psutil/issues/2386
+.. _2387: https://github.com/giampaolo/psutil/issues/2387
+.. _2388: https://github.com/giampaolo/psutil/issues/2388
+.. _2389: https://github.com/giampaolo/psutil/issues/2389
+.. _2390: https://github.com/giampaolo/psutil/issues/2390
+.. _2391: https://github.com/giampaolo/psutil/issues/2391
+.. _2392: https://github.com/giampaolo/psutil/issues/2392
+.. _2393: https://github.com/giampaolo/psutil/issues/2393
+.. _2394: https://github.com/giampaolo/psutil/issues/2394
+.. _2395: https://github.com/giampaolo/psutil/issues/2395
+.. _2396: https://github.com/giampaolo/psutil/issues/2396
+.. _2397: https://github.com/giampaolo/psutil/issues/2397
+.. _2398: https://github.com/giampaolo/psutil/issues/2398
+.. _2399: https://github.com/giampaolo/psutil/issues/2399
+.. _2400: https://github.com/giampaolo/psutil/issues/2400
+.. _2401: https://github.com/giampaolo/psutil/issues/2401
+.. _2402: https://github.com/giampaolo/psutil/issues/2402
+.. _2403: https://github.com/giampaolo/psutil/issues/2403
+.. _2404: https://github.com/giampaolo/psutil/issues/2404
+.. _2405: https://github.com/giampaolo/psutil/issues/2405
+.. _2406: https://github.com/giampaolo/psutil/issues/2406
+.. _2407: https://github.com/giampaolo/psutil/issues/2407
+.. _2408: https://github.com/giampaolo/psutil/issues/2408
+.. _2409: https://github.com/giampaolo/psutil/issues/2409
+.. _2410: https://github.com/giampaolo/psutil/issues/2410
+.. _2411: https://github.com/giampaolo/psutil/issues/2411
+.. _2412: https://github.com/giampaolo/psutil/issues/2412
+.. _2413: https://github.com/giampaolo/psutil/issues/2413
+.. _2414: https://github.com/giampaolo/psutil/issues/2414
+.. _2415: https://github.com/giampaolo/psutil/issues/2415
+.. _2416: https://github.com/giampaolo/psutil/issues/2416
+.. _2417: https://github.com/giampaolo/psutil/issues/2417
+.. _2418: https://github.com/giampaolo/psutil/issues/2418
+.. _2419: https://github.com/giampaolo/psutil/issues/2419
+.. _2420: https://github.com/giampaolo/psutil/issues/2420
+.. _2421: https://github.com/giampaolo/psutil/issues/2421
+.. _2422: https://github.com/giampaolo/psutil/issues/2422
+.. _2423: https://github.com/giampaolo/psutil/issues/2423
+.. _2424: https://github.com/giampaolo/psutil/issues/2424
+.. _2425: https://github.com/giampaolo/psutil/issues/2425
+.. _2426: https://github.com/giampaolo/psutil/issues/2426
+.. _2427: https://github.com/giampaolo/psutil/issues/2427
+.. _2428: https://github.com/giampaolo/psutil/issues/2428
+.. _2429: https://github.com/giampaolo/psutil/issues/2429
+.. _2430: https://github.com/giampaolo/psutil/issues/2430
+.. _2431: https://github.com/giampaolo/psutil/issues/2431
+.. _2432: https://github.com/giampaolo/psutil/issues/2432
+.. _2433: https://github.com/giampaolo/psutil/issues/2433
+.. _2434: https://github.com/giampaolo/psutil/issues/2434
+.. _2435: https://github.com/giampaolo/psutil/issues/2435
+.. _2436: https://github.com/giampaolo/psutil/issues/2436
+.. _2437: https://github.com/giampaolo/psutil/issues/2437
+.. _2438: https://github.com/giampaolo/psutil/issues/2438
+.. _2439: https://github.com/giampaolo/psutil/issues/2439
+.. _2440: https://github.com/giampaolo/psutil/issues/2440
+.. _2441: https://github.com/giampaolo/psutil/issues/2441
+.. _2442: https://github.com/giampaolo/psutil/issues/2442
+.. _2443: https://github.com/giampaolo/psutil/issues/2443
+.. _2444: https://github.com/giampaolo/psutil/issues/2444
+.. _2445: https://github.com/giampaolo/psutil/issues/2445
+.. _2446: https://github.com/giampaolo/psutil/issues/2446
+.. _2447: https://github.com/giampaolo/psutil/issues/2447
+.. _2448: https://github.com/giampaolo/psutil/issues/2448
+.. _2449: https://github.com/giampaolo/psutil/issues/2449
+.. _2450: https://github.com/giampaolo/psutil/issues/2450
+.. _2451: https://github.com/giampaolo/psutil/issues/2451
+.. _2452: https://github.com/giampaolo/psutil/issues/2452
+.. _2453: https://github.com/giampaolo/psutil/issues/2453
+.. _2454: https://github.com/giampaolo/psutil/issues/2454
+.. _2455: https://github.com/giampaolo/psutil/issues/2455
+.. _2456: https://github.com/giampaolo/psutil/issues/2456
+.. _2457: https://github.com/giampaolo/psutil/issues/2457
+.. _2458: https://github.com/giampaolo/psutil/issues/2458
+.. _2459: https://github.com/giampaolo/psutil/issues/2459
+.. _2460: https://github.com/giampaolo/psutil/issues/2460
+.. _2461: https://github.com/giampaolo/psutil/issues/2461
+.. _2462: https://github.com/giampaolo/psutil/issues/2462
+.. _2463: https://github.com/giampaolo/psutil/issues/2463
+.. _2464: https://github.com/giampaolo/psutil/issues/2464
+.. _2465: https://github.com/giampaolo/psutil/issues/2465
+.. _2466: https://github.com/giampaolo/psutil/issues/2466
+.. _2467: https://github.com/giampaolo/psutil/issues/2467
+.. _2468: https://github.com/giampaolo/psutil/issues/2468
+.. _2469: https://github.com/giampaolo/psutil/issues/2469
+.. _2470: https://github.com/giampaolo/psutil/issues/2470
+.. _2471: https://github.com/giampaolo/psutil/issues/2471
+.. _2472: https://github.com/giampaolo/psutil/issues/2472
+.. _2473: https://github.com/giampaolo/psutil/issues/2473
+.. _2474: https://github.com/giampaolo/psutil/issues/2474
+.. _2475: https://github.com/giampaolo/psutil/issues/2475
+.. _2476: https://github.com/giampaolo/psutil/issues/2476
+.. _2477: https://github.com/giampaolo/psutil/issues/2477
+.. _2478: https://github.com/giampaolo/psutil/issues/2478
+.. _2479: https://github.com/giampaolo/psutil/issues/2479
+.. _2480: https://github.com/giampaolo/psutil/issues/2480
+.. _2481: https://github.com/giampaolo/psutil/issues/2481
+.. _2482: https://github.com/giampaolo/psutil/issues/2482
+.. _2483: https://github.com/giampaolo/psutil/issues/2483
+.. _2484: https://github.com/giampaolo/psutil/issues/2484
+.. _2485: https://github.com/giampaolo/psutil/issues/2485
+.. _2486: https://github.com/giampaolo/psutil/issues/2486
+.. _2487: https://github.com/giampaolo/psutil/issues/2487
+.. _2488: https://github.com/giampaolo/psutil/issues/2488
+.. _2489: https://github.com/giampaolo/psutil/issues/2489
+.. _2490: https://github.com/giampaolo/psutil/issues/2490
+.. _2491: https://github.com/giampaolo/psutil/issues/2491
+.. _2492: https://github.com/giampaolo/psutil/issues/2492
+.. _2493: https://github.com/giampaolo/psutil/issues/2493
+.. _2494: https://github.com/giampaolo/psutil/issues/2494
+.. _2495: https://github.com/giampaolo/psutil/issues/2495
+.. _2496: https://github.com/giampaolo/psutil/issues/2496
+.. _2497: https://github.com/giampaolo/psutil/issues/2497
+.. _2498: https://github.com/giampaolo/psutil/issues/2498
+.. _2499: https://github.com/giampaolo/psutil/issues/2499
+.. _2500: https://github.com/giampaolo/psutil/issues/2500
+.. _2501: https://github.com/giampaolo/psutil/issues/2501
+.. _2502: https://github.com/giampaolo/psutil/issues/2502
+.. _2503: https://github.com/giampaolo/psutil/issues/2503
+.. _2504: https://github.com/giampaolo/psutil/issues/2504
+.. _2505: https://github.com/giampaolo/psutil/issues/2505
+.. _2506: https://github.com/giampaolo/psutil/issues/2506
+.. _2507: https://github.com/giampaolo/psutil/issues/2507
+.. _2508: https://github.com/giampaolo/psutil/issues/2508
+.. _2509: https://github.com/giampaolo/psutil/issues/2509
+.. _2510: https://github.com/giampaolo/psutil/issues/2510
+.. _2511: https://github.com/giampaolo/psutil/issues/2511
+.. _2512: https://github.com/giampaolo/psutil/issues/2512
+.. _2513: https://github.com/giampaolo/psutil/issues/2513
+.. _2514: https://github.com/giampaolo/psutil/issues/2514
+.. _2515: https://github.com/giampaolo/psutil/issues/2515
+.. _2516: https://github.com/giampaolo/psutil/issues/2516
+.. _2517: https://github.com/giampaolo/psutil/issues/2517
+.. _2518: https://github.com/giampaolo/psutil/issues/2518
+.. _2519: https://github.com/giampaolo/psutil/issues/2519
+.. _2520: https://github.com/giampaolo/psutil/issues/2520
+.. _2521: https://github.com/giampaolo/psutil/issues/2521
+.. _2522: https://github.com/giampaolo/psutil/issues/2522
+.. _2523: https://github.com/giampaolo/psutil/issues/2523
+.. _2524: https://github.com/giampaolo/psutil/issues/2524
+.. _2525: https://github.com/giampaolo/psutil/issues/2525
+.. _2526: https://github.com/giampaolo/psutil/issues/2526
+.. _2527: https://github.com/giampaolo/psutil/issues/2527
+.. _2528: https://github.com/giampaolo/psutil/issues/2528
+.. _2529: https://github.com/giampaolo/psutil/issues/2529
+.. _2530: https://github.com/giampaolo/psutil/issues/2530
+.. _2531: https://github.com/giampaolo/psutil/issues/2531
+.. _2532: https://github.com/giampaolo/psutil/issues/2532
+.. _2533: https://github.com/giampaolo/psutil/issues/2533
+.. _2534: https://github.com/giampaolo/psutil/issues/2534
+.. _2535: https://github.com/giampaolo/psutil/issues/2535
+.. _2536: https://github.com/giampaolo/psutil/issues/2536
+.. _2537: https://github.com/giampaolo/psutil/issues/2537
+.. _2538: https://github.com/giampaolo/psutil/issues/2538
+.. _2539: https://github.com/giampaolo/psutil/issues/2539
+.. _2540: https://github.com/giampaolo/psutil/issues/2540
+.. _2541: https://github.com/giampaolo/psutil/issues/2541
+.. _2542: https://github.com/giampaolo/psutil/issues/2542
+.. _2543: https://github.com/giampaolo/psutil/issues/2543
+.. _2544: https://github.com/giampaolo/psutil/issues/2544
+.. _2545: https://github.com/giampaolo/psutil/issues/2545
+.. _2546: https://github.com/giampaolo/psutil/issues/2546
+.. _2547: https://github.com/giampaolo/psutil/issues/2547
+.. _2548: https://github.com/giampaolo/psutil/issues/2548
+.. _2549: https://github.com/giampaolo/psutil/issues/2549
+.. _2550: https://github.com/giampaolo/psutil/issues/2550
+.. _2551: https://github.com/giampaolo/psutil/issues/2551
+.. _2552: https://github.com/giampaolo/psutil/issues/2552
+.. _2553: https://github.com/giampaolo/psutil/issues/2553
+.. _2554: https://github.com/giampaolo/psutil/issues/2554
+.. _2555: https://github.com/giampaolo/psutil/issues/2555
+.. _2556: https://github.com/giampaolo/psutil/issues/2556
+.. _2557: https://github.com/giampaolo/psutil/issues/2557
+.. _2558: https://github.com/giampaolo/psutil/issues/2558
+.. _2559: https://github.com/giampaolo/psutil/issues/2559
+.. _2560: https://github.com/giampaolo/psutil/issues/2560
+.. _2561: https://github.com/giampaolo/psutil/issues/2561
+.. _2562: https://github.com/giampaolo/psutil/issues/2562
+.. _2563: https://github.com/giampaolo/psutil/issues/2563
+.. _2564: https://github.com/giampaolo/psutil/issues/2564
+.. _2565: https://github.com/giampaolo/psutil/issues/2565
+.. _2566: https://github.com/giampaolo/psutil/issues/2566
+.. _2567: https://github.com/giampaolo/psutil/issues/2567
+.. _2568: https://github.com/giampaolo/psutil/issues/2568
+.. _2569: https://github.com/giampaolo/psutil/issues/2569
+.. _2570: https://github.com/giampaolo/psutil/issues/2570
+.. _2571: https://github.com/giampaolo/psutil/issues/2571
+.. _2572: https://github.com/giampaolo/psutil/issues/2572
+.. _2573: https://github.com/giampaolo/psutil/issues/2573
+.. _2574: https://github.com/giampaolo/psutil/issues/2574
+.. _2575: https://github.com/giampaolo/psutil/issues/2575
+.. _2576: https://github.com/giampaolo/psutil/issues/2576
+.. _2577: https://github.com/giampaolo/psutil/issues/2577
+.. _2578: https://github.com/giampaolo/psutil/issues/2578
+.. _2579: https://github.com/giampaolo/psutil/issues/2579
+.. _2580: https://github.com/giampaolo/psutil/issues/2580
+.. _2581: https://github.com/giampaolo/psutil/issues/2581
+.. _2582: https://github.com/giampaolo/psutil/issues/2582
+.. _2583: https://github.com/giampaolo/psutil/issues/2583
+.. _2584: https://github.com/giampaolo/psutil/issues/2584
+.. _2585: https://github.com/giampaolo/psutil/issues/2585
+.. _2586: https://github.com/giampaolo/psutil/issues/2586
+.. _2587: https://github.com/giampaolo/psutil/issues/2587
+.. _2588: https://github.com/giampaolo/psutil/issues/2588
+.. _2589: https://github.com/giampaolo/psutil/issues/2589
+.. _2590: https://github.com/giampaolo/psutil/issues/2590
+.. _2591: https://github.com/giampaolo/psutil/issues/2591
+.. _2592: https://github.com/giampaolo/psutil/issues/2592
+.. _2593: https://github.com/giampaolo/psutil/issues/2593
+.. _2594: https://github.com/giampaolo/psutil/issues/2594
+.. _2595: https://github.com/giampaolo/psutil/issues/2595
+.. _2596: https://github.com/giampaolo/psutil/issues/2596
+.. _2597: https://github.com/giampaolo/psutil/issues/2597
+.. _2598: https://github.com/giampaolo/psutil/issues/2598
+.. _2599: https://github.com/giampaolo/psutil/issues/2599
+.. _2600: https://github.com/giampaolo/psutil/issues/2600
+.. _2601: https://github.com/giampaolo/psutil/issues/2601
+.. _2602: https://github.com/giampaolo/psutil/issues/2602
+.. _2603: https://github.com/giampaolo/psutil/issues/2603
+.. _2604: https://github.com/giampaolo/psutil/issues/2604
+.. _2605: https://github.com/giampaolo/psutil/issues/2605
+.. _2606: https://github.com/giampaolo/psutil/issues/2606
+.. _2607: https://github.com/giampaolo/psutil/issues/2607
+.. _2608: https://github.com/giampaolo/psutil/issues/2608
+.. _2609: https://github.com/giampaolo/psutil/issues/2609
+.. _2610: https://github.com/giampaolo/psutil/issues/2610
+.. _2611: https://github.com/giampaolo/psutil/issues/2611
+.. _2612: https://github.com/giampaolo/psutil/issues/2612
+.. _2613: https://github.com/giampaolo/psutil/issues/2613
+.. _2614: https://github.com/giampaolo/psutil/issues/2614
+.. _2615: https://github.com/giampaolo/psutil/issues/2615
+.. _2616: https://github.com/giampaolo/psutil/issues/2616
+.. _2617: https://github.com/giampaolo/psutil/issues/2617
+.. _2618: https://github.com/giampaolo/psutil/issues/2618
+.. _2619: https://github.com/giampaolo/psutil/issues/2619
+.. _2620: https://github.com/giampaolo/psutil/issues/2620
+.. _2621: https://github.com/giampaolo/psutil/issues/2621
+.. _2622: https://github.com/giampaolo/psutil/issues/2622
+.. _2623: https://github.com/giampaolo/psutil/issues/2623
+.. _2624: https://github.com/giampaolo/psutil/issues/2624
+.. _2625: https://github.com/giampaolo/psutil/issues/2625
+.. _2626: https://github.com/giampaolo/psutil/issues/2626
+.. _2627: https://github.com/giampaolo/psutil/issues/2627
+.. _2628: https://github.com/giampaolo/psutil/issues/2628
+.. _2629: https://github.com/giampaolo/psutil/issues/2629
+.. _2630: https://github.com/giampaolo/psutil/issues/2630
+.. _2631: https://github.com/giampaolo/psutil/issues/2631
+.. _2632: https://github.com/giampaolo/psutil/issues/2632
+.. _2633: https://github.com/giampaolo/psutil/issues/2633
+.. _2634: https://github.com/giampaolo/psutil/issues/2634
+.. _2635: https://github.com/giampaolo/psutil/issues/2635
+.. _2636: https://github.com/giampaolo/psutil/issues/2636
+.. _2637: https://github.com/giampaolo/psutil/issues/2637
+.. _2638: https://github.com/giampaolo/psutil/issues/2638
+.. _2639: https://github.com/giampaolo/psutil/issues/2639
+.. _2640: https://github.com/giampaolo/psutil/issues/2640
+.. _2641: https://github.com/giampaolo/psutil/issues/2641
+.. _2642: https://github.com/giampaolo/psutil/issues/2642
+.. _2643: https://github.com/giampaolo/psutil/issues/2643
+.. _2644: https://github.com/giampaolo/psutil/issues/2644
+.. _2645: https://github.com/giampaolo/psutil/issues/2645
+.. _2646: https://github.com/giampaolo/psutil/issues/2646
+.. _2647: https://github.com/giampaolo/psutil/issues/2647
+.. _2648: https://github.com/giampaolo/psutil/issues/2648
+.. _2649: https://github.com/giampaolo/psutil/issues/2649
+.. _2650: https://github.com/giampaolo/psutil/issues/2650
+.. _2651: https://github.com/giampaolo/psutil/issues/2651
+.. _2652: https://github.com/giampaolo/psutil/issues/2652
+.. _2653: https://github.com/giampaolo/psutil/issues/2653
+.. _2654: https://github.com/giampaolo/psutil/issues/2654
+.. _2655: https://github.com/giampaolo/psutil/issues/2655
+.. _2656: https://github.com/giampaolo/psutil/issues/2656
+.. _2657: https://github.com/giampaolo/psutil/issues/2657
+.. _2658: https://github.com/giampaolo/psutil/issues/2658
+.. _2659: https://github.com/giampaolo/psutil/issues/2659
+.. _2660: https://github.com/giampaolo/psutil/issues/2660
+.. _2661: https://github.com/giampaolo/psutil/issues/2661
+.. _2662: https://github.com/giampaolo/psutil/issues/2662
+.. _2663: https://github.com/giampaolo/psutil/issues/2663
+.. _2664: https://github.com/giampaolo/psutil/issues/2664
+.. _2665: https://github.com/giampaolo/psutil/issues/2665
+.. _2666: https://github.com/giampaolo/psutil/issues/2666
+.. _2667: https://github.com/giampaolo/psutil/issues/2667
+.. _2668: https://github.com/giampaolo/psutil/issues/2668
+.. _2669: https://github.com/giampaolo/psutil/issues/2669
+.. _2670: https://github.com/giampaolo/psutil/issues/2670
+.. _2671: https://github.com/giampaolo/psutil/issues/2671
+.. _2672: https://github.com/giampaolo/psutil/issues/2672
+.. _2673: https://github.com/giampaolo/psutil/issues/2673
+.. _2674: https://github.com/giampaolo/psutil/issues/2674
+.. _2675: https://github.com/giampaolo/psutil/issues/2675
+.. _2676: https://github.com/giampaolo/psutil/issues/2676
+.. _2677: https://github.com/giampaolo/psutil/issues/2677
+.. _2678: https://github.com/giampaolo/psutil/issues/2678
+.. _2679: https://github.com/giampaolo/psutil/issues/2679
+.. _2680: https://github.com/giampaolo/psutil/issues/2680
+.. _2681: https://github.com/giampaolo/psutil/issues/2681
+.. _2682: https://github.com/giampaolo/psutil/issues/2682
+.. _2683: https://github.com/giampaolo/psutil/issues/2683
+.. _2684: https://github.com/giampaolo/psutil/issues/2684
+.. _2685: https://github.com/giampaolo/psutil/issues/2685
+.. _2686: https://github.com/giampaolo/psutil/issues/2686
+.. _2687: https://github.com/giampaolo/psutil/issues/2687
+.. _2688: https://github.com/giampaolo/psutil/issues/2688
+.. _2689: https://github.com/giampaolo/psutil/issues/2689
+.. _2690: https://github.com/giampaolo/psutil/issues/2690
+.. _2691: https://github.com/giampaolo/psutil/issues/2691
+.. _2692: https://github.com/giampaolo/psutil/issues/2692
+.. _2693: https://github.com/giampaolo/psutil/issues/2693
+.. _2694: https://github.com/giampaolo/psutil/issues/2694
+.. _2695: https://github.com/giampaolo/psutil/issues/2695
+.. _2696: https://github.com/giampaolo/psutil/issues/2696
+.. _2697: https://github.com/giampaolo/psutil/issues/2697
+.. _2698: https://github.com/giampaolo/psutil/issues/2698
+.. _2699: https://github.com/giampaolo/psutil/issues/2699
+.. _2700: https://github.com/giampaolo/psutil/issues/2700
+.. _2701: https://github.com/giampaolo/psutil/issues/2701
+.. _2702: https://github.com/giampaolo/psutil/issues/2702
+.. _2703: https://github.com/giampaolo/psutil/issues/2703
+.. _2704: https://github.com/giampaolo/psutil/issues/2704
+.. _2705: https://github.com/giampaolo/psutil/issues/2705
+.. _2706: https://github.com/giampaolo/psutil/issues/2706
+.. _2707: https://github.com/giampaolo/psutil/issues/2707
+.. _2708: https://github.com/giampaolo/psutil/issues/2708
+.. _2709: https://github.com/giampaolo/psutil/issues/2709
+.. _2710: https://github.com/giampaolo/psutil/issues/2710
+.. _2711: https://github.com/giampaolo/psutil/issues/2711
+.. _2712: https://github.com/giampaolo/psutil/issues/2712
+.. _2713: https://github.com/giampaolo/psutil/issues/2713
+.. _2714: https://github.com/giampaolo/psutil/issues/2714
+.. _2715: https://github.com/giampaolo/psutil/issues/2715
+.. _2716: https://github.com/giampaolo/psutil/issues/2716
+.. _2717: https://github.com/giampaolo/psutil/issues/2717
+.. _2718: https://github.com/giampaolo/psutil/issues/2718
+.. _2719: https://github.com/giampaolo/psutil/issues/2719
+.. _2720: https://github.com/giampaolo/psutil/issues/2720
+.. _2721: https://github.com/giampaolo/psutil/issues/2721
+.. _2722: https://github.com/giampaolo/psutil/issues/2722
+.. _2723: https://github.com/giampaolo/psutil/issues/2723
+.. _2724: https://github.com/giampaolo/psutil/issues/2724
+.. _2725: https://github.com/giampaolo/psutil/issues/2725
+.. _2726: https://github.com/giampaolo/psutil/issues/2726
+.. _2727: https://github.com/giampaolo/psutil/issues/2727
+.. _2728: https://github.com/giampaolo/psutil/issues/2728
+.. _2729: https://github.com/giampaolo/psutil/issues/2729
+.. _2730: https://github.com/giampaolo/psutil/issues/2730
+.. _2731: https://github.com/giampaolo/psutil/issues/2731
+.. _2732: https://github.com/giampaolo/psutil/issues/2732
+.. _2733: https://github.com/giampaolo/psutil/issues/2733
+.. _2734: https://github.com/giampaolo/psutil/issues/2734
+.. _2735: https://github.com/giampaolo/psutil/issues/2735
+.. _2736: https://github.com/giampaolo/psutil/issues/2736
+.. _2737: https://github.com/giampaolo/psutil/issues/2737
+.. _2738: https://github.com/giampaolo/psutil/issues/2738
+.. _2739: https://github.com/giampaolo/psutil/issues/2739
+.. _2740: https://github.com/giampaolo/psutil/issues/2740
+.. _2741: https://github.com/giampaolo/psutil/issues/2741
+.. _2742: https://github.com/giampaolo/psutil/issues/2742
+.. _2743: https://github.com/giampaolo/psutil/issues/2743
+.. _2744: https://github.com/giampaolo/psutil/issues/2744
+.. _2745: https://github.com/giampaolo/psutil/issues/2745
+.. _2746: https://github.com/giampaolo/psutil/issues/2746
+.. _2747: https://github.com/giampaolo/psutil/issues/2747
+.. _2748: https://github.com/giampaolo/psutil/issues/2748
+.. _2749: https://github.com/giampaolo/psutil/issues/2749
+.. _2750: https://github.com/giampaolo/psutil/issues/2750
+.. _2751: https://github.com/giampaolo/psutil/issues/2751
+.. _2752: https://github.com/giampaolo/psutil/issues/2752
+.. _2753: https://github.com/giampaolo/psutil/issues/2753
+.. _2754: https://github.com/giampaolo/psutil/issues/2754
+.. _2755: https://github.com/giampaolo/psutil/issues/2755
+.. _2756: https://github.com/giampaolo/psutil/issues/2756
+.. _2757: https://github.com/giampaolo/psutil/issues/2757
+.. _2758: https://github.com/giampaolo/psutil/issues/2758
+.. _2759: https://github.com/giampaolo/psutil/issues/2759
+.. _2760: https://github.com/giampaolo/psutil/issues/2760
+.. _2761: https://github.com/giampaolo/psutil/issues/2761
+.. _2762: https://github.com/giampaolo/psutil/issues/2762
+.. _2763: https://github.com/giampaolo/psutil/issues/2763
+.. _2764: https://github.com/giampaolo/psutil/issues/2764
+.. _2765: https://github.com/giampaolo/psutil/issues/2765
+.. _2766: https://github.com/giampaolo/psutil/issues/2766
+.. _2767: https://github.com/giampaolo/psutil/issues/2767
+.. _2768: https://github.com/giampaolo/psutil/issues/2768
+.. _2769: https://github.com/giampaolo/psutil/issues/2769
+.. _2770: https://github.com/giampaolo/psutil/issues/2770
+.. _2771: https://github.com/giampaolo/psutil/issues/2771
+.. _2772: https://github.com/giampaolo/psutil/issues/2772
+.. _2773: https://github.com/giampaolo/psutil/issues/2773
+.. _2774: https://github.com/giampaolo/psutil/issues/2774
+.. _2775: https://github.com/giampaolo/psutil/issues/2775
+.. _2776: https://github.com/giampaolo/psutil/issues/2776
+.. _2777: https://github.com/giampaolo/psutil/issues/2777
+.. _2778: https://github.com/giampaolo/psutil/issues/2778
+.. _2779: https://github.com/giampaolo/psutil/issues/2779
+.. _2780: https://github.com/giampaolo/psutil/issues/2780
+.. _2781: https://github.com/giampaolo/psutil/issues/2781
+.. _2782: https://github.com/giampaolo/psutil/issues/2782
+.. _2783: https://github.com/giampaolo/psutil/issues/2783
+.. _2784: https://github.com/giampaolo/psutil/issues/2784
+.. _2785: https://github.com/giampaolo/psutil/issues/2785
+.. _2786: https://github.com/giampaolo/psutil/issues/2786
+.. _2787: https://github.com/giampaolo/psutil/issues/2787
+.. _2788: https://github.com/giampaolo/psutil/issues/2788
+.. _2789: https://github.com/giampaolo/psutil/issues/2789
+.. _2790: https://github.com/giampaolo/psutil/issues/2790
+.. _2791: https://github.com/giampaolo/psutil/issues/2791
+.. _2792: https://github.com/giampaolo/psutil/issues/2792
+.. _2793: https://github.com/giampaolo/psutil/issues/2793
+.. _2794: https://github.com/giampaolo/psutil/issues/2794
+.. _2795: https://github.com/giampaolo/psutil/issues/2795
+.. _2796: https://github.com/giampaolo/psutil/issues/2796
+.. _2797: https://github.com/giampaolo/psutil/issues/2797
+.. _2798: https://github.com/giampaolo/psutil/issues/2798
+.. _2799: https://github.com/giampaolo/psutil/issues/2799
+.. _2800: https://github.com/giampaolo/psutil/issues/2800
+.. _2801: https://github.com/giampaolo/psutil/issues/2801
+.. _2802: https://github.com/giampaolo/psutil/issues/2802
+.. _2803: https://github.com/giampaolo/psutil/issues/2803
+.. _2804: https://github.com/giampaolo/psutil/issues/2804
+.. _2805: https://github.com/giampaolo/psutil/issues/2805
+.. _2806: https://github.com/giampaolo/psutil/issues/2806
+.. _2807: https://github.com/giampaolo/psutil/issues/2807
+.. _2808: https://github.com/giampaolo/psutil/issues/2808
+.. _2809: https://github.com/giampaolo/psutil/issues/2809
+.. _2810: https://github.com/giampaolo/psutil/issues/2810
+.. _2811: https://github.com/giampaolo/psutil/issues/2811
+.. _2812: https://github.com/giampaolo/psutil/issues/2812
+.. _2813: https://github.com/giampaolo/psutil/issues/2813
+.. _2814: https://github.com/giampaolo/psutil/issues/2814
+.. _2815: https://github.com/giampaolo/psutil/issues/2815
+.. _2816: https://github.com/giampaolo/psutil/issues/2816
+.. _2817: https://github.com/giampaolo/psutil/issues/2817
+.. _2818: https://github.com/giampaolo/psutil/issues/2818
+.. _2819: https://github.com/giampaolo/psutil/issues/2819
+.. _2820: https://github.com/giampaolo/psutil/issues/2820
+.. _2821: https://github.com/giampaolo/psutil/issues/2821
+.. _2822: https://github.com/giampaolo/psutil/issues/2822
+.. _2823: https://github.com/giampaolo/psutil/issues/2823
+.. _2824: https://github.com/giampaolo/psutil/issues/2824
+.. _2825: https://github.com/giampaolo/psutil/issues/2825
+.. _2826: https://github.com/giampaolo/psutil/issues/2826
+.. _2827: https://github.com/giampaolo/psutil/issues/2827
+.. _2828: https://github.com/giampaolo/psutil/issues/2828
+.. _2829: https://github.com/giampaolo/psutil/issues/2829
+.. _2830: https://github.com/giampaolo/psutil/issues/2830
+.. _2831: https://github.com/giampaolo/psutil/issues/2831
+.. _2832: https://github.com/giampaolo/psutil/issues/2832
+.. _2833: https://github.com/giampaolo/psutil/issues/2833
+.. _2834: https://github.com/giampaolo/psutil/issues/2834
+.. _2835: https://github.com/giampaolo/psutil/issues/2835
+.. _2836: https://github.com/giampaolo/psutil/issues/2836
+.. _2837: https://github.com/giampaolo/psutil/issues/2837
+.. _2838: https://github.com/giampaolo/psutil/issues/2838
+.. _2839: https://github.com/giampaolo/psutil/issues/2839
+.. _2840: https://github.com/giampaolo/psutil/issues/2840
+.. _2841: https://github.com/giampaolo/psutil/issues/2841
+.. _2842: https://github.com/giampaolo/psutil/issues/2842
+.. _2843: https://github.com/giampaolo/psutil/issues/2843
+.. _2844: https://github.com/giampaolo/psutil/issues/2844
+.. _2845: https://github.com/giampaolo/psutil/issues/2845
+.. _2846: https://github.com/giampaolo/psutil/issues/2846
+.. _2847: https://github.com/giampaolo/psutil/issues/2847
+.. _2848: https://github.com/giampaolo/psutil/issues/2848
+.. _2849: https://github.com/giampaolo/psutil/issues/2849
+.. _2850: https://github.com/giampaolo/psutil/issues/2850
+.. _2851: https://github.com/giampaolo/psutil/issues/2851
+.. _2852: https://github.com/giampaolo/psutil/issues/2852
+.. _2853: https://github.com/giampaolo/psutil/issues/2853
+.. _2854: https://github.com/giampaolo/psutil/issues/2854
+.. _2855: https://github.com/giampaolo/psutil/issues/2855
+.. _2856: https://github.com/giampaolo/psutil/issues/2856
+.. _2857: https://github.com/giampaolo/psutil/issues/2857
+.. _2858: https://github.com/giampaolo/psutil/issues/2858
+.. _2859: https://github.com/giampaolo/psutil/issues/2859
+.. _2860: https://github.com/giampaolo/psutil/issues/2860
+.. _2861: https://github.com/giampaolo/psutil/issues/2861
+.. _2862: https://github.com/giampaolo/psutil/issues/2862
+.. _2863: https://github.com/giampaolo/psutil/issues/2863
+.. _2864: https://github.com/giampaolo/psutil/issues/2864
+.. _2865: https://github.com/giampaolo/psutil/issues/2865
+.. _2866: https://github.com/giampaolo/psutil/issues/2866
+.. _2867: https://github.com/giampaolo/psutil/issues/2867
+.. _2868: https://github.com/giampaolo/psutil/issues/2868
+.. _2869: https://github.com/giampaolo/psutil/issues/2869
+.. _2870: https://github.com/giampaolo/psutil/issues/2870
+.. _2871: https://github.com/giampaolo/psutil/issues/2871
+.. _2872: https://github.com/giampaolo/psutil/issues/2872
+.. _2873: https://github.com/giampaolo/psutil/issues/2873
+.. _2874: https://github.com/giampaolo/psutil/issues/2874
+.. _2875: https://github.com/giampaolo/psutil/issues/2875
+.. _2876: https://github.com/giampaolo/psutil/issues/2876
+.. _2877: https://github.com/giampaolo/psutil/issues/2877
+.. _2878: https://github.com/giampaolo/psutil/issues/2878
+.. _2879: https://github.com/giampaolo/psutil/issues/2879
+.. _2880: https://github.com/giampaolo/psutil/issues/2880
+.. _2881: https://github.com/giampaolo/psutil/issues/2881
+.. _2882: https://github.com/giampaolo/psutil/issues/2882
+.. _2883: https://github.com/giampaolo/psutil/issues/2883
+.. _2884: https://github.com/giampaolo/psutil/issues/2884
+.. _2885: https://github.com/giampaolo/psutil/issues/2885
+.. _2886: https://github.com/giampaolo/psutil/issues/2886
+.. _2887: https://github.com/giampaolo/psutil/issues/2887
+.. _2888: https://github.com/giampaolo/psutil/issues/2888
+.. _2889: https://github.com/giampaolo/psutil/issues/2889
+.. _2890: https://github.com/giampaolo/psutil/issues/2890
+.. _2891: https://github.com/giampaolo/psutil/issues/2891
+.. _2892: https://github.com/giampaolo/psutil/issues/2892
+.. _2893: https://github.com/giampaolo/psutil/issues/2893
+.. _2894: https://github.com/giampaolo/psutil/issues/2894
+.. _2895: https://github.com/giampaolo/psutil/issues/2895
+.. _2896: https://github.com/giampaolo/psutil/issues/2896
+.. _2897: https://github.com/giampaolo/psutil/issues/2897
+.. _2898: https://github.com/giampaolo/psutil/issues/2898
+.. _2899: https://github.com/giampaolo/psutil/issues/2899
+.. _2900: https://github.com/giampaolo/psutil/issues/2900
+.. _2901: https://github.com/giampaolo/psutil/issues/2901
+.. _2902: https://github.com/giampaolo/psutil/issues/2902
+.. _2903: https://github.com/giampaolo/psutil/issues/2903
+.. _2904: https://github.com/giampaolo/psutil/issues/2904
+.. _2905: https://github.com/giampaolo/psutil/issues/2905
+.. _2906: https://github.com/giampaolo/psutil/issues/2906
+.. _2907: https://github.com/giampaolo/psutil/issues/2907
+.. _2908: https://github.com/giampaolo/psutil/issues/2908
+.. _2909: https://github.com/giampaolo/psutil/issues/2909
+.. _2910: https://github.com/giampaolo/psutil/issues/2910
+.. _2911: https://github.com/giampaolo/psutil/issues/2911
+.. _2912: https://github.com/giampaolo/psutil/issues/2912
+.. _2913: https://github.com/giampaolo/psutil/issues/2913
+.. _2914: https://github.com/giampaolo/psutil/issues/2914
+.. _2915: https://github.com/giampaolo/psutil/issues/2915
+.. _2916: https://github.com/giampaolo/psutil/issues/2916
+.. _2917: https://github.com/giampaolo/psutil/issues/2917
+.. _2918: https://github.com/giampaolo/psutil/issues/2918
+.. _2919: https://github.com/giampaolo/psutil/issues/2919
+.. _2920: https://github.com/giampaolo/psutil/issues/2920
+.. _2921: https://github.com/giampaolo/psutil/issues/2921
+.. _2922: https://github.com/giampaolo/psutil/issues/2922
+.. _2923: https://github.com/giampaolo/psutil/issues/2923
+.. _2924: https://github.com/giampaolo/psutil/issues/2924
+.. _2925: https://github.com/giampaolo/psutil/issues/2925
+.. _2926: https://github.com/giampaolo/psutil/issues/2926
+.. _2927: https://github.com/giampaolo/psutil/issues/2927
+.. _2928: https://github.com/giampaolo/psutil/issues/2928
+.. _2929: https://github.com/giampaolo/psutil/issues/2929
+.. _2930: https://github.com/giampaolo/psutil/issues/2930
+.. _2931: https://github.com/giampaolo/psutil/issues/2931
+.. _2932: https://github.com/giampaolo/psutil/issues/2932
+.. _2933: https://github.com/giampaolo/psutil/issues/2933
+.. _2934: https://github.com/giampaolo/psutil/issues/2934
+.. _2935: https://github.com/giampaolo/psutil/issues/2935
+.. _2936: https://github.com/giampaolo/psutil/issues/2936
+.. _2937: https://github.com/giampaolo/psutil/issues/2937
+.. _2938: https://github.com/giampaolo/psutil/issues/2938
+.. _2939: https://github.com/giampaolo/psutil/issues/2939
+.. _2940: https://github.com/giampaolo/psutil/issues/2940
+.. _2941: https://github.com/giampaolo/psutil/issues/2941
+.. _2942: https://github.com/giampaolo/psutil/issues/2942
+.. _2943: https://github.com/giampaolo/psutil/issues/2943
+.. _2944: https://github.com/giampaolo/psutil/issues/2944
+.. _2945: https://github.com/giampaolo/psutil/issues/2945
+.. _2946: https://github.com/giampaolo/psutil/issues/2946
+.. _2947: https://github.com/giampaolo/psutil/issues/2947
+.. _2948: https://github.com/giampaolo/psutil/issues/2948
+.. _2949: https://github.com/giampaolo/psutil/issues/2949
+.. _2950: https://github.com/giampaolo/psutil/issues/2950
+.. _2951: https://github.com/giampaolo/psutil/issues/2951
+.. _2952: https://github.com/giampaolo/psutil/issues/2952
+.. _2953: https://github.com/giampaolo/psutil/issues/2953
+.. _2954: https://github.com/giampaolo/psutil/issues/2954
+.. _2955: https://github.com/giampaolo/psutil/issues/2955
+.. _2956: https://github.com/giampaolo/psutil/issues/2956
+.. _2957: https://github.com/giampaolo/psutil/issues/2957
+.. _2958: https://github.com/giampaolo/psutil/issues/2958
+.. _2959: https://github.com/giampaolo/psutil/issues/2959
+.. _2960: https://github.com/giampaolo/psutil/issues/2960
+.. _2961: https://github.com/giampaolo/psutil/issues/2961
+.. _2962: https://github.com/giampaolo/psutil/issues/2962
+.. _2963: https://github.com/giampaolo/psutil/issues/2963
+.. _2964: https://github.com/giampaolo/psutil/issues/2964
+.. _2965: https://github.com/giampaolo/psutil/issues/2965
+.. _2966: https://github.com/giampaolo/psutil/issues/2966
+.. _2967: https://github.com/giampaolo/psutil/issues/2967
+.. _2968: https://github.com/giampaolo/psutil/issues/2968
+.. _2969: https://github.com/giampaolo/psutil/issues/2969
+.. _2970: https://github.com/giampaolo/psutil/issues/2970
+.. _2971: https://github.com/giampaolo/psutil/issues/2971
+.. _2972: https://github.com/giampaolo/psutil/issues/2972
+.. _2973: https://github.com/giampaolo/psutil/issues/2973
+.. _2974: https://github.com/giampaolo/psutil/issues/2974
+.. _2975: https://github.com/giampaolo/psutil/issues/2975
+.. _2976: https://github.com/giampaolo/psutil/issues/2976
+.. _2977: https://github.com/giampaolo/psutil/issues/2977
+.. _2978: https://github.com/giampaolo/psutil/issues/2978
+.. _2979: https://github.com/giampaolo/psutil/issues/2979
+.. _2980: https://github.com/giampaolo/psutil/issues/2980
+.. _2981: https://github.com/giampaolo/psutil/issues/2981
+.. _2982: https://github.com/giampaolo/psutil/issues/2982
+.. _2983: https://github.com/giampaolo/psutil/issues/2983
+.. _2984: https://github.com/giampaolo/psutil/issues/2984
+.. _2985: https://github.com/giampaolo/psutil/issues/2985
+.. _2986: https://github.com/giampaolo/psutil/issues/2986
+.. _2987: https://github.com/giampaolo/psutil/issues/2987
+.. _2988: https://github.com/giampaolo/psutil/issues/2988
+.. _2989: https://github.com/giampaolo/psutil/issues/2989
+.. _2990: https://github.com/giampaolo/psutil/issues/2990
+.. _2991: https://github.com/giampaolo/psutil/issues/2991
+.. _2992: https://github.com/giampaolo/psutil/issues/2992
+.. _2993: https://github.com/giampaolo/psutil/issues/2993
+.. _2994: https://github.com/giampaolo/psutil/issues/2994
+.. _2995: https://github.com/giampaolo/psutil/issues/2995
+.. _2996: https://github.com/giampaolo/psutil/issues/2996
+.. _2997: https://github.com/giampaolo/psutil/issues/2997
+.. _2998: https://github.com/giampaolo/psutil/issues/2998
+.. _2999: https://github.com/giampaolo/psutil/issues/2999
+.. _3000: https://github.com/giampaolo/psutil/issues/3000

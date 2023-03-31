@@ -16,8 +16,11 @@ because of how its JIT handles memory, so tests are skipped.
 """
 
 from __future__ import print_function
+
 import functools
 import os
+import platform
+import unittest
 
 import psutil
 import psutil._common
@@ -29,8 +32,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import ProcessLookupError
 from psutil._compat import super
-from psutil.tests import create_sockets
-from psutil.tests import get_testfn
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON
@@ -43,13 +44,14 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import TestMemoryLeak
+from psutil.tests import create_sockets
+from psutil.tests import get_testfn
 from psutil.tests import process_namespace
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
-from psutil.tests import TestMemoryLeak
-from psutil.tests import unittest
 
 
 cext = psutil._psplatform.cext
@@ -363,6 +365,9 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         self.execute(psutil.cpu_stats)
 
     @fewtimes_if_linux()
+    # TODO: remove this once 1892 is fixed
+    @unittest.skipIf(MACOS and platform.machine() == 'arm64',
+                     "skipped due to #1892")
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         self.execute(psutil.cpu_freq)
@@ -455,6 +460,9 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     def test_users(self):
         self.execute(psutil.users)
+
+    def test_set_debug(self):
+        self.execute(lambda: psutil._set_debug(False))
 
     if WINDOWS:
 

@@ -36,6 +36,8 @@ PID    USER       NI   VIRT    RES  CPU%  MEM%     TIME+  NAME
 import datetime
 import sys
 import time
+
+
 try:
     import curses
 except ImportError:

@@ -30,8 +30,10 @@ PID   USER      DISK READ  DISK WRITE  COMMAND
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import time
 import sys
+import time
+
+
 try:
     import curses
 except ImportError:
@@ -63,7 +65,7 @@ def printl(line, highlight=False):
 
 
 def poll(interval):
-    """Calculate IO usage by comparing IO statics before and
+    """Calculate IO usage by comparing IO statistics before and
     after the interval.
     Return a tuple including all currently running processes
     sorted by IO activity and total disks I/O activity.

@@ -58,6 +58,11 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 #endif
 
 
+#ifndef SPEED_UNKNOWN
+    #define SPEED_UNKNOWN -1
+#endif
+
+
 #if PSUTIL_HAVE_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
@@ -71,6 +76,18 @@ ioprio_get(int which, int who) {
 static inline int
 ioprio_set(int which, int who, int ioprio) {
     return syscall(__NR_ioprio_set, which, who, ioprio);
+}
+
+// * defined in linux/ethtool.h but not always available (e.g. Android)
+// * #ifdef check needed for old kernels, see:
+//   https://github.com/giampaolo/psutil/issues/2164
+static inline uint32_t
+psutil_ethtool_cmd_speed(const struct ethtool_cmd *ecmd) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 27)
+    return ecmd->speed;
+#else
+    return (ecmd->speed_hi << 16) | ecmd->speed;
+#endif
 }
 
 #define IOPRIO_CLASS_SHIFT 13
@@ -290,52 +307,53 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     cpu_set_t cpu_set;
     size_t len;
     pid_t pid;
-    int i, seq_len;
+    Py_ssize_t i, seq_len;
     PyObject *py_cpu_set;
-    PyObject *py_cpu_seq = NULL;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
-        PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
-                     Py_TYPE(py_cpu_set)->tp_name);
-        goto error;
+        return PyErr_Format(
+            PyExc_TypeError,
+#if PY_MAJOR_VERSION >= 3
+            "sequence argument expected, got %R", Py_TYPE(py_cpu_set)
+#else
+            "sequence argument expected, got %s", Py_TYPE(py_cpu_set)->tp_name
+#endif
+        );
     }
 
-    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
-    if (!py_cpu_seq)
-        goto error;
-    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
+    seq_len = PySequence_Size(py_cpu_set);
+    if (seq_len < 0) {
+        return NULL;
+    }
     CPU_ZERO(&cpu_set);
     for (i = 0; i < seq_len; i++) {
-        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
+        PyObject *item = PySequence_GetItem(py_cpu_set, i);
+        if (!item) {
+            return NULL;
+        }
 #if PY_MAJOR_VERSION >= 3
         long value = PyLong_AsLong(item);
 #else
         long value = PyInt_AsLong(item);
 #endif
+        Py_XDECREF(item);
         if ((value == -1) || PyErr_Occurred()) {
             if (!PyErr_Occurred())
                 PyErr_SetString(PyExc_ValueError, "invalid CPU value");
-            goto error;
+            return NULL;
         }
         CPU_SET(value, &cpu_set);
     }
 
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    Py_DECREF(py_cpu_seq);
     Py_RETURN_NONE;
-
-error:
-    if (py_cpu_seq != NULL)
-        Py_DECREF(py_cpu_seq);
-    return NULL;
 }
 #endif  /* PSUTIL_HAVE_CPU_AFFINITY */
 
@@ -417,6 +435,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
     int sock = 0;
     int ret;
     int duplex;
+    __u32 uint_speed;
     int speed;
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
@@ -438,7 +457,15 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 
     if (ret != -1) {
         duplex = ethcmd.duplex;
-        speed = ethcmd.speed;
+        // speed is returned from ethtool as a __u32 ranging from 0 to INT_MAX
+        // or SPEED_UNKNOWN (-1)
+        uint_speed = psutil_ethtool_cmd_speed(&ethcmd);
+        if (uint_speed == (__u32)SPEED_UNKNOWN || uint_speed > INT_MAX) {
+            speed = 0;
+        }
+        else {
+            speed = (int)uint_speed;
+        }
     }
     else {
         if ((errno == EOPNOTSUPP) || (errno == EINVAL)) {
@@ -476,35 +503,22 @@ static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
-    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
-     "Get process I/O priority"},
-    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
-     "Set process I/O priority"},
+    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
+    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},
 #endif
 #ifdef PSUTIL_HAVE_CPU_AFFINITY
-    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
-     "Return process CPU affinity as a Python long (the bitmask)."},
-    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
-     "Set process CPU affinity; expects a bitmask."},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
 #endif
-
     // --- system related functions
-
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
-     "Return disk mounted partitions as a list of tuples including "
-     "device, mount point and filesystem type"},
-    {"users", psutil_users, METH_VARARGS,
-     "Return currently connected users as a list of tuples"},
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
-     "Return duplex and speed info about a NIC"},
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"users", psutil_users, METH_VARARGS},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
 
     // --- linux specific
-
-    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
-     "A wrapper around sysinfo(), return system memory usage statistics"},
+    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
     // --- others
-    {"set_testing", psutil_set_testing, METH_NOARGS,
-     "Set psutil in testing mode"},
+    {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
 };

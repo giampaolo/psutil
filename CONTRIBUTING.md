@@ -14,6 +14,8 @@ Issues
   editing the default issue **template**. There is a bot which automatically
   assigns **labels** based on issue's title and body format. Labels help
   keeping the issues properly organized and searchable (by OS, issue type, etc.).
+* When reporting a malfunction, consider enabling
+  [debug mode](https://psutil.readthedocs.io/en/latest/#debug-mode) first.
 * To report a **security vulnerability**, use the
   [Tidelift security contact](https://tidelift.com/security).
   Tidelift will coordinate the fix and the disclosure of the reported problem.
@@ -23,7 +25,7 @@ Pull Requests
 
 * The PR system is for fixing bugs or make enhancements related to the
   **program code**.
-* If you whish to implement a new feature or add support for a new platform it's
+* If you wish to implement a new feature or add support for a new platform it's
   better to **discuss it first**, either on the issue tracker, the forum or via
   private email.
 * In order to get acquainted with the code base and tooling, take a look at the

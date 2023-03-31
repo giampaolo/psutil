@@ -9,7 +9,7 @@ install a C compiler. All you have to do is::
 
     pip install psutil
 
-If wheels are not available for your platform or architecture, or you whish to
+If wheels are not available for your platform or architecture, or you wish to
 build & install psutil from sources, keep reading.
 
 Linux (build)
@@ -23,6 +23,11 @@ Ubuntu / Debian::
 RedHat / CentOS::
 
     sudo yum install gcc python3-devel
+    pip install --no-binary :all: psutil
+
+Alpine::
+
+    sudo apk add gcc python3-dev
     pip install --no-binary :all: psutil
 
 Windows (build)
