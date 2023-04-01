@@ -316,7 +316,7 @@ def run(pid, verbose=False):
             print_("", template % (bytes2human(region.rss), region.path))
 
 
-def main(argv=None):
+def main():
     parser = argparse.ArgumentParser(
         description="print information about a process")
     parser.add_argument("pid", type=int, help="process pid", nargs='?')

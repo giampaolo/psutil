@@ -346,10 +346,7 @@ if POSIX:
             # for an explanation of Solaris /etc/release
             with open('/etc/release') as f:
                 update = re.search(r'(?<=s10s_u)[0-9]{1,2}', f.readline())
-                if update is None:
-                    return 0
-                else:
-                    return int(update.group(0))
+                return int(update.group(0)) if update else 0
 
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':

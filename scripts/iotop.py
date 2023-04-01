@@ -71,7 +71,7 @@ def poll(interval):
     sorted by IO activity and total disks I/O activity.
     """
     # first get a list of all processes and disk io counters
-    procs = [p for p in psutil.process_iter()]
+    procs = list(psutil.process_iter())
     for p in procs[:]:
         try:
             p._before = p.io_counters()

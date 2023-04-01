@@ -299,19 +299,19 @@ class TestMemoizeDecorator(PsutilTestCase):
 
     def run_against(self, obj, expected_retval=None):
         # no args
-        for x in range(2):
+        for _ in range(2):
             ret = obj()
             self.assertEqual(self.calls, [((), {})])
             if expected_retval is not None:
                 self.assertEqual(ret, expected_retval)
         # with args
-        for x in range(2):
+        for _ in range(2):
             ret = obj(1)
             self.assertEqual(self.calls, [((), {}), ((1, ), {})])
             if expected_retval is not None:
                 self.assertEqual(ret, expected_retval)
         # with args + kwargs
-        for x in range(2):
+        for _ in range(2):
             ret = obj(1, bar=2)
             self.assertEqual(
                 self.calls, [((), {}), ((1, ), {}), ((1, ), {'bar': 2})])
@@ -400,19 +400,19 @@ class TestMemoizeDecorator(PsutilTestCase):
 
         calls = []
         # no args
-        for x in range(2):
+        for _ in range(2):
             ret = foo()
             expected = ((), {})
             self.assertEqual(ret, expected)
             self.assertEqual(len(calls), 1)
         # with args
-        for x in range(2):
+        for _ in range(2):
             ret = foo(1)
             expected = ((1, ), {})
             self.assertEqual(ret, expected)
             self.assertEqual(len(calls), 2)
         # with args + kwargs
-        for x in range(2):
+        for _ in range(2):
             ret = foo(1, bar=2)
             expected = ((1, ), {'bar': 2})
             self.assertEqual(ret, expected)
@@ -732,7 +732,7 @@ class TestWrapNumbers(PsutilTestCase):
             {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}})
         self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
 
-        def assert_():
+        def check_cache_info():
             cache = wrap_numbers.cache_info()
             self.assertEqual(
                 cache[1],
@@ -746,14 +746,14 @@ class TestWrapNumbers(PsutilTestCase):
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
         self.assertEqual(cache[0], {'disk_io': input})
-        assert_()
+        check_cache_info()
 
         # then it goes up
         input = {'disk1': nt(100, 100, 90)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
         self.assertEqual(cache[0], {'disk_io': input})
-        assert_()
+        check_cache_info()
 
         # then it wraps again
         input = {'disk1': nt(100, 100, 20)}
@@ -837,7 +837,7 @@ class TestScripts(PsutilTestCase):
         return out
 
     @staticmethod
-    def assert_syntax(exe, args=None):
+    def assert_syntax(exe):
         exe = os.path.join(SCRIPTS_DIR, exe)
         if PY3:
             f = open(exe, 'rt', encoding='utf8')

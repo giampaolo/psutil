@@ -222,7 +222,7 @@ def add_label(issue, label):
     issue.add_to_labels(label)
 
 
-def _guess_labels_from_text(issue, text):
+def _guess_labels_from_text(text):
     assert isinstance(text, str), text
     for label, keywords in LABELS_MAP.items():
         for keyword in keywords:
@@ -232,7 +232,7 @@ def _guess_labels_from_text(issue, text):
 
 def add_labels_from_text(issue, text):
     assert isinstance(text, str), text
-    for label, keyword in _guess_labels_from_text(issue, text):
+    for label, keyword in _guess_labels_from_text(text):
         add_label(issue, label)
 
 
