@@ -201,7 +201,7 @@ def get_free_version_info():
     out = sh(["free", "-V"]).strip()
     if 'UNKNOWN' in out:
         raise unittest.SkipTest("can't determine free version")
-    return tuple(map(int, out.split()[-1].split('.')))
+    return tuple(map(int, re.findall(r'\d+', out.split()[-1])))
 
 
 @contextlib.contextmanager
