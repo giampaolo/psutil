@@ -176,7 +176,11 @@ def cpu_freq():
     Also, the returned frequency never changes, see:
     https://arstechnica.com/civis/viewtopic.php?f=19&t=465002
     """
-    curr, min_, max_ = cext.cpu_freq()
+    try:
+        curr, min_, max_ = cext.cpu_freq()
+    except FileNotFoundError:
+        # apple silicon requires specialized call.
+        curr, min_, max_ = cext.arm_cpu_freq()
     return [_common.scpufreq(curr, min_, max_)]
 
 

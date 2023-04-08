@@ -29,6 +29,9 @@ For reference, here's the git history with original implementations:
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
+#include <COreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+
 
 
 PyObject *
@@ -109,6 +112,48 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
+PyObject *
+psutil_arm_cpu_freq(PyObject *self, PyObject *args) {
+    unsigned int curr;
+    uint32_t min = UINT32_MAX;
+    uint32_t max = 0;
+
+    CFDictionaryRef matching = IOServiceMatching("AppleARMIODevice");
+    io_iterator_t iter;
+
+    IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
+    io_registry_entry_t entry;
+    while ((entry = IOIteratorNext(iter))) {
+        io_name_t name;
+        IORegistryEntryGetName(entry, name);
+
+        if (strncmp(name, "pmgr", 4) == 0) {
+            break;
+        }
+    }
+    IOObjectRelease(iter);
+    CFRelease(matching);
+    CFTypeRef pCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
+
+    size_t length = CFDataGetLength(pCoreRef);
+    for (size_t i = 0; i < length - 3; i += 4) {
+        uint32_t curr_freq = 0;
+        CFDataGetBytes(pCoreRef, CFRangeMake(i, sizeof(uint32_t)), (UInt8 *) &curr_freq);
+        if (curr_freq > 1e6 && curr_freq < min) {
+            min = curr_freq;
+        }
+        if (curr_freq > max) {
+            max = curr_freq;
+        }
+    }
+    curr = max;
+
+    return Py_BuildValue(
+            "IKK",
+            curr / 1000 / 1000,
+            min / 1000 / 1000,
+            max / 1000 / 1000);
+}
 
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
