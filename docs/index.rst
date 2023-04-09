@@ -268,13 +268,13 @@ CPU
 .. function:: cpu_freq(percpu=False)
 
     Return CPU frequency as a named tuple including *current*, *min* and *max*
-    frequencies expressed in Mhz.
-    On Linux *current* frequency reports the real-time value, on all other
-    platforms this usually represents the nominal "fixed" value (never changing).
-    If *percpu* is ``True`` and the system supports per-cpu frequency
-    retrieval (Linux only) a list of frequencies is returned for each CPU,
-    if not, a list with a single element is returned.
-    If *min* and *max* cannot be determined they are set to ``0.0``.
+    frequencies expressed in Mhz. On Linux *current* frequency reports the
+    real-time value, on all other platforms this usually represents the
+    nominal "fixed" value (never changing). If *percpu* is ``True`` and the
+    system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
+    frequencies is returned for each CPU, if not, a list with a single element
+    is returned. If *min* and *max* cannot be determined they are set to
+    ``0.0``.
 
     Example (Linux):
 
@@ -289,7 +289,8 @@ CPU
         scpufreq(current=1703.609, min=800.0, max=3500.0),
         scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    Availability: Linux, macOS, Windows, FreeBSD, OpenBSD
+    Availability: Linux, macOS, Windows, FreeBSD, OpenBSD. *percpu* only
+    supported on Linux and FreeBSD.
 
     .. versionadded:: 5.1.0
 
