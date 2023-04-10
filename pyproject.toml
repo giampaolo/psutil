@@ -77,7 +77,7 @@ requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-skip = ["pp*", "*-musllinux*"]
+skip = "pp*"
 test-extras = "test"
 test-command = [
     "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/runner.py",
@@ -85,4 +85,11 @@ test-command = [
 ]
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
+archs = ["x86_64", "arm64", "universal2"]
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y net-tools"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = "apk --no-cache add coreutils procps"
