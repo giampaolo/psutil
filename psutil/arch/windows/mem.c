@@ -12,6 +12,14 @@
 
 
 PyObject *
+psutil_getpagesize(PyObject *self, PyObject *args) {
+    // XXX: we may want to use GetNativeSystemInfo to differentiate
+    // page size for WoW64 processes (but am not sure).
+    return Py_BuildValue("I", PSUTIL_SYSTEM_INFO.dwPageSize);
+}
+
+
+PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
     PERFORMANCE_INFORMATION perfInfo;

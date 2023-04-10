@@ -1515,17 +1515,6 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * System memory page size as an int.
- */
-static PyObject *
-psutil_getpagesize(PyObject *self, PyObject *args) {
-    // XXX: we may want to use GetNativeSystemInfo to differentiate
-    // page size for WoW64 processes (but am not sure).
-    return Py_BuildValue("I", PSUTIL_SYSTEM_INFO.dwPageSize);
-}
-
-
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
