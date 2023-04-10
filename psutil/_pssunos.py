@@ -143,7 +143,7 @@ def swap_memory():
     p = subprocess.Popen(['/usr/bin/env', 'PATH=/usr/sbin:/sbin:%s' %
                           os.environ['PATH'], 'swap', '-l'],
                          stdout=subprocess.PIPE)
-    stdout, stderr = p.communicate()
+    stdout, _ = p.communicate()
     if PY3:
         stdout = stdout.decode(sys.stdout.encoding)
     if p.returncode != 0:

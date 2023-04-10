@@ -34,6 +34,44 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 
+[tool.pylint.messages_control]
+# Important ones:
+# undefined-all-variable, invalid-envvar-default, reimported, raising-format-tuple, simplifiable-if-expression, useless-object-inheritance
+disable = [
+    "broad-except",  # except Exception:
+    "consider-using-dict-comprehension",
+    "consider-using-f-string",
+    "consider-using-set-comprehension",
+    "consider-using-with",
+    "disallowed-name",
+    "fixme",
+    "global-statement",
+    "import-error",
+    "import-outside-toplevel",
+    "inconsistent-return-statements",
+    "invalid-name",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "no-else-raise",
+    "no-else-return",
+    "protected-access",
+    "raise-missing-from",
+    "redefined-builtin",
+    "super-with-arguments",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
+    "ungrouped-imports",
+    "unspecified-encoding",
+    "wrong-import-position",
+]
+
 [build-system]
 requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"

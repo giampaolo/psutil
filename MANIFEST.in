@@ -85,6 +85,8 @@ include psutil/arch/windows/cpu.c
 include psutil/arch/windows/cpu.h
 include psutil/arch/windows/disk.c
 include psutil/arch/windows/disk.h
+include psutil/arch/windows/mem.c
+include psutil/arch/windows/mem.h
 include psutil/arch/windows/net.c
 include psutil/arch/windows/net.h
 include psutil/arch/windows/ntextapi.h

@@ -22,6 +22,7 @@ PY3_DEPS = \
 	flake8-quotes \
 	isort \
 	pep8-naming \
+	pylint \
 	pyperf \
 	pypinfo \
 	requests \
@@ -196,6 +197,9 @@ flake8:  ## Run flake8 linter.
 
 isort:  ## Run isort linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
+
+pylint:  ## Python pylint (not mandatory, just run it from time to time)
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
 c-linter:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py

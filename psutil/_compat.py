@@ -254,7 +254,7 @@ except ImportError:
         http://docs.python.org/3/library/functools.html#functools.lru_cache
         """
         def decorating_function(user_function):
-            cache = dict()
+            cache = {}
             stats = [0, 0]
             HITS, MISSES = 0, 1
             make_key = _make_key
@@ -432,7 +432,7 @@ except ImportError:
 try:
     from subprocess import TimeoutExpired as SubprocessTimeoutExpired
 except ImportError:
-    class SubprocessTimeoutExpired:
+    class SubprocessTimeoutExpired(Exception):
         pass
 
 
