@@ -23,6 +23,8 @@
   argument.
 - 2216_, [Windows]: fix tests when running in a virtual environment (patch by
   Matthieu Darbois)
+- 2225_, [POSIX]: `users()`_ loses precision for ``started`` attribute (off by
+  1 minute).
 
 5.9.4
 =====
