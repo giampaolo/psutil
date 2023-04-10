@@ -23,7 +23,6 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
-from psutil.tests import CI_TESTING
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PsutilTestCase
@@ -334,19 +333,24 @@ class TestSystemAPIs(PsutilTestCase):
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 
-    @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    # @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
     @retry_on_failure()
     def test_users(self):
-        out = sh("who")
+        out = sh("who -u")
         if not out.strip():
             raise self.skipTest("no users on this system")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
+        started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
         self.assertEqual(len(users), len(psutil.users()))
-        for u in psutil.users():
-            self.assertIn(u.name, users)
-            self.assertIn(u.terminal, terminals)
+        with self.subTest(psutil=psutil.users(), who=out):
+            for idx, u in enumerate(psutil.users()):
+                self.assertEqual(u.name, users[idx])
+                self.assertEqual(u.terminal, terminals[idx])
+                psutil_started = datetime.datetime.fromtimestamp(
+                    u.started).strftime("%Y-%m-%d %H:%M")
+                self.assertEqual(psutil_started, started[idx])
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
