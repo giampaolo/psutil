@@ -59,7 +59,7 @@ LABELS_MAP = {
     "wsl": ["wsl"],
     "unix": [
         "psposix", "_psutil_posix", "waitpid", "statvfs", "/dev/tty",
-        "/dev/pts",
+        "/dev/pts", "posix",
     ],
     "pypy": ["pypy"],
     # types

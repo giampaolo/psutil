@@ -966,11 +966,11 @@ psutil_users(PyObject *self, PyObject *args) {
         if (! py_hostname)
             goto error;
         py_tuple = Py_BuildValue(
-            "(OOOfi)",
+            "(OOOdi)",
             py_username,        // username
             py_tty,             // tty
             py_hostname,        // hostname
-            (float)ut.ut_time,  // start time
+            (double)ut.ut_time,  // start time
 #if defined(PSUTIL_OPENBSD) || (defined(__FreeBSD_version) && __FreeBSD_version < 900000)
             -1                  // process id (set to None later)
 #else
