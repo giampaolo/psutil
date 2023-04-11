@@ -699,7 +699,7 @@ def retry_error_partial_copy(fun):
     def wrapper(self, *args, **kwargs):
         delay = 0.0001
         times = 33
-        for x in range(times):  # retries for roughly 1 second
+        for _ in range(times):  # retries for roughly 1 second
             try:
                 return fun(self, *args, **kwargs)
             except WindowsError as _:

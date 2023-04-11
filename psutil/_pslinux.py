@@ -327,8 +327,8 @@ except ImportError:
                     pid, resource_, ctypes.byref(new), ctypes.byref(current))
 
             if ret != 0:
-                errno = ctypes.get_errno()
-                raise OSError(errno, os.strerror(errno))
+                errno_ = ctypes.get_errno()
+                raise OSError(errno_, os.strerror(errno_))
             return (current.rlim_cur, current.rlim_max)
 
 
@@ -344,34 +344,43 @@ if prlimit is not None:
 
 def calculate_avail_vmem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
-    "MemAvailable:" column, see:
+    "MemAvailable", see:
     https://blog.famzah.net/2014/09/24/
+
     This code reimplements the algorithm outlined here:
     https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
         commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
 
-    XXX: on recent kernels this calculation differs by ~1.5% than
-    "MemAvailable:" as it's calculated slightly differently, see:
-    https://gitlab.com/procps-ng/procps/issues/42
-    https://github.com/famzah/linux-memavailable-procfs/issues/2
+    We use this function also when "MemAvailable" returns 0 (possibly a
+    kernel bug, see: https://github.com/giampaolo/psutil/issues/1915).
+    In that case this routine matches "free" CLI tool result ("available"
+    column).
+
+    XXX: on recent kernels this calculation may differ by ~1.5% compared
+    to "MemAvailable:", as it's calculated slightly differently.
     It is still way more realistic than doing (free + cached) though.
+    See:
+    * https://gitlab.com/procps-ng/procps/issues/42
+    * https://github.com/famzah/linux-memavailable-procfs/issues/2
     """
-    # Fallback for very old distros. According to
+    # Note about "fallback" value. According to:
     # https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
     #     commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
-    # ...long ago "avail" was calculated as (free + cached).
-    # We might fallback in such cases:
-    # "Active(file)" not available: 2.6.28 / Dec 2008
-    # "Inactive(file)" not available: 2.6.28 / Dec 2008
-    # "SReclaimable:" not available: 2.6.19 / Nov 2006
-    # /proc/zoneinfo not available: 2.6.13 / Aug 2005
+    # ...long ago "available" memory was calculated as (free + cached),
+    # We use fallback when one of these is missing from /proc/meminfo:
+    # "Active(file)": introduced in 2.6.28 / Dec 2008
+    # "Inactive(file)": introduced in 2.6.28 / Dec 2008
+    # "SReclaimable": introduced in 2.6.19 / Nov 2006
+    # /proc/zoneinfo: introduced in 2.6.13 / Aug 2005
     free = mems[b'MemFree:']
     fallback = free + mems.get(b"Cached:", 0)
     try:
         lru_active_file = mems[b'Active(file):']
         lru_inactive_file = mems[b'Inactive(file):']
         slab_reclaimable = mems[b'SReclaimable:']
-    except KeyError:
+    except KeyError as err:
+        debug("%r is missing from /proc/meminfo; using an approximation "
+              "for calculating available memory" % err.args[0])
         return fallback
     try:
         f = open_binary('%s/zoneinfo' % get_procfs_path())
@@ -396,19 +405,11 @@ def calculate_avail_vmem(mems):
 
 def virtual_memory():
     """Report virtual memory stats.
-    This implementation matches "free" and "vmstat -s" cmdline
-    utility values and procps-ng-3.3.12 source was used as a reference
-    (2016-09-18):
+    This implementation mimicks procps-ng-3.3.12, aka "free" CLI tool:
     https://gitlab.com/procps-ng/procps/blob/
-        24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c
-    For reference, procps-ng-3.3.10 is the version available on Ubuntu
-    16.04.
-
-    Note about "available" memory: up until psutil 4.3 it was
-    calculated as "avail = (free + buffers + cached)". Now
-    "MemAvailable:" column (kernel 3.14) from /proc/meminfo is used as
-    it's more accurate.
-    That matches "available" column in newer versions of "free".
+        24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L778-791
+    The returned values are supposed to match both "free" and "vmstat -s"
+    CLI tools.
     """
     missing_fields = []
     mems = {}
@@ -490,17 +491,23 @@ def virtual_memory():
         avail = mems[b'MemAvailable:']
     except KeyError:
         avail = calculate_avail_vmem(mems)
+    else:
+        if avail == 0:
+            # Yes, it can happen (probably a kernel bug):
+            # https://github.com/giampaolo/psutil/issues/1915
+            # In this case "free" CLI tool makes an estimate. We do the same,
+            # and it matches "free" CLI tool.
+            avail = calculate_avail_vmem(mems)
 
     if avail < 0:
         avail = 0
         missing_fields.append('available')
-
-    # If avail is greater than total or our calculation overflows,
-    # that's symptomatic of running within a LCX container where such
-    # values will be dramatically distorted over those of the host.
-    # https://gitlab.com/procps-ng/procps/blob/
-    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
-    if avail > total:
+    elif avail > total:
+        # If avail is greater than total or our calculation overflows,
+        # that's symptomatic of running within a LCX container where such
+        # values will be dramatically distorted over those of the host.
+        # https://gitlab.com/procps-ng/procps/blob/
+        #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
         avail = free
 
     percent = usage_percent((total - avail), total, round_=1)
@@ -510,7 +517,7 @@ def virtual_memory():
         msg = "%s memory stats couldn't be determined and %s set to 0" % (
             ", ".join(missing_fields),
             "was" if len(missing_fields) == 1 else "were")
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared, slab)
@@ -544,7 +551,7 @@ def swap_memory():
         # see https://github.com/giampaolo/psutil/issues/722
         msg = "'sin' and 'sout' swap memory stats couldn't " \
               "be determined and were set to 0 (%s)" % str(err)
-        warnings.warn(msg, RuntimeWarning)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
         sin = sout = 0
     else:
         with f:
@@ -564,7 +571,7 @@ def swap_memory():
                 # https://github.com/giampaolo/psutil/issues/313
                 msg = "'sin' and 'sout' swap memory stats couldn't " \
                       "be determined and were set to 0"
-                warnings.warn(msg, RuntimeWarning)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
 
@@ -1257,16 +1264,17 @@ def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
     procfs_path = get_procfs_path()
-    with open_text("%s/filesystems" % procfs_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line.startswith("nodev"):
-                fstypes.add(line.strip())
-            else:
-                # ignore all lines starting with "nodev" except "nodev zfs"
-                fstype = line.split("\t")[1]
-                if fstype == "zfs":
-                    fstypes.add("zfs")
+    if not all:
+        with open_text("%s/filesystems" % procfs_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line.startswith("nodev"):
+                    fstypes.add(line.strip())
+                else:
+                    # ignore all lines starting with "nodev" except "nodev zfs"
+                    fstype = line.split("\t")[1]
+                    if fstype == "zfs":
+                        fstypes.add("zfs")
 
     # See: https://github.com/giampaolo/psutil/issues/1307
     if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
@@ -1829,7 +1837,7 @@ class Process(object):
                 )
             except KeyError as err:
                 raise ValueError("%r field was not found in %s; found fields "
-                                 "are %r" % (err[0], fname, fields))
+                                 "are %r" % (err.args[0], fname, fields))
 
     @wrap_exceptions
     def cpu_times(self):

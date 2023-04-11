@@ -314,7 +314,14 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
-        return PyErr_Format(PyExc_TypeError, "sequence argument expected, got %R", Py_TYPE(py_cpu_set));
+        return PyErr_Format(
+            PyExc_TypeError,
+#if PY_MAJOR_VERSION >= 3
+            "sequence argument expected, got %R", Py_TYPE(py_cpu_set)
+#else
+            "sequence argument expected, got %s", Py_TYPE(py_cpu_set)->tp_name
+#endif
+        );
     }
 
     seq_len = PySequence_Size(py_cpu_set);
@@ -385,11 +392,11 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
 
         py_tuple = Py_BuildValue(
-            "OOOfO" _Py_PARSE_PID,
+            "OOOdO" _Py_PARSE_PID,
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
-            (float)ut->ut_tv.tv_sec,  // tstamp
+            (double)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
         );

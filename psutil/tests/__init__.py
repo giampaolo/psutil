@@ -41,7 +41,6 @@ from socket import SOCK_STREAM
 
 import psutil
 from psutil import AIX
-from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import POSIX
@@ -80,28 +79,25 @@ if POSIX:
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'ROOT_DIR', 'SCRIPTS_DIR', 'TESTFN_PREFIX',
-    'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "HAS_MEMORY_FULL_INFO", "MACOS_11PLUS",
-    "MACOS_12PLUS",
+    "HAS_SENSORS_TEMPERATURES", "MACOS_11PLUS",
+    "MACOS_12PLUS", "COVERAGE",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
     # threads
-    'ThreadTask'
+    'ThreadTask',
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace', 'print_sysinfo',
-    # install utils
-    'install_pip', 'install_test_deps',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_exe', 'decode_path', 'encode_path',
-    'get_testfn',
+    'chdir', 'safe_rmpath', 'create_exe', 'get_testfn',
     # os
     'get_winver', 'kernel_version',
     # sync primitives
@@ -128,6 +124,7 @@ PYPY = '__pypy__' in sys.builtin_module_names
 APPVEYOR = 'APPVEYOR' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = APPVEYOR or GITHUB_ACTIONS
+COVERAGE = 'COVERAGE_RUN' in os.environ
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2 ** 32
 
@@ -197,7 +194,10 @@ ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 ROOT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', '..'))
-SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
+SCRIPTS_DIR = os.environ.get(
+    "PSUTIL_SCRIPTS_DIR",
+    os.path.join(ROOT_DIR, 'scripts')
+)
 HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
@@ -236,13 +236,21 @@ def _get_py_exe():
         else:
             return exe
 
-    if GITHUB_ACTIONS:
-        if PYPY:
-            return which("pypy3") if PY3 else which("pypy")
-        elif FREEBSD:
-            return os.path.realpath(sys.executable)
-        else:
-            return which('python')
+    env = os.environ.copy()
+
+    # On Windows, starting with python 3.7, virtual environments use a
+    # venv launcher startup process. This does not play well when
+    # counting spawned processes, or when relying on the PID of the
+    # spawned process to do some checks, e.g. connections check per PID.
+    # Let's use the base python in this case.
+    base = getattr(sys, "_base_executable", None)
+    if WINDOWS and sys.version_info >= (3, 7) and base is not None:
+        # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
+        # base python executable to know about the environment.
+        env["__PYVENV_LAUNCHER__"] = sys.executable
+        return base, env
+    elif GITHUB_ACTIONS:
+        return sys.executable, env
     elif MACOS:
         exe = \
             attempt(sys.executable) or \
@@ -251,14 +259,14 @@ def _get_py_exe():
             attempt(psutil.Process().exe())
         if not exe:
             raise ValueError("can't find python exe real abspath")
-        return exe
+        return exe, env
     else:
         exe = os.path.realpath(sys.executable)
         assert os.path.exists(exe), exe
-        return exe
+        return exe, env
 
 
-PYTHON_EXE = _get_py_exe()
+PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
 DEVNULL = open(os.devnull, 'r+')
 atexit.register(DEVNULL.close)
 
@@ -347,7 +355,7 @@ def spawn_testproc(cmd=None, **kwds):
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     kwds.setdefault("cwd", os.getcwd())
-    kwds.setdefault("env", os.environ)
+    kwds.setdefault("env", PYTHON_EXE_ENV)
     if WINDOWS:
         # Prevents the subprocess to open error dialogs. This will also
         # cause stderr to be suppressed, which is suboptimal in order
@@ -447,7 +455,7 @@ def spawn_zombie():
             zpid = int(conn.recv(1024))
             _pids_started.add(zpid)
             zombie = psutil.Process(zpid)
-            call_until(lambda: zombie.status(), "ret == psutil.STATUS_ZOMBIE")
+            call_until(zombie.status, "ret == psutil.STATUS_ZOMBIE")
             return (parent, zombie)
         finally:
             conn.close()
@@ -617,7 +625,7 @@ def reap_children(recursive=False):
     if children:
         for p in children:
             terminate(p, wait_timeout=None)
-        gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
+        _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn("couldn't terminate process %r; attempting kill()" % p)
             terminate(p, sig=signal.SIGKILL)
@@ -988,7 +996,7 @@ class TestMemoryLeak(PsutilTestCase):
     retries = 10 if CI_TESTING else 5
     verbose = True
     _thisproc = psutil.Process()
-    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG', 0))
+    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG'))
 
     @classmethod
     def setUpClass(cls):
@@ -1048,7 +1056,7 @@ class TestMemoryLeak(PsutilTestCase):
         diff = mem2 - mem1  # can also be negative
         return diff
 
-    def _check_mem(self, fun, times, warmup_times, retries, tolerance):
+    def _check_mem(self, fun, times, retries, tolerance):
         messages = []
         prev_mem = 0
         increase = times
@@ -1093,8 +1101,7 @@ class TestMemoryLeak(PsutilTestCase):
 
         self._call_ntimes(fun, warmup_times)  # warm up
         self._check_fds(fun)
-        self._check_mem(fun, times=times, warmup_times=warmup_times,
-                        retries=retries, tolerance=tolerance)
+        self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)
 
     def execute_w_exc(self, exc, fun, **kwargs):
         """Convenience method to test a callable while making sure it
@@ -1111,7 +1118,6 @@ def print_sysinfo():
     import datetime
     import getpass
     import locale
-    import platform
     import pprint
     try:
         import pip
@@ -1605,7 +1611,7 @@ def check_net_address(addr, family):
     elif family == psutil.AF_LINK:
         assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
-        raise ValueError("unknown family %r", family)
+        raise ValueError("unknown family %r" % family)
 
 
 def check_connection_ntuple(conn):
@@ -1726,7 +1732,7 @@ def import_module_by_path(path):
 
 def warn(msg):
     """Raise a warning msg."""
-    warnings.warn(msg, UserWarning)
+    warnings.warn(msg, UserWarning, stacklevel=2)
 
 
 def is_namedtuple(x):

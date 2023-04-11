@@ -1579,11 +1579,11 @@ psutil_users(PyObject *self, PyObject *args) {
         if (! py_hostname)
             goto error;
         py_tuple = Py_BuildValue(
-            "(OOOfi)",
+            "(OOOdi)",
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
-            (float)utx->ut_tv.tv_sec, // start time
+            (double)utx->ut_tv.tv_sec, // start time
             utx->ut_pid               // process id
         );
         if (!py_tuple) {

@@ -8,7 +8,7 @@ ARGS =
 TSCRIPT = psutil/tests/runner.py
 
 # Internal.
-DEPS = \
+PY3_DEPS = \
 	autoflake \
 	autopep8 \
 	check-manifest \
@@ -22,6 +22,7 @@ DEPS = \
 	flake8-quotes \
 	isort \
 	pep8-naming \
+	pylint \
 	pyperf \
 	pypinfo \
 	requests \
@@ -34,8 +35,9 @@ PY2_DEPS = \
 	futures \
 	ipaddress \
 	mock
-DEPS += `$(PYTHON) -c \
-	"import sys; print('$(PY2_DEPS)' if sys.version_info[0] == 2 else '')"`
+PY_DEPS = `$(PYTHON) -c \
+	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')"`
+NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
 	"import sys, os; \
@@ -45,7 +47,7 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
+TEST_PREFIX = PSUTIL_SCRIPTS_DIR=`pwd`/scripts PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -55,7 +57,8 @@ TEST_PREFIX = PYTHONWARNINGS=always PSUTIL_DEBUG=1
 # ===================================================================
 
 clean:  ## Remove all build files.
-	@rm -rfv `find . -type d -name __pycache__ \
+	@rm -rfv `find . \
+		-type d -name __pycache__ \
 		-o -type f -name \*.bak \
 		-o -type f -name \*.orig \
 		-o -type f -name \*.pyc \
@@ -71,10 +74,12 @@ clean:  ## Remove all build files.
 		*\@psutil-* \
 		.coverage \
 		.failed-tests.txt \
+		.pytest_cache \
 		build/ \
 		dist/ \
 		docs/_build/ \
-		htmlcov/
+		htmlcov/ \
+		wheelhouse
 
 .PHONY: build
 build:  ## Compile (in parallel) without installing.
@@ -115,13 +120,13 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(PY_DEPS)
 
 # ===================================================================
 # Tests
 # ===================================================================
 
-test:  ## Run all tests.
+test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
 
@@ -169,10 +174,6 @@ test-memleaks:  ## Memory leak tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memleaks.py
 
-test-by-name:  ## e.g. make test-by-name ARGS=psutil.tests.test_system.TestSystemAPIs
-	${MAKE} build
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS)
-
 test-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) --last-failed
@@ -181,7 +182,7 @@ test-coverage:  ## Run test coverage.
 	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(TEST_PREFIX) $(PYTHON) -m coverage run $(TSCRIPT)
+	$(TEST_PREFIX) $(PYTHON) -m coverage run -m unittest -v
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
@@ -192,10 +193,13 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 flake8:  ## Run flake8 linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8 --jobs=${NUM_WORKERS}
 
 isort:  ## Run isort linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
+
+pylint:  ## Python pylint (not mandatory, just run it from time to time)
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
 c-linter:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -210,11 +214,11 @@ lint-all:  ## Run all linters
 # ===================================================================
 
 fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
-	@git ls-files '*.py' | xargs $(PYTHON) -m autopep8 --in-place --jobs 0 --global-config=.flake8
-	@git ls-files '*.py' | xargs $(PYTHON) -m autoflake --in-place --jobs 0 --remove-all-unused-imports --remove-unused-variables --remove-duplicate-keys
+	@git ls-files '*.py' | xargs $(PYTHON) -m autopep8 --in-place --jobs=${NUM_WORKERS} --global-config=.flake8
+	@git ls-files '*.py' | xargs $(PYTHON) -m autoflake --in-place --jobs=${NUM_WORKERS} --remove-all-unused-imports --remove-unused-variables --remove-duplicate-keys
 
 fix-imports:  ## Fix imports with isort.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort
+	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-flake8

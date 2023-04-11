@@ -45,10 +45,9 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYTHON_EXE
-from psutil.tests import ROOT_DIR
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
-from psutil.tests import import_module_by_path
 from psutil.tests import mock
 from psutil.tests import reload_module
 from psutil.tests import sh
@@ -250,15 +249,15 @@ class TestMisc(PsutilTestCase):
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
 
-    # XXX: https://github.com/pypa/setuptools/pull/2896
-    @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
-    def test_setup_script(self):
-        setup_py = os.path.join(ROOT_DIR, 'setup.py')
-        if CI_TESTING and not os.path.exists(setup_py):
-            return self.skipTest("can't find setup.py")
-        module = import_module_by_path(setup_py)
-        self.assertRaises(SystemExit, module.setup)
-        self.assertEqual(module.get_version(), psutil.__version__)
+    # # XXX: https://github.com/pypa/setuptools/pull/2896
+    # @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
+    # def test_setup_script(self):
+    #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
+    #     if CI_TESTING and not os.path.exists(setup_py):
+    #         return self.skipTest("can't find setup.py")
+    #     module = import_module_by_path(setup_py)
+    #     self.assertRaises(SystemExit, module.setup)
+    #     self.assertEqual(module.get_version(), psutil.__version__)
 
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case
@@ -291,9 +290,108 @@ class TestMisc(PsutilTestCase):
 # ===================================================================
 
 
-class TestCommonModule(PsutilTestCase):
+class TestMemoizeDecorator(PsutilTestCase):
 
-    def test_memoize(self):
+    def setUp(self):
+        self.calls = []
+
+    tearDown = setUp
+
+    def run_against(self, obj, expected_retval=None):
+        # no args
+        for _ in range(2):
+            ret = obj()
+            self.assertEqual(self.calls, [((), {})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # with args
+        for _ in range(2):
+            ret = obj(1)
+            self.assertEqual(self.calls, [((), {}), ((1, ), {})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # with args + kwargs
+        for _ in range(2):
+            ret = obj(1, bar=2)
+            self.assertEqual(
+                self.calls, [((), {}), ((1, ), {}), ((1, ), {'bar': 2})])
+            if expected_retval is not None:
+                self.assertEqual(ret, expected_retval)
+        # clear cache
+        self.assertEqual(len(self.calls), 3)
+        obj.cache_clear()
+        ret = obj()
+        if expected_retval is not None:
+            self.assertEqual(ret, expected_retval)
+        self.assertEqual(len(self.calls), 4)
+        # docstring
+        self.assertEqual(obj.__doc__, "my docstring")
+
+    def test_function(self):
+        @memoize
+        def foo(*args, **kwargs):
+            """my docstring"""
+            baseclass.calls.append((args, kwargs))
+            return 22
+
+        baseclass = self
+        self.run_against(foo, expected_retval=22)
+
+    def test_class(self):
+        @memoize
+        class Foo:
+            """my docstring"""
+
+            def __init__(self, *args, **kwargs):
+                baseclass.calls.append((args, kwargs))
+
+            def bar(self):
+                return 22
+
+        baseclass = self
+        self.run_against(Foo, expected_retval=None)
+        self.assertEqual(Foo().bar(), 22)
+
+    def test_class_singleton(self):
+        # @memoize can be used against classes to create singletons
+        @memoize
+        class Bar:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        self.assertIs(Bar(), Bar())
+        self.assertEqual(id(Bar()), id(Bar()))
+        self.assertEqual(id(Bar(1)), id(Bar(1)))
+        self.assertEqual(id(Bar(1, foo=3)), id(Bar(1, foo=3)))
+        self.assertNotEqual(id(Bar(1)), id(Bar(2)))
+
+    def test_staticmethod(self):
+        class Foo:
+            @staticmethod
+            @memoize
+            def bar(*args, **kwargs):
+                """my docstring"""
+                baseclass.calls.append((args, kwargs))
+                return 22
+
+        baseclass = self
+        self.run_against(Foo().bar, expected_retval=22)
+
+    def test_classmethod(self):
+        class Foo:
+            @classmethod
+            @memoize
+            def bar(cls, *args, **kwargs):
+                """my docstring"""
+                baseclass.calls.append((args, kwargs))
+                return 22
+
+        baseclass = self
+        self.run_against(Foo().bar, expected_retval=22)
+
+    def test_original(self):
+        # This was the original test before I made it dynamic to test it
+        # against different types. Keeping it anyway.
         @memoize
         def foo(*args, **kwargs):
             """foo docstring"""
@@ -302,19 +400,19 @@ class TestCommonModule(PsutilTestCase):
 
         calls = []
         # no args
-        for x in range(2):
+        for _ in range(2):
             ret = foo()
             expected = ((), {})
             self.assertEqual(ret, expected)
             self.assertEqual(len(calls), 1)
         # with args
-        for x in range(2):
+        for _ in range(2):
             ret = foo(1)
             expected = ((1, ), {})
             self.assertEqual(ret, expected)
             self.assertEqual(len(calls), 2)
         # with args + kwargs
-        for x in range(2):
+        for _ in range(2):
             ret = foo(1, bar=2)
             expected = ((1, ), {'bar': 2})
             self.assertEqual(ret, expected)
@@ -327,6 +425,9 @@ class TestCommonModule(PsutilTestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+
+class TestCommonModule(PsutilTestCase):
 
     def test_memoize_when_activated(self):
         class Foo:
@@ -631,7 +732,7 @@ class TestWrapNumbers(PsutilTestCase):
             {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}})
         self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
 
-        def assert_():
+        def check_cache_info():
             cache = wrap_numbers.cache_info()
             self.assertEqual(
                 cache[1],
@@ -645,14 +746,14 @@ class TestWrapNumbers(PsutilTestCase):
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
         self.assertEqual(cache[0], {'disk_io': input})
-        assert_()
+        check_cache_info()
 
         # then it goes up
         input = {'disk1': nt(100, 100, 90)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
         self.assertEqual(cache[0], {'disk_io': input})
-        assert_()
+        check_cache_info()
 
         # then it wraps again
         input = {'disk1': nt(100, 100, 20)}
@@ -720,6 +821,7 @@ class TestScripts(PsutilTestCase):
 
     @staticmethod
     def assert_stdout(exe, *args, **kwargs):
+        kwargs.setdefault("env", PYTHON_EXE_ENV)
         exe = '%s' % os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe]
         for arg in args:
@@ -735,7 +837,7 @@ class TestScripts(PsutilTestCase):
         return out
 
     @staticmethod
-    def assert_syntax(exe, args=None):
+    def assert_syntax(exe):
         exe = os.path.join(SCRIPTS_DIR, exe)
         if PY3:
             f = open(exe, 'rt', encoding='utf8')

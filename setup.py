@@ -214,6 +214,7 @@ if WINDOWS:
             'psutil/arch/windows/process_info.c',
             'psutil/arch/windows/process_handles.c',
             'psutil/arch/windows/disk.c',
+            'psutil/arch/windows/mem.c',
             'psutil/arch/windows/net.c',
             'psutil/arch/windows/cpu.c',
             'psutil/arch/windows/security.c',
@@ -346,10 +347,7 @@ if POSIX:
             # for an explanation of Solaris /etc/release
             with open('/etc/release') as f:
                 update = re.search(r'(?<=s10s_u)[0-9]{1,2}', f.readline())
-                if update is None:
-                    return 0
-                else:
-                    return int(update.group(0))
+                return int(update.group(0)) if update else 0
 
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
@@ -466,12 +464,14 @@ def main():
                                 "develop")):
             py3 = "3" if PY3 else ""
             if LINUX:
+                pyimpl = "pypy" if PYPY else "python"
                 if which('dpkg'):
-                    missdeps("sudo apt-get install gcc python%s-dev" % py3)
+                    missdeps("sudo apt-get install gcc %s%s-dev" %
+                             (pyimpl, py3))
                 elif which('rpm'):
-                    missdeps("sudo yum install gcc python%s-devel" % py3)
+                    missdeps("sudo yum install gcc %s%s-devel" % (pyimpl, py3))
                 elif which('apk'):
-                    missdeps("sudo apk add gcc python%s-dev" % py3)
+                    missdeps("sudo apk add gcc %s%s-dev" % (pyimpl, py3))
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
                              "is not installed"), color="red", file=sys.stderr)

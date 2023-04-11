@@ -516,7 +516,7 @@ class Process(object):
                     "s" if len(invalid_names) > 1 else "",
                     ", ".join(map(repr, invalid_names))))
 
-        retdict = dict()
+        retdict = {}
         ls = attrs or valid_names
         with self.oneshot():
             for name in ls:

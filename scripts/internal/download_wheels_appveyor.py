@@ -101,9 +101,9 @@ def run():
     # 2 wheels (32 and 64 bit) per supported python version
     expected = len(PY_VERSIONS) * 2
     if expected != completed:
-        return exit("expected %s files, got %s" % (expected, completed))
+        return sys.exit("expected %s files, got %s" % (expected, completed))
     if exc:
-        return exit()
+        return sys.exit()
     rename_win27_wheels()
 
 

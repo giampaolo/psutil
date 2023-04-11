@@ -501,7 +501,7 @@ class TestSystemWideConnections(ConnectionTestCase):
         pids = []
         times = 10
         fnames = []
-        for i in range(times):
+        for _ in range(times):
             fname = self.get_testfn()
             fnames.append(fname)
             src = textwrap.dedent("""\

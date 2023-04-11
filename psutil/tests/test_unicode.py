@@ -316,8 +316,7 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
     funky_suffix = INVALID_UNICODE_SUFFIX
 
-    @classmethod
-    def expect_exact_path_match(cls):
+    def expect_exact_path_match(self):
         # Invalid unicode names are supposed to work on Python 2.
         return True
 

@@ -98,7 +98,7 @@ def main():
         elif path.endswith(".tar.gz"):
             pkg = Tarball(path)
         else:
-            raise ValueError("invalid package %r", path)
+            raise ValueError("invalid package %r" % path)
         groups[pkg.platform()].append(pkg)
 
     tot_files = 0

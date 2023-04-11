@@ -51,33 +51,6 @@ def vm_stat(field):
     return int(re.search(r'\d+', line).group(0)) * getpagesize()
 
 
-# http://code.activestate.com/recipes/578019/
-def human2bytes(s):
-    SYMBOLS = {
-        'customary': ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'),
-    }
-    init = s
-    num = ""
-    while s and s[0:1].isdigit() or s[0:1] == '.':
-        num += s[0]
-        s = s[1:]
-    num = float(num)
-    letter = s.strip()
-    for name, sset in SYMBOLS.items():
-        if letter in sset:
-            break
-    else:
-        if letter == 'k':
-            sset = SYMBOLS['customary']
-            letter = letter.upper()
-        else:
-            raise ValueError("can't interpret %r" % init)
-    prefix = {sset[0]: 1}
-    for i, s in enumerate(sset[1:]):
-        prefix[s] = 1 << (i + 1) * 10
-    return int(num * prefix[letter])
-
-
 @unittest.skipIf(not MACOS, "MACOS only")
 class TestProcess(PsutilTestCase):
 
@@ -199,16 +172,6 @@ class TestSystemAPIs(PsutilTestCase):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout
         self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
-
-    # Not very reliable.
-    # def test_swapmem_total(self):
-    #     out = sh('sysctl vm.swapusage')
-    #     out = out.replace('vm.swapusage: ', '')
-    #     total, used, free = re.findall('\d+.\d+\w', out)
-    #     psutil_smem = psutil.swap_memory()
-    #     self.assertEqual(psutil_smem.total, human2bytes(total))
-    #     self.assertEqual(psutil_smem.used, human2bytes(used))
-    #     self.assertEqual(psutil_smem.free, human2bytes(free))
 
     # --- network
 

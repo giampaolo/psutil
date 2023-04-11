@@ -85,6 +85,8 @@ include psutil/arch/windows/cpu.c
 include psutil/arch/windows/cpu.h
 include psutil/arch/windows/disk.c
 include psutil/arch/windows/disk.h
+include psutil/arch/windows/mem.c
+include psutil/arch/windows/mem.h
 include psutil/arch/windows/net.c
 include psutil/arch/windows/net.h
 include psutil/arch/windows/ntextapi.h
@@ -129,6 +131,7 @@ include scripts/fans.py
 include scripts/free.py
 include scripts/ifconfig.py
 include scripts/internal/README
+include scripts/internal/appveyor_run_with_compiler.cmd
 include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py

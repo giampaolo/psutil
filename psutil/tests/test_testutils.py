@@ -27,8 +27,10 @@ from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
+from psutil.tests import COVERAGE
 from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import PYTHON_EXE
+from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
 from psutil.tests import TestMemoryLeak
 from psutil.tests import bind_socket
@@ -259,7 +261,8 @@ class TestProcessUtils(PsutilTestCase):
         terminate(p)
         # by psutil.Popen
         cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
-        p = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         env=PYTHON_EXE_ENV)
         terminate(p)
         self.assertProcessGone(p)
         terminate(p)
@@ -368,6 +371,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     @retry_on_failure()
     @unittest.skipIf(CI_TESTING, "skipped on CI")
+    @unittest.skipIf(COVERAGE, "skipped during test coverage")
     def test_leak_mem(self):
         ls = []
 
@@ -402,16 +406,16 @@ class TestMemLeakClass(TestMemoryLeak):
         self.assertEqual(len(ls), times + 1)
 
     def test_execute_w_exc(self):
-        def fun():
+        def fun_1():
             1 / 0
-        self.execute_w_exc(ZeroDivisionError, fun)
+        self.execute_w_exc(ZeroDivisionError, fun_1)
         with self.assertRaises(ZeroDivisionError):
-            self.execute_w_exc(OSError, fun)
+            self.execute_w_exc(OSError, fun_1)
 
-        def fun():
+        def fun_2():
             pass
         with self.assertRaises(AssertionError):
-            self.execute_w_exc(ZeroDivisionError, fun)
+            self.execute_w_exc(ZeroDivisionError, fun_2)
 
 
 class TestTestingUtils(PsutilTestCase):

@@ -3,7 +3,28 @@
 5.9.5 (IN DEVELOPMENT)
 ======================
 
+**Enhancements**
+
+- 2196_: in case of exception, display a cleaner error traceback by hiding the
+  `KeyError` bit deriving from a missed cache hit.
+- 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
+  is raised.
+
+**Bug fixes**
+
+- 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
+  ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
+  calculate an approximation for ``available`` memory which matches "free"
+  CLI utility.
 - 2164_, [Linux]: compilation fails on kernels < 2.6.27 (e.g. CentOS 5).
+- 2186_, [FreeBSD]: compilation fails with Clang 15.  (patch by Po-Chuan Hsieh)
+- 2191_, [Linux]: `disk_partitions()`_: do not unnecessarily read
+  /proc/filesystems and raise `AccessDenied`_ unless user specified `all=False`
+  argument.
+- 2216_, [Windows]: fix tests when running in a virtual environment (patch by
+  Matthieu Darbois)
+- 2225_, [POSIX]: `users()`_ loses precision for ``started`` attribute (off by
+  1 minute).
 
 5.9.4
 =====
