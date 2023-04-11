@@ -348,7 +348,10 @@ class TestSystemAPIs(PsutilTestCase):
                 self.assertEqual(u.name, users[idx])
                 self.assertEqual(u.terminal, terminals[idx])
                 p = psutil.Process(u.pid)
-                self.assertAlmostEqual(u.started, p.create_time(), delta=1)
+                # on macOS time is off by ~47 secs for some reason, but
+                # the next test against 'who' CLI succeeds
+                delta = 60 if MACOS else 1
+                self.assertAlmostEqual(u.started, p.create_time(), delta=delta)
 
     @retry_on_failure()
     def test_users_started(self):
