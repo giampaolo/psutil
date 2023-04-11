@@ -342,15 +342,34 @@ class TestSystemAPIs(PsutilTestCase):
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
-        started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
         self.assertEqual(len(users), len(psutil.users()))
         with self.subTest(psutil=psutil.users(), who=out):
             for idx, u in enumerate(psutil.users()):
                 self.assertEqual(u.name, users[idx])
                 self.assertEqual(u.terminal, terminals[idx])
-                psutil_started = datetime.datetime.fromtimestamp(
-                    u.started).strftime("%Y-%m-%d %H:%M")
-                self.assertEqual(psutil_started, started[idx])
+
+    @retry_on_failure()
+    def test_users_started(self):
+        out = sh("who -u")
+        if not out.strip():
+            raise self.skipTest("no users on this system")
+        # '2023-04-11 09:31' (Linux)
+        started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
+        if started:
+            tstamp = "%Y-%m-%d %H:%M"
+        else:
+            # 'Apr 10 22:27' (macOS)
+            started = re.findall(r"[A-Z][a-z][a-z] \d\d \d\d:\d\d", out)
+            if started:
+                tstamp = "%b %d %H:%M"
+            else:
+                raise ValueError(
+                    "cannot interpret tstamp in who output\n%s" % (out))
+        with self.subTest(psutil=psutil.users(), who=out):
+            for idx, u in enumerate(psutil.users()):
+                psutil_value = datetime.datetime.fromtimestamp(
+                    u.started).strftime(tstamp)
+                self.assertEqual(psutil_value, started[idx])
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
