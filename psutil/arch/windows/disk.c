@@ -360,6 +360,89 @@ error:
 
 
 /*
+ * Return information about the disk page files as a list.
+ * A page file is basically the same thing as a swap partition.
+ */
+PyObject *
+psutil_disk_swaps(PyObject *self, PyObject *args) {
+    NTSTATUS status;
+    PVOID buffer = NULL;
+    ULONG bufferSize = 0x200;
+    PSYSTEM_PAGEFILE_INFORMATION pInfo;
+    PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (! py_retlist)
+        return NULL;
+
+    // Enumerate page files.
+    buffer = MALLOC_ZERO(bufferSize);
+    while ((status = NtQuerySystemInformation(
+        SystemPageFileInformation,
+        buffer,
+        bufferSize,
+        NULL)) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        FREE(buffer);
+        bufferSize *= 2;
+        buffer = MALLOC_ZERO(bufferSize);
+    }
+
+    if (! NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
+        goto error;
+    }
+
+    // Traverse the resulting struct.
+    // A TotalSize of 0 is used to indicate that there are no pagefiles.
+    pInfo = (SYSTEM_PAGEFILE_INFORMATION *)buffer;
+    if (pInfo->TotalSize != 0) {
+        while (TRUE) {
+            // construct python list
+            py_path = PyUnicode_FromWideChar(
+                pInfo->PageFileName.Buffer,
+                wcslen(pInfo->PageFileName.Buffer));
+            if (! py_path)
+                goto error;
+
+            py_tuple = Py_BuildValue(
+                "Okkk",
+                py_path,
+                pInfo->TotalSize * PSUTIL_SYSTEM_INFO.dwPageSize,
+                pInfo->TotalInUse * PSUTIL_SYSTEM_INFO.dwPageSize,
+                pInfo->PeakUsage * PSUTIL_SYSTEM_INFO.dwPageSize
+            );
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_CLEAR(py_tuple);
+            Py_CLEAR(py_path);
+
+            // end of list
+            if (pInfo->NextEntryOffset == 0)
+                break;
+            // set pointer to the next pInfo struct
+            pInfo = (SYSTEM_PAGEFILE_INFORMATION *) \
+                ((BYTE *)pInfo + pInfo->NextEntryOffset);
+        }
+    }
+
+    FREE(buffer);
+    return py_retlist;
+
+error:
+    if (buffer != NULL)
+        FREE(buffer);
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+
+
+/*
  Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
  and return the corresponding drive letter (e.g. "C:\\").
  If no match is found return an empty string.

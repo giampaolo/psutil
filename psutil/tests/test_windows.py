@@ -162,6 +162,11 @@ class TestSystemAPIs(WindowsTestCase):
             int(w.AvailableBytes), psutil.virtual_memory().free,
             delta=TOLERANCE_SYS_MEM)
 
+    def test_percent_swapmem(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile()[0]
+        percent = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
+        self.assertEqual(int(percent), int(psutil.swap_memory().percent))
+
     # @unittest.skipIf(wmi is None, "wmi module is not installed")
     # def test__UPTIME(self):
     #     # _UPTIME constant is not public but it is used internally

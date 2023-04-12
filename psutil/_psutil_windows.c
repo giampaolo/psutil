@@ -1557,6 +1557,7 @@ PsutilMethods[] = {
     {"cpu_times", psutil_cpu_times, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"disk_swaps", psutil_disk_swaps, METH_VARARGS},
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
