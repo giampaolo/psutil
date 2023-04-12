@@ -25,6 +25,8 @@
   Matthieu Darbois)
 - 2225_, [POSIX]: `users()`_ loses precision for ``started`` attribute (off by
   1 minute).
+- 2229_, [OpenBSD]: unable to properly recognize zombie processes.
+  `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
 
 5.9.4
 =====
