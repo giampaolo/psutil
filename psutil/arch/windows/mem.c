@@ -7,6 +7,7 @@
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
+#include <pdh.h>
 
 #include "../../_psutil_common.h"
 
@@ -40,4 +41,53 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         availPhys,
         totalSys,
         availSys);
+}
+
+/*
+ * Return a Python float representing the percent usage of all paging files on
+ * the system.
+ */
+PyObject *
+psutil_swap_percent(PyObject *self, PyObject *args) {
+    WCHAR *szCounterPath = L"\\Paging File(_Total)\\% Usage";
+    PDH_STATUS s;
+    HQUERY hQuery;
+    HCOUNTER hCounter;
+    PDH_FMT_COUNTERVALUE counterValue;
+    double percentUsage;
+
+    if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError, "PdhOpenQueryW failed");
+        return NULL;
+    }
+
+    s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
+    if (s != ERROR_SUCCESS) {
+        PdhCloseQuery(hQuery);
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "PdhAddEnglishCounterW failed. Performance counters may be disabled."
+        );
+        return NULL;
+    }
+
+    s = PdhCollectQueryData(hQuery);
+    if (s != ERROR_SUCCESS) {
+        // If swap disabled this will fail
+        percentUsage = 0;
+    } else {
+        s = PdhGetFormattedCounterValue(
+            (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue);
+        if (s != ERROR_SUCCESS) {
+            percentUsage = 0;
+        } else {
+            percentUsage = counterValue.doubleValue;
+        }
+    }
+
+    PdhRemoveCounter(hCounter);
+
+    PdhCloseQuery(hQuery);
+
+    return Py_BuildValue("d", percentUsage);
 }

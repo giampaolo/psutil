@@ -8,3 +8,4 @@
 
 PyObject *psutil_getpagesize(PyObject *self, PyObject *args);
 PyObject *psutil_virtual_mem(PyObject *self, PyObject *args);
+PyObject *psutil_swap_percent(PyObject *self, PyObject *args);
