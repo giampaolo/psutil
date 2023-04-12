@@ -836,7 +836,7 @@ def create_exe(outpath, c_code=None):
     assert not os.path.exists(outpath), outpath
     if c_code:
         if not which("gcc"):
-            raise ValueError("gcc is not installed")
+            raise unittest.SkipTest("gcc is not installed")
         if isinstance(c_code, bool):        # c_code is True
             c_code = textwrap.dedent(
                 """

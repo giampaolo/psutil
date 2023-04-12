@@ -115,7 +115,10 @@ def ps_args(pid):
     field = "command"
     if AIX or SUNOS:
         field = "args"
-    return ps(field, pid)
+    out = ps(field, pid)
+    # observed on BSD + Github CI: '/usr/local/bin/python3 -E -O (python3.9)'
+    out = re.sub(r"\(python.*?\)$", "", out)
+    return out.strip()
 
 
 def ps_rss(pid):
@@ -415,7 +418,12 @@ class TestSystemAPIs(PsutilTestCase):
     @retry_on_failure()
     def test_disk_usage(self):
         def df(device):
-            out = sh("df -k %s" % device).strip()
+            try:
+                out = sh("df -k %s" % device).strip()
+            except RuntimeError as err:
+                if "device busy" in str(err).lower():
+                    raise self.skipTest("df returned EBUSY")
+                raise
             line = out.split('\n')[1]
             fields = line.split()
             total = int(fields[1]) * 1024

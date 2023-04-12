@@ -131,6 +131,7 @@ class BSDTestCase(PsutilTestCase):
         num = sysctl('hw.physmem')
         self.assertEqual(num, psutil.virtual_memory().total)
 
+    @unittest.skipIf(not which('ifconfig'), "ifconfig cmd not available")
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
             try:
