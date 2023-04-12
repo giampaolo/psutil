@@ -3,8 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Functions related to the Performance Data Helper (PDH) API.
- * File name from Windows Management Instrumentation API, not implemented.
+ * Functions related to the Windows Management Instrumentation API.
  */
 
 #include <Python.h>
@@ -13,9 +12,6 @@
 
 #include "../../_psutil_common.h"
 
-/*
- * Load average implementation using "\System\Processor Queue Length" counter
- */
 
 // We use an exponentially weighted moving average, just like Unix systems do
 // https://en.wikipedia.org/wiki/Load_(computing)#Unix-style_load_calculation
@@ -56,6 +52,7 @@ VOID CALLBACK LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
     load_avg_15m = load_avg_15m * LOADAVG_FACTOR_15F + currentLoad * \
         (1.0 - LOADAVG_FACTOR_15F);
 }
+
 
 PyObject *
 psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
