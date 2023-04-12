@@ -8,4 +8,4 @@
 
 PyObject* psutil_init_loadavg_counter();
 PyObject* psutil_get_loadavg();
-PyObject* psutil_get_percentswap();
+PyObject* psutil_swap_percent();

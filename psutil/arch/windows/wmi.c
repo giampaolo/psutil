@@ -131,7 +131,7 @@ psutil_get_loadavg(PyObject *self, PyObject *args) {
  * the system.
  */
 PyObject *
-psutil_get_percentswap(PyObject *self, PyObject *args) {
+psutil_swap_percent(PyObject *self, PyObject *args) {
     WCHAR *szCounterPath = L"\\Paging File(_Total)\\% Usage";
     PDH_STATUS s;
     HQUERY hQuery;
@@ -146,6 +146,7 @@ psutil_get_percentswap(PyObject *self, PyObject *args) {
 
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
     if (s != ERROR_SUCCESS) {
+        PdhCloseQuery(hQuery);
         PyErr_Format(
             PyExc_RuntimeError,
             "PdhAddEnglishCounterW failed. Performance counters may be disabled."
