@@ -287,6 +287,7 @@ elif NETBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
+            'psutil/arch/netbsd/cpu.c',
             'psutil/arch/netbsd/mem.c',
             'psutil/arch/netbsd/specific.c',
             'psutil/arch/netbsd/socks.c',
