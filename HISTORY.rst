@@ -9,7 +9,7 @@
   `KeyError` bit deriving from a missed cache hit.
 - 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
   is raised.
-- XXXX_, [OpenBSD]: `psutil.net_connections`_ implementation was rewritten from
+- 2230_, [OpenBSD]: `psutil.net_connections`_ implementation was rewritten from
   scratch:
   - We're now able to retrieve the path of AF_UNIX sockets (before it was an
     empty string)
