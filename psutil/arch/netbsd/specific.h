@@ -19,7 +19,6 @@ PyObject *psutil_get_cmdline(pid_t pid);
 PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);
 PyObject *psutil_proc_connections(PyObject *self, PyObject *args);
-PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
 PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
 PyObject* psutil_proc_num_threads(PyObject* self, PyObject* args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);

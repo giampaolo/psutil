@@ -31,7 +31,6 @@
 #define _KERNEL  // for DTYPE_*
     #include <sys/file.h>
 #undef _KERNEL
-#include <sys/disk.h>  // struct diskstats
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -452,62 +451,4 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     free(freep);
 
     return Py_BuildValue("i", cnt);
-}
-
-
-PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    int i, dk_ndrive, mib[3];
-    size_t len;
-    struct io_sysctl *stats = NULL;
-    PyObject *py_disk_info = NULL;
-    PyObject *py_retdict = PyDict_New();
-
-    if (py_retdict == NULL)
-        return NULL;
-    mib[0] = CTL_HW;
-    mib[1] = HW_IOSTATS;
-    mib[2] = sizeof(struct io_sysctl);
-    len = 0;
-    if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
-        warn("can't get HW_IOSTATS");
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    dk_ndrive = (int)(len / sizeof(struct io_sysctl));
-
-    stats = malloc(len);
-    if (stats == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    if (sysctl(mib, 3, stats, &len, NULL, 0) < 0 ) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < dk_ndrive; i++) {
-        py_disk_info = Py_BuildValue(
-            "(KKKK)",
-            stats[i].rxfer,
-            stats[i].wxfer,
-            stats[i].rbytes,
-            stats[i].wbytes
-        );
-        if (!py_disk_info)
-            goto error;
-        if (PyDict_SetItemString(py_retdict, stats[i].name, py_disk_info))
-            goto error;
-        Py_DECREF(py_disk_info);
-    }
-
-    free(stats);
-    return py_retdict;
-
-error:
-    Py_XDECREF(py_disk_info);
-    Py_DECREF(py_retdict);
-    if (stats != NULL)
-        free(stats);
-    return NULL;
 }
