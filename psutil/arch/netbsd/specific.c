@@ -7,32 +7,9 @@
  * Platform-specific module methods for NetBSD.
  */
 
-#if defined(PSUTIL_NETBSD)
-    #define _KMEMUSER
-#endif
-
 #include <Python.h>
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/proc.h>
-#include <signal.h>
 #include <kvm.h>
-// connection stuff
-#include <netdb.h>  // for NI_MAXHOST
-#include <sys/socket.h>
-#define _KERNEL  // for DTYPE_*
-    #include <sys/file.h>
-#undef _KERNEL
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
@@ -291,10 +268,6 @@ error:
     return NULL;
 }
 
-
-// ============================================================================
-// APIS
-// ============================================================================
 
 int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
