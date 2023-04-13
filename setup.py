@@ -275,6 +275,7 @@ elif OPENBSD:
             'psutil/arch/openbsd/disk.c',
             'psutil/arch/openbsd/mem.c',
             'psutil/arch/openbsd/proc.c',
+            'psutil/arch/openbsd/socks.c',
         ],
         define_macros=macros,
         libraries=["kvm"],

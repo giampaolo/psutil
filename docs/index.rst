@@ -659,19 +659,18 @@ Network
     (Solaris) UNIX sockets are not supported.
 
   .. note::
-     (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
-     This is a limitation of the OS.
-
-  .. note::
-     (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
-     "". This is a limitation of the OS.
+     (Linux, FreeBSD, OpenBSD) *raddr* field for UNIX sockets is always set to
+     ``""`` (empty string). This is a limitation of the OS.
 
   .. versionadded:: 2.1.0
 
   .. versionchanged:: 5.3.0 : socket "fd" is now set for real instead of being
      ``-1``.
 
-  .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+  .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
+
+  .. versionchanged:: 5.9.5 : OpenBSD: retrieve *laddr* path for AF_UNIX
+    sockets (before it was an empty string).
 
 .. function:: net_if_addrs()
 
@@ -1943,18 +1942,18 @@ Process class
       (Solaris) UNIX sockets are not supported.
 
     .. note::
-       (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
+       (Linux, FreeBSD) *raddr* field for UNIX sockets is always set to "".
        This is a limitation of the OS.
 
     .. note::
-       (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
+       (OpenBSD) *laddr* and *raddr* fields for UNIX sockets are always set to
        "". This is a limitation of the OS.
 
     .. note::
       (AIX) :class:`psutil.AccessDenied` is always raised unless running
       as root (lsof does the same).
 
-    .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+    .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
 
   .. method:: is_running()
 
