@@ -180,7 +180,7 @@ if NETBSD:
     def virtual_memory():
         """System virtual memory as a namedtuple."""
         mem = cext.virtual_mem()
-        total, free, active, inactive, wired, cached, avail = mem
+        total, free, active, inactive, wired, cached = mem
         # On NetBSD buffers and shared mem is determined via /proc.
         # The C ext set them to 0.
         with open('/proc/meminfo', 'rb') as f:
@@ -191,7 +191,10 @@ if NETBSD:
                     shared = int(line.split()[1]) * 1024
                 elif line.startswith(b'Cached:'):
                     cached = int(line.split()[1]) * 1024
-        used = active + wired + cached
+        # match htop (I verified):
+        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
+        used = active + wired
+        avail = total - used
         percent = usage_percent((total - avail), total, round_=1)
         return svmem(total, avail, percent, used, free,
                      active, inactive, buffers, cached, shared, wired)
