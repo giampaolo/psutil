@@ -254,12 +254,12 @@ def swap_memory():
     # pages are accessed, so we can't use free system memory for swap.
     # instead, we calculate page file usage based on performance counter
     if (total > 0):
-        percentswap = cext.getpercentswap()
+        percentswap = cext.swap_percent()
         used = int(0.01 * percentswap * total)
     else:
         used = 0
     free = total - used
-    percent = usage_percent(used, total, round_=1)
+    percent = round(percentswap, 1)
     return _common.sswap(total, used, free, percent, 0, 0)
 
 
