@@ -34,6 +34,7 @@
   1 minute).
 - 2229_, [OpenBSD]: unable to properly recognize zombie processes.
   `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
+- 2231_, [NetBSD]: *available*  `virtual_memory()`_ is higher than *total*.
 
 5.9.4
 =====
