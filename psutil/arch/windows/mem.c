@@ -44,7 +44,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 }
 
 
-// Return a float representing the percent usage of all paging files on 
+// Return a float representing the percent usage of all paging files on
 // the system.
 PyObject *
 psutil_swap_percent(PyObject *self, PyObject *args) {
@@ -73,17 +73,19 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
     s = PdhCollectQueryData(hQuery);
     if (s != ERROR_SUCCESS) {
         // If swap disabled this will fail.
+        psutil_debug("PdhCollectQueryData failed; assume swap percent is 0");
         percentUsage = 0;
-    } 
+    }
     else {
         s = PdhGetFormattedCounterValue(
             (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue);
         if (s != ERROR_SUCCESS) {
-            percentUsage = 0;
-        } 
-        else {
-            percentUsage = counterValue.doubleValue;
+            PdhCloseQuery(hQuery);
+            PyErr_Format(
+                PyExc_RuntimeError, "PdhGetFormattedCounterValue failed");
+            return NULL;
         }
+        percentUsage = counterValue.doubleValue;
     }
 
     PdhRemoveCounter(hCounter);
