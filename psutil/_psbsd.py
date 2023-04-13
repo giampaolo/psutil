@@ -180,7 +180,7 @@ if NETBSD:
     def virtual_memory():
         """System virtual memory as a namedtuple."""
         mem = cext.virtual_mem()
-        total, free, active, inactive, wired, cached, buffers, shared = mem
+        total, free, active, inactive, wired, cached = mem
         # On NetBSD buffers and shared mem is determined via /proc.
         # The C ext set them to 0.
         with open('/proc/meminfo', 'rb') as f:

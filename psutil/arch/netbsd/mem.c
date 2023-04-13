@@ -39,7 +39,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    return Py_BuildValue("KKKKKKKK",
+    return Py_BuildValue("KKKKKK",
         (unsigned long long) uv.npages << uv.pageshift,  // total
         (unsigned long long) uv.free << uv.pageshift,  // free
         (unsigned long long) uv.active << uv.pageshift,  // active
