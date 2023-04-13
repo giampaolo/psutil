@@ -401,26 +401,23 @@ def net_if_stats():
 
 def net_connections(kind):
     """System-wide network connections."""
-    if OPENBSD:
-        ret = []
-        for pid in pids():
-            try:
-                cons = Process(pid).connections(kind)
-            except (NoSuchProcess, ZombieProcess):
-                continue
-            else:
-                for conn in cons:
-                    conn = list(conn)
-                    conn.append(pid)
-                    ret.append(_common.sconn(*conn))
-        return ret
-
     if kind not in _common.conn_tmap:
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     ret = set()
-    if NETBSD:
+
+    if OPENBSD:
+        rawlist = cext.net_connections(-1, families, types)
+        ret = set()
+        for item in rawlist:
+            fd, fam, type, laddr, raddr, status, pid = item
+            if fam in families and type in types:
+                nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                    TCP_STATUSES, pid)
+                ret.add(nt)
+        return list(ret)
+    elif NETBSD:
         rawlist = cext.net_connections(-1)
     else:
         rawlist = cext.net_connections()
@@ -773,9 +770,9 @@ class Process(object):
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
+        families, types = conn_tmap[kind]
 
         if NETBSD:
-            families, types = conn_tmap[kind]
             ret = []
             rawlist = cext.net_connections(self.pid)
             for item in rawlist:
@@ -786,9 +783,22 @@ class Process(object):
                                         TCP_STATUSES)
                     ret.append(nt)
             self._assert_alive()
-            return list(ret)
+            return ret
 
-        families, types = conn_tmap[kind]
+        elif OPENBSD:
+            ret = []
+            rawlist = cext.net_connections(self.pid, families, types)
+            for item in rawlist:
+                fd, fam, type, laddr, raddr, status, pid = item
+                assert pid == self.pid
+                if fam in families and type in types:
+                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
+                                        TCP_STATUSES)
+                    ret.append(nt)
+            self._assert_alive()
+            return ret
+
+        # FreeBSD
         rawlist = cext.proc_connections(self.pid, families, types)
         ret = []
         for item in rawlist:

@@ -1152,6 +1152,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
             //
             int fd, family, type, lport, rport, state;
+            // TODO: use INET6_ADDRSTRLEN instead of 200
             char lip[200], rip[200];
             int inseq;
             PyObject *py_family;

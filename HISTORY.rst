@@ -9,9 +9,16 @@
   `KeyError` bit deriving from a missed cache hit.
 - 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
   is raised.
+- XXXX_, [OpenBSD]: `psutil.net_connections`_ implementation was rewritten from
+  scratch:
+  - We're now able to retrieve the path of AF_UNIX sockets (before it was an
+    empty string)
+  - The function is faster since it no longer iterates over all processes.
+  - No longer produces duplicate connection entries.
 
 **Bug fixes**
 
+- 1043_, [OpenBSD] `psutil.net_connections`_ returns duplicate entries.
 - 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
   ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
   calculate an approximation for ``available`` memory which matches "free"
