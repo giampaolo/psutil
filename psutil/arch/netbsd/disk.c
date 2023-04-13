@@ -15,7 +15,7 @@ original(ish) implementations:
 
 #include <Python.h>
 #include <sys/sysctl.h>
-#include <sys/disk.h>  // struct diskstats
+#include <sys/disk.h>
 
 
 PyObject *

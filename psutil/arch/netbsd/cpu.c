@@ -47,7 +47,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    // XXX: why static?
     int mib[3];
     int ncpu;
     size_t len;
