@@ -32,6 +32,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
     long pagesize = psutil_getpagesize();
+    unsigned long long available;
 
     size = sizeof(uv);
     if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
@@ -39,16 +40,17 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    return Py_BuildValue("KKKKKKKK",
+    // follow zabbix
+    available = uv.inactive + uv.execpages + uv.filepages + uv.free;
+    return Py_BuildValue(
+        "KKKKKKK",
         (unsigned long long) uv.npages << uv.pageshift,  // total
         (unsigned long long) uv.free << uv.pageshift,  // free
         (unsigned long long) uv.active << uv.pageshift,  // active
         (unsigned long long) uv.inactive << uv.pageshift,  // inactive
         (unsigned long long) uv.wired << uv.pageshift,  // wired
         (unsigned long long) (uv.filepages + uv.execpages) * pagesize,  // cached
-        // These are determined from /proc/meminfo in Python.
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) 0  // shared
+        available << uv.pageshift  // available
     );
 }
 

@@ -176,11 +176,11 @@ else:
 # =====================================================================
 
 
-def virtual_memory():
-    """System virtual memory as a namedtuple."""
-    mem = cext.virtual_mem()
-    total, free, active, inactive, wired, cached, buffers, shared = mem
-    if NETBSD:
+if NETBSD:
+    def virtual_memory():
+        """System virtual memory as a namedtuple."""
+        mem = cext.virtual_mem()
+        total, free, active, inactive, wired, cached, avail = mem
         # On NetBSD buffers and shared mem is determined via /proc.
         # The C ext set them to 0.
         with open('/proc/meminfo', 'rb') as f:
@@ -191,11 +191,20 @@ def virtual_memory():
                     shared = int(line.split()[1]) * 1024
                 elif line.startswith(b'Cached:'):
                     cached = int(line.split()[1]) * 1024
-    avail = inactive + cached + free
-    used = active + wired + cached
-    percent = usage_percent((total - avail), total, round_=1)
-    return svmem(total, avail, percent, used, free,
-                 active, inactive, buffers, cached, shared, wired)
+        used = active + wired + cached
+        percent = usage_percent((total - avail), total, round_=1)
+        return svmem(total, avail, percent, used, free,
+                     active, inactive, buffers, cached, shared, wired)
+else:
+    def virtual_memory():
+        """System virtual memory as a namedtuple."""
+        mem = cext.virtual_mem()
+        total, free, active, inactive, wired, cached, buffers, shared = mem
+        avail = inactive + cached + free
+        used = active + wired + cached
+        percent = usage_percent((total - avail), total, round_=1)
+        return svmem(total, avail, percent, used, free,
+                     active, inactive, buffers, cached, shared, wired)
 
 
 def swap_memory():
