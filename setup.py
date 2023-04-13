@@ -287,7 +287,10 @@ elif NETBSD:
         'psutil._psutil_bsd',
         sources=sources + [
             'psutil/_psutil_bsd.c',
-            'psutil/arch/netbsd/specific.c',
+            'psutil/arch/netbsd/cpu.c',
+            'psutil/arch/netbsd/disk.c',
+            'psutil/arch/netbsd/mem.c',
+            'psutil/arch/netbsd/proc.c',
             'psutil/arch/netbsd/socks.c',
         ],
         define_macros=macros,

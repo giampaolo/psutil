@@ -93,7 +93,10 @@
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
 #elif PSUTIL_NETBSD
-    #include "arch/netbsd/specific.h"
+    #include "arch/netbsd/cpu.h"
+    #include "arch/netbsd/disk.h"
+    #include "arch/netbsd/mem.h"
+    #include "arch/netbsd/proc.h"
     #include "arch/netbsd/socks.h"
 
     #include <utmpx.h>
