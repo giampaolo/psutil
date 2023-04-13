@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
-#include <sys/swap.h>  // for swap_mem
 #include <signal.h>
 #include <kvm.h>
 // connection stuff
@@ -431,96 +430,6 @@ error:
     Py_DECREF(py_retlist);
     if (argstr != NULL)
         free(argstr);
-    return NULL;
-}
-
-
-/*
- * Virtual memory stats, taken from:
- * https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/
- *     netbsd/memory.c
- */
-PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    size_t size;
-    struct uvmexp_sysctl uv;
-    int mib[] = {CTL_VM, VM_UVMEXP2};
-    long pagesize = psutil_getpagesize();
-
-    size = sizeof(uv);
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uv.npages << uv.pageshift,  // total
-        (unsigned long long) uv.free << uv.pageshift,  // free
-        (unsigned long long) uv.active << uv.pageshift,  // active
-        (unsigned long long) uv.inactive << uv.pageshift,  // inactive
-        (unsigned long long) uv.wired << uv.pageshift,  // wired
-        (unsigned long long) (uv.filepages + uv.execpages) * pagesize,  // cached
-        // These are determined from /proc/meminfo in Python.
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) 0  // shared
-    );
-}
-
-
-PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    uint64_t swap_total, swap_free;
-    struct swapent *swdev;
-    int nswap, i;
-    long pagesize = psutil_getpagesize();
-
-    nswap = swapctl(SWAP_NSWAP, 0, 0);
-    if (nswap == 0) {
-        // This means there's no swap partition.
-        return Py_BuildValue("(iiiii)", 0, 0, 0, 0, 0);
-    }
-
-    swdev = calloc(nswap, sizeof(*swdev));
-    if (swdev == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    // Total things up.
-    swap_total = swap_free = 0;
-    for (i = 0; i < nswap; i++) {
-        if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_total += (uint64_t)swdev[i].se_nblks * DEV_BSIZE;
-            swap_free += (uint64_t)(swdev[i].se_nblks - swdev[i].se_inuse) * DEV_BSIZE;
-        }
-    }
-    free(swdev);
-
-    // Get swap in/out
-    unsigned int total;
-    size_t size = sizeof(total);
-    struct uvmexp_sysctl uv;
-    int mib[] = {CTL_VM, VM_UVMEXP2};
-    size = sizeof(uv);
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    return Py_BuildValue("(LLLll)",
-                         swap_total,
-                         (swap_total - swap_free),
-                         swap_free,
-                         (long) uv.pgswapin * pagesize,  // swap in
-                         (long) uv.pgswapout * pagesize);  // swap out
-
-error:
-    free(swdev);
     return NULL;
 }
 
