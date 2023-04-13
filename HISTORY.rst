@@ -47,6 +47,8 @@
   ``SPEED_UNKNOWN`` definition.  (patch by Amir Rossert)
 - 2010_, [macOS]: on MacOS, arm64 ``IFM_1000_TX`` and ``IFM_1000_T`` are the
   same value, causing a build failure.  (patch by Lawrence D'Anna)
+- 2160_, [Windows]: Get Windows percent swap usage from performance counters.
+  (patch by Daniel Widdis)
 
 5.9.3
 =====

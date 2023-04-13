@@ -1560,6 +1560,7 @@ PsutilMethods[] = {
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
+    {"swap_percent", psutil_swap_percent, METH_VARARGS},
     {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
