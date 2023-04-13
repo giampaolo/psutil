@@ -45,10 +45,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) uv.active << uv.pageshift,  // active
         (unsigned long long) uv.inactive << uv.pageshift,  // inactive
         (unsigned long long) uv.wired << uv.pageshift,  // wired
-        (unsigned long long) (uv.filepages + uv.execpages) * pagesize,  // cached
-        // These are determined from /proc/meminfo in Python.
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) 0  // shared
+        (unsigned long long) (uv.filepages + uv.execpages) * pagesize  // cached
     );
 }
 
