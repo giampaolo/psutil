@@ -188,8 +188,6 @@ def virtual_memory():
                     buffers = int(line.split()[1]) * 1024
                 elif line.startswith(b'MemShared:'):
                     shared = int(line.split()[1]) * 1024
-                elif line.startswith(b'Cached:'):
-                    cached = int(line.split()[1]) * 1024
         # Before avail was calculated as (inactive + cached + free),
         # same as zabbix, but it turned out it could exceed total (see
         # #2233), so zabbix seems to be wrong. Htop calculates it
