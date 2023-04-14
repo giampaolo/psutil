@@ -347,7 +347,8 @@ Memory
 
   - **used**: memory used, calculated differently depending on the platform and
     designed for informational purposes only. **total - free** does not
-    necessarily match **used**.
+    necessarily match **used**. On NetBSD this matches the value of ``htop``
+    CLI utility.
   - **free**: memory not being used at all (zeroed) that is readily available;
     note that this doesn't reflect the actual memory available (use
     **available** instead). **total - used** does not necessarily match

@@ -191,7 +191,10 @@ if NETBSD:
                     shared = int(line.split()[1]) * 1024
                 elif line.startswith(b'Cached:'):
                     cached = int(line.split()[1]) * 1024
-        # match htop (I verified):
+        # I had 2 references to decide how to calculate used/avail
+        # memory, one is zabbix the other htop. Htop numbers seem more
+        # realistic. In here we match htop 100%.
+        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c
         # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
         used = active + wired
         avail = total - used
