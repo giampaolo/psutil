@@ -176,9 +176,9 @@ else:
 # =====================================================================
 
 
-if NETBSD:
-    def virtual_memory():
-        mem = cext.virtual_mem()
+def virtual_memory():
+    mem = cext.virtual_mem()
+    if NETBSD:
         total, free, active, inactive, wired, cached = mem
         # On NetBSD buffers and shared mem is determined via /proc.
         # The C ext set them to 0.
@@ -199,12 +199,7 @@ if NETBSD:
         # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135  # noqa
         used = active + wired
         avail = total - used
-        percent = usage_percent((total - avail), total, round_=1)
-        return svmem(total, avail, percent, used, free,
-                     active, inactive, buffers, cached, shared, wired)
-else:
-    def virtual_memory():
-        mem = cext.virtual_mem()
+    else:
         total, free, active, inactive, wired, cached, buffers, shared = mem
         # matches freebsd-memory CLI:
         # * https://people.freebsd.org/~rse/dist/freebsd-memory
@@ -213,9 +208,10 @@ else:
         # * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143  # noqa
         avail = inactive + cached + free
         used = active + wired + cached
-        percent = usage_percent((total - avail), total, round_=1)
-        return svmem(total, avail, percent, used, free,
-                     active, inactive, buffers, cached, shared, wired)
+
+    percent = usage_percent((total - avail), total, round_=1)
+    return svmem(total, avail, percent, used, free,
+                 active, inactive, buffers, cached, shared, wired)
 
 
 def swap_memory():
