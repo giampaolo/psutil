@@ -345,6 +345,7 @@ Memory
 
   Other metrics:
 
+  - **percent**: the percentage usage calculated as ``(total - available) / total * 100``
   - **used**: memory used, calculated differently depending on the platform and
     designed for informational purposes only. **total - free** does not
     necessarily match **used**. On NetBSD this matches the value of ``htop``
