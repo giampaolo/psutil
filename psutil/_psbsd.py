@@ -178,7 +178,6 @@ else:
 
 if NETBSD:
     def virtual_memory():
-        """System virtual memory as a namedtuple."""
         mem = cext.virtual_mem()
         total, free, active, inactive, wired, cached = mem
         # On NetBSD buffers and shared mem is determined via /proc.
@@ -191,11 +190,13 @@ if NETBSD:
                     shared = int(line.split()[1]) * 1024
                 elif line.startswith(b'Cached:'):
                     cached = int(line.split()[1]) * 1024
-        # I had 2 references to decide how to calculate used/avail
-        # memory, one is zabbix the other htop. Htop numbers seem more
-        # realistic. In here we match htop 100%.
-        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c
-        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
+        # Before avail was calculated as (inactive + cached + free),
+        # same as zabbix, but it turned out it could exceed total (see
+        # #2233), so zabbix seems to be wrong. Htop calculates it
+        # differently, and the used value seem more realistic, so let's
+        # match htop.
+        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162  # noqa
+        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135  # noqa
         used = active + wired
         avail = total - used
         percent = usage_percent((total - avail), total, round_=1)
@@ -203,9 +204,13 @@ if NETBSD:
                      active, inactive, buffers, cached, shared, wired)
 else:
     def virtual_memory():
-        """System virtual memory as a namedtuple."""
         mem = cext.virtual_mem()
         total, free, active, inactive, wired, cached, buffers, shared = mem
+        # matches freebsd-memory CLI:
+        # * https://people.freebsd.org/~rse/dist/freebsd-memory
+        # * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
+        # matches zabbix:
+        # * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143  # noqa
         avail = inactive + cached + free
         used = active + wired + cached
         percent = usage_percent((total - avail), total, round_=1)
