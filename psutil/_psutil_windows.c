@@ -33,6 +33,7 @@
 #include "arch/windows/process_handles.h"
 #include "arch/windows/disk.h"
 #include "arch/windows/cpu.h"
+#include "arch/windows/mem.h"
 #include "arch/windows/net.h"
 #include "arch/windows/services.h"
 #include "arch/windows/socks.h"
@@ -602,35 +603,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
 }
-
-
-/*
- * Return a Python integer indicating the total amount of physical memory
- * in bytes.
- */
-static PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
-    PERFORMANCE_INFORMATION perfInfo;
-
-    if (! GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
-    // values are size_t, widen (if needed) to long long
-    pageSize = perfInfo.PageSize;
-    totalPhys = perfInfo.PhysicalTotal * pageSize;
-    availPhys = perfInfo.PhysicalAvailable * pageSize;
-    totalSys = perfInfo.CommitLimit * pageSize;
-    availSys = totalSys - perfInfo.CommitTotal * pageSize;
-    return Py_BuildValue(
-        "(LLLL)",
-        totalPhys,
-        availPhys,
-        totalSys,
-        availSys);
-}
-
 
 /*
  * Return process current working directory as a Python string.
@@ -1543,17 +1515,6 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * System memory page size as an int.
- */
-static PyObject *
-psutil_getpagesize(PyObject *self, PyObject *args) {
-    // XXX: we may want to use GetNativeSystemInfo to differentiate
-    // page size for WoW64 processes (but am not sure).
-    return Py_BuildValue("I", PSUTIL_SYSTEM_INFO.dwPageSize);
-}
-
-
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -1599,6 +1560,7 @@ PsutilMethods[] = {
     {"disk_usage", psutil_disk_usage, METH_VARARGS},
     {"getloadavg", (PyCFunction)psutil_get_loadavg, METH_VARARGS},
     {"getpagesize", psutil_getpagesize, METH_VARARGS},
+    {"swap_percent", psutil_swap_percent, METH_VARARGS},
     {"init_loadavg_counter", (PyCFunction)psutil_init_loadavg_counter, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},

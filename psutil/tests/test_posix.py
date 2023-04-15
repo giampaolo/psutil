@@ -23,7 +23,6 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
-from psutil.tests import CI_TESTING
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PsutilTestCase
@@ -116,7 +115,10 @@ def ps_args(pid):
     field = "command"
     if AIX or SUNOS:
         field = "args"
-    return ps(field, pid)
+    out = ps(field, pid)
+    # observed on BSD + Github CI: '/usr/local/bin/python3 -E -O (python3.9)'
+    out = re.sub(r"\(python.*?\)$", "", out)
+    return out.strip()
 
 
 def ps_rss(pid):
@@ -334,19 +336,50 @@ class TestSystemAPIs(PsutilTestCase):
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 
-    @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    # @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
     @retry_on_failure()
     def test_users(self):
-        out = sh("who")
+        out = sh("who -u")
         if not out.strip():
             raise self.skipTest("no users on this system")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
         self.assertEqual(len(users), len(psutil.users()))
-        for u in psutil.users():
-            self.assertIn(u.name, users)
-            self.assertIn(u.terminal, terminals)
+        with self.subTest(psutil=psutil.users(), who=out):
+            for idx, u in enumerate(psutil.users()):
+                self.assertEqual(u.name, users[idx])
+                self.assertEqual(u.terminal, terminals[idx])
+                if u.pid is not None:  # None on OpenBSD
+                    p = psutil.Process(u.pid)
+                    # on macOS time is off by ~47 secs for some reason, but
+                    # the next test against 'who' CLI succeeds
+                    delta = 60 if MACOS else 1
+                    self.assertAlmostEqual(
+                        u.started, p.create_time(), delta=delta)
+
+    @retry_on_failure()
+    def test_users_started(self):
+        out = sh("who -u")
+        if not out.strip():
+            raise self.skipTest("no users on this system")
+        # '2023-04-11 09:31' (Linux)
+        started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
+        if started:
+            tstamp = "%Y-%m-%d %H:%M"
+        else:
+            # 'Apr 10 22:27' (macOS)
+            started = re.findall(r"[A-Z][a-z][a-z] \d\d \d\d:\d\d", out)
+            if started:
+                tstamp = "%b %d %H:%M"
+            else:
+                raise ValueError(
+                    "cannot interpret tstamp in who output\n%s" % (out))
+        with self.subTest(psutil=psutil.users(), who=out):
+            for idx, u in enumerate(psutil.users()):
+                psutil_value = datetime.datetime.fromtimestamp(
+                    u.started).strftime(tstamp)
+                self.assertEqual(psutil_value, started[idx])
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
@@ -387,7 +420,12 @@ class TestSystemAPIs(PsutilTestCase):
     @retry_on_failure()
     def test_disk_usage(self):
         def df(device):
-            out = sh("df -k %s" % device).strip()
+            try:
+                out = sh("df -k %s" % device).strip()
+            except RuntimeError as err:
+                if "device busy" in str(err).lower():
+                    raise self.skipTest("df returned EBUSY")
+                raise
             line = out.split('\n')[1]
             fields = line.split()
             total = int(fields[1]) * 1024

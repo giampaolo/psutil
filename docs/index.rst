@@ -268,13 +268,13 @@ CPU
 .. function:: cpu_freq(percpu=False)
 
     Return CPU frequency as a named tuple including *current*, *min* and *max*
-    frequencies expressed in Mhz.
-    On Linux *current* frequency reports the real-time value, on all other
-    platforms this usually represents the nominal "fixed" value (never changing).
-    If *percpu* is ``True`` and the system supports per-cpu frequency
-    retrieval (Linux only) a list of frequencies is returned for each CPU,
-    if not, a list with a single element is returned.
-    If *min* and *max* cannot be determined they are set to ``0.0``.
+    frequencies expressed in Mhz. On Linux *current* frequency reports the
+    real-time value, on all other platforms this usually represents the
+    nominal "fixed" value (never changing). If *percpu* is ``True`` and the
+    system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
+    frequencies is returned for each CPU, if not, a list with a single element
+    is returned. If *min* and *max* cannot be determined they are set to
+    ``0.0``.
 
     Example (Linux):
 
@@ -289,7 +289,8 @@ CPU
         scpufreq(current=1703.609, min=800.0, max=3500.0),
         scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    Availability: Linux, macOS, Windows, FreeBSD, OpenBSD
+    Availability: Linux, macOS, Windows, FreeBSD, OpenBSD. *percpu* only
+    supported on Linux and FreeBSD.
 
     .. versionadded:: 5.1.0
 
@@ -333,14 +334,17 @@ Memory
 .. function:: virtual_memory()
 
   Return statistics about system memory usage as a named tuple including the
-  following fields, expressed in bytes. Main metrics:
+  following fields, expressed in bytes.
+
+  Main metrics:
 
   - **total**: total physical memory (exclusive swap).
   - **available**: the memory that can be given instantly to processes without
     the system going into swap.
-    This is calculated by summing different memory values depending on the
-    platform and it is supposed to be used to monitor actual memory usage in a
-    cross platform fashion.
+    This is calculated by summing different memory metrics that vary depending
+    on the platform. It is supposed to be used to monitor actual memory usage
+    in a cross platform fashion.
+  - **percent**: the percentage usage calculated as ``(total - available) / total * 100``.
 
   Other metrics:
 
@@ -368,7 +372,8 @@ Memory
   human readable form.
 
   .. note:: if you just want to know how much physical memory is left in a
-    cross platform fashion simply rely on the **available** field.
+    cross platform fashion simply rely on **available** and **percent**
+    fields.
 
   >>> import psutil
   >>> mem = psutil.virtual_memory()
@@ -658,19 +663,18 @@ Network
     (Solaris) UNIX sockets are not supported.
 
   .. note::
-     (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
-     This is a limitation of the OS.
-
-  .. note::
-     (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
-     "". This is a limitation of the OS.
+     (Linux, FreeBSD, OpenBSD) *raddr* field for UNIX sockets is always set to
+     ``""`` (empty string). This is a limitation of the OS.
 
   .. versionadded:: 2.1.0
 
   .. versionchanged:: 5.3.0 : socket "fd" is now set for real instead of being
      ``-1``.
 
-  .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+  .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
+
+  .. versionchanged:: 5.9.5 : OpenBSD: retrieve *laddr* path for AF_UNIX
+    sockets (before it was an empty string).
 
 .. function:: net_if_addrs()
 
@@ -1942,18 +1946,18 @@ Process class
       (Solaris) UNIX sockets are not supported.
 
     .. note::
-       (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
+       (Linux, FreeBSD) *raddr* field for UNIX sockets is always set to "".
        This is a limitation of the OS.
 
     .. note::
-       (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
+       (OpenBSD) *laddr* and *raddr* fields for UNIX sockets are always set to
        "". This is a limitation of the OS.
 
     .. note::
       (AIX) :class:`psutil.AccessDenied` is always raised unless running
       as root (lsof does the same).
 
-    .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+    .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
 
   .. method:: is_running()
 

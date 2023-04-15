@@ -84,6 +84,7 @@
     #include "arch/openbsd/disk.h"
     #include "arch/openbsd/mem.h"
     #include "arch/openbsd/proc.h"
+    #include "arch/openbsd/socks.h"
 
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
@@ -92,7 +93,10 @@
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
 #elif PSUTIL_NETBSD
-    #include "arch/netbsd/specific.h"
+    #include "arch/netbsd/cpu.h"
+    #include "arch/netbsd/disk.h"
+    #include "arch/netbsd/mem.h"
+    #include "arch/netbsd/proc.h"
     #include "arch/netbsd/socks.h"
 
     #include <utmpx.h>
@@ -966,11 +970,11 @@ psutil_users(PyObject *self, PyObject *args) {
         if (! py_hostname)
             goto error;
         py_tuple = Py_BuildValue(
-            "(OOOfi)",
+            "(OOOdi)",
             py_username,        // username
             py_tty,             // tty
             py_hostname,        // hostname
-            (float)ut.ut_time,  // start time
+            (double)ut.ut_time,  // start time
 #if defined(PSUTIL_OPENBSD) || (defined(__FreeBSD_version) && __FreeBSD_version < 900000)
             -1                  // process id (set to None later)
 #else
@@ -1016,11 +1020,11 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
 
         py_tuple = Py_BuildValue(
-            "(OOOfO)",
+            "(OOOdO)",
             py_username,   // username
             py_tty,        // tty
             py_hostname,   // hostname
-            (float)utx->ut_tv.tv_sec,  // start time
+            (double)utx->ut_tv.tv_sec,  // start time
             py_pid         // process id
         );
 
@@ -1064,7 +1068,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_name", psutil_proc_name, METH_VARARGS},
     {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS},
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
-#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
+#if defined(PSUTIL_FREEBSD)
     {"proc_connections", psutil_proc_connections, METH_VARARGS},
 #endif
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
@@ -1093,6 +1097,7 @@ static PyMethodDef mod_methods[] = {
     {"cpu_times", psutil_cpu_times, METH_VARARGS},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
+    {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"pids", psutil_pids, METH_VARARGS},
@@ -1101,9 +1106,6 @@ static PyMethodDef mod_methods[] = {
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
      {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
-#endif
-#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
-    {"net_connections", psutil_net_connections, METH_VARARGS},
 #endif
 #if defined(PSUTIL_FREEBSD)
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},

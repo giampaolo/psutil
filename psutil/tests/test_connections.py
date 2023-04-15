@@ -143,11 +143,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             laddr = laddr.decode()
         if sock.family == AF_INET6:
             laddr = laddr[:2]
-        if sock.family == AF_UNIX and OPENBSD:
-            # No addresses are set for UNIX sockets on OpenBSD.
-            pass
-        else:
-            self.assertEqual(conn.laddr, laddr)
+        self.assertEqual(conn.laddr, laddr)
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
         if sock.family == AF_UNIX and HAS_CONNECTIONS_UNIX:
@@ -243,22 +239,16 @@ class TestConnectedSocket(ConnectionTestCase):
                 # a UNIX connection to  /var/run/log.
                 cons = [c for c in cons if c.raddr != '/var/run/log']
             self.assertEqual(len(cons), 2, msg=cons)
-            if LINUX or FREEBSD or SUNOS:
+            if LINUX or FREEBSD or SUNOS or OPENBSD:
                 # remote path is never set
                 self.assertEqual(cons[0].raddr, "")
                 self.assertEqual(cons[1].raddr, "")
                 # one local address should though
                 self.assertEqual(testfn, cons[0].laddr or cons[1].laddr)
-            elif OPENBSD:
-                # No addresses whatsoever here.
-                for addr in (cons[0].laddr, cons[0].raddr,
-                             cons[1].laddr, cons[1].raddr):
-                    self.assertEqual(addr, "")
             else:
                 # On other systems either the laddr or raddr
                 # of both peers are set.
                 self.assertEqual(cons[0].laddr or cons[1].laddr, testfn)
-                self.assertEqual(cons[0].raddr or cons[1].raddr, testfn)
         finally:
             server.close()
             client.close()

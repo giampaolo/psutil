@@ -127,10 +127,12 @@ class BSDTestCase(PsutilTestCase):
         self.assertEqual(psutil.cpu_count(logical=True), syst)
 
     @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
+    @unittest.skipIf(NETBSD, "skipped on NETBSD")  # we check /proc/meminfo
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         self.assertEqual(num, psutil.virtual_memory().total)
 
+    @unittest.skipIf(not which('ifconfig'), "ifconfig cmd not available")
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -507,6 +509,8 @@ class NetBSDTestCase(PsutilTestCase):
                     return int(line.split()[1]) * 1024
         raise ValueError("can't find %s" % look_for)
 
+    # --- virtual mem
+
     def test_vmem_total(self):
         self.assertEqual(
             psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
@@ -526,6 +530,13 @@ class NetBSDTestCase(PsutilTestCase):
             psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"),
             delta=TOLERANCE_SYS_MEM)
 
+    def test_vmem_cached(self):
+        self.assertAlmostEqual(
+            psutil.virtual_memory().cached, self.parse_meminfo("Cached:"),
+            delta=TOLERANCE_SYS_MEM)
+
+    # --- swap mem
+
     def test_swapmem_total(self):
         self.assertAlmostEqual(
             psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"),
@@ -539,6 +550,8 @@ class NetBSDTestCase(PsutilTestCase):
     def test_swapmem_used(self):
         smem = psutil.swap_memory()
         self.assertEqual(smem.used, smem.total - smem.free)
+
+    # --- others
 
     def test_cpu_stats_interrupts(self):
         with open('/proc/stat', 'rb') as f:
