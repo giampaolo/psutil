@@ -423,25 +423,20 @@ def net_connections(kind):
 
     if OPENBSD:
         rawlist = cext.net_connections(-1, families, types)
-        ret = set()
-        for item in rawlist:
-            fd, fam, type, laddr, raddr, status, pid = item
-            if fam in families and type in types:
-                nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                    TCP_STATUSES, pid)
-                ret.add(nt)
-        return list(ret)
     elif NETBSD:
         rawlist = cext.net_connections(-1)
-    else:
+    else:  # FreeBSD
         rawlist = cext.net_connections()
+
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        # TODO: apply filter at C level
-        if fam in families and type in types:
-            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                TCP_STATUSES, pid)
-            ret.add(nt)
+        if NETBSD or FREEBSD:
+            # OpenBSD implements filtering in C
+            if (fam not in families) or (type not in types):
+                continue
+        nt = conn_to_ntuple(fd, fam, type, laddr, raddr,
+                            status, TCP_STATUSES, pid)
+        ret.add(nt)
     return list(ret)
 
 
@@ -785,45 +780,26 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
+        ret = []
 
         if NETBSD:
-            ret = []
             rawlist = cext.net_connections(self.pid)
-            for item in rawlist:
-                fd, fam, type, laddr, raddr, status, pid = item
-                assert pid == self.pid
-                if fam in families and type in types:
-                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                        TCP_STATUSES)
-                    ret.append(nt)
-            self._assert_alive()
-            return ret
-
         elif OPENBSD:
-            ret = []
             rawlist = cext.net_connections(self.pid, families, types)
-            for item in rawlist:
-                fd, fam, type, laddr, raddr, status, pid = item
-                assert pid == self.pid
-                if fam in families and type in types:
-                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                        TCP_STATUSES)
-                    ret.append(nt)
-            self._assert_alive()
-            return ret
+        else:  # FreeBSD
+            rawlist = cext.proc_connections(self.pid, families, types)
 
-        # FreeBSD
-        rawlist = cext.proc_connections(self.pid, families, types)
-        ret = []
         for item in rawlist:
-            fd, fam, type, laddr, raddr, status = item
+            fd, fam, type, laddr, raddr, status = item[:6]
+            if NETBSD:
+                # FreeBSD and OpenBSD implement filtering in C
+                if (fam not in families) or (type not in types):
+                    continue
             nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
                                 TCP_STATUSES)
             ret.append(nt)
 
-        if OPENBSD:
-            self._assert_alive()
-
+        self._assert_alive()
         return ret
 
     @wrap_exceptions
