@@ -35,6 +35,8 @@
 - 2229_, [OpenBSD]: unable to properly recognize zombie processes.
   `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
 - 2231_, [NetBSD]: *available*  `virtual_memory()`_ is higher than *total*.
+- 2234_, [NetBSD]: `virtual_memory()`_ metrics are wrong: *available* and
+  *used* are too high. We now match values shown by *htop* CLI utility.
 
 5.9.4
 =====
