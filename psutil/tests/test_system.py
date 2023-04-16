@@ -187,7 +187,7 @@ class TestProcessAPIs(PsutilTestCase):
                 # if it is no longer in psutil.pids()
                 time.sleep(.1)
                 self.assertNotIn(pid, psutil.pids())
-        pids = range(max(pids) + 5000, max(pids) + 6000)
+        pids = range(max(pids) + 15000, max(pids) + 16000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid), msg=pid)
 

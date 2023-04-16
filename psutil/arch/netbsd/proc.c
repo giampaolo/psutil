@@ -247,6 +247,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     nlwps = (int)(size / sizeof(struct kinfo_lwp));
     for (i = 0; i < nlwps; i++) {
+        if ((&kl[i])->l_stat == LSIDL || (&kl[i])->l_stat == LSZOMB)
+            continue;
+        // XXX: we return 2 "user" times because the struct does not provide
+        // any "system" time.
         py_tuple = Py_BuildValue("idd",
                                  (&kl[i])->l_lid,
                                  PSUTIL_KPT2DOUBLE((&kl[i])->l_rtime),

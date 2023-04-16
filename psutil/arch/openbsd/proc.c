@@ -305,8 +305,14 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     int name[] = { CTL_KERN, KERN_PROC_CWD, pid };
     if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        if (errno == ENOENT) {
+            psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to None");
+            Py_RETURN_NONE;  // mimic os.cpu_count()
+        }
+        else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
     }
     return PyUnicode_DecodeFSDefault(path);
 }
