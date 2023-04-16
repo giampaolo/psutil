@@ -39,6 +39,8 @@
   *used* are too high. We now match values shown by *htop* CLI utility.
 - 2236_, [NetBSD]: `Process.num_threads()`_ and `Process.threads()`_ return
   threads that are already terminated.
+- 2237_, [OpenBSD]: `Process.cwd()`_ may raise ``FileNotFoundError`` if cwd no
+  longer exists. Return ``None`` instead.
 
 5.9.4
 =====

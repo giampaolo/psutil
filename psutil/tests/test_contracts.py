@@ -438,8 +438,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                         name, info['pid'], repr(value))
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
-                    s = "\n".join((" " * 4) + i for i in s.splitlines())
-                    s += '\n'
+                    s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
                     failures.append(s)
                 else:
                     if value not in (0, 0.0, [], None, '', {}):
