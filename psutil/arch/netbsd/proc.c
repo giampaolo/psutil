@@ -117,7 +117,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (len == -1) {
         if (errno == ENOENT) {
             psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
-            return Py_BuildValue("", "");
+            return Py_BuildValue("s", "");
         }
         else {
             PyErr_SetFromErrno(PyExc_OSError);
