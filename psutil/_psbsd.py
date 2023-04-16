@@ -839,7 +839,7 @@ class Process(object):
         elif NETBSD or HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
-            return cext.proc_cwd(self.pid) or None
+            return cext.proc_cwd(self.pid) or ""
         else:
             raise NotImplementedError(
                 "supported only starting from FreeBSD 8" if

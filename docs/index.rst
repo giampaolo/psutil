@@ -1180,9 +1180,10 @@ Process class
 
   .. method:: exe()
 
-    The process executable as an absolute path.
-    On some systems this may also be an empty string.
-    The return value is cached after first call.
+    The process executable as an absolute path. On some systems, if exe cannot
+    be determined for some internal reason (e.g. system process or path no
+    longer exists), this may be an empty string. The return value is cached
+    after first call.
 
     >>> import psutil
     >>> psutil.Process().exe()
@@ -1281,7 +1282,9 @@ Process class
 
   .. method:: cwd()
 
-    The process current working directory as an absolute path.
+    The process current working directory as an absolute path. If cwd cannot be
+    determined for some internal reason (e.g. system process or directiory no
+    longer exists) it may return an empty string.
 
     .. versionchanged:: 5.6.4 added support for NetBSD
 

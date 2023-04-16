@@ -115,10 +115,13 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     ssize_t len = readlink(buf, path, sizeof(path) - 1);
     free(buf);
     if (len == -1) {
-        if (errno == ENOENT)
-            NoSuchProcess("readlink -> ENOENT");
-        else
+        if (errno == ENOENT) {
+            psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
+            return Py_BuildValue("", "");
+        }
+        else {
             PyErr_SetFromErrno(PyExc_OSError);
+        }
         return NULL;
     }
     path[len] = '\0';

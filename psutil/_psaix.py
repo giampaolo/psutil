@@ -487,7 +487,7 @@ class Process(object):
             return result.rstrip('/')
         except FileNotFoundError:
             os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
-            return None
+            return ""
 
     @wrap_exceptions
     def memory_info(self):

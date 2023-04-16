@@ -15,6 +15,10 @@
     empty string)
   - The function is faster since it no longer iterates over all processes.
   - No longer produces duplicate connection entries.
+- 2238_: there are cases where `Process.cwd()`_ cannot be determined
+  (e.g. directory no longer exists), in which case we returned either ``None``
+  or an empty string. This was consolidated and we now return ``""`` on all
+  platforms.
 
 **Bug fixes**
 
@@ -39,8 +43,8 @@
   *used* are too high. We now match values shown by *htop* CLI utility.
 - 2236_, [NetBSD]: `Process.num_threads()`_ and `Process.threads()`_ return
   threads that are already terminated.
-- 2237_, [OpenBSD]: `Process.cwd()`_ may raise ``FileNotFoundError`` if cwd no
-  longer exists. Return ``None`` instead.
+- 2237_, [OpenBSD], [NetBSD]: `Process.cwd()`_ may raise ``FileNotFoundError``
+  if cwd no longer exists. Return an empty string instead.
 
 5.9.4
 =====
