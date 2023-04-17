@@ -16,6 +16,7 @@
 # * https://github.com/actions/upload-artifact
 # * https://github.com/marketplace/actions/cancel-workflow-action
 # * https://github.com/vmactions/freebsd-vm
+# * https://github.com/marketplace/actions/docker-setup-qemu
 
 on: [push, pull_request]
 name: build
@@ -32,15 +33,17 @@ jobs:
         - os: ubuntu-latest
           archs: "x86_64 i686"
         - os: macos-12
-          archs: "x86_64 arm64"
+          archs: "x86_64 arm64 universal2"
         - os: windows-2019
           archs: "AMD64"
+        - os: windows-2019
+          archs: "ARM64"
         - os: windows-2019
           archs: "x86"
 
     steps:
     - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
+      uses: styfle/cancel-workflow-action@0.11.0
       with:
         access_token: ${{ github.token }}
 
@@ -50,7 +53,7 @@ jobs:
         python-version: 3.11
 
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.11.2
+      uses: pypa/cibuildwheel@v2.12.1
       env:
         CIBW_ARCHS: "${{ matrix.archs }}"
 
@@ -66,6 +69,45 @@ jobs:
         make generate-manifest
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
+
+  py3-qemu:
+    name: py3-qemu-${{ matrix.os }}-all
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          archs: "aarch64 ppc64le s390x"
+
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.11.0
+      with:
+        access_token: ${{ github.token }}
+
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: all
+
+    - name: Create wheels + run tests
+      uses: pypa/cibuildwheel@v2.12.1
+      env:
+        CIBW_ARCHS: "${{ matrix.archs }}"
+        CIBW_TEST_SKIP: "*-*linux_{aarch64,ppc64le,s390x}"
+
+    - name: Upload wheels
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: wheelhouse
 
   # Linux + macOS + Python 2
   py2:
@@ -85,7 +127,7 @@ jobs:
 
     steps:
     - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
+      uses: styfle/cancel-workflow-action@0.11.0
       with:
         access_token: ${{ github.token }}
 
@@ -115,7 +157,7 @@ jobs:
     runs-on: macos-12
     steps:
     - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
+      uses: styfle/cancel-workflow-action@0.11.0
       with:
         access_token: ${{ github.token }}
 
