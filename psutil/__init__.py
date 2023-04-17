@@ -626,7 +626,12 @@ class Process(object):
             # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
             try:
                 cmdline = self.cmdline()
-            except AccessDenied:
+            except (AccessDenied, ZombieProcess):
+                # Just pass and return the truncated name: it's better
+                # than nothing. Note: there are actual cases where a
+                # zombie process can return a name() but not a
+                # cmdline(), see:
+                # https://github.com/giampaolo/psutil/issues/2239
                 pass
             else:
                 if cmdline:

@@ -19,6 +19,10 @@
   (e.g. directory no longer exists), in which case we returned either ``None``
   or an empty string. This was consolidated and we now return ``""`` on all
   platforms.
+- 2239_, [UNIX]: if process is a zombie, and we can only determine part of the
+  its truncated `Process.name()`_ (15 chars), don't fail with `ZombieProcess`_
+  when we try to guess the full name from the `Process.cmdline()`_. Just
+  return the truncated name.
 
 **Bug fixes**
 

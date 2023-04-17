@@ -732,7 +732,15 @@ class TestProcess(PsutilTestCase):
         create_exe(testfn)
         cmdline = [testfn] + (["0123456789"] * 20)
         p = self.spawn_psproc(cmdline)
-        self.assertEqual(p.cmdline(), cmdline)
+        if OPENBSD:
+            # XXX: for some reason the test process may turn into a
+            # zombie (don't know why).
+            try:
+                self.assertEqual(p.cmdline(), cmdline)
+            except psutil.ZombieProcess:
+                raise self.skipTest("OPENBSD: process turned into zombie")
+        else:
+            self.assertEqual(p.cmdline(), cmdline)
 
     def test_name(self):
         p = self.spawn_psproc(PYTHON_EXE)
@@ -745,7 +753,23 @@ class TestProcess(PsutilTestCase):
         testfn = self.get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
         p = self.spawn_psproc(testfn)
-        self.assertEqual(p.name(), os.path.basename(testfn))
+        if OPENBSD:
+            # XXX: for some reason the test process may turn into a
+            # zombie (don't know why). Because the name() is long, all
+            # UNIX kernels truncate it to 15 chars, so internally psutil
+            # tries to guess the full name() from the cmdline(). But the
+            # cmdline() of a zombie on OpenBSD fails (internally), so we
+            # just compare the first 15 chars. Full explanation:
+            # https://github.com/giampaolo/psutil/issues/2239
+            try:
+                self.assertEqual(p.name(), os.path.basename(testfn))
+            except AssertionError:
+                if p.status() == psutil.STATUS_ZOMBIE:
+                    assert os.path.basename(testfn).startswith(p.name())
+                else:
+                    raise
+        else:
+            self.assertEqual(p.name(), os.path.basename(testfn))
 
     # XXX
     @unittest.skipIf(SUNOS, "broken on SUNOS")
