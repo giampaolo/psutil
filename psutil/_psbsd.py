@@ -835,11 +835,11 @@ class Process(object):
         # sometimes we get an empty string, in which case we turn
         # it into None
         if OPENBSD and self.pid == 0:
-            return None  # ...else it would raise EINVAL
+            return ""  # ...else it would raise EINVAL
         elif NETBSD or HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
-            return cext.proc_cwd(self.pid) or ""
+            return cext.proc_cwd(self.pid)
         else:
             raise NotImplementedError(
                 "supported only starting from FreeBSD 8" if

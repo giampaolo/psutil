@@ -23,6 +23,8 @@
   its truncated `Process.name()`_ (15 chars), don't fail with `ZombieProcess`_
   when we try to guess the full name from the `Process.cmdline()`_. Just
   return the truncated name.
+- 2240_, [NetBSD], [OpenBSD]: add CI testing on every commit for NetBSD and
+  OpenBSD platforms (python 3 only).
 
 **Bug fixes**
 

@@ -1,21 +1,15 @@
-# Executed on every push by GitHub Actions. This runs CI tests and
-# generates wheels (not all) on the following platforms:
+# Runs CI tests and generates wheels on the following platforms:
 #
-# * Linux
-# * macOS
-# * Windows (disabled)
-# * FreeBSD
+# * Linux (py2 and py3)
+# * macOS (py2 and py3)
+# * Windows (py3, py2 is done by appveyor)
 #
-# To skip certain builds see:
-# https://cibuildwheel.readthedocs.io/en/stable/options/#build-skip
-#
-# External GH actions:
+# Useful URLs:
 # * https://github.com/pypa/cibuildwheel
 # * https://github.com/actions/checkout
 # * https://github.com/actions/setup-python
 # * https://github.com/actions/upload-artifact
 # * https://github.com/marketplace/actions/cancel-workflow-action
-# * https://github.com/vmactions/freebsd-vm
 
 on: [push, pull_request]
 name: build
@@ -109,34 +103,6 @@ jobs:
         make generate-manifest
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
-
-  # FreeBSD (tests only)
-  py3-freebsd:
-    runs-on: macos-12
-    steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
-    - uses: actions/checkout@v3
-
-    - name: Run tests
-      id: test
-      uses: vmactions/freebsd-vm@v0
-      with:
-        usesh: true
-        prepare: pkg install -y gcc python3
-        run: |
-          set +e
-          export \
-            PYTHONUNBUFFERED=1 \
-            PYTHONWARNINGS=always \
-            PSUTIL_DEBUG=1
-          python3 -m pip install --user setuptools
-          python3 setup.py install
-          python3 psutil/tests/runner.py
-          python3 psutil/tests/test_memleaks.py
 
   # Run linters
   linters:

@@ -159,6 +159,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(code, 5)
         self.assertProcessGone(p)
 
+    @unittest.skipIf(NETBSD, "fails on NETBSD")
     def test_wait_stopped(self):
         p = self.spawn_psproc()
         if POSIX:

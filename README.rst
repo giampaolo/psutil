@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage|
 |  |version| |py-versions| |packages| |license|
-|  |github-actions| |appveyor| |doc| |twitter| |tidelift|
+|  |github-actions-wheels|  |github-actions-bsd| |appveyor| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -18,13 +18,17 @@
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
 
-.. |github-actions| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml?label=Linux%2C%20macOS%2C%20FreeBSD%20tests
+.. |github-actions-wheels| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml?label=Linux%2C%20macOS%2C%20Windows
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
-    :alt: Linux, macOS, Windows tests
+    :alt: Linux, macOS, Windows
 
-.. |appveyor| image:: https://img.shields.io/appveyor/build/giampaolo/psutil/master.svg?maxAge=3600&label=Windows%20tests
+.. |github-actions-bsd| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml?label=FreeBSD,%20NetBSD,%20OpenBSD
+    :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests
+    :alt: FreeBSD, NetBSD, OpenBSD
+
+.. |appveyor| image:: https://img.shields.io/appveyor/build/giampaolo/psutil/master.svg?maxAge=3600&label=Windows%20(py2)
     :target: https://ci.appveyor.com/project/giampaolo/psutil
-    :alt: Windows tests (Appveyor)
+    :alt: Windows (Appveyor)
 
 .. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
