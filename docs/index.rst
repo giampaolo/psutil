@@ -2637,6 +2637,18 @@ Supported Python versions are 2.7, 3.4+ and PyPy3.
 Timeline
 ========
 
+- 2023-04-17:
+  `5.9.5 <https://pypi.org/project/psutil/5.9.5/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#595>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.4...release-5.9.5#files_bucket>`__
+- 2022-11-07:
+  `5.9.4 <https://pypi.org/project/psutil/5.9.4/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#594>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.3...release-5.9.4#files_bucket>`__
+- 2022-10-18:
+  `5.9.3 <https://pypi.org/project/psutil/5.9.3/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#593>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.2...release-5.9.3#files_bucket>`__
 - 2022-09-04:
   `5.9.2 <https://pypi.org/project/psutil/5.9.2/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#592>`__ -
@@ -2653,7 +2665,7 @@ Timeline
   `5.8.0 <https://pypi.org/project/psutil/5.8.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#580>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.7.3...release-5.8.0#files_bucket>`__
-- 2020-10-23:
+- 2020-10-24:
   `5.7.3 <https://pypi.org/project/psutil/5.7.3/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#573>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.7.2...release-5.7.3#files_bucket>`__
@@ -2721,7 +2733,7 @@ Timeline
   `5.4.6 <https://pypi.org/project/psutil/5.4.6/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#546>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.4.5...release-5.4.6#files_bucket>`__
-- 2018-04-14:
+- 2018-04-13:
   `5.4.5 <https://pypi.org/project/psutil/5.4.5/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#545>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.4.4...release-5.4.5#files_bucket>`__
@@ -2747,7 +2759,7 @@ Timeline
   `diff <https://github.com/giampaolo/psutil/compare/release-5.3.1...release-5.4.0#files_bucket>`__
 - 2017-09-10:
   `5.3.1 <https://pypi.org/project/psutil/5.3.1/#files>`__ -
-  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#530>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#531>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-5.3.0...release-5.3.1#files_bucket>`__
 - 2017-09-01:
   `5.3.0 <https://pypi.org/project/psutil/5.3.0/#files>`__ -
