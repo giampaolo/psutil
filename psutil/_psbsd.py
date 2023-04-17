@@ -177,10 +177,9 @@ else:
 
 
 def virtual_memory():
-    """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
-    total, free, active, inactive, wired, cached, buffers, shared = mem
     if NETBSD:
+        total, free, active, inactive, wired, cached = mem
         # On NetBSD buffers and shared mem is determined via /proc.
         # The C ext set them to 0.
         with open('/proc/meminfo', 'rb') as f:
@@ -189,10 +188,25 @@ def virtual_memory():
                     buffers = int(line.split()[1]) * 1024
                 elif line.startswith(b'MemShared:'):
                     shared = int(line.split()[1]) * 1024
-                elif line.startswith(b'Cached:'):
-                    cached = int(line.split()[1]) * 1024
-    avail = inactive + cached + free
-    used = active + wired + cached
+        # Before avail was calculated as (inactive + cached + free),
+        # same as zabbix, but it turned out it could exceed total (see
+        # #2233), so zabbix seems to be wrong. Htop calculates it
+        # differently, and the used value seem more realistic, so let's
+        # match htop.
+        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162  # noqa
+        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135  # noqa
+        used = active + wired
+        avail = total - used
+    else:
+        total, free, active, inactive, wired, cached, buffers, shared = mem
+        # matches freebsd-memory CLI:
+        # * https://people.freebsd.org/~rse/dist/freebsd-memory
+        # * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
+        # matches zabbix:
+        # * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143  # noqa
+        avail = inactive + cached + free
+        used = active + wired + cached
+
     percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared, wired)
@@ -401,36 +415,28 @@ def net_if_stats():
 
 def net_connections(kind):
     """System-wide network connections."""
-    if OPENBSD:
-        ret = []
-        for pid in pids():
-            try:
-                cons = Process(pid).connections(kind)
-            except (NoSuchProcess, ZombieProcess):
-                continue
-            else:
-                for conn in cons:
-                    conn = list(conn)
-                    conn.append(pid)
-                    ret.append(_common.sconn(*conn))
-        return ret
-
     if kind not in _common.conn_tmap:
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     ret = set()
-    if NETBSD:
+
+    if OPENBSD:
+        rawlist = cext.net_connections(-1, families, types)
+    elif NETBSD:
         rawlist = cext.net_connections(-1)
-    else:
+    else:  # FreeBSD
         rawlist = cext.net_connections()
+
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        # TODO: apply filter at C level
-        if fam in families and type in types:
-            nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                TCP_STATUSES, pid)
-            ret.add(nt)
+        if NETBSD or FREEBSD:
+            # OpenBSD implements filtering in C
+            if (fam not in families) or (type not in types):
+                continue
+        nt = conn_to_ntuple(fd, fam, type, laddr, raddr,
+                            status, TCP_STATUSES, pid)
+        ret.add(nt)
     return list(ret)
 
 
@@ -545,7 +551,7 @@ else:
 def is_zombie(pid):
     try:
         st = cext.proc_oneshot_info(pid)[kinfo_proc_map['status']]
-        return st == cext.SZOMB
+        return PROC_STATUSES.get(st) == _common.STATUS_ZOMBIE
     except Exception:
         return False
 
@@ -773,33 +779,27 @@ class Process(object):
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
+        families, types = conn_tmap[kind]
+        ret = []
 
         if NETBSD:
-            families, types = conn_tmap[kind]
-            ret = []
             rawlist = cext.net_connections(self.pid)
-            for item in rawlist:
-                fd, fam, type, laddr, raddr, status, pid = item
-                assert pid == self.pid
-                if fam in families and type in types:
-                    nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
-                                        TCP_STATUSES)
-                    ret.append(nt)
-            self._assert_alive()
-            return list(ret)
+        elif OPENBSD:
+            rawlist = cext.net_connections(self.pid, families, types)
+        else:  # FreeBSD
+            rawlist = cext.proc_connections(self.pid, families, types)
 
-        families, types = conn_tmap[kind]
-        rawlist = cext.proc_connections(self.pid, families, types)
-        ret = []
         for item in rawlist:
-            fd, fam, type, laddr, raddr, status = item
+            fd, fam, type, laddr, raddr, status = item[:6]
+            if NETBSD:
+                # FreeBSD and OpenBSD implement filtering in C
+                if (fam not in families) or (type not in types):
+                    continue
             nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
                                 TCP_STATUSES)
             ret.append(nt)
 
-        if OPENBSD:
-            self._assert_alive()
-
+        self._assert_alive()
         return ret
 
     @wrap_exceptions
@@ -835,11 +835,11 @@ class Process(object):
         # sometimes we get an empty string, in which case we turn
         # it into None
         if OPENBSD and self.pid == 0:
-            return None  # ...else it would raise EINVAL
+            return ""  # ...else it would raise EINVAL
         elif NETBSD or HAS_PROC_OPEN_FILES:
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
-            return cext.proc_cwd(self.pid) or None
+            return cext.proc_cwd(self.pid)
         else:
             raise NotImplementedError(
                 "supported only starting from FreeBSD 8" if

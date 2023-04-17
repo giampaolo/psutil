@@ -82,7 +82,6 @@ from contextlib import closing
 
 import psutil
 from psutil import BSD
-from psutil import OPENBSD
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -257,9 +256,7 @@ class TestFSAPIs(BaseUnicodeTest):
         with closing(sock):
             conn = psutil.Process().connections('unix')[0]
             self.assertIsInstance(conn.laddr, str)
-            # AF_UNIX addr not set on OpenBSD
-            if not OPENBSD:  # XXX
-                self.assertEqual(conn.laddr, name)
+            self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
@@ -281,11 +278,9 @@ class TestFSAPIs(BaseUnicodeTest):
                 raise unittest.SkipTest("not supported")
         with closing(sock):
             cons = psutil.net_connections(kind='unix')
-            # AF_UNIX addr not set on OpenBSD
-            if not OPENBSD:
-                conn = find_sock(cons)
-                self.assertIsInstance(conn.laddr, str)
-                self.assertEqual(conn.laddr, name)
+            conn = find_sock(cons)
+            self.assertIsInstance(conn.laddr, str)
+            self.assertEqual(conn.laddr, name)
 
     def test_disk_usage(self):
         dname = self.funky_name + "2"

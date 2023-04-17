@@ -6,25 +6,12 @@
  */
 
 #include <Python.h>
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <sys/proc.h>
-#include <signal.h>
 #include <kvm.h>
-#include <netdb.h>  // for NI_MAXHOST
-#include <sys/socket.h>
-#define _KERNEL  // for DTYPE_*
-#include <sys/file.h>
-#undef _KERNEL
-#include <arpa/inet.h> // for inet_ntoa()
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
@@ -155,6 +142,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 }
 
 
+// TODO: refactor this (it's clunky)
 static char **
 _psutil_get_argv(pid_t pid) {
     static char **argv;
@@ -317,217 +305,14 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     int name[] = { CTL_KERN, KERN_PROC_CWD, pid };
     if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    return PyUnicode_DecodeFSDefault(path);
-}
-
-
-// see sys/kern/kern_sysctl.c lines 1100 and
-// usr.bin/fstat/fstat.c print_inet_details()
-static char *
-psutil_convert_ipv4(int family, uint32_t addr[4]) {
-    struct in_addr a;
-    memcpy(&a, addr, sizeof(a));
-    return inet_ntoa(a);
-}
-
-
-static char *
-psutil_inet6_addrstr(struct in6_addr *p)
-{
-    struct sockaddr_in6 sin6;
-    static char hbuf[NI_MAXHOST];
-    const int niflags = NI_NUMERICHOST;
-
-    memset(&sin6, 0, sizeof(sin6));
-    sin6.sin6_family = AF_INET6;
-    sin6.sin6_len = sizeof(struct sockaddr_in6);
-    sin6.sin6_addr = *p;
-    if (IN6_IS_ADDR_LINKLOCAL(p) &&
-        *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
-        sin6.sin6_scope_id =
-            ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-        sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
-    }
-
-    if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-        hbuf, sizeof(hbuf), NULL, 0, niflags))
-        return "invalid";
-
-    return hbuf;
-}
-
-
-/*
- * List process connections.
- * Note: there is no net_connections() on OpenBSD. The Python
- * implementation will iterate over all processes and use this
- * function.
- * Note: local and remote paths cannot be determined for UNIX sockets.
- */
-PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args) {
-    pid_t pid;
-    int i;
-    int cnt;
-    struct kinfo_file *freep = NULL;
-    struct kinfo_file *kif;
-    char *tcplist = NULL;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
-    PyObject *py_laddr = NULL;
-    PyObject *py_raddr = NULL;
-    PyObject *py_af_filter = NULL;
-    PyObject *py_type_filter = NULL;
-    PyObject *py_family = NULL;
-    PyObject *_type = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid, &py_af_filter,
-                           &py_type_filter))
-        goto error;
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
-        goto error;
-    }
-
-    freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL) {
-        goto error;
-    }
-
-    for (i = 0; i < cnt; i++) {
-        int state;
-        int lport;
-        int rport;
-        char addrbuf[NI_MAXHOST + 2];
-        int inseq;
-        struct in6_addr laddr6;
-        py_tuple = NULL;
-        py_laddr = NULL;
-        py_raddr = NULL;
-
-        kif = &freep[i];
-        if (kif->f_type == DTYPE_SOCKET) {
-            // apply filters
-            py_family = PyLong_FromLong((long)kif->so_family);
-            inseq = PySequence_Contains(py_af_filter, py_family);
-            Py_DECREF(py_family);
-            if (inseq == 0)
-                continue;
-            _type = PyLong_FromLong((long)kif->so_type);
-            inseq = PySequence_Contains(py_type_filter, _type);
-            Py_DECREF(_type);
-            if (inseq == 0)
-                continue;
-
-            // IPv4 / IPv6 socket
-            if ((kif->so_family == AF_INET) || (kif->so_family == AF_INET6)) {
-                // fill status
-                if (kif->so_type == SOCK_STREAM)
-                    state = kif->t_state;
-                else
-                    state = PSUTIL_CONN_NONE;
-
-                // ports
-                lport = ntohs(kif->inp_lport);
-                rport = ntohs(kif->inp_fport);
-
-                // local address, IPv4
-                if (kif->so_family == AF_INET) {
-                    py_laddr = Py_BuildValue(
-                        "(si)",
-                        psutil_convert_ipv4(kif->so_family, kif->inp_laddru),
-                        lport);
-                    if (!py_laddr)
-                        goto error;
-                }
-                else {
-                    // local address, IPv6
-                    memcpy(&laddr6, kif->inp_laddru, sizeof(laddr6));
-                    snprintf(addrbuf, sizeof(addrbuf), "%s",
-                             psutil_inet6_addrstr(&laddr6));
-                    py_laddr = Py_BuildValue("(si)", addrbuf, lport);
-                    if (!py_laddr)
-                        goto error;
-                }
-
-                if (rport != 0) {
-                    // remote address, IPv4
-                    if (kif->so_family == AF_INET) {
-                        py_raddr = Py_BuildValue(
-                            "(si)",
-                            psutil_convert_ipv4(
-                                kif->so_family, kif->inp_faddru),
-                            rport);
-                    }
-                    else {
-                        // remote address, IPv6
-                        memcpy(&laddr6, kif->inp_faddru, sizeof(laddr6));
-                        snprintf(addrbuf, sizeof(addrbuf), "%s",
-                                 psutil_inet6_addrstr(&laddr6));
-                        py_raddr = Py_BuildValue("(si)", addrbuf, rport);
-                        if (!py_raddr)
-                            goto error;
-                    }
-                }
-                else {
-                    py_raddr = Py_BuildValue("()");
-                }
-
-                if (!py_raddr)
-                    goto error;
-                py_tuple = Py_BuildValue(
-                    "(iiiNNi)",
-                    kif->fd_fd,
-                    kif->so_family,
-                    kif->so_type,
-                    py_laddr,
-                    py_raddr,
-                    state);
-                if (!py_tuple)
-                    goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_DECREF(py_tuple);
-            }
-            // UNIX socket.
-            // XXX: local addr is supposed to be in "unp_path" but it
-            // always empty; also "fstat" command is not able to show
-            // UNIX socket paths.
-            else if (kif->so_family == AF_UNIX) {
-                py_tuple = Py_BuildValue(
-                    "(iiissi)",
-                    kif->fd_fd,
-                    kif->so_family,
-                    kif->so_type,
-                    "",  // laddr (kif->unp_path is empty)
-                    "",  // raddr
-                    PSUTIL_CONN_NONE);
-                if (!py_tuple)
-                    goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_DECREF(py_tuple);
-                Py_INCREF(Py_None);
-            }
+        if (errno == ENOENT) {
+            psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
+            return Py_BuildValue("s", "");
+        }
+        else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
         }
     }
-    free(freep);
-    free(tcplist);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_XDECREF(py_laddr);
-    Py_XDECREF(py_raddr);
-    Py_DECREF(py_retlist);
-    if (freep != NULL)
-        free(freep);
-    if (tcplist != NULL)
-        free(tcplist);
-    return NULL;
+    return PyUnicode_DecodeFSDefault(path);
 }

@@ -258,8 +258,8 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assertIsInstance(disk.mountpoint, str)
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
-            self.assertIsInstance(disk.maxfile, int)
-            self.assertIsInstance(disk.maxpath, int)
+            self.assertIsInstance(disk.maxfile, (int, type(None)))
+            self.assertIsInstance(disk.maxpath, (int, type(None)))
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_net_connections(self):
@@ -438,8 +438,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                         name, info['pid'], repr(value))
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
-                    s = "\n".join((" " * 4) + i for i in s.splitlines())
-                    s += '\n'
+                    s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
                     failures.append(s)
                 else:
                     if value not in (0, 0.0, [], None, '', {}):
@@ -453,10 +452,9 @@ class TestFetchAllProcesses(PsutilTestCase):
             self.assertIsInstance(part, str)
 
     def exe(self, ret, info):
-        self.assertIsInstance(ret, (str, unicode, type(None)))
-        if not ret:
-            self.assertEqual(ret, '')
-        else:
+        self.assertIsInstance(ret, (str, unicode))
+        self.assertEqual(ret.strip(), ret)
+        if ret:
             if WINDOWS and not ret.endswith('.exe'):
                 return  # May be "Registry", "MemCompression", ...
             assert os.path.isabs(ret), ret
@@ -521,7 +519,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def username(self, ret, info):
         self.assertIsInstance(ret, str)
-        assert ret
+        self.assertEqual(ret.strip(), ret)
+        assert ret.strip()
 
     def status(self, ret, info):
         self.assertIsInstance(ret, str)
@@ -620,6 +619,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         for f in ret:
             self.assertIsInstance(f.fd, int)
             self.assertIsInstance(f.path, str)
+            self.assertEqual(f.path.strip(), f.path)
             if WINDOWS:
                 self.assertEqual(f.fd, -1)
             elif LINUX:
@@ -652,8 +652,9 @@ class TestFetchAllProcesses(PsutilTestCase):
                 check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
-        if ret:     # 'ret' can be None or empty
-            self.assertIsInstance(ret, str)
+        self.assertIsInstance(ret, (str, unicode))
+        self.assertEqual(ret.strip(), ret)
+        if ret:
             assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)

@@ -18,5 +18,3 @@ PyObject *psutil_get_cmdline(pid_t pid);
 PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
-PyObject *psutil_proc_connections(PyObject *self, PyObject *args);
-

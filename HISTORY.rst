@@ -9,9 +9,24 @@
   `KeyError` bit deriving from a missed cache hit.
 - 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
   is raised.
+- 2230_, [OpenBSD]: `psutil.net_connections`_ implementation was rewritten from
+  scratch:
+  - We're now able to retrieve the path of AF_UNIX sockets (before it was an
+    empty string)
+  - The function is faster since it no longer iterates over all processes.
+  - No longer produces duplicate connection entries.
+- 2238_: there are cases where `Process.cwd()`_ cannot be determined
+  (e.g. directory no longer exists), in which case we returned either ``None``
+  or an empty string. This was consolidated and we now return ``""`` on all
+  platforms.
+- 2239_, [UNIX]: if process is a zombie, and we can only determine part of the
+  its truncated `Process.name()`_ (15 chars), don't fail with `ZombieProcess`_
+  when we try to guess the full name from the `Process.cmdline()`_. Just
+  return the truncated name.
 
 **Bug fixes**
 
+- 1043_, [OpenBSD] `psutil.net_connections`_ returns duplicate entries.
 - 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
   ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
   calculate an approximation for ``available`` memory which matches "free"
@@ -25,6 +40,15 @@
   Matthieu Darbois)
 - 2225_, [POSIX]: `users()`_ loses precision for ``started`` attribute (off by
   1 minute).
+- 2229_, [OpenBSD]: unable to properly recognize zombie processes.
+  `NoSuchProcess`_ may be raised instead of `ZombieProcess`_.
+- 2231_, [NetBSD]: *available*  `virtual_memory()`_ is higher than *total*.
+- 2234_, [NetBSD]: `virtual_memory()`_ metrics are wrong: *available* and
+  *used* are too high. We now match values shown by *htop* CLI utility.
+- 2236_, [NetBSD]: `Process.num_threads()`_ and `Process.threads()`_ return
+  threads that are already terminated.
+- 2237_, [OpenBSD], [NetBSD]: `Process.cwd()`_ may raise ``FileNotFoundError``
+  if cwd no longer exists. Return an empty string instead.
 
 5.9.4
 =====
@@ -45,6 +69,8 @@
   ``SPEED_UNKNOWN`` definition.  (patch by Amir Rossert)
 - 2010_, [macOS]: on MacOS, arm64 ``IFM_1000_TX`` and ``IFM_1000_T`` are the
   same value, causing a build failure.  (patch by Lawrence D'Anna)
+- 2160_, [Windows]: Get Windows percent swap usage from performance counters.
+  (patch by Daniel Widdis)
 
 5.9.3
 =====

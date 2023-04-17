@@ -7,39 +7,13 @@
  * Platform-specific module methods for NetBSD.
  */
 
-#if defined(PSUTIL_NETBSD)
-    #define _KMEMUSER
-#endif
-
 #include <Python.h>
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/proc.h>
-#include <sys/swap.h>  // for swap_mem
-#include <signal.h>
 #include <kvm.h>
-// connection stuff
-#include <netdb.h>  // for NI_MAXHOST
-#include <sys/socket.h>
-#include <sys/sched.h>  // for CPUSTATES & CP_*
-#define _KERNEL  // for DTYPE_*
-    #include <sys/file.h>
-#undef _KERNEL
-#include <sys/disk.h>  // struct diskstats
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
-#include "specific.h"
+#include "proc.h"
 
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
@@ -141,10 +115,13 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     ssize_t len = readlink(buf, path, sizeof(path) - 1);
     free(buf);
     if (len == -1) {
-        if (errno == ENOENT)
-            NoSuchProcess("readlink -> ENOENT");
-        else
+        if (errno == ENOENT) {
+            psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
+            return Py_BuildValue("s", "");
+        }
+        else {
             PyErr_SetFromErrno(PyExc_OSError);
+        }
         return NULL;
     }
     path[len] = '\0';
@@ -273,6 +250,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     nlwps = (int)(size / sizeof(struct kinfo_lwp));
     for (i = 0; i < nlwps; i++) {
+        if ((&kl[i])->l_stat == LSIDL || (&kl[i])->l_stat == LSZOMB)
+            continue;
+        // XXX: we return 2 "user" times because the struct does not provide
+        // any "system" time.
         py_tuple = Py_BuildValue("idd",
                                  (&kl[i])->l_lid,
                                  PSUTIL_KPT2DOUBLE((&kl[i])->l_rtime),
@@ -294,10 +275,6 @@ error:
     return NULL;
 }
 
-
-// ============================================================================
-// APIS
-// ============================================================================
 
 int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
@@ -435,96 +412,6 @@ error:
 }
 
 
-/*
- * Virtual memory stats, taken from:
- * https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/
- *     netbsd/memory.c
- */
-PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    size_t size;
-    struct uvmexp_sysctl uv;
-    int mib[] = {CTL_VM, VM_UVMEXP2};
-    long pagesize = psutil_getpagesize();
-
-    size = sizeof(uv);
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uv.npages << uv.pageshift,  // total
-        (unsigned long long) uv.free << uv.pageshift,  // free
-        (unsigned long long) uv.active << uv.pageshift,  // active
-        (unsigned long long) uv.inactive << uv.pageshift,  // inactive
-        (unsigned long long) uv.wired << uv.pageshift,  // wired
-        (unsigned long long) (uv.filepages + uv.execpages) * pagesize,  // cached
-        // These are determined from /proc/meminfo in Python.
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) 0  // shared
-    );
-}
-
-
-PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    uint64_t swap_total, swap_free;
-    struct swapent *swdev;
-    int nswap, i;
-    long pagesize = psutil_getpagesize();
-
-    nswap = swapctl(SWAP_NSWAP, 0, 0);
-    if (nswap == 0) {
-        // This means there's no swap partition.
-        return Py_BuildValue("(iiiii)", 0, 0, 0, 0, 0);
-    }
-
-    swdev = calloc(nswap, sizeof(*swdev));
-    if (swdev == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    // Total things up.
-    swap_total = swap_free = 0;
-    for (i = 0; i < nswap; i++) {
-        if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_total += (uint64_t)swdev[i].se_nblks * DEV_BSIZE;
-            swap_free += (uint64_t)(swdev[i].se_nblks - swdev[i].se_inuse) * DEV_BSIZE;
-        }
-    }
-    free(swdev);
-
-    // Get swap in/out
-    unsigned int total;
-    size_t size = sizeof(total);
-    struct uvmexp_sysctl uv;
-    int mib[] = {CTL_VM, VM_UVMEXP2};
-    size = sizeof(uv);
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    return Py_BuildValue("(LLLll)",
-                         swap_total,
-                         (swap_total - swap_free),
-                         swap_free,
-                         (long) uv.pgswapin * pagesize,  // swap in
-                         (long) uv.pgswapout * pagesize);  // swap out
-
-error:
-    free(swdev);
-    return NULL;
-}
-
-
 PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     long pid;
@@ -544,145 +431,4 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     free(freep);
 
     return Py_BuildValue("i", cnt);
-}
-
-
-PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    // XXX: why static?
-    int mib[3];
-    int ncpu;
-    size_t len;
-    size_t size;
-    int i;
-    PyObject *py_cputime = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-    // retrieve the number of cpus
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    uint64_t cpu_time[CPUSTATES];
-
-    for (i = 0; i < ncpu; i++) {
-        // per-cpu info
-        mib[0] = CTL_KERN;
-        mib[1] = KERN_CP_TIME;
-        mib[2] = i;
-        size = sizeof(cpu_time);
-        if (sysctl(mib, 3, &cpu_time, &size, NULL, 0) == -1) {
-            warn("failed to get kern.cptime2");
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
-
-        py_cputime = Py_BuildValue(
-            "(ddddd)",
-            (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC);
-        if (!py_cputime)
-            goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_DECREF(py_cputime);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cputime);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
-
-
-PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    int i, dk_ndrive, mib[3];
-    size_t len;
-    struct io_sysctl *stats = NULL;
-    PyObject *py_disk_info = NULL;
-    PyObject *py_retdict = PyDict_New();
-
-    if (py_retdict == NULL)
-        return NULL;
-    mib[0] = CTL_HW;
-    mib[1] = HW_IOSTATS;
-    mib[2] = sizeof(struct io_sysctl);
-    len = 0;
-    if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
-        warn("can't get HW_IOSTATS");
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    dk_ndrive = (int)(len / sizeof(struct io_sysctl));
-
-    stats = malloc(len);
-    if (stats == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-    if (sysctl(mib, 3, stats, &len, NULL, 0) < 0 ) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    for (i = 0; i < dk_ndrive; i++) {
-        py_disk_info = Py_BuildValue(
-            "(KKKK)",
-            stats[i].rxfer,
-            stats[i].wxfer,
-            stats[i].rbytes,
-            stats[i].wbytes
-        );
-        if (!py_disk_info)
-            goto error;
-        if (PyDict_SetItemString(py_retdict, stats[i].name, py_disk_info))
-            goto error;
-        Py_DECREF(py_disk_info);
-    }
-
-    free(stats);
-    return py_retdict;
-
-error:
-    Py_XDECREF(py_disk_info);
-    Py_DECREF(py_retdict);
-    if (stats != NULL)
-        free(stats);
-    return NULL;
-}
-
-
-PyObject *
-psutil_cpu_stats(PyObject *self, PyObject *args) {
-    size_t size;
-    struct uvmexp_sysctl uv;
-    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
-
-    size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    return Py_BuildValue(
-        "IIIIIII",
-        uv.swtch,  // ctx switches
-        uv.intrs,  // interrupts - XXX always 0, will be determined via /proc
-        uv.softs,  // soft interrupts
-        uv.syscalls,  // syscalls - XXX always 0
-        uv.traps,  // traps
-        uv.faults,  // faults
-        uv.forks  // forks
-    );
 }

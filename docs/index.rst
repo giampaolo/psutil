@@ -334,14 +334,17 @@ Memory
 .. function:: virtual_memory()
 
   Return statistics about system memory usage as a named tuple including the
-  following fields, expressed in bytes. Main metrics:
+  following fields, expressed in bytes.
+
+  Main metrics:
 
   - **total**: total physical memory (exclusive swap).
   - **available**: the memory that can be given instantly to processes without
     the system going into swap.
-    This is calculated by summing different memory values depending on the
-    platform and it is supposed to be used to monitor actual memory usage in a
-    cross platform fashion.
+    This is calculated by summing different memory metrics that vary depending
+    on the platform. It is supposed to be used to monitor actual memory usage
+    in a cross platform fashion.
+  - **percent**: the percentage usage calculated as ``(total - available) / total * 100``.
 
   Other metrics:
 
@@ -369,7 +372,8 @@ Memory
   human readable form.
 
   .. note:: if you just want to know how much physical memory is left in a
-    cross platform fashion simply rely on the **available** field.
+    cross platform fashion simply rely on **available** and **percent**
+    fields.
 
   >>> import psutil
   >>> mem = psutil.virtual_memory()
@@ -659,19 +663,18 @@ Network
     (Solaris) UNIX sockets are not supported.
 
   .. note::
-     (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
-     This is a limitation of the OS.
-
-  .. note::
-     (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
-     "". This is a limitation of the OS.
+     (Linux, FreeBSD, OpenBSD) *raddr* field for UNIX sockets is always set to
+     ``""`` (empty string). This is a limitation of the OS.
 
   .. versionadded:: 2.1.0
 
   .. versionchanged:: 5.3.0 : socket "fd" is now set for real instead of being
      ``-1``.
 
-  .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+  .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
+
+  .. versionchanged:: 5.9.5 : OpenBSD: retrieve *laddr* path for AF_UNIX
+    sockets (before it was an empty string).
 
 .. function:: net_if_addrs()
 
@@ -1177,9 +1180,10 @@ Process class
 
   .. method:: exe()
 
-    The process executable as an absolute path.
-    On some systems this may also be an empty string.
-    The return value is cached after first call.
+    The process executable as an absolute path. On some systems, if exe cannot
+    be determined for some internal reason (e.g. system process or path no
+    longer exists), this may be an empty string. The return value is cached
+    after first call.
 
     >>> import psutil
     >>> psutil.Process().exe()
@@ -1278,7 +1282,9 @@ Process class
 
   .. method:: cwd()
 
-    The process current working directory as an absolute path.
+    The process current working directory as an absolute path. If cwd cannot be
+    determined for some internal reason (e.g. system process or directiory no
+    longer exists) it may return an empty string.
 
     .. versionchanged:: 5.6.4 added support for NetBSD
 
@@ -1943,18 +1949,18 @@ Process class
       (Solaris) UNIX sockets are not supported.
 
     .. note::
-       (Linux, FreeBSD) "raddr" field for UNIX sockets is always set to "".
+       (Linux, FreeBSD) *raddr* field for UNIX sockets is always set to "".
        This is a limitation of the OS.
 
     .. note::
-       (OpenBSD) "laddr" and "raddr" fields for UNIX sockets are always set to
+       (OpenBSD) *laddr* and *raddr* fields for UNIX sockets are always set to
        "". This is a limitation of the OS.
 
     .. note::
       (AIX) :class:`psutil.AccessDenied` is always raised unless running
       as root (lsof does the same).
 
-    .. versionchanged:: 5.3.0 : "laddr" and "raddr" are named tuples.
+    .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
 
   .. method:: is_running()
 
