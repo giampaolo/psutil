@@ -189,14 +189,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = pMin < eMin ? pMin : eMin;
     curr = max;
 
-    if (pCoreRef != NULL)
-        CFRelease(pCoreRef);
-    if (eCoreRef != NULL)
-        CFRelease(eCoreRef);
-    if (iter)
-        IOObjectRelease(iter);
-    if (entry)
-        IOObjectRelease(entry);
+    CFRelease(pCoreRef);
+    CFRelease(eCoreRef);
+    IOObjectRelease(iter);
+    IOObjectRelease(entry);
 
     return Py_BuildValue(
             "IKK",
