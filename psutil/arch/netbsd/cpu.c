@@ -6,6 +6,7 @@
  */
 
 #include <Python.h>
+#include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
 
