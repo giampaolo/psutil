@@ -140,12 +140,11 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while ((entry = IOIteratorNext(iter))) {
+    while ((entry = IOIteratorNext(iter)) != 0) {
         io_name_t name;
         status = IORegistryEntryGetName(entry, name);
         if (status != KERN_SUCCESS) {
-            if (entry)
-                IOObjectRelease(entry);
+            IOObjectRelease(entry);
             continue;
         }
         if (strcmp(name, "pmgr") == 0) {
@@ -160,13 +159,13 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     }
 
     pCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
-    if (!pCoreRef) {
+    if (pCoreRef == NULL) {
         PyErr_Format(PyExc_RuntimeError, "'voltage-states5-sram' property not found");
         goto error;
     }
 
     eCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
-    if (!eCoreRef) {
+    if (eCoreRef == NULL) {
         PyErr_Format(PyExc_RuntimeError, "'voltage-states1-sram' property not found");
         goto error;
     }
@@ -204,9 +203,9 @@ error:
         CFRelease(pCoreRef);
     if (eCoreRef != NULL)
         CFRelease(eCoreRef);
-    if (iter)
+    if (iter != 0)
         IOObjectRelease(iter);
-    if (entry)
+    if (entry != 0)
         IOObjectRelease(entry);
     return NULL;
 }
