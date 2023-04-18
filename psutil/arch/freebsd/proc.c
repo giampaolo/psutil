@@ -135,24 +135,24 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 
 
 /*
- * XXX no longer used; it probably makese sense to remove it.
  * Borrowed from psi Python System Information project
- *
- * Get command arguments and environment variables.
- *
  * Based on code from ps.
- *
- * Returns:
- *      0 for success;
- *      -1 for failure (Exception raised);
- *      1 for insufficient privileges.
  */
-static char
-*psutil_get_cmd_args(pid_t pid, size_t *argsize) {
+PyObject *
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
+    pid_t pid;
     int mib[4];
     int argmax;
     size_t size = sizeof(argmax);
     char *procargs = NULL;
+    size_t pos = 0;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_arg = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
 
     // Get the maximum process arguments size.
     mib[0] = CTL_KERN;
@@ -160,13 +160,13 @@ static char
 
     size = sizeof(argmax);
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
-        return NULL;
+        goto error;
 
     // Allocate space for the arguments.
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
         PyErr_NoMemory();
-        return NULL;
+        goto error;
     }
 
     // Make a sysctl() call to get the raw argument space of the process.
@@ -177,55 +177,33 @@ static char
 
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
-        free(procargs);
         PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGS)");
-        return NULL;
-    }
-
-    // return string and set the length of arguments
-    *argsize = size;
-    return procargs;
-}
-
-
-// returns the command line as a python list object
-PyObject *
-psutil_get_cmdline(pid_t pid) {
-    char *argstr = NULL;
-    size_t pos = 0;
-    size_t argsize = 0;
-    PyObject *py_retlist = Py_BuildValue("[]");
-    PyObject *py_arg = NULL;
-
-    if (pid < 0)
-        return py_retlist;
-    argstr = psutil_get_cmd_args(pid, &argsize);
-    if (argstr == NULL)
         goto error;
+    }
 
     // args are returned as a flattened string with \0 separators between
     // arguments add each string to the list then step forward to the next
     // separator
-    if (argsize > 0) {
-        while (pos < argsize) {
-            py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
+    if (size > 0) {
+        while (pos < size) {
+            py_arg = PyUnicode_DecodeFSDefault(&procargs[pos]);
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
             Py_DECREF(py_arg);
-            pos = pos + strlen(&argstr[pos]) + 1;
+            pos = pos + strlen(&procargs[pos]) + 1;
         }
     }
 
-    free(argstr);
+    free(procargs);
     return py_retlist;
 
 error:
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
-    if (argstr != NULL)
-        free(argstr);
+    if (procargs != NULL)
+        free(procargs);
     return NULL;
 }
 

@@ -143,45 +143,42 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 
 
 // TODO: refactor this (it's clunky)
-static char **
-_psutil_get_argv(pid_t pid) {
+PyObject *
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int mib[4];
     static char **argv;
-    int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
+    char **p;
     size_t argv_size = 128;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_arg = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC_ARGS;
+    mib[2] = pid;
+    mib[3] = KERN_PROC_ARGV;
+
     // Loop and reallocate until we have enough space to fit argv.
     for (;; argv_size *= 2) {
         if (argv_size >= 8192) {
             PyErr_SetString(PyExc_RuntimeError,
                             "can't allocate enough space for KERN_PROC_ARGV");
-            return NULL;
+            goto error;
         }
         if ((argv = realloc(argv, argv_size)) == NULL)
             continue;
-        if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
-            return argv;
+        if (sysctl(mib, 4, argv, &argv_size, NULL, 0) == 0)
+            break;
         if (errno == ENOMEM)
             continue;
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-}
-
-
-// returns the command line as a python list object
-PyObject *
-psutil_get_cmdline(pid_t pid) {
-    static char **argv;
-    char **p;
-    PyObject *py_arg = NULL;
-    PyObject *py_retlist = Py_BuildValue("[]");
-
-    if (!py_retlist)
-        return NULL;
-    if (pid < 0)
-        return py_retlist;
-
-    if ((argv = _psutil_get_argv(pid)) == NULL)
         goto error;
+    }
 
     for (p = argv; *p != NULL; p++) {
         py_arg = PyUnicode_DecodeFSDefault(*p);
@@ -191,6 +188,7 @@ psutil_get_cmdline(pid_t pid) {
             goto error;
         Py_DECREF(py_arg);
     }
+
     return py_retlist;
 
 error:

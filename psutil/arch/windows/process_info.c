@@ -24,6 +24,13 @@ typedef NTSTATUS (NTAPI *__NtQueryInformationProcess)(
     PDWORD ReturnLength);
 #endif
 
+#define PSUTIL_FIRST_PROCESS(Processes) ( \
+    (PSYSTEM_PROCESS_INFORMATION)(Processes))
+#define PSUTIL_NEXT_PROCESS(Process) ( \
+   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
+
 
 /*
  * Given a pointer into a process's memory, figure out how much
@@ -535,15 +542,38 @@ error:
  * with given pid or NULL on error.
  */
 PyObject *
-psutil_get_cmdline(DWORD pid, int use_peb) {
-    PyObject *ret = NULL;
+psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     WCHAR *data = NULL;
+    LPWSTR *szArglist = NULL;
     SIZE_T size;
+    int nArgs;
+    int i;
+    int func_ret;
+    DWORD pid;
+    int pid_return;
+    int use_peb;
+    // TODO: shouldn't this be decref-ed in case of error on
+    // PyArg_ParseTuple?
+    PyObject *py_usepeb = Py_True;
     PyObject *py_retlist = NULL;
     PyObject *py_unicode = NULL;
-    LPWSTR *szArglist = NULL;
-    int nArgs, i;
-    int func_ret;
+    static char *keywords[] = {"pid", "use_peb", NULL};
+
+    if (! PyArg_ParseTupleAndKeywords(args, kwdict, _Py_PARSE_PID "|O",
+                                      keywords, &pid, &py_usepeb))
+    {
+        return NULL;
+    }
+    if ((pid == 0) || (pid == 4))
+        return Py_BuildValue("[]");
+
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0)
+        return NoSuchProcess("psutil_pid_is_running -> 0");
+    if (pid_return == -1)
+        return NULL;
+
+    use_peb = (py_usepeb == Py_True) ? 1 : 0;
 
     /*
     Reading the PEB to get the cmdline seem to be the best method if
@@ -559,47 +589,60 @@ psutil_get_cmdline(DWORD pid, int use_peb) {
     else
         func_ret = psutil_cmdline_query_proc(pid, &data, &size);
     if (func_ret != 0)
-        goto out;
+        goto error;
 
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
         PyErr_SetFromOSErrnoWithSyscall("CommandLineToArgvW");
-        goto out;
+        goto error;
     }
 
     // arglist parsed as array of UNICODE_STRING, so convert each to
     // Python string object and add to arg list
     py_retlist = PyList_New(nArgs);
     if (py_retlist == NULL)
-        goto out;
+        goto error;
     for (i = 0; i < nArgs; i++) {
         py_unicode = PyUnicode_FromWideChar(szArglist[i],
             wcslen(szArglist[i]));
         if (py_unicode == NULL)
-            goto out;
+            goto error;
         PyList_SetItem(py_retlist, i, py_unicode);
         py_unicode = NULL;
     }
-    ret = py_retlist;
-    py_retlist = NULL;
 
-out:
+    LocalFree(szArglist);
+    free(data);
+    return py_retlist;
+
+error:
     if (szArglist != NULL)
         LocalFree(szArglist);
     if (data != NULL)
         free(data);
     Py_XDECREF(py_unicode);
     Py_XDECREF(py_retlist);
-    return ret;
+    return NULL;
 }
 
 
 PyObject *
-psutil_get_cwd(DWORD pid) {
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    DWORD pid;
     PyObject *ret = NULL;
     WCHAR *data = NULL;
     SIZE_T size;
+    int pid_return;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0)
+        return NoSuchProcess("psutil_pid_is_running -> 0");
+    if (pid_return == -1)
+        return NULL;
 
     if (psutil_get_process_data(pid, KIND_CWD, &data, &size) != 0)
         goto out;
@@ -620,10 +663,23 @@ out:
  * process with given pid or NULL on error.
  */
 PyObject *
-psutil_get_environ(DWORD pid) {
-    PyObject *ret = NULL;
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    DWORD pid;
     WCHAR *data = NULL;
     SIZE_T size;
+    int pid_return;
+    PyObject *ret = NULL;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if ((pid == 0) || (pid == 4))
+        return Py_BuildValue("s", "");
+
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0)
+        return NoSuchProcess("psutil_pid_is_running -> 0");
+    if (pid_return == -1)
+        return NULL;
 
     if (psutil_get_process_data(pid, KIND_ENVIRON, &data, &size) != 0)
         goto out;

@@ -380,22 +380,6 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process cmdline as a Python list of cmdline arguments.
- */
-static PyObject *
-psutil_proc_cmdline(PyObject *self, PyObject *args) {
-    pid_t pid;
-    PyObject *py_retlist = NULL;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    py_retlist = psutil_get_cmdline(pid);
-    if (py_retlist == NULL)
-        return NULL;
-    return Py_BuildValue("N", py_retlist);
-}
-
 
 /*
  * Return process environment as a Python dictionary

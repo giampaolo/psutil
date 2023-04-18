@@ -11,7 +11,7 @@ typedef struct kinfo_proc kinfo_proc;
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
 int psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc);
 
-PyObject* psutil_get_cmdline(long pid);
+PyObject* psutil_proc_cmdline(PyObject* self, PyObject* args);
 PyObject* psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args);
 PyObject* psutil_proc_cpu_affinity_set(PyObject* self, PyObject* args);
 PyObject* psutil_proc_cwd(PyObject* self, PyObject* args);
