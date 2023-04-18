@@ -35,6 +35,7 @@
 #include "arch/windows/cpu.h"
 #include "arch/windows/mem.h"
 #include "arch/windows/net.h"
+#include "arch/windows/sensors.h"
 #include "arch/windows/services.h"
 #include "arch/windows/socks.h"
 #include "arch/windows/wmi.h"
@@ -1414,31 +1415,6 @@ error:
     Py_DECREF(py_retdict);
     CloseHandle(handle);
     return NULL;
-}
-
-
-/*
- * Return battery usage stats.
- */
-static PyObject *
-psutil_sensors_battery(PyObject *self, PyObject *args) {
-    SYSTEM_POWER_STATUS sps;
-
-    if (GetSystemPowerStatus(&sps) == 0) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
-    return Py_BuildValue(
-        "iiiI",
-        sps.ACLineStatus,  // whether AC is connected: 0=no, 1=yes, 255=unknown
-        // status flag:
-        // 1, 2, 4 = high, low, critical
-        // 8 = charging
-        // 128 = no battery
-        sps.BatteryFlag,
-        sps.BatteryLifePercent,  // percent
-        sps.BatteryLifeTime  // remaining secs
-    );
 }
 
 
