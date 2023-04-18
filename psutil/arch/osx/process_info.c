@@ -161,7 +161,8 @@ psutil_is_zombie(pid_t pid) {
 
 // return process args as a python list
 PyObject *
-psutil_get_cmdline(pid_t pid) {
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
+    pid_t pid;
     int nargs;
     size_t len;
     char *procargs = NULL;
@@ -169,13 +170,17 @@ psutil_get_cmdline(pid_t pid) {
     char *arg_end;
     char *curr_arg;
     size_t argmax;
-
+    PyObject *py_retlist = PyList_New(0);
     PyObject *py_arg = NULL;
-    PyObject *py_retlist = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
 
     // special case for PID 0 (kernel_task) where cmdline cannot be fetched
     if (pid == 0)
-        return Py_BuildValue("[]");
+        return py_retlist;
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_sysctl_argmax();
@@ -201,7 +206,7 @@ psutil_get_cmdline(pid_t pid) {
 
     if (arg_ptr == arg_end) {
         free(procargs);
-        return Py_BuildValue("[]");
+        return py_retlist;
     }
 
     // skip ahead to the first argument
@@ -212,9 +217,6 @@ psutil_get_cmdline(pid_t pid) {
 
     // iterate through arguments
     curr_arg = arg_ptr;
-    py_retlist = Py_BuildValue("[]");
-    if (!py_retlist)
-        goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
             py_arg = PyUnicode_DecodeFSDefault(curr_arg);
@@ -250,7 +252,8 @@ error:
 // * caller has an entitlement
 // See: https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321
 PyObject *
-psutil_get_environ(pid_t pid) {
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    pid_t pid;
     int nargs;
     char *procargs = NULL;
     char *procenv = NULL;
@@ -259,6 +262,9 @@ psutil_get_environ(pid_t pid) {
     char *env_start;
     size_t argmax;
     PyObject *py_ret = NULL;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
 
     // special case for PID 0 (kernel_task) where cmdline cannot be fetched
     if (pid == 0)

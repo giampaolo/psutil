@@ -387,46 +387,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process cmdline as a Python list of cmdline arguments.
- */
-static PyObject *
-psutil_proc_cmdline(PyObject *self, PyObject *args) {
-    pid_t pid;
-    PyObject *py_retlist = NULL;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-    // get the commandline, defined in arch/osx/process_info.c
-    py_retlist = psutil_get_cmdline(pid);
-    return py_retlist;
-}
-
-
-/*
- * Return process environment as a Python string.
- * On Big Sur this function returns an empty string unless:
- * * kernel is DEVELOPMENT || DEBUG
- * * target process is same as current_proc()
- * * target process is not cs_restricted
- * * SIP is off
- * * caller has an entitlement
- */
-static PyObject *
-psutil_proc_environ(PyObject *self, PyObject *args) {
-    pid_t pid;
-    PyObject *py_str = NULL;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-    // get the environment block, defined in arch/osx/process_info.c
-    py_str = psutil_get_environ(pid);
-    return py_str;
-}
-
-
-/*
  * Indicates if the given virtual address on the given architecture is in the
  * shared VM region.
  */

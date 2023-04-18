@@ -277,59 +277,6 @@ psutil_proc_times(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process cmdline as a Python list of cmdline arguments.
- */
-static PyObject *
-psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
-    DWORD pid;
-    int pid_return;
-    int use_peb;
-    PyObject *py_usepeb = Py_True;
-    static char *keywords[] = {"pid", "use_peb", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwdict, _Py_PARSE_PID "|O",
-                                     keywords, &pid, &py_usepeb))
-    {
-        return NULL;
-    }
-    if ((pid == 0) || (pid == 4))
-        return Py_BuildValue("[]");
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
-        return NULL;
-
-    use_peb = (py_usepeb == Py_True) ? 1 : 0;
-    return psutil_get_cmdline(pid, use_peb);
-}
-
-
-/*
- * Return process cmdline as a Python list of cmdline arguments.
- */
-static PyObject *
-psutil_proc_environ(PyObject *self, PyObject *args) {
-    DWORD pid;
-    int pid_return;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    if ((pid == 0) || (pid == 4))
-        return Py_BuildValue("s", "");
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
-        return NULL;
-
-    return psutil_get_environ(pid);
-}
-
-
-/*
  * Return process executable path. Works for all processes regardless of
  * privilege. NtQuerySystemInformation has some sort of internal cache,
  * since it succeeds even when a process is gone (but not if a PID never
@@ -602,26 +549,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     CloseHandle(hProcess);
 
     return Py_BuildValue("I", wsCounters.NumberOfPrivatePages);
-}
-
-/*
- * Return process current working directory as a Python string.
- */
-static PyObject *
-psutil_proc_cwd(PyObject *self, PyObject *args) {
-    DWORD pid;
-    int pid_return;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
-    if (pid_return == -1)
-        return NULL;
-
-    return psutil_get_cwd(pid);
 }
 
 

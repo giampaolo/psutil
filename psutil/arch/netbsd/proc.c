@@ -187,6 +187,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 }
 */
 
+
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
@@ -198,6 +199,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
         return NULL;
     return Py_BuildValue("l", (long)kp.p_nlwps);
 }
+
 
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
@@ -328,86 +330,64 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 }
 
 
-char *
-psutil_get_cmd_args(pid_t pid, size_t *argsize) {
+PyObject *
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
+    pid_t pid;
     int mib[4];
     int st;
-    size_t len;
-    char *procargs;
+    size_t len = 0;
+    size_t pos = 0;
+    char *procargs = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_arg = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC_ARGS;
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
-    len = 0;
 
     st = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
     if (st == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV) get size");
+        goto error;
     }
 
     procargs = (char *)malloc(len);
     if (procargs == NULL) {
         PyErr_NoMemory();
-        return NULL;
+        goto error;
     }
     st = sysctl(mib, __arraycount(mib), procargs, &len, NULL, 0);
     if (st == -1) {
-        free(procargs);
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV)");
+        goto error;
     }
 
-    *argsize = len;
-    return procargs;
-}
-
-
-// Return the command line as a python list object.
-// XXX - most of the times sysctl() returns a truncated string.
-// Also /proc/pid/cmdline behaves the same so it looks like this
-// is a kernel bug.
-PyObject *
-psutil_get_cmdline(pid_t pid) {
-    char *argstr = NULL;
-    size_t pos = 0;
-    size_t argsize = 0;
-    PyObject *py_arg = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-    if (pid == 0)
-        return py_retlist;
-
-    argstr = psutil_get_cmd_args(pid, &argsize);
-    if (argstr == NULL)
-        goto error;
-
-    // args are returned as a flattened string with \0 separators between
-    // arguments add each string to the list then step forward to the next
-    // separator
-    if (argsize > 0) {
-        while (pos < argsize) {
-            py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
+    if (len > 0) {
+        while (pos < len) {
+            py_arg = PyUnicode_DecodeFSDefault(&procargs[pos]);
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
             Py_DECREF(py_arg);
-            pos = pos + strlen(&argstr[pos]) + 1;
+            pos = pos + strlen(&procargs[pos]) + 1;
         }
     }
 
-    free(argstr);
+    free(procargs);
     return py_retlist;
 
 error:
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
-    if (argstr != NULL)
-        free(argstr);
+    if (procargs != NULL)
+        free(procargs);
     return NULL;
 }
 
