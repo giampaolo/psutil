@@ -1,7 +1,9 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.5 (IN DEVELOPMENT)
-======================
+5.9.5
+=====
+
+2023-04-17
 
 **Enhancements**
 
@@ -15,6 +17,16 @@
     empty string)
   - The function is faster since it no longer iterates over all processes.
   - No longer produces duplicate connection entries.
+- 2238_: there are cases where `Process.cwd()`_ cannot be determined
+  (e.g. directory no longer exists), in which case we returned either ``None``
+  or an empty string. This was consolidated and we now return ``""`` on all
+  platforms.
+- 2239_, [UNIX]: if process is a zombie, and we can only determine part of the
+  its truncated `Process.name()`_ (15 chars), don't fail with `ZombieProcess`_
+  when we try to guess the full name from the `Process.cmdline()`_. Just
+  return the truncated name.
+- 2240_, [NetBSD], [OpenBSD]: add CI testing on every commit for NetBSD and
+  OpenBSD platforms (python 3 only).
 
 **Bug fixes**
 
@@ -39,8 +51,8 @@
   *used* are too high. We now match values shown by *htop* CLI utility.
 - 2236_, [NetBSD]: `Process.num_threads()`_ and `Process.threads()`_ return
   threads that are already terminated.
-- 2237_, [OpenBSD]: `Process.cwd()`_ may raise ``FileNotFoundError`` if cwd no
-  longer exists. Return ``None`` instead.
+- 2237_, [OpenBSD], [NetBSD]: `Process.cwd()`_ may raise ``FileNotFoundError``
+  if cwd no longer exists. Return an empty string instead.
 
 5.9.4
 =====

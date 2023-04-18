@@ -62,18 +62,20 @@ OpenBSD
 ::
 
     export PKG_PATH=http://ftp.eu.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
-    pkg_add -v python gcc
+    pkg_add -v python3 gcc
     pip install psutil
 
 NetBSD
 ------
 
+Assuming Python 3.11 (the most recent at the time of writing):
+
 ::
 
-    export PKG_PATH="ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
+    export PKG_PATH="http://ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
     pkg_add -v pkgin
-    pkgin install python3 gcc
-    pip install psutil
+    pkgin install python311-* gcc12-* py311-setuptools-* py311-pip-*
+    python3.11 -m pip install psutil
 
 Sun Solaris
 -----------

@@ -542,7 +542,7 @@ class Process(object):
             return os.readlink("%s/%s/path/cwd" % (procfs_path, self.pid))
         except FileNotFoundError:
             os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
-            return None
+            return ""
 
     @wrap_exceptions
     def memory_info(self):
