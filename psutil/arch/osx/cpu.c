@@ -200,7 +200,6 @@ error:
     if (entry)
         IOObjectRelease(entry);
     return NULL;
-        
 }
 #else
 PyObject *
