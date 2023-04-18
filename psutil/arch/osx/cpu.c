@@ -123,50 +123,58 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     uint32_t eMin;
     uint32_t max;
     kern_return_t status;
+    CFDictionaryRef matching = NULL;
+    CFTypeRef pCoreRef = NULL;
+    CFTypeRef eCoreRef = NULL;
+    io_iterator_t iter = 0;
+    io_registry_entry_t entry = 0;
 
-    CFDictionaryRef matching = IOServiceMatching("AppleARMIODevice");
+    matching = IOServiceMatching("AppleARMIODevice");
     if (matching == 0) {
         return PyErr_Format(PyExc_RuntimeError, "IOServiceMatching call failed, 'AppleARMIODevice' not found");
     }
-    io_iterator_t iter;
 
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
     if (status != KERN_SUCCESS) {
-        return PyErr_Format(PyExc_RuntimeError, "IOServiceGetMatchingServices call failed");
+        PyErr_Format(PyExc_RuntimeError, "IOServiceGetMatchingServices call failed");
+        goto error;
     }
 
-    io_registry_entry_t entry;
     while ((entry = IOIteratorNext(iter))) {
         io_name_t name;
         status = IORegistryEntryGetName(entry, name);
         if (status != KERN_SUCCESS) {
+            if (entry)
+                IOObjectRelease(entry);
             continue;
         }
         if (strcmp(name, "pmgr") == 0) {
             break;
         }
+        IOObjectRelease(entry);
     }
 
     if (entry == 0) {
-        return PyErr_Format(PyExc_RuntimeError, "'pmgr' entry was not found in AppleARMIODevice service");
+        PyErr_Format(PyExc_RuntimeError, "'pmgr' entry was not found in AppleARMIODevice service");
+        goto error;
     }
 
-    CFTypeRef pCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
+    pCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
     if (!pCoreRef) {
-        return PyErr_Format(PyExc_RuntimeError, "'voltage-states5-sram' property not found");
+        PyErr_Format(PyExc_RuntimeError, "'voltage-states5-sram' property not found");
+        goto error;
     }
 
-    CFTypeRef eCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
+    eCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
     if (!eCoreRef) {
-        return PyErr_Format(PyExc_RuntimeError, "'voltage-states1-sram' property not found");
+        PyErr_Format(PyExc_RuntimeError, "'voltage-states1-sram' property not found");
+        goto error;
     }
-
-    IOObjectRelease(iter);
-    IOObjectRelease(entry);
 
     size_t pCoreLength = CFDataGetLength(pCoreRef);
     if (pCoreLength < 8) {
-        return PyErr_Format(PyExc_RuntimeError, "expected 'voltage-states5-sram' buffer to have at least size 8");
+        PyErr_Format(PyExc_RuntimeError, "expected 'voltage-states5-sram' buffer to have at least size 8");
+        goto error;
     }
 
     CFDataGetBytes(pCoreRef, CFRangeMake(0, 4), (UInt8 *) &pMin);
@@ -176,14 +184,23 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = pMin < eMin ? pMin : eMin;
     curr = max;
 
-    CFRelease(pCoreRef);
-    CFRelease(eCoreRef);
 
     return Py_BuildValue(
             "IKK",
             curr / 1000 / 1000,
             min / 1000 / 1000,
             max / 1000 / 1000);
+error:
+    if (pCoreRef != NULL)
+        CFRelease(pCoreRef);
+    if (eCoreRef != NULL)
+        CFRelease(eCoreRef);
+    if (iter)
+        IOObjectRelease(iter);
+    if (entry)
+        IOObjectRelease(entry);
+    return NULL;
+        
 }
 #else
 PyObject *
