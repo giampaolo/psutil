@@ -172,8 +172,13 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     }
 
     size_t pCoreLength = CFDataGetLength(pCoreRef);
+    size_t eCoreLength = CFDataGetLength(eCoreRef);
     if (pCoreLength < 8) {
         PyErr_Format(PyExc_RuntimeError, "expected 'voltage-states5-sram' buffer to have at least size 8");
+        goto error;
+    }
+    if (eCoreLength < 4) {
+        PyErr_Format(PyExc_RuntimeError, "expected 'voltage-states1-sram' buffer to have at least size 4");
         goto error;
     }
 
@@ -184,6 +189,14 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = pMin < eMin ? pMin : eMin;
     curr = max;
 
+    if (pCoreRef != NULL)
+        CFRelease(pCoreRef);
+    if (eCoreRef != NULL)
+        CFRelease(eCoreRef);
+    if (iter)
+        IOObjectRelease(iter);
+    if (entry)
+        IOObjectRelease(entry);
 
     return Py_BuildValue(
             "IKK",
