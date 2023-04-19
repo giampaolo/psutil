@@ -243,6 +243,7 @@ elif MACOS:
             'psutil/_psutil_osx.c',
             'psutil/arch/osx/process_info.c',
             'psutil/arch/osx/cpu.c',
+            'psutil/arch/osx/mem.c',
         ],
         define_macros=macros,
         extra_link_args=[
