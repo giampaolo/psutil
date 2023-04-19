@@ -245,6 +245,7 @@ elif MACOS:
             'psutil/arch/osx/cpu.c',
             'psutil/arch/osx/disk.c',
             'psutil/arch/osx/mem.c',
+            'psutil/arch/osx/net.c',
             'psutil/arch/osx/sensors.c',
             'psutil/arch/osx/sys.c',
         ],
