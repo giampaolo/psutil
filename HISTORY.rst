@@ -1,5 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.6 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+- 2241_, [NetBSD]: can't compile On NetBSD 10.99.3/amd64.  (patch by Thomas
+  Klausner)
+
 5.9.5
 =====
 
