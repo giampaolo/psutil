@@ -23,12 +23,16 @@ def sh(cmd):
 
 
 def main():
-    files = sh("git ls-files").split('\n')
-    for file in files:
+    files = []
+    for file in sh("git ls-files").split('\n'):
         if file.startswith(SKIP_PREFIXES) or \
                 os.path.splitext(file)[1].lower() in SKIP_EXTS or \
                 file in SKIP_FILES:
             continue
+        if file not in files:
+            files.append(file)
+
+    for file in files:
         print("include " + file)
 
 

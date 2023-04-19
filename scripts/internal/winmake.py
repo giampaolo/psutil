@@ -515,6 +515,14 @@ def download_appveyor_wheels():
        "--user giampaolo --project psutil" % PYTHON)
 
 
+def generate_manifest():
+    """Generate MANIFEST.in file."""
+    script = "scripts\\internal\\generate_manifest.py"
+    out = subprocess.check_output([PYTHON, script], text=True)
+    with open("MANIFEST.in", "w", newline="\n") as f:
+        f.write(out)
+
+
 def get_python(path):
     if not path:
         return sys.executable
@@ -560,6 +568,7 @@ def parse_args():
     sp.add_parser('clean', help="deletes dev files")
     sp.add_parser('coverage', help="run coverage tests.")
     sp.add_parser('download-appveyor-wheels', help="download wheels.")
+    sp.add_parser('generate-manifest', help="generate MANIFEST.in file")
     sp.add_parser('help', help="print this help")
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")

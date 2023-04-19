@@ -4,6 +4,13 @@
  * found in the LICENSE file.
  */
 
+/*
+ * Process related functions. Original code was moved in here from
+ * psutil/_psutil_windows.c in 2023. For reference, here's the GIT blame
+ * history before the move:
+ * https://github.com/giampaolo/psutil/blame/59504a5/psutil/_psutil_windows.c
+*/
+
 // Fixes clash between winsock2.h and windows.h
 #define WIN32_LEAN_AND_MEAN
 
@@ -18,9 +25,9 @@
 
 #include "../../_psutil_common.h"
 #include "proc.h"
-#include "process_info.h"
-#include "process_handles.h"
-#include "process_utils.h"
+#include "proc_info.h"
+#include "proc_handles.h"
+#include "proc_utils.h"
 
 
 // Raised by Process.wait().

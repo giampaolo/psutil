@@ -11,8 +11,8 @@
 #include <windows.h>
 
 #include "../../_psutil_common.h"
-#include "process_info.h"
-#include "process_utils.h"
+#include "proc_info.h"
+#include "proc_utils.h"
 
 
 #ifndef _WIN64

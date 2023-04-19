@@ -12,7 +12,7 @@
 #include <ws2tcpip.h>
 
 #include "../../_psutil_common.h"
-#include "process_utils.h"
+#include "proc_utils.h"
 
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
