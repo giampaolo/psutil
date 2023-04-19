@@ -93,6 +93,8 @@ include psutil/arch/openbsd/socks.c
 include psutil/arch/openbsd/socks.h
 include psutil/arch/osx/cpu.c
 include psutil/arch/osx/cpu.h
+include psutil/arch/osx/disk.c
+include psutil/arch/osx/disk.h
 include psutil/arch/osx/mem.c
 include psutil/arch/osx/mem.h
 include psutil/arch/osx/process_info.c
