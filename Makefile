@@ -87,6 +87,7 @@ build:  ## Compile (in parallel) without installing.
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
 	PYTHONWARNINGS=all $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
+	$(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
