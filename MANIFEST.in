@@ -108,6 +108,8 @@ include psutil/arch/windows/mem.h
 include psutil/arch/windows/net.c
 include psutil/arch/windows/net.h
 include psutil/arch/windows/ntextapi.h
+include psutil/arch/windows/proc.c
+include psutil/arch/windows/proc.h
 include psutil/arch/windows/process_handles.c
 include psutil/arch/windows/process_handles.h
 include psutil/arch/windows/process_info.c
