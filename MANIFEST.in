@@ -99,6 +99,8 @@ include psutil/arch/osx/mem.c
 include psutil/arch/osx/mem.h
 include psutil/arch/osx/process_info.c
 include psutil/arch/osx/process_info.h
+include psutil/arch/osx/sensors.c
+include psutil/arch/osx/sensors.h
 include psutil/arch/osx/sys.c
 include psutil/arch/osx/sys.h
 include psutil/arch/solaris/environ.c
