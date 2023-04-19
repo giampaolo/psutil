@@ -5,6 +5,9 @@
  */
 
 #include <Python.h>
+#include <windows.h>
+
+#include "ntextapi.h"
 
 #define PSUTIL_FIRST_PROCESS(Processes) ( \
     (PSYSTEM_PROCESS_INFORMATION)(Processes))
