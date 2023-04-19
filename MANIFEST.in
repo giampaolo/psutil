@@ -38,7 +38,6 @@ include psutil/_psutil_osx.c
 include psutil/_psutil_posix.c
 include psutil/_psutil_posix.h
 include psutil/_psutil_sunos.c
-include psutil/_psutil_windows.c
 include psutil/_pswindows.py
 include psutil/arch/aix/common.c
 include psutil/arch/aix/common.h
@@ -108,6 +107,7 @@ include psutil/arch/windows/mem.h
 include psutil/arch/windows/net.c
 include psutil/arch/windows/net.h
 include psutil/arch/windows/ntextapi.h
+include psutil/arch/windows/proc.c
 include psutil/arch/windows/process_handles.c
 include psutil/arch/windows/process_handles.h
 include psutil/arch/windows/process_info.c
