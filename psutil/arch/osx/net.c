@@ -15,6 +15,8 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
+#include "../../_psutil_common.h"
+
 
 PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {

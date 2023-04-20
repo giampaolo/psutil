@@ -12,6 +12,8 @@
 #include <sys/sysctl.h>
 #include <utmpx.h>
 
+#include "../../_psutil_common.h"
+
 
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {

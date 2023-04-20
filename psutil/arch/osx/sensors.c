@@ -15,6 +15,8 @@
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
+#include "../../_psutil_common.h"
+
 
 PyObject *
 psutil_sensors_battery(PyObject *self, PyObject *args) {
