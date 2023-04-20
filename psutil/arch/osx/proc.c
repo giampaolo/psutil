@@ -255,7 +255,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
                 "setting AccessDenied()",
-                pid, err, errno, mach_error_string(err));
+                (long)pid, err, errno, mach_error_string(err));
             AccessDenied("task_for_pid");
         }
         return 1;
