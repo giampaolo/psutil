@@ -9,6 +9,7 @@
 from __future__ import print_function
 
 import contextlib
+import glob
 import io
 import os
 import platform
@@ -208,23 +209,11 @@ if WINDOWS:
 
     ext = Extension(
         'psutil._psutil_windows',
-        sources=sources + [
-            'psutil/_psutil_windows.c',
-            'psutil/arch/windows/cpu.c',
-            'psutil/arch/windows/disk.c',
-            'psutil/arch/windows/mem.c',
-            'psutil/arch/windows/net.c',
-            'psutil/arch/windows/proc.c',
-            'psutil/arch/windows/proc_handles.c',
-            'psutil/arch/windows/proc_info.c',
-            'psutil/arch/windows/proc_utils.c',
-            'psutil/arch/windows/security.c',
-            'psutil/arch/windows/sensors.c',
-            'psutil/arch/windows/services.c',
-            'psutil/arch/windows/socks.c',
-            'psutil/arch/windows/sys.c',
-            'psutil/arch/windows/wmi.c',
-        ],
+        sources=(
+            sources +
+            ["psutil/_psutil_windows.c"] +
+            glob.glob("psutil/arch/windows/*.c")
+        ),
         define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
@@ -239,16 +228,11 @@ elif MACOS:
     macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
         'psutil._psutil_osx',
-        sources=sources + [
-            'psutil/_psutil_osx.c',
-            'psutil/arch/osx/cpu.c',
-            'psutil/arch/osx/disk.c',
-            'psutil/arch/osx/mem.c',
-            'psutil/arch/osx/net.c',
-            'psutil/arch/osx/proc.c',
-            'psutil/arch/osx/sensors.c',
-            'psutil/arch/osx/sys.c',
-        ],
+        sources=(
+            sources +
+            ["psutil/_psutil_osx.c"] +
+            glob.glob("psutil/arch/osx/*.c")
+        ),
         define_macros=macros,
         extra_link_args=[
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
@@ -259,21 +243,12 @@ elif FREEBSD:
     macros.append(("PSUTIL_FREEBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
-        sources=sources + [
-            'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/cpu.c',
-            'psutil/arch/bsd/disk.c',
-            'psutil/arch/bsd/net.c',
-            'psutil/arch/bsd/proc.c',
-            'psutil/arch/bsd/sys.c',
-            'psutil/arch/freebsd/cpu.c',
-            'psutil/arch/freebsd/disk.c',
-            'psutil/arch/freebsd/mem.c',
-            'psutil/arch/freebsd/proc.c',
-            'psutil/arch/freebsd/proc_socks.c',
-            'psutil/arch/freebsd/sensors.c',
-            'psutil/arch/freebsd/sys_socks.c',
-        ],
+        sources=(
+            sources +
+            ["psutil/_psutil_bsd.c"] +
+            glob.glob("psutil/arch/bsd/*.c") +
+            glob.glob("psutil/arch/freebsd/*.c")
+        ),
         define_macros=macros,
         libraries=["devstat"],
         **py_limited_api)
@@ -282,19 +257,12 @@ elif OPENBSD:
     macros.append(("PSUTIL_OPENBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
-        sources=sources + [
-            'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/cpu.c',
-            'psutil/arch/bsd/disk.c',
-            'psutil/arch/bsd/net.c',
-            'psutil/arch/bsd/proc.c',
-            'psutil/arch/bsd/sys.c',
-            'psutil/arch/openbsd/cpu.c',
-            'psutil/arch/openbsd/disk.c',
-            'psutil/arch/openbsd/mem.c',
-            'psutil/arch/openbsd/proc.c',
-            'psutil/arch/openbsd/socks.c',
-        ],
+        sources=(
+            sources +
+            ["psutil/_psutil_bsd.c"] +
+            glob.glob("psutil/arch/bsd/*.c") +
+            glob.glob("psutil/arch/openbsd/*.c")
+        ),
         define_macros=macros,
         libraries=["kvm"],
         **py_limited_api)
@@ -303,19 +271,12 @@ elif NETBSD:
     macros.append(("PSUTIL_NETBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
-        sources=sources + [
-            'psutil/_psutil_bsd.c',
-            'psutil/arch/bsd/cpu.c',
-            'psutil/arch/bsd/disk.c',
-            'psutil/arch/bsd/net.c',
-            'psutil/arch/bsd/proc.c',
-            'psutil/arch/bsd/sys.c',
-            'psutil/arch/netbsd/cpu.c',
-            'psutil/arch/netbsd/disk.c',
-            'psutil/arch/netbsd/mem.c',
-            'psutil/arch/netbsd/proc.c',
-            'psutil/arch/netbsd/socks.c',
-        ],
+        sources=(
+            sources +
+            ["psutil/_psutil_bsd.c"] +
+            glob.glob("psutil/arch/bsd/*.c") +
+            glob.glob("psutil/arch/netbsd/*.c")
+        ),
         define_macros=macros,
         libraries=["kvm"],
         **py_limited_api)
