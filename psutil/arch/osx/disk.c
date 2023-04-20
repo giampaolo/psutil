@@ -18,6 +18,8 @@
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
 
+#include "../../_psutil_common.h"
+
 
 /*
  * Return a list of tuples including device, mount point and fs type
