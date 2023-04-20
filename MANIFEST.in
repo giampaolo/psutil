@@ -34,7 +34,6 @@ include psutil/_psutil_bsd.c
 include psutil/_psutil_common.c
 include psutil/_psutil_common.h
 include psutil/_psutil_linux.c
-include psutil/_psutil_osx.c
 include psutil/_psutil_posix.c
 include psutil/_psutil_posix.h
 include psutil/_psutil_sunos.c
@@ -99,6 +98,7 @@ include psutil/arch/osx/mem.c
 include psutil/arch/osx/mem.h
 include psutil/arch/osx/net.c
 include psutil/arch/osx/net.h
+include psutil/arch/osx/proc.c
 include psutil/arch/osx/process_info.c
 include psutil/arch/osx/process_info.h
 include psutil/arch/osx/sensors.c
