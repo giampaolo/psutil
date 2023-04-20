@@ -8,7 +8,6 @@
 
 typedef struct kinfo_proc kinfo_proc;
 
-int psutil_is_zombie(pid_t pid);
 int psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp);
 int psutil_get_proc_list(kinfo_proc **procList, size_t *procCount);
 int psutil_proc_pidinfo(
