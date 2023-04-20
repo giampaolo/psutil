@@ -2,9 +2,12 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * macOS platform-specific module methods.
  */
+
+// Process related functions. Original code was moved in here from
+// psutil/_psutil_osx.c in 2023. For reference, here's the GIT blame
+// history before the move:
+// https://github.com/giampaolo/psutil/blame/59504a5/psutil/_psutil_osx.c
 
 #include <Python.h>
 #include <assert.h>
@@ -15,6 +18,7 @@
 #include <sys/sysctl.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
+#include <sys/sysctl.h>
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <pwd.h>
@@ -24,20 +28,12 @@
 #include <mach/shared_region.h>
 #include <mach-o/loader.h>
 
-#include "_psutil_common.h"
-#include "_psutil_posix.h"
-#include "arch/osx/cpu.h"
-#include "arch/osx/disk.h"
-#include "arch/osx/mem.h"
-#include "arch/osx/net.h"
-#include "arch/osx/process_info.h"
-#include "arch/osx/sensors.h"
-#include "arch/osx/sys.h"
+#include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
+#include "process_info.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-
-static PyObject *ZombieProcessError;
 
 
 /*
@@ -48,7 +44,7 @@ static PyObject *ZombieProcessError;
  * - for PIDs != getpid() or PIDs which are not members of the procmod
  *   it requires root
  * As such we can only guess what the heck went wrong and fail either
- * with NoSuchProcess, ZombieProcessError or giveup with AccessDenied.
+ * with NoSuchProcess or giveup with AccessDenied.
  * Here's some history:
  * https://github.com/giampaolo/psutil/issues/1181
  * https://github.com/giampaolo/psutil/issues/1209
@@ -64,9 +60,10 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess("task_for_pid");
-        else if (psutil_is_zombie(pid) == 1)
-            PyErr_SetString(ZombieProcessError,
-                            "task_for_pid -> psutil_is_zombie -> 1");
+        // Now done in Python.
+        // else if (psutil_is_zombie(pid) == 1)
+        //     PyErr_SetString(ZombieProcessError,
+        //                     "task_for_pid -> psutil_is_zombie -> 1");
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
@@ -149,7 +146,7 @@ error:
 /*
  * Return a Python list of all the PIDs running on the system.
  */
-static PyObject *
+PyObject *
 psutil_pids(PyObject *self, PyObject *args) {
     kinfo_proc *proclist = NULL;
     kinfo_proc *orig_address = NULL;
@@ -196,7 +193,7 @@ error:
  * This will also succeed for zombie processes returning correct
  * information.
  */
-static PyObject *
+PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct kinfo_proc kp;
@@ -247,7 +244,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
  * EACCES for PIDs owned by another user and with ESRCH for zombie
  * processes.
  */
-static PyObject *
+PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
@@ -289,7 +286,7 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
 /*
  * Return process name from kinfo_proc as a Python string.
  */
-static PyObject *
+PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
     pid_t pid;
     struct kinfo_proc kp;
@@ -306,7 +303,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
  * Return process current working directory.
  * Raises NSP in case of zombie process.
  */
-static PyObject *
+PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_vnodepathinfo pathinfo;
@@ -327,7 +324,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 /*
  * Return path of the process executable.
  */
-static PyObject *
+PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     pid_t pid;
     char buf[PATH_MAX];
@@ -393,7 +390,7 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
  * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
  *     nsMemoryReporterManager.cpp
  */
-static PyObject *
+PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     pid_t pid;
     size_t len;
@@ -473,7 +470,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 /*
  * Return process threads
  */
-static PyObject *
+PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     pid_t pid;
     int err, ret;
@@ -576,7 +573,7 @@ error:
  * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/m78fd
  * - /usr/include/sys/proc_info.h
  */
-static PyObject *
+PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
     int num_fds;
@@ -667,7 +664,7 @@ error:
  * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/wNrC0
  * - /usr/include/sys/proc_info.h
  */
-static PyObject *
+PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args) {
     pid_t pid;
     int num_fds;
@@ -863,7 +860,7 @@ error:
  * Return number of file descriptors opened by process.
  * Raises NSP in case of zombie process.
  */
-static PyObject *
+PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     pid_t pid;
     int num_fds;
@@ -878,139 +875,4 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     free(fds_pointer);
     return Py_BuildValue("i", num_fds);
-}
-
-
-/*
- * define the psutil C module methods and initialize the module.
- */
-static PyMethodDef mod_methods[] = {
-    // --- per-process functions
-    {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS},
-    {"proc_connections", psutil_proc_connections, METH_VARARGS},
-    {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
-    {"proc_environ", psutil_proc_environ, METH_VARARGS},
-    {"proc_exe", psutil_proc_exe, METH_VARARGS},
-    {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS},
-    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
-    {"proc_name", psutil_proc_name, METH_VARARGS},
-    {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS},
-    {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
-    {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS},
-    {"proc_threads", psutil_proc_threads, METH_VARARGS},
-
-    // --- system-related functions
-    {"boot_time", psutil_boot_time, METH_VARARGS},
-    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS},
-    {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
-    {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
-    {"cpu_stats", psutil_cpu_stats, METH_VARARGS},
-    {"cpu_times", psutil_cpu_times, METH_VARARGS},
-    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS},
-    {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
-    {"disk_usage_used", psutil_disk_usage_used, METH_VARARGS},
-    {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
-    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
-    {"pids", psutil_pids, METH_VARARGS},
-    {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
-    {"swap_mem", psutil_swap_mem, METH_VARARGS},
-    {"users", psutil_users, METH_VARARGS},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
-
-    // --- others
-    {"set_debug", psutil_set_debug, METH_VARARGS},
-
-    {NULL, NULL, 0, NULL}
-};
-
-
-#if PY_MAJOR_VERSION >= 3
-    #define INITERR return NULL
-
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_psutil_osx",
-        NULL,
-        -1,
-        mod_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
-
-    PyObject *PyInit__psutil_osx(void)
-#else  /* PY_MAJOR_VERSION */
-    #define INITERR return
-
-    void init_psutil_osx(void)
-#endif  /* PY_MAJOR_VERSION */
-{
-#if PY_MAJOR_VERSION >= 3
-    PyObject *mod = PyModule_Create(&moduledef);
-#else
-    PyObject *mod = Py_InitModule("_psutil_osx", mod_methods);
-#endif
-    if (mod == NULL)
-        INITERR;
-
-    if (psutil_setup() != 0)
-        INITERR;
-
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        INITERR;
-    // process status constants, defined in:
-    // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
-    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
-        INITERR;
-    // connection status constants
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
-        INITERR;
-    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        INITERR;
-
-    // Exception.
-    ZombieProcessError = PyErr_NewException(
-        "_psutil_osx.ZombieProcessError", NULL, NULL);
-    if (ZombieProcessError == NULL)
-        INITERR;
-    Py_INCREF(ZombieProcessError);
-    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError)) {
-        Py_DECREF(ZombieProcessError);
-        INITERR;
-    }
-
-    if (mod == NULL)
-        INITERR;
-#if PY_MAJOR_VERSION >= 3
-    return mod;
-#endif
 }

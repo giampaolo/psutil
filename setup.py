@@ -241,11 +241,12 @@ elif MACOS:
         'psutil._psutil_osx',
         sources=sources + [
             'psutil/_psutil_osx.c',
-            'psutil/arch/osx/process_info.c',
             'psutil/arch/osx/cpu.c',
             'psutil/arch/osx/disk.c',
             'psutil/arch/osx/mem.c',
             'psutil/arch/osx/net.c',
+            'psutil/arch/osx/proc.c',
+            'psutil/arch/osx/process_info.c',
             'psutil/arch/osx/sensors.c',
             'psutil/arch/osx/sys.c',
         ],
@@ -501,7 +502,7 @@ def main():
                     missdeps("sudo apk add gcc %s%s-dev" % (pyimpl, py3))
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
-                             "is not installed"), color="red", file=sys.stderr)
+                             "is not installed", color="red"), file=sys.stderr)
             elif FREEBSD:
                 if which('pkg'):
                     missdeps("pkg install gcc python%s" % py3)
