@@ -16,7 +16,6 @@
 #include "arch/osx/mem.h"
 #include "arch/osx/net.h"
 #include "arch/osx/proc.h"
-#include "arch/osx/process_info.h"
 #include "arch/osx/sensors.h"
 #include "arch/osx/sys.h"
 

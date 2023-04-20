@@ -101,8 +101,6 @@ include psutil/arch/osx/net.c
 include psutil/arch/osx/net.h
 include psutil/arch/osx/proc.c
 include psutil/arch/osx/proc.h
-include psutil/arch/osx/process_info.c
-include psutil/arch/osx/process_info.h
 include psutil/arch/osx/sensors.c
 include psutil/arch/osx/sensors.h
 include psutil/arch/osx/sys.c

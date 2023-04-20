@@ -7,8 +7,10 @@
 #include <Python.h>
 
 PyObject *psutil_pids(PyObject *self, PyObject *args);
+PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
 PyObject *psutil_proc_connections(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
+PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
 PyObject *psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);

@@ -246,7 +246,6 @@ elif MACOS:
             'psutil/arch/osx/mem.c',
             'psutil/arch/osx/net.c',
             'psutil/arch/osx/proc.c',
-            'psutil/arch/osx/process_info.c',
             'psutil/arch/osx/sensors.c',
             'psutil/arch/osx/sys.c',
         ],
