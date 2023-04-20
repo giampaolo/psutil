@@ -5,9 +5,10 @@
  */
 
 // Process related functions. Original code was moved in here from
-// psutil/_psutil_osx.c in 2023. For reference, here's the GIT blame
-// history before the move:
+// psutil/_psutil_osx.c and psutil/arc/osx/process_info.c in 2023.
+// For reference, here's the GIT blame history before the move:
 // https://github.com/giampaolo/psutil/blame/59504a5/psutil/_psutil_osx.c
+// https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/arch/osx/process_info.c
 
 #include <Python.h>
 #include <assert.h>
@@ -875,4 +876,201 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     free(fds_pointer);
     return Py_BuildValue("i", num_fds);
+}
+
+
+// return process args as a python list
+PyObject *
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int nargs;
+    size_t len;
+    char *procargs = NULL;
+    char *arg_ptr;
+    char *arg_end;
+    char *curr_arg;
+    size_t argmax;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_arg = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
+
+    // special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    if (pid == 0)
+        return py_retlist;
+
+    // read argmax and allocate memory for argument space.
+    argmax = psutil_sysctl_argmax();
+    if (! argmax)
+        goto error;
+
+    procargs = (char *)malloc(argmax);
+    if (NULL == procargs) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
+        goto error;
+
+    arg_end = &procargs[argmax];
+    // copy the number of arguments to nargs
+    memcpy(&nargs, procargs, sizeof(nargs));
+
+    arg_ptr = procargs + sizeof(nargs);
+    len = strlen(arg_ptr);
+    arg_ptr += len + 1;
+
+    if (arg_ptr == arg_end) {
+        free(procargs);
+        return py_retlist;
+    }
+
+    // skip ahead to the first argument
+    for (; arg_ptr < arg_end; arg_ptr++) {
+        if (*arg_ptr != '\0')
+            break;
+    }
+
+    // iterate through arguments
+    curr_arg = arg_ptr;
+    while (arg_ptr < arg_end && nargs > 0) {
+        if (*arg_ptr++ == '\0') {
+            py_arg = PyUnicode_DecodeFSDefault(curr_arg);
+            if (! py_arg)
+                goto error;
+            if (PyList_Append(py_retlist, py_arg))
+                goto error;
+            Py_DECREF(py_arg);
+            // iterate to next arg and decrement # of args
+            curr_arg = arg_ptr;
+            nargs--;
+        }
+    }
+
+    free(procargs);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_arg);
+    Py_XDECREF(py_retlist);
+    if (procargs != NULL)
+        free(procargs);
+    return NULL;
+}
+
+
+// Return process environment as a python string.
+// On Big Sur this function returns an empty string unless:
+// * kernel is DEVELOPMENT || DEBUG
+// * target process is same as current_proc()
+// * target process is not cs_restricted
+// * SIP is off
+// * caller has an entitlement
+// See: https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321
+PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int nargs;
+    char *procargs = NULL;
+    char *procenv = NULL;
+    char *arg_ptr;
+    char *arg_end;
+    char *env_start;
+    size_t argmax;
+    PyObject *py_ret = NULL;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+
+    // special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    if (pid == 0)
+        goto empty;
+
+    // read argmax and allocate memory for argument space.
+    argmax = psutil_sysctl_argmax();
+    if (! argmax)
+        goto error;
+
+    procargs = (char *)malloc(argmax);
+    if (NULL == procargs) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
+        goto error;
+
+    arg_end = &procargs[argmax];
+    // copy the number of arguments to nargs
+    memcpy(&nargs, procargs, sizeof(nargs));
+
+    // skip executable path
+    arg_ptr = procargs + sizeof(nargs);
+    arg_ptr = memchr(arg_ptr, '\0', arg_end - arg_ptr);
+
+    if (arg_ptr == NULL || arg_ptr == arg_end) {
+        psutil_debug(
+            "(arg_ptr == NULL || arg_ptr == arg_end); set environ to empty");
+        goto empty;
+    }
+
+    // skip ahead to the first argument
+    for (; arg_ptr < arg_end; arg_ptr++) {
+        if (*arg_ptr != '\0')
+            break;
+    }
+
+    // iterate through arguments
+    while (arg_ptr < arg_end && nargs > 0) {
+        if (*arg_ptr++ == '\0')
+            nargs--;
+    }
+
+    // build an environment variable block
+    env_start = arg_ptr;
+
+    procenv = calloc(1, arg_end - arg_ptr);
+    if (procenv == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    while (*arg_ptr != '\0' && arg_ptr < arg_end) {
+        char *s = memchr(arg_ptr + 1, '\0', arg_end - arg_ptr);
+        if (s == NULL)
+            break;
+        memcpy(procenv + (arg_ptr - env_start), arg_ptr, s - arg_ptr);
+        arg_ptr = s + 1;
+    }
+
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(
+        procenv, arg_ptr - env_start + 1);
+    if (!py_ret) {
+        // XXX: don't want to free() this as per:
+        // https://github.com/giampaolo/psutil/issues/926
+        // It sucks but not sure what else to do.
+        procargs = NULL;
+        goto error;
+    }
+
+    free(procargs);
+    free(procenv);
+    return py_ret;
+
+empty:
+    if (procargs != NULL)
+        free(procargs);
+    return Py_BuildValue("s", "");
+
+error:
+    Py_XDECREF(py_ret);
+    if (procargs != NULL)
+        free(procargs);
+    if (procenv != NULL)
+        free(procargs);
+    return NULL;
 }
