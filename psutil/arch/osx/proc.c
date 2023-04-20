@@ -31,7 +31,6 @@
 
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
-#include "process_info.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
