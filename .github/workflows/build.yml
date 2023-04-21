@@ -1,0 +1,137 @@
+# Runs CI tests and generates wheels on the following platforms:
+#
+# * Linux (py2 and py3)
+# * macOS (py2 and py3)
+# * Windows (py3, py2 is done by appveyor)
+#
+# Useful URLs:
+# * https://github.com/pypa/cibuildwheel
+# * https://github.com/actions/checkout
+# * https://github.com/actions/setup-python
+# * https://github.com/actions/upload-artifact
+# * https://github.com/marketplace/actions/cancel-workflow-action
+
+on: [push, pull_request]
+name: build
+jobs:
+  # Linux + macOS + Windows Python 3
+  py3:
+    name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'windows') && matrix.archs || 'all' }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - os: ubuntu-latest
+          archs: "x86_64 i686"
+        - os: macos-12
+          archs: "x86_64 arm64"
+        - os: windows-2019
+          archs: "AMD64"
+        - os: windows-2019
+          archs: "x86"
+
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.9.1
+      with:
+        access_token: ${{ github.token }}
+
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Create wheels + run tests
+      uses: pypa/cibuildwheel@v2.11.2
+      env:
+        CIBW_ARCHS: "${{ matrix.archs }}"
+
+    - name: Upload wheels
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: wheelhouse
+
+    - name: Generate .tar.gz
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
+
+  # Linux + macOS + Python 2
+  py2:
+    name: py2-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-12]
+    env:
+      CIBW_TEST_COMMAND:
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/runner.py &&
+        PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 python {project}/psutil/tests/test_memleaks.py
+      CIBW_TEST_EXTRAS: test
+      CIBW_BUILD: 'cp27-*'
+
+    steps:
+    - name: Cancel previous runs
+      uses: styfle/cancel-workflow-action@0.9.1
+      with:
+        access_token: ${{ github.token }}
+
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+
+    - name: Create wheels + run tests
+      uses: pypa/cibuildwheel@v1.12.0
+
+    - name: Upload wheels
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: wheelhouse
+
+    - name: Generate .tar.gz
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
+
+  # Run linters
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+    - name: 'Run linters'
+      run: |
+        # py3
+        python3 -m pip install flake8 isort
+        python3 -m flake8 .
+        python3 -m isort .
+        # clinter
+        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py
+
+  # Check sanity of .tar.gz + wheel files
+  check-dist:
+    needs: [py2, py3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: wheelhouse
+      - run: |
+          python scripts/internal/print_hashes.py wheelhouse/
+          pipx run twine check --strict wheelhouse/*

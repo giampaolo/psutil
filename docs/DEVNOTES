@@ -1,0 +1,133 @@
+TODO
+====
+
+A collection of ideas and notes about stuff to implement in future versions.
+"#NNN" occurrences refer to bug tracker issues at:
+https://github.com/giampaolo/psutil/issues
+
+FEATURES
+========
+
+- (UNIX) process root (different from cwd)
+
+- (Linux) locked files via /proc/locks:
+  https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
+
+- #269: NIC rx/tx queue. This should probably go into net_if_stats().
+  Figure out on what platforms this is supported:
+  Linux: yes
+  Others: ?
+
+- Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
+
+- (Windows) fall back on using WMIC for Process methods returning AccessDenied
+
+- #613: thread names; patch for macOS available at:
+  https://code.google.com/p/plcrashreporter/issues/detail?id=65
+  Sample code:
+  https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
+
+- scripts/taskmgr-gui.py (using tk).
+
+- system-wide number of open file descriptors:
+  - https://jira.hyperic.com/browse/SIGAR-30
+
+- Number of system threads.
+  - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
+
+- Doc / wiki which compares similarities between UNIX cli tools and psutil.
+  Example:
+  ```
+  df -a  ->  psutil.disk_partitions
+  lsof  ->  psutil.Process.open_files() and psutil.Process.open_connections()
+  killall->  (actual script)
+  tty  ->  psutil.Process.terminal()
+  who  ->  psutil.users()
+  ```
+
+- psutil.proc_tree() something which obtains a {pid:ppid, ...} dict for
+  all running processes in one shot. This can be factored out from
+  Process.children() and exposed as a first class function.
+  PROS: on Windows we can take advantage of _psutil_windows.ppid_map()
+  which is faster than iterating over all pids and calling ppid().
+  CONS: scripts/pstree.py shows this can be easily done in the user code
+  so maybe it's not worth the addition.
+
+- advanced cmdline interface exposing the whole API and providing different
+  kind of outputs (e.g. pprinted, colorized, json).
+
+- [Linux]: process cgroups (http://en.wikipedia.org/wiki/Cgroups). They look
+  similar to prlimit() in terms of functionality but uglier (they should allow
+  limiting per-process network IO resources though, which is great). Needs
+  further reading.
+
+- Python 3.3. exposed different sched.h functions:
+  http://docs.python.org/dev/whatsnew/3.3.html#os
+  http://bugs.python.org/issue12655
+  http://docs.python.org/dev/library/os.html#interface-to-the-scheduler
+  It might be worth to take a look and figure out whether we can include some
+  of those in psutil.
+  Also, we can probably reimplement wait_pid() on POSIX which is currently
+  implemented as a busy-loop.
+
+- os.times() provides 'elapsed' times (cpu_times() might).
+
+- ...also guest_time and cguest_time on Linux.
+
+- Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
+   - NoSuchProcess inherits from ProcessLookupError
+   - AccessDenied inherits from PermissionError
+   - TimeoutExpired inherits from TimeoutError (debatable)
+   See: http://docs.python.org/3/library/exceptions.html#os-exceptions
+
+- Process.threads() might grow an extra "id" parameter so that it can be
+   used as such:
+  ```
+  >>> p = psutil.Process(os.getpid())
+  >>> p.threads(id=psutil.current_thread_id())
+  thread(id=2539, user_time=0.03, system_time=0.02)
+  >>>
+  ```
+  Note: this leads to questions such as "should we have a custom NoSuchThread
+  exception? Also see issue #418.
+  Note #2: this would work with os.getpid() only.
+  psutil.current_thread_id() might be desirable as per issue #418 though.
+
+- should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
+  NoSuchProcess and AccessDenied? Not that we need it, but currently we
+  cannot raise a TimeoutExpired exception with a specific error string.
+
+- round Process.memory_percent() result?
+
+BUGFIXES
+========
+
+- #600: windows / open_files(): support network file handles.
+
+REJECTED IDEAS
+==============
+
+- #550: threads per core
+- #1667: process_iter(new_only=True)
+
+INCONSISTENCIES
+===============
+
+- disk_partitions(all=False) should have been "perdisk=False" instead:
+  * disk_io_counters(perdisk=False)
+  * net_io_counters(pernic=False)
+  * cpu_times_percent(percpu=False)
+  * cpu_times(percpu=False)
+  * cpu_freq(percpu=False)
+- PROCFS_PATH should have been set_procfs_path()
+
+RESOURCES
+=========
+
+- conky: https://github.com/brndnmtthws/conky/
+- sigar: https://github.com/hyperic/sigar (Java)
+- zabbix: https://zabbix.org/wiki/Get_Zabbix
+- libstatgrab: http://www.i-scream.org/libstatgrab/
+- top: http://www.unixtop.org/
+- oshi: https://github.com/oshi/oshi
+- netdata: https://github.com/netdata/netdata

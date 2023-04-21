@@ -1,0 +1,15 @@
+About
+=====
+
+This directory contains the reStructuredText (reST) sources to the psutil
+documentation.  You don't need to build them yourself, prebuilt versions are
+available at http://psutil.readthedocs.io.
+In case you want, you need to install sphinx first:
+
+    $ pip install sphinx
+
+Then run:
+
+    $ make html
+
+You'll then have an HTML version of the doc at _build/html/index.html.
