@@ -257,7 +257,9 @@ def swap_memory():
         percentswap = cext.swap_percent()
         used = int(0.01 * percentswap * total)
     else:
+        percentswap = 0.0
         used = 0
+
     free = total - used
     percent = round(percentswap, 1)
     return _common.sswap(total, used, free, percent, 0, 0)
