@@ -50,7 +50,7 @@ INSTALL_OPTS = `$(PYTHON) -c \
 TEST_PREFIX = PSUTIL_SCRIPTS_DIR=`pwd`/scripts PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
-.DEFAULT_GOAL := help
+# .DEFAULT_GOAL := help
 
 # ===================================================================
 # Install

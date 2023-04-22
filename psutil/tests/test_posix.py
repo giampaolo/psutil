@@ -62,10 +62,7 @@ def ps(fmt, pid=None):
             cmd.append('ax')
 
     if SUNOS:
-        # XXX: set() has not get() method so this cannot work; not sure
-        # what I meant in here.
-        fmt_map = set(('command', 'comm', 'start', 'stime'))
-        fmt = fmt_map.get(fmt, fmt)
+        fmt = fmt.replace("start", "stime")
 
     cmd.extend(['-o', fmt])
 
@@ -373,6 +370,12 @@ class TestSystemAPIs(PsutilTestCase):
                 started = re.findall(r"[A-Z][a-z][a-z] \d\d", out)
                 if started:
                     tstamp = "%b %d"
+                else:
+                    # 'apr 10' (sunOS)
+                    started = re.findall(r"[a-z][a-z][a-z] \d\d", out)
+                    if started:
+                        tstamp = "%b %d"
+                        started = [x.capitalize() for x in started]
 
         if not tstamp:
             raise ValueError(

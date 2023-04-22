@@ -129,7 +129,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
  */
 static int
 cstrings_array_to_string(char **joined, char ** array, size_t count, char dm) {
-    int i;
+    size_t i;
     size_t total_length = 0;
     size_t item_length = 0;
     char *result = NULL;
@@ -353,7 +353,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_cpu_num(PyObject *self, PyObject *args) {
-    int fd = NULL;
+    int fd = -1;
     int pid;
     char path[1000];
     struct prheader header;

@@ -25,10 +25,9 @@ class SunOSSpecificTestCase(PsutilTestCase):
             raise ValueError('no swap device(s) configured')
         total = free = 0
         for line in lines:
-            line = line.split()
-            t, f = line[-2:]
-            total += int(int(t) * 512)
-            free += int(int(f) * 512)
+            fields = line.split()
+            total = int(fields[3]) * 512
+            free = int(fields[4]) * 512
         used = total - free
 
         psutil_swap = psutil.swap_memory()

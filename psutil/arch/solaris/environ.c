@@ -55,7 +55,7 @@ open_address_space(pid_t pid, const char *procfs_path) {
  * @return amount of bytes stored to the buffer or -1 in case of
  *         error.
  */
-static int
+static size_t
 read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     size_t to_read = buf_size;
     size_t stored  = 0;
@@ -161,7 +161,7 @@ read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
     char **result = NULL;
     char *pblock = NULL;
     size_t pblock_size;
-    int i;
+    size_t i;
 
     assert(ptr_size == 4 || ptr_size == 8);
 
@@ -247,7 +247,7 @@ ptr_size_by_psinfo(psinfo_t info) {
 static int
 search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
     int count = 0;
-    int r;
+    size_t r;
     char buf[8];
     static const char zeros[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -391,7 +391,7 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
  */
 void
 psutil_free_cstrings_array(char **array, size_t count) {
-    int i;
+    size_t i;
 
     if (!array)
         return;
