@@ -11,7 +11,7 @@
 #include <Psapi.h>  // EnumProcesses
 
 #include "../../_psutil_common.h"
-#include "process_utils.h"
+#include "proc_utils.h"
 
 
 DWORD *

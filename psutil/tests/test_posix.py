@@ -358,6 +358,7 @@ class TestSystemAPIs(PsutilTestCase):
         out = sh("who -u")
         if not out.strip():
             raise self.skipTest("no users on this system")
+        tstamp = None
         # '2023-04-11 09:31' (Linux)
         started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
         if started:
@@ -368,8 +369,14 @@ class TestSystemAPIs(PsutilTestCase):
             if started:
                 tstamp = "%b %d %H:%M"
             else:
-                raise ValueError(
-                    "cannot interpret tstamp in who output\n%s" % (out))
+                # 'Apr 10'
+                started = re.findall(r"[A-Z][a-z][a-z] \d\d", out)
+                if started:
+                    tstamp = "%b %d"
+
+        if not tstamp:
+            raise ValueError(
+                "cannot interpret tstamp in who output\n%s" % (out))
         with self.subTest(psutil=psutil.users(), who=out):
             for idx, u in enumerate(psutil.users()):
                 psutil_value = datetime.datetime.fromtimestamp(

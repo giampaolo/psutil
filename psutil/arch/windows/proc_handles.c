@@ -23,7 +23,7 @@
 #include <Python.h>
 
 #include "../../_psutil_common.h"
-#include "process_utils.h"
+#include "proc_utils.h"
 
 
 #define THREAD_TIMEOUT 100  // ms
