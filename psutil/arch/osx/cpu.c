@@ -128,12 +128,12 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     CFTypeRef eCoreRef = NULL;
     io_iterator_t iter = 0;
     io_registry_entry_t entry = 0;
-    io_name_t name;    
+    io_name_t name;
 
     matching = IOServiceMatching("AppleARMIODevice");
     if (matching == 0) {
         return PyErr_Format(
-            PyExc_RuntimeError, 
+            PyExc_RuntimeError,
             "IOServiceMatching call failed, 'AppleARMIODevice' not found"
         );
     }
@@ -160,7 +160,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     if (entry == 0) {
         PyErr_Format(
-            PyExc_RuntimeError, 
+            PyExc_RuntimeError,
             "'pmgr' entry was not found in AppleARMIODevice service"
         );
         goto error;
@@ -186,14 +186,14 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     size_t eCoreLength = CFDataGetLength(eCoreRef);
     if (pCoreLength < 8) {
         PyErr_Format(
-            PyExc_RuntimeError, 
+            PyExc_RuntimeError,
             "expected 'voltage-states5-sram' buffer to have at least size 8"
         );
         goto error;
     }
     if (eCoreLength < 4) {
         PyErr_Format(
-            PyExc_RuntimeError, 
+            PyExc_RuntimeError,
             "expected 'voltage-states1-sram' buffer to have at least size 4"
         );
         goto error;
