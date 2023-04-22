@@ -1113,54 +1113,121 @@ Process class
     ...
     >>>
 
-    Here's a list of methods which can take advantage of the speedup depending
-    on what platform you're on.
-    In the table below horizontal empty rows indicate what process methods can
-    be efficiently grouped together internally.
-    The last column (speedup) shows an approximation of the speedup you can get
+    .. versionadded:: 4.5.0
+
+    Method grouping & speedup potential
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Here's a list of method groups for each platform which can benefit
+    from speedups.
+    Methods in each group can be efficiently grouped together internally.
+    Calling any method in a group will cache the values for all other
+    methods in the same group.
+    "Speedup" is an approximation of the speedup you can get
     if you call all the methods together (best case scenario).
 
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | Linux                        | Windows                       | macOS                        | BSD                          | SunOS                    | AIX                      |
-    +==============================+===============================+==============================+==============================+==========================+==========================+
-    | :meth:`cpu_num`              | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`cpu_num`              | :meth:`name`             | :meth:`name`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`~Process.cpu_percent` | :meth:`cpu_times`             | :meth:`cpu_times`            | :meth:`~Process.cpu_percent` | :meth:`cmdline`          | :meth:`cmdline`          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`cpu_times`            | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`cpu_times`            | :meth:`create_time`      | :meth:`create_time`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`create_time`          | :meth:`memory_info`           | :meth:`memory_percent`       | :meth:`create_time`          |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`memory_maps`           | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      | :meth:`memory_info`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`num_ctx_switches`      | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   | :meth:`memory_percent`   |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`status`               | :meth:`num_handles`           |                              | :meth:`name`                 | :meth:`num_threads`      | :meth:`num_threads`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`terminal`             | :meth:`num_threads`           | :meth:`create_time`          | :meth:`memory_info`          | :meth:`ppid`             | :meth:`ppid`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              | :meth:`username`              | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`gids`                 |                               | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     | :meth:`exe`                   | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_threads`          | :meth:`name`                  | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`username`             |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`username`         | :meth:`username`         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              |                               | :meth:`username`             | :meth:`username`             |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_full_info`     |                               |                              |                              |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | *speedup: +2.6x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         | *speedup: +1.3x*         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    Linux
+    """""
 
-    .. versionadded:: 5.0.0
+    #. :meth:`cpu_num`,
+       :meth:`~Process.cpu_percent`,
+       :meth:`cpu_times`,
+       :meth:`create_time`,
+       :meth:`name`,
+       :meth:`ppid`,
+       :meth:`status`,
+       :meth:`terminal`
+
+    #. :meth:`gids`,
+       :meth:`num_ctx_switches`,
+       :meth:`num_threads`,
+       :meth:`uids`,
+       :meth:`username`
+
+    #. :meth:`memory_full_info`,
+       :meth:`memory_maps`
+
+    *Speedup: +2.6x*
+
+    Windows
+    """""""
+
+    #. :meth:`~Process.cpu_percent`,
+       :meth:`cpu_times`,
+       :meth:`io_counters()`,
+       :meth:`memory_info`,
+       :meth:`memory_maps`,
+       :meth:`num_ctx_switches`,
+       :meth:`num_handles`,
+       :meth:`num_threads`,
+       :meth:`username`
+
+    #. :meth:`exe`,
+       :meth:`name`
+
+    *Speedup: +1.8x / +6.5x*
+
+    macOS
+    """""
+
+    #. :meth:`cpu_num`,
+       :meth:`cpu_times`,
+       :meth:`memory_info`,
+       :meth:`memory_percent`,
+       :meth:`num_ctx_switches`,
+       :meth:`num_threads`
+
+    #. :meth:`create_time`,
+       :meth:`gids`,
+       :meth:`name`,
+       :meth:`ppid`,
+       :meth:`status`,
+       :meth:`terminal`,
+       :meth:`uids`,
+       :meth:`username`
+
+    *Speedup: +1.9x*
+
+    BSD
+    """
+
+    #. :meth:`cpu_num` ,
+       :meth:`~Process.cpu_percent`,
+       :meth:`cpu_times`,
+       :meth:`create_time`,
+       :meth:`gids`,
+       :meth:`io_counters()`,
+       :meth:`memory_info`,
+       :meth:`memory_percent`,
+       :meth:`name`,
+       :meth:`num_ctx_switches`,
+       :meth:`ppid`,
+       :meth:`status`,
+       :meth:`terminal`,
+       :meth:`uids`,
+       :meth:`username`
+
+    *Speedup: +2.0x*
+
+    SunOS & AIX
+    """""""""""
+
+    #. :meth:`name`,
+       :meth:`cmdline`,
+       :meth:`create_time`
+
+    #. :meth:`memory_info`,
+       :meth:`memory_percent`,
+       :meth:`num_threads`,
+       :meth:`ppid`,
+       :meth:`status`,
+       :meth:`terminal`
+
+    #. :meth:`gids`,
+       :meth:`uids`,
+       :meth:`username`
+
+    *Speedup: +1.3x*
 
   .. attribute:: pid
 
