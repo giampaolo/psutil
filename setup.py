@@ -61,7 +61,9 @@ from _compat import which  # NOQA
 
 PYPY = '__pypy__' in sys.builtin_module_names
 PY36_PLUS = sys.version_info[:2] >= (3, 6)
+PY37_PLUS = sys.version_info[:2] >= (3, 7)
 CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
+CP37_PLUS = PY37_PLUS and sys.implementation.name == "cpython"
 
 macros = []
 if POSIX:
@@ -112,9 +114,14 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 # Py_LIMITED_API lets us create a single wheel which works with multiple
 # python versions, including unreleased ones.
-if bdist_wheel and CP36_PLUS and (MACOS or LINUX or WINDOWS):
+if bdist_wheel and CP36_PLUS and (MACOS or LINUX):
     py_limited_api = {"py_limited_api": True}
     macros.append(('Py_LIMITED_API', '0x03060000'))
+elif bdist_wheel and CP37_PLUS and WINDOWS:
+    # PyErr_SetFromWindowsErr / PyErr_SetFromWindowsErrWithFilename are
+    # part of the stable API/ABI starting with CPython 3.7
+    py_limited_api = {"py_limited_api": True}
+    macros.append(('Py_LIMITED_API', '0x03070000'))
 else:
     py_limited_api = {}
 
