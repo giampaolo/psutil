@@ -61,6 +61,8 @@ XXXX-XX-XX
   threads that are already terminated.
 - 2237_, [OpenBSD], [NetBSD]: `Process.cwd()`_ may raise ``FileNotFoundError``
   if cwd no longer exists. Return an empty string instead.
+- 2222_, [macOS]: `cpu_freq()` now returns fixed values for `min` and `max`
+  frequencies in all Apple Silicon chips.
 
 5.9.4
 =====
