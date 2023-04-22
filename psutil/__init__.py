@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions 2.7 and 3.5+.
+Works with Python versions 2.7 and 3.6+.
 """
 
 from __future__ import division

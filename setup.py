@@ -445,7 +445,7 @@ def main():
     if setuptools is not None:
         kwargs.update(
             python_requires=(
-                ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"),
+                ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"),
             extras_require=extras_require,
             zip_safe=False,
         )
