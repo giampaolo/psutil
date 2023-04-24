@@ -135,3 +135,4 @@ jobs:
       - run: |
           python scripts/internal/print_hashes.py wheelhouse/
           pipx run twine check --strict wheelhouse/*
+          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
