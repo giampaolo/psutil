@@ -35,22 +35,23 @@ PY2_DEPS = \
 	futures \
 	ipaddress \
 	mock
-PY_DEPS = `$(PYTHON) -c \
-	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')"`
-NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
+PY_DEPS = $(shell $(PYTHON) -c \
+	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')")
+NUM_WORKERS = $(shell $(PYTHON) -c \
+	"import os; print(os.cpu_count() or 1)")
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
-BUILD_OPTS = `$(PYTHON) -c \
+BUILD_OPTS = $(shell $(PYTHON) -c \
 	"import sys, os; \
 	py36 = sys.version_info[:2] >= (3, 6); \
 	cpus = os.cpu_count() or 1 if py36 else 1; \
-	print('--parallel %s' % cpus if cpus > 1 else '')"`
+	print('--parallel %s' % cpus if cpus > 1 else '')")
 # In not in a virtualenv, add --user options for install commands.
-INSTALL_OPTS = `$(PYTHON) -c \
-	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-TEST_PREFIX = PSUTIL_SCRIPTS_DIR=`pwd`/scripts PYTHONWARNINGS=always PSUTIL_DEBUG=1
+INSTALL_OPTS = $(shell $(PYTHON) -c \
+	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')")
+TEST_PREFIX = PSUTIL_SCRIPTS_DIR=$(shell pwd)/scripts PYTHONWARNINGS=always PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
-# .DEFAULT_GOAL := help
+.DEFAULT_GOAL := help
 
 # ===================================================================
 # Install
@@ -169,7 +170,7 @@ test-posix:  ## POSIX specific tests.
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} build
-	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_$(shell $(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])').py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
@@ -253,7 +254,7 @@ print-dist:  ## Print downloaded wheels / tar.gs
 # ===================================================================
 
 git-tag-release:  ## Git-tag a new release.
-	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git tag -a release-$(shell python3 -c "import setup; print(setup.get_version())") -m $(shell git rev-list HEAD --count):$(shell git rev-parse --short HEAD)
 	git push --follow-tags
 
 sdist:  ## Create tar.gz source distribution.
