@@ -36,7 +36,11 @@ PY2_DEPS = \
 	ipaddress \
 	mock
 PY_DEPS = `$(PYTHON) -c \
-	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')"`
+	"import sys; \
+	py3 = sys.version_info[0] == 3; \
+	py38 = sys.version_info[:2] >= (3, 8); \
+	py3_extra = ' abi3audit' if py38 else ''; \
+	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
 NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
@@ -234,8 +238,12 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
-# Wheels
+# Distribution
 # ===================================================================
+
+sdist:  ## Create tar.gz source distribution.
+	${MAKE} generate-manifest
+	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
 
 download-wheels-github:  ## Download latest wheels hosted on github.
 	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
@@ -245,43 +253,26 @@ download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py
 	${MAKE} print-dist
 
-print-dist:  ## Print downloaded wheels / tar.gs
-	$(PYTHON) scripts/internal/print_dist.py
-
-# ===================================================================
-# Distribution
-# ===================================================================
-
-git-tag-release:  ## Git-tag a new release.
-	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
-	git push --follow-tags
-
-sdist:  ## Create tar.gz source distribution.
-	${MAKE} generate-manifest
-	$(PYTHON) setup.py sdist
-	$(PYTHON) -m twine check --strict dist/*.tar.gz
-
-# --- others
-
-check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
-	rm -rf dist
-	${MAKE} clean
+check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
-	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
 	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
 	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
+	$(PYTHON) -m twine check --strict dist/*.tar.gz
+
+check-wheels:  ## Check sanity of wheels.
+	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
+	$(PYTHON) -m twine check --strict dist/*.whl
 
 pre-release:  ## Check if we're ready to produce a new release.
+	${MAKE} clean
+	${MAKE} sdist
 	${MAKE} check-sdist
 	${MAKE} install
-	${MAKE} generate-manifest
-	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	${MAKE} sdist
 	${MAKE} download-wheels-github
 	${MAKE} download-wheels-appveyor
+	${MAKE} check-wheels
 	${MAKE} print-hashes
 	${MAKE} print-dist
-	$(PYTHON) -m twine check --strict dist/*
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -290,16 +281,22 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
 
-release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	$(PYTHON) -m twine check --strict dist/*
-	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
+release:  ## Upload a new release.
+	${MAKE} check-sdist
+	${MAKE} check-wheels
+	$(PYTHON) -m twine upload dist/*.tar.gz
+	$(PYTHON) -m twine upload dist/*.whl
 	${MAKE} git-tag-release
-
-check-manifest:  ## Inspect MANIFEST.in file.
-	$(PYTHON) -m check_manifest -v $(ARGS)
 
 generate-manifest:  ## Generates MANIFEST.in file.
 	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+
+print-dist:  ## Print downloaded wheels / tar.gs
+	$(PYTHON) scripts/internal/print_dist.py
+
+git-tag-release:  ## Git-tag a new release.
+	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git push --follow-tags
 
 # ===================================================================
 # Printers
@@ -342,6 +339,9 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 
 check-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
+
+check-manifest:  ## Inspect MANIFEST.in file.
+	$(PYTHON) -m check_manifest -v $(ARGS)
 
 help: ## Display callable targets.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
