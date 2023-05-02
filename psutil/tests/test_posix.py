@@ -378,8 +378,9 @@ class TestSystemAPIs(PsutilTestCase):
                         started = [x.capitalize() for x in started]
 
         if not tstamp:
-            raise ValueError(
+            raise unittest.SkipTest(
                 "cannot interpret tstamp in who output\n%s" % (out))
+
         with self.subTest(psutil=psutil.users(), who=out):
             for idx, u in enumerate(psutil.users()):
                 psutil_value = datetime.datetime.fromtimestamp(
