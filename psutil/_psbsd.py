@@ -24,6 +24,7 @@ from ._common import NoSuchProcess
 from ._common import ZombieProcess
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
+from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import usage_percent
@@ -662,10 +663,10 @@ class Process(object):
         if OPENBSD and self.pid == 0:
             return []  # ...else it crashes
         elif NETBSD:
-            # XXX - most of the times the underlying sysctl() call on Net
-            # and Open BSD returns a truncated string.
-            # Also /proc/pid/cmdline behaves the same so it looks
-            # like this is a kernel bug.
+            # XXX - most of the times the underlying sysctl() call on
+            # NetBSD and OpenBSD returns a truncated string. Also
+            # /proc/pid/cmdline behaves the same so it looks like this
+            # is a kernel bug.
             try:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
@@ -677,6 +678,7 @@ class Process(object):
                     else:
                         # XXX: this happens with unicode tests. It means the C
                         # routine is unable to decode invalid unicode chars.
+                        debug("ignoring %r and returning an empty list" % err)
                         return []
                 else:
                     raise
