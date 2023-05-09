@@ -65,7 +65,7 @@ class WindowsTestCase(PsutilTestCase):
 
 
 def powershell(cmd):
-    """Currently not used, but avalable just in case. Usage:
+    """Currently not used, but available just in case. Usage:
 
     >>> powershell(
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
@@ -79,7 +79,7 @@ def powershell(cmd):
 
 
 def wmic(path, what, converter=int):
-    """Currently not used, but avalable just in case. Usage:
+    """Currently not used, but available just in case. Usage:
 
     >>> wmic("Win32_OperatingSystem", "FreePhysicalMemory")
     2134124534
