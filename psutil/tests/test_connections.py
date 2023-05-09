@@ -200,7 +200,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
 
 @serialrun
 class TestConnectedSocket(ConnectionTestCase):
-    """Test socket pairs which are are actually connected to
+    """Test socket pairs which are actually connected to
     each other.
     """
 

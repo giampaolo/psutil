@@ -247,7 +247,7 @@ def swap_memory():
     total_system = mem[2]
 
     # system memory (commit total/limit) is the sum of physical and swap
-    # thus physical memory values need to be substracted to get swap values
+    # thus physical memory values need to be subtracted to get swap values
     total = total_system - total_phys
     # commit total is incremented immediately (decrementing free_system)
     # while the corresponding free physical value is not decremented until

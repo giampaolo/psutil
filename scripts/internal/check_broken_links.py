@@ -25,7 +25,7 @@ Method:
   Handles redirects, http, https, ftp as well.
 
 REFERENCES:
-Using [1] with some modificatons for including ftp
+Using [1] with some modifications for including ftp
 [1] http://stackoverflow.com/a/6883094/5163807
 [2] http://stackoverflow.com/a/31952097/5163807
 [3] http://daringfireball.net/2010/07/improved_regex_for_matching_urls

@@ -481,7 +481,7 @@ XXXX-XX-XX
   doesn't exist.  (patch by Cedric Lamoriniere)
 - 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
   ``SystemError``.  (patch by Daniel Beer)
-- 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
+- 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Raspberry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimics ``ps aux`` output.
 - 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
   properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)`` being
