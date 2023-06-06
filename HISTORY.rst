@@ -7,6 +7,7 @@ XXXX-XX-XX
 
 - 2241_, [NetBSD]: can't compile On NetBSD 10.99.3/amd64.  (patch by Thomas
   Klausner)
+- 2266_, Check PID range before any cext call.  (patch by Xuehai Pan)
 
 5.9.5
 =====
