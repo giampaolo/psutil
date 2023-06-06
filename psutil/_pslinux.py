@@ -1443,8 +1443,9 @@ def sensors_fans():
         except (IOError, OSError) as err:
             debug(err)
             continue
+        fallback_label = os.path.split(base)[1]
         unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
-        label = cat(base + '_label', fallback='').strip()
+        label = cat(base + '_label', fallback=f'{fallback_label}').strip()
         ret[unit_name].append(_common.sfan(label, current))
 
     return dict(ret)
