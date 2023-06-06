@@ -358,6 +358,11 @@ class Process(object):
         self._exitcode = _SENTINEL
         # cache creation time for later use in is_running() method
         try:
+            try:
+                _psplatform.cext._check_pid_range(pid)
+            except OverflowError:
+                raise NoSuchProcess(pid, msg="process PID out of range")
+
             self.create_time()
         except AccessDenied:
             # We should never get here as AFAIK we're able to get
