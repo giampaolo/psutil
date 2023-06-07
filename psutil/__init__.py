@@ -359,7 +359,7 @@ class Process(object):
         # cache creation time for later use in is_running() method
         try:
             try:
-                _psplatform.cext._check_pid_range(pid)
+                _psplatform.cext.check_pid_range(pid)
             except OverflowError:
                 raise NoSuchProcess(pid, msg="process PID out of range")
 

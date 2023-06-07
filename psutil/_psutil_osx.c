@@ -54,7 +54,7 @@ static PyMethodDef mod_methods[] = {
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- others
-    {"_check_pid_range", psutil_check_pid_range, METH_VARARGS},
+    {"check_pid_range", psutil_check_pid_range, METH_VARARGS},
     {"set_debug", psutil_set_debug, METH_VARARGS},
 
     {NULL, NULL, 0, NULL}
