@@ -378,8 +378,8 @@ class Process(object):
         # it might refer to a process whose PID has been reused).
         # This will be used later in __eq__() and is_running().
         self._ident = (self.pid, self._create_time)
-        # Is set only in `process_iter()`:
-        self.info = None
+        # Is modified only in `process_iter()`:
+        self.info = {}
 
     def __str__(self):
         info = collections.OrderedDict()
