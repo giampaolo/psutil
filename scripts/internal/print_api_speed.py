@@ -181,7 +181,7 @@ def main():
     print_header("PROCESS APIS")
     ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
               'as_dict', 'parent', 'parents', 'memory_info_ex', 'oneshot',
-              'pid', 'rlimit', 'children']
+              'pid', 'rlimit', 'children', 'info']
     if psutil.MACOS:
         ignore.append('memory_maps')  # XXX
     p = psutil.Process()

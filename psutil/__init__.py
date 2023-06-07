@@ -533,8 +533,8 @@ class Process(object):
         with self.oneshot():
             for name in ls:
                 try:
-                    if name == 'pid':
-                        ret = self.pid
+                    if name in ('pid', 'info'):
+                        ret = getattr(self, name)
                     else:
                         meth = getattr(self, name)
                         ret = meth()

@@ -1229,6 +1229,7 @@ class process_namespace:
     ignored = [
         ('as_dict', (), {}),
         ('children', (), {'recursive': True}),
+        ('info', (), {}),
         ('is_running', (), {}),
         ('memory_info_ex', (), {}),
         ('oneshot', (), {}),
