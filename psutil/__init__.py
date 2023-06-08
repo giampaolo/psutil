@@ -340,6 +340,14 @@ class Process(object):
             if pid < 0:
                 raise ValueError('pid must be a positive integer (got %s)'
                                  % pid)
+            try:
+                _psplatform.cext.check_pid_range(pid)
+            except OverflowError:
+                raise NoSuchProcess(
+                    pid,
+                    msg='process PID out of range (got %s)' % pid,
+                )
+
         self._pid = pid
         self._name = None
         self._exe = None
@@ -358,11 +366,6 @@ class Process(object):
         self._exitcode = _SENTINEL
         # cache creation time for later use in is_running() method
         try:
-            try:
-                _psplatform.cext.check_pid_range(pid)
-            except OverflowError:
-                raise NoSuchProcess(pid, msg="process PID out of range")
-
             self.create_time()
         except AccessDenied:
             # We should never get here as AFAIK we're able to get
