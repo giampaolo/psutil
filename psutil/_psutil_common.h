@@ -100,7 +100,6 @@ PyObject* PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // ====================================================================
 
 PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);
-
 PyObject* psutil_set_debug(PyObject *self, PyObject *args);
 int psutil_setup(void);
 
