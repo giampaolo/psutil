@@ -340,6 +340,14 @@ class Process(object):
             if pid < 0:
                 raise ValueError('pid must be a positive integer (got %s)'
                                  % pid)
+            try:
+                _psplatform.cext.check_pid_range(pid)
+            except OverflowError:
+                raise NoSuchProcess(
+                    pid,
+                    msg='process PID out of range (got %s)' % pid,
+                )
+
         self._pid = pid
         self._name = None
         self._exe = None

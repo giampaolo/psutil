@@ -60,6 +60,12 @@ from psutil.tests import sh
 
 class TestSpecialMethods(PsutilTestCase):
 
+    def test_check_pid_range(self):
+        with self.assertRaises(OverflowError):
+            psutil._psplatform.cext.check_pid_range(2 ** 128)
+        with self.assertRaises(psutil.NoSuchProcess):
+            psutil.Process(2 ** 128)
+
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_testproc().pid)
         r = func(p)
