@@ -11,6 +11,7 @@ XXXX-XX-XX
   instead of OverflowError.  (patch by Xuehai Pan)
 - 2268_: ``bytes2human()`` utility function was unable to properly represent
   negative values.
+- 2252_: [Windows]: `psutil.disk_usage`_ fails on Python 3.12+.  (patch by Matthieu Darbois)
 
 5.9.5
 =====
