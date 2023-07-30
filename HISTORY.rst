@@ -7,6 +7,10 @@ XXXX-XX-XX
 
 - 2241_, [NetBSD]: can't compile On NetBSD 10.99.3/amd64.  (patch by Thomas
   Klausner)
+- 2266_: if `Process`_ class is passed a very high PID, raise `NoSuchProcess`_
+  instead of OverflowError.  (patch by Xuehai Pan)
+- 2268_: ``bytes2human()`` utility function was unable to properly represent
+  negative values.
 
 5.9.5
 =====

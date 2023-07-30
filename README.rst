@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage|
-|  |version| |py-versions| |packages| |license| |twitter| |tidelift|
-|  |github-actions-wheels|  |github-actions-bsd| |appveyor| |doc|
+|  |version| |py-versions| |packages| |license|
+|  |github-actions-wheels|  |github-actions-bsd| |appveyor| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -488,6 +488,7 @@ Here's some I find particularly interesting:
 - https://github.com/google/grr
 - https://github.com/facebook/osquery/
 - https://github.com/nicolargo/glances
+- https://github.com/aristocratos/bpytop
 - https://github.com/Jahaja/psdash
 - https://github.com/ajenti/ajenti
 - https://github.com/home-assistant/home-assistant/
