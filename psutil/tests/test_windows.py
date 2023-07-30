@@ -374,7 +374,7 @@ class TestProcess(WindowsTestCase):
         # that nothing strange happens
         str(p)
         p.username()
-        self.assertTrue(p.create_time() >= 0.0)
+        self.assertGreaterEqual(p.create_time(), 0.0)
         try:
             rss, vms = p.memory_info()[:2]
         except psutil.AccessDenied:
@@ -382,7 +382,7 @@ class TestProcess(WindowsTestCase):
             if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
                 raise
         else:
-            self.assertTrue(rss > 0)
+            self.assertGreater(rss, 0)
 
     def test_send_signal(self):
         p = psutil.Process(self.pid)

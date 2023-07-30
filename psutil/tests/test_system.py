@@ -263,7 +263,7 @@ class TestMiscAPIs(PsutilTestCase):
 
         # assert all other constants are set to False
         for name in names:
-            self.assertIs(getattr(psutil, name), False, msg=name)
+            self.assertFalse(getattr(psutil, name), msg=name)
 
 
 class TestMemoryAPIs(PsutilTestCase):

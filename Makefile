@@ -28,6 +28,7 @@ PY3_DEPS = \
 	requests \
 	setuptools \
 	sphinx_rtd_theme \
+	teyit \
 	twine \
 	virtualenv \
 	wheel
@@ -225,9 +226,13 @@ fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
 fix-imports:  ## Fix imports with isort.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
 
+fix-unittests:  ## Fix unittest idioms.
+	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
+
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-flake8
 	${MAKE} fix-imports
+	${MAKE} fix-unittests
 
 # ===================================================================
 # GIT
