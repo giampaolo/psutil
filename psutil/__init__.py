@@ -1629,16 +1629,18 @@ def cpu_times(percpu=False):
 
 
 try:
-    _last_cpu_times = cpu_times()
+    _last_cpu_times = {threading.current_thread().ident: cpu_times()}
 except Exception:
     # Don't want to crash at import time.
-    _last_cpu_times = None
+    _last_cpu_times = {}
 
 try:
-    _last_per_cpu_times = cpu_times(percpu=True)
+    _last_per_cpu_times = {
+        threading.current_thread().ident: cpu_times(percpu=True)
+    }
 except Exception:
     # Don't want to crash at import time.
-    _last_per_cpu_times = None
+    _last_per_cpu_times = {}
 
 
 def _cpu_tot_time(times):
@@ -1732,8 +1734,7 @@ def cpu_percent(interval=None, percpu=False):
       2.9
       >>>
     """
-    global _last_cpu_times
-    global _last_per_cpu_times
+    tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
         raise ValueError("interval is not positive (got %r)" % interval)
@@ -1756,14 +1757,9 @@ def cpu_percent(interval=None, percpu=False):
             t1 = cpu_times()
             time.sleep(interval)
         else:
-            t1 = _last_cpu_times
-            if t1 is None:
-                # Something bad happened at import time. We'll
-                # get a meaningful result on the next call. See:
-                # https://github.com/giampaolo/psutil/pull/715
-                t1 = cpu_times()
-        _last_cpu_times = cpu_times()
-        return calculate(t1, _last_cpu_times)
+            t1 = _last_cpu_times.get(tid) or cpu_times()
+        _last_cpu_times[tid] = cpu_times()
+        return calculate(t1, _last_cpu_times[tid])
     # per-cpu usage
     else:
         ret = []
@@ -1771,23 +1767,17 @@ def cpu_percent(interval=None, percpu=False):
             tot1 = cpu_times(percpu=True)
             time.sleep(interval)
         else:
-            tot1 = _last_per_cpu_times
-            if tot1 is None:
-                # Something bad happened at import time. We'll
-                # get a meaningful result on the next call. See:
-                # https://github.com/giampaolo/psutil/pull/715
-                tot1 = cpu_times(percpu=True)
-        _last_per_cpu_times = cpu_times(percpu=True)
-        for t1, t2 in zip(tot1, _last_per_cpu_times):
+            tot1 = _last_per_cpu_times.get(tid) or cpu_times(percpu=True)
+        _last_per_cpu_times[tid] = cpu_times(percpu=True)
+        for t1, t2 in zip(tot1, _last_per_cpu_times[tid]):
             ret.append(calculate(t1, t2))
         return ret
 
 
-# Use separate global vars for cpu_times_percent() so that it's
-# independent from cpu_percent() and they can both be used within
-# the same program.
-_last_cpu_times_2 = _last_cpu_times
-_last_per_cpu_times_2 = _last_per_cpu_times
+# Use a separate dict for cpu_times_percent(), so it's independent from
+# cpu_percent() and they can both be used within the same program.
+_last_cpu_times_2 = _last_cpu_times.copy()
+_last_per_cpu_times_2 = _last_per_cpu_times.copy()
 
 
 def cpu_times_percent(interval=None, percpu=False):
@@ -1803,8 +1793,7 @@ def cpu_times_percent(interval=None, percpu=False):
     *interval* and *percpu* arguments have the same meaning as in
     cpu_percent().
     """
-    global _last_cpu_times_2
-    global _last_per_cpu_times_2
+    tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
         raise ValueError("interval is not positive (got %r)" % interval)
@@ -1832,14 +1821,9 @@ def cpu_times_percent(interval=None, percpu=False):
             t1 = cpu_times()
             time.sleep(interval)
         else:
-            t1 = _last_cpu_times_2
-            if t1 is None:
-                # Something bad happened at import time. We'll
-                # get a meaningful result on the next call. See:
-                # https://github.com/giampaolo/psutil/pull/715
-                t1 = cpu_times()
-        _last_cpu_times_2 = cpu_times()
-        return calculate(t1, _last_cpu_times_2)
+            t1 = _last_cpu_times_2.get(tid) or cpu_times()
+        _last_cpu_times_2[tid] = cpu_times()
+        return calculate(t1, _last_cpu_times_2[tid])
     # per-cpu usage
     else:
         ret = []
@@ -1847,14 +1831,9 @@ def cpu_times_percent(interval=None, percpu=False):
             tot1 = cpu_times(percpu=True)
             time.sleep(interval)
         else:
-            tot1 = _last_per_cpu_times_2
-            if tot1 is None:
-                # Something bad happened at import time. We'll
-                # get a meaningful result on the next call. See:
-                # https://github.com/giampaolo/psutil/pull/715
-                tot1 = cpu_times(percpu=True)
-        _last_per_cpu_times_2 = cpu_times(percpu=True)
-        for t1, t2 in zip(tot1, _last_per_cpu_times_2):
+            tot1 = _last_per_cpu_times_2.get(tid) or cpu_times(percpu=True)
+        _last_per_cpu_times_2[tid] = cpu_times(percpu=True)
+        for t1, t2 in zip(tot1, _last_per_cpu_times_2[tid]):
             ret.append(calculate(t1, t2))
         return ret
 
