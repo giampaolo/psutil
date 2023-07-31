@@ -2121,7 +2121,7 @@ def net_io_counters(pernic=False, nowrap=True):
     and wrap (restart from 0) and add "old value" to "new value" so that
     the returned numbers will always be increasing or remain the same,
     but never decrease.
-    "disk_io_counters.cache_clear()" can be used to invalidate the
+    "net_io_counters.cache_clear()" can be used to invalidate the
     cache.
     """
     rawdict = _psplatform.net_io_counters()
