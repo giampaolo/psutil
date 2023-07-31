@@ -67,7 +67,7 @@ except ImportError:
         warnings.simplefilter("ignore")
         import mock  # NOQA - requires "pip install mock"
 
-if sys.version_info[0] >= 3:
+if PY3:
     import enum
 else:
     enum = None

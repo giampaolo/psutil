@@ -2189,7 +2189,7 @@ def net_if_addrs():
     Note: you can have more than one address of the same family
     associated with each interface.
     """
-    has_enums = sys.version_info[0] >= 3
+    has_enums = _PY3
     if has_enums:
         import socket
     rawlist = _psplatform.net_if_addrs()

@@ -28,7 +28,7 @@ if MACOS:
     from . import _psutil_osx
 
 
-if sys.version_info[0] >= 3:
+if PY3:
     import enum
 else:
     enum = None

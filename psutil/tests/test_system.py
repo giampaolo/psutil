@@ -32,6 +32,7 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
+from psutil._compat import PY3
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
@@ -751,7 +752,7 @@ class TestNetAPIs(PsutilTestCase):
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
-                if sys.version_info[0] >= 3 and not PYPY:
+                if PY3 and not PYPY:
                     self.assertIsInstance(addr.family, enum.IntEnum)
                 if nic_stats[nic].isup:
                     # Do not test binding to addresses of interfaces
