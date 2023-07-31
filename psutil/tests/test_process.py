@@ -1059,12 +1059,12 @@ class TestProcess(PsutilTestCase):
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
-        for _ in range(500000):
+        for _ in range(2):
+            time.sleep(0.05)  # this shall ensure a context switch happens
             after = sum(p.num_ctx_switches())
             if after > before:
                 return
-        raise self.fail(
-            "num ctx switches still the same after 50.000 iterations")
+        raise self.fail("num ctx switches still the same after 2 iterations")
 
     def test_ppid(self):
         p = psutil.Process()

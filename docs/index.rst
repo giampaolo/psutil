@@ -1766,7 +1766,7 @@ Process class
     fields are variable depending on the platform.
     This method is useful to obtain a detailed representation of process
     memory usage as explained
-    `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__
+    `here <https://web.archive.org/web/20180907232758/http://bmaurer.blogspot.com/2006/03/memory-usage-with-smaps.html>`__
     (the most important value is "private" memory).
     If *grouped* is ``True`` the mapped regions with the same *path* are
     grouped together and the different memory fields are summed.  If *grouped*
