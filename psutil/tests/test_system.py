@@ -30,9 +30,9 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
-from psutil._compat import PY3
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL

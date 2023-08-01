@@ -31,11 +31,11 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
 from psutil._compat import unicode
-from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
@@ -359,6 +359,7 @@ def proc_info(pid):
         tcase.assertEqual(exc.pid, pid)
         tcase.assertEqual(exc.name, name)
         if isinstance(exc, psutil.ZombieProcess):
+            tcase.assertProcessZombie(proc)
             if exc.ppid is not None:
                 tcase.assertGreaterEqual(exc.ppid, 0)
                 tcase.assertEqual(exc.ppid, ppid)
@@ -401,14 +402,16 @@ class TestFetchAllProcesses(PsutilTestCase):
     Uses a process pool to get info about all processes.
     """
 
+    use_proc_pool = not CI_TESTING
+
     def setUp(self):
         # Using a pool in a CI env may result in deadlock, see:
         # https://github.com/giampaolo/psutil/issues/2104
-        if not CI_TESTING:
+        if self.use_proc_pool:
             self.pool = multiprocessing.Pool()
 
     def tearDown(self):
-        if not CI_TESTING:
+        if self.use_proc_pool:
             self.pool.terminate()
             self.pool.join()
 
@@ -417,7 +420,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         # same object as test_contracts.proc_info".
         from psutil.tests.test_contracts import proc_info
 
-        if not CI_TESTING:
+        if self.use_proc_pool:
             return self.pool.imap_unordered(proc_info, psutil.pids())
         else:
             ls = []
