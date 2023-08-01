@@ -56,7 +56,7 @@ except ImportError as err:
     else:
         raise
 
-if sys.version_info >= (3, 4):
+if PY3:
     import enum
 else:
     enum = None

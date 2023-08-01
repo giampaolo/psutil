@@ -47,7 +47,7 @@ line tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, \
 nice, ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It \
 currently supports Linux, Windows, macOS, Sun Solaris, FreeBSD, OpenBSD, \
 NetBSD and AIX, both 32-bit and 64-bit architectures.  Supported Python \
-versions are 2.7 and 3.4+. PyPy is also known to work.
+versions are 2.7 and 3.6+. PyPy is also known to work.
 
 What's new
 ==========

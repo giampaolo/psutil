@@ -15,7 +15,6 @@ import os
 import platform
 import signal
 import stat
-import sys
 import time
 import traceback
 import unittest
@@ -36,6 +35,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
 from psutil._compat import unicode
+from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
@@ -723,7 +723,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             priorities = [getattr(psutil, x) for x in dir(psutil)
                           if x.endswith('_PRIORITY_CLASS')]
             self.assertIn(ret, priorities)
-            if sys.version_info > (3, 4):
+            if PY3:
                 self.assertIsInstance(ret, enum.IntEnum)
             else:
                 self.assertIsInstance(ret, int)
