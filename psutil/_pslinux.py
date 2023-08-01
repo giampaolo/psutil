@@ -1684,6 +1684,12 @@ class Process(object):
         os.stat('%s/%s' % (self._procfs_path, self.pid))
 
     def _is_zombie(self):
+        # Note: most of the times Linux is able to return info about the
+        # process even if it's a zombie, and /proc/{pid} will exist.
+        # There are some exceptions though, like exe(), cmdline() and
+        # memory_maps(). In these cases /proc/{pid}/{file} exists but
+        # it's empty. Instead of returning a "null" value we'll raise an
+        # exception.
         try:
             data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
         except OSError:
