@@ -176,6 +176,10 @@ CPU
   utilization as a percentage for each CPU.
   First element of the list refers to first CPU, second element to second CPU
   and so on. The order of the list is consistent across calls.
+  Internally this function maintains a global map (a dict) where each key is
+  the ID of the calling thread (`threading.get_ident`_). This means it can be
+  called from different threads, at different intervals, and still return
+  meaningful and independent results.
 
     >>> import psutil
     >>> # blocking
@@ -194,6 +198,8 @@ CPU
     it will return a meaningless ``0.0`` value which you are supposed to
     ignore.
 
+  .. versionchanged:: 5.9.6 function is now thread safe.
+
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
   Same as :func:`cpu_percent()` but provides utilization percentages for each
@@ -211,6 +217,8 @@ CPU
 
   .. versionchanged::
     4.1.0 two new *interrupt* and *dpc* fields are returned on Windows.
+
+  .. versionchanged:: 5.9.6 function is now thread safe.
 
 .. function:: cpu_count(logical=True)
 
@@ -3052,6 +3060,7 @@ Timeline
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`threading.get_ident`: https://docs.python.org/3/library/threading.html#threading.get_ident
 .. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
 .. _Tidelift security contact: https://tidelift.com/security
 .. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
