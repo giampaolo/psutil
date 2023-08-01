@@ -957,6 +957,39 @@ class PsutilTestCase(TestCase):
         assert not psutil.pid_exists(proc.pid), proc.pid
         self.assertNotIn(proc.pid, psutil.pids())
 
+    def assertProcessZombie(self, proc):
+        # A zombie process should always be instantiable.
+        psutil.Process(proc.pid)
+        # Its status always be querable.
+        self.assertEqual(proc.status(), psutil.STATUS_ZOMBIE)
+        # It should be considered 'running'.
+        assert proc.is_running()
+        # as_dict() shouldn't crash.
+        proc.as_dict()
+        # It should show up in pids() and process_iter().
+        self.assertIn(proc.pid, psutil.pids())
+        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        # It cannot be signaled or terminated.
+        proc.suspend()
+        proc.resume()
+        proc.terminate()
+        proc.kill()
+        assert proc.is_running()
+
+        # Its parent should 'see' it (edit: not true on BSD and MACOS).
+        # descendants = [x.pid for x in psutil.Process().children(
+        #                recursive=True)]
+        # self.assertIn(proc.pid, descendants)
+
+        # __eq__ can't be relied upon because creation time may not be
+        # querable.
+        # self.assertEqual(proc, psutil.Process(proc.pid))
+
+        # XXX should we also assume ppid() to be usable? Note: this
+        # would be an important use case as the only way to get
+        # rid of a zombie is to kill its parent.
+        # self.assertEqual(proc.ppid(), os.getpid())
+
 
 @unittest.skipIf(PYPY, "unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):

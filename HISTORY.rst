@@ -24,8 +24,11 @@ XXXX-XX-XX
   (patch by student_2333)
 - 2268_: ``bytes2human()`` utility function was unable to properly represent
   negative values.
-- 2252_: [Windows]: `psutil.disk_usage`_ fails on Python 3.12+.  (patch by
+- 2252_, [Windows]: `psutil.disk_usage`_ fails on Python 3.12+.  (patch by
   Matthieu Darbois)
+- 2283_, [Linux]: `memory_full_info`_ may incorrectly raise `ZombieProcess`_
+ if it's determined via ``/proc/pid/smaps_rollup``. Instead we now fallback on
+ reading ``/proc/pid/smaps``.
 
 5.9.5
 =====
