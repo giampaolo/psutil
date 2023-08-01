@@ -1677,12 +1677,6 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
-    def _assert_alive(self):
-        """Raise NSP if the process disappeared on us."""
-        # For those C function who do not raise NSP, possibly returning
-        # incorrect or incomplete result.
-        os.stat('%s/%s' % (self._procfs_path, self.pid))
-
     def _is_zombie(self):
         # Note: most of the times Linux is able to return info about the
         # process even if it's a zombie, and /proc/{pid} will exist.
@@ -1702,6 +1696,13 @@ class Process(object):
     def _raise_if_zombie(self):
         if self._is_zombie():
             raise ZombieProcess(self.pid, self._name, self._ppid)
+
+    def _assert_alive(self):
+        """Raise NSP if the process disappeared on us."""
+        # For those C function who do not raise NSP, possibly returning
+        # incorrect or incomplete result.
+        self._raise_if_zombie()
+        os.stat('%s/%s' % (self._procfs_path, self.pid))
 
     @wrap_exceptions
     @memoize_when_activated
