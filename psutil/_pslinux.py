@@ -1654,8 +1654,10 @@ def wrap_exceptions(fun):
         except PermissionError:
             raise AccessDenied(self.pid, self._name)
         except ProcessLookupError:
+            self._raise_if_zombie()
             raise NoSuchProcess(self.pid, self._name)
         except FileNotFoundError:
+            self._raise_if_zombie()
             if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
                 raise NoSuchProcess(self.pid, self._name)
             # Note: zombies will keep existing under /proc until they're
@@ -1763,6 +1765,7 @@ class Process(object):
         # XXX - gets changed later and probably needs refactoring
         return name
 
+    @wrap_exceptions
     def exe(self):
         try:
             return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
@@ -1773,13 +1776,7 @@ class Process(object):
             # low pids (about 0-20)
             if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
                 return ""
-            else:
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
+            raise
 
     @wrap_exceptions
     def cmdline(self):
@@ -1911,22 +1908,16 @@ class Process(object):
             # than /proc/pid/smaps. It reports higher PSS than */smaps
             # (from 1k up to 200k higher; tested against all processes).
             uss = pss = swap = 0
-            try:
-                with open_binary("{}/{}/smaps_rollup".format(
-                        self._procfs_path, self.pid)) as f:
-                    for line in f:
-                        if line.startswith(b"Private_"):
-                            # Private_Clean, Private_Dirty, Private_Hugetlb
-                            uss += int(line.split()[1]) * 1024
-                        elif line.startswith(b"Pss:"):
-                            pss = int(line.split()[1]) * 1024
-                        elif line.startswith(b"Swap:"):
-                            swap = int(line.split()[1]) * 1024
-            except ProcessLookupError:  # happens on readline()
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
+            with open_binary("{}/{}/smaps_rollup".format(
+                    self._procfs_path, self.pid)) as f:
+                for line in f:
+                    if line.startswith(b"Private_"):
+                        # Private_Clean, Private_Dirty, Private_Hugetlb
+                        uss += int(line.split()[1]) * 1024
+                    elif line.startswith(b"Pss:"):
+                        pss = int(line.split()[1]) * 1024
+                    elif line.startswith(b"Swap:"):
+                        swap = int(line.split()[1]) * 1024
             return (uss, pss, swap)
 
         @wrap_exceptions
@@ -2043,14 +2034,7 @@ class Process(object):
 
     @wrap_exceptions
     def cwd(self):
-        try:
-            return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
-        except (FileNotFoundError, ProcessLookupError):
-            # https://github.com/giampaolo/psutil/issues/986
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
-            else:
-                raise ZombieProcess(self.pid, self._name, self._ppid)
+        return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
     @wrap_exceptions
     def num_ctx_switches(self,
@@ -2192,12 +2176,11 @@ class Process(object):
                             "got %s" % repr(limits))
                     prlimit(self.pid, resource_, limits)
             except OSError as err:
-                if err.errno == errno.ENOSYS and pid_exists(self.pid):
+                if err.errno == errno.ENOSYS:
                     # I saw this happening on Travis:
                     # https://travis-ci.org/giampaolo/psutil/jobs/51368273
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-                else:
-                    raise
+                    self._raise_if_zombie()
+                raise
 
     @wrap_exceptions
     def status(self):
