@@ -1909,11 +1909,15 @@ class Process(object):
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
-        @wrap_exceptions
         def _parse_smaps_rollup(self):
             # /proc/pid/smaps_rollup was added to Linux in 2017. Faster
             # than /proc/pid/smaps. It reports higher PSS than */smaps
             # (from 1k up to 200k higher; tested against all processes).
+            # IMPORTANT: /proc/pid/smaps_rollup is weird, because it
+            # raises ESRCH / ENOENT for many PIDs, even if they're alive
+            # (also as root). In that case we'll use /proc/pid/smaps as
+            # fallback, which is slower but has a +50% success rate
+            # compared to /proc/pid/smaps_rollup.
             uss = pss = swap = 0
             with open_binary("{}/{}/smaps_rollup".format(
                     self._procfs_path, self.pid)) as f:
@@ -1957,9 +1961,15 @@ class Process(object):
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
             return (uss, pss, swap)
 
+        @wrap_exceptions
         def memory_full_info(self):
             if HAS_PROC_SMAPS_ROLLUP:  # faster
-                uss, pss, swap = self._parse_smaps_rollup()
+                try:
+                    uss, pss, swap = self._parse_smaps_rollup()
+                except (ProcessLookupError, FileNotFoundError) as err:
+                    debug("ignore %r for pid %s and retry using "
+                          "/proc/pid/smaps" % (err, self.pid))
+                    uss, pss, swap = self._parse_smaps()
             else:
                 uss, pss, swap = self._parse_smaps()
             basic_mem = self.memory_info()

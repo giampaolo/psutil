@@ -359,6 +359,7 @@ def proc_info(pid):
         tcase.assertEqual(exc.pid, pid)
         tcase.assertEqual(exc.name, name)
         if isinstance(exc, psutil.ZombieProcess):
+            tcase.assertProcessZombie(proc)
             if exc.ppid is not None:
                 tcase.assertGreaterEqual(exc.ppid, 0)
                 tcase.assertEqual(exc.ppid, ppid)
@@ -400,6 +401,8 @@ class TestFetchAllProcesses(PsutilTestCase):
     some sanity checks against Process API's returned values.
     Uses a process pool to get info about all processes.
     """
+    use_proc_pool = not CI_TESTING
+
     use_proc_pool = not CI_TESTING
 
     def setUp(self):

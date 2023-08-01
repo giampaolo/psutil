@@ -1321,25 +1321,8 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
         parent, zombie = self.spawn_zombie()
-        # A zombie process should always be instantiable
-        zproc = psutil.Process(zombie.pid)
-        # ...and at least its status always be querable
-        self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
-        # ...and it should be considered 'running'
-        assert zproc.is_running()
-        # ...and as_dict() shouldn't crash
-        zproc.as_dict()
-        # ...its parent should 'see' it (edit: not true on BSD and MACOS
-        # descendants = [x.pid for x in psutil.Process().children(
-        #                recursive=True)]
-        # self.assertIn(zpid, descendants)
-        # XXX should we also assume ppid be usable?  Note: this
-        # would be an important use case as the only way to get
-        # rid of a zombie is to kill its parent.
-        # self.assertEqual(zpid.ppid(), os.getpid())
-        # ...and all other APIs should be able to deal with it
-
-        ns = process_namespace(zproc)
+        self.assertProcessZombie(zombie)
+        ns = process_namespace(zombie)
         for fun, name in ns.iter(ns.all):
             with self.subTest(name):
                 try:
@@ -1355,11 +1338,11 @@ class TestProcess(PsutilTestCase):
                 except (psutil.ZombieProcess, psutil.AccessDenied):
                     pass
 
-        assert psutil.pid_exists(zproc.pid)
-        self.assertIn(zproc.pid, psutil.pids())
-        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        assert psutil.pid_exists(zombie.pid)
+        self.assertIn(zombie.pid, psutil.pids())
+        self.assertIn(zombie.pid, [x.pid for x in psutil.process_iter()])
         psutil._pmap = {}
-        self.assertIn(zproc.pid, [x.pid for x in psutil.process_iter()])
+        self.assertIn(zombie.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
