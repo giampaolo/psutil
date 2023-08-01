@@ -2082,12 +2082,15 @@ class TestProcess(PsutilTestCase):
         # happen in case of zombie process:
         # https://travis-ci.org/giampaolo/psutil/jobs/51368273
         with mock.patch("psutil._pslinux.prlimit",
-                        side_effect=OSError(errno.ENOSYS, "")) as m:
-            p = psutil.Process()
-            p.name()
-            with self.assertRaises(psutil.ZombieProcess) as exc:
-                p.rlimit(psutil.RLIMIT_NOFILE)
-            assert m.called
+                        side_effect=OSError(errno.ENOSYS, "")) as m1:
+            with mock.patch("psutil._pslinux.Process._is_zombie",
+                            return_value=True) as m2:
+                p = psutil.Process()
+                p.name()
+                with self.assertRaises(psutil.ZombieProcess) as exc:
+                    p.rlimit(psutil.RLIMIT_NOFILE)
+        assert m1.called
+        assert m2.called
         self.assertEqual(exc.exception.pid, p.pid)
         self.assertEqual(exc.exception.name, p.name())
 
