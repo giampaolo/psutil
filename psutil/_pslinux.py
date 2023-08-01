@@ -1681,6 +1681,20 @@ class Process(object):
         # incorrect or incomplete result.
         os.stat('%s/%s' % (self._procfs_path, self.pid))
 
+    def _is_zombie(self):
+        try:
+            data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
+        except OSError:
+            return False
+        else:
+            rpar = data.rfind(b')')
+            status = data[rpar + 2:rpar + 3]
+            return status == b"Z"
+
+    def _raise_if_zombie(self):
+        if self._is_zombie():
+            raise ZombieProcess(self.pid, self._name, self._ppid)
+
     @wrap_exceptions
     @memoize_when_activated
     def _parse_stat_file(self):
@@ -1753,6 +1767,7 @@ class Process(object):
         try:
             return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
         except (FileNotFoundError, ProcessLookupError):
+            self._raise_if_zombie()
             # no such file error; might be raised also if the
             # path actually exists for system processes with
             # low pids (about 0-20)
@@ -1772,6 +1787,7 @@ class Process(object):
             data = f.read()
         if not data:
             # may happen in case of zombie process
+            self._raise_if_zombie()
             return []
         # 'man proc' states that args are separated by null bytes '\0'
         # and last char is supposed to be a null byte. Nevertheless
@@ -1988,6 +2004,7 @@ class Process(object):
             data = self._read_smaps_file()
             # Note: smaps file can be empty for certain processes.
             if not data:
+                self._raise_if_zombie()
                 return []
             lines = data.split(b'\n')
             ls = []
