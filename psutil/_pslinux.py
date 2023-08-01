@@ -1993,7 +1993,8 @@ class Process(object):
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
-            # Note: smaps file can be empty for certain processes.
+            # Note: smaps file can be empty for certain processes or for
+            # zombies.
             if not data:
                 self._raise_if_zombie()
                 return []

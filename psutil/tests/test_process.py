@@ -1350,11 +1350,10 @@ class TestProcess(PsutilTestCase):
         for fun, name in ns.iter(ns.getters):
             with self.subTest(name):
                 try:
-                    val = fun()
+                    retval = fun()
+                    self.assertNotIn(retval, ("", None, []))
                 except (psutil.ZombieProcess, psutil.AccessDenied):
                     pass
-                else:
-                    self.assertNotIn(val, ("", None, []))
 
         assert psutil.pid_exists(zproc.pid)
         self.assertIn(zproc.pid, psutil.pids())
