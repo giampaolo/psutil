@@ -14,14 +14,18 @@ XXXX-XX-XX
   would get the right result.
 - 2266_: if `Process`_ class is passed a very high PID, raise `NoSuchProcess`_
   instead of OverflowError.  (patch by Xuehai Pan)
+- 2246_: drop python 3.4 & 3.5 support.  (patch by Matthieu Darbois)
 
 **Bug fixes**
 
 - 2241_, [NetBSD]: can't compile On NetBSD 10.99.3/amd64.  (patch by Thomas
   Klausner)
+- 2245_, [Windows]: fix var unbound error on possibly in `swap_memory()`_
+  (patch by student_2333)
 - 2268_: ``bytes2human()`` utility function was unable to properly represent
   negative values.
-- 2252_: [Windows]: `psutil.disk_usage`_ fails on Python 3.12+.  (patch by Matthieu Darbois)
+- 2252_: [Windows]: `psutil.disk_usage`_ fails on Python 3.12+.  (patch by
+  Matthieu Darbois)
 
 5.9.5
 =====

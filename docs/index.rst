@@ -2627,6 +2627,7 @@ If you want to develop psutil take a look at the `development guide`_.
 Platforms support history
 =========================
 
+* psutil 5.9.6 (XXXX-XX): drop Python 3.4 and 3.5 support
 * psutil 5.9.1 (2022-05): drop Python 2.6 support
 * psutil 5.9.0 (2021-12): **MidnightBSD**
 * psutil 5.8.0 (2020-12): **PyPy 2** on Windows
