@@ -1320,12 +1320,6 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
-        def succeed_or_zombie_p_exc(fun):
-            try:
-                return fun()
-            except (psutil.ZombieProcess, psutil.AccessDenied):
-                pass
-
         parent, zombie = self.spawn_zombie()
         # A zombie process should always be instantiable
         zproc = psutil.Process(zombie.pid)
@@ -1347,7 +1341,20 @@ class TestProcess(PsutilTestCase):
 
         ns = process_namespace(zproc)
         for fun, name in ns.iter(ns.all):
-            succeed_or_zombie_p_exc(fun)
+            with self.subTest(name):
+                try:
+                    fun()
+                except (psutil.ZombieProcess, psutil.AccessDenied):
+                    pass
+
+        for fun, name in ns.iter(ns.getters):
+            with self.subTest(name):
+                try:
+                    val = fun()
+                except (psutil.ZombieProcess, psutil.AccessDenied):
+                    pass
+                else:
+                    self.assertNotIn(val, ("", None, []))
 
         assert psutil.pid_exists(zproc.pid)
         self.assertIn(zproc.pid, psutil.pids())
