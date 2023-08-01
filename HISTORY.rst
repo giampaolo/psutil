@@ -26,7 +26,7 @@ XXXX-XX-XX
   negative values.
 - 2252_, [Windows]: `psutil.disk_usage`_ fails on Python 3.12+.  (patch by
   Matthieu Darbois)
-- 2283_, [Linux]: `memory_full_info`_ may incorrectly raise `ZombieProcess`_
+- 2284_, [Linux]: `memory_full_info`_ may incorrectly raise `ZombieProcess`_
  if it's determined via ``/proc/pid/smaps_rollup``. Instead we now fallback on
  reading ``/proc/pid/smaps``.
 
