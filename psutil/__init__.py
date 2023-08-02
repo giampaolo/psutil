@@ -263,22 +263,6 @@ else:  # pragma: no cover
         return ret
 
 
-def _assert_pid_not_reused(fun):
-    """Decorator which raises NoSuchProcess in case a process is no
-    longer running or its PID has been reused.
-    """
-    @functools.wraps(fun)
-    def wrapper(self, *args, **kwargs):
-        if not self.is_running():
-            if self._pid_reused:
-                msg = "process no longer exists and its PID has been reused"
-            else:
-                msg = None
-            raise NoSuchProcess(self.pid, self._name, msg=msg)
-        return fun(self, *args, **kwargs)
-    return wrapper
-
-
 def _pprint_secs(secs):
     """Format seconds in a human readable form."""
     now = time.time()
@@ -441,6 +425,17 @@ class Process(object):
         if self._hash is None:
             self._hash = hash(self._ident)
         return self._hash
+
+    def _raise_if_pid_reused(self):
+        """Raises NoSuchProcess in case a process is no longer running
+        or its PID has been reused.
+        """
+        if not self.is_running():
+            if self._pid_reused:
+                msg = "process no longer exists and its PID has been reused"
+            else:
+                msg = None
+            raise NoSuchProcess(self.pid, self._name, msg=msg)
 
     @property
     def pid(self):
@@ -750,8 +745,7 @@ class Process(object):
         if value is None:
             return self._proc.nice_get()
         else:
-            if not self.is_running():
-                raise NoSuchProcess(self.pid, self._name)
+            self._raise_if_pid_reused()
             self._proc.nice_set(value)
 
     if POSIX:
@@ -813,6 +807,7 @@ class Process(object):
                     raise ValueError("'ioclass' argument must be specified")
                 return self._proc.ionice_get()
             else:
+                self._raise_if_pid_reused()
                 return self._proc.ionice_set(ioclass, value)
 
     # Linux / FreeBSD only
@@ -828,6 +823,8 @@ class Process(object):
             See "man prlimit" for further info.
             Available on Linux and FreeBSD only.
             """
+            if limits is not None:
+                self._raise_if_pid_reused()
             return self._proc.rlimit(resource, limits)
 
     # Windows, Linux and FreeBSD only
@@ -844,6 +841,7 @@ class Process(object):
             if cpus is None:
                 return sorted(set(self._proc.cpu_affinity_get()))
             else:
+                self._raise_if_pid_reused()
                 if not cpus:
                     if hasattr(self._proc, "_get_eligible_cpus"):
                         cpus = self._proc._get_eligible_cpus()
@@ -900,7 +898,6 @@ class Process(object):
             """
             return self._proc.threads()
 
-    @_assert_pid_not_reused
     def children(self, recursive=False):
         """Return the children of this process as a list of Process
         instances, pre-emptively checking whether PID has been reused.
@@ -927,6 +924,7 @@ class Process(object):
         process Y won't be listed as the reference to process A
         is lost.
         """
+        self._raise_if_pid_reused()
         ppid_map = _ppid_map()
         ret = []
         if not recursive:
@@ -1197,6 +1195,7 @@ class Process(object):
     if POSIX:
         def _send_signal(self, sig):
             assert not self.pid < 0, self.pid
+            self._raise_if_pid_reused()
             if self.pid == 0:
                 # see "man 2 kill"
                 raise ValueError(
@@ -1216,7 +1215,6 @@ class Process(object):
             except PermissionError:
                 raise AccessDenied(self.pid, self._name)
 
-    @_assert_pid_not_reused
     def send_signal(self, sig):
         """Send a signal *sig* to process pre-emptively checking
         whether PID has been reused (see signal module constants) .
@@ -1226,9 +1224,9 @@ class Process(object):
         if POSIX:
             self._send_signal(sig)
         else:  # pragma: no cover
+            self._raise_if_pid_reused()
             self._proc.send_signal(sig)
 
-    @_assert_pid_not_reused
     def suspend(self):
         """Suspend process execution with SIGSTOP pre-emptively checking
         whether PID has been reused.
@@ -1237,9 +1235,9 @@ class Process(object):
         if POSIX:
             self._send_signal(signal.SIGSTOP)
         else:  # pragma: no cover
+            self._raise_if_pid_reused()
             self._proc.suspend()
 
-    @_assert_pid_not_reused
     def resume(self):
         """Resume process execution with SIGCONT pre-emptively checking
         whether PID has been reused.
@@ -1248,9 +1246,9 @@ class Process(object):
         if POSIX:
             self._send_signal(signal.SIGCONT)
         else:  # pragma: no cover
+            self._raise_if_pid_reused()
             self._proc.resume()
 
-    @_assert_pid_not_reused
     def terminate(self):
         """Terminate the process with SIGTERM pre-emptively checking
         whether PID has been reused.
@@ -1259,9 +1257,9 @@ class Process(object):
         if POSIX:
             self._send_signal(signal.SIGTERM)
         else:  # pragma: no cover
+            self._raise_if_pid_reused()
             self._proc.kill()
 
-    @_assert_pid_not_reused
     def kill(self):
         """Kill the current process with SIGKILL pre-emptively checking
         whether PID has been reused.
@@ -1269,6 +1267,7 @@ class Process(object):
         if POSIX:
             self._send_signal(signal.SIGKILL)
         else:  # pragma: no cover
+            self._raise_if_pid_reused()
             self._proc.kill()
 
     def wait(self, timeout=None):

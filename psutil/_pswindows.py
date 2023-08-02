@@ -879,8 +879,8 @@ class Process(object):
     def kill(self):
         return cext.proc_kill(self.pid)
 
-    @wrap_exceptions
     def send_signal(self, sig):
+        self._raise_if_pid_reused()
         if sig == signal.SIGTERM:
             cext.proc_kill(self.pid)
         # py >= 2.7
