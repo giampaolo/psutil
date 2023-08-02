@@ -29,6 +29,8 @@ XXXX-XX-XX
 - 2284_, [Linux]: `memory_full_info`_ may incorrectly raise `ZombieProcess`_
  if it's determined via ``/proc/pid/smaps_rollup``. Instead we now fallback on
  reading ``/proc/pid/smaps``.
+- 2287_, [OpenBSD], [NetBSD]: `Process.is_running()`_ erroneously return
+  ``False`` for zombie processes, because creation time cannot be determined.
 - 2288_, [Linux]: correctly raise `ZombieProcess`_ on `exe`_, `cmdline`_ and
   `memory_maps`_ instead of returning a "null" value.
 
