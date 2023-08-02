@@ -72,6 +72,11 @@ class TestProcessAPIs(PsutilTestCase):
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
+        # assert there are no duplicates
+        ls = [x for x in psutil.process_iter()]
+        self.assertEqual(sorted(ls, key=lambda x: x.pid),
+                         sorted(set(ls), key=lambda x: x.pid))
+
         with mock.patch('psutil.Process',
                         side_effect=psutil.NoSuchProcess(os.getpid())):
             self.assertEqual(list(psutil.process_iter()), [])
