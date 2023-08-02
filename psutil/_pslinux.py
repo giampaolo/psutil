@@ -1697,7 +1697,7 @@ class Process(object):
         if self._is_zombie():
             raise ZombieProcess(self.pid, self._name, self._ppid)
 
-    def _assert_alive(self):
+    def _raise_if_not_alive(self):
         """Raise NSP if the process disappeared on us."""
         # For those C function who do not raise NSP, possibly returning
         # incorrect or incomplete result.
@@ -2101,7 +2101,7 @@ class Process(object):
             ntuple = _common.pthread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         if hit_enoent:
-            self._assert_alive()
+            self._raise_if_not_alive()
         return retlist
 
     @wrap_exceptions
@@ -2253,13 +2253,13 @@ class Process(object):
                             path, int(fd), int(pos), mode, flags)
                         retlist.append(ntuple)
         if hit_enoent:
-            self._assert_alive()
+            self._raise_if_not_alive()
         return retlist
 
     @wrap_exceptions
     def connections(self, kind='inet'):
         ret = _connections.retrieve(kind, self.pid)
-        self._assert_alive()
+        self._raise_if_not_alive()
         return ret
 
     @wrap_exceptions
