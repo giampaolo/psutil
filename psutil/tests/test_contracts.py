@@ -405,6 +405,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     use_proc_pool = not CI_TESTING
 
+    use_proc_pool = not CI_TESTING
+
     def setUp(self):
         # Using a pool in a CI env may result in deadlock, see:
         # https://github.com/giampaolo/psutil/issues/2104
