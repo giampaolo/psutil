@@ -404,7 +404,7 @@ class Process(object):
                 pass
             if self._exitcode not in (_SENTINEL, None):
                 info["exitcode"] = self._exitcode
-            if self._create_time:
+            if self._create_time is not None:
                 info['started'] = _pprint_secs(self._create_time)
             return "%s.%s(%s)" % (
                 self.__class__.__module__,
