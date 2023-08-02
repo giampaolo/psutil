@@ -418,10 +418,10 @@ class Process(object):
         # on PID and creation time.
         if not isinstance(other, Process):
             return NotImplemented
-        if OPENBSD:  # pragma: no cover
-            # Zombie processes on OpenBSD has a creation time of 0.0.
-            # This covers the case when a process started normally (so
-            # it has a ctime), then it turned into a zombie. It's
+        if OPENBSD or NETBSD:  # pragma: no cover
+            # Zombie processes on Open/NetBSD has a creation time of
+            # 0.0. This covers the case when a process started normally
+            # (so it has a ctime), then it turned into a zombie. It's
             # important to do this because is_running() depends on
             # __eq__.
             pid1, ctime1 = self._ident
