@@ -1654,12 +1654,12 @@ def wrap_exceptions(fun):
         except PermissionError:
             raise AccessDenied(self.pid, self._name)
         except ProcessLookupError:
+            self._raise_if_zombie()
             raise NoSuchProcess(self.pid, self._name)
         except FileNotFoundError:
+            self._raise_if_zombie()
             if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
                 raise NoSuchProcess(self.pid, self._name)
-            # Note: zombies will keep existing under /proc until they're
-            # gone so there's no way to distinguish them in here.
             raise
     return wrapper
 
@@ -1675,7 +1675,27 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
-    def _assert_alive(self):
+    def _is_zombie(self):
+        # Note: most of the times Linux is able to return info about the
+        # process even if it's a zombie, and /proc/{pid} will exist.
+        # There are some exceptions though, like exe(), cmdline() and
+        # memory_maps(). In these cases /proc/{pid}/{file} exists but
+        # it's empty. Instead of returning a "null" value we'll raise an
+        # exception.
+        try:
+            data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
+        except (IOError, OSError):
+            return False
+        else:
+            rpar = data.rfind(b')')
+            status = data[rpar + 2:rpar + 3]
+            return status == b"Z"
+
+    def _raise_if_zombie(self):
+        if self._is_zombie():
+            raise ZombieProcess(self.pid, self._name, self._ppid)
+
+    def _raise_if_not_alive(self):
         """Raise NSP if the process disappeared on us."""
         # For those C function who do not raise NSP, possibly returning
         # incorrect or incomplete result.
@@ -1749,22 +1769,18 @@ class Process(object):
         # XXX - gets changed later and probably needs refactoring
         return name
 
+    @wrap_exceptions
     def exe(self):
         try:
             return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
         except (FileNotFoundError, ProcessLookupError):
+            self._raise_if_zombie()
             # no such file error; might be raised also if the
             # path actually exists for system processes with
             # low pids (about 0-20)
             if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
                 return ""
-            else:
-                if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
-                else:
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
+            raise
 
     @wrap_exceptions
     def cmdline(self):
@@ -1772,6 +1788,7 @@ class Process(object):
             data = f.read()
         if not data:
             # may happen in case of zombie process
+            self._raise_if_zombie()
             return []
         # 'man proc' states that args are separated by null bytes '\0'
         # and last char is supposed to be a null byte. Nevertheless
@@ -1990,8 +2007,10 @@ class Process(object):
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
-            # Note: smaps file can be empty for certain processes.
+            # Note: smaps file can be empty for certain processes or for
+            # zombies.
             if not data:
+                self._raise_if_zombie()
                 return []
             lines = data.split(b'\n')
             ls = []
@@ -2030,14 +2049,7 @@ class Process(object):
 
     @wrap_exceptions
     def cwd(self):
-        try:
-            return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
-        except (FileNotFoundError, ProcessLookupError):
-            # https://github.com/giampaolo/psutil/issues/986
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
-            else:
-                raise ZombieProcess(self.pid, self._name, self._ppid)
+        return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
     @wrap_exceptions
     def num_ctx_switches(self,
@@ -2086,7 +2098,7 @@ class Process(object):
             ntuple = _common.pthread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         if hit_enoent:
-            self._assert_alive()
+            self._raise_if_not_alive()
         return retlist
 
     @wrap_exceptions
@@ -2179,12 +2191,11 @@ class Process(object):
                             "got %s" % repr(limits))
                     prlimit(self.pid, resource_, limits)
             except OSError as err:
-                if err.errno == errno.ENOSYS and pid_exists(self.pid):
+                if err.errno == errno.ENOSYS:
                     # I saw this happening on Travis:
                     # https://travis-ci.org/giampaolo/psutil/jobs/51368273
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
-                else:
-                    raise
+                    self._raise_if_zombie()
+                raise
 
     @wrap_exceptions
     def status(self):
@@ -2239,13 +2250,13 @@ class Process(object):
                             path, int(fd), int(pos), mode, flags)
                         retlist.append(ntuple)
         if hit_enoent:
-            self._assert_alive()
+            self._raise_if_not_alive()
         return retlist
 
     @wrap_exceptions
     def connections(self, kind='inet'):
         ret = _connections.retrieve(kind, self.pid)
-        self._assert_alive()
+        self._raise_if_not_alive()
         return ret
 
     @wrap_exceptions

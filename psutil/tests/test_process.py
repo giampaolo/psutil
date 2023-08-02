@@ -1320,23 +1320,8 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
-        def succeed_or_zombie_p_exc(fun):
-            try:
-                return fun()
-            except (psutil.ZombieProcess, psutil.AccessDenied):
-                pass
-
         parent, zombie = self.spawn_zombie()
         self.assertProcessZombie(zombie)
-        ns = process_namespace(zombie)
-        for fun, name in ns.iter(ns.all):
-            succeed_or_zombie_p_exc(fun)
-
-        assert psutil.pid_exists(zombie.pid)
-        self.assertIn(zombie.pid, psutil.pids())
-        self.assertIn(zombie.pid, [x.pid for x in psutil.process_iter()])
-        psutil._pmap = {}
-        self.assertIn(zombie.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):

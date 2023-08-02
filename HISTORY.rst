@@ -29,6 +29,8 @@ XXXX-XX-XX
 - 2284_, [Linux]: `memory_full_info`_ may incorrectly raise `ZombieProcess`_
  if it's determined via ``/proc/pid/smaps_rollup``. Instead we now fallback on
  reading ``/proc/pid/smaps``.
+- 2288_, [Linux]: correctly raise `ZombieProcess`_ on `exe`_, `cmdline`_ and
+  `memory_maps`_ instead of returning a "null" value.
 
 5.9.5
 =====

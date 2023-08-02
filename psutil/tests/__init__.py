@@ -964,17 +964,38 @@ class PsutilTestCase(TestCase):
         self.assertEqual(proc.status(), psutil.STATUS_ZOMBIE)
         # It should be considered 'running'.
         assert proc.is_running()
+        assert psutil.pid_exists(proc.pid)
         # as_dict() shouldn't crash.
         proc.as_dict()
         # It should show up in pids() and process_iter().
         self.assertIn(proc.pid, psutil.pids())
         self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
-        # It cannot be signaled or terminated.
+        psutil._pmap = {}
+        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        # Call all methods.
+        ns = process_namespace(proc)
+        for fun, name in ns.iter(ns.all):
+            with self.subTest(name):
+                try:
+                    fun()
+                except (psutil.ZombieProcess, psutil.AccessDenied):
+                    pass
+        if LINUX:
+            # https://github.com/giampaolo/psutil/pull/2288
+            self.assertRaises(psutil.ZombieProcess, proc.cmdline)
+            self.assertRaises(psutil.ZombieProcess, proc.exe)
+            self.assertRaises(psutil.ZombieProcess, proc.memory_maps)
+        # Zombie cannot be signaled or terminated.
         proc.suspend()
         proc.resume()
         proc.terminate()
         proc.kill()
         assert proc.is_running()
+        assert psutil.pid_exists(proc.pid)
+        self.assertIn(proc.pid, psutil.pids())
+        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        psutil._pmap = {}
+        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
 
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(

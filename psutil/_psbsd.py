@@ -553,7 +553,7 @@ def is_zombie(pid):
     try:
         st = cext.proc_oneshot_info(pid)[kinfo_proc_map['status']]
         return PROC_STATUSES.get(st) == _common.STATUS_ZOMBIE
-    except Exception:
+    except OSError:
         return False
 
 
