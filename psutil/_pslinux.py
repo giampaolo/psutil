@@ -1660,8 +1660,6 @@ def wrap_exceptions(fun):
             self._raise_if_zombie()
             if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
                 raise NoSuchProcess(self.pid, self._name)
-            # Note: zombies will keep existing under /proc until they're
-            # gone so there's no way to distinguish them in here.
             raise
     return wrapper
 
