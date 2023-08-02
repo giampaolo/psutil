@@ -2060,24 +2060,10 @@ class TestProcess(PsutilTestCase):
 
     def test_exe_mocked(self):
         with mock.patch('psutil._pslinux.readlink',
-                        side_effect=OSError(errno.ENOENT, "")) as m1:
-            with mock.patch('psutil.Process.cmdline',
-                            side_effect=psutil.AccessDenied(0, "")) as m2:
-                # No such file error; might be raised also if /proc/pid/exe
-                # path actually exists for system processes with low pids
-                # (about 0-20). In this case psutil is supposed to return
-                # an empty string.
-                ret = psutil.Process().exe()
-                assert m1.called
-                assert m2.called
-                self.assertEqual(ret, "")
-
-                # ...but if /proc/pid no longer exist we're supposed to treat
-                # it as an alias for zombie process
-                with mock.patch('psutil._pslinux.os.path.lexists',
-                                return_value=False):
-                    self.assertRaises(
-                        psutil.ZombieProcess, psutil.Process().exe)
+                        side_effect=OSError(errno.ENOENT, "")) as m:
+            ret = psutil.Process().exe()
+            assert m.called
+            self.assertEqual(ret, "")
 
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case
@@ -2096,23 +2082,15 @@ class TestProcess(PsutilTestCase):
         # happen in case of zombie process:
         # https://travis-ci.org/giampaolo/psutil/jobs/51368273
         with mock.patch("psutil._pslinux.prlimit",
-                        side_effect=OSError(errno.ENOSYS, "")) as m:
-            p = psutil.Process()
-            p.name()
-            with self.assertRaises(psutil.ZombieProcess) as exc:
-                p.rlimit(psutil.RLIMIT_NOFILE)
-            assert m.called
-        self.assertEqual(exc.exception.pid, p.pid)
-        self.assertEqual(exc.exception.name, p.name())
-
-    def test_cwd_zombie(self):
-        with mock.patch("psutil._pslinux.os.readlink",
-                        side_effect=OSError(errno.ENOENT, "")) as m:
-            p = psutil.Process()
-            p.name()
-            with self.assertRaises(psutil.ZombieProcess) as exc:
-                p.cwd()
-            assert m.called
+                        side_effect=OSError(errno.ENOSYS, "")) as m1:
+            with mock.patch("psutil._pslinux.Process._is_zombie",
+                            return_value=True) as m2:
+                p = psutil.Process()
+                p.name()
+                with self.assertRaises(psutil.ZombieProcess) as exc:
+                    p.rlimit(psutil.RLIMIT_NOFILE)
+        assert m1.called
+        assert m2.called
         self.assertEqual(exc.exception.pid, p.pid)
         self.assertEqual(exc.exception.name, p.name())
 
