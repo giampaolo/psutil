@@ -980,14 +980,11 @@ class PsutilTestCase(TestCase):
                     fun()
                 except (psutil.ZombieProcess, psutil.AccessDenied):
                     pass
-        # Make sure getters does not return 'null' values.
-        for fun, name in ns.iter(ns.getters):
-            with self.subTest(name):
-                try:
-                    retval = fun()
-                    self.assertNotIn(retval, ("", None, []))
-                except (psutil.ZombieProcess, psutil.AccessDenied):
-                    pass
+        if LINUX:
+            # https://github.com/giampaolo/psutil/pull/2288
+            self.assertRaises(psutil.ZombieProcess, proc.cmdline)
+            self.assertRaises(psutil.ZombieProcess, proc.exe)
+            self.assertRaises(psutil.ZombieProcess, proc.memory_maps)
         # Zombie cannot be signaled or terminated.
         proc.suspend()
         proc.resume()
