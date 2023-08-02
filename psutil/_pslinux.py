@@ -1701,7 +1701,6 @@ class Process(object):
         """Raise NSP if the process disappeared on us."""
         # For those C function who do not raise NSP, possibly returning
         # incorrect or incomplete result.
-        self._raise_if_zombie()
         os.stat('%s/%s' % (self._procfs_path, self.pid))
 
     @wrap_exceptions
