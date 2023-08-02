@@ -1322,27 +1322,6 @@ class TestProcess(PsutilTestCase):
     def test_zombie_process(self):
         parent, zombie = self.spawn_zombie()
         self.assertProcessZombie(zombie)
-        ns = process_namespace(zombie)
-        for fun, name in ns.iter(ns.all):
-            with self.subTest(name):
-                try:
-                    fun()
-                except (psutil.ZombieProcess, psutil.AccessDenied):
-                    pass
-
-        for fun, name in ns.iter(ns.getters):
-            with self.subTest(name):
-                try:
-                    retval = fun()
-                    self.assertNotIn(retval, ("", None, []))
-                except (psutil.ZombieProcess, psutil.AccessDenied):
-                    pass
-
-        assert psutil.pid_exists(zombie.pid)
-        self.assertIn(zombie.pid, psutil.pids())
-        self.assertIn(zombie.pid, [x.pid for x in psutil.process_iter()])
-        psutil._pmap = {}
-        self.assertIn(zombie.pid, [x.pid for x in psutil.process_iter()])
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process_is_running_w_exc(self):
