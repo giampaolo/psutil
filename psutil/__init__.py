@@ -419,7 +419,7 @@ class Process(object):
         if not isinstance(other, Process):
             return NotImplemented
         if OPENBSD or NETBSD:  # pragma: no cover
-            # Zombie processes on Open/NetBSD has a creation time of
+            # Zombie processes on Open/NetBSD have a creation time of
             # 0.0. This covers the case when a process started normally
             # (so it has a ctime), then it turned into a zombie. It's
             # important to do this because is_running() depends on
