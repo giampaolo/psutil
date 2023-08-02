@@ -43,6 +43,8 @@ import psutil
 from psutil import AIX
 from psutil import LINUX
 from psutil import MACOS
+from psutil import NETBSD
+from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
@@ -960,8 +962,11 @@ class PsutilTestCase(TestCase):
     def assertProcessZombie(self, proc):
         # A zombie process should always be instantiable.
         clone = psutil.Process(proc.pid)
+        # Cloned zombie on Open/NetBSD has null creation time, see:
         # https://github.com/giampaolo/psutil/issues/2287
         self.assertEqual(proc, clone)
+        if not (OPENBSD or NETBSD):
+            self.assertEqual(hash(proc), hash(clone))
         # Its status always be querable.
         self.assertEqual(proc.status(), psutil.STATUS_ZOMBIE)
         # It should be considered 'running'.
