@@ -1684,7 +1684,7 @@ class Process(object):
         # exception.
         try:
             data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
-        except OSError:
+        except (IOError, OSError):
             return False
         else:
             rpar = data.rfind(b')')
