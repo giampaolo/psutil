@@ -401,9 +401,6 @@ class TestFetchAllProcesses(PsutilTestCase):
     some sanity checks against Process API's returned values.
     Uses a process pool to get info about all processes.
     """
-    use_proc_pool = not CI_TESTING
-
-    use_proc_pool = not CI_TESTING
 
     use_proc_pool = not CI_TESTING
 
