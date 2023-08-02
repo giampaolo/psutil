@@ -959,7 +959,8 @@ class PsutilTestCase(TestCase):
 
     def assertProcessZombie(self, proc):
         # A zombie process should always be instantiable.
-        psutil.Process(proc.pid)
+        clone = psutil.Process(proc.pid)
+        self.assertEqual(proc, clone)
         # Its status always be querable.
         self.assertEqual(proc.status(), psutil.STATUS_ZOMBIE)
         # It should be considered 'running'.
