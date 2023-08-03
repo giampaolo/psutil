@@ -1091,13 +1091,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(grandchild.parent(), child)
         self.assertEqual(child.parent(), parent)
 
-    def test_parent_disappeared(self):
-        # Emulate a case where the parent process disappeared.
-        p = self.spawn_psproc()
-        with mock.patch("psutil.Process",
-                        side_effect=psutil.NoSuchProcess(0, 'foo')):
-            self.assertIsNone(p.parent())
-
     @retry_on_failure()
     def test_parents(self):
         parent = psutil.Process()
@@ -1355,6 +1348,7 @@ class TestProcess(PsutilTestCase):
         for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
             with self.subTest(name=name):
                 self.assertRaisesRegex(psutil.NoSuchProcess, msg, fun)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.ppid)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parent)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parents)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.children)

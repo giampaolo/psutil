@@ -622,6 +622,7 @@ class Process(object):
 
         # XXX should we check creation time here rather than in
         # Process.parent()?
+        self._raise_if_pid_reused()
         if POSIX:
             return self._proc.ppid()
         else:  # pragma: no cover
