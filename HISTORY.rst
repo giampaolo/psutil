@@ -15,6 +15,8 @@ XXXX-XX-XX
 - 2266_: if `Process`_ class is passed a very high PID, raise `NoSuchProcess`_
   instead of OverflowError.  (patch by Xuehai Pan)
 - 2246_: drop python 3.4 & 3.5 support.  (patch by Matthieu Darbois)
+- 2290_: PID reuse is now pre-emptively checked for `Process.pids`_  and
+  `Process.parents`_.
 
 **Bug fixes**
 
@@ -33,6 +35,10 @@ XXXX-XX-XX
   ``False`` for zombie processes, because creation time cannot be determined.
 - 2288_, [Linux]: correctly raise `ZombieProcess`_ on `exe`_, `cmdline`_ and
   `memory_maps`_ instead of returning a "null" value.
+- 2290_: differently from what stated in the doc, PID reuse is not
+  pre-emptively checked for `Process.nice`_ (set), `Process.ionice`_,
+  (set), `Process.cpu_affinity`_ (set), `Process.rlimit`_
+  (set), `Process.parent`_.
 
 5.9.5
 =====
