@@ -1091,13 +1091,6 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(grandchild.parent(), child)
         self.assertEqual(child.parent(), parent)
 
-    def test_parent_disappeared(self):
-        # Emulate a case where the parent process disappeared.
-        p = self.spawn_psproc()
-        with mock.patch("psutil.Process",
-                        side_effect=psutil.NoSuchProcess(0, 'foo')):
-            self.assertIsNone(p.parent())
-
     @retry_on_failure()
     def test_parents(self):
         parent = psutil.Process()
@@ -1351,10 +1344,13 @@ class TestProcess(PsutilTestCase):
         assert not p.is_running()
         assert p != psutil.Process(subp.pid)
         msg = "process no longer exists and its PID has been reused"
-        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.suspend)
-        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.resume)
-        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.terminate)
-        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.kill)
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
+            with self.subTest(name=name):
+                self.assertRaisesRegex(psutil.NoSuchProcess, msg, fun)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.ppid)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parent)
+        self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parents)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.children)
 
     def test_pid_0(self):

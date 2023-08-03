@@ -1079,6 +1079,7 @@ Process class
     :meth:`cpu_affinity` (set),
     :meth:`rlimit` (set),
     :meth:`children`,
+    :meth:`ppid`,
     :meth:`parent`,
     :meth:`parents`,
     :meth:`suspend`
