@@ -427,14 +427,15 @@ class Process(object):
         return self._hash
 
     def _raise_if_pid_reused(self):
-        """Raises NoSuchProcess in case a process is no longer running
-        or its PID has been reused.
-        """
-        if not self.is_running():
-            if self._pid_reused:
-                msg = "process no longer exists and its PID has been reused"
-            else:
-                msg = None
+        """Raises NoSuchProcess in case process PID has been reused."""
+        if not self.is_running() and self._pid_reused:
+            # We may directly raise NSP in here already if PID is just
+            # not running, but I prefer NSP to be raised naturally by
+            # the actual Process API call. This way unit tests will tell
+            # us if the API is broken (aka don't raise NSP when it
+            # should). We also remain consistent with all other "get"
+            # APIs which don't use _raise_if_pid_reused().
+            msg = "process no longer exists and its PID has been reused"
             raise NoSuchProcess(self.pid, self._name, msg=msg)
 
     @property
