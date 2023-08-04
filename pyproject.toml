@@ -74,7 +74,9 @@ disable = [
 
 [tool.rstcheck]
 ignore_messages = [
-    "Hyperlink target \"\\d+\" is not referenced"
+    "Hyperlink target \".*?\" is not referenced",
+    "Duplicate implicit target name",
+    "Duplicate explicit target name",
 ]
 
 [build-system]
