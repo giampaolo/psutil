@@ -74,9 +74,22 @@ disable = [
 
 [tool.rstcheck]
 ignore_messages = [
-    "Hyperlink target \".*?\" is not referenced",
-    "Duplicate implicit target name",
     "Duplicate explicit target name",
+    "Duplicate implicit target name",
+    "Hyperlink target \".*?\" is not referenced",
+    "No directive entry for \"attribute\"",
+    "No role entry for \"meth\"",
+    "No role entry for \"meth\"",
+    "Unknown directive type \"attribute\"",
+    "Unknown directive type \"data\"",
+    "Unknown directive type \"function\"",
+    "Unknown directive type \"method\"",
+    "Unknown directive type \"moduleauthor\"",
+    "Unknown directive type \"versionadded\"",
+    "Unknown directive type \"versionchanged\"",
+    "Unknown interpreted text role \"class\".",
+    "Unknown interpreted text role \"func\".",
+    "Unknown interpreted text role \"meth\".",
 ]
 
 [build-system]
