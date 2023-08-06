@@ -115,7 +115,7 @@ jobs:
         python-version: 3.x
     - name: 'Run linters'
       run: |
-        python3 -m pip install isort rstcheck flake8 flake8-blind-except flake8-bugbear flake8-debugger flake8-print flake8-quotes
+        python3 -m pip install isort rstcheck flake8 flake8-blind-except flake8-bugbear flake8-debugger flake8-print flake8-quotes sphinx
         make lint-all
 
   # Check sanity of .tar.gz + wheel files

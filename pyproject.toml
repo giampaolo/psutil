@@ -77,12 +77,6 @@ ignore_messages = [
     "Duplicate explicit target name",
     "Duplicate implicit target name",
     "Hyperlink target \".*?\" is not referenced",
-    "for \"class\" in module",
-    "for \"data\" in module",
-    "for \"function\" in module",
-    "for \"meth\" in module",
-    "for \"method\" in module",
-    "for \"versionadded\" in module",
 ]
 
 [build-system]
