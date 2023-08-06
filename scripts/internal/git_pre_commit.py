@@ -24,6 +24,7 @@ Install this with "make install-git-hooks".
 from __future__ import print_function
 
 import os
+import shlex
 import subprocess
 import sys
 
@@ -66,8 +67,12 @@ def exit(msg):
 
 
 def sh(cmd):
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True)
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
+    p = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True
+    )
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
@@ -84,14 +89,16 @@ def open_text(path):
 
 
 def git_commit_files():
-    out = sh("git diff --cached --name-only")
+    out = sh(["git", "diff", "--cached", "--name-only"])
     py_files = [x for x in out.split('\n') if x.endswith('.py') and
                 os.path.exists(x)]
     c_files = [x for x in out.split('\n') if x.endswith(('.c', '.h')) and
                os.path.exists(x)]
     rst_files = [x for x in out.split('\n') if x.endswith('.rst') and
                  os.path.exists(x)]
-    new_rm_mv = sh("git diff --name-only --diff-filter=ADR --cached")
+    new_rm_mv = sh(
+        ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"]
+    )
     # XXX: we should escape spaces and possibly other amenities here
     new_rm_mv = new_rm_mv.split()
     return (py_files, c_files, rst_files, new_rm_mv)
@@ -155,7 +162,7 @@ def main():
             return sys.exit("RST code didn't pass style check")
 
     if new_rm_mv:
-        out = sh("%s scripts/internal/generate_manifest.py" % PYTHON)
+        out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
         with open_text('MANIFEST.in') as f:
             if out.strip() != f.read().strip():
                 sys.exit("some files were added, deleted or renamed; "
