@@ -15,6 +15,7 @@ the files which were modified in the commit. Checks:
 - assert "flake8" checks pass
 - assert "isort" checks pass
 - assert C linter checks pass
+- assert RsT checks pass
 - abort if files were added/renamed/removed and MANIFEST.in was not updated
 
 Install this with "make install-git-hooks".
