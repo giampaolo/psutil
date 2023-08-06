@@ -15,6 +15,7 @@ the files which were modified in the commit. Checks:
 - assert "flake8" checks pass
 - assert "isort" checks pass
 - assert C linter checks pass
+- assert RsT checks pass
 - abort if files were added/renamed/removed and MANIFEST.in was not updated
 
 Install this with "make install-git-hooks".
@@ -66,8 +67,12 @@ def exit(msg):
 
 
 def sh(cmd):
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True)
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
+    p = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        universal_newlines=True
+    )
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
@@ -84,19 +89,23 @@ def open_text(path):
 
 
 def git_commit_files():
-    out = sh("git diff --cached --name-only")
+    out = sh(["git", "diff", "--cached", "--name-only"])
     py_files = [x for x in out.split('\n') if x.endswith('.py') and
                 os.path.exists(x)]
     c_files = [x for x in out.split('\n') if x.endswith(('.c', '.h')) and
                os.path.exists(x)]
-    new_rm_mv = sh("git diff --name-only --diff-filter=ADR --cached")
+    rst_files = [x for x in out.split('\n') if x.endswith('.rst') and
+                 os.path.exists(x)]
+    new_rm_mv = sh(
+        ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"]
+    )
     # XXX: we should escape spaces and possibly other amenities here
     new_rm_mv = new_rm_mv.split()
-    return (py_files, c_files, new_rm_mv)
+    return (py_files, c_files, rst_files, new_rm_mv)
 
 
 def main():
-    py_files, c_files, new_rm_mv = git_commit_files()
+    py_files, c_files, rst_files, new_rm_mv = git_commit_files()
     # Check file content.
     for path in py_files:
         if os.path.realpath(path) == THIS_SCRIPT:
@@ -122,27 +131,38 @@ def main():
     if py_files:
         # flake8
         assert os.path.exists('.flake8')
-        cmd = "%s -m flake8 --config=.flake8 %s" % (PYTHON, " ".join(py_files))
-        ret = subprocess.call(shlex.split(cmd))
+        print("running flake8 (%s files)" % len(py_files))
+        cmd = [PYTHON, "-m", "flake8", "--config=.flake8"] + py_files
+        ret = subprocess.call(cmd)
         if ret != 0:
             return sys.exit("python code didn't pass 'flake8' style check; "
                             "try running 'make fix-flake8'")
         # isort
-        cmd = "%s -m isort --check-only %s" % (
-            PYTHON, " ".join(py_files))
-        ret = subprocess.call(shlex.split(cmd))
+        print("running isort (%s files)" % len(py_files))
+        cmd = [PYTHON, "-m", "isort", "--check-only"] + py_files
+        ret = subprocess.call(cmd)
         if ret != 0:
             return sys.exit("python code didn't pass 'isort' style check; "
                             "try running 'make fix-imports'")
     # C linter
     if c_files:
+        print("running clinter (%s files)" % len(c_files))
         # XXX: we should escape spaces and possibly other amenities here
-        cmd = "%s scripts/internal/clinter.py %s" % (PYTHON, " ".join(c_files))
-        ret = subprocess.call(cmd, shell=True)
+        cmd = [PYTHON, "scripts/internal/clinter.py"] + c_files
+        ret = subprocess.call(cmd)
         if ret != 0:
             return sys.exit("C code didn't pass style check")
+
+    # RST linter
+    if rst_files:
+        print("running rst linter (%s)" % len(rst_files))
+        cmd = ["rstcheck", "--config=pyproject.toml"] + rst_files
+        ret = subprocess.call(cmd)
+        if ret != 0:
+            return sys.exit("RST code didn't pass style check")
+
     if new_rm_mv:
-        out = sh("%s scripts/internal/generate_manifest.py" % PYTHON)
+        out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
         with open_text('MANIFEST.in') as f:
             if out.strip() != f.read().strip():
                 sys.exit("some files were added, deleted or renamed; "

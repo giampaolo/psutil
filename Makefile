@@ -26,6 +26,7 @@ PY3_DEPS = \
 	pyperf \
 	pypinfo \
 	requests \
+	rstcheck \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
@@ -207,13 +208,17 @@ isort:  ## Run isort linter.
 pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
-c-linter:  ## Run C linter.
+lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
+
+lint-rst:  ## Run C linter.
+	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
 
 lint-all:  ## Run all linters
 	${MAKE} flake8
 	${MAKE} isort
-	${MAKE} c-linter
+	${MAKE} lint-c
+	${MAKE} lint-rst
 
 # ===================================================================
 # Fixers

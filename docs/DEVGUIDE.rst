@@ -121,9 +121,6 @@ Documentation
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
-.. _`appveyor.yml`: https://github.com/giampaolo/psutil/blob/master/appveyor.yml
-.. _`Appveyor`: https://ci.appveyor.com/project/giampaolo/psuti
-.. _`coveralls.io`: https://coveralls.io/github/giampaolo/psuti
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst
@@ -137,5 +134,3 @@ Documentation
 .. _`psutil/tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_linux.py
 .. _`psutil/tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_process.py
 .. _`psutil/tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_system.py
-.. _`RsT syntax`: http://docutils.sourceforge.net/docs/user/rst/quickref.htm
-.. _`sphinx`: http://sphinx-doc.org

@@ -72,6 +72,13 @@ disable = [
     "wrong-import-position",
 ]
 
+[tool.rstcheck]
+ignore_messages = [
+    "Duplicate explicit target name",
+    "Duplicate implicit target name",
+    "Hyperlink target \".*?\" is not referenced",
+]
+
 [build-system]
 requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"
