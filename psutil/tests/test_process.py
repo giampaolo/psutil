@@ -1072,11 +1072,6 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.ppid(), os.getppid())
         p = self.spawn_psproc()
         self.assertEqual(p.ppid(), os.getpid())
-        if APPVEYOR:
-            # Occasional failures, see:
-            # https://ci.appveyor.com/project/giampaolo/psutil/build/
-            #     job/0hs623nenj7w4m33
-            return
 
     def test_parent(self):
         p = self.spawn_psproc()

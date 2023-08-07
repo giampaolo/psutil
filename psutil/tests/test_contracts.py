@@ -366,6 +366,7 @@ def proc_info(pid):
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assertProcessGone(proc)
         str(exc)
+        repr(exc)
 
     def do_wait():
         if pid != 0:
@@ -376,23 +377,27 @@ def proc_info(pid):
 
     try:
         proc = psutil.Process(pid)
+    except psutil.NoSuchProcess:
+        tcase.assertPidGone(pid)
+        return {}
+    try:
         d = proc.as_dict(['ppid', 'name'])
     except psutil.NoSuchProcess:
-        return {}
-
-    name, ppid = d['name'], d['ppid']
-    info = {'pid': proc.pid}
-    ns = process_namespace(proc)
-    # We don't use oneshot() because in order not to fool
-    # check_exception() in case of NSP.
-    for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
-        try:
-            info[fun_name] = fun()
-        except psutil.Error as exc:
-            check_exception(exc, proc, name, ppid)
-            continue
-    do_wait()
-    return info
+        tcase.assertProcessGone(proc)
+    else:
+        name, ppid = d['name'], d['ppid']
+        info = {'pid': proc.pid}
+        ns = process_namespace(proc)
+        # We don't use oneshot() because in order not to fool
+        # check_exception() in case of NSP.
+        for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
+            try:
+                info[fun_name] = fun()
+            except psutil.Error as exc:
+                check_exception(exc, proc, name, ppid)
+                continue
+        do_wait()
+        return info
 
 
 @serialrun
@@ -402,7 +407,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     Uses a process pool to get info about all processes.
     """
 
-    use_proc_pool = not CI_TESTING
+    use_proc_pool = 0
 
     def setUp(self):
         # Using a pool in a CI env may result in deadlock, see:
@@ -435,9 +440,9 @@ class TestFetchAllProcesses(PsutilTestCase):
                 meth = getattr(self, name)
                 try:
                     meth(value, info)
-                except AssertionError:
+                except Exception:
                     s = '\n' + '=' * 70 + '\n'
-                    s += "FAIL: test_%s pid=%s, ret=%s\n" % (
+                    s += "FAIL: name=test_%s, pid=%s, ret=%s\n" % (
                         name, info['pid'], repr(value))
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
@@ -480,6 +485,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def ppid(self, ret, info):
         self.assertIsInstance(ret, (int, long))
         self.assertGreaterEqual(ret, 0)
+        proc_info(ret)
 
     def name(self, ret, info):
         self.assertIsInstance(ret, (str, unicode))

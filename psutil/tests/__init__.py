@@ -944,20 +944,45 @@ class PsutilTestCase(TestCase):
         self.addCleanup(terminate, sproc)  # executed first
         return sproc
 
-    def assertProcessGone(self, proc):
-        self.assertRaises(psutil.NoSuchProcess, psutil.Process, proc.pid)
-        if isinstance(proc, (psutil.Process, psutil.Popen)):
-            assert not proc.is_running()
+    def _check_proc_exc(self, proc, exc):
+        self.assertIsInstance(exc, psutil.Error)
+        self.assertEqual(exc.pid, proc.pid)
+        self.assertEqual(exc.name, proc._name)
+        if exc.name:
+            self.assertNotEqual(exc.name, "")
+        if isinstance(exc, psutil.ZombieProcess):
+            self.assertEqual(exc.ppid, proc._ppid)
+            if exc.ppid is not None:
+                self.assertGreaterEqual(exc.ppid, 0)
+        str(exc)
+        repr(exc)
+
+    def assertPidGone(self, pid):
+        with self.assertRaises(psutil.NoSuchProcess) as cm:
             try:
-                status = proc.status()
-            except psutil.NoSuchProcess:
-                pass
-            else:
-                raise AssertionError("Process.status() didn't raise exception "
-                                     "(status=%s)" % status)
-            proc.wait(timeout=0)  # assert not raise TimeoutExpired
-        assert not psutil.pid_exists(proc.pid), proc.pid
-        self.assertNotIn(proc.pid, psutil.pids())
+                psutil.Process(pid)
+            except psutil.ZombieProcess:
+                raise AssertionError(
+                    "wasn't supposed to raise ZombieProcess")
+        self.assertEqual(cm.exception.pid, pid)
+        self.assertEqual(cm.exception.name, None)
+        assert not psutil.pid_exists(pid), pid
+        self.assertNotIn(pid, psutil.pids())
+        self.assertNotIn(pid, [x.pid for x in psutil.process_iter()])
+
+    def assertProcessGone(self, proc):
+        self.assertPidGone(proc.pid)
+        ns = process_namespace(proc)
+        for fun, name in ns.iter(ns.all, clear_cache=True):
+            with self.subTest(proc=proc, name=name):
+                with self.assertRaises(psutil.NoSuchProcess) as cm:
+                    try:
+                        fun()
+                    except psutil.ZombieProcess:
+                        raise AssertionError(
+                            "wasn't supposed to raise ZombieProcess")
+                self._check_proc_exc(proc, cm.exception)
+        proc.wait(timeout=0)  # assert not raise TimeoutExpired
 
     def assertProcessZombie(self, proc):
         # A zombie process should always be instantiable.
@@ -981,17 +1006,23 @@ class PsutilTestCase(TestCase):
         self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
         # Call all methods.
         ns = process_namespace(proc)
-        for fun, name in ns.iter(ns.all):
-            with self.subTest(name):
+        for fun, name in ns.iter(ns.all, clear_cache=True):
+            with self.subTest(proc=proc, name=name):
                 try:
                     fun()
-                except (psutil.ZombieProcess, psutil.AccessDenied):
-                    pass
+                except (psutil.ZombieProcess, psutil.AccessDenied) as exc:
+                    self._check_proc_exc(proc, exc)
         if LINUX:
             # https://github.com/giampaolo/psutil/pull/2288
-            self.assertRaises(psutil.ZombieProcess, proc.cmdline)
-            self.assertRaises(psutil.ZombieProcess, proc.exe)
-            self.assertRaises(psutil.ZombieProcess, proc.memory_maps)
+            with self.assertRaises(psutil.ZombieProcess) as cm:
+                proc.cmdline()
+            self._check_proc_exc(proc, cm.exception)
+            with self.assertRaises(psutil.ZombieProcess) as cm:
+                proc.exe()
+            self._check_proc_exc(proc, cm.exception)
+            with self.assertRaises(psutil.ZombieProcess) as cm:
+                proc.memory_maps()
+            self._check_proc_exc(proc, cm.exception)
         # Zombie cannot be signaled or terminated.
         proc.suspend()
         proc.resume()
