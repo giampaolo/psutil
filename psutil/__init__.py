@@ -1459,7 +1459,10 @@ def process_iter(attrs=None, ad_value=None):
     new_pids = a - b
     gone_pids = b - a
     for pid in gone_pids:
-        remove(pid)
+        proc = pmap.get(pid)
+        if proc is not None:
+            if not proc.is_running():
+                remove(pid)
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
         for pid, proc in ls:
