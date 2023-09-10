@@ -1345,6 +1345,18 @@ def sensors_temperatures():
             current = float(bcat(path)) / 1000.0
             path = os.path.join(os.path.dirname(base), 'name')
             unit_name = cat(path).strip()
+
+            address = os.path.join(os.path.dirname(base), 'device', 'address')
+            # Some systems may have multiple devices with same unit_name,
+            # for example multiple nvme SSDs, both will have their sensors
+            # inside ret['nvme'] making it difficult to know which
+            # SSD they refer to
+            try:
+                unit_name += '-' + ''.join(cat(address).strip().split(':')[1:3]).split('.')[0]
+            except:
+                # device address file may not always exist, be readable or
+                # correctly parsable
+                pass
         except (IOError, OSError, ValueError):
             # A lot of things can go wrong here, so let's just skip the
             # whole entry. Sure thing is Linux's /sys/class/hwmon really
