@@ -1471,9 +1471,13 @@ def sensors_battery():
                 except ValueError:
                     return ret.strip()
         return None
+    # The final check verifies if the reported battery is internal
+    # since the existence of the device/path file represent an available
+    # ACPI path to the battery itself.
+    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') 
+        or 'battery' in x.lower() and 
+        os.path.exists(os.path.join(POWER_SUPPLY_PATH, x, "device/path"))]
 
-    bats = [x for x in os.listdir(POWER_SUPPLY_PATH) if x.startswith('BAT') or
-            'battery' in x.lower()]
     if not bats:
         return None
     # Get the first available battery. Usually this is "BAT0", except
