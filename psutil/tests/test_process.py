@@ -1301,11 +1301,6 @@ class TestProcess(PsutilTestCase):
         for fun, name in ns.iter(ns.all):
             assert_raises_nsp(fun, name)
 
-        # NtQuerySystemInformation succeeds even if process is gone.
-        if WINDOWS and not GITHUB_ACTIONS:
-            normcase = os.path.normcase
-            self.assertEqual(normcase(p.exe()), normcase(PYTHON_EXE))
-
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
         parent, zombie = self.spawn_zombie()

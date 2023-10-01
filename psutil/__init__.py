@@ -1227,6 +1227,9 @@ class Process(object):
             self._send_signal(sig)
         else:  # pragma: no cover
             self._raise_if_pid_reused()
+            if sig != signal.SIGTERM and not self.is_running():
+                msg = "process no longer exists"
+                raise NoSuchProcess(self.pid, self._name, msg=msg)
             self._proc.send_signal(sig)
 
     def suspend(self):
