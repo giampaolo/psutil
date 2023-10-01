@@ -975,13 +975,16 @@ class PsutilTestCase(TestCase):
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
             with self.subTest(proc=proc, name=name):
-                with self.assertRaises(psutil.NoSuchProcess) as cm:
-                    try:
-                        fun()
-                    except psutil.ZombieProcess:
-                        raise AssertionError(
-                            "wasn't supposed to raise ZombieProcess")
-                self._check_proc_exc(proc, cm.exception)
+                try:
+                    ret = fun()
+                except psutil.ZombieProcess:
+                    raise
+                except psutil.NoSuchProcess as exc:
+                    self._check_proc_exc(proc, exc)
+                else:
+                    msg = "Process.%s() didn't raise NSP and returned %r" % (
+                        name, ret)
+                    raise AssertionError(msg)
         proc.wait(timeout=0)  # assert not raise TimeoutExpired
 
     def assertProcessZombie(self, proc):
