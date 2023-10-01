@@ -40,6 +40,8 @@ XXXX-XX-XX
   pre-emptively checked for `Process.nice()`_ (set), `Process.ionice()`_,
   (set), `Process.cpu_affinity()`_ (set), `Process.rlimit()`_
   (set), `Process.parent()`_.
+- 2308_, [OpenBSD]: `Process.threads()`_ always fail with AccessDenied (also as
+  root).
 
 5.9.5
 =====
