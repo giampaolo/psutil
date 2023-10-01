@@ -8,6 +8,7 @@ include LICENSE
 include MANIFEST.in
 include Makefile
 include README.rst
+include docs/.readthedocs.yaml
 include docs/DEVGUIDE.rst
 include docs/DEVNOTES
 include docs/Makefile
@@ -19,6 +20,7 @@ include docs/_static/sidebar.js
 include docs/conf.py
 include docs/index.rst
 include docs/make.bat
+include docs/requirements.txt
 include make.bat
 include psutil/__init__.py
 include psutil/_common.py
