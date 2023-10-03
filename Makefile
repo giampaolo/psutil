@@ -212,18 +212,18 @@ _pylint:  ## Python pylint (not mandatory, just run it from time to time)
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-lint-toml:  ## Linter for pyproject.toml
-	@git ls-files '*.toml' | xargs toml-sort --check
-
 lint-rst:  ## Run C linter.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
+
+lint-toml:  ## Linter for pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-all:  ## Run all linters
 	${MAKE} flake8
 	${MAKE} isort
-	${MAKE} lint-toml
 	${MAKE} lint-c
 	${MAKE} lint-rst
+	${MAKE} lint-toml
 
 # ===================================================================
 # Fixers

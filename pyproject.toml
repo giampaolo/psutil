@@ -82,7 +82,7 @@ ignore_messages = [
 [tool.tomlsort]
 in_place = true
 no_sort_tables = true
-sort_inline_arrays = false
+sort_inline_arrays = true
 spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
