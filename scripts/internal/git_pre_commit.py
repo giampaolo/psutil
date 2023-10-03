@@ -106,27 +106,6 @@ def git_commit_files():
 
 def main():
     py_files, c_files, rst_files, new_rm_mv = git_commit_files()
-    # Check file content.
-    for path in py_files:
-        if os.path.realpath(path) == THIS_SCRIPT:
-            continue
-        with open_text(path) as f:
-            lines = f.readlines()
-        for lineno, line in enumerate(lines, 1):
-            # space at end of line
-            if line.endswith(' '):
-                print("%s:%s %r" % (path, lineno, line))
-                return sys.exit("space at end of line")
-            line = line.rstrip()
-            # # pdb (now provided by flake8-debugger plugin)
-            # if "pdb.set_trace" in line:
-            #     print("%s:%s %s" % (path, lineno, line))
-            #     return sys.exit("you forgot a pdb in your python code")
-            # # bare except clause (now provided by flake8-blind-except plugin)
-            # if "except:" in line and not line.endswith("# NOQA"):
-            #     print("%s:%s %s" % (path, lineno, line))
-            #     return sys.exit("bare except clause")
-
     # Python linters
     if py_files:
         # flake8
