@@ -27,7 +27,7 @@ import os
 
 
 PROJECT_NAME = "psutil"
-AUTHOR = u"Giampaolo Rodola"
+AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -288,7 +288,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'psutil.tex', u'psutil Documentation',
+    (master_doc, 'psutil.tex', 'psutil Documentation',
      AUTHOR, 'manual'),
 ]
 
@@ -330,7 +330,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'psutil', u'psutil Documentation',
+    (master_doc, 'psutil', 'psutil Documentation',
      [author], 1)
 ]
 
@@ -345,7 +345,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'psutil', u'psutil Documentation',
+    (master_doc, 'psutil', 'psutil Documentation',
      author, 'psutil', 'One line description of project.',
      'Miscellaneous'),
 ]

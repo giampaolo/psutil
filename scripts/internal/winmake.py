@@ -192,7 +192,7 @@ def safe_rmtree(path):
 
 def recursive_rm(*patterns):
     """Recursively remove a file or matching a list of patterns."""
-    for root, dirs, files in os.walk(u'.'):
+    for root, dirs, files in os.walk('.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
