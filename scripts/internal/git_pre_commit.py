@@ -108,12 +108,46 @@ def git_commit_files():
     return (py_files, c_files, rst_files, toml_files, new_rm_mv)
 
 
+def flake8(files):
+    assert os.path.exists('.flake8')
+    print("running flake8 (%s files)" % len(files))
+    cmd = [PYTHON, "-m", "flake8", "--config=.flake8"] + files
+    if subprocess.call(cmd) != 0:
+        return sys.exit(
+            "python code didn't pass 'flake8' style check; " +
+            "try running 'make fix-flake8'"
+        )
+
+
+def isort(files):
+    print("running isort (%s)" % len(files))
+    cmd = [PYTHON, "-m", "isort", "--check-only"] + files
+    if subprocess.call(cmd) != 0:
+        return sys.exit(
+            "python code didn't pass 'isort' style check; " +
+            "try running 'make fix-imports'")
+
+
+def c_linter(files):
+    print("running clinter (%s)" % len(files))
+    # XXX: we should escape spaces and possibly other amenities here
+    cmd = [PYTHON, "scripts/internal/clinter.py"] + files
+    if subprocess.call(cmd) != 0:
+        return sys.exit("C code didn't pass style check")
+
+
 def toml_sort(files):
     print("running toml linter (%s)" % len(files))
     cmd = ["toml-sort", "--check"] + files
-    ret = subprocess.call(cmd)
-    if ret != 0:
+    if subprocess.call(cmd) != 0:
         return sys.exit("%s didn't pass style check" % ' '.join(files))
+
+
+def rstcheck(files):
+    print("running rst linter (%s)" % len(files))
+    cmd = ["rstcheck", "--config=pyproject.toml"] + files
+    if subprocess.call(cmd) != 0:
+        return sys.exit("RST code didn't pass style check")
 
 
 def main():
@@ -139,47 +173,15 @@ def main():
             #     print("%s:%s %s" % (path, lineno, line))
             #     return sys.exit("bare except clause")
 
-    # Python linters
     if py_files:
-        # flake8
-        assert os.path.exists('.flake8')
-        print("running flake8 (%s files)" % len(py_files))
-        cmd = [PYTHON, "-m", "flake8", "--config=.flake8"] + py_files
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            return sys.exit("python code didn't pass 'flake8' style check; "
-                            "try running 'make fix-flake8'")
-        # isort
-        print("running isort (%s files)" % len(py_files))
-        cmd = [PYTHON, "-m", "isort", "--check-only"] + py_files
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            return sys.exit("python code didn't pass 'isort' style check; "
-                            "try running 'make fix-imports'")
-    # C linter
+        flake8(py_files)
+        isort(py_files)
     if c_files:
-        print("running clinter (%s files)" % len(c_files))
-        # XXX: we should escape spaces and possibly other amenities here
-        cmd = [PYTHON, "scripts/internal/clinter.py"] + c_files
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            return sys.exit("C code didn't pass style check")
-
-    # RST linter
+        c_linter(c_files)
     if rst_files:
-        print("running rst linter (%s)" % len(rst_files))
-        cmd = ["rstcheck", "--config=pyproject.toml"] + rst_files
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            return sys.exit("RST code didn't pass style check")
-
+        rstcheck(rst_files)
     if toml_files:
-        print("running rst linter (%s)" % len(rst_files))
-        cmd = ["rstcheck", "--config=pyproject.toml"] + rst_files
-        ret = subprocess.call(cmd)
-        if ret != 0:
-            return sys.exit("RST code didn't pass style check")
-
+        toml_sort(toml_files)
     if new_rm_mv:
         out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
         with open_text('MANIFEST.in') as f:
