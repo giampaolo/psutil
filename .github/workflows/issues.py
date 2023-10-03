@@ -144,10 +144,7 @@ def has_label(issue, label):
 
 def has_os_label(issue):
     labels = set([x.name for x in issue.labels])
-    for label in OS_LABELS:
-        if label in labels:
-            return True
-    return False
+    return any(x in labels for x in OS_LABELS)
 
 
 def get_repo():
