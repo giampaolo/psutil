@@ -206,14 +206,14 @@ flake8:  ## Run flake8 linter.
 isort:  ## Run isort linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
 
-pylint:  ## Python pylint (not mandatory, just run it from time to time)
+_pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
-
-lint-toml:  ## Linter for pyproject.toml
-	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
+
+lint-toml:  ## Linter for pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-rst:  ## Run C linter.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
@@ -221,6 +221,7 @@ lint-rst:  ## Run C linter.
 lint-all:  ## Run all linters
 	${MAKE} flake8
 	${MAKE} isort
+	${MAKE} lint-toml
 	${MAKE} lint-c
 	${MAKE} lint-rst
 
@@ -235,16 +236,17 @@ fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
 fix-imports:  ## Fix imports with isort.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
 
-fix-toml:  ## Fix pyproject.toml
-	@git ls-files '*.toml' | xargs toml-sort
-
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
+
+fix-toml:  ## Fix pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-flake8
 	${MAKE} fix-imports
 	${MAKE} fix-unittests
+	${MAKE} fix-toml
 
 # ===================================================================
 # GIT

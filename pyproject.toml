@@ -3,35 +3,35 @@ force_single_line = true  # one import per line
 lines_after_imports = 2  # blank spaces after import section
 
 [tool.coverage.report]
-omit = [
-    "psutil/_compat.py",
-    "psutil/tests/*",
-    "setup.py",
-]
 exclude_lines = [
     "enum.IntEnum",
     "except ImportError:",
     "globals().update",
-    "if __name__ == .__main__.:",
-    "if _WINDOWS:",
     "if BSD",
-    "if enum is None:",
-    "if enum is not None:",
     "if FREEBSD",
-    "if has_enums:",
     "if LINUX",
     "if LITTLE_ENDIAN:",
     "if MACOS",
     "if NETBSD",
     "if OPENBSD",
-    "if ppid_map is None:",
     "if PY3:",
     "if SUNOS",
-    "if sys.platform.startswith",
     "if WINDOWS",
+    "if _WINDOWS:",
+    "if __name__ == .__main__.:",
+    "if enum is None:",
+    "if enum is not None:",
+    "if has_enums:",
+    "if ppid_map is None:",
+    "if sys.platform.startswith",
     "import enum",
     "pragma: no cover",
     "raise NotImplementedError",
+]
+omit = [
+    "psutil/_compat.py",
+    "psutil/tests/*",
+    "setup.py",
 ]
 
 [tool.pylint.messages_control]
@@ -87,17 +87,17 @@ spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
-[build-system]
-requires = ["setuptools>=43", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [tool.cibuildwheel]
-skip = ["pp*", "*-musllinux*"]
-test-extras = "test"
+skip = ["*-musllinux*", "pp*"]
 test-command = [
     "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/runner.py",
-    "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/test_memleaks.py"
+    "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/test_memleaks.py",
 ]
+test-extras = "test"
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
+archs = ["arm64", "x86_64"]
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=43", "wheel"]
