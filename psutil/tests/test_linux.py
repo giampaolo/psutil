@@ -113,7 +113,7 @@ def get_ipv4_broadcast(ifname):
 
 
 def get_ipv6_addresses(ifname):
-    with open("/proc/net/if_inet6", 'rt') as f:
+    with open("/proc/net/if_inet6") as f:
         all_fields = []
         for line in f.readlines():
             fields = line.split()
@@ -943,7 +943,7 @@ class TestLoadAvg(PsutilTestCase):
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         psutil_value = psutil.getloadavg()
-        with open("/proc/loadavg", "r") as f:
+        with open("/proc/loadavg") as f:
             proc_value = f.read().split()
 
         self.assertAlmostEqual(float(proc_value[0]), psutil_value[0], delta=1)
@@ -1015,7 +1015,7 @@ class TestSystemNetIfStats(PsutilTestCase):
 
     def test_mtu(self):
         for name, stats in psutil.net_if_stats().items():
-            with open("/sys/class/net/%s/mtu" % name, "rt") as f:
+            with open("/sys/class/net/%s/mtu" % name) as f:
                 self.assertEqual(stats.mtu, int(f.read().strip()))
 
     @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
@@ -1159,7 +1159,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
 
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
-        with open("/proc/filesystems", "r") as f:
+        with open("/proc/filesystems") as f:
             data = f.read()
         if 'zfs' in data:
             for part in psutil.disk_partitions():
@@ -1896,7 +1896,7 @@ class TestProcess(PsutilTestCase):
         testfn = self.get_testfn()
         with open(testfn, "w"):
             self.assertEqual(get_test_file(testfn).mode, "w")
-        with open(testfn, "r"):
+        with open(testfn):
             self.assertEqual(get_test_file(testfn).mode, "r")
         with open(testfn, "a"):
             self.assertEqual(get_test_file(testfn).mode, "a")

@@ -85,7 +85,7 @@ def sh(cmd):
 
 def open_text(path):
     kw = {'encoding': 'utf8'} if PY3 else {}
-    return open(path, 'rt', **kw)
+    return open(path, **kw)
 
 
 def git_commit_files():

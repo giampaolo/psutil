@@ -108,7 +108,7 @@ class TestLoader:
         suite = unittest.TestSuite()
         if not os.path.isfile(FAILED_TESTS_FNAME):
             return suite
-        with open(FAILED_TESTS_FNAME, 'rt') as f:
+        with open(FAILED_TESTS_FNAME) as f:
             names = f.read().split()
         for n in names:
             test = unittest.defaultTestLoader.loadTestsFromName(n)
@@ -163,7 +163,7 @@ class ColouredTextRunner(unittest.TextTestRunner):
 
     def _write_last_failed(self):
         if self.failed_tnames:
-            with open(FAILED_TESTS_FNAME, 'wt') as f:
+            with open(FAILED_TESTS_FNAME, "w") as f:
                 for tname in self.failed_tnames:
                     f.write(tname + '\n')
 

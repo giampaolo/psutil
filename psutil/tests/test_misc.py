@@ -563,7 +563,7 @@ class TestCommonModule(PsutilTestCase):
 
     def test_cat_bcat(self):
         testfn = self.get_testfn()
-        with open(testfn, "wt") as f:
+        with open(testfn, "w") as f:
             f.write("foo")
         self.assertEqual(cat(testfn), "foo")
         self.assertEqual(bcat(testfn), b"foo")
@@ -846,9 +846,9 @@ class TestScripts(PsutilTestCase):
     def assert_syntax(exe):
         exe = os.path.join(SCRIPTS_DIR, exe)
         if PY3:
-            f = open(exe, 'rt', encoding='utf8')
+            f = open(exe, encoding='utf8')
         else:
-            f = open(exe, 'rt')
+            f = open(exe)
         with f:
             src = f.read()
         ast.parse(src)

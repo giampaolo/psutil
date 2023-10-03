@@ -772,12 +772,12 @@ def open_text(fname):
     On Python 2 this is just an alias for open(name, 'rt').
     """
     if not PY3:
-        return open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE)
+        return open(fname, buffering=FILE_READ_BUFFER_SIZE)
 
     # See:
     # https://github.com/giampaolo/psutil/issues/675
     # https://github.com/giampaolo/psutil/pull/733
-    fobj = open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE,
+    fobj = open(fname, buffering=FILE_READ_BUFFER_SIZE,
                 encoding=ENCODING, errors=ENCODING_ERRS)
     try:
         # Dictates per-line read(2) buffer size. Defaults is 8k. See:

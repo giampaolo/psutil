@@ -478,7 +478,7 @@ def pyrun(src, **kwds):
     kwds.setdefault("stderr", None)
     srcfile = get_testfn()
     try:
-        with open(srcfile, 'wt') as f:
+        with open(srcfile, "w") as f:
             f.write(src)
         subp = spawn_testproc([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
@@ -849,7 +849,7 @@ def create_exe(outpath, c_code=None):
                 }
                 """)
         assert isinstance(c_code, str), c_code
-        with open(get_testfn(suffix='.c'), 'wt') as f:
+        with open(get_testfn(suffix='.c'), "w") as f:
             f.write(c_code)
         try:
             subprocess.check_call(["gcc", f.name, "-o", outpath])

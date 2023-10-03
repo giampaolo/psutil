@@ -60,7 +60,7 @@ def check_line(path, line, idx, lines):
 
 
 def process(path):
-    with open(path, 'rt') as f:
+    with open(path) as f:
         lines = f.readlines()
     for idx, line in enumerate(lines):
         check_line(path, line, idx, lines)

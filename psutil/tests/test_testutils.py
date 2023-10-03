@@ -170,7 +170,7 @@ class TestFSTestUtils(PsutilTestCase):
 
     def test_open_text(self):
         with open_text(__file__) as f:
-            self.assertEqual(f.mode, 'rt')
+            self.assertEqual(f.mode, 'r')
 
     def test_open_binary(self):
         with open_binary(__file__) as f:
