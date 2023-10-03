@@ -22,6 +22,7 @@
 
 # -- General configuration ------------------------------------------------
 
+import ast
 import datetime
 import os
 
@@ -37,7 +38,7 @@ def get_version():
     with open(INIT) as f:
         for line in f:
             if line.startswith('__version__'):
-                ret = eval(line.strip().split(' = ')[1])
+                ret = ast.literal_eval(line.strip().split(' = ')[1])
                 assert ret.count('.') == 2, ret
                 for num in ret.split('.'):
                     assert num.isdigit(), ret
@@ -314,7 +315,7 @@ latex_documents = [
 #
 # latex_appendices = []
 
-# It false, will not define \strong, \code, 	itleref, \crossref ... but only
+# It false, will not define \strong, \code,     itleref, \crossref ... but only
 # \sphinxstrong, ..., \sphinxtitleref, ... To help avoid clash with user added
 # packages.
 #

@@ -769,7 +769,7 @@ def call_until(fun, expr):
     expression is True.
     """
     ret = fun()
-    assert eval(expr)
+    assert eval(expr)  # noqa
     return ret
 
 
