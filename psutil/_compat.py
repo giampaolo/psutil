@@ -152,7 +152,7 @@ else:
                             if not attr.startswith('__'):
                                 setattr(self, attr, getattr(unwrap_me, attr))
                     else:
-                        super(TemporaryClass, self).__init__(*args, **kwargs)
+                        super(TemporaryClass, self).__init__(*args, **kwargs)  # noqa
 
                 class __metaclass__(type):
                     def __instancecheck__(cls, inst):

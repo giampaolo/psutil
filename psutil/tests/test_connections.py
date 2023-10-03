@@ -533,10 +533,10 @@ class TestMisc(PsutilTestCase):
                 ints.append(num)
                 strs.append(str_)
         if SUNOS:
-            psutil.CONN_IDLE
-            psutil.CONN_BOUND
+            psutil.CONN_IDLE  # noqa
+            psutil.CONN_BOUND  # noqa
         if WINDOWS:
-            psutil.CONN_DELETE_TCB
+            psutil.CONN_DELETE_TCB  # noqa
 
 
 if __name__ == '__main__':

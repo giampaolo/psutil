@@ -1525,7 +1525,7 @@ class TestPopen(PsutilTestCase):
                           stderr=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.name()
             proc.cpu_times()
-            proc.stdin
+            proc.stdin  # noqa
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
             proc.terminate()
