@@ -275,14 +275,14 @@ disk_io_counters = cext.disk_io_counters
 
 def disk_usage(path):
     """Return disk usage associated with path."""
+    from shutil import disk_usage
     if PY3 and isinstance(path, bytes):
         # XXX: do we want to use "strict"? Probably yes, in order
         # to fail immediately. After all we are accepting input here...
         path = path.decode(ENCODING, errors="strict")
-    total, free = cext.disk_usage(path)
-    used = total - free
+    total,used,free=disk_usage(path)
     percent = usage_percent(used, total, round_=1)
-    return _common.sdiskusage(total, used, free, percent)
+    return total, used, free, percent
 
 
 def disk_partitions(all):
