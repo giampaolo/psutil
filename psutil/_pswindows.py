@@ -493,7 +493,7 @@ def win_service_get(name):
     return service
 
 
-class WindowsService(object):
+class WindowsService:
     """Represents an installed Windows service."""
 
     def __init__(self, name, display_name):
@@ -725,7 +725,7 @@ def retry_error_partial_copy(fun):
     return wrapper
 
 
-class Process(object):
+class Process:
     """Wrapper class around underlying C implementation."""
 
     __slots__ = ["pid", "_name", "_ppid", "_cache"]

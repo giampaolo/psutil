@@ -1664,7 +1664,7 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-class Process(object):
+class Process:
     """Linux process implementation."""
 
     __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]

@@ -279,7 +279,7 @@ def _pprint_secs(secs):
 # =====================================================================
 
 
-class Process(object):
+class Process(object):  # noqa: UP004
     """Represents an OS process with the given PID.
     If PID is omitted current process PID (os.getpid()) is used.
     Raise NoSuchProcess if PID does not exist.

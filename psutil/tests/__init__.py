@@ -682,7 +682,7 @@ def get_winver():
 # ===================================================================
 
 
-class retry(object):
+class retry:
     """A retry decorator."""
 
     def __init__(self,

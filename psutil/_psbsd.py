@@ -599,7 +599,7 @@ def wrap_exceptions_procfs(inst):
         raise AccessDenied(inst.pid, inst._name)
 
 
-class Process(object):
+class Process:
     """Wrapper class around underlying C implementation."""
 
     __slots__ = ["pid", "_name", "_ppid", "_cache"]
