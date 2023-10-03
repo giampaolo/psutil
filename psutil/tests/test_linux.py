@@ -180,7 +180,7 @@ def free_physmem():
     for line in lines:
         if line.startswith('Mem'):
             total, used, free, shared = \
-                [int(x) for x in line.split()[1:5]]
+                (int(x) for x in line.split()[1:5])
             nt = collections.namedtuple(
                 'free', 'total used free shared output')
             return nt(total, used, free, shared, out)

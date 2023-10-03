@@ -149,8 +149,8 @@ def cpu_count_cores():
                          stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
     if PY3:
-        stdout, stderr = [x.decode(sys.stdout.encoding)
-                          for x in (stdout, stderr)]
+        stdout, stderr = (x.decode(sys.stdout.encoding)
+                          for x in (stdout, stderr))
     if p.returncode != 0:
         raise RuntimeError("%r command error\n%s" % (cmd, stderr))
     processors = stdout.strip().splitlines()
@@ -249,8 +249,8 @@ def net_if_stats():
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if PY3:
-            stdout, stderr = [x.decode(sys.stdout.encoding)
-                              for x in (stdout, stderr)]
+            stdout, stderr = (x.decode(sys.stdout.encoding)
+                              for x in (stdout, stderr))
         if p.returncode == 0:
             re_result = re.search(
                 r"Running: (\d+) Mbps.*?(\w+) Duplex", stdout)
@@ -511,8 +511,8 @@ class Process:
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if PY3:
-            stdout, stderr = [x.decode(sys.stdout.encoding)
-                              for x in (stdout, stderr)]
+            stdout, stderr = (x.decode(sys.stdout.encoding)
+                              for x in (stdout, stderr))
         if "no such process" in stderr.lower():
             raise NoSuchProcess(self.pid, self._name)
         procfiles = re.findall(r"(\d+): S_IFREG.*\s*.*name:(.*)\n", stdout)

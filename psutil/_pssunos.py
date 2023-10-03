@@ -622,8 +622,8 @@ class Process:
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if PY3:
-            stdout, stderr = [x.decode(sys.stdout.encoding)
-                              for x in (stdout, stderr)]
+            stdout, stderr = (x.decode(sys.stdout.encoding)
+                              for x in (stdout, stderr))
         if p.returncode != 0:
             if 'permission denied' in stderr.lower():
                 raise AccessDenied(self.pid, self._name)
