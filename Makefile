@@ -30,6 +30,7 @@ PY3_DEPS = \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
+	toml-sort \
 	twine \
 	virtualenv \
 	wheel
@@ -208,6 +209,9 @@ isort:  ## Run isort linter.
 pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
+lint-toml:  ## Linter for pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort --check
+
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
@@ -230,6 +234,9 @@ fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
 
 fix-imports:  ## Fix imports with isort.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
+
+fix-toml:  ## Fix pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort
 
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats

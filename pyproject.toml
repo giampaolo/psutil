@@ -79,6 +79,14 @@ ignore_messages = [
     "Hyperlink target \".*?\" is not referenced",
 ]
 
+[tool.tomlsort]
+in_place = true
+no_sort_tables = true
+sort_inline_arrays = false
+spaces_before_inline_comment = 2
+spaces_indent_inline_array = 4
+trailing_comma_inline_array = true
+
 [build-system]
 requires = ["setuptools>=43", "wheel"]
 build-backend = "setuptools.build_meta"
