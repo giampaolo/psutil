@@ -175,7 +175,7 @@ def run(pid, verbose=False):
     cpu_tot_time = datetime.timedelta(seconds=sum(pinfo['cpu_times']))
     cpu_tot_time = "%s:%s.%s" % (
         cpu_tot_time.seconds // 60 % 60,
-        str((cpu_tot_time.seconds % 60)).zfill(2),
+        str(cpu_tot_time.seconds % 60).zfill(2),
         str(cpu_tot_time.microseconds)[:2])
     print_('cpu-tspent', cpu_tot_time)
     print_('cpu-times', str_ntuple(pinfo['cpu_times']))
