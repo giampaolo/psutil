@@ -282,7 +282,7 @@ def disk_usage(path):
         path = path.decode(ENCODING, errors="strict")
     total,used,free=disk_usage(path)
     percent = usage_percent(used, total, round_=1)
-    return total, used, free, percent
+    return _common.sdiskusage(total, used, free, percent)
 
 
 def disk_partitions(all):
