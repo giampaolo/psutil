@@ -40,10 +40,6 @@ ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
 DEPS = [
     "coverage",
-    "flake8",
-    "flake8-blind-except",
-    "flake8-debugger",
-    "flake8-print",
     "nose",
     "pdbpp",
     "pip",
@@ -58,8 +54,6 @@ if sys.version_info[0] == 2:
     DEPS.append('mock')
     DEPS.append('ipaddress')
     DEPS.append('enum34')
-else:
-    DEPS.append('flake8-bugbear')
 
 if not PYPY:
     DEPS.append("pywin32")
@@ -382,16 +376,6 @@ def setup_dev_env():
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-def flake8():
-    """Run flake8 against all py files"""
-    py_files = subprocess.check_output("git ls-files")
-    if PY3:
-        py_files = py_files.decode()
-    py_files = [x for x in py_files.split() if x.endswith('.py')]
-    py_files = ' '.join(py_files)
-    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
-
-
 def test(name=RUNNER_PY):
     """Run tests"""
     build()
@@ -572,7 +556,6 @@ def parse_args():
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
     sp.add_parser('install-pip', help="install pip")
-    sp.add_parser('flake8', help="run flake8 against all py files")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
     sp.add_parser('setup-dev-env', help="install deps")

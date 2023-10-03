@@ -12,7 +12,6 @@ the files which were modified in the commit. Checks:
 - assert no space at EOLs
 - assert not pdb.set_trace in code
 - assert no bare except clause ("except:") in code
-- assert "flake8" checks pass
 - assert "isort" checks pass
 - assert C linter checks pass
 - assert RsT checks pass
@@ -108,17 +107,6 @@ def git_commit_files():
     return (py_files, c_files, rst_files, toml_files, new_rm_mv)
 
 
-def flake8(files):
-    assert os.path.exists('.flake8')
-    print("running flake8 (%s files)" % len(files))
-    cmd = [PYTHON, "-m", "flake8", "--config=.flake8"] + files
-    if subprocess.call(cmd) != 0:
-        return sys.exit(
-            "python code didn't pass 'flake8' style check; " +
-            "try running 'make fix-flake8'"
-        )
-
-
 def isort(files):
     print("running isort (%s)" % len(files))
     cmd = [PYTHON, "-m", "isort", "--check-only"] + files
@@ -174,7 +162,6 @@ def main():
             #     return sys.exit("bare except clause")
 
     if py_files:
-        flake8(py_files)
         isort(py_files)
     if c_files:
         c_linter(c_files)
