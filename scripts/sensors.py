@@ -45,10 +45,7 @@ def main():
         temps = psutil.sensors_temperatures()
     else:
         temps = {}
-    if hasattr(psutil, "sensors_fans"):
-        fans = psutil.sensors_fans()
-    else:
-        fans = {}
+    fans = psutil.sensors_fans() if hasattr(psutil, "sensors_fans") else {}
     if hasattr(psutil, "sensors_battery"):
         battery = psutil.sensors_battery()
     else:

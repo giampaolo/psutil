@@ -68,10 +68,7 @@ def ps(fmt, pid=None):
 
     output = sh(cmd)
 
-    if LINUX:
-        output = output.splitlines()
-    else:
-        output = output.splitlines()[1:]
+    output = output.splitlines() if LINUX else output.splitlines()[1:]
 
     all_output = []
     for line in output:

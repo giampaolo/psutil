@@ -670,10 +670,7 @@ def get_winver():
         sp = wv.service_pack_major or 0
     else:
         r = re.search(r"\s\d$", wv[4])
-        if r:
-            sp = int(r.group(0))
-        else:
-            sp = 0
+        sp = int(r.group(0)) if r else 0
     return (wv[0], wv[1], sp)
 
 

@@ -968,10 +968,7 @@ class Connections:
                     if filter_pid is not None and filter_pid != pid:
                         continue
                     else:
-                        if len(tokens) == 8:
-                            path = tokens[-1]
-                        else:
-                            path = ""
+                        path = tokens[-1] if len(tokens) == 8 else ''
                         type_ = _common.socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:

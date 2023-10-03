@@ -28,10 +28,7 @@ import tempfile
 
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
-if APPVEYOR:
-    PYTHON = sys.executable
-else:
-    PYTHON = os.getenv('PYTHON', sys.executable)
+PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
 RUNNER_PY = 'psutil\\tests\\runner.py'
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
