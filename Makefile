@@ -30,6 +30,7 @@ PY3_DEPS = \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
+	toml-sort \
 	twine \
 	virtualenv \
 	wheel
@@ -205,7 +206,7 @@ flake8:  ## Run flake8 linter.
 isort:  ## Run isort linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
 
-pylint:  ## Python pylint (not mandatory, just run it from time to time)
+_pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
 lint-c:  ## Run C linter.
@@ -214,11 +215,15 @@ lint-c:  ## Run C linter.
 lint-rst:  ## Run C linter.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
 
+lint-toml:  ## Linter for pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort --check
+
 lint-all:  ## Run all linters
 	${MAKE} flake8
 	${MAKE} isort
 	${MAKE} lint-c
 	${MAKE} lint-rst
+	${MAKE} lint-toml
 
 # ===================================================================
 # Fixers
@@ -234,10 +239,14 @@ fix-imports:  ## Fix imports with isort.
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
 
+fix-toml:  ## Fix pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort
+
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-flake8
 	${MAKE} fix-imports
 	${MAKE} fix-unittests
+	${MAKE} fix-toml
 
 # ===================================================================
 # GIT
