@@ -108,7 +108,7 @@ templ = "| %-30s | %15s |"
 
 def print_row(left, right):
     if isinstance(right, int):
-        right = '{0:,}'.format(right)
+        right = '{:,}'.format(right)
     print(templ % (left, right))
 
 

@@ -379,7 +379,7 @@ class TestProcess(WindowsTestCase):
             rss, vms = p.memory_info()[:2]
         except psutil.AccessDenied:
             # expected on Windows Vista and Windows 7
-            if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
+            if platform.uname()[1] not in ('vista', 'win-7', 'win7'):
                 raise
         else:
             self.assertGreater(rss, 0)
