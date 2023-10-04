@@ -195,7 +195,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
         self.assertEqual(
-            hasit, False if OPENBSD or NETBSD or AIX or MACOS else True)
+            hasit, not (OPENBSD or NETBSD or AIX or MACOS))
 
 
 # ===================================================================
