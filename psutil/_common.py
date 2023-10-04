@@ -286,7 +286,7 @@ class Error(Exception):
         info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
-            if value:
+            if value:  # noqa
                 info[name] = value
             elif name == "pid" and value == 0:
                 info[name] = value

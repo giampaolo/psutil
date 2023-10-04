@@ -959,7 +959,7 @@ class Connections:
                     raise RuntimeError(
                         "error while parsing %s; malformed line %r" % (
                             file, line))
-                if inode in inodes:
+                if inode in inodes:  # noqa
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
                     pairs = inodes[inode]
