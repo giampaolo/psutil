@@ -17,6 +17,8 @@ XXXX-XX-XX
 - 2246_: drop python 3.4 & 3.5 support.  (patch by Matthieu Darbois)
 - 2290_: PID reuse is now pre-emptively checked for `Process.ppid()`_  and
   `Process.parents()`_.
+- 2312_: use ``ruff`` Python linter instead of ``flake8 + isort``. It's an
+  order of magnitude faster + it adds a ton of new code quality checks.
 
 **Bug fixes**
 

@@ -5,9 +5,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Notes about unicode handling in psutil
-======================================
+"""Notes about unicode handling in psutil
+======================================.
 
 Starting from version 5.3.0 psutil adds unicode support, see:
 https://github.com/giampaolo/psutil/issues/1040
@@ -309,6 +308,7 @@ class TestFSAPIs(BaseUnicodeTest):
 @unittest.skipIf(CI_TESTING, "unreliable on CI")
 class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
+
     funky_suffix = INVALID_UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
@@ -323,6 +323,7 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
 
 class TestNonFSAPIS(BaseUnicodeTest):
     """Unicode tests for non fs-related APIs."""
+
     funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")

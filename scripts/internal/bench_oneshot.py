@@ -4,10 +4,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A simple micro benchmark script which prints the speedup when using
+"""A simple micro benchmark script which prints the speedup when using
 Process.oneshot() ctx manager.
-See: https://github.com/giampaolo/psutil/issues/799
+See: https://github.com/giampaolo/psutil/issues/799.
 """
 
 from __future__ import division

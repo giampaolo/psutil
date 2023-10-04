@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Remove raw HTML from README.rst to make it compatible with PyPI on
+"""Remove raw HTML from README.rst to make it compatible with PyPI on
 dist upload.
 """
 

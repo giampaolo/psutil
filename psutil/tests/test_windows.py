@@ -379,7 +379,7 @@ class TestProcess(WindowsTestCase):
             rss, vms = p.memory_info()[:2]
         except psutil.AccessDenied:
             # expected on Windows Vista and Windows 7
-            if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
+            if platform.uname()[1] not in ('vista', 'win-7', 'win7'):
                 raise
         else:
             self.assertGreater(rss, 0)
@@ -625,14 +625,13 @@ class TestProcessWMI(WindowsTestCase):
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestDualProcessImplementation(PsutilTestCase):
-    """
-    Certain APIs on Windows have 2 internal implementations, one
+    """Certain APIs on Windows have 2 internal implementations, one
     based on documented Windows APIs, another one based
     NtQuerySystemInformation() which gets called as fallback in
     case the first fails because of limited permission error.
     Here we test that the two methods return the exact same value,
     see:
-    https://github.com/giampaolo/psutil/issues/304
+    https://github.com/giampaolo/psutil/issues/304.
     """
 
     @classmethod

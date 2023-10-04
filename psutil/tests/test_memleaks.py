@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Tests for detecting function memory leaks (typically the ones
+"""Tests for detecting function memory leaks (typically the ones
 implemented in C). It does so by calling a function many times and
 checking whether process memory usage keeps increasing between
 calls or over time.

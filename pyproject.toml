@@ -1,6 +1,85 @@
-[tool.isort]
-force_single_line = true  # one import per line
-lines_after_imports = 2  # blank spaces after import section
+[tool.ruff]
+# https://beta.ruff.rs/docs/settings/
+target-version = "py37"
+line-length = 79
+select = [
+    # To get a list of all values: `python3 -m ruff linter`.
+    "ALL",
+    "D200",  # [*] One-line docstring should fit on one line
+    "D204",  # [*] 1 blank line required after class docstring
+    "D209",  # [*] Multi-line docstring closing quotes should be on a separate line
+    "D212",  # [*] Multi-line docstring summary should start at the first line
+    "D301",  # Use `r"""` if any backslashes in a docstring
+    "D403",  # [*] First word of the first line should be capitalized
+    "PERF102",  # [*] When using only the keys of a dict use the `keys()` method
+    "S113",  # Probable use of requests call without timeout
+    "S602",  # `subprocess` call with `shell=True` identified, security issue
+]
+ignore = [
+    "A",  # flake8-builtins
+    "ANN",  # flake8-annotations
+    "ARG",  # flake8-unused-arguments
+    "B007",  # Loop control variable `x` not used within loop body
+    "B904",  # Within an `except` clause, raise exceptions with `raise ... from err` (PYTHON2.7 COMPAT)
+    "BLE001",  # Do not catch blind exception: `Exception`
+    "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
+    "C408",  # Unnecessary `dict` call (rewrite as a literal)
+    "C90",  # mccabe (function `X` is too complex)
+    "COM812",  # Trailing comma missing
+    "D",  # pydocstyle
+    "DTZ",  # flake8-datetimez
+    "EM",  # flake8-errmsg
+    "ERA001",  # Found commented-out code
+    "FBT",  # flake8-boolean-trap (makes zero sense)
+    "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
+    "FLY",  # flynt (PYTHON2.7 COMPAT)
+    "INP",  # flake8-no-pep420
+    "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
+    "N802",  # Function name X should be lowercase.
+    "N803",  # Argument name X should be lowercase.
+    "N806",  # Variable X in function should be lowercase.
+    "N818",  # Exception name `FooBar` should be named with an Error suffix
+    "PERF",  # Perflint
+    "PGH004",  # Use specific rule codes when using `noqa`
+    "PLR",  # pylint
+    "PLW",  # pylint
+    "PT",  # flake8-pytest-style
+    "PTH",  # flake8-use-pathlib
+    "PYI",  # flake8-pyi
+    "Q000",  # Single quotes found but double quotes preferred
+    "RET",  # flake8-return
+    "RUF",  # Ruff-specific rules
+    "S",  # flake8-bandit
+    "SIM102",  # Use a single `if` statement instead of nested `if` statements
+    "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
+    "SIM115",  # Use context handler for opening files
+    "SIM117",  # Use a single `with` statement with multiple contexts instead of nested `with` statements
+    "SLF",  # flake8-self
+    "TD",  # all TODOs, XXXs, etc.
+    "TRY003",  # Avoid specifying long messages outside the exception class
+    "TRY200",  # Use `raise from` to specify exception cause (PYTHON2.7 COMPAT)
+    "TRY300",  # Consider moving this statement to an `else` block
+    "TRY301",  # Abstract `raise` to an inner function
+    "UP009",  # [*] UTF-8 encoding declaration is unnecessary (PYTHON2.7 COMPAT)
+    "UP010",  # [*] Unnecessary `__future__` import `print_function` for target Python version (PYTHON2.7 COMPAT)
+    "UP024",  # [*] Replace aliased errors with `OSError` (PYTHON2.7 COMPAT)
+    "UP028",  # [*] Replace `yield` over `for` loop with `yield from` (PYTHON2.7 COMPAT)
+    "UP031",  # [*] Use format specifiers instead of percent format
+    "UP032",  # [*] Use f-string instead of `format` call (PYTHON2.7 COMPAT)
+]
+
+[tool.ruff.per-file-ignores]
+# T201 == print(), T203 == pprint()
+".github/workflows/*" = ["T201", "T203"]
+"psutil/tests/runner.py" = ["T201", "T203"]
+"scripts/*" = ["T201", "T203"]
+"scripts/internal/*" = ["T201", "T203"]
+"setup.py" = ["T201", "T203"]
+
+[tool.ruff.isort]
+# https://beta.ruff.rs/docs/settings/#isort
+force-single-line = true  # one import per line
+lines-after-imports = 2
 
 [tool.coverage.report]
 exclude_lines = [

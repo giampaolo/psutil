@@ -34,7 +34,7 @@ __all__ = [
     "InterruptedError", "ChildProcessError", "FileExistsError"]
 
 
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 _SENTINEL = object()
 
 if PY3:
@@ -152,7 +152,7 @@ else:
                             if not attr.startswith('__'):
                                 setattr(self, attr, getattr(unwrap_me, attr))
                     else:
-                        super(TemporaryClass, self).__init__(*args, **kwargs)
+                        super(TemporaryClass, self).__init__(*args, **kwargs)  # noqa
 
                 class __metaclass__(type):
                     def __instancecheck__(cls, inst):
@@ -222,7 +222,7 @@ except ImportError:
         "CacheInfo", ["hits", "misses", "maxsize", "currsize"])
 
     class _HashedSeq(list):
-        __slots__ = 'hashvalue'
+        __slots__ = ('hashvalue', )
 
         def __init__(self, tup, hash=hash):
             self[:] = tup
@@ -251,7 +251,7 @@ except ImportError:
 
     def lru_cache(maxsize=100, typed=False):
         """Least-recently-used cache decorator, see:
-        http://docs.python.org/3/library/functools.html#functools.lru_cache
+        http://docs.python.org/3/library/functools.html#functools.lru_cache.
         """
         def decorating_function(user_function):
             cache = {}
@@ -328,7 +328,7 @@ except ImportError:
                     return result
 
             def cache_info():
-                """Report cache statistics"""
+                """Report cache statistics."""
                 lock.acquire()
                 try:
                     return _CacheInfo(stats[HITS], stats[MISSES], maxsize,
@@ -337,7 +337,7 @@ except ImportError:
                     lock.release()
 
             def cache_clear():
-                """Clear the cache and cache statistics"""
+                """Clear the cache and cache statistics."""
                 lock.acquire()
                 try:
                     cache.clear()

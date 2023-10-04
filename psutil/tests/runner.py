@@ -4,12 +4,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Unit test runner, providing new features on top of unittest module:
+"""Unit test runner, providing new features on top of unittest module:
 - colourized output
 - parallel run (UNIX only)
 - print failures/tracebacks on CTRL+C
-- re-run failed tests only (make test-failed)
+- re-run failed tests only (make test-failed).
 
 Invocation examples:
 - make test
@@ -59,7 +58,7 @@ NWORKERS = psutil.cpu_count() or 1
 USE_COLORS = not CI_TESTING and term_supports_colors()
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
+loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase  # noqa
 
 
 def cprint(msg, color, bold=False, file=None):
@@ -108,7 +107,7 @@ class TestLoader:
         suite = unittest.TestSuite()
         if not os.path.isfile(FAILED_TESTS_FNAME):
             return suite
-        with open(FAILED_TESTS_FNAME, 'rt') as f:
+        with open(FAILED_TESTS_FNAME) as f:
             names = f.read().split()
         for n in names:
             test = unittest.defaultTestLoader.loadTestsFromName(n)
@@ -145,10 +144,11 @@ class ColouredResult(unittest.TextTestResult):
 
 
 class ColouredTextRunner(unittest.TextTestRunner):
+    """A coloured text runner which also prints failed tests on
+    KeyboardInterrupt and save failed tests in a file so that they can
+    be re-run.
     """
-    A coloured text runner which also prints failed tests on KeyboardInterrupt
-    and save failed tests in a file so that they can be re-run.
-    """
+
     resultclass = ColouredResult if USE_COLORS else unittest.TextTestResult
 
     def __init__(self, *args, **kwargs):
@@ -163,7 +163,7 @@ class ColouredTextRunner(unittest.TextTestRunner):
 
     def _write_last_failed(self):
         if self.failed_tnames:
-            with open(FAILED_TESTS_FNAME, 'wt') as f:
+            with open(FAILED_TESTS_FNAME, "w") as f:
                 for tname in self.failed_tnames:
                     f.write(tname + '\n')
 

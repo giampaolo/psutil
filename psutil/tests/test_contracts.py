@@ -6,7 +6,7 @@
 
 """Contracts tests. These tests mainly check API sanity in terms of
 returned types and APIs availability.
-Some of these are duplicates of tests test_system.py and test_process.py
+Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import errno
@@ -195,7 +195,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
         self.assertEqual(
-            hasit, False if OPENBSD or NETBSD or AIX or MACOS else True)
+            hasit, not (OPENBSD or NETBSD or AIX or MACOS))
 
 
 # ===================================================================
@@ -206,7 +206,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
 class TestSystemAPITypes(PsutilTestCase):
     """Check the return types of system related APIs.
     Mainly we want to test we never return unicode on Python 2, see:
-    https://github.com/giampaolo/psutil/issues/1039
+    https://github.com/giampaolo/psutil/issues/1039.
     """
 
     @classmethod
@@ -297,7 +297,7 @@ class TestSystemAPITypes(PsutilTestCase):
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
-        for ifname, _ in psutil.net_io_counters(pernic=True).items():
+        for ifname in psutil.net_io_counters(pernic=True):
             self.assertIsInstance(ifname, str)
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")

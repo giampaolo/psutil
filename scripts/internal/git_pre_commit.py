@@ -4,22 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-This gets executed on 'git commit' and rejects the commit in case the
-submitted code does not pass validation. Validation is run only against
-the files which were modified in the commit. Checks:
-
-- assert no space at EOLs
-- assert not pdb.set_trace in code
-- assert no bare except clause ("except:") in code
-- assert "flake8" checks pass
-- assert "isort" checks pass
-- assert C linter checks pass
-- assert RsT checks pass
-- assert TOML checks pass
-- abort if files were added/renamed/removed and MANIFEST.in was not updated
-
-Install this with "make install-git-hooks".
+"""This gets executed on 'git commit' and rejects the commit in case
+the submitted code does not pass validation. Validation is run only
+against the files which were modified in the commit. Install this with
+"make install-git-hooks".
 """
 
 from __future__ import print_function
@@ -31,7 +19,7 @@ import sys
 
 
 PYTHON = sys.executable
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 THIS_SCRIPT = os.path.realpath(__file__)
 
 
@@ -86,7 +74,7 @@ def sh(cmd):
 
 def open_text(path):
     kw = {'encoding': 'utf8'} if PY3 else {}
-    return open(path, 'rt', **kw)
+    return open(path, **kw)
 
 
 def git_commit_files():
@@ -108,24 +96,14 @@ def git_commit_files():
     return (py_files, c_files, rst_files, toml_files, new_rm_mv)
 
 
-def flake8(files):
-    assert os.path.exists('.flake8')
-    print("running flake8 (%s files)" % len(files))
-    cmd = [PYTHON, "-m", "flake8", "--config=.flake8"] + files
+def ruff(files):
+    print("running ruff (%s)" % len(files))
+    cmd = [PYTHON, "-m", "ruff", "check", "--no-cache"] + files
     if subprocess.call(cmd) != 0:
-        return sys.exit(
-            "python code didn't pass 'flake8' style check; " +
-            "try running 'make fix-flake8'"
+        return exit(
+            "Python code didn't pass 'ruff' style check."
+            "Try running 'make fix-ruff'."
         )
-
-
-def isort(files):
-    print("running isort (%s)" % len(files))
-    cmd = [PYTHON, "-m", "isort", "--check-only"] + files
-    if subprocess.call(cmd) != 0:
-        return sys.exit(
-            "python code didn't pass 'isort' style check; " +
-            "try running 'make fix-imports'")
 
 
 def c_linter(files):
@@ -152,30 +130,8 @@ def rstcheck(files):
 
 def main():
     py_files, c_files, rst_files, toml_files, new_rm_mv = git_commit_files()
-    # Check file content.
-    for path in py_files:
-        if os.path.realpath(path) == THIS_SCRIPT:
-            continue
-        with open_text(path) as f:
-            lines = f.readlines()
-        for lineno, line in enumerate(lines, 1):
-            # space at end of line
-            if line.endswith(' '):
-                print("%s:%s %r" % (path, lineno, line))
-                return sys.exit("space at end of line")
-            line = line.rstrip()
-            # # pdb (now provided by flake8-debugger plugin)
-            # if "pdb.set_trace" in line:
-            #     print("%s:%s %s" % (path, lineno, line))
-            #     return sys.exit("you forgot a pdb in your python code")
-            # # bare except clause (now provided by flake8-blind-except plugin)
-            # if "except:" in line and not line.endswith("# NOQA"):
-            #     print("%s:%s %s" % (path, lineno, line))
-            #     return sys.exit("bare except clause")
-
     if py_files:
-        flake8(py_files)
-        isort(py_files)
+        ruff(py_files)
     if c_files:
         c_linter(c_files)
     if rst_files:

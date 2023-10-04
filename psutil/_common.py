@@ -37,7 +37,7 @@ except ImportError:
 
 
 # can't take it from _common.py as this script is imported by setup.py
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 if PY3:
     import enum
 else:
@@ -280,13 +280,14 @@ class Error(Exception):
     """Base exception class. All other psutil exceptions inherit
     from this one.
     """
+
     __module__ = 'psutil'
 
     def _infodict(self, attrs):
         info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
-            if value:
+            if value:  # noqa
                 info[name] = value
             elif name == "pid" and value == 0:
                 info[name] = value
@@ -313,6 +314,7 @@ class NoSuchProcess(Error):
     """Exception raised when a process with a certain PID doesn't
     or no longer exists.
     """
+
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, msg=None):
@@ -329,6 +331,7 @@ class ZombieProcess(NoSuchProcess):
     On Linux all zombie processes are querable (hence this is never
     raised). Windows doesn't have zombie processes.
     """
+
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
@@ -339,6 +342,7 @@ class ZombieProcess(NoSuchProcess):
 
 class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
+
     __module__ = 'psutil'
 
     def __init__(self, pid=None, name=None, msg=None):
@@ -352,6 +356,7 @@ class TimeoutExpired(Error):
     """Raised on Process.wait(timeout) if timeout expires and process
     is still alive.
     """
+
     __module__ = 'psutil'
 
     def __init__(self, seconds, pid=None, name=None):
@@ -496,7 +501,8 @@ def memoize_when_activated(fun):
 
     def cache_activate(proc):
         """Activate cache. Expects a Process instance. Cache will be
-        stored as a "_cache" instance attribute."""
+        stored as a "_cache" instance attribute.
+        """
         proc._cache = {}
 
     def cache_deactivate(proc):
@@ -514,7 +520,7 @@ def memoize_when_activated(fun):
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:
-    http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+    http://mail.python.org/pipermail/python-dev/2012-June/120787.html.
     """
     try:
         st = os.stat(path)
@@ -528,8 +534,8 @@ def isfile_strict(path):
 
 def path_exists_strict(path):
     """Same as os.path.exists() but does not swallow EACCES / EPERM
-    exceptions, see:
-    http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+    exceptions. See:
+    http://mail.python.org/pipermail/python-dev/2012-June/120787.html.
     """
     try:
         os.stat(path)
@@ -678,7 +684,7 @@ class _WrapNumbers:
 
     def run(self, input_dict, name):
         """Cache dict and sum numbers which overflow and wrap.
-        Return an updated copy of `input_dict`
+        Return an updated copy of `input_dict`.
         """
         if name not in self.cache:
             # This was the first call.
@@ -689,7 +695,7 @@ class _WrapNumbers:
 
         old_dict = self.cache[name]
         new_dict = {}
-        for key in input_dict.keys():
+        for key in input_dict:
             input_tuple = input_dict[key]
             try:
                 old_tuple = old_dict[key]
@@ -772,12 +778,12 @@ def open_text(fname):
     On Python 2 this is just an alias for open(name, 'rt').
     """
     if not PY3:
-        return open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE)
+        return open(fname, buffering=FILE_READ_BUFFER_SIZE)
 
     # See:
     # https://github.com/giampaolo/psutil/issues/675
     # https://github.com/giampaolo/psutil/pull/733
-    fobj = open(fname, "rt", buffering=FILE_READ_BUFFER_SIZE,
+    fobj = open(fname, buffering=FILE_READ_BUFFER_SIZE,
                 encoding=ENCODING, errors=ENCODING_ERRS)
     try:
         # Dictates per-line read(2) buffer size. Defaults is 8k. See:
@@ -815,8 +821,7 @@ def bcat(fname, fallback=_DEFAULT):
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
-    """Used by various scripts. See:
-    http://goo.gl/zeJZl
+    """Used by various scripts. See: http://goo.gl/zeJZl.
 
     >>> bytes2human(10000)
     '9.8K'

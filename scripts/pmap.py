@@ -4,9 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat -v' on BSD.
-Report memory map of a process.
+"""A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat
+-v' on BSD. Report memory map of a process.
 
 $ python3 scripts/pmap.py 32402
 Address                 RSS  Mode    Mapping

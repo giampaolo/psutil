@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Same as bench_oneshot.py but uses perf module instead, which is
+"""Same as bench_oneshot.py but uses perf module instead, which is
 supposed to be more precise.
 """
 

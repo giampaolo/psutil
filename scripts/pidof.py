@@ -5,8 +5,8 @@
 # found in the LICENSE file.
 
 
-"""
-A clone of 'pidof' cmdline utility.
+"""A clone of 'pidof' cmdline utility.
+
 $ pidof python
 1140 1138 1136 1134 1133 1129 1127 1125 1121 1120 1119
 """

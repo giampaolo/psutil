@@ -68,7 +68,8 @@ __extra__all__ = [
     # connection status constants
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", ]
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING"
+]
 
 
 # =====================================================================
@@ -345,7 +346,7 @@ if prlimit is not None:
 def calculate_avail_vmem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
     "MemAvailable", see:
-    https://blog.famzah.net/2014/09/24/
+    https://blog.famzah.net/2014/09/24/.
 
     This code reimplements the algorithm outlined here:
     https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
@@ -549,8 +550,8 @@ def swap_memory():
         f = open_binary("%s/vmstat" % get_procfs_path())
     except IOError as err:
         # see https://github.com/giampaolo/psutil/issues/722
-        msg = "'sin' and 'sout' swap memory stats couldn't " \
-              "be determined and were set to 0 (%s)" % str(err)
+        msg = "'sin' and 'sout' swap memory stats couldn't " + \
+            "be determined and were set to 0 (%s)" % str(err)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
         sin = sout = 0
     else:
@@ -569,8 +570,8 @@ def swap_memory():
                 # we might get here when dealing with exotic Linux
                 # flavors, see:
                 # https://github.com/giampaolo/psutil/issues/313
-                msg = "'sin' and 'sout' swap memory stats couldn't " \
-                      "be determined and were set to 0"
+                msg = "'sin' and 'sout' swap memory stats couldn't "
+                msg += "be determined and were set to 0"
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
@@ -710,8 +711,7 @@ def cpu_stats():
 
 
 def _cpu_get_cpuinfo_freq():
-    """Return current CPU frequency from cpuinfo if available.
-    """
+    """Return current CPU frequency from cpuinfo if available."""
     ret = []
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:
@@ -958,7 +958,7 @@ class Connections:
                     raise RuntimeError(
                         "error while parsing %s; malformed line %r" % (
                             file, line))
-                if inode in inodes:
+                if inode in inodes:  # noqa
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
                     pairs = inodes[inode]
@@ -968,10 +968,7 @@ class Connections:
                     if filter_pid is not None and filter_pid != pid:
                         continue
                     else:
-                        if len(tokens) == 8:
-                            path = tokens[-1]
-                        else:
-                            path = ""
+                        path = tokens[-1] if len(tokens) == 8 else ''
                         type_ = _common.socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
@@ -1191,8 +1188,9 @@ class RootFsDeviceFinder:
     or "rootfs". This container class uses different strategies to try to
     obtain the real device path. Resources:
     https://bootlin.com/blog/find-root-device/
-    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
+    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/.
     """
+
     __slots__ = ['major', 'minor']
 
     def __init__(self):
@@ -1455,7 +1453,7 @@ def sensors_battery():
     Implementation note: it appears /sys/class/power_supply/BAT0/
     directory structure may vary and provide files with the same
     meaning but under different names, see:
-    https://github.com/giampaolo/psutil/issues/966
+    https://github.com/giampaolo/psutil/issues/966.
     """
     null = object()
 
@@ -1664,7 +1662,7 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-class Process(object):
+class Process:
     """Linux process implementation."""
 
     __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
@@ -1901,7 +1899,7 @@ class Process(object):
         #  ============================================================
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
-                [int(x) * PAGESIZE for x in f.readline().split()[:7]]
+                (int(x) * PAGESIZE for x in f.readline().split()[:7])
         return pmem(rss, vms, shared, text, lib, data, dirty)
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
@@ -1981,7 +1979,7 @@ class Process(object):
         def memory_maps(self):
             """Return process's mapped memory regions as a list of named
             tuples. Fields are explained in 'man proc'; here is an updated
-            (Apr 2012) version: http://goo.gl/fmebo
+            (Apr 2012) version: http://goo.gl/fmebo.
 
             /proc/{PID}/smaps does not exist on kernels < 2.6.14 or if
             CONFIG_MMU kernel configuration option is not enabled.

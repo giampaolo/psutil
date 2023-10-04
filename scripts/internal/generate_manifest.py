@@ -4,11 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Generate MANIFEST.in file.
-"""
+"""Generate MANIFEST.in file."""
 
 import os
+import shlex
 import subprocess
 
 
@@ -19,7 +18,7 @@ SKIP_PREFIXES = ('.ci/', '.github/')
 
 def sh(cmd):
     return subprocess.check_output(
-        cmd, shell=True, universal_newlines=True).strip()
+        shlex.split(cmd), universal_newlines=True).strip()
 
 
 def main():

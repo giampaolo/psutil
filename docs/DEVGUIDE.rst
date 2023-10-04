@@ -12,7 +12,7 @@ Once you have a compiler installed run:
 .. code-block:: bash
 
     git clone git@github.com:giampaolo/psutil.git
-    make setup-dev-env  # install useful dev libs (flake8, coverage, ...)
+    make setup-dev-env  # install useful dev libs (ruff, coverage, ...)
     make build
     make install
     make test

@@ -4,18 +4,18 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print PYPI statistics in MarkDown format.
+"""Print PYPI statistics in MarkDown format.
 Useful sites:
 * https://pepy.tech/project/psutil
 * https://pypistats.org/packages/psutil
-* https://hugovk.github.io/top-pypi-packages/
+* https://hugovk.github.io/top-pypi-packages/.
 """
 
 from __future__ import print_function
 
 import json
 import os
+import shlex
 import subprocess
 import sys
 
@@ -28,8 +28,10 @@ AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 PKGNAME = 'psutil'
 DAYS = 30
 LIMIT = 100
-GITHUB_SCRIPT_URL = "https://github.com/giampaolo/psutil/blob/master/" \
-                    "scripts/internal/pypistats.py"
+GITHUB_SCRIPT_URL = (
+    "https://github.com/giampaolo/psutil/blob/master/"
+    "scripts/internal/pypistats.py"
+)
 LAST_UPDATE = None
 bytes_billed = 0
 
@@ -41,7 +43,7 @@ def sh(cmd):
     assert os.path.exists(AUTH_FILE)
     env = os.environ.copy()
     env['GOOGLE_APPLICATION_CREDENTIALS'] = AUTH_FILE
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+    p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
@@ -108,7 +110,7 @@ templ = "| %-30s | %15s |"
 
 def print_row(left, right):
     if isinstance(right, int):
-        right = '{0:,}'.format(right)
+        right = '{:,}'.format(right)
     print(templ % (left, right))
 
 

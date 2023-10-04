@@ -4,9 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Prints release announce based on HISTORY.rst file content.
-See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode
+"""Prints release announce based on HISTORY.rst file content.
+See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
 """
 
 import os
@@ -14,7 +13,7 @@ import re
 import subprocess
 import sys
 
-from psutil import __version__ as PRJ_VERSION
+from psutil import __version__
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -24,6 +23,7 @@ PRINT_HASHES_SCRIPT = os.path.join(
     ROOT, 'scripts', 'internal', 'print_hashes.py')
 
 PRJ_NAME = 'psutil'
+PRJ_VERSION = __version__
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
 PRJ_URL_DOC = 'http://psutil.readthedocs.io'
 PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'

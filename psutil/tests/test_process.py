@@ -964,7 +964,7 @@ class TestProcess(PsutilTestCase):
         if len(initial) > 12:
             initial = initial[:12]  # ...otherwise it will take forever
         combos = []
-        for i in range(0, len(initial) + 1):
+        for i in range(len(initial) + 1):
             for subset in itertools.combinations(initial, i):
                 if subset:
                     combos.append(list(subset))
@@ -1462,6 +1462,7 @@ if POSIX and os.getuid() == 0:
         Executed only on UNIX and only if the user who run the test script
         is root.
         """
+
         # the uid/gid the test suite runs under
         if hasattr(os, 'getuid'):
             PROCESS_UID = os.getuid()
@@ -1525,7 +1526,7 @@ class TestPopen(PsutilTestCase):
                           stderr=subprocess.PIPE, env=PYTHON_EXE_ENV) as proc:
             proc.name()
             proc.cpu_times()
-            proc.stdin
+            proc.stdin  # noqa
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
             proc.terminate()

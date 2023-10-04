@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'free' cmdline utility.
+"""A clone of 'free' cmdline utility.
 
 $ python3 scripts/free.py
              total       used       free     shared    buffers      cache

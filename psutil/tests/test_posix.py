@@ -43,8 +43,7 @@ if POSIX:
 
 
 def ps(fmt, pid=None):
-    """
-    Wrapper for calling the ps command with a little bit of cross-platform
+    """Wrapper for calling the ps command with a little bit of cross-platform
     support for a narrow range of features.
     """
 
@@ -68,10 +67,7 @@ def ps(fmt, pid=None):
 
     output = sh(cmd)
 
-    if LINUX:
-        output = output.splitlines()
-    else:
-        output = output.splitlines()[1:]
+    output = output.splitlines() if LINUX else output.splitlines()[1:]
 
     all_output = []
     for line in output:
@@ -324,7 +320,7 @@ class TestSystemAPIs(PsutilTestCase):
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
-        for nic in psutil.net_io_counters(pernic=True).keys():
+        for nic in psutil.net_io_counters(pernic=True):
             for line in output.split():
                 if line.startswith(nic):
                     break

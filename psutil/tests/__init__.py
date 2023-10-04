@@ -4,9 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Test utilities.
-"""
+"""Test utilities."""
 
 from __future__ import print_function
 
@@ -368,9 +366,11 @@ def spawn_testproc(cmd=None, **kwds):
         testfn = get_testfn()
         try:
             safe_rmpath(testfn)
-            pyline = "from time import sleep;" \
-                     "open(r'%s', 'w').close();" \
-                     "sleep(60);" % testfn
+            pyline = (
+                "from time import sleep;" +
+                "open(r'%s', 'w').close();" % testfn +
+                "sleep(60);"
+            )
             cmd = [PYTHON_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)
@@ -478,7 +478,7 @@ def pyrun(src, **kwds):
     kwds.setdefault("stderr", None)
     srcfile = get_testfn()
     try:
-        with open(srcfile, 'wt') as f:
+        with open(srcfile, "w") as f:
             f.write(src)
         subp = spawn_testproc([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
@@ -490,7 +490,7 @@ def pyrun(src, **kwds):
 
 @_reap_children_on_err
 def sh(cmd, **kwds):
-    """run cmd in a subprocess and return its output.
+    """Run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
     # Prevents subprocess to open error dialogs in case of error.
@@ -670,10 +670,7 @@ def get_winver():
         sp = wv.service_pack_major or 0
     else:
         r = re.search(r"\s\d$", wv[4])
-        if r:
-            sp = int(r.group(0))
-        else:
-            sp = 0
+        sp = int(r.group(0)) if r else 0
     return (wv[0], wv[1], sp)
 
 
@@ -682,7 +679,7 @@ def get_winver():
 # ===================================================================
 
 
-class retry(object):
+class retry:
     """A retry decorator."""
 
     def __init__(self,
@@ -772,7 +769,7 @@ def call_until(fun, expr):
     expression is True.
     """
     ret = fun()
-    assert eval(expr)
+    assert eval(expr)  # noqa
     return ret
 
 
@@ -849,7 +846,7 @@ def create_exe(outpath, c_code=None):
                 }
                 """)
         assert isinstance(c_code, str), c_code
-        with open(get_testfn(suffix='.c'), 'wt') as f:
+        with open(get_testfn(suffix='.c'), "w") as f:
             f.write(c_code)
         try:
             subprocess.check_call(["gcc", f.name, "-o", outpath])
@@ -894,7 +891,7 @@ class TestCase(unittest.TestCase):
     # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
     # add support for the new name.
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp  # noqa
 
     # ...otherwise multiprocessing.Pool complains
     if not PY3:
@@ -1084,6 +1081,7 @@ class TestMemoryLeak(PsutilTestCase):
             def test_fun(self):
                 self.execute(some_function)
     """
+
     # Configurable class attrs.
     times = 200
     warmup_times = 10
@@ -1316,6 +1314,7 @@ class process_namespace:
     >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
+
     utils = [
         ('cpu_percent', (), {}),
         ('memory_percent', (), {}),
@@ -1452,6 +1451,7 @@ class system_namespace:
     >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
+
     getters = [
         ('boot_time', (), {}),
         ('cpu_count', (), {'logical': False}),
@@ -1915,4 +1915,4 @@ def cleanup_test_procs():
 # module. With this it will. See:
 # https://gmpy.dev/blog/2016/how-to-always-execute-exit-functions-in-python
 if POSIX:
-    signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))
+    signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(sig))

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Benchmark all API calls and print them from fastest to slowest.
+"""Benchmark all API calls and print them from fastest to slowest.
 
 $ make print_api_speed
 SYSTEM APIS                NUM CALLS      SECONDS
@@ -192,8 +191,9 @@ def main():
     print_timings()
 
     if not prio_set:
-        print_color("\nWARN: couldn't set highest process priority " +
-                    "(requires root)", "red")
+        msg = "\nWARN: couldn't set highest process priority "
+        msg += "(requires root)"
+        print_color(msg, "red")
 
 
 if __name__ == '__main__':

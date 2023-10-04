@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Show battery information.
+"""Show battery information.
 
 $ python3 scripts/battery.py
 charge:     74%

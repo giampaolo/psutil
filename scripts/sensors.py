@@ -5,8 +5,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'sensors' utility on Linux printing hardware temperatures,
+"""A clone of 'sensors' utility on Linux printing hardware temperatures,
 fans speed and battery info.
 
 $ python3 scripts/sensors.py
@@ -45,10 +44,7 @@ def main():
         temps = psutil.sensors_temperatures()
     else:
         temps = {}
-    if hasattr(psutil, "sensors_fans"):
-        fans = psutil.sensors_fans()
-    else:
-        fans = {}
+    fans = psutil.sensors_fans() if hasattr(psutil, "sensors_fans") else {}
     if hasattr(psutil, "sensors_battery"):
         battery = psutil.sensors_battery()
     else:

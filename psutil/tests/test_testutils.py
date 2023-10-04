@@ -5,9 +5,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Tests for testing utils (psutil.tests namespace).
-"""
+"""Tests for testing utils (psutil.tests namespace)."""
 
 import collections
 import contextlib
@@ -71,7 +69,7 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             while queue:
                 queue.pop()
-                1 / 0
+                1 / 0  # noqa
             return 1
 
         queue = list(range(3))
@@ -85,7 +83,7 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             while queue:
                 queue.pop()
-                1 / 0
+                1 / 0  # noqa
             return 1
 
         queue = list(range(6))
@@ -107,7 +105,7 @@ class TestRetryDecorator(PsutilTestCase):
 
         @retry(retries=5, interval=None, logfun=None)
         def foo():
-            1 / 0
+            1 / 0  # noqa
 
         self.assertRaises(ZeroDivisionError, foo)
         self.assertEqual(sleep.call_count, 0)
@@ -117,7 +115,7 @@ class TestRetryDecorator(PsutilTestCase):
 
         @retry(retries=5, interval=1, logfun=None)
         def foo():
-            1 / 0
+            1 / 0  # noqa
 
         self.assertRaises(ZeroDivisionError, foo)
         self.assertEqual(sleep.call_count, 5)
@@ -170,7 +168,7 @@ class TestFSTestUtils(PsutilTestCase):
 
     def test_open_text(self):
         with open_text(__file__) as f:
-            self.assertEqual(f.mode, 'rt')
+            self.assertEqual(f.mode, 'r')
 
     def test_open_binary(self):
         with open_binary(__file__) as f:
@@ -407,7 +405,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     def test_execute_w_exc(self):
         def fun_1():
-            1 / 0
+            1 / 0  # noqa
         self.execute_w_exc(ZeroDivisionError, fun_1)
         with self.assertRaises(ZeroDivisionError):
             self.execute_w_exc(OSError, fun_1)

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of top / htop.
+"""A clone of top / htop.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
@@ -117,7 +116,7 @@ def print_header(procs_status, num_procs):
     """Print system-related info, above the process list."""
 
     def get_dashes(perc):
-        dashes = "|" * int((float(perc) / 10 * 4))
+        dashes = "|" * int(float(perc) / 10 * 4)
         empty_dashes = " " * (40 - len(dashes))
         return dashes, empty_dashes
 
@@ -182,7 +181,7 @@ def refresh_window(procs, procs_status):
         if p.dict['cpu_times'] is not None:
             ctime = datetime.timedelta(seconds=sum(p.dict['cpu_times']))
             ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
-                                  str((ctime.seconds % 60)).zfill(2),
+                                  str(ctime.seconds % 60).zfill(2),
                                   str(ctime.microseconds)[:2])
         else:
             ctime = ''
@@ -192,10 +191,7 @@ def refresh_window(procs, procs_status):
             p.dict['memory_percent'] = ''
         if p.dict['cpu_percent'] is None:
             p.dict['cpu_percent'] = ''
-        if p.dict['username']:
-            username = p.dict['username'][:8]
-        else:
-            username = ""
+        username = p.dict['username'][:8] if p.dict['username'] else ''
         line = templ % (p.pid,
                         username,
                         p.dict['nice'],
@@ -216,7 +212,7 @@ def refresh_window(procs, procs_status):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    for i in range(0, curses.COLORS):
+    for i in range(curses.COLORS):
         curses.init_pair(i + 1, i, -1)
     curses.endwin()
     win.nodelay(1)

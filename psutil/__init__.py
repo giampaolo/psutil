@@ -227,8 +227,8 @@ _SENTINEL = object()
 # See: https://github.com/giampaolo/psutil/issues/564
 if (int(__version__.replace('.', '')) !=
         getattr(_psplatform.cext, 'version', None)):
-    msg = "version conflict: %r C extension module was built for another " \
-          "version of psutil" % _psplatform.cext.__file__
+    msg = "version conflict: %r C extension " % _psplatform.cext.__file__
+    msg += "module was built for another version of psutil"
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
             '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
@@ -267,10 +267,7 @@ def _pprint_secs(secs):
     """Format seconds in a human readable form."""
     now = time.time()
     secs_ago = int(now - secs)
-    if secs_ago < 60 * 60 * 24:
-        fmt = "%H:%M:%S"
-    else:
-        fmt = "%Y-%m-%d %H:%M:%S"
+    fmt = "%H:%M:%S" if secs_ago < 60 * 60 * 24 else "%Y-%m-%d %H:%M:%S"
     return datetime.datetime.fromtimestamp(secs).strftime(fmt)
 
 
@@ -279,7 +276,7 @@ def _pprint_secs(secs):
 # =====================================================================
 
 
-class Process(object):
+class Process(object):  # noqa: UP004
     """Represents an OS process with the given PID.
     If PID is omitted current process PID (os.getpid()) is used.
     Raise NoSuchProcess if PID does not exist.
@@ -869,7 +866,8 @@ class Process(object):
 
         def environ(self):
             """The environment variables of the process as a dict.  Note: this
-            might not reflect changes made after the process started.  """
+            might not reflect changes made after the process started.
+            """
             return self._proc.environ()
 
     if WINDOWS:
@@ -1333,7 +1331,7 @@ class Popen(Process):
       >>> p.username()
       'giampaolo'
       >>> p.communicate()
-      ('hi\n', None)
+      ('hi', None)
       >>> p.terminate()
       >>> p.wait(timeout=2)
       0
@@ -1384,7 +1382,7 @@ class Popen(Process):
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
             return self.__subproc.returncode
-        ret = super(Popen, self).wait(timeout)
+        ret = super(Popen, self).wait(timeout)  # noqa
         self.__subproc.returncode = ret
         return ret
 
@@ -2200,7 +2198,7 @@ def net_if_addrs():
                 if WINDOWS and fam == -1:
                     fam = _psplatform.AF_LINK
                 elif (hasattr(_psplatform, "AF_LINK") and
-                        _psplatform.AF_LINK == fam):
+                        fam == _psplatform.AF_LINK):
                     # Linux defines AF_LINK as an alias for AF_PACKET.
                     # We re-set the family here so that repr(family)
                     # will show AF_LINK rather than AF_PACKET
@@ -2425,7 +2423,7 @@ def test():  # pragma: no cover
 
 del memoize_when_activated, division
 if sys.version_info[0] < 3:
-    del num, x
+    del num, x  # noqa
 
 if __name__ == "__main__":
     test()

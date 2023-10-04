@@ -216,8 +216,8 @@ class TestMiscAPIs(PsutilTestCase):
             self.assertIsInstance(user.terminal, (str, type(None)))
             if user.host is not None:
                 self.assertIsInstance(user.host, (str, type(None)))
-            user.terminal
-            user.host
+            user.terminal  # noqa
+            user.host  # noqa
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
             if WINDOWS or OPENBSD:
@@ -617,7 +617,7 @@ class TestDiskAPIs(PsutilTestCase):
             else:
                 # we cannot make any assumption about this, see:
                 # http://goo.gl/p9c43
-                disk.device
+                disk.device  # noqa
             # on modern systems mount points can also be files
             assert os.path.exists(disk.mountpoint), disk
             assert disk.fstype, disk

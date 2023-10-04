@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Helper script iterates over all processes and .
+"""Helper script iterates over all processes and .
 It prints how many AccessDenied exceptions are raised in total and
 for what Process method.
 

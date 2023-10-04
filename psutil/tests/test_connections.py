@@ -357,14 +357,14 @@ class TestFilters(ConnectionTestCase):
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
         tcp4_proc = self.pyrun(tcp4_template)
-        tcp4_addr = eval(wait_for_file(testfile, delete=True))
+        tcp4_addr = eval(wait_for_file(testfile, delete=True))  # noqa
         udp4_proc = self.pyrun(udp4_template)
-        udp4_addr = eval(wait_for_file(testfile, delete=True))
+        udp4_addr = eval(wait_for_file(testfile, delete=True))  # noqa
         if supports_ipv6():
             tcp6_proc = self.pyrun(tcp6_template)
-            tcp6_addr = eval(wait_for_file(testfile, delete=True))
+            tcp6_addr = eval(wait_for_file(testfile, delete=True))  # noqa
             udp6_proc = self.pyrun(udp6_template)
-            udp6_addr = eval(wait_for_file(testfile, delete=True))
+            udp6_addr = eval(wait_for_file(testfile, delete=True))  # noqa
         else:
             tcp6_proc = None
             udp6_proc = None
@@ -533,10 +533,10 @@ class TestMisc(PsutilTestCase):
                 ints.append(num)
                 strs.append(str_)
         if SUNOS:
-            psutil.CONN_IDLE
-            psutil.CONN_BOUND
+            psutil.CONN_IDLE  # noqa
+            psutil.CONN_BOUND  # noqa
         if WINDOWS:
-            psutil.CONN_DELETE_TCB
+            psutil.CONN_DELETE_TCB  # noqa
 
 
 if __name__ == '__main__':

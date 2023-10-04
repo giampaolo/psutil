@@ -503,7 +503,7 @@ class NetBSDTestCase(PsutilTestCase):
 
     @staticmethod
     def parse_meminfo(look_for):
-        with open('/proc/meminfo', 'rt') as f:
+        with open('/proc/meminfo') as f:
             for line in f:
                 if line.startswith(look_for):
                     return int(line.split()[1]) * 1024
