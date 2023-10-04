@@ -851,7 +851,7 @@ class Process:
         t = self._get_raw_meminfo()
         rss = t[2]  # wset
         vms = t[7]  # pagefile
-        return pmem(*(rss, vms, ) + t)
+        return pmem(*(rss, vms) + t)
 
     @wrap_exceptions
     def memory_full_info(self):

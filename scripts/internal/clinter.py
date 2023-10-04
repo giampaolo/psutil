@@ -54,7 +54,7 @@ def check_line(path, line, idx, lines):
         warn(path, line, lineno, "no blank line at EOF")
 
     ss = s.strip()
-    if ss.startswith(("printf(", "printf (", )):
+    if ss.startswith(("printf(", "printf (")):
         if not ss.endswith(("// NOQA", "//  NOQA")):
             warn(path, line, lineno, "printf() statement")
 
