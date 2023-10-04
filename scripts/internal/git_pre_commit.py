@@ -111,9 +111,9 @@ def isort(files):
     print("running isort (%s)" % len(files))
     cmd = [PYTHON, "-m", "isort", "--check-only"] + files
     if subprocess.call(cmd) != 0:
-        return sys.exit(
-            "python code didn't pass 'isort' style check; " +
-            "try running 'make fix-imports'")
+        msg = "python code didn't pass 'isort' style check; "
+        msg += "try running 'make fix-imports'"
+        return sys.exit(msg)
 
 
 def c_linter(files):

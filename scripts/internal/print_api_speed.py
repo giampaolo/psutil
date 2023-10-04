@@ -192,8 +192,9 @@ def main():
     print_timings()
 
     if not prio_set:
-        print_color("\nWARN: couldn't set highest process priority " +
-                    "(requires root)", "red")
+        msg = "\nWARN: couldn't set highest process priority "
+        msg += "(requires root)", "red"
+        print_color(msg)
 
 
 if __name__ == '__main__':
