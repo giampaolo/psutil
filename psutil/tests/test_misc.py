@@ -329,7 +329,7 @@ class TestMemoizeDecorator(PsutilTestCase):
             self.assertEqual(ret, expected_retval)
         self.assertEqual(len(self.calls), 4)
         # docstring
-        self.assertEqual(obj.__doc__, "my docstring")
+        self.assertEqual(obj.__doc__, "My docstring.")
 
     def test_function(self):
         @memoize
@@ -344,7 +344,7 @@ class TestMemoizeDecorator(PsutilTestCase):
     def test_class(self):
         @memoize
         class Foo:
-            """my docstring."""
+            """My docstring."""
 
             def __init__(self, *args, **kwargs):
                 baseclass.calls.append((args, kwargs))
@@ -428,7 +428,7 @@ class TestMemoizeDecorator(PsutilTestCase):
         self.assertEqual(ret, expected)
         self.assertEqual(len(calls), 4)
         # docstring
-        self.assertEqual(foo.__doc__, "foo docstring")
+        self.assertEqual(foo.__doc__, "Foo docstring.")
 
 
 class TestCommonModule(PsutilTestCase):
