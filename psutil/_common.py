@@ -501,7 +501,8 @@ def memoize_when_activated(fun):
 
     def cache_activate(proc):
         """Activate cache. Expects a Process instance. Cache will be
-        stored as a "_cache" instance attribute."""
+        stored as a "_cache" instance attribute.
+        """
         proc._cache = {}
 
     def cache_deactivate(proc):

@@ -866,7 +866,8 @@ class Process(object):  # noqa: UP004
 
         def environ(self):
             """The environment variables of the process as a dict.  Note: this
-            might not reflect changes made after the process started.  """
+            might not reflect changes made after the process started.
+            """
             return self._proc.environ()
 
     if WINDOWS:
