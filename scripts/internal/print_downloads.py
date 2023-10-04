@@ -28,8 +28,10 @@ AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 PKGNAME = 'psutil'
 DAYS = 30
 LIMIT = 100
-GITHUB_SCRIPT_URL = "https://github.com/giampaolo/psutil/blob/master/" + \
+GITHUB_SCRIPT_URL = (
+    "https://github.com/giampaolo/psutil/blob/master/"
     "scripts/internal/pypistats.py"
+)
 LAST_UPDATE = None
 bytes_billed = 0
 
