@@ -280,6 +280,7 @@ class Error(Exception):
     """Base exception class. All other psutil exceptions inherit
     from this one.
     """
+
     __module__ = 'psutil'
 
     def _infodict(self, attrs):
@@ -313,6 +314,7 @@ class NoSuchProcess(Error):
     """Exception raised when a process with a certain PID doesn't
     or no longer exists.
     """
+
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, msg=None):
@@ -329,6 +331,7 @@ class ZombieProcess(NoSuchProcess):
     On Linux all zombie processes are querable (hence this is never
     raised). Windows doesn't have zombie processes.
     """
+
     __module__ = 'psutil'
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
@@ -339,6 +342,7 @@ class ZombieProcess(NoSuchProcess):
 
 class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
+
     __module__ = 'psutil'
 
     def __init__(self, pid=None, name=None, msg=None):
@@ -352,6 +356,7 @@ class TimeoutExpired(Error):
     """Raised on Process.wait(timeout) if timeout expires and process
     is still alive.
     """
+
     __module__ = 'psutil'
 
     def __init__(self, seconds, pid=None, name=None):

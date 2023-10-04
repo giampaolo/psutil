@@ -1083,6 +1083,7 @@ class TestMemoryLeak(PsutilTestCase):
             def test_fun(self):
                 self.execute(some_function)
     """
+
     # Configurable class attrs.
     times = 200
     warmup_times = 10
@@ -1315,6 +1316,7 @@ class process_namespace:
     >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
+
     utils = [
         ('cpu_percent', (), {}),
         ('memory_percent', (), {}),
@@ -1451,6 +1453,7 @@ class system_namespace:
     >>> for fun, name in ns.iter(ns.getters):
     ...    fun()
     """
+
     getters = [
         ('boot_time', (), {}),
         ('cpu_count', (), {'logical': False}),

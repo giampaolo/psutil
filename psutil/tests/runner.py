@@ -149,6 +149,7 @@ class ColouredTextRunner(unittest.TextTestRunner):
     A coloured text runner which also prints failed tests on KeyboardInterrupt
     and save failed tests in a file so that they can be re-run.
     """
+
     resultclass = ColouredResult if USE_COLORS else unittest.TextTestResult
 
     def __init__(self, *args, **kwargs):

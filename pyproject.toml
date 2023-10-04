@@ -4,6 +4,7 @@ target-version = "py37"
 line-length = 79
 select = [
     "ALL",  # to get a list of all values: `python3 -m ruff linter`
+    "D204",  # [*] 1 blank line required after class docstring (pydocstyle)
 ]
 ignore = [
     "A",  # flake8-builtins

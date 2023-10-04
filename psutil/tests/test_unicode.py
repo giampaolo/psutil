@@ -309,6 +309,7 @@ class TestFSAPIs(BaseUnicodeTest):
 @unittest.skipIf(CI_TESTING, "unreliable on CI")
 class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
+
     funky_suffix = INVALID_UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
@@ -323,6 +324,7 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
 
 class TestNonFSAPIS(BaseUnicodeTest):
     """Unicode tests for non fs-related APIs."""
+
     funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")

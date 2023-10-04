@@ -1462,6 +1462,7 @@ if POSIX and os.getuid() == 0:
         Executed only on UNIX and only if the user who run the test script
         is root.
         """
+
         # the uid/gid the test suite runs under
         if hasattr(os, 'getuid'):
             PROCESS_UID = os.getuid()
