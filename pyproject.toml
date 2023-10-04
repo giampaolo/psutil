@@ -10,6 +10,7 @@ select = [
     "D212",  # [*] Multi-line docstring summary should start at the first line
     "D301",  # Use `r"""` if any backslashes in a docstring
     "D403",  # [*] First word of the first line should be capitalized
+    "PERF102",  # [*] When using only the keys of a dict use the `keys()` method
 ]
 ignore = [
     "A",  # flake8-builtins

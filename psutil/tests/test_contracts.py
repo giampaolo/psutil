@@ -297,7 +297,7 @@ class TestSystemAPITypes(PsutilTestCase):
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
-        for ifname, _ in psutil.net_io_counters(pernic=True).items():
+        for ifname in psutil.net_io_counters(pernic=True):
             self.assertIsInstance(ifname, str)
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
