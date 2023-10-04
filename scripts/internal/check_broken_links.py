@@ -198,7 +198,7 @@ def validate_url(url):
 
 
 def parallel_validator(urls):
-    """validates all urls in parallel
+    """Validates all urls in parallel
     urls: tuple(filename, url)
     """
     fails = []  # list of tuples (filename, url)

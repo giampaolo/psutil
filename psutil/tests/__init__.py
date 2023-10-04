@@ -490,7 +490,7 @@ def pyrun(src, **kwds):
 
 @_reap_children_on_err
 def sh(cmd, **kwds):
-    """run cmd in a subprocess and return its output.
+    """Run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
     # Prevents subprocess to open error dialogs in case of error.
