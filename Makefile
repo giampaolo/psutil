@@ -72,6 +72,7 @@ clean:  ## Remove all build files.
 		.coverage \
 		.failed-tests.txt \
 		.pytest_cache \
+		.ruff_cache/ \
 		build/ \
 		dist/ \
 		docs/_build/ \
