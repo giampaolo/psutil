@@ -2422,7 +2422,7 @@ def test():  # pragma: no cover
 
 del memoize_when_activated, division
 if sys.version_info[0] < 3:
-    del num, x
+    del num, x  # noqa
 
 if __name__ == "__main__":
     test()

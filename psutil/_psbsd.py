@@ -8,7 +8,7 @@ import contextlib
 import errno
 import functools
 import os
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElementTree
 from collections import defaultdict
 from collections import namedtuple
 
@@ -284,7 +284,7 @@ else:
             index = s.rfind("</groups>")
             if index != -1:
                 s = s[:index + 9]
-                root = ET.fromstring(s)
+                root = ElementTree.fromstring(s)
                 try:
                     ret = len(root.findall('group/children/group/cpu')) or None
                 finally:

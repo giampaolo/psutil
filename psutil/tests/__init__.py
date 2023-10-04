@@ -893,7 +893,7 @@ class TestCase(unittest.TestCase):
     # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
     # add support for the new name.
     if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp  # noqa
 
     # ...otherwise multiprocessing.Pool complains
     if not PY3:

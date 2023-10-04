@@ -59,7 +59,7 @@ NWORKERS = psutil.cpu_count() or 1
 USE_COLORS = not CI_TESTING and term_supports_colors()
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase
+loadTestsFromTestCase = unittest.defaultTestLoader.loadTestsFromTestCase  # noqa
 
 
 def cprint(msg, color, bold=False, file=None):
