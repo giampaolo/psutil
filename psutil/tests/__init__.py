@@ -368,9 +368,11 @@ def spawn_testproc(cmd=None, **kwds):
         testfn = get_testfn()
         try:
             safe_rmpath(testfn)
-            pyline = "from time import sleep;" \
-                     "open(r'%s', 'w').close();" \
-                     "sleep(60);" % testfn
+            pyline = (
+                "from time import sleep;" +
+                "open(r'%s', 'w').close();" +
+                "sleep(60);" % testfn
+            )
             cmd = [PYTHON_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
             _subprocesses_started.add(sproc)

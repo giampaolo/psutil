@@ -549,8 +549,8 @@ def swap_memory():
         f = open_binary("%s/vmstat" % get_procfs_path())
     except IOError as err:
         # see https://github.com/giampaolo/psutil/issues/722
-        msg = "'sin' and 'sout' swap memory stats couldn't " \
-              "be determined and were set to 0 (%s)" % str(err)
+        msg = "'sin' and 'sout' swap memory stats couldn't " + \
+            "be determined and were set to 0 (%s)" % str(err)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
         sin = sout = 0
     else:
@@ -569,8 +569,8 @@ def swap_memory():
                 # we might get here when dealing with exotic Linux
                 # flavors, see:
                 # https://github.com/giampaolo/psutil/issues/313
-                msg = "'sin' and 'sout' swap memory stats couldn't " \
-                      "be determined and were set to 0"
+                msg = "'sin' and 'sout' swap memory stats couldn't " + \
+                    "be determined and were set to 0"
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
