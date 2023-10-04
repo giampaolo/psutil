@@ -26,7 +26,7 @@ ignore = [
     "DTZ",  # flake8-datetimez
     "EM",  # flake8-errmsg
     "ERA001",  # Found commented-out code
-    "FBT",  # flake8-boolean-trap
+    "FBT",  # flake8-boolean-trap (makes zero sense)
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
     "FLY",  # flynt (PYTHON2.7 COMPAT)
     "INP",  # flake8-no-pep420
@@ -34,7 +34,6 @@ ignore = [
     "N802",  # Function name X should be lowercase.
     "N803",  # Argument name X should be lowercase.
     "N806",  # Variable X in function should be lowercase.
-    "N812",  # Lowercase `error` imported as non-lowercase `FooBarError`
     "N818",  # Exception name `FooBar` should be named with an Error suffix
     "PERF",  # Perflint
     "PGH004",  # Use specific rule codes when using `noqa`
