@@ -34,7 +34,7 @@ __all__ = [
     "InterruptedError", "ChildProcessError", "FileExistsError"]
 
 
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 _SENTINEL = object()
 
 if PY3:
