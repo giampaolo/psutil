@@ -4,9 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Kill a process by name.
-"""
+"""Kill a process by name."""
 
 import os
 import sys

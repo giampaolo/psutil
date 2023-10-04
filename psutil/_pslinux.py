@@ -711,8 +711,7 @@ def cpu_stats():
 
 
 def _cpu_get_cpuinfo_freq():
-    """Return current CPU frequency from cpuinfo if available.
-    """
+    """Return current CPU frequency from cpuinfo if available."""
     ret = []
     with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:
