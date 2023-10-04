@@ -106,6 +106,16 @@ def git_commit_files():
     return (py_files, c_files, rst_files, toml_files, new_rm_mv)
 
 
+def ruff(files):
+    print("running ruff (%s)" % len(files))
+    cmd = [PYTHON, "-m", "ruff", "check", "--no-cache"] + files
+    if subprocess.call(cmd) != 0:
+        return exit(
+            "Python code didn't pass 'ruff' style check."
+            "Try running 'make fix-ruff'."
+        )
+
+
 def isort(files):
     print("running isort (%s)" % len(files))
     cmd = [PYTHON, "-m", "isort", "--check-only"] + files
@@ -140,6 +150,7 @@ def rstcheck(files):
 def main():
     py_files, c_files, rst_files, toml_files, new_rm_mv = git_commit_files()
     if py_files:
+        ruff(py_files)
         isort(py_files)
     if c_files:
         c_linter(c_files)

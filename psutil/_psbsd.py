@@ -8,9 +8,9 @@ import contextlib
 import errno
 import functools
 import os
-import xml.etree.ElementTree as ElementTree
 from collections import defaultdict
 from collections import namedtuple
+from xml.etree import ElementTree
 
 from . import _common
 from . import _psposix
