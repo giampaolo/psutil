@@ -1914,4 +1914,4 @@ def cleanup_test_procs():
 # module. With this it will. See:
 # https://gmpy.dev/blog/2016/how-to-always-execute-exit-functions-in-python
 if POSIX:
-    signal.signal(signal.SIGTERM, lambda sig, frame: sys.exit(sig))
+    signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(sig))
