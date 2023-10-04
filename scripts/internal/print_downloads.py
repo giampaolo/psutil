@@ -15,6 +15,7 @@ from __future__ import print_function
 
 import json
 import os
+import shlex
 import subprocess
 import sys
 
@@ -42,7 +43,7 @@ def sh(cmd):
     assert os.path.exists(AUTH_FILE)
     env = os.environ.copy()
     env['GOOGLE_APPLICATION_CREDENTIALS'] = AUTH_FILE
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+    p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = p.communicate()
     if p.returncode != 0:

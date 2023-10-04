@@ -144,9 +144,8 @@ def cpu_count_logical():
 
 
 def cpu_count_cores():
-    cmd = "lsdev -Cc processor"
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
+    cmd = ["lsdev", "-Cc", "processor"]
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
     if PY3:
         stdout, stderr = (x.decode(sys.stdout.encoding)

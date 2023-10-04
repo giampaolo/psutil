@@ -6,6 +6,7 @@
 
 """Prints releases' timeline in RST format."""
 
+import shlex
 import subprocess
 
 
@@ -18,7 +19,7 @@ entry = """\
 
 def sh(cmd):
     return subprocess.check_output(
-        cmd, shell=True, universal_newlines=True).strip()
+        shlex.split(cmd), universal_newlines=True).strip()
 
 
 def get_tag_date(tag):

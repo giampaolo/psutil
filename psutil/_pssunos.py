@@ -617,8 +617,8 @@ class Process:
         """Get UNIX sockets used by process by parsing 'pfiles' output."""
         # TODO: rewrite this in C (...but the damn netstat source code
         # does not include this part! Argh!!)
-        cmd = "pfiles %s" % pid
-        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+        cmd = ["pfiles", str(pid)]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if PY3:
