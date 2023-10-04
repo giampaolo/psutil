@@ -12,7 +12,7 @@ https://github.com/settings/tokens
 The token must be created with at least "public_repo" scope/rights.
 If you lose it, just generate a new token.
 REST API doc:
-https://developer.github.com/v3/actions/artifacts/
+https://developer.github.com/v3/actions/artifacts/.
 """
 
 import argparse

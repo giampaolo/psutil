@@ -6,7 +6,7 @@
 
 """
 Prints files hashes, see:
-https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode
+https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
 """
 
 import argparse

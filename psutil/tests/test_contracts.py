@@ -6,7 +6,7 @@
 
 """Contracts tests. These tests mainly check API sanity in terms of
 returned types and APIs availability.
-Some of these are duplicates of tests test_system.py and test_process.py
+Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import errno
@@ -206,7 +206,7 @@ class TestAvailProcessAPIs(PsutilTestCase):
 class TestSystemAPITypes(PsutilTestCase):
     """Check the return types of system related APIs.
     Mainly we want to test we never return unicode on Python 2, see:
-    https://github.com/giampaolo/psutil/issues/1039
+    https://github.com/giampaolo/psutil/issues/1039.
     """
 
     @classmethod

@@ -219,7 +219,7 @@ def disk_usage(path):
 @memoize
 def get_terminal_map():
     """Get a map of device-id -> path as a dict.
-    Used by Process.terminal()
+    Used by Process.terminal().
     """
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')

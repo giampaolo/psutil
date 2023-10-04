@@ -7,7 +7,7 @@
 """
 A simple micro benchmark script which prints the speedup when using
 Process.oneshot() ctx manager.
-See: https://github.com/giampaolo/psutil/issues/799
+See: https://github.com/giampaolo/psutil/issues/799.
 """
 
 from __future__ import division

@@ -195,7 +195,7 @@ def convert_dos_path(s):
     r"""Convert paths using native DOS format like:
         "\Device\HarddiskVolume1\Windows\systemew\file.txt"
     into:
-        "C:\Windows\systemew\file.txt"
+        "C:\Windows\systemew\file.txt".
     """
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = cext.QueryDosDevice(rawdrive)
@@ -348,7 +348,7 @@ _loadavg_inititialized = False
 
 def getloadavg():
     """Return the number of processes in the system run queue averaged
-    over the last 1, 5, and 15 minutes respectively as a tuple"""
+    over the last 1, 5, and 15 minutes respectively as a tuple."""
     global _loadavg_inititialized
 
     if not _loadavg_inititialized:
@@ -701,7 +701,7 @@ def wrap_exceptions(fun):
 
 def retry_error_partial_copy(fun):
     """Workaround for https://github.com/giampaolo/psutil/issues/875.
-    See: https://stackoverflow.com/questions/4457745#4457745
+    See: https://stackoverflow.com/questions/4457745#4457745.
     """
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):

@@ -144,7 +144,7 @@ def cpu_times():
 
 
 def per_cpu_times():
-    """Return system CPU times as a named tuple"""
+    """Return system CPU times as a named tuple."""
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle = cpu_t
@@ -174,7 +174,7 @@ def cpu_freq():
     """Return CPU frequency.
     On macOS per-cpu frequency is not supported.
     Also, the returned frequency never changes, see:
-    https://arstechnica.com/civis/viewtopic.php?f=19&t=465002
+    https://arstechnica.com/civis/viewtopic.php?f=19&t=465002.
     """
     curr, min_, max_ = cext.cpu_freq()
     return [_common.scpufreq(curr, min_, max_)]

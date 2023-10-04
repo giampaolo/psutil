@@ -632,7 +632,7 @@ class TestDualProcessImplementation(PsutilTestCase):
     case the first fails because of limited permission error.
     Here we test that the two methods return the exact same value,
     see:
-    https://github.com/giampaolo/psutil/issues/304
+    https://github.com/giampaolo/psutil/issues/304.
     """
 
     @classmethod

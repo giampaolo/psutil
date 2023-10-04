@@ -334,7 +334,7 @@ class TestMemoizeDecorator(PsutilTestCase):
     def test_function(self):
         @memoize
         def foo(*args, **kwargs):
-            """My docstring"""
+            """My docstring."""
             baseclass.calls.append((args, kwargs))
             return 22
 
@@ -344,7 +344,7 @@ class TestMemoizeDecorator(PsutilTestCase):
     def test_class(self):
         @memoize
         class Foo:
-            """my docstring"""
+            """my docstring."""
 
             def __init__(self, *args, **kwargs):
                 baseclass.calls.append((args, kwargs))
@@ -374,7 +374,7 @@ class TestMemoizeDecorator(PsutilTestCase):
             @staticmethod
             @memoize
             def bar(*args, **kwargs):
-                """My docstring"""
+                """My docstring."""
                 baseclass.calls.append((args, kwargs))
                 return 22
 
@@ -386,7 +386,7 @@ class TestMemoizeDecorator(PsutilTestCase):
             @classmethod
             @memoize
             def bar(cls, *args, **kwargs):
-                """My docstring"""
+                """My docstring."""
                 baseclass.calls.append((args, kwargs))
                 return 22
 
@@ -398,7 +398,7 @@ class TestMemoizeDecorator(PsutilTestCase):
         # against different types. Keeping it anyway.
         @memoize
         def foo(*args, **kwargs):
-            """Foo docstring"""
+            """Foo docstring."""
             calls.append(None)
             return (args, kwargs)
 

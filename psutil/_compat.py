@@ -251,7 +251,7 @@ except ImportError:
 
     def lru_cache(maxsize=100, typed=False):
         """Least-recently-used cache decorator, see:
-        http://docs.python.org/3/library/functools.html#functools.lru_cache
+        http://docs.python.org/3/library/functools.html#functools.lru_cache.
         """
         def decorating_function(user_function):
             cache = {}
@@ -328,7 +328,7 @@ except ImportError:
                     return result
 
             def cache_info():
-                """Report cache statistics"""
+                """Report cache statistics."""
                 lock.acquire()
                 try:
                     return _CacheInfo(stats[HITS], stats[MISSES], maxsize,
@@ -337,7 +337,7 @@ except ImportError:
                     lock.release()
 
             def cache_clear():
-                """Clear the cache and cache statistics"""
+                """Clear the cache and cache statistics."""
                 lock.acquire()
                 try:
                     cache.clear()

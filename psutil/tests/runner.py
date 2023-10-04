@@ -9,7 +9,7 @@ Unit test runner, providing new features on top of unittest module:
 - colourized output
 - parallel run (UNIX only)
 - print failures/tracebacks on CTRL+C
-- re-run failed tests only (make test-failed)
+- re-run failed tests only (make test-failed).
 
 Invocation examples:
 - make test

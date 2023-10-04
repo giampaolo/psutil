@@ -9,7 +9,7 @@ Print PYPI statistics in MarkDown format.
 Useful sites:
 * https://pepy.tech/project/psutil
 * https://pypistats.org/packages/psutil
-* https://hugovk.github.io/top-pypi-packages/
+* https://hugovk.github.io/top-pypi-packages/.
 """
 
 from __future__ import print_function

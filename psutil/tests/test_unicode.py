@@ -7,7 +7,7 @@
 
 """
 Notes about unicode handling in psutil
-======================================
+======================================.
 
 Starting from version 5.3.0 psutil adds unicode support, see:
 https://github.com/giampaolo/psutil/issues/1040

@@ -346,7 +346,7 @@ if prlimit is not None:
 def calculate_avail_vmem(mems):
     """Fallback for kernels < 3.14 where /proc/meminfo does not provide
     "MemAvailable", see:
-    https://blog.famzah.net/2014/09/24/
+    https://blog.famzah.net/2014/09/24/.
 
     This code reimplements the algorithm outlined here:
     https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
@@ -1188,7 +1188,7 @@ class RootFsDeviceFinder:
     or "rootfs". This container class uses different strategies to try to
     obtain the real device path. Resources:
     https://bootlin.com/blog/find-root-device/
-    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/
+    https://www.systutorials.com/how-to-find-the-disk-where-root-is-on-in-bash-on-linux/.
     """
 
     __slots__ = ['major', 'minor']
@@ -1453,7 +1453,7 @@ def sensors_battery():
     Implementation note: it appears /sys/class/power_supply/BAT0/
     directory structure may vary and provide files with the same
     meaning but under different names, see:
-    https://github.com/giampaolo/psutil/issues/966
+    https://github.com/giampaolo/psutil/issues/966.
     """
     null = object()
 
@@ -1979,7 +1979,7 @@ class Process:
         def memory_maps(self):
             """Return process's mapped memory regions as a list of named
             tuples. Fields are explained in 'man proc'; here is an updated
-            (Apr 2012) version: http://goo.gl/fmebo
+            (Apr 2012) version: http://goo.gl/fmebo.
 
             /proc/{PID}/smaps does not exist on kernels < 2.6.14 or if
             CONFIG_MMU kernel configuration option is not enabled.

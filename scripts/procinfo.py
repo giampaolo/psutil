@@ -6,6 +6,7 @@
 
 """
 Print detailed information about a process.
+
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
 $ python3 scripts/procinfo.py

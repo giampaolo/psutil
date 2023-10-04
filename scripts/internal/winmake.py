@@ -209,7 +209,7 @@ def recursive_rm(*patterns):
 
 
 def build():
-    """Build / compile"""
+    """Build / compile."""
     # Make sure setuptools is installed (needed for 'develop' /
     # edit mode).
     sh('%s -c "import setuptools"' % PYTHON)
@@ -260,7 +260,7 @@ def upload_wheels():
 
 
 def install_pip():
-    """Install pip"""
+    """Install pip."""
     try:
         sh('%s -c "import pip"' % PYTHON)
     except SystemExit:
@@ -289,13 +289,13 @@ def install_pip():
 
 
 def install():
-    """Install in develop / edit mode"""
+    """Install in develop / edit mode."""
     build()
     sh("%s setup.py develop" % PYTHON)
 
 
 def uninstall():
-    """Uninstall psutil"""
+    """Uninstall psutil."""
     # Uninstalling psutil on Windows seems to be tricky.
     # On "import psutil" tests may import a psutil version living in
     # C:\PythonXY\Lib\site-packages which is not what we want, so
@@ -341,7 +341,7 @@ def uninstall():
 
 
 def clean():
-    """Deletes dev files"""
+    """Deletes dev files."""
     recursive_rm(
         "$testfn*",
         "*.bak",
@@ -367,14 +367,14 @@ def clean():
 
 
 def setup_dev_env():
-    """Install useful deps"""
+    """Install useful deps."""
     install_pip()
     install_git_hooks()
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
 def test(name=RUNNER_PY):
-    """Run tests"""
+    """Run tests."""
     build()
     sh("%s %s" % (PYTHON, name))
 
@@ -390,55 +390,55 @@ def coverage():
 
 
 def test_process():
-    """Run process tests"""
+    """Run process tests."""
     build()
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 def test_system():
-    """Run system tests"""
+    """Run system tests."""
     build()
     sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 def test_platform():
-    """Run windows only tests"""
+    """Run windows only tests."""
     build()
     sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 def test_misc():
-    """Run misc tests"""
+    """Run misc tests."""
     build()
     sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 def test_unicode():
-    """Run unicode tests"""
+    """Run unicode tests."""
     build()
     sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 def test_connections():
-    """Run connections tests"""
+    """Run connections tests."""
     build()
     sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 def test_contracts():
-    """Run contracts tests"""
+    """Run contracts tests."""
     build()
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
 def test_testutils():
-    """Run test utilities tests"""
+    """Run test utilities tests."""
     build()
     sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
 
 
 def test_by_name(name):
-    """Run test by name"""
+    """Run test by name."""
     build()
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
@@ -450,7 +450,7 @@ def test_failed():
 
 
 def test_memleaks():
-    """Run memory leaks tests"""
+    """Run memory leaks tests."""
     build()
     sh("%s psutil\\tests\\test_memleaks.py" % PYTHON)
 

@@ -519,7 +519,7 @@ def memoize_when_activated(fun):
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:
-    http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+    http://mail.python.org/pipermail/python-dev/2012-June/120787.html.
     """
     try:
         st = os.stat(path)
@@ -533,8 +533,8 @@ def isfile_strict(path):
 
 def path_exists_strict(path):
     """Same as os.path.exists() but does not swallow EACCES / EPERM
-    exceptions, see:
-    http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+    exceptions. See:
+    http://mail.python.org/pipermail/python-dev/2012-June/120787.html.
     """
     try:
         os.stat(path)
@@ -683,7 +683,7 @@ class _WrapNumbers:
 
     def run(self, input_dict, name):
         """Cache dict and sum numbers which overflow and wrap.
-        Return an updated copy of `input_dict`
+        Return an updated copy of `input_dict`.
         """
         if name not in self.cache:
             # This was the first call.
@@ -820,8 +820,7 @@ def bcat(fname, fallback=_DEFAULT):
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
-    """Used by various scripts. See:
-    http://goo.gl/zeJZl
+    """Used by various scripts. See: http://goo.gl/zeJZl.
 
     >>> bytes2human(10000)
     '9.8K'
