@@ -1597,7 +1597,7 @@ class TestSensorsBattery(PsutilTestCase):
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
         def open_mock(name, *args, **kwargs):
-            if name.endswith("AC0/online") or name.endswith("AC/online"):
+            if name.endswith(('AC0/online', 'AC/online')):
                 return io.BytesIO(b"1")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -1614,7 +1614,7 @@ class TestSensorsBattery(PsutilTestCase):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
         def open_mock(name, *args, **kwargs):
-            if name.endswith("AC0/online") or name.endswith("AC/online"):
+            if name.endswith(('AC0/online', 'AC/online')):
                 raise IOError(errno.ENOENT, "")
             elif name.endswith("/status"):
                 return io.StringIO(u("charging"))
@@ -1630,7 +1630,7 @@ class TestSensorsBattery(PsutilTestCase):
     def test_emulate_power_not_plugged(self):
         # Pretend the AC power cable is not connected.
         def open_mock(name, *args, **kwargs):
-            if name.endswith("AC0/online") or name.endswith("AC/online"):
+            if name.endswith(('AC0/online', 'AC/online')):
                 return io.BytesIO(b"0")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -1645,7 +1645,7 @@ class TestSensorsBattery(PsutilTestCase):
         # Same as above but pretend /AC0/online does not exist in which
         # case code relies on /status file.
         def open_mock(name, *args, **kwargs):
-            if name.endswith("AC0/online") or name.endswith("AC/online"):
+            if name.endswith(('AC0/online', 'AC/online')):
                 raise IOError(errno.ENOENT, "")
             elif name.endswith("/status"):
                 return io.StringIO(u("discharging"))
@@ -1662,8 +1662,10 @@ class TestSensorsBattery(PsutilTestCase):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
         def open_mock(name, *args, **kwargs):
-            if name.startswith("/sys/class/power_supply/AC0/online") or \
-                    name.startswith("/sys/class/power_supply/AC/online"):
+            if name.startswith(
+                ('/sys/class/power_supply/AC0/online',
+                 '/sys/class/power_supply/AC/online')
+            ):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")

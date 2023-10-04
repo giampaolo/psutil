@@ -172,7 +172,7 @@ def get_urls(fname):
         return parse_rst(fname)
     elif fname.endswith('.py'):
         return parse_py(fname)
-    elif fname.endswith('.c') or fname.endswith('.h'):
+    elif fname.endswith(('.c', '.h')):
         return parse_c(fname)
     else:
         with open(fname, errors='ignore') as f:
