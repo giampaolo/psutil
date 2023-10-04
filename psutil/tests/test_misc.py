@@ -843,8 +843,7 @@ class TestScripts(PsutilTestCase):
     @staticmethod
     def assert_syntax(exe):
         exe = os.path.join(SCRIPTS_DIR, exe)
-        f = open(exe, encoding="utf8") if PY3 else open(exe)
-        with f:
+        with open(exe, encoding="utf8") if PY3 else open(exe) as f:
             src = f.read()
         ast.parse(src)
 
