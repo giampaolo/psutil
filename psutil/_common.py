@@ -689,7 +689,7 @@ class _WrapNumbers:
 
         old_dict = self.cache[name]
         new_dict = {}
-        for key in input_dict.keys():
+        for key in input_dict:
             input_tuple = input_dict[key]
             try:
                 old_tuple = old_dict[key]

@@ -321,7 +321,7 @@ class TestSystemAPIs(PsutilTestCase):
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
-        for nic in psutil.net_io_counters(pernic=True).keys():
+        for nic in psutil.net_io_counters(pernic=True):
             for line in output.split():
                 if line.startswith(nic):
                     break

@@ -55,6 +55,7 @@ ignore = [
     "UP010",  # [*] Unnecessary `__future__` import `print_function` for target Python version (PYTHON2.7 COMPAT)
     "UP024",  # [*] Replace aliased errors with `OSError` (PYTHON2.7 COMPAT)
     "UP031",  # [*] Use format specifiers instead of percent format
+    "UP032",  # [*] Use f-string instead of `format` call (PYTHON2.7 COMPAT)
 ]
 
 [tool.ruff.per-file-ignores]
