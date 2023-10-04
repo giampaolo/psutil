@@ -4,20 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""This gets executed on 'git commit' and rejects the commit in case the
-submitted code does not pass validation. Validation is run only against
-the files which were modified in the commit. Checks:
-
-- assert no space at EOLs
-- assert not pdb.set_trace in code
-- assert no bare except clause ("except:") in code
-- assert "isort" checks pass
-- assert C linter checks pass
-- assert RsT checks pass
-- assert TOML checks pass
-- abort if files were added/renamed/removed and MANIFEST.in was not updated
-
-Install this with "make install-git-hooks".
+"""This gets executed on 'git commit' and rejects the commit in case
+the submitted code does not pass validation. Validation is run only
+against the files which were modified in the commit. Install this with
+"make install-git-hooks".
 """
 
 from __future__ import print_function
@@ -116,15 +106,6 @@ def ruff(files):
         )
 
 
-def isort(files):
-    print("running isort (%s)" % len(files))
-    cmd = [PYTHON, "-m", "isort", "--check-only"] + files
-    if subprocess.call(cmd) != 0:
-        msg = "python code didn't pass 'isort' style check; "
-        msg += "try running 'make fix-imports'"
-        return sys.exit(msg)
-
-
 def c_linter(files):
     print("running clinter (%s)" % len(files))
     # XXX: we should escape spaces and possibly other amenities here
@@ -151,7 +132,6 @@ def main():
     py_files, c_files, rst_files, toml_files, new_rm_mv = git_commit_files()
     if py_files:
         ruff(py_files)
-        isort(py_files)
     if c_files:
         c_linter(c_files)
     if rst_files:

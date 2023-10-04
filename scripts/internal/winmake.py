@@ -38,7 +38,6 @@ ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
 DEPS = [
     "coverage",
-    "nose",
     "pdbpp",
     "pip",
     "pyperf",

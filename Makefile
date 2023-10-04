@@ -12,8 +12,6 @@ PY3_DEPS = \
 	check-manifest \
 	concurrencytest \
 	coverage \
-	isort \
-	pep8-naming \
 	pylint \
 	pyperf \
 	pypinfo \
@@ -195,9 +193,6 @@ test-coverage:  ## Run test coverage.
 ruff:  ## Run ruff linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --config=pyproject.toml --no-cache
 
-isort:  ## Run isort linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
-
 _pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
@@ -211,7 +206,7 @@ lint-toml:  ## Linter for pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-all:  ## Run all linters
-	${MAKE} isort
+	${MAKE} ruff
 	${MAKE} lint-c
 	${MAKE} lint-rst
 	${MAKE} lint-toml
@@ -223,9 +218,6 @@ lint-all:  ## Run all linters
 fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --config=pyproject.toml --no-cache --fix
 
-fix-imports:  ## Fix imports with isort.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
-
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
 
@@ -234,7 +226,6 @@ fix-toml:  ## Fix pyproject.toml
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
-	${MAKE} fix-imports
 	${MAKE} fix-unittests
 	${MAKE} fix-toml
 

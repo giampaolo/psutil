@@ -3,9 +3,10 @@
 target-version = "py37"
 line-length = 79
 select = [
-    "ALL",  # to get a list of all values: `python3 -m ruff linter`
-    "D200",  # [*] One-line docstring should fit on one line (pydocstyle)
-    "D204",  # [*] 1 blank line required after class docstring (pydocstyle)
+    # To get a list of all values: `python3 -m ruff linter`.
+    "ALL",
+    "D200",  # [*] One-line docstring should fit on one line
+    "D204",  # [*] 1 blank line required after class docstring
     "D209",  # [*] Multi-line docstring closing quotes should be on a separate line
     "D212",  # [*] Multi-line docstring summary should start at the first line
     "D301",  # Use `r"""` if any backslashes in a docstring
@@ -22,7 +23,7 @@ ignore = [
     "B904",  # Within an `except` clause, raise exceptions with `raise ... from err` (PYTHON2.7 COMPAT)
     "BLE001",  # Do not catch blind exception: `Exception`
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
-    # "C408",  # Unnecessary `dict` call (rewrite as a literal)
+    "C408",  # Unnecessary `dict` call (rewrite as a literal)
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
@@ -79,10 +80,6 @@ ignore = [
 # https://beta.ruff.rs/docs/settings/#isort
 force-single-line = true  # one import per line
 lines-after-imports = 2
-
-[tool.isort]
-force_single_line = true  # one import per line
-lines_after_imports = 2  # blank spaces after import section
 
 [tool.coverage.report]
 exclude_lines = [
