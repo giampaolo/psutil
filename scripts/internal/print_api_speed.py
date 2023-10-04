@@ -192,8 +192,8 @@ def main():
 
     if not prio_set:
         msg = "\nWARN: couldn't set highest process priority "
-        msg += "(requires root)", "red"
-        print_color(msg)
+        msg += "(requires root)"
+        print_color(msg, "red")
 
 
 if __name__ == '__main__':
