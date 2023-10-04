@@ -213,7 +213,7 @@ def refresh_window(procs, procs_status):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    for i in range(0, curses.COLORS):
+    for i in range(curses.COLORS):
         curses.init_pair(i + 1, i, -1)
     curses.endwin()
     win.nodelay(1)

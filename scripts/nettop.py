@@ -128,7 +128,7 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    for i in range(0, curses.COLORS):
+    for i in range(curses.COLORS):
         curses.init_pair(i + 1, i, -1)
     curses.endwin()
     win.nodelay(1)

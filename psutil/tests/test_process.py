@@ -964,7 +964,7 @@ class TestProcess(PsutilTestCase):
         if len(initial) > 12:
             initial = initial[:12]  # ...otherwise it will take forever
         combos = []
-        for i in range(0, len(initial) + 1):
+        for i in range(len(initial) + 1):
             for subset in itertools.combinations(initial, i):
                 if subset:
                     combos.append(list(subset))

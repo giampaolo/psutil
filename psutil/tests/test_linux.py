@@ -123,7 +123,7 @@ def get_ipv6_addresses(ifname):
         if len(all_fields) == 0:
             raise ValueError("could not find interface %r" % ifname)
 
-    for i in range(0, len(all_fields)):
+    for i in range(len(all_fields)):
         unformatted = all_fields[i][0]
         groups = []
         for j in range(0, len(unformatted), 4):
@@ -2178,7 +2178,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(gids.real, 1004)
             self.assertEqual(gids.effective, 1005)
             self.assertEqual(gids.saved, 1006)
-            self.assertEqual(p._proc._get_eligible_cpus(), list(range(0, 8)))
+            self.assertEqual(p._proc._get_eligible_cpus(), list(range(8)))
 
     def test_connections_enametoolong(self):
         # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
