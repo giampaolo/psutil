@@ -4,8 +4,7 @@
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
 
-"""
-Checks for broken links in file names specified as command line
+"""Checks for broken links in file names specified as command line
 parameters.
 
 There are a ton of a solutions available for validating URLs in string

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Script which downloads wheel files hosted on AppVeyor:
+"""Script which downloads wheel files hosted on AppVeyor:
 https://ci.appveyor.com/project/giampaolo/psutil
 Re-adapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:

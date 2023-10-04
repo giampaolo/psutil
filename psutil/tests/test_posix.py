@@ -43,8 +43,7 @@ if POSIX:
 
 
 def ps(fmt, pid=None):
-    """
-    Wrapper for calling the ps command with a little bit of cross-platform
+    """Wrapper for calling the ps command with a little bit of cross-platform
     support for a narrow range of features.
     """
 

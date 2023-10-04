@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Show detailed memory usage about all (querable) processes.
+"""Show detailed memory usage about all (querable) processes.
 
 Processes are sorted by their "USS" (Unique Set Size) memory, which is
 probably the most representative metric for determining how much memory

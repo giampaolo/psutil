@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print detailed information about a process.
+"""Print detailed information about a process.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 

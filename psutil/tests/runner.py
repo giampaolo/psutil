@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Unit test runner, providing new features on top of unittest module:
+"""Unit test runner, providing new features on top of unittest module:
 - colourized output
 - parallel run (UNIX only)
 - print failures/tracebacks on CTRL+C
@@ -145,9 +144,9 @@ class ColouredResult(unittest.TextTestResult):
 
 
 class ColouredTextRunner(unittest.TextTestRunner):
-    """
-    A coloured text runner which also prints failed tests on KeyboardInterrupt
-    and save failed tests in a file so that they can be re-run.
+    """A coloured text runner which also prints failed tests on
+    KeyboardInterrupt and save failed tests in a file so that they can
+    be re-run.
     """
 
     resultclass = ColouredResult if USE_COLORS else unittest.TextTestResult

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Purge psutil installation by removing psutil-related files and
+"""Purge psutil installation by removing psutil-related files and
 directories found in site-packages directories. This is needed mainly
 because sometimes "import psutil" imports a leftover installation
 from site-packages directory instead of the main working directory.

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print PYPI statistics in MarkDown format.
+"""Print PYPI statistics in MarkDown format.
 Useful sites:
 * https://pepy.tech/project/psutil
 * https://pypistats.org/packages/psutil

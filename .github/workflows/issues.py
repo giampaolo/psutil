@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Bot triggered by Github Actions every time a new issue, PR or comment
+"""Bot triggered by Github Actions every time a new issue, PR or comment
 is created. Assign labels, provide replies, closes issues, etc. depending
 on the situation.
 """

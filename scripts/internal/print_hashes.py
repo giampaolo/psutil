@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Prints files hashes, see:
+"""Prints files hashes, see:
 https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
 """
 

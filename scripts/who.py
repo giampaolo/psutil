@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'who' command; print information about users who are
+"""A clone of 'who' command; print information about users who are
 currently logged in.
 
 $ python3 scripts/who.py

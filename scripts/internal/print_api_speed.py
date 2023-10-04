@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Benchmark all API calls and print them from fastest to slowest.
+"""Benchmark all API calls and print them from fastest to slowest.
 
 $ make print_api_speed
 SYSTEM APIS                NUM CALLS      SECONDS

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'ps aux'.
+"""A clone of 'ps aux'.
 
 $ python3 scripts/ps.py
 USER         PID  %MEM     VSZ     RSS  NICE STATUS  START   TIME  CMDLINE

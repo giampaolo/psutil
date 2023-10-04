@@ -7,6 +7,7 @@ select = [
     "D200",  # [*] One-line docstring should fit on one line (pydocstyle)
     "D204",  # [*] 1 blank line required after class docstring (pydocstyle)
     "D209",  # [*] Multi-line docstring closing quotes should be on a separate line
+    "D212",  # [*] Multi-line docstring summary should start at the first line
     "D301",  # Use `r"""` if any backslashes in a docstring
     "D403",  # [*] First word of the first line should be capitalized
 ]

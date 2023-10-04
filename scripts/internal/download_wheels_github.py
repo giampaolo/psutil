@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Script which downloads wheel files hosted on GitHub:
+"""Script which downloads wheel files hosted on GitHub:
 https://github.com/giampaolo/psutil/actions
 It needs an access token string generated from personal GitHub profile:
 https://github.com/settings/tokens

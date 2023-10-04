@@ -625,8 +625,7 @@ class TestProcessWMI(WindowsTestCase):
 
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestDualProcessImplementation(PsutilTestCase):
-    """
-    Certain APIs on Windows have 2 internal implementations, one
+    """Certain APIs on Windows have 2 internal implementations, one
     based on documented Windows APIs, another one based
     NtQuerySystemInformation() which gets called as fallback in
     case the first fails because of limited permission error.

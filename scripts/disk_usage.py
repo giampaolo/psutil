@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-List all mounted disk partitions a-la "df -h" command.
+"""List all mounted disk partitions a-la "df -h" command.
 
 $ python3 scripts/disk_usage.py
 Device               Total     Used     Free  Use %      Type  Mount

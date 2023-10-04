@@ -5,8 +5,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Notes about unicode handling in psutil
+"""Notes about unicode handling in psutil
 ======================================.
 
 Starting from version 5.3.0 psutil adds unicode support, see:
