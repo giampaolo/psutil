@@ -1330,7 +1330,7 @@ class Popen(Process):
       >>> p.username()
       'giampaolo'
       >>> p.communicate()
-      ('hi\n', None)
+      ('hi', None)
       >>> p.terminate()
       >>> p.wait(timeout=2)
       0

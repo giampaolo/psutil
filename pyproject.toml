@@ -6,8 +6,8 @@ select = [
     "ALL",  # to get a list of all values: `python3 -m ruff linter`
     "D200",  # [*] One-line docstring should fit on one line (pydocstyle)
     "D204",  # [*] 1 blank line required after class docstring (pydocstyle)
+    "D301",  # Use `r"""` if any backslashes in a docstring
     "D403",  # [*] First word of the first line should be capitalized
-    "D415",  # [*] First line should end with a period, question mark, or exclamation point
 ]
 ignore = [
     "A",  # flake8-builtins
