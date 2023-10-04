@@ -2197,7 +2197,7 @@ def net_if_addrs():
                 if WINDOWS and fam == -1:
                     fam = _psplatform.AF_LINK
                 elif (hasattr(_psplatform, "AF_LINK") and
-                        _psplatform.AF_LINK == fam):
+                        fam == _psplatform.AF_LINK):
                     # Linux defines AF_LINK as an alias for AF_PACKET.
                     # We re-set the family here so that repr(family)
                     # will show AF_LINK rather than AF_PACKET
