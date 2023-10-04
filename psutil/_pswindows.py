@@ -719,8 +719,10 @@ def retry_error_partial_copy(fun):
                 else:
                     raise
         else:
-            msg = "{} retried {} times, converted to AccessDenied as it's " + \
+            msg = (
+                "{} retried {} times, converted to AccessDenied as it's "
                 "still returning {}".format(fun, times, err)
+            )
             raise AccessDenied(pid=self.pid, name=self._name, msg=msg)
     return wrapper
 
