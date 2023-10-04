@@ -32,12 +32,14 @@ PROJECT = "psutil"
 PROJECT_VERSION = __version__
 OUTFILE = "wheels-github.zip"
 TOKEN = ""
+TIMEOUT = 30
 
 
 def get_artifacts():
     base_url = "https://api.github.com/repos/%s/%s" % (USER, PROJECT)
     url = base_url + "/actions/artifacts"
-    res = requests.get(url=url, headers={"Authorization": "token %s" % TOKEN})
+    res = requests.get(url=url, headers={
+                       "Authorization": "token %s" % TOKEN}, timeout=TIMEOUT)
     res.raise_for_status()
     data = json.loads(res.content)
     return data
@@ -45,7 +47,8 @@ def get_artifacts():
 
 def download_zip(url):
     print("downloading: " + url)
-    res = requests.get(url=url, headers={"Authorization": "token %s" % TOKEN})
+    res = requests.get(url=url, headers={
+                       "Authorization": "token %s" % TOKEN}, timeout=TIMEOUT)
     res.raise_for_status()
     totbytes = 0
     with open(OUTFILE, 'wb') as f:
