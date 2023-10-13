@@ -16,7 +16,6 @@ import re
 import socket
 import struct
 import sys
-import traceback
 import warnings
 from collections import defaultdict
 from collections import namedtuple
@@ -284,9 +283,9 @@ def set_scputimes_ntuple(procfs_path):
 
 try:
     set_scputimes_ntuple("/proc")
-except Exception:  # pragma: no cover
+except Exception as err:  # pragma: no cover
     # Don't want to crash at import time.
-    traceback.print_exc()
+    debug("ignoring exception on import: %r" % err)
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
 
 

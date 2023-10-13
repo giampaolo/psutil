@@ -22,6 +22,9 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 2195_, [Linux]: no longer print exception at import time in case /proc/stat
+  can't be read due to permission error. Redirect it to ``PSUTIL_DEBUG``
+  instead.
 - 2241_, [NetBSD]: can't compile On NetBSD 10.99.3/amd64.  (patch by Thomas
   Klausner)
 - 2245_, [Windows]: fix var unbound error on possibly in `swap_memory()`_
