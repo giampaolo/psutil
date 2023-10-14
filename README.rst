@@ -148,6 +148,8 @@ Supporters
       <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
       <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
       <a href="https://github.com/robusta-dev"><img height="40" width="40" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
+      <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
+      <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
 
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
