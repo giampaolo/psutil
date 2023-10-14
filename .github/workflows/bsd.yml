@@ -13,7 +13,7 @@ jobs:
   freebsd:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run tests
         uses: vmactions/freebsd-vm@v0
         with:
@@ -30,7 +30,7 @@ jobs:
   openbsd:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run tests
         uses: vmactions/openbsd-vm@v0
         with:
@@ -48,7 +48,7 @@ jobs:
   netbsd:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run tests
         uses: vmactions/netbsd-vm@v0
         with:
