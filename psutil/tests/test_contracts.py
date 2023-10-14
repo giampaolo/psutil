@@ -668,8 +668,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             try:
                 st = os.stat(ret)
             except OSError as err:
-                if WINDOWS and err.errno in \
-                        psutil._psplatform.ACCESS_DENIED_SET:
+                if WINDOWS and psutil._psplatform.is_permission_err(err):
                     pass
                 # directory has been removed in mean time
                 elif err.errno != errno.ENOENT:
