@@ -20,7 +20,7 @@ jobs:
   py3:
     name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'windows') && matrix.archs || 'all' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
