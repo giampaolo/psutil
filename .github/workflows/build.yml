@@ -9,10 +9,12 @@
 # * https://github.com/actions/checkout
 # * https://github.com/actions/setup-python
 # * https://github.com/actions/upload-artifact
-# * https://github.com/marketplace/actions/cancel-workflow-action
 
 on: [push, pull_request]
 name: build
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+  cancel-in-progress: true
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
@@ -33,11 +35,6 @@ jobs:
           archs: "x86"
 
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
@@ -79,11 +76,6 @@ jobs:
       CIBW_BUILD: 'cp27-*'
 
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
