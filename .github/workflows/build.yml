@@ -35,7 +35,7 @@ jobs:
           archs: "x86"
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: 3.11
@@ -76,7 +76,7 @@ jobs:
       CIBW_BUILD: 'cp27-*'
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: 3.9
@@ -101,7 +101,7 @@ jobs:
   linters:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: 3.x
@@ -115,7 +115,7 @@ jobs:
     needs: [py2, py3]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
