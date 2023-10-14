@@ -41,7 +41,7 @@ jobs:
         python-version: 3.11
 
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.14.1
+      uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS: "${{ matrix.archs }}"
         CIBW_PRERELEASE_PYTHONS: True
