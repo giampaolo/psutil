@@ -6,8 +6,6 @@
  * Linux-specific functions.
  */
 
-#include "arch/linux/net.h"
-
 #ifndef _GNU_SOURCE
     #define _GNU_SOURCE 1
 #endif
@@ -36,17 +34,8 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 #endif
 
 #include "_psutil_common.h"
+#include "arch/linux/net.h"
 
-// May happen on old RedHat versions, see:
-// https://github.com/giampaolo/psutil/issues/607
-#ifndef DUPLEX_UNKNOWN
-    #define DUPLEX_UNKNOWN 0xff
-#endif
-
-
-#ifndef SPEED_UNKNOWN
-    #define SPEED_UNKNOWN -1
-#endif
 
 
 #if PSUTIL_HAVE_IOPRIO

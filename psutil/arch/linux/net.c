@@ -38,6 +38,16 @@ psutil_ethtool_cmd_speed(const struct ethtool_cmd *ecmd) {
 #endif
 }
 
+// May happen on old RedHat versions, see:
+// https://github.com/giampaolo/psutil/issues/607
+#ifndef DUPLEX_UNKNOWN
+    #define DUPLEX_UNKNOWN 0xff
+#endif
+// https://github.com/giampaolo/psutil/pull/2156
+#ifndef SPEED_UNKNOWN
+    #define SPEED_UNKNOWN -1
+#endif
+
 
 // References:
 // * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py
