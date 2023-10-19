@@ -72,6 +72,8 @@ include psutil/arch/freebsd/sensors.c
 include psutil/arch/freebsd/sensors.h
 include psutil/arch/freebsd/sys_socks.c
 include psutil/arch/freebsd/sys_socks.h
+include psutil/arch/linux/net.c
+include psutil/arch/linux/net.h
 include psutil/arch/netbsd/cpu.c
 include psutil/arch/netbsd/cpu.h
 include psutil/arch/netbsd/disk.c
