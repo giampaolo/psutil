@@ -12,7 +12,7 @@
 #include "../../_psutil_common.h"
 
 
-#if PSUTIL_HAVE_IOPRIO
+#ifdef PSUTIL_HAVE_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };

@@ -9,14 +9,17 @@
 #include <sched.h> // CPU_ALLOC
 
 // Linux >= 2.6.13
-#define PSUTIL_HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
+#if defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
+    #define PSUTIL_HAVE_IOPRIO
+
+    PyObject *psutil_proc_ioprio_get(PyObject *self, PyObject *args);
+    PyObject *psutil_proc_ioprio_set(PyObject *self, PyObject *args);
+#endif
 
 // Should exist starting from CentOS 6 (year 2011).
 #ifdef CPU_ALLOC
     #define PSUTIL_HAVE_CPU_AFFINITY
-#endif
 
-PyObject *psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args);
-PyObject *psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args);
-PyObject *psutil_proc_ioprio_get(PyObject *self, PyObject *args);
-PyObject *psutil_proc_ioprio_set(PyObject *self, PyObject *args);
+    PyObject *psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args);
+    PyObject *psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args);
+#endif
