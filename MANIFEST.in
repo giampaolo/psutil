@@ -78,6 +78,8 @@ include psutil/arch/linux/mem.c
 include psutil/arch/linux/mem.h
 include psutil/arch/linux/net.c
 include psutil/arch/linux/net.h
+include psutil/arch/linux/proc.c
+include psutil/arch/linux/proc.h
 include psutil/arch/linux/users.c
 include psutil/arch/linux/users.h
 include psutil/arch/netbsd/cpu.c
