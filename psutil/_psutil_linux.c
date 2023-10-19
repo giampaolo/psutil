@@ -6,8 +6,6 @@
  * Linux-specific functions.
  */
 
-#include "arch/linux/mem.h"
-
 #ifndef _GNU_SOURCE
     #define _GNU_SOURCE 1
 #endif
@@ -15,11 +13,16 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <features.h>
-#include <utmp.h>
 #include <sched.h>
 #include <sys/syscall.h>
 #include <sys/resource.h>
 #include <linux/ethtool.h>  // DUPLEX_*
+
+#include "_psutil_common.h"
+#include "arch/linux/disk.h"
+#include "arch/linux/mem.h"
+#include "arch/linux/net.h"
+#include "arch/linux/users.h"
 
 
 /* The minimum number of CPUs allocated in a cpu_set_t */
@@ -32,11 +35,6 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 #ifdef CPU_ALLOC
     #define PSUTIL_HAVE_CPU_AFFINITY
 #endif
-
-#include "_psutil_common.h"
-#include "arch/linux/disk.h"
-#include "arch/linux/net.h"
-
 
 #if PSUTIL_HAVE_IOPRIO
 enum {
@@ -231,69 +229,6 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 #endif  /* PSUTIL_HAVE_CPU_AFFINITY */
 
 
-/*
- * Return currently connected users as a list of tuples.
- */
-static PyObject *
-psutil_users(PyObject *self, PyObject *args) {
-    struct utmp *ut;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
-    PyObject *py_username = NULL;
-    PyObject *py_tty = NULL;
-    PyObject *py_hostname = NULL;
-    PyObject *py_user_proc = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-    setutent();
-    while (NULL != (ut = getutent())) {
-        py_tuple = NULL;
-        py_user_proc = NULL;
-        if (ut->ut_type == USER_PROCESS)
-            py_user_proc = Py_True;
-        else
-            py_user_proc = Py_False;
-        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
-        if (! py_username)
-            goto error;
-        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
-        if (! py_tty)
-            goto error;
-        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
-        if (! py_hostname)
-            goto error;
-
-        py_tuple = Py_BuildValue(
-            "OOOdO" _Py_PARSE_PID,
-            py_username,              // username
-            py_tty,                   // tty
-            py_hostname,              // hostname
-            (double)ut->ut_tv.tv_sec,  // tstamp
-            py_user_proc,             // (bool) user process
-            ut->ut_pid                // process id
-        );
-        if (! py_tuple)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_username);
-        Py_CLEAR(py_tty);
-        Py_CLEAR(py_hostname);
-        Py_CLEAR(py_tuple);
-    }
-    endutent();
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_username);
-    Py_XDECREF(py_tty);
-    Py_XDECREF(py_hostname);
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    endutent();
-    return NULL;
-}
 
 
 /*
