@@ -74,6 +74,8 @@ include psutil/arch/freebsd/sys_socks.c
 include psutil/arch/freebsd/sys_socks.h
 include psutil/arch/linux/disk.c
 include psutil/arch/linux/disk.h
+include psutil/arch/linux/mem.c
+include psutil/arch/linux/mem.h
 include psutil/arch/linux/net.c
 include psutil/arch/linux/net.h
 include psutil/arch/netbsd/cpu.c

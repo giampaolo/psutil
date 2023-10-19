@@ -6,6 +6,8 @@
  * Linux-specific functions.
  */
 
+#include "arch/linux/mem.h"
+
 #ifndef _GNU_SOURCE
     #define _GNU_SOURCE 1
 #endif
@@ -16,7 +18,6 @@
 #include <utmp.h>
 #include <sched.h>
 #include <sys/syscall.h>
-#include <sys/sysinfo.h>
 #include <sys/resource.h>
 #include <linux/ethtool.h>  // DUPLEX_*
 
@@ -100,29 +101,6 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 #endif
-
-
-/*
- * A wrapper around sysinfo(), return system memory usage statistics.
- */
-static PyObject *
-psutil_linux_sysinfo(PyObject *self, PyObject *args) {
-    struct sysinfo info;
-
-    if (sysinfo(&info) != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    // note: boot time might also be determined from here
-    return Py_BuildValue(
-        "(kkkkkkI)",
-        info.totalram,  // total
-        info.freeram,  // free
-        info.bufferram, // buffer
-        info.sharedram, // shared
-        info.totalswap, // swap tot
-        info.freeswap,  // swap free
-        info.mem_unit  // multiplier
-    );
-}
 
 
 /*
