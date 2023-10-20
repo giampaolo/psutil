@@ -10,10 +10,8 @@
 #include "../../_psutil_common.h"
 
 
-/*
- * Return disk mounted partitions as a list of tuples including device,
- * mount point and filesystem type
- */
+// Return disk mounted partitions as a list of tuples including device,
+// mount point and filesystem type.
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
