@@ -42,6 +42,10 @@ load_systemd() {
     dlsym_check(handle, sd_session_get_tty);
     dlsym_check(handle, sd_session_get_username);
 
+    if (! sd_booted()) {
+        dlclose(handle);
+        return NULL;
+    }
     return handle;
 }
 
@@ -76,7 +80,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
 
         char *tty = NULL;
         if (sd_session_get_tty(session_id, &tty) < 0) {
-            py_tty = PyUnicode_DecodeFSDefault("n/a");
+            py_tty = PyUnicode_DecodeFSDefault("");
         } else {
             py_tty = PyUnicode_DecodeFSDefault(tty);
             free(tty);
@@ -117,7 +121,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
-        free (sessions_list[i]);
+        free(sessions_list[i]);
     }
     free(sessions_list);
     return py_retlist;
@@ -128,7 +132,8 @@ error:
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    free(sessions_list);
+    if (sessions_list)
+        free(sessions_list);
     return NULL;
 }
 
@@ -193,9 +198,12 @@ error:
 
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
-  void *handle = load_systemd();
-  if (handle && sd_booted())
-      return psutil_users_systemd(self, args);
-  else
-    return psutil_users_utmp(self, args);
+    PyObject *result = NULL;
+    void *handle = load_systemd();
+    if (handle) {
+        result = psutil_users_systemd(self, args);
+        dlclose(handle);
+    } else
+        result = psutil_users_utmp(self, args);
+    return result;
 }
