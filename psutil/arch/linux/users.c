@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <utmp.h>
 
+#include "../../_psutil_common.h"
+
 
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
