@@ -297,7 +297,11 @@ elif LINUX:
     macros.append(("PSUTIL_LINUX", 1))
     ext = Extension(
         'psutil._psutil_linux',
-        sources=sources + ['psutil/_psutil_linux.c'],
+        sources=(
+            sources +
+            ["psutil/_psutil_linux.c"] +
+            glob.glob("psutil/arch/linux/*.c")
+        ),
         define_macros=macros,
         **py_limited_api)
 
