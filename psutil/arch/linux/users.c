@@ -48,7 +48,7 @@ load_systemd() {
     return handle;
 }
 
-static PyObject *
+PyObject *
 psutil_users_systemd(PyObject *self, PyObject *args) {
     char **sessions_list = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -59,17 +59,27 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
     PyObject *py_user_proc = NULL;
     double tstamp = 0.0;
     pid_t pid = 0;
+    int sessions;
+    const char *session_id = NULL;
+    char *username = NULL;
+    char *tty = NULL;
+    char *hostname = NULL;
+    uint64_t usec = 0;
+    void *handle = load_systemd();
+
+    if (! handle)
+        return NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    int sessions = sd_get_sessions(&sessions_list);
+    sessions = sd_get_sessions(&sessions_list);
     for (int i = 0; i < sessions; i++) {
-        const char *session_id = sessions_list[i];
+        session_id = sessions_list[i];
         py_tuple = NULL;
         py_user_proc = NULL;
         py_user_proc = Py_True;
 
-        char *username = NULL;
+        username = NULL;
         if (sd_session_get_username(session_id, &username) < 0)
             goto error;
         py_username = PyUnicode_DecodeFSDefault(username);
@@ -77,7 +87,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         if (! py_username)
             goto error;
 
-        char *tty = NULL;
+        tty = NULL;
         if (sd_session_get_tty(session_id, &tty) < 0) {
             py_tty = PyUnicode_DecodeFSDefault("");
         } else {
@@ -87,7 +97,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         if (! py_tty)
             goto error;
 
-        char *hostname = NULL;
+        hostname = NULL;
         if (sd_session_get_remote_host(session_id, &hostname) < 0)
             goto error;
         py_hostname = PyUnicode_DecodeFSDefault(hostname);
@@ -95,7 +105,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         if (! py_hostname)
             goto error;
 
-        uint64_t usec = 0;
+        usec = 0;
         if (sd_session_get_start_time(session_id, &usec) < 0)
            goto error;
         tstamp = (double)usec / 1000000.0;
@@ -123,6 +133,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         free(sessions_list[i]);
     }
     free(sessions_list);
+    dlclose(handle);
     return py_retlist;
 
 error:
@@ -133,10 +144,11 @@ error:
     Py_DECREF(py_retlist);
     if (sessions_list)
         free(sessions_list);
+    dlclose(handle);
     return NULL;
 }
 
-static PyObject *
+PyObject *
 psutil_users_utmp(PyObject *self, PyObject *args) {
     struct utmp *ut;
     PyObject *py_retlist = PyList_New(0);
@@ -195,16 +207,4 @@ error:
     Py_DECREF(py_retlist);
     endutent();
     return NULL;
-}
-
-PyObject *
-psutil_users(PyObject *self, PyObject *args) {
-    PyObject *result = NULL;
-    void *handle = load_systemd();
-    if (handle) {
-        result = psutil_users_systemd(self, args);
-        dlclose(handle);
-    } else
-        result = psutil_users_utmp(self, args);
-    return result;
 }
