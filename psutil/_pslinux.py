@@ -1547,7 +1547,9 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = cext.users_systemd()
+    if rawlist is None:
+        rawlist = cext.users_utmp()
     for item in rawlist:
         user, tty, hostname, tstamp, user_process, pid = item
         # note: the underlying C function includes entries about
