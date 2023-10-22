@@ -19,19 +19,22 @@ int (*sd_session_get_start_time)(const char *, uint64_t *);
 int (*sd_session_get_tty)(const char *, char **);
 int (*sd_session_get_username)(const char *, char **);
 
-#define dlsym_check(__h, __fn) do {           \
-    __fn = dlsym(__h, #__fn);                 \
-    if (dlerror() != NULL || __fn == NULL) {  \
-        dlclose(__h);                         \
-        return NULL;                          \
-    }                                         \
+#define dlsym_check(__h, __fn, __name) do {        \
+    __fn = dlsym(__h, #__fn);                      \
+    if (dlerror() != NULL || __fn == NULL) {       \
+        psutil_debug("missing '%s' fun", __name);  \
+        dlclose(__h);                              \
+        return NULL;                               \
+    }                                              \
 } while (0)
 
 static void *
 load_systemd() {
     void *handle = dlopen("libsystemd.so.0", RTLD_LAZY);
-    if (dlerror() != NULL || handle == NULL)
+    if (dlerror() != NULL || handle == NULL) {
+        psutil_debug("can't open libsystemd.so.0");
         return NULL;
+    }
 
     dlsym_check(handle, sd_booted);
     dlsym_check(handle, sd_get_sessions);
@@ -42,6 +45,7 @@ load_systemd() {
     dlsym_check(handle, sd_session_get_username);
 
     if (! sd_booted()) {
+        psutil_debug("systemd not booted");
         dlclose(handle);
         return NULL;
     }
@@ -68,7 +72,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
     void *handle = load_systemd();
 
     if (! handle)
-        return NULL;
+        return Py_RETURN_NONE;
 
     if (py_retlist == NULL)
         return NULL;
