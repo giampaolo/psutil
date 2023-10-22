@@ -10,7 +10,8 @@
 
 #include "../../_psutil_common.h"
 
-/* Systemd function signatures that will be loaded */
+
+// Systemd function signatures that will be loaded dynamically.
 int (*sd_booted)(void);
 int (*sd_get_sessions)(char ***);
 int (*sd_session_get_leader)(const char *, pid_t *);
@@ -18,6 +19,7 @@ int (*sd_session_get_remote_host)(const char *,char **);
 int (*sd_session_get_start_time)(const char *, uint64_t *);
 int (*sd_session_get_tty)(const char *, char **);
 int (*sd_session_get_username)(const char *, char **);
+
 
 #define dlsym_check(__h, __fn, __name) do {        \
     __fn = dlsym(__h, #__fn);                      \
@@ -28,6 +30,7 @@ int (*sd_session_get_username)(const char *, char **);
     }                                              \
 } while (0)
 
+
 static void *
 load_systemd() {
     void *handle = dlopen("libsystemd.so.0", RTLD_LAZY);
@@ -36,13 +39,13 @@ load_systemd() {
         return NULL;
     }
 
-    dlsym_check(handle, sd_booted);
-    dlsym_check(handle, sd_get_sessions);
-    dlsym_check(handle, sd_session_get_leader);
-    dlsym_check(handle, sd_session_get_remote_host);
-    dlsym_check(handle, sd_session_get_start_time);
-    dlsym_check(handle, sd_session_get_tty);
-    dlsym_check(handle, sd_session_get_username);
+    dlsym_check(handle, sd_booted, "sd_booted");
+    dlsym_check(handle, sd_get_sessions, "sd_get_sessions");
+    dlsym_check(handle, sd_session_get_leader, "sd_session_get_leader");
+    dlsym_check(handle, sd_session_get_remote_host, "sd_session_get_remote_host");
+    dlsym_check(handle, sd_session_get_start_time, "sd_session_get_start_time");
+    dlsym_check(handle, sd_session_get_tty, "sd_session_get_tty");
+    dlsym_check(handle, sd_session_get_username, "sd_session_get_username");
 
     if (! sd_booted()) {
         psutil_debug("systemd not booted");
@@ -54,8 +57,7 @@ load_systemd() {
 
 PyObject *
 psutil_users_systemd(PyObject *self, PyObject *args) {
-    char **sessions_list = NULL;
-    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_retlist = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
@@ -64,6 +66,7 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
     double tstamp = 0.0;
     pid_t pid = 0;
     int sessions;
+    char **sessions_list = NULL;
     const char *session_id = NULL;
     char *username = NULL;
     char *tty = NULL;
@@ -72,10 +75,12 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
     void *handle = load_systemd();
 
     if (! handle)
-        return Py_RETURN_NONE;
+        Py_RETURN_NONE;
 
+    py_retlist = PyList_New(0);
     if (py_retlist == NULL)
-        return NULL;
+        goto error;
+
     sessions = sd_get_sessions(&sessions_list);
     for (int i = 0; i < sessions; i++) {
         session_id = sessions_list[i];
@@ -94,7 +99,8 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         tty = NULL;
         if (sd_session_get_tty(session_id, &tty) < 0) {
             py_tty = PyUnicode_DecodeFSDefault("");
-        } else {
+        }
+        else {
             py_tty = PyUnicode_DecodeFSDefault(tty);
             free(tty);
         }
@@ -151,6 +157,7 @@ error:
     dlclose(handle);
     return NULL;
 }
+
 
 PyObject *
 psutil_users_utmp(PyObject *self, PyObject *args) {
