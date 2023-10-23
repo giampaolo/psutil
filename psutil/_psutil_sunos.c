@@ -51,6 +51,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <math.h> // fabs()
+#include <unistd.h>
 
 #include "_psutil_common.h"
 #include "_psutil_posix.h"

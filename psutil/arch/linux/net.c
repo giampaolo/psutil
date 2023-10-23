@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <linux/if.h>
 #include <linux/version.h>
+#include <unistd.h>
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES

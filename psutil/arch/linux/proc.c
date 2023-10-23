@@ -7,6 +7,7 @@
 #include <Python.h>
 #include <sys/syscall.h>
 #include <sched.h>
+#include <unistd.h>
 
 #include "proc.h"
 #include "../../_psutil_common.h"
