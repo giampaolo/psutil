@@ -1513,25 +1513,11 @@ class TestMisc(PsutilTestCase):
                 psutil._pslinux.boot_time)
             assert m.called
 
-    def test_users_mocked(self):
-        # Make sure ':0' and ':0.0' (returned by C ext) are converted
-        # to 'localhost'.
-        with mock.patch('psutil._pslinux.cext.users',
-                        return_value=[('giampaolo', 'pts/2', ':0',
-                                       1436573184.0, True, 2)]) as m:
-            self.assertEqual(psutil.users()[0].host, 'localhost')
-            assert m.called
-        with mock.patch('psutil._pslinux.cext.users',
-                        return_value=[('giampaolo', 'pts/2', ':0.0',
-                                       1436573184.0, True, 2)]) as m:
-            self.assertEqual(psutil.users()[0].host, 'localhost')
-            assert m.called
-        # ...otherwise it should be returned as-is
-        with mock.patch('psutil._pslinux.cext.users',
-                        return_value=[('giampaolo', 'pts/2', 'foo',
-                                       1436573184.0, True, 2)]) as m:
-            self.assertEqual(psutil.users()[0].host, 'foo')
-            assert m.called
+    def test_users(self):
+        # Make sure the C extension converts ':0' and ':0.0' to
+        # 'localhost'.
+        for user in psutil.users():
+            self.assertNotIn(user.host, (":0", ":0.0"))
 
     def test_procfs_path(self):
         tdir = self.get_testfn()

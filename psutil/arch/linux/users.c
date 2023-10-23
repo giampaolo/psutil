@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <utmp.h>
+#include <string.h>
 
 #include "../../_psutil_common.h"
 
@@ -18,35 +19,33 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
-    PyObject *py_user_proc = NULL;
 
     if (py_retlist == NULL)
         return NULL;
     setutent();
     while (NULL != (ut = getutent())) {
+        if (ut->ut_type != USER_PROCESS)
+            continue;
         py_tuple = NULL;
-        py_user_proc = NULL;
-        if (ut->ut_type == USER_PROCESS)
-            py_user_proc = Py_True;
-        else
-            py_user_proc = Py_False;
         py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
         if (! py_username)
             goto error;
         py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
         if (! py_tty)
             goto error;
-        py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        if (strcmp(ut->ut_host, ":0") || strcmp(ut->ut_host, ":0.0"))
+            py_hostname = PyUnicode_DecodeFSDefault("localhost");
+        else
+            py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
         if (! py_hostname)
             goto error;
 
         py_tuple = Py_BuildValue(
-            "OOOdO" _Py_PARSE_PID,
+            "OOOd" _Py_PARSE_PID,
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
             (double)ut->ut_tv.tv_sec,  // tstamp
-            py_user_proc,             // (bool) user process
             ut->ut_pid                // process id
         );
         if (! py_tuple)
