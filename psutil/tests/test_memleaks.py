@@ -485,6 +485,14 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
             name = next(psutil.win_service_iter()).name()
             self.execute(lambda: cext.winservice_query_descr(name))
 
+    if LINUX:
+
+        def test_users_systemd(self):
+            self.execute(cext.users_systemd)
+
+        def test_users_utmp(self):
+            self.execute(cext.users_utmp)
+
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
