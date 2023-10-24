@@ -63,7 +63,6 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
-    PyObject *py_user_proc = NULL;
     double tstamp = 0.0;
     pid_t pid = 0;
     int sessions;
@@ -86,8 +85,6 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
     for (int i = 0; i < sessions; i++) {
         session_id = sessions_list[i];
         py_tuple = NULL;
-        py_user_proc = NULL;
-        py_user_proc = Py_True;
 
         username = NULL;
         if (sd_session_get_username(session_id, &username) < 0)
@@ -125,12 +122,11 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
            goto error;
 
         py_tuple = Py_BuildValue(
-            "OOOdO" _Py_PARSE_PID,
+            "OOOd" _Py_PARSE_PID,
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
             tstamp,                   // tstamp
-            py_user_proc,             // (bool) user process
             pid                       // process id
         );
         if (! py_tuple)
