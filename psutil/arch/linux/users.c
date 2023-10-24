@@ -7,6 +7,7 @@
 #include <Python.h>
 #include <dlfcn.h>
 #include <utmp.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "../../_psutil_common.h"
@@ -66,8 +67,23 @@ load_systemd() {
     return HANDLE;
 }
 
+static void
+set_systemd_errno(const char *syscall, int neg_errno) {
+    PyObject *exc;
+    int pos_errno;
+    char fullmsg[1024];
+
+    pos_errno = abs(neg_errno);
+    snprintf(fullmsg, 1024, "%s (originated from %s)", strerror(pos_errno), syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", pos_errno, fullmsg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+}
+
+
 PyObject *
 psutil_users_systemd(PyObject *self, PyObject *args) {
+    int ret;
     PyObject *py_retlist = NULL;
     PyObject *py_tuple = NULL;
     PyObject *py_username = NULL;
@@ -97,8 +113,10 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         py_tuple = NULL;
 
         username = NULL;
-        if (sd_session_get_username(session_id, &username) < 0)
+        if ((ret = sd_session_get_username(session_id, &username)) < 0) {
+            set_systemd_errno("sd_session_get_username", ret);
             goto error;
+        }
         py_username = PyUnicode_DecodeFSDefault(username);
         free(username);
         if (! py_username)
@@ -127,12 +145,16 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
             goto error;
 
         usec = 0;
-        if (sd_session_get_start_time(session_id, &usec) < 0)
-           goto error;
+        if ((ret = sd_session_get_start_time(session_id, &usec)) < 0) {
+            set_systemd_errno("sd_session_get_start_time", ret);
+            goto error;
+        }
         tstamp = (double)usec / 1000000.0;
 
-        if (sd_session_get_leader(session_id, &pid) < 0)
-           goto error;
+        if ((ret = sd_session_get_leader(session_id, &pid)) < 0) {
+            set_systemd_errno("sd_session_get_leader", ret);
+            goto error;
+        }
 
         py_tuple = Py_BuildValue(
             "OOOd" _Py_PARSE_PID,
