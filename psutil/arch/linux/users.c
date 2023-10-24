@@ -116,10 +116,13 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
             goto error;
 
         hostname = NULL;
-        if (sd_session_get_remote_host(session_id, &hostname) < 0)
-            goto error;
-        py_hostname = PyUnicode_DecodeFSDefault(hostname);
-        free(hostname);
+        if (sd_session_get_remote_host(session_id, &hostname) < 0) {
+            py_hostname =  PyUnicode_DecodeFSDefault("");
+        }
+        else {
+            py_hostname = PyUnicode_DecodeFSDefault(hostname);
+            free(hostname);
+        }
         if (! py_hostname)
             goto error;
 
