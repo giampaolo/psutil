@@ -21,6 +21,9 @@ int (*sd_session_get_start_time)(const char *, uint64_t *);
 int (*sd_session_get_tty)(const char *, char **);
 int (*sd_session_get_username)(const char *, char **);
 
+// Handle for the libsystemd library
+void *HANDLE = NULL;
+
 
 #define dlsym_check(__h, __fn, __name) do {        \
     __fn = dlsym(__h, #__fn);                      \
@@ -34,7 +37,12 @@ int (*sd_session_get_username)(const char *, char **);
 
 static void *
 load_systemd() {
-    void *handle = dlopen("libsystemd.so.0", RTLD_LAZY);
+    void *handle = NULL;
+
+    if (HANDLE != NULL)
+        return HANDLE;
+
+    handle = dlopen("libsystemd.so.0", RTLD_LAZY);
     if (dlerror() != NULL || handle == NULL) {
         psutil_debug("can't open libsystemd.so.0");
         return NULL;
@@ -53,7 +61,9 @@ load_systemd() {
         dlclose(handle);
         return NULL;
     }
-    return handle;
+
+    HANDLE = handle;
+    return HANDLE;
 }
 
 PyObject *
@@ -140,7 +150,6 @@ psutil_users_systemd(PyObject *self, PyObject *args) {
         free(sessions_list[i]);
     }
     free(sessions_list);
-    dlclose(handle);
     return py_retlist;
 
 error:
@@ -151,7 +160,6 @@ error:
     Py_DECREF(py_retlist);
     if (sessions_list)
         free(sessions_list);
-    dlclose(handle);
     return NULL;
 }
 
