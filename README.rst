@@ -493,6 +493,7 @@ Here's some I find particularly interesting:
 - https://github.com/Jahaja/psdash
 - https://github.com/ajenti/ajenti
 - https://github.com/home-assistant/home-assistant/
+- https://github.com/redhog/pieshell
 
 Portings
 ========
