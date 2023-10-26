@@ -44,7 +44,8 @@ def get_version():
                     assert num.isdigit(), ret
                 return ret
         else:
-            raise ValueError("couldn't find version string")
+            msg = "couldn't find version string"
+            raise ValueError(msg)
 
 
 VERSION = get_version()

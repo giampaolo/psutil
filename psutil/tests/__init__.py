@@ -1806,7 +1806,7 @@ def reload_module(module):
 
 def import_module_by_path(path):
     name = os.path.splitext(os.path.basename(path))[0]
-    if sys.version_info[0] == 2:
+    if sys.version_info[0] < 3:
         import imp
         return imp.load_source(name, path)
     else:

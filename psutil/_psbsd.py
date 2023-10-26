@@ -253,7 +253,8 @@ else:
         if cpu_count_logical() == 1:
             return [cpu_times()]
         if per_cpu_times.__called__:
-            raise NotImplementedError("supported only starting from FreeBSD 8")
+            msg = "supported only starting from FreeBSD 8"
+            raise NotImplementedError(msg)
         per_cpu_times.__called__ = True
         return [cpu_times()]
 

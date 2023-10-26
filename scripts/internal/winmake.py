@@ -46,7 +46,7 @@ DEPS = [
     "wheel",
 ]
 
-if sys.version_info[0] == 2:
+if sys.version_info[0] < 3:
     DEPS.append('mock')
     DEPS.append('ipaddress')
     DEPS.append('enum34')

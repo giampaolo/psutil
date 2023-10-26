@@ -28,7 +28,6 @@ ignore = [
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
     "DTZ",  # flake8-datetimez
-    "EM",  # flake8-errmsg
     "ERA001",  # Found commented-out code
     "FBT",  # flake8-boolean-trap (makes zero sense)
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
@@ -71,6 +70,7 @@ ignore = [
 [tool.ruff.per-file-ignores]
 # T201 == print(), T203 == pprint()
 ".github/workflows/*" = ["T201", "T203"]
+"psutil/tests/*" = ["EM101"]  # raw-string-in-exception
 "psutil/tests/runner.py" = ["T201", "T203"]
 "scripts/*" = ["T201", "T203"]
 "scripts/internal/*" = ["T201", "T203"]

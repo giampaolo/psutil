@@ -100,7 +100,9 @@ def wait_pid(pid, timeout=None, proc_name=None,
     timeout=0 is also possible (either return immediately or raise).
     """
     if pid <= 0:
-        raise ValueError("can't wait for PID 0")  # see "man waitpid"
+        # see "man waitpid"
+        msg = "can't wait for PID 0"
+        raise ValueError(msg)
     interval = 0.0001
     flags = 0
     if timeout is not None:
