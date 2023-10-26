@@ -715,8 +715,8 @@ class Process(object):  # noqa: UP004
         if POSIX:
             if pwd is None:
                 # might happen if python was installed from sources
-                raise ImportError(
-                    "requires pwd module shipped with standard python")
+                msg = "requires pwd module shipped with standard python"
+                raise ImportError(msg)
             real_uid = self.uids().real
             try:
                 return pwd.getpwuid(real_uid).pw_name
@@ -803,7 +803,8 @@ class Process(object):  # noqa: UP004
             """
             if ioclass is None:
                 if value is not None:
-                    raise ValueError("'ioclass' argument must be specified")
+                    msg = "'ioclass' argument must be specified"
+                    raise ValueError(msg)
                 return self._proc.ionice_get()
             else:
                 self._raise_if_pid_reused()
@@ -1198,10 +1199,12 @@ class Process(object):  # noqa: UP004
             self._raise_if_pid_reused()
             if self.pid == 0:
                 # see "man 2 kill"
-                raise ValueError(
+                msg = (
                     "preventing sending signal to process with PID 0 as it "
                     "would affect every process in the process group of the "
-                    "calling process (os.getpid()) instead of PID 0")
+                    "calling process (os.getpid()) instead of PID 0"
+                )
+                raise ValueError(msg)
             try:
                 os.kill(self.pid, sig)
             except ProcessLookupError:
@@ -1288,7 +1291,8 @@ class Process(object):  # noqa: UP004
         To wait for multiple Process(es) use psutil.wait_procs().
         """
         if timeout is not None and not timeout >= 0:
-            raise ValueError("timeout must be a positive integer")
+            msg = "timeout must be a positive integer"
+            raise ValueError(msg)
         if self._exitcode is not _SENTINEL:
             return self._exitcode
         self._exitcode = self._proc.wait(timeout)

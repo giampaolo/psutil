@@ -891,9 +891,11 @@ class Process:
                      getattr(signal, "CTRL_BREAK_EVENT", object())):
             os.kill(self.pid, sig)
         else:
-            raise ValueError(
+            msg = (
                 "only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT signals "
-                "are supported on Windows")
+                "are supported on Windows"
+            )
+            raise ValueError(msg)
 
     @wrap_exceptions
     def wait(self, timeout=None):
@@ -1045,7 +1047,8 @@ class Process:
     @wrap_exceptions
     def ionice_set(self, ioclass, value):
         if value:
-            raise TypeError("value argument not accepted on Windows")
+            msg = "value argument not accepted on Windows"
+            raise TypeError(msg)
         if ioclass not in (IOPRIO_VERYLOW, IOPRIO_LOW, IOPRIO_NORMAL,
                            IOPRIO_HIGH):
             raise ValueError("%s is not a valid priority" % ioclass)

@@ -151,7 +151,8 @@ def swap_memory():
 
     lines = stdout.strip().split('\n')[1:]
     if not lines:
-        raise RuntimeError('no swap device(s) configured')
+        msg = 'no swap device(s) configured'
+        raise RuntimeError(msg)
     total = free = 0
     for line in lines:
         line = line.split()

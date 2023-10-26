@@ -83,7 +83,8 @@ else:
                 # Get the function's first positional argument.
                 type_or_obj = f.f_locals[f.f_code.co_varnames[0]]
             except (IndexError, KeyError):
-                raise RuntimeError('super() used in a function with no args')
+                msg = 'super() used in a function with no args'
+                raise RuntimeError(msg)
             try:
                 # Get the MRO so we can crawl it.
                 mro = type_or_obj.__mro__
@@ -91,7 +92,8 @@ else:
                 try:
                     mro = type_or_obj.__class__.__mro__
                 except AttributeError:
-                    raise RuntimeError('super() used in a non-newstyle class')
+                    msg = 'super() used in a non-newstyle class'
+                    raise RuntimeError(msg)
             for type_ in mro:
                 #  Find the class that owns the currently-executing method.
                 for meth in type_.__dict__.values():
@@ -118,7 +120,8 @@ else:
                     continue
                 break  # found
             else:
-                raise RuntimeError('super() called outside a method')
+                msg = 'super() called outside a method'
+                raise RuntimeError(msg)
 
         # Dispatch to builtin super().
         if type_or_obj is not _SENTINEL:
@@ -199,9 +202,9 @@ else:
         except FileExistsError:
             pass
         except OSError:
-            raise RuntimeError(
-                "broken or incompatible Python implementation, see: "
-                "https://github.com/giampaolo/psutil/issues/1659")
+            msg = ("broken or incompatible Python implementation, see: "
+                   "https://github.com/giampaolo/psutil/issues/1659")
+            raise RuntimeError(msg)
 
 
 # --- stdlib additions

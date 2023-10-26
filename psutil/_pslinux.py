@@ -745,8 +745,8 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or \
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
-                    raise NotImplementedError(
-                        "can't find current frequency file")
+                    msg = "can't find current frequency file"
+                    raise NotImplementedError(msg)
             curr = int(curr) / 1000
             max_ = int(bcat(pjoin(path, "scaling_max_freq"))) / 1000
             min_ = int(bcat(pjoin(path, "scaling_min_freq"))) / 1000
@@ -2157,7 +2157,8 @@ class Process:
             if value and ioclass in (IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE):
                 raise ValueError("%r ioclass accepts no value" % ioclass)
             if value < 0 or value > 7:
-                raise ValueError("value not in 0-7 range")
+                msg = "value not in 0-7 range"
+                raise ValueError(msg)
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if prlimit is not None:
@@ -2168,7 +2169,8 @@ class Process:
             # we don't want that. We should never get here though as
             # PID 0 is not supported on Linux.
             if self.pid == 0:
-                raise ValueError("can't use prlimit() against PID 0 process")
+                msg = "can't use prlimit() against PID 0 process"
+                raise ValueError(msg)
             try:
                 if limits is None:
                     # get
