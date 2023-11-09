@@ -10,6 +10,11 @@ XXXX-XX-XX
 - 2324_: enforce Ruff rule `raw-string-in-exception`, which helps providing
   clearer tracebacks when exceptions are raised by psutil.
 
+**Bug fixes**
+
+- 2325_, [PyPy]: psutil did not compile on PyPy due to missing
+  `PyErr_SetExcFromWindowsErrWithFilenameObject` cPython API.
+
 5.9.6
 =====
 

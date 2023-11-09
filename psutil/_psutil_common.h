@@ -31,11 +31,15 @@ static const int PSUTIL_CONN_NONE = 128;
     #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
 #endif
 
-#if defined(PSUTIL_WINDOWS) && \
-        defined(PYPY_VERSION) && \
-        !defined(PyErr_SetFromWindowsErrWithFilename)
-    PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
-                                                  const char *filename);
+#if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
+    #if !defined(PyErr_SetFromWindowsErrWithFilename)
+        PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
+                                                      const char *filename);
+    #endif
+    #if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
+        PyObject *PyErr_SetExcFromWindowsErrWithFilenameObject(
+            PyObject *type, int ierr, PyObject *filename);
+    #endif
 #endif
 
 // --- _Py_PARSE_PID

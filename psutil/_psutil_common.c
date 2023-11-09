@@ -58,6 +58,18 @@ error:
 #endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
 
 
+#if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
+PyObject *
+PyErr_SetExcFromWindowsErrWithFilenameObject(PyObject *type,
+                                             int ierr,
+                                             PyObject *filename) {
+    // Original function is too complex. Just raise OSError without
+    // filename.
+    return PyErr_SetFromWindowsErrWithFilename(ierr, NULL);
+}
+#endif // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
+
+
 // PyPy 2.7
 #if !defined(PyErr_SetFromWindowsErr)
 PyObject *
