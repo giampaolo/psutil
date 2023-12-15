@@ -12,6 +12,7 @@ PY3_DEPS = \
 	check-manifest \
 	concurrencytest \
 	coverage \
+	packaging \
 	pylint \
 	pyperf \
 	pypinfo \
@@ -269,6 +270,13 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} sdist
 	${MAKE} check-sdist
 	${MAKE} install
+	$(PYTHON) -c \
+		"import requests, sys; \
+		from packaging.version import parse; \
+		from psutil import __version__; \
+		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
+		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
+		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
 	${MAKE} download-wheels-github
 	${MAKE} download-wheels-appveyor
 	${MAKE} check-wheels
