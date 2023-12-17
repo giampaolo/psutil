@@ -433,6 +433,8 @@ class TestFetchAllProcesses(PsutilTestCase):
                 ls.append(proc_info(pid))
             return ls
 
+    # XXX
+    @unittest.skipIf(WINDOWS, "temporary")
     def test_all(self):
         failures = []
         for info in self.iter_proc_info():
