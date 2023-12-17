@@ -357,7 +357,7 @@ def proc_info(pid):
 
     def check_exception(exc, proc, name, ppid):
         tcase.assertEqual(exc.pid, pid)
-        tcase.assertEqual(exc.name, proc._name)
+        tcase.assertEqual(exc.name, name)
         if isinstance(exc, psutil.ZombieProcess):
             tcase.assertProcessZombie(proc)
             if exc.ppid is not None:
@@ -433,8 +433,6 @@ class TestFetchAllProcesses(PsutilTestCase):
                 ls.append(proc_info(pid))
             return ls
 
-    # XXX
-    @unittest.skipIf(WINDOWS, "temporary")
     def test_all(self):
         failures = []
         for info in self.iter_proc_info():
