@@ -103,7 +103,7 @@ def main():
 
     tot_files = 0
     tot_size = 0
-    templ = "%-100s %7s %7s %7s"
+    templ = "%-120s %7s %7s %7s"
     for platf, pkgs in groups.items():
         ppn = "%s (%s)" % (platf, len(pkgs))
         s = templ % (ppn, "size", "arch", "pyver")

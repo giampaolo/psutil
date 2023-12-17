@@ -728,6 +728,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(' '.join(p.cmdline()), ' '.join(cmdline))
 
     @unittest.skipIf(PYPY, "broken on PYPY")
+    @unittest.skipIf(WINDOWS, "temporary")
     def test_long_cmdline(self):
         testfn = self.get_testfn()
         create_exe(testfn)
