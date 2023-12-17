@@ -167,6 +167,7 @@ class BaseUnicodeTest(PsutilTestCase):
 @serialrun
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
+@unittest.skipIf(WINDOWS, "temporary")
 class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""
 

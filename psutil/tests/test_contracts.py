@@ -357,7 +357,7 @@ def proc_info(pid):
 
     def check_exception(exc, proc, name, ppid):
         tcase.assertEqual(exc.pid, pid)
-        tcase.assertEqual(exc.name, name)
+        tcase.assertEqual(exc.name, proc._name)
         if isinstance(exc, psutil.ZombieProcess):
             tcase.assertProcessZombie(proc)
             if exc.ppid is not None:
