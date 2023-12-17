@@ -2650,6 +2650,10 @@ PyPy3.
 Timeline
 ========
 
+- 2023-12-17:
+  `5.9.7 <https://pypi.org/project/psutil/5.9.7/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#596>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.6...release-5.9.7#files_bucket>`__
 - 2023-10-15:
   `5.9.6 <https://pypi.org/project/psutil/5.9.6/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#596>`__ -
