@@ -84,6 +84,7 @@ from psutil import BSD
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
+from psutil._compat import super
 from psutil._compat import u
 from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
@@ -158,10 +159,18 @@ def try_unicode(suffix):
 class BaseUnicodeTest(PsutilTestCase):
     funky_suffix = None
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.skip_tests = False
+        if cls.funky_suffix is not None:
+            if not try_unicode(cls.funky_suffix):
+                cls.skip_tests = True
+
     def setUp(self):
-        if self.funky_suffix is not None:
-            if not try_unicode(self.funky_suffix):
-                raise self.skipTest("can't handle unicode str")
+        super().setUp()
+        if self.skip_tests:
+            raise self.skipTest("can't handle unicode str")
 
 
 @serialrun
@@ -174,11 +183,13 @@ class TestFSAPIs(BaseUnicodeTest):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.funky_name = get_testfn(suffix=cls.funky_suffix)
         create_exe(cls.funky_name)
 
     @classmethod
     def tearDownClass(cls):
+        super().tearDownClass()
         safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
@@ -192,7 +203,8 @@ class TestFSAPIs(BaseUnicodeTest):
     # ---
 
     def test_proc_exe(self):
-        subp = self.spawn_testproc(cmd=[self.funky_name])
+        cmd = [self.funky_name, "-c", "time.sleep(10)"]
+        subp = self.spawn_testproc(cmd)
         p = psutil.Process(subp.pid)
         exe = p.exe()
         self.assertIsInstance(exe, str)
@@ -201,20 +213,23 @@ class TestFSAPIs(BaseUnicodeTest):
                              os.path.normcase(self.funky_name))
 
     def test_proc_name(self):
-        subp = self.spawn_testproc(cmd=[self.funky_name])
+        cmd = [self.funky_name, "-c", "time.sleep(10)"]
+        subp = self.spawn_testproc(cmd)
         name = psutil.Process(subp.pid).name()
         self.assertIsInstance(name, str)
         if self.expect_exact_path_match():
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        subp = self.spawn_testproc(cmd=[self.funky_name])
+        cmd = [self.funky_name, "-c", "time.sleep(10)"]
+        subp = self.spawn_testproc(cmd)
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()
         for part in cmdline:
             self.assertIsInstance(part, str)
         if self.expect_exact_path_match():
-            self.assertEqual(cmdline, [self.funky_name])
+            self.assertEqual(
+                cmdline, [self.funky_name, "-c", "time.sleep(10)"])
 
     def test_proc_cwd(self):
         dname = self.funky_name + "2"
