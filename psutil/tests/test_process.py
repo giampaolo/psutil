@@ -825,9 +825,6 @@ class TestProcess(PsutilTestCase):
         init = p.nice()
         try:
             if WINDOWS:
-                # A CI runner may limit our maximum priority, which will break
-                # this test. Instead, we test in order of increasing priority,
-                # and match either the expected value or the highest so far.
                 highest_prio = None
                 for prio in [psutil.IDLE_PRIORITY_CLASS,
                              psutil.BELOW_NORMAL_PRIORITY_CLASS,
@@ -842,10 +839,16 @@ class TestProcess(PsutilTestCase):
                             pass
                         else:
                             new_prio = p.nice()
-                            if CI_TESTING:
+                            # The OS may limit our maximum priority,
+                            # even if the function succeeds. For higher
+                            # priorities, we match either the expected
+                            # value or the highest so far.
+                            if prio in (psutil.ABOVE_NORMAL_PRIORITY_CLASS,
+                                        psutil.HIGH_PRIORITY_CLASS,
+                                        psutil.REALTIME_PRIORITY_CLASS):
                                 if new_prio == prio or highest_prio is None:
                                     highest_prio = prio
-                                self.assertEqual(new_prio, highest_prio)
+                                    self.assertEqual(new_prio, highest_prio)
                             else:
                                 self.assertEqual(new_prio, prio)
             else:

@@ -96,6 +96,7 @@ __all__ = [
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace', 'print_sysinfo',
+    'is_win_secure_system_proc',
     # fs utils
     'chdir', 'safe_rmpath', 'create_exe', 'get_testfn',
     # os
@@ -1294,6 +1295,31 @@ def print_sysinfo():
         print("%-17s %s" % (k + ':', v), file=sys.stderr)  # NOQA
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
+
+    if WINDOWS:
+        os.system("tasklist")
+    elif which("ps"):
+        os.system("ps aux")
+    print("=" * 70, file=sys.stderr)  # NOQA
+    sys.stdout.flush()
+
+
+def is_win_secure_system_proc(pid):
+    # see: https://github.com/giampaolo/psutil/issues/2338
+    @memoize
+    def get_procs():
+        ret = {}
+        out = sh("tasklist.exe /NH /FO csv")
+        for line in out.splitlines()[1:]:
+            bits = [x.replace('"', "") for x in line.split(",")]
+            name, pid = bits[0], int(bits[1])
+            ret[pid] = name
+        return ret
+
+    try:
+        return get_procs()[pid] == "Secure System"
+    except KeyError:
+        return False
 
 
 def _get_eligible_cpu():

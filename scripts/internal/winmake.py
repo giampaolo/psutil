@@ -442,7 +442,7 @@ def test_by_name(name):
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
-def test_failed():
+def test_last_failed():
     """Re-run tests which failed on last run."""
     build()
     sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
@@ -559,7 +559,8 @@ def parse_args():
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
     sp.add_parser('test-connections', help="run connections tests")
     sp.add_parser('test-contracts', help="run contracts tests")
-    sp.add_parser('test-failed', help="re-run tests which failed on last run")
+    sp.add_parser('test-last-failed',
+                  help="re-run tests which failed on last run")
     sp.add_parser('test-memleaks', help="run memory leaks tests")
     sp.add_parser('test-misc', help="run misc tests")
     sp.add_parser('test-platform', help="run windows only tests")

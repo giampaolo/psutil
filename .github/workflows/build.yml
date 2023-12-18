@@ -33,7 +33,6 @@ jobs:
           archs: "AMD64"
         - os: windows-2019
           archs: "x86"
-
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4

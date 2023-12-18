@@ -36,7 +36,6 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import range
 from psutil._compat import unicode
-from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
@@ -51,6 +50,7 @@ from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import is_namedtuple
+from psutil.tests import is_win_secure_system_proc
 from psutil.tests import kernel_version
 from psutil.tests import process_namespace
 from psutil.tests import serialrun
@@ -442,8 +442,8 @@ class TestFetchAllProcesses(PsutilTestCase):
                     meth(value, info)
                 except Exception:
                     s = '\n' + '=' * 70 + '\n'
-                    s += "FAIL: name=test_%s, pid=%s, ret=%s\n" % (
-                        name, info['pid'], repr(value))
+                    s += "FAIL: name=test_%s, pid=%s, ret=%s\ninfo=%s\n" % (
+                        name, info['pid'], repr(value), info)
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
                     s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
@@ -489,11 +489,12 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def name(self, ret, info):
         self.assertIsInstance(ret, (str, unicode))
-        if APPVEYOR and not ret and info['status'] == 'stopped':
+        if WINDOWS and not ret and is_win_secure_system_proc(info['pid']):
+            # https://github.com/giampaolo/psutil/issues/2338
             return
         # on AIX, "<exiting>" processes don't have names
         if not AIX:
-            assert ret
+            assert ret, repr(ret)
 
     def create_time(self, ret, info):
         self.assertIsInstance(ret, float)
@@ -562,7 +563,8 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def num_threads(self, ret, info):
         self.assertIsInstance(ret, int)
-        if APPVEYOR and not ret and info['status'] == 'stopped':
+        if WINDOWS and ret == 0 and is_win_secure_system_proc(info['pid']):
+            # https://github.com/giampaolo/psutil/issues/2338
             return
         self.assertGreaterEqual(ret, 1)
 

@@ -11,11 +11,11 @@ concurrency:
   cancel-in-progress: true
 jobs:
   freebsd:
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Run tests
-        uses: vmactions/freebsd-vm@v0
+        uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
           prepare: |
@@ -28,11 +28,11 @@ jobs:
             make test
             make test-memleaks
   openbsd:
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Run tests
-        uses: vmactions/openbsd-vm@v0
+        uses: vmactions/openbsd-vm@v1
         with:
           usesh: true
           prepare: |
@@ -46,16 +46,16 @@ jobs:
             make test
             make test-memleaks
   netbsd:
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Run tests
-        uses: vmactions/netbsd-vm@v0
+        uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
           prepare: |
             set -e
-            pkg_add -v pkgin
+            /usr/sbin/pkg_add -v pkgin
             pkgin update
             pkgin -y install python311-* py311-setuptools-* gcc12-*
           run: |
