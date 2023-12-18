@@ -753,7 +753,8 @@ class TestProcess(PsutilTestCase):
     def test_long_name(self):
         testfn = self.get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
-        p = self.spawn_psproc(testfn)
+        cmdline = [testfn] + (["0123456789"] * 20)
+        p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
             # zombie (don't know why). Because the name() is long, all
