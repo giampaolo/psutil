@@ -59,14 +59,6 @@ struct kpcb {
 // kinfo_pcb results list
 SLIST_HEAD(kpcbhead, kpcb) kpcbhead = SLIST_HEAD_INITIALIZER(kpcbhead);
 
-static void psutil_kiflist_init(void);
-static void psutil_kiflist_clear(void);
-static void psutil_kpcblist_init(void);
-static void psutil_kpcblist_clear(void);
-static int psutil_get_files(void);
-static int psutil_get_sockets(const char *name);
-static int psutil_get_info(int aff);
-
 
 // Initialize kinfo_file results list.
 static void
@@ -79,10 +71,11 @@ psutil_kiflist_init(void) {
 // Clear kinfo_file results list.
 static void
 psutil_kiflist_clear(void) {
-     while (!SLIST_EMPTY(&kihead)) {
-             SLIST_REMOVE_HEAD(&kihead, kifs);
-     }
-
+    while (!SLIST_EMPTY(&kihead)) {
+        struct kif *kif = SLIST_FIRST(&kihead);
+        SLIST_REMOVE_HEAD(&kihead, kifs);
+        free(kif);
+    }
     return;
 }
 
@@ -99,9 +92,10 @@ psutil_kpcblist_init(void) {
 static void
 psutil_kpcblist_clear(void) {
      while (!SLIST_EMPTY(&kpcbhead)) {
-             SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
+        struct kpcb *kpcb = SLIST_FIRST(&kpcbhead);
+        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
+        free(kpcb);
      }
-
     return;
 }
 
@@ -149,6 +143,8 @@ psutil_get_files(void) {
         kif->kif = &ki[j];
         SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
+
+    // free(buf);
 
     /*
     // debug
@@ -206,6 +202,8 @@ psutil_get_sockets(const char *name) {
         kpcb->kpcb = &kp[j];
         SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
     }
+
+    // free(pcb);
     return 0;
 }
 

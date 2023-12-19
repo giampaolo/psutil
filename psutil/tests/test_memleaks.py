@@ -249,7 +249,6 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
-    @unittest.skipIf(NETBSD, "critically broken on NETBSD (#930)")
     def test_connections(self):
         # TODO: UNIX sockets are temporarily implemented by parsing
         # 'pfiles' cmd  output; we don't want that part of the code to
@@ -422,7 +421,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     @fewtimes_if_linux()
     @unittest.skipIf(MACOS and os.getuid() != 0, "need root access")
-    @unittest.skipIf(NETBSD, "critically broken on NETBSD (#930)")
     def test_net_connections(self):
         # always opens and handle on Windows() (once)
         psutil.net_connections(kind='all')
