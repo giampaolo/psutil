@@ -1,7 +1,7 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.8
-=====
+5.9.8 (IN DEVELOPMENT)
+======================
 
 - 2340_, [NetBSD]: if process is terminated, `Process.cwd()`_ will return an
   empty string instead of raising `NoSuchProcess`_.
