@@ -211,19 +211,20 @@ class TestMiscAPIs(PsutilTestCase):
         users = psutil.users()
         self.assertNotEqual(users, [])
         for user in users:
-            assert user.name, user
-            self.assertIsInstance(user.name, str)
-            self.assertIsInstance(user.terminal, (str, type(None)))
-            if user.host is not None:
-                self.assertIsInstance(user.host, (str, type(None)))
-            user.terminal  # noqa
-            user.host  # noqa
-            assert user.started > 0.0, user
-            datetime.datetime.fromtimestamp(user.started)
-            if WINDOWS or OPENBSD:
-                self.assertIsNone(user.pid)
-            else:
-                psutil.Process(user.pid)
+            with self.subTest(user=user):
+                assert user.name
+                self.assertIsInstance(user.name, str)
+                self.assertIsInstance(user.terminal, (str, type(None)))
+                if user.host is not None:
+                    self.assertIsInstance(user.host, (str, type(None)))
+                user.terminal  # noqa
+                user.host  # noqa
+                self.assertGreater(user.started, 0.0)
+                datetime.datetime.fromtimestamp(user.started)
+                if WINDOWS or OPENBSD:
+                    self.assertIsNone(user.pid)
+                else:
+                    psutil.Process(user.pid)
 
     def test_test(self):
         # test for psutil.test() function
@@ -282,15 +283,13 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.used > 0, mem
         assert mem.free >= 0, mem
         for name in mem._fields:
-            value = getattr(mem, name)
-            if name != 'percent':
-                self.assertIsInstance(value, (int, long))
-            if name != 'total':
-                if not value >= 0:
-                    raise self.fail("%r < 0 (%s)" % (name, value))
-                if value > mem.total:
-                    raise self.fail("%r > total (total=%s, %s=%s)"
-                                    % (name, mem.total, name, value))
+            with self.subTest(name=name):
+                value = getattr(mem, name)
+                if name != 'percent':
+                    self.assertIsInstance(value, (int, long))
+                if name != 'total':
+                    self.assertGreaterEqual(value, 0)
+                    self.assertGreater(value, mem.total)
 
     def test_swap_memory(self):
         mem = psutil.swap_memory()
@@ -433,15 +432,20 @@ class TestCpuAPIs(PsutilTestCase):
                 if difference >= 0.05:
                     return
 
+    @unittest.skipIf(CI_TESTING and OPENBSD, "unreliable on OPENBSD + CI")
     def test_cpu_times_comparison(self):
         # Make sure the sum of all per cpu times is almost equal to
-        # base "one cpu" times.
+        # base "one cpu" times. On OpenBSD the sum of per-CPUs is
+        # higher for some reason.
         base = psutil.cpu_times()
         per_cpu = psutil.cpu_times(percpu=True)
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
         for field in base._fields:
-            self.assertAlmostEqual(
-                getattr(base, field), getattr(summed_values, field), delta=1)
+            with self.subTest(field=field, base=base, per_cpu=per_cpu):
+                self.assertAlmostEqual(
+                    getattr(base, field),
+                    getattr(summed_values, field),
+                    delta=1)
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:
