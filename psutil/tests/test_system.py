@@ -283,13 +283,15 @@ class TestMemoryAPIs(PsutilTestCase):
         assert mem.used > 0, mem
         assert mem.free >= 0, mem
         for name in mem._fields:
-            with self.subTest(name=name):
-                value = getattr(mem, name)
-                if name != 'percent':
-                    self.assertIsInstance(value, (int, long))
-                if name != 'total':
-                    self.assertGreaterEqual(value, 0)
-                    self.assertGreater(value, mem.total)
+            value = getattr(mem, name)
+            if name != 'percent':
+                self.assertIsInstance(value, (int, long))
+            if name != 'total':
+                if not value >= 0:
+                    raise self.fail("%r < 0 (%s)" % (name, value))
+                if value > mem.total:
+                    raise self.fail("%r > total (total=%s, %s=%s)"
+                                    % (name, mem.total, name, value))
 
     def test_swap_memory(self):
         mem = psutil.swap_memory()
