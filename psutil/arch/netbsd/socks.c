@@ -44,6 +44,8 @@ enum af_filter {
 struct kif {
     SLIST_ENTRY(kif) kifs;
     struct kinfo_file *kif;
+    char *buf;
+    int has_buf;
 };
 
 // kinfo_file results list
@@ -54,36 +56,31 @@ SLIST_HEAD(kifhead, kif) kihead = SLIST_HEAD_INITIALIZER(kihead);
 struct kpcb {
     SLIST_ENTRY(kpcb) kpcbs;
     struct kinfo_pcb *kpcb;
+    struct kinfo_pcb *buf;
+    int has_buf;
 };
 
 // kinfo_pcb results list
 SLIST_HEAD(kpcbhead, kpcb) kpcbhead = SLIST_HEAD_INITIALIZER(kpcbhead);
-
-static void psutil_kiflist_init(void);
-static void psutil_kiflist_clear(void);
-static void psutil_kpcblist_init(void);
-static void psutil_kpcblist_clear(void);
-static int psutil_get_files(void);
-static int psutil_get_sockets(const char *name);
-static int psutil_get_info(int aff);
 
 
 // Initialize kinfo_file results list.
 static void
 psutil_kiflist_init(void) {
     SLIST_INIT(&kihead);
-    return;
 }
 
 
 // Clear kinfo_file results list.
 static void
 psutil_kiflist_clear(void) {
-     while (!SLIST_EMPTY(&kihead)) {
-             SLIST_REMOVE_HEAD(&kihead, kifs);
-     }
-
-    return;
+    while (!SLIST_EMPTY(&kihead)) {
+        struct kif *kif = SLIST_FIRST(&kihead);
+        if (kif->has_buf == 1)
+            free(kif->buf);
+        free(kif);
+        SLIST_REMOVE_HEAD(&kihead, kifs);
+    }
 }
 
 
@@ -91,18 +88,19 @@ psutil_kiflist_clear(void) {
 static void
 psutil_kpcblist_init(void) {
     SLIST_INIT(&kpcbhead);
-    return;
 }
 
 
 // Clear kinof_pcb result list.
 static void
 psutil_kpcblist_clear(void) {
-     while (!SLIST_EMPTY(&kpcbhead)) {
-             SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
-     }
-
-    return;
+    while (!SLIST_EMPTY(&kpcbhead)) {
+        struct kpcb *kpcb = SLIST_FIRST(&kpcbhead);
+        if (kpcb->has_buf == 1)
+            free(kpcb->buf);
+        free(kpcb);
+        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
+    }
 }
 
 
@@ -112,7 +110,7 @@ psutil_get_files(void) {
     size_t len;
     size_t j;
     int mib[6];
-    char *buf;
+    char *buf = NULL;
     off_t offset;
 
     mib[0] = CTL_KERN;
@@ -124,7 +122,7 @@ psutil_get_files(void) {
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     offset = len % sizeof(off_t);
@@ -132,33 +130,46 @@ psutil_get_files(void) {
 
     if ((buf = malloc(len + offset)) == NULL) {
         PyErr_NoMemory();
-        return -1;
+        goto error;
     }
 
     if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
-        free(buf);
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     len /= sizeof(struct kinfo_file);
     struct kinfo_file *ki = (struct kinfo_file *)(buf + offset);
 
-    for (j = 0; j < len; j++) {
-        struct kif *kif = malloc(sizeof(struct kif));
-        kif->kif = &ki[j];
-        SLIST_INSERT_HEAD(&kihead, kif, kifs);
+    if (len > 0) {
+        for (j = 0; j < len; j++) {
+            struct kif *kif = malloc(sizeof(struct kif));
+            if (kif == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+            kif->kif = &ki[j];
+            if (j == 0) {
+                kif->has_buf = 1;
+                kif->buf = buf;
+            }
+            else {
+                kif->has_buf = 0;
+                kif->buf = NULL;
+            }
+            SLIST_INSERT_HEAD(&kihead, kif, kifs);
+        }
     }
-
-    /*
-    // debug
-    struct kif *k;
-    SLIST_FOREACH(k, &kihead, kifs) {
-            printf("%d\n", k->kif->ki_pid);  // NOQA
+    else {
+        free(buf);
     }
-    */
 
     return 0;
+
+error:
+    if (buf != NULL)
+        free(buf);
+    return -1;
 }
 
 
@@ -167,7 +178,7 @@ static int
 psutil_get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
-    struct kinfo_pcb *pcb;
+    struct kinfo_pcb *pcb = NULL;
     size_t len;
     size_t j;
 
@@ -175,17 +186,17 @@ psutil_get_sockets(const char *name) {
 
     if (sysctlnametomib(name, mib, &namelen) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     if ((pcb = malloc(len)) == NULL) {
         PyErr_NoMemory();
-        return -1;
+        goto error;
     }
     memset(pcb, 0, len);
 
@@ -193,20 +204,42 @@ psutil_get_sockets(const char *name) {
     mib[7] = len / sizeof(*pcb);
 
     if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
-        free(pcb);
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     len /= sizeof(struct kinfo_pcb);
     struct kinfo_pcb *kp = (struct kinfo_pcb *)pcb;
 
-    for (j = 0; j < len; j++) {
-        struct kpcb *kpcb = malloc(sizeof(struct kpcb));
-        kpcb->kpcb = &kp[j];
-        SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
+    if (len > 0) {
+        for (j = 0; j < len; j++) {
+            struct kpcb *kpcb = malloc(sizeof(struct kpcb));
+            if (kpcb == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+            kpcb->kpcb = &kp[j];
+            if (j == 0) {
+                kpcb->has_buf = 1;
+                kpcb->buf = pcb;
+            }
+            else {
+                kpcb->has_buf = 0;
+                kpcb->buf = NULL;
+            }
+            SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
+        }
     }
+    else {
+        free(pcb);
+    }
+
     return 0;
+
+error:
+    if (pcb != NULL)
+        free(pcb);
+    return -1;
 }
 
 
@@ -318,6 +351,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     psutil_kiflist_init();
     psutil_kpcblist_init();
+
     if (psutil_get_files() != 0)
         goto error;
     if (psutil_get_info(ALL) != 0)
@@ -429,8 +463,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    psutil_kiflist_clear();
+    psutil_kpcblist_clear();
+    Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
-    return 0;
+    return NULL;
 }
