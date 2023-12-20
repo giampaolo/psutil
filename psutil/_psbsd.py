@@ -786,11 +786,16 @@ class Process:
 
         if NETBSD:
             rawlist = cext.net_connections(self.pid, kind)
-        else:
+        elif OPENBSD:
             rawlist = cext.net_connections(self.pid, families, types)
+        else:
+            rawlist = cext.proc_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]
+            if FREEBSD:
+                if (fam not in families) or (type not in types):
+                    continue
             nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
                                 TCP_STATUSES)
             ret.append(nt)
