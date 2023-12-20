@@ -473,7 +473,7 @@ def main():
                 elif which('rpm'):
                     missdeps("sudo yum install gcc %s%s-devel" % (pyimpl, py3))
                 elif which('apk'):
-                    missdeps("sudo apk add gcc %s%s-dev" % (pyimpl, py3))
+                    missdeps("sudo apk add gcc %s%s-dev musl-dev linux-headers" % (pyimpl, py3))
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
                              "is not installed", color="red"), file=sys.stderr)

@@ -27,7 +27,7 @@ RedHat / CentOS::
 
 Alpine::
 
-    sudo apk add gcc python3-dev
+    sudo apk add gcc python3-dev musl-dev linux-headers
     pip install --no-binary :all: psutil
 
 Windows (build)
