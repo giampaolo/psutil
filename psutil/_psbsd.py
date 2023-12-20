@@ -428,13 +428,10 @@ def net_connections(kind):
     elif NETBSD:
         rawlist = cext.net_connections(-1, kind)
     else:  # FreeBSD
-        rawlist = cext.net_connections()
+        rawlist = cext.net_connections(families, types)
 
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        if FREEBSD:
-            if (fam not in families) or (type not in types):
-                continue
         nt = conn_to_ntuple(fd, fam, type, laddr, raddr,
                             status, TCP_STATUSES, pid)
         ret.add(nt)
