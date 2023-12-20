@@ -25,7 +25,6 @@ import psutil
 import psutil._common
 from psutil import LINUX
 from psutil import MACOS
-from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
