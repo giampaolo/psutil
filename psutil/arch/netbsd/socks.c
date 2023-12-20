@@ -45,6 +45,7 @@ struct kif {
     SLIST_ENTRY(kif) kifs;
     struct kinfo_file *kif;
     char *buf;
+    int has_buf;
 };
 
 // kinfo_file results list
@@ -74,13 +75,10 @@ psutil_kiflist_init(void) {
 // Clear kinfo_file results list.
 static void
 psutil_kiflist_clear(void) {
-    unsigned int i = 0;
-
     while (!SLIST_EMPTY(&kihead)) {
         struct kif *kif = SLIST_FIRST(&kihead);
-        if (i == 0)
+        if (kif->has_buf == 1)
             free(kif->buf);
-        i++;
         free(kif);
         SLIST_REMOVE_HEAD(&kihead, kifs);
     }
@@ -146,24 +144,28 @@ psutil_get_files(void) {
     len /= sizeof(struct kinfo_file);
     struct kinfo_file *ki = (struct kinfo_file *)(buf + offset);
 
-    for (j = 0; j < len; j++) {
-        struct kif *kif = malloc(sizeof(struct kif));
-        if (kif == NULL) {
-            PyErr_NoMemory();
-            goto error;
+    if (len > 0) {
+        for (j = 0; j < len; j++) {
+            struct kif *kif = malloc(sizeof(struct kif));
+            if (kif == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+            kif->kif = &ki[j];
+            if (j == 0) {
+                kif->has_buf = 1;
+                kif->buf = buf;
+            }
+            else {
+                kif->has_buf = 0;
+                kif->buf = NULL;
+            }
+            SLIST_INSERT_HEAD(&kihead, kif, kifs);
         }
-        kif->kif = &ki[j];
-        kif->buf = buf;
-        SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
-
-    /*
-    // debug
-    struct kif *k;
-    SLIST_FOREACH(k, &kihead, kifs) {
-            printf("%d\n", k->kif->ki_pid);  // NOQA
+    else {
+        free(buf);
     }
-    */
 
     return 0;
 
@@ -187,7 +189,7 @@ psutil_get_sockets(const char *name) {
 
     if (sysctlnametomib(name, mib, &namelen) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1) {
