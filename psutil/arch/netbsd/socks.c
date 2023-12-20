@@ -68,7 +68,6 @@ SLIST_HEAD(kpcbhead, kpcb) kpcbhead = SLIST_HEAD_INITIALIZER(kpcbhead);
 static void
 psutil_kiflist_init(void) {
     SLIST_INIT(&kihead);
-    return;
 }
 
 
@@ -89,7 +88,6 @@ psutil_kiflist_clear(void) {
 static void
 psutil_kpcblist_init(void) {
     SLIST_INIT(&kpcbhead);
-    return;
 }
 
 
@@ -103,7 +101,6 @@ psutil_kpcblist_clear(void) {
         free(kpcb);
         SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
     }
-    return;
 }
 
 
