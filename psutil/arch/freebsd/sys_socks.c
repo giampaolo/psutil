@@ -351,7 +351,9 @@ psutil_value_in_seq(PyObject *py_seq, int value) {
     PyObject *py_value;
 
     py_value = PyLong_FromLong((long)value);
-    inseq = PySequence_Contains(py_seq, py_value);
+    if (py_value == NULL)
+        return -1;
+    inseq = PySequence_Contains(py_seq, py_value);  // return -1 on failure
     Py_DECREF(py_value);
     return inseq;
 }
@@ -374,11 +376,16 @@ psutil_net_connections(PyObject* self, PyObject* args) {
         goto error;
     }
 
-    include_v4 = psutil_value_in_seq(py_af_filter, AF_INET);
-    include_v6 = psutil_value_in_seq(py_af_filter, AF_INET6);
-    include_unix = psutil_value_in_seq(py_af_filter, AF_UNIX);
-    include_tcp = psutil_value_in_seq(py_type_filter, SOCK_STREAM);
-    include_udp = psutil_value_in_seq(py_type_filter, SOCK_DGRAM);
+    if ((include_v4 = psutil_value_in_seq(py_af_filter, AF_INET)) == -1)
+        goto error;
+    if ((include_v6 = psutil_value_in_seq(py_af_filter, AF_INET6)) == -1)
+        goto error;
+    if ((include_unix = psutil_value_in_seq(py_af_filter, AF_UNIX)) == -1)
+        goto error;
+    if ((include_tcp = psutil_value_in_seq(py_type_filter, SOCK_STREAM)) == -1)
+        goto error;
+    if ((include_udp = psutil_value_in_seq(py_type_filter, SOCK_DGRAM)) == -1)
+        goto error;
 
     if (psutil_populate_xfiles() != 1)
         goto error;
