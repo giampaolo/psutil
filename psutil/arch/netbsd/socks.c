@@ -351,6 +351,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     psutil_kiflist_init();
     psutil_kpcblist_init();
+
     if (psutil_get_files() != 0)
         goto error;
     if (psutil_get_info(ALL) != 0)
@@ -462,8 +463,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    psutil_kiflist_clear();
+    psutil_kpcblist_clear();
+    Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
-    return 0;
+    return NULL;
 }
