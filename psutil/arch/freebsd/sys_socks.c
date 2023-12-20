@@ -33,7 +33,7 @@ static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
 
 
-int
+static int
 psutil_populate_xfiles(void) {
     size_t len;
 
@@ -61,7 +61,7 @@ psutil_populate_xfiles(void) {
 }
 
 
-struct xfile *
+static struct xfile *
 psutil_get_file_from_sock(kvaddr_t sock) {
     struct xfile *xf;
     int n;
@@ -76,7 +76,8 @@ psutil_get_file_from_sock(kvaddr_t sock) {
 
 // Reference:
 // https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
-int psutil_gather_inet(
+static int
+psutil_gather_inet(
         int proto, int include_v4, int include_v6, PyObject *py_retlist)
 {
     struct xinpgen *xig, *exig;
@@ -243,7 +244,8 @@ error:
 }
 
 
-int psutil_gather_unix(int proto, PyObject *py_retlist) {
+static int
+psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
@@ -347,7 +349,7 @@ error:
 }
 
 
-int
+static int
 psutil_int_in_seq(int value, PyObject *py_seq) {
     int inseq;
     PyObject *py_value;
