@@ -179,6 +179,12 @@ int psutil_gather_inet(
                 goto error;
         }
 
+        // filter
+        if ((inp->inp_vflag & INP_IPV4) && (include_v4 == 0))
+            continue;
+        if ((inp->inp_vflag & INP_IPV6) && (include_v6 == 0))
+            continue;
+
         char lip[200], rip[200];
 
         xf = psutil_get_file_from_sock(so->xso_so);
@@ -188,15 +194,11 @@ int psutil_gather_inet(
         rport = ntohs(inp->inp_fport);
 
         if (inp->inp_vflag & INP_IPV4) {
-            if (include_v4 == 0)
-                continue;
             family = AF_INET;
             inet_ntop(AF_INET, &inp->inp_laddr.s_addr, lip, sizeof(lip));
             inet_ntop(AF_INET, &inp->inp_faddr.s_addr, rip, sizeof(rip));
         }
         else if (inp->inp_vflag & INP_IPV6) {
-            if (include_v6 == 0)
-                continue;
             family = AF_INET6;
             inet_ntop(AF_INET6, &inp->in6p_laddr.s6_addr, lip, sizeof(lip));
             inet_ntop(AF_INET6, &inp->in6p_faddr.s6_addr, rip, sizeof(rip));
