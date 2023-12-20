@@ -115,7 +115,7 @@ psutil_get_files(void) {
     size_t len;
     size_t j;
     int mib[6];
-    char *buf;
+    char *buf = NULL;
     off_t offset;
 
     mib[0] = CTL_KERN;
@@ -127,7 +127,7 @@ psutil_get_files(void) {
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     offset = len % sizeof(off_t);
@@ -135,13 +135,12 @@ psutil_get_files(void) {
 
     if ((buf = malloc(len + offset)) == NULL) {
         PyErr_NoMemory();
-        return -1;
+        goto error;
     }
 
     if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
-        free(buf);
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     len /= sizeof(struct kinfo_file);
@@ -149,12 +148,14 @@ psutil_get_files(void) {
 
     for (j = 0; j < len; j++) {
         struct kif *kif = malloc(sizeof(struct kif));
+        if (kif == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
         kif->kif = &ki[j];
         kif->buf = buf;
         SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
-
-    // free(buf);
 
     /*
     // debug
@@ -165,6 +166,11 @@ psutil_get_files(void) {
     */
 
     return 0;
+
+error:
+    if (buf != NULL)
+        free(buf);
+    return -1;
 }
 
 
