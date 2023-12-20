@@ -245,84 +245,85 @@ error:
 
 // Collect open file and connections.
 static int
-psutil_get_info(int aff) {
-    switch (aff) {
-        case INET:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
-            break;
-        case INET4:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            break;
-        case INET6:
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
-            break;
-        case TCP:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            break;
-        case TCP4:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            break;
-        case TCP6:
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            break;
-        case UDP:
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
-            break;
-        case UDP4:
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            break;
-        case UDP6:
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
-            break;
-        case UNIX:
-            if (psutil_get_sockets("net.local.stream.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
-                return -1;
-            break;
-        case ALL:
-            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.stream.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
-                return -1;
-            if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
-                return -1;
-            break;
+psutil_get_info(char *kind) {
+    if (strcmp(kind, "inet") == 0) {
+        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+            return -1;
     }
-
+    else if (strcmp(kind, "inet4") == 0) {
+        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "inet6") == 0) {
+        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "tcp") == 0) {
+        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "tcp4") == 0) {
+        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "tcp6") == 0) {
+        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "udp") == 0) {
+        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "udp4") == 0) {
+        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "udp6") == 0) {
+        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "unix") == 0) {
+        if (psutil_get_sockets("net.local.stream.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
+            return -1;
+    }
+    else if (strcmp(kind, "all") == 0) {
+        if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.local.stream.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
+            return -1;
+        if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
+            return -1;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError, "invalid kind value");
+        return -1;
+    }
     return 0;
 }
 
@@ -334,6 +335,7 @@ PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     char laddr[PATH_MAX];
     char raddr[PATH_MAX];
+    char *kind;
     int32_t lport;
     int32_t rport;
     int32_t status;
@@ -346,15 +348,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "s", &pid, &kind)) {
+        goto error;
+    }
 
     psutil_kiflist_init();
     psutil_kpcblist_init();
 
     if (psutil_get_files() != 0)
         goto error;
-    if (psutil_get_info(ALL) != 0)
+    if (psutil_get_info(kind) != 0)
         goto error;
 
     struct kif *k;

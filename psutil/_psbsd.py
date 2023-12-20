@@ -426,14 +426,13 @@ def net_connections(kind):
     if OPENBSD:
         rawlist = cext.net_connections(-1, families, types)
     elif NETBSD:
-        rawlist = cext.net_connections(-1)
+        rawlist = cext.net_connections(-1, kind)
     else:  # FreeBSD
         rawlist = cext.net_connections()
 
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
-        if NETBSD or FREEBSD:
-            # OpenBSD implements filtering in C
+        if FREEBSD:
             if (fam not in families) or (type not in types):
                 continue
         nt = conn_to_ntuple(fd, fam, type, laddr, raddr,
@@ -786,18 +785,12 @@ class Process:
         ret = []
 
         if NETBSD:
-            rawlist = cext.net_connections(self.pid)
-        elif OPENBSD:
+            rawlist = cext.net_connections(self.pid, kind)
+        else:
             rawlist = cext.net_connections(self.pid, families, types)
-        else:  # FreeBSD
-            rawlist = cext.proc_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]
-            if NETBSD:
-                # FreeBSD and OpenBSD implement filtering in C
-                if (fam not in families) or (type not in types):
-                    continue
             nt = conn_to_ntuple(fd, fam, type, laddr, raddr, status,
                                 TCP_STATUSES)
             ret.append(nt)
