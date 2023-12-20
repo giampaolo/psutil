@@ -8,7 +8,7 @@
 - 2343_, [FreeBSD]: filter `net_connections()`_ returned list in C instead of
   Python, and avoid to retrieve unnecessary connection types unless explicitly
   asked. E.g., on an IDLE system with few IPv6 connections this will run around
-  4 times faster. Before all connection types (TCP, UDP, UNIX) were retrived
+  4 times faster. Before all connection types (TCP, UDP, UNIX) were retrieved
   internally, even if only a portion was returned.
 - 2342_, [NetBSD]: same as above (#2343) but for NetBSD.
 
