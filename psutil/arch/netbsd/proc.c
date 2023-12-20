@@ -93,7 +93,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     char path[MAXPATHLEN];
     size_t pathlen = sizeof path;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
 #ifdef KERN_PROC_CWD
@@ -116,7 +116,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     free(buf);
     if (len == -1) {
         if (errno == ENOENT)
-            NoSuchProcess("sysctl -> ENOENT");
+            NoSuchProcess("readlink -> ENOENT");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -143,7 +143,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int ret;
     size_t size;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0) {
         // else returns ENOENT
@@ -190,7 +190,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
     long pid;
     kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -211,7 +211,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     mib[0] = CTL_KERN;
@@ -396,7 +396,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     struct kinfo_file *freep;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     errno = 0;
