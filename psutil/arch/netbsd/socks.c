@@ -55,6 +55,8 @@ SLIST_HEAD(kifhead, kif) kihead = SLIST_HEAD_INITIALIZER(kihead);
 struct kpcb {
     SLIST_ENTRY(kpcb) kpcbs;
     struct kinfo_pcb *kpcb;
+    struct kinfo_pcb *buf;
+    int has_buf;
 };
 
 // kinfo_pcb results list
@@ -96,11 +98,13 @@ psutil_kpcblist_init(void) {
 // Clear kinof_pcb result list.
 static void
 psutil_kpcblist_clear(void) {
-     while (!SLIST_EMPTY(&kpcbhead)) {
+    while (!SLIST_EMPTY(&kpcbhead)) {
         struct kpcb *kpcb = SLIST_FIRST(&kpcbhead);
-        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
+        if (kpcb->has_buf == 1)
+            free(kpcb->buf);
         free(kpcb);
-     }
+        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
+    }
     return;
 }
 
@@ -203,13 +207,25 @@ psutil_get_sockets(const char *name) {
     len /= sizeof(struct kinfo_pcb);
     struct kinfo_pcb *kp = (struct kinfo_pcb *)pcb;
 
-    for (j = 0; j < len; j++) {
-        struct kpcb *kpcb = malloc(sizeof(struct kpcb));
-        kpcb->kpcb = &kp[j];
-        SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
+    if (len > 0) {
+        for (j = 0; j < len; j++) {
+            struct kpcb *kpcb = malloc(sizeof(struct kpcb));
+            kpcb->kpcb = &kp[j];
+            if (j == 0) {
+                kpcb->has_buf = 1;
+                kpcb->buf = pcb;
+            }
+            else {
+                kpcb->has_buf = 0;
+                kpcb->buf = NULL;
+            }
+            SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
+        }
+    }
+    else {
+        free(pcb);
     }
 
-    // free(pcb);
     return 0;
 }
 
