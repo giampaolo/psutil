@@ -3,6 +3,20 @@
 5.9.8 (IN DEVELOPMENT)
 ======================
 
+**Enhancements**
+
+- 2342_, [NetBSD]: filter `net_connections()`_ returned list in C instead of
+  Python, and avoid to retrieve unnecessary connection types unless explicitly
+  asked. E.g., on an IDLE system with few IPv6 connections this will run around
+  170% faster. Before all connection types (TCP, UDP, UNIX) were retrived
+  internally, even if they were not returned.::
+
+    import psutil, time
+    started = time.monotonic()
+    for x in range(1000):
+        psutil.net_connections("tcp6")
+    print(f"completed in {(time.monotonic() - started):.4f} secs")
+
 **Bug fixes**
 
 - 930_, [NetBSD], [critical]: `net_connections()`_ implementation was broken.
