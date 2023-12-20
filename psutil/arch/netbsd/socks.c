@@ -25,21 +25,6 @@
 #include "../../_psutil_posix.h"
 
 
-// address family filter
-enum af_filter {
-    INET,
-    INET4,
-    INET6,
-    TCP,
-    TCP4,
-    TCP6,
-    UDP,
-    UDP4,
-    UDP6,
-    UNIX,
-    ALL,
-};
-
 // kinfo_file results
 struct kif {
     SLIST_ENTRY(kif) kifs;
