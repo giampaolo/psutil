@@ -33,7 +33,7 @@ static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
 
 
-int
+static int
 psutil_populate_xfiles(void) {
     size_t len;
 
@@ -61,7 +61,7 @@ psutil_populate_xfiles(void) {
 }
 
 
-struct xfile *
+static struct xfile *
 psutil_get_file_from_sock(kvaddr_t sock) {
     struct xfile *xf;
     int n;
@@ -76,7 +76,10 @@ psutil_get_file_from_sock(kvaddr_t sock) {
 
 // Reference:
 // https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
-int psutil_gather_inet(int proto, PyObject *py_retlist) {
+static int
+psutil_gather_inet(
+        int proto, int include_v4, int include_v6, PyObject *py_retlist)
+{
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
     struct xtcpcb *xtp;
@@ -177,6 +180,12 @@ int psutil_gather_inet(int proto, PyObject *py_retlist) {
                 goto error;
         }
 
+        // filter
+        if ((inp->inp_vflag & INP_IPV4) && (include_v4 == 0))
+            continue;
+        if ((inp->inp_vflag & INP_IPV6) && (include_v6 == 0))
+            continue;
+
         char lip[200], rip[200];
 
         xf = psutil_get_file_from_sock(so->xso_so);
@@ -235,7 +244,8 @@ error:
 }
 
 
-int psutil_gather_unix(int proto, PyObject *py_retlist) {
+static int
+psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
@@ -339,23 +349,74 @@ error:
 }
 
 
+static int
+psutil_int_in_seq(int value, PyObject *py_seq) {
+    int inseq;
+    PyObject *py_value;
+
+    py_value = PyLong_FromLong((long)value);
+    if (py_value == NULL)
+        return -1;
+    inseq = PySequence_Contains(py_seq, py_value);  // return -1 on failure
+    Py_DECREF(py_value);
+    return inseq;
+}
+
+
 PyObject*
 psutil_net_connections(PyObject* self, PyObject* args) {
-    // Return system-wide open connections.
+    int include_v4, include_v6, include_unix, include_tcp, include_udp;
+    PyObject *py_af_filter = NULL;
+    PyObject *py_type_filter = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
+    if (! PyArg_ParseTuple(args, "OO", &py_af_filter, &py_type_filter)) {
+        goto error;
+    }
+    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
+        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+        goto error;
+    }
+
+    if ((include_v4 = psutil_int_in_seq(AF_INET, py_af_filter)) == -1)
+        goto error;
+    if ((include_v6 = psutil_int_in_seq(AF_INET6, py_af_filter)) == -1)
+        goto error;
+    if ((include_unix = psutil_int_in_seq(AF_UNIX, py_af_filter)) == -1)
+        goto error;
+    if ((include_tcp = psutil_int_in_seq(SOCK_STREAM, py_type_filter)) == -1)
+        goto error;
+    if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
+        goto error;
+
     if (psutil_populate_xfiles() != 1)
         goto error;
-    if (psutil_gather_inet(IPPROTO_TCP, py_retlist) == 0)
-        goto error;
-    if (psutil_gather_inet(IPPROTO_UDP, py_retlist) == 0)
-        goto error;
-    if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
-       goto error;
-    if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
-        goto error;
+
+    // TCP
+    if (include_tcp == 1) {
+        if (psutil_gather_inet(
+                IPPROTO_TCP, include_v4, include_v6, py_retlist) == 0)
+        {
+            goto error;
+        }
+    }
+    // UDP
+    if (include_udp == 1) {
+        if (psutil_gather_inet(
+                IPPROTO_UDP, include_v4, include_v6, py_retlist) == 0)
+        {
+            goto error;
+        }
+    }
+    // UNIX
+    if (include_unix == 1) {
+        if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
+           goto error;
+        if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
+            goto error;
+    }
 
     free(psutil_xfiles);
     return py_retlist;
