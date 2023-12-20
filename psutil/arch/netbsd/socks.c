@@ -44,6 +44,7 @@ enum af_filter {
 struct kif {
     SLIST_ENTRY(kif) kifs;
     struct kinfo_file *kif;
+    char *buf;
 };
 
 // kinfo_file results list
@@ -71,12 +72,16 @@ psutil_kiflist_init(void) {
 // Clear kinfo_file results list.
 static void
 psutil_kiflist_clear(void) {
+    unsigned int i = 0;
+
     while (!SLIST_EMPTY(&kihead)) {
         struct kif *kif = SLIST_FIRST(&kihead);
-        SLIST_REMOVE_HEAD(&kihead, kifs);
+        if (i == 0)
+            free(kif->buf);
+        i++;
         free(kif);
+        SLIST_REMOVE_HEAD(&kihead, kifs);
     }
-    return;
 }
 
 
@@ -141,6 +146,7 @@ psutil_get_files(void) {
     for (j = 0; j < len; j++) {
         struct kif *kif = malloc(sizeof(struct kif));
         kif->kif = &ki[j];
+        kif->buf = buf;
         SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
 
