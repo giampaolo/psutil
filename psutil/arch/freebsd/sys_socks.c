@@ -346,7 +346,7 @@ error:
 
 
 int
-psutil_value_in_seq(PyObject *py_seq, int value) {
+psutil_int_in_seq(int value, PyObject *py_seq) {
     int inseq;
     PyObject *py_value;
 
@@ -376,15 +376,15 @@ psutil_net_connections(PyObject* self, PyObject* args) {
         goto error;
     }
 
-    if ((include_v4 = psutil_value_in_seq(py_af_filter, AF_INET)) == -1)
+    if ((include_v4 = psutil_int_in_seq(AF_INET, py_af_filter)) == -1)
         goto error;
-    if ((include_v6 = psutil_value_in_seq(py_af_filter, AF_INET6)) == -1)
+    if ((include_v6 = psutil_int_in_seq(AF_INET6, py_af_filter)) == -1)
         goto error;
-    if ((include_unix = psutil_value_in_seq(py_af_filter, AF_UNIX)) == -1)
+    if ((include_unix = psutil_int_in_seq(AF_UNIX, py_af_filter)) == -1)
         goto error;
-    if ((include_tcp = psutil_value_in_seq(py_type_filter, SOCK_STREAM)) == -1)
+    if ((include_tcp = psutil_int_in_seq(SOCK_STREAM, py_type_filter)) == -1)
         goto error;
-    if ((include_udp = psutil_value_in_seq(py_type_filter, SOCK_DGRAM)) == -1)
+    if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
         goto error;
 
     if (psutil_populate_xfiles() != 1)
