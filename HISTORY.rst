@@ -3,6 +3,10 @@
 5.9.8 (IN DEVELOPMENT)
 ======================
 
+**Bug fixes**
+
+- 930_, [NetBSD], [critical]: `net_connections()`_ implementation was broken.
+  It could either leak memory or core dump.
 - 2340_, [NetBSD]: if process is terminated, `Process.cwd()`_ will return an
   empty string instead of raising `NoSuchProcess`_.
 
