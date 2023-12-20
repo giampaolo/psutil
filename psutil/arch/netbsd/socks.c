@@ -173,7 +173,7 @@ static int
 psutil_get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
-    struct kinfo_pcb *pcb;
+    struct kinfo_pcb *pcb = NULL;
     size_t len;
     size_t j;
 
@@ -186,12 +186,12 @@ psutil_get_sockets(const char *name) {
 
     if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     if ((pcb = malloc(len)) == NULL) {
         PyErr_NoMemory();
-        return -1;
+        goto error;
     }
     memset(pcb, 0, len);
 
@@ -199,9 +199,8 @@ psutil_get_sockets(const char *name) {
     mib[7] = len / sizeof(*pcb);
 
     if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
-        free(pcb);
         PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
+        goto error;
     }
 
     len /= sizeof(struct kinfo_pcb);
@@ -210,6 +209,10 @@ psutil_get_sockets(const char *name) {
     if (len > 0) {
         for (j = 0; j < len; j++) {
             struct kpcb *kpcb = malloc(sizeof(struct kpcb));
+            if (kpcb == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
             kpcb->kpcb = &kp[j];
             if (j == 0) {
                 kpcb->has_buf = 1;
@@ -227,6 +230,11 @@ psutil_get_sockets(const char *name) {
     }
 
     return 0;
+
+error:
+    if (pcb != NULL)
+        free(pcb);
+    return -1;
 }
 
 
