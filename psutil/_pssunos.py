@@ -235,8 +235,12 @@ def disk_partitions(all=False):
                 debug("skipping %r: %s" % (mountpoint, err))
                 continue
         maxfile = maxpath = None  # set later
+
+        # Not yet implemented
+        rotational = None
+
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,
-                                   maxfile, maxpath)
+                                   maxfile, maxpath, rotational)
         retlist.append(ntuple)
     return retlist
 

@@ -288,7 +288,11 @@ def disk_usage(path):
 def disk_partitions(all):
     """Return disk partitions."""
     rawlist = cext.disk_partitions(all)
-    return [_common.sdiskpart(*x) for x in rawlist]
+
+    # Not yet implemented
+    rotational = None
+
+    return [_common.sdiskpart(*x, rotational) for x in rawlist]
 
 
 # =====================================================================

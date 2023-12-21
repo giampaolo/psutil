@@ -1291,8 +1291,15 @@ def disk_partitions(all=False):
             if device == '' or fstype not in fstypes:
                 continue
         maxfile = maxpath = None  # set later
+
+        rotational = None
+        try:
+            rotational = int(open(f'/sys/class/block/{device[device.rfind("/")+1:]}/queue/rotational').read())
+        except (FileNotFoundError, PermissionError):
+            pass
+
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts,
-                                   maxfile, maxpath)
+                                   maxfile, maxpath, rotational)
         retlist.append(ntuple)
 
     return retlist
