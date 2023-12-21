@@ -421,9 +421,9 @@ class TestSystemAPIs(PsutilTestCase):
     @unittest.skipIf(AIX, "unreliable on AIX")
     @retry_on_failure()
     def test_disk_usage(self):
-        def df(device):
+        def df(path):
             try:
-                out = sh("df -k %s" % device).strip()
+                out = sh("df -k %s" % path).strip()
             except RuntimeError as err:
                 if "device busy" in str(err).lower():
                     raise self.skipTest("df returned EBUSY")
@@ -440,7 +440,7 @@ class TestSystemAPIs(PsutilTestCase):
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             try:
-                total, used, free, percent = df(part.device)
+                total, used, free, percent = df(part.mountpoint)
             except RuntimeError as err:
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
