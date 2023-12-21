@@ -178,7 +178,9 @@ else:
 sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
                              'sout'])
 # psutil.disk_usage()
-sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent'])
+sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent',
+                                       'total_inodes', 'used_inodes',
+                                       'free_inodes', 'percent_inodes'])
 # psutil.disk_io_counters()
 sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_bytes', 'write_bytes',
