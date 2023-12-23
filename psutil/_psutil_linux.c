@@ -41,6 +41,11 @@ static PyMethodDef mod_methods[] = {
     {"set_debug", psutil_set_debug, METH_VARARGS},
     {NULL, NULL, 0, NULL}
 };
+// May happen on old RedHat versions, see:
+// https://github.com/giampaolo/psutil/issues/607
+#ifndef DUPLEX_UNKNOWN
+    #define DUPLEX_UNKNOWN 0xff
+#endif
 
 
 #if PY_MAJOR_VERSION >= 3
