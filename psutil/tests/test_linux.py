@@ -205,12 +205,13 @@ def get_free_version_info():
 
 
 @contextlib.contextmanager
-def mock_open_content(for_path, content):
-    """Mock open() builtin and forces it to return a certain `content`
-    on read() if the path being opened matches `for_path`.
+def mock_open_content(pairs):
+    """Mock open() builtin and forces it to return a certain content
+    for a given path. `pairs` is a {"path": "content", ...} dict.
     """
     def open_mock(name, *args, **kwargs):
-        if name == for_path:
+        if name in pairs:
+            content = pairs[name]
             if PY3:
                 if isinstance(content, basestring):
                     return io.StringIO(content)
@@ -362,18 +363,17 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
         # raise a warning.
-        with mock_open_content(
-            '/proc/meminfo',
-            textwrap.dedent("""\
-                Active(anon):    6145416 kB
-                Active(file):    2950064 kB
-                Inactive(anon):   574764 kB
-                Inactive(file):  1567648 kB
-                MemAvailable:         -1 kB
-                MemFree:         2057400 kB
-                MemTotal:       16325648 kB
-                SReclaimable:     346648 kB
-                """).encode()) as m:
+        content = textwrap.dedent("""\
+            Active(anon):    6145416 kB
+            Active(file):    2950064 kB
+            Inactive(anon):   574764 kB
+            Inactive(file):  1567648 kB
+            MemAvailable:         -1 kB
+            MemFree:         2057400 kB
+            MemTotal:       16325648 kB
+            SReclaimable:     346648 kB
+            """).encode()
+        with mock_open_content({'/proc/meminfo': content}) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.virtual_memory()
@@ -415,23 +415,22 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
-        with mock_open_content(
-            '/proc/meminfo',
-            textwrap.dedent("""\
-                Active:          9444728 kB
-                Active(anon):    6145416 kB
-                Active(file):    2950064 kB
-                Buffers:          287952 kB
-                Cached:          4818144 kB
-                Inactive(file):  1578132 kB
-                Inactive(anon):   574764 kB
-                Inactive(file):  1567648 kB
-                MemAvailable:    6574984 kB
-                MemFree:         2057400 kB
-                MemTotal:       16325648 kB
-                Shmem:            577588 kB
-                SReclaimable:     346648 kB
-                """).encode()) as m:
+        content = textwrap.dedent("""\
+            Active:          9444728 kB
+            Active(anon):    6145416 kB
+            Active(file):    2950064 kB
+            Buffers:          287952 kB
+            Cached:          4818144 kB
+            Inactive(file):  1578132 kB
+            Inactive(anon):   574764 kB
+            Inactive(file):  1567648 kB
+            MemAvailable:    6574984 kB
+            MemFree:         2057400 kB
+            MemTotal:       16325648 kB
+            Shmem:            577588 kB
+            SReclaimable:     346648 kB
+            """).encode()
+        with mock_open_content({'/proc/meminfo': content}) as m:
             with warnings.catch_warnings(record=True) as ws:
                 ret = psutil.virtual_memory()
             assert m.called
@@ -444,19 +443,18 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
         # Remove Active(file), Inactive(file) and SReclaimable
         # from /proc/meminfo and make sure the fallback is used
         # (free + cached),
-        with mock_open_content(
-            "/proc/meminfo",
-            textwrap.dedent("""\
-                    Active:          9444728 kB
-                    Active(anon):    6145416 kB
-                    Buffers:          287952 kB
-                    Cached:          4818144 kB
-                    Inactive(file):  1578132 kB
-                    Inactive(anon):   574764 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    Shmem:            577588 kB
-                    """).encode()) as m:
+        content = textwrap.dedent("""\
+            Active:          9444728 kB
+            Active(anon):    6145416 kB
+            Buffers:          287952 kB
+            Cached:          4818144 kB
+            Inactive(file):  1578132 kB
+            Inactive(anon):   574764 kB
+            MemFree:         2057400 kB
+            MemTotal:       16325648 kB
+            Shmem:            577588 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}) as m:
             with warnings.catch_warnings(record=True) as ws:
                 ret = psutil.virtual_memory()
             assert m.called
@@ -468,22 +466,21 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
         # (free + cached).
-        with mock_open_content(
-                "/proc/meminfo",
-                textwrap.dedent("""\
-                    Active:          9444728 kB
-                    Active(anon):    6145416 kB
-                    Active(file):    2950064 kB
-                    Buffers:          287952 kB
-                    Cached:          4818144 kB
-                    Inactive(file):  1578132 kB
-                    Inactive(anon):   574764 kB
-                    Inactive(file):  1567648 kB
-                    MemFree:         2057400 kB
-                    MemTotal:       16325648 kB
-                    Shmem:            577588 kB
-                    SReclaimable:     346648 kB
-                    """).encode()):
+        content = textwrap.dedent("""\
+            Active:          9444728 kB
+            Active(anon):    6145416 kB
+            Active(file):    2950064 kB
+            Buffers:          287952 kB
+            Cached:          4818144 kB
+            Inactive(file):  1578132 kB
+            Inactive(anon):   574764 kB
+            Inactive(file):  1567648 kB
+            MemFree:         2057400 kB
+            MemTotal:       16325648 kB
+            Shmem:            577588 kB
+            SReclaimable:     346648 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}):
             with mock_open_exception(
                     "/proc/zoneinfo",
                     IOError(errno.ENOENT, 'no such file or directory')):
@@ -498,64 +495,57 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
 
     def test_virtual_memory_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
-        def open_mock(name, *args, **kwargs):
-            if name == '/proc/meminfo':
-                return io.BytesIO(textwrap.dedent("""\
-                    MemTotal:              100 kB
-                    MemFree:               2 kB
-                    MemAvailable:          3 kB
-                    Buffers:               4 kB
-                    Cached:                5 kB
-                    SwapCached:            6 kB
-                    Active:                7 kB
-                    Inactive:              8 kB
-                    Active(anon):          9 kB
-                    Inactive(anon):        10 kB
-                    Active(file):          11 kB
-                    Inactive(file):        12 kB
-                    Unevictable:           13 kB
-                    Mlocked:               14 kB
-                    SwapTotal:             15 kB
-                    SwapFree:              16 kB
-                    Dirty:                 17 kB
-                    Writeback:             18 kB
-                    AnonPages:             19 kB
-                    Mapped:                20 kB
-                    Shmem:                 21 kB
-                    Slab:                  22 kB
-                    SReclaimable:          23 kB
-                    SUnreclaim:            24 kB
-                    KernelStack:           25 kB
-                    PageTables:            26 kB
-                    NFS_Unstable:          27 kB
-                    Bounce:                28 kB
-                    WritebackTmp:          29 kB
-                    CommitLimit:           30 kB
-                    Committed_AS:          31 kB
-                    VmallocTotal:          32 kB
-                    VmallocUsed:           33 kB
-                    VmallocChunk:          34 kB
-                    HardwareCorrupted:     35 kB
-                    AnonHugePages:         36 kB
-                    ShmemHugePages:        37 kB
-                    ShmemPmdMapped:        38 kB
-                    CmaTotal:              39 kB
-                    CmaFree:               40 kB
-                    HugePages_Total:       41 kB
-                    HugePages_Free:        42 kB
-                    HugePages_Rsvd:        43 kB
-                    HugePages_Surp:        44 kB
-                    Hugepagesize:          45 kB
-                    DirectMap46k:          46 kB
-                    DirectMap47M:          47 kB
-                    DirectMap48G:          48 kB
-                    """).encode())
-            else:
-                return orig_open(name, *args, **kwargs)
-
-        orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+        content = textwrap.dedent("""\
+            MemTotal:              100 kB
+            MemFree:               2 kB
+            MemAvailable:          3 kB
+            Buffers:               4 kB
+            Cached:                5 kB
+            SwapCached:            6 kB
+            Active:                7 kB
+            Inactive:              8 kB
+            Active(anon):          9 kB
+            Inactive(anon):        10 kB
+            Active(file):          11 kB
+            Inactive(file):        12 kB
+            Unevictable:           13 kB
+            Mlocked:               14 kB
+            SwapTotal:             15 kB
+            SwapFree:              16 kB
+            Dirty:                 17 kB
+            Writeback:             18 kB
+            AnonPages:             19 kB
+            Mapped:                20 kB
+            Shmem:                 21 kB
+            Slab:                  22 kB
+            SReclaimable:          23 kB
+            SUnreclaim:            24 kB
+            KernelStack:           25 kB
+            PageTables:            26 kB
+            NFS_Unstable:          27 kB
+            Bounce:                28 kB
+            WritebackTmp:          29 kB
+            CommitLimit:           30 kB
+            Committed_AS:          31 kB
+            VmallocTotal:          32 kB
+            VmallocUsed:           33 kB
+            VmallocChunk:          34 kB
+            HardwareCorrupted:     35 kB
+            AnonHugePages:         36 kB
+            ShmemHugePages:        37 kB
+            ShmemPmdMapped:        38 kB
+            CmaTotal:              39 kB
+            CmaFree:               40 kB
+            HugePages_Total:       41 kB
+            HugePages_Free:        42 kB
+            HugePages_Rsvd:        43 kB
+            HugePages_Surp:        44 kB
+            Hugepagesize:          45 kB
+            DirectMap46k:          46 kB
+            DirectMap47M:          47 kB
+            DirectMap48G:          48 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}) as m:
             mem = psutil.virtual_memory()
             assert m.called
             self.assertEqual(mem.total, 100 * 1024)
@@ -657,7 +647,7 @@ class TestSystemSwapMemory(PsutilTestCase):
         # Emulate a case where /proc/meminfo provides no swap metrics
         # in which case sysinfo() syscall is supposed to be used
         # as a fallback.
-        with mock_open_content("/proc/meminfo", b"") as m:
+        with mock_open_content({"/proc/meminfo": b""}) as m:
             psutil.swap_memory()
             assert m.called
 
@@ -747,7 +737,7 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 
             # Finally, let's make /proc/cpuinfo return meaningless data;
             # this way we'll fall back on relying on /proc/stat
-            with mock_open_content('/proc/cpuinfo', b"") as m:
+            with mock_open_content({"/proc/cpuinfo": b""}) as m:
                 self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
                 assert m.called
 
@@ -1112,14 +1102,13 @@ class TestSystemNetConnections(PsutilTestCase):
         psutil.net_connections(kind='inet6')
 
     def test_emulate_unix(self):
-        with mock_open_content(
-            '/proc/net/unix',
-            textwrap.dedent("""\
-                0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
-                0: 00000003 000 000 0001 03 35010 @/tmp/dbus-tB2X8h69BQ
-                0: 00000003 000 000 0001 03 34424 @/tmp/dbus-cHy80Y8O
-                000000000000000000000000000000000000000000000000000000
-                """)) as m:
+        content = textwrap.dedent("""\
+            0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
+            0: 00000003 000 000 0001 03 35010 @/tmp/dbus-tB2X8h69BQ
+            0: 00000003 000 000 0001 03 34424 @/tmp/dbus-cHy80Y8O
+            000000000000000000000000000000000000000000000000000000
+            """)
+        with mock_open_content({"/proc/net/unix": content}) as m:
             psutil.net_connections(kind='unix')
             assert m.called
 
@@ -1199,9 +1188,8 @@ class TestSystemDiskIoCounters(PsutilTestCase):
     def test_emulate_kernel_2_4(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767
-        with mock_open_content(
-                '/proc/diskstats',
-                "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"):
+        content = "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"
+        with mock_open_content({'/proc/diskstats': content}):
             with mock.patch('psutil._pslinux.is_storage_device',
                             return_value=True):
                 ret = psutil.disk_io_counters(nowrap=False)
@@ -1219,9 +1207,8 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
         # lines reporting all metrics:
         # https://github.com/giampaolo/psutil/issues/767
-        with mock_open_content(
-                '/proc/diskstats',
-                "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"):
+        content = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
+        with mock_open_content({"/proc/diskstats": content}):
             with mock.patch('psutil._pslinux.is_storage_device',
                             return_value=True):
                 ret = psutil.disk_io_counters(nowrap=False)
@@ -1241,9 +1228,7 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         # amount of metrics when it bumps into a partition
         # (instead of a disk). See:
         # https://github.com/giampaolo/psutil/issues/767
-        with mock_open_content(
-                '/proc/diskstats',
-                "   3    1   hda 1 2 3 4"):
+        with mock_open_content({"/proc/diskstats": "   3    1   hda 1 2 3 4"}):
             with mock.patch('psutil._pslinux.is_storage_device',
                             return_value=True):
                 ret = psutil.disk_io_counters(nowrap=False)
@@ -1262,12 +1247,11 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         # Make sure that when perdisk=True disk partitions are returned,
         # see:
         # https://github.com/giampaolo/psutil/pull/1313#issuecomment-408626842
-        with mock_open_content(
-                '/proc/diskstats',
-                textwrap.dedent("""\
-                    3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
-                    3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
-                    """)):
+        content = textwrap.dedent("""\
+            3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
+            3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+            """)
+        with mock_open_content({"/proc/diskstats": content}):
             with mock.patch('psutil._pslinux.is_storage_device',
                             return_value=False):
                 ret = psutil.disk_io_counters(perdisk=True, nowrap=False)
@@ -1281,12 +1265,11 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         # Make sure that when perdisk=False partitions (e.g. 'sda1',
         # 'nvme0n1p1') are skipped and not included in the total count.
         # https://github.com/giampaolo/psutil/pull/1313#issuecomment-408626842
-        with mock_open_content(
-                '/proc/diskstats',
-                textwrap.dedent("""\
-                    3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
-                    3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
-                    """)):
+        content = textwrap.dedent("""\
+            3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
+            3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+            """)
+        with mock_open_content({"/proc/diskstats": content}):
             with mock.patch('psutil._pslinux.is_storage_device',
                             return_value=False):
                 ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
@@ -1296,12 +1279,11 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         def is_storage_device(name):
             return name == 'nvme0n1'
 
-        with mock_open_content(
-                '/proc/diskstats',
-                textwrap.dedent("""\
-                    3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
-                    3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
-                    """)):
+        content = textwrap.dedent("""\
+            3    0   nvme0n1 1 2 3 4 5 6 7 8 9 10 11
+            3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
+            """)
+        with mock_open_content({"/proc/diskstats": content}):
             with mock.patch('psutil._pslinux.is_storage_device',
                             create=True, side_effect=is_storage_device):
                 ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
@@ -1468,13 +1450,12 @@ class TestMisc(PsutilTestCase):
     def test_cpu_steal_decrease(self):
         # Test cumulative cpu stats decrease. We should ignore this.
         # See issue #1210.
-        with mock_open_content(
-            "/proc/stat",
-            textwrap.dedent("""\
-                cpu   0 0 0 0 0 0 0 1 0 0
-                cpu0  0 0 0 0 0 0 0 1 0 0
-                cpu1  0 0 0 0 0 0 0 1 0 0
-                """).encode()) as m:
+        content = textwrap.dedent("""\
+            cpu   0 0 0 0 0 0 0 1 0 0
+            cpu0  0 0 0 0 0 0 0 1 0 0
+            cpu1  0 0 0 0 0 0 0 1 0 0
+            """).encode()
+        with mock_open_content({"/proc/stat": content}) as m:
             # first call to "percent" functions should read the new stat file
             # and compare to the "real" file read at import time - so the
             # values are meaningless
@@ -1484,13 +1465,12 @@ class TestMisc(PsutilTestCase):
             psutil.cpu_times_percent()
             psutil.cpu_times_percent(percpu=True)
 
-        with mock_open_content(
-            "/proc/stat",
-            textwrap.dedent("""\
-                cpu   1 0 0 0 0 0 0 0 0 0
-                cpu0  1 0 0 0 0 0 0 0 0 0
-                cpu1  1 0 0 0 0 0 0 0 0 0
-                """).encode()) as m:
+        content = textwrap.dedent("""\
+            cpu   1 0 0 0 0 0 0 0 0 0
+            cpu0  1 0 0 0 0 0 0 0 0 0
+            cpu1  1 0 0 0 0 0 0 0 0 0
+            """).encode()
+        with mock_open_content({"/proc/stat": content}):
             # Increase "user" while steal goes "backwards" to zero.
             cpu_percent = psutil.cpu_percent()
             assert m.called
@@ -1559,7 +1539,7 @@ class TestMisc(PsutilTestCase):
         # Internally pid_exists relies on /proc/{pid}/status.
         # Emulate a case where this file is empty in which case
         # psutil is supposed to fall back on using pids().
-        with mock_open_content("/proc/%s/status", "") as m:
+        with mock_open_content({"/proc/%s/status": ""}) as m:
             assert psutil.pid_exists(os.getpid())
             assert m.called
 
@@ -1667,7 +1647,7 @@ class TestSensorsBattery(PsutilTestCase):
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
         with mock_open_content(
-                "/sys/class/power_supply/BAT0/energy_full", b"0") as m:
+                {"/sys/class/power_supply/BAT0/energy_full": b"0"}) as m:
             self.assertEqual(psutil.sensors_battery().percent, 0)
             assert m.called
 
@@ -1681,7 +1661,7 @@ class TestSensorsBattery(PsutilTestCase):
                     "/sys/class/power_supply/BAT0/charge_full",
                     IOError(errno.ENOENT, "")):
                 with mock_open_content(
-                        "/sys/class/power_supply/BAT0/capacity", b"88"):
+                        {"/sys/class/power_supply/BAT0/capacity": b"88"}):
                     self.assertEqual(psutil.sensors_battery().percent, 88)
 
     def test_emulate_no_power(self):
@@ -1834,31 +1814,30 @@ class TestProcess(PsutilTestCase):
 
     def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
-        with mock_open_content(
-            "/proc/%s/smaps" % os.getpid(),
-            textwrap.dedent("""\
-                fffff0 r-xp 00000000 00:00 0                  [vsyscall]
-                Size:                  1 kB
-                Rss:                   2 kB
-                Pss:                   3 kB
-                Shared_Clean:          4 kB
-                Shared_Dirty:          5 kB
-                Private_Clean:         6 kB
-                Private_Dirty:         7 kB
-                Referenced:            8 kB
-                Anonymous:             9 kB
-                LazyFree:              10 kB
-                AnonHugePages:         11 kB
-                ShmemPmdMapped:        12 kB
-                Shared_Hugetlb:        13 kB
-                Private_Hugetlb:       14 kB
-                Swap:                  15 kB
-                SwapPss:               16 kB
-                KernelPageSize:        17 kB
-                MMUPageSize:           18 kB
-                Locked:                19 kB
-                VmFlags: rd ex
-                """).encode()) as m:
+        content = textwrap.dedent("""\
+            fffff0 r-xp 00000000 00:00 0                  [vsyscall]
+            Size:                  1 kB
+            Rss:                   2 kB
+            Pss:                   3 kB
+            Shared_Clean:          4 kB
+            Shared_Dirty:          5 kB
+            Private_Clean:         6 kB
+            Private_Dirty:         7 kB
+            Referenced:            8 kB
+            Anonymous:             9 kB
+            LazyFree:              10 kB
+            AnonHugePages:         11 kB
+            ShmemPmdMapped:        12 kB
+            Shared_Hugetlb:        13 kB
+            Private_Hugetlb:       14 kB
+            Swap:                  15 kB
+            SwapPss:               16 kB
+            KernelPageSize:        17 kB
+            MMUPageSize:           18 kB
+            Locked:                19 kB
+            VmFlags: rd ex
+            """).encode()
+        with mock_open_content({"/proc/%s/smaps" % os.getpid(): content}) as m:
             p = psutil._pslinux.Process(os.getpid())
             uss, pss, swap = p._parse_smaps()
             assert m.called
@@ -2128,7 +2107,7 @@ class TestProcess(PsutilTestCase):
             "7",      # delayacct_blkio_ticks
         ]
         content = " ".join(args).encode()
-        with mock_open_content('/proc/%s/stat' % os.getpid(), content):
+        with mock_open_content({"/proc/%s/stat" % os.getpid(): content}):
             p = psutil.Process()
             self.assertEqual(p.name(), 'cat')
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
@@ -2144,16 +2123,15 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.cpu_num(), 6)
 
     def test_status_file_parsing(self):
-        with mock_open_content(
-            '/proc/%s/status' % os.getpid(),
-            textwrap.dedent("""\
-                Uid:\t1000\t1001\t1002\t1003
-                Gid:\t1004\t1005\t1006\t1007
-                Threads:\t66
-                Cpus_allowed:\tf
-                Cpus_allowed_list:\t0-7
-                voluntary_ctxt_switches:\t12
-                nonvoluntary_ctxt_switches:\t13""").encode()):
+        content = textwrap.dedent("""\
+            Uid:\t1000\t1001\t1002\t1003
+            Gid:\t1004\t1005\t1006\t1007
+            Threads:\t66
+            Cpus_allowed:\tf
+            Cpus_allowed_list:\t0-7
+            voluntary_ctxt_switches:\t12
+            nonvoluntary_ctxt_switches:\t13""").encode()
+        with mock_open_content({"/proc/%s/status" % os.getpid(): content}):
             p = psutil.Process()
             self.assertEqual(p.num_ctx_switches().voluntary, 12)
             self.assertEqual(p.num_ctx_switches().involuntary, 13)
