@@ -1257,6 +1257,51 @@ class RootFsDeviceFinder:
             return path
 
 
+def _disk_partitions_mountinfo(fstypes, all=False):
+    # Since Linux 2.6.26. Advantage: differently from /proc/self/mounts
+    # it provides the real device name for bind-mounts, see:
+    # https://github.com/giampaolo/psutil/issues/2347
+    retlist = []
+    procfs_path = get_procfs_path()
+    with open_text("%s/self/mountinfo" % procfs_path) as f:
+        for line in f:
+            fields = line.strip().split()
+            (
+                _id,
+                _parid,
+                _majmin,
+                _root,
+                mountpoint,
+                opts1,
+                _opt_fields,
+                _sep,
+                fstype,
+                device,
+                opts2
+            ) = fields[:11]
+            opts = ",".join(dict.fromkeys(opts1.split(",") + opts2.split(",")))
+            retlist.append((device, mountpoint, fstype, opts))
+
+    return retlist
+
+
+def _disk_partitions_getmntent(fstypes, all=False):
+    # /proc/self/mounts introduced in Linux 2.4.19.
+    # See: https://github.com/giampaolo/psutil/issues/1307
+    procfs_path = get_procfs_path()
+    if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
+        mounts_path = os.path.realpath("/etc/mtab")
+    else:
+        mounts_path = os.path.realpath("%s/self/mounts" % procfs_path)
+
+    retlist = []
+    partitions = cext.disk_partitions(mounts_path)
+    for partition in partitions:
+        device, mountpoint, fstype, opts = partition
+        retlist.append((device, mountpoint, fstype, opts))
+    return retlist
+
+
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples."""
     fstypes = set()
@@ -1273,19 +1318,17 @@ def disk_partitions(all=False):
                     if fstype == "zfs":
                         fstypes.add("zfs")
 
-    # See: https://github.com/giampaolo/psutil/issues/1307
-    if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
-        mounts_path = os.path.realpath("/etc/mtab")
+    if os.path.exists("%s/self/mountinfo" % procfs_path):
+        rawlist = _disk_partitions_mountinfo(fstypes, all=all)
     else:
-        mounts_path = os.path.realpath("%s/self/mounts" % procfs_path)
+        rawlist = _disk_partitions_getmntent(fstypes, all=all)
 
     retlist = []
-    partitions = cext.disk_partitions(mounts_path)
-    for partition in partitions:
+    for partition in rawlist:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
-        if device in ("/dev/root", "rootfs"):
+        elif device in ("/dev/root", "rootfs"):
             device = RootFsDeviceFinder().find() or device
         if not all:
             if device == '' or fstype not in fstypes:
