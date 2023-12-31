@@ -1280,10 +1280,11 @@ def _disk_partitions_mountinfo():
                 _sep,
                 fstype,
                 device,
-                opts2
-            ) = fields[:11]
+            ) = fields[:10]
+            opts2 = fields[10] if len(fields) >= 11 else ""
+
             opts1 = opts1.split(",")
-            opts2 = opts2.split(",")
+            opts2 = opts2.split(",") if opts2 else []
             opts = dict.fromkeys(opts1 + opts2)
             if "ro" in opts and "rw" in opts:
                 del opts["rw"]
