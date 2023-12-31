@@ -1184,6 +1184,15 @@ class TestSystemDiskPartitions(PsutilTestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
 
+    def test_getmntent_mountinfo_parity(self):
+        # exclude opts, because they're slightly different for some reason
+        self.assertEqual(
+            sorted([x[:-1] for x in
+                    psutil._psplatform._disk_partitions_getmntent()]),
+            sorted([x[:-1] for x in
+                    psutil._psplatform._disk_partitions_mountinfo()])
+        )
+
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskIoCounters(PsutilTestCase):
