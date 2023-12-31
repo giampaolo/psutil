@@ -1167,20 +1167,19 @@ class TestSystemDiskPartitions(PsutilTestCase):
                         'psutil._pslinux._disk_partitions_getmntent',
                         return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]
                     ):
-
                         ret = psutil.disk_partitions()
                         assert m1.called
                         # assert m2.called
                         assert ret
                         self.assertEqual(ret[0].fstype, 'zfs')
 
-    def test_emulate_realpath_fail(self):
+    def test_getmntent_emulate_realpath_fail(self):
         # See: https://github.com/giampaolo/psutil/issues/1307
         try:
             with mock.patch('os.path.realpath',
                             return_value='/non/existent') as m:
                 with self.assertRaises(FileNotFoundError):
-                    psutil.disk_partitions()
+                    psutil._psplatform._disk_partitions_getmntent()
                 assert m.called
         finally:
             psutil.PROCFS_PATH = "/proc"
@@ -1365,16 +1364,21 @@ class TestRootFsDeviceFinder(PsutilTestCase):
         self.assertEqual(psutil_value, findmnt_value)
 
     def test_disk_partitions_mocked(self):
+        retval = [('/dev/root', '/', 'ext4', 'rw')]
         with mock.patch(
-                'psutil._pslinux.cext.disk_partitions',
-                return_value=[('/dev/root', '/', 'ext4', 'rw')]) as m:
-            part = psutil.disk_partitions()[0]
-            assert m.called
-            if not GITHUB_ACTIONS:
-                self.assertNotEqual(part.device, "/dev/root")
-                self.assertEqual(part.device, RootFsDeviceFinder().find())
-            else:
-                self.assertEqual(part.device, "/dev/root")
+            'psutil._pslinux._disk_partitions_mountinfo',
+            return_value=retval
+        ):
+            with mock.patch(
+                'psutil._pslinux._disk_partitions_getmntent',
+                return_value=retval
+            ):
+                part = psutil.disk_partitions()[0]
+                if not GITHUB_ACTIONS:
+                    self.assertNotEqual(part.device, "/dev/root")
+                    self.assertEqual(part.device, RootFsDeviceFinder().find())
+                else:
+                    self.assertEqual(part.device, "/dev/root")
 
 
 # =====================================================================

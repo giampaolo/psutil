@@ -1257,7 +1257,7 @@ class RootFsDeviceFinder:
             return path
 
 
-def _disk_partitions_mountinfo(fstypes, all=False):
+def _disk_partitions_mountinfo():
     # Since Linux 2.6.26. Advantage: differently from /proc/self/mounts
     # it provides the real device name for bind-mounts, see:
     # https://github.com/giampaolo/psutil/issues/2347
@@ -1285,7 +1285,7 @@ def _disk_partitions_mountinfo(fstypes, all=False):
     return retlist
 
 
-def _disk_partitions_getmntent(fstypes, all=False):
+def _disk_partitions_getmntent():
     # /proc/self/mounts introduced in Linux 2.4.19.
     # See: https://github.com/giampaolo/psutil/issues/1307
     procfs_path = get_procfs_path()
@@ -1319,9 +1319,9 @@ def disk_partitions(all=False):
                         fstypes.add("zfs")
 
     if os.path.exists("%s/self/mountinfo" % procfs_path):
-        rawlist = _disk_partitions_mountinfo(fstypes, all=all)
+        rawlist = _disk_partitions_mountinfo()
     else:
-        rawlist = _disk_partitions_getmntent(fstypes, all=all)
+        rawlist = _disk_partitions_getmntent()
 
     retlist = []
     for partition in rawlist:
