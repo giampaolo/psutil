@@ -1146,6 +1146,28 @@ class TestSystemDiskPartitions(PsutilTestCase):
             self.assertAlmostEqual(usage.used, used,
                                    delta=TOLERANCE_DISK_USAGE)
 
+    def test_against_mount(self):
+        def parse_mount():
+            ls = []
+            out = sh("mount")
+            for line in out.splitlines():
+                fields = line.split()
+                device = fields[0]
+                mountpoint = fields[2]
+                fstype = fields[4]
+                opts = fields[5][1:-1]
+                ls.append((device, mountpoint, fstype, opts))
+            return ls
+
+        self.assertEqual(
+            parse_mount(), psutil._psplatform._disk_partitions_mountinfo())
+        self.assertEqual(
+            parse_mount(), psutil._psplatform._disk_partitions_getmntent())
+        self.assertEqual(
+            parse_mount(),
+            [tuple(x[:4]) for x in psutil.disk_partitions(all=True)]
+        )
+
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
         with open("/proc/filesystems") as f:
@@ -1187,10 +1209,8 @@ class TestSystemDiskPartitions(PsutilTestCase):
     def test_getmntent_mountinfo_parity(self):
         # exclude opts, because they're slightly different for some reason
         self.assertEqual(
-            sorted([x[:-1] for x in
-                    psutil._psplatform._disk_partitions_getmntent()]),
-            sorted([x[:-1] for x in
-                    psutil._psplatform._disk_partitions_mountinfo()])
+            psutil._psplatform._disk_partitions_getmntent(),
+            psutil._psplatform._disk_partitions_mountinfo()
         )
 
 

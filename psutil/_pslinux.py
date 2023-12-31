@@ -1258,12 +1258,15 @@ class RootFsDeviceFinder:
 
 
 def _disk_partitions_mountinfo():
-    # Since Linux 2.6.26. Advantage: differently from /proc/self/mounts
-    # it provides the real device name for bind-mounts, see:
-    # https://github.com/giampaolo/psutil/issues/2347
+    # /proc/pid/mountinfo was introduced in Linux 2.6.26. Advantage: it
+    # provides the real device name for bind-mounts, see:
+    # https://github.com/giampaolo/psutil/issues/2347. Also, despite
+    # not officially stated, it seems it deprecates /proc/pid/mounts.
+    # `strace mount` shows mount CLI uses /proc/pid/mountinfo, so we
+    # also use this as the default.
     retlist = []
     procfs_path = get_procfs_path()
-    with open_text("%s/self/mountinfo" % procfs_path) as f:
+    with open_text("%s/%s/mountinfo" % (procfs_path, os.getpid())) as f:
         for line in f:
             fields = line.strip().split()
             (
@@ -1279,20 +1282,27 @@ def _disk_partitions_mountinfo():
                 device,
                 opts2
             ) = fields[:11]
-            opts = ",".join(dict.fromkeys(opts1.split(",") + opts2.split(",")))
+            opts1 = opts1.split(",")
+            opts2 = opts2.split(",")
+            opts = dict.fromkeys(opts1 + opts2)
+            if "ro" in opts and "rw" in opts:
+                del opts["rw"]
+            opts = ",".join(opts)
             retlist.append((device, mountpoint, fstype, opts))
 
     return retlist
 
 
 def _disk_partitions_getmntent():
-    # /proc/self/mounts introduced in Linux 2.4.19.
+    # /proc/pid/mounts introduced in Linux 2.4.19.
     # See: https://github.com/giampaolo/psutil/issues/1307
     procfs_path = get_procfs_path()
     if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
         mounts_path = os.path.realpath("/etc/mtab")
     else:
-        mounts_path = os.path.realpath("%s/self/mounts" % procfs_path)
+        mounts_path = os.path.realpath(
+            "%s/%s/mounts" % (procfs_path, os.getpid())
+        )
 
     retlist = []
     partitions = cext.disk_partitions(mounts_path)
@@ -1318,7 +1328,7 @@ def disk_partitions(all=False):
                     if fstype == "zfs":
                         fstypes.add("zfs")
 
-    if os.path.exists("%s/self/mountinfo" % procfs_path):
+    if os.path.exists("%s/%s/mountinfo" % (procfs_path, os.getpid())):
         rawlist = _disk_partitions_mountinfo()
     else:
         rawlist = _disk_partitions_getmntent()
