@@ -1157,14 +1157,8 @@ class TestSystemDiskPartitions(PsutilTestCase):
             else:
                 raise self.fail("couldn't find any ZFS partition")
         else:
-            def open_mock(name, *args, **kwargs):
-                if name == "/proc/filesystems":
-                    return io.StringIO(u("nodev\tzfs\n"))
-                return orig_open(name, *args, **kwargs)
-
-            orig_open = open
-            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-            with mock.patch(patch_point, side_effect=open_mock) as m1:
+            with mock_open_content(
+                    {"/proc/filesystems": "nodev\tzfs\n"}) as m1:
                 with mock.patch(
                     'psutil._pslinux._disk_partitions_mountinfo',
                     return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]
