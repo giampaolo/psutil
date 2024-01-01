@@ -1307,10 +1307,10 @@ def print_sysinfo():
 
     if WINDOWS:
         print_section(
-            "tasklist", subprocess.check_output(["tasklist"], text=True))
+            "tasklist", subprocess.check_output(["tasklist"]).decode())
     elif which("ps"):
         print_section(
-            "ps aux", subprocess.check_output(["ps", "aux"], text=True))
+            "ps aux", subprocess.check_output(["ps", "aux"]).decode())
 
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
