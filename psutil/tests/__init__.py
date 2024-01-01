@@ -1222,6 +1222,15 @@ def print_sysinfo():
     except ImportError:
         wheel = None
 
+    def print_section(section, info):
+        print("\n" + " {} ".format(section).center(70, "=") + "\n",  # NOQA
+              file=sys.stderr)
+        if isinstance(info, str):
+            print(info, file=sys.stderr)  # NOQA
+        else:
+            pprint.pprint(info)  # NOQA
+        sys.stdout.flush()
+
     info = collections.OrderedDict()
 
     # OS
@@ -1288,18 +1297,21 @@ def print_sysinfo():
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
-    info['proc'] = pprint.pformat(pinfo)
+    info['proc'] = pinfo
+    info['partitions'] = psutil.disk_partitions(all=True)
 
-    print("=" * 70, file=sys.stderr)  # NOQA
-    for k, v in info.items():
-        print("%-17s %s" % (k + ':', v), file=sys.stderr)  # NOQA
-    print("=" * 70, file=sys.stderr)  # NOQA
-    sys.stdout.flush()
+    print_section("psutil", info)
+
+    if POSIX and which("mount"):
+        print_section("mount", sh("mount"))
 
     if WINDOWS:
-        os.system("tasklist")
+        print_section(
+            "tasklist", subprocess.check_output(["tasklist"], text=True))
     elif which("ps"):
-        os.system("ps aux")
+        print_section(
+            "ps aux", subprocess.check_output(["ps", "aux"], text=True))
+
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
 
@@ -1585,7 +1597,7 @@ def skip_on_not_implemented(only_if=None):
                     if not only_if:
                         raise
                 msg = "%r was skipped because it raised NotImplementedError" \
-                      % fun.__name__
+                    % fun.__name__
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator

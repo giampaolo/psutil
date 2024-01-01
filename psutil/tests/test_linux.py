@@ -1119,9 +1119,7 @@ class TestSystemNetConnections(PsutilTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
-class TestSystemDiskPartitions(PsutilTestCase):
-    maxDiff = None
-
+class TestSystemDiskUsage(PsutilTestCase):
     @unittest.skipIf(not hasattr(os, 'statvfs'), "os.statvfs() not available")
     @skip_on_not_implemented()
     def test_against_df(self):
@@ -1146,6 +1144,11 @@ class TestSystemDiskPartitions(PsutilTestCase):
                                    delta=TOLERANCE_DISK_USAGE)
             self.assertAlmostEqual(usage.used, used,
                                    delta=TOLERANCE_DISK_USAGE)
+
+
+@unittest.skipIf(not LINUX, "LINUX only")
+class TestSystemDiskPartitions(PsutilTestCase):
+    maxDiff = None
 
     def test_against_mount(self):
         def parse_mount(out):
