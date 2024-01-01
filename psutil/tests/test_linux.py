@@ -1120,6 +1120,7 @@ class TestSystemNetConnections(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskPartitions(PsutilTestCase):
+    maxDiff = None
 
     @unittest.skipIf(not hasattr(os, 'statvfs'), "os.statvfs() not available")
     @skip_on_not_implemented()
@@ -1147,9 +1148,8 @@ class TestSystemDiskPartitions(PsutilTestCase):
                                    delta=TOLERANCE_DISK_USAGE)
 
     def test_against_mount(self):
-        def parse_mount():
+        def parse_mount(out):
             ls = []
-            out = sh("mount")
             for line in out.splitlines():
                 fields = line.split()
                 device = fields[0]
@@ -1159,14 +1159,17 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 ls.append((device, mountpoint, fstype, opts))
             return ls
 
-        self.assertEqual(
-            parse_mount(), psutil._psplatform._disk_partitions_mountinfo())
-        self.assertEqual(
-            parse_mount(), psutil._psplatform._disk_partitions_getmntent())
-        self.assertEqual(
-            parse_mount(),
-            [tuple(x[:4]) for x in psutil.disk_partitions(all=True)]
-        )
+        out = sh("mount")
+        mount = parse_mount(out)
+        with self.subTest(mount="\n" + out):
+            self.assertEqual(
+                mount, psutil._psplatform._disk_partitions_mountinfo())
+            self.assertEqual(
+                mount, psutil._psplatform._disk_partitions_getmntent())
+            self.assertEqual(
+                mount,
+                [tuple(x[:4]) for x in psutil.disk_partitions(all=True)]
+            )
 
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
