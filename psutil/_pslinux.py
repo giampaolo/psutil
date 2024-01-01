@@ -1282,7 +1282,6 @@ def _disk_partitions_mountinfo():
                 device,
             ) = fields[:10]
             opts2 = fields[10] if len(fields) >= 11 else ""
-
             opts1 = opts1.split(",")
             opts2 = opts2.split(",") if opts2 else []
             opts = dict.fromkeys(opts1 + opts2)

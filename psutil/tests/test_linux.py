@@ -1157,18 +1157,19 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 fstype = fields[4]
                 opts = fields[5][1:-1]
                 ls.append((device, mountpoint, fstype, opts))
-            return ls
+            return sorted(ls)
 
         out = sh("mount")
         mount = parse_mount(out)
         with self.subTest(mount="\n" + out):
             self.assertEqual(
-                mount, psutil._psplatform._disk_partitions_mountinfo())
+                mount, sorted(psutil._psplatform._disk_partitions_mountinfo()))
             self.assertEqual(
-                mount, psutil._psplatform._disk_partitions_getmntent())
+                mount, sorted(psutil._psplatform._disk_partitions_getmntent()))
             self.assertEqual(
                 mount,
-                [tuple(x[:4]) for x in psutil.disk_partitions(all=True)]
+                sorted([tuple(x[:4])
+                       for x in psutil.disk_partitions(all=True)])
             )
 
     def test_zfs_fs(self):
