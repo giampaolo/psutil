@@ -1163,12 +1163,11 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 opts = opts.replace("uhelper=udisks2", "")
                 opts = opts.rstrip(",")
                 ls.append((device, mountpoint, fstype, opts))
-            return sorted(ls)
+            return ls
 
         out = sh("mount")
-        sys_mounts = sorted(parse_mount(out))
-        psutil_mounts = sorted([x[:4]
-                               for x in psutil.disk_partitions(all=True)])
+        sys_mounts = parse_mount(out)
+        psutil_mounts = [x[:4] for x in psutil.disk_partitions(all=True)]
         self.assertEqual(len(sys_mounts), len(psutil_mounts))
         for idx in range(len(sys_mounts)):
             self.assertEqual(sys_mounts[idx], psutil_mounts[idx])
