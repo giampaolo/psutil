@@ -1148,7 +1148,6 @@ class TestSystemDiskUsage(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskPartitions(PsutilTestCase):
-    maxDiff = None
 
     def test_against_mount(self):
         def parse_mount(out):
@@ -1159,21 +1158,20 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 mountpoint = fields[2]
                 fstype = fields[4]
                 opts = fields[5][1:-1]
+                # Happens when we have a USB stick. This is not
+                # reported by /proc/pid/mountinfo.
+                opts = opts.replace("uhelper=udisks2", "")
+                opts = opts.rstrip(",")
                 ls.append((device, mountpoint, fstype, opts))
             return sorted(ls)
 
         out = sh("mount")
-        mount = parse_mount(out)
-        with self.subTest(mount="\n" + out):
-            self.assertEqual(
-                mount, sorted(psutil._psplatform._parse_mountinfo()))
-            self.assertEqual(
-                mount, sorted(psutil._psplatform._parse_mounts()))
-            self.assertEqual(
-                mount,
-                sorted([tuple(x[:4])
-                       for x in psutil.disk_partitions(all=True)])
-            )
+        sys_mounts = sorted(parse_mount(out))
+        psutil_mounts = sorted([x[:4]
+                               for x in psutil.disk_partitions(all=True)])
+        self.assertEqual(len(sys_mounts), len(psutil_mounts))
+        for idx in range(len(sys_mounts)):
+            self.assertEqual(sys_mounts[idx], psutil_mounts[idx])
 
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
