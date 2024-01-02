@@ -1312,10 +1312,12 @@ def print_sysinfo():
         print_section(
             "ps aux", subprocess.check_output(["ps", "aux"]).decode())
 
-    with open("/proc/self/mountinfo") as f:
-        data = f.read()
-    print_section("mountinfo 1", data)
-    print_section("mountinfo 2", repr(data))
+    # XXX
+    if LINUX:
+        with open("/proc/self/mountinfo") as f:
+            data = f.read()
+        print_section("mountinfo 1", data)
+        print_section("mountinfo 2", repr(data))
 
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()

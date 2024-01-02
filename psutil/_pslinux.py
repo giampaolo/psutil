@@ -1268,14 +1268,14 @@ def _parse_mountinfo():
     procfs_path = get_procfs_path()
     with open_text("%s/%s/mountinfo" % (procfs_path, os.getpid())) as f:
         for line in f:
-            fields1, fields2 = line.strip().split(" - ")
+            fields1, _, fields2 = line.strip().partition(" - ")
             fields1 = fields1.split()
             fields2 = fields2.split()
             mountpoint = fields1[4]  # field #5 in `man proc`
             opts1 = fields1[5]  # field #6
             fstype = fields2[0]  # field #9
             device = fields2[1]  # field #10
-            opts2 = fields2[2] if len(fields2) >= 2 else ""  # field #11
+            opts2 = fields2[2] if len(fields2) >= 3 else ""  # field #11
 
             # group opts
             opts1 = opts1.split(",")
