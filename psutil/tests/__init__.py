@@ -1325,7 +1325,7 @@ def print_sysinfo():
 
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
-    @ memoize
+    @memoize
     def get_procs():
         ret = {}
         out = sh("tasklist.exe /NH /FO csv")
@@ -1466,7 +1466,7 @@ class process_namespace:
         """Clear the cache of a Process instance."""
         self._proc._init(self._proc.pid, _ignore_nsp=True)
 
-    @ classmethod
+    @classmethod
     def test_class_coverage(cls, test_class, ls):
         """Given a TestCase instance and a list of tuples checks that
         the class defines the required test method names.
@@ -1478,7 +1478,7 @@ class process_namespace:
                     test_class.__class__.__name__, meth_name)
                 raise AttributeError(msg)
 
-    @ classmethod
+    @classmethod
     def test(cls):
         this = set([x[0] for x in cls.all])
         ignored = set([x[0] for x in cls.ignored])
@@ -1540,7 +1540,7 @@ class system_namespace:
 
     all = getters
 
-    @ staticmethod
+    @staticmethod
     def iter(ls):
         """Given a list of tuples yields a set of (fun, fun_name) tuples
         in random order.
@@ -1579,7 +1579,7 @@ def retry_on_failure(retries=NO_RETRIES):
 def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
     def decorator(fun):
-        @ functools.wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
@@ -1595,7 +1595,7 @@ def skip_on_access_denied(only_if=None):
 def skip_on_not_implemented(only_if=None):
     """Decorator to Ignore NotImplementedError exceptions."""
     def decorator(fun):
-        @ functools.wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
@@ -1701,7 +1701,7 @@ def unix_socketpair(name):
     return (server, client)
 
 
-@ contextlib.contextmanager
+@contextlib.contextmanager
 def create_sockets():
     """Open as many socket families / types as possible."""
     socks = []
@@ -1885,7 +1885,7 @@ def is_namedtuple(x):
 
 
 if POSIX:
-    @ contextlib.contextmanager
+    @contextlib.contextmanager
     def copyload_shared_lib(suffix=""):
         """Ctx manager which picks up a random shared CO lib used
         by this process, copies it in another location and loads it
@@ -1905,7 +1905,7 @@ if POSIX:
         finally:
             safe_rmpath(dst)
 else:
-    @ contextlib.contextmanager
+    @contextlib.contextmanager
     def copyload_shared_lib(suffix=""):
         """Ctx manager which picks up a random shared DLL lib used
         by this process, copies it in another location and loads it
@@ -1950,7 +1950,7 @@ else:
 
 
 # this is executed first
-@ atexit.register
+@atexit.register
 def cleanup_test_procs():
     reap_children(recursive=True)
 

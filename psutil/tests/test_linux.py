@@ -1149,29 +1149,29 @@ class TestSystemDiskUsage(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskPartitions(PsutilTestCase):
 
-    # def test_against_mount(self):
-    #     def parse_mount(out):
-    #         ls = []
-    #         for line in out.splitlines():
-    #             fields = line.split()
-    #             device = fields[0]
-    #             mountpoint = fields[2]
-    #             fstype = fields[4]
-    #             opts = fields[5][1:-1]
-    #             # Happens when we have a USB stick. This is not
-    #             # reported by /proc/pid/mountinfo.
-    #             opts = opts.replace("uhelper=udisks2", "")
-    #             opts = opts.rstrip(",")
-    #             ls.append((device, mountpoint, fstype, opts))
-    #         return ls
+    def test_against_mount(self):
+        def parse_mount(out):
+            ls = []
+            for line in out.splitlines():
+                fields = line.split()
+                device = fields[0]
+                mountpoint = fields[2]
+                fstype = fields[4]
+                opts = fields[5][1:-1]
+                # Happens when we have a USB stick. This is not
+                # reported by /proc/pid/mountinfo.
+                opts = opts.replace("uhelper=udisks2", "")
+                opts = opts.rstrip(",")
+                ls.append((device, mountpoint, fstype, opts))
+            return ls
 
-    #     out = sh("mount")
-    #     sys_mounts = parse_mount(out)
-    #     psutil_mounts = [x[:4] for x in psutil.disk_partitions(all=True)]
-    #     self.assertEqual(len(sys_mounts), len(psutil_mounts))
-    #     for idx in range(len(sys_mounts)):
-    #         with self.subTest(line=sys_mounts[idx]):
-    #             self.assertEqual(sys_mounts[idx], psutil_mounts[idx])
+        out = sh("mount")
+        sys_mounts = parse_mount(out)
+        psutil_mounts = [x[:4] for x in psutil.disk_partitions(all=True)]
+        self.assertEqual(len(sys_mounts), len(psutil_mounts))
+        for idx in range(len(sys_mounts)):
+            with self.subTest(line=sys_mounts[idx]):
+                self.assertEqual(sys_mounts[idx], psutil_mounts[idx])
 
     def test_against_findmnt(self):
         # Originally we test psutil against "mount" output, but "man mount"
