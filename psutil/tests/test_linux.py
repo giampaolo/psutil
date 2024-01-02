@@ -1170,7 +1170,8 @@ class TestSystemDiskPartitions(PsutilTestCase):
         psutil_mounts = [x[:4] for x in psutil.disk_partitions(all=True)]
         self.assertEqual(len(sys_mounts), len(psutil_mounts))
         for idx in range(len(sys_mounts)):
-            self.assertEqual(sys_mounts[idx], psutil_mounts[idx])
+            with self.subTest(line=sys_mounts[idx]):
+                self.assertEqual(sys_mounts[idx], psutil_mounts[idx])
 
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
