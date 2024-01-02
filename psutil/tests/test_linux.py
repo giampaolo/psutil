@@ -1166,9 +1166,9 @@ class TestSystemDiskPartitions(PsutilTestCase):
         mount = parse_mount(out)
         with self.subTest(mount="\n" + out):
             self.assertEqual(
-                mount, sorted(psutil._psplatform._disk_partitions_mountinfo()))
+                mount, sorted(psutil._psplatform._parse_mountinfo()))
             self.assertEqual(
-                mount, sorted(psutil._psplatform._disk_partitions_getmntent()))
+                mount, sorted(psutil._psplatform._parse_mounts()))
             self.assertEqual(
                 mount,
                 sorted([tuple(x[:4])
@@ -1189,11 +1189,11 @@ class TestSystemDiskPartitions(PsutilTestCase):
             with mock_open_content(
                     {"/proc/filesystems": "nodev\tzfs\n"}) as m1:
                 with mock.patch(
-                    'psutil._pslinux._disk_partitions_mountinfo',
+                    'psutil._pslinux._parse_mountinfo',
                     return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]
                 ):
                     with mock.patch(
-                        'psutil._pslinux._disk_partitions_getmntent',
+                        'psutil._pslinux._parse_mounts',
                         return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]
                     ):
                         ret = psutil.disk_partitions()
@@ -1208,7 +1208,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
             with mock.patch('os.path.realpath',
                             return_value='/non/existent') as m:
                 with self.assertRaises(FileNotFoundError):
-                    psutil._psplatform._disk_partitions_getmntent()
+                    psutil._psplatform._parse_mounts()
                 assert m.called
         finally:
             psutil.PROCFS_PATH = "/proc"
@@ -1216,8 +1216,8 @@ class TestSystemDiskPartitions(PsutilTestCase):
     def test_getmntent_mountinfo_parity(self):
         # exclude opts, because they're slightly different for some reason
         self.assertEqual(
-            psutil._psplatform._disk_partitions_getmntent(),
-            psutil._psplatform._disk_partitions_mountinfo()
+            psutil._psplatform._parse_mounts(),
+            psutil._psplatform._parse_mountinfo()
         )
 
 
@@ -1402,11 +1402,11 @@ class TestRootFsDeviceFinder(PsutilTestCase):
     def test_disk_partitions_mocked(self):
         retval = [('/dev/root', '/', 'ext4', 'rw')]
         with mock.patch(
-            'psutil._pslinux._disk_partitions_mountinfo',
+            'psutil._pslinux._parse_mountinfo',
             return_value=retval
         ):
             with mock.patch(
-                'psutil._pslinux._disk_partitions_getmntent',
+                'psutil._pslinux._parse_mounts',
                 return_value=retval
             ):
                 part = psutil.disk_partitions()[0]

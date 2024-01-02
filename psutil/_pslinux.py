@@ -1257,7 +1257,7 @@ class RootFsDeviceFinder:
             return path
 
 
-def _disk_partitions_mountinfo():
+def _parse_mountinfo():
     # /proc/pid/mountinfo was introduced in Linux 2.6.26. Advantage: it
     # provides the real device name for bind-mounts, see:
     # https://github.com/giampaolo/psutil/issues/2347. Also, despite
@@ -1293,7 +1293,7 @@ def _disk_partitions_mountinfo():
     return retlist
 
 
-def _disk_partitions_getmntent():
+def _parse_mounts():
     # /proc/pid/mounts introduced in Linux 2.4.19.
     # See: https://github.com/giampaolo/psutil/issues/1307
     procfs_path = get_procfs_path()
@@ -1329,9 +1329,9 @@ def disk_partitions(all=False):
                         fstypes.add("zfs")
 
     if os.path.exists("%s/%s/mountinfo" % (procfs_path, os.getpid())):
-        rawlist = _disk_partitions_mountinfo()
+        rawlist = _parse_mountinfo()
     else:
-        rawlist = _disk_partitions_getmntent()
+        rawlist = _parse_mounts()
 
     retlist = []
     for partition in rawlist:
