@@ -63,6 +63,7 @@ else:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
+# fmt: off
 __extra__all__ = [
     "win_service_iter", "win_service_get",
     # Process priority
@@ -74,6 +75,7 @@ __extra__all__ = [
     # others
     "CONN_DELETE_TCB", "AF_LINK",
 ]
+# fmt: on
 
 
 # =====================================================================
