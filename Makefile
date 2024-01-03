@@ -9,6 +9,7 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 PY3_DEPS = \
+	black \
 	check-manifest \
 	concurrencytest \
 	coverage \
@@ -195,6 +196,9 @@ test-coverage:  ## Run test coverage.
 ruff:  ## Run ruff linter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --config=pyproject.toml --no-cache
 
+black:  ## Python files linting (via black)
+	@git ls-files '*.py' | xargs $(PYTHON) -m black --config=pyproject.toml --check --safe
+
 _pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
@@ -219,6 +223,9 @@ lint-all:  ## Run all linters
 
 fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --config=pyproject.toml --no-cache --fix
+
+fix-black:
+	git ls-files '*.py' | xargs $(PYTHON) -m black --config=pyproject.toml
 
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
