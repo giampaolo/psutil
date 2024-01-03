@@ -2373,11 +2373,13 @@ def test():  # pragma: no cover
     from ._compat import get_terminal_size
 
     today_day = datetime.date.today()
+    # fmt: off
     templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
     print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",  # NOQA
                    "STATUS", "START", "TIME", "CMDLINE"))
+    # fmt: on
     for p in process_iter(attrs, ad_value=None):
         if p.info['create_time']:
             ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
