@@ -27,7 +27,7 @@ SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 # --- constants
 
-
+# fmt: off
 LABELS_MAP = {
     # platforms
     "linux": [
@@ -93,6 +93,7 @@ LABELS_MAP = {
         "segfault", "segmentation fault",
     ],
 }
+# fmt: on
 
 LABELS_MAP['scripts'].extend(
     [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')])
