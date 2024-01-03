@@ -93,15 +93,15 @@ LABELS_MAP = {
         "segfault", "segmentation fault",
     ],
 }
-# fmt: on
-
-LABELS_MAP['scripts'].extend(
-    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')])
 
 OS_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "openbsd",
     "bsd", "sunos", "unix", "wsl", "aix", "cygwin",
 ]
+# fmt: on
+
+LABELS_MAP['scripts'].extend(
+    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')])
 
 ILLOGICAL_PAIRS = [
     ('bug', 'enhancement'),
