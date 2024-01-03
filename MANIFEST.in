@@ -7,6 +7,7 @@ include LICENSE
 include MANIFEST.in
 include Makefile
 include README.rst
+include SECURITY.md
 include docs/.readthedocs.yaml
 include docs/DEVGUIDE.rst
 include docs/DEVNOTES
