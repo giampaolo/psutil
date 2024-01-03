@@ -145,6 +145,7 @@ else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
+# fmt: off
 __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
@@ -191,6 +192,7 @@ __all__ = [
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
+# fmt: on
 
 
 __all__.extend(_psplatform.__extra__all__)
