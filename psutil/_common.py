@@ -140,6 +140,7 @@ if enum is None:
     NIC_DUPLEX_HALF = 1
     NIC_DUPLEX_UNKNOWN = 0
 else:
+
     class NicDuplex(enum.IntEnum):
         NIC_DUPLEX_FULL = 2
         NIC_DUPLEX_HALF = 1
@@ -152,6 +153,7 @@ if enum is None:
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2
 else:
+
     class BatteryTime(enum.IntEnum):
         POWER_TIME_UNKNOWN = -1
         POWER_TIME_UNLIMITED = -2
@@ -222,8 +224,9 @@ sfan = namedtuple('sfan', ['label', 'current'])
 # --- for Process methods
 
 # psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
+pcputimes = namedtuple(
+    'pcputimes', ['user', 'system', 'children_user', 'children_system']
+)
 # psutil.Process.open_files()
 popenfile = namedtuple('popenfile', ['path', 'fd'])
 # psutil.Process.threads()
@@ -233,15 +236,17 @@ puids = namedtuple('puids', ['real', 'effective', 'saved'])
 # psutil.Process.gids()
 pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
 # psutil.Process.io_counters()
-pio = namedtuple('pio', ['read_count', 'write_count',
-                         'read_bytes', 'write_bytes'])
+pio = namedtuple(
+    'pio', ['read_count', 'write_count', 'read_bytes', 'write_bytes']
+)
 # psutil.Process.ionice()
 pionice = namedtuple('pionice', ['ioclass', 'value'])
 # psutil.Process.ctx_switches()
 pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
 # psutil.Process.connections()
-pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
-                             'status'])
+pconn = namedtuple(
+    'pconn', ['fd', 'family', 'type', 'laddr', 'raddr', 'status']
+)
 
 # psutil.connections() and psutil.Process.connections()
 addr = namedtuple('addr', ['ip', 'port'])
@@ -270,9 +275,7 @@ if AF_INET6 is not None:
     })
 
 if AF_UNIX is not None:
-    conn_tmap.update({
-        "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
-    })
+    conn_tmap.update({"unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM])})
 
 
 # =====================================================================
@@ -302,7 +305,8 @@ class Error(Exception):
         info = self._infodict(("pid", "ppid", "name"))
         if info:
             details = "(%s)" % ", ".join(
-                ["%s=%r" % (k, v) for k, v in info.items()])
+                ["%s=%r" % (k, v) for k, v in info.items()]
+            )
         else:
             details = None
         return " ".join([x for x in (getattr(self, "msg", ""), details) if x])
@@ -391,6 +395,7 @@ if PY3:
         value = None
     """)
 else:
+
     def raise_from(value, from_value):
         raise value
 
@@ -430,6 +435,7 @@ def memoize(fun):
     It does NOT support:
      - methods
     """
+
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
@@ -477,6 +483,7 @@ def memoize_when_activated(fun):
     >>> foo()
     >>>
     """
+
     @functools.wraps(fun)
     def wrapper(self):
         try:
@@ -583,7 +590,7 @@ def parse_environ_block(data):
         equal_pos = data.find("=", pos, next_pos)
         if equal_pos > pos:
             key = data[pos:equal_pos]
-            value = data[equal_pos + 1:next_pos]
+            value = data[equal_pos + 1 : next_pos]
             # Windows expects environment variables to be uppercase only
             if WINDOWS_:
                 key = key.upper()
@@ -642,9 +649,12 @@ def deprecated_method(replacement):
     """A decorator which can be used to mark a method as deprecated
     'replcement' is the method name which will be called instead.
     """
+
     def outer(fun):
         msg = "%s() is deprecated and will be removed; use %s() instead" % (
-            fun.__name__, replacement)
+            fun.__name__,
+            replacement,
+        )
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
@@ -652,7 +662,9 @@ def deprecated_method(replacement):
         def inner(self, *args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
+
         return inner
+
     return outer
 
 
@@ -787,8 +799,12 @@ def open_text(fname):
     # See:
     # https://github.com/giampaolo/psutil/issues/675
     # https://github.com/giampaolo/psutil/pull/733
-    fobj = open(fname, buffering=FILE_READ_BUFFER_SIZE,
-                encoding=ENCODING, errors=ENCODING_ERRS)
+    fobj = open(
+        fname,
+        buffering=FILE_READ_BUFFER_SIZE,
+        encoding=ENCODING,
+        errors=ENCODING_ERRS,
+    )
     try:
         # Dictates per-line read(2) buffer size. Defaults is 8k. See:
         # https://github.com/giampaolo/psutil/issues/2050#issuecomment-1013387546
@@ -849,9 +865,12 @@ def get_procfs_path():
 
 
 if PY3:
+
     def decode(s):
         return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
+
 else:
+
     def decode(s):
         return s
 
@@ -867,6 +886,7 @@ def term_supports_colors(file=sys.stdout):  # pragma: no cover
         return True
     try:
         import curses
+
         assert file.isatty()
         curses.setupterm()
         assert curses.tigetnum("colors") > 0
@@ -881,14 +901,24 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
     if not term_supports_colors():
         return s
     attr = []
-    colors = dict(green='32', red='91', brown='33', yellow='93', blue='34',
-                  violet='35', lightblue='36', grey='37', darkgrey='30')
+    colors = dict(
+        blue='34',
+        brown='33',
+        darkgrey='30',
+        green='32',
+        grey='37',
+        lightblue='36',
+        red='91',
+        violet='35',
+        yellow='93',
+    )
     colors[None] = '29'
     try:
         color = colors[color]
     except KeyError:
-        raise ValueError("invalid color %r; choose between %s" % (
-            list(colors.keys())))
+        raise ValueError(
+            "invalid color %r; choose between %s" % (list(colors.keys()))
+        )
     attr.append(color)
     if bold:
         attr.append('1')
@@ -896,7 +926,8 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
 
 
 def print_color(
-        s, color=None, bold=False, file=sys.stdout):  # pragma: no cover
+    s, color=None, bold=False, file=sys.stdout
+):  # pragma: no cover
     """Print a colorized version of string."""
     if not term_supports_colors():
         print(s, file=file)  # NOQA
@@ -907,16 +938,19 @@ def print_color(
 
         DEFAULT_COLOR = 7
         GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
-        SetConsoleTextAttribute = \
+        SetConsoleTextAttribute = (
             ctypes.windll.Kernel32.SetConsoleTextAttribute
+        )
 
         colors = dict(green=2, red=4, brown=6, yellow=6)
         colors[None] = DEFAULT_COLOR
         try:
             color = colors[color]
         except KeyError:
-            raise ValueError("invalid color %r; choose between %r" % (
-                color, list(colors.keys())))
+            raise ValueError(
+                "invalid color %r; choose between %r"
+                % (color, list(colors.keys()))
+            )
         if bold and color <= 7:
             color += 8
 
@@ -925,7 +959,7 @@ def print_color(
         handle = GetStdHandle(handle_id)
         SetConsoleTextAttribute(handle, color)
         try:
-            print(s, file=file)    # NOQA
+            print(s, file=file)  # NOQA
         finally:
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
@@ -934,13 +968,17 @@ def debug(msg):
     """If PSUTIL_DEBUG env var is set, print a debug message to stderr."""
     if PSUTIL_DEBUG:
         import inspect
+
         fname, lineno, _, lines, index = inspect.getframeinfo(
-            inspect.currentframe().f_back)
+            inspect.currentframe().f_back
+        )
         if isinstance(msg, Exception):
             if isinstance(msg, (OSError, IOError, EnvironmentError)):
                 # ...because str(exc) may contain info about the file name
                 msg = "ignoring %s" % msg
             else:
                 msg = "ignoring %r" % msg
-        print("psutil-debug [%s:%s]> %s" % (fname, lineno, msg),  # NOQA
-              file=sys.stderr)
+        print(  # noqa
+            "psutil-debug [%s:%s]> %s" % (fname, lineno, msg),
+            file=sys.stderr,
+        )
