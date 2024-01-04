@@ -575,14 +575,12 @@ class WindowsService:
                     "service %r is not querable (not enough privileges)"
                     % self._name
                 )
-                raise AccessDenied(
-                    pid=None, name=self._name, msg=msg % self._name
-                )
+                raise AccessDenied(pid=None, name=self._name, msg=msg)
             elif err.winerror in (
                 cext.ERROR_INVALID_NAME,
                 cext.ERROR_SERVICE_DOES_NOT_EXIST,
             ):
-                msg = "service %r does not exist)" % self._name
+                msg = "service %r does not exist" % self._name
                 raise NoSuchProcess(pid=None, name=self._name, msg=msg)
             else:
                 raise
