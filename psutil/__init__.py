@@ -317,17 +317,16 @@ class Process(object):  # noqa: UP004
             pid = os.getpid()
         else:
             if not _PY3 and not isinstance(pid, (int, long)):
-                raise TypeError('pid must be an integer (got %r)' % pid)
+                msg = "pid must be an integer (got %r)" % pid
+                raise TypeError(msg)
             if pid < 0:
-                raise ValueError('pid must be a positive integer (got %s)'
-                                 % pid)
+                msg = "pid must be a positive integer (got %s)" % pid
+                raise ValueError(msg)
             try:
                 _psplatform.cext.check_pid_range(pid)
             except OverflowError:
-                raise NoSuchProcess(
-                    pid,
-                    msg='process PID out of range (got %s)' % pid,
-                )
+                msg = "process PID out of range (got %s)" % pid
+                raise NoSuchProcess(pid, msg=msg)
 
         self._pid = pid
         self._name = None
@@ -359,7 +358,8 @@ class Process(object):  # noqa: UP004
             pass
         except NoSuchProcess:
             if not _ignore_nsp:
-                raise NoSuchProcess(pid, msg='process PID not found')
+                msg = "process PID not found"
+                raise NoSuchProcess(pid, msg=msg)
             else:
                 self._gone = True
         # This pair is supposed to identify a Process instance
@@ -523,13 +523,16 @@ class Process(object):  # noqa: UP004
         valid_names = _as_dict_attrnames
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
-                raise TypeError("invalid attrs type %s" % type(attrs))
+                msg = "invalid attrs type %s" % type(attrs)
+                raise TypeError(msg)
             attrs = set(attrs)
             invalid_names = attrs - valid_names
             if invalid_names:
-                raise ValueError("invalid attr name%s %s" % (
+                msg = "invalid attr name%s %s" % (
                     "s" if len(invalid_names) > 1 else "",
-                    ", ".join(map(repr, invalid_names))))
+                    ", ".join(map(repr, invalid_names)),
+                )
+                raise ValueError(msg)
 
         retdict = {}
         ls = attrs or valid_names
@@ -1006,7 +1009,8 @@ class Process(object):  # noqa: UP004
         """
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
-            raise ValueError("interval is not positive (got %r)" % interval)
+            msg = "interval is not positive (got %r)" % interval
+            raise ValueError(msg)
         num_cpus = cpu_count() or 1
 
         def timer():
@@ -1115,8 +1119,10 @@ class Process(object):  # noqa: UP004
         """
         valid_types = list(_psplatform.pfullmem._fields)
         if memtype not in valid_types:
-            raise ValueError("invalid memtype %r; valid types are %r" % (
-                memtype, tuple(valid_types)))
+            msg = "invalid memtype %r; valid types are %r" % (
+                memtype, tuple(valid_types),
+            )
+            raise ValueError(msg)
         fun = self.memory_info if memtype in _psplatform.pmem._fields else \
             self.memory_full_info
         metrics = fun()
@@ -1126,10 +1132,11 @@ class Process(object):  # noqa: UP004
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         if not total_phymem > 0:
             # we should never get here
-            raise ValueError(
-                "can't calculate process memory percent because "
-                "total physical system memory is not positive (%r)"
-                % total_phymem)
+            msg = (
+                "can't calculate process memory percent because total physical"
+                " system memory is not positive (%r)" % (total_phymem)
+            )
+            raise ValueError(msg)
         return (value / float(total_phymem)) * 100
 
     if hasattr(_psplatform.Process, "memory_maps"):
@@ -1380,8 +1387,10 @@ class Popen(Process):
             try:
                 return object.__getattribute__(self.__subproc, name)
             except AttributeError:
-                raise AttributeError("%s instance has no attribute '%s'"
-                                     % (self.__class__.__name__, name))
+                msg = "%s instance has no attribute '%s'" % (
+                    self.__class__.__name__, name,
+                )
+                raise AttributeError(msg)
 
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
@@ -1558,7 +1567,8 @@ def wait_procs(procs, timeout=None, callback=None):
     gone = set()
     alive = set(procs)
     if callback is not None and not callable(callback):
-        raise TypeError("callback %r is not a callable" % callable)
+        msg = "callback %r is not a callable" % callback
+        raise TypeError(msg)
     if timeout is not None:
         deadline = _timer() + timeout
 
@@ -1650,15 +1660,15 @@ def cpu_times(percpu=False):
 
 try:
     _last_cpu_times = {threading.current_thread().ident: cpu_times()}
-except Exception:
+except Exception:  # noqa: BLE001
     # Don't want to crash at import time.
     _last_cpu_times = {}
 
 try:
     _last_per_cpu_times = {
-        threading.current_thread().ident: cpu_times(percpu=True)
+        threading.current_thread().ident: cpu_times(percpu=True),
     }
-except Exception:
+except Exception:  # noqa: BLE001
     # Don't want to crash at import time.
     _last_per_cpu_times = {}
 
@@ -1757,7 +1767,8 @@ def cpu_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        raise ValueError("interval is not positive (got %r)" % interval)
+        msg = "interval is not positive (got %r)" % interval
+        raise ValueError(msg)
 
     def calculate(t1, t2):
         times_delta = _cpu_times_deltas(t1, t2)
@@ -1816,7 +1827,8 @@ def cpu_times_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        raise ValueError("interval is not positive (got %r)" % interval)
+        msg = "interval is not positive (got %r)" % interval
+        raise ValueError(msg)
 
     def calculate(t1, t2):
         nums = []

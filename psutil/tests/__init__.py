@@ -197,7 +197,7 @@ ROOT_DIR = os.path.realpath(
     os.path.join(os.path.dirname(__file__), '..', '..'))
 SCRIPTS_DIR = os.environ.get(
     "PSUTIL_SCRIPTS_DIR",
-    os.path.join(ROOT_DIR, 'scripts')
+    os.path.join(ROOT_DIR, 'scripts'),
 )
 HERE = os.path.realpath(os.path.dirname(__file__))
 
@@ -217,7 +217,7 @@ HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 try:
     HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
-except Exception:
+except Exception:  # noqa: BLE001
     HAS_BATTERY = False
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
@@ -232,7 +232,7 @@ def _get_py_exe():
         try:
             subprocess.check_call(
                 [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except Exception:
+        except subprocess.CalledProcessError:
             return None
         else:
             return exe

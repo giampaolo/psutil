@@ -222,7 +222,7 @@ class ParallelRunner(ColouredTextRunner):
         for test in suite:
             if test.countTestCases() == 0:
                 continue
-            elif isinstance(test, unittest.TestSuite):
+            if isinstance(test, unittest.TestSuite):
                 test_class = test._tests[0].__class__
             elif isinstance(test, unittest.TestCase):
                 test_class = test

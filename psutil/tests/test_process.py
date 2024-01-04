@@ -647,7 +647,7 @@ class TestProcess(PsutilTestCase):
                 value = getattr(nt, fname)
                 if fname == 'path':
                     continue
-                elif fname in ('addr', 'perms'):
+                if fname in ('addr', 'perms'):
                     assert value, value
                 else:
                     self.assertIsInstance(value, (int, long))
@@ -1412,7 +1412,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(
         MACOS_11PLUS,
-        "macOS 11+ can't get another process environment, issue #2084"
+        "macOS 11+ can't get another process environment, issue #2084",
     )
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
