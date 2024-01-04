@@ -11,6 +11,7 @@
   4 times faster. Before all connection types (TCP, UDP, UNIX) were retrieved
   internally, even if only a portion was returned.
 - 2342_, [NetBSD]: same as above (#2343) but for NetBSD.
+- 2349_: adopted black formatting style.
 
 **Bug fixes**
 
