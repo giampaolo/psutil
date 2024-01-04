@@ -347,6 +347,13 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(not LINUX, "linux only")
     def test_ionice_linux(self):
+
+        def cleanup(init):
+            ioclass, value = init
+            if ioclass == psutil.IOPRIO_CLASS_NONE:
+                value = 0
+            p.ionice(ioclass, value)
+
         p = psutil.Process()
         if not CI_TESTING:
             self.assertEqual(p.ionice()[0], psutil.IOPRIO_CLASS_NONE)
@@ -355,38 +362,33 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(psutil.IOPRIO_CLASS_BE, 2)  # normal
         self.assertEqual(psutil.IOPRIO_CLASS_IDLE, 3)  # low
         init = p.ionice()
+        self.addCleanup(cleanup, init)
+
+        # low
+        p.ionice(psutil.IOPRIO_CLASS_IDLE)
+        self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_IDLE, 0))
+        with self.assertRaises(ValueError):  # accepts no value
+            p.ionice(psutil.IOPRIO_CLASS_IDLE, value=7)
+        # normal
+        p.ionice(psutil.IOPRIO_CLASS_BE)
+        self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 0))
+        p.ionice(psutil.IOPRIO_CLASS_BE, value=7)
+        self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
+        with self.assertRaises(ValueError):
+            p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
         try:
-            # low
-            p.ionice(psutil.IOPRIO_CLASS_IDLE)
-            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_IDLE, 0))
-            with self.assertRaises(ValueError):  # accepts no value
-                p.ionice(psutil.IOPRIO_CLASS_IDLE, value=7)
-            # normal
-            p.ionice(psutil.IOPRIO_CLASS_BE)
-            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 0))
-            p.ionice(psutil.IOPRIO_CLASS_BE, value=7)
-            self.assertEqual(tuple(p.ionice()), (psutil.IOPRIO_CLASS_BE, 7))
-            with self.assertRaises(ValueError):
-                p.ionice(psutil.IOPRIO_CLASS_BE, value=8)
-            try:
-                p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
-            except psutil.AccessDenied:
-                pass
-            # errs
-            self.assertRaisesRegex(
-                ValueError, "ioclass accepts no value",
-                p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
-            self.assertRaisesRegex(
-                ValueError, "ioclass accepts no value",
-                p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
-            self.assertRaisesRegex(
-                ValueError, "'ioclass' argument must be specified",
-                p.ionice, value=1)
-        finally:
-            ioclass, value = init
-            if ioclass == psutil.IOPRIO_CLASS_NONE:
-                value = 0
-            p.ionice(ioclass, value)
+            p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+        except psutil.AccessDenied:
+            pass
+        # errs
+        with self.assertRaisesRegex(ValueError, "ioclass accepts no value"):
+            p.ionice(psutil.IOPRIO_CLASS_NONE, 1)
+        with self.assertRaisesRegex(ValueError, "ioclass accepts no value"):
+            p.ionice(psutil.IOPRIO_CLASS_IDLE, 1)
+        with self.assertRaisesRegex(
+            ValueError, "'ioclass' argument must be specified",
+        ):
+            p.ionice(value=1)
 
     @unittest.skipIf(not HAS_IONICE, "not supported")
     @unittest.skipIf(not WINDOWS, 'not supported on this win version')
@@ -395,27 +397,26 @@ class TestProcess(PsutilTestCase):
         if not CI_TESTING:
             self.assertEqual(p.ionice(), psutil.IOPRIO_NORMAL)
         init = p.ionice()
+        self.addCleanup(p.ionice, init)
+
+        # base
+        p.ionice(psutil.IOPRIO_VERYLOW)
+        self.assertEqual(p.ionice(), psutil.IOPRIO_VERYLOW)
+        p.ionice(psutil.IOPRIO_LOW)
+        self.assertEqual(p.ionice(), psutil.IOPRIO_LOW)
         try:
-            # base
-            p.ionice(psutil.IOPRIO_VERYLOW)
-            self.assertEqual(p.ionice(), psutil.IOPRIO_VERYLOW)
-            p.ionice(psutil.IOPRIO_LOW)
-            self.assertEqual(p.ionice(), psutil.IOPRIO_LOW)
-            try:
-                p.ionice(psutil.IOPRIO_HIGH)
-            except psutil.AccessDenied:
-                pass
-            else:
-                self.assertEqual(p.ionice(), psutil.IOPRIO_HIGH)
-            # errs
-            self.assertRaisesRegex(
-                TypeError, "value argument not accepted on Windows",
-                p.ionice, psutil.IOPRIO_NORMAL, value=1)
-            self.assertRaisesRegex(
-                ValueError, "is not a valid priority",
-                p.ionice, psutil.IOPRIO_HIGH + 1)
-        finally:
-            p.ionice(init)
+            p.ionice(psutil.IOPRIO_HIGH)
+        except psutil.AccessDenied:
+            pass
+        else:
+            self.assertEqual(p.ionice(), psutil.IOPRIO_HIGH)
+        # errs
+        with self.assertRaisesRegex(
+            TypeError, "value argument not accepted on Windows",
+        ):
+            p.ionice(psutil.IOPRIO_NORMAL, value=1)
+        with self.assertRaisesRegex(ValueError, "is not a valid priority"):
+            p.ionice(psutil.IOPRIO_HIGH + 1)
 
     @unittest.skipIf(not HAS_RLIMIT, "not supported")
     def test_rlimit_get(self):
@@ -821,59 +822,61 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(os.getresgid(), p.gids())
 
     def test_nice(self):
+        def cleanup(init):
+            try:
+                p.nice(init)
+            except psutil.AccessDenied:
+                pass
+
         p = psutil.Process()
         self.assertRaises(TypeError, p.nice, "str")
         init = p.nice()
-        try:
-            if WINDOWS:
-                highest_prio = None
-                for prio in [psutil.IDLE_PRIORITY_CLASS,
-                             psutil.BELOW_NORMAL_PRIORITY_CLASS,
-                             psutil.NORMAL_PRIORITY_CLASS,
-                             psutil.ABOVE_NORMAL_PRIORITY_CLASS,
-                             psutil.HIGH_PRIORITY_CLASS,
-                             psutil.REALTIME_PRIORITY_CLASS]:
-                    with self.subTest(prio=prio):
-                        try:
-                            p.nice(prio)
-                        except psutil.AccessDenied:
-                            pass
+        self.addCleanup(cleanup, init)
+
+        if WINDOWS:
+            highest_prio = None
+            for prio in [psutil.IDLE_PRIORITY_CLASS,
+                         psutil.BELOW_NORMAL_PRIORITY_CLASS,
+                         psutil.NORMAL_PRIORITY_CLASS,
+                         psutil.ABOVE_NORMAL_PRIORITY_CLASS,
+                         psutil.HIGH_PRIORITY_CLASS,
+                         psutil.REALTIME_PRIORITY_CLASS]:
+                with self.subTest(prio=prio):
+                    try:
+                        p.nice(prio)
+                    except psutil.AccessDenied:
+                        pass
+                    else:
+                        new_prio = p.nice()
+                        # The OS may limit our maximum priority,
+                        # even if the function succeeds. For higher
+                        # priorities, we match either the expected
+                        # value or the highest so far.
+                        if prio in (psutil.ABOVE_NORMAL_PRIORITY_CLASS,
+                                    psutil.HIGH_PRIORITY_CLASS,
+                                    psutil.REALTIME_PRIORITY_CLASS):
+                            if new_prio == prio or highest_prio is None:
+                                highest_prio = prio
+                                self.assertEqual(new_prio, highest_prio)
                         else:
-                            new_prio = p.nice()
-                            # The OS may limit our maximum priority,
-                            # even if the function succeeds. For higher
-                            # priorities, we match either the expected
-                            # value or the highest so far.
-                            if prio in (psutil.ABOVE_NORMAL_PRIORITY_CLASS,
-                                        psutil.HIGH_PRIORITY_CLASS,
-                                        psutil.REALTIME_PRIORITY_CLASS):
-                                if new_prio == prio or highest_prio is None:
-                                    highest_prio = prio
-                                    self.assertEqual(new_prio, highest_prio)
-                            else:
-                                self.assertEqual(new_prio, prio)
-            else:
-                try:
-                    if hasattr(os, "getpriority"):
-                        self.assertEqual(
-                            os.getpriority(os.PRIO_PROCESS, os.getpid()),
-                            p.nice())
-                    p.nice(1)
-                    self.assertEqual(p.nice(), 1)
-                    if hasattr(os, "getpriority"):
-                        self.assertEqual(
-                            os.getpriority(os.PRIO_PROCESS, os.getpid()),
-                            p.nice())
-                    # XXX - going back to previous nice value raises
-                    # AccessDenied on MACOS
-                    if not MACOS:
-                        p.nice(0)
-                        self.assertEqual(p.nice(), 0)
-                except psutil.AccessDenied:
-                    pass
-        finally:
+                            self.assertEqual(new_prio, prio)
+        else:
             try:
-                p.nice(init)
+                if hasattr(os, "getpriority"):
+                    self.assertEqual(
+                        os.getpriority(os.PRIO_PROCESS, os.getpid()),
+                        p.nice())
+                p.nice(1)
+                self.assertEqual(p.nice(), 1)
+                if hasattr(os, "getpriority"):
+                    self.assertEqual(
+                        os.getpriority(os.PRIO_PROCESS, os.getpid()),
+                        p.nice())
+                # XXX - going back to previous nice value raises
+                # AccessDenied on MACOS
+                if not MACOS:
+                    p.nice(0)
+                    self.assertEqual(p.nice(), 0)
             except psutil.AccessDenied:
                 pass
 

@@ -52,17 +52,19 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 class ConnectionTestCase(PsutilTestCase):
 
     def setUp(self):
-        if not (NETBSD or FREEBSD):
-            # process opens a UNIX socket to /var/log/run.
-            cons = thisproc.connections(kind='all')
-            assert not cons, cons
+        if NETBSD or FREEBSD or (MACOS and not PY3):
+            # Process opens a UNIX socket to /var/log/run.
+            return
+        cons = thisproc.connections(kind='all')
+        assert not cons, cons
 
     def tearDown(self):
-        if not (FREEBSD or NETBSD):
-            # Make sure we closed all resources.
-            # NetBSD opens a UNIX socket to /var/log/run.
-            cons = thisproc.connections(kind='all')
-            assert not cons, cons
+        # Make sure we closed all resources.
+        # Some BSDs open a UNIX socket to /var/log/run.
+        if NETBSD or FREEBSD or (MACOS and not PY3):
+            return
+        cons = thisproc.connections(kind='all')
+        assert not cons, cons
 
     def compare_procsys_connections(self, pid, proc_cons, kind='all'):
         """Given a process PID and its list of connections compare
