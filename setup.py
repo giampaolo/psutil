@@ -244,7 +244,8 @@ if WINDOWS:
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -265,7 +266,8 @@ elif MACOS:
             'IOKit',
         ],
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -282,7 +284,8 @@ elif FREEBSD:
         define_macros=macros,
         libraries=["devstat"],
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -299,7 +302,8 @@ elif OPENBSD:
         define_macros=macros,
         libraries=["kvm"],
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -316,7 +320,8 @@ elif NETBSD:
         define_macros=macros,
         libraries=["kvm"],
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -335,7 +340,8 @@ elif LINUX:
         ),
         define_macros=macros,
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -352,7 +358,8 @@ elif SUNOS:
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'],
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -370,7 +377,8 @@ elif AIX:
         libraries=['perfstat'],
         define_macros=macros,
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
 
@@ -384,7 +392,8 @@ if POSIX:
         define_macros=macros,
         sources=sources,
         # fmt: off
-        **py_limited_api  # python 2.7 compatibility requires no comma
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
         # fmt: on
     )
     if SUNOS:
