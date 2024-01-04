@@ -106,7 +106,7 @@ jobs:
         python-version: 3.x
     - name: 'Run linters'
       run: |
-        python3 -m pip install ruff rstcheck toml-sort sphinx
+        python3 -m pip install ruff black rstcheck toml-sort sphinx
         make lint-all
 
   # Check sanity of .tar.gz + wheel files
