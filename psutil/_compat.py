@@ -16,6 +16,7 @@ import sys
 import types
 
 
+# fmt: off
 __all__ = [
     # constants
     "PY3",
@@ -31,7 +32,9 @@ __all__ = [
     "redirect_stderr",
     # python 3 exceptions
     "FileNotFoundError", "PermissionError", "ProcessLookupError",
-    "InterruptedError", "ChildProcessError", "FileExistsError"]
+    "InterruptedError", "ChildProcessError", "FileExistsError",
+]
+# fmt: on
 
 
 PY3 = sys.version_info[0] >= 3
