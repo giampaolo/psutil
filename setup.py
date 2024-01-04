@@ -387,6 +387,7 @@ def main():
         description=__doc__ .replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_long_description(),
         long_description_content_type='text/x-rst',
+        # fmt: off
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
             'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',
@@ -394,6 +395,7 @@ def main():
             'monitoring', 'ulimit', 'prlimit', 'smem', 'performance',
             'metrics', 'agent', 'observability',
         ],
+        # fmt: on
         author='Giampaolo Rodola',
         author_email='g.rodola@gmail.com',
         url='https://github.com/giampaolo/psutil',
