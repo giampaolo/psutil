@@ -1,6 +1,5 @@
 [tool.black]
 line-length = 79
-skip-magic-trailing-comma = true
 skip-string-normalization = true
 preview = true
 target-version = ["py37"]
