@@ -26,6 +26,7 @@ THIS_SCRIPT = os.path.realpath(__file__)
 def term_supports_colors():
     try:
         import curses
+
         assert sys.stderr.isatty()
         curses.setupterm()
         assert curses.tigetnum("colors") > 0
@@ -41,9 +42,9 @@ def hilite(s, ok=True, bold=False):
     attr = []
     if ok is None:  # no color
         pass
-    elif ok:   # green
+    elif ok:  # green
         attr.append('32')
-    else:   # red
+    else:  # red
         attr.append('31')
     if bold:
         attr.append('1')
@@ -59,7 +60,9 @@ def sh(cmd):
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
     p = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         universal_newlines=True,
     )
     stdout, stderr = p.communicate()
@@ -79,17 +82,22 @@ def open_text(path):
 
 def git_commit_files():
     out = sh(["git", "diff", "--cached", "--name-only"])
-    py_files = [x for x in out.split('\n') if x.endswith('.py') and
-                os.path.exists(x)]
-    c_files = [x for x in out.split('\n') if x.endswith(('.c', '.h')) and
-               os.path.exists(x)]
-    rst_files = [x for x in out.split('\n') if x.endswith('.rst') and
-                 os.path.exists(x)]
+    py_files = [
+        x for x in out.split('\n') if x.endswith('.py') and os.path.exists(x)
+    ]
+    c_files = [
+        x
+        for x in out.split('\n')
+        if x.endswith(('.c', '.h')) and os.path.exists(x)
+    ]
+    rst_files = [
+        x for x in out.split('\n') if x.endswith('.rst') and os.path.exists(x)
+    ]
     toml_files = [
         x for x in out.split("\n") if x.endswith(".toml") and os.path.exists(x)
     ]
     new_rm_mv = sh(
-        ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"],
+        ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"]
     )
     # XXX: we should escape spaces and possibly other amenities here
     new_rm_mv = new_rm_mv.split()
@@ -102,7 +110,7 @@ def ruff(files):
     if subprocess.call(cmd) != 0:
         return exit(
             "Python code didn't pass 'ruff' style check."
-            "Try running 'make fix-ruff'.",
+            "Try running 'make fix-ruff'."
         )
 
 
@@ -142,8 +150,10 @@ def main():
         out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
         with open_text('MANIFEST.in') as f:
             if out.strip() != f.read().strip():
-                sys.exit("some files were added, deleted or renamed; "
-                         "run 'make generate-manifest' and commit again")
+                sys.exit(
+                    "some files were added, deleted or renamed; "
+                    "run 'make generate-manifest' and commit again"
+                )
 
 
 main()

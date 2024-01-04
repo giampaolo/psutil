@@ -20,15 +20,17 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.realpath(os.path.join(HERE, '..', '..'))
 HISTORY = os.path.join(ROOT, 'HISTORY.rst')
 PRINT_HASHES_SCRIPT = os.path.join(
-    ROOT, 'scripts', 'internal', 'print_hashes.py')
+    ROOT, 'scripts', 'internal', 'print_hashes.py'
+)
 
 PRJ_NAME = 'psutil'
 PRJ_VERSION = __version__
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
 PRJ_URL_DOC = 'http://psutil.readthedocs.io'
 PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'
-PRJ_URL_WHATSNEW = \
+PRJ_URL_WHATSNEW = (
     'https://github.com/giampaolo/psutil/blob/master/HISTORY.rst'
+)
 
 template = """\
 Hello all,
@@ -109,9 +111,12 @@ def get_changes():
 
 def main():
     changes = get_changes()
-    hashes = subprocess.check_output(
-        [sys.executable, PRINT_HASHES_SCRIPT, 'dist/']).strip().decode()
-    print(template.format(
+    hashes = (
+        subprocess.check_output([sys.executable, PRINT_HASHES_SCRIPT, 'dist/'])
+        .strip()
+        .decode()
+    )
+    text = template.format(
         prj_name=PRJ_NAME,
         prj_version=PRJ_VERSION,
         prj_urlhome=PRJ_URL_HOME,
@@ -120,7 +125,8 @@ def main():
         prj_urlwhatsnew=PRJ_URL_WHATSNEW,
         changes=changes,
         hashes=hashes,
-    ))
+    )
+    print(text)
 
 
 if __name__ == '__main__':

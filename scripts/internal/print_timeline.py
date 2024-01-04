@@ -19,7 +19,8 @@ entry = """\
 
 def sh(cmd):
     return subprocess.check_output(
-        shlex.split(cmd), universal_newlines=True).strip()
+        shlex.split(cmd), universal_newlines=True
+    ).strip()
 
 
 def get_tag_date(tag):

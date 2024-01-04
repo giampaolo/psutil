@@ -35,8 +35,10 @@ def main():
 
     print("charge:     %s%%" % round(batt.percent, 2))
     if batt.power_plugged:
-        print("status:     %s" % (
-            "charging" if batt.percent < 100 else "fully charged"))
+        print(
+            "status:     %s"
+            % ("charging" if batt.percent < 100 else "fully charged")
+        )
         print("plugged in: yes")
     else:
         print("left:       %s" % secs2hours(batt.secsleft))

@@ -36,9 +36,11 @@ def check_line(path, line, idx, lines):
         if not eof:
             nextline = lines[idx + 1]
             # "#" is a pre-processor line
-            if nextline != '\n' and \
-                    nextline.strip()[0] != '#' and \
-                    nextline.strip()[:2] != '*/':
+            if (
+                nextline != '\n'
+                and nextline.strip()[0] != '#'
+                and nextline.strip()[:2] != '*/'
+            ):
                 warn(path, line, lineno, "expected 1 blank line")
 
     sls = s.lstrip()

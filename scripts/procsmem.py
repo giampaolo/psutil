@@ -96,8 +96,10 @@ def main():
         )
         print(line)
     if ad_pids:
-        print("warning: access denied for %s pids" % (len(ad_pids)),
-              file=sys.stderr)
+        print(
+            "warning: access denied for %s pids" % (len(ad_pids)),
+            file=sys.stderr,
+        )
 
 
 if __name__ == '__main__':

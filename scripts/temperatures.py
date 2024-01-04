@@ -38,9 +38,13 @@ def main():
     for name, entries in temps.items():
         print(name)
         for entry in entries:
-            print("    %-20s %s °C (high = %s °C, critical = %s °C)" % (
-                entry.label or name, entry.current, entry.high,
-                entry.critical))
+            line = "    %-20s %s °C (high = %s °C, critical = %s °C)" % (
+                entry.label or name,
+                entry.current,
+                entry.high,
+                entry.critical,
+            )
+            print(line)
         print()
 
 

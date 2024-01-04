@@ -36,7 +36,7 @@ from psutil._compat import get_terminal_size
 
 
 def safe_print(s):
-    s = s[:get_terminal_size()[0]]
+    s = s[: get_terminal_size()[0]]
     try:
         print(s)
     except UnicodeEncodeError:
@@ -52,11 +52,13 @@ def main():
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        safe_print(templ % (
+        line = templ % (
             m.addr.split('-')[0].zfill(16),
             bytes2human(m.rss),
             m.perms,
-            m.path))
+            m.path,
+        )
+        safe_print(line)
     print("-" * 31)
     print(templ % ("Total", bytes2human(total_rss), '', ''))
     safe_print("PID = %s, name = %s" % (p.pid, p.name()))
