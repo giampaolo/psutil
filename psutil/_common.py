@@ -979,6 +979,5 @@ def debug(msg):
             else:
                 msg = "ignoring %r" % msg
         print(  # noqa
-            "psutil-debug [%s:%s]> %s" % (fname, lineno, msg),
-            file=sys.stderr,
+            "psutil-debug [%s:%s]> %s" % (fname, lineno, msg), file=sys.stderr
         )
