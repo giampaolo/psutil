@@ -118,8 +118,10 @@ def refresh_window(procs, disks_read, disks_write):
     templ = "%-5s %-7s %11s %11s  %s"
     win.erase()
 
-    disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
-                % (bytes2human(disks_read), bytes2human(disks_write))
+    disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" % (
+        bytes2human(disks_read),
+        bytes2human(disks_write),
+    )
     printl(disks_tot)
 
     header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
@@ -131,7 +133,8 @@ def refresh_window(procs, disks_read, disks_write):
             p._username[:7],
             bytes2human(p._read_per_sec),
             bytes2human(p._write_per_sec),
-            p._cmdline)
+            p._cmdline,
+        )
         try:
             printl(line)
         except curses.error:

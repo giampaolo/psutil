@@ -48,11 +48,7 @@ from psutil._common import bytes2human
 
 win = curses.initscr()
 lineno = 0
-colors_map = dict(
-    green=3,
-    red=10,
-    yellow=4,
-)
+colors_map = dict(green=3, red=10, yellow=4)
 
 
 def printl(line, color=None, bold=False, highlight=False):
@@ -75,6 +71,7 @@ def printl(line, color=None, bold=False, highlight=False):
     else:
         lineno += 1
 
+
 # --- /curses stuff
 
 
@@ -85,9 +82,16 @@ def poll(interval):
     procs_status = {}
     for p in psutil.process_iter():
         try:
-            p.dict = p.as_dict(['username', 'nice', 'memory_info',
-                                'memory_percent', 'cpu_percent',
-                                'cpu_times', 'name', 'status'])
+            p.dict = p.as_dict([
+                'username',
+                'nice',
+                'memory_info',
+                'memory_percent',
+                'cpu_percent',
+                'cpu_times',
+                'name',
+                'status',
+            ])
             try:
                 procs_status[p.dict['status']] += 1
             except KeyError:
@@ -98,8 +102,9 @@ def poll(interval):
             procs.append(p)
 
     # return processes sorted by CPU percent usage
-    processes = sorted(procs, key=lambda p: p.dict['cpu_percent'],
-                       reverse=True)
+    processes = sorted(
+        procs, key=lambda p: p.dict['cpu_percent'], reverse=True
+    )
     return (processes, procs_status)
 
 
@@ -131,7 +136,8 @@ def print_header(procs_status, num_procs):
     mem = psutil.virtual_memory()
     dashes, empty_dashes = get_dashes(mem.percent)
     line = " Mem   [%s%s] %5s%% %6s / %s" % (
-        dashes, empty_dashes,
+        dashes,
+        empty_dashes,
         mem.percent,
         bytes2human(mem.used),
         bytes2human(mem.total),
@@ -142,7 +148,8 @@ def print_header(procs_status, num_procs):
     swap = psutil.swap_memory()
     dashes, empty_dashes = get_dashes(swap.percent)
     line = " Swap  [%s%s] %5s%% %6s / %s" % (
-        dashes, empty_dashes,
+        dashes,
+        empty_dashes,
         swap.percent,
         bytes2human(swap.used),
         bytes2human(swap.total),
@@ -157,11 +164,16 @@ def print_header(procs_status, num_procs):
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
     printl(" Processes: %s (%s)" % (num_procs, ', '.join(st)))
     # load average, uptime
-    uptime = datetime.datetime.now() - \
-        datetime.datetime.fromtimestamp(psutil.boot_time())
+    uptime = datetime.datetime.now() - datetime.datetime.fromtimestamp(
+        psutil.boot_time()
+    )
     av1, av2, av3 = psutil.getloadavg()
-    line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
-        % (av1, av2, av3, str(uptime).split('.')[0])
+    line = " Load average: %.2f %.2f %.2f  Uptime: %s" % (
+        av1,
+        av2,
+        av3,
+        str(uptime).split('.')[0],
+    )
     printl(line)
 
 
@@ -170,8 +182,17 @@ def refresh_window(procs, procs_status):
     curses.endwin()
     templ = "%-6s %-8s %4s %6s %6s %5s %5s %9s  %2s"
     win.erase()
-    header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
-                      "TIME+", "NAME")
+    header = templ % (
+        "PID",
+        "USER",
+        "NI",
+        "VIRT",
+        "RES",
+        "CPU%",
+        "MEM%",
+        "TIME+",
+        "NAME",
+    )
     print_header(procs_status, len(procs))
     printl("")
     printl(header, bold=True, highlight=True)
@@ -180,9 +201,11 @@ def refresh_window(procs, procs_status):
         # is expressed as: "mm:ss.ms"
         if p.dict['cpu_times'] is not None:
             ctime = datetime.timedelta(seconds=sum(p.dict['cpu_times']))
-            ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
-                                  str(ctime.seconds % 60).zfill(2),
-                                  str(ctime.microseconds)[:2])
+            ctime = "%s:%s.%s" % (
+                ctime.seconds // 60 % 60,
+                str(ctime.seconds % 60).zfill(2),
+                str(ctime.microseconds)[:2],
+            )
         else:
             ctime = ''
         if p.dict['memory_percent'] is not None:
@@ -192,16 +215,17 @@ def refresh_window(procs, procs_status):
         if p.dict['cpu_percent'] is None:
             p.dict['cpu_percent'] = ''
         username = p.dict['username'][:8] if p.dict['username'] else ''
-        line = templ % (p.pid,
-                        username,
-                        p.dict['nice'],
-                        bytes2human(getattr(p.dict['memory_info'], 'vms', 0)),
-                        bytes2human(getattr(p.dict['memory_info'], 'rss', 0)),
-                        p.dict['cpu_percent'],
-                        p.dict['memory_percent'],
-                        ctime,
-                        p.dict['name'] or '',
-                        )
+        line = templ % (
+            p.pid,
+            username,
+            p.dict['nice'],
+            bytes2human(getattr(p.dict['memory_info'], 'vms', 0)),
+            bytes2human(getattr(p.dict['memory_info'], 'rss', 0)),
+            p.dict['cpu_percent'],
+            p.dict['memory_percent'],
+            ctime,
+            p.dict['name'] or '',
+        )
         try:
             printl(line)
         except curses.error:

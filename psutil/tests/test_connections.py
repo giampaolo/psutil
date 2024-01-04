@@ -50,7 +50,6 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 @serialrun
 class ConnectionTestCase(PsutilTestCase):
-
     def setUp(self):
         if NETBSD or FREEBSD or (MACOS and not PY3):
             # Process opens a UNIX socket to /var/log/run.
@@ -88,7 +87,6 @@ class ConnectionTestCase(PsutilTestCase):
 
 
 class TestBasicOperations(ConnectionTestCase):
-
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_system(self):
         with create_sockets():
@@ -136,7 +134,8 @@ class TestUnconnectedSockets(ConnectionTestCase):
         self.assertEqual(conn.family, sock.family)
         # see: http://bugs.python.org/issue30204
         self.assertEqual(
-            conn.type, sock.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE))
+            conn.type, sock.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)
+        )
 
         # local address
         laddr = sock.getsockname()
@@ -257,7 +256,6 @@ class TestConnectedSocket(ConnectionTestCase):
 
 
 class TestFilters(ConnectionTestCase):
-
     def test_filters(self):
         def check(kind, families, types):
             for conn in thisproc.connections(kind=kind):
@@ -269,45 +267,43 @@ class TestFilters(ConnectionTestCase):
                     self.assertIn(conn.type, types)
 
         with create_sockets():
-            check('all',
-                  [AF_INET, AF_INET6, AF_UNIX],
-                  [SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET])
-            check('inet',
-                  [AF_INET, AF_INET6],
-                  [SOCK_STREAM, SOCK_DGRAM])
-            check('inet4',
-                  [AF_INET],
-                  [SOCK_STREAM, SOCK_DGRAM])
-            check('tcp',
-                  [AF_INET, AF_INET6],
-                  [SOCK_STREAM])
-            check('tcp4',
-                  [AF_INET],
-                  [SOCK_STREAM])
-            check('tcp6',
-                  [AF_INET6],
-                  [SOCK_STREAM])
-            check('udp',
-                  [AF_INET, AF_INET6],
-                  [SOCK_DGRAM])
-            check('udp4',
-                  [AF_INET],
-                  [SOCK_DGRAM])
-            check('udp6',
-                  [AF_INET6],
-                  [SOCK_DGRAM])
+            check(
+                'all',
+                [AF_INET, AF_INET6, AF_UNIX],
+                [SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET],
+            )
+            check('inet', [AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM])
+            check('inet4', [AF_INET], [SOCK_STREAM, SOCK_DGRAM])
+            check('tcp', [AF_INET, AF_INET6], [SOCK_STREAM])
+            check('tcp4', [AF_INET], [SOCK_STREAM])
+            check('tcp6', [AF_INET6], [SOCK_STREAM])
+            check('udp', [AF_INET, AF_INET6], [SOCK_DGRAM])
+            check('udp4', [AF_INET], [SOCK_DGRAM])
+            check('udp6', [AF_INET6], [SOCK_DGRAM])
             if HAS_CONNECTIONS_UNIX:
-                check('unix',
-                      [AF_UNIX],
-                      [SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET])
+                check(
+                    'unix',
+                    [AF_UNIX],
+                    [SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET],
+                )
 
     @skip_on_access_denied(only_if=MACOS)
     def test_combos(self):
         reap_children()
 
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
-            all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4",
-                         "tcp6", "udp", "udp4", "udp6")
+            all_kinds = (
+                "all",
+                "inet",
+                "inet4",
+                "inet6",
+                "tcp",
+                "tcp4",
+                "tcp6",
+                "udp",
+                "udp4",
+                "udp6",
+            )
             check_connection_ntuple(conn)
             self.assertEqual(conn.family, family)
             self.assertEqual(conn.type, type)
@@ -348,13 +344,17 @@ class TestFilters(ConnectionTestCase):
         # must be relative on Windows
         testfile = os.path.basename(self.get_testfn(dir=os.getcwd()))
         tcp4_template = tcp_template.format(
-            family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
+            family=int(AF_INET), addr="127.0.0.1", testfn=testfile
+        )
         udp4_template = udp_template.format(
-            family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
+            family=int(AF_INET), addr="127.0.0.1", testfn=testfile
+        )
         tcp6_template = tcp_template.format(
-            family=int(AF_INET6), addr="::1", testfn=testfile)
+            family=int(AF_INET6), addr="::1", testfn=testfile
+        )
         udp6_template = udp_template.format(
-            family=int(AF_INET6), addr="::1", testfn=testfile)
+            family=int(AF_INET6), addr="::1", testfn=testfile
+        )
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
@@ -379,24 +379,52 @@ class TestFilters(ConnectionTestCase):
             for conn in cons:
                 # TCP v4
                 if p.pid == tcp4_proc.pid:
-                    check_conn(p, conn, AF_INET, SOCK_STREAM, tcp4_addr, (),
-                               psutil.CONN_LISTEN,
-                               ("all", "inet", "inet4", "tcp", "tcp4"))
+                    check_conn(
+                        p,
+                        conn,
+                        AF_INET,
+                        SOCK_STREAM,
+                        tcp4_addr,
+                        (),
+                        psutil.CONN_LISTEN,
+                        ("all", "inet", "inet4", "tcp", "tcp4"),
+                    )
                 # UDP v4
                 elif p.pid == udp4_proc.pid:
-                    check_conn(p, conn, AF_INET, SOCK_DGRAM, udp4_addr, (),
-                               psutil.CONN_NONE,
-                               ("all", "inet", "inet4", "udp", "udp4"))
+                    check_conn(
+                        p,
+                        conn,
+                        AF_INET,
+                        SOCK_DGRAM,
+                        udp4_addr,
+                        (),
+                        psutil.CONN_NONE,
+                        ("all", "inet", "inet4", "udp", "udp4"),
+                    )
                 # TCP v6
                 elif p.pid == getattr(tcp6_proc, "pid", None):
-                    check_conn(p, conn, AF_INET6, SOCK_STREAM, tcp6_addr, (),
-                               psutil.CONN_LISTEN,
-                               ("all", "inet", "inet6", "tcp", "tcp6"))
+                    check_conn(
+                        p,
+                        conn,
+                        AF_INET6,
+                        SOCK_STREAM,
+                        tcp6_addr,
+                        (),
+                        psutil.CONN_LISTEN,
+                        ("all", "inet", "inet6", "tcp", "tcp6"),
+                    )
                 # UDP v6
                 elif p.pid == getattr(udp6_proc, "pid", None):
-                    check_conn(p, conn, AF_INET6, SOCK_DGRAM, udp6_addr, (),
-                               psutil.CONN_NONE,
-                               ("all", "inet", "inet6", "udp", "udp6"))
+                    check_conn(
+                        p,
+                        conn,
+                        AF_INET6,
+                        SOCK_DGRAM,
+                        udp6_addr,
+                        (),
+                        psutil.CONN_NONE,
+                        ("all", "inet", "inet6", "udp", "udp6"),
+                    )
 
     def test_count(self):
         with create_sockets():
@@ -471,6 +499,7 @@ class TestSystemWideConnections(ConnectionTestCase):
 
         with create_sockets():
             from psutil._common import conn_tmap
+
             for kind, groups in conn_tmap.items():
                 # XXX: SunOS does not retrieve UNIX sockets.
                 if kind == 'unix' and not HAS_CONNECTIONS_UNIX:
@@ -511,17 +540,18 @@ class TestSystemWideConnections(ConnectionTestCase):
         for fname in fnames:
             wait_for_file(fname)
 
-        syscons = [x for x in psutil.net_connections(kind='all') if x.pid
-                   in pids]
+        syscons = [
+            x for x in psutil.net_connections(kind='all') if x.pid in pids
+        ]
         for pid in pids:
-            self.assertEqual(len([x for x in syscons if x.pid == pid]),
-                             expected)
+            self.assertEqual(
+                len([x for x in syscons if x.pid == pid]), expected
+            )
             p = psutil.Process(pid)
             self.assertEqual(len(p.connections('all')), expected)
 
 
 class TestMisc(PsutilTestCase):
-
     def test_connection_constants(self):
         ints = []
         strs = []
@@ -543,4 +573,5 @@ class TestMisc(PsutilTestCase):
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
+
     run_from_name(__file__)

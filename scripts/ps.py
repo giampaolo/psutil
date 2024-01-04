@@ -41,11 +41,13 @@ from psutil._compat import get_terminal_size
 
 def main():
     today_day = datetime.date.today()
+    # fmt: off
     templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
     print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
                    "STATUS", "START", "TIME", "CMDLINE"))
+    # fmt: on
     for p in psutil.process_iter(attrs, ad_value=None):
         if p.info['create_time']:
             ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
@@ -56,8 +58,9 @@ def main():
         else:
             ctime = ''
         if p.info['cpu_times']:
-            cputime = time.strftime("%M:%S",
-                                    time.localtime(sum(p.info['cpu_times'])))
+            cputime = time.strftime(
+                "%M:%S", time.localtime(sum(p.info['cpu_times']))
+            )
         else:
             cputime = ''
 
@@ -72,12 +75,21 @@ def main():
         if not user:
             user = ''
         user = user[:9]
-        vms = bytes2human(p.info['memory_info'].vms) if \
-            p.info['memory_info'] is not None else ''
-        rss = bytes2human(p.info['memory_info'].rss) if \
-            p.info['memory_info'] is not None else ''
-        memp = round(p.info['memory_percent'], 1) if \
-            p.info['memory_percent'] is not None else ''
+        vms = (
+            bytes2human(p.info['memory_info'].vms)
+            if p.info['memory_info'] is not None
+            else ''
+        )
+        rss = (
+            bytes2human(p.info['memory_info'].rss)
+            if p.info['memory_info'] is not None
+            else ''
+        )
+        memp = (
+            round(p.info['memory_percent'], 1)
+            if p.info['memory_percent'] is not None
+            else ''
+        )
         nice = int(p.info['nice']) if p.info['nice'] else ''
         if p.info['cmdline']:
             cmdline = ' '.join(p.info['cmdline'])
@@ -95,8 +107,9 @@ def main():
             status,
             ctime,
             cputime,
-            cmdline)
-        print(line[:get_terminal_size()[0]])
+            cmdline,
+        )
+        print(line[: get_terminal_size()[0]])
 
 
 if __name__ == '__main__':

@@ -17,7 +17,6 @@ from psutil.tests import sh
 
 @unittest.skipIf(not SUNOS, "SUNOS only")
 class SunOSSpecificTestCase(PsutilTestCase):
-
     def test_swap_memory(self):
         out = sh('env PATH=/usr/sbin:/sbin:%s swap -l' % os.environ['PATH'])
         lines = out.strip().split('\n')[1:]
@@ -42,4 +41,5 @@ class SunOSSpecificTestCase(PsutilTestCase):
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
+
     run_from_name(__file__)

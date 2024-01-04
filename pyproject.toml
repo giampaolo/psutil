@@ -1,3 +1,9 @@
+[tool.black]
+line-length = 79
+skip-string-normalization = true
+preview = true
+target-version = ["py37"]
+
 [tool.ruff]
 # https://beta.ruff.rs/docs/settings/
 target-version = "py37"
@@ -25,6 +31,7 @@ ignore = [
     "B904",  # Within an `except` clause, raise exceptions with `raise ... from err` (PYTHON2.7 COMPAT)
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
     "C90",  # mccabe (function `X` is too complex)
+    "COM812",  # Trailing comma missing
     "D",  # pydocstyle
     "DTZ",  # flake8-datetimez
     "ERA001",  # Found commented-out code
