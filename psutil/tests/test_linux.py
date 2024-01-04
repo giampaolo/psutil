@@ -1630,7 +1630,7 @@ class TestSensorsBattery(PsutilTestCase):
         def open_mock(name, *args, **kwargs):
             if name.startswith(
                 ('/sys/class/power_supply/AC0/online',
-                 '/sys/class/power_supply/AC/online')
+                 '/sys/class/power_supply/AC/online'),
             ):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/status"):

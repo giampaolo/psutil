@@ -67,7 +67,7 @@ __extra__all__ = [
     # connection status constants
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING"
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
 ]
 
 
@@ -154,7 +154,7 @@ TCP_STATUSES = {
     "08": _common.CONN_CLOSE_WAIT,
     "09": _common.CONN_LAST_ACK,
     "0A": _common.CONN_LISTEN,
-    "0B": _common.CONN_CLOSING
+    "0B": _common.CONN_CLOSING,
 }
 
 
@@ -283,7 +283,7 @@ def set_scputimes_ntuple(procfs_path):
 
 try:
     set_scputimes_ntuple("/proc")
-except Exception as err:  # pragma: no cover
+except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
     debug("ignoring exception on import: %r" % err)
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
@@ -2033,7 +2033,7 @@ class Process:
                     data.get(b'Private_Dirty:', 0),
                     data.get(b'Referenced:', 0),
                     data.get(b'Anonymous:', 0),
-                    data.get(b'Swap:', 0)
+                    data.get(b'Swap:', 0),
                 ))
             return ls
 

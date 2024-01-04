@@ -138,7 +138,8 @@ def wait_pid(pid, timeout=None, proc_name=None,
                 # WNOHANG flag was used and PID is still running.
                 interval = sleep(interval)
                 continue
-            elif os.WIFEXITED(status):
+
+            if os.WIFEXITED(status):
                 # Process terminated normally by calling exit(3) or _exit(2),
                 # or by returning from main(). The return value is the
                 # positive integer passed to *exit().

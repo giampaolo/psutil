@@ -43,9 +43,8 @@ def get_version():
                 for num in ret.split('.'):
                     assert num.isdigit(), ret
                 return ret
-        else:
-            msg = "couldn't find version string"
-            raise ValueError(msg)
+        msg = "couldn't find version string"
+        raise ValueError(msg)
 
 
 VERSION = get_version()
@@ -333,7 +332,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'psutil', 'psutil Documentation',
-     [author], 1)
+     [author], 1),
 ]
 
 # If true, show URL addresses after external links.

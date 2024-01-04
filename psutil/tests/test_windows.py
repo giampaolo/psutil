@@ -608,7 +608,7 @@ class TestProcessWMI(WindowsTestCase):
         # bytes but funnily enough on certain platforms bytes are
         # returned instead.
         wmi_usage = int(w.PageFileUsage)
-        if (vms != wmi_usage) and (vms != wmi_usage * 1024):
+        if vms not in (wmi_usage, wmi_usage * 1024):
             raise self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
     def test_create_time(self):
@@ -822,7 +822,7 @@ class TestServices(PsutilTestCase):
             "pause_pending",
             "continue_pending",
             "stop_pending",
-            "stopped"
+            "stopped",
         ])
         for serv in psutil.win_service_iter():
             data = serv.as_dict()

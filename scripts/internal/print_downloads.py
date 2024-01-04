@@ -144,7 +144,7 @@ def main():
     data = [
         {'what': 'Per month', 'download_count': downs},
         {'what': 'Per day', 'download_count': int(downs / 30)},
-        {'what': 'PYPI ranking', 'download_count': ranking()}
+        {'what': 'PYPI ranking', 'download_count': ranking()},
     ]
     print_markdown_table('Overview', 'what', data)
     print_markdown_table('Operating systems', 'system_name',

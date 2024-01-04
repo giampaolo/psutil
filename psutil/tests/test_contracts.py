@@ -440,7 +440,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 meth = getattr(self, name)
                 try:
                     meth(value, info)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     s = '\n' + '=' * 70 + '\n'
                     s += "FAIL: name=test_%s, pid=%s, ret=%s\ninfo=%s\n" % (
                         name, info['pid'], repr(value), info)

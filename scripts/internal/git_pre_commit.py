@@ -29,7 +29,7 @@ def term_supports_colors():
         assert sys.stderr.isatty()
         curses.setupterm()
         assert curses.tigetnum("colors") > 0
-    except Exception:
+    except Exception:  # noqa: BLE001
         return False
     return True
 
@@ -60,7 +60,7 @@ def sh(cmd):
         cmd = shlex.split(cmd)
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True
+        universal_newlines=True,
     )
     stdout, stderr = p.communicate()
     if p.returncode != 0:
@@ -89,7 +89,7 @@ def git_commit_files():
         x for x in out.split("\n") if x.endswith(".toml") and os.path.exists(x)
     ]
     new_rm_mv = sh(
-        ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"]
+        ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"],
     )
     # XXX: we should escape spaces and possibly other amenities here
     new_rm_mv = new_rm_mv.split()
@@ -102,7 +102,7 @@ def ruff(files):
     if subprocess.call(cmd) != 0:
         return exit(
             "Python code didn't pass 'ruff' style check."
-            "Try running 'make fix-ruff'."
+            "Try running 'make fix-ruff'.",
         )
 
 

@@ -427,7 +427,7 @@ except ImportError:
                 res = struct.unpack(
                     'hh', fcntl.ioctl(1, termios.TIOCGWINSZ, '1234'))
                 return (res[1], res[0])
-            except Exception:
+            except Exception:  # noqa: BLE001
                 return fallback
 
 
