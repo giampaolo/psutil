@@ -163,6 +163,7 @@ pinfo_map = dict(
 # =====================================================================
 
 
+# fmt: off
 # psutil.cpu_times()
 scputimes = namedtuple('scputimes',
                        ['user', 'system', 'idle', 'interrupt', 'dpc'])
@@ -185,6 +186,7 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'other_count', 'other_bytes'])
+# fmt: on
 
 
 # =====================================================================
