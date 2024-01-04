@@ -26,7 +26,7 @@ def main():
             user.terminal or '-',
             datetime.fromtimestamp(user.started).strftime("%Y-%m-%d %H:%M"),
             "(%s)" % user.host if user.host else "",
-            proc_name
+            proc_name,
         ))
 
 

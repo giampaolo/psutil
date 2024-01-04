@@ -213,7 +213,7 @@ def parallel_validator(urls):
             fname, url = fut_to_url[fut]
             try:
                 ok = fut.result()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 fails.append((fname, url))
                 print()
                 print("warn: error while validating %s" % url, file=sys.stderr)

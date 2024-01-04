@@ -230,7 +230,7 @@ if WINDOWS:
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
-        **py_limited_api
+        **py_limited_api  # noqa (noqa needed for python 2.7)
     )
 
 elif MACOS:
@@ -244,7 +244,7 @@ elif MACOS:
         ),
         define_macros=macros,
         extra_link_args=[
-            '-framework', 'CoreFoundation', '-framework', 'IOKit'
+            '-framework', 'CoreFoundation', '-framework', 'IOKit',
         ],
         **py_limited_api)
 
@@ -313,7 +313,7 @@ elif SUNOS:
         sources=sources + [
             'psutil/_psutil_sunos.c',
             'psutil/arch/solaris/v10/ifaddrs.c',
-            'psutil/arch/solaris/environ.c'
+            'psutil/arch/solaris/environ.c',
         ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'],
@@ -473,7 +473,10 @@ def main():
                 elif which('rpm'):
                     missdeps("sudo yum install gcc %s%s-devel" % (pyimpl, py3))
                 elif which('apk'):
-                    missdeps("sudo apk add gcc %s%s-dev musl-dev linux-headers" % (pyimpl, py3))
+                    missdeps(
+                        "sudo apk add gcc %s%s-dev musl-dev linux-headers" % (
+                            pyimpl, py3),
+                    )
             elif MACOS:
                 print(hilite("XCode (https://developer.apple.com/xcode/) "
                              "is not installed", color="red"), file=sys.stderr)
