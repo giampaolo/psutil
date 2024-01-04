@@ -230,7 +230,7 @@ if WINDOWS:
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
-        **py_limited_api,
+        **py_limited_api  # noqa (noqa needed for python 2.7)
     )
 
 elif MACOS:
