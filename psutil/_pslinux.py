@@ -390,7 +390,7 @@ def calculate_avail_vmem(mems):
         slab_reclaimable = mems[b'SReclaimable:']
     except KeyError as err:
         debug(
-            "{} is missing from /proc/meminfo; using an approximation for "
+            "%s is missing from /proc/meminfo; using an approximation for "
             "calculating available memory"
             % err.args[0]
         )
