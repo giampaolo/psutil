@@ -165,6 +165,7 @@ TCP_STATUSES = {
 # =====================================================================
 
 
+# fmt: off
 # psutil.virtual_memory()
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
@@ -199,6 +200,7 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 pcputimes = namedtuple('pcputimes',
                        ['user', 'system', 'children_user', 'children_system',
                         'iowait'])
+# fmt: on
 
 
 # =====================================================================
