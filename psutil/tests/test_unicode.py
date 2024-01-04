@@ -111,6 +111,7 @@ from psutil.tests import terminate
 
 
 if APPVEYOR:
+
     def safe_rmpath(path):  # NOQA
         # TODO - this is quite random and I'm not sure why it happens,
         # nor I can reproduce it locally:
@@ -123,6 +124,7 @@ if APPVEYOR:
         #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
         #     windows/process_info.c#L146
         from psutil.tests import safe_rmpath as rm
+
         try:
             return rm(path)
         except WindowsError:
@@ -209,8 +211,9 @@ class TestFSAPIs(BaseUnicodeTest):
         exe = p.exe()
         self.assertIsInstance(exe, str)
         if self.expect_exact_path_match():
-            self.assertEqual(os.path.normcase(exe),
-                             os.path.normcase(self.funky_name))
+            self.assertEqual(
+                os.path.normcase(exe), os.path.normcase(self.funky_name)
+            )
 
     def test_proc_name(self):
         cmd = [self.funky_name, "-c", "time.sleep(10)"]
@@ -229,7 +232,8 @@ class TestFSAPIs(BaseUnicodeTest):
             self.assertIsInstance(part, str)
         if self.expect_exact_path_match():
             self.assertEqual(
-                cmdline, [self.funky_name, "-c", "time.sleep(10)"])
+                cmdline, [self.funky_name, "-c", "time.sleep(10)"]
+            )
 
     def test_proc_cwd(self):
         dname = self.funky_name + "2"
@@ -254,8 +258,9 @@ class TestFSAPIs(BaseUnicodeTest):
             # XXX - see https://github.com/giampaolo/psutil/issues/595
             return self.skipTest("open_files on BSD is broken")
         if self.expect_exact_path_match():
-            self.assertEqual(os.path.normcase(path),
-                             os.path.normcase(self.funky_name))
+            self.assertEqual(
+                os.path.normcase(path), os.path.normcase(self.funky_name)
+            )
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_proc_connections(self):
@@ -309,10 +314,13 @@ class TestFSAPIs(BaseUnicodeTest):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
         with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
+
             def normpath(p):
                 return os.path.realpath(os.path.normcase(p))
-            libpaths = [normpath(x.path)
-                        for x in psutil.Process().memory_maps()]
+
+            libpaths = [
+                normpath(x.path) for x in psutil.Process().memory_maps()
+            ]
             # ...just to have a clearer msg in case of failure
             libpaths = [x for x in libpaths if TESTFN_PREFIX in x]
             self.assertIn(normpath(funky_path), libpaths)
@@ -362,4 +370,5 @@ class TestNonFSAPIS(BaseUnicodeTest):
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
+
     run_from_name(__file__)

@@ -63,11 +63,10 @@ from psutil.tests import serialrun
 # Make sure code reflects what doc promises in terms of APIs
 # availability.
 
-class TestAvailConstantsAPIs(PsutilTestCase):
 
+class TestAvailConstantsAPIs(PsutilTestCase):
     def test_PROCFS_PATH(self):
-        self.assertEqual(hasattr(psutil, "PROCFS_PATH"),
-                         LINUX or SUNOS or AIX)
+        self.assertEqual(hasattr(psutil, "PROCFS_PATH"), LINUX or SUNOS or AIX)
 
     def test_win_priority(self):
         ae = self.assertEqual
@@ -92,8 +91,9 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
-    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
-                     "unsupported on GITHUB_ACTIONS + LINUX")
+    @unittest.skipIf(
+        GITHUB_ACTIONS and LINUX, "unsupported on GITHUB_ACTIONS + LINUX"
+    )
     def test_rlimit(self):
         ae = self.assertEqual
         ae(hasattr(psutil, "RLIM_INFINITY"), LINUX or FREEBSD)
@@ -127,7 +127,6 @@ class TestAvailConstantsAPIs(PsutilTestCase):
 
 
 class TestAvailSystemAPIs(PsutilTestCase):
-
     def test_win_service_iter(self):
         self.assertEqual(hasattr(psutil, "win_service_iter"), WINDOWS)
 
@@ -135,27 +134,39 @@ class TestAvailSystemAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
 
     def test_cpu_freq(self):
-        self.assertEqual(hasattr(psutil, "cpu_freq"),
-                         LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD)
+        self.assertEqual(
+            hasattr(psutil, "cpu_freq"),
+            LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD,
+        )
 
     def test_sensors_temperatures(self):
         self.assertEqual(
-            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD)
+            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD
+        )
 
     def test_sensors_fans(self):
         self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX)
 
     def test_battery(self):
-        self.assertEqual(hasattr(psutil, "sensors_battery"),
-                         LINUX or WINDOWS or FREEBSD or MACOS)
+        self.assertEqual(
+            hasattr(psutil, "sensors_battery"),
+            LINUX or WINDOWS or FREEBSD or MACOS,
+        )
 
 
 class TestAvailProcessAPIs(PsutilTestCase):
-
     def test_environ(self):
-        self.assertEqual(hasattr(psutil.Process, "environ"),
-                         LINUX or MACOS or WINDOWS or AIX or SUNOS or
-                         FREEBSD or OPENBSD or NETBSD)
+        self.assertEqual(
+            hasattr(psutil.Process, "environ"),
+            LINUX
+            or MACOS
+            or WINDOWS
+            or AIX
+            or SUNOS
+            or FREEBSD
+            or OPENBSD
+            or NETBSD,
+        )
 
     def test_uids(self):
         self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
@@ -169,8 +180,9 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
 
-    @unittest.skipIf(GITHUB_ACTIONS and LINUX,
-                     "unsupported on GITHUB_ACTIONS + LINUX")
+    @unittest.skipIf(
+        GITHUB_ACTIONS and LINUX, "unsupported on GITHUB_ACTIONS + LINUX"
+    )
     def test_rlimit(self):
         self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
 
@@ -185,17 +197,19 @@ class TestAvailProcessAPIs(PsutilTestCase):
         self.assertEqual(hasattr(psutil.Process, "num_handles"), WINDOWS)
 
     def test_cpu_affinity(self):
-        self.assertEqual(hasattr(psutil.Process, "cpu_affinity"),
-                         LINUX or WINDOWS or FREEBSD)
+        self.assertEqual(
+            hasattr(psutil.Process, "cpu_affinity"),
+            LINUX or WINDOWS or FREEBSD,
+        )
 
     def test_cpu_num(self):
-        self.assertEqual(hasattr(psutil.Process, "cpu_num"),
-                         LINUX or FREEBSD or SUNOS)
+        self.assertEqual(
+            hasattr(psutil.Process, "cpu_num"), LINUX or FREEBSD or SUNOS
+        )
 
     def test_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(
-            hasit, not (OPENBSD or NETBSD or AIX or MACOS))
+        self.assertEqual(hasit, not (OPENBSD or NETBSD or AIX or MACOS))
 
 
 # ===================================================================
@@ -237,8 +251,9 @@ class TestSystemAPITypes(PsutilTestCase):
         self.assertIsInstance(psutil.cpu_count(), int)
 
     # TODO: remove this once 1892 is fixed
-    @unittest.skipIf(MACOS and platform.machine() == 'arm64',
-                     "skipped due to #1892")
+    @unittest.skipIf(
+        MACOS and platform.machine() == 'arm64', "skipped due to #1892"
+    )
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
@@ -334,7 +349,6 @@ class TestSystemAPITypes(PsutilTestCase):
 
 
 class TestProcessWaitType(PsutilTestCase):
-
     @unittest.skipIf(not POSIX, "not POSIX")
     def test_negative_signal(self):
         p = psutil.Process(self.spawn_testproc().pid)
@@ -443,7 +457,11 @@ class TestFetchAllProcesses(PsutilTestCase):
                 except Exception:  # noqa: BLE001
                     s = '\n' + '=' * 70 + '\n'
                     s += "FAIL: name=test_%s, pid=%s, ret=%s\ninfo=%s\n" % (
-                        name, info['pid'], repr(value), info)
+                        name,
+                        info['pid'],
+                        repr(value),
+                        info,
+                    )
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
                     s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
@@ -556,7 +574,8 @@ class TestFetchAllProcesses(PsutilTestCase):
                 psutil.IOPRIO_VERYLOW,
                 psutil.IOPRIO_LOW,
                 psutil.IOPRIO_NORMAL,
-                psutil.IOPRIO_HIGH]
+                psutil.IOPRIO_HIGH,
+            ]
             self.assertIsInstance(ret, int)
             self.assertGreaterEqual(ret, 0)
             self.assertIn(ret, choices)
@@ -730,8 +749,11 @@ class TestFetchAllProcesses(PsutilTestCase):
         if POSIX:
             assert -20 <= ret <= 20, ret
         else:
-            priorities = [getattr(psutil, x) for x in dir(psutil)
-                          if x.endswith('_PRIORITY_CLASS')]
+            priorities = [
+                getattr(psutil, x)
+                for x in dir(psutil)
+                if x.endswith('_PRIORITY_CLASS')
+            ]
             self.assertIn(ret, priorities)
             if PY3:
                 self.assertIsInstance(ret, enum.IntEnum)
@@ -759,4 +781,5 @@ class TestFetchAllProcesses(PsutilTestCase):
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
+
     run_from_name(__file__)
