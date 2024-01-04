@@ -21,7 +21,8 @@ from github import Github
 
 
 ROOT_DIR = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), '..', '..'))
+    os.path.join(os.path.dirname(__file__), '..', '..')
+)
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 
@@ -101,7 +102,8 @@ OS_LABELS = [
 # fmt: on
 
 LABELS_MAP['scripts'].extend(
-    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')])
+    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')]
+)
 
 ILLOGICAL_PAIRS = [
     ('bug', 'enhancement'),
@@ -248,10 +250,12 @@ def add_labels_from_new_body(issue, text):
     # add bug/enhancement label
     log("search for 'Bug fix: y/n' line")
     r = re.search(r"\* Bug fix:.*?\n", text)
-    if is_pr(issue) and \
-            r is not None and \
-            not has_label(issue, "bug") and \
-            not has_label(issue, "enhancement"):
+    if (
+        is_pr(issue)
+        and r is not None
+        and not has_label(issue, "bug")
+        and not has_label(issue, "enhancement")
+    ):
         log("found")
         s = r.group(0).lower()
         if 'yes' in s:
@@ -290,20 +294,25 @@ def add_labels_from_new_body(issue, text):
 
 def on_new_issue(issue):
     def has_text(text):
-        return text in issue.title.lower() or \
-            (issue.body and text in issue.body.lower())
+        return text in issue.title.lower() or (
+            issue.body and text in issue.body.lower()
+        )
 
     def body_mentions_python_h():
         if not issue.body:
             return False
         body = issue.body.replace(' ', '')
-        return "#include<Python.h>\n^~~~" in body or \
-            "#include<Python.h>\r\n^~~~" in body
+        return (
+            "#include<Python.h>\n^~~~" in body
+            or "#include<Python.h>\r\n^~~~" in body
+        )
 
     log("searching for missing Python.h")
-    if has_text("missing python.h") or \
-            has_text("python.h: no such file or directory") or \
-            body_mentions_python_h():
+    if (
+        has_text("missing python.h")
+        or has_text("python.h: no such file or directory")
+        or body_mentions_python_h()
+    ):
         log("found mention of Python.h")
         issue.create_comment(REPLY_MISSING_PYTHON_HEADERS)
         issue.edit(state='closed')
