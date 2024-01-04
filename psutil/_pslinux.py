@@ -1117,6 +1117,7 @@ def disk_io_counters(perdisk=False):
         for line in lines:
             fields = line.split()
             flen = len(fields)
+            # fmt: off
             if flen == 15:
                 # Linux 2.4
                 name = fields[3]
@@ -1137,6 +1138,7 @@ def disk_io_counters(perdisk=False):
                 raise ValueError("not sure how to interpret line %r" % line)
             yield (name, reads, writes, rbytes, wbytes, rtime, wtime,
                    reads_merged, writes_merged, busy_time)
+            # fmt: on
 
     def read_sysfs():
         for block in os.listdir('/sys/block'):
@@ -1146,10 +1148,12 @@ def disk_io_counters(perdisk=False):
                 with open_text(os.path.join(root, 'stat')) as f:
                     fields = f.read().strip().split()
                 name = os.path.basename(root)
+                # fmt: off
                 (reads, reads_merged, rbytes, rtime, writes, writes_merged,
                     wbytes, wtime, _, busy_time) = map(int, fields[:10])
                 yield (name, reads, writes, rbytes, wbytes, rtime,
                        wtime, reads_merged, writes_merged, busy_time)
+                # fmt: on
 
     if os.path.exists('%s/diskstats' % get_procfs_path()):
         gen = read_procfs()
@@ -1162,6 +1166,7 @@ def disk_io_counters(perdisk=False):
 
     retdict = {}
     for entry in gen:
+        # fmt: off
         (name, reads, writes, rbytes, wbytes, rtime, wtime, reads_merged,
             writes_merged, busy_time) = entry
         if not perdisk and not is_storage_device(name):
@@ -1182,6 +1187,7 @@ def disk_io_counters(perdisk=False):
         wbytes *= DISK_SECTOR_SIZE
         retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
                          reads_merged, writes_merged, busy_time)
+        # fmt: on
 
     return retdict
 
