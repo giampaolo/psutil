@@ -336,6 +336,7 @@ class Process(object):  # noqa: UP004
         self._pid_reused = False
         self._hash = None
         self._lock = threading.RLock()
+        self._info = {}
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
@@ -440,6 +441,17 @@ class Process(object):  # noqa: UP004
         """The process PID."""
         return self._pid
 
+    @property
+    def info(self):
+        """Stored result of proc.as_dict(attrs=attrs) when process_iter() is
+        called with the attrs parameter.
+        """
+        return self._info
+
+    @info.setter
+    def info(self, value):
+        self._info = value
+
     # --- utility methods
 
     @contextlib.contextmanager
@@ -539,8 +551,8 @@ class Process(object):  # noqa: UP004
         with self.oneshot():
             for name in ls:
                 try:
-                    if name == 'pid':
-                        ret = self.pid
+                    if name in ('pid', 'info'):
+                        ret = getattr(self, name)
                     else:
                         meth = getattr(self, name)
                         ret = meth()
