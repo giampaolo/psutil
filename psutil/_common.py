@@ -47,6 +47,7 @@ else:
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
 _DEFAULT = object()
 
+# fmt: off
 __all__ = [
     # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
@@ -77,6 +78,7 @@ __all__ = [
     # shell utils
     'hilite', 'term_supports_colors', 'print_color',
 ]
+# fmt: on
 
 
 # ===================================================================
@@ -174,6 +176,7 @@ else:
 
 # --- for system functions
 
+# fmt: off
 # psutil.swap_memory()
 sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
                              'sout'])
@@ -214,6 +217,7 @@ shwtemp = namedtuple(
 sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
 # psutil.sensors_fans()
 sfan = namedtuple('sfan', ['label', 'current'])
+# fmt: on
 
 # --- for Process methods
 
