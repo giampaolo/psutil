@@ -26,14 +26,13 @@ For reference, here's the git history with original implementations:
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <mach/mach.h>
-
-#include "../../_psutil_common.h"
-#include "../../_psutil_posix.h"
-
 #if defined(__arm64__) || defined(__aarch64__)
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
 #endif
+
+#include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
 
 
 PyObject *
