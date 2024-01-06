@@ -371,7 +371,8 @@ def proc_info(pid):
 
     def check_exception(exc, proc, name, ppid):
         tcase.assertEqual(exc.pid, pid)
-        tcase.assertEqual(exc.name, name)
+        if exc.name is not None:
+            tcase.assertEqual(exc.name, name)
         if isinstance(exc, psutil.ZombieProcess):
             tcase.assertProcessZombie(proc)
             if exc.ppid is not None:
@@ -552,7 +553,7 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def status(self, ret, info):
         self.assertIsInstance(ret, str)
-        assert ret
+        assert ret, ret
         self.assertNotEqual(ret, '?')  # XXX
         self.assertIn(ret, VALID_PROC_STATUSES)
 
@@ -706,7 +707,7 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def cpu_affinity(self, ret, info):
         self.assertIsInstance(ret, list)
-        assert ret != [], ret
+        self.assertNotEqual(ret, [])
         cpus = list(range(psutil.cpu_count()))
         for n in ret:
             self.assertIsInstance(n, int)

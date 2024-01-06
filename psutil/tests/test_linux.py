@@ -845,7 +845,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
             with mock.patch("os.path.exists", side_effect=path_exists_mock):
                 reload_module(psutil._pslinux)
                 ret = psutil.cpu_freq()
-                assert ret
+                assert ret, ret
                 self.assertEqual(ret.max, 0.0)
                 self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):
@@ -1972,8 +1972,7 @@ class TestProcess(PsutilTestCase):
                 'psutil._pslinux.os.readlink',
                 side_effect=OSError(errno.ENOENT, ""),
             ) as m:
-                files = p.open_files()
-                assert not files
+                self.assertEqual(p.open_files(), [])
                 assert m.called
             # also simulate the case where os.readlink() returns EINVAL
             # in which case psutil is supposed to 'continue'
@@ -1997,8 +1996,7 @@ class TestProcess(PsutilTestCase):
             with mock.patch(
                 patch_point, side_effect=IOError(errno.ENOENT, "")
             ) as m:
-                files = p.open_files()
-                assert not files
+                self.assertEqual(p.open_files(), [])
                 assert m.called
 
     def test_open_files_enametoolong(self):
@@ -2015,8 +2013,7 @@ class TestProcess(PsutilTestCase):
                 patch_point, side_effect=OSError(errno.ENAMETOOLONG, "")
             ) as m:
                 with mock.patch("psutil._pslinux.debug"):
-                    files = p.open_files()
-                    assert not files
+                    self.assertEqual(p.open_files(), [])
                     assert m.called
 
     # --- mocked tests
@@ -2250,7 +2247,7 @@ class TestProcess(PsutilTestCase):
         ) as m:
             p = psutil.Process()
             with mock.patch("psutil._pslinux.debug"):
-                assert not p.connections()
+                self.assertEqual(p.connections(), [])
                 assert m.called
 
 

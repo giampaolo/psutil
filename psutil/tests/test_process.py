@@ -78,7 +78,11 @@ class TestProcess(PsutilTestCase):
 
     def spawn_psproc(self, *args, **kwargs):
         sproc = self.spawn_testproc(*args, **kwargs)
-        return psutil.Process(sproc.pid)
+        try:
+            return psutil.Process(sproc.pid)
+        except psutil.NoSuchProcess:
+            self.assertPidGone(sproc.pid)
+            raise
 
     # ---
 

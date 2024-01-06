@@ -2031,11 +2031,7 @@ class Process:
             if HAS_PROC_SMAPS_ROLLUP:  # faster
                 try:
                     uss, pss, swap = self._parse_smaps_rollup()
-                except (ProcessLookupError, FileNotFoundError) as err:
-                    debug(
-                        "ignore %r for pid %s and retry using /proc/pid/smaps"
-                        % (err, self.pid)
-                    )
+                except (ProcessLookupError, FileNotFoundError):
                     uss, pss, swap = self._parse_smaps()
             else:
                 uss, pss, swap = self._parse_smaps()

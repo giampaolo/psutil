@@ -55,7 +55,7 @@ class ConnectionTestCase(PsutilTestCase):
             # Process opens a UNIX socket to /var/log/run.
             return
         cons = thisproc.connections(kind='all')
-        assert not cons, cons
+        self.assertEqual(cons, [])
 
     def tearDown(self):
         # Make sure we closed all resources.
@@ -63,7 +63,7 @@ class ConnectionTestCase(PsutilTestCase):
         if NETBSD or FREEBSD or (MACOS and not PY3):
             return
         cons = thisproc.connections(kind='all')
-        assert not cons, cons
+        self.assertEqual(cons, [])
 
     def compare_procsys_connections(self, pid, proc_cons, kind='all'):
         """Given a process PID and its list of connections compare
@@ -156,7 +156,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         addr = ("127.0.0.1", 0)
         with closing(bind_socket(AF_INET, SOCK_STREAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
-            assert not conn.raddr
+            self.assertEqual(conn.raddr, ())
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
     @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
@@ -164,14 +164,14 @@ class TestUnconnectedSockets(ConnectionTestCase):
         addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_STREAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
-            assert not conn.raddr
+            self.assertEqual(conn.raddr, ())
             self.assertEqual(conn.status, psutil.CONN_LISTEN)
 
     def test_udp_v4(self):
         addr = ("127.0.0.1", 0)
         with closing(bind_socket(AF_INET, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
-            assert not conn.raddr
+            self.assertEqual(conn.raddr, ())
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not supports_ipv6(), "IPv6 not supported")
@@ -179,7 +179,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         addr = ("::1", 0)
         with closing(bind_socket(AF_INET6, SOCK_DGRAM, addr=addr)) as sock:
             conn = self.check_socket(sock)
-            assert not conn.raddr
+            self.assertEqual(conn.raddr, ())
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
@@ -187,7 +187,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
             conn = self.check_socket(sock)
-            assert not conn.raddr
+            self.assertEqual(conn.raddr, "")
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
     @unittest.skipIf(not POSIX, 'POSIX only')
@@ -195,7 +195,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
             conn = self.check_socket(sock)
-            assert not conn.raddr
+            self.assertEqual(conn.raddr, "")
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
@@ -210,7 +210,7 @@ class TestConnectedSocket(ConnectionTestCase):
     @unittest.skipIf(SUNOS, "unreliable on SUONS")
     def test_tcp(self):
         addr = ("127.0.0.1", 0)
-        assert not thisproc.connections(kind='tcp4')
+        self.assertEqual(thisproc.connections(kind='tcp4'), [])
         server, client = tcp_socketpair(AF_INET, addr=addr)
         try:
             cons = thisproc.connections(kind='tcp4')
@@ -233,8 +233,8 @@ class TestConnectedSocket(ConnectionTestCase):
         server, client = unix_socketpair(testfn)
         try:
             cons = thisproc.connections(kind='unix')
-            assert not (cons[0].laddr and cons[0].raddr)
-            assert not (cons[1].laddr and cons[1].raddr)
+            assert not (cons[0].laddr and cons[0].raddr), cons
+            assert not (cons[1].laddr and cons[1].raddr), cons
             if NETBSD or FREEBSD:
                 # On NetBSD creating a UNIX socket will cause
                 # a UNIX connection to  /var/run/log.
@@ -313,9 +313,9 @@ class TestFilters(ConnectionTestCase):
             for kind in all_kinds:
                 cons = proc.connections(kind=kind)
                 if kind in kinds:
-                    assert cons
+                    self.assertNotEqual(cons, [])
                 else:
-                    assert not cons, cons
+                    self.assertEqual(cons, [])
             # compare against system-wide connections
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.

@@ -318,7 +318,7 @@ class TestNetUtils(PsutilTestCase):
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
-        assert not p.connections(kind='unix')
+        self.assertEqual(p.connections(kind='unix'), [])
         name = self.get_testfn()
         server, client = unix_socketpair(name)
         try:
