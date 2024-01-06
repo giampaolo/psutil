@@ -20,6 +20,8 @@
 - 2340_, [NetBSD]: if process is terminated, `Process.cwd()`_ will return an
   empty string instead of raising `NoSuchProcess`_.
 - 2345_, [Linux]: fix compilation on older compiler missing DUPLEX_UNKNOWN
+- 2222_, [macOS]: `cpu_freq()` now returns fixed values for `min` and `max`
+  frequencies in all Apple Silicon chips.
 
 5.9.7
 =====
@@ -137,8 +139,6 @@
   threads that are already terminated.
 - 2237_, [OpenBSD], [NetBSD]: `Process.cwd()`_ may raise ``FileNotFoundError``
   if cwd no longer exists. Return an empty string instead.
-- 2222_, [macOS]: `cpu_freq()` now returns fixed values for `min` and `max`
-  frequencies in all Apple Silicon chips.
 
 5.9.4
 =====

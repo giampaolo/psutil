@@ -1,0 +1,27 @@
+[
+  {
+    "directory": "/Users/olivertome/Desktop/dev/oss/psutil/",
+    "arguments": ["clang", "-Wno-unused-result", "-Wsign-compare", "-Wunreachable-code", "-fno-common", "-dynamic", "-DNDEBUG", "-g", "-fwrapv", "-O3", "-Wall", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk", "-DPSUTIL_POSIX=1", "-DPSUTIL_SIZEOF_PID_T=4", "-DPSUTIL_VERSION=595", "-DPSUTIL_OSX=1", "-I/Users/olivertome/.venvs/psutil/include", "-I/opt/homebrew/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/include/python3.10", "-c", "psutil/_psutil_common.c", "-o", "build/temp.macosx-13-arm64-cpython-310/psutil/_psutil_common.o"],
+    "file": "psutil/_psutil_common.c"
+  },
+  {
+    "directory": "/Users/olivertome/Desktop/dev/oss/psutil/",
+    "arguments": ["clang", "-Wno-unused-result", "-Wsign-compare", "-Wunreachable-code", "-fno-common", "-dynamic", "-DNDEBUG", "-g", "-fwrapv", "-O3", "-Wall", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk", "-DPSUTIL_POSIX=1", "-DPSUTIL_SIZEOF_PID_T=4", "-DPSUTIL_VERSION=595", "-DPSUTIL_OSX=1", "-I/Users/olivertome/.venvs/psutil/include", "-I/opt/homebrew/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/include/python3.10", "-c", "psutil/_psutil_osx.c", "-o", "build/temp.macosx-13-arm64-cpython-310/psutil/_psutil_osx.o"],
+    "file": "psutil/_psutil_osx.c"
+  },
+  {
+    "directory": "/Users/olivertome/Desktop/dev/oss/psutil/",
+    "arguments": ["clang", "-Wno-unused-result", "-Wsign-compare", "-Wunreachable-code", "-fno-common", "-dynamic", "-DNDEBUG", "-g", "-fwrapv", "-O3", "-Wall", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk", "-DPSUTIL_POSIX=1", "-DPSUTIL_SIZEOF_PID_T=4", "-DPSUTIL_VERSION=595", "-DPSUTIL_OSX=1", "-I/Users/olivertome/.venvs/psutil/include", "-I/opt/homebrew/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/include/python3.10", "-c", "psutil/_psutil_posix.c", "-o", "build/temp.macosx-13-arm64-cpython-310/psutil/_psutil_posix.o"],
+    "file": "psutil/_psutil_posix.c"
+  },
+  {
+    "directory": "/Users/olivertome/Desktop/dev/oss/psutil/",
+    "arguments": ["clang", "-Wno-unused-result", "-Wsign-compare", "-Wunreachable-code", "-fno-common", "-dynamic", "-DNDEBUG", "-g", "-fwrapv", "-O3", "-Wall", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk", "-DPSUTIL_POSIX=1", "-DPSUTIL_SIZEOF_PID_T=4", "-DPSUTIL_VERSION=595", "-DPSUTIL_OSX=1", "-I/Users/olivertome/.venvs/psutil/include", "-I/opt/homebrew/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/include/python3.10", "-c", "psutil/arch/osx/cpu.c", "-o", "build/temp.macosx-13-arm64-cpython-310/psutil/arch/osx/cpu.o"],
+    "file": "psutil/arch/osx/cpu.c"
+  },
+  {
+    "directory": "/Users/olivertome/Desktop/dev/oss/psutil/",
+    "arguments": ["clang", "-Wno-unused-result", "-Wsign-compare", "-Wunreachable-code", "-fno-common", "-dynamic", "-DNDEBUG", "-g", "-fwrapv", "-O3", "-Wall", "-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX13.sdk", "-DPSUTIL_POSIX=1", "-DPSUTIL_SIZEOF_PID_T=4", "-DPSUTIL_VERSION=595", "-DPSUTIL_OSX=1", "-I/Users/olivertome/.venvs/psutil/include", "-I/opt/homebrew/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/include/python3.10", "-c", "psutil/arch/osx/process_info.c", "-o", "build/temp.macosx-13-arm64-cpython-310/psutil/arch/osx/process_info.o"],
+    "file": "psutil/arch/osx/process_info.c"
+  }
+]
