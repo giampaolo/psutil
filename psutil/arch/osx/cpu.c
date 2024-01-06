@@ -26,14 +26,13 @@ For reference, here's the git history with original implementations:
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <mach/mach.h>
-
-#include "../../_psutil_common.h"
-#include "../../_psutil_posix.h"
-
 #if defined(__arm64__) || defined(__aarch64__)
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
 #endif
+
+#include "../../_psutil_common.h"
+#include "../../_psutil_posix.h"
 
 
 PyObject *
@@ -128,20 +127,25 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     CFTypeRef eCoreRef = NULL;
     io_iterator_t iter = 0;
     io_registry_entry_t entry = 0;
+    io_name_t name;
 
     matching = IOServiceMatching("AppleARMIODevice");
     if (matching == 0) {
-        return PyErr_Format(PyExc_RuntimeError, "IOServiceMatching call failed, 'AppleARMIODevice' not found");
+        return PyErr_Format(
+            PyExc_RuntimeError,
+            "IOServiceMatching call failed, 'AppleARMIODevice' not found"
+        );
     }
 
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
     if (status != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "IOServiceGetMatchingServices call failed");
+        PyErr_Format(
+            PyExc_RuntimeError, "IOServiceGetMatchingServices call failed"
+        );
         goto error;
     }
 
     while ((entry = IOIteratorNext(iter)) != 0) {
-        io_name_t name;
         status = IORegistryEntryGetName(entry, name);
         if (status != KERN_SUCCESS) {
             IOObjectRelease(entry);
@@ -154,30 +158,43 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     }
 
     if (entry == 0) {
-        PyErr_Format(PyExc_RuntimeError, "'pmgr' entry was not found in AppleARMIODevice service");
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "'pmgr' entry was not found in AppleARMIODevice service"
+        );
         goto error;
     }
 
-    pCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
+    pCoreRef = IORegistryEntryCreateCFProperty(
+        entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
     if (pCoreRef == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "'voltage-states5-sram' property not found");
+        PyErr_Format(
+            PyExc_RuntimeError, "'voltage-states5-sram' property not found");
         goto error;
     }
 
-    eCoreRef = IORegistryEntryCreateCFProperty(entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
+    eCoreRef = IORegistryEntryCreateCFProperty(
+        entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
     if (eCoreRef == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "'voltage-states1-sram' property not found");
+        PyErr_Format(
+            PyExc_RuntimeError, "'voltage-states1-sram' property not found");
         goto error;
     }
 
     size_t pCoreLength = CFDataGetLength(pCoreRef);
     size_t eCoreLength = CFDataGetLength(eCoreRef);
     if (pCoreLength < 8) {
-        PyErr_Format(PyExc_RuntimeError, "expected 'voltage-states5-sram' buffer to have at least size 8");
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "expected 'voltage-states5-sram' buffer to have at least size 8"
+        );
         goto error;
     }
     if (eCoreLength < 4) {
-        PyErr_Format(PyExc_RuntimeError, "expected 'voltage-states1-sram' buffer to have at least size 4");
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "expected 'voltage-states1-sram' buffer to have at least size 4"
+        );
         goto error;
     }
 
@@ -194,10 +211,12 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     IOObjectRelease(entry);
 
     return Py_BuildValue(
-            "IKK",
-            curr / 1000 / 1000,
-            min / 1000 / 1000,
-            max / 1000 / 1000);
+        "IKK",
+        curr / 1000 / 1000,
+        min / 1000 / 1000,
+        max / 1000 / 1000
+    );
+
 error:
     if (pCoreRef != NULL)
         CFRelease(pCoreRef);
