@@ -15,15 +15,18 @@ from psutil._common import print_color
 
 
 class Wheel:
-
     def __init__(self, path):
         self._path = path
         self._name = os.path.basename(path)
 
     def __repr__(self):
         return "<%s(name=%s, plat=%s, arch=%s, pyver=%s)>" % (
-            self.__class__.__name__, self.name, self.platform(), self.arch(),
-            self.pyver())
+            self.__class__.__name__,
+            self.name,
+            self.platform(),
+            self.arch(),
+            self.pyver(),
+        )
 
     __str__ = __repr__
 
@@ -72,7 +75,6 @@ class Wheel:
 
 
 class Tarball(Wheel):
-
     def platform(self):
         return "source"
 
@@ -85,8 +87,12 @@ class Tarball(Wheel):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('dir', nargs="?", default="dist",
-                        help='directory containing tar.gz or wheel files')
+    parser.add_argument(
+        'dir',
+        nargs="?",
+        default="dist",
+        help='directory containing tar.gz or wheel files',
+    )
     args = parser.parse_args()
 
     groups = collections.defaultdict(list)
@@ -103,7 +109,7 @@ def main():
 
     tot_files = 0
     tot_size = 0
-    templ = "%-100s %7s %7s %7s"
+    templ = "%-120s %7s %7s %7s"
     for platf, pkgs in groups.items():
         ppn = "%s (%s)" % (platf, len(pkgs))
         s = templ % (ppn, "size", "arch", "pyver")
@@ -111,15 +117,21 @@ def main():
         for pkg in sorted(pkgs, key=lambda x: x.name):
             tot_files += 1
             tot_size += pkg.size()
-            s = templ % ("  " + pkg.name, bytes2human(pkg.size()), pkg.arch(),
-                         pkg.pyver())
+            s = templ % (
+                "  " + pkg.name,
+                bytes2human(pkg.size()),
+                pkg.arch(),
+                pkg.pyver(),
+            )
             if 'pypy' in pkg.pyver():
                 print_color(s, color='violet')
             else:
                 print_color(s, color='brown')
 
-    print_color("\n\ntotals: files=%s, size=%s" % (
-        tot_files, bytes2human(tot_size)), bold=True)
+    print_color(
+        "\n\ntotals: files=%s, size=%s" % (tot_files, bytes2human(tot_size)),
+        bold=True,
+    )
 
 
 if __name__ == '__main__':

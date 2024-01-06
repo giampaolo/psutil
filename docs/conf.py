@@ -22,28 +22,29 @@
 
 # -- General configuration ------------------------------------------------
 
+import ast
 import datetime
 import os
 
 
 PROJECT_NAME = "psutil"
-AUTHOR = u"Giampaolo Rodola"
+AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 def get_version():
     INIT = os.path.abspath(os.path.join(HERE, '../psutil/__init__.py'))
-    with open(INIT, 'r') as f:
+    with open(INIT) as f:
         for line in f:
             if line.startswith('__version__'):
-                ret = eval(line.strip().split(' = ')[1])
+                ret = ast.literal_eval(line.strip().split(' = ')[1])
                 assert ret.count('.') == 2, ret
                 for num in ret.split('.'):
                     assert num.isdigit(), ret
                 return ret
-        else:
-            raise ValueError("couldn't find version string")
+        msg = "couldn't find version string"
+        raise ValueError(msg)
 
 
 VERSION = get_version()
@@ -55,11 +56,13 @@ VERSION = get_version()
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.coverage',
-              'sphinx.ext.imgmath',
-              'sphinx.ext.viewcode',
-              'sphinx.ext.intersphinx']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
+    'sphinx.ext.imgmath',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -270,15 +273,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -288,8 +288,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'psutil.tex', u'psutil Documentation',
-     AUTHOR, 'manual'),
+    (master_doc, 'psutil.tex', 'psutil Documentation', AUTHOR, 'manual')
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -314,7 +313,7 @@ latex_documents = [
 #
 # latex_appendices = []
 
-# It false, will not define \strong, \code, 	itleref, \crossref ... but only
+# It false, will not define \strong, \code,     itleref, \crossref ... but only
 # \sphinxstrong, ..., \sphinxtitleref, ... To help avoid clash with user added
 # packages.
 #
@@ -329,10 +328,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'psutil', u'psutil Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, 'psutil', 'psutil Documentation', [author], 1)]
 
 # If true, show URL addresses after external links.
 #
@@ -344,11 +340,15 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'psutil', u'psutil Documentation',
-     author, 'psutil', 'One line description of project.',
-     'Miscellaneous'),
-]
+texinfo_documents = [(
+    master_doc,
+    'psutil',
+    'psutil Documentation',
+    author,
+    'psutil',
+    'One line description of project.',
+    'Miscellaneous',
+)]
 
 # Documents to append as an appendix to all manuals.
 #
@@ -372,5 +372,5 @@ html_context = {
         'https://media.readthedocs.org/css/sphinx_rtd_theme.css',
         'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
         '_static/css/custom.css',
-    ],
+    ]
 }

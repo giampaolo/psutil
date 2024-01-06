@@ -9,25 +9,21 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 PY3_DEPS = \
-	autoflake \
-	autopep8 \
+	black \
 	check-manifest \
 	concurrencytest \
 	coverage \
-	flake8 \
-	flake8-blind-except \
-	flake8-bugbear \
-	flake8-debugger \
-	flake8-print \
-	flake8-quotes \
-	isort \
-	pep8-naming \
+	packaging \
 	pylint \
 	pyperf \
 	pypinfo \
 	requests \
+	rstcheck \
+	ruff \
 	setuptools \
 	sphinx_rtd_theme \
+	teyit \
+	toml-sort \
 	twine \
 	virtualenv \
 	wheel
@@ -36,7 +32,11 @@ PY2_DEPS = \
 	ipaddress \
 	mock
 PY_DEPS = `$(PYTHON) -c \
-	"import sys; print('$(PY3_DEPS)' if sys.version_info[0] == 3 else '$(PY2_DEPS)')"`
+	"import sys; \
+	py3 = sys.version_info[0] == 3; \
+	py38 = sys.version_info[:2] >= (3, 8); \
+	py3_extra = ' abi3audit' if py38 else ''; \
+	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
 NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
@@ -75,6 +75,7 @@ clean:  ## Remove all build files.
 		.coverage \
 		.failed-tests.txt \
 		.pytest_cache \
+		.ruff_cache/ \
 		build/ \
 		dist/ \
 		docs/_build/ \
@@ -120,8 +121,8 @@ install-pip:  ## Install pip (no-op if already installed).
 setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade --trusted-host files.pythonhosted.org $(PY_DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade $(PY_DEPS)
 
 # ===================================================================
 # Tests
@@ -175,7 +176,7 @@ test-memleaks:  ## Memory leak tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memleaks.py
 
-test-failed:  ## Re-run tests which failed on last run
+test-last-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) --last-failed
 
@@ -193,37 +194,52 @@ test-coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
-flake8:  ## Run flake8 linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m flake8 --config=.flake8 --jobs=${NUM_WORKERS}
+ruff:  ## Run ruff linter.
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache
 
-isort:  ## Run isort linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --check-only --jobs=${NUM_WORKERS}
+black:  ## Python files linting (via black)
+	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
-pylint:  ## Python pylint (not mandatory, just run it from time to time)
+_pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
-c-linter:  ## Run C linter.
+lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
+lint-rst:  ## Run C linter.
+	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
+
+lint-toml:  ## Linter for pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort --check
+
 lint-all:  ## Run all linters
-	${MAKE} flake8
-	${MAKE} isort
-	${MAKE} c-linter
+	${MAKE} black
+	${MAKE} ruff
+	${MAKE} lint-c
+	${MAKE} lint-rst
+	${MAKE} lint-toml
 
 # ===================================================================
 # Fixers
 # ===================================================================
 
-fix-flake8:  ## Run autopep8, fix some Python flake8 / pep8 issues.
-	@git ls-files '*.py' | xargs $(PYTHON) -m autopep8 --in-place --jobs=${NUM_WORKERS} --global-config=.flake8
-	@git ls-files '*.py' | xargs $(PYTHON) -m autoflake --in-place --jobs=${NUM_WORKERS} --remove-all-unused-imports --remove-unused-variables --remove-duplicate-keys
+fix-black:
+	git ls-files '*.py' | xargs $(PYTHON) -m black
 
-fix-imports:  ## Fix imports with isort.
-	@git ls-files '*.py' | xargs $(PYTHON) -m isort --jobs=${NUM_WORKERS}
+fix-ruff:
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --no-cache --fix
+
+fix-unittests:  ## Fix unittest idioms.
+	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
+
+fix-toml:  ## Fix pyproject.toml
+	@git ls-files '*.toml' | xargs toml-sort
 
 fix-all:  ## Run all code fixers.
-	${MAKE} fix-flake8
-	${MAKE} fix-imports
+	${MAKE} fix-ruff
+	${MAKE} fix-black
+	${MAKE} fix-unittests
+	${MAKE} fix-toml
 
 # ===================================================================
 # GIT
@@ -234,8 +250,12 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
-# Wheels
+# Distribution
 # ===================================================================
+
+sdist:  ## Create tar.gz source distribution.
+	${MAKE} generate-manifest
+	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
 
 download-wheels-github:  ## Download latest wheels hosted on github.
 	$(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
@@ -245,43 +265,28 @@ download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON) scripts/internal/download_wheels_appveyor.py
 	${MAKE} print-dist
 
-print-dist:  ## Print downloaded wheels / tar.gs
-	$(PYTHON) scripts/internal/print_dist.py
-
-# ===================================================================
-# Distribution
-# ===================================================================
-
-git-tag-release:  ## Git-tag a new release.
-	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
-	git push --follow-tags
-
-sdist:  ## Create tar.gz source distribution.
-	${MAKE} generate-manifest
-	$(PYTHON) setup.py sdist
-	$(PYTHON) -m twine check --strict dist/*.tar.gz
-
-# --- others
-
-check-sdist:  ## Create source distribution and checks its sanity (MANIFEST)
-	rm -rf dist
-	${MAKE} clean
+check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
-	PYTHONWARNINGS=all $(PYTHON) setup.py sdist
 	build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
 	build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
+	$(PYTHON) -m twine check --strict dist/*.tar.gz
+
+check-wheels:  ## Check sanity of wheels.
+	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
+	$(PYTHON) -m twine check --strict dist/*.whl
 
 pre-release:  ## Check if we're ready to produce a new release.
+	${MAKE} clean
+	${MAKE} sdist
 	${MAKE} check-sdist
 	${MAKE} install
-	${MAKE} generate-manifest
-	git diff MANIFEST.in > /dev/null  # ...otherwise 'git diff-index HEAD' will complain
-	${MAKE} sdist
-	${MAKE} download-wheels-github
-	${MAKE} download-wheels-appveyor
-	${MAKE} print-hashes
-	${MAKE} print-dist
-	$(PYTHON) -m twine check --strict dist/*
+	$(PYTHON) -c \
+		"import requests, sys; \
+		from packaging.version import parse; \
+		from psutil import __version__; \
+		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
+		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
+		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
@@ -289,17 +294,28 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
+	${MAKE} download-wheels-github
+	${MAKE} download-wheels-appveyor
+	${MAKE} check-wheels
+	${MAKE} print-hashes
+	${MAKE} print-dist
 
-release:  ## Create a release (down/uploads tar.gz, wheels, git tag release).
-	$(PYTHON) -m twine check --strict dist/*
-	$(PYTHON) -m twine upload dist/*  # upload tar.gz and Windows wheels on PyPI
+release:  ## Upload a new release.
+	${MAKE} check-sdist
+	${MAKE} check-wheels
+	$(PYTHON) -m twine upload dist/*.tar.gz
+	$(PYTHON) -m twine upload dist/*.whl
 	${MAKE} git-tag-release
-
-check-manifest:  ## Inspect MANIFEST.in file.
-	$(PYTHON) -m check_manifest -v $(ARGS)
 
 generate-manifest:  ## Generates MANIFEST.in file.
 	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+
+print-dist:  ## Print downloaded wheels / tar.gs
+	$(PYTHON) scripts/internal/print_dist.py
+
+git-tag-release:  ## Git-tag a new release.
+	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git push --follow-tags
 
 # ===================================================================
 # Printers
@@ -342,6 +358,9 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 
 check-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
+
+check-manifest:  ## Inspect MANIFEST.in file.
+	$(PYTHON) -m check_manifest -v $(ARGS)
 
 help: ## Display callable targets.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

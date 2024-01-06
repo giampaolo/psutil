@@ -4,10 +4,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A simple micro benchmark script which prints the speedup when using
+"""A simple micro benchmark script which prints the speedup when using
 Process.oneshot() ctx manager.
-See: https://github.com/giampaolo/psutil/issues/799
+See: https://github.com/giampaolo/psutil/issues/799.
 """
 
 from __future__ import division
@@ -128,19 +127,23 @@ setup = textwrap.dedent("""
 
 
 def main():
-    print("%s methods involved on platform %r (%s iterations, psutil %s):" % (
-        len(names), sys.platform, ITERATIONS, psutil.__version__))
+    print(
+        "%s methods involved on platform %r (%s iterations, psutil %s):"
+        % (len(names), sys.platform, ITERATIONS, psutil.__version__)
+    )
     for name in sorted(names):
         print("    " + name)
 
     # "normal" run
     elapsed1 = timeit.timeit(
-        "call_normal(funs)", setup=setup, number=ITERATIONS)
+        "call_normal(funs)", setup=setup, number=ITERATIONS
+    )
     print("normal:  %.3f secs" % elapsed1)
 
     # "one shot" run
     elapsed2 = timeit.timeit(
-        "call_oneshot(funs)", setup=setup, number=ITERATIONS)
+        "call_oneshot(funs)", setup=setup, number=ITERATIONS
+    )
     print("onshot:  %.3f secs" % elapsed2)
 
     # done

@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'netstat -antp' on Linux.
+"""A clone of 'netstat -antp' on Linux.
 
 $ python3 scripts/netstat.py
 Proto Local address      Remote address   Status        PID    Program name
@@ -39,9 +38,15 @@ proto_map = {
 
 def main():
     templ = "%-5s %-30s %-30s %-13s %-6s %s"
-    print(templ % (
-        "Proto", "Local address", "Remote address", "Status", "PID",
-        "Program name"))
+    header = templ % (
+        "Proto",
+        "Local address",
+        "Remote address",
+        "Status",
+        "PID",
+        "Program name",
+    )
+    print(header)
     proc_names = {}
     for p in psutil.process_iter(['pid', 'name']):
         proc_names[p.info['pid']] = p.info['name']
@@ -51,14 +56,15 @@ def main():
         if c.raddr:
             raddr = "%s:%s" % (c.raddr)
         name = proc_names.get(c.pid, '?') or ''
-        print(templ % (
+        line = templ % (
             proto_map[(c.family, c.type)],
             laddr,
             raddr or AD,
             c.status,
             c.pid or AD,
             name[:15],
-        ))
+        )
+        print(line)
 
 
 if __name__ == '__main__':

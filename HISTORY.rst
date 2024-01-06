@@ -1,12 +1,88 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.6 (IN DEVELOPMENT)
+5.9.8 (IN DEVELOPMENT)
 ======================
 
-XXXX-XX-XX
+**Enhancements**
 
+- 2343_, [FreeBSD]: filter `net_connections()`_ returned list in C instead of
+  Python, and avoid to retrieve unnecessary connection types unless explicitly
+  asked. E.g., on an IDLE system with few IPv6 connections this will run around
+  4 times faster. Before all connection types (TCP, UDP, UNIX) were retrieved
+  internally, even if only a portion was returned.
+- 2342_, [NetBSD]: same as above (#2343) but for NetBSD.
+- 2349_: adopted black formatting style.
+
+**Bug fixes**
+
+- 930_, [NetBSD], [critical]: `net_connections()`_ implementation was broken.
+  It could either leak memory or core dump.
+- 2340_, [NetBSD]: if process is terminated, `Process.cwd()`_ will return an
+  empty string instead of raising `NoSuchProcess`_.
+- 2345_, [Linux]: fix compilation on older compiler missing DUPLEX_UNKNOWN
+
+5.9.7
+=====
+
+2023-12-17
+
+**Enhancements**
+
+- 2324_: enforce Ruff rule `raw-string-in-exception`, which helps providing
+  clearer tracebacks when exceptions are raised by psutil.
+
+**Bug fixes**
+
+- 2325_, [PyPy]: psutil did not compile on PyPy due to missing
+  `PyErr_SetExcFromWindowsErrWithFilenameObject` cPython API.
+
+5.9.6
+=====
+
+2023-10-15
+
+**Enhancements**
+
+- 1703_: `cpu_percent()`_ and `cpu_times_percent()`_ are now thread safe,
+  meaning they can be called from different threads and still return
+  meaningful and independent results. Before, if (say) 10 threads called
+  ``cpu_percent(interval=None)`` at the same time, only 1 thread out of 10
+  would get the right result.
+- 2266_: if `Process`_ class is passed a very high PID, raise `NoSuchProcess`_
+  instead of OverflowError.  (patch by Xuehai Pan)
+- 2246_: drop python 3.4 & 3.5 support.  (patch by Matthieu Darbois)
+- 2290_: PID reuse is now pre-emptively checked for `Process.ppid()`_  and
+  `Process.parents()`_.
+- 2312_: use ``ruff`` Python linter instead of ``flake8 + isort``. It's an
+  order of magnitude faster + it adds a ton of new code quality checks.
+
+**Bug fixes**
+
+- 2195_, [Linux]: no longer print exception at import time in case /proc/stat
+  can't be read due to permission error. Redirect it to ``PSUTIL_DEBUG``
+  instead.
 - 2241_, [NetBSD]: can't compile On NetBSD 10.99.3/amd64.  (patch by Thomas
   Klausner)
+- 2245_, [Windows]: fix var unbound error on possibly in `swap_memory()`_
+  (patch by student_2333)
+- 2268_: ``bytes2human()`` utility function was unable to properly represent
+  negative values.
+- 2252_, [Windows]: `disk_usage()`_ fails on Python 3.12+.  (patch by
+  Matthieu Darbois)
+- 2284_, [Linux]: `Process.memory_full_info()`_ may incorrectly raise
+  `ZombieProcess`_ if it's determined via ``/proc/pid/smaps_rollup``. Instead
+  we now fallback on reading ``/proc/pid/smaps``.
+- 2287_, [OpenBSD], [NetBSD]: `Process.is_running()`_ erroneously return
+  ``False`` for zombie processes, because creation time cannot be determined.
+- 2288_, [Linux]: correctly raise `ZombieProcess`_ on `Process.exe()`_,
+  `Process.cmdline()`_ and `Process.memory_maps()`_ instead of returning a
+  "null" value.
+- 2290_: differently from what stated in the doc, PID reuse is not
+  pre-emptively checked for `Process.nice()`_ (set), `Process.ionice()`_,
+  (set), `Process.cpu_affinity()`_ (set), `Process.rlimit()`_
+  (set), `Process.parent()`_.
+- 2308_, [OpenBSD]: `Process.threads()`_ always fail with AccessDenied (also as
+  root).
 
 5.9.5
 =====
@@ -19,10 +95,10 @@ XXXX-XX-XX
   `KeyError` bit deriving from a missed cache hit.
 - 2217_: print the full traceback when a `DeprecationWarning` or `UserWarning`
   is raised.
-- 2230_, [OpenBSD]: `psutil.net_connections`_ implementation was rewritten from
-  scratch:
+- 2230_, [OpenBSD]: `net_connections()`_ implementation was rewritten
+  from scratch:
   - We're now able to retrieve the path of AF_UNIX sockets (before it was an
-    empty string)
+  empty string)
   - The function is faster since it no longer iterates over all processes.
   - No longer produces duplicate connection entries.
 - 2238_: there are cases where `Process.cwd()`_ cannot be determined
@@ -38,7 +114,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 1043_, [OpenBSD] `psutil.net_connections`_ returns duplicate entries.
+- 1043_, [OpenBSD] `net_connections()`_ returns duplicate entries.
 - 1915_, [Linux]: on certain kernels, ``"MemAvailable"`` field from
   ``/proc/meminfo`` returns ``0`` (possibly a kernel bug), in which case we
   calculate an approximation for ``available`` memory which matches "free"
@@ -98,7 +174,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 2116_, [macOS], [critical]: `psutil.net_connections`_ fails with RuntimeError.
+- 2116_, [macOS], [critical]: `net_connections()`_ fails with RuntimeError.
 - 2135_, [macOS]: `Process.environ()`_ may contain garbage data. Fix
   out-of-bounds read around ``sysctl_procargs``.  (patch by Bernhard Urban-Forster)
 - 2138_, [Linux], **[critical]**: can't compile psutil on Android due to
@@ -483,7 +559,7 @@ XXXX-XX-XX
   doesn't exist.  (patch by Cedric Lamoriniere)
 - 1471_, [SunOS]: `Process.name()`_ and `Process.cmdline()`_ can return
   ``SystemError``.  (patch by Daniel Beer)
-- 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Rasbperry-pi 3.
+- 1472_, [Linux]: `cpu_freq()`_ does not return all CPUs on Raspberry-pi 3.
 - 1474_: fix formatting of ``psutil.tests()`` which mimics ``ps aux`` output.
 - 1475_, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
   properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)`` being
@@ -1545,7 +1621,7 @@ XXXX-XX-XX
 - 564_: C extension version mismatch in case the user messed up with psutil
   installation or with sys.path is now detected at import time.
 - 568_: new `pidof.py`_ script.
-- 569_, [FreeBSD]: add support for `Process.cpu_affinity`_ on FreeBSD.
+- 569_, [FreeBSD]: add support for `Process.cpu_affinity()`_ on FreeBSD.
 
 **Bug fixes**
 
@@ -1557,7 +1633,7 @@ XXXX-XX-XX
   (patch by spacewander)
 - 565_, [Windows]: use proper encoding for `Process.username()`_ and `users()`_.
   (patch by Sylvain Mouquet)
-- 567_, [Linux]: in the alternative implementation of `Process.cpu_affinity`_
+- 567_, [Linux]: in the alternative implementation of `Process.cpu_affinity()`_
   ``PyList_Append`` and ``Py_BuildValue`` return values are not checked.
 - 569_, [FreeBSD]: fix memory leak in `cpu_count()`_ with ``logical=False``.
 - 571_, [Linux]: `Process.open_files()`_ might swallow `AccessDenied`_
@@ -2139,7 +2215,8 @@ In most cases accessing the old names will work but it will cause a
   representation.
 - 283_: speedup `Process.is_running()`_ by caching its return value in case the
   process is terminated.
-- 284_, [POSIX]: per-process number of opened file descriptors (`Process.num_fds`_).
+- 284_, [POSIX]: per-process number of opened file descriptors
+  (`Process.num_fds()`_).
 - 287_: `process_iter()`_ now caches `Process`_ instances between calls.
 - 290_: `Process.nice()`_ property is deprecated in favor of new ``get_nice()``
   and ``set_nice()`` methods.
@@ -2497,8 +2574,6 @@ In most cases accessing the old names will work but it will cause a
 
 .. _`Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
-.. _`psutil.Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
-
 
 .. _`AccessDenied`: https://psutil.readthedocs.io/en/latest/#psutil.AccessDenied
 .. _`NoSuchProcess`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
@@ -2556,7 +2631,6 @@ In most cases accessing the old names will work but it will cause a
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`free.py`: https://github.com/giampaolo/psutil/blob/master/scripts/free.py
-.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
 .. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
 .. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
 .. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py

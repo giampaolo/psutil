@@ -20,7 +20,7 @@ int PSUTIL_DEBUG = 0;
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
-// PyPy on Windows
+// PyPy on Windows. Missing APIs added in PyPy 7.3.14.
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
 #if !defined(PyErr_SetFromWindowsErrWithFilename)
 PyObject *
@@ -56,6 +56,18 @@ error:
     return NULL;
 }
 #endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
+
+
+#if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
+PyObject *
+PyErr_SetExcFromWindowsErrWithFilenameObject(PyObject *type,
+                                             int ierr,
+                                             PyObject *filename) {
+    // Original function is too complex. Just raise OSError without
+    // filename.
+    return PyErr_SetFromWindowsErrWithFilename(ierr, NULL);
+}
+#endif // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 
 
 // PyPy 2.7
@@ -128,6 +140,27 @@ AccessDenied(const char *syscall) {
     return NULL;
 }
 
+/*
+ * Raise OverflowError if Python int value overflowed when converting to pid_t.
+ * Raise ValueError if Python int value is negative.
+ * Otherwise, return None.
+ */
+PyObject *
+psutil_check_pid_range(PyObject *self, PyObject *args) {
+#ifdef PSUTIL_WINDOWS
+    DWORD pid;
+#else
+    pid_t pid;
+#endif
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if (pid < 0) {
+        PyErr_SetString(PyExc_ValueError, "pid must be a positive integer");
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
 
 // Enable or disable PSUTIL_DEBUG messages.
 PyObject *

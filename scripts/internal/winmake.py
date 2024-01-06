@@ -28,23 +28,15 @@ import tempfile
 
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
-if APPVEYOR:
-    PYTHON = sys.executable
-else:
-    PYTHON = os.getenv('PYTHON', sys.executable)
+PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
 RUNNER_PY = 'psutil\\tests\\runner.py'
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
 DEPS = [
     "coverage",
-    "flake8",
-    "flake8-blind-except",
-    "flake8-debugger",
-    "flake8-print",
-    "nose",
     "pdbpp",
     "pip",
     "pyperf",
@@ -54,14 +46,11 @@ DEPS = [
     "wheel",
 ]
 
-if sys.version_info[:2] >= (3, 5):
-    DEPS.append('flake8-bugbear')
-if sys.version_info[:2] <= (2, 7):
+if sys.version_info[0] < 3:
     DEPS.append('mock')
-if sys.version_info[:2] <= (3, 2):
     DEPS.append('ipaddress')
-if sys.version_info[:2] <= (3, 4):
     DEPS.append('enum34')
+
 if not PYPY:
     DEPS.append("pywin32")
     DEPS.append("wmi")
@@ -104,7 +93,7 @@ def safe_print(text, file=sys.stdout):
 
 def stderr_handle():
     GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
-    STD_ERROR_HANDLE_ID = ctypes.c_ulong(0xfffffff4)
+    STD_ERROR_HANDLE_ID = ctypes.c_ulong(0xFFFFFFF4)
     GetStdHandle.restype = ctypes.c_ulong
     handle = GetStdHandle(STD_ERROR_HANDLE_ID)
     atexit.register(ctypes.windll.Kernel32.CloseHandle, handle)
@@ -125,7 +114,9 @@ def win_colorprint(s, color=LIGHTBLUE):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    p = subprocess.Popen(cmd, shell=True, env=os.environ, cwd=os.getcwd())
+    p = subprocess.Popen(
+        cmd, shell=True, env=os.environ, cwd=os.getcwd()  # noqa
+    )
     p.communicate()
     if p.returncode != 0:
         sys.exit(p.returncode)
@@ -133,6 +124,7 @@ def sh(cmd, nolog=False):
 
 def rm(pattern, directory=False):
     """Recursively remove a file or dir by pattern."""
+
     def safe_remove(path):
         try:
             os.remove(path)
@@ -199,7 +191,7 @@ def safe_rmtree(path):
 
 def recursive_rm(*patterns):
     """Recursively remove a file or matching a list of patterns."""
-    for root, dirs, files in os.walk(u'.'):
+    for root, dirs, files in os.walk('.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
             continue
@@ -219,7 +211,7 @@ def recursive_rm(*patterns):
 
 
 def build():
-    """Build / compile"""
+    """Build / compile."""
     # Make sure setuptools is installed (needed for 'develop' /
     # edit mode).
     sh('%s -c "import setuptools"' % PYTHON)
@@ -270,7 +262,7 @@ def upload_wheels():
 
 
 def install_pip():
-    """Install pip"""
+    """Install pip."""
     try:
         sh('%s -c "import pip"' % PYTHON)
     except SystemExit:
@@ -299,13 +291,13 @@ def install_pip():
 
 
 def install():
-    """Install in develop / edit mode"""
+    """Install in develop / edit mode."""
     build()
     sh("%s setup.py develop" % PYTHON)
 
 
 def uninstall():
-    """Uninstall psutil"""
+    """Uninstall psutil."""
     # Uninstalling psutil on Windows seems to be tricky.
     # On "import psutil" tests may import a psutil version living in
     # C:\PythonXY\Lib\site-packages which is not what we want, so
@@ -334,7 +326,7 @@ def uninstall():
                 # easy_install can add a line (installation path) into
                 # easy-install.pth; that line alters sys.path.
                 path = os.path.join(dir, name)
-                with open(path, 'rt') as f:
+                with open(path) as f:
                     lines = f.readlines()
                     hasit = False
                     for line in lines:
@@ -342,7 +334,7 @@ def uninstall():
                             hasit = True
                             break
                 if hasit:
-                    with open(path, 'wt') as f:
+                    with open(path, "w") as f:
                         for line in lines:
                             if 'psutil' not in line:
                                 f.write(line)
@@ -351,7 +343,7 @@ def uninstall():
 
 
 def clean():
-    """Deletes dev files"""
+    """Deletes dev files."""
     recursive_rm(
         "$testfn*",
         "*.bak",
@@ -377,24 +369,14 @@ def clean():
 
 
 def setup_dev_env():
-    """Install useful deps"""
+    """Install useful deps."""
     install_pip()
     install_git_hooks()
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-def flake8():
-    """Run flake8 against all py files"""
-    py_files = subprocess.check_output("git ls-files")
-    if PY3:
-        py_files = py_files.decode()
-    py_files = [x for x in py_files.split() if x.endswith('.py')]
-    py_files = ' '.join(py_files)
-    sh("%s -m flake8 %s" % (PYTHON, py_files), nolog=True)
-
-
 def test(name=RUNNER_PY):
-    """Run tests"""
+    """Run tests."""
     build()
     sh("%s %s" % (PYTHON, name))
 
@@ -410,67 +392,67 @@ def coverage():
 
 
 def test_process():
-    """Run process tests"""
+    """Run process tests."""
     build()
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
 def test_system():
-    """Run system tests"""
+    """Run system tests."""
     build()
     sh("%s psutil\\tests\\test_system.py" % PYTHON)
 
 
 def test_platform():
-    """Run windows only tests"""
+    """Run windows only tests."""
     build()
     sh("%s psutil\\tests\\test_windows.py" % PYTHON)
 
 
 def test_misc():
-    """Run misc tests"""
+    """Run misc tests."""
     build()
     sh("%s psutil\\tests\\test_misc.py" % PYTHON)
 
 
 def test_unicode():
-    """Run unicode tests"""
+    """Run unicode tests."""
     build()
     sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
 
 
 def test_connections():
-    """Run connections tests"""
+    """Run connections tests."""
     build()
     sh("%s psutil\\tests\\test_connections.py" % PYTHON)
 
 
 def test_contracts():
-    """Run contracts tests"""
+    """Run contracts tests."""
     build()
     sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
 
 
 def test_testutils():
-    """Run test utilities tests"""
+    """Run test utilities tests."""
     build()
     sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
 
 
 def test_by_name(name):
-    """Run test by name"""
+    """Run test by name."""
     build()
     sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
-def test_failed():
+def test_last_failed():
     """Re-run tests which failed on last run."""
     build()
     sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
 
 
 def test_memleaks():
-    """Run memory leaks tests"""
+    """Run memory leaks tests."""
     build()
     sh("%s psutil\\tests\\test_memleaks.py" % PYTHON)
 
@@ -479,11 +461,13 @@ def install_git_hooks():
     """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
         src = os.path.join(
-            ROOT_DIR, "scripts", "internal", "git_pre_commit.py")
+            ROOT_DIR, "scripts", "internal", "git_pre_commit.py"
+        )
         dst = os.path.realpath(
-            os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit"))
-        with open(src, "rt") as s:
-            with open(dst, "wt") as d:
+            os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit")
+        )
+        with open(src) as s:
+            with open(dst, "w") as d:
                 d.write(s.read())
 
 
@@ -511,8 +495,10 @@ def print_api_speed():
 
 def download_appveyor_wheels():
     """Download appveyor wheels."""
-    sh("%s -Wa scripts\\internal\\download_wheels_appveyor.py "
-       "--user giampaolo --project psutil" % PYTHON)
+    sh(
+        "%s -Wa scripts\\internal\\download_wheels_appveyor.py "
+        "--user giampaolo --project psutil" % PYTHON
+    )
 
 
 def generate_manifest():
@@ -558,9 +544,7 @@ def get_python(path):
 def parse_args():
     parser = argparse.ArgumentParser()
     # option shared by all commands
-    parser.add_argument(
-        '-p', '--python',
-        help="use python executable path")
+    parser.add_argument('-p', '--python', help="use python executable path")
     sp = parser.add_subparsers(dest='command', title='targets')
     sp.add_parser('bench-oneshot', help="benchmarks for oneshot()")
     sp.add_parser('bench-oneshot_2', help="benchmarks for oneshot() (perf)")
@@ -573,7 +557,6 @@ def parse_args():
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
     sp.add_parser('install-pip', help="install pip")
-    sp.add_parser('flake8', help="run flake8 against all py files")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
     sp.add_parser('setup-dev-env', help="install deps")
@@ -581,7 +564,9 @@ def parse_args():
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
     sp.add_parser('test-connections', help="run connections tests")
     sp.add_parser('test-contracts', help="run contracts tests")
-    sp.add_parser('test-failed', help="re-run tests which failed on last run")
+    sp.add_parser(
+        'test-last-failed', help="re-run tests which failed on last run"
+    )
     sp.add_parser('test-memleaks', help="run memory leaks tests")
     sp.add_parser('test-misc', help="run misc tests")
     sp.add_parser('test-platform', help="run windows only tests")
@@ -612,7 +597,8 @@ def main():
     PYTHON = get_python(args.python)
     if not PYTHON:
         return sys.exit(
-            "can't find any python installation matching %r" % args.python)
+            "can't find any python installation matching %r" % args.python
+        )
     os.putenv('PYTHON', PYTHON)
     win_colorprint("using " + PYTHON)
 

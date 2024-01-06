@@ -99,14 +99,14 @@ PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD pid;
+    DWORD access = PROCESS_TERMINATE | PROCESS_QUERY_LIMITED_INFORMATION;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0)
         return AccessDenied("automatically set for PID 0");
 
-    hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-    hProcess = psutil_check_phandle(hProcess, pid, 0);
+    hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -271,6 +271,11 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (pid == 0)
         return AccessDenied("automatically set for PID 0");
+
+    // ...because NtQuerySystemInformation can succeed for terminated
+    // processes.
+    if (psutil_pid_is_running(pid) == 0)
+        return NoSuchProcess("psutil_pid_is_running -> 0");
 
     buffer = MALLOC_ZERO(bufferSize);
     if (! buffer) {
@@ -535,12 +540,13 @@ psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     DWORD pid;
     NTSTATUS status;
     HANDLE hProcess;
+    DWORD access = PROCESS_SUSPEND_RESUME | PROCESS_QUERY_LIMITED_INFORMATION;
     PyObject* suspend;
 
-        if (! PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &suspend))
-            return NULL;
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &suspend))
+        return NULL;
 
-    hProcess = psutil_handle_from_pid(pid, PROCESS_SUSPEND_RESUME);
+    hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
 

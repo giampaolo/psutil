@@ -36,9 +36,11 @@ def check_line(path, line, idx, lines):
         if not eof:
             nextline = lines[idx + 1]
             # "#" is a pre-processor line
-            if nextline != '\n' and \
-                    nextline.strip()[0] != '#' and \
-                    nextline.strip()[:2] != '*/':
+            if (
+                nextline != '\n'
+                and nextline.strip()[0] != '#'
+                and nextline.strip()[:2] != '*/'
+            ):
                 warn(path, line, lineno, "expected 1 blank line")
 
     sls = s.lstrip()
@@ -54,13 +56,13 @@ def check_line(path, line, idx, lines):
         warn(path, line, lineno, "no blank line at EOF")
 
     ss = s.strip()
-    if ss.startswith(("printf(", "printf (", )):
+    if ss.startswith(("printf(", "printf (")):
         if not ss.endswith(("// NOQA", "//  NOQA")):
             warn(path, line, lineno, "printf() statement")
 
 
 def process(path):
-    with open(path, 'rt') as f:
+    with open(path) as f:
         lines = f.readlines()
     for idx, line in enumerate(lines):
         check_line(path, line, idx, lines)

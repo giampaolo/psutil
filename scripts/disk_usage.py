@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-List all mounted disk partitions a-la "df -h" command.
+"""List all mounted disk partitions a-la "df -h" command.
 
 $ python3 scripts/disk_usage.py
 Device               Total     Used     Free  Use %      Type  Mount
@@ -24,8 +23,7 @@ from psutil._common import bytes2human
 
 def main():
     templ = "%-17s %8s %8s %8s %5s%% %9s  %s"
-    print(templ % ("Device", "Total", "Used", "Free", "Use ", "Type",
-                   "Mount"))
+    print(templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount"))
     for part in psutil.disk_partitions(all=False):
         if os.name == 'nt':
             if 'cdrom' in part.opts or part.fstype == '':
@@ -34,14 +32,16 @@ def main():
                 # partition or just hang.
                 continue
         usage = psutil.disk_usage(part.mountpoint)
-        print(templ % (
+        line = templ % (
             part.device,
             bytes2human(usage.total),
             bytes2human(usage.used),
             bytes2human(usage.free),
             int(usage.percent),
             part.fstype,
-            part.mountpoint))
+            part.mountpoint,
+        )
+        print(line)
 
 
 if __name__ == '__main__':

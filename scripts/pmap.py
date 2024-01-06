@@ -4,9 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat -v' on BSD.
-Report memory map of a process.
+"""A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat
+-v' on BSD. Report memory map of a process.
 
 $ python3 scripts/pmap.py 32402
 Address                 RSS  Mode    Mapping
@@ -37,7 +36,7 @@ from psutil._compat import get_terminal_size
 
 
 def safe_print(s):
-    s = s[:get_terminal_size()[0]]
+    s = s[: get_terminal_size()[0]]
     try:
         print(s)
     except UnicodeEncodeError:
@@ -53,11 +52,13 @@ def main():
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        safe_print(templ % (
+        line = templ % (
             m.addr.split('-')[0].zfill(16),
             bytes2human(m.rss),
             m.perms,
-            m.path))
+            m.path,
+        )
+        safe_print(line)
     print("-" * 31)
     print(templ % ("Total", bytes2human(total_rss), '', ''))
     safe_print("PID = %s, name = %s" % (p.pid, p.name()))

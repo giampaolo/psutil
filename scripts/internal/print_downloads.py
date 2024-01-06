@@ -4,18 +4,18 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print PYPI statistics in MarkDown format.
+"""Print PYPI statistics in MarkDown format.
 Useful sites:
 * https://pepy.tech/project/psutil
 * https://pypistats.org/packages/psutil
-* https://hugovk.github.io/top-pypi-packages/
+* https://hugovk.github.io/top-pypi-packages/.
 """
 
 from __future__ import print_function
 
 import json
 import os
+import shlex
 import subprocess
 import sys
 
@@ -28,21 +28,28 @@ AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 PKGNAME = 'psutil'
 DAYS = 30
 LIMIT = 100
-GITHUB_SCRIPT_URL = "https://github.com/giampaolo/psutil/blob/master/" \
-                    "scripts/internal/pypistats.py"
+GITHUB_SCRIPT_URL = (
+    "https://github.com/giampaolo/psutil/blob/master/"
+    "scripts/internal/pypistats.py"
+)
 LAST_UPDATE = None
 bytes_billed = 0
 
 
 # --- get
 
+
 @memoize
 def sh(cmd):
     assert os.path.exists(AUTH_FILE)
     env = os.environ.copy()
     env['GOOGLE_APPLICATION_CREDENTIALS'] = AUTH_FILE
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True)
+    p = subprocess.Popen(
+        shlex.split(cmd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
@@ -60,8 +67,9 @@ def query(cmd):
 
 def top_packages():
     global LAST_UPDATE
-    ret = query("pypinfo --all --json --days %s --limit %s '' project" % (
-        DAYS, LIMIT))
+    ret = query(
+        "pypinfo --all --json --days %s --limit %s '' project" % (DAYS, LIMIT)
+    )
     LAST_UPDATE = ret['last_update']
     return [(x['project'], x['download_count']) for x in ret['rows']]
 
@@ -108,7 +116,7 @@ templ = "| %-30s | %15s |"
 
 def print_row(left, right):
     if isinstance(right, int):
-        right = '{0:,}'.format(right)
+        right = '{:,}'.format(right)
     print(templ % (left, right))
 
 
@@ -142,17 +150,21 @@ def main():
     data = [
         {'what': 'Per month', 'download_count': downs},
         {'what': 'Per day', 'download_count': int(downs / 30)},
-        {'what': 'PYPI ranking', 'download_count': ranking()}
+        {'what': 'PYPI ranking', 'download_count': ranking()},
     ]
     print_markdown_table('Overview', 'what', data)
-    print_markdown_table('Operating systems', 'system_name',
-                         downloads_by_system()['rows'])
-    print_markdown_table('Distros', 'distro_name',
-                         downloads_by_distro()['rows'])
-    print_markdown_table('Python versions', 'python_version',
-                         downloads_pyver()['rows'])
-    print_markdown_table('Countries', 'country',
-                         downloads_by_country()['rows'])
+    print_markdown_table(
+        'Operating systems', 'system_name', downloads_by_system()['rows']
+    )
+    print_markdown_table(
+        'Distros', 'distro_name', downloads_by_distro()['rows']
+    )
+    print_markdown_table(
+        'Python versions', 'python_version', downloads_pyver()['rows']
+    )
+    print_markdown_table(
+        'Countries', 'country', downloads_by_country()['rows']
+    )
 
 
 if __name__ == '__main__':

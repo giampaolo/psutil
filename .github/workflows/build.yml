@@ -9,16 +9,18 @@
 # * https://github.com/actions/checkout
 # * https://github.com/actions/setup-python
 # * https://github.com/actions/upload-artifact
-# * https://github.com/marketplace/actions/cancel-workflow-action
 
 on: [push, pull_request]
 name: build
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+  cancel-in-progress: true
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
     name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'windows') && matrix.archs || 'all' }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -31,22 +33,17 @@ jobs:
           archs: "AMD64"
         - os: windows-2019
           archs: "x86"
-
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: 3.11
 
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.11.2
+      uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS: "${{ matrix.archs }}"
+        CIBW_PRERELEASE_PYTHONS: True
 
     - name: Upload wheels
       uses: actions/upload-artifact@v3
@@ -78,12 +75,7 @@ jobs:
       CIBW_BUILD: 'cp27-*'
 
     steps:
-    - name: Cancel previous runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ github.token }}
-
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
       with:
         python-version: 3.9
@@ -108,23 +100,21 @@ jobs:
   linters:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
     - name: 'Run linters'
       run: |
-        # py3
-        python3 -m pip install flake8 isort
-        python3 -m flake8 .
-        python3 -m isort .
-        # clinter
-        find . -type f \( -iname "*.c" -o -iname "*.h" \) | xargs python3 scripts/internal/clinter.py
+        python3 -m pip install ruff black rstcheck toml-sort sphinx
+        make lint-all
 
   # Check sanity of .tar.gz + wheel files
   check-dist:
     needs: [py2, py3]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
@@ -135,3 +125,4 @@ jobs:
       - run: |
           python scripts/internal/print_hashes.py wheelhouse/
           pipx run twine check --strict wheelhouse/*
+          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl

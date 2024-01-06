@@ -4,12 +4,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Script which downloads wheel files hosted on AppVeyor:
+"""Script which downloads wheel files hosted on AppVeyor:
 https://ci.appveyor.com/project/giampaolo/psutil
 Re-adapted from the original recipe of Ibarra Corretge'
 <saghul@gmail.com>:
-http://code.saghul.net/index.php/2015/09/09/
+http://code.saghul.net/index.php/2015/09/09/.
 """
 
 from __future__ import print_function
@@ -20,13 +19,14 @@ import sys
 
 import requests
 
-from psutil import __version__ as PSUTIL_VERSION
+from psutil import __version__
 from psutil._common import bytes2human
 from psutil._common import print_color
 
 
 USER = "giampaolo"
 PROJECT = "psutil"
+PROJECT_VERSION = __version__
 BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7']
 TIMEOUT = 30
@@ -40,7 +40,7 @@ def download_file(url):
     tot_bytes = 0
     with open(local_fname, 'wb') as f:
         for chunk in r.iter_content(chunk_size=16384):
-            if chunk:    # filter out keep-alive new chunks
+            if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
                 tot_bytes += len(chunk)
     return local_fname
@@ -49,8 +49,8 @@ def download_file(url):
 def get_file_urls():
     with requests.Session() as session:
         data = session.get(
-            BASE_URL + '/projects/' + USER + '/' + PROJECT,
-            timeout=TIMEOUT)
+            BASE_URL + '/projects/' + USER + '/' + PROJECT, timeout=TIMEOUT
+        )
         data = data.json()
 
         urls = []
@@ -71,12 +71,12 @@ def get_file_urls():
 
 def rename_win27_wheels():
     # See: https://github.com/giampaolo/psutil/issues/810
-    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
-    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
+    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PROJECT_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PROJECT_VERSION
     print("rename: %s\n        %s" % (src, dst))
     os.rename(src, dst)
-    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PSUTIL_VERSION
-    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PSUTIL_VERSION
+    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PROJECT_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PROJECT_VERSION
     print("rename: %s\n        %s" % (src, dst))
     os.rename(src, dst)
 
@@ -96,8 +96,10 @@ def run():
                 raise
             else:
                 completed += 1
-                print("downloaded %-45s %s" % (
-                    local_fname, bytes2human(os.path.getsize(local_fname))))
+                print(
+                    "downloaded %-45s %s"
+                    % (local_fname, bytes2human(os.path.getsize(local_fname)))
+                )
     # 2 wheels (32 and 64 bit) per supported python version
     expected = len(PY_VERSIONS) * 2
     if expected != completed:

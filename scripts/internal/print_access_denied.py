@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Helper script iterates over all processes and .
+"""Helper script iterates over all processes and .
 It prints how many AccessDenied exceptions are raised in total and
 for what Process method.
 
@@ -85,9 +84,10 @@ def main():
         print_color(s, "red" if ads else None)
     tot_perc = round((tot_ads / tot_calls) * 100, 1)
     print("-" * 50)
-    print("Totals: access-denied=%s (%s%%), calls=%s, processes=%s, "
-          "elapsed=%ss" % (tot_ads, tot_perc, tot_calls, tot_procs,
-                           round(elapsed, 2)))
+    print(
+        "Totals: access-denied=%s (%s%%), calls=%s, processes=%s, elapsed=%ss"
+        % (tot_ads, tot_perc, tot_calls, tot_procs, round(elapsed, 2))
+    )
 
 
 if __name__ == '__main__':

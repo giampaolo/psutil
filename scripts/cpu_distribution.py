@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Shows CPU workload split across different CPUs.
+"""Shows CPU workload split across different CPUs.
 
 $ python3 scripts/cpu_workload.py
 CPU 0     CPU 1     CPU 2     CPU 3     CPU 4     CPU 5     CPU 6     CPU 7

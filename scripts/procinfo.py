@@ -4,8 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print detailed information about a process.
+"""Print detailed information about a process.
+
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
 $ python3 scripts/procinfo.py
@@ -132,8 +132,9 @@ def str_ntuple(nt, convert_bytes=False):
     if not convert_bytes:
         return ", ".join(["%s=%s" % (x, getattr(nt, x)) for x in nt._fields])
     else:
-        return ", ".join(["%s=%s" % (x, bytes2human(getattr(nt, x)))
-                          for x in nt._fields])
+        return ", ".join(
+            ["%s=%s" % (x, bytes2human(getattr(nt, x))) for x in nt._fields]
+        )
 
 
 def run(pid, verbose=False):
@@ -147,10 +148,7 @@ def run(pid, verbose=False):
     with proc.oneshot():
         try:
             parent = proc.parent()
-            if parent:
-                parent = '(%s)' % parent.name()
-            else:
-                parent = ''
+            parent = '(%s)' % parent.name() if parent else ''
         except psutil.Error:
             parent = ''
         try:
@@ -159,7 +157,8 @@ def run(pid, verbose=False):
             pinfo['children'] = []
         if pinfo['create_time']:
             started = datetime.datetime.fromtimestamp(
-                pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
+                pinfo['create_time']
+            ).strftime('%Y-%m-%d %H:%M')
         else:
             started = ACCESS_DENIED
 
@@ -175,8 +174,9 @@ def run(pid, verbose=False):
     cpu_tot_time = datetime.timedelta(seconds=sum(pinfo['cpu_times']))
     cpu_tot_time = "%s:%s.%s" % (
         cpu_tot_time.seconds // 60 % 60,
-        str((cpu_tot_time.seconds % 60)).zfill(2),
-        str(cpu_tot_time.microseconds)[:2])
+        str(cpu_tot_time.seconds % 60).zfill(2),
+        str(cpu_tot_time.microseconds)[:2],
+    )
     print_('cpu-tspent', cpu_tot_time)
     print_('cpu-times', str_ntuple(pinfo['cpu_times']))
     if hasattr(proc, "cpu_affinity"):
@@ -205,8 +205,10 @@ def run(pid, verbose=False):
             if psutil.WINDOWS:
                 print_("ionice", ionice)
             else:
-                print_("ionice", "class=%s, value=%s" % (
-                    str(ionice.ioclass), ionice.value))
+                print_(
+                    "ionice",
+                    "class=%s, value=%s" % (str(ionice.ioclass), ionice.value),
+                )
 
     print_('num-threads', pinfo['num_threads'])
     if psutil.POSIX:
@@ -241,8 +243,10 @@ def run(pid, verbose=False):
 
     if pinfo['connections']:
         template = '%-5s %-25s %-25s %s'
-        print_('connections',
-               template % ('PROTO', 'LOCAL ADDR', 'REMOTE ADDR', 'STATUS'))
+        print_(
+            'connections',
+            template % ('PROTO', 'LOCAL ADDR', 'REMOTE ADDR', 'STATUS'),
+        )
         for conn in pinfo['connections']:
             if conn.type == socket.SOCK_STREAM:
                 type = 'TCP'
@@ -255,11 +259,13 @@ def run(pid, verbose=False):
                 rip, rport = '*', '*'
             else:
                 rip, rport = conn.raddr
-            print_('', template % (
+            line = template % (
                 type,
                 "%s:%s" % (lip, lport),
                 "%s:%s" % (rip, rport),
-                conn.status))
+                conn.status,
+            )
+            print_('', line)
     else:
         print_('connections', '')
 
@@ -293,8 +299,11 @@ def run(pid, verbose=False):
                     soft = "infinity"
                 if hard == psutil.RLIM_INFINITY:
                     hard = "infinity"
-                print_('', template % (
-                    RLIMITS_MAP.get(res_name, res_name), soft, hard))
+                print_(
+                    '',
+                    template
+                    % (RLIMITS_MAP.get(res_name, res_name), soft, hard),
+                )
 
     if hasattr(proc, "environ") and pinfo['environ']:
         template = "%-25s %s"
@@ -318,10 +327,12 @@ def run(pid, verbose=False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="print information about a process")
+        description="print information about a process"
+    )
     parser.add_argument("pid", type=int, help="process pid", nargs='?')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                        help="print more info")
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help="print more info"
+    )
     args = parser.parse_args()
     run(args.pid, args.verbose)
 

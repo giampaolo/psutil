@@ -4,8 +4,7 @@
 # All rights reserved. Use of this source code is governed by a
 # BSD-style license that can be found in the LICENSE file.
 
-"""
-Checks for broken links in file names specified as command line
+"""Checks for broken links in file names specified as command line
 parameters.
 
 There are a ton of a solutions available for validating URLs in string
@@ -25,7 +24,7 @@ Method:
   Handles redirects, http, https, ftp as well.
 
 REFERENCES:
-Using [1] with some modificatons for including ftp
+Using [1] with some modifications for including ftp
 [1] http://stackoverflow.com/a/6883094/5163807
 [2] http://stackoverflow.com/a/31952097/5163807
 [3] http://daringfireball.net/2010/07/improved_regex_for_matching_urls
@@ -55,7 +54,8 @@ import requests
 HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = re.compile(
     r'(?:http|ftp|https)?://'
-    r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+    r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+)
 REQUEST_TIMEOUT = 15
 # There are some status codes sent by websites on HEAD request.
 # Like 503 by Microsoft, and 401 by Apple
@@ -65,6 +65,7 @@ RETRY_STATUSES = [503, 401, 403]
 
 def memoize(fun):
     """A memoize decorator."""
+
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
@@ -103,8 +104,10 @@ def parse_rst(fname):
     # HISTORY file has a lot of dead links.
     if fname == 'HISTORY.rst' and urls:
         urls = [
-            x for x in urls if
-            not x.startswith('https://github.com/giampaolo/psutil/issues')]
+            x
+            for x in urls
+            if not x.startswith('https://github.com/giampaolo/psutil/issues')
+        ]
     return urls
 
 
@@ -161,7 +164,7 @@ def parse_c(fname):
 
 
 def parse_generic(fname):
-    with open(fname, 'rt', errors='ignore') as f:
+    with open(fname, errors='ignore') as f:
         text = f.read()
     return find_urls(text)
 
@@ -172,10 +175,10 @@ def get_urls(fname):
         return parse_rst(fname)
     elif fname.endswith('.py'):
         return parse_py(fname)
-    elif fname.endswith('.c') or fname.endswith('.h'):
+    elif fname.endswith(('.c', '.h')):
         return parse_c(fname)
     else:
-        with open(fname, 'rt', errors='ignore') as f:
+        with open(fname, errors='ignore') as f:
             if f.readline().strip().startswith('#!/usr/bin/env python3'):
                 return parse_py(fname)
         return parse_generic(fname)
@@ -198,15 +201,16 @@ def validate_url(url):
 
 
 def parallel_validator(urls):
-    """validates all urls in parallel
-    urls: tuple(filename, url)
+    """Validates all urls in parallel
+    urls: tuple(filename, url).
     """
     fails = []  # list of tuples (filename, url)
     current = 0
     total = len(urls)
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        fut_to_url = {executor.submit(validate_url, url[1]): url
-                      for url in urls}
+        fut_to_url = {
+            executor.submit(validate_url, url[1]): url for url in urls
+        }
         for fut in concurrent.futures.as_completed(fut_to_url):
             current += 1
             sys.stdout.write("\r%s / %s" % (current, total))
@@ -214,7 +218,7 @@ def parallel_validator(urls):
             fname, url = fut_to_url[fut]
             try:
                 ok = fut.result()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 fails.append((fname, url))
                 print()
                 print("warn: error while validating %s" % url, file=sys.stderr)
@@ -229,7 +233,8 @@ def parallel_validator(urls):
 
 def main():
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument('files', nargs="+")
     parser.parse_args()
     args = parser.parse_args()

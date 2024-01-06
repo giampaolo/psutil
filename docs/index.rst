@@ -38,7 +38,7 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-Supported Python versions are **2.7** and **3.4+**.
+Supported Python versions are **2.7** and **3.6+**.
 `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
@@ -90,6 +90,8 @@ Supporters
       <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
       <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
       <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
+      <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
+      <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
     </div>
     <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
@@ -176,6 +178,10 @@ CPU
   utilization as a percentage for each CPU.
   First element of the list refers to first CPU, second element to second CPU
   and so on. The order of the list is consistent across calls.
+  Internally this function maintains a global map (a dict) where each key is
+  the ID of the calling thread (`threading.get_ident`_). This means it can be
+  called from different threads, at different intervals, and still return
+  meaningful and independent results.
 
     >>> import psutil
     >>> # blocking
@@ -194,6 +200,8 @@ CPU
     it will return a meaningless ``0.0`` value which you are supposed to
     ignore.
 
+  .. versionchanged:: 5.9.6 function is now thread safe.
+
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
   Same as :func:`cpu_percent()` but provides utilization percentages for each
@@ -211,6 +219,8 @@ CPU
 
   .. versionchanged::
     4.1.0 two new *interrupt* and *dpc* fields are returned on Windows.
+
+  .. versionchanged:: 5.9.6 function is now thread safe.
 
 .. function:: cpu_count(logical=True)
 
@@ -1071,6 +1081,7 @@ Process class
     :meth:`cpu_affinity` (set),
     :meth:`rlimit` (set),
     :meth:`children`,
+    :meth:`ppid`,
     :meth:`parent`,
     :meth:`parents`,
     :meth:`suspend`
@@ -1758,7 +1769,7 @@ Process class
     fields are variable depending on the platform.
     This method is useful to obtain a detailed representation of process
     memory usage as explained
-    `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__
+    `here <https://web.archive.org/web/20180907232758/http://bmaurer.blogspot.com/2006/03/memory-usage-with-smaps.html>`__
     (the most important value is "private" memory).
     If *grouped* is ``True`` the mapped regions with the same *path* are
     grouped together and the different memory fields are summed.  If *grouped*
@@ -2544,7 +2555,7 @@ Bytes conversion
       for i, s in enumerate(symbols):
           prefix[s] = 1 << (i + 1) * 10
       for s in reversed(symbols):
-          if n >= prefix[s]:
+          if abs(n) >= prefix[s]:
               value = float(n) / prefix[s]
               return '%.1f%s' % (value, s)
       return "%sB" % n
@@ -2572,7 +2583,7 @@ FAQs
   the Python script as a Windows service (ProcessHacker does this).
 
 * Q: is MinGW supported on Windows?
-* A: no, you should Visual Studio (see `development guide`_).
+* A: no, you should Visual Studio (see `development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_).
 
 Running tests
 =============
@@ -2614,29 +2625,39 @@ contact`_.  Tidelift will coordinate the fix and disclosure.
 Development guide
 =================
 
-If you want to develop psutil take a look at the `development guide`_.
+If you want to develop psutil take a look at the `DEVGUIDE.rst`_.
 
 Platforms support history
 =========================
 
-* psutil 5.9.1 (2022-05): drop Python 2.6 support
-* psutil 5.9.0 (2021-12): **MidnightBSD**
-* psutil 5.8.0 (2020-12): **PyPy 2** on Windows
-* psutil 5.7.1 (2020-07): **Windows Nano**
-* psutil 5.7.0 (2020-02): drop Windows XP & Server 2003 support
-* psutil 5.7.0 (2020-02): **PyPy 3** on Windows
-* psutil 5.4.0 (2017-11): **AIX**
-* psutil 3.4.1 (2016-01): **NetBSD**
-* psutil 3.3.0 (2015-11): **OpenBSD**
-* psutil 1.0.0 (2013-07): **Solaris**
-* psutil 0.1.1 (2009-03): **FreeBSD**
-* psutil 0.1.0 (2009-01): **Linux, Windows, macOS**
+* psutil 5.9.6 (2023-10): drop Python 3.4 and 3.5
+* psutil 5.9.1 (2022-05): drop Python 2.6
+* psutil 5.9.0 (2021-12): add **MidnightBSD**
+* psutil 5.8.0 (2020-12): add **PyPy 2** on Windows
+* psutil 5.7.1 (2020-07): add **Windows Nano**
+* psutil 5.7.0 (2020-02): drop Windows XP & Windows Server 2003
+* psutil 5.7.0 (2020-02): add **PyPy 3** on Windows
+* psutil 5.4.0 (2017-11): add **AIX**
+* psutil 3.4.1 (2016-01): add **NetBSD**
+* psutil 3.3.0 (2015-11): add **OpenBSD**
+* psutil 1.0.0 (2013-07): add **Solaris**
+* psutil 0.1.1 (2009-03): add **FreeBSD**
+* psutil 0.1.0 (2009-01): add **Linux, Windows, macOS**
 
-Supported Python versions are 2.7, 3.4+ and PyPy3.
+Supported Python versions at the time of writing are cPython 2.7, 3.6+ and
+PyPy3.
 
 Timeline
 ========
 
+- 2023-12-17:
+  `5.9.7 <https://pypi.org/project/psutil/5.9.7/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#596>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.6...release-5.9.7#files_bucket>`__
+- 2023-10-15:
+  `5.9.6 <https://pypi.org/project/psutil/5.9.6/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#596>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-5.9.5...release-5.9.6#files_bucket>`__
 - 2023-04-17:
   `5.9.5 <https://pypi.org/project/psutil/5.9.5/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#595>`__ -
@@ -3000,7 +3021,7 @@ Timeline
 .. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
-.. _`development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
+.. _`DEVGUIDE.rst`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
@@ -3023,7 +3044,6 @@ Timeline
 .. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
 .. _`open`: https://docs.python.org/3/library/functions.html#open
 .. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
-.. _`os.getloadavg`: https://docs.python.org/3/library/os.html#os.getloadavg
 .. _`os.getpid`: https://docs.python.org/3/library/os.html#os.getpid
 .. _`os.getpriority`: https://docs.python.org/3/library/os.html#os.getpriority
 .. _`os.getresgid`: https://docs.python.org//library/os.html#os.getresgid
@@ -3052,6 +3072,6 @@ Timeline
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 .. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`threading.get_ident`: https://docs.python.org/3/library/threading.html#threading.get_ident
 .. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
-.. _Tidelift security contact: https://tidelift.com/security
-.. _Tidelift Subscription: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+.. _`Tidelift security contact`: https://tidelift.com/security

@@ -219,8 +219,15 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
     if (! kd) {
-        convert_kvm_err("kvm_openfiles()", errbuf);
-        goto error;
+        // Usually fails due to EPERM against /dev/mem. We retry with
+        // KVM_NO_FILES which apparently has the same effect.
+        // https://stackoverflow.com/questions/22369736/
+        psutil_debug("kvm_openfiles(O_RDONLY) failed");
+        kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+        if (! kd) {
+            convert_kvm_err("kvm_openfiles()", errbuf);
+            goto error;
+        }
     }
 
     kp = kvm_getprocs(

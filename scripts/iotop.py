@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of iotop (http://guichaz.free.fr/iotop/) showing real time
+"""A clone of iotop (http://guichaz.free.fr/iotop/) showing real time
 disk I/O statistics.
 
 It works on Linux only (FreeBSD and macOS are missing support for IO
@@ -119,8 +118,10 @@ def refresh_window(procs, disks_read, disks_write):
     templ = "%-5s %-7s %11s %11s  %s"
     win.erase()
 
-    disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
-                % (bytes2human(disks_read), bytes2human(disks_write))
+    disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" % (
+        bytes2human(disks_read),
+        bytes2human(disks_write),
+    )
     printl(disks_tot)
 
     header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
@@ -132,7 +133,8 @@ def refresh_window(procs, disks_read, disks_write):
             p._username[:7],
             bytes2human(p._read_per_sec),
             bytes2human(p._write_per_sec),
-            p._cmdline)
+            p._cmdline,
+        )
         try:
             printl(line)
         except curses.error:
@@ -143,7 +145,7 @@ def refresh_window(procs, disks_read, disks_write):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    for i in range(0, curses.COLORS):
+    for i in range(curses.COLORS):
         curses.init_pair(i + 1, i, -1)
     curses.endwin()
     win.nodelay(1)
