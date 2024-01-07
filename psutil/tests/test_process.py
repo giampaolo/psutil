@@ -57,7 +57,8 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
 from psutil.tests import copyload_shared_lib
-from psutil.tests import create_exe
+from psutil.tests import create_c_exe
+from psutil.tests import create_py_exe
 from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import reap_children
@@ -768,9 +769,8 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
-        testfn = self.get_testfn(suffix="0123456789" * 2)
-        create_exe(testfn)
-        cmdline = [testfn, "-c", "time.sleep(10)"]
+        pyexe = create_py_exe(self.get_testfn(suffix="0123456789" * 2))
+        cmdline = [pyexe, "-c", "time.sleep(10)"]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -781,14 +781,14 @@ class TestProcess(PsutilTestCase):
             # just compare the first 15 chars. Full explanation:
             # https://github.com/giampaolo/psutil/issues/2239
             try:
-                self.assertEqual(p.name(), os.path.basename(testfn))
+                self.assertEqual(p.name(), os.path.basename(pyexe))
             except AssertionError:
                 if p.status() == psutil.STATUS_ZOMBIE:
-                    assert os.path.basename(testfn).startswith(p.name())
+                    assert os.path.basename(pyexe).startswith(p.name())
                 else:
                     raise
         else:
-            self.assertEqual(p.name(), os.path.basename(testfn))
+            self.assertEqual(p.name(), os.path.basename(pyexe))
 
     # XXX
     @unittest.skipIf(SUNOS, "broken on SUNOS")
@@ -798,15 +798,12 @@ class TestProcess(PsutilTestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_path = self.get_testfn(suffix='foo bar )')
-        create_exe(funky_path)
-        cmdline = [funky_path, "-c", "time.sleep(10)"]
+        pyexe = create_py_exe(self.get_testfn(suffix='foo bar )'))
+        cmdline = [pyexe, "-c", "time.sleep(10)"]
         p = self.spawn_psproc(cmdline)
         self.assertEqual(p.cmdline(), cmdline)
-        self.assertEqual(p.name(), os.path.basename(funky_path))
-        self.assertEqual(
-            os.path.normcase(p.exe()), os.path.normcase(funky_path)
-        )
+        self.assertEqual(p.name(), os.path.basename(pyexe))
+        self.assertEqual(os.path.normcase(p.exe()), os.path.normcase(pyexe))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_uids(self):
@@ -1477,10 +1474,9 @@ class TestProcess(PsutilTestCase):
                 return execve("/bin/cat", argv, envp);
             }
             """)
-        path = self.get_testfn()
-        create_exe(path, c_code=code)
+        cexe = create_c_exe(self.get_testfn(), c_code=code)
         sproc = self.spawn_testproc(
-            [path], stdin=subprocess.PIPE, stderr=subprocess.PIPE
+            [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
         )
         p = psutil.Process(sproc.pid)
         wait_for_pid(p.pid)

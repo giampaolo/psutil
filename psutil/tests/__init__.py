@@ -100,7 +100,7 @@ __all__ = [
     'process_namespace', 'system_namespace', 'print_sysinfo',
     'is_win_secure_system_proc',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_exe', 'get_testfn',
+    'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
     'get_winver', 'kernel_version',
     # sync primitives
@@ -377,7 +377,7 @@ def spawn_testproc(cmd=None, **kwds):
             pyline = (
                 "from time import sleep;"
                 + "open(r'%s', 'w').close();" % testfn
-                + "sleep(60);"
+                + "[sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
@@ -853,33 +853,41 @@ def chdir(dirname):
         os.chdir(curdir)
 
 
-def create_exe(outpath, c_code=None):
-    """Creates an executable file in the given location."""
-    assert not os.path.exists(outpath), outpath
-    if c_code:
-        if not which("gcc"):
-            raise unittest.SkipTest("gcc is not installed")
-        if isinstance(c_code, bool):  # c_code is True
-            c_code = textwrap.dedent("""
-                #include <unistd.h>
-                int main() {
-                    pause();
-                    return 1;
-                }
-                """)
-        assert isinstance(c_code, str), c_code
-        with open(get_testfn(suffix='.c'), "w") as f:
-            f.write(c_code)
-        try:
-            subprocess.check_call(["gcc", f.name, "-o", outpath])
-        finally:
-            safe_rmpath(f.name)
+def create_py_exe(path):
+    """Create a Python executable file in the given location."""
+    assert not os.path.exists(path), path
+    atexit.register(safe_rmpath, path)
+    shutil.copyfile(PYTHON_EXE, path)
+    if POSIX:
+        st = os.stat(path)
+        os.chmod(path, st.st_mode | stat.S_IEXEC)
+    return path
+
+
+def create_c_exe(path, c_code=None):
+    """Create a compiled C executable in the given location."""
+    assert not os.path.exists(path), path
+    if not which("gcc"):
+        raise unittest.SkipTest("gcc is not installed")
+    if c_code is None:
+        c_code = textwrap.dedent("""
+            #include <unistd.h>
+            int main() {
+                pause();
+                return 1;
+            }
+            """)
     else:
-        # copy python executable
-        shutil.copyfile(PYTHON_EXE, outpath)
-        if POSIX:
-            st = os.stat(outpath)
-            os.chmod(outpath, st.st_mode | stat.S_IEXEC)
+        assert isinstance(c_code, str), c_code
+
+    atexit.register(safe_rmpath, path)
+    with open(get_testfn(suffix='.c'), "w") as f:
+        f.write(c_code)
+    try:
+        subprocess.check_call(["gcc", f.name, "-o", path])
+    finally:
+        safe_rmpath(f.name)
+    return path
 
 
 def get_testfn(suffix="", dir=None):
@@ -891,7 +899,9 @@ def get_testfn(suffix="", dir=None):
     while True:
         name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix, dir=dir)
         if not os.path.exists(name):  # also include dirs
-            return os.path.realpath(name)  # needed for OSX
+            path = os.path.realpath(name)  # needed for OSX
+            atexit.register(safe_rmpath, path)
+            return path
 
 
 # ===================================================================
@@ -940,6 +950,7 @@ class PsutilTestCase(TestCase):
     """
 
     def get_testfn(self, suffix="", dir=None):
+        suffix += "-" + self.id()  # add the test name
         fname = get_testfn(suffix=suffix, dir=dir)
         self.addCleanup(safe_rmpath, fname)
         return fname

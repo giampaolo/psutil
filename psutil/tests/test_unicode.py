@@ -100,7 +100,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import bind_unix_socket
 from psutil.tests import chdir
 from psutil.tests import copyload_shared_lib
-from psutil.tests import create_exe
+from psutil.tests import create_py_exe
 from psutil.tests import get_testfn
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
@@ -139,7 +139,7 @@ def try_unicode(suffix):
     testfn = get_testfn(suffix=suffix)
     try:
         safe_rmpath(testfn)
-        create_exe(testfn)
+        create_py_exe(testfn)
         sproc = spawn_testproc(cmd=[testfn])
         shutil.copyfile(testfn, testfn + '-2')
         safe_rmpath(testfn + '-2')
@@ -165,9 +165,13 @@ class BaseUnicodeTest(PsutilTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.skip_tests = False
+        cls.funky_name = None
         if cls.funky_suffix is not None:
             if not try_unicode(cls.funky_suffix):
                 cls.skip_tests = True
+            else:
+                cls.funky_name = get_testfn(suffix=cls.funky_suffix)
+                create_py_exe(cls.funky_name)
 
     def setUp(self):
         super().setUp()
@@ -182,17 +186,6 @@ class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""
 
     funky_suffix = UNICODE_SUFFIX
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.funky_name = get_testfn(suffix=cls.funky_suffix)
-        create_exe(cls.funky_name)
-
-    @classmethod
-    def tearDownClass(cls):
-        super().tearDownClass()
-        safe_rmpath(cls.funky_name)
 
     def expect_exact_path_match(self):
         # Do not expect psutil to correctly handle unicode paths on
