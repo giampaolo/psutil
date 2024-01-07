@@ -20,6 +20,8 @@
 - 2340_, [NetBSD]: if process is terminated, `Process.cwd()`_ will return an
   empty string instead of raising `NoSuchProcess`_.
 - 2345_, [Linux]: fix compilation on older compiler missing DUPLEX_UNKNOWN
+- 2222_, [macOS]: `cpu_freq()` now returns fixed values for `min` and `max`
+  frequencies in all Apple Silicon chips.
 
 5.9.7
 =====
