@@ -397,6 +397,12 @@ def test_process():
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
+def test_process_all():
+    """Run process all tests."""
+    build()
+    sh("%s psutil\\tests\\test_process_all.py" % PYTHON)
+
+
 def test_system():
     """Run system tests."""
     build()
@@ -517,23 +523,15 @@ def get_python(path):
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
     vers = (
-        '26',
-        '26-32',
-        '26-64',
         '27',
         '27-32',
         '27-64',
-        '36',
-        '36-32',
-        '36-64',
-        '37',
-        '37-32',
-        '37-64',
-        '38',
-        '38-32',
-        '38-64',
-        '39-32',
-        '39-64',
+        '310-32',
+        '310-64',
+        '311-32',
+        '311-64',
+        '312-32',
+        '312-64',
     )
     for v in vers:
         pypath = r'C:\\python%s\python.exe' % v
@@ -571,6 +569,7 @@ def parse_args():
     sp.add_parser('test-misc', help="run misc tests")
     sp.add_parser('test-platform', help="run windows only tests")
     sp.add_parser('test-process', help="run process tests")
+    sp.add_parser('test-process-all', help="run process all tests")
     sp.add_parser('test-system', help="run system tests")
     sp.add_parser('test-unicode', help="run unicode tests")
     sp.add_parser('test-testutils', help="run test utils tests")

@@ -746,9 +746,9 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
-        testfn = self.get_testfn()
-        create_exe(testfn)
-        cmdline = [testfn] + (["0123456789"] * 20)
+        cmdline = [PYTHON_EXE]
+        cmdline.extend(["-v"] * 50)
+        cmdline.extend(["-c", "time.sleep(10)"])
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -770,7 +770,7 @@ class TestProcess(PsutilTestCase):
     def test_long_name(self):
         testfn = self.get_testfn(suffix="0123456789" * 2)
         create_exe(testfn)
-        cmdline = [testfn] + (["0123456789"] * 20)
+        cmdline = [testfn, "-c", "time.sleep(10)"]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -800,15 +800,7 @@ class TestProcess(PsutilTestCase):
         # https://github.com/giampaolo/psutil/issues/628
         funky_path = self.get_testfn(suffix='foo bar )')
         create_exe(funky_path)
-        cmdline = [
-            funky_path,
-            "-c",
-            "import time; [time.sleep(0.01) for x in range(3000)];arg1",
-            "arg2",
-            "",
-            "arg3",
-            "",
-        ]
+        cmdline = [funky_path, "-c", "time.sleep(10)"]
         p = self.spawn_psproc(cmdline)
         self.assertEqual(p.cmdline(), cmdline)
         self.assertEqual(p.name(), os.path.basename(funky_path))

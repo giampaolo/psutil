@@ -140,6 +140,10 @@ test-process:  ## Run process-related API tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process.py
 
+test-process-all:  ## Run tests which iterate over all process PIDs.
+	${MAKE} build
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process_all.py
+
 test-system:  ## Run system-related API tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_system.py

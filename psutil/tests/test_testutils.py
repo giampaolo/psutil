@@ -36,6 +36,7 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_sockets
+from psutil.tests import filter_proc_connections
 from psutil.tests import get_free_port
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
@@ -318,14 +319,18 @@ class TestNetUtils(PsutilTestCase):
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
-        self.assertEqual(p.connections(kind='unix'), [])
+        self.assertEqual(
+            filter_proc_connections(p.connections(kind='unix')), []
+        )
         name = self.get_testfn()
         server, client = unix_socketpair(name)
         try:
             assert os.path.exists(name)
             assert stat.S_ISSOCK(os.stat(name).st_mode)
             self.assertEqual(p.num_fds() - num_fds, 2)
-            self.assertEqual(len(p.connections(kind='unix')), 2)
+            self.assertEqual(
+                len(filter_proc_connections(p.connections(kind='unix'))), 2
+            )
             self.assertEqual(server.getsockname(), name)
             self.assertEqual(client.getpeername(), name)
         finally:
@@ -374,10 +379,10 @@ class TestMemLeakClass(TestMemoryLeak):
         ls = []
 
         def fun(ls=ls):
-            ls.append("x" * 24 * 1024)
+            ls.append("x" * 124 * 1024)
 
         try:
-            # will consume around 3M in total
+            # will consume around 30M in total
             self.assertRaisesRegex(
                 AssertionError, "extra-mem", self.execute, fun, times=50
             )

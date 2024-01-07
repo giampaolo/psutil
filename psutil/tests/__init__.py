@@ -47,6 +47,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import bytes2human
+from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
@@ -105,7 +106,7 @@ __all__ = [
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
-    'check_net_address',
+    'check_net_address', 'filter_proc_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
     # compat
@@ -1869,6 +1870,20 @@ def check_connection_ntuple(conn):
     check_type(conn)
     check_addrs(conn)
     check_status(conn)
+
+
+def filter_proc_connections(cons):
+    """Our process may start with some open UNIX sockets which are not
+    initialized by us, invalidating unit tests.
+    """
+    new = []
+    for conn in cons:
+        if POSIX and conn.family == socket.AF_UNIX:
+            if MACOS and "/syslog" in conn.raddr:
+                debug("skipping %s" % str(conn))
+                continue
+        new.append(conn)
+    return new
 
 
 # ===================================================================

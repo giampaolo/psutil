@@ -164,6 +164,7 @@ include psutil/tests/test_misc.py
 include psutil/tests/test_osx.py
 include psutil/tests/test_posix.py
 include psutil/tests/test_process.py
+include psutil/tests/test_process_all.py
 include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
 include psutil/tests/test_testutils.py
