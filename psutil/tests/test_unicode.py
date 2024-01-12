@@ -224,9 +224,7 @@ class TestFSAPIs(BaseUnicodeTest):
         for part in cmdline:
             self.assertIsInstance(part, str)
         if self.expect_exact_path_match():
-            self.assertEqual(
-                cmdline, [self.funky_name, "-c", "time.sleep(10)"]
-            )
+            self.assertEqual(cmdline, cmd)
 
     def test_proc_cwd(self):
         dname = self.funky_name + "2"

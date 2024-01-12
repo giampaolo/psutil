@@ -757,6 +757,8 @@ def wait_for_pid(pid):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
     """
+    if pid not in psutil.pids():
+        raise psutil.NoSuchProcess(pid)
     psutil.Process(pid)
     if WINDOWS:
         # give it some more time to allow better initialization
@@ -950,7 +952,6 @@ class PsutilTestCase(TestCase):
     """
 
     def get_testfn(self, suffix="", dir=None):
-        suffix += "-" + self.id()  # add the test name
         fname = get_testfn(suffix=suffix, dir=dir)
         self.addCleanup(safe_rmpath, fname)
         return fname

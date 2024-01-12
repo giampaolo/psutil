@@ -762,7 +762,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.cmdline(), cmdline)
 
     def test_name(self):
-        p = self.spawn_psproc(PYTHON_EXE)
+        p = self.spawn_psproc()
         name = p.name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
