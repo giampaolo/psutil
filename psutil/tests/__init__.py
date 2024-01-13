@@ -352,7 +352,7 @@ def _reap_children_on_err(fun):
 
 @_reap_children_on_err
 def spawn_testproc(cmd=None, **kwds):
-    """Creates a python subprocess which does nothing for 60 secs and
+    """Create a python subprocess which does nothing for some secs and
     return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
     By default stdin and stdout are redirected to /dev/null.
@@ -371,13 +371,13 @@ def spawn_testproc(cmd=None, **kwds):
         CREATE_NO_WINDOW = 0x8000000
         kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
-        testfn = get_testfn()
+        testfn = get_testfn(dir=os.getcwd())
         try:
             safe_rmpath(testfn)
             pyline = (
-                "from time import sleep;"
+                "import time;"
                 + "open(r'%s', 'w').close();" % testfn
-                + "[sleep(0.1) for x in range(100)];"  # 10 secs
+                + "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
