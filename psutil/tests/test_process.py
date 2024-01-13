@@ -749,7 +749,7 @@ class TestProcess(PsutilTestCase):
     def test_long_cmdline(self):
         cmdline = [PYTHON_EXE]
         cmdline.extend(["-v"] * 50)
-        cmdline.extend(["-c", "time.sleep(10)"])
+        cmdline.extend(["-c", "import time; time.sleep(10)"])
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -770,7 +770,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix="0123456789" * 2))
-        cmdline = [pyexe, "-c", "time.sleep(10)"]
+        cmdline = [pyexe, "-c", "import time; time.sleep(10)"]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -799,7 +799,7 @@ class TestProcess(PsutilTestCase):
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
         pyexe = create_py_exe(self.get_testfn(suffix='foo bar )'))
-        cmdline = [pyexe, "-c", "time.sleep(10)"]
+        cmdline = [pyexe, "-c", "import time; time.sleep(10)"]
         p = self.spawn_psproc(cmdline)
         self.assertEqual(p.cmdline(), cmdline)
         self.assertEqual(p.name(), os.path.basename(pyexe))

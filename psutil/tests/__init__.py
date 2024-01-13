@@ -760,9 +760,6 @@ def wait_for_pid(pid):
     if pid not in psutil.pids():
         raise psutil.NoSuchProcess(pid)
     psutil.Process(pid)
-    if WINDOWS:
-        # give it some more time to allow better initialization
-        time.sleep(0.01)
 
 
 @retry(
