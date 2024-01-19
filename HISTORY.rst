@@ -1,7 +1,9 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.8 (IN DEVELOPMENT)
-======================
+5.9.8
+=====
+
+2024-01-19
 
 **Enhancements**
 
@@ -19,7 +21,7 @@
   It could either leak memory or core dump.
 - 2340_, [NetBSD]: if process is terminated, `Process.cwd()`_ will return an
   empty string instead of raising `NoSuchProcess`_.
-- 2345_, [Linux]: fix compilation on older compiler missing DUPLEX_UNKNOWN
+- 2345_, [Linux]: fix compilation on older compiler missing DUPLEX_UNKNOWN.
 - 2222_, [macOS]: `cpu_freq()` now returns fixed values for `min` and `max`
   frequencies in all Apple Silicon chips.
 
