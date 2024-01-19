@@ -61,7 +61,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
-SIOCGIFNETMASK = 0x891b
+SIOCGIFNETMASK = 0x891B
 SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
@@ -75,41 +75,47 @@ EMPTY_TEMPERATURES = not glob.glob('/sys/class/hwmon/hwmon*')
 
 def get_ipv4_address(ifname):
     import fcntl
+
     ifname = ifname[:15]
     if PY3:
         ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         return socket.inet_ntoa(
-            fcntl.ioctl(s.fileno(),
-                        SIOCGIFADDR,
-                        struct.pack('256s', ifname))[20:24])
+            fcntl.ioctl(s.fileno(), SIOCGIFADDR, struct.pack('256s', ifname))[
+                20:24
+            ]
+        )
 
 
 def get_ipv4_netmask(ifname):
     import fcntl
+
     ifname = ifname[:15]
     if PY3:
         ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         return socket.inet_ntoa(
-            fcntl.ioctl(s.fileno(),
-                        SIOCGIFNETMASK,
-                        struct.pack('256s', ifname))[20:24])
+            fcntl.ioctl(
+                s.fileno(), SIOCGIFNETMASK, struct.pack('256s', ifname)
+            )[20:24]
+        )
 
 
 def get_ipv4_broadcast(ifname):
     import fcntl
+
     ifname = ifname[:15]
     if PY3:
         ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         return socket.inet_ntoa(
-            fcntl.ioctl(s.fileno(),
-                        SIOCGIFBRDADDR,
-                        struct.pack('256s', ifname))[20:24])
+            fcntl.ioctl(
+                s.fileno(), SIOCGIFBRDADDR, struct.pack('256s', ifname)
+            )[20:24]
+        )
 
 
 def get_ipv6_addresses(ifname):
@@ -127,7 +133,7 @@ def get_ipv6_addresses(ifname):
         unformatted = all_fields[i][0]
         groups = []
         for j in range(0, len(unformatted), 4):
-            groups.append(unformatted[j:j + 4])
+            groups.append(unformatted[j : j + 4])
         formatted = ":".join(groups)
         packed = socket.inet_pton(socket.AF_INET6, formatted)
         all_fields[i] = socket.inet_ntop(socket.AF_INET6, packed)
@@ -136,18 +142,23 @@ def get_ipv6_addresses(ifname):
 
 def get_mac_address(ifname):
     import fcntl
+
     ifname = ifname[:15]
     if PY3:
         ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         info = fcntl.ioctl(
-            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname))
+            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname)
+        )
         if PY3:
+
             def ord(x):
                 return x
+
         else:
             import __builtin__
+
             ord = __builtin__.ord
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
@@ -164,7 +175,8 @@ def free_swap():
             nt = collections.namedtuple('free', 'total used free')
             return nt(int(total), int(used), int(free))
     raise ValueError(
-        "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines))
+        "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines)
+    )
 
 
 def free_physmem():
@@ -179,13 +191,14 @@ def free_physmem():
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
-            total, used, free, shared = \
-                (int(x) for x in line.split()[1:5])
+            total, used, free, shared = (int(x) for x in line.split()[1:5])
             nt = collections.namedtuple(
-                'free', 'total used free shared output')
+                'free', 'total used free shared output'
+            )
             return nt(total, used, free, shared, out)
     raise ValueError(
-        "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
+        "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines)
+    )
 
 
 def vmstat(stat):
@@ -209,6 +222,7 @@ def mock_open_content(pairs):
     """Mock open() builtin and forces it to return a certain content
     for a given path. `pairs` is a {"path": "content", ...} dict.
     """
+
     def open_mock(name, *args, **kwargs):
         if name in pairs:
             content = pairs[name]
@@ -233,6 +247,7 @@ def mock_open_exception(for_path, exc):
     """Mock open() builtin and raises `exc` if the path being opened
     matches `for_path`.
     """
+
     def open_mock(name, *args, **kwargs):
         if name == for_path:
             raise exc
@@ -252,7 +267,6 @@ def mock_open_exception(for_path, exc):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
-
     def test_total(self):
         cli_value = free_physmem().total
         psutil_value = psutil.virtual_memory().total
@@ -268,15 +282,17 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
             raise self.skipTest("old free version")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
-        self.assertAlmostEqual(cli_value, psutil_value,
-                               delta=TOLERANCE_SYS_MEM)
+        self.assertAlmostEqual(
+            cli_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_free(self):
         cli_value = free_physmem().free
         psutil_value = psutil.virtual_memory().free
-        self.assertAlmostEqual(cli_value, psutil_value,
-                               delta=TOLERANCE_SYS_MEM)
+        self.assertAlmostEqual(
+            cli_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_shared(self):
@@ -286,8 +302,11 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
-            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
+            free_value,
+            psutil_value,
+            delta=TOLERANCE_SYS_MEM,
+            msg='%s %s \n%s' % (free_value, psutil_value, free.output),
+        )
 
     @retry_on_failure()
     def test_available(self):
@@ -301,18 +320,21 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
             free_value = int(lines[1].split()[-1])
             psutil_value = psutil.virtual_memory().available
             self.assertAlmostEqual(
-                free_value, psutil_value, delta=TOLERANCE_SYS_MEM,
-                msg='%s %s \n%s' % (free_value, psutil_value, out))
+                free_value,
+                psutil_value,
+                delta=TOLERANCE_SYS_MEM,
+                msg='%s %s \n%s' % (free_value, psutil_value, out),
+            )
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
-
     def test_total(self):
         vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_used(self):
@@ -325,40 +347,44 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_free(self):
         vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_buffers(self):
         vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_active(self):
         vmstat_value = vmstat('active memory') * 1024
         psutil_value = psutil.virtual_memory().active
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_inactive(self):
         vmstat_value = vmstat('inactive memory') * 1024
         psutil_value = psutil.virtual_memory().inactive
         self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemVirtualMemoryMocks(PsutilTestCase):
-
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
@@ -381,7 +407,8 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
                 self.assertIn(
-                    "memory stats couldn't be determined", str(w.message))
+                    "memory stats couldn't be determined", str(w.message)
+                )
                 self.assertIn("cached", str(w.message))
                 self.assertIn("shared", str(w.message))
                 self.assertIn("active", str(w.message))
@@ -437,7 +464,8 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
             self.assertEqual(ret.available, 6574984 * 1024)
             w = ws[0]
             self.assertIn(
-                "inactive memory stats couldn't be determined", str(w.message))
+                "inactive memory stats couldn't be determined", str(w.message)
+            )
 
     def test_avail_old_missing_fields(self):
         # Remove Active(file), Inactive(file) and SReclaimable
@@ -461,7 +489,8 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
             self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
             w = ws[0]
             self.assertIn(
-                "inactive memory stats couldn't be determined", str(w.message))
+                "inactive memory stats couldn't be determined", str(w.message)
+            )
 
     def test_avail_old_missing_zoneinfo(self):
         # Remove /proc/zoneinfo file. Make sure fallback is used
@@ -482,16 +511,19 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
             """).encode()
         with mock_open_content({"/proc/meminfo": content}):
             with mock_open_exception(
-                    "/proc/zoneinfo",
-                    IOError(errno.ENOENT, 'no such file or directory')):
+                "/proc/zoneinfo",
+                IOError(errno.ENOENT, 'no such file or directory'),
+            ):
                 with warnings.catch_warnings(record=True) as ws:
                     ret = psutil.virtual_memory()
                     self.assertEqual(
-                        ret.available, 2057400 * 1024 + 4818144 * 1024)
+                        ret.available, 2057400 * 1024 + 4818144 * 1024
+                    )
                     w = ws[0]
                     self.assertIn(
                         "inactive memory stats couldn't be determined",
-                        str(w.message))
+                        str(w.message),
+                    )
 
     def test_virtual_memory_mocked(self):
         # Emulate /proc/meminfo because neither vmstat nor free return slab.
@@ -567,7 +599,6 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemSwapMemory(PsutilTestCase):
-
     @staticmethod
     def meminfo_has_swap_info():
         """Return True if /proc/meminfo provides swap metrics."""
@@ -579,21 +610,24 @@ class TestSystemSwapMemory(PsutilTestCase):
         free_value = free_swap().total
         psutil_value = psutil.swap_memory().total
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_used(self):
         free_value = free_swap().used
         psutil_value = psutil.swap_memory().used
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_free(self):
         free_value = free_swap().free
         psutil_value = psutil.swap_memory().free
         return self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM)
+            free_value, psutil_value, delta=TOLERANCE_SYS_MEM
+        )
 
     def test_missing_sin_sout(self):
         with mock.patch('psutil._common.open', create=True) as m:
@@ -605,15 +639,17 @@ class TestSystemSwapMemory(PsutilTestCase):
                 w = ws[0]
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
-                    "be determined", str(w.message))
+                    "be determined",
+                    str(w.message),
+                )
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
         with mock_open_exception(
-                "/proc/vmstat",
-                IOError(errno.ENOENT, 'no such file or directory')) as m:
+            "/proc/vmstat", IOError(errno.ENOENT, 'no such file or directory')
+        ) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -623,7 +659,8 @@ class TestSystemSwapMemory(PsutilTestCase):
                 self.assertIn(
                     "'sin' and 'sout' swap memory stats couldn't "
                     "be determined and were set to 0",
-                    str(w.message))
+                    str(w.message),
+                )
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
 
@@ -637,6 +674,7 @@ class TestSystemSwapMemory(PsutilTestCase):
             swap = psutil.swap_memory()
         assert not m.called
         import psutil._psutil_linux as cext
+
         _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
@@ -659,7 +697,6 @@ class TestSystemSwapMemory(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUTimes(PsutilTestCase):
-
     def test_fields(self):
         fields = psutil.cpu_times()._fields
         kernel_ver = re.findall(r'\d+\.\d+\.\d+', os.uname()[2])[0]
@@ -680,9 +717,10 @@ class TestSystemCPUTimes(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUCountLogical(PsutilTestCase):
-
-    @unittest.skipIf(not os.path.exists("/sys/devices/system/cpu/online"),
-                     "/sys/devices/system/cpu/online does not exist")
+    @unittest.skipIf(
+        not os.path.exists("/sys/devices/system/cpu/online"),
+        "/sys/devices/system/cpu/online does not exist",
+    )
     def test_against_sysdev_cpu_online(self):
         with open("/sys/devices/system/cpu/online") as f:
             value = f.read().strip()
@@ -690,8 +728,10 @@ class TestSystemCPUCountLogical(PsutilTestCase):
             value = int(value.split('-')[1]) + 1
             self.assertEqual(psutil.cpu_count(), value)
 
-    @unittest.skipIf(not os.path.exists("/sys/devices/system/cpu"),
-                     "/sys/devices/system/cpu does not exist")
+    @unittest.skipIf(
+        not os.path.exists("/sys/devices/system/cpu"),
+        "/sys/devices/system/cpu does not exist",
+    )
     def test_against_sysdev_cpu_num(self):
         ls = os.listdir("/sys/devices/system/cpu")
         count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
@@ -710,11 +750,13 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 
     def test_emulate_fallbacks(self):
         import psutil._pslinux
+
         original = psutil._pslinux.cpu_count_logical()
         # Here we want to mock os.sysconf("SC_NPROCESSORS_ONLN") in
         # order to cause the parsing of /proc/cpuinfo and /proc/stat.
         with mock.patch(
-                'psutil._pslinux.os.sysconf', side_effect=ValueError) as m:
+            'psutil._pslinux.os.sysconf', side_effect=ValueError
+        ) as m:
             self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
             assert m.called
 
@@ -731,8 +773,9 @@ class TestSystemCPUCountLogical(PsutilTestCase):
             with open('/proc/cpuinfo', 'rb') as f:
                 cpuinfo_data = f.read()
             fake_file = io.BytesIO(cpuinfo_data)
-            with mock.patch('psutil._common.open',
-                            return_value=fake_file, create=True) as m:
+            with mock.patch(
+                'psutil._common.open', return_value=fake_file, create=True
+            ) as m:
                 self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
 
             # Finally, let's make /proc/cpuinfo return meaningless data;
@@ -744,7 +787,6 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUCountCores(PsutilTestCase):
-
     @unittest.skipIf(not which("lscpu"), "lscpu utility not available")
     def test_against_lscpu(self):
         out = sh("lscpu -p")
@@ -773,7 +815,6 @@ class TestSystemCPUCountCores(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUFrequency(PsutilTestCase):
-
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
@@ -784,8 +825,9 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_exists(path)
 
         orig_exists = os.path.exists
-        with mock.patch("os.path.exists", side_effect=path_exists_mock,
-                        create=True):
+        with mock.patch(
+            "os.path.exists", side_effect=path_exists_mock, create=True
+        ):
             assert psutil.cpu_freq()
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
@@ -803,7 +845,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
             with mock.patch("os.path.exists", side_effect=path_exists_mock):
                 reload_module(psutil._pslinux)
                 ret = psutil.cpu_freq()
-                assert ret
+                assert ret, ret
                 self.assertEqual(ret.max, 0.0)
                 self.assertEqual(ret.min, 0.0)
                 for freq in psutil.cpu_freq(percpu=True):
@@ -816,14 +858,17 @@ class TestSystemCPUFrequency(PsutilTestCase):
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
-            if (name.endswith('/scaling_cur_freq') and
-                    name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
+            if name.endswith('/scaling_cur_freq') and name.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy"
+            ):
                 return io.BytesIO(b"500000")
-            elif (name.endswith('/scaling_min_freq') and
-                    name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
+            elif name.endswith('/scaling_min_freq') and name.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy"
+            ):
                 return io.BytesIO(b"600000")
-            elif (name.endswith('/scaling_max_freq') and
-                    name.startswith("/sys/devices/system/cpu/cpufreq/policy")):
+            elif name.endswith('/scaling_max_freq') and name.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy"
+            ):
                 return io.BytesIO(b"700000")
             elif name == '/proc/cpuinfo':
                 return io.BytesIO(b"cpu MHz     : 500")
@@ -833,8 +878,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch(
-                    'os.path.exists', return_value=True):
+            with mock.patch('os.path.exists', return_value=True):
                 freq = psutil.cpu_freq()
                 self.assertEqual(freq.current, 500.0)
                 # when /proc/cpuinfo is used min and max frequencies are not
@@ -848,27 +892,32 @@ class TestSystemCPUFrequency(PsutilTestCase):
     def test_emulate_multi_cpu(self):
         def open_mock(name, *args, **kwargs):
             n = name
-            if (n.endswith('/scaling_cur_freq') and
-                    n.startswith("/sys/devices/system/cpu/cpufreq/policy0")):
+            if n.endswith('/scaling_cur_freq') and n.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy0"
+            ):
                 return io.BytesIO(b"100000")
-            elif (n.endswith('/scaling_min_freq') and
-                    n.startswith("/sys/devices/system/cpu/cpufreq/policy0")):
+            elif n.endswith('/scaling_min_freq') and n.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy0"
+            ):
                 return io.BytesIO(b"200000")
-            elif (n.endswith('/scaling_max_freq') and
-                    n.startswith("/sys/devices/system/cpu/cpufreq/policy0")):
+            elif n.endswith('/scaling_max_freq') and n.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy0"
+            ):
                 return io.BytesIO(b"300000")
-            elif (n.endswith('/scaling_cur_freq') and
-                    n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
+            elif n.endswith('/scaling_cur_freq') and n.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy1"
+            ):
                 return io.BytesIO(b"400000")
-            elif (n.endswith('/scaling_min_freq') and
-                    n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
+            elif n.endswith('/scaling_min_freq') and n.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy1"
+            ):
                 return io.BytesIO(b"500000")
-            elif (n.endswith('/scaling_max_freq') and
-                    n.startswith("/sys/devices/system/cpu/cpufreq/policy1")):
+            elif n.endswith('/scaling_max_freq') and n.startswith(
+                "/sys/devices/system/cpu/cpufreq/policy1"
+            ):
                 return io.BytesIO(b"600000")
             elif name == '/proc/cpuinfo':
-                return io.BytesIO(b"cpu MHz     : 100\n"
-                                  b"cpu MHz     : 400")
+                return io.BytesIO(b"cpu MHz     : 100\ncpu MHz     : 400")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -876,8 +925,9 @@ class TestSystemCPUFrequency(PsutilTestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
-                with mock.patch('psutil._pslinux.cpu_count_logical',
-                                return_value=2):
+                with mock.patch(
+                    'psutil._pslinux.cpu_count_logical', return_value=2
+                ):
                     freq = psutil.cpu_freq(percpu=True)
                     self.assertEqual(freq[0].current, 100.0)
                     if freq[0].min != 0.0:
@@ -907,15 +957,15 @@ class TestSystemCPUFrequency(PsutilTestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
-                with mock.patch('psutil._pslinux.cpu_count_logical',
-                                return_value=1):
+                with mock.patch(
+                    'psutil._pslinux.cpu_count_logical', return_value=1
+                ):
                     freq = psutil.cpu_freq()
                     self.assertEqual(freq.current, 200)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUStats(PsutilTestCase):
-
     def test_ctx_switches(self):
         vmstat_value = vmstat("context switches")
         psutil_value = psutil.cpu_stats().ctx_switches
@@ -929,7 +979,6 @@ class TestSystemCPUStats(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestLoadAvg(PsutilTestCase):
-
     @unittest.skipIf(not HAS_GETLOADAVG, "not supported")
     def test_getloadavg(self):
         psutil_value = psutil.getloadavg()
@@ -948,7 +997,6 @@ class TestLoadAvg(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIfAddrs(PsutilTestCase):
-
     def test_ips(self):
         for name, addrs in psutil.net_if_addrs().items():
             for addr in addrs:
@@ -958,8 +1006,9 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     self.assertEqual(addr.address, get_ipv4_address(name))
                     self.assertEqual(addr.netmask, get_ipv4_netmask(name))
                     if addr.broadcast is not None:
-                        self.assertEqual(addr.broadcast,
-                                         get_ipv4_broadcast(name))
+                        self.assertEqual(
+                            addr.broadcast, get_ipv4_broadcast(name)
+                        )
                     else:
                         self.assertEqual(get_ipv4_broadcast(name), '0.0.0.0')
                 elif addr.family == socket.AF_INET6:
@@ -990,7 +1039,6 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIfStats(PsutilTestCase):
-
     @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
@@ -1000,8 +1048,9 @@ class TestSystemNetIfStats(PsutilTestCase):
                 pass
             else:
                 self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
-                self.assertEqual(stats.mtu,
-                                 int(re.findall(r'(?i)MTU[: ](\d+)', out)[0]))
+                self.assertEqual(
+                    stats.mtu, int(re.findall(r'(?i)MTU[: ](\d+)', out)[0])
+                )
 
     def test_mtu(self):
         for name, stats in psutil.net_if_stats().items():
@@ -1041,7 +1090,6 @@ class TestSystemNetIfStats(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
-
     @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     @retry_on_failure()
     def test_against_ifconfig(self):
@@ -1049,17 +1097,21 @@ class TestSystemNetIOCounters(PsutilTestCase):
             ret = {}
             out = sh("ifconfig %s" % nic)
             ret['packets_recv'] = int(
-                re.findall(r'RX packets[: ](\d+)', out)[0])
+                re.findall(r'RX packets[: ](\d+)', out)[0]
+            )
             ret['packets_sent'] = int(
-                re.findall(r'TX packets[: ](\d+)', out)[0])
+                re.findall(r'TX packets[: ](\d+)', out)[0]
+            )
             ret['errin'] = int(re.findall(r'errors[: ](\d+)', out)[0])
             ret['errout'] = int(re.findall(r'errors[: ](\d+)', out)[1])
             ret['dropin'] = int(re.findall(r'dropped[: ](\d+)', out)[0])
             ret['dropout'] = int(re.findall(r'dropped[: ](\d+)', out)[1])
             ret['bytes_recv'] = int(
-                re.findall(r'RX (?:packets \d+ +)?bytes[: ](\d+)', out)[0])
+                re.findall(r'RX (?:packets \d+ +)?bytes[: ](\d+)', out)[0]
+            )
             ret['bytes_sent'] = int(
-                re.findall(r'TX (?:packets \d+ +)?bytes[: ](\d+)', out)[0])
+                re.findall(r'TX (?:packets \d+ +)?bytes[: ](\d+)', out)[0]
+            )
             return ret
 
         nio = psutil.net_io_counters(pernic=True, nowrap=False)
@@ -1069,26 +1121,33 @@ class TestSystemNetIOCounters(PsutilTestCase):
             except RuntimeError:
                 continue
             self.assertAlmostEqual(
-                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 5)
+                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 5
+            )
             self.assertAlmostEqual(
-                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 5)
+                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 5
+            )
             self.assertAlmostEqual(
-                stats.packets_recv, ifconfig_ret['packets_recv'], delta=1024)
+                stats.packets_recv, ifconfig_ret['packets_recv'], delta=1024
+            )
             self.assertAlmostEqual(
-                stats.packets_sent, ifconfig_ret['packets_sent'], delta=1024)
+                stats.packets_sent, ifconfig_ret['packets_sent'], delta=1024
+            )
             self.assertAlmostEqual(
-                stats.errin, ifconfig_ret['errin'], delta=10)
+                stats.errin, ifconfig_ret['errin'], delta=10
+            )
             self.assertAlmostEqual(
-                stats.errout, ifconfig_ret['errout'], delta=10)
+                stats.errout, ifconfig_ret['errout'], delta=10
+            )
             self.assertAlmostEqual(
-                stats.dropin, ifconfig_ret['dropin'], delta=10)
+                stats.dropin, ifconfig_ret['dropin'], delta=10
+            )
             self.assertAlmostEqual(
-                stats.dropout, ifconfig_ret['dropout'], delta=10)
+                stats.dropout, ifconfig_ret['dropout'], delta=10
+            )
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemNetConnections(PsutilTestCase):
-
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
     def test_emulate_ipv6_unsupported(self, supports_ipv6, inet_ntop):
@@ -1140,15 +1199,16 @@ class TestSystemDiskUsage(PsutilTestCase):
             usage = psutil.disk_usage(part.mountpoint)
             _, total, used, free = df(part.mountpoint)
             self.assertEqual(usage.total, total)
-            self.assertAlmostEqual(usage.free, free,
-                                   delta=TOLERANCE_DISK_USAGE)
-            self.assertAlmostEqual(usage.used, used,
-                                   delta=TOLERANCE_DISK_USAGE)
+            self.assertAlmostEqual(
+                usage.free, free, delta=TOLERANCE_DISK_USAGE
+            )
+            self.assertAlmostEqual(
+                usage.used, used, delta=TOLERANCE_DISK_USAGE
+            )
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskPartitions(PsutilTestCase):
-
     def test_against_mount(self):
         def parse_mount(out):
             ls = []
@@ -1205,14 +1265,15 @@ class TestSystemDiskPartitions(PsutilTestCase):
                 raise self.fail("couldn't find any ZFS partition")
         else:
             with mock_open_content(
-                    {"/proc/filesystems": "nodev\tzfs\n"}) as m1:
+                {"/proc/filesystems": "nodev\tzfs\n"}
+            ) as m1:
                 with mock.patch(
                     'psutil._pslinux._parse_mountinfo',
-                    return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]
+                    return_value=[('/dev/sdb3', '/', 'zfs', 'rw')],
                 ):
                     with mock.patch(
                         'psutil._pslinux._parse_mounts',
-                        return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]
+                        return_value=[('/dev/sdb3', '/', 'zfs', 'rw')],
                     ):
                         ret = psutil.disk_partitions()
                         assert m1.called
@@ -1223,8 +1284,9 @@ class TestSystemDiskPartitions(PsutilTestCase):
     def test_getmntent_emulate_realpath_fail(self):
         # See: https://github.com/giampaolo/psutil/issues/1307
         try:
-            with mock.patch('os.path.realpath',
-                            return_value='/non/existent') as m:
+            with mock.patch(
+                'os.path.realpath', return_value='/non/existent'
+            ) as m:
                 with self.assertRaises(FileNotFoundError):
                     psutil._psplatform._parse_mounts()
                 assert m.called
@@ -1235,20 +1297,20 @@ class TestSystemDiskPartitions(PsutilTestCase):
         # exclude opts, because they're slightly different for some reason
         self.assertEqual(
             psutil._psplatform._parse_mounts(),
-            psutil._psplatform._parse_mountinfo()
+            psutil._psplatform._parse_mountinfo(),
         )
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemDiskIoCounters(PsutilTestCase):
-
     def test_emulate_kernel_2_4(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767
         content = "   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"
         with mock_open_content({'/proc/diskstats': content}):
-            with mock.patch('psutil._pslinux.is_storage_device',
-                            return_value=True):
+            with mock.patch(
+                'psutil._pslinux.is_storage_device', return_value=True
+            ):
                 ret = psutil.disk_io_counters(nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.read_merged_count, 2)
@@ -1266,8 +1328,9 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         # https://github.com/giampaolo/psutil/issues/767
         content = "   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"
         with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch('psutil._pslinux.is_storage_device',
-                            return_value=True):
+            with mock.patch(
+                'psutil._pslinux.is_storage_device', return_value=True
+            ):
                 ret = psutil.disk_io_counters(nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.read_merged_count, 2)
@@ -1286,8 +1349,9 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         # (instead of a disk). See:
         # https://github.com/giampaolo/psutil/issues/767
         with mock_open_content({"/proc/diskstats": "   3    1   hda 1 2 3 4"}):
-            with mock.patch('psutil._pslinux.is_storage_device',
-                            return_value=True):
+            with mock.patch(
+                'psutil._pslinux.is_storage_device', return_value=True
+            ):
                 ret = psutil.disk_io_counters(nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
@@ -1309,8 +1373,9 @@ class TestSystemDiskIoCounters(PsutilTestCase):
             3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
             """)
         with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch('psutil._pslinux.is_storage_device',
-                            return_value=False):
+            with mock.patch(
+                'psutil._pslinux.is_storage_device', return_value=False
+            ):
                 ret = psutil.disk_io_counters(perdisk=True, nowrap=False)
                 self.assertEqual(len(ret), 2)
                 self.assertEqual(ret['nvme0n1'].read_count, 1)
@@ -1327,8 +1392,9 @@ class TestSystemDiskIoCounters(PsutilTestCase):
             3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
             """)
         with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch('psutil._pslinux.is_storage_device',
-                            return_value=False):
+            with mock.patch(
+                'psutil._pslinux.is_storage_device', return_value=False
+            ):
                 ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
                 self.assertIsNone(ret)
 
@@ -1341,8 +1407,11 @@ class TestSystemDiskIoCounters(PsutilTestCase):
             3    0   nvme0n1p1 1 2 3 4 5 6 7 8 9 10 11
             """)
         with mock_open_content({"/proc/diskstats": content}):
-            with mock.patch('psutil._pslinux.is_storage_device',
-                            create=True, side_effect=is_storage_device):
+            with mock.patch(
+                'psutil._pslinux.is_storage_device',
+                create=True,
+                side_effect=is_storage_device,
+            ):
                 ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
                 self.assertEqual(ret.read_count, 1)
                 self.assertEqual(ret.write_count, 5)
@@ -1354,8 +1423,9 @@ class TestSystemDiskIoCounters(PsutilTestCase):
             return True
 
         wprocfs = psutil.disk_io_counters(perdisk=True)
-        with mock.patch('psutil._pslinux.os.path.exists',
-                        create=True, side_effect=exists):
+        with mock.patch(
+            'psutil._pslinux.os.path.exists', create=True, side_effect=exists
+        ):
             wsysfs = psutil.disk_io_counters(perdisk=True)
         self.assertEqual(len(wprocfs), len(wsysfs))
 
@@ -1363,14 +1433,14 @@ class TestSystemDiskIoCounters(PsutilTestCase):
         def exists(path):
             return False
 
-        with mock.patch('psutil._pslinux.os.path.exists',
-                        create=True, side_effect=exists):
+        with mock.patch(
+            'psutil._pslinux.os.path.exists', create=True, side_effect=exists
+        ):
             self.assertRaises(NotImplementedError, psutil.disk_io_counters)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestRootFsDeviceFinder(PsutilTestCase):
-
     def setUp(self):
         dev = os.stat("/").st_dev
         self.major = os.major(dev)
@@ -1382,8 +1452,9 @@ class TestRootFsDeviceFinder(PsutilTestCase):
             finder.ask_proc_partitions()
         else:
             self.assertRaises(FileNotFoundError, finder.ask_proc_partitions)
-        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
-                self.major, self.minor)):
+        if os.path.exists(
+            "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
+        ):
             finder.ask_sys_dev_block()
         else:
             self.assertRaises(FileNotFoundError, finder.ask_sys_dev_block)
@@ -1397,8 +1468,9 @@ class TestRootFsDeviceFinder(PsutilTestCase):
         a = b = c = None
         if os.path.exists("/proc/partitions"):
             a = finder.ask_proc_partitions()
-        if os.path.exists("/sys/dev/block/%s:%s/uevent" % (
-                self.major, self.minor)):
+        if os.path.exists(
+            "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
+        ):
             b = finder.ask_sys_class_block()
         c = finder.ask_sys_dev_block()
 
@@ -1420,12 +1492,10 @@ class TestRootFsDeviceFinder(PsutilTestCase):
     def test_disk_partitions_mocked(self):
         retval = [('/dev/root', '/', 'ext4', 'rw')]
         with mock.patch(
-            'psutil._pslinux._parse_mountinfo',
-            return_value=retval
+            'psutil._pslinux._parse_mountinfo', return_value=retval
         ):
             with mock.patch(
-                'psutil._pslinux._parse_mounts',
-                return_value=retval
+                'psutil._pslinux._parse_mounts', return_value=retval
             ):
                 part = psutil.disk_partitions()[0]
                 if not GITHUB_ACTIONS:
@@ -1442,7 +1512,6 @@ class TestRootFsDeviceFinder(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestMisc(PsutilTestCase):
-
     def test_boot_time(self):
         vmstat_value = vmstat('boot time')
         psutil_value = psutil.boot_time()
@@ -1475,7 +1544,8 @@ class TestMisc(PsutilTestCase):
                 self.assertRaises(IOError, psutil.cpu_percent, percpu=True)
                 self.assertRaises(IOError, psutil.cpu_times_percent)
                 self.assertRaises(
-                    IOError, psutil.cpu_times_percent, percpu=True)
+                    IOError, psutil.cpu_times_percent, percpu=True
+                )
 
                 psutil.PROCFS_PATH = my_procfs
 
@@ -1498,11 +1568,11 @@ class TestMisc(PsutilTestCase):
                     f.write('cpu1  1 0 0 0 0 0 0 0 0 0\n')
 
                 self.assertNotEqual(psutil.cpu_percent(), 0)
-                self.assertNotEqual(
-                    sum(psutil.cpu_percent(percpu=True)), 0)
+                self.assertNotEqual(sum(psutil.cpu_percent(percpu=True)), 0)
                 self.assertNotEqual(sum(psutil.cpu_times_percent()), 0)
                 self.assertNotEqual(
-                    sum(map(sum, psutil.cpu_times_percent(percpu=True))), 0)
+                    sum(map(sum, psutil.cpu_times_percent(percpu=True))), 0
+                )
         finally:
             shutil.rmtree(my_procfs)
             reload_module(psutil)
@@ -1550,9 +1620,7 @@ class TestMisc(PsutilTestCase):
 
     def test_boot_time_mocked(self):
         with mock.patch('psutil._common.open', create=True) as m:
-            self.assertRaises(
-                RuntimeError,
-                psutil._pslinux.boot_time)
+            self.assertRaises(RuntimeError, psutil._pslinux.boot_time)
             assert m.called
 
     def test_users(self):
@@ -1614,7 +1682,6 @@ class TestMisc(PsutilTestCase):
 @unittest.skipIf(not LINUX, "LINUX only")
 @unittest.skipIf(not HAS_BATTERY, "no battery")
 class TestSensorsBattery(PsutilTestCase):
-
     @unittest.skipIf(not which("acpi"), "acpi utility not available")
     def test_percent(self):
         out = sh("acpi -b")
@@ -1635,7 +1702,8 @@ class TestSensorsBattery(PsutilTestCase):
         with mock.patch(patch_point, side_effect=open_mock) as m:
             self.assertEqual(psutil.sensors_battery().power_plugged, True)
             self.assertEqual(
-                psutil.sensors_battery().secsleft, psutil.POWER_TIME_UNLIMITED)
+                psutil.sensors_battery().secsleft, psutil.POWER_TIME_UNLIMITED
+            )
             assert m.called
 
     def test_emulate_power_plugged_2(self):
@@ -1690,10 +1758,10 @@ class TestSensorsBattery(PsutilTestCase):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
         def open_mock(name, *args, **kwargs):
-            if name.startswith(
-                ('/sys/class/power_supply/AC0/online',
-                 '/sys/class/power_supply/AC/online')
-            ):
+            if name.startswith((
+                '/sys/class/power_supply/AC0/online',
+                '/sys/class/power_supply/AC/online',
+            )):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")
@@ -1709,7 +1777,8 @@ class TestSensorsBattery(PsutilTestCase):
     def test_emulate_energy_full_0(self):
         # Emulate a case where energy_full files returns 0.
         with mock_open_content(
-                {"/sys/class/power_supply/BAT0/energy_full": b"0"}) as m:
+            {"/sys/class/power_supply/BAT0/energy_full": b"0"}
+        ) as m:
             self.assertEqual(psutil.sensors_battery().percent, 0)
             assert m.called
 
@@ -1717,32 +1786,35 @@ class TestSensorsBattery(PsutilTestCase):
         # Emulate a case where energy_full file does not exist.
         # Expected fallback on /capacity.
         with mock_open_exception(
-                "/sys/class/power_supply/BAT0/energy_full",
-                IOError(errno.ENOENT, "")):
+            "/sys/class/power_supply/BAT0/energy_full",
+            IOError(errno.ENOENT, ""),
+        ):
             with mock_open_exception(
-                    "/sys/class/power_supply/BAT0/charge_full",
-                    IOError(errno.ENOENT, "")):
+                "/sys/class/power_supply/BAT0/charge_full",
+                IOError(errno.ENOENT, ""),
+            ):
                 with mock_open_content(
-                        {"/sys/class/power_supply/BAT0/capacity": b"88"}):
+                    {"/sys/class/power_supply/BAT0/capacity": b"88"}
+                ):
                     self.assertEqual(psutil.sensors_battery().percent, 88)
 
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
         with mock_open_exception(
-                "/sys/class/power_supply/AC/online",
-                IOError(errno.ENOENT, "")):
+            "/sys/class/power_supply/AC/online", IOError(errno.ENOENT, "")
+        ):
             with mock_open_exception(
-                    "/sys/class/power_supply/AC0/online",
-                    IOError(errno.ENOENT, "")):
+                "/sys/class/power_supply/AC0/online", IOError(errno.ENOENT, "")
+            ):
                 with mock_open_exception(
-                        "/sys/class/power_supply/BAT0/status",
-                        IOError(errno.ENOENT, "")):
+                    "/sys/class/power_supply/BAT0/status",
+                    IOError(errno.ENOENT, ""),
+                ):
                     self.assertIsNone(psutil.sensors_battery().power_plugged)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSensorsBatteryEmulated(PsutilTestCase):
-
     def test_it(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith("/energy_now"):
@@ -1765,7 +1837,6 @@ class TestSensorsBatteryEmulated(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSensorsTemperatures(PsutilTestCase):
-
     def test_emulate_class_hwmon(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
@@ -1785,8 +1856,9 @@ class TestSensorsTemperatures(PsutilTestCase):
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
             # Test case with /sys/class/hwmon
-            with mock.patch('glob.glob',
-                            return_value=['/sys/class/hwmon/hwmon0/temp1']):
+            with mock.patch(
+                'glob.glob', return_value=['/sys/class/hwmon/hwmon0/temp1']
+            ):
                 temp = psutil.sensors_temperatures()['name'][0]
                 self.assertEqual(temp.label, 'label')
                 self.assertEqual(temp.current, 30.0)
@@ -1814,8 +1886,10 @@ class TestSensorsTemperatures(PsutilTestCase):
             elif path == '/sys/class/thermal/thermal_zone*':
                 return ['/sys/class/thermal/thermal_zone0']
             elif path == '/sys/class/thermal/thermal_zone0/trip_point*':
-                return ['/sys/class/thermal/thermal_zone1/trip_point_0_type',
-                        '/sys/class/thermal/thermal_zone1/trip_point_0_temp']
+                return [
+                    '/sys/class/thermal/thermal_zone1/trip_point_0_type',
+                    '/sys/class/thermal/thermal_zone1/trip_point_0_temp',
+                ]
             return []
 
         orig_open = open
@@ -1831,7 +1905,6 @@ class TestSensorsTemperatures(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSensorsFans(PsutilTestCase):
-
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
@@ -1846,8 +1919,9 @@ class TestSensorsFans(PsutilTestCase):
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch(patch_point, side_effect=open_mock):
-            with mock.patch('glob.glob',
-                            return_value=['/sys/class/hwmon/hwmon2/fan1']):
+            with mock.patch(
+                'glob.glob', return_value=['/sys/class/hwmon/hwmon2/fan1']
+            ):
                 fan = psutil.sensors_fans()['name'][0]
                 self.assertEqual(fan.label, 'label')
                 self.assertEqual(fan.current, 2000)
@@ -1860,19 +1934,18 @@ class TestSensorsFans(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestProcess(PsutilTestCase):
-
     @retry_on_failure()
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_testproc()
         uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
         maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         self.assertAlmostEqual(
-            uss, sum([x.private_dirty + x.private_clean for x in maps]),
-            delta=4096)
-        self.assertAlmostEqual(
-            pss, sum([x.pss for x in maps]), delta=4096)
-        self.assertAlmostEqual(
-            swap, sum([x.swap for x in maps]), delta=4096)
+            uss,
+            sum([x.private_dirty + x.private_clean for x in maps]),
+            delta=4096,
+        )
+        self.assertAlmostEqual(pss, sum([x.pss for x in maps]), delta=4096)
+        self.assertAlmostEqual(swap, sum([x.swap for x in maps]), delta=4096)
 
     def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222
@@ -1953,15 +2026,18 @@ class TestProcess(PsutilTestCase):
         with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
-            with mock.patch('psutil._pslinux.os.readlink',
-                            side_effect=OSError(errno.ENOENT, "")) as m:
-                files = p.open_files()
-                assert not files
+            with mock.patch(
+                'psutil._pslinux.os.readlink',
+                side_effect=OSError(errno.ENOENT, ""),
+            ) as m:
+                self.assertEqual(p.open_files(), [])
                 assert m.called
             # also simulate the case where os.readlink() returns EINVAL
             # in which case psutil is supposed to 'continue'
-            with mock.patch('psutil._pslinux.os.readlink',
-                            side_effect=OSError(errno.EINVAL, "")) as m:
+            with mock.patch(
+                'psutil._pslinux.os.readlink',
+                side_effect=OSError(errno.EINVAL, ""),
+            ) as m:
                 self.assertEqual(p.open_files(), [])
                 assert m.called
 
@@ -1975,10 +2051,10 @@ class TestProcess(PsutilTestCase):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-            with mock.patch(patch_point,
-                            side_effect=IOError(errno.ENOENT, "")) as m:
-                files = p.open_files()
-                assert not files
+            with mock.patch(
+                patch_point, side_effect=IOError(errno.ENOENT, "")
+            ) as m:
+                self.assertEqual(p.open_files(), [])
                 assert m.called
 
     def test_open_files_enametoolong(self):
@@ -1991,18 +2067,19 @@ class TestProcess(PsutilTestCase):
             # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             patch_point = 'psutil._pslinux.os.readlink'
-            with mock.patch(patch_point,
-                            side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
+            with mock.patch(
+                patch_point, side_effect=OSError(errno.ENAMETOOLONG, "")
+            ) as m:
                 with mock.patch("psutil._pslinux.debug"):
-                    files = p.open_files()
-                    assert not files
+                    self.assertEqual(p.open_files(), [])
                     assert m.called
 
     # --- mocked tests
 
     def test_terminal_mocked(self):
-        with mock.patch('psutil._pslinux._psposix.get_terminal_map',
-                        return_value={}) as m:
+        with mock.patch(
+            'psutil._pslinux._psposix.get_terminal_map', return_value={}
+        ) as m:
             self.assertIsNone(psutil._pslinux.Process(os.getpid()).terminal())
             assert m.called
 
@@ -2018,13 +2095,15 @@ class TestProcess(PsutilTestCase):
         # see: https://github.com/giampaolo/psutil/issues/639
         p = psutil.Process()
         fake_file = io.StringIO(u('foo\x00bar\x00'))
-        with mock.patch('psutil._common.open',
-                        return_value=fake_file, create=True) as m:
+        with mock.patch(
+            'psutil._common.open', return_value=fake_file, create=True
+        ) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
         fake_file = io.StringIO(u('foo\x00bar\x00\x00'))
-        with mock.patch('psutil._common.open',
-                        return_value=fake_file, create=True) as m:
+        with mock.patch(
+            'psutil._common.open', return_value=fake_file, create=True
+        ) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
 
@@ -2032,13 +2111,15 @@ class TestProcess(PsutilTestCase):
         # see: https://github.com/giampaolo/psutil/issues/1179
         p = psutil.Process()
         fake_file = io.StringIO(u('foo bar '))
-        with mock.patch('psutil._common.open',
-                        return_value=fake_file, create=True) as m:
+        with mock.patch(
+            'psutil._common.open', return_value=fake_file, create=True
+        ) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
         fake_file = io.StringIO(u('foo bar  '))
-        with mock.patch('psutil._common.open',
-                        return_value=fake_file, create=True) as m:
+        with mock.patch(
+            'psutil._common.open', return_value=fake_file, create=True
+        ) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar', ''])
             assert m.called
 
@@ -2047,14 +2128,16 @@ class TestProcess(PsutilTestCase):
         #    1179#issuecomment-552984549
         p = psutil.Process()
         fake_file = io.StringIO(u('foo\x20bar\x00'))
-        with mock.patch('psutil._common.open',
-                        return_value=fake_file, create=True) as m:
+        with mock.patch(
+            'psutil._common.open', return_value=fake_file, create=True
+        ) as m:
             self.assertEqual(p.cmdline(), ['foo', 'bar'])
             assert m.called
 
     def test_readlink_path_deleted_mocked(self):
-        with mock.patch('psutil._pslinux.os.readlink',
-                        return_value='/home/foo (deleted)'):
+        with mock.patch(
+            'psutil._pslinux.os.readlink', return_value='/home/foo (deleted)'
+        ):
             self.assertEqual(psutil.Process().exe(), "/home/foo")
             self.assertEqual(psutil.Process().cwd(), "/home/foo")
 
@@ -2088,8 +2171,9 @@ class TestProcess(PsutilTestCase):
             self.assertRaises(psutil.AccessDenied, psutil.Process().threads)
 
     def test_exe_mocked(self):
-        with mock.patch('psutil._pslinux.readlink',
-                        side_effect=OSError(errno.ENOENT, "")) as m:
+        with mock.patch(
+            'psutil._pslinux.readlink', side_effect=OSError(errno.ENOENT, "")
+        ) as m:
             ret = psutil.Process().exe()
             assert m.called
             self.assertEqual(ret, "")
@@ -2098,8 +2182,8 @@ class TestProcess(PsutilTestCase):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.
         with mock_open_exception(
-                '/proc/%s/smaps' % os.getpid(),
-                IOError(errno.ENOENT, "")) as m:
+            '/proc/%s/smaps' % os.getpid(), IOError(errno.ENOENT, "")
+        ) as m:
             p = psutil.Process()
             with self.assertRaises(FileNotFoundError):
                 p.memory_maps()
@@ -2110,10 +2194,12 @@ class TestProcess(PsutilTestCase):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:
         # https://travis-ci.org/giampaolo/psutil/jobs/51368273
-        with mock.patch("psutil._pslinux.prlimit",
-                        side_effect=OSError(errno.ENOSYS, "")) as m1:
-            with mock.patch("psutil._pslinux.Process._is_zombie",
-                            return_value=True) as m2:
+        with mock.patch(
+            "psutil._pslinux.prlimit", side_effect=OSError(errno.ENOSYS, "")
+        ) as m1:
+            with mock.patch(
+                "psutil._pslinux.Process._is_zombie", return_value=True
+            ) as m2:
                 p = psutil.Process()
                 p.name()
                 with self.assertRaises(psutil.ZombieProcess) as exc:
@@ -2125,48 +2211,48 @@ class TestProcess(PsutilTestCase):
 
     def test_stat_file_parsing(self):
         args = [
-            "0",      # pid
+            "0",  # pid
             "(cat)",  # name
-            "Z",      # status
-            "1",      # ppid
-            "0",      # pgrp
-            "0",      # session
-            "0",      # tty
-            "0",      # tpgid
-            "0",      # flags
-            "0",      # minflt
-            "0",      # cminflt
-            "0",      # majflt
-            "0",      # cmajflt
-            "2",      # utime
-            "3",      # stime
-            "4",      # cutime
-            "5",      # cstime
-            "0",      # priority
-            "0",      # nice
-            "0",      # num_threads
-            "0",      # itrealvalue
-            "6",      # starttime
-            "0",      # vsize
-            "0",      # rss
-            "0",      # rsslim
-            "0",      # startcode
-            "0",      # endcode
-            "0",      # startstack
-            "0",      # kstkesp
-            "0",      # kstkeip
-            "0",      # signal
-            "0",      # blocked
-            "0",      # sigignore
-            "0",      # sigcatch
-            "0",      # wchan
-            "0",      # nswap
-            "0",      # cnswap
-            "0",      # exit_signal
-            "6",      # processor
-            "0",      # rt priority
-            "0",      # policy
-            "7",      # delayacct_blkio_ticks
+            "Z",  # status
+            "1",  # ppid
+            "0",  # pgrp
+            "0",  # session
+            "0",  # tty
+            "0",  # tpgid
+            "0",  # flags
+            "0",  # minflt
+            "0",  # cminflt
+            "0",  # majflt
+            "0",  # cmajflt
+            "2",  # utime
+            "3",  # stime
+            "4",  # cutime
+            "5",  # cstime
+            "0",  # priority
+            "0",  # nice
+            "0",  # num_threads
+            "0",  # itrealvalue
+            "6",  # starttime
+            "0",  # vsize
+            "0",  # rss
+            "0",  # rsslim
+            "0",  # startcode
+            "0",  # endcode
+            "0",  # startstack
+            "0",  # kstkesp
+            "0",  # kstkeip
+            "0",  # signal
+            "0",  # blocked
+            "0",  # sigignore
+            "0",  # sigcatch
+            "0",  # wchan
+            "0",  # nswap
+            "0",  # cnswap
+            "0",  # exit_signal
+            "6",  # processor
+            "0",  # rt priority
+            "0",  # policy
+            "7",  # delayacct_blkio_ticks
         ]
         content = " ".join(args).encode()
         with mock_open_content({"/proc/%s/stat" % os.getpid(): content}):
@@ -2175,7 +2261,8 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(p.status(), psutil.STATUS_ZOMBIE)
             self.assertEqual(p.ppid(), 1)
             self.assertEqual(
-                p.create_time(), 6 / CLOCK_TICKS + psutil.boot_time())
+                p.create_time(), 6 / CLOCK_TICKS + psutil.boot_time()
+            )
             cpu = p.cpu_times()
             self.assertEqual(cpu.user, 2 / CLOCK_TICKS)
             self.assertEqual(cpu.system, 3 / CLOCK_TICKS)
@@ -2212,11 +2299,13 @@ class TestProcess(PsutilTestCase):
         # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
         # a file with full path longer than PATH_MAX, see:
         # https://github.com/giampaolo/psutil/issues/1940
-        with mock.patch('psutil._pslinux.os.readlink',
-                        side_effect=OSError(errno.ENAMETOOLONG, "")) as m:
+        with mock.patch(
+            'psutil._pslinux.os.readlink',
+            side_effect=OSError(errno.ENAMETOOLONG, ""),
+        ) as m:
             p = psutil.Process()
             with mock.patch("psutil._pslinux.debug"):
-                assert not p.connections()
+                self.assertEqual(p.connections(), [])
                 assert m.called
 
 
@@ -2235,7 +2324,8 @@ class TestProcessAgainstStatus(PsutilTestCase):
 
     def read_status_file(self, linestart):
         with psutil._psplatform.open_text(
-                '/proc/%s/status' % self.proc.pid) as f:
+            '/proc/%s/status' % self.proc.pid
+        ) as f:
             for line in f:
                 line = line.strip()
                 if line.startswith(linestart):
@@ -2252,7 +2342,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
 
     def test_status(self):
         value = self.read_status_file("State:")
-        value = value[value.find('(') + 1:value.rfind(')')]
+        value = value[value.find('(') + 1 : value.rfind(')')]
         value = value.replace(' ', '-')
         self.assertEqual(self.proc.status(), value)
 
@@ -2286,7 +2376,8 @@ class TestProcessAgainstStatus(PsutilTestCase):
         if '-' in str(value):
             min_, max_ = map(int, value.split('-'))
             self.assertEqual(
-                self.proc.cpu_affinity(), list(range(min_, max_ + 1)))
+                self.proc.cpu_affinity(), list(range(min_, max_ + 1))
+            )
 
     def test_cpu_affinity_eligible_cpus(self):
         value = self.read_status_file("Cpus_allowed_list:")
@@ -2305,7 +2396,6 @@ class TestProcessAgainstStatus(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestUtils(PsutilTestCase):
-
     def test_readlink(self):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             self.assertEqual(psutil._psplatform.readlink("bar"), "foo")
@@ -2314,4 +2404,5 @@ class TestUtils(PsutilTestCase):
 
 if __name__ == '__main__':
     from psutil.tests.runner import run_from_name
+
     run_from_name(__file__)

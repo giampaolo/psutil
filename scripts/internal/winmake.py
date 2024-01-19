@@ -93,7 +93,7 @@ def safe_print(text, file=sys.stdout):
 
 def stderr_handle():
     GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
-    STD_ERROR_HANDLE_ID = ctypes.c_ulong(0xfffffff4)
+    STD_ERROR_HANDLE_ID = ctypes.c_ulong(0xFFFFFFF4)
     GetStdHandle.restype = ctypes.c_ulong
     handle = GetStdHandle(STD_ERROR_HANDLE_ID)
     atexit.register(ctypes.windll.Kernel32.CloseHandle, handle)
@@ -114,7 +114,9 @@ def win_colorprint(s, color=LIGHTBLUE):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    p = subprocess.Popen(cmd, shell=True, env=os.environ, cwd=os.getcwd())  # noqa
+    p = subprocess.Popen(
+        cmd, shell=True, env=os.environ, cwd=os.getcwd()  # noqa
+    )
     p.communicate()
     if p.returncode != 0:
         sys.exit(p.returncode)
@@ -122,6 +124,7 @@ def sh(cmd, nolog=False):
 
 def rm(pattern, directory=False):
     """Recursively remove a file or dir by pattern."""
+
     def safe_remove(path):
         try:
             os.remove(path)
@@ -394,6 +397,12 @@ def test_process():
     sh("%s psutil\\tests\\test_process.py" % PYTHON)
 
 
+def test_process_all():
+    """Run process all tests."""
+    build()
+    sh("%s psutil\\tests\\test_process_all.py" % PYTHON)
+
+
 def test_system():
     """Run system tests."""
     build()
@@ -458,9 +467,11 @@ def install_git_hooks():
     """Install GIT pre-commit hook."""
     if os.path.isdir('.git'):
         src = os.path.join(
-            ROOT_DIR, "scripts", "internal", "git_pre_commit.py")
+            ROOT_DIR, "scripts", "internal", "git_pre_commit.py"
+        )
         dst = os.path.realpath(
-            os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit"))
+            os.path.join(ROOT_DIR, ".git", "hooks", "pre-commit")
+        )
         with open(src) as s:
             with open(dst, "w") as d:
                 d.write(s.read())
@@ -490,8 +501,10 @@ def print_api_speed():
 
 def download_appveyor_wheels():
     """Download appveyor wheels."""
-    sh("%s -Wa scripts\\internal\\download_wheels_appveyor.py "
-       "--user giampaolo --project psutil" % PYTHON)
+    sh(
+        "%s -Wa scripts\\internal\\download_wheels_appveyor.py "
+        "--user giampaolo --project psutil" % PYTHON
+    )
 
 
 def generate_manifest():
@@ -510,23 +523,15 @@ def get_python(path):
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
     vers = (
-        '26',
-        '26-32',
-        '26-64',
         '27',
         '27-32',
         '27-64',
-        '36',
-        '36-32',
-        '36-64',
-        '37',
-        '37-32',
-        '37-64',
-        '38',
-        '38-32',
-        '38-64',
-        '39-32',
-        '39-64',
+        '310-32',
+        '310-64',
+        '311-32',
+        '311-64',
+        '312-32',
+        '312-64',
     )
     for v in vers:
         pypath = r'C:\\python%s\python.exe' % v
@@ -537,9 +542,7 @@ def get_python(path):
 def parse_args():
     parser = argparse.ArgumentParser()
     # option shared by all commands
-    parser.add_argument(
-        '-p', '--python',
-        help="use python executable path")
+    parser.add_argument('-p', '--python', help="use python executable path")
     sp = parser.add_subparsers(dest='command', title='targets')
     sp.add_parser('bench-oneshot', help="benchmarks for oneshot()")
     sp.add_parser('bench-oneshot_2', help="benchmarks for oneshot() (perf)")
@@ -559,12 +562,14 @@ def parse_args():
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
     sp.add_parser('test-connections', help="run connections tests")
     sp.add_parser('test-contracts', help="run contracts tests")
-    sp.add_parser('test-last-failed',
-                  help="re-run tests which failed on last run")
+    sp.add_parser(
+        'test-last-failed', help="re-run tests which failed on last run"
+    )
     sp.add_parser('test-memleaks', help="run memory leaks tests")
     sp.add_parser('test-misc', help="run misc tests")
     sp.add_parser('test-platform', help="run windows only tests")
     sp.add_parser('test-process', help="run process tests")
+    sp.add_parser('test-process-all', help="run process all tests")
     sp.add_parser('test-system', help="run system tests")
     sp.add_parser('test-unicode', help="run unicode tests")
     sp.add_parser('test-testutils', help="run test utils tests")
@@ -591,7 +596,8 @@ def main():
     PYTHON = get_python(args.python)
     if not PYTHON:
         return sys.exit(
-            "can't find any python installation matching %r" % args.python)
+            "can't find any python installation matching %r" % args.python
+        )
     os.putenv('PYTHON', PYTHON)
     win_colorprint("using " + PYTHON)
 

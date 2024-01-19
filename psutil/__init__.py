@@ -145,6 +145,7 @@ else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
+# fmt: off
 __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
@@ -191,6 +192,7 @@ __all__ = [
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
 ]
+# fmt: on
 
 
 __all__.extend(_psplatform.__extra__all__)
@@ -225,18 +227,25 @@ _SENTINEL = object()
 # was compiled for a different version of psutil.
 # We want to prevent that by failing sooner rather than later.
 # See: https://github.com/giampaolo/psutil/issues/564
-if (int(__version__.replace('.', '')) !=
-        getattr(_psplatform.cext, 'version', None)):
+if int(__version__.replace('.', '')) != getattr(
+    _psplatform.cext, 'version', None
+):
     msg = "version conflict: %r C extension " % _psplatform.cext.__file__
     msg += "module was built for another version of psutil"
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
-            '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
+            '.'.join([x for x in str(_psplatform.cext.version)]),
+            __version__,
+        )
     else:
         msg += " (different than %s)" % __version__
     msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
-        getattr(_psplatform.cext, "__file__",
-                "the existing psutil install directory"))
+        getattr(
+            _psplatform.cext,
+            "__file__",
+            "the existing psutil install directory",
+        )
+    )
     msg += " or clean the virtual env somehow, then reinstall"
     raise ImportError(msg)
 
@@ -250,6 +259,7 @@ if hasattr(_psplatform, 'ppid_map'):
     # Faster version (Windows and Linux).
     _ppid_map = _psplatform.ppid_map
 else:  # pragma: no cover
+
     def _ppid_map():
         """Return a {pid: ppid, ...} dict for all running processes in
         one shot. Used to speed up Process.children().
@@ -317,17 +327,16 @@ class Process(object):  # noqa: UP004
             pid = os.getpid()
         else:
             if not _PY3 and not isinstance(pid, (int, long)):
-                raise TypeError('pid must be an integer (got %r)' % pid)
+                msg = "pid must be an integer (got %r)" % pid
+                raise TypeError(msg)
             if pid < 0:
-                raise ValueError('pid must be a positive integer (got %s)'
-                                 % pid)
+                msg = "pid must be a positive integer (got %s)" % pid
+                raise ValueError(msg)
             try:
                 _psplatform.cext.check_pid_range(pid)
             except OverflowError:
-                raise NoSuchProcess(
-                    pid,
-                    msg='process PID out of range (got %s)' % pid,
-                )
+                msg = "process PID out of range (got %s)" % pid
+                raise NoSuchProcess(pid, msg=msg)
 
         self._pid = pid
         self._name = None
@@ -359,7 +368,8 @@ class Process(object):  # noqa: UP004
             pass
         except NoSuchProcess:
             if not _ignore_nsp:
-                raise NoSuchProcess(pid, msg='process PID not found')
+                msg = "process PID not found"
+                raise NoSuchProcess(pid, msg=msg)
             else:
                 self._gone = True
         # This pair is supposed to identify a Process instance
@@ -390,7 +400,8 @@ class Process(object):  # noqa: UP004
             return "%s.%s(%s)" % (
                 self.__class__.__module__,
                 self.__class__.__name__,
-                ", ".join(["%s=%r" % (k, v) for k, v in info.items()]))
+                ", ".join(["%s=%r" % (k, v) for k, v in info.items()]),
+            )
 
     __repr__ = __str__
 
@@ -523,13 +534,16 @@ class Process(object):  # noqa: UP004
         valid_names = _as_dict_attrnames
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
-                raise TypeError("invalid attrs type %s" % type(attrs))
+                msg = "invalid attrs type %s" % type(attrs)
+                raise TypeError(msg)
             attrs = set(attrs)
             invalid_names = attrs - valid_names
             if invalid_names:
-                raise ValueError("invalid attr name%s %s" % (
+                msg = "invalid attr name%s %s" % (
                     "s" if len(invalid_names) > 1 else "",
-                    ", ".join(map(repr, invalid_names))))
+                    ", ".join(map(repr, invalid_names)),
+                )
+                raise ValueError(msg)
 
         retdict = {}
         ls = attrs or valid_names
@@ -663,6 +677,7 @@ class Process(object):  # noqa: UP004
         May also be an empty string.
         The return value is cached after first call.
         """
+
         def guess_it(fallback):
             # try to guess exe from cmdline[0] in absence of a native
             # exe representation
@@ -672,9 +687,11 @@ class Process(object):  # noqa: UP004
                 # Attempt to guess only in case of an absolute path.
                 # It is not safe otherwise as the process might have
                 # changed cwd.
-                if (os.path.isabs(exe) and
-                        os.path.isfile(exe) and
-                        os.access(exe, os.X_OK)):
+                if (
+                    os.path.isabs(exe)
+                    and os.path.isfile(exe)
+                    and os.access(exe, os.X_OK)
+                ):
                     return exe
             if isinstance(fallback, AccessDenied):
                 raise fallback
@@ -1006,7 +1023,8 @@ class Process(object):  # noqa: UP004
         """
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
-            raise ValueError("interval is not positive (got %r)" % interval)
+            msg = "interval is not positive (got %r)" % interval
+            raise ValueError(msg)
         num_cpus = cpu_count() or 1
 
         def timer():
@@ -1038,7 +1056,7 @@ class Process(object):  # noqa: UP004
             # This is the utilization split evenly between all CPUs.
             # E.g. a busy loop process on a 2-CPU-cores system at this
             # point is reported as 50% instead of 100%.
-            overall_cpus_percent = ((delta_proc / delta_time) * 100)
+            overall_cpus_percent = (delta_proc / delta_time) * 100
         except ZeroDivisionError:
             # interval was too low
             return 0.0
@@ -1115,10 +1133,16 @@ class Process(object):  # noqa: UP004
         """
         valid_types = list(_psplatform.pfullmem._fields)
         if memtype not in valid_types:
-            raise ValueError("invalid memtype %r; valid types are %r" % (
-                memtype, tuple(valid_types)))
-        fun = self.memory_info if memtype in _psplatform.pmem._fields else \
-            self.memory_full_info
+            msg = "invalid memtype %r; valid types are %r" % (
+                memtype,
+                tuple(valid_types),
+            )
+            raise ValueError(msg)
+        fun = (
+            self.memory_info
+            if memtype in _psplatform.pmem._fields
+            else self.memory_full_info
+        )
         metrics = fun()
         value = getattr(metrics, memtype)
 
@@ -1126,13 +1150,15 @@ class Process(object):  # noqa: UP004
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         if not total_phymem > 0:
             # we should never get here
-            raise ValueError(
-                "can't calculate process memory percent because "
-                "total physical system memory is not positive (%r)"
-                % total_phymem)
+            msg = (
+                "can't calculate process memory percent because total physical"
+                " system memory is not positive (%r)" % (total_phymem)
+            )
+            raise ValueError(msg)
         return (value / float(total_phymem)) * 100
 
     if hasattr(_psplatform.Process, "memory_maps"):
+
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.
@@ -1194,6 +1220,7 @@ class Process(object):  # noqa: UP004
     # --- signals
 
     if POSIX:
+
         def _send_signal(self, sig):
             assert not self.pid < 0, self.pid
             self._raise_if_pid_reused()
@@ -1300,11 +1327,13 @@ class Process(object):  # noqa: UP004
 
 
 # The valid attr names which can be processed by Process.as_dict().
+# fmt: off
 _as_dict_attrnames = set(
     [x for x in dir(Process) if not x.startswith('_') and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
       'memory_info_ex', 'oneshot'}])
+# fmt: on
 
 
 # =====================================================================
@@ -1380,8 +1409,11 @@ class Popen(Process):
             try:
                 return object.__getattribute__(self.__subproc, name)
             except AttributeError:
-                raise AttributeError("%s instance has no attribute '%s'"
-                                     % (self.__class__.__name__, name))
+                msg = "%s instance has no attribute '%s'" % (
+                    self.__class__.__name__,
+                    name,
+                )
+                raise AttributeError(msg)
 
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
@@ -1478,7 +1510,8 @@ def process_iter(attrs=None, ad_value=None):
                     if proc.is_running():
                         if attrs is not None:
                             proc.info = proc.as_dict(
-                                attrs=attrs, ad_value=ad_value)
+                                attrs=attrs, ad_value=ad_value
+                            )
                         yield proc
                     else:
                         yield add(pid)
@@ -1537,6 +1570,7 @@ def wait_procs(procs, timeout=None, callback=None):
     >>> for p in alive:
     ...     p.kill()
     """
+
     def check_gone(proc, timeout):
         try:
             returncode = proc.wait(timeout=timeout)
@@ -1558,7 +1592,8 @@ def wait_procs(procs, timeout=None, callback=None):
     gone = set()
     alive = set(procs)
     if callback is not None and not callable(callback):
-        raise TypeError("callback %r is not a callable" % callable)
+        msg = "callback %r is not a callable" % callback
+        raise TypeError(msg)
     if timeout is not None:
         deadline = _timer() + timeout
 
@@ -1650,7 +1685,7 @@ def cpu_times(percpu=False):
 
 try:
     _last_cpu_times = {threading.current_thread().ident: cpu_times()}
-except Exception:
+except Exception:  # noqa: BLE001
     # Don't want to crash at import time.
     _last_cpu_times = {}
 
@@ -1658,7 +1693,7 @@ try:
     _last_per_cpu_times = {
         threading.current_thread().ident: cpu_times(percpu=True)
     }
-except Exception:
+except Exception:  # noqa: BLE001
     # Don't want to crash at import time.
     _last_per_cpu_times = {}
 
@@ -1757,7 +1792,8 @@ def cpu_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        raise ValueError("interval is not positive (got %r)" % interval)
+        msg = "interval is not positive (got %r)" % interval
+        raise ValueError(msg)
 
     def calculate(t1, t2):
         times_delta = _cpu_times_deltas(t1, t2)
@@ -1816,7 +1852,8 @@ def cpu_times_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        raise ValueError("interval is not positive (got %r)" % interval)
+        msg = "interval is not positive (got %r)" % interval
+        raise ValueError(msg)
 
     def calculate(t1, t2):
         nums = []
@@ -2021,6 +2058,7 @@ def disk_partitions(all=False):
     If *all* parameter is False return physical devices only and ignore
     all others.
     """
+
     def pathconf(path, name):
         try:
             return os.pathconf(path, name)
@@ -2033,7 +2071,8 @@ def disk_partitions(all=False):
         for item in ret:
             nt = item._replace(
                 maxfile=pathconf(item.mountpoint, 'PC_NAME_MAX'),
-                maxpath=pathconf(item.mountpoint, 'PC_PATH_MAX'))
+                maxpath=pathconf(item.mountpoint, 'PC_PATH_MAX'),
+            )
             new.append(nt)
         return new
     else:
@@ -2088,7 +2127,8 @@ def disk_io_counters(perdisk=False, nowrap=True):
 
 
 disk_io_counters.cache_clear = functools.partial(
-    _wrap_numbers.cache_clear, 'psutil.disk_io_counters')
+    _wrap_numbers.cache_clear, 'psutil.disk_io_counters'
+)
 disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 
 
@@ -2137,7 +2177,8 @@ def net_io_counters(pernic=False, nowrap=True):
 
 
 net_io_counters.cache_clear = functools.partial(
-    _wrap_numbers.cache_clear, 'psutil.net_io_counters')
+    _wrap_numbers.cache_clear, 'psutil.net_io_counters'
+)
 net_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 
 
@@ -2201,8 +2242,10 @@ def net_if_addrs():
             except ValueError:
                 if WINDOWS and fam == -1:
                     fam = _psplatform.AF_LINK
-                elif (hasattr(_psplatform, "AF_LINK") and
-                        fam == _psplatform.AF_LINK):
+                elif (
+                    hasattr(_psplatform, "AF_LINK")
+                    and fam == _psplatform.AF_LINK
+                ):
                     # Linux defines AF_LINK as an alias for AF_PACKET.
                     # We re-set the family here so that repr(family)
                     # will show AF_LINK rather than AF_PACKET
@@ -2249,6 +2292,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
         All temperatures are expressed in celsius unless *fahrenheit*
         is set to True.
         """
+
         def convert(n):
             if n is not None:
                 return (float(n) * 9 / 5) + 32 if fahrenheit else n
@@ -2269,7 +2313,8 @@ if hasattr(_psplatform, "sensors_temperatures"):
                     high = critical
 
                 ret[name].append(
-                    _common.shwtemp(label, current, high, critical))
+                    _common.shwtemp(label, current, high, critical)
+                )
 
         return dict(ret)
 
@@ -2360,6 +2405,7 @@ def _set_debug(value):
     messages to stderr.
     """
     import psutil._common
+
     psutil._common.PSUTIL_DEBUG = bool(value)
     _psplatform.cext.set_debug(bool(value))
 
@@ -2369,11 +2415,13 @@ def test():  # pragma: no cover
     from ._compat import get_terminal_size
 
     today_day = datetime.date.today()
+    # fmt: off
     templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
     attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
     print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",  # NOQA
                    "STATUS", "START", "TIME", "CMDLINE"))
+    # fmt: on
     for p in process_iter(attrs, ad_value=None):
         if p.info['create_time']:
             ctime = datetime.datetime.fromtimestamp(p.info['create_time'])
@@ -2384,8 +2432,9 @@ def test():  # pragma: no cover
         else:
             ctime = ''
         if p.info['cpu_times']:
-            cputime = time.strftime("%M:%S",
-                                    time.localtime(sum(p.info['cpu_times'])))
+            cputime = time.strftime(
+                "%M:%S", time.localtime(sum(p.info['cpu_times']))
+            )
         else:
             cputime = ''
 
@@ -2398,12 +2447,21 @@ def test():  # pragma: no cover
         if user and WINDOWS and '\\' in user:
             user = user.split('\\')[1]
         user = user[:9]
-        vms = bytes2human(p.info['memory_info'].vms) if \
-            p.info['memory_info'] is not None else ''
-        rss = bytes2human(p.info['memory_info'].rss) if \
-            p.info['memory_info'] is not None else ''
-        memp = round(p.info['memory_percent'], 1) if \
-            p.info['memory_percent'] is not None else ''
+        vms = (
+            bytes2human(p.info['memory_info'].vms)
+            if p.info['memory_info'] is not None
+            else ''
+        )
+        rss = (
+            bytes2human(p.info['memory_info'].rss)
+            if p.info['memory_info'] is not None
+            else ''
+        )
+        memp = (
+            round(p.info['memory_percent'], 1)
+            if p.info['memory_percent'] is not None
+            else ''
+        )
         nice = int(p.info['nice']) if p.info['nice'] else ''
         if p.info['cmdline']:
             cmdline = ' '.join(p.info['cmdline'])
@@ -2421,8 +2479,9 @@ def test():  # pragma: no cover
             status,
             ctime,
             cputime,
-            cmdline)
-        print(line[:get_terminal_size()[0]])  # NOQA
+            cmdline,
+        )
+        print(line[: get_terminal_size()[0]])  # NOQA
 
 
 del memoize_when_activated, division

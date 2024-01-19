@@ -9,6 +9,7 @@ TSCRIPT = psutil/tests/runner.py
 
 # Internal.
 PY3_DEPS = \
+	black \
 	check-manifest \
 	concurrencytest \
 	coverage \
@@ -18,6 +19,7 @@ PY3_DEPS = \
 	pypinfo \
 	requests \
 	rstcheck \
+	ruff \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
@@ -138,6 +140,10 @@ test-process:  ## Run process-related API tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process.py
 
+test-process-all:  ## Run tests which iterate over all process PIDs.
+	${MAKE} build
+	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process_all.py
+
 test-system:  ## Run system-related API tests.
 	${MAKE} build
 	$(TEST_PREFIX) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_system.py
@@ -193,7 +199,10 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 ruff:  ## Run ruff linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --config=pyproject.toml --no-cache
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache
+
+black:  ## Python files linting (via black)
+	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 _pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
@@ -208,6 +217,7 @@ lint-toml:  ## Linter for pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-all:  ## Run all linters
+	${MAKE} black
 	${MAKE} ruff
 	${MAKE} lint-c
 	${MAKE} lint-rst
@@ -217,8 +227,11 @@ lint-all:  ## Run all linters
 # Fixers
 # ===================================================================
 
+fix-black:
+	git ls-files '*.py' | xargs $(PYTHON) -m black
+
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --config=pyproject.toml --no-cache --fix
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --no-cache --fix
 
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
@@ -228,6 +241,7 @@ fix-toml:  ## Fix pyproject.toml
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
+	${MAKE} fix-black
 	${MAKE} fix-unittests
 	${MAKE} fix-toml
 

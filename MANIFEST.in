@@ -7,6 +7,7 @@ include LICENSE
 include MANIFEST.in
 include Makefile
 include README.rst
+include SECURITY.md
 include docs/.readthedocs.yaml
 include docs/DEVGUIDE.rst
 include docs/DEVNOTES
@@ -163,6 +164,7 @@ include psutil/tests/test_misc.py
 include psutil/tests/test_osx.py
 include psutil/tests/test_posix.py
 include psutil/tests/test_process.py
+include psutil/tests/test_process_all.py
 include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
 include psutil/tests/test_testutils.py

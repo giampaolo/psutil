@@ -136,7 +136,8 @@ def main():
     global TIMES
 
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument('-t', '--times', type=int, default=TIMES)
     args = parser.parse_args()
     TIMES = args.times
@@ -152,8 +153,12 @@ def main():
     # --- system
 
     public_apis = []
-    ignore = ['wait_procs', 'process_iter', 'win_service_get',
-              'win_service_iter']
+    ignore = [
+        'wait_procs',
+        'process_iter',
+        'win_service_get',
+        'win_service_iter',
+    ]
     if psutil.MACOS:
         ignore.append('net_connections')  # raises AD
     for name in psutil.__all__:
@@ -167,9 +172,9 @@ def main():
         fun = getattr(psutil, name)
         args = ()
         if name == 'pid_exists':
-            args = (os.getpid(), )
+            args = (os.getpid(),)
         elif name == 'disk_usage':
-            args = (os.getcwd(), )
+            args = (os.getcwd(),)
         timecall(name, fun, *args)
     timecall('cpu_count (cores)', psutil.cpu_count, logical=False)
     timecall('process_iter (all)', lambda: list(psutil.process_iter()))
@@ -178,9 +183,22 @@ def main():
     # --- process
     print("")
     print_header("PROCESS APIS")
-    ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-              'as_dict', 'parent', 'parents', 'memory_info_ex', 'oneshot',
-              'pid', 'rlimit', 'children']
+    ignore = [
+        'send_signal',
+        'suspend',
+        'resume',
+        'terminate',
+        'kill',
+        'wait',
+        'as_dict',
+        'parent',
+        'parents',
+        'memory_info_ex',
+        'oneshot',
+        'pid',
+        'rlimit',
+        'children',
+    ]
     if psutil.MACOS:
         ignore.append('memory_maps')  # XXX
     p = psutil.Process()

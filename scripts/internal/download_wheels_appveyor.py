@@ -40,7 +40,7 @@ def download_file(url):
     tot_bytes = 0
     with open(local_fname, 'wb') as f:
         for chunk in r.iter_content(chunk_size=16384):
-            if chunk:    # filter out keep-alive new chunks
+            if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
                 tot_bytes += len(chunk)
     return local_fname
@@ -49,8 +49,8 @@ def download_file(url):
 def get_file_urls():
     with requests.Session() as session:
         data = session.get(
-            BASE_URL + '/projects/' + USER + '/' + PROJECT,
-            timeout=TIMEOUT)
+            BASE_URL + '/projects/' + USER + '/' + PROJECT, timeout=TIMEOUT
+        )
         data = data.json()
 
         urls = []
@@ -96,8 +96,10 @@ def run():
                 raise
             else:
                 completed += 1
-                print("downloaded %-45s %s" % (
-                    local_fname, bytes2human(os.path.getsize(local_fname))))
+                print(
+                    "downloaded %-45s %s"
+                    % (local_fname, bytes2human(os.path.getsize(local_fname)))
+                )
     # 2 wheels (32 and 64 bit) per supported python version
     expected = len(PY_VERSIONS) * 2
     if expected != completed:

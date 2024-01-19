@@ -80,12 +80,13 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     global lineno
 
     # totals
-    printl("total bytes:           sent: %-10s   received: %s" % (
-        bytes2human(tot_after.bytes_sent),
-        bytes2human(tot_after.bytes_recv))
+    printl(
+        "total bytes:           sent: %-10s   received: %s"
+        % (
+            bytes2human(tot_after.bytes_sent),
+            bytes2human(tot_after.bytes_recv),
+        )
     )
-    printl("total packets:         sent: %-10s   received: %s" % (
-        tot_after.packets_sent, tot_after.packets_recv))
 
     # per-network interface details: let's sort network interfaces so
     # that the ones which generated more traffic are shown first
@@ -96,6 +97,7 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
         stats_before = pnic_before[name]
         stats_after = pnic_after[name]
         templ = "%-15s %15s %15s"
+        # fmt: off
         printl(templ % (name, "TOTAL", "PER-SEC"), highlight=True)
         printl(templ % (
             "bytes-sent",
@@ -120,6 +122,7 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
             stats_after.packets_recv - stats_before.packets_recv,
         ))
         printl("")
+        # fmt: on
     win.refresh()
     lineno = 0
 
