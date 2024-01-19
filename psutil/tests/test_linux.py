@@ -1239,7 +1239,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
 
         def parse_findmnt(out):
             ls = []
-            out = sh(["findmnt", "--all", "--list", "--nofsroot"])
+            out = sh(["findmnt", "--list", "--nofsroot"])
             for line in out.splitlines()[1:]:
                 mountpoint, device, fstype, opts = line.split()
                 ls.append((device, mountpoint, fstype, opts))
