@@ -150,6 +150,7 @@ Supporters
       <a href="https://github.com/robusta-dev"><img height="40" width="40" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
       <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
       <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
+      <a href="https://github.com/c0m4r"><img height="40" width="40" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
 
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>

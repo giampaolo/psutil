@@ -1,5 +1,12 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.9.9 (IN DEVELOPMENT)
+======================
+
+**Bug fixes**
+
+- 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
+
 5.9.8
 =====
 
