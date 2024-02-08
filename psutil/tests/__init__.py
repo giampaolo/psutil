@@ -56,7 +56,6 @@ from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import range
 from psutil._compat import super
-from psutil._compat import u
 from psutil._compat import unicode
 from psutil._compat import which
 
@@ -186,7 +185,7 @@ if os.name == 'java':
     TESTFN_PREFIX = '$psutil-%s-' % os.getpid()
 else:
     TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
-UNICODE_SUFFIX = u("-ƒőő")
+UNICODE_SUFFIX = u"-ƒőő"
 # An invalid unicode string.
 if PY3:
     INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')

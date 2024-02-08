@@ -23,7 +23,7 @@ __all__ = [
     # builtins
     "long", "range", "super", "unicode", "basestring",
     # literals
-    "u", "b",
+    "b",
     # collections module
     "lru_cache",
     # shutil module
@@ -47,9 +47,6 @@ if PY3:
     basestring = str
     range = range
 
-    def u(s):
-        return s
-
     def b(s):
         return s.encode("latin-1")
 
@@ -58,9 +55,6 @@ else:
     range = xrange
     unicode = unicode
     basestring = basestring
-
-    def u(s):
-        return unicode(s, "unicode_escape")
 
     def b(s):
         return s

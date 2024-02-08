@@ -93,6 +93,7 @@ ignore = [
     "UP009",  # [*] UTF-8 encoding declaration is unnecessary (PYTHON2.7 COMPAT)
     "UP010",  # [*] Unnecessary `__future__` import `print_function` for target Python version (PYTHON2.7 COMPAT)
     "UP024",  # [*] Replace aliased errors with `OSError` (PYTHON2.7 COMPAT)
+    "UP025",  # [*] Remove unicode literals from strings (PYTHON2.7 COMPAT)
     "UP028",  # [*] Replace `yield` over `for` loop with `yield from` (PYTHON2.7 COMPAT)
     "UP031",  # [*] Use format specifiers instead of percent format
     "UP032",  # [*] Use f-string instead of `format` call (PYTHON2.7 COMPAT)

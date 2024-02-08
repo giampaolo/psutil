@@ -85,7 +85,6 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import super
-from psutil._compat import u
 from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
@@ -190,7 +189,7 @@ class TestFSAPIs(BaseUnicodeTest):
     def expect_exact_path_match(self):
         # Do not expect psutil to correctly handle unicode paths on
         # Python 2 if os.listdir() is not able either.
-        here = '.' if isinstance(self.funky_name, str) else u('.')
+        here = '.' if isinstance(self.funky_name, str) else u'.'
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             return self.funky_name in os.listdir(here)
