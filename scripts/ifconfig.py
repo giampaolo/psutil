@@ -111,7 +111,7 @@ def main():
                 print("         netmask   : %s" % addr.netmask)
             if addr.ptp:
                 print("      p2p       : %s" % addr.ptp)
-        print("")
+        print()
 
 
 if __name__ == '__main__':

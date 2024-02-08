@@ -965,7 +965,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(
                 p.cpu_affinity(), list(os.sched_getaffinity(p.pid))
             )
-        #
+
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
         # it should work with all iterables, not only lists
@@ -1344,7 +1344,7 @@ class TestProcess(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_zombie_process(self):
-        parent, zombie = self.spawn_zombie()
+        _parent, zombie = self.spawn_zombie()
         self.assertProcessZombie(zombie)
 
     @unittest.skipIf(not POSIX, 'POSIX only')

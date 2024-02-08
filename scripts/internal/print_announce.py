@@ -6,6 +6,7 @@
 
 """Prints release announce based on HISTORY.rst file content.
 See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
+
 """
 
 import os

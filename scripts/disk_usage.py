@@ -12,6 +12,7 @@ Device               Total     Used     Free  Use %      Type  Mount
 /dev/sda6           345.9G    83.8G   244.5G    24%      ext4  /home
 /dev/sda1           296.0M    43.1M   252.9M    14%      vfat  /boot/efi
 /dev/sda2           600.0M   312.4M   287.6M    52%   fuseblk  /media/Recovery
+
 """
 
 import os
@@ -26,7 +27,7 @@ def main():
     print(templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount"))
     for part in psutil.disk_partitions(all=False):
         if os.name == 'nt':
-            if 'cdrom' in part.opts or part.fstype == '':
+            if 'cdrom' in part.opts or not part.fstype:
                 # skip cd-rom drives with no disk in it; they may raise
                 # ENOENT, pop-up a Windows GUI error for a non-ready
                 # partition or just hang.

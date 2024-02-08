@@ -181,7 +181,7 @@ def main():
     print_timings()
 
     # --- process
-    print("")
+    print()
     print_header("PROCESS APIS")
     ignore = [
         'send_signal',

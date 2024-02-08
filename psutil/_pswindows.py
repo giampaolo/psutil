@@ -239,7 +239,6 @@ def virtual_memory():
     """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
     totphys, availphys, totsys, availsys = mem
-    #
     total = totphys
     avail = availphys
     free = availphys
@@ -515,7 +514,7 @@ def win_service_get(name):
     return service
 
 
-class WindowsService:
+class WindowsService:  # noqa: PLW1641
     """Represents an installed Windows service."""
 
     def __init__(self, name, display_name):

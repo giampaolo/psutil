@@ -52,7 +52,7 @@ def main():
         )
         print(s)
         print("binpath: %s" % info['binpath'])
-        print("")
+        print()
 
 
 if __name__ == '__main__':

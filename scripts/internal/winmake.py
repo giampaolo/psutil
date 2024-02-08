@@ -138,7 +138,7 @@ def rm(pattern, directory=False):
         def onerror(fun, path, excinfo):
             exc = excinfo[1]
             if exc.errno != errno.ENOENT:
-                raise
+                raise  # noqa: PLE0704
 
         existed = os.path.isdir(path)
         shutil.rmtree(path, onerror=onerror)
@@ -181,7 +181,7 @@ def safe_rmtree(path):
     def onerror(fun, path, excinfo):
         exc = excinfo[1]
         if exc.errno != errno.ENOENT:
-            raise
+            raise  # noqa: PLE0704
 
     existed = os.path.isdir(path)
     shutil.rmtree(path, onerror=onerror)

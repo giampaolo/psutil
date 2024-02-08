@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-#
+
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
 # psutil documentation build configuration file, created by
 # sphinx-quickstart on Wed Oct 19 21:54:30 2016.
 #

@@ -65,7 +65,7 @@ def get_file_urls():
             print_color("no artifacts found", 'red')
             sys.exit(1)
         else:
-            for url in sorted(urls, key=lambda x: os.path.basename(x)):
+            for url in sorted(urls, key=os.path.basename):
                 yield url
 
 

@@ -32,6 +32,7 @@ PID     User    Cmdline                            USS     PSS    Swap     RSS
 20513   giampao /opt/sublime_text/sublime_text   65.8M   73.0M      0B   87.9M
 3976    giampao compiz                          115.0M  117.0M      0B  130.9M
 32486   giampao skype                           145.1M  147.5M      0B  149.6M
+
 """
 
 from __future__ import print_function
@@ -89,8 +90,8 @@ def main():
             p.pid,
             p._info["username"][:7] if p._info["username"] else "",
             convert_bytes(p._uss),
-            convert_bytes(p._pss) if p._pss != "" else "",
-            convert_bytes(p._swap) if p._swap != "" else "",
+            convert_bytes(p._pss) if p._pss else "",
+            convert_bytes(p._swap) if p._swap else "",
             convert_bytes(p._rss),
             cmd,
         )

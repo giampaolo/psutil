@@ -1342,7 +1342,6 @@ class TestSystemDiskIoCounters(PsutilTestCase):
                 ret = psutil.disk_io_counters(perdisk=False, nowrap=False)
                 self.assertIsNone(ret)
 
-        #
         def is_storage_device(name):
             return name == 'nvme0n1'
 
@@ -1936,7 +1935,6 @@ class TestProcess(PsutilTestCase):
                         break
             raise RuntimeError("timeout looking for test file")
 
-        #
         testfn = self.get_testfn()
         with open(testfn, "w"):
             self.assertEqual(get_test_file(testfn).mode, "w")
@@ -1944,7 +1942,6 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(get_test_file(testfn).mode, "r")
         with open(testfn, "a"):
             self.assertEqual(get_test_file(testfn).mode, "a")
-        #
         with open(testfn, "r+"):
             self.assertEqual(get_test_file(testfn).mode, "r+")
         with open(testfn, "w+"):

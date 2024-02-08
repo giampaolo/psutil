@@ -60,7 +60,6 @@ else:
 
 # fmt: off
 __extra__all__ = [
-    #
     'PROCFS_PATH',
     # io prio constants
     "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
@@ -1355,7 +1354,7 @@ def disk_partitions(all=False):
         if device in ("/dev/root", "rootfs"):
             device = RootFsDeviceFinder().find() or device
         if not all:
-            if device == '' or fstype not in fstypes:
+            if not device or fstype not in fstypes:
                 continue
         maxfile = maxpath = None  # set later
         ntuple = _common.sdiskpart(

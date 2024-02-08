@@ -344,7 +344,7 @@ class TestCpuAPIs(PsutilTestCase):
         self.assertIsNotNone(logical)
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
-        #
+
         if os.path.exists("/proc/cpuinfo"):
             with open("/proc/cpuinfo") as fd:
                 cpuinfo_data = fd.read()
