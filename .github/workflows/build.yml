@@ -18,7 +18,7 @@ concurrency:
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
-    name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'windows') && matrix.archs || 'all' }}
+    name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'ubuntu') && 'all' || matrix.archs }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -28,7 +28,9 @@ jobs:
         - os: ubuntu-latest
           archs: "x86_64 i686"
         - os: macos-12
-          archs: "x86_64 arm64"
+          archs: "x86_64"
+        - os: macos-14
+          archs: "arm64"
         - os: windows-2019
           archs: "AMD64"
         - os: windows-2019
@@ -40,7 +42,7 @@ jobs:
         python-version: 3.11
 
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.16.5
+      uses: pypa/cibuildwheel@v2.17.0
       env:
         CIBW_ARCHS: "${{ matrix.archs }}"
         CIBW_PRERELEASE_PYTHONS: True
