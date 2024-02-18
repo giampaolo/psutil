@@ -869,25 +869,29 @@ class RemoteProcessTestCase(PsutilTestCase):
 @unittest.skipIf(not WINDOWS, "WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
-        valid_statuses = set([
-            "running",
-            "paused",
-            "start",
-            "pause",
-            "continue",
-            "stop",
-            "stopped",
-        ])
+        valid_statuses = set(
+            [
+                "running",
+                "paused",
+                "start",
+                "pause",
+                "continue",
+                "stop",
+                "stopped",
+            ]
+        )
         valid_start_types = set(["automatic", "manual", "disabled"])
-        valid_statuses = set([
-            "running",
-            "paused",
-            "start_pending",
-            "pause_pending",
-            "continue_pending",
-            "stop_pending",
-            "stopped",
-        ])
+        valid_statuses = set(
+            [
+                "running",
+                "paused",
+                "start_pending",
+                "pause_pending",
+                "continue_pending",
+                "stop_pending",
+                "stopped",
+            ]
+        )
         for serv in psutil.win_service_iter():
             data = serv.as_dict()
             self.assertIsInstance(data['name'], str)

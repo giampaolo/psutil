@@ -269,10 +269,12 @@ conn_tmap = {
 }
 
 if AF_INET6 is not None:
-    conn_tmap.update({
-        "tcp6": ([AF_INET6], [SOCK_STREAM]),
-        "udp6": ([AF_INET6], [SOCK_DGRAM]),
-    })
+    conn_tmap.update(
+        {
+            "tcp6": ([AF_INET6], [SOCK_STREAM]),
+            "udp6": ([AF_INET6], [SOCK_DGRAM]),
+        }
+    )
 
 if AF_UNIX is not None:
     conn_tmap.update({"unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM])})
