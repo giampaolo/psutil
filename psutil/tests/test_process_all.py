@@ -28,6 +28,7 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
+from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import CI_TESTING
