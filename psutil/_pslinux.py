@@ -1454,10 +1454,12 @@ def sensors_temperatures():
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
-            trip_points = set([
-                '_'.join(os.path.basename(p).split('_')[0:3])
-                for p in trip_paths
-            ])
+            trip_points = set(
+                [
+                    '_'.join(os.path.basename(p).split('_')[0:3])
+                    for p in trip_paths
+                ]
+            )
             critical = None
             high = None
             for trip_point in trip_points:
@@ -2100,7 +2102,7 @@ class Process:
                         path
                     ):
                         path = path[:-10]
-                ls.append((
+                item = (
                     decode(addr),
                     decode(perms),
                     path,
@@ -2114,7 +2116,8 @@ class Process:
                     data.get(b'Referenced:', 0),
                     data.get(b'Anonymous:', 0),
                     data.get(b'Swap:', 0),
-                ))
+                )
+                ls.append(item)
             return ls
 
     @wrap_exceptions

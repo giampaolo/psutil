@@ -120,7 +120,7 @@ def get_ipv4_broadcast(ifname):
 def get_ipv6_addresses(ifname):
     with open("/proc/net/if_inet6") as f:
         all_fields = []
-        for line in f.readlines():
+        for line in f:
             fields = line.split()
             if fields[-1] == ifname:
                 all_fields.append(fields)
@@ -1698,10 +1698,12 @@ class TestSensorsBattery(PsutilTestCase):
         # Pretend we can't know whether the AC power cable not
         # connected (assert fallback to False).
         def open_mock(name, *args, **kwargs):
-            if name.startswith((
-                '/sys/class/power_supply/AC0/online',
-                '/sys/class/power_supply/AC/online',
-            )):
+            if name.startswith(
+                (
+                    '/sys/class/power_supply/AC0/online',
+                    '/sys/class/power_supply/AC/online',
+                )
+            ):
                 raise IOError(errno.ENOENT, "")
             elif name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")
