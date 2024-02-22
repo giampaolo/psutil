@@ -768,6 +768,11 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
         ret = []
         pjoin = os.path.join
         for i, path in enumerate(paths):
+            online_path = f"/sys/devices/system/cpu/cpu{i}/online"
+            # if cpu core is offline, set to all zeroes
+            if cat(online_path, fallback=None) == "0\n":
+                ret.append(_common.scpufreq(0, 0, 0))
+                continue
             if len(paths) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
