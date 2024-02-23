@@ -768,11 +768,6 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
         ret = []
         pjoin = os.path.join
         for i, path in enumerate(paths):
-            online_path = f"/sys/devices/system/cpu/cpu{i}/online"
-            # if cpu core is offline, set to all zeroes
-            if cat(online_path, fallback=None) == "0\n":
-                ret.append(_common.scpufreq(0, 0, 0))
-                continue
             if len(paths) == len(cpuinfo_freqs):
                 # take cached value from cpuinfo if available, see:
                 # https://github.com/giampaolo/psutil/issues/1851
@@ -784,6 +779,13 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
+                    online_path = (
+                        "/sys/devices/system/cpu/cpu{}/online".format(i)
+                    )
+                    # if cpu core is offline, set to all zeroes
+                    if cat(online_path, fallback=None) == "0\n":
+                        ret.append(_common.scpufreq(0.0, 0.0, 0.0))
+                        continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
             curr = int(curr) / 1000
