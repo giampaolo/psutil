@@ -3,6 +3,10 @@
 5.9.9 (IN DEVELOPMENT)
 ======================
 
+**Enhancements**
+
+- 2366_, [Windows]: log debug message when using slower process APIs.
+
 **Bug fixes**
 
 - 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
