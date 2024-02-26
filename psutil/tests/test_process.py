@@ -1436,15 +1436,13 @@ class TestProcess(PsutilTestCase):
                 d.pop("__CF_USER_TEXT_ENCODING", None)
                 d.pop("VERSIONER_PYTHON_PREFER_32_BIT", None)
                 d.pop("VERSIONER_PYTHON_VERSION", None)
-            return dict(
-                [
-                    (
-                        k.replace("\r", "").replace("\n", ""),
-                        v.replace("\r", "").replace("\n", ""),
-                    )
-                    for k, v in d.items()
-                ]
-            )
+            return dict([
+                (
+                    k.replace("\r", "").replace("\n", ""),
+                    v.replace("\r", "").replace("\n", ""),
+                )
+                for k, v in d.items()
+            ])
 
         self.maxDiff = None
         p = psutil.Process()

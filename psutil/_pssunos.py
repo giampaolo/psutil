@@ -682,12 +682,10 @@ class Process:
 
         # UNIX sockets
         if kind in ('all', 'unix'):
-            ret.extend(
-                [
-                    _common.pconn(*conn)
-                    for conn in self._get_unix_sockets(self.pid)
-                ]
-            )
+            ret.extend([
+                _common.pconn(*conn)
+                for conn in self._get_unix_sockets(self.pid)
+            ])
         return ret
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss anon locked')

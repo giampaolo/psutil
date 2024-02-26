@@ -1461,12 +1461,10 @@ def sensors_temperatures():
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
-            trip_points = set(
-                [
-                    '_'.join(os.path.basename(p).split('_')[0:3])
-                    for p in trip_paths
-                ]
-            )
+            trip_points = set([
+                '_'.join(os.path.basename(p).split('_')[0:3])
+                for p in trip_paths
+            ])
             critical = None
             high = None
             for trip_point in trip_points:

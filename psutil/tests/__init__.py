@@ -1286,13 +1286,11 @@ def print_sysinfo():
         info['kernel'] = platform.uname()[2]
 
     # python
-    info['python'] = ', '.join(
-        [
-            platform.python_implementation(),
-            platform.python_version(),
-            platform.python_compiler(),
-        ]
-    )
+    info['python'] = ', '.join([
+        platform.python_implementation(),
+        platform.python_version(),
+        platform.python_compiler(),
+    ])
     info['pip'] = getattr(pip, '__version__', 'not installed')
     if wheel is not None:
         info['pip'] += " (wheel=%s)" % wheel.__version__

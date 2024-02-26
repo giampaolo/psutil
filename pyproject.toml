@@ -4,7 +4,7 @@ line-length = 79
 skip-string-normalization = true
 # https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html
 preview = true
-enable-unstable-feature = ["multiline_string_handling", "string_processing", "wrap_long_dict_values_in_parens"]
+enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "multiline_string_handling", "string_processing", "wrap_long_dict_values_in_parens"]
 
 [tool.ruff]
 # https://beta.ruff.rs/docs/settings/
