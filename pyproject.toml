@@ -8,11 +8,11 @@ enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "multil
 
 [tool.ruff]
 # https://beta.ruff.rs/docs/settings/
-preview = true
 target-version = "py37"
 line-length = 79
 
 [tool.ruff.lint]
+preview = true
 select = [
     # To get a list of all values: `python3 -m ruff linter`.
     "ALL",
