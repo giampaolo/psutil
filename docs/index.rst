@@ -3048,6 +3048,7 @@ Timeline
 .. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
 .. _`open`: https://docs.python.org/3/library/functions.html#open
 .. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
+.. _`os.getloadavg`: https://docs.python.org//library/os.html#os.getloadavg
 .. _`os.getpid`: https://docs.python.org/3/library/os.html#os.getpid
 .. _`os.getpriority`: https://docs.python.org/3/library/os.html#os.getpriority
 .. _`os.getresgid`: https://docs.python.org//library/os.html#os.getresgid

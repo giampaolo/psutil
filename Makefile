@@ -210,7 +210,7 @@ _pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
 lint-c:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs $(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/clinter.py
+	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
 lint-rst:  ## Run C linter.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
