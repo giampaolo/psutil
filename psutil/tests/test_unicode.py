@@ -175,7 +175,7 @@ class BaseUnicodeTest(PsutilTestCase):
     def setUp(self):
         super().setUp()
         if self.skip_tests:
-            raise self.skipTest("can't handle unicode str")
+            raise unittest.SkipTest("can't handle unicode str")
 
 
 @serialrun
@@ -246,7 +246,7 @@ class TestFSAPIs(BaseUnicodeTest):
         self.assertIsInstance(path, str)
         if BSD and not path:
             # XXX - see https://github.com/giampaolo/psutil/issues/595
-            return self.skipTest("open_files on BSD is broken")
+            raise unittest.SkipTest("open_files on BSD is broken")
         if self.expect_exact_path_match():
             self.assertEqual(
                 os.path.normcase(path), os.path.normcase(self.funky_name)

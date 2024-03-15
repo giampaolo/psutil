@@ -239,7 +239,7 @@ class TestSystemAPITypes(PsutilTestCase):
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
-            raise self.skipTest("cpu_freq() returns None")
+            raise unittest.SkipTest("cpu_freq() returns None")
         self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int, long))
 
     def test_disk_io_counters(self):

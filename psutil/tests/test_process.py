@@ -757,7 +757,7 @@ class TestProcess(PsutilTestCase):
             try:
                 self.assertEqual(p.cmdline(), cmdline)
             except psutil.ZombieProcess:
-                raise self.skipTest("OPENBSD: process turned into zombie")
+                raise unittest.SkipTest("OPENBSD: process turned into zombie")
         else:
             self.assertEqual(p.cmdline(), cmdline)
 
@@ -1165,7 +1165,7 @@ class TestProcess(PsutilTestCase):
         # this is the one, now let's make sure there are no duplicates
         pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
         if LINUX and pid == 0:
-            raise self.skipTest("PID 0")
+            raise unittest.SkipTest("PID 0")
         p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)

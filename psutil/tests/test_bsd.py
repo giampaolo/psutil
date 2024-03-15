@@ -267,7 +267,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         try:
             sysctl_result = int(sysctl(sensor))
         except RuntimeError:
-            self.skipTest("frequencies not supported by kernel")
+            raise unittest.SkipTest("frequencies not supported by kernel")
         self.assertEqual(psutil.cpu_freq().current, sysctl_result)
 
         sensor = "dev.cpu.0.freq_levels"
@@ -500,7 +500,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             try:
                 sysctl_result = int(float(sysctl(sensor)[:-1]))
             except RuntimeError:
-                self.skipTest("temperatures not supported by kernel")
+                raise unittest.SkipTest("temperatures not supported by kernel")
             self.assertAlmostEqual(
                 psutil.sensors_temperatures()["coretemp"][cpu].current,
                 sysctl_result,

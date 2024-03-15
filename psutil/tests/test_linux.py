@@ -278,7 +278,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
         if get_free_version_info() < (3, 3, 12):
-            raise self.skipTest("old free version")
+            raise unittest.SkipTest("old free version")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
@@ -342,7 +342,7 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
         if get_free_version_info() < (3, 3, 12):
-            raise self.skipTest("old free version")
+            raise unittest.SkipTest("old free version")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
