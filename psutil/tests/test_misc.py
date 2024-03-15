@@ -15,6 +15,7 @@ import os
 import pickle
 import socket
 import stat
+import sys
 import unittest
 
 import psutil
@@ -632,6 +633,7 @@ class TestCommonModule(PsutilTestCase):
 
         with redirect_stderr(StringIO()) as f:
             debug("hello")
+            sys.stderr.flush()
         msg = f.getvalue()
         assert msg.startswith("psutil-debug"), msg
         self.assertIn("hello", msg)
