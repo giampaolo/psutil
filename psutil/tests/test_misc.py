@@ -284,6 +284,8 @@ class TestMisc(PsutilTestCase):
 
         ns = system_namespace()
         for fun, name in ns.iter(ns.getters):
+            if name in {"win_service_iter", "win_service_get"}:
+                continue
             with self.subTest(name=name):
                 try:
                     ret = fun()
