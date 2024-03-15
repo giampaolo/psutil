@@ -11,8 +11,8 @@
 // https://github.com/giampaolo/psutil/commit/e0df5da
 
 
-#include <CoreFoundation/CoreFoundation.h>
 #include <Python.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
