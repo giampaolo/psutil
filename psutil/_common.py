@@ -331,6 +331,9 @@ class NoSuchProcess(Error):
         self.name = name
         self.msg = msg or "process no longer exists"
 
+    def __reduce__(self):
+        return (self.__class__, (self.pid, self.name, self.msg))
+
 
 class ZombieProcess(NoSuchProcess):
     """Exception raised when querying a zombie process. This is
@@ -347,6 +350,9 @@ class ZombieProcess(NoSuchProcess):
         self.ppid = ppid
         self.msg = msg or "PID still exists but it's a zombie"
 
+    def __reduce__(self):
+        return (self.__class__, (self.pid, self.name, self.ppid, self.msg))
+
 
 class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
@@ -358,6 +364,9 @@ class AccessDenied(Error):
         self.pid = pid
         self.name = name
         self.msg = msg or ""
+
+    def __reduce__(self):
+        return (self.__class__, (self.pid, self.name, self.msg))
 
 
 class TimeoutExpired(Error):
@@ -373,6 +382,9 @@ class TimeoutExpired(Error):
         self.pid = pid
         self.name = name
         self.msg = "timeout after %s seconds" % seconds
+
+    def __reduce__(self):
+        return (self.__class__, (self.seconds, self.pid, self.name))
 
 
 # ===================================================================

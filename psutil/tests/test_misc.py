@@ -280,6 +280,45 @@ class TestMisc(PsutilTestCase):
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
 
+        b = pickle.loads(
+            pickle.dumps(
+                psutil.NoSuchProcess(
+                    pid=4567, name='name test', msg='msg test'
+                )
+            )
+        )
+        self.assertEqual(b.pid, 4567)
+        self.assertEqual(b.name, 'name test')
+        self.assertEqual(b.msg, 'msg test')
+
+        b = pickle.loads(
+            pickle.dumps(
+                psutil.ZombieProcess(
+                    pid=4567, name='name test', ppid=42, msg='msg test'
+                )
+            )
+        )
+        self.assertEqual(b.pid, 4567)
+        self.assertEqual(b.ppid, 42)
+        self.assertEqual(b.name, 'name test')
+        self.assertEqual(b.msg, 'msg test')
+
+        b = pickle.loads(
+            pickle.dumps(psutil.AccessDenied(pid=123, name='name', msg='msg'))
+        )
+        self.assertEqual(b.pid, 123)
+        self.assertEqual(b.name, 'name')
+        self.assertEqual(b.msg, 'msg')
+
+        b = pickle.loads(
+            pickle.dumps(
+                psutil.TimeoutExpired(seconds=33, pid=4567, name='name')
+            )
+        )
+        self.assertEqual(b.seconds, 33)
+        self.assertEqual(b.pid, 4567)
+        self.assertEqual(b.name, 'name')
+
     # # XXX: https://github.com/pypa/setuptools/pull/2896
     # @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
     # def test_setup_script(self):

@@ -11,6 +11,7 @@
 
 - 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
 - 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch by Shade Gladden)
+- 2272_, Add pickle support to psutil Exceptions
 
 5.9.8
 =====
