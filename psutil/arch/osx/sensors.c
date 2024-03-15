@@ -12,6 +12,7 @@
 
 
 #include <Python.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
