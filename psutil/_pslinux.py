@@ -1548,17 +1548,45 @@ def sensors_battery():
                     return ret.strip()
         return None
 
+    def detect_battery_path(*expected_files):
+        """Find the device path having the maximum number of files
+        that are to be excepted for a battery. If no path has the
+        expected files, return None. Used as a fallback for when
+        the usual prefixes don't find a match.
+        """
+        highest_score, final_battery = 0, None
+        for battery in os.listdir(POWER_SUPPLY_PATH):
+            battery_path = os.path.join(POWER_SUPPLY_PATH, battery)
+
+            actual_files = os.listdir(battery_path)
+            current_score = len([
+                f for f in actual_files if f in expected_files
+            ])
+
+            if current_score > highest_score:
+                highest_score, final_battery = current_score, battery
+
+        return final_battery
+
     bats = [
         x
         for x in os.listdir(POWER_SUPPLY_PATH)
         if x.startswith('BAT') or 'battery' in x.lower()
     ]
-    if not bats:
-        return None
-    # Get the first available battery. Usually this is "BAT0", except
-    # some rare exceptions:
-    # https://github.com/giampaolo/psutil/issues/1238
-    root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
+    if bats:
+        # Get the first available battery. Usually this is "BAT0", except
+        # some rare exceptions:
+        # https://github.com/giampaolo/psutil/issues/1238
+        root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
+    else:
+        # Fallback to handle the rare exceptions
+        root = detect_battery_path(
+            "energy_now", "charge_now", "power_now", "current_now",
+            "energy_full", "charge_full", "capacity", "time_to_empty_now"
+        )
+
+    if root is None:
+        return
 
     # Base metrics.
     energy_now = multi_bcat(root + "/energy_now", root + "/charge_now")
@@ -1586,6 +1614,12 @@ def sensors_battery():
         os.path.join(POWER_SUPPLY_PATH, "AC0/online"),
         os.path.join(POWER_SUPPLY_PATH, "AC/online"),
     )
+    if online is None:
+        # Fallback for when 'AC' and 'AC0' don't exist
+        online = multi_bcat(
+            detect_battery_path("online")
+        )
+
     if online is not None:
         power_plugged = online == 1
     else:
