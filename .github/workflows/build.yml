@@ -41,6 +41,12 @@ jobs:
       with:
         python-version: 3.11
 
+    - name: Set up QEMU
+      if: runner.os == 'linux'
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: 'arm64'
+
     - name: Create wheels + run tests
       uses: pypa/cibuildwheel@v2.17.0
       env:
