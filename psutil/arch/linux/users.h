@@ -6,4 +6,5 @@
 
 #include <Python.h>
 
-PyObject *psutil_users(PyObject* self, PyObject* args);
+PyObject *psutil_users_systemd(PyObject* self, PyObject* args);
+PyObject *psutil_users_utmp(PyObject* self, PyObject* args);
