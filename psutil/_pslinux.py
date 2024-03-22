@@ -417,7 +417,7 @@ def calculate_avail_vmem(mems):
 
 def virtual_memory():
     """Report virtual memory stats.
-    This implementation mimicks procps-ng-3.3.12, aka "free" CLI tool:
+    This implementation mimics procps-ng-3.3.12, aka "free" CLI tool:
     https://gitlab.com/procps-ng/procps/blob/
         24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L778-791
     The returned values are supposed to match both "free" and "vmstat -s"
@@ -601,6 +601,51 @@ def swap_memory():
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
+
+
+def apply_zfs_arcstats(vm_stats: svmem):
+    """Apply ZFS ARC (Adaptive Replacement Cache) stats to
+    input virtual memory call results"""
+    mems = {}
+
+    with open_binary('%s/spl/kstat/zfs/arcstats' % get_procfs_path()) as f:
+        for line in f:
+            fields = line.split()
+            try:
+                mems[fields[0]] = int(fields[2])
+            except ValueError:
+                # Not a key: value line
+                continue
+
+    try:
+        zfs_min = mems[b'c_min']
+        zfs_size = mems[b'size']
+    except KeyError:
+        msg = ("ZFS ARC memory stats couldn't be determined, "
+               "no modification made to virtual memory stats")
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        zfs_min = zfs_size = 0
+
+    # ZFS ARC memory consumption is not reported by /proc/meminfo.
+    # Running this func will include reclaimable ZFS ARC
+    # memory in the returned values.
+    # N.B. this will make psutil match the output of "htop" instead
+    # of "free" CLI tool.
+    # See:
+    # https://www.reddit.com/r/zfs/comments/ha0p7f/understanding_arcstat_and_free/
+    # https://github.com/openzfs/zfs/issues/10255
+
+    # When accounting for zfs memory, we need to keep track of "shared"
+    # So "used" memory is more relevant than "available"
+    vm_stats.used += vm_stats.shared
+    vm_stats.cached -= vm_stats.shared
+    shrinkable_size = max(zfs_size - zfs_min, 0)
+    vm_stats.used -= shrinkable_size
+    vm_stats.cached += shrinkable_size
+    vm_stats.available += shrinkable_size
+    vm_stats.percent = usage_percent(vm_stats.used, vm_stats.total, round_=1)
+
+    return vm_stats
 
 
 # =====================================================================

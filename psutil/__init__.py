@@ -2036,6 +2036,14 @@ def swap_memory():
     return _psplatform.swap_memory()
 
 
+def apply_zfs_arcstats(vm_stats):
+    """Apply ZFS ARC stats to virtual memory stats."""
+    # Only applicable to linux distros
+    if LINUX:
+        return _psplatform.apply_zfs_arcstats(vm_stats)
+    raise NotImplementedError("ZFS ARC stats are only available on Linux")
+
+
 # =====================================================================
 # --- disks/paritions related functions
 # =====================================================================
