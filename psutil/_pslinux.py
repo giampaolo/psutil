@@ -637,15 +637,25 @@ def apply_zfs_arcstats(vm_stats: svmem):
 
     # When accounting for zfs memory, we need to keep track of "shared"
     # So "used" memory is more relevant than "available"
-    vm_stats.used += vm_stats.shared
-    vm_stats.cached -= vm_stats.shared
     shrinkable_size = max(zfs_size - zfs_min, 0)
-    vm_stats.used -= shrinkable_size
-    vm_stats.cached += shrinkable_size
-    vm_stats.available += shrinkable_size
-    vm_stats.percent = usage_percent(vm_stats.used, vm_stats.total, round_=1)
+    used = vm_stats.used + vm_stats.shared - shrinkable_size
+    cached = vm_stats.cached - vm_stats.shared + shrinkable_size
+    available = vm_stats.available + shrinkable_size
+    percent = usage_percent(vm_stats.used, vm_stats.total, round_=1)
 
-    return vm_stats
+    return svmem(
+        vm_stats.total,
+        available,
+        percent,
+        used,
+        vm_stats.free,
+        vm_stats.active,
+        vm_stats.inactive,
+        vm_stats.buffers,
+        cached,
+        vm_stats.shared,
+        vm_stats.slab,
+    )
 
 
 # =====================================================================
