@@ -624,7 +624,7 @@ def apply_zfs_arcstats(vm_stats: svmem):
         msg = ("ZFS ARC memory is not configured on this device, "
                "no modification made to virtual memory stats")
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
-        zfs_min = zfs_size = 0
+        return vm_stats
 
     # ZFS ARC memory consumption is not reported by /proc/meminfo.
     # Running this func will include reclaimable ZFS ARC
@@ -641,7 +641,7 @@ def apply_zfs_arcstats(vm_stats: svmem):
     used = vm_stats.used + vm_stats.shared - shrinkable_size
     cached = vm_stats.cached - vm_stats.shared + shrinkable_size
     available = vm_stats.available + shrinkable_size
-    percent = usage_percent(vm_stats.used, vm_stats.total, round_=1)
+    percent = usage_percent(used, vm_stats.total, round_=1)
 
     return svmem(
         vm_stats.total,
