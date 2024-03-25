@@ -183,7 +183,7 @@ __all__ = [
 
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
+    "virtual_memory", "swap_memory", "apply_zfs_arcstats",          # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "cpu_stats",  # "cpu_freq", "getloadavg"
     "net_io_counters", "net_connections", "net_if_addrs",           # network
@@ -2034,6 +2034,14 @@ def swap_memory():
     'sin' and 'sout' on Windows are meaningless and always set to 0.
     """
     return _psplatform.swap_memory()
+
+
+def apply_zfs_arcstats(vm_stats):
+    """Apply ZFS ARC stats to virtual memory stats."""
+    # Only applicable to linux distros
+    if LINUX:
+        return _psplatform.apply_zfs_arcstats(vm_stats)
+    raise NotImplementedError("ZFS ARC stats are only available on Linux")
 
 
 # =====================================================================
