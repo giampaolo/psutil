@@ -608,20 +608,20 @@ def apply_zfs_arcstats(vm_stats: svmem):
     input virtual memory call results"""
     mems = {}
 
-    with open_binary('%s/spl/kstat/zfs/arcstats' % get_procfs_path()) as f:
-        for line in f:
-            fields = line.split()
-            try:
-                mems[fields[0]] = int(fields[2])
-            except ValueError:
-                # Not a key: value line
-                continue
-
     try:
+        with open_binary('%s/spl/kstat/zfs/arcstats' % get_procfs_path()) as f:
+            for line in f:
+                fields = line.split()
+                try:
+                    mems[fields[0]] = int(fields[2])
+                except ValueError:
+                    # Not a key: value line
+                    continue
+
         zfs_min = mems[b'c_min']
         zfs_size = mems[b'size']
-    except KeyError:
-        msg = ("ZFS ARC memory stats couldn't be determined, "
+    except (KeyError, FileNotFoundError):
+        msg = ("ZFS ARC memory is not configured on this device, "
                "no modification made to virtual memory stats")
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
         zfs_min = zfs_size = 0
