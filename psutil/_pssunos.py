@@ -730,7 +730,7 @@ class Process:
                         # readlink() even if it exists (ls shows it).
                         # If that's the case we just return the
                         # unresolved link path.
-                        # This seems an incosistency with /proc similar
+                        # This seems an inconsistency with /proc similar
                         # to: http://goo.gl/55XgO
                         name = '%s/%s/path/%s' % (procfs_path, self.pid, name)
                         hit_enoent = True

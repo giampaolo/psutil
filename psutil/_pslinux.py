@@ -417,7 +417,7 @@ def calculate_avail_vmem(mems):
 
 def virtual_memory():
     """Report virtual memory stats.
-    This implementation mimicks procps-ng-3.3.12, aka "free" CLI tool:
+    This implementation mimics procps-ng-3.3.12, aka "free" CLI tool:
     https://gitlab.com/procps-ng/procps/blob/
         24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L778-791
     The returned values are supposed to match both "free" and "vmstat -s"

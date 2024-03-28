@@ -88,7 +88,7 @@ class TestProcessAPIs(PsutilTestCase):
             with self.assertRaises(psutil.AccessDenied):
                 list(psutil.process_iter())
 
-    def test_prcess_iter_w_attrs(self):
+    def test_process_iter_w_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
             self.assertEqual(list(p.info.keys()), ['pid'])
         with self.assertRaises(ValueError):
