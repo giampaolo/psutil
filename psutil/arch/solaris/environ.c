@@ -240,7 +240,7 @@ ptr_size_by_psinfo(psinfo_t info) {
 
 /*
  * Count amount of pointers in a block which ends with NULL.
- * @param fd a discriptor of /proc/PID/as special file.
+ * @param fd a descriptor of /proc/PID/as special file.
  * @param offt an offset of block of pointers at the file.
  * @param ptr_size a pointer size (allowed values: {4, 8}).
  * @return amount of non-NULL pointers or -1 in case of error.

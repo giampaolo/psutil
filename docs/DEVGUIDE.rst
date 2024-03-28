@@ -28,7 +28,7 @@ Once you have a compiler installed run:
     make test-memleaks
     make test-coverage
     make lint-all        # Run Python and C linter
-    make fix-all         # Fix linting erors
+    make fix-all         # Fix linting errors
     make uninstall
     make help
 

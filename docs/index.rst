@@ -1294,7 +1294,7 @@ Process class
   .. method:: cwd()
 
     The process current working directory as an absolute path. If cwd cannot be
-    determined for some internal reason (e.g. system process or directiory no
+    determined for some internal reason (e.g. system process or directory no
     longer exists) it may return an empty string.
 
     .. versionchanged:: 5.6.4 added support for NetBSD
