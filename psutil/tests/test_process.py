@@ -1512,18 +1512,36 @@ class TestProcess(PsutilTestCase):
                             return tgid != pid
                     raise ValueError("'Tgid' line not found in %s" % path)
 
-        for pid in range(1, 3000):
-            if LINUX and is_linux_tid(pid):
-                # On Linux a TID (thread ID) can be passed to the
-                # Process class and is querable like a PID (process
-                # ID). Skip it.
-                continue
-            exists = psutil.pid_exists(pid)
-            if exists:
-                psutil.Process(pid)
-            else:
-                with self.assertRaises(psutil.NoSuchProcess):
-                    psutil.Process(pid)
+        def check(pid):
+            # Try 3 times to avoid race conditions, especially in CI
+            # envs where PIDs may appear and disappear all of the
+            # sudden.
+            x = 3
+            while True:
+                exists = psutil.pid_exists(pid)
+                try:
+                    if exists:
+                        psutil.Process(pid)
+                        self.assertIn(pid, psutil.pids())
+                    else:
+                        with self.assertRaises(psutil.NoSuchProcess):
+                            psutil.Process(pid)
+                        self.assertNotIn(pid, psutil.pids())
+                except (psutil.Error, AssertionError) as err:
+                    x -= 1
+                    if x == 0:
+                        raise
+                else:
+                    return
+
+        with mock.patch("psutil._psplatform.debug"):  # quite verbose on win
+            for pid in range(1, 3000):
+                if LINUX and is_linux_tid(pid):
+                    # On Linux a TID (thread ID) can be passed to the
+                    # Process class and is querable like a PID (process
+                    # ID). Skip it.
+                    continue
+                check(pid)
 
 
 # ===================================================================
