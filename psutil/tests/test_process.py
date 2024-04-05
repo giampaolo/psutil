@@ -1496,6 +1496,35 @@ class TestProcess(PsutilTestCase):
         sproc.communicate()
         self.assertEqual(sproc.returncode, 0)
 
+    def test_pid_exists_and_process_agree(self):
+        def is_linux_tid(pid):
+            try:
+                f = open("/proc/%s/status" % pid, "rb")
+            except FileNotFoundError:
+                return False
+            else:
+                with f:
+                    for line in f:
+                        if line.startswith(b"Tgid:"):
+                            tgid = int(line.split()[1])
+                            # If tgid and pid are different then we're
+                            # dealing with a process TID.
+                            return tgid != pid
+                    raise ValueError("'Tgid' line not found in %s" % path)
+
+        for pid in range(1, 3000):
+            if LINUX and is_linux_tid(pid):
+                # On Linux a TID (thread ID) can be passed to the
+                # Process class and is querable like a PID (process
+                # ID). Skip it.
+                continue
+            exists = psutil.pid_exists(pid)
+            if exists:
+                psutil.Process(pid)
+            else:
+                with self.assertRaises(psutil.NoSuchProcess):
+                    psutil.Process(pid)
+
 
 # ===================================================================
 # --- Limited user tests

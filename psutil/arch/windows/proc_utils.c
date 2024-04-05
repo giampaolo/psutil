@@ -173,17 +173,15 @@ psutil_pid_is_running(DWORD pid) {
 
     hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
 
-    // Access denied means there's a process to deny access to.
-    if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED))
-        return 1;
-
-    hProcess = psutil_check_phandle(hProcess, pid, 1);
     if (hProcess != NULL) {
+        hProcess = psutil_check_phandle(hProcess, pid, 1);
+        if (hProcess != NULL) {
+            CloseHandle(hProcess);
+            return 1;
+        }
         CloseHandle(hProcess);
-        return 1;
     }
 
-    CloseHandle(hProcess);
     PyErr_Clear();
     return psutil_pid_in_pids(pid);
 }
