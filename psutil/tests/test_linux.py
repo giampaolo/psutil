@@ -1360,9 +1360,7 @@ class TestSystemDiskIoCounters(PsutilTestCase):
 
     def test_emulate_use_sysfs(self):
         def exists(path):
-            if path == '/proc/diskstats':
-                return False
-            return True
+            return path == '/proc/diskstats'
 
         wprocfs = psutil.disk_io_counters(perdisk=True)
         with mock.patch(

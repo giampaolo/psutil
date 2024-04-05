@@ -702,12 +702,10 @@ def is_permission_err(exc):
     # On Python 2 OSError doesn't always have 'winerror'. Sometimes
     # it does, in which case the original exception was WindowsError
     # (which is a subclass of OSError).
-    if getattr(exc, "winerror", -1) in (
+    return getattr(exc, "winerror", -1) in (
         cext.ERROR_ACCESS_DENIED,
         cext.ERROR_PRIVILEGE_NOT_HELD,
-    ):
-        return True
-    return False
+    )
 
 
 def convert_oserror(exc, pid=None, name=None):

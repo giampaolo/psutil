@@ -230,10 +230,10 @@ lint-all:  ## Run all linters
 # ===================================================================
 
 fix-black:
-	git ls-files '*.py' | xargs $(PYTHON) -m black
+	@git ls-files '*.py' | xargs $(PYTHON) -m black
 
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --no-cache --fix
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix
 
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
