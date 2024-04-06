@@ -10,6 +10,8 @@
 
 **Bug fixes**
 
+- 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
+  a thread ID (TID) instead of a PID (process ID).
 - 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch by Shade Gladden)
 - 2272_: Add pickle support to psutil Exceptions.
 - 2359_, [Windows], [CRITICAL]: `pid_exists()`_ disagrees with `Process`_ on

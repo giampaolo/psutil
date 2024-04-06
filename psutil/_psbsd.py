@@ -561,10 +561,9 @@ def pids():
     return ret
 
 
-if OPENBSD or NETBSD:
+if NETBSD:
 
     def pid_exists(pid):
-        """Return True if pid exists."""
         exists = _psposix.pid_exists(pid)
         if not exists:
             # We do this because _psposix.pid_exists() lies in case of
@@ -573,7 +572,19 @@ if OPENBSD or NETBSD:
         else:
             return True
 
-else:
+elif OPENBSD:
+
+    def pid_exists(pid):
+        exists = _psposix.pid_exists(pid)
+        if not exists:
+            return False
+        else:
+            # OpenBSD seems to be the only BSD platform where
+            # _psposix.pid_exists() returns True for thread IDs (tids),
+            # so we can't use it.
+            return pid in pids()
+
+else:  # FreeBSD
     pid_exists = _psposix.pid_exists
 
 
