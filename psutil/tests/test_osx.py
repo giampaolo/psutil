@@ -120,7 +120,9 @@ class TestSystemAPIs(PsutilTestCase):
         self.assertEqual(num, psutil.cpu_count(logical=False))
 
     # TODO: remove this once 1892 is fixed
-    @unittest.skipIf(platform.machine() == 'arm64', "skipped due to #1892")
+    @unittest.skipIf(
+        MACOS and platform.machine() == 'arm64', "skipped due to #1892"
+    )
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         self.assertEqual(

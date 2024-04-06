@@ -104,12 +104,14 @@ class TestFetchAllProcesses(PsutilTestCase):
     """
 
     def setUp(self):
+        psutil._set_debug(False)
         # Using a pool in a CI env may result in deadlock, see:
         # https://github.com/giampaolo/psutil/issues/2104
         if USE_PROC_POOL:
             self.pool = multiprocessing.Pool()
 
     def tearDown(self):
+        psutil._set_debug(True)
         if USE_PROC_POOL:
             self.pool.terminate()
             self.pool.join()
@@ -457,6 +459,79 @@ class TestFetchAllProcesses(PsutilTestCase):
         for k, v in ret.items():
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
+
+
+class TestPidsRange(PsutilTestCase):
+    """Given pid_exists() return value for a range of PIDs which may or
+    may not exist, make sure that psutil.Process() and psutil.pids()
+    agree with pid_exists(). This guarantees that the 3 APIs are all
+    consistent with each other. See:
+    https://github.com/giampaolo/psutil/issues/2359
+
+    XXX - Note about Windows: it turns out there are some "hidden" PIDs
+    which are not returned by psutil.pids() and are also not revealed
+    by taskmgr.exe and ProcessHacker, still they can be instantiated by
+    psutil.Process() and queried. One of such PIDs is "conhost.exe".
+    Running as_dict() for it reveals that some Process() APIs
+    erroneously raise NoSuchProcess, so we know we have problem there.
+    Let's ignore this for now, since it's quite a corner case (who even
+    imagined hidden PIDs existed on Windows?).
+    """
+
+    def setUp(self):
+        psutil._set_debug(False)
+
+    def tearDown(self):
+        psutil._set_debug(True)
+
+    def test_it(self):
+        def is_linux_tid(pid):
+            try:
+                f = open("/proc/%s/status" % pid, "rb")
+            except FileNotFoundError:
+                return False
+            else:
+                with f:
+                    for line in f:
+                        if line.startswith(b"Tgid:"):
+                            tgid = int(line.split()[1])
+                            # If tgid and pid are different then we're
+                            # dealing with a process TID.
+                            return tgid != pid
+                    raise ValueError("'Tgid' line not found")
+
+        def check(pid):
+            # In case of failure retry up to 3 times in order to avoid
+            # race conditions, especially when running in a CI
+            # environment where PIDs may appear and disappear at any
+            # time.
+            x = 3
+            while True:
+                exists = psutil.pid_exists(pid)
+                try:
+                    if exists:
+                        psutil.Process(pid)
+                        if not WINDOWS:  # see docstring
+                            self.assertIn(pid, psutil.pids())
+                    else:
+                        with self.assertRaises(psutil.NoSuchProcess):
+                            psutil.Process(pid)
+                        if not WINDOWS:  # see docstring
+                            self.assertNotIn(pid, psutil.pids())
+                except (psutil.Error, AssertionError) as err:
+                    x -= 1
+                    if x == 0:
+                        raise
+                else:
+                    return
+
+        for pid in range(1, 3000):
+            if LINUX and is_linux_tid(pid):
+                # On Linux a TID (thread ID) can be passed to the
+                # Process class and is querable like a PID (process
+                # ID). Skip it.
+                continue
+            check(pid)
 
 
 if __name__ == '__main__':
