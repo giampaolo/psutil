@@ -514,8 +514,12 @@ class TestPidsRange(PsutilTestCase):
                         if not WINDOWS:  # see docstring
                             self.assertIn(pid, psutil.pids())
                     else:
-                        with self.assertRaises(psutil.NoSuchProcess):
-                            psutil.Process(pid)
+                        # On OpenBSD thread IDs can be instantiated,
+                        # and oneshot() succeeds, but other APIs fail
+                        # with EINVAL.
+                        if not OPENBSD:
+                            with self.assertRaises(psutil.NoSuchProcess):
+                                psutil.Process(pid)
                         if not WINDOWS:  # see docstring
                             self.assertNotIn(pid, psutil.pids())
                 except (psutil.Error, AssertionError) as err:
@@ -531,7 +535,8 @@ class TestPidsRange(PsutilTestCase):
                 # Process class and is querable like a PID (process
                 # ID). Skip it.
                 continue
-            check(pid)
+            with self.subTest(pid=pid):
+                check(pid)
 
 
 if __name__ == '__main__':
