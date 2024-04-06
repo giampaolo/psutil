@@ -38,7 +38,6 @@ from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
 from psutil.tests import is_namedtuple
 from psutil.tests import is_win_secure_system_proc
-from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import serialrun
 
@@ -105,12 +104,14 @@ class TestFetchAllProcesses(PsutilTestCase):
     """
 
     def setUp(self):
+        psutil._set_debug(False)
         # Using a pool in a CI env may result in deadlock, see:
         # https://github.com/giampaolo/psutil/issues/2104
         if USE_PROC_POOL:
             self.pool = multiprocessing.Pool()
 
     def tearDown(self):
+        psutil._set_debug(True)
         if USE_PROC_POOL:
             self.pool.terminate()
             self.pool.join()
@@ -477,6 +478,12 @@ class TestPidsRange(PsutilTestCase):
     imagined hidden PIDs existed on Windows?).
     """
 
+    def setUp(self):
+        psutil._set_debug(False)
+
+    def tearDown(self):
+        psutil._set_debug(True)
+
     def test_it(self):
         def is_linux_tid(pid):
             try:
@@ -491,7 +498,7 @@ class TestPidsRange(PsutilTestCase):
                             # If tgid and pid are different then we're
                             # dealing with a process TID.
                             return tgid != pid
-                    raise ValueError("'Tgid' line not found in %s" % path)
+                    raise ValueError("'Tgid' line not found")
 
         def check(pid):
             # In case of failure retry up to 3 times in order to avoid
@@ -518,14 +525,13 @@ class TestPidsRange(PsutilTestCase):
                 else:
                     return
 
-        with mock.patch("psutil._psplatform.debug"):  # quite verbose on win
-            for pid in range(1, 3000):
-                if LINUX and is_linux_tid(pid):
-                    # On Linux a TID (thread ID) can be passed to the
-                    # Process class and is querable like a PID (process
-                    # ID). Skip it.
-                    continue
-                check(pid)
+        for pid in range(1, 3000):
+            if LINUX and is_linux_tid(pid):
+                # On Linux a TID (thread ID) can be passed to the
+                # Process class and is querable like a PID (process
+                # ID). Skip it.
+                continue
+            check(pid)
 
 
 if __name__ == '__main__':
