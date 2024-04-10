@@ -78,17 +78,34 @@ class TestProcessAPIs(PsutilTestCase):
             sorted(set(ls), key=lambda x: x.pid),
         )
 
-        with mock.patch(
-            'psutil.Process', side_effect=psutil.NoSuchProcess(os.getpid())
-        ):
-            self.assertEqual(list(psutil.process_iter()), [])
-        with mock.patch(
-            'psutil.Process', side_effect=psutil.AccessDenied(os.getpid())
-        ):
-            with self.assertRaises(psutil.AccessDenied):
-                list(psutil.process_iter())
+        # emulate NSP for all PIDs
+        list(psutil.process_iter())  # populate cache
+        for x in range(2):
+            with mock.patch(
+                'psutil.Process.as_dict',
+                side_effect=psutil.NoSuchProcess(os.getpid()),
+            ):
+                self.assertEqual(
+                    list(psutil.process_iter(attrs=["cpu_times"])), []
+                )
+
+            psutil._pmap.clear()  # repeat test with a de-populated cache
+
+        list(psutil.process_iter())  # populate cache
+        for x in range(2):
+            with mock.patch(
+                'psutil.Process.as_dict',
+                side_effect=psutil.AccessDenied(os.getpid()),
+            ):
+                with self.assertRaises(psutil.AccessDenied):
+                    list(psutil.process_iter(attrs=["cpu_times"]))
+            # repeat test with a de-populated cache
+            psutil._pmap.clear()
 
     def test_process_iter_w_attrs(self):
+        for p in psutil.process_iter(attrs=['pid']):
+            self.assertEqual(list(p.info.keys()), ['pid'])
+        # yield again
         for p in psutil.process_iter(attrs=['pid']):
             self.assertEqual(list(p.info.keys()), ['pid'])
         with self.assertRaises(ValueError):
