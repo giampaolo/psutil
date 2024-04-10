@@ -88,7 +88,6 @@ class TestProcessAPIs(PsutilTestCase):
                 self.assertEqual(
                     list(psutil.process_iter(attrs=["cpu_times"])), []
                 )
-
             psutil._pmap.clear()  # repeat test with a de-populated cache
 
         list(psutil.process_iter())  # populate cache
@@ -99,8 +98,7 @@ class TestProcessAPIs(PsutilTestCase):
             ):
                 with self.assertRaises(psutil.AccessDenied):
                     list(psutil.process_iter(attrs=["cpu_times"]))
-            # repeat test with a de-populated cache
-            psutil._pmap.clear()
+            psutil._pmap.clear()  # repeat test with a de-populated cache
 
     def test_process_iter_w_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):

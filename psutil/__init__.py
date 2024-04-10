@@ -291,11 +291,9 @@ class Process(object):  # noqa: UP004
     If PID is omitted current process PID (os.getpid()) is used.
     Raise NoSuchProcess if PID does not exist.
 
-    Note that most of the methods of this class do not make sure
-    the PID of the process being queried has been reused over time.
-    That means you might end up retrieving an information referring
-    to another process in case the original one this instance
-    refers to is gone in the meantime.
+    Note that most of the methods of this class do not make sure that
+    the PID of the process being queried has been reused. That means
+    that you may end up retrieving information for another process.
 
     The only exceptions for which process identity is pre-emptively
     checked and guaranteed are:
@@ -312,11 +310,8 @@ class Process(object):  # noqa: UP004
      - terminate()
      - kill()
 
-    To prevent this problem for all other methods you can:
-     - use is_running() before querying the process
-     - if you're continuously iterating over a set of Process
-       instances use process_iter() which pre-emptively checks
-       process identity for every yielded instance
+    To prevent this problem for all other methods you can use
+    is_running() before querying the process.
     """
 
     def __init__(self, pid=None):
@@ -436,7 +431,7 @@ class Process(object):  # noqa: UP004
 
     def _raise_if_pid_reused(self):
         """Raises NoSuchProcess in case process PID has been reused."""
-        if not self.is_running() and self._pid_reused:
+        if self._pid_reused or (not self.is_running() and self._pid_reused):
             # We may directly raise NSP in here already if PID is just
             # not running, but I prefer NSP to be raised naturally by
             # the actual Process API call. This way unit tests will tell
@@ -1464,10 +1459,6 @@ def process_iter(attrs=None, ad_value=None):
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
 
-    Cached Process instances are checked for identity so that you're
-    safe in case a PID has been reused by another process, in which
-    case the cached instance is updated.
-
     The sorting order in which processes are yielded is based on
     their PIDs.
 
@@ -1504,32 +1495,13 @@ def process_iter(attrs=None, ad_value=None):
                 if proc is None:  # new process
                     yield add(pid)
                 else:
-                    # use is_running() to check whether PID has been
-                    # reused by another process in which case yield a
-                    # new Process instance
-                    if proc.is_running():
-                        if attrs is not None:
-                            proc.info = proc.as_dict(
-                                attrs=attrs, ad_value=ad_value
-                            )
-                        yield proc
-                    else:
-                        yield add(pid)
+                    if attrs is not None:
+                        proc.info = proc.as_dict(
+                            attrs=attrs, ad_value=ad_value
+                        )
+                    yield proc
             except NoSuchProcess:
                 remove(pid)
-            except AccessDenied:
-                # Process creation time can't be determined hence there's
-                # no way to tell whether the pid of the cached process
-                # has been reused. Just return the cached version.
-                if proc is None and pid in pmap:
-                    try:
-                        yield pmap[pid]
-                    except KeyError:
-                        # If we get here it is likely that 2 threads were
-                        # using process_iter().
-                        pass
-                else:
-                    raise
     finally:
         _pmap = pmap
 
