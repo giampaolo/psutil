@@ -61,8 +61,8 @@ from psutil.tests import retry_on_failure
 # ===================================================================
 
 
-class TestProcessAPIs(PsutilTestCase):
-    def test_process_iter(self):
+class TestProcessIter(PsutilTestCase):
+    def test_pid_presence(self):
         self.assertIn(os.getpid(), [x.pid for x in psutil.process_iter()])
         sproc = self.spawn_testproc()
         self.assertIn(sproc.pid, [x.pid for x in psutil.process_iter()])
@@ -71,14 +71,14 @@ class TestProcessAPIs(PsutilTestCase):
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
-        # assert there are no duplicates
+    def test_no_duplicates(self):
         ls = [x for x in psutil.process_iter()]
         self.assertEqual(
             sorted(ls, key=lambda x: x.pid),
             sorted(set(ls), key=lambda x: x.pid),
         )
 
-        # emulate NSP for all PIDs
+    def test_emulate_nsp(self):
         list(psutil.process_iter())  # populate cache
         for x in range(2):
             with mock.patch(
@@ -90,6 +90,7 @@ class TestProcessAPIs(PsutilTestCase):
                 )
             psutil.process_iter.cache_clear()  # repeat test without cache
 
+    def test_emulate_access_denied(self):
         list(psutil.process_iter())  # populate cache
         for x in range(2):
             with mock.patch(
@@ -100,7 +101,7 @@ class TestProcessAPIs(PsutilTestCase):
                     list(psutil.process_iter(attrs=["cpu_times"]))
             psutil.process_iter.cache_clear()  # repeat test without cache
 
-    def test_process_iter_w_attrs(self):
+    def test_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
             self.assertEqual(list(p.info.keys()), ['pid'])
         # yield again
@@ -128,6 +129,14 @@ class TestProcessAPIs(PsutilTestCase):
                 self.assertGreaterEqual(p.info['pid'], 0)
             assert m.called
 
+    def test_cache_clear(self):
+        list(psutil.process_iter())  # populate cache
+        assert psutil._pmap
+        psutil.process_iter.cache_clear()
+        assert not psutil._pmap
+
+
+class TestProcessAPIs(PsutilTestCase):
     @unittest.skipIf(
         PYPY and WINDOWS, "spawn_testproc() unreliable on PYPY + WINDOWS"
     )
