@@ -213,7 +213,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.9.9"
+__version__ = "6.0.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -1458,6 +1458,7 @@ def process_iter(attrs=None, ad_value=None):
 
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
+    Cache can optionally be cleared via `process_iter.clear_cache()`.
 
     The sorting order in which processes are yielded is based on
     their PIDs.
@@ -1504,6 +1505,10 @@ def process_iter(attrs=None, ad_value=None):
                 remove(pid)
     finally:
         _pmap = pmap
+
+
+process_iter.cache_clear = functools.partial(_pmap.clear)
+process_iter.cache_clear.__doc__ = "Clear process_iter() internal cache."
 
 
 def wait_procs(procs, timeout=None, callback=None):

@@ -1,12 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.9 (IN DEVELOPMENT)
+6.0.0 (IN DEVELOPMENT)
 ======================
 
 **Enhancements**
 
 - 2366_, [Windows]: log debug message when using slower process APIs.
 - 2375_, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
+- 2396_: `process_iter()`_ no longer pre-emptively checks whether PIDs have
+  been reused. As such it's around 20x times faster.
+- 2396_: a new ``psutil.process_iter.cache_clear()`` API can be used the clear
+  `process_iter()`_ internal cache.
 
 **Bug fixes**
 
