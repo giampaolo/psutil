@@ -19,6 +19,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import warnings
 
@@ -65,6 +66,7 @@ PY36_PLUS = sys.version_info[:2] >= (3, 6)
 PY37_PLUS = sys.version_info[:2] >= (3, 7)
 CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
 CP37_PLUS = PY37_PLUS and sys.implementation.name == "cpython"
+Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 macros = []
 if POSIX:
@@ -118,10 +120,10 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 # Py_LIMITED_API lets us create a single wheel which works with multiple
 # python versions, including unreleased ones.
-if bdist_wheel and CP36_PLUS and (MACOS or LINUX):
+if bdist_wheel and CP36_PLUS and (MACOS or LINUX) and not Py_GIL_DISABLED:
     py_limited_api = {"py_limited_api": True}
     macros.append(('Py_LIMITED_API', '0x03060000'))
-elif bdist_wheel and CP37_PLUS and WINDOWS:
+elif bdist_wheel and CP37_PLUS and WINDOWS and not Py_GIL_DISABLED:
     # PyErr_SetFromWindowsErr / PyErr_SetFromWindowsErrWithFilename are
     # part of the stable API/ABI starting with CPython 3.7
     py_limited_api = {"py_limited_api": True}

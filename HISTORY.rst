@@ -7,6 +7,7 @@
 
 - 2366_, [Windows]: log debug message when using slower process APIs.
 - 2375_, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
+- 2401_, Support building with free-threaded CPython 3.13.
 
 **Bug fixes**
 
