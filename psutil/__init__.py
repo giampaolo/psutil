@@ -1474,8 +1474,6 @@ def process_iter(attrs=None, ad_value=None):
 
     def add(pid):
         proc = Process(pid)
-        if attrs is not None:
-            proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
         pmap[proc.pid] = proc
         return proc
 
@@ -1494,13 +1492,10 @@ def process_iter(attrs=None, ad_value=None):
         for pid, proc in ls:
             try:
                 if proc is None:  # new process
-                    yield add(pid)
-                else:
-                    if attrs is not None:
-                        proc.info = proc.as_dict(
-                            attrs=attrs, ad_value=ad_value
-                        )
-                    yield proc
+                    proc = add(pid)
+                if attrs is not None:
+                    proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                yield proc
             except NoSuchProcess:
                 remove(pid)
     finally:
