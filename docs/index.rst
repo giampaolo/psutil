@@ -1985,10 +1985,16 @@ Process class
     This is reliable also in case the process is gone and its PID reused by
     another process, therefore it must be preferred over doing
     ``psutil.pid_exists(p.pid)``.
+    If PID has been reused this method will also remove the process from
+    :func:`process_iter()` internal cache.
 
     .. note::
       this will return ``True`` also if the process is a zombie
       (``p.status() == psutil.STATUS_ZOMBIE``).
+
+    .. versionchanged:: 6.0.0 : automatically remove process from
+      :func:`process_iter()` internal cache if PID has been reused by another
+      process.
 
   .. method:: send_signal(signal)
 

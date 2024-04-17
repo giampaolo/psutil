@@ -599,8 +599,10 @@ class Process(object):  # noqa: UP004
 
     def is_running(self):
         """Return whether this process is running.
-        It also checks if PID has been reused by another process in
-        which case return False.
+
+        It also checks if PID has been reused by another process, in
+        which case it will remove the process from `process_iter()`
+        internal cache and return False.
         """
         if self._gone or self._pid_reused:
             return False
@@ -611,6 +613,10 @@ class Process(object):  # noqa: UP004
             # Process identity / uniqueness over time is guaranteed by
             # (PID + creation time) and that is verified in __eq__.
             self._pid_reused = self != Process(self.pid)
+            if self._pid_reused:
+                self._gone = True
+                # remove this PID from `process_iter()` internal cache
+                _pmap.pop(self.pid, None)
             return not self._pid_reused
         except ZombieProcess:
             # We should never get here as it's already handled in
