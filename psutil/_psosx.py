@@ -203,10 +203,7 @@ def disk_partitions(all=False):
         if not all:
             if not os.path.isabs(device) or not os.path.exists(device):
                 continue
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 

@@ -5,6 +5,9 @@
 
 **Enhancements**
 
+- 2109_: ``maxfile`` and ``maxpath`` fields were removed from the namedtuple
+  returned by `disk_partitions()`_. Reason: on network filesystems (NFS) this
+  can potentially take a very long time to complete.
 - 2366_, [Windows]: log debug message when using slower process APIs.
 - 2375_, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
 - 2396_: `process_iter()`_ no longer pre-emptively checks whether PIDs have
@@ -23,6 +26,17 @@
 - 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
 - 2362_, [macOS]: can't compile on macOS 10.11.  (patch by Ryan Schmidt)
 - 2365_, [macOS]: can't compile on macOS < 10.9.  (patch by Ryan Schmidt)
+
+**Porting notes**
+
+Version 6.0.0 introduces some changes which affect backward compatibility:
+
+- 2109_: the namedtuple returned by `disk_partitions()`_' no longer has
+  ``maxfile`` and ``maxpath`` fields.
+- 2396_: `process_iter()`_ no longer pre-emptively checks whether PIDs have
+  been reused. If you want to check for PID reusage you are supposed to use
+  `Process.is_running()`_ against the yielded `Process`_ instances. That will
+  also automatically remove reused PIDs from `process_iter()`_ internal cache.
 
 5.9.8
 =====

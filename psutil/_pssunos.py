@@ -246,10 +246,7 @@ def disk_partitions(all=False):
                 # https://github.com/giampaolo/psutil/issues/1674
                 debug("skipping %r: %s" % (mountpoint, err))
                 continue
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 

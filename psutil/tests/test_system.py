@@ -667,12 +667,6 @@ class TestDiskAPIs(PsutilTestCase):
             self.assertIsInstance(nt.mountpoint, str)
             self.assertIsInstance(nt.fstype, str)
             self.assertIsInstance(nt.opts, str)
-            self.assertIsInstance(nt.maxfile, (int, type(None)))
-            self.assertIsInstance(nt.maxpath, (int, type(None)))
-            if nt.maxfile is not None and not GITHUB_ACTIONS:
-                self.assertGreater(nt.maxfile, 0)
-            if nt.maxpath is not None:
-                self.assertGreater(nt.maxpath, 0)
 
         # all = False
         ls = psutil.disk_partitions(all=False)
