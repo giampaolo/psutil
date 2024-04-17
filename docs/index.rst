@@ -1267,7 +1267,7 @@ Process class
       >>>
       >>> # get a list of valid attrs names
       >>> list(psutil.Process().as_dict().keys())
-      ['status', 'cpu_num', 'num_ctx_switches', 'pid', 'memory_full_info', 'net_connections', 'cmdline', 'create_time', 'ionice', 'num_fds', 'memory_maps', 'cpu_percent', 'terminal', 'ppid', 'cwd', 'nice', 'username', 'cpu_times', 'io_counters', 'memory_info', 'threads', 'open_files', 'name', 'num_threads', 'exe', 'uids', 'gids', 'cpu_affinity', 'memory_percent', 'environ']
+      ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_full_info', 'memory_info', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
     .. versionchanged::
       3.0.0 *ad_value* is used also when incurring into
