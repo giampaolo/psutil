@@ -28,7 +28,7 @@ from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import AF_UNIX
-from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_NET_CONNECTIONS_UNIX
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import PsutilTestCase
 from psutil.tests import bind_socket
@@ -146,7 +146,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         self.assertEqual(conn.laddr, laddr)
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
-        if sock.family == AF_UNIX and HAS_CONNECTIONS_UNIX:
+        if sock.family == AF_UNIX and HAS_NET_CONNECTIONS_UNIX:
             cons = this_proc_connections(kind='all')
             self.compare_procsys_connections(os.getpid(), cons, kind='all')
         return conn
@@ -279,7 +279,7 @@ class TestFilters(ConnectionTestCase):
             check('udp', [AF_INET, AF_INET6], [SOCK_DGRAM])
             check('udp4', [AF_INET], [SOCK_DGRAM])
             check('udp6', [AF_INET6], [SOCK_DGRAM])
-            if HAS_CONNECTIONS_UNIX:
+            if HAS_NET_CONNECTIONS_UNIX:
                 check(
                     'unix',
                     [AF_UNIX],
@@ -318,7 +318,7 @@ class TestFilters(ConnectionTestCase):
             # compare against system-wide connections
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.
-            if HAS_CONNECTIONS_UNIX:
+            if HAS_NET_CONNECTIONS_UNIX:
                 self.compare_procsys_connections(proc.pid, [conn])
 
         tcp_template = textwrap.dedent("""
@@ -476,7 +476,7 @@ class TestFilters(ConnectionTestCase):
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
             # Skipped on BSD becayse by default the Python process
             # creates a UNIX socket to '/var/run/log'.
-            if HAS_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
+            if HAS_NET_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
                 cons = this_proc_connections(kind='unix')
                 self.assertEqual(len(cons), 3)
                 for conn in cons:
@@ -501,7 +501,7 @@ class TestSystemWideConnections(ConnectionTestCase):
 
             for kind, groups in conn_tmap.items():
                 # XXX: SunOS does not retrieve UNIX sockets.
-                if kind == 'unix' and not HAS_CONNECTIONS_UNIX:
+                if kind == 'unix' and not HAS_NET_CONNECTIONS_UNIX:
                     continue
                 families, types_ = groups
                 cons = psutil.net_connections(kind)

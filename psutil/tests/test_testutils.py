@@ -26,7 +26,7 @@ from psutil._common import open_text
 from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
 from psutil.tests import COVERAGE
-from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_NET_CONNECTIONS_UNIX
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
@@ -348,7 +348,7 @@ class TestNetUtils(PsutilTestCase):
             self.assertGreaterEqual(fams[socket.AF_INET], 2)
             if supports_ipv6():
                 self.assertGreaterEqual(fams[socket.AF_INET6], 2)
-            if POSIX and HAS_CONNECTIONS_UNIX:
+            if POSIX and HAS_NET_CONNECTIONS_UNIX:
                 self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
             self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)

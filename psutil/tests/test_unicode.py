@@ -88,9 +88,9 @@ from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
-from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_NET_CONNECTIONS_UNIX
 from psutil.tests import INVALID_UNICODE_SUFFIX
 from psutil.tests import PYPY
 from psutil.tests import TESTFN_PREFIX
@@ -268,7 +268,7 @@ class TestFSAPIs(BaseUnicodeTest):
             self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
+    @unittest.skipIf(not HAS_NET_CONNECTIONS_UNIX, "can't list UNIX sockets")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):

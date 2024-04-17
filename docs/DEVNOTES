@@ -39,7 +39,7 @@ FEATURES
   Example:
   ```
   df -a  ->  psutil.disk_partitions
-  lsof  ->  psutil.Process.open_files() and psutil.Process.open_connections()
+  lsof  ->  psutil.Process.open_files() and psutil.Process.net_connections()
   killall->  (actual script)
   tty  ->  psutil.Process.terminal()
   who  ->  psutil.users()
