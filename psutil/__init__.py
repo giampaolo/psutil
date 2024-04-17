@@ -608,16 +608,15 @@ class Process(object):  # noqa: UP004
             return False
         try:
             # Checking if PID is alive is not enough as the PID might
-            # have been reused by another process: we also want to
-            # verify process identity.
-            # Process identity / uniqueness over time is guaranteed by
-            # (PID + creation time) and that is verified in __eq__.
+            # have been reused by another process. Process identity /
+            # uniqueness over time is guaranteed by (PID + creation
+            # time) and that is verified in __eq__.
             self._pid_reused = self != Process(self.pid)
             if self._pid_reused:
-                self._gone = True
                 # remove this PID from `process_iter()` internal cache
                 _pmap.pop(self.pid, None)
-            return not self._pid_reused
+                raise NoSuchProcess(self.pid)
+            return True
         except ZombieProcess:
             # We should never get here as it's already handled in
             # Process.__init__; here just for extra safety.
