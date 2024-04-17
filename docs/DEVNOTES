@@ -113,13 +113,11 @@ REJECTED IDEAS
 INCONSISTENCIES
 ===============
 
-- disk_partitions(all=False) should have been "perdisk=False" instead:
-  * disk_io_counters(perdisk=False)
-  * net_io_counters(pernic=False)
-  * cpu_times_percent(percpu=False)
-  * cpu_times(percpu=False)
-  * cpu_freq(percpu=False)
-- PROCFS_PATH should have been set_procfs_path()
+- `Process.connections()` should have been `Process.net_connections()` for
+  consistency with `psutil.net_connections()`.
+- PROCFS_PATH should have been set_procfs_path().
+- `virtual_memory()` should have been `memory_virtual()`.
+- `swap_memory()` should have been `memory_swap()`.
 
 RESOURCES
 =========
