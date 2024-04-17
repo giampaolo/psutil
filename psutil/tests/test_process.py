@@ -1375,13 +1375,24 @@ class TestProcess(PsutilTestCase):
         subp = self.spawn_testproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
+
+        list(psutil.process_iter())
+        self.assertIn(p.pid, psutil._pmap)
         assert not p.is_running()
+        # make sure is_running() removed PID from process_iter()
+        # internal cache
+        self.assertNotIn(p.pid, psutil._pmap)
+
         assert p != psutil.Process(subp.pid)
         msg = "process no longer exists and its PID has been reused"
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
             with self.subTest(name=name):
                 self.assertRaisesRegex(psutil.NoSuchProcess, msg, fun)
+
+        self.assertIn("terminated + PID reused", str(p))
+        self.assertIn("terminated + PID reused", repr(p))
+
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.ppid)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parent)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parents)
