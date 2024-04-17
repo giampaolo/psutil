@@ -551,7 +551,7 @@ class TestSystemWideConnections(ConnectionTestCase):
 
 
 class TestMisc(PsutilTestCase):
-    def test_connection_constants(self):
+    def test_net_connection_constants(self):
         ints = []
         strs = []
         for name in dir(psutil):
