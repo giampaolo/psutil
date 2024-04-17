@@ -246,7 +246,7 @@ def net_connections(kind='inet'):
     ret = []
     for pid in pids():
         try:
-            cons = Process(pid).connections(kind)
+            cons = Process(pid).net_connections(kind)
         except NoSuchProcess:
             continue
         else:
@@ -501,7 +501,7 @@ class Process:
         return files
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError(
                 "invalid %r kind argument; choose between %s"

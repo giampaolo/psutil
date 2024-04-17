@@ -113,8 +113,6 @@ REJECTED IDEAS
 INCONSISTENCIES
 ===============
 
-- `Process.connections()` should have been `Process.net_connections()` for
-  consistency with `psutil.net_connections()`.
 - PROCFS_PATH should have been set_procfs_path().
 - `virtual_memory()` should have been `memory_virtual()`.
 - `swap_memory()` should have been `memory_swap()`.

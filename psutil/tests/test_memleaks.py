@@ -256,7 +256,7 @@ class TestProcessObjectLeaks(TestMemoryLeak):
         # be executed.
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.connections(kind))
+            self.execute(lambda: self.proc.net_connections(kind))
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):

@@ -320,7 +320,7 @@ class TestNetUtils(PsutilTestCase):
         p = psutil.Process()
         num_fds = p.num_fds()
         self.assertEqual(
-            filter_proc_connections(p.connections(kind='unix')), []
+            filter_proc_connections(p.net_connections(kind='unix')), []
         )
         name = self.get_testfn()
         server, client = unix_socketpair(name)
@@ -329,7 +329,7 @@ class TestNetUtils(PsutilTestCase):
             assert stat.S_ISSOCK(os.stat(name).st_mode)
             self.assertEqual(p.num_fds() - num_fds, 2)
             self.assertEqual(
-                len(filter_proc_connections(p.connections(kind='unix'))), 2
+                len(filter_proc_connections(p.net_connections(kind='unix'))), 2
             )
             self.assertEqual(server.getsockname(), name)
             self.assertEqual(client.getpeername(), name)

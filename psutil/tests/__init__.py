@@ -1399,8 +1399,9 @@ class process_namespace:
     ignored = [
         ('as_dict', (), {}),
         ('children', (), {'recursive': True}),
+        ('connections', (), {}),  # deprecated
         ('is_running', (), {}),
-        ('memory_info_ex', (), {}),
+        ('memory_info_ex', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
@@ -1410,7 +1411,6 @@ class process_namespace:
 
     getters = [
         ('cmdline', (), {}),
-        ('connections', (), {'kind': 'all'}),
         ('cpu_times', (), {}),
         ('create_time', (), {}),
         ('cwd', (), {}),
@@ -1418,6 +1418,7 @@ class process_namespace:
         ('memory_full_info', (), {}),
         ('memory_info', (), {}),
         ('name', (), {}),
+        ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
         ('num_ctx_switches', (), {}),
         ('num_threads', (), {}),

@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for net_connections() and Process.connections() APIs."""
+"""Tests for psutil.net_connections() and Process.net_connections() APIs."""
 
 import os
 import socket
@@ -49,7 +49,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
 def this_proc_connections(kind):
-    cons = psutil.Process().connections(kind=kind)
+    cons = psutil.Process().net_connections(kind=kind)
     if kind in ("all", "unix"):
         return filter_proc_connections(cons)
     return cons
@@ -310,7 +310,7 @@ class TestFilters(ConnectionTestCase):
             self.assertEqual(conn.raddr, raddr)
             self.assertEqual(conn.status, status)
             for kind in all_kinds:
-                cons = proc.connections(kind=kind)
+                cons = proc.net_connections(kind=kind)
                 if kind in kinds:
                     self.assertNotEqual(cons, [])
                 else:
@@ -373,7 +373,7 @@ class TestFilters(ConnectionTestCase):
             udp6_addr = None
 
         for p in psutil.Process().children():
-            cons = p.connections()
+            cons = p.net_connections()
             self.assertEqual(len(cons), 1)
             for conn in cons:
                 # TCP v4
@@ -511,8 +511,8 @@ class TestSystemWideConnections(ConnectionTestCase):
     @retry_on_failure()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
-        # sockets. For each process check that proc.connections()
-        # and net_connections() return the same results.
+        # sockets. For each process check that proc.net_connections()
+        # and psutil.net_connections() return the same results.
         # This is done mainly to check whether net_connections()'s
         # pid is properly set, see:
         # https://github.com/giampaolo/psutil/issues/1013
@@ -547,7 +547,7 @@ class TestSystemWideConnections(ConnectionTestCase):
                 len([x for x in syscons if x.pid == pid]), expected
             )
             p = psutil.Process(pid)
-            self.assertEqual(len(p.connections('all')), expected)
+            self.assertEqual(len(p.net_connections('all')), expected)
 
 
 class TestMisc(PsutilTestCase):

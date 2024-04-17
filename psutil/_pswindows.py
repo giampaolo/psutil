@@ -1059,7 +1059,7 @@ class Process:
         return list(ret)
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         return net_connections(kind, _pid=self.pid)
 
     @wrap_exceptions

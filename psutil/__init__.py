@@ -1198,7 +1198,7 @@ class Process(object):  # noqa: UP004
         """
         return self._proc.open_files()
 
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         """Return socket connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) namedtuples.
         The *kind* parameter filters for connections that match the
@@ -1220,7 +1220,11 @@ class Process(object):  # noqa: UP004
         | all        | the sum of all the possible families and protocols |
         +------------+----------------------------------------------------+
         """
-        return self._proc.connections(kind)
+        return self._proc.net_connections(kind)
+
+    @_common.deprecated_method(replacement="net_connections")
+    def connections(self, kind="inet"):
+        return self.net_connections(kind=kind)
 
     # --- signals
 

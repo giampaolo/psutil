@@ -37,12 +37,12 @@ List of APIs returning or dealing with a string:
 ('not tested' means they are not tested to deal with non-ASCII strings):
 
 * Process.cmdline()
-* Process.connections('unix')
 * Process.cwd()
 * Process.environ()
 * Process.exe()
 * Process.memory_maps()
 * Process.name()
+* Process.net_connections('unix')
 * Process.open_files()
 * Process.username()             (not tested)
 
@@ -263,7 +263,7 @@ class TestFSAPIs(BaseUnicodeTest):
             else:
                 raise unittest.SkipTest("not supported")
         with closing(sock):
-            conn = psutil.Process().connections('unix')[0]
+            conn = psutil.Process().net_connections('unix')[0]
             self.assertIsInstance(conn.laddr, str)
             self.assertEqual(conn.laddr, name)
 

@@ -2344,7 +2344,7 @@ class Process:
         return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         ret = _connections.retrieve(kind, self.pid)
         self._raise_if_not_alive()
         return ret

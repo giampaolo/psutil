@@ -2241,7 +2241,7 @@ class TestProcess(PsutilTestCase):
         ) as m:
             p = psutil.Process()
             with mock.patch("psutil._pslinux.debug"):
-                self.assertEqual(p.connections(), [])
+                self.assertEqual(p.net_connections(), [])
                 assert m.called
 
 

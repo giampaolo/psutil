@@ -652,7 +652,7 @@ Network
    +----------------+-----------------------------------------------------+
 
   On macOS and AIX this function requires root privileges.
-  To get per-process connections use :meth:`Process.connections`.
+  To get per-process connections use :meth:`Process.net_connections`.
   Also, see `netstat.py`_ example script.
   Example:
 
@@ -1896,7 +1896,7 @@ Process class
     .. versionchanged::
       4.1.0 new *position*, *mode* and *flags* fields on Linux.
 
-  .. method:: connections(kind="inet")
+  .. method:: net_connections(kind="inet")
 
     Return socket connections opened by process as a list of named tuples.
     To get system-wide connections use :func:`psutil.net_connections()`.
@@ -1955,7 +1955,7 @@ Process class
       >>> p = psutil.Process(1694)
       >>> p.name()
       'firefox'
-      >>> p.connections()
+      >>> p.net_connections()
       [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
        pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING'),
        pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED'),
@@ -2386,7 +2386,7 @@ Connections constants
 .. data:: CONN_BOUND (Solaris)
 
   A set of strings representing the status of a TCP connection.
-  Returned by :meth:`psutil.Process.connections()` and
+  Returned by :meth:`psutil.Process.net_connections()` and
   :func:`psutil.net_connections` (`status` field).
 
 Hardware constants
