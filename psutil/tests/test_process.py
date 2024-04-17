@@ -1382,6 +1382,8 @@ class TestProcess(PsutilTestCase):
         for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
             with self.subTest(name=name):
                 self.assertRaisesRegex(psutil.NoSuchProcess, msg, fun)
+        self.assertIn("terminated + PID reused", str(p))
+        self.assertIn("terminated + PID reused", repr(p))
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.ppid)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parent)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parents)
