@@ -450,16 +450,15 @@ Disks
     on Windows).
   * **opts**: a comma-separated string indicating different mount options for
     the drive/partition. Platform-dependent.
-  * **maxfile**: the maximum length a file name can have.
-  * **maxpath**: the maximum length a path name (directory name + base file
-    name) can have.
 
   >>> import psutil
   >>> psutil.disk_partitions()
-  [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro', maxfile=255, maxpath=4096),
-   sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw', maxfile=255, maxpath=4096)]
+  [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
+   sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
   .. versionchanged:: 5.7.4 added *maxfile* and *maxpath* fields
+
+  .. versionchanged:: 6.0.0 removed *maxfile* and *maxpath* fields
 
 .. function:: disk_usage(path)
 
