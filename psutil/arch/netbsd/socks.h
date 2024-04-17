@@ -6,5 +6,5 @@
  * found in the LICENSE file.
  */
 
-PyObject *psutil_proc_connections(PyObject *, PyObject *);
 PyObject *psutil_net_connections(PyObject *, PyObject *);
+PyObject *psutil_proc_net_connections(PyObject *, PyObject *);

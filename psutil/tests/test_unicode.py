@@ -253,7 +253,7 @@ class TestFSAPIs(BaseUnicodeTest):
             )
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    def test_proc_connections(self):
+    def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)

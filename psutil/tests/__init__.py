@@ -105,7 +105,7 @@ __all__ = [
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
-    'check_net_address', 'filter_proc_connections',
+    'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
     # compat
@@ -1884,7 +1884,7 @@ def check_connection_ntuple(conn):
     check_status(conn)
 
 
-def filter_proc_connections(cons):
+def filter_proc_net_connections(cons):
     """Our process may start with some open UNIX sockets which are not
     initialized by us, invalidating unit tests.
     """

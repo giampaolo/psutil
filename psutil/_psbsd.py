@@ -835,7 +835,7 @@ class Process:
         elif OPENBSD:
             rawlist = cext.net_connections(self.pid, families, types)
         else:
-            rawlist = cext.proc_connections(self.pid, families, types)
+            rawlist = cext.proc_net_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]

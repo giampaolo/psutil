@@ -178,7 +178,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
 
 
 PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args) {
+psutil_proc_net_connections(PyObject *self, PyObject *args) {
     // Return connections opened by process.
     pid_t pid;
     int i;

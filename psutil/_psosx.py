@@ -508,7 +508,7 @@ class Process:
                 % (kind, ', '.join([repr(x) for x in conn_tmap]))
             )
         families, types = conn_tmap[kind]
-        rawlist = cext.proc_connections(self.pid, families, types)
+        rawlist = cext.proc_net_connections(self.pid, families, types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
