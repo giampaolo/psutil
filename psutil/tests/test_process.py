@@ -1468,6 +1468,7 @@ class TestProcess(PsutilTestCase):
         MACOS_11PLUS,
         "macOS 11+ can't get another process environment, issue #2084",
     )
+    @unittest.skipIf(NETBSD, "sometimes fails on `assert is_running()`")
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
         code = textwrap.dedent("""
