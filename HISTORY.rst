@@ -45,9 +45,10 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
   The old name is still available, but it's deprecated (triggers a
   ``DeprecationWarning``) and will be removed in the future. This also means
-  that `Process.as_dict()`_ will 1) return a dictionary with a different key
-  name ( "net_connections" instead of "connections") 2) it will no longer
-  accept ``as_dict(attrs=["connections"])`` as an argument.
+  that `Process.as_dict()`_ will:
+  1) return a dictionary with a different key name ("net_connections" instead
+  of "connections")
+  2) it will no longer accept ``as_dict(attrs=["connections"])`` as an argument.
 - 2409_: removed `Process.memory_info_ex()`, which was deprecated 8 years ago.
   You are supposed to use `Process.memory_info()`_ instead.
 
