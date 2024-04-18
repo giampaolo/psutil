@@ -37,12 +37,12 @@ List of APIs returning or dealing with a string:
 ('not tested' means they are not tested to deal with non-ASCII strings):
 
 * Process.cmdline()
-* Process.connections('unix')
 * Process.cwd()
 * Process.environ()
 * Process.exe()
 * Process.memory_maps()
 * Process.name()
+* Process.net_connections('unix')
 * Process.open_files()
 * Process.username()             (not tested)
 
@@ -88,9 +88,9 @@ from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
-from psutil.tests import HAS_CONNECTIONS_UNIX
 from psutil.tests import HAS_ENVIRON
 from psutil.tests import HAS_MEMORY_MAPS
+from psutil.tests import HAS_NET_CONNECTIONS_UNIX
 from psutil.tests import INVALID_UNICODE_SUFFIX
 from psutil.tests import PYPY
 from psutil.tests import TESTFN_PREFIX
@@ -253,7 +253,7 @@ class TestFSAPIs(BaseUnicodeTest):
             )
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    def test_proc_connections(self):
+    def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
         try:
             sock = bind_unix_socket(name)
@@ -263,12 +263,12 @@ class TestFSAPIs(BaseUnicodeTest):
             else:
                 raise unittest.SkipTest("not supported")
         with closing(sock):
-            conn = psutil.Process().connections('unix')[0]
+            conn = psutil.Process().net_connections('unix')[0]
             self.assertIsInstance(conn.laddr, str)
             self.assertEqual(conn.laddr, name)
 
     @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(not HAS_CONNECTIONS_UNIX, "can't list UNIX sockets")
+    @unittest.skipIf(not HAS_NET_CONNECTIONS_UNIX, "can't list UNIX sockets")
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):

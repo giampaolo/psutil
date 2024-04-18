@@ -448,7 +448,7 @@ class Process:
             return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         ret = net_connections(kind, _pid=self.pid)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether

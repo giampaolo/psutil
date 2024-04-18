@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for net_connections() and Process.connections() APIs."""
+"""Tests for psutil.net_connections() and Process.net_connections() APIs."""
 
 import os
 import socket
@@ -28,14 +28,14 @@ from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil._compat import PY3
 from psutil.tests import AF_UNIX
-from psutil.tests import HAS_CONNECTIONS_UNIX
+from psutil.tests import HAS_NET_CONNECTIONS_UNIX
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import PsutilTestCase
 from psutil.tests import bind_socket
 from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
-from psutil.tests import filter_proc_connections
+from psutil.tests import filter_proc_net_connections
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import serialrun
@@ -48,21 +48,21 @@ from psutil.tests import wait_for_file
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 
-def this_proc_connections(kind):
-    cons = psutil.Process().connections(kind=kind)
+def this_proc_net_connections(kind):
+    cons = psutil.Process().net_connections(kind=kind)
     if kind in ("all", "unix"):
-        return filter_proc_connections(cons)
+        return filter_proc_net_connections(cons)
     return cons
 
 
 @serialrun
 class ConnectionTestCase(PsutilTestCase):
     def setUp(self):
-        self.assertEqual(this_proc_connections(kind='all'), [])
+        self.assertEqual(this_proc_net_connections(kind='all'), [])
 
     def tearDown(self):
         # Make sure we closed all resources.
-        self.assertEqual(this_proc_connections(kind='all'), [])
+        self.assertEqual(this_proc_net_connections(kind='all'), [])
 
     def compare_procsys_connections(self, pid, proc_cons, kind='all'):
         """Given a process PID and its list of connections compare
@@ -94,11 +94,11 @@ class TestBasicOperations(ConnectionTestCase):
 
     def test_process(self):
         with create_sockets():
-            for conn in this_proc_connections(kind='all'):
+            for conn in this_proc_net_connections(kind='all'):
                 check_connection_ntuple(conn)
 
     def test_invalid_kind(self):
-        self.assertRaises(ValueError, this_proc_connections, kind='???')
+        self.assertRaises(ValueError, this_proc_net_connections, kind='???')
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
@@ -107,7 +107,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
     """Tests sockets which are open but not connected to anything."""
 
     def get_conn_from_sock(self, sock):
-        cons = this_proc_connections(kind='all')
+        cons = this_proc_net_connections(kind='all')
         smap = dict([(c.fd, c) for c in cons])
         if NETBSD or FREEBSD:
             # NetBSD opens a UNIX socket to /var/log/run
@@ -146,8 +146,8 @@ class TestUnconnectedSockets(ConnectionTestCase):
         self.assertEqual(conn.laddr, laddr)
 
         # XXX Solaris can't retrieve system-wide UNIX sockets
-        if sock.family == AF_UNIX and HAS_CONNECTIONS_UNIX:
-            cons = this_proc_connections(kind='all')
+        if sock.family == AF_UNIX and HAS_NET_CONNECTIONS_UNIX:
+            cons = this_proc_net_connections(kind='all')
             self.compare_procsys_connections(os.getpid(), cons, kind='all')
         return conn
 
@@ -209,17 +209,17 @@ class TestConnectedSocket(ConnectionTestCase):
     @unittest.skipIf(SUNOS, "unreliable on SUONS")
     def test_tcp(self):
         addr = ("127.0.0.1", 0)
-        self.assertEqual(this_proc_connections(kind='tcp4'), [])
+        self.assertEqual(this_proc_net_connections(kind='tcp4'), [])
         server, client = tcp_socketpair(AF_INET, addr=addr)
         try:
-            cons = this_proc_connections(kind='tcp4')
+            cons = this_proc_net_connections(kind='tcp4')
             self.assertEqual(len(cons), 2)
             self.assertEqual(cons[0].status, psutil.CONN_ESTABLISHED)
             self.assertEqual(cons[1].status, psutil.CONN_ESTABLISHED)
             # May not be fast enough to change state so it stays
             # commenteed.
             # client.close()
-            # cons = this_proc_connections(kind='all')
+            # cons = this_proc_net_connections(kind='all')
             # self.assertEqual(len(cons), 1)
             # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
         finally:
@@ -231,7 +231,7 @@ class TestConnectedSocket(ConnectionTestCase):
         testfn = self.get_testfn()
         server, client = unix_socketpair(testfn)
         try:
-            cons = this_proc_connections(kind='unix')
+            cons = this_proc_net_connections(kind='unix')
             assert not (cons[0].laddr and cons[0].raddr), cons
             assert not (cons[1].laddr and cons[1].raddr), cons
             if NETBSD or FREEBSD:
@@ -257,7 +257,7 @@ class TestConnectedSocket(ConnectionTestCase):
 class TestFilters(ConnectionTestCase):
     def test_filters(self):
         def check(kind, families, types):
-            for conn in this_proc_connections(kind=kind):
+            for conn in this_proc_net_connections(kind=kind):
                 self.assertIn(conn.family, families)
                 self.assertIn(conn.type, types)
             if not SKIP_SYSCONS:
@@ -279,7 +279,7 @@ class TestFilters(ConnectionTestCase):
             check('udp', [AF_INET, AF_INET6], [SOCK_DGRAM])
             check('udp4', [AF_INET], [SOCK_DGRAM])
             check('udp6', [AF_INET6], [SOCK_DGRAM])
-            if HAS_CONNECTIONS_UNIX:
+            if HAS_NET_CONNECTIONS_UNIX:
                 check(
                     'unix',
                     [AF_UNIX],
@@ -310,7 +310,7 @@ class TestFilters(ConnectionTestCase):
             self.assertEqual(conn.raddr, raddr)
             self.assertEqual(conn.status, status)
             for kind in all_kinds:
-                cons = proc.connections(kind=kind)
+                cons = proc.net_connections(kind=kind)
                 if kind in kinds:
                     self.assertNotEqual(cons, [])
                 else:
@@ -318,7 +318,7 @@ class TestFilters(ConnectionTestCase):
             # compare against system-wide connections
             # XXX Solaris can't retrieve system-wide UNIX
             # sockets.
-            if HAS_CONNECTIONS_UNIX:
+            if HAS_NET_CONNECTIONS_UNIX:
                 self.compare_procsys_connections(proc.pid, [conn])
 
         tcp_template = textwrap.dedent("""
@@ -373,7 +373,7 @@ class TestFilters(ConnectionTestCase):
             udp6_addr = None
 
         for p in psutil.Process().children():
-            cons = p.connections()
+            cons = p.net_connections()
             self.assertEqual(len(cons), 1)
             for conn in cons:
                 # TCP v4
@@ -428,56 +428,56 @@ class TestFilters(ConnectionTestCase):
     def test_count(self):
         with create_sockets():
             # tcp
-            cons = this_proc_connections(kind='tcp')
+            cons = this_proc_net_connections(kind='tcp')
             self.assertEqual(len(cons), 2 if supports_ipv6() else 1)
             for conn in cons:
                 self.assertIn(conn.family, (AF_INET, AF_INET6))
                 self.assertEqual(conn.type, SOCK_STREAM)
             # tcp4
-            cons = this_proc_connections(kind='tcp4')
+            cons = this_proc_net_connections(kind='tcp4')
             self.assertEqual(len(cons), 1)
             self.assertEqual(cons[0].family, AF_INET)
             self.assertEqual(cons[0].type, SOCK_STREAM)
             # tcp6
             if supports_ipv6():
-                cons = this_proc_connections(kind='tcp6')
+                cons = this_proc_net_connections(kind='tcp6')
                 self.assertEqual(len(cons), 1)
                 self.assertEqual(cons[0].family, AF_INET6)
                 self.assertEqual(cons[0].type, SOCK_STREAM)
             # udp
-            cons = this_proc_connections(kind='udp')
+            cons = this_proc_net_connections(kind='udp')
             self.assertEqual(len(cons), 2 if supports_ipv6() else 1)
             for conn in cons:
                 self.assertIn(conn.family, (AF_INET, AF_INET6))
                 self.assertEqual(conn.type, SOCK_DGRAM)
             # udp4
-            cons = this_proc_connections(kind='udp4')
+            cons = this_proc_net_connections(kind='udp4')
             self.assertEqual(len(cons), 1)
             self.assertEqual(cons[0].family, AF_INET)
             self.assertEqual(cons[0].type, SOCK_DGRAM)
             # udp6
             if supports_ipv6():
-                cons = this_proc_connections(kind='udp6')
+                cons = this_proc_net_connections(kind='udp6')
                 self.assertEqual(len(cons), 1)
                 self.assertEqual(cons[0].family, AF_INET6)
                 self.assertEqual(cons[0].type, SOCK_DGRAM)
             # inet
-            cons = this_proc_connections(kind='inet')
+            cons = this_proc_net_connections(kind='inet')
             self.assertEqual(len(cons), 4 if supports_ipv6() else 2)
             for conn in cons:
                 self.assertIn(conn.family, (AF_INET, AF_INET6))
                 self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
             # inet6
             if supports_ipv6():
-                cons = this_proc_connections(kind='inet6')
+                cons = this_proc_net_connections(kind='inet6')
                 self.assertEqual(len(cons), 2)
                 for conn in cons:
                     self.assertEqual(conn.family, AF_INET6)
                     self.assertIn(conn.type, (SOCK_STREAM, SOCK_DGRAM))
             # Skipped on BSD becayse by default the Python process
             # creates a UNIX socket to '/var/run/log'.
-            if HAS_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
-                cons = this_proc_connections(kind='unix')
+            if HAS_NET_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
+                cons = this_proc_net_connections(kind='unix')
                 self.assertEqual(len(cons), 3)
                 for conn in cons:
                     self.assertEqual(conn.family, AF_UNIX)
@@ -501,7 +501,7 @@ class TestSystemWideConnections(ConnectionTestCase):
 
             for kind, groups in conn_tmap.items():
                 # XXX: SunOS does not retrieve UNIX sockets.
-                if kind == 'unix' and not HAS_CONNECTIONS_UNIX:
+                if kind == 'unix' and not HAS_NET_CONNECTIONS_UNIX:
                     continue
                 families, types_ = groups
                 cons = psutil.net_connections(kind)
@@ -511,8 +511,8 @@ class TestSystemWideConnections(ConnectionTestCase):
     @retry_on_failure()
     def test_multi_sockets_procs(self):
         # Creates multiple sub processes, each creating different
-        # sockets. For each process check that proc.connections()
-        # and net_connections() return the same results.
+        # sockets. For each process check that proc.net_connections()
+        # and psutil.net_connections() return the same results.
         # This is done mainly to check whether net_connections()'s
         # pid is properly set, see:
         # https://github.com/giampaolo/psutil/issues/1013
@@ -547,11 +547,11 @@ class TestSystemWideConnections(ConnectionTestCase):
                 len([x for x in syscons if x.pid == pid]), expected
             )
             p = psutil.Process(pid)
-            self.assertEqual(len(p.connections('all')), expected)
+            self.assertEqual(len(p.net_connections('all')), expected)
 
 
 class TestMisc(PsutilTestCase):
-    def test_connection_constants(self):
+    def test_net_connection_constants(self):
         ints = []
         strs = []
         for name in dir(psutil):

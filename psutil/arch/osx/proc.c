@@ -857,7 +857,7 @@ error:
  * - /usr/include/sys/proc_info.h
  */
 PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args) {
+psutil_proc_net_connections(PyObject *self, PyObject *args) {
     pid_t pid;
     int num_fds;
     int i;

@@ -39,7 +39,7 @@ FEATURES
   Example:
   ```
   df -a  ->  psutil.disk_partitions
-  lsof  ->  psutil.Process.open_files() and psutil.Process.open_connections()
+  lsof  ->  psutil.Process.open_files() and psutil.Process.net_connections()
   killall->  (actual script)
   tty  ->  psutil.Process.terminal()
   who  ->  psutil.users()
@@ -113,8 +113,6 @@ REJECTED IDEAS
 INCONSISTENCIES
 ===============
 
-- `Process.connections()` should have been `Process.net_connections()` for
-  consistency with `psutil.net_connections()`.
 - PROCFS_PATH should have been set_procfs_path().
 - `virtual_memory()` should have been `memory_virtual()`.
 - `swap_memory()` should have been `memory_swap()`.

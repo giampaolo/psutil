@@ -2231,7 +2231,7 @@ class TestProcess(PsutilTestCase):
             self.assertEqual(gids.saved, 1006)
             self.assertEqual(p._proc._get_eligible_cpus(), list(range(8)))
 
-    def test_connections_enametoolong(self):
+    def test_net_connections_enametoolong(self):
         # Simulate a case where /proc/{pid}/fd/{fd} symlink points to
         # a file with full path longer than PATH_MAX, see:
         # https://github.com/giampaolo/psutil/issues/1940
@@ -2241,7 +2241,7 @@ class TestProcess(PsutilTestCase):
         ) as m:
             p = psutil.Process()
             with mock.patch("psutil._pslinux.debug"):
-                self.assertEqual(p.connections(), [])
+                self.assertEqual(p.net_connections(), [])
                 assert m.called
 
 

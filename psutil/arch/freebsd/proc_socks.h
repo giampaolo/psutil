@@ -6,4 +6,4 @@
 
 #include <Python.h>
 
-PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
+PyObject* psutil_proc_net_connections(PyObject* self, PyObject* args);

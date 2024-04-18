@@ -821,7 +821,7 @@ class Process:
         return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError(
                 "invalid %r kind argument; choose between %s"
@@ -835,7 +835,7 @@ class Process:
         elif OPENBSD:
             rawlist = cext.net_connections(self.pid, families, types)
         else:
-            rawlist = cext.proc_connections(self.pid, families, types)
+            rawlist = cext.proc_net_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]

@@ -815,7 +815,7 @@ class _Ipv6UnsupportedError(Exception):
     pass
 
 
-class Connections:
+class NetConnections:
     """A wrapper on top of /proc/net/* files, retrieving per-process
     and system-wide open connections (TCP, UDP, UNIX) similarly to
     "netstat -an".
@@ -981,8 +981,8 @@ class Connections:
                     else:
                         status = _common.CONN_NONE
                     try:
-                        laddr = Connections.decode_address(laddr, family)
-                        raddr = Connections.decode_address(raddr, family)
+                        laddr = NetConnections.decode_address(laddr, family)
+                        raddr = NetConnections.decode_address(raddr, family)
                     except _Ipv6UnsupportedError:
                         continue
                     yield (fd, family, type_, laddr, raddr, status, pid)
@@ -1059,12 +1059,12 @@ class Connections:
         return list(ret)
 
 
-_connections = Connections()
+_net_connections = NetConnections()
 
 
 def net_connections(kind='inet'):
     """Return system-wide open connections."""
-    return _connections.retrieve(kind)
+    return _net_connections.retrieve(kind)
 
 
 def net_io_counters():
@@ -2344,8 +2344,8 @@ class Process:
         return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
-        ret = _connections.retrieve(kind, self.pid)
+    def net_connections(self, kind='inet'):
+        ret = _net_connections.retrieve(kind, self.pid)
         self._raise_if_not_alive()
         return ret
 
