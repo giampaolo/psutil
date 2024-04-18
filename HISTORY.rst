@@ -14,6 +14,9 @@
   been reused. This makes `process_iter()`_ around 20x times faster.
 - 2396_: a new ``psutil.process_iter.cache_clear()`` API can be used the clear
   `process_iter()`_ internal cache.
+- 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
+  The old name is still available, but it's deprecated (triggers a
+  ``DeprecationWarning``) and will be removed in the future.
 
 **Bug fixes**
 
@@ -37,6 +40,9 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   been reused. If you want to check for PID reusage you are supposed to use
   `Process.is_running()`_ against the yielded `Process`_ instances. That will
   also automatically remove reused PIDs from `process_iter()`_ internal cache.
+- 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
+  The old name is still available, but it's deprecated (triggers a
+  ``DeprecationWarning``) and will be removed in the future.
 
 5.9.8
 =====
@@ -2644,6 +2650,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.memory_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_percent
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
+.. _`Process.net_connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.net_connections
 .. _`Process.nice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.nice
 .. _`Process.num_ctx_switches()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_ctx_switches
 .. _`Process.num_fds()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_fds

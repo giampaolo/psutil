@@ -1902,9 +1902,10 @@ Process class
     To get system-wide connections use :func:`psutil.net_connections()`.
     Every named tuple provides 6 attributes:
 
-    - **fd**: the socket file descriptor. This can be passed to `socket.fromfd`_
-      to obtain a usable socket object. On Windows, FreeBSD and SunOS this is
-      always set to ``-1``.
+    - **fd**: the socket file descriptor. If the connection refers to the
+      current process this may be passed to `socket.fromfd`_ to obtain a usable
+      socket object.
+      On Windows, FreeBSD and SunOS this is always set to ``-1``.
     - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or
       `AF_UNIX`_.
     - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
@@ -1977,6 +1978,16 @@ Process class
       as root (lsof does the same).
 
     .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
+
+    .. versionchanged:: 6.0.0 : method renamed from `connections` to
+      `net_connections`.
+
+  .. method:: connections()
+
+    Same as :meth:`net_connections` (deprecated).
+
+    .. warning::
+      deprecated in version 6.0.0; use :meth:`net_connections` instead.
 
   .. method:: is_running()
 
