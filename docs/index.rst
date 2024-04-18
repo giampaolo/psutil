@@ -1706,13 +1706,6 @@ Process class
     .. versionchanged::
       4.0.0 multiple fields are returned, not only `rss` and `vms`.
 
-  .. method:: memory_info_ex()
-
-    Same as :meth:`memory_info` (deprecated).
-
-    .. warning::
-      deprecated in version 4.0.0; use :meth:`memory_info` instead.
-
   .. method:: memory_full_info()
 
     This method returns the same information as :meth:`memory_info`, plus, on

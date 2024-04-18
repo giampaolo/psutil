@@ -1401,7 +1401,6 @@ class process_namespace:
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
         ('is_running', (), {}),
-        ('memory_info_ex', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),

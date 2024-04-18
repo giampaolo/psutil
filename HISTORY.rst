@@ -17,6 +17,7 @@
 - 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
   The old name is still available, but it's deprecated (triggers a
   ``DeprecationWarning``) and will be removed in the future.
+- 2409_: removed `Process.memory_info_ex()`, which was deprecated 8 years ago.
 
 **Bug fixes**
 
@@ -40,9 +41,15 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   been reused. If you want to check for PID reusage you are supposed to use
   `Process.is_running()`_ against the yielded `Process`_ instances. That will
   also automatically remove reused PIDs from `process_iter()`_ internal cache.
+  You can now also use new `process_iter.cache_clear()` API if you want to.
 - 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
   The old name is still available, but it's deprecated (triggers a
-  ``DeprecationWarning``) and will be removed in the future.
+  ``DeprecationWarning``) and will be removed in the future. This also means
+  that `Process.as_dict()`_ will 1) return a dictionary with a different key
+  name ( "net_connections" instead of "connections") 2) it will no longer
+  accept ``as_dict(attrs=["connections"])`` as an argument.
+- 2409_: removed `Process.memory_info_ex()`, which was deprecated 8 years ago.
+  You are supposed to use `Process.memory_info()`_ instead.
 
 5.9.8
 =====
@@ -676,7 +683,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - 1429_, [Windows]: ``SE DEBUG`` was not properly set for current process. It is
   now, and it should result in less `AccessDenied`_ exceptions for low PID
   processes.
-- 1432_, [Windows]: `Process.memory_info_ex()`_'s USS memory is miscalculated
+- 1432_, [Windows]: `Process.memory_info_ex()` USS memory is miscalculated
   because we're not using the actual system ``PAGESIZE``.
 - 1439_, [NetBSD]: `Process.connections()`_ may return incomplete results if using
   `Process.oneshot()`_.
@@ -894,7 +901,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   to print useful debug messages on stderr (useful in case of nasty errors).
 - 1177_, [macOS]: added support for `sensors_battery()`_.  (patch by Arnon Yaari)
 - 1183_: `Process.children()`_ is 2x faster on POSIX and 2.4x faster on Linux.
-- 1188_: deprecated method `Process.memory_info_ex()`_ now warns by using
+- 1188_: deprecated method `Process.memory_info_ex()` now warns by using
   ``FutureWarning`` instead of ``DeprecationWarning``.
 
 **Bug fixes**
@@ -1300,7 +1307,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   `Process.threads()`_ and `Process.memory_maps()`_ may raise ``RuntimeError`` if
   attempting to query a 64bit process with a 32bit Python. "Null" values are
   returned as a fallback.
-- 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`_
+- 858_: `Process.as_dict()`_ should not call `Process.memory_info_ex()`
   because it's deprecated.
 - 863_, [Windows]: `Process.memory_maps()`_ truncates addresses above 32 bits.
 - 866_, [Windows]: `win_service_iter()`_ and services in general are not able to
@@ -2160,7 +2167,7 @@ In most cases accessing the old names will work but it will cause a
 - 220_, [FreeBSD]: ``get_connections()`` has been rewritten in C and no longer
   requires ``lsof``.
 - 222_, [macOS]: add support for `Process.cwd()`_.
-- 261_: per-process extended memory info (`Process.memory_info_ex()`_).
+- 261_: per-process extended memory info (`Process.memory_info_ex()`).
 - 295_, [macOS]: `Process.exe()`_ path is now determined by asking the OS
   instead of being guessed from `Process.cmdline()`_.
 - 297_, [macOS]: the `Process`_ methods below were always raising `AccessDenied`_
@@ -2646,7 +2653,6 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
 .. _`Process.memory_full_info()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_full_info
 .. _`Process.memory_info()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_info
-.. _`Process.memory_info_ex()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_info_ex
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.memory_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_percent
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name

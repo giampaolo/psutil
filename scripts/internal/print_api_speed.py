@@ -184,20 +184,20 @@ def main():
     print()
     print_header("PROCESS APIS")
     ignore = [
-        'send_signal',
-        'suspend',
-        'resume',
-        'terminate',
-        'kill',
-        'wait',
         'as_dict',
+        'children',
+        'connections',
+        'kill',
+        'oneshot',
         'parent',
         'parents',
-        'memory_info_ex',
-        'oneshot',
         'pid',
+        'resume',
         'rlimit',
-        'children',
+        'send_signal',
+        'suspend',
+        'terminate',
+        'wait',
     ]
     if psutil.MACOS:
         ignore.append('memory_maps')  # XXX
