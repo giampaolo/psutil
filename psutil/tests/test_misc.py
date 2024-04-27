@@ -43,6 +43,7 @@ from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PYTHON_EXE_ENV
+from psutil.tests import QEMU_USER
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
@@ -287,6 +288,9 @@ class TestMisc(PsutilTestCase):
         ns = system_namespace()
         for fun, name in ns.iter(ns.getters):
             if name in {"win_service_iter", "win_service_get"}:
+                continue
+            if QEMU_USER and name == "net_if_stats":
+                # OSError: [Errno 38] ioctl(SIOCETHTOOL) not implemented
                 continue
             with self.subTest(name=name):
                 try:
@@ -1008,6 +1012,7 @@ class TestScripts(PsutilTestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
+    @unittest.skipIf(QEMU_USER, 'QEMU user not supported')
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 

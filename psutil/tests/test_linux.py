@@ -36,6 +36,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
+from psutil.tests import QEMU_USER
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
@@ -1051,6 +1052,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
+@unittest.skipIf(QEMU_USER, "QEMU user not supported")
 class TestSystemNetIfStats(PsutilTestCase):
     @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     def test_against_ifconfig(self):
@@ -1610,7 +1612,7 @@ class TestMisc(PsutilTestCase):
         with ThreadTask():
             p = psutil.Process()
             threads = p.threads()
-            self.assertEqual(len(threads), 2)
+            self.assertEqual(len(threads), 3 if QEMU_USER else 2)
             tid = sorted(threads, key=lambda x: x.id)[1].id
             self.assertNotEqual(p.pid, tid)
             pt = psutil.Process(tid)
@@ -2290,6 +2292,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
         value = self.read_status_file("Name:")
         self.assertEqual(self.proc.name(), value)
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_status(self):
         value = self.read_status_file("State:")
         value = value[value.find('(') + 1 : value.rfind(')')]
