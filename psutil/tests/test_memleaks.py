@@ -19,6 +19,7 @@ from __future__ import print_function
 import functools
 import os
 import platform
+import sys
 import unittest
 
 import psutil
@@ -43,6 +44,7 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
+from psutil.tests import QEMU_USER
 from psutil.tests import TestMemoryLeak
 from psutil.tests import create_sockets
 from psutil.tests import get_testfn
@@ -398,6 +400,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         times = FEW_TIMES if POSIX else self.times
         self.execute(lambda: psutil.disk_usage('.'), times=times)
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_disk_partitions(self):
         self.execute(psutil.disk_partitions)
 
@@ -435,6 +438,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
 
@@ -491,6 +495,11 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
 
 if __name__ == '__main__':
+    from psutil.tests.runner import cprint
     from psutil.tests.runner import run_from_name
+
+    if QEMU_USER:
+        cprint("skipping %s tests under QEMU_USER" % __file__, "brown")
+        sys.exit(0)
 
     run_from_name(__file__)
