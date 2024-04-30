@@ -20,6 +20,9 @@
 
 **Bug fixes**
 
+- 1586_, `cpu_times_percent()`_ reports much too low values if the interval is
+  less than 1 second (with ``percpu=True``) or less than ``1/cpu_count()``
+  seconds (with ``percpu=False``).
 - 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
   a thread ID (TID) instead of a PID (process ID).
 - 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch by Shade Gladden)
