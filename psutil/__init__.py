@@ -1601,14 +1601,14 @@ def wait_procs(procs, timeout=None, callback=None):
                 check_gone(proc, timeout)
             else:
                 check_gone(proc, max_timeout)
-        alive = alive - gone
+        alive = alive - gone  # noqa PLR6104
 
     if alive:
         # Last attempt over processes survived so far.
         # timeout == 0 won't make this function wait any further.
         for proc in alive:
             check_gone(proc, 0)
-        alive = alive - gone
+        alive = alive - gone  # noqa: PLR6104
 
     return (list(gone), list(alive))
 

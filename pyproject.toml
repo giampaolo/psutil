@@ -46,10 +46,13 @@ ignore = [
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
     "FLY",  # flynt (PYTHON2.7 COMPAT)
     "FURB101",  # `open` and `read` should be replaced by `Path(src).read_text()`
+    "FURB103",  # `open` and `write` should be replaced by `Path(...).write_text(...)`
     "FURB113",  # Use `x.extend(('a', 'b', 'c'))` instead of repeatedly calling `x.append()`
+    "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator
     "FURB145",  # [*] Prefer `copy` method over slicing (PYTHON2.7 COMPAT)
+    "FURB192",  # [*] Prefer `min` over `sorted()` to compute the minimum value in a sequence
     "INP",  # flake8-no-pep420
     "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
     "N802",  # Function name X should be lowercase.
@@ -108,7 +111,7 @@ ignore = [
 "psutil/tests/*" = ["EM101", "TRY003"]
 "psutil/tests/runner.py" = ["T201", "T203"]
 "scripts/*" = ["T201", "T203"]
-"scripts/internal/*" = ["T201", "T203"]
+"scripts/internal/*" = ["EM101", "T201", "T203", "TRY003"]
 "setup.py" = ["T201", "T203"]
 
 [tool.ruff.lint.isort]
