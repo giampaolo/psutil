@@ -20,7 +20,7 @@ PY3_DEPS = \
 	pypinfo \
 	requests \
 	rstcheck \
-	ruff==0.3.4 \
+	ruff==0.4.4 \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
