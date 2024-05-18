@@ -37,6 +37,16 @@ jobs:
           archs: "x86"
     steps:
     - uses: actions/checkout@v4
+
+    # see https://cibuildwheel.pypa.io/en/stable/faq/#macos-building-cpython-38-wheels-on-arm64
+    - name: "Install python 3.8 universal2 on macOS arm64"
+      if: runner.os == 'macOS' && runner.arch == 'ARM64'
+      uses: actions/setup-python@v5
+      env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
+      with:
+        python-version: 3.8
+
     - uses: actions/setup-python@v5
       with:
         python-version: 3.11
