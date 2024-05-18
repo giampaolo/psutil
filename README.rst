@@ -228,8 +228,8 @@ Disks
 .. code-block:: python
 
     >>> psutil.disk_partitions()
-    [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid', maxfile=255, maxpath=4096),
-     sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext', opts='rw', maxfile=255, maxpath=4096)]
+    [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
+     sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext', opts='rw')]
     >>>
     >>> psutil.disk_usage('/')
     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
@@ -382,7 +382,7 @@ Process management
     [popenfile(path='/home/giampaolo/monit.py', fd=3, position=0, mode='r', flags=32768),
      popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
     >>>
-    >>> p.connections(kind='tcp')
+    >>> p.net_connections(kind='tcp')
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
      pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING')]
     >>>

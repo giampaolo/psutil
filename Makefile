@@ -166,7 +166,7 @@ test-contracts:  ## APIs sanity tests.
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_contracts.py
 
-test-connections:  ## Test net_connections() and Process.connections().
+test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_connections.py
 

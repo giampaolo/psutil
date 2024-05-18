@@ -395,10 +395,7 @@ def disk_partitions(all=False):
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -824,7 +821,7 @@ class Process:
         return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError(
                 "invalid %r kind argument; choose between %s"
@@ -838,7 +835,7 @@ class Process:
         elif OPENBSD:
             rawlist = cext.net_connections(self.pid, families, types)
         else:
-            rawlist = cext.proc_connections(self.pid, families, types)
+            rawlist = cext.proc_net_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]

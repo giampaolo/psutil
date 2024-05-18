@@ -250,13 +250,13 @@ class TestProcessObjectLeaks(TestMemoryLeak):
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
-    def test_connections(self):
+    def test_net_connections(self):
         # TODO: UNIX sockets are temporarily implemented by parsing
         # 'pfiles' cmd  output; we don't want that part of the code to
         # be executed.
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.connections(kind))
+            self.execute(lambda: self.proc.net_connections(kind))
 
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):

@@ -241,13 +241,13 @@ def run(pid, verbose=False):
     else:
         print_('open-files', '')
 
-    if pinfo['connections']:
+    if pinfo['net_connections']:
         template = '%-5s %-25s %-25s %s'
         print_(
             'connections',
             template % ('PROTO', 'LOCAL ADDR', 'REMOTE ADDR', 'STATUS'),
         )
-        for conn in pinfo['connections']:
+        for conn in pinfo['net_connections']:
             if conn.type == socket.SOCK_STREAM:
                 type = 'TCP'
             elif conn.type == socket.SOCK_DGRAM:

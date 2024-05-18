@@ -86,7 +86,7 @@ __all__ = [
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "MACOS_11PLUS",
+    "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
     "MACOS_12PLUS", "COVERAGE",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
@@ -105,7 +105,7 @@ __all__ = [
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
-    'check_net_address', 'filter_proc_connections',
+    'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
     # compat
@@ -205,13 +205,13 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 
-HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
-HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
+HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
+HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
@@ -1399,8 +1399,9 @@ class process_namespace:
     ignored = [
         ('as_dict', (), {}),
         ('children', (), {'recursive': True}),
+        ('connections', (), {}),  # deprecated
         ('is_running', (), {}),
-        ('memory_info_ex', (), {}),
+        ('memory_info_ex', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
@@ -1410,7 +1411,6 @@ class process_namespace:
 
     getters = [
         ('cmdline', (), {}),
-        ('connections', (), {'kind': 'all'}),
         ('cpu_times', (), {}),
         ('create_time', (), {}),
         ('cwd', (), {}),
@@ -1418,6 +1418,7 @@ class process_namespace:
         ('memory_full_info', (), {}),
         ('memory_info', (), {}),
         ('name', (), {}),
+        ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
         ('num_ctx_switches', (), {}),
         ('num_threads', (), {}),
@@ -1758,7 +1759,7 @@ def create_sockets():
         if supports_ipv6():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if POSIX and HAS_CONNECTIONS_UNIX:
+        if POSIX and HAS_NET_CONNECTIONS_UNIX:
             fname1 = get_testfn()
             fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)
@@ -1883,7 +1884,7 @@ def check_connection_ntuple(conn):
     check_status(conn)
 
 
-def filter_proc_connections(cons):
+def filter_proc_net_connections(cons):
     """Our process may start with some open UNIX sockets which are not
     initialized by us, invalidating unit tests.
     """
