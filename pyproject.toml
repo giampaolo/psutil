@@ -205,7 +205,11 @@ spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
-skip = ["*-musllinux*", "pp*"]
+skip = [
+    "*-musllinux*",
+    "cp313-win*",  # pywin32 is not available on cp313 yet
+    "pp*",
+]
 test-command = [
     "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/runner.py",
     "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/test_memleaks.py",
