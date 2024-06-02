@@ -165,7 +165,7 @@ def cpu_count_cores():
 
 
 def cpu_stats():
-    ctx_switches, interrupts, soft_interrupts, syscalls, traps = (
+    ctx_switches, interrupts, soft_interrupts, syscalls, _traps = (
         cext.cpu_stats()
     )
     return _common.scpustats(

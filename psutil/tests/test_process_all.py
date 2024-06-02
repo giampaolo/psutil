@@ -522,7 +522,7 @@ class TestPidsRange(PsutilTestCase):
                                 psutil.Process(pid)
                         if not WINDOWS:  # see docstring
                             self.assertNotIn(pid, psutil.pids())
-                except (psutil.Error, AssertionError) as err:
+                except (psutil.Error, AssertionError):
                     x -= 1
                     if x == 0:
                         raise

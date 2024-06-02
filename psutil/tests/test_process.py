@@ -808,7 +808,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_uids(self):
         p = psutil.Process()
-        real, effective, saved = p.uids()
+        real, effective, _saved = p.uids()
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getuid())
         # os.geteuid() refers to "effective" uid
@@ -822,7 +822,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_gids(self):
         p = psutil.Process()
-        real, effective, saved = p.gids()
+        real, effective, _saved = p.gids()
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getgid())
         # os.geteuid() refers to "effective" uid

@@ -845,7 +845,7 @@ class TestNetAPIs(PsutilTestCase):
                             0,
                             socket.AI_PASSIVE,
                         )[0]
-                        af, socktype, proto, canonname, sa = info
+                        af, socktype, proto, _canonname, sa = info
                         s = socket.socket(af, socktype, proto)
                         with contextlib.closing(s):
                             s.bind(sa)

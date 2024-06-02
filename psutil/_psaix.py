@@ -105,7 +105,7 @@ svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 
 
 def virtual_memory():
-    total, avail, free, pinned, inuse = cext.virtual_mem()
+    total, avail, free, _pinned, inuse = cext.virtual_mem()
     percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, inuse, free)
 

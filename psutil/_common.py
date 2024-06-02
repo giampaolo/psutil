@@ -980,7 +980,7 @@ def debug(msg):
     if PSUTIL_DEBUG:
         import inspect
 
-        fname, lineno, _, lines, index = inspect.getframeinfo(
+        fname, lineno, _, _lines, _index = inspect.getframeinfo(
             inspect.currentframe().f_back
         )
         if isinstance(msg, Exception):

@@ -41,7 +41,6 @@ ignore = [
     "D",  # pydocstyle
     "DTZ",  # flake8-datetimez
     "ERA001",  # Found commented-out code
-    "F841",  # Local variable `parent` is assigned to but never used
     "FBT",  # flake8-boolean-trap (makes zero sense)
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
     "FLY",  # flynt (PYTHON2.7 COMPAT)

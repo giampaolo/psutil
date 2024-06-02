@@ -1080,25 +1080,25 @@ def net_io_counters():
         name = line[:colon].strip()
         fields = line[colon + 1 :].strip().split()
 
-        # in
         (
+            # in
             bytes_recv,
             packets_recv,
             errin,
             dropin,
-            fifoin,  # unused
-            framein,  # unused
-            compressedin,  # unused
-            multicastin,  # unused
+            _fifoin,  # unused
+            _framein,  # unused
+            _compressedin,  # unused
+            _multicastin,  # unused
             # out
             bytes_sent,
             packets_sent,
             errout,
             dropout,
-            fifoout,  # unused
-            collisionsout,  # unused
-            carrierout,  # unused
-            compressedout,
+            _fifoout,  # unused
+            _collisionsout,  # unused
+            _carrierout,  # unused
+            _compressedout,  # unused
         ) = map(int, fields)
 
         retdict[name] = (
@@ -2091,9 +2091,9 @@ class Process:
             for header, data in get_blocks(lines, current_block):
                 hfields = header.split(None, 5)
                 try:
-                    addr, perms, offset, dev, inode, path = hfields
+                    addr, perms, _offset, _dev, _inode, path = hfields
                 except ValueError:
-                    addr, perms, offset, dev, inode, path = hfields + ['']
+                    addr, perms, _offset, _dev, _inode, path = hfields + ['']
                 if not path:
                     path = '[anon]'
                 else:

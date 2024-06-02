@@ -240,7 +240,7 @@ class TestProcessUtils(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_spawn_zombie(self):
-        parent, zombie = self.spawn_zombie()
+        _parent, zombie = self.spawn_zombie()
         self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
 
     def test_terminate(self):

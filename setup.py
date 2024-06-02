@@ -431,7 +431,7 @@ if py_limited_api:
 
     class bdist_wheel_abi3(bdist_wheel):
         def get_tag(self):
-            python, abi, plat = bdist_wheel.get_tag(self)
+            python, _abi, plat = bdist_wheel.get_tag(self)
             return python, "abi3", plat
 
     cmdclass["bdist_wheel"] = bdist_wheel_abi3
