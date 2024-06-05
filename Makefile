@@ -20,7 +20,7 @@ PY3_DEPS = \
 	pypinfo \
 	requests \
 	rstcheck \
-	ruff==0.3.4 \
+	ruff==0.4.4 \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
@@ -166,7 +166,7 @@ test-contracts:  ## APIs sanity tests.
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_contracts.py
 
-test-connections:  ## Test net_connections() and Process.connections().
+test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_connections.py
 
@@ -233,7 +233,7 @@ fix-black:
 	@git ls-files '*.py' | xargs $(PYTHON) -m black
 
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix $(ARGS)
 
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats

@@ -120,7 +120,7 @@ STATUS_WAITING = "waiting"  # FreeBSD
 STATUS_SUSPENDED = "suspended"  # NetBSD
 STATUS_PARKED = "parked"  # Linux
 
-# Process.connections() and psutil.net_connections()
+# Process.net_connections() and psutil.net_connections()
 CONN_ESTABLISHED = "ESTABLISHED"
 CONN_SYN_SENT = "SYN_SENT"
 CONN_SYN_RECV = "SYN_RECV"
@@ -189,8 +189,7 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_bytes', 'write_bytes',
                                  'read_time', 'write_time'])
 # psutil.disk_partitions()
-sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts',
-                                     'maxfile', 'maxpath'])
+sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
 # psutil.net_io_counters()
 snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
                                'packets_sent', 'packets_recv',
@@ -243,17 +242,17 @@ pio = namedtuple(
 pionice = namedtuple('pionice', ['ioclass', 'value'])
 # psutil.Process.ctx_switches()
 pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
-# psutil.Process.connections()
+# psutil.Process.net_connections()
 pconn = namedtuple(
     'pconn', ['fd', 'family', 'type', 'laddr', 'raddr', 'status']
 )
 
-# psutil.connections() and psutil.Process.connections()
+# psutil.net_connections() and psutil.Process.net_connections()
 addr = namedtuple('addr', ['ip', 'port'])
 
 
 # ===================================================================
-# --- Process.connections() 'kind' parameter mapping
+# --- Process.net_connections() 'kind' parameter mapping
 # ===================================================================
 
 
@@ -981,7 +980,7 @@ def debug(msg):
     if PSUTIL_DEBUG:
         import inspect
 
-        fname, lineno, _, lines, index = inspect.getframeinfo(
+        fname, lineno, _, _lines, _index = inspect.getframeinfo(
             inspect.currentframe().f_back
         )
         if isinstance(msg, Exception):

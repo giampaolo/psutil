@@ -23,7 +23,7 @@
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS},
-    {"proc_connections", psutil_proc_connections, METH_VARARGS},
+    {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
     {"proc_environ", psutil_proc_environ, METH_VARARGS},
     {"proc_exe", psutil_proc_exe, METH_VARARGS},

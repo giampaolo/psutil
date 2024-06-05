@@ -165,7 +165,7 @@ def cpu_count_cores():
 
 
 def cpu_stats():
-    ctx_switches, interrupts, soft_interrupts, syscalls, traps = (
+    ctx_switches, interrupts, soft_interrupts, syscalls, _traps = (
         cext.cpu_stats()
     )
     return _common.scpustats(
@@ -203,10 +203,7 @@ def disk_partitions(all=False):
         if not all:
             if not os.path.isabs(device) or not os.path.exists(device):
                 continue
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -249,7 +246,7 @@ def net_connections(kind='inet'):
     ret = []
     for pid in pids():
         try:
-            cons = Process(pid).connections(kind)
+            cons = Process(pid).net_connections(kind)
         except NoSuchProcess:
             continue
         else:
@@ -504,14 +501,14 @@ class Process:
         return files
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError(
                 "invalid %r kind argument; choose between %s"
                 % (kind, ', '.join([repr(x) for x in conn_tmap]))
             )
         families, types = conn_tmap[kind]
-        rawlist = cext.proc_connections(self.pid, families, types)
+        rawlist = cext.proc_net_connections(self.pid, families, types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item

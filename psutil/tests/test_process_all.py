@@ -356,7 +356,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         self.assertIsInstance(ret, int)
         self.assertGreaterEqual(ret, 0)
 
-    def connections(self, ret, info):
+    def net_connections(self, ret, info):
         with create_sockets():
             self.assertEqual(len(ret), len(set(ret)))
             for conn in ret:
@@ -522,7 +522,7 @@ class TestPidsRange(PsutilTestCase):
                                 psutil.Process(pid)
                         if not WINDOWS:  # see docstring
                             self.assertNotIn(pid, psutil.pids())
-                except (psutil.Error, AssertionError) as err:
+                except (psutil.Error, AssertionError):
                     x -= 1
                     if x == 0:
                         raise

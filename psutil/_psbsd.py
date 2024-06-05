@@ -321,7 +321,7 @@ def cpu_stats():
     if FREEBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps.
-        ctxsw, intrs, soft_intrs, syscalls, traps = cext.cpu_stats()
+        ctxsw, intrs, soft_intrs, syscalls, _traps = cext.cpu_stats()
     elif NETBSD:
         # XXX
         # Note about intrs: the C extension returns 0. intrs
@@ -332,7 +332,7 @@ def cpu_stats():
         #
         # Note: the C ext is returning some metrics we are not exposing:
         # traps, faults and forks.
-        ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = (
+        ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
             cext.cpu_stats()
         )
         with open('/proc/stat', 'rb') as f:
@@ -342,7 +342,7 @@ def cpu_stats():
     elif OPENBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps, faults and forks.
-        ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = (
+        ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
             cext.cpu_stats()
         )
     return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
@@ -395,10 +395,7 @@ def disk_partitions(all=False):
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -824,7 +821,7 @@ class Process:
         return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError(
                 "invalid %r kind argument; choose between %s"
@@ -838,7 +835,7 @@ class Process:
         elif OPENBSD:
             rawlist = cext.net_connections(self.pid, families, types)
         else:
-            rawlist = cext.proc_connections(self.pid, families, types)
+            rawlist = cext.proc_net_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]

@@ -808,7 +808,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_uids(self):
         p = psutil.Process()
-        real, effective, saved = p.uids()
+        real, effective, _saved = p.uids()
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getuid())
         # os.geteuid() refers to "effective" uid
@@ -822,7 +822,7 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not POSIX, 'POSIX only')
     def test_gids(self):
         p = psutil.Process()
-        real, effective, saved = p.gids()
+        real, effective, _saved = p.gids()
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getgid())
         # os.geteuid() refers to "effective" uid
@@ -1207,9 +1207,9 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(sorted(d.keys()), ['exe', 'name'])
 
         p = psutil.Process(min(psutil.pids()))
-        d = p.as_dict(attrs=['connections'], ad_value='foo')
-        if not isinstance(d['connections'], list):
-            self.assertEqual(d['connections'], 'foo')
+        d = p.as_dict(attrs=['net_connections'], ad_value='foo')
+        if not isinstance(d['net_connections'], list):
+            self.assertEqual(d['net_connections'], 'foo')
 
         # Test ad_value is set on AccessDenied.
         with mock.patch(
@@ -1375,13 +1375,24 @@ class TestProcess(PsutilTestCase):
         subp = self.spawn_testproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
+
+        list(psutil.process_iter())
+        self.assertIn(p.pid, psutil._pmap)
         assert not p.is_running()
+        # make sure is_running() removed PID from process_iter()
+        # internal cache
+        self.assertNotIn(p.pid, psutil._pmap)
+
         assert p != psutil.Process(subp.pid)
         msg = "process no longer exists and its PID has been reused"
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.setters + ns.killers, clear_cache=False):
             with self.subTest(name=name):
                 self.assertRaisesRegex(psutil.NoSuchProcess, msg, fun)
+
+        self.assertIn("terminated + PID reused", str(p))
+        self.assertIn("terminated + PID reused", repr(p))
+
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.ppid)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parent)
         self.assertRaisesRegex(psutil.NoSuchProcess, msg, p.parents)
@@ -1457,6 +1468,7 @@ class TestProcess(PsutilTestCase):
         MACOS_11PLUS,
         "macOS 11+ can't get another process environment, issue #2084",
     )
+    @unittest.skipIf(NETBSD, "sometimes fails on `assert is_running()`")
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
         code = textwrap.dedent("""

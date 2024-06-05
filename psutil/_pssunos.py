@@ -209,7 +209,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    ctx_switches, interrupts, syscalls, traps = cext.cpu_stats()
+    ctx_switches, interrupts, syscalls, _traps = cext.cpu_stats()
     soft_interrupts = 0
     return _common.scpustats(
         ctx_switches, interrupts, soft_interrupts, syscalls
@@ -246,10 +246,7 @@ def disk_partitions(all=False):
                 # https://github.com/giampaolo/psutil/issues/1674
                 debug("skipping %r: %s" % (mountpoint, err))
                 continue
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -669,7 +666,7 @@ class Process:
                 yield (-1, socket.AF_UNIX, type, path, "", _common.CONN_NONE)
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         ret = net_connections(kind, _pid=self.pid)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether

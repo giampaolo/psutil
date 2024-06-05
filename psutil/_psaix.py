@@ -105,7 +105,7 @@ svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 
 
 def virtual_memory():
-    total, avail, free, pinned, inuse = cext.virtual_mem()
+    total, avail, free, _pinned, inuse = cext.virtual_mem()
     percent = usage_percent((total - avail), total, round_=1)
     return svmem(total, avail, percent, inuse, free)
 
@@ -191,10 +191,7 @@ def disk_partitions(all=False):
             # filter by filesystem having a total size > 0.
             if not disk_usage(mountpoint).total:
                 continue
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -451,7 +448,7 @@ class Process:
             return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         ret = net_connections(kind, _pid=self.pid)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether

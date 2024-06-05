@@ -15,8 +15,8 @@ int psutil_get_proc_list(kinfo_proc **procList, size_t *procCount);
 char *psutil_get_cmd_args(pid_t pid, size_t *argsize);
 
 PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
-PyObject *psutil_proc_connections(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
+PyObject *psutil_proc_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);
 PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
 PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
