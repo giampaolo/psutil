@@ -758,8 +758,14 @@ class TestProcess(PsutilTestCase):
                 self.assertEqual(p.cmdline(), cmdline)
             except psutil.ZombieProcess:
                 raise unittest.SkipTest("OPENBSD: process turned into zombie")
-        else:
+        elif NETBSD:
+            ret = p.cmdline()
+            if ret == []:
+                # https://github.com/giampaolo/psutil/issues/2250
+                raise unittest.SkipTest("OPENBSD: returned EBUSY")
             self.assertEqual(p.cmdline(), cmdline)
+
+        self.assertEqual(p.cmdline(), cmdline)
 
     def test_name(self):
         p = self.spawn_psproc()
