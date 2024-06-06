@@ -21,15 +21,19 @@
 
 **Bug fixes**
 
-- 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
-  a thread ID (TID) instead of a PID (process ID).
-- 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch by Shade Gladden)
+- 2250_, [NetBSD]: `Process.cmdline()`_ sometimes fail with EBUSY. It usually
+  happens for long cmdlines with lots of arguments. In this case retry getting
+  the cmdline for up to 50 times, and return an empty list as last resort.
+- 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch
+  by Shade Gladden)
 - 2272_: Add pickle support to psutil Exceptions.
 - 2359_, [Windows], [CRITICAL]: `pid_exists()`_ disagrees with `Process`_ on
   whether a pid exists when ERROR_ACCESS_DENIED.
 - 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
 - 2362_, [macOS]: can't compile on macOS 10.11.  (patch by Ryan Schmidt)
 - 2365_, [macOS]: can't compile on macOS < 10.9.  (patch by Ryan Schmidt)
+- 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
+  a thread ID (TID) instead of a PID (process ID).
 
 **Porting notes**
 
