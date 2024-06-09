@@ -36,6 +36,7 @@ from psutil._common import open_text
 from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
+from psutil._compat import redirect_stderr
 from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
@@ -763,7 +764,6 @@ class TestProcess(PsutilTestCase):
             if ret == []:
                 # https://github.com/giampaolo/psutil/issues/2250
                 raise unittest.SkipTest("OPENBSD: returned EBUSY")
-            self.assertEqual(p.cmdline(), cmdline)
 
         self.assertEqual(p.cmdline(), cmdline)
 
@@ -1378,6 +1378,11 @@ class TestProcess(PsutilTestCase):
 
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.
+        if PY3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
+
         subp = self.spawn_testproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
@@ -1385,8 +1390,15 @@ class TestProcess(PsutilTestCase):
         list(psutil.process_iter())
         self.assertIn(p.pid, psutil._pmap)
         assert not p.is_running()
+
         # make sure is_running() removed PID from process_iter()
         # internal cache
+        with redirect_stderr(StringIO()) as f:
+            list(psutil.process_iter())
+        self.assertIn(
+            "refreshing Process instance for reused PID %s" % p.pid,
+            f.getvalue(),
+        )
         self.assertNotIn(p.pid, psutil._pmap)
 
         assert p != psutil.Process(subp.pid)

@@ -85,6 +85,7 @@ from ._common import Error
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
+from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._compat import PY3 as _PY3
@@ -613,8 +614,7 @@ class Process(object):  # noqa: UP004
             # time) and that is verified in __eq__.
             self._pid_reused = self != Process(self.pid)
             if self._pid_reused:
-                # remove this PID from `process_iter()` internal cache
-                _pmap.pop(self.pid, None)
+                _pids_reused.add(self.pid)
                 raise NoSuchProcess(self.pid)
             return True
         except ZombieProcess:
@@ -1464,6 +1464,7 @@ def pid_exists(pid):
 
 
 _pmap = {}
+_pids_reused = set()
 
 
 def process_iter(attrs=None, ad_value=None):
@@ -1500,6 +1501,10 @@ def process_iter(attrs=None, ad_value=None):
     new_pids = a - b
     gone_pids = b - a
     for pid in gone_pids:
+        remove(pid)
+    while _pids_reused:
+        pid = _pids_reused.pop()
+        debug("refreshing Process instance for reused PID %s" % pid)
         remove(pid)
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))

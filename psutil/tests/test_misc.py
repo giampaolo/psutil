@@ -219,6 +219,7 @@ class TestMisc(PsutilTestCase):
         dir_psutil = dir(psutil)
         for name in dir_psutil:
             if name in (
+                'debug',
                 'long',
                 'tests',
                 'test',

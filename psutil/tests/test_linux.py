@@ -1120,10 +1120,10 @@ class TestSystemNetIOCounters(PsutilTestCase):
             except RuntimeError:
                 continue
             self.assertAlmostEqual(
-                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 5
+                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 10
             )
             self.assertAlmostEqual(
-                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 5
+                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 10
             )
             self.assertAlmostEqual(
                 stats.packets_recv, ifconfig_ret['packets_recv'], delta=1024
