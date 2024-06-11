@@ -34,6 +34,8 @@
 - 2365_, [macOS]: can't compile on macOS < 10.9.  (patch by Ryan Schmidt)
 - 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
   a thread ID (TID) instead of a PID (process ID).
+- 2412_, [macOS]: can't compile on macOS 10.4 PowerPC due to missing `MNT_`
+  constants.
 
 **Porting notes**
 
