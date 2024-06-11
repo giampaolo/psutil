@@ -328,7 +328,7 @@ class TestFilters(ConnectionTestCase):
             s.listen(5)
             with open('{testfn}', 'w') as f:
                 f.write(str(s.getsockname()[:2]))
-            time.sleep(60)
+            [time.sleep(0.1) for x in range(100)]
             """)
 
         udp_template = textwrap.dedent("""
@@ -337,7 +337,7 @@ class TestFilters(ConnectionTestCase):
             s.bind(('{addr}', 0))
             with open('{testfn}', 'w') as f:
                 f.write(str(s.getsockname()[:2]))
-            time.sleep(60)
+            [time.sleep(0.1) for x in range(100)]
             """)
 
         # must be relative on Windows
@@ -530,7 +530,7 @@ class TestSystemWideConnections(ConnectionTestCase):
                 with create_sockets():
                     with open(r'%s', 'w') as f:
                         f.write("hello")
-                    time.sleep(60)
+                    [time.sleep(0.1) for x in range(100)]
                 """ % fname)
             sproc = self.pyrun(src)
             pids.append(sproc.pid)

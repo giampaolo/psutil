@@ -197,7 +197,11 @@ class TestFSAPIs(BaseUnicodeTest):
     # ---
 
     def test_proc_exe(self):
-        cmd = [self.funky_name, "-c", "import time; time.sleep(10)"]
+        cmd = [
+            self.funky_name,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         subp = self.spawn_testproc(cmd)
         p = psutil.Process(subp.pid)
         exe = p.exe()
@@ -208,7 +212,11 @@ class TestFSAPIs(BaseUnicodeTest):
             )
 
     def test_proc_name(self):
-        cmd = [self.funky_name, "-c", "import time; time.sleep(10)"]
+        cmd = [
+            self.funky_name,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         subp = self.spawn_testproc(cmd)
         name = psutil.Process(subp.pid).name()
         self.assertIsInstance(name, str)
@@ -216,7 +224,11 @@ class TestFSAPIs(BaseUnicodeTest):
             self.assertEqual(name, os.path.basename(self.funky_name))
 
     def test_proc_cmdline(self):
-        cmd = [self.funky_name, "-c", "import time; time.sleep(10)"]
+        cmd = [
+            self.funky_name,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         subp = self.spawn_testproc(cmd)
         p = psutil.Process(subp.pid)
         cmdline = p.cmdline()

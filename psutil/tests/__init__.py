@@ -408,7 +408,7 @@ def spawn_children_pair():
             s += "f = open('%s', 'w');"
             s += "f.write(str(os.getpid()));"
             s += "f.close();"
-            s += "time.sleep(60);"
+            s += "[time.sleep(0.1) for x in range(100 * 6)];"
             p = subprocess.Popen([r'%s', '-c', s])
             p.wait()
             """ % (os.path.basename(testfn), PYTHON_EXE))

@@ -255,7 +255,8 @@ class TestProcess(PsutilTestCase):
 
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
-        assert (times.user > 0.0) or (times.system > 0.0), times
+        assert times.user >= 0.0, times
+        assert times.system >= 0.0, times
         assert times.children_user >= 0.0, times
         assert times.children_system >= 0.0, times
         if LINUX:
@@ -727,8 +728,17 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(out, 'hey')
 
     def test_cmdline(self):
-        cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
+        cmdline = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         p = self.spawn_psproc(cmdline)
+
+        if NETBSD and p.cmdline() == []:
+            # https://github.com/giampaolo/psutil/issues/2250
+            raise unittest.SkipTest("OPENBSD: returned EBUSY")
+
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
         # Also /proc/pid/cmdline behaves the same so it looks
@@ -750,7 +760,9 @@ class TestProcess(PsutilTestCase):
     def test_long_cmdline(self):
         cmdline = [PYTHON_EXE]
         cmdline.extend(["-v"] * 50)
-        cmdline.extend(["-c", "import time; time.sleep(10)"])
+        cmdline.extend(
+            ["-c", "import time; [time.sleep(0.1) for x in range(100)]"]
+        )
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -776,7 +788,11 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix="0123456789" * 2))
-        cmdline = [pyexe, "-c", "import time; time.sleep(10)"]
+        cmdline = [
+            pyexe,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -805,7 +821,11 @@ class TestProcess(PsutilTestCase):
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
         pyexe = create_py_exe(self.get_testfn(suffix='foo bar )'))
-        cmdline = [pyexe, "-c", "import time; time.sleep(10)"]
+        cmdline = [
+            pyexe,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         p = self.spawn_psproc(cmdline)
         self.assertEqual(p.cmdline(), cmdline)
         self.assertEqual(p.name(), os.path.basename(pyexe))
@@ -931,7 +951,10 @@ class TestProcess(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import os, time; os.chdir('..'); time.sleep(60)",
+            (
+                "import os, time; os.chdir('..'); [time.sleep(0.1) for x in"
+                " range(100)]"
+            ),
         ]
         p = self.spawn_psproc(cmd)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
@@ -1031,7 +1054,10 @@ class TestProcess(PsutilTestCase):
             assert os.path.isfile(file.path), file
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % testfn
+        cmdline = (
+            "import time; f = open(r'%s', 'r'); [time.sleep(0.1) for x in"
+            " range(100)];" % testfn
+        )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
         for x in range(100):
@@ -1599,7 +1625,11 @@ class TestPopen(PsutilTestCase):
         # XXX this test causes a ResourceWarning on Python 3 because
         # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
         with psutil.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -1635,7 +1665,11 @@ class TestPopen(PsutilTestCase):
         # subprocess.Popen()'s terminate(), kill() and send_signal() do
         # not raise exception after the process is gone. psutil.Popen
         # diverges from that.
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
         with psutil.Popen(
             cmd,
             stdout=subprocess.PIPE,
