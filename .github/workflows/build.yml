@@ -18,23 +18,20 @@ concurrency:
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
-    name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'ubuntu') && 'all' || matrix.archs }}
+    name: "py3-${{ matrix.os }}-${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-        - os: ubuntu-latest
-          archs: "x86_64 i686"
-        - os: macos-12
-          archs: "x86_64"
-        - os: macos-14
-          archs: "arm64"
-        - os: windows-2019
-          archs: "AMD64"
-        - os: windows-2019
-          archs: "x86"
+        - {os: ubuntu-latest, arch: x86_64}
+        - {os: ubuntu-latest, arch: i686}
+        - {os: ubuntu-latest, arch: aarch64}
+        - {os: macos-12, arch: x86_64}
+        - {os: macos-14, arch: arm64}
+        - {os: windows-2019, arch: AMD64}
+        - {os: windows-2019, arch: x86}
     steps:
     - uses: actions/checkout@v4
 
@@ -51,16 +48,20 @@ jobs:
       with:
         python-version: 3.11
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      if: matrix.arch == 'aarch64'
+
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.18.0
+      uses: pypa/cibuildwheel@v2.19.1
       env:
-        CIBW_ARCHS: "${{ matrix.archs }}"
+        CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
 
     - name: Upload wheels
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'ubuntu') && 'all' || matrix.archs }}
+        name: wheels-py3-${{ matrix.os }}-${{ matrix.arch }}
         path: wheelhouse
 
     - name: Generate .tar.gz
