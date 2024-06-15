@@ -278,8 +278,14 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # Newer versions of procps are using yet another way to compute used
+        # memory.
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
         if get_free_version_info() < (3, 3, 12):
-            raise unittest.SkipTest("old free version")
+            raise unittest.SkipTest("free version too old")
+        if get_free_version_info() >= (4, 0, 0):
+            raise unittest.SkipTest("free version too recent")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
@@ -342,8 +348,14 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # Newer versions of procps are using yet another way to compute used
+        # memory.
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
         if get_free_version_info() < (3, 3, 12):
-            raise unittest.SkipTest("old free version")
+            raise unittest.SkipTest("free version too old")
+        if get_free_version_info() >= (4, 0, 0):
+            raise unittest.SkipTest("free version too recent")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
