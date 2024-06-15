@@ -28,6 +28,7 @@ from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import basestring
+from psutil.tests import AARCH64
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
@@ -830,6 +831,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
             assert psutil.cpu_freq()
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    @unittest.skipIf(AARCH64, "aarch64 does not report mhz in /proc/cpuinfo")
     def test_emulate_use_cpuinfo(self):
         # Emulate a case where /sys/devices/system/cpu/cpufreq* does not
         # exist and /proc/cpuinfo is used instead.
