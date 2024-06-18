@@ -207,6 +207,7 @@ trailing_comma_inline_array = true
 skip = [
     "*-musllinux*",
     "cp313-win*",  # pywin32 is not available on cp313 yet
+    "cp3{7,8,9,10,11,12}-*linux_{aarch64,ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
 ]
 test-command = [
@@ -217,6 +218,9 @@ test-extras = "test"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y net-tools"
 
 [build-system]
 build-backend = "setuptools.build_meta"

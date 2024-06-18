@@ -28,6 +28,7 @@ from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import basestring
+from psutil.tests import AARCH64
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
@@ -35,6 +36,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
+from psutil.tests import QEMU_USER
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
@@ -277,8 +279,14 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # Newer versions of procps are using yet another way to compute used
+        # memory.
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
         if get_free_version_info() < (3, 3, 12):
-            raise unittest.SkipTest("old free version")
+            raise unittest.SkipTest("free version too old")
+        if get_free_version_info() >= (4, 0, 0):
+            raise unittest.SkipTest("free version too recent")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
@@ -341,8 +349,14 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # Newer versions of procps are using yet another way to compute used
+        # memory.
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
         if get_free_version_info() < (3, 3, 12):
-            raise unittest.SkipTest("old free version")
+            raise unittest.SkipTest("free version too old")
+        if get_free_version_info() >= (4, 0, 0):
+            raise unittest.SkipTest("free version too recent")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
@@ -830,6 +844,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
             assert psutil.cpu_freq()
 
     @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    @unittest.skipIf(AARCH64, "aarch64 does not report mhz in /proc/cpuinfo")
     def test_emulate_use_cpuinfo(self):
         # Emulate a case where /sys/devices/system/cpu/cpufreq* does not
         # exist and /proc/cpuinfo is used instead.
@@ -1037,6 +1052,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
+@unittest.skipIf(QEMU_USER, "QEMU user not supported")
 class TestSystemNetIfStats(PsutilTestCase):
     @unittest.skipIf(not which("ifconfig"), "ifconfig utility not available")
     def test_against_ifconfig(self):
@@ -1596,7 +1612,7 @@ class TestMisc(PsutilTestCase):
         with ThreadTask():
             p = psutil.Process()
             threads = p.threads()
-            self.assertEqual(len(threads), 2)
+            self.assertEqual(len(threads), 3 if QEMU_USER else 2)
             tid = sorted(threads, key=lambda x: x.id)[1].id
             self.assertNotEqual(p.pid, tid)
             pt = psutil.Process(tid)
@@ -2276,6 +2292,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
         value = self.read_status_file("Name:")
         self.assertEqual(self.proc.name(), value)
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_status(self):
         value = self.read_status_file("State:")
         value = value[value.find('(') + 1 : value.rfind(')')]
