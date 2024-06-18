@@ -255,7 +255,11 @@ class TestProcessUtils(PsutilTestCase):
         self.assertPidGone(p.pid)
         terminate(p)
         # by psutil.Popen
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
         p = psutil.Popen(
             cmd,
             stdout=subprocess.PIPE,

@@ -36,6 +36,7 @@ from psutil._common import open_text
 from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
+from psutil._compat import redirect_stderr
 from psutil._compat import super
 from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
@@ -53,6 +54,7 @@ from psutil.tests import MACOS_11PLUS
 from psutil.tests import PYPY
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PYTHON_EXE_ENV
+from psutil.tests import QEMU_USER
 from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
@@ -252,9 +254,11 @@ class TestProcess(PsutilTestCase):
             psutil.Process().cpu_percent()
             assert m.called
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
-        assert (times.user > 0.0) or (times.system > 0.0), times
+        assert times.user >= 0.0, times
+        assert times.system >= 0.0, times
         assert times.children_user >= 0.0, times
         assert times.children_system >= 0.0, times
         if LINUX:
@@ -263,6 +267,7 @@ class TestProcess(PsutilTestCase):
         for name in times._fields:
             time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_cpu_times_2(self):
         user_time, kernel_time = psutil.Process().cpu_times()[:2]
         utime, ktime = os.times()[:2]
@@ -631,6 +636,8 @@ class TestProcess(PsutilTestCase):
 
         for nt in maps:
             if not nt.path.startswith('['):
+                if QEMU_USER and "/bin/qemu-" in nt.path:
+                    continue
                 assert os.path.isabs(nt.path), nt.path
                 if POSIX:
                     try:
@@ -696,6 +703,7 @@ class TestProcess(PsutilTestCase):
         assert not p.is_running()
         assert not p.is_running()
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_exe(self):
         p = self.spawn_psproc()
         exe = p.exe()
@@ -726,8 +734,17 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(out, 'hey')
 
     def test_cmdline(self):
-        cmdline = [PYTHON_EXE, "-c", "import time; time.sleep(60)"]
+        cmdline = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         p = self.spawn_psproc(cmdline)
+
+        if NETBSD and p.cmdline() == []:
+            # https://github.com/giampaolo/psutil/issues/2250
+            raise unittest.SkipTest("OPENBSD: returned EBUSY")
+
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
         # Also /proc/pid/cmdline behaves the same so it looks
@@ -743,13 +760,18 @@ class TestProcess(PsutilTestCase):
                         ' '.join(p.cmdline()[1:]), ' '.join(cmdline[1:])
                     )
                     return
+            if QEMU_USER:
+                self.assertEqual(' '.join(p.cmdline()[2:]), ' '.join(cmdline))
+                return
             self.assertEqual(' '.join(p.cmdline()), ' '.join(cmdline))
 
     @unittest.skipIf(PYPY, "broken on PYPY")
     def test_long_cmdline(self):
         cmdline = [PYTHON_EXE]
         cmdline.extend(["-v"] * 50)
-        cmdline.extend(["-c", "import time; time.sleep(10)"])
+        cmdline.extend(
+            ["-c", "import time; [time.sleep(0.1) for x in range(100)]"]
+        )
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -758,8 +780,14 @@ class TestProcess(PsutilTestCase):
                 self.assertEqual(p.cmdline(), cmdline)
             except psutil.ZombieProcess:
                 raise unittest.SkipTest("OPENBSD: process turned into zombie")
+        elif QEMU_USER:
+            self.assertEqual(p.cmdline()[2:], cmdline)
         else:
-            self.assertEqual(p.cmdline(), cmdline)
+            ret = p.cmdline()
+            if NETBSD and ret == []:
+                # https://github.com/giampaolo/psutil/issues/2250
+                raise unittest.SkipTest("OPENBSD: returned EBUSY")
+            self.assertEqual(ret, cmdline)
 
     def test_name(self):
         p = self.spawn_psproc()
@@ -767,10 +795,15 @@ class TestProcess(PsutilTestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @unittest.skipIf(PYPY, "unreliable on PYPY")
+    @unittest.skipIf(PYPY or QEMU_USER, "unreliable on PYPY")
+    @unittest.skipIf(QEMU_USER, "unreliable on QEMU user")
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix="0123456789" * 2))
-        cmdline = [pyexe, "-c", "import time; time.sleep(10)"]
+        cmdline = [
+            pyexe,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         p = self.spawn_psproc(cmdline)
         if OPENBSD:
             # XXX: for some reason the test process may turn into a
@@ -794,12 +827,17 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(SUNOS, "broken on SUNOS")
     @unittest.skipIf(AIX, "broken on AIX")
     @unittest.skipIf(PYPY, "broken on PYPY")
+    @unittest.skipIf(QEMU_USER, "broken on QEMU user")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
         pyexe = create_py_exe(self.get_testfn(suffix='foo bar )'))
-        cmdline = [pyexe, "-c", "import time; time.sleep(10)"]
+        cmdline = [
+            pyexe,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)]",
+        ]
         p = self.spawn_psproc(cmdline)
         self.assertEqual(p.cmdline(), cmdline)
         self.assertEqual(p.name(), os.path.basename(pyexe))
@@ -896,6 +934,7 @@ class TestProcess(PsutilTestCase):
             except psutil.AccessDenied:
                 pass
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     def test_status(self):
         p = psutil.Process()
         self.assertEqual(p.status(), psutil.STATUS_RUNNING)
@@ -925,7 +964,10 @@ class TestProcess(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            "import os, time; os.chdir('..'); time.sleep(60)",
+            (
+                "import os, time; os.chdir('..'); [time.sleep(0.1) for x in"
+                " range(100)]"
+            ),
         ]
         p = self.spawn_psproc(cmd)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
@@ -1025,7 +1067,10 @@ class TestProcess(PsutilTestCase):
             assert os.path.isfile(file.path), file
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % testfn
+        cmdline = (
+            "import time; f = open(r'%s', 'r'); [time.sleep(0.1) for x in"
+            " range(100)];" % testfn
+        )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
         for x in range(100):
@@ -1117,6 +1162,7 @@ class TestProcess(PsutilTestCase):
         self.assertEqual(grandchild.parent(), child)
         self.assertEqual(child.parent(), parent)
 
+    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
     @retry_on_failure()
     def test_parents(self):
         parent = psutil.Process()
@@ -1372,6 +1418,11 @@ class TestProcess(PsutilTestCase):
 
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.
+        if PY3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
+
         subp = self.spawn_testproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
@@ -1379,8 +1430,15 @@ class TestProcess(PsutilTestCase):
         list(psutil.process_iter())
         self.assertIn(p.pid, psutil._pmap)
         assert not p.is_running()
+
         # make sure is_running() removed PID from process_iter()
         # internal cache
+        with redirect_stderr(StringIO()) as f:
+            list(psutil.process_iter())
+        self.assertIn(
+            "refreshing Process instance for reused PID %s" % p.pid,
+            f.getvalue(),
+        )
         self.assertNotIn(p.pid, psutil._pmap)
 
         assert p != psutil.Process(subp.pid)
@@ -1581,7 +1639,11 @@ class TestPopen(PsutilTestCase):
         # XXX this test causes a ResourceWarning on Python 3 because
         # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
         with psutil.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -1617,7 +1679,11 @@ class TestPopen(PsutilTestCase):
         # subprocess.Popen()'s terminate(), kill() and send_signal() do
         # not raise exception after the process is gone. psutil.Popen
         # diverges from that.
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
         with psutil.Popen(
             cmd,
             stdout=subprocess.PIPE,
