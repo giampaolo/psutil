@@ -209,7 +209,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    ctx_switches, interrupts, syscalls, traps = cext.cpu_stats()
+    ctx_switches, interrupts, syscalls, _traps = cext.cpu_stats()
     soft_interrupts = 0
     return _common.scpustats(
         ctx_switches, interrupts, soft_interrupts, syscalls

@@ -240,7 +240,7 @@ class TestProcessUtils(PsutilTestCase):
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_spawn_zombie(self):
-        parent, zombie = self.spawn_zombie()
+        _parent, zombie = self.spawn_zombie()
         self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
 
     def test_terminate(self):
@@ -255,7 +255,11 @@ class TestProcessUtils(PsutilTestCase):
         self.assertPidGone(p.pid)
         terminate(p)
         # by psutil.Popen
-        cmd = [PYTHON_EXE, "-c", "import time; time.sleep(60);"]
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
         p = psutil.Popen(
             cmd,
             stdout=subprocess.PIPE,

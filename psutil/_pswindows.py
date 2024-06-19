@@ -238,7 +238,7 @@ def getpagesize():
 def virtual_memory():
     """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
-    totphys, availphys, totsys, availsys = mem
+    totphys, availphys, _totsys, _availsys = mem
     total = totphys
     avail = availphys
     free = availphys
@@ -337,7 +337,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return CPU statistics."""
-    ctx_switches, interrupts, dpcs, syscalls = cext.cpu_stats()
+    ctx_switches, interrupts, _dpcs, syscalls = cext.cpu_stats()
     soft_interrupts = 0
     return _common.scpustats(
         ctx_switches, interrupts, soft_interrupts, syscalls
@@ -986,7 +986,7 @@ class Process:
         # Note: proc_times() not put under oneshot() 'cause create_time()
         # is already cached by the main Process class.
         try:
-            user, system, created = cext.proc_times(self.pid)
+            _user, _system, created = cext.proc_times(self.pid)
             return created
         except OSError as err:
             if is_permission_err(err):
@@ -1010,7 +1010,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         try:
-            user, system, created = cext.proc_times(self.pid)
+            user, system, _created = cext.proc_times(self.pid)
         except OSError as err:
             if not is_permission_err(err):
                 raise

@@ -20,7 +20,7 @@ PY3_DEPS = \
 	pypinfo \
 	requests \
 	rstcheck \
-	ruff==0.3.4 \
+	ruff==0.4.4 \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
@@ -233,7 +233,7 @@ fix-black:
 	@git ls-files '*.py' | xargs $(PYTHON) -m black
 
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix $(ARGS)
 
 fix-unittests:  ## Fix unittest idioms.
 	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
@@ -309,8 +309,8 @@ pre-release:  ## Check if we're ready to produce a new release.
 release:  ## Upload a new release.
 	${MAKE} check-sdist
 	${MAKE} check-wheels
-	$(PYTHON) -m twine upload dist/*.tar.gz
-	$(PYTHON) -m twine upload dist/*.whl
+	$(PYTHON) -m twine upload --verbose dist/*.tar.gz
+	$(PYTHON) -m twine upload --verbose dist/*.whl
 	${MAKE} git-tag-release
 
 generate-manifest:  ## Generates MANIFEST.in file.

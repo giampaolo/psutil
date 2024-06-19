@@ -18,39 +18,50 @@ concurrency:
 jobs:
   # Linux + macOS + Windows Python 3
   py3:
-    name: py3-${{ matrix.os }}-${{ startsWith(matrix.os, 'ubuntu') && 'all' || matrix.archs }}
+    name: "py3-${{ matrix.os }}-${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         include:
-        - os: ubuntu-latest
-          archs: "x86_64 i686"
-        - os: macos-12
-          archs: "x86_64"
-        - os: macos-14
-          archs: "arm64"
-        - os: windows-2019
-          archs: "AMD64"
-        - os: windows-2019
-          archs: "x86"
+        - {os: ubuntu-latest, arch: x86_64}
+        - {os: ubuntu-latest, arch: i686}
+        - {os: ubuntu-latest, arch: aarch64}
+        - {os: macos-12, arch: x86_64}
+        - {os: macos-14, arch: arm64}
+        - {os: windows-2019, arch: AMD64}
+        - {os: windows-2019, arch: x86}
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+
+    # see https://cibuildwheel.pypa.io/en/stable/faq/#macos-building-cpython-38-wheels-on-arm64
+    - name: "Install python 3.8 universal2 on macOS arm64"
+      if: runner.os == 'macOS' && runner.arch == 'ARM64'
+      uses: actions/setup-python@v5
+      env:
+          PIP_DISABLE_PIP_VERSION_CHECK: 1
+      with:
+        python-version: 3.8
+
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.11
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      if: matrix.arch == 'aarch64'
+
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.17.0
+      uses: pypa/cibuildwheel@v2.19.1
       env:
-        CIBW_ARCHS: "${{ matrix.archs }}"
+        CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-py3-${{ matrix.os }}-${{ matrix.arch }}
         path: wheelhouse
 
     - name: Generate .tar.gz
@@ -78,7 +89,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.9
 
@@ -86,9 +97,9 @@ jobs:
       uses: pypa/cibuildwheel@v1.12.0
 
     - name: Upload wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-py2-${{ matrix.os }}
         path: wheelhouse
 
     - name: Generate .tar.gz
@@ -103,24 +114,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.x
     - name: 'Run linters'
       run: |
-        python3 -m pip install ruff==0.3.4 black rstcheck toml-sort sphinx
+        python3 -m pip install ruff==0.4.4 black rstcheck toml-sort sphinx
         make lint-all
 
-  # Check sanity of .tar.gz + wheel files
-  check-dist:
+  # upload weels as a single artefact
+  upload-wheels:
     needs: [py2, py3]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/upload-artifact/merge@v4
+        with:
+          name: wheels
+          pattern: wheels-*
+          separate-directories: false
+          delete-merged: true
+
+  # Check sanity of .tar.gz + wheel files
+  check-dist:
+    needs: [upload-wheels]
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: wheels
           path: wheelhouse

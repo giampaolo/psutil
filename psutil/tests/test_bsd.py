@@ -171,7 +171,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
         while lines:
             line = lines.pop()
             fields = line.split()
-            _, start, stop, perms, res = fields[:5]
+            _, start, stop, _perms, res = fields[:5]
             map = maps.pop()
             self.assertEqual("%s-%s" % (start, stop), map.addr)
             self.assertEqual(int(res), map.rss)
@@ -416,19 +416,19 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     # --- swap memory
 
     def test_swapmem_free(self):
-        total, used, free = self.parse_swapinfo()
+        _total, _used, free = self.parse_swapinfo()
         self.assertAlmostEqual(
             psutil.swap_memory().free, free, delta=TOLERANCE_SYS_MEM
         )
 
     def test_swapmem_used(self):
-        total, used, free = self.parse_swapinfo()
+        _total, used, _free = self.parse_swapinfo()
         self.assertAlmostEqual(
             psutil.swap_memory().used, used, delta=TOLERANCE_SYS_MEM
         )
 
     def test_swapmem_total(self):
-        total, used, free = self.parse_swapinfo()
+        total, _used, _free = self.parse_swapinfo()
         self.assertAlmostEqual(
             psutil.swap_memory().total, total, delta=TOLERANCE_SYS_MEM
         )
@@ -447,7 +447,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
-            m, s = divmod(secs, 60)
+            m, _s = divmod(secs, 60)
             h, m = divmod(m, 60)
             return "%d:%02d" % (h, m)
 

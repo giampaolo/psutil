@@ -86,13 +86,15 @@ def get_changes():
     block = []
 
     # eliminate the part preceding the first block
-    for line in lines:
+    while lines:
         line = lines.pop(0)
         if line.startswith('===='):
             break
-    lines.pop(0)
+    else:
+        raise ValueError("something wrong")
 
-    for line in lines:
+    lines.pop(0)
+    while lines:
         line = lines.pop(0)
         line = line.rstrip()
         if re.match(r"^- \d+_", line):
@@ -101,6 +103,8 @@ def get_changes():
         if line.startswith('===='):
             break
         block.append(line)
+    else:
+        raise ValueError("something wrong")
 
     # eliminate bottom empty lines
     block.pop(-1)

@@ -25,6 +25,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
+from psutil.tests import QEMU_USER
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
 from psutil.tests import retry_on_failure
@@ -102,7 +103,11 @@ def ps_name(pid):
     field = "command"
     if SUNOS:
         field = "comm"
-    return ps(field, pid).split()[0]
+    command = ps(field, pid).split()
+    if QEMU_USER:
+        assert "/bin/qemu-" in command[0]
+        return command[1]
+    return command[0]
 
 
 def ps_args(pid):

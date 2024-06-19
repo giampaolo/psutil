@@ -407,7 +407,7 @@ class TestProcess(WindowsTestCase):
         p.username()
         self.assertGreaterEqual(p.create_time(), 0.0)
         try:
-            rss, vms = p.memory_info()[:2]
+            rss, _vms = p.memory_info()[:2]
         except psutil.AccessDenied:
             # expected on Windows Vista and Windows 7
             if platform.uname()[1] not in ('vista', 'win-7', 'win7'):

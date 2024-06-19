@@ -32,6 +32,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import CI_TESTING
+from psutil.tests import QEMU_USER
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_connection_ntuple
@@ -235,6 +236,9 @@ class TestFetchAllProcesses(PsutilTestCase):
     def status(self, ret, info):
         self.assertIsInstance(ret, str)
         assert ret, ret
+        if QEMU_USER:
+            # status does not work under qemu user
+            return
         self.assertNotEqual(ret, '?')  # XXX
         self.assertIn(ret, VALID_PROC_STATUSES)
 
@@ -522,7 +526,7 @@ class TestPidsRange(PsutilTestCase):
                                 psutil.Process(pid)
                         if not WINDOWS:  # see docstring
                             self.assertNotIn(pid, psutil.pids())
-                except (psutil.Error, AssertionError) as err:
+                except (psutil.Error, AssertionError):
                     x -= 1
                     if x == 0:
                         raise

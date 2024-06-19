@@ -256,7 +256,7 @@ class ParallelRunner(ColouredTextRunner):
         # At this point we should have N zombies (the workers), which
         # will disappear with wait().
         orphans = psutil.Process().children()
-        gone, alive = psutil.wait_procs(orphans, timeout=1)
+        _gone, alive = psutil.wait_procs(orphans, timeout=1)
         if alive:
             cprint("alive processes %s" % alive, "red")
             reap_children()

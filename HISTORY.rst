@@ -1,7 +1,18 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-6.0.0 (IN DEVELOPMENT)
-======================
+6.0.1
+=====
+
+**Bug fixes**
+
+- 1586_, `cpu_times_percent()`_ reports much too low values if the interval is
+  less than 1 second (with ``percpu=True``) or less than ``1/cpu_count()``
+  seconds (with ``percpu=False``).
+
+6.0.0
+=====
+
+2024-06-18
 
 **Enhancements**
 
@@ -14,24 +25,29 @@
   been reused. This makes `process_iter()`_ around 20x times faster.
 - 2396_: a new ``psutil.process_iter.cache_clear()`` API can be used the clear
   `process_iter()`_ internal cache.
+- 2401_, Support building with free-threaded CPython 3.13.
 - 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
   The old name is still available, but it's deprecated (triggers a
   ``DeprecationWarning``) and will be removed in the future.
+- 2425_: [Linux]: provide aarch64 wheels.  (patch by Matthieu Darbois / Ben Raz)
 
 **Bug fixes**
 
-- 1586_, `cpu_times_percent()`_ reports much too low values if the interval is
-  less than 1 second (with ``percpu=True``) or less than ``1/cpu_count()``
-  seconds (with ``percpu=False``).
-- 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
-  a thread ID (TID) instead of a PID (process ID).
-- 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch by Shade Gladden)
+- 2250_, [NetBSD]: `Process.cmdline()`_ sometimes fail with EBUSY. It usually
+  happens for long cmdlines with lots of arguments. In this case retry getting
+  the cmdline for up to 50 times, and return an empty list as last resort.
+- 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch
+  by Shade Gladden)
 - 2272_: Add pickle support to psutil Exceptions.
 - 2359_, [Windows], [CRITICAL]: `pid_exists()`_ disagrees with `Process`_ on
   whether a pid exists when ERROR_ACCESS_DENIED.
 - 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
 - 2362_, [macOS]: can't compile on macOS 10.11.  (patch by Ryan Schmidt)
 - 2365_, [macOS]: can't compile on macOS < 10.9.  (patch by Ryan Schmidt)
+- 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
+  a thread ID (TID) instead of a PID (process ID).
+- 2412_, [macOS]: can't compile on macOS 10.4 PowerPC due to missing `MNT_`
+  constants.
 
 **Porting notes**
 

@@ -58,11 +58,13 @@ class Wheel:
 
     def arch(self):
         if self.name.endswith(('x86_64.whl', 'amd64.whl')):
-            return '64'
+            return '64-bit'
         if self.name.endswith(("i686.whl", "win32.whl")):
-            return '32'
+            return '32-bit'
         if self.name.endswith("arm64.whl"):
             return 'arm64'
+        if self.name.endswith("aarch64.whl"):
+            return 'aarch64'
         return '?'
 
     def pyver(self):
@@ -109,7 +111,7 @@ def main():
 
     tot_files = 0
     tot_size = 0
-    templ = "%-120s %7s %7s %7s"
+    templ = "%-120s %7s %8s %7s"
     for platf, pkgs in groups.items():
         ppn = "%s (%s)" % (platf, len(pkgs))
         s = templ % (ppn, "size", "arch", "pyver")
