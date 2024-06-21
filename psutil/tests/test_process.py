@@ -312,6 +312,7 @@ class TestProcess(PsutilTestCase):
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
+            # Note: this will fail unless pytest is run with `-s` opt
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
 

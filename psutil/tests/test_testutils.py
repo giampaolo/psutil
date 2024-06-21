@@ -389,9 +389,9 @@ class TestMemLeakClass(TestMemoryLeak):
             ls.append("x" * 124 * 1024)
 
         try:
-            # will consume around 30M in total
+            # will consume around 60M in total
             self.assertRaisesRegex(
-                AssertionError, "extra-mem", self.execute, fun, times=50
+                AssertionError, "extra-mem", self.execute, fun, times=100
             )
         finally:
             del ls

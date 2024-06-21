@@ -5,7 +5,7 @@
 # Configurable.
 PYTHON = python3
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
-PYTEST_ARGS = -v --tb=native -o cache_dir=/tmp/psutil-pytest-cache
+PYTEST_ARGS = -v --tb=native -s -o cache_dir=/tmp/psutil-pytest-cache
 ARGS =
 
 # mandatory deps for running tests

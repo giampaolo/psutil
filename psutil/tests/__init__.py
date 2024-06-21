@@ -521,7 +521,7 @@ def sh(cmd, **kwds):
     else:
         stdout, stderr = p.communicate()
     if p.returncode != 0:
-        raise RuntimeError(stderr)
+        raise RuntimeError(stdout + stderr)
     if stderr:
         warn(stderr)
     if stdout.endswith('\n'):
