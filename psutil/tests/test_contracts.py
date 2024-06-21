@@ -341,9 +341,3 @@ class TestProcessWaitType(PsutilTestCase):
             self.assertIsInstance(code, enum.IntEnum)
         else:
             self.assertIsInstance(code, int)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

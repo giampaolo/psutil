@@ -1706,9 +1706,3 @@ class TestPopen(PsutilTestCase):
                     proc.send_signal,
                     signal.CTRL_BREAK_EVENT,
                 )
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

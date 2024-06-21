@@ -368,9 +368,3 @@ class TestNonFSAPIS(BaseUnicodeTest):
             self.assertIsInstance(k, str)
             self.assertIsInstance(v, str)
         self.assertEqual(env['FUNNY_ARG'], self.funky_suffix)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

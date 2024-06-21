@@ -568,9 +568,3 @@ class TestMisc(PsutilTestCase):
             psutil.CONN_BOUND  # noqa
         if WINDOWS:
             psutil.CONN_DELETE_TCB  # noqa
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

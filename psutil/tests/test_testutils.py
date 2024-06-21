@@ -452,9 +452,3 @@ class TestOtherUtils(PsutilTestCase):
     def test_is_namedtuple(self):
         assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))
         assert not is_namedtuple(tuple())
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

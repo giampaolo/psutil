@@ -490,9 +490,3 @@ class TestMisc(PsutilTestCase):
         self.assertGreater(pagesize, 0)
         self.assertEqual(pagesize, resource.getpagesize())
         self.assertEqual(pagesize, mmap.PAGESIZE)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)
