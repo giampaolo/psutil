@@ -44,7 +44,7 @@ Once you have a compiler installed run:
 
 .. code-block:: bash
 
-    make test TSCRIPT=test_script.py  # on UNIX
+    make test ARGS=test_script.py     # on UNIX
     make test test_script.py          # on Windows
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
