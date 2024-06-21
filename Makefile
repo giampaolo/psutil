@@ -11,7 +11,6 @@ ARGS =
 PY3_DEPS = \
 	black \
 	check-manifest \
-	concurrencytest \
 	coverage \
 	packaging \
 	pylint \

@@ -29,9 +29,11 @@ import tempfile
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
-RUNNER_PY = 'psutil\\tests\\runner.py'
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] >= 3
+PYTEST_ARGS = "-v --tb=native "
+if PY3:
+    PYTEST_ARGS += "-o "
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
@@ -41,6 +43,7 @@ DEPS = [
     "pip",
     "pyperf",
     "pyreadline",
+    "pytest",
     "requests",
     "setuptools",
     "wheel",
@@ -375,17 +378,17 @@ def setup_dev_env():
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-def test(name=RUNNER_PY):
+def test(args=""):
     """Run tests."""
     build()
-    sh("%s %s" % (PYTHON, name))
+    sh("%s -m pytest %s %s" % (PYTHON, PYTEST_ARGS, args))
 
 
 def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
+    sh("%s -m coverage run -m pytest %s" % (PYTHON, PYTEST_ARGS))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -448,13 +451,13 @@ def test_testutils():
 def test_by_name(name):
     """Run test by name."""
     build()
-    sh("%s -m unittest -v %s" % (PYTHON, name))
+    test(name)
 
 
 def test_last_failed():
     """Re-run tests which failed on last run."""
     build()
-    sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
+    test("--last-failed")
 
 
 def test_memleaks():
