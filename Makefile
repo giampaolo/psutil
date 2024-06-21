@@ -20,7 +20,7 @@ PY3_DEPS = \
 	pypinfo \
 	requests \
 	rstcheck \
-	ruff==0.4.4 \
+	ruff \
 	setuptools \
 	sphinx_rtd_theme \
 	teyit \
@@ -309,8 +309,8 @@ pre-release:  ## Check if we're ready to produce a new release.
 release:  ## Upload a new release.
 	${MAKE} check-sdist
 	${MAKE} check-wheels
-	$(PYTHON) -m twine upload --verbose dist/*.tar.gz
-	$(PYTHON) -m twine upload --verbose dist/*.whl
+	$(PYTHON) -m twine upload dist/*.tar.gz
+	$(PYTHON) -m twine upload dist/*.whl
 	${MAKE} git-tag-release
 
 generate-manifest:  ## Generates MANIFEST.in file.
