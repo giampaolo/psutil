@@ -312,9 +312,13 @@ class TestProcess(PsutilTestCase):
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
-            # Note: this will fail unless pytest is run with `-s` opt
-            tty = os.path.realpath(sh('tty'))
-            self.assertEqual(terminal, tty)
+            try:
+                tty = os.path.realpath(sh('tty'))
+            except RuntimeError:
+                # Note: happens if pytest is run without the `-s` opt.
+                raise unittest.SkipTest("can't rely on `tty` CLI")
+            else:
+                self.assertEqual(terminal, tty)
 
     @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
     @skip_on_not_implemented(only_if=LINUX)
