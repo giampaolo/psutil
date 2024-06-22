@@ -36,6 +36,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
+from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
@@ -1603,6 +1604,7 @@ class TestMisc(PsutilTestCase):
             psutil.PROCFS_PATH = "/proc"
 
     @retry_on_failure()
+    @unittest.skipIf(PYTEST_PARALLEL, "skip if pytest-parallel")
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False
