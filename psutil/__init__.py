@@ -1851,10 +1851,9 @@ def cpu_times_percent(interval=None, percpu=False):
         times_delta = _cpu_times_deltas(t1, t2)
         all_delta = _cpu_tot_time(times_delta)
         # "scale" is the value to multiply each delta with to get percentages.
-        # We use "max" to avoid division by zero (if all_delta is 0, then all
-        # fields are 0 so percentages will be 0 too. all_delta cannot be a
-        # fraction because cpu times are integers)
-        scale = 100.0 / max(1, all_delta)
+        # Avoid division by zero (if all_delta is 0, then all fields are 0 so
+        # percentages will be 0 too).
+        scale = 100.0 / all_delta if all_delta > 0 else 100.0
         for field_delta in times_delta:
             field_perc = field_delta * scale
             field_perc = round(field_perc, 1)

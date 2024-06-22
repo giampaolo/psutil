@@ -1,7 +1,18 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-6.0.0 2024-06-18
-================
+6.0.1
+=====
+
+**Bug fixes**
+
+- 1586_, `cpu_times_percent()`_ reports much too low values if the interval is
+  less than 1 second (with ``percpu=True``) or less than ``1/cpu_count()``
+  seconds (with ``percpu=False``).
+
+6.0.0
+=====
+
+2024-06-18
 
 **Enhancements**
 
