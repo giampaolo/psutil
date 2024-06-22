@@ -14,7 +14,6 @@ import ctypes
 import errno
 import functools
 import gc
-import inspect
 import os
 import platform
 import random
@@ -1597,16 +1596,6 @@ class system_namespace:
             yield (fun, fun_name)
 
     test_class_coverage = process_namespace.test_class_coverage
-
-
-def serialrun(klass):
-    """A decorator to mark a TestCase class. When running parallel tests,
-    class' unit tests will be run serially (1 process).
-    """
-    # assert issubclass(klass, unittest.TestCase), klass
-    assert inspect.isclass(klass), klass
-    klass._serialrun = True
-    return klass
 
 
 def retry_on_failure(retries=NO_RETRIES):
