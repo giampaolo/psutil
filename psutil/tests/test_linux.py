@@ -2126,9 +2126,13 @@ class TestProcess(PsutilTestCase):
         with mock.patch(
             'psutil._pslinux.readlink', side_effect=OSError(errno.ENOENT, "")
         ) as m:
-            ret = psutil.Process().exe()
-            assert m.called
-            self.assertEqual(ret, "")
+            # de-activate guessing from cmdline()
+            with mock.patch(
+                'psutil._pslinux.Process.cmdline', return_value=[]
+            ):
+                ret = psutil.Process().exe()
+                assert m.called
+                self.assertEqual(ret, "")
 
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case

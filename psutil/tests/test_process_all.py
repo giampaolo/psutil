@@ -40,7 +40,6 @@ from psutil.tests import create_sockets
 from psutil.tests import is_namedtuple
 from psutil.tests import is_win_secure_system_proc
 from psutil.tests import process_namespace
-from psutil.tests import serialrun
 
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
@@ -97,7 +96,6 @@ def proc_info(pid):
         return info
 
 
-@serialrun
 class TestFetchAllProcesses(PsutilTestCase):
     """Test which iterates over all running processes and performs
     some sanity checks against Process API's returned values.

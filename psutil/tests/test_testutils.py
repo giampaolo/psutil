@@ -16,6 +16,8 @@ import stat
 import subprocess
 import unittest
 
+import pytest
+
 import psutil
 import psutil.tests
 from psutil import FREEBSD
@@ -46,7 +48,6 @@ from psutil.tests import retry
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
-from psutil.tests import serialrun
 from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
@@ -361,7 +362,7 @@ class TestNetUtils(PsutilTestCase):
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
-@serialrun
+@pytest.mark.xdist_group(name="group_serial")
 class TestMemLeakClass(TestMemoryLeak):
     @retry_on_failure()
     def test_times(self):

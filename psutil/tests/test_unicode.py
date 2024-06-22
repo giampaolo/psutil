@@ -79,6 +79,8 @@ import unittest
 import warnings
 from contextlib import closing
 
+import pytest
+
 import psutil
 from psutil import BSD
 from psutil import POSIX
@@ -103,7 +105,6 @@ from psutil.tests import create_py_exe
 from psutil.tests import get_testfn
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
-from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
@@ -178,7 +179,7 @@ class BaseUnicodeTest(PsutilTestCase):
             raise unittest.SkipTest("can't handle unicode str")
 
 
-@serialrun
+@pytest.mark.xdist_group(name="group_serial")
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
 class TestFSAPIs(BaseUnicodeTest):

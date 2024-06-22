@@ -21,6 +21,7 @@ PY3_DEPS += \
 	pyperf \
 	pypinfo \
 	pytest-cov \
+	pytest-xdist \
 	requests \
 	rstcheck \
 	ruff \
@@ -140,7 +141,8 @@ test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) --parallel
+	# note: -s and -v opts are ignored
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
 	${MAKE} build

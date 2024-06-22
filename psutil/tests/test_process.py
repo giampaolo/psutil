@@ -21,6 +21,8 @@ import time
 import types
 import unittest
 
+import pytest
+
 import psutil
 from psutil import AIX
 from psutil import BSD
@@ -309,6 +311,7 @@ class TestProcess(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.xdist_group(name="group_serial")
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
