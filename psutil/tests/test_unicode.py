@@ -179,7 +179,7 @@ class BaseUnicodeTest(PsutilTestCase):
             raise unittest.SkipTest("can't handle unicode str")
 
 
-@pytest.mark.xdist_group(name="group_serial")
+@pytest.mark.xdist_group(name="serial")
 @unittest.skipIf(ASCII_FS, "ASCII fs")
 @unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
 class TestFSAPIs(BaseUnicodeTest):

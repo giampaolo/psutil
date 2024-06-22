@@ -362,7 +362,7 @@ class TestNetUtils(PsutilTestCase):
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
-@pytest.mark.xdist_group(name="group_serial")
+@pytest.mark.xdist_group(name="serial")
 class TestMemLeakClass(TestMemoryLeak):
     @retry_on_failure()
     def test_times(self):

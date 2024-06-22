@@ -56,7 +56,7 @@ def this_proc_net_connections(kind):
     return cons
 
 
-@pytest.mark.xdist_group(name="group_serial")
+@pytest.mark.xdist_group(name="serial")
 class ConnectionTestCase(PsutilTestCase):
     def setUp(self):
         self.assertEqual(this_proc_net_connections(kind='all'), [])
@@ -103,7 +103,7 @@ class TestBasicOperations(ConnectionTestCase):
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
-@pytest.mark.xdist_group(name="group_serial")
+@pytest.mark.xdist_group(name="serial")
 class TestUnconnectedSockets(ConnectionTestCase):
     """Tests sockets which are open but not connected to anything."""
 
@@ -199,7 +199,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
-@pytest.mark.xdist_group(name="group_serial")
+@pytest.mark.xdist_group(name="serial")
 class TestConnectedSocket(ConnectionTestCase):
     """Test socket pairs which are actually connected to
     each other.
