@@ -12,26 +12,29 @@ ARGS =
 PY3_DEPS = \
 	pytest
 # dev deps.
-PY3_DEPS += \
-	black \
-	check-manifest \
-	coverage \
-	packaging \
-	pylint \
-	pyperf \
-	pypinfo \
-	pytest-cov \
-	pytest-xdist \
-	requests \
-	rstcheck \
-	ruff \
-	setuptools \
-	sphinx_rtd_theme \
-	teyit \
-	toml-sort \
-	twine \
-	virtualenv \
-	wheel
+ifndef GITHUB_ACTIONS
+	PY3_DEPS += \
+		black \
+		check-manifest \
+		coverage \
+		packaging \
+		pylint \
+		pyperf \
+		pypinfo \
+		pytest-cov \
+		pytest-xdist \
+		requests \
+		rstcheck \
+		ruff \
+		setuptools \
+		sphinx_rtd_theme \
+		teyit \
+		toml-sort \
+		twine \
+		virtualenv \
+		wheel
+endif
+# python 2 deps
 PY2_DEPS = \
 	futures \
 	ipaddress \
@@ -43,6 +46,7 @@ PY_DEPS = `$(PYTHON) -c \
 	py38 = sys.version_info[:2] >= (3, 8); \
 	py3_extra = ' abi3audit' if py38 else ''; \
 	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
+
 NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
