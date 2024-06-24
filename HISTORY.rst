@@ -1,7 +1,19 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-6.0.0 2024-06-18
-================
+6.0.1 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
+  Python 3.13.  (patch by Sam Gross)
+
+6.0.0
+======
+
+2024-06-18
 
 **Enhancements**
 
@@ -14,7 +26,7 @@
   been reused. This makes `process_iter()`_ around 20x times faster.
 - 2396_: a new ``psutil.process_iter.cache_clear()`` API can be used the clear
   `process_iter()`_ internal cache.
-- 2401_, Support building with free-threaded CPython 3.13.
+- 2401_, Support building with free-threaded CPython 3.13. (patch by Sam Gross)
 - 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
   The old name is still available, but it's deprecated (triggers a
   ``DeprecationWarning``) and will be removed in the future.
