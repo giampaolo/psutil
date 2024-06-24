@@ -165,6 +165,10 @@ void init_psutil_windows(void)
     if (module == NULL)
         INITERROR;
 
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+#endif
+
     if (psutil_setup() != 0)
         INITERROR;
     if (psutil_set_se_debug() != 0)
