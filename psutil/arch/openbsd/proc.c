@@ -147,7 +147,7 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
-    static char **argv;
+    char **argv = NULL;
     char **p;
     size_t argv_size = 128;
     PyObject *py_retlist = PyList_New(0);
@@ -189,9 +189,12 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
         Py_DECREF(py_arg);
     }
 
+    free(argv);
     return py_retlist;
 
 error:
+    if (argv != NULL)
+        free(argv);
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;

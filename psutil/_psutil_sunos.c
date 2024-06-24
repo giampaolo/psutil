@@ -1721,6 +1721,10 @@ void init_psutil_sunos(void)
     if (module == NULL)
         INITERROR;
 
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+#endif
+
     if (psutil_setup() != 0)
         INITERROR;
 

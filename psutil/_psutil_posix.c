@@ -913,6 +913,10 @@ static PyMethodDef mod_methods[] = {
     if (mod == NULL)
         INITERR;
 
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+#endif
+
 #if defined(PSUTIL_BSD) || \
         defined(PSUTIL_OSX) || \
         defined(PSUTIL_SUNOS) || \
