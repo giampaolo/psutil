@@ -193,7 +193,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    free(argv);
+    if (argv != NULL)
+        free(argv);
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
