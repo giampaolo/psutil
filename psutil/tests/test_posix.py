@@ -315,7 +315,7 @@ class TestSystemAPIs(PsutilTestCase):
         pids_psutil = psutil.pids()
 
         # on MACOS and OPENBSD ps doesn't show pid 0
-        if MACOS or OPENBSD and 0 not in pids_ps:
+        if MACOS or (OPENBSD and 0 not in pids_ps):
             pids_ps.insert(0, 0)
 
         # There will often be one more process in pids_ps for ps itself

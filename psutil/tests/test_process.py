@@ -618,7 +618,7 @@ class TestProcess(PsutilTestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             self.assertGreaterEqual(value, 0, msg=(name, value))
-            if name == 'vms' and OSX or LINUX:
+            if (name == 'vms' and OSX) or LINUX:
                 continue
             self.assertLessEqual(value, total, msg=(name, value, total))
         if LINUX or WINDOWS or MACOS:
