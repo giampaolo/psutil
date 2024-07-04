@@ -53,7 +53,7 @@ jobs:
       if: matrix.arch == 'aarch64'
 
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.19.1
+      uses: pypa/cibuildwheel@v2.19.2
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
