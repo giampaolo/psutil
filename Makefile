@@ -28,7 +28,6 @@ ifndef GITHUB_ACTIONS
 		ruff \
 		setuptools \
 		sphinx_rtd_theme \
-		teyit \
 		toml-sort \
 		twine \
 		virtualenv \
@@ -244,16 +243,12 @@ fix-black:
 fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix $(ARGS)
 
-fix-unittests:  ## Fix unittest idioms.
-	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
-
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
 	${MAKE} fix-black
-	${MAKE} fix-unittests
 	${MAKE} fix-toml
 
 # ===================================================================
