@@ -26,7 +26,7 @@ For reference, here's the git history with original(ish) implementations:
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    static int maxcpus;
+    int maxcpus;
     int mib[2];
     int ncpu;
     size_t len;

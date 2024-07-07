@@ -78,6 +78,10 @@ static PyMethodDef mod_methods[] = {
     if (mod == NULL)
         INITERR;
 
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+#endif
+
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;

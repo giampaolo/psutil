@@ -1081,6 +1081,9 @@ void init_psutil_aix(void)
 #else
     PyObject *module = Py_InitModule("_psutil_aix", PsutilMethods);
 #endif
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+#endif
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     PyModule_AddIntConstant(module, "SIDL", SIDL);

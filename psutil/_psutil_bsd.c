@@ -143,6 +143,10 @@ static PyMethodDef mod_methods[] = {
     if (mod == NULL)
         INITERR;
 
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+#endif
+
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
     // process status constants
 

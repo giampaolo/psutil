@@ -319,7 +319,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             value = getattr(ret, name)
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0, msg=(name, value))
-            if LINUX or OSX and name in ('vms', 'data'):
+            if LINUX or (OSX and name in ('vms', 'data')):
                 # On Linux there are processes (e.g. 'goa-daemon') whose
                 # VMS is incredibly high for some reason.
                 continue
