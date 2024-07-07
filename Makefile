@@ -5,7 +5,7 @@
 # Configurable.
 PYTHON = python3
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
-PYTEST_ARGS = --tb=native -v -s
+PYTEST_ARGS = -v -s --tb=short
 ARGS =
 
 # mandatory deps for running tests
