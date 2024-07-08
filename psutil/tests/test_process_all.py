@@ -32,6 +32,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import CI_TESTING
+from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import PsutilTestCase
@@ -44,7 +45,7 @@ from psutil.tests import process_namespace
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
-USE_PROC_POOL = LINUX and not CI_TESTING
+USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
 
 
 def proc_info(pid):
