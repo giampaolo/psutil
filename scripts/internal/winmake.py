@@ -19,6 +19,7 @@ import ctypes
 import errno
 import fnmatch
 import os
+import shlex
 import shutil
 import site
 import ssl
@@ -117,9 +118,9 @@ def win_colorprint(s, color=LIGHTBLUE):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    p = subprocess.Popen(
-        cmd, shell=True, env=os.environ, cwd=os.getcwd()  # noqa
-    )
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
+    p = subprocess.Popen(cmd, env=os.environ, cwd=os.getcwd())
     p.communicate()
     if p.returncode != 0:
         sys.exit(p.returncode)
