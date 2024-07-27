@@ -57,6 +57,8 @@ jobs:
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
+        CIBW_TEST_COMMAND:
+          make test
 
     - name: Upload wheels
       uses: actions/upload-artifact@v4
