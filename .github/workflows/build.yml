@@ -26,12 +26,12 @@ jobs:
       matrix:
         include:
         - {os: ubuntu-latest, arch: x86_64}
-        # - {os: ubuntu-latest, arch: i686}
-        # - {os: ubuntu-latest, arch: aarch64}
-        # - {os: macos-12, arch: x86_64}
-        # - {os: macos-14, arch: arm64}
-        # - {os: windows-2019, arch: AMD64}
-        # - {os: windows-2019, arch: x86}
+        - {os: ubuntu-latest, arch: i686}
+        - {os: ubuntu-latest, arch: aarch64}
+        - {os: macos-12, arch: x86_64}
+        - {os: macos-14, arch: arm64}
+        - {os: windows-2019, arch: AMD64}
+        - {os: windows-2019, arch: x86}
     steps:
     - uses: actions/checkout@v4
 
