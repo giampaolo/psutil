@@ -58,6 +58,7 @@ jobs:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
         CIBW_TEST_COMMAND:
+          pip install pytest
           make test
 
     - name: Upload wheels
