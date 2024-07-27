@@ -44,6 +44,7 @@ ignore = [
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
+    "DOC501",  # Raised exception `X` missing from docstring
     "DTZ",  # flake8-datetimez
     "ERA001",  # Found commented-out code
     "FBT",  # flake8-boolean-trap (makes zero sense)
