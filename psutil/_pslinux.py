@@ -1530,6 +1530,9 @@ def sensors_battery():
     meaning but under different names, see:
     https://github.com/giampaolo/psutil/issues/966.
     """
+    if not os.path.isdir(POWER_SUPPLY_PATH):
+        return None
+
     null = object()
 
     def multi_bcat(*paths):
