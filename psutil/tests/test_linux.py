@@ -1843,6 +1843,8 @@ class TestSensorsTemperatures(PsutilTestCase):
                 return [
                     '/sys/class/thermal/thermal_zone1/trip_point_0_type',
                     '/sys/class/thermal/thermal_zone1/trip_point_0_temp',
+                    '/sys/class/thermal/thermal_zone1/trip_point_1_type',
+                    '/sys/class/thermal/thermal_zone1/trip_point_1_temp',
                 ]
             return []
 
