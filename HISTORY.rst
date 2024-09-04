@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
   Python 3.13.  (patch by Sam Gross)
+- 2439_: correct sensors_temperatures calculation for theraml_zone (patch by
+  Siena Richard)
 
 6.0.0
 ======
