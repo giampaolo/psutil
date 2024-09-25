@@ -39,14 +39,15 @@ ignore = [
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
+    "DOC",  # various docstring warnings
     "DTZ",  # flake8-datetimez
     "ERA001",  # Found commented-out code
     "FBT",  # flake8-boolean-trap (makes zero sense)
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
     "FLY",  # flynt (PYTHON2.7 COMPAT)
     "FURB101",  # `open` and `read` should be replaced by `Path(src).read_text()`
-    "FURB103",  # `open` and `write` should be replaced by `Path(...).write_text(...)`
-    "FURB113",  # Use `x.extend(('a', 'b', 'c'))` instead of repeatedly calling `x.append()`
+    "FURB103",  # `open` and `write` should be replaced by `Path(src).write_text()`
+    "FURB113",  # Use `ls.extend(...)` instead of repeatedly calling `ls.append()`
     "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator
@@ -99,6 +100,7 @@ ignore = [
     "UP028",  # [*] Replace `yield` over `for` loop with `yield from` (PYTHON2.7 COMPAT)
     "UP031",  # [*] Use format specifiers instead of percent format
     "UP032",  # [*] Use f-string instead of `format` call (PYTHON2.7 COMPAT)
+    "UP036",  # Version block is outdated for minimum Python version (PYTHON2.7 COMPAT)
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -114,8 +114,8 @@ def win_colorprint(s, color=LIGHTBLUE):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    p = subprocess.Popen(
-        cmd, shell=True, env=os.environ, cwd=os.getcwd()  # noqa
+    p = subprocess.Popen(  # noqa S602
+        cmd, shell=True, env=os.environ, cwd=os.getcwd()
     )
     p.communicate()
     if p.returncode != 0:

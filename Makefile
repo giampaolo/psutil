@@ -201,7 +201,7 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 ruff:  ## Run ruff linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --output-format=concise
 
 black:  ## Python files linting (via black)
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
