@@ -373,9 +373,9 @@ class Process(object):  # noqa: UP004
         """Return a (pid, uid) tuple which is supposed to identify a
         Process instance univocally over time. The PID alone is not
         enough, as it can be assigned to a new process after this one
-        terminates [1], so we add process creation time to the mix. We
-        need this in order to prevent killing the wrong process later
-        on.
+        terminates, so we add process creation time to the mix. We need
+        this in order to prevent killing the wrong process later on.
+        This is also known as PID reuse or PID recycling problem.
 
         The reliability of this strategy mostly depends on
         create_time() precision, which is 0.01 secs on Linux. The
@@ -383,12 +383,13 @@ class Process(object):  # noqa: UP004
         won't reuse the same PID after such a short period of time
         (0.01 secs). Technically this is inherently racy, but
         practically it should be good enough.
-
-        [1] This is also known as PID reuse or PID recycling problem.
-
-        See: https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
         """
         if WINDOWS:
+            # Use create_time() fast method in order to speedup
+            # `process_iter()`. This means we'll get AccessDenied for
+            # most ADMIN processes, but that's fine since it means
+            # we'll also get AccessDenied on kill().
+            # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
             self._create_time = self._proc.create_time(fast_only=True)
             return (self.pid, self._create_time)
         else:
