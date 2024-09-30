@@ -359,15 +359,24 @@ class TestMisc(PsutilTestCase):
         ) as meth:
             psutil.Process()
             assert meth.called
+
         with mock.patch.object(
             psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
         ) as meth:
             psutil.Process()
             assert meth.called
+
         with mock.patch.object(
             psutil.Process, '_get_ident', side_effect=ValueError
         ) as meth:
             with self.assertRaises(ValueError):
+                psutil.Process()
+            assert meth.called
+
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
+        ) as meth:
+            with self.assertRaises(psutil.NoSuchProcess):
                 psutil.Process()
             assert meth.called
 
