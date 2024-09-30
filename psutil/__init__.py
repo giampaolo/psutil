@@ -370,17 +370,19 @@ class Process(object):  # noqa: UP004
                 self._gone = True
 
     def _get_ident(self):
-        """Return a pair which is supposed to identify a Process instance
-        univocally over time. The PID alone is not enough, as it can be
-        reused after the process terminates, so we add process creation
-        time to the mix. This will later be used by __eq__() and
-        is_running() in order to prevent killling the wrong process.
+        """Return a pair which is supposed to identify a Process
+        instance univocally over time. The PID alone is not enough, as
+        it can be reused by the OS after the process terminates, so we
+        add process creation time to the mix. This will later be used
+        by __eq__() and is_running() in order to prevent killing the
+        wrong process.
 
-        Technically this algo is racy, but it's the best we can do. The
-        reliability of this method mostly depends on create_time()
-        precision, which is 0.01 secs on Linux. The assumption is that
-        the kernel won't recycle the same PID in such a short time
-        (0.01 secs).
+        The reliability of this strategy mostly depends on
+        create_time() precision, which is 0.01 secs on Linux. The
+        assumption is that, after a process terminates, the kernel
+        won't reuse the same PID after such a short time (0.01 secs).
+        Technically this is racy, but practically it should be good
+        enough.
 
         See: https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
         """
