@@ -21,6 +21,7 @@ ifndef GITHUB_ACTIONS
 		pylint \
 		pyperf \
 		pypinfo \
+		pytest \
 		pytest-cov \
 		pytest-xdist \
 		requests \
