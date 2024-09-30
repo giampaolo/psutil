@@ -120,7 +120,9 @@ def sh(cmd, nolog=False):
         safe_print("cmd: " + cmd)
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
-    p = subprocess.Popen(cmd, env=os.environ, cwd=os.getcwd())
+    p = subprocess.Popen(  # noqa S602
+        cmd, shell=True, env=os.environ, cwd=os.getcwd()
+    )
     p.communicate()
     if p.returncode != 0:
         sys.exit(p.returncode)

@@ -10,7 +10,7 @@ import functools
 import os
 from collections import defaultdict
 from collections import namedtuple
-from xml.etree import ElementTree
+from xml.etree import ElementTree  # noqa ICN001
 
 from . import _common
 from . import _psposix

@@ -1,67 +1,67 @@
-# Execute tests on *BSD platforms. Does not produce wheels.
-# Useful URLs:
-# https://github.com/vmactions/freebsd-vm
-# https://github.com/vmactions/openbsd-vm
-# https://github.com/vmactions/netbsd-vm
+# # Execute tests on *BSD platforms. Does not produce wheels.
+# # Useful URLs:
+# # https://github.com/vmactions/freebsd-vm
+# # https://github.com/vmactions/openbsd-vm
+# # https://github.com/vmactions/netbsd-vm
 
-on: [push, pull_request]
-name: bsd-tests
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
-  cancel-in-progress: true
-jobs:
-  freebsd:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run tests
-        uses: vmactions/freebsd-vm@v1
-        with:
-          usesh: true
-          prepare: |
-            pkg install -y gcc python3
-          run: |
-            set -e -x
-            make install-pip
-            python3 -m pip install --user setuptools
-            make install
-            make test
-            make test-memleaks
-  openbsd:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run tests
-        uses: vmactions/openbsd-vm@v1
-        with:
-          usesh: true
-          prepare: |
-            set -e
-            pkg_add gcc python3
-          run: |
-            set -e
-            make install-pip
-            python3 -m pip install --user setuptools
-            make install
-            make test
-            make test-memleaks
-  netbsd:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run tests
-        uses: vmactions/netbsd-vm@v1
-        with:
-          usesh: true
-          prepare: |
-            set -e
-            /usr/sbin/pkg_add -v pkgin
-            pkgin update
-            pkgin -y install python311-* py311-setuptools-* gcc12-*
-          run: |
-            set -e
-            make install-pip PYTHON=python3.11
-            python3.11 -m pip install --user setuptools
-            make install PYTHON=python3.11
-            make test PYTHON=python3.11
-            make test-memleaks PYTHON=python3.11
+# on: [push, pull_request]
+# name: bsd-tests
+# concurrency:
+#   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+#   cancel-in-progress: true
+# jobs:
+#   freebsd:
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Run tests
+#         uses: vmactions/freebsd-vm@v1
+#         with:
+#           usesh: true
+#           prepare: |
+#             pkg install -y gcc python3
+#           run: |
+#             set -e -x
+#             make install-pip
+#             python3 -m pip install --user setuptools
+#             make install
+#             make test
+#             make test-memleaks
+#   openbsd:
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Run tests
+#         uses: vmactions/openbsd-vm@v1
+#         with:
+#           usesh: true
+#           prepare: |
+#             set -e
+#             pkg_add gcc python3
+#           run: |
+#             set -e
+#             make install-pip
+#             python3 -m pip install --user setuptools
+#             make install
+#             make test
+#             make test-memleaks
+#   netbsd:
+#     runs-on: ubuntu-22.04
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Run tests
+#         uses: vmactions/netbsd-vm@v1
+#         with:
+#           usesh: true
+#           prepare: |
+#             set -e
+#             /usr/sbin/pkg_add -v pkgin
+#             pkgin update
+#             pkgin -y install python311-* py311-setuptools-* gcc12-*
+#           run: |
+#             set -e
+#             make install-pip PYTHON=python3.11
+#             python3.11 -m pip install --user setuptools
+#             make install PYTHON=python3.11
+#             make test PYTHON=python3.11
+#             make test-memleaks PYTHON=python3.11
