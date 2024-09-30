@@ -350,12 +350,13 @@ class Process(object):  # noqa: UP004
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
+        self._ident = (self.pid, None)
         try:
             self._ident = self._get_ident()
         except AccessDenied:
-            # This should only be possible on Windows, since we use
-            # fast creation time retrieval. AFAIK on all other
-            # platforma we're able to get process creation time.
+            # This should happen on Windows only, since we use the fast
+            # create time method. AFAIK, on all other platforms we are
+            # able to get create time for all PIDs.
             pass
         except ZombieProcess:
             # Zombies can still be queried by this class (although
@@ -380,10 +381,12 @@ class Process(object):  # noqa: UP004
         precision, which is 0.01 secs on Linux. The assumption is that
         the kernel won't recycle the same PID in such a short time
         (0.01 secs).
+
+        See: https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
         """
         if WINDOWS:
-            # See: https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
-            return (self.pid, self.create_time(fast_only=True))
+            self._create_time = self._proc.create_time(fast_only=True)
+            return (self.pid, self._create_time)
         else:
             return (self.pid, self.create_time())
 
@@ -430,10 +433,10 @@ class Process(object):  # noqa: UP004
             # (so it has a ctime), then it turned into a zombie. It's
             # important to do this because is_running() depends on
             # __eq__.
-            pid1, ctime1 = self._ident
-            pid2, ctime2 = other._ident
+            pid1, ident1 = self._ident
+            pid2, ident2 = other._ident
             if pid1 == pid2:
-                if ctime1 and not ctime2:
+                if ident1 and not ident2:
                     try:
                         return self.status() == STATUS_ZOMBIE
                     except Error:
