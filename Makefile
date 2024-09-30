@@ -282,7 +282,7 @@ check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON) -m twine check --strict dist/*.tar.gz
 
 check-wheels:  ## Check sanity of wheels.
-	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
+	$(PYTHON) -m abi3audit --verbose --strict --debug dist/*-abi3-*.whl
 	$(PYTHON) -m twine check --strict dist/*.whl
 
 pre-release:  ## Check if we're ready to produce a new release.
