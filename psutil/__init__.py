@@ -282,6 +282,10 @@ def _pprint_secs(secs):
     return datetime.datetime.fromtimestamp(secs).strftime(fmt)
 
 
+class _proc_iter_pid(int):
+    pass
+
+
 # =====================================================================
 # --- Process class
 # =====================================================================
@@ -334,11 +338,12 @@ class Process(object):  # noqa: UP004
                 msg = "process PID out of range (got %s)" % pid
                 raise NoSuchProcess(pid, msg=msg)
 
-        self._pid = pid
+        self._pid = int(pid)  # cast for _proc_iter_pid type
         self._name = None
         self._exe = None
         self._create_time = None
         self._gone = False
+        self._ident = None
         self._pid_reused = False
         self._hash = None
         self._lock = threading.RLock()
@@ -350,6 +355,11 @@ class Process(object):  # noqa: UP004
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
+
+        if not isinstance(pid, _proc_iter_pid):
+            self._get_ident(_ignore_nsp=_ignore_nsp)
+
+    def _get_ident(self, _ignore_nsp=False):
         # cache creation time for later use in is_running() method
         try:
             self.create_time()
@@ -365,7 +375,7 @@ class Process(object):  # noqa: UP004
         except NoSuchProcess:
             if not _ignore_nsp:
                 msg = "process PID not found"
-                raise NoSuchProcess(pid, msg=msg)
+                raise NoSuchProcess(self.pid, msg=msg)
             else:
                 self._gone = True
         # This pair is supposed to identify a Process instance
@@ -1488,7 +1498,7 @@ def process_iter(attrs=None, ad_value=None):
     global _pmap
 
     def add(pid):
-        proc = Process(pid)
+        proc = Process(_proc_iter_pid(pid))
         pmap[proc.pid] = proc
         return proc
 
@@ -1506,14 +1516,25 @@ def process_iter(attrs=None, ad_value=None):
         pid = _pids_reused.pop()
         debug("refreshing Process instance for reused PID %s" % pid)
         remove(pid)
+
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
         for pid, proc in ls:
             try:
                 if proc is None:  # new process
                     proc = add(pid)
-                if attrs is not None:
-                    proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    new = True
+                else:
+                    new = False
+
+                with proc.oneshot():
+                    if new:
+                        proc._get_ident()
+                    if attrs is not None:
+                        proc.info = proc.as_dict(
+                            attrs=attrs, ad_value=ad_value
+                        )
+
                 yield proc
             except NoSuchProcess:
                 remove(pid)
