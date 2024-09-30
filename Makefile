@@ -271,6 +271,10 @@ download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels_appveyor.py
 	${MAKE} print-dist
 
+create-wheels:  ## Create .whl files
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
+	${MAKE} check-wheels
+
 check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON_ENV_VARS) $(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	$(PYTHON_ENV_VARS) build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
