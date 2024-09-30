@@ -350,13 +350,12 @@ class Process(object):  # noqa: UP004
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
-        # cache creation time for later use in is_running() method
         try:
-            self.create_time()
+            self._ident = self._get_ident()
         except AccessDenied:
-            # We should never get here as AFAIK we're able to get
-            # process creation time on all platforms even as a
-            # limited user.
+            # This should only be possible on Windows, since we use
+            # fast creation time retrieval. AFAIK on all other
+            # platforma we're able to get process creation time.
             pass
         except ZombieProcess:
             # Zombies can still be queried by this class (although
@@ -368,11 +367,25 @@ class Process(object):  # noqa: UP004
                 raise NoSuchProcess(pid, msg=msg)
             else:
                 self._gone = True
-        # This pair is supposed to identify a Process instance
-        # univocally over time (the PID alone is not enough as
-        # it might refer to a process whose PID has been reused).
-        # This will be used later in __eq__() and is_running().
-        self._ident = (self.pid, self._create_time)
+
+    def _get_ident(self):
+        """Return a pair which is supposed to identify a Process instance
+        univocally over time. The PID alone is not enough, as it can be
+        reused after the process terminates, so we add process creation
+        time to the mix. This will later be used by __eq__() and
+        is_running() in order to prevent killling the wrong process.
+
+        Technically this algo is racy, but it's the best we can do. The
+        reliability of this method mostly depends on create_time()
+        precision, which is 0.01 secs on Linux. The assumption is that
+        the kernel won't recycle the same PID in such a short time
+        (0.01 secs).
+        """
+        if WINDOWS:
+            # See: https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
+            return (self.pid, self.create_time(fast_only=True))
+        else:
+            return (self.pid, self.create_time())
 
     def __str__(self):
         info = collections.OrderedDict()
