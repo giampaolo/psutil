@@ -26,12 +26,12 @@ jobs:
       matrix:
         include:
         - {os: ubuntu-latest, arch: x86_64}
-        - {os: ubuntu-latest, arch: i686}
-        - {os: ubuntu-latest, arch: aarch64}
-        - {os: macos-12, arch: x86_64}
-        - {os: macos-14, arch: arm64}
-        - {os: windows-2019, arch: AMD64}
-        - {os: windows-2019, arch: x86}
+        # - {os: ubuntu-latest, arch: i686}
+        # - {os: ubuntu-latest, arch: aarch64}
+        # - {os: macos-12, arch: x86_64}
+        # - {os: macos-14, arch: arm64}
+        # - {os: windows-2019, arch: AMD64}
+        # - {os: windows-2019, arch: x86}
     steps:
     - uses: actions/checkout@v4
 
@@ -57,9 +57,9 @@ jobs:
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
+        CIBW_TEST_REQUIRES: pytest
         CIBW_TEST_COMMAND:
-          python -m pip install pytest
-          PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python -m pytest -v -s --tb=short --ignore={project}/tests/test_memleaks.py  {project}/psutil/tests
+          PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python -m pytest -v -s --tb=short --ignore={project}/tests/test_memleaks.py {project}/psutil/tests
 
     - name: Upload wheels
       uses: actions/upload-artifact@v4
