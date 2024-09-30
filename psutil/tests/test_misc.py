@@ -354,20 +354,18 @@ class TestMisc(PsutilTestCase):
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case
         # of zombie processes or access denied.
-        if not WINDOWS:
-            # Windows uses fast create time method directly
-            with mock.patch.object(
-                psutil.Process, 'create_time', side_effect=psutil.AccessDenied
-            ) as meth:
-                psutil.Process()
-                assert meth.called
         with mock.patch.object(
-            psutil.Process, 'create_time', side_effect=psutil.ZombieProcess(1)
+            psutil.Process, '_get_ident', side_effect=psutil.AccessDenied
         ) as meth:
             psutil.Process()
             assert meth.called
         with mock.patch.object(
-            psutil.Process, 'create_time', side_effect=ValueError
+            psutil.Process, '_get_ident', side_effect=psutil.ZombieProcess(1)
+        ) as meth:
+            psutil.Process()
+            assert meth.called
+        with mock.patch.object(
+            psutil.Process, '_get_ident', side_effect=ValueError
         ) as meth:
             with self.assertRaises(ValueError):
                 psutil.Process()
