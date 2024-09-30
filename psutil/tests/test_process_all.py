@@ -412,7 +412,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             for fname in nt._fields:
                 value = getattr(nt, fname)
                 if fname == 'path':
-                    if not value.startswith(("[", "anon_inode:")):
+                    if not value.startswith(("[", "anon_inode:", "socket:")):
                         assert os.path.isabs(nt.path), nt.path
                         # commented as on Linux we might get
                         # '/foo/bar (deleted)'
