@@ -45,7 +45,7 @@ jobs:
             pkg_add gmake
           run: |
             set -e
-            gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
 
   netbsd:
     runs-on: ubuntu-latest
@@ -62,4 +62,4 @@ jobs:
             pkgin -y install gmake
           run: |
             set -e
-            gmake PYTHON=python3.11 install-sysdeps install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 gmake PYTHON=python3.11 install-sysdeps install-pydeps install print-sysinfo test test-memleaks

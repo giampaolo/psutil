@@ -164,7 +164,7 @@ install-sysdeps:
 ifdef HAS_APT
 	$(SUDO) apt-get install -y python3-dev gcc
 else ifdef HAS_YUM
-	$(SUDO) yum install -u python3-devel gcc
+	$(SUDO) yum install -y python3-devel gcc
 else ifdef FREEBSD
 	$(SUDO) pkg install -y gmake python3 gcc
 else ifdef NETBSD
