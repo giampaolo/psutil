@@ -58,7 +58,7 @@ jobs:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
         CIBW_TEST_COMMAND:
-          make -C {project} setup-dev-env install PYTHON="env python" && make -C {project} test test-memleaks  PSUTIL_SCRIPTS_DIR={project}/scripts
+          make -C {project} setup-dev-env install test test-memleaks PYTHON="env python" PSUTIL_SCRIPTS_DIR={project}/scripts
         CIBW_TEST_EXTRAS: test
 
     - name: Upload wheels
