@@ -156,7 +156,7 @@ psutil_threaded_get_filename(HANDLE hFile) {
     hThread = CreateThread(
         NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL);
     if (hThread == NULL) {
-        PyErr_SetFromOSErrnoWithSyscall("CreateThread");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("CreateThread");
         return 1;
     }
 
@@ -168,7 +168,7 @@ psutil_threaded_get_filename(HANDLE hFile) {
         psutil_debug(
             "get handle name thread timed out after %i ms", THREAD_TIMEOUT);
         if (TerminateThread(hThread, 0) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall("TerminateThread");
+            psutil_PyErr_SetFromOSErrnoWithSyscall("TerminateThread");
             CloseHandle(hThread);
             return 1;
         }
@@ -179,26 +179,28 @@ psutil_threaded_get_filename(HANDLE hFile) {
     if (dwWait == WAIT_FAILED) {
         psutil_debug("WaitForSingleObject -> WAIT_FAILED");
         if (TerminateThread(hThread, 0) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "WaitForSingleObject -> WAIT_FAILED -> TerminateThread");
+            psutil_PyErr_SetFromOSErrnoWithSyscall(
+                "WaitForSingleObject -> WAIT_FAILED -> TerminateThread"
+            );
             CloseHandle(hThread);
             return 1;
         }
-        PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
         CloseHandle(hThread);
         return 1;
     }
 
     if (GetExitCodeThread(hThread, &threadRetValue) == 0) {
         if (TerminateThread(hThread, 0) == 0) {
-            PyErr_SetFromOSErrnoWithSyscall(
-                "GetExitCodeThread (failed) -> TerminateThread");
+            psutil_PyErr_SetFromOSErrnoWithSyscall(
+                "GetExitCodeThread (failed) -> TerminateThread"
+            );
             CloseHandle(hThread);
             return 1;
         }
 
         CloseHandle(hThread);
-        PyErr_SetFromOSErrnoWithSyscall("GetExitCodeThread");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("GetExitCodeThread");
         return 1;
     }
     CloseHandle(hThread);

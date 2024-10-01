@@ -352,7 +352,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     st = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
     if (st == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV) get size");
+        psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctl(KERN_PROC_ARGV) get size"
+        );
         goto error;
     }
 
@@ -382,7 +384,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
                 }
             }
             else {
-                PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV)");
+                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV)");
                 goto error;
             }
         }

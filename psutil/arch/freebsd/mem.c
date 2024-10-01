@@ -39,36 +39,44 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     size_t buffers_size = sizeof(buffers);
 
     if (sysctlbyname("hw.physmem", &total, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('hw.physmem')");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('hw.physmem')"
+        );
     }
     if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.vm.v_active_count')");
     }
     if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, &size, NULL, 0))
     {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.vm.v_inactive_count')");
     }
     if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_wire_count')");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_wire_count')"
+        );
     }
     // https://github.com/giampaolo/psutil/issues/997
     if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0)) {
         cached = 0;
     }
     if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_free_count')");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_free_count')"
+        );
     }
     if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('vfs.bufspace')");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vfs.bufspace')"
+        );
     }
 
     size = sizeof(vm);
     if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0) {
-        return PyErr_SetFromOSErrnoWithSyscall("sysctl(CTL_VM | VM_METER)");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctl(CTL_VM | VM_METER)"
+        );
     }
 
     return Py_BuildValue("KKKKKKKK",
@@ -109,20 +117,24 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     kvm_close(kd);
 
     if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapin)'");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_swapin)'"
+        );
     }
     if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1){
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapout)'");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_swapout)'"
+        );
     }
     if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodein)'");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_vnodein)'"
+        );
     }
     if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodeout)'");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_vnodeout)'"
+        );
     }
 
     return Py_BuildValue(
@@ -135,4 +147,3 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         nodein + nodeout  // swap out
     );
 }
-

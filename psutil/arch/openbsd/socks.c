@@ -67,7 +67,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     ikf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*ikf), &cnt);
     if (! ikf) {
-        PyErr_SetFromOSErrnoWithSyscall("kvm_getfiles");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("kvm_getfiles");
         goto error;
     }
 
