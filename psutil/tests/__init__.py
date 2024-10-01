@@ -1355,12 +1355,17 @@ def print_sysinfo():
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
 
-    if WINDOWS:
-        os.system("tasklist")
-    elif which("ps"):
-        os.system("ps aux")
-    print("=" * 70, file=sys.stderr)  # NOQA
+    # if WINDOWS:
+    #     os.system("tasklist")
+    # elif which("ps"):
+    #     os.system("ps aux")
+    # print("=" * 70, file=sys.stderr)  # NOQA
+
     sys.stdout.flush()
+
+
+if CI_TESTING:
+    print_sysinfo()
 
 
 def is_win_secure_system_proc(pid):
