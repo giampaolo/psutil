@@ -19,9 +19,9 @@ ifeq ($(UNAME_S),Linux)
 else ifeq ($(UNAME_S),FreeBSD)
 	FREEBSD = true
 else ifeq ($(UNAME_S),NetBSD)
-	NetBSD = true
+	NETBSD = true
 else ifeq ($(UNAME_S),OpenBSD)
-	OpenBSD = true
+	OPENBSD = true
 endif
 
 ifneq (,$(shell command -v sudo 2> /dev/null))
