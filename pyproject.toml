@@ -23,12 +23,7 @@ select = [
     "D301",  # Use `r"""` if any backslashes in a docstring
     "D403",  # [*] First word of the first line should be capitalized
     "PERF102",  # [*] When using only the keys of a dict use the `keys()` method
-    "PLR5501",  # [*] Use `elif` instead of `else` then `if`, to reduce indentation
-    "PLR6104",  # Use `+=` to perform an augmented assignment directly
-    "PLW0602",  # Using global for `x` but no assignment is done
     "RET507",  # Unnecessary `elif` after `continue` statement
-    "RUF021",  # [*] Parenthesize `a and b` expressions when chaining `and` and `or` together, to make the precedence clear
-    "RUF023",  # [*] `Class.__slots__` is not sorted
     "S113",  # Probable use of requests call without timeout
     "S602",  # `subprocess` call with `shell=True` identified, security issue
 ]
@@ -45,7 +40,6 @@ ignore = [
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
     "DOC",  # various docstring warnings
-    "DOC501",  # Raised exception `X` missing from docstring
     "DTZ",  # flake8-datetimez
     "ERA001",  # Found commented-out code
     "FBT",  # flake8-boolean-trap (makes zero sense)
