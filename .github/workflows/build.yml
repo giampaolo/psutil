@@ -57,9 +57,9 @@ jobs:
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
-        CIBW_TEST_REQUIRES: pytest bdist_wheel
+        CIBW_TEST_REQUIRES: pytest
         CIBW_TEST_COMMAND:
-          make -C {project} install && PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python -m pytest --tb=short -v -s {project}/psutil/tests
+          make -C {project} install && env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python -m pytest --tb=short -v -s {project}/psutil/tests
         CIBW_TEST_EXTRAS: test
 
     - name: Upload wheels
