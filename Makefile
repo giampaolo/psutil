@@ -141,6 +141,7 @@ uninstall:  ## Uninstall this package via pip.
 install-pip:  ## Install pip (no-op if already installed).
 	@$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
+		print('pip already installed') if pkgutil.find_loader('pip') else None; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
 		PY3 = sys.version_info[0] == 3; \
 		pyexc = 'from urllib.request import urlopen' if PY3 else 'from urllib2 import urlopen'; \

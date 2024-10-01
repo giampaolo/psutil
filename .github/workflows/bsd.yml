@@ -59,6 +59,7 @@ jobs:
             set -e
             /usr/sbin/pkg_add -v pkgin
             pkgin update
+            pkgin -y install gmake
           run: |
             set -e
             gmake PYTHON=python3.11 install-sysdeps install-pydeps install print-sysinfo test test-memleaks
