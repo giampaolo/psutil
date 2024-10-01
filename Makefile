@@ -2,8 +2,12 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-# Configurable.
-PYTHON = python3
+ifdef CIBUILDWHEEL
+	PYTHON = python3
+else
+	PYTHON = env python
+endif
+
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 PYTEST_ARGS = -v -s --tb=short
 ARGS =
