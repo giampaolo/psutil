@@ -64,6 +64,11 @@ BUILD_OPTS = `$(PYTHON) -c \
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),FreeBSD)
+	FREEBSD = 1
+endif
+
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
 
@@ -134,6 +139,11 @@ install-pip:  ## Install pip (no-op if already installed).
 		code = os.system('%s %s --user --upgrade' % (sys.executable, f.name)); \
 		f.close(); \
 		sys.exit(code);"
+
+install-sysdeps:
+ifdef FREEBSD
+	sudo pkg install -y gmake python3 gcc
+endif
 
 setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
