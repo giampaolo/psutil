@@ -59,7 +59,7 @@ jobs:
             set -e
             /usr/sbin/pkg_add -v pkgin
             pkgin update
-            pkgin -y install gmake
+            pkgin -y install python311-* gcc12-*
           run: |
             set -e
-            PIP_BREAK_SYSTEM_PACKAGES=1 gmake PYTHON=python3.11 install-sysdeps install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 PYTHON=python3.11 gmake install-pydeps install print-sysinfo test test-memleaks

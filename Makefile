@@ -170,7 +170,7 @@ else ifdef FREEBSD
 else ifdef NETBSD
 	# $(SUDO) /usr/sbin/pkg_add -v pkgin
 	# $(SUDO) pkgin update
-	$(SUDO) pkgin -y install gmake python311-* py311-setuptools-* gcc12-*
+	$(SUDO) pkgin -y install gmake python311-* gcc12-*
 else ifdef OPENBSD
 	$(SUDO) pkg_add gmake gcc python3
 endif
