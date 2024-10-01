@@ -10,7 +10,8 @@ ARGS =
 
 # mandatory deps for running tests
 PY3_DEPS = \
-	pytest
+	pytest \
+	pytest-xdist
 # dev deps.
 ifndef GITHUB_ACTIONS
 	PY3_DEPS += \
@@ -22,7 +23,6 @@ ifndef GITHUB_ACTIONS
 		pyperf \
 		pypinfo \
 		pytest-cov \
-		pytest-xdist \
 		requests \
 		rstcheck \
 		ruff \
