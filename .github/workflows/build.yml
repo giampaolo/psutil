@@ -74,82 +74,82 @@ jobs:
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
 
-  # # Linux + macOS + Python 2
-  # py2:
-  #   name: py2, ${{ matrix.os }}
-  #   runs-on: ${{ matrix.os }}
-  #   timeout-minutes: 20
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [ubuntu-latest, macos-12]
-  #   env:
-  #     CIBW_TEST_COMMAND:
-  #       PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python -m pytest --tb=short -v -s {project}/psutil/tests
-  #     CIBW_TEST_EXTRAS: test
-  #     CIBW_BUILD: 'cp27-*'
+  # Linux + macOS + Python 2
+  py2:
+    name: py2, ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-12]
+    env:
+        CIBW_TEST_COMMAND:
+          make -C {project} setup-dev-env install test test-memleaks PYTHON="env python" PSUTIL_SCRIPTS_DIR={project}/scripts
+      CIBW_TEST_EXTRAS: test
+      CIBW_BUILD: 'cp27-*'
 
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - uses: actions/setup-python@v5
-  #     with:
-  #       python-version: 3.9
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.9
 
-  #   - name: Create wheels + run tests
-  #     uses: pypa/cibuildwheel@v1.12.0
+    - name: Create wheels + run tests
+      uses: pypa/cibuildwheel@v1.12.0
 
-  #   - name: Upload wheels
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: wheels-py2-${{ matrix.os }}
-  #       path: wheelhouse
+    - name: Upload wheels
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-py2-${{ matrix.os }}
+        path: wheelhouse
 
-  #   - name: Generate .tar.gz
-  #     if: matrix.os == 'ubuntu-latest'
-  #     run: |
-  #       make generate-manifest
-  #       python setup.py sdist
-  #       mv dist/psutil*.tar.gz wheelhouse/
+    - name: Generate .tar.gz
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        make generate-manifest
+        python setup.py sdist
+        mv dist/psutil*.tar.gz wheelhouse/
 
-  # # Run linters
-  # linters:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - uses: actions/setup-python@v5
-  #     with:
-  #       python-version: 3.x
-  #   - name: 'Run linters'
-  #     run: |
-  #       python3 -m pip install ruff black rstcheck toml-sort sphinx
-  #       make lint-all
+  # Run linters
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.x
+    - name: 'Run linters'
+      run: |
+        python3 -m pip install ruff black rstcheck toml-sort sphinx
+        make lint-all
 
-  # # upload weels as a single artefact
-  # upload-wheels:
-  #   needs: [py2, py3]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/upload-artifact/merge@v4
-  #       with:
-  #         name: wheels
-  #         pattern: wheels-*
-  #         separate-directories: false
-  #         delete-merged: true
+  # upload weels as a single artefact
+  upload-wheels:
+    needs: [py2, py3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/upload-artifact/merge@v4
+        with:
+          name: wheels
+          pattern: wheels-*
+          separate-directories: false
+          delete-merged: true
 
-  # # Check sanity of .tar.gz + wheel files
-  # check-dist:
-  #   needs: [upload-wheels]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.x
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         name: wheels
-  #         path: wheelhouse
-  #     - run: |
-  #         python scripts/internal/print_hashes.py wheelhouse/
-  #         pipx run twine check --strict wheelhouse/*
-  #         pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
+  # Check sanity of .tar.gz + wheel files
+  check-dist:
+    needs: [upload-wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: wheelhouse
+      - run: |
+          python scripts/internal/print_hashes.py wheelhouse/
+          pipx run twine check --strict wheelhouse/*
+          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl

@@ -12,7 +12,8 @@ PY3_DEPS = \
 	setuptools \
 	pytest \
 	pytest-xdist
-# dev deps.
+
+# deps for local development
 ifndef CIBUILDWHEEL
 	PY3_DEPS += \
 		black \
@@ -23,7 +24,6 @@ ifndef CIBUILDWHEEL
 		pyperf \
 		pypinfo \
 		pytest-cov \
-		pytest-xdist \
 		requests \
 		rstcheck \
 		ruff \
@@ -34,12 +34,16 @@ ifndef CIBUILDWHEEL
 		virtualenv \
 		wheel
 endif
+
 # python 2 deps
 PY2_DEPS = \
 	futures \
 	ipaddress \
-	mock \
-	pytest
+	mock==1.0.1 \
+	pytest==4.6.11 \
+	pytest-xdist \
+	setuptools
+
 PY_DEPS = `$(PYTHON) -c \
 	"import sys; \
 	py3 = sys.version_info[0] == 3; \
@@ -48,12 +52,14 @@ PY_DEPS = `$(PYTHON) -c \
 	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
 
 NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
+
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
 	"import sys, os; \
 	py36 = sys.version_info[:2] >= (3, 6); \
 	cpus = os.cpu_count() or 1 if py36 else 1; \
 	print('--parallel %s' % cpus if cpus > 1 else '')"`
+
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
