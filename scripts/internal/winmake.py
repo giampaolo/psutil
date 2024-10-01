@@ -43,7 +43,7 @@ else:
 
 
 # mandatory deps
-if not PY3:
+if PY3:
     DEPS = [
         "setuptools",
         "pytest",
@@ -51,7 +51,6 @@ if not PY3:
     ]
 else:
     DEPS = [
-        "enum34",
         "futures",
         "ipaddress",
         "mock==1.0.1",
@@ -65,7 +64,6 @@ if not APPVEYOR:
     DEPS += [
         "coverage",
         "pdbpp",
-        "pip",
         "pyperf",
         "pyreadline",
         "requests",
