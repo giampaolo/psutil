@@ -29,7 +29,6 @@ import tempfile
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
-GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] >= 3
 PYTEST_ARGS = "-v -s --tb=short"
 if PY3:
@@ -37,6 +36,11 @@ if PY3:
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
+if PY3:
+    GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
+else:
+    GET_PIP_URL = "https://bootstrap.pypa.io/pip/2.7/get-pip.py"
+
 
 # mandatory deps
 if not PY3:
