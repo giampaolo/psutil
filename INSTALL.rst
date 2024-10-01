@@ -15,7 +15,7 @@ build & install psutil from sources, keep reading.
 Linux (build)
 -------------
 
-Ubuntu / Debian::
+Debian / Ubuntu::
 
     sudo apt-get install gcc python3-dev
     pip install --no-binary :all: psutil
@@ -96,7 +96,7 @@ Install pip
 -----------
 
 Pip is shipped by default with Python 2.7.9+ and 3.4+.
-If you don't have pip you can install with wget::
+If you don't have pip you can install it with wget::
 
     wget https://bootstrap.pypa.io/get-pip.py -O - | python3
 
