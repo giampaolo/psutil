@@ -3,7 +3,12 @@
 # You can set the variables below from the command line.
 
 # Configurable.
-PYTHON = python3
+ifdef CIBUILDWHEEL
+	PYTHON = env python
+else
+	PYTHON = python3
+endif
+
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 PYTEST_ARGS = -v -s --tb=short
 ARGS =
@@ -11,7 +16,8 @@ ARGS =
 # mandatory deps for running tests
 PY3_DEPS = \
 	pytest \
-	pytest-xdist
+	pytest-xdist \
+	setuptools
 # dev deps.
 ifndef GITHUB_ACTIONS
 	PY3_DEPS += \
@@ -26,7 +32,6 @@ ifndef GITHUB_ACTIONS
 		requests \
 		rstcheck \
 		ruff \
-		setuptools \
 		sphinx_rtd_theme \
 		toml-sort \
 		twine \
