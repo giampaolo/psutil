@@ -51,6 +51,7 @@ if PY3:
     ]
 else:
     DEPS = [
+        "enum34",
         "futures",
         "ipaddress",
         "mock==1.0.1",
