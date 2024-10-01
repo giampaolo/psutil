@@ -520,7 +520,7 @@ def print_sysinfo():
     """Print system info."""
     build()
     sh(
-        "%s -c 'from psutil.tests import print_sysinfo; print_sysinfo()'"
+        '%s -c "from psutil.tests import print_sysinfo; print_sysinfo()"'
         % PYTHON
     )
 
