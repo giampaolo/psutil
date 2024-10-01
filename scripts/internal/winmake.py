@@ -48,6 +48,7 @@ if PY3:
         "setuptools",
         "pytest",
         "pytest-xdist",
+        "wheel",
     ]
 else:
     DEPS = [
@@ -58,6 +59,7 @@ else:
         "pytest-xdist",
         "pytest==4.6.11",
         "setuptools",
+        "wheel",
     ]
 
 # deps for local development
