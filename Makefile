@@ -7,16 +7,19 @@ PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 PYTEST_ARGS = -v -s --tb=short
 ARGS =
 
+# Recognize platform
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-	LINUX = 1
+	LINUX = true
 	ifneq (,$(shell command -v apt 2> /dev/null))
-		HAS_APT = 1
+		HAS_APT = true
 	else ifneq (,$(shell command -v yum 2> /dev/null))
-		HAS_YUM = 1
+		HAS_YUM = true
 	endif
 else ifeq ($(UNAME_S),FreeBSD)
-	FREEBSD = 1
+	FREEBSD = true
+else ifeq ($(UNAME_S),NetBSD)
+	NetBSD = true
 endif
 
 ifneq (,$(shell command -v sudo 2> /dev/null))
@@ -161,6 +164,10 @@ else ifdef HAS_YUM
 	$(SUDO) yum install -u python3-devel gcc
 else ifdef FREEBSD
 	$(SUDO) pkg install -y gmake python3 gcc
+else ifdef NETBSD
+	# $(SUDO) pkg_add -v pkgin
+	# $(SUDO) pkgin update
+	$(SUDO) pkgin -y install python311-* py311-setuptools-* gcc12-*
 endif
 
 install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).

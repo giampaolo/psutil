@@ -26,9 +26,10 @@ jobs:
         with:
           usesh: true
           prepare: |
+            set -e
             pkg install -y gmake
           run: |
-            set -e -x
+            set -e
             gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
 
 #   openbsd:
@@ -49,23 +50,18 @@ jobs:
 #             make install
 #             make test
 #             make test-memleaks
-#   netbsd:
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Run tests
-#         uses: vmactions/netbsd-vm@v1
-#         with:
-#           usesh: true
-#           prepare: |
-#             set -e
-#             /usr/sbin/pkg_add -v pkgin
-#             pkgin update
-#             pkgin -y install python311-* py311-setuptools-* gcc12-*
-#           run: |
-#             set -e
-#             make install-pip PYTHON=python3.11
-#             python3.11 -m pip install --user setuptools
-#             make install PYTHON=python3.11
-#             make test PYTHON=python3.11
-#             make test-memleaks PYTHON=python3.11
+  netbsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        uses: vmactions/netbsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            set -e
+            pkg_add -v pkgin
+            pkgin update
+          run: |
+            set -e
+            gmake PYTHON=python3.11 install-sysdeps install-pydeps install print-sysinfo test test-memleaks
