@@ -148,7 +148,7 @@ psutil_pid_exists(pid_t pid) {
 void
 psutil_raise_for_pid(long pid, char *syscall) {
     if (errno != 0)
-        PyErr_SetFromOSErrnoWithSyscall(syscall);
+        psutil_PyErr_SetFromOSErrnoWithSyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
         NoSuchProcess(syscall);
     else
@@ -470,14 +470,14 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
         goto error;
     }
 
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
         goto error;
     }
 

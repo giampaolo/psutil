@@ -380,7 +380,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 #endif
             default:
                 sprintf(errbuf, "kvm_getenvv(pid=%ld)", pid);
-                PyErr_SetFromOSErrnoWithSyscall(errbuf);
+                psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
                 break;
         }
         goto error;

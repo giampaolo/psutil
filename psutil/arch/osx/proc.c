@@ -77,7 +77,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     while (lim-- > 0) {
         size = 0;
         if (sysctl((int *)mib, 3, NULL, &size, NULL, 0) == -1) {
-            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
+            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
             return 1;
         }
         size2 = size + (size >> 3);  // add some
@@ -100,7 +100,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
             err = errno;
             free(ptr);
             if (err != ENOMEM) {
-                PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
+                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
                 return 1;
             }
         }
@@ -132,7 +132,7 @@ psutil_sysctl_argmax() {
 
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
         return argmax;
-    PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
+    psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
     return 0;
 }
 
@@ -164,7 +164,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
             return 1;
         }
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
         return 1;
     }
     return 0;
@@ -186,7 +186,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     // now read the data from sysctl
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
-        PyErr_SetFromOSErrnoWithSyscall("sysctl");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl");
         return -1;
     }
 
@@ -605,8 +605,9 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     len = sizeof(cpu_type);
     if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
-        return PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('sysctl.proc_cputype')");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('sysctl.proc_cputype')"
+        );
     }
 
     // Roughly based on libtop_update_vm_regions in
@@ -977,7 +978,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 
                 // check for inet_ntop failures
                 if (errno != 0) {
-                    PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                    psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
                     goto error;
                 }
 

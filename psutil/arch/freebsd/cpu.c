@@ -42,7 +42,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
         Py_DECREF(py_retlist);
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('kern.smp.maxcpus')");
     }
     long cpu_time[maxcpus][CPUSTATES];
@@ -52,14 +52,16 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_NCPU)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_NCPU)");
         goto error;
     }
 
     // per-cpu info
     size = sizeof(cpu_time);
     if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('kern.smp.maxcpus')");
+        psutil_PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('kern.smp.maxcpus')"
+        );
         goto error;
     }
 
@@ -126,23 +128,23 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     size_t size = sizeof(v_soft);
 
     if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.sys.v_soft')");
     }
     if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.sys.v_intr')");
     }
     if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.sys.v_syscall')");
     }
     if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.sys.v_trap')");
     }
     if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0)) {
-        return PyErr_SetFromOSErrnoWithSyscall(
+        return psutil_PyErr_SetFromOSErrnoWithSyscall(
             "sysctlbyname('vm.stats.sys.v_swtch')");
     }
 

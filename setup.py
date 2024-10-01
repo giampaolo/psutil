@@ -225,6 +225,9 @@ if WINDOWS:
         ('PSAPI_VERSION', 1),
     ])
 
+    if Py_GIL_DISABLED:
+        macros.append(('Py_GIL_DISABLED', 1))
+
     ext = Extension(
         'psutil._psutil_windows',
         sources=(
