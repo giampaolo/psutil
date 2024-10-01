@@ -36,7 +36,6 @@ init:
 
 install:
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
-  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user setuptools pip"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py setup-dev-env"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py install"
@@ -44,6 +43,7 @@ install:
 build: off
 
 test_script:
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py print-sysinfo"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test-memleaks"
 

@@ -23,6 +23,7 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
+from psutil.tests import AARCH64
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
 from psutil.tests import QEMU_USER
@@ -288,7 +289,10 @@ class TestProcess(PsutilTestCase):
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
-        self.assertEqual(ps_cmdline, psutil_cmdline)
+        if AARCH64 and len(ps_cmdline) < len(psutil_cmdline):
+            self.assertTrue(psutil_cmdline.startswith(ps_cmdline))
+        else:
+            self.assertEqual(ps_cmdline, psutil_cmdline)
 
     # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
     # incorrect value (20); the real deal is getpriority(2) which
@@ -315,7 +319,7 @@ class TestSystemAPIs(PsutilTestCase):
         pids_psutil = psutil.pids()
 
         # on MACOS and OPENBSD ps doesn't show pid 0
-        if MACOS or OPENBSD and 0 not in pids_ps:
+        if MACOS or (OPENBSD and 0 not in pids_ps):
             pids_ps.insert(0, 0)
 
         # There will often be one more process in pids_ps for ps itself
@@ -490,9 +494,3 @@ class TestMisc(PsutilTestCase):
         self.assertGreater(pagesize, 0)
         self.assertEqual(pagesize, resource.getpagesize())
         self.assertEqual(pagesize, mmap.PAGESIZE)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

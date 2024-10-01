@@ -16,17 +16,10 @@ rem ...therefore it might not work on your Windows installation.
 rem
 rem To compile for a specific Python version run:
 rem     set PYTHON=C:\Python34\python.exe & make.bat build
-rem
-rem To use a different test script:
-rem      set TSCRIPT=foo.py & make.bat test
 rem ==========================================================================
 
 if "%PYTHON%" == "" (
     set PYTHON=python
-)
-
-if "%TSCRIPT%" == "" (
-    set TSCRIPT=psutil\tests\runner.py
 )
 
 rem Needed to locate the .pypirc file and upload exes on PyPI.

@@ -1,15 +1,22 @@
-# # Execute tests on *BSD platforms. Does not produce wheels.
-# # Useful URLs:
-# # https://github.com/vmactions/freebsd-vm
-# # https://github.com/vmactions/openbsd-vm
-# # https://github.com/vmactions/netbsd-vm
+# Execute tests on *BSD platforms. Does not produce wheels.
+# Useful URLs:
+# https://github.com/vmactions/freebsd-vm
+# https://github.com/vmactions/openbsd-vm
+# https://github.com/vmactions/netbsd-vm
 
-# on: [push, pull_request]
-# name: bsd-tests
-# concurrency:
-#   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
-#   cancel-in-progress: true
-# jobs:
+on: [push, pull_request]
+name: bsd-tests
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+  cancel-in-progress: true
+jobs:
+  # here just so that I can comment the next jobs to temporarily disable them
+  empty-job:
+    if: false
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
 #   freebsd:
 #     runs-on: ubuntu-22.04
 #     steps:

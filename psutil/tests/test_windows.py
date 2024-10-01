@@ -959,9 +959,3 @@ class TestServices(PsutilTestCase):
         self.assertIn(service.display_name(), str(service))
         self.assertIn(service.name(), repr(service))
         self.assertIn(service.display_name(), repr(service))
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

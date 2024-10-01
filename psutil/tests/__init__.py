@@ -14,7 +14,6 @@ import ctypes
 import errno
 import functools
 import gc
-import inspect
 import os
 import platform
 import random
@@ -87,7 +86,7 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
-    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "QEMU_USER",
+    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "QEMU_USER", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -128,6 +127,7 @@ APPVEYOR = 'APPVEYOR' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = APPVEYOR or GITHUB_ACTIONS
 COVERAGE = 'COVERAGE_RUN' in os.environ
+PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 if LINUX and GITHUB_ACTIONS:
     with open('/proc/1/cmdline') as f:
         QEMU_USER = "/bin/qemu-" in f.read()
@@ -521,7 +521,7 @@ def sh(cmd, **kwds):
     else:
         stdout, stderr = p.communicate()
     if p.returncode != 0:
-        raise RuntimeError(stderr)
+        raise RuntimeError(stdout + stderr)
     if stderr:
         warn(stderr)
     if stdout.endswith('\n'):
@@ -1355,11 +1355,12 @@ def print_sysinfo():
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
 
-    if WINDOWS:
-        os.system("tasklist")
-    elif which("ps"):
-        os.system("ps aux")
-    print("=" * 70, file=sys.stderr)  # NOQA
+    # if WINDOWS:
+    #     os.system("tasklist")
+    # elif which("ps"):
+    #     os.system("ps aux")
+    # print("=" * 70, file=sys.stderr)  # NOQA
+
     sys.stdout.flush()
 
 
@@ -1596,16 +1597,6 @@ class system_namespace:
             yield (fun, fun_name)
 
     test_class_coverage = process_namespace.test_class_coverage
-
-
-def serialrun(klass):
-    """A decorator to mark a TestCase class. When running parallel tests,
-    class' unit tests will be run serially (1 process).
-    """
-    # assert issubclass(klass, unittest.TestCase), klass
-    assert inspect.isclass(klass), klass
-    klass._serialrun = True
-    return klass
 
 
 def retry_on_failure(retries=NO_RETRIES):

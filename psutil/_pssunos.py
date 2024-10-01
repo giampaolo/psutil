@@ -387,7 +387,7 @@ def wrap_exceptions(fun):
 class Process:
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
+    __slots__ = ["_cache", "_name", "_ppid", "_procfs_path", "pid"]
 
     def __init__(self, pid):
         self.pid = pid

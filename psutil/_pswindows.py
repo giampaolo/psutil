@@ -762,7 +762,7 @@ def retry_error_partial_copy(fun):
 class Process:
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_cache"]
+    __slots__ = ["_cache", "_name", "_ppid", "pid"]
 
     def __init__(self, pid):
         self.pid = pid

@@ -16,6 +16,8 @@ from socket import AF_INET6
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
+import pytest
+
 import psutil
 from psutil import FREEBSD
 from psutil import LINUX
@@ -38,7 +40,6 @@ from psutil.tests import create_sockets
 from psutil.tests import filter_proc_net_connections
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
-from psutil.tests import serialrun
 from psutil.tests import skip_on_access_denied
 from psutil.tests import tcp_socketpair
 from psutil.tests import unix_socketpair
@@ -55,7 +56,7 @@ def this_proc_net_connections(kind):
     return cons
 
 
-@serialrun
+@pytest.mark.xdist_group(name="serial")
 class ConnectionTestCase(PsutilTestCase):
     def setUp(self):
         self.assertEqual(this_proc_net_connections(kind='all'), [])
@@ -102,7 +103,7 @@ class TestBasicOperations(ConnectionTestCase):
         self.assertRaises(ValueError, psutil.net_connections, kind='???')
 
 
-@serialrun
+@pytest.mark.xdist_group(name="serial")
 class TestUnconnectedSockets(ConnectionTestCase):
     """Tests sockets which are open but not connected to anything."""
 
@@ -198,7 +199,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
             self.assertEqual(conn.status, psutil.CONN_NONE)
 
 
-@serialrun
+@pytest.mark.xdist_group(name="serial")
 class TestConnectedSocket(ConnectionTestCase):
     """Test socket pairs which are actually connected to
     each other.
@@ -568,9 +569,3 @@ class TestMisc(PsutilTestCase):
             psutil.CONN_BOUND  # noqa
         if WINDOWS:
             psutil.CONN_DELETE_TCB  # noqa
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

@@ -29,27 +29,49 @@ import tempfile
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
-RUNNER_PY = 'psutil\\tests\\runner.py'
-GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] >= 3
+PYTEST_ARGS = "-v -s --tb=short"
+if PY3:
+    PYTEST_ARGS += "-o "
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
-DEPS = [
-    "coverage",
-    "pdbpp",
-    "pip",
-    "pyperf",
-    "pyreadline",
-    "requests",
-    "setuptools",
-    "wheel",
-]
+if PY3:
+    GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
+else:
+    GET_PIP_URL = "https://bootstrap.pypa.io/pip/2.7/get-pip.py"
 
-if sys.version_info[0] < 3:
-    DEPS.append('mock')
-    DEPS.append('ipaddress')
-    DEPS.append('enum34')
+
+# mandatory deps
+if PY3:
+    DEPS = [
+        "setuptools",
+        "pytest",
+        "pytest-xdist",
+        "wheel",
+    ]
+else:
+    DEPS = [
+        "enum34",
+        "futures",
+        "ipaddress",
+        "mock==1.0.1",
+        "pytest-xdist",
+        "pytest==4.6.11",
+        "setuptools",
+        "wheel",
+    ]
+
+# deps for local development
+if not APPVEYOR:
+    DEPS += [
+        "coverage",
+        "pdbpp",
+        "pyperf",
+        "pyreadline",
+        "requests",
+        "wheel",
+    ]
 
 if not PYPY:
     DEPS.append("pywin32")
@@ -375,17 +397,17 @@ def setup_dev_env():
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
-def test(name=RUNNER_PY):
+def test(args=""):
     """Run tests."""
     build()
-    sh("%s %s" % (PYTHON, name))
+    sh("%s -m pytest %s %s" % (PYTHON, PYTEST_ARGS, args))
 
 
 def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
+    sh("%s -m coverage run -m pytest %s" % (PYTHON, PYTEST_ARGS))
     sh("%s -m coverage report" % PYTHON)
     sh("%s -m coverage html" % PYTHON)
     sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
@@ -448,13 +470,13 @@ def test_testutils():
 def test_by_name(name):
     """Run test by name."""
     build()
-    sh("%s -m unittest -v %s" % (PYTHON, name))
+    test(name)
 
 
 def test_last_failed():
     """Re-run tests which failed on last run."""
     build()
-    sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
+    test("--last-failed")
 
 
 def test_memleaks():
@@ -497,6 +519,14 @@ def print_api_speed():
     """Benchmark all API calls."""
     build()
     sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
+
+
+def print_sysinfo():
+    """Print system info."""
+    build()
+    from psutil.tests import print_sysinfo
+
+    print_sysinfo()
 
 
 def download_appveyor_wheels():
@@ -557,6 +587,7 @@ def parse_args():
     sp.add_parser('install-pip', help="install pip")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
+    sp.add_parser('print-sysinfo', help="print system info")
     sp.add_parser('setup-dev-env', help="install deps")
     test = sp.add_parser('test', help="[ARG] run tests")
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")

@@ -129,9 +129,3 @@ class AIXSpecificTestCase(PsutilTestCase):
         ifconfig_names = set(out.split())
         psutil_names = set(psutil.net_if_addrs().keys())
         self.assertSetEqual(ifconfig_names, psutil_names)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

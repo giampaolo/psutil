@@ -980,9 +980,3 @@ class TestSensorsAPIs(PsutilTestCase):
                 self.assertIsInstance(entry.label, str)
                 self.assertIsInstance(entry.current, (int, long))
                 self.assertGreaterEqual(entry.current, 0)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

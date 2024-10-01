@@ -312,8 +312,13 @@ class TestProcess(PsutilTestCase):
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
-            tty = os.path.realpath(sh('tty'))
-            self.assertEqual(terminal, tty)
+            try:
+                tty = os.path.realpath(sh('tty'))
+            except RuntimeError:
+                # Note: happens if pytest is run without the `-s` opt.
+                raise unittest.SkipTest("can't rely on `tty` CLI")
+            else:
+                self.assertEqual(terminal, tty)
 
     @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
     @skip_on_not_implemented(only_if=LINUX)
@@ -1498,13 +1503,16 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
         def clean_dict(d):
-            # Most of these are problematic on Travis.
-            d.pop("PLAT", None)
-            d.pop("HOME", None)
+            exclude = ["PLAT", "HOME", "PYTEST_CURRENT_TEST", "PYTEST_VERSION"]
             if MACOS:
-                d.pop("__CF_USER_TEXT_ENCODING", None)
-                d.pop("VERSIONER_PYTHON_PREFER_32_BIT", None)
-                d.pop("VERSIONER_PYTHON_VERSION", None)
+                exclude.extend([
+                    "__CF_USER_TEXT_ENCODING",
+                    "VERSIONER_PYTHON_PREFER_32_BIT",
+                    "VERSIONER_PYTHON_VERSION",
+                    "VERSIONER_PYTHON_VERSION",
+                ])
+            for name in exclude:
+                d.pop(name, None)
             return dict([
                 (
                     k.replace("\r", "").replace("\n", ""),
@@ -1706,9 +1714,3 @@ class TestPopen(PsutilTestCase):
                     proc.send_signal,
                     signal.CTRL_BREAK_EVENT,
                 )
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

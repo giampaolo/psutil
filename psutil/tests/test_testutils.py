@@ -16,6 +16,8 @@ import stat
 import subprocess
 import unittest
 
+import pytest
+
 import psutil
 import psutil.tests
 from psutil import FREEBSD
@@ -46,7 +48,6 @@ from psutil.tests import retry
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
-from psutil.tests import serialrun
 from psutil.tests import system_namespace
 from psutil.tests import tcp_socketpair
 from psutil.tests import terminate
@@ -361,7 +362,7 @@ class TestNetUtils(PsutilTestCase):
             self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
 
 
-@serialrun
+@pytest.mark.xdist_group(name="serial")
 class TestMemLeakClass(TestMemoryLeak):
     @retry_on_failure()
     def test_times(self):
@@ -389,9 +390,9 @@ class TestMemLeakClass(TestMemoryLeak):
             ls.append("x" * 124 * 1024)
 
         try:
-            # will consume around 30M in total
+            # will consume around 60M in total
             self.assertRaisesRegex(
-                AssertionError, "extra-mem", self.execute, fun, times=50
+                AssertionError, "extra-mem", self.execute, fun, times=100
             )
         finally:
             del ls
@@ -452,9 +453,3 @@ class TestOtherUtils(PsutilTestCase):
     def test_is_namedtuple(self):
         assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))
         assert not is_namedtuple(tuple())
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

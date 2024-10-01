@@ -2,49 +2,64 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-# Configurable.
 PYTHON = python3
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
+PYTEST_ARGS = -v -s --tb=short
 ARGS =
-TSCRIPT = psutil/tests/runner.py
 
-# Internal.
+# mandatory deps for running tests
 PY3_DEPS = \
-	black \
-	check-manifest \
-	concurrencytest \
-	coverage \
-	packaging \
-	pylint \
-	pyperf \
-	pypinfo \
-	requests \
-	rstcheck \
-	ruff \
 	setuptools \
-	sphinx_rtd_theme \
-	teyit \
-	toml-sort \
-	twine \
-	virtualenv \
-	wheel
+	pytest \
+	pytest-xdist
+
+# deps for local development
+ifndef CIBUILDWHEEL
+	PY3_DEPS += \
+		black \
+		check-manifest \
+		coverage \
+		packaging \
+		pylint \
+		pyperf \
+		pypinfo \
+		pytest-cov \
+		requests \
+		rstcheck \
+		ruff \
+		setuptools \
+		sphinx_rtd_theme \
+		toml-sort \
+		twine \
+		virtualenv \
+		wheel
+endif
+
+# python 2 deps
 PY2_DEPS = \
 	futures \
 	ipaddress \
-	mock
+	mock==1.0.1 \
+	pytest==4.6.11 \
+	pytest-xdist \
+	setuptools
+
 PY_DEPS = `$(PYTHON) -c \
 	"import sys; \
 	py3 = sys.version_info[0] == 3; \
 	py38 = sys.version_info[:2] >= (3, 8); \
 	py3_extra = ' abi3audit' if py38 else ''; \
 	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
+
 NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
+
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
 BUILD_OPTS = `$(PYTHON) -c \
 	"import sys, os; \
 	py36 = sys.version_info[:2] >= (3, 6); \
 	cpus = os.cpu_count() or 1 if py36 else 1; \
 	print('--parallel %s' % cpus if cpus > 1 else '')"`
+
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
@@ -123,8 +138,8 @@ install-pip:  ## Install pip (no-op if already installed).
 setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade $(PY_DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade $(PY_DEPS)
 
 # ===================================================================
 # Tests
@@ -132,65 +147,65 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) --parallel
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process.py
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process_all.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process_all.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_system.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_misc.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_misc.py
 
 test-testutils:  ## Run test utils tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_testutils.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_testutils.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_unicode.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_contracts.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_contracts.py
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_connections.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_posix.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memleaks.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_memleaks.py
 
 test-last-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) --last-failed
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --last-failed $(ARGS)
 
 test-coverage:  ## Run test coverage.
 	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m unittest -v
+	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py $(ARGS)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
@@ -235,16 +250,12 @@ fix-black:
 fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix $(ARGS)
 
-fix-unittests:  ## Fix unittest idioms.
-	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
-
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
 	${MAKE} fix-black
-	${MAKE} fix-unittests
 	${MAKE} fix-toml
 
 # ===================================================================
@@ -350,6 +361,9 @@ print-downloads:  ## Print PYPI download statistics
 
 print-hashes:  ## Prints hashes of files in dist/ directory
 	$(PYTHON) scripts/internal/print_hashes.py dist/
+
+print-sysinfo:  ## Prints system info
+	$(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 
 # ===================================================================
 # Misc

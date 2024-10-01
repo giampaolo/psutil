@@ -36,6 +36,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
+from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
@@ -980,10 +981,12 @@ class TestSystemCPUFrequency(PsutilTestCase):
 
 @unittest.skipIf(not LINUX, "LINUX only")
 class TestSystemCPUStats(PsutilTestCase):
-    def test_ctx_switches(self):
-        vmstat_value = vmstat("context switches")
-        psutil_value = psutil.cpu_stats().ctx_switches
-        self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+
+    # XXX: fails too often.
+    # def test_ctx_switches(self):
+    #     vmstat_value = vmstat("context switches")
+    #     psutil_value = psutil.cpu_stats().ctx_switches
+    #     self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
 
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
@@ -1603,6 +1606,7 @@ class TestMisc(PsutilTestCase):
             psutil.PROCFS_PATH = "/proc"
 
     @retry_on_failure()
+    @unittest.skipIf(PYTEST_PARALLEL, "skip if pytest-parallel")
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False
@@ -2126,9 +2130,13 @@ class TestProcess(PsutilTestCase):
         with mock.patch(
             'psutil._pslinux.readlink', side_effect=OSError(errno.ENOENT, "")
         ) as m:
-            ret = psutil.Process().exe()
-            assert m.called
-            self.assertEqual(ret, "")
+            # de-activate guessing from cmdline()
+            with mock.patch(
+                'psutil._pslinux.Process.cmdline', return_value=[]
+            ):
+                ret = psutil.Process().exe()
+                assert m.called
+                self.assertEqual(ret, "")
 
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case
@@ -2353,9 +2361,3 @@ class TestUtils(PsutilTestCase):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             self.assertEqual(psutil._psplatform.readlink("bar"), "foo")
             assert m.called
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

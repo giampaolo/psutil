@@ -19,7 +19,6 @@ from __future__ import print_function
 import functools
 import os
 import platform
-import sys
 import unittest
 
 import psutil
@@ -492,14 +491,3 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
             self.execute(lambda: cext.winservice_query_descr(name))
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import cprint
-    from psutil.tests.runner import run_from_name
-
-    if QEMU_USER:
-        cprint("skipping %s tests under QEMU_USER" % __file__, "brown")
-        sys.exit(0)
-
-    run_from_name(__file__)

@@ -624,9 +624,3 @@ class NetBSDTestCase(PsutilTestCase):
         self.assertAlmostEqual(
             psutil.cpu_stats().ctx_switches, ctx_switches, delta=1000
         )
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

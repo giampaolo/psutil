@@ -32,6 +32,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import CI_TESTING
+from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import PsutilTestCase
@@ -40,12 +41,11 @@ from psutil.tests import create_sockets
 from psutil.tests import is_namedtuple
 from psutil.tests import is_win_secure_system_proc
 from psutil.tests import process_namespace
-from psutil.tests import serialrun
 
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
-USE_PROC_POOL = LINUX and not CI_TESTING
+USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
 
 
 def proc_info(pid):
@@ -97,7 +97,6 @@ def proc_info(pid):
         return info
 
 
-@serialrun
 class TestFetchAllProcesses(PsutilTestCase):
     """Test which iterates over all running processes and performs
     some sanity checks against Process API's returned values.
@@ -321,7 +320,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             value = getattr(ret, name)
             self.assertIsInstance(value, (int, long))
             self.assertGreaterEqual(value, 0, msg=(name, value))
-            if LINUX or OSX and name in ('vms', 'data'):
+            if LINUX or (OSX and name in ('vms', 'data')):
                 # On Linux there are processes (e.g. 'goa-daemon') whose
                 # VMS is incredibly high for some reason.
                 continue
@@ -541,9 +540,3 @@ class TestPidsRange(PsutilTestCase):
                 continue
             with self.subTest(pid=pid):
                 check(pid)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

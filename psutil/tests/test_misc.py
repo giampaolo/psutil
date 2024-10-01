@@ -1069,9 +1069,3 @@ class TestScripts(PsutilTestCase):
     @unittest.skipIf(not HAS_BATTERY, "no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

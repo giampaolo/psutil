@@ -204,9 +204,3 @@ class TestSystemAPIs(PsutilTestCase):
         psutil_result = psutil.sensors_battery()
         self.assertEqual(psutil_result.power_plugged, power_plugged)
         self.assertEqual(psutil_result.percent, int(percent))
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)
