@@ -201,12 +201,10 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 ruff:  ## Run ruff linter.
-	@$(PYTHON) -m ruff --version
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --output-format=concise
 
 black:  ## Python files linting (via black)
-	@$(PYTHON) -m black --version
-	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe --diff
+	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 _pylint:  ## Python pylint (not mandatory, just run it from time to time)
 	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
