@@ -47,7 +47,7 @@ if WINDOWS and not PYPY:
         import win32api  # requires "pip install pywin32"
         import win32con
         import win32process
-        import wmi  # requires "pip install wmi" / "make setup-dev-env"
+        import wmi  # requires "pip install wmi" / "make install-pydeps"
 
 if WINDOWS:
     from psutil._pswindows import convert_oserror

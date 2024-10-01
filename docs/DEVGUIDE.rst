@@ -12,7 +12,7 @@ Once you have a compiler installed run:
 .. code-block:: bash
 
     git clone git@github.com:giampaolo/psutil.git
-    make setup-dev-env  # install useful dev libs (ruff, coverage, ...)
+    make install-pydeps  # install useful dev libs (ruff, coverage, ...)
     make build
     make install
     make test
@@ -118,7 +118,7 @@ Documentation
 -------------
 
 - doc source code is written in a single file: ``docs/index.rst``.
-- doc can be built with ``make setup-dev-env; cd docs; make html``.
+- doc can be built with ``make install-pydeps; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS

@@ -28,6 +28,7 @@ ifndef CIBUILDWHEEL
 		rstcheck \
 		ruff \
 		setuptools \
+		sphinx \
 		sphinx_rtd_theme \
 		toml-sort \
 		twine \
@@ -145,7 +146,7 @@ ifdef FREEBSD
 	sudo pkg install -y gmake python3 gcc
 endif
 
-setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
+install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip

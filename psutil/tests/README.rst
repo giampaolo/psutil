@@ -9,6 +9,6 @@ Instructions for running tests
   As a "developer", if you have a copy of the source code and you wish to hack
   on psutil::
 
-    make setup-dev-env  # install missing third-party deps
+    make install-pydeps  # install missing third-party deps
     make test           # serial run
     make test-parallel  # parallel run

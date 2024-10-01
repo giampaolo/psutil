@@ -229,6 +229,6 @@ dummy:
 	@echo
 	@echo "Build finished. Dummy builder generates no files."
 
-.PHONY: setup-dev-env
-setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
+.PHONY: install-pydeps
+install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	$(PYTHON) -m pip install --user --upgrade --trusted-host files.pythonhosted.org $(DEPS)
