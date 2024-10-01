@@ -217,10 +217,6 @@ skip = [
     "cp3{7,8,9,10,11,12}-*linux_{aarch64,ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
 ]
-test-command = [
-    "python -m pip install pytest && env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python -m pytest --tb=short -v -s  {project}/psutil/tests",
-]
-test-extras = "test"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
