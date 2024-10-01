@@ -1503,13 +1503,16 @@ class TestProcess(PsutilTestCase):
     @unittest.skipIf(not HAS_ENVIRON, "not supported")
     def test_environ(self):
         def clean_dict(d):
-            # Most of these are problematic on Travis.
-            d.pop("PLAT", None)
-            d.pop("HOME", None)
+            exclude = ["PLAT", "HOME", "PYTEST_CURRENT_TEST"]
             if MACOS:
-                d.pop("__CF_USER_TEXT_ENCODING", None)
-                d.pop("VERSIONER_PYTHON_PREFER_32_BIT", None)
-                d.pop("VERSIONER_PYTHON_VERSION", None)
+                exclude.extend([
+                    "__CF_USER_TEXT_ENCODING",
+                    "VERSIONER_PYTHON_PREFER_32_BIT",
+                    "VERSIONER_PYTHON_VERSION",
+                    "VERSIONER_PYTHON_VERSION",
+                ])
+            for name in exclude:
+                d.pop(name, None)
             return dict([
                 (
                     k.replace("\r", "").replace("\n", ""),
