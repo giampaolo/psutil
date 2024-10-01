@@ -19,7 +19,6 @@ import ctypes
 import errno
 import fnmatch
 import os
-import shlex
 import shutil
 import site
 import ssl
@@ -119,8 +118,6 @@ def win_colorprint(s, color=LIGHTBLUE):
 def sh(cmd, nolog=False):
     if not nolog:
         safe_print("cmd: " + cmd)
-    if isinstance(cmd, str):
-        cmd = shlex.split(cmd)
     p = subprocess.Popen(  # noqa S602
         cmd, shell=True, env=os.environ, cwd=os.getcwd()
     )
