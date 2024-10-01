@@ -14,6 +14,7 @@ ARGS =
 
 # mandatory deps for running tests
 PY3_DEPS = \
+	setuptools \
 	pytest \
 	pytest-xdist
 # dev deps.
