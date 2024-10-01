@@ -10,8 +10,17 @@ ARGS =
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	LINUX = 1
+	ifneq (,$(shell command -v apt 2> /dev/null))
+		HAS_APT = 1
+	else ifneq (,$(shell command -v yum 2> /dev/null))
+		HAS_YUM = 1
+	endif
 else ifeq ($(UNAME_S),FreeBSD)
 	FREEBSD = 1
+endif
+
+ifneq (,$(shell command -v sudo 2> /dev/null))
+	SUDO = sudo
 endif
 
 # mandatory deps for running tests
@@ -146,8 +155,12 @@ install-pip:  ## Install pip (no-op if already installed).
 		sys.exit(code);"
 
 install-sysdeps:
-ifdef FREEBSD
-	sudo pkg install -y gmake python3 gcc
+ifdef HAS_APT
+	$(SUDO) apt-get install -y python3-dev gcc
+else ifdef HAS_YUM
+	$(SUDO) yum install -u python3-devel gcc
+else ifdef FREEBSD
+	$(SUDO) pkg install -y gmake python3 gcc
 endif
 
 install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).

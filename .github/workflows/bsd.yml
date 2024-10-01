@@ -11,14 +11,14 @@ concurrency:
   cancel-in-progress: true
 jobs:
   # here just so that I can comment the next jobs to temporarily disable them
-  empty-job:
-    if: false
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
+  # empty-job:
+  #   if: false
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
   freebsd:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run tests
@@ -28,7 +28,8 @@ jobs:
           prepare: |
             pkg install -y gmake
           run: |
-            gmake install-sysdeps install-pydeps install test test-memleaks
+            set -e -x
+            gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
 
 #   openbsd:
 #     runs-on: ubuntu-22.04
