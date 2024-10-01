@@ -17,23 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-#   freebsd:
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Run tests
-#         uses: vmactions/freebsd-vm@v1
-#         with:
-#           usesh: true
-#           prepare: |
-#             pkg install -y gcc python3
-#           run: |
-#             set -e -x
-#             make install-pip
-#             python3 -m pip install --user setuptools
-#             make install
-#             make test
-#             make test-memleaks
+  freebsd:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y gmake
+          run: |
+            gmake install-sysdeps install-pydeps install test test-memleaks
+
 #   openbsd:
 #     runs-on: ubuntu-22.04
 #     steps:
