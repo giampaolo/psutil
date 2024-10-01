@@ -20,6 +20,8 @@ else ifeq ($(UNAME_S),FreeBSD)
 	FREEBSD = true
 else ifeq ($(UNAME_S),NetBSD)
 	NetBSD = true
+else ifeq ($(UNAME_S),OpenBSD)
+	OpenBSD = true
 endif
 
 ifneq (,$(shell command -v sudo 2> /dev/null))
@@ -165,9 +167,11 @@ else ifdef HAS_YUM
 else ifdef FREEBSD
 	$(SUDO) pkg install -y gmake python3 gcc
 else ifdef NETBSD
-	# $(SUDO) pkg_add -v pkgin
+	# $(SUDO) /usr/sbin/pkg_add -v pkgin
 	# $(SUDO) pkgin update
-	$(SUDO) pkgin -y install python311-* py311-setuptools-* gcc12-*
+	$(SUDO) pkgin -y install gmake python311-* py311-setuptools-* gcc12-*
+else ifdef OPENBSD
+	$(SUDO) pkg_add gmake gcc python3
 endif
 
 install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).

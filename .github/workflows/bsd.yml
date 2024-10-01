@@ -32,24 +32,21 @@ jobs:
             set -e
             gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
 
-#   openbsd:
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Run tests
-#         uses: vmactions/openbsd-vm@v1
-#         with:
-#           usesh: true
-#           prepare: |
-#             set -e
-#             pkg_add gcc python3
-#           run: |
-#             set -e
-#             make install-pip
-#             python3 -m pip install --user setuptools
-#             make install
-#             make test
-#             make test-memleaks
+  openbsd:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        uses: vmactions/openbsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            set -e
+            pkg_add gmake
+          run: |
+            set -e
+            gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
+
   netbsd:
     runs-on: ubuntu-latest
     steps:
@@ -60,7 +57,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
-            pkg_add -v pkgin
+            /usr/sbin/pkg_add -v pkgin
             pkgin update
           run: |
             set -e
