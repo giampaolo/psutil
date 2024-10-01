@@ -89,7 +89,7 @@ PyErr_SetFromWindowsErr(int winerr) {
  * message.
  */
 PyObject *
-psutil_SetFromOSErrnoWithSyscall(const char *syscall) {
+psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
     char fullmsg[1024];
 
 #ifdef PSUTIL_WINDOWS
