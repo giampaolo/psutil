@@ -17,7 +17,7 @@ PY3_DEPS = \
 	pytest \
 	pytest-xdist
 # dev deps.
-ifndef GITHUB_ACTIONS
+ifndef CIBUILDWHEEL
 	PY3_DEPS += \
 		black \
 		check-manifest \
