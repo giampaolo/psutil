@@ -519,10 +519,9 @@ def print_api_speed():
 def print_sysinfo():
     """Print system info."""
     build()
-    sh(
-        '%s -c "from psutil.tests import print_sysinfo; print_sysinfo()"'
-        % PYTHON
-    )
+    from psutil.tests import print_sysinfo
+
+    print_sysinfo()
 
 
 def download_appveyor_wheels():
