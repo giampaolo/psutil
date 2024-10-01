@@ -1364,10 +1364,6 @@ def print_sysinfo():
     sys.stdout.flush()
 
 
-if CI_TESTING:
-    print_sysinfo()
-
-
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
     @memoize
