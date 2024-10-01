@@ -7,6 +7,13 @@ PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 PYTEST_ARGS = -v -s --tb=short
 ARGS =
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	LINUX = 1
+else ifeq ($(UNAME_S),FreeBSD)
+	FREEBSD = 1
+endif
+
 # mandatory deps for running tests
 PY3_DEPS = \
 	setuptools \
@@ -14,26 +21,28 @@ PY3_DEPS = \
 	pytest-xdist
 
 # deps for local development
-ifndef CIBUILDWHEEL
-	PY3_DEPS += \
-		black \
-		check-manifest \
-		coverage \
-		packaging \
-		pylint \
-		pyperf \
-		pypinfo \
-		pytest-cov \
-		requests \
-		rstcheck \
-		ruff \
-		setuptools \
-		sphinx \
-		sphinx_rtd_theme \
-		toml-sort \
-		twine \
-		virtualenv \
-		wheel
+ifdef LINUX
+	ifndef CIBUILDWHEEL
+		PY3_DEPS += \
+			black \
+			check-manifest \
+			coverage \
+			packaging \
+			pylint \
+			pyperf \
+			pypinfo \
+			pytest-cov \
+			requests \
+			rstcheck \
+			ruff \
+			setuptools \
+			sphinx \
+			sphinx_rtd_theme \
+			toml-sort \
+			twine \
+			virtualenv \
+			wheel
+	endif
 endif
 
 # python 2 deps
@@ -64,11 +73,6 @@ BUILD_OPTS = `$(PYTHON) -c \
 # In not in a virtualenv, add --user options for install commands.
 INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),FreeBSD)
-	FREEBSD = 1
-endif
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
