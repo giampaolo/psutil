@@ -15,6 +15,8 @@ ifeq ($(UNAME_S),Linux)
 		HAS_APT = true
 	else ifneq (,$(shell command -v yum 2> /dev/null))
 		HAS_YUM = true
+	else ifneq (,$(shell command -v apk 2> /dev/null))
+		HAS_APK = true  # musl linux
 	endif
 else ifeq ($(UNAME_S),FreeBSD)
 	FREEBSD = true
@@ -163,13 +165,17 @@ install-pip:  ## Install pip (no-op if already installed).
 install-sysdeps:
 ifdef HAS_APT
 	$(SUDO) apt-get install -y python3-dev gcc
+	$(SUDO) apt-get install -y net-tools coreutils util-linux  # for tests
 else ifdef HAS_YUM
 	$(SUDO) yum install -y python3-devel gcc
+	$(SUDO) yum install -y net-tools coreutils util-linux  # for tests
+else ifdef HAS_APK
+	$(SUDO) apk add python3-dev gcc musl-dev linux-headers coreutils procps
 else ifdef FREEBSD
 	$(SUDO) pkg install -y gmake python3 gcc
 else ifdef NETBSD
-	# $(SUDO) /usr/sbin/pkg_add -v pkgin
-	# $(SUDO) pkgin update
+	$(SUDO) /usr/sbin/pkg_add -v pkgin
+	$(SUDO) pkgin update
 	$(SUDO) pkgin -y install gmake python311-* gcc12-*
 else ifdef OPENBSD
 	$(SUDO) pkg_add gmake gcc python3

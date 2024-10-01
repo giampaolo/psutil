@@ -215,9 +215,6 @@ skip = [
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
 
-[tool.cibuildwheel.linux]
-before-all = "yum install -y net-tools"
-
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=43", "wheel"]
