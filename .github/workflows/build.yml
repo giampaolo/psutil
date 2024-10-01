@@ -57,6 +57,7 @@ jobs:
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
         CIBW_PRERELEASE_PYTHONS: True
+
     - name: Upload wheels
       uses: actions/upload-artifact@v4
       with:
@@ -108,45 +109,45 @@ jobs:
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
 
-  # # Run linters
-  # linters:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - uses: actions/setup-python@v5
-  #     with:
-  #       python-version: 3.x
-  #   - name: 'Run linters'
-  #     run: |
-  #       python3 -m pip install ruff black rstcheck toml-sort sphinx
-  #       make lint-all
+  # Run linters
+  linters:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.x
+    - name: 'Run linters'
+      run: |
+        python3 -m pip install ruff black rstcheck toml-sort sphinx
+        make lint-all
 
-  # # upload weels as a single artefact
-  # upload-wheels:
-  #   needs: [py2, py3]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/upload-artifact/merge@v4
-  #       with:
-  #         name: wheels
-  #         pattern: wheels-*
-  #         separate-directories: false
-  #         delete-merged: true
+  # upload weels as a single artefact
+  upload-wheels:
+    needs: [py2, py3]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/upload-artifact/merge@v4
+        with:
+          name: wheels
+          pattern: wheels-*
+          separate-directories: false
+          delete-merged: true
 
-  # # Check sanity of .tar.gz + wheel files
-  # check-dist:
-  #   needs: [upload-wheels]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-python@v5
-  #       with:
-  #         python-version: 3.x
-  #     - uses: actions/download-artifact@v4
-  #       with:
-  #         name: wheels
-  #         path: wheelhouse
-  #     - run: |
-  #         python scripts/internal/print_hashes.py wheelhouse/
-  #         pipx run twine check --strict wheelhouse/*
-  #         pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
+  # Check sanity of .tar.gz + wheel files
+  check-dist:
+    needs: [upload-wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: wheelhouse
+      - run: |
+          python scripts/internal/print_hashes.py wheelhouse/
+          pipx run twine check --strict wheelhouse/*
+          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
