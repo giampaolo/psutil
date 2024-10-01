@@ -13,6 +13,8 @@ jobs:
   empty-job:  # here just so that I can comment the next jobs if I want to temporarily disable them
     if: false
     runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
 
 #   freebsd:
 #     runs-on: ubuntu-22.04
