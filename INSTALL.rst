@@ -18,18 +18,14 @@ Compile psutil from sources
 UNIX
 ----
 
-On all UNIX systems you can use the
-`install-sysdeps.sh <https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh>`__
-script to install the system dependencies necessary to compile psutil. You can
-invoke this script from the Makefile as::
+On all UNIX systems you can use the `install-sysdeps.sh
+<https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh>`__
+script. This will install the system dependencies necessary to compile psutil
+from sources. You can invoke this script from the Makefile as::
 
     make install-sysdeps
 
-If you're on a BSD platform you need to use ``gmake`` instead of ``make``::
-
-    gmake install-sysdeps
-
-After system deps are installed you can build & compile psutil with::
+After system deps are installed, you can compile & install psutil with::
 
     make build
     make install
@@ -59,11 +55,10 @@ Alpine::
 Windows
 -------
 
-In order to build / install psutil from sources on Windows you need Visual Studio
-(MinGW is not supported).
-Here's a couple of guides describing how to do it: `link <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
-and `link <https://cpython-core-tutorial.readthedocs.io/en/latest/build_cpython_windows.html>`__.
-Once VS is installed do::
+In order to build / install psutil from sources on Windows you need to install
+`Visua Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`__
+or later (see cPython `devguide <https://devguide.python.org/getting-started/setup-building/#windows>`__'s instructions).
+MinGW is not supported. Once Visual Studio is installed do::
 
     pip install --no-binary :all: psutil
 

@@ -5,16 +5,19 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2448_: add ``make install-sysdeps`` target to install the necessary system
+  dependencies (python-dev, gcc, etc.) on all supported UNIX flavors.
+- 2449_: add ``make install-pydeps-test`` and ``make install-pydeps-dev``
+  targets. They can be used to install dependencies meant for running tests and
+  for local development. They can also be installed via ``pip install .[test]``
+  and ``pip install .[dev]``.
+
 **Bug fixes**
 
 - 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
   Python 3.13.  (patch by Sam Gross)
-
-**Enhancements**
-
-- 2448_: add ``make install-sysdeps`` target to install all necessary system
-  dependencies (python-dev, gcc, etc.) on different UNIX flavors. Also rename
-  ``make setup-dev-env`` to ``make install-pydeps``.
 
 6.0.0
 ======

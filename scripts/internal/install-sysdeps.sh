@@ -47,13 +47,13 @@ main() {
     elif [ $HAS_APK ]; then
         $SUDO apk add python3-dev gcc musl-dev linux-headers coreutils procps
     elif [ $FREEBSD ]; then
-        $SUDO pkg install -y gmake python3 gcc
+        $SUDO pkg install -y python3 gcc
     elif [ $NETBSD ]; then
         $SUDO /usr/sbin/pkg_add -v pkgin
         $SUDO pkgin update
-        $SUDO pkgin -y install gmake python311-* gcc12-*
+        $SUDO pkgin -y install python311-* gcc12-*
     elif [ $OPENBSD ]; then
-        $SUDO pkg_add gmake gcc python3
+        $SUDO pkg_add gcc python3
     else
         echo "Unsupported platform: $UNAME_S"
     fi

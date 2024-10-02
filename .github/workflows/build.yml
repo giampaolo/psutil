@@ -59,7 +59,7 @@ jobs:
         CIBW_PRERELEASE_PYTHONS: True
         CIBW_TEST_EXTRAS: test
         CIBW_TEST_COMMAND:
-          make -C {project} PYTHON="env python" PSUTIL_SCRIPTS_DIR="{project}/scripts" install-sysdeps install-pydeps install print-sysinfo test test-memleaks
+          make -C {project} PYTHON="env python" PSUTIL_SCRIPTS_DIR="{project}/scripts" install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
 
     - name: Upload wheels
       uses: actions/upload-artifact@v4
@@ -87,7 +87,7 @@ jobs:
       CIBW_BUILD: 'cp27-*'
       CIBW_TEST_EXTRAS: test
       CIBW_TEST_COMMAND:
-        make -C {project} PYTHON="env python" PSUTIL_SCRIPTS_DIR="{project}/scripts" install-sysdeps install-pydeps install print-sysinfo test test-memleaks
+        make -C {project} PYTHON="env python" PSUTIL_SCRIPTS_DIR="{project}/scripts" install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
 
     steps:
     - uses: actions/checkout@v4
