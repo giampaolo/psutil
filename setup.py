@@ -79,6 +79,7 @@ else:
     TEST_DEPS = [
         "futures",
         "ipaddress",
+        "enum34",
         "mock==1.0.1",
         "pytest-xdist",
         "pytest==4.6.11",
