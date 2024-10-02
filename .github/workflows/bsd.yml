@@ -20,8 +20,7 @@ jobs:
         with:
           usesh: true
           run: |
-            scripts/internal/install-sysdeps.sh
-            PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
 
   openbsd:
     # if: false
@@ -33,8 +32,7 @@ jobs:
         with:
           usesh: true
           run: |
-            scripts/internal/install-sysdeps.sh
-            PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
 
   netbsd:
     # if: false
@@ -46,5 +44,4 @@ jobs:
         with:
           usesh: true
           run: |
-            scripts/internal/install-sysdeps.sh
-            PIP_BREAK_SYSTEM_PACKAGES=1 gmake PYTHON=python3.11 install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 make PYTHON=python3.11 install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks

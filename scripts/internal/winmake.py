@@ -390,7 +390,7 @@ def clean():
     safe_rmtree("tmp")
 
 
-def install_pydeps():
+def install_pydeps_test():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
@@ -588,7 +588,7 @@ def parse_args():
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
     sp.add_parser('print-sysinfo', help="print system info")
-    sp.add_parser('install-pydeps', help="install python deps")
+    sp.add_parser('install-pydeps-test', help="install python test deps")
     test = sp.add_parser('test', help="[ARG] run tests")
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
     sp.add_parser('test-connections', help="run connections tests")
