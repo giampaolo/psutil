@@ -10,6 +10,12 @@ XXXX-XX-XX
 - 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
   Python 3.13.  (patch by Sam Gross)
 
+**Enhancements**
+
+- 2448_: add ``make install-sysdeps`` target to install all necessary system
+  dependencies (python-dev, gcc, etc.) on different UNIX flavors. Also rename
+  ``make setup-dev-env`` to ``make install-pydeps``.
+
 6.0.0
 ======
 

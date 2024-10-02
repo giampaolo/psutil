@@ -14,25 +14,28 @@ PY3_DEPS = \
 	pytest-xdist
 
 # deps for local development
-ifndef CIBUILDWHEEL
-	PY3_DEPS += \
-		black \
-		check-manifest \
-		coverage \
-		packaging \
-		pylint \
-		pyperf \
-		pypinfo \
-		pytest-cov \
-		requests \
-		rstcheck \
-		ruff \
-		setuptools \
-		sphinx_rtd_theme \
-		toml-sort \
-		twine \
-		virtualenv \
-		wheel
+ifdef LINUX
+	ifndef CIBUILDWHEEL
+		PY3_DEPS += \
+			black \
+			check-manifest \
+			coverage \
+			packaging \
+			pylint \
+			pyperf \
+			pypinfo \
+			pytest-cov \
+			requests \
+			rstcheck \
+			ruff \
+			setuptools \
+			sphinx \
+			sphinx_rtd_theme \
+			toml-sort \
+			twine \
+			virtualenv \
+			wheel
+	endif
 endif
 
 # python 2 deps
@@ -117,6 +120,7 @@ uninstall:  ## Uninstall this package via pip.
 install-pip:  ## Install pip (no-op if already installed).
 	@$(PYTHON) -c \
 		"import sys, ssl, os, pkgutil, tempfile, atexit; \
+		print('pip already installed') if pkgutil.find_loader('pip') else None; \
 		sys.exit(0) if pkgutil.find_loader('pip') else None; \
 		PY3 = sys.version_info[0] == 3; \
 		pyexc = 'from urllib.request import urlopen' if PY3 else 'from urllib2 import urlopen'; \
@@ -135,7 +139,10 @@ install-pip:  ## Install pip (no-op if already installed).
 		f.close(); \
 		sys.exit(code);"
 
-setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
+install-sysdeps:
+	scripts/internal/install-sysdeps.sh
+
+install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
