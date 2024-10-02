@@ -36,46 +36,18 @@ if PY3:
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
+WINDOWS = os.name == "nt"
 if PY3:
     GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 else:
     GET_PIP_URL = "https://bootstrap.pypa.io/pip/2.7/get-pip.py"
 
+sys.path.insert(0, ROOT_DIR)  # so that we can import setup.py
 
-# mandatory deps
-if PY3:
-    DEPS = [
-        "setuptools",
-        "pytest",
-        "pytest-xdist",
-        "wheel",
-    ]
-else:
-    DEPS = [
-        "enum34",
-        "futures",
-        "ipaddress",
-        "mock==1.0.1",
-        "pytest-xdist",
-        "pytest==4.6.11",
-        "setuptools",
-        "wheel",
-    ]
+import setup  # NOQA
 
-# deps for local development
-if not APPVEYOR:
-    DEPS += [
-        "coverage",
-        "pdbpp",
-        "pyperf",
-        "pyreadline",
-        "requests",
-        "wheel",
-    ]
-
-if not PYPY:
-    DEPS.append("pywin32")
-    DEPS.append("wmi")
+TEST_DEPS = setup.TEST_DEPS
+DEV_DEPS = setup.DEV_DEPS
 
 _cmds = {}
 if PY3:
@@ -123,6 +95,8 @@ def stderr_handle():
 
 
 def win_colorprint(s, color=LIGHTBLUE):
+    if not WINDOWS:
+        return print(s)
     color += 8  # bold
     handle = stderr_handle()
     SetConsoleTextAttribute = ctypes.windll.Kernel32.SetConsoleTextAttribute
@@ -394,7 +368,14 @@ def install_pydeps_test():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
-    sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
+    sh("%s -m pip install -U %s" % (PYTHON, " ".join(TEST_DEPS)))
+
+
+def install_pydeps_dev():
+    """Install useful deps."""
+    install_pip()
+    install_git_hooks()
+    sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEV_DEPS)))
 
 
 def test(args=""):
@@ -585,10 +566,11 @@ def parse_args():
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
     sp.add_parser('install-pip', help="install pip")
+    sp.add_parser('install-pydeps-dev', help="install dev python deps")
+    sp.add_parser('install-pydeps-test', help="install python test deps")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
     sp.add_parser('print-sysinfo', help="print system info")
-    sp.add_parser('install-pydeps-test', help="install python test deps")
     test = sp.add_parser('test', help="[ARG] run tests")
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
     sp.add_parser('test-connections', help="run connections tests")

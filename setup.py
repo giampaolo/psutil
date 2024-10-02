@@ -76,6 +76,7 @@ TEST_DEPS = [
 ]
 if WINDOWS and not PYPY:
     TEST_DEPS.append("pywin32")
+    TEST_DEPS.append("wheel")
     TEST_DEPS.append("wmi")
 if not PY3:
     TEST_DEPS.extend([
@@ -107,6 +108,9 @@ DEV_DEPS = [
     "virtualenv",
     "wheel",
 ]
+if WINDOWS:
+    DEV_DEPS.append("pyreadline")
+    DEV_DEPS.append("pdbpp")
 
 macros = []
 if POSIX:
