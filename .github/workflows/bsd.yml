@@ -47,4 +47,4 @@ jobs:
           usesh: true
           run: |
             scripts/internal/install-sysdeps.sh
-            PIP_BREAK_SYSTEM_PACKAGES=1 PYTHON=python3.11 gmake install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 gmake PYTHON=python3.11 install-pydeps install print-sysinfo test test-memleaks
