@@ -7,29 +7,6 @@ PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 PYTEST_ARGS = -v -s --tb=short
 ARGS =
 
-# Recognize platform
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	LINUX = true
-	ifneq (,$(shell command -v apt 2> /dev/null))
-		HAS_APT = true
-	else ifneq (,$(shell command -v yum 2> /dev/null))
-		HAS_YUM = true
-	else ifneq (,$(shell command -v apk 2> /dev/null))
-		HAS_APK = true  # musl linux
-	endif
-else ifeq ($(UNAME_S),FreeBSD)
-	FREEBSD = true
-else ifeq ($(UNAME_S),NetBSD)
-	NETBSD = true
-else ifeq ($(UNAME_S),OpenBSD)
-	OPENBSD = true
-endif
-
-ifneq ($(shell id -u), 0)
-	SUDO = sudo
-endif
-
 # mandatory deps for running tests
 PY3_DEPS = \
 	setuptools \
@@ -163,23 +140,7 @@ install-pip:  ## Install pip (no-op if already installed).
 		sys.exit(code);"
 
 install-sysdeps:
-ifdef HAS_APT
-	$(SUDO) apt-get install -y python3-dev gcc
-	$(SUDO) apt-get install -y net-tools coreutils util-linux  # for tests
-else ifdef HAS_YUM
-	$(SUDO) yum install -y python3-devel gcc
-	$(SUDO) yum install -y net-tools coreutils util-linux  # for tests
-else ifdef HAS_APK
-	$(SUDO) apk add python3-dev gcc musl-dev linux-headers coreutils procps
-else ifdef FREEBSD
-	$(SUDO) pkg install -y gmake python3 gcc
-else ifdef NETBSD
-	$(SUDO) /usr/sbin/pkg_add -v pkgin
-	$(SUDO) pkgin update
-	$(SUDO) pkgin -y install gmake python311-* gcc12-*
-else ifdef OPENBSD
-	$(SUDO) pkg_add gmake gcc python3
-endif
+	scripts/internal/install-sysdeps.sh
 
 install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).
 	${MAKE} install-git-hooks
