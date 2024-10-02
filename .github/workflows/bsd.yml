@@ -20,13 +20,12 @@ jobs:
         with:
           usesh: true
           run: |
-            set -e
             scripts/internal/install-sysdeps.sh
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
 
   openbsd:
     # if: false
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Run tests
@@ -34,7 +33,6 @@ jobs:
         with:
           usesh: true
           run: |
-            set -e
             scripts/internal/install-sysdeps.sh
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
 
@@ -48,6 +46,5 @@ jobs:
         with:
           usesh: true
           run: |
-            set -e
             scripts/internal/install-sysdeps.sh
-            PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 PYTHON=python3.11 gmake install-pydeps install print-sysinfo test test-memleaks
