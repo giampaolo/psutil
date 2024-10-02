@@ -21,6 +21,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
+            find .
             ./scripts/internal/install-sysdeps.sh
           run: |
             set -e
@@ -37,6 +38,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
+            find .
             ./scripts/internal/install-sysdeps.sh
           run: |
             set -e
@@ -53,6 +55,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
+            find .
             ./scripts/internal/install-sysdeps.sh
           run: |
             set -e
