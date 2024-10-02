@@ -22,8 +22,9 @@ jobs:
           prepare: |
             set -e
             printenv
+            pwd
             find /
-            ./scripts/internal/install-sysdeps.sh
+            ./psutil/scripts/internal/install-sysdeps.sh
           run: |
             set -e
             gmake install-pydeps install print-sysinfo test test-memleaks
@@ -40,8 +41,9 @@ jobs:
           prepare: |
             set -e
             printenv
+            pwd
             find /
-            ./scripts/internal/install-sysdeps.sh
+            ./psutil/scripts/internal/install-sysdeps.sh
           run: |
             set -e
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
@@ -58,8 +60,9 @@ jobs:
           prepare: |
             set -e
             printenv
+            pwd
             find /
-            ./scripts/internal/install-sysdeps.sh
+            ./psutil/scripts/internal/install-sysdeps.sh
           run: |
             set -e
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
