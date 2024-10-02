@@ -120,12 +120,12 @@ install-pip:  ## Install pip (no-op if already installed).
 install-sysdeps:
 	./scripts/internal/install-sysdeps.sh
 
-install-pydeps-test:  ## Install python deps to run unit tests.
+install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
 	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
 
-install-pydeps-dev:  ## Install development python deps.
+install-pydeps-dev:  ## Install python deps meant for local development.
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version

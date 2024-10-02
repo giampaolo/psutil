@@ -12,7 +12,8 @@ Once you have a compiler installed run:
 .. code-block:: bash
 
     git clone git@github.com:giampaolo/psutil.git
-    make install-pydeps-test
+    make install-sysdeps      # install gcc and python headers
+    make install-pydeps-test  # install python deps necessary to run unit tests
     make build
     make install
     make test
@@ -29,7 +30,7 @@ Once you have a compiler installed run:
     make install-pydeps-dev   # install dev deps (ruff, black, ...)
     make test                 # run tests
     make test-parallel        # run tests in parallel (faster)
-    make test-memleaks        # test memory leaks
+    make test-memleaks        # run memory leak tests
     make test-coverage        # run test coverage
     make lint-all             # run linters
     make fix-all              # fix linters errors
