@@ -69,24 +69,25 @@ CP37_PLUS = PY37_PLUS and sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 # Test deps, installable via `pip install .[test]`.
-TEST_DEPS = [
-    "pytest",
-    "pytest-xdist",
-    "setuptools",
-]
-if WINDOWS and not PYPY:
-    TEST_DEPS.append("pywin32")
-    TEST_DEPS.append("wheel")
-    TEST_DEPS.append("wmi")
-if not PY3:
-    TEST_DEPS.extend([
+if PY3:
+    TEST_DEPS = [
+        "pytest",
+        "pytest-xdist",
+        "setuptools",
+    ]
+else:
+    TEST_DEPS = [
         "futures",
         "ipaddress",
         "mock==1.0.1",
         "pytest-xdist",
         "pytest==4.6.11",
         "setuptools",
-    ])
+    ]
+if WINDOWS and not PYPY:
+    TEST_DEPS.append("pywin32")
+    TEST_DEPS.append("wheel")
+    TEST_DEPS.append("wmi")
 
 # Development deps, installable via `pip install .[dev]`.
 DEV_DEPS = [
