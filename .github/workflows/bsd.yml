@@ -19,15 +19,10 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
-          prepare: |
-            set -e
-            printenv
-            pwd
-            ls -la
-            sh work/psutil/psutil/scripts/internal/install-sysdeps.sh
           run: |
             set -e
-            gmake install-pydeps install print-sysinfo test test-memleaks
+            scripts/internal/install-sysdeps.sh
+            PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
 
   openbsd:
     # if: false
@@ -38,14 +33,9 @@ jobs:
         uses: vmactions/openbsd-vm@v1
         with:
           usesh: true
-          prepare: |
-            set -e
-            printenv
-            pwd
-            ls -la
-            sh work/psutil/psutil/scripts/internal/install-sysdeps.sh
           run: |
             set -e
+            scripts/internal/install-sysdeps.sh
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
 
   netbsd:
@@ -57,12 +47,7 @@ jobs:
         uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
-          prepare: |
-            set -e
-            printenv
-            pwd
-            ls -la
-            sh work/psutil/psutil/scripts/internal/install-sysdeps.sh
           run: |
             set -e
+            scripts/internal/install-sysdeps.sh
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
