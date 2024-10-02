@@ -21,7 +21,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
-            scripts/internal/install-sysdeps.sh
+            ./scripts/internal/install-sysdeps.sh
           run: |
             set -e
             gmake install-pydeps install print-sysinfo test test-memleaks
@@ -37,7 +37,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
-            scripts/internal/install-sysdeps.sh
+            ./scripts/internal/install-sysdeps.sh
           run: |
             set -e
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
@@ -53,7 +53,7 @@ jobs:
           usesh: true
           prepare: |
             set -e
-            scripts/internal/install-sysdeps.sh
+            ./scripts/internal/install-sysdeps.sh
           run: |
             set -e
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-pydeps install print-sysinfo test test-memleaks
