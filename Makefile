@@ -13,31 +13,6 @@ PY3_DEPS = \
 	pytest \
 	pytest-xdist
 
-# deps for local development
-ifdef LINUX
-	ifndef CIBUILDWHEEL
-		PY3_DEPS += \
-			black \
-			check-manifest \
-			coverage \
-			packaging \
-			pylint \
-			pyperf \
-			pypinfo \
-			pytest-cov \
-			requests \
-			rstcheck \
-			ruff \
-			setuptools \
-			sphinx \
-			sphinx_rtd_theme \
-			toml-sort \
-			twine \
-			virtualenv \
-			wheel
-	endif
-endif
-
 # python 2 deps
 PY2_DEPS = \
 	futures \
@@ -64,8 +39,9 @@ BUILD_OPTS = `$(PYTHON) -c \
 	print('--parallel %s' % cpus if cpus > 1 else '')"`
 
 # In not in a virtualenv, add --user options for install commands.
-INSTALL_OPTS = `$(PYTHON) -c \
+SETUP_INSTALL_OPTS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
+PIP_INSTALL_OPTS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -110,8 +86,7 @@ build:  ## Compile (in parallel) without installing.
 
 install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(INSTALL_OPTS)
-	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_OPTS)
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
@@ -140,13 +115,18 @@ install-pip:  ## Install pip (no-op if already installed).
 		sys.exit(code);"
 
 install-sysdeps:
-	scripts/internal/install-sysdeps.sh
+	./scripts/internal/install-sysdeps.sh
 
-install-pydeps:  ## Install GIT hooks, pip, test deps (also upgrades them).
+install-pydeps-test:  ## Install python deps to run unit tests.
+	${MAKE} install-pip
+	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
+	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) $(shell $(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))")
+
+install-pydeps-dev:  ## Install development python deps.
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
-	$(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade $(PY_DEPS)
+	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
+	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) $(shell $(PYTHON) -c "import setup; print(' '.join(setup.DEV_DEPS))")
 
 # ===================================================================
 # Tests

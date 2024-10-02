@@ -100,7 +100,6 @@ DEV_DEPS = [
     "requests",
     "rstcheck",
     "ruff",
-    "setuptools",
     "sphinx",
     "sphinx_rtd_theme",
     "toml-sort",
