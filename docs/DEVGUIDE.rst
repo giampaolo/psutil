@@ -12,32 +12,35 @@ Once you have a compiler installed run:
 .. code-block:: bash
 
     git clone git@github.com:giampaolo/psutil.git
-    make install-pydeps  # install useful dev libs (ruff, coverage, ...)
+    make install-pydeps-test
     make build
     make install
     make test
 
-- ``make`` (see `Makefile`_) is the designated tool to run tests, build, install
-  try new features you're developing, etc. This also includes Windows (see
-  `make.bat`_ ).
-  Some useful commands are:
+- ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
+  install, run tests and do pretty much anything that involves development.
+  This also includes Windows, meaning that you can run `make command` similarly
+  as if you were on UNIX (see `make.bat`_ and `winmake.py`_). Some useful
+  commands are:
 
 .. code-block:: bash
 
-    make test-parallel   # faster
-    make test-memleaks
-    make test-coverage
-    make lint-all        # Run Python and C linter
-    make fix-all         # Fix linting errors
+    make clean                # remove build files
+    make install-pydeps-dev   # install dev deps (ruff, black, ...)
+    make test                 # run tests
+    make test-parallel        # run tests in parallel (faster)
+    make test-memleaks        # test memory leaks
+    make test-coverage        # run test coverage
+    make lint-all             # run linters
+    make fix-all              # fix linters errors
     make uninstall
     make help
-
 
 - To run a specific unit test:
 
 .. code-block:: bash
 
-    make test ARGS=psutil.tests.test_system.TestDiskAPIs
+    make test ARGS=psutil/tests/test_system.py::TestDiskAPIs::test_disk_usage
 
 - If you're working on a new feature and you wish to compile & test it "on the
   fly" from a test script, this is a quick & dirty way to do it:
@@ -48,7 +51,8 @@ Once you have a compiler installed run:
     make test test_script.py          # on Windows
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
-  "edit" mode, meaning you can edit psutil code on the fly while you develop.
+  "edit" / development mode, meaning you can edit psutil code on the fly while
+  you develop.
 
 - If you want to target a specific Python version:
 
@@ -60,10 +64,12 @@ Once you have a compiler installed run:
 Coding style
 ------------
 
-- Oython code strictly follows `PEP-8`_ styling guides and this is enforced by
-  a commit GIT hook installed via ``make install-git-hooks`` which will reject
-  commits if code is not PEP-8 complieant.
-- C code should follow `PEP-7`_ styling guides.
+- Python code strictly follows `PEP-8`_ styling guide. In addition we use
+  ``black`` and ``ruff`` code formatters / linters. This is enforced by a GIT
+  commit hook, installed via ``make install-git-hooks``, which will reject the
+  commit if code is not compliant.
+- C code should follow `PEP-7`_ styling guides, but things are more relaxed.
+- Linters are enforced also for ``.rst`` and ``.toml`` files.
 
 Code organization
 -----------------
@@ -101,7 +107,7 @@ Make a pull request
 
 - Fork psutil (go to https://github.com/giampaolo/psutil and click on "fork")
 - Git clone the fork locally: ``git clone git@github.com:YOUR-USERNAME/psutil.git``
-- Create a branch:``git checkout -b new-feature``
+- Create a branch: ``git checkout -b new-feature``
 - Commit your changes: ``git commit -am 'add some feature'``
 - Push the branch: ``git push origin new-feature``
 - Create a new PR via the GitHub web interface and sign-off your work (see
@@ -118,13 +124,14 @@ Documentation
 -------------
 
 - doc source code is written in a single file: ``docs/index.rst``.
-- doc can be built with ``make install-pydeps; cd docs; make html``.
+- doc can be built with ``make install-pydeps-dev; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst
 .. _`make.bat`: https://github.com/giampaolo/psutil/blob/master/make.bat
+.. _`winmake.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/winmake.py
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/

@@ -36,14 +36,14 @@ init:
 
 install:
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
-  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py install-pydeps"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py install-pydeps-test"
   - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py install"
+  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py print-sysinfo"
 
 build: off
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py print-sysinfo"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test"
   - "%WITH_COMPILER% %PYTHON%/python.exe scripts/internal/winmake.py test-memleaks"
 

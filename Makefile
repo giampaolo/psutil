@@ -129,7 +129,7 @@ install-pydeps-dev:  ## Install development python deps.
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
-	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) $(shell $(PYTHON) -c "import setup; print(' '.join(setup.DEV_DEPS))")
+	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) $(shell $(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS + setup.DEV_DEPS))")
 
 install-git-hooks:  ## Install GIT pre-commit hook.
 	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
