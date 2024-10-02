@@ -90,6 +90,8 @@ if POSIX:
 
 extras_require = {
     "test": [
+        "pytest",
+        "pytest-xdist",
         "enum34; python_version <= '3.4'",
         "ipaddress; python_version < '3.0'",
         "mock; python_version < '3.0'",
