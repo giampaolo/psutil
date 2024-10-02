@@ -68,6 +68,47 @@ CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
 CP37_PLUS = PY37_PLUS and sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
+# Test deps, installable via `pip install .[test]`.
+TEST_DEPS = [
+    "pytest",
+    "pytest-xdist",
+    "setuptools",
+]
+if WINDOWS and not PYPY:
+    TEST_DEPS.append("pywin32")
+    TEST_DEPS.append("wmi")
+if not PY3:
+    TEST_DEPS.extend([
+        "futures",
+        "ipaddress",
+        "mock==1.0.1",
+        "pytest-xdist",
+        "pytest==4.6.11",
+        "setuptools",
+    ])
+
+# Development deps, installable via `pip install .[dev]`.
+DEV_DEPS = [
+    "black",
+    "check-manifest",
+    "coverage",
+    "packaging",
+    "pylint",
+    "pyperf",
+    "pypinfo",
+    "pytest-cov",
+    "requests",
+    "rstcheck",
+    "ruff",
+    "setuptools",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "toml-sort",
+    "twine",
+    "virtualenv",
+    "wheel",
+]
+
 macros = []
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
@@ -86,21 +127,6 @@ else:
 sources = ['psutil/_psutil_common.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
-
-
-extras_require = {
-    "test": [
-        "pytest",
-        "pytest-xdist",
-        "enum34; python_version <= '3.4'",
-        "ipaddress; python_version < '3.0'",
-        "mock; python_version < '3.0'",
-    ]
-}
-if not PYPY:
-    extras_require['test'].extend(
-        ["pywin32; sys.platform == 'win32'", "wmi; sys.platform == 'win32'"]
-    )
 
 
 def get_version():
@@ -514,6 +540,10 @@ def main():
         ],
     )
     if setuptools is not None:
+        extras_require = {
+            "dev": DEV_DEPS,
+            "test": TEST_DEPS,
+        }
         kwargs.update(
             python_requires=(
                 ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
