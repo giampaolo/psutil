@@ -26,7 +26,7 @@ else ifeq ($(UNAME_S),OpenBSD)
 	OPENBSD = true
 endif
 
-ifneq (,$(shell command -v sudo 2> /dev/null))
+ifneq ($(shell id -u), 0)
 	SUDO = sudo
 endif
 
