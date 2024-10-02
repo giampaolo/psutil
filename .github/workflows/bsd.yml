@@ -10,14 +10,8 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
   cancel-in-progress: true
 jobs:
-  # here just so that I can comment the next jobs to temporarily disable them
-  # empty-job:
-  #   if: false
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-
   freebsd:
+    # if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,6 +27,7 @@ jobs:
             gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
 
   openbsd:
+    # if: false
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +43,7 @@ jobs:
             PIP_BREAK_SYSTEM_PACKAGES=1 gmake install-sysdeps install-pydeps install print-sysinfo test test-memleaks
 
   netbsd:
+    # if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
