@@ -12,8 +12,34 @@ install a C compiler. All you have to do is::
 If wheels are not available for your platform or architecture, or you wish to
 build & install psutil from sources, keep reading.
 
-Linux (build)
--------------
+Compile psutil from sources
+===========================
+
+UNIX
+----
+
+On all UNIX systems you can use the
+`install-sysdeps.sh <https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh>`__
+script to install the system dependencies necessary to compile psutil. You can
+invoke this script from the Makefile as::
+
+    make install-sysdeps
+
+If you're on a BSD platform you need to use ``gmake`` instead of ``make``::
+
+    gmake install-sysdeps
+
+After system deps are installed you can build & compile psutil with::
+
+    make build
+    make install
+
+...or this, which will fetch the latest source distribution from `PyPI <https://pypi.org/project/psutil/>`__::
+
+    pip install --no-binary :all: psutil
+
+Linux
+-----
 
 Debian / Ubuntu::
 
@@ -30,10 +56,10 @@ Alpine::
     sudo apk add gcc python3-dev musl-dev linux-headers
     pip install --no-binary :all: psutil
 
-Windows (build)
----------------
+Windows
+-------
 
-In order to install psutil from sources on Windows you need Visual Studio
+In order to build / install psutil from sources on Windows you need Visual Studio
 (MinGW is not supported).
 Here's a couple of guides describing how to do it: `link <https://blog.ionelmc.ro/2014/12/21/compiling-python-extensions-on-windows/>`__
 and `link <https://cpython-core-tutorial.readthedocs.io/en/latest/build_cpython_windows.html>`__.
