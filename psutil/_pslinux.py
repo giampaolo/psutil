@@ -1467,23 +1467,27 @@ def sensors_temperatures():
             for trip_point in trip_points:
                 path = os.path.join(base, trip_point + "_type")
                 trip_type = cat(path, fallback='').strip()
+                current_critical = None
+                current_high = None
                 if trip_type == 'critical':
-                    critical = bcat(
+                    current_critical = bcat(
                         os.path.join(base, trip_point + "_temp"), fallback=None
                     )
                 elif trip_type == 'high':
-                    high = bcat(
+                    current_high = bcat(
                         os.path.join(base, trip_point + "_temp"), fallback=None
                     )
 
-                if high is not None:
+                if current_high is not None:
                     try:
-                        high = float(high) / 1000.0
+                        current_high = float(current_high) / 1000.0
+                        high = max(high, current_high) if high else current_high
                     except ValueError:
                         high = None
-                if critical is not None:
+                if current_critical is not None:
                     try:
-                        critical = float(critical) / 1000.0
+                        current_critical = float(current_critical) / 1000.0
+                        critical = max(critical, current_critical) if critical else current_critical
                     except ValueError:
                         critical = None
 
