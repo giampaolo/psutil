@@ -217,4 +217,4 @@ archs = ["arm64", "x86_64"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools>=43", "wheel"]
+requires = ["setuptools>=43"]
