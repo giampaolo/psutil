@@ -46,6 +46,9 @@ PIP_INSTALL_OPTS = --trusted-host files.pythonhosted.org --trusted-host pypi.org
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
 
+# install git hook
+_ := $(shell mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
+
 # ===================================================================
 # Install
 # ===================================================================
@@ -127,6 +130,10 @@ install-pydeps-dev:  ## Install development python deps.
 	${MAKE} install-pip
 	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
 	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) $(shell $(PYTHON) -c "import setup; print(' '.join(setup.DEV_DEPS))")
+
+install-git-hooks:  ## Install GIT pre-commit hook.
+	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
 # Tests
@@ -244,14 +251,6 @@ fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
 	${MAKE} fix-black
 	${MAKE} fix-toml
-
-# ===================================================================
-# GIT
-# ===================================================================
-
-install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
-	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
 # Distribution
