@@ -31,15 +31,11 @@ with warnings.catch_warnings():
         from setuptools import Extension
         from setuptools import setup
     except ImportError:
+        if "CIBUILDWHEEL" in os.environ:
+            raise
         setuptools = None
         from distutils.core import Extension
         from distutils.core import setup
-    try:
-        from wheel.bdist_wheel import bdist_wheel
-    except ImportError:
-        if "CIBUILDWHEEL" in os.environ:
-            raise
-        bdist_wheel = None
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -153,16 +149,19 @@ macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 # Py_LIMITED_API lets us create a single wheel which works with multiple
 # python versions, including unreleased ones.
-if bdist_wheel and CP36_PLUS and (MACOS or LINUX) and not Py_GIL_DISABLED:
+if setuptools and CP36_PLUS and (MACOS or LINUX) and not Py_GIL_DISABLED:
     py_limited_api = {"py_limited_api": True}
+    options = {"bdist_wheel": {"py_limited_api": "cp36"}}
     macros.append(('Py_LIMITED_API', '0x03060000'))
-elif bdist_wheel and CP37_PLUS and WINDOWS and not Py_GIL_DISABLED:
+elif setuptools and CP37_PLUS and WINDOWS and not Py_GIL_DISABLED:
     # PyErr_SetFromWindowsErr / PyErr_SetFromWindowsErrWithFilename are
     # part of the stable API/ABI starting with CPython 3.7
     py_limited_api = {"py_limited_api": True}
+    options = {"bdist_wheel": {"py_limited_api": "cp37"}}
     macros.append(('Py_LIMITED_API', '0x03070000'))
 else:
     py_limited_api = {}
+    options = {}
 
 
 def get_long_description():
@@ -462,22 +461,11 @@ if POSIX:
 else:
     extensions = [ext]
 
-cmdclass = {}
-if py_limited_api:
-
-    class bdist_wheel_abi3(bdist_wheel):
-        def get_tag(self):
-            python, _abi, plat = bdist_wheel.get_tag(self)
-            return python, "abi3", plat
-
-    cmdclass["bdist_wheel"] = bdist_wheel_abi3
-
 
 def main():
     kwargs = dict(
         name='psutil',
         version=VERSION,
-        cmdclass=cmdclass,
         description=__doc__.replace('\n', ' ').strip() if __doc__ else '',
         long_description=get_long_description(),
         long_description_content_type='text/x-rst',
@@ -497,6 +485,7 @@ def main():
         license='BSD-3-Clause',
         packages=['psutil', 'psutil.tests'],
         ext_modules=extensions,
+        options=options,
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',
