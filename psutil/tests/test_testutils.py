@@ -74,8 +74,8 @@ class TestRetryDecorator(PsutilTestCase):
             return 1
 
         queue = list(range(3))
-        self.assertEqual(foo(), 1)
-        self.assertEqual(sleep.call_count, 3)
+        assert foo() == 1
+        assert sleep.call_count == 3
 
     @mock.patch('time.sleep')
     def test_retry_failure(self, sleep):
@@ -88,8 +88,9 @@ class TestRetryDecorator(PsutilTestCase):
             return 1
 
         queue = list(range(6))
-        self.assertRaises(ZeroDivisionError, foo)
-        self.assertEqual(sleep.call_count, 5)
+        with pytest.raises(ZeroDivisionError):
+            foo()
+        assert sleep.call_count == 5
 
     @mock.patch('time.sleep')
     def test_exception_arg(self, sleep):
@@ -97,8 +98,9 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             raise TypeError
 
-        self.assertRaises(TypeError, foo)
-        self.assertEqual(sleep.call_count, 0)
+        with pytest.raises(TypeError):
+            foo()
+        assert sleep.call_count == 0
 
     @mock.patch('time.sleep')
     def test_no_interval_arg(self, sleep):
@@ -108,8 +110,9 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             1 / 0  # noqa
 
-        self.assertRaises(ZeroDivisionError, foo)
-        self.assertEqual(sleep.call_count, 0)
+        with pytest.raises(ZeroDivisionError):
+            foo()
+        assert sleep.call_count == 0
 
     @mock.patch('time.sleep')
     def test_retries_arg(self, sleep):
@@ -117,12 +120,14 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             1 / 0  # noqa
 
-        self.assertRaises(ZeroDivisionError, foo)
-        self.assertEqual(sleep.call_count, 5)
+        with pytest.raises(ZeroDivisionError):
+            foo()
+        assert sleep.call_count == 5
 
     @mock.patch('time.sleep')
     def test_retries_and_timeout_args(self, sleep):
-        self.assertRaises(ValueError, retry, retries=5, timeout=1)
+        with pytest.raises(ValueError):
+            retry(retries=5, timeout=1)
 
 
 class TestSyncTestUtils(PsutilTestCase):
@@ -130,7 +135,8 @@ class TestSyncTestUtils(PsutilTestCase):
         wait_for_pid(os.getpid())
         nopid = max(psutil.pids()) + 99999
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
+            with pytest.raises(psutil.NoSuchProcess):
+                wait_for_pid(nopid)
 
     def test_wait_for_file(self):
         testfn = self.get_testfn()
@@ -149,7 +155,8 @@ class TestSyncTestUtils(PsutilTestCase):
     def test_wait_for_file_no_file(self):
         testfn = self.get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            self.assertRaises(IOError, wait_for_file, testfn)
+            with pytest.raises(IOError):
+                wait_for_file(testfn)
 
     def test_wait_for_file_no_delete(self):
         testfn = self.get_testfn()
@@ -160,17 +167,17 @@ class TestSyncTestUtils(PsutilTestCase):
 
     def test_call_until(self):
         ret = call_until(lambda: 1, "ret == 1")
-        self.assertEqual(ret, 1)
+        assert ret == 1
 
 
 class TestFSTestUtils(PsutilTestCase):
     def test_open_text(self):
         with open_text(__file__) as f:
-            self.assertEqual(f.mode, 'r')
+            assert f.mode == 'r'
 
     def test_open_binary(self):
         with open_binary(__file__) as f:
-            self.assertEqual(f.mode, 'rb')
+            assert f.mode == 'rb'
 
     def test_safe_mkdir(self):
         testfn = self.get_testfn()
@@ -195,7 +202,7 @@ class TestFSTestUtils(PsutilTestCase):
         with mock.patch(
             'psutil.tests.os.stat', side_effect=OSError(errno.EINVAL, "")
         ) as m:
-            with self.assertRaises(OSError):
+            with pytest.raises(OSError):
                 safe_rmpath(testfn)
             assert m.called
 
@@ -204,8 +211,8 @@ class TestFSTestUtils(PsutilTestCase):
         base = os.getcwd()
         os.mkdir(testfn)
         with chdir(testfn):
-            self.assertEqual(os.getcwd(), os.path.join(base, testfn))
-        self.assertEqual(os.getcwd(), base)
+            assert os.getcwd() == os.path.join(base, testfn)
+        assert os.getcwd() == base
 
 
 class TestProcessUtils(PsutilTestCase):
@@ -220,17 +227,17 @@ class TestProcessUtils(PsutilTestCase):
 
     def test_spawn_children_pair(self):
         child, grandchild = self.spawn_children_pair()
-        self.assertNotEqual(child.pid, grandchild.pid)
+        assert child.pid != grandchild.pid
         assert child.is_running()
         assert grandchild.is_running()
         children = psutil.Process().children()
-        self.assertEqual(children, [child])
+        assert children == [child]
         children = psutil.Process().children(recursive=True)
-        self.assertEqual(len(children), 2)
-        self.assertIn(child, children)
-        self.assertIn(grandchild, children)
-        self.assertEqual(child.ppid(), os.getpid())
-        self.assertEqual(grandchild.ppid(), child.pid)
+        assert len(children) == 2
+        assert child in children
+        assert grandchild in children
+        assert child.ppid() == os.getpid()
+        assert grandchild.ppid() == child.pid
 
         terminate(child)
         assert not child.is_running()
@@ -242,7 +249,7 @@ class TestProcessUtils(PsutilTestCase):
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_spawn_zombie(self):
         _parent, zombie = self.spawn_zombie()
-        self.assertEqual(zombie.status(), psutil.STATUS_ZOMBIE)
+        assert zombie.status() == psutil.STATUS_ZOMBIE
 
     def test_terminate(self):
         # by subprocess.Popen
@@ -288,23 +295,23 @@ class TestNetUtils(PsutilTestCase):
     def bind_socket(self):
         port = get_free_port()
         with contextlib.closing(bind_socket(addr=('', port))) as s:
-            self.assertEqual(s.getsockname()[1], port)
+            assert s.getsockname()[1] == port
 
     @unittest.skipIf(not POSIX, "POSIX only")
     def test_bind_unix_socket(self):
         name = self.get_testfn()
         sock = bind_unix_socket(name)
         with contextlib.closing(sock):
-            self.assertEqual(sock.family, socket.AF_UNIX)
-            self.assertEqual(sock.type, socket.SOCK_STREAM)
-            self.assertEqual(sock.getsockname(), name)
+            assert sock.family == socket.AF_UNIX
+            assert sock.type == socket.SOCK_STREAM
+            assert sock.getsockname() == name
             assert os.path.exists(name)
             assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
         name = self.get_testfn()
         sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
         with contextlib.closing(sock):
-            self.assertEqual(sock.type, socket.SOCK_DGRAM)
+            assert sock.type == socket.SOCK_DGRAM
 
     def tcp_tcp_socketpair(self):
         addr = ("127.0.0.1", get_free_port())
@@ -313,9 +320,9 @@ class TestNetUtils(PsutilTestCase):
             with contextlib.closing(client):
                 # Ensure they are connected and the positions are
                 # correct.
-                self.assertEqual(server.getsockname(), addr)
-                self.assertEqual(client.getpeername(), addr)
-                self.assertNotEqual(client.getsockname(), addr)
+                assert server.getsockname() == addr
+                assert client.getpeername() == addr
+                assert client.getsockname() != addr
 
     @unittest.skipIf(not POSIX, "POSIX only")
     @unittest.skipIf(
@@ -324,23 +331,23 @@ class TestNetUtils(PsutilTestCase):
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
-        self.assertEqual(
-            filter_proc_net_connections(p.net_connections(kind='unix')), []
+        assert (
+            filter_proc_net_connections(p.net_connections(kind='unix')) == []
         )
         name = self.get_testfn()
         server, client = unix_socketpair(name)
         try:
             assert os.path.exists(name)
             assert stat.S_ISSOCK(os.stat(name).st_mode)
-            self.assertEqual(p.num_fds() - num_fds, 2)
-            self.assertEqual(
+            assert p.num_fds() - num_fds == 2
+            assert (
                 len(
                     filter_proc_net_connections(p.net_connections(kind='unix'))
-                ),
-                2,
+                )
+                == 2
             )
-            self.assertEqual(server.getsockname(), name)
-            self.assertEqual(client.getpeername(), name)
+            assert server.getsockname() == name
+            assert client.getpeername() == name
         finally:
             client.close()
             server.close()
@@ -353,13 +360,13 @@ class TestNetUtils(PsutilTestCase):
                 fams[s.family] += 1
                 # work around http://bugs.python.org/issue30204
                 types[s.getsockopt(socket.SOL_SOCKET, socket.SO_TYPE)] += 1
-            self.assertGreaterEqual(fams[socket.AF_INET], 2)
+            assert fams[socket.AF_INET] >= 2
             if supports_ipv6():
-                self.assertGreaterEqual(fams[socket.AF_INET6], 2)
+                assert fams[socket.AF_INET6] >= 2
             if POSIX and HAS_NET_CONNECTIONS_UNIX:
-                self.assertGreaterEqual(fams[socket.AF_UNIX], 2)
-            self.assertGreaterEqual(types[socket.SOCK_STREAM], 2)
-            self.assertGreaterEqual(types[socket.SOCK_DGRAM], 2)
+                assert fams[socket.AF_UNIX] >= 2
+            assert types[socket.SOCK_STREAM] >= 2
+            assert types[socket.SOCK_DGRAM] >= 2
 
 
 @pytest.mark.xdist_group(name="serial")
@@ -371,14 +378,19 @@ class TestMemLeakClass(TestMemoryLeak):
 
         cnt = {'cnt': 0}
         self.execute(fun, times=10, warmup_times=15)
-        self.assertEqual(cnt['cnt'], 26)
+        assert cnt['cnt'] == 26
 
     def test_param_err(self):
-        self.assertRaises(ValueError, self.execute, lambda: 0, times=0)
-        self.assertRaises(ValueError, self.execute, lambda: 0, times=-1)
-        self.assertRaises(ValueError, self.execute, lambda: 0, warmup_times=-1)
-        self.assertRaises(ValueError, self.execute, lambda: 0, tolerance=-1)
-        self.assertRaises(ValueError, self.execute, lambda: 0, retries=-1)
+        with pytest.raises(ValueError):
+            self.execute(lambda: 0, times=0)
+        with pytest.raises(ValueError):
+            self.execute(lambda: 0, times=-1)
+        with pytest.raises(ValueError):
+            self.execute(lambda: 0, warmup_times=-1)
+        with pytest.raises(ValueError):
+            self.execute(lambda: 0, tolerance=-1)
+        with pytest.raises(ValueError):
+            self.execute(lambda: 0, retries=-1)
 
     @retry_on_failure()
     @unittest.skipIf(CI_TESTING, "skipped on CI")
@@ -391,9 +403,8 @@ class TestMemLeakClass(TestMemoryLeak):
 
         try:
             # will consume around 60M in total
-            self.assertRaisesRegex(
-                AssertionError, "extra-mem", self.execute, fun, times=100
-            )
+            with pytest.raises(AssertionError, match="extra-mem"):
+                self.execute(fun, times=100)
         finally:
             del ls
 
@@ -405,9 +416,8 @@ class TestMemLeakClass(TestMemoryLeak):
 
         box = []
         kind = "fd" if POSIX else "handle"
-        self.assertRaisesRegex(
-            AssertionError, "unclosed " + kind, self.execute, fun
-        )
+        with pytest.raises(AssertionError, match="unclosed " + kind):
+            self.execute(fun)
 
     def test_tolerance(self):
         def fun():
@@ -418,20 +428,20 @@ class TestMemLeakClass(TestMemoryLeak):
         self.execute(
             fun, times=times, warmup_times=0, tolerance=200 * 1024 * 1024
         )
-        self.assertEqual(len(ls), times + 1)
+        assert len(ls) == times + 1
 
     def test_execute_w_exc(self):
         def fun_1():
             1 / 0  # noqa
 
         self.execute_w_exc(ZeroDivisionError, fun_1)
-        with self.assertRaises(ZeroDivisionError):
+        with pytest.raises(ZeroDivisionError):
             self.execute_w_exc(OSError, fun_1)
 
         def fun_2():
             pass
 
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun_2)
 
 
@@ -441,12 +451,12 @@ class TestTestingUtils(PsutilTestCase):
         ns = process_namespace(p)
         ns.test()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
-        self.assertEqual(fun(), p.ppid())
+        assert fun() == p.ppid()
 
     def test_system_namespace(self):
         ns = system_namespace()
         fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
-        self.assertEqual(fun(), psutil.net_if_addrs())
+        assert fun() == psutil.net_if_addrs()
 
 
 class TestOtherUtils(PsutilTestCase):

@@ -67,12 +67,10 @@ class TestProcess(PsutilTestCase):
         hhmmss = start_ps.split(' ')[-2]
         year = start_ps.split(' ')[-1]
         start_psutil = psutil.Process(self.pid).create_time()
-        self.assertEqual(
-            hhmmss, time.strftime("%H:%M:%S", time.localtime(start_psutil))
+        assert hhmmss == time.strftime(
+            "%H:%M:%S", time.localtime(start_psutil)
         )
-        self.assertEqual(
-            year, time.strftime("%Y", time.localtime(start_psutil))
-        )
+        assert year == time.strftime("%Y", time.localtime(start_psutil))
 
 
 @unittest.skipIf(not MACOS, "MACOS only")
@@ -113,11 +111,11 @@ class TestSystemAPIs(PsutilTestCase):
 
     def test_cpu_count_logical(self):
         num = sysctl("sysctl hw.logicalcpu")
-        self.assertEqual(num, psutil.cpu_count(logical=True))
+        assert num == psutil.cpu_count(logical=True)
 
     def test_cpu_count_cores(self):
         num = sysctl("sysctl hw.physicalcpu")
-        self.assertEqual(num, psutil.cpu_count(logical=False))
+        assert num == psutil.cpu_count(logical=False)
 
     # TODO: remove this once 1892 is fixed
     @unittest.skipIf(
@@ -125,21 +123,15 @@ class TestSystemAPIs(PsutilTestCase):
     )
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
-        self.assertEqual(
-            freq.current * 1000 * 1000, sysctl("sysctl hw.cpufrequency")
-        )
-        self.assertEqual(
-            freq.min * 1000 * 1000, sysctl("sysctl hw.cpufrequency_min")
-        )
-        self.assertEqual(
-            freq.max * 1000 * 1000, sysctl("sysctl hw.cpufrequency_max")
-        )
+        assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
+        assert freq.min * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_min")
+        assert freq.max * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_max")
 
     # --- virtual mem
 
     def test_vmem_total(self):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
-        self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
+        assert sysctl_hwphymem == psutil.virtual_memory().total
 
     @retry_on_failure()
     def test_vmem_free(self):
@@ -188,10 +180,8 @@ class TestSystemAPIs(PsutilTestCase):
             except RuntimeError:
                 pass
             else:
-                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
-                self.assertEqual(
-                    stats.mtu, int(re.findall(r'mtu (\d+)', out)[0])
-                )
+                assert stats.isup == ('RUNNING' in out), out
+                assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
     # --- sensors_battery
 
@@ -202,5 +192,5 @@ class TestSystemAPIs(PsutilTestCase):
         drawing_from = re.search("Now drawing from '([^']+)'", out).group(1)
         power_plugged = drawing_from == "AC Power"
         psutil_result = psutil.sensors_battery()
-        self.assertEqual(psutil_result.power_plugged, power_plugged)
-        self.assertEqual(psutil_result.percent, int(percent))
+        assert psutil_result.power_plugged == power_plugged
+        assert psutil_result.percent == int(percent)

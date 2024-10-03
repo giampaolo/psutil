@@ -49,7 +49,7 @@ from psutil.tests import kernel_version
 
 class TestAvailConstantsAPIs(PsutilTestCase):
     def test_PROCFS_PATH(self):
-        self.assertEqual(hasattr(psutil, "PROCFS_PATH"), LINUX or SUNOS or AIX)
+        assert hasattr(psutil, "PROCFS_PATH") == (LINUX or SUNOS or AIX)
 
     def test_win_priority(self):
         ae = self.assertEqual
@@ -111,36 +111,31 @@ class TestAvailConstantsAPIs(PsutilTestCase):
 
 class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_iter(self):
-        self.assertEqual(hasattr(psutil, "win_service_iter"), WINDOWS)
+        assert hasattr(psutil, "win_service_iter") == WINDOWS
 
     def test_win_service_get(self):
-        self.assertEqual(hasattr(psutil, "win_service_get"), WINDOWS)
+        assert hasattr(psutil, "win_service_get") == WINDOWS
 
     def test_cpu_freq(self):
-        self.assertEqual(
-            hasattr(psutil, "cpu_freq"),
-            LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD,
+        assert hasattr(psutil, "cpu_freq") == (
+            LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD
         )
 
     def test_sensors_temperatures(self):
-        self.assertEqual(
-            hasattr(psutil, "sensors_temperatures"), LINUX or FREEBSD
-        )
+        assert hasattr(psutil, "sensors_temperatures") == (LINUX or FREEBSD)
 
     def test_sensors_fans(self):
-        self.assertEqual(hasattr(psutil, "sensors_fans"), LINUX)
+        assert hasattr(psutil, "sensors_fans") == LINUX
 
     def test_battery(self):
-        self.assertEqual(
-            hasattr(psutil, "sensors_battery"),
-            LINUX or WINDOWS or FREEBSD or MACOS,
+        assert hasattr(psutil, "sensors_battery") == (
+            LINUX or WINDOWS or FREEBSD or MACOS
         )
 
 
 class TestAvailProcessAPIs(PsutilTestCase):
     def test_environ(self):
-        self.assertEqual(
-            hasattr(psutil.Process, "environ"),
+        assert hasattr(psutil.Process, "environ") == (
             LINUX
             or MACOS
             or WINDOWS
@@ -148,51 +143,50 @@ class TestAvailProcessAPIs(PsutilTestCase):
             or SUNOS
             or FREEBSD
             or OPENBSD
-            or NETBSD,
+            or NETBSD
         )
 
     def test_uids(self):
-        self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
+        assert hasattr(psutil.Process, "uids") == POSIX
 
     def test_gids(self):
-        self.assertEqual(hasattr(psutil.Process, "uids"), POSIX)
+        assert hasattr(psutil.Process, "uids") == POSIX
 
     def test_terminal(self):
-        self.assertEqual(hasattr(psutil.Process, "terminal"), POSIX)
+        assert hasattr(psutil.Process, "terminal") == POSIX
 
     def test_ionice(self):
-        self.assertEqual(hasattr(psutil.Process, "ionice"), LINUX or WINDOWS)
+        assert hasattr(psutil.Process, "ionice") == (LINUX or WINDOWS)
 
     @unittest.skipIf(
         GITHUB_ACTIONS and LINUX, "unsupported on GITHUB_ACTIONS + LINUX"
     )
     def test_rlimit(self):
-        self.assertEqual(hasattr(psutil.Process, "rlimit"), LINUX or FREEBSD)
+        assert hasattr(psutil.Process, "rlimit") == (LINUX or FREEBSD)
 
     def test_io_counters(self):
         hasit = hasattr(psutil.Process, "io_counters")
-        self.assertEqual(hasit, not (MACOS or SUNOS))
+        assert hasit == (not (MACOS or SUNOS))
 
     def test_num_fds(self):
-        self.assertEqual(hasattr(psutil.Process, "num_fds"), POSIX)
+        assert hasattr(psutil.Process, "num_fds") == POSIX
 
     def test_num_handles(self):
-        self.assertEqual(hasattr(psutil.Process, "num_handles"), WINDOWS)
+        assert hasattr(psutil.Process, "num_handles") == WINDOWS
 
     def test_cpu_affinity(self):
-        self.assertEqual(
-            hasattr(psutil.Process, "cpu_affinity"),
-            LINUX or WINDOWS or FREEBSD,
+        assert hasattr(psutil.Process, "cpu_affinity") == (
+            LINUX or WINDOWS or FREEBSD
         )
 
     def test_cpu_num(self):
-        self.assertEqual(
-            hasattr(psutil.Process, "cpu_num"), LINUX or FREEBSD or SUNOS
+        assert hasattr(psutil.Process, "cpu_num") == (
+            LINUX or FREEBSD or SUNOS
         )
 
     def test_memory_maps(self):
         hasit = hasattr(psutil.Process, "memory_maps")
-        self.assertEqual(hasit, not (OPENBSD or NETBSD or AIX or MACOS))
+        assert hasit == (not (OPENBSD or NETBSD or AIX or MACOS))
 
 
 # ===================================================================
@@ -213,9 +207,9 @@ class TestSystemAPITypes(PsutilTestCase):
     def assert_ntuple_of_nums(self, nt, type_=float, gezero=True):
         assert is_namedtuple(nt)
         for n in nt:
-            self.assertIsInstance(n, type_)
+            assert isinstance(n, type_)
             if gezero:
-                self.assertGreaterEqual(n, 0)
+                assert n >= 0
 
     def test_cpu_times(self):
         self.assert_ntuple_of_nums(psutil.cpu_times())
@@ -223,15 +217,15 @@ class TestSystemAPITypes(PsutilTestCase):
             self.assert_ntuple_of_nums(nt)
 
     def test_cpu_percent(self):
-        self.assertIsInstance(psutil.cpu_percent(interval=None), float)
-        self.assertIsInstance(psutil.cpu_percent(interval=0.00001), float)
+        assert isinstance(psutil.cpu_percent(interval=None), float)
+        assert isinstance(psutil.cpu_percent(interval=0.00001), float)
 
     def test_cpu_times_percent(self):
         self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=None))
         self.assert_ntuple_of_nums(psutil.cpu_times_percent(interval=0.0001))
 
     def test_cpu_count(self):
-        self.assertIsInstance(psutil.cpu_count(), int)
+        assert isinstance(psutil.cpu_count(), int)
 
     # TODO: remove this once 1892 is fixed
     @unittest.skipIf(
@@ -246,88 +240,88 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for k, v in psutil.disk_io_counters(perdisk=True).items():
-            self.assertIsInstance(k, str)
+            assert isinstance(k, str)
             self.assert_ntuple_of_nums(v, type_=(int, long))
 
     def test_disk_partitions(self):
         # Duplicate of test_system.py. Keep it anyway.
         for disk in psutil.disk_partitions():
-            self.assertIsInstance(disk.device, str)
-            self.assertIsInstance(disk.mountpoint, str)
-            self.assertIsInstance(disk.fstype, str)
-            self.assertIsInstance(disk.opts, str)
+            assert isinstance(disk.device, str)
+            assert isinstance(disk.mountpoint, str)
+            assert isinstance(disk.fstype, str)
+            assert isinstance(disk.opts, str)
 
     @unittest.skipIf(SKIP_SYSCONS, "requires root")
     def test_net_connections(self):
         with create_sockets():
             ret = psutil.net_connections('all')
-            self.assertEqual(len(ret), len(set(ret)))
+            assert len(ret) == len(set(ret))
             for conn in ret:
                 assert is_namedtuple(conn)
 
     def test_net_if_addrs(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, addrs in psutil.net_if_addrs().items():
-            self.assertIsInstance(ifname, str)
+            assert isinstance(ifname, str)
             for addr in addrs:
                 if enum is not None and not PYPY:
-                    self.assertIsInstance(addr.family, enum.IntEnum)
+                    assert isinstance(addr.family, enum.IntEnum)
                 else:
-                    self.assertIsInstance(addr.family, int)
-                self.assertIsInstance(addr.address, str)
-                self.assertIsInstance(addr.netmask, (str, type(None)))
-                self.assertIsInstance(addr.broadcast, (str, type(None)))
+                    assert isinstance(addr.family, int)
+                assert isinstance(addr.address, str)
+                assert isinstance(addr.netmask, (str, type(None)))
+                assert isinstance(addr.broadcast, (str, type(None)))
 
     @unittest.skipIf(QEMU_USER, 'QEMU user not supported')
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, info in psutil.net_if_stats().items():
-            self.assertIsInstance(ifname, str)
-            self.assertIsInstance(info.isup, bool)
+            assert isinstance(ifname, str)
+            assert isinstance(info.isup, bool)
             if enum is not None:
-                self.assertIsInstance(info.duplex, enum.IntEnum)
+                assert isinstance(info.duplex, enum.IntEnum)
             else:
-                self.assertIsInstance(info.duplex, int)
-            self.assertIsInstance(info.speed, int)
-            self.assertIsInstance(info.mtu, int)
+                assert isinstance(info.duplex, int)
+            assert isinstance(info.speed, int)
+            assert isinstance(info.mtu, int)
 
     @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname in psutil.net_io_counters(pernic=True):
-            self.assertIsInstance(ifname, str)
+            assert isinstance(ifname, str)
 
     @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
     def test_sensors_fans(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
-            self.assertIsInstance(name, str)
+            assert isinstance(name, str)
             for unit in units:
-                self.assertIsInstance(unit.label, str)
-                self.assertIsInstance(unit.current, (float, int, type(None)))
+                assert isinstance(unit.label, str)
+                assert isinstance(unit.current, (float, int, type(None)))
 
     @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
     def test_sensors_temperatures(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():
-            self.assertIsInstance(name, str)
+            assert isinstance(name, str)
             for unit in units:
-                self.assertIsInstance(unit.label, str)
-                self.assertIsInstance(unit.current, (float, int, type(None)))
-                self.assertIsInstance(unit.high, (float, int, type(None)))
-                self.assertIsInstance(unit.critical, (float, int, type(None)))
+                assert isinstance(unit.label, str)
+                assert isinstance(unit.current, (float, int, type(None)))
+                assert isinstance(unit.high, (float, int, type(None)))
+                assert isinstance(unit.critical, (float, int, type(None)))
 
     def test_boot_time(self):
         # Duplicate of test_system.py. Keep it anyway.
-        self.assertIsInstance(psutil.boot_time(), float)
+        assert isinstance(psutil.boot_time(), float)
 
     def test_users(self):
         # Duplicate of test_system.py. Keep it anyway.
         for user in psutil.users():
-            self.assertIsInstance(user.name, str)
-            self.assertIsInstance(user.terminal, (str, type(None)))
-            self.assertIsInstance(user.host, (str, type(None)))
-            self.assertIsInstance(user.pid, (int, type(None)))
+            assert isinstance(user.name, str)
+            assert isinstance(user.terminal, (str, type(None)))
+            assert isinstance(user.host, (str, type(None)))
+            assert isinstance(user.pid, (int, type(None)))
 
 
 class TestProcessWaitType(PsutilTestCase):
@@ -336,8 +330,8 @@ class TestProcessWaitType(PsutilTestCase):
         p = psutil.Process(self.spawn_testproc().pid)
         p.terminate()
         code = p.wait()
-        self.assertEqual(code, -signal.SIGTERM)
+        assert code == -signal.SIGTERM
         if enum is not None:
-            self.assertIsInstance(code, enum.IntEnum)
+            assert isinstance(code, enum.IntEnum)
         else:
-            self.assertIsInstance(code, int)
+            assert isinstance(code, int)
