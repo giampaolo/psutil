@@ -501,9 +501,7 @@ class TestProcess(PsutilTestCase):
             with pytest.raises(IOError) as exc:
                 with open(testfn, "wb") as f:
                     f.write(b"X" * 1025)
-            assert (
-                exc.exception.errno if PY3 else exc.exception[0]
-            ) == errno.EFBIG
+            assert (exc.value.errno if PY3 else exc.value[0]) == errno.EFBIG
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)

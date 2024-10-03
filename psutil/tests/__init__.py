@@ -1253,8 +1253,7 @@ class TestMemoryLeak(PsutilTestCase):
         """
 
         def call():
-            with pytest.raises(exc):
-                fun()
+            self.assertRaises(exc, fun)
 
         self.execute(call, **kwargs)
 
