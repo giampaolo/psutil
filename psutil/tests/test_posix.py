@@ -481,10 +481,10 @@ class TestSystemAPIs(PsutilTestCase):
                     continue
                 raise
             else:
-                self.assertAlmostEqual(usage.total, total, delta=tolerance)
-                self.assertAlmostEqual(usage.used, used, delta=tolerance)
-                self.assertAlmostEqual(usage.free, free, delta=tolerance)
-                self.assertAlmostEqual(usage.percent, percent, delta=1)
+                assert abs(usage.total - total) < tolerance
+                assert abs(usage.used - used) < tolerance
+                assert abs(usage.free - free) < tolerance
+                assert abs(usage.percent - percent) < 1
 
 
 @unittest.skipIf(not POSIX, "POSIX only")

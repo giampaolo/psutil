@@ -413,7 +413,7 @@ class TestCpuAPIs(PsutilTestCase):
             assert isinstance(cp_time, float)
             assert cp_time >= 0.0
             total += cp_time
-        self.assertAlmostEqual(total, sum(times), places=6)
+        assert round(abs(total - sum(times)), 6) == 0
         str(times)
         # CPU times are always supposed to increase over time
         # or at least remain the same and that's because time
@@ -452,7 +452,7 @@ class TestCpuAPIs(PsutilTestCase):
                 assert isinstance(cp_time, float)
                 assert cp_time >= 0.0
                 total += cp_time
-            self.assertAlmostEqual(total, sum(times), places=6)
+            assert round(abs(total - sum(times)), 6) == 0
             str(times)
         assert len(psutil.cpu_times(percpu=True)[0]) == len(
             psutil.cpu_times(percpu=False)
@@ -502,10 +502,9 @@ class TestCpuAPIs(PsutilTestCase):
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
         for field in base._fields:
             with self.subTest(field=field, base=base, per_cpu=per_cpu):
-                self.assertAlmostEqual(
-                    getattr(base, field),
-                    getattr(summed_values, field),
-                    delta=1,
+                assert (
+                    abs(getattr(base, field) - getattr(summed_values, field))
+                    < 1
                 )
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
@@ -641,15 +640,11 @@ class TestDiskAPIs(PsutilTestCase):
             # py >= 3.3, see: http://bugs.python.org/issue12442
             shutil_usage = shutil.disk_usage(os.getcwd())
             tolerance = 5 * 1024 * 1024  # 5MB
-            self.assertEqual(usage.total, shutil_usage.total)
-            self.assertAlmostEqual(
-                usage.free, shutil_usage.free, delta=tolerance
-            )
+            assert usage.total == shutil_usage.total
+            assert abs(usage.free - shutil_usage.free) < tolerance
             if not MACOS_12PLUS:
                 # see https://github.com/giampaolo/psutil/issues/2147
-                self.assertAlmostEqual(
-                    usage.used, shutil_usage.used, delta=tolerance
-                )
+                assert abs(usage.used - shutil_usage.used) < tolerance
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms

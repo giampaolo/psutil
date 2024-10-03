@@ -586,15 +586,16 @@ class TestProcess(PsutilTestCase):
                 p.threads()
             except psutil.AccessDenied:
                 raise unittest.SkipTest("on OpenBSD this requires root access")
-        self.assertAlmostEqual(
-            p.cpu_times().user,
-            sum([x.user_time for x in p.threads()]),
-            delta=0.1,
+        assert (
+            abs(p.cpu_times().user - sum([x.user_time for x in p.threads()]))
+            < 0.1
         )
-        self.assertAlmostEqual(
-            p.cpu_times().system,
-            sum([x.system_time for x in p.threads()]),
-            delta=0.1,
+        assert (
+            abs(
+                p.cpu_times().system
+                - sum([x.system_time for x in p.threads()])
+            )
+            < 0.1
         )
 
     @retry_on_failure()

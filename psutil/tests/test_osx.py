@@ -98,14 +98,10 @@ class TestSystemAPIs(PsutilTestCase):
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             dev, total, used, free = df(part.mountpoint)
-            self.assertEqual(part.device, dev)
-            self.assertEqual(usage.total, total)
-            self.assertAlmostEqual(
-                usage.free, free, delta=TOLERANCE_DISK_USAGE
-            )
-            self.assertAlmostEqual(
-                usage.used, used, delta=TOLERANCE_DISK_USAGE
-            )
+            assert part.device == dev
+            assert usage.total == total
+            assert abs(usage.free - free) < TOLERANCE_DISK_USAGE
+            assert abs(usage.used - used) < TOLERANCE_DISK_USAGE
 
     # --- cpu
 
@@ -137,25 +133,25 @@ class TestSystemAPIs(PsutilTestCase):
     def test_vmem_free(self):
         vmstat_val = vm_stat("free")
         psutil_val = psutil.virtual_memory().free
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_vmem_active(self):
         vmstat_val = vm_stat("active")
         psutil_val = psutil.virtual_memory().active
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_vmem_inactive(self):
         vmstat_val = vm_stat("inactive")
         psutil_val = psutil.virtual_memory().inactive
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_vmem_wired(self):
         vmstat_val = vm_stat("wired")
         psutil_val = psutil.virtual_memory().wired
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     # --- swap mem
 
@@ -163,13 +159,13 @@ class TestSystemAPIs(PsutilTestCase):
     def test_swapmem_sin(self):
         vmstat_val = vm_stat("Pageins")
         psutil_val = psutil.swap_memory().sin
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_swapmem_sout(self):
         vmstat_val = vm_stat("Pageout")
         psutil_val = psutil.swap_memory().sout
-        self.assertAlmostEqual(psutil_val, vmstat_val, delta=TOLERANCE_SYS_MEM)
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     # --- network
 

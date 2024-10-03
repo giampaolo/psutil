@@ -161,10 +161,9 @@ class TestSystemAPIs(WindowsTestCase):
 
     def test_free_phymem(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
-        self.assertAlmostEqual(
-            int(w.AvailableBytes),
-            psutil.virtual_memory().free,
-            delta=TOLERANCE_SYS_MEM,
+        assert (
+            abs(int(w.AvailableBytes) - psutil.virtual_memory().free)
+            < TOLERANCE_SYS_MEM
         )
 
     def test_total_swapmem(self):
@@ -184,11 +183,9 @@ class TestSystemAPIs(WindowsTestCase):
             percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
             # exact percent may change but should be reasonable
             # assert within +/- 5% and between 0 and 100%
-            self.assertGreaterEqual(psutil.swap_memory().percent, 0)
-            self.assertAlmostEqual(
-                psutil.swap_memory().percent, percentSwap, delta=5
-            )
-            self.assertLessEqual(psutil.swap_memory().percent, 100)
+            assert psutil.swap_memory().percent >= 0
+            assert abs(psutil.swap_memory().percent - percentSwap) < 5
+            assert psutil.swap_memory().percent <= 100
 
     # @unittest.skipIf(wmi is None, "wmi module is not installed")
     # def test__UPTIME(self):
@@ -250,15 +247,11 @@ class TestSystemAPIs(WindowsTestCase):
                 continue
             sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
             psutil_value = psutil.disk_usage(disk.mountpoint)
-            self.assertAlmostEqual(
-                sys_value[0], psutil_value.free, delta=TOLERANCE_DISK_USAGE
+            assert abs(sys_value[0] - psutil_value.free) < TOLERANCE_DISK_USAGE
+            assert (
+                abs(sys_value[1] - psutil_value.total) < TOLERANCE_DISK_USAGE
             )
-            self.assertAlmostEqual(
-                sys_value[1], psutil_value.total, delta=TOLERANCE_DISK_USAGE
-            )
-            self.assertEqual(
-                psutil_value.used, psutil_value.total - psutil_value.free
-            )
+            assert psutil_value.used == psutil_value.total - psutil_value.free
 
     def test_disk_partitions(self):
         sys_value = [
@@ -324,10 +317,9 @@ class TestSensorsBattery(WindowsTestCase):
         w = wmi.WMI()
         battery_wmi = w.query('select * from Win32_Battery')[0]
         battery_psutil = psutil.sensors_battery()
-        self.assertAlmostEqual(
-            battery_psutil.percent,
-            battery_wmi.EstimatedChargeRemaining,
-            delta=1,
+        assert (
+            abs(battery_psutil.percent - battery_wmi.EstimatedChargeRemaining)
+            < 1
         )
 
     @unittest.skipIf(not HAS_BATTERY, "no battery")
@@ -687,9 +679,9 @@ class TestDualProcessImplementation(PsutilTestCase):
             mem_2 = psutil.Process(self.pid).memory_info()
             assert len(mem_1) == len(mem_2)
             for i in range(len(mem_1)):
-                self.assertGreaterEqual(mem_1[i], 0)
-                self.assertGreaterEqual(mem_2[i], 0)
-                self.assertAlmostEqual(mem_1[i], mem_2[i], delta=512)
+                assert mem_1[i] >= 0
+                assert mem_2[i] >= 0
+                assert abs(mem_1[i] - mem_2[i]) < 512
             assert fun.called
 
     def test_create_time(self):
@@ -709,12 +701,8 @@ class TestDualProcessImplementation(PsutilTestCase):
         ) as fun:
             cpu_times_2 = psutil.Process(self.pid).cpu_times()
             assert fun.called
-            self.assertAlmostEqual(
-                cpu_times_1.user, cpu_times_2.user, delta=0.01
-            )
-            self.assertAlmostEqual(
-                cpu_times_1.system, cpu_times_2.system, delta=0.01
-            )
+            assert abs(cpu_times_1.user - cpu_times_2.user) < 0.01
+            assert abs(cpu_times_1.system - cpu_times_2.system) < 0.01
 
     def test_io_counters(self):
         io_counters_1 = psutil.Process(self.pid).io_counters()
@@ -724,9 +712,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         ) as fun:
             io_counters_2 = psutil.Process(self.pid).io_counters()
             for i in range(len(io_counters_1)):
-                self.assertAlmostEqual(
-                    io_counters_1[i], io_counters_2[i], delta=5
-                )
+                assert abs(io_counters_1[i] - io_counters_2[i]) < 5
             assert fun.called
 
     def test_num_handles(self):

@@ -292,17 +292,13 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
             raise unittest.SkipTest("free version too recent")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
-        self.assertAlmostEqual(
-            cli_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_free(self):
         cli_value = free_physmem().free
         psutil_value = psutil.virtual_memory().free
-        self.assertAlmostEqual(
-            cli_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_shared(self):
@@ -311,12 +307,9 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         if free_value == 0:
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
-        self.assertAlmostEqual(
-            free_value,
-            psutil_value,
-            delta=TOLERANCE_SYS_MEM,
-            msg='%s %s \n%s' % (free_value, psutil_value, free.output),
-        )
+        assert (
+            abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
+        ), '%s %s \n%s' % (free_value, psutil_value, free.output)
 
     @retry_on_failure()
     def test_available(self):
@@ -329,12 +322,9 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         else:
             free_value = int(lines[1].split()[-1])
             psutil_value = psutil.virtual_memory().available
-            self.assertAlmostEqual(
-                free_value,
-                psutil_value,
-                delta=TOLERANCE_SYS_MEM,
-                msg='%s %s \n%s' % (free_value, psutil_value, out),
-            )
+            assert (
+                abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
+            ), '%s %s \n%s' % (free_value, psutil_value, out)
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -342,9 +332,7 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
     def test_total(self):
         vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
-        self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_used(self):
@@ -362,41 +350,31 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
             raise unittest.SkipTest("free version too recent")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
-        self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_free(self):
         vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
-        self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_buffers(self):
         vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
-        self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_active(self):
         vmstat_value = vmstat('active memory') * 1024
         psutil_value = psutil.virtual_memory().active
-        self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_inactive(self):
         vmstat_value = vmstat('inactive memory') * 1024
         psutil_value = psutil.virtual_memory().inactive
-        self.assertAlmostEqual(
-            vmstat_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -621,25 +599,19 @@ class TestSystemSwapMemory(PsutilTestCase):
     def test_total(self):
         free_value = free_swap().total
         psutil_value = psutil.swap_memory().total
-        return self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_used(self):
         free_value = free_swap().used
         psutil_value = psutil.swap_memory().used
-        return self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
     def test_free(self):
         free_value = free_swap().free
         psutil_value = psutil.swap_memory().free
-        return self.assertAlmostEqual(
-            free_value, psutil_value, delta=TOLERANCE_SYS_MEM
-        )
+        assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
     def test_missing_sin_sout(self):
         with mock.patch('psutil._common.open', create=True) as m:
@@ -689,8 +661,8 @@ class TestSystemSwapMemory(PsutilTestCase):
         _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
         total *= unit_multiplier
         free *= unit_multiplier
-        self.assertEqual(swap.total, total)
-        self.assertAlmostEqual(swap.free, free, delta=TOLERANCE_SYS_MEM)
+        assert swap.total == total
+        assert abs(swap.free - free) < TOLERANCE_SYS_MEM
 
     def test_emulate_meminfo_has_no_metrics(self):
         # Emulate a case where /proc/meminfo provides no swap metrics
@@ -988,7 +960,7 @@ class TestSystemCPUStats(PsutilTestCase):
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
-        self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+        assert abs(vmstat_value - psutil_value) < 500
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -999,9 +971,9 @@ class TestLoadAvg(PsutilTestCase):
         with open("/proc/loadavg") as f:
             proc_value = f.read().split()
 
-        self.assertAlmostEqual(float(proc_value[0]), psutil_value[0], delta=1)
-        self.assertAlmostEqual(float(proc_value[1]), psutil_value[1], delta=1)
-        self.assertAlmostEqual(float(proc_value[2]), psutil_value[2], delta=1)
+        assert abs(float(proc_value[0]) - psutil_value[0]) < 1
+        assert abs(float(proc_value[1]) - psutil_value[1]) < 1
+        assert abs(float(proc_value[2]) - psutil_value[2]) < 1
 
 
 # =====================================================================
@@ -1133,30 +1105,22 @@ class TestSystemNetIOCounters(PsutilTestCase):
                 ifconfig_ret = ifconfig(name)
             except RuntimeError:
                 continue
-            self.assertAlmostEqual(
-                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 10
+            assert (
+                abs(stats.bytes_recv - ifconfig_ret['bytes_recv']) < 1024 * 10
             )
-            self.assertAlmostEqual(
-                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 10
+            assert (
+                abs(stats.bytes_sent - ifconfig_ret['bytes_sent']) < 1024 * 10
             )
-            self.assertAlmostEqual(
-                stats.packets_recv, ifconfig_ret['packets_recv'], delta=1024
+            assert (
+                abs(stats.packets_recv - ifconfig_ret['packets_recv']) < 1024
             )
-            self.assertAlmostEqual(
-                stats.packets_sent, ifconfig_ret['packets_sent'], delta=1024
+            assert (
+                abs(stats.packets_sent - ifconfig_ret['packets_sent']) < 1024
             )
-            self.assertAlmostEqual(
-                stats.errin, ifconfig_ret['errin'], delta=10
-            )
-            self.assertAlmostEqual(
-                stats.errout, ifconfig_ret['errout'], delta=10
-            )
-            self.assertAlmostEqual(
-                stats.dropin, ifconfig_ret['dropin'], delta=10
-            )
-            self.assertAlmostEqual(
-                stats.dropout, ifconfig_ret['dropout'], delta=10
-            )
+            assert abs(stats.errin - ifconfig_ret['errin']) < 10
+            assert abs(stats.errout - ifconfig_ret['errout']) < 10
+            assert abs(stats.dropin - ifconfig_ret['dropin']) < 10
+            assert abs(stats.dropout - ifconfig_ret['dropout']) < 10
 
 
 @unittest.skipIf(not LINUX, "LINUX only")
@@ -1211,13 +1175,9 @@ class TestSystemDiskPartitions(PsutilTestCase):
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             _, total, used, free = df(part.mountpoint)
-            self.assertEqual(usage.total, total)
-            self.assertAlmostEqual(
-                usage.free, free, delta=TOLERANCE_DISK_USAGE
-            )
-            self.assertAlmostEqual(
-                usage.used, used, delta=TOLERANCE_DISK_USAGE
-            )
+            assert usage.total == total
+            assert abs(usage.free - free) < TOLERANCE_DISK_USAGE
+            assert abs(usage.used - used) < TOLERANCE_DISK_USAGE
 
     def test_zfs_fs(self):
         # Test that ZFS partitions are returned.
@@ -1657,7 +1617,7 @@ class TestSensorsBattery(PsutilTestCase):
         out = sh("acpi -b")
         acpi_value = int(out.split(",")[1].strip().replace('%', ''))
         psutil_value = psutil.sensors_battery().percent
-        self.assertAlmostEqual(acpi_value, psutil_value, delta=1)
+        assert abs(acpi_value - psutil_value) < 1
 
     def test_emulate_power_plugged(self):
         # Pretend the AC power cable is connected.
@@ -1910,13 +1870,12 @@ class TestProcess(PsutilTestCase):
         sproc = self.spawn_testproc()
         uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
         maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
-        self.assertAlmostEqual(
-            uss,
-            sum([x.private_dirty + x.private_clean for x in maps]),
-            delta=4096,
+        assert (
+            abs(uss - sum([x.private_dirty + x.private_clean for x in maps]))
+            < 4096
         )
-        self.assertAlmostEqual(pss, sum([x.pss for x in maps]), delta=4096)
-        self.assertAlmostEqual(swap, sum([x.swap for x in maps]), delta=4096)
+        assert abs(pss - sum([x.pss for x in maps])) < 4096
+        assert abs(swap - sum([x.swap for x in maps])) < 4096
 
     def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222

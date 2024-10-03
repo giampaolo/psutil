@@ -40,16 +40,10 @@ class AIXSpecificTestCase(PsutilTestCase):
         # we're seeing differences of ~1.2 MB. 2 MB is still a good tolerance
         # when compared to GBs.
         TOLERANCE_SYS_MEM = 2 * KB * KB  # 2 MB
-        self.assertEqual(psutil_result.total, total)
-        self.assertAlmostEqual(
-            psutil_result.used, used, delta=TOLERANCE_SYS_MEM
-        )
-        self.assertAlmostEqual(
-            psutil_result.available, available, delta=TOLERANCE_SYS_MEM
-        )
-        self.assertAlmostEqual(
-            psutil_result.free, free, delta=TOLERANCE_SYS_MEM
-        )
+        assert psutil_result.total == total
+        assert abs(psutil_result.used - used) < TOLERANCE_SYS_MEM
+        assert abs(psutil_result.available - available) < TOLERANCE_SYS_MEM
+        assert abs(psutil_result.free - free) < TOLERANCE_SYS_MEM
 
     def test_swap_memory(self):
         out = sh('/usr/sbin/lsps -a')
@@ -91,25 +85,21 @@ class AIXSpecificTestCase(PsutilTestCase):
         # numbers are usually in the millions so 1000 is ok for tolerance
         CPU_STATS_TOLERANCE = 1000
         psutil_result = psutil.cpu_stats()
-        self.assertAlmostEqual(
-            psutil_result.ctx_switches,
-            int(matchobj.group("cs")),
-            delta=CPU_STATS_TOLERANCE,
+        assert (
+            abs(psutil_result.ctx_switches - int(matchobj.group("cs")))
+            < CPU_STATS_TOLERANCE
         )
-        self.assertAlmostEqual(
-            psutil_result.syscalls,
-            int(matchobj.group("sysc")),
-            delta=CPU_STATS_TOLERANCE,
+        assert (
+            abs(psutil_result.syscalls - int(matchobj.group("sysc")))
+            < CPU_STATS_TOLERANCE
         )
-        self.assertAlmostEqual(
-            psutil_result.interrupts,
-            int(matchobj.group("dev")),
-            delta=CPU_STATS_TOLERANCE,
+        assert (
+            abs(psutil_result.interrupts - int(matchobj.group("dev")))
+            < CPU_STATS_TOLERANCE
         )
-        self.assertAlmostEqual(
-            psutil_result.soft_interrupts,
-            int(matchobj.group("soft")),
-            delta=CPU_STATS_TOLERANCE,
+        assert (
+            abs(psutil_result.soft_interrupts - int(matchobj.group("soft")))
+            < CPU_STATS_TOLERANCE
         )
 
     def test_cpu_count_logical(self):
