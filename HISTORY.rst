@@ -7,6 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 2446_: use pytest instead of unittest.
 - 2448_: add ``make install-sysdeps`` target to install the necessary system
   dependencies (python-dev, gcc, etc.) on all supported UNIX flavors.
 - 2449_: add ``make install-pydeps-test`` and ``make install-pydeps-dev``

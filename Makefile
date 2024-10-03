@@ -242,7 +242,7 @@ fix-black:
 	@git ls-files '*.py' | xargs $(PYTHON) -m black
 
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix $(ARGS)
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix --output-format=concise $(ARGS)
 
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort

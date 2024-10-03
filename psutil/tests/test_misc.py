@@ -18,6 +18,8 @@ import stat
 import sys
 import unittest
 
+import pytest
+
 import psutil
 import psutil.tests
 from psutil import POSIX
@@ -60,26 +62,24 @@ from psutil.tests import system_namespace
 
 class TestSpecialMethods(PsutilTestCase):
     def test_check_pid_range(self):
-        with self.assertRaises(OverflowError):
+        with pytest.raises(OverflowError):
             psutil._psplatform.cext.check_pid_range(2**128)
-        with self.assertRaises(psutil.NoSuchProcess):
+        with pytest.raises(psutil.NoSuchProcess):
             psutil.Process(2**128)
 
     def test_process__repr__(self, func=repr):
         p = psutil.Process(self.spawn_testproc().pid)
         r = func(p)
-        self.assertIn("psutil.Process", r)
-        self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn(
-            "name='%s'" % str(p.name()), r.replace("name=u'", "name='")
-        )
-        self.assertIn("status=", r)
-        self.assertNotIn("exitcode=", r)
+        assert "psutil.Process" in r
+        assert "pid=%s" % p.pid in r
+        assert "name='%s'" % str(p.name()) in r.replace("name=u'", "name='")
+        assert "status=" in r
+        assert "exitcode=" not in r
         p.terminate()
         p.wait()
         r = func(p)
-        self.assertIn("status='terminated'", r)
-        self.assertIn("exitcode=", r)
+        assert "status='terminated'" in r
+        assert "exitcode=" in r
 
         with mock.patch.object(
             psutil.Process,
@@ -88,9 +88,9 @@ class TestSpecialMethods(PsutilTestCase):
         ):
             p = psutil.Process()
             r = func(p)
-            self.assertIn("pid=%s" % p.pid, r)
-            self.assertIn("status='zombie'", r)
-            self.assertNotIn("name=", r)
+            assert "pid=%s" % p.pid in r
+            assert "status='zombie'" in r
+            assert "name=" not in r
         with mock.patch.object(
             psutil.Process,
             "name",
@@ -98,9 +98,9 @@ class TestSpecialMethods(PsutilTestCase):
         ):
             p = psutil.Process()
             r = func(p)
-            self.assertIn("pid=%s" % p.pid, r)
-            self.assertIn("terminated", r)
-            self.assertNotIn("name=", r)
+            assert "pid=%s" % p.pid in r
+            assert "terminated" in r
+            assert "name=" not in r
         with mock.patch.object(
             psutil.Process,
             "name",
@@ -108,106 +108,104 @@ class TestSpecialMethods(PsutilTestCase):
         ):
             p = psutil.Process()
             r = func(p)
-            self.assertIn("pid=%s" % p.pid, r)
-            self.assertNotIn("name=", r)
+            assert "pid=%s" % p.pid in r
+            assert "name=" not in r
 
     def test_process__str__(self):
         self.test_process__repr__(func=str)
 
     def test_error__repr__(self):
-        self.assertEqual(repr(psutil.Error()), "psutil.Error()")
+        assert repr(psutil.Error()) == "psutil.Error()"
 
     def test_error__str__(self):
-        self.assertEqual(str(psutil.Error()), "")
+        assert str(psutil.Error()) == ""  # noqa
 
     def test_no_such_process__repr__(self):
-        self.assertEqual(
-            repr(psutil.NoSuchProcess(321)),
-            "psutil.NoSuchProcess(pid=321, msg='process no longer exists')",
+        assert (
+            repr(psutil.NoSuchProcess(321))
+            == "psutil.NoSuchProcess(pid=321, msg='process no longer exists')"
         )
-        self.assertEqual(
-            repr(psutil.NoSuchProcess(321, name="name", msg="msg")),
-            "psutil.NoSuchProcess(pid=321, name='name', msg='msg')",
+        assert (
+            repr(psutil.NoSuchProcess(321, name="name", msg="msg"))
+            == "psutil.NoSuchProcess(pid=321, name='name', msg='msg')"
         )
 
     def test_no_such_process__str__(self):
-        self.assertEqual(
-            str(psutil.NoSuchProcess(321)),
-            "process no longer exists (pid=321)",
+        assert (
+            str(psutil.NoSuchProcess(321))
+            == "process no longer exists (pid=321)"
         )
-        self.assertEqual(
-            str(psutil.NoSuchProcess(321, name="name", msg="msg")),
-            "msg (pid=321, name='name')",
+        assert (
+            str(psutil.NoSuchProcess(321, name="name", msg="msg"))
+            == "msg (pid=321, name='name')"
         )
 
     def test_zombie_process__repr__(self):
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321)),
-            'psutil.ZombieProcess(pid=321, msg="PID still '
-            'exists but it\'s a zombie")',
+        assert (
+            repr(psutil.ZombieProcess(321))
+            == 'psutil.ZombieProcess(pid=321, msg="PID still '
+            'exists but it\'s a zombie")'
         )
-        self.assertEqual(
-            repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
-            "psutil.ZombieProcess(pid=321, ppid=320, name='name', msg='foo')",
+        assert (
+            repr(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo"))
+            == "psutil.ZombieProcess(pid=321, ppid=320, name='name',"
+            " msg='foo')"
         )
 
     def test_zombie_process__str__(self):
-        self.assertEqual(
-            str(psutil.ZombieProcess(321)),
-            "PID still exists but it's a zombie (pid=321)",
+        assert (
+            str(psutil.ZombieProcess(321))
+            == "PID still exists but it's a zombie (pid=321)"
         )
-        self.assertEqual(
-            str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo")),
-            "foo (pid=321, ppid=320, name='name')",
+        assert (
+            str(psutil.ZombieProcess(321, name="name", ppid=320, msg="foo"))
+            == "foo (pid=321, ppid=320, name='name')"
         )
 
     def test_access_denied__repr__(self):
-        self.assertEqual(
-            repr(psutil.AccessDenied(321)), "psutil.AccessDenied(pid=321)"
-        )
-        self.assertEqual(
-            repr(psutil.AccessDenied(321, name="name", msg="msg")),
-            "psutil.AccessDenied(pid=321, name='name', msg='msg')",
+        assert repr(psutil.AccessDenied(321)) == "psutil.AccessDenied(pid=321)"
+        assert (
+            repr(psutil.AccessDenied(321, name="name", msg="msg"))
+            == "psutil.AccessDenied(pid=321, name='name', msg='msg')"
         )
 
     def test_access_denied__str__(self):
-        self.assertEqual(str(psutil.AccessDenied(321)), "(pid=321)")
-        self.assertEqual(
-            str(psutil.AccessDenied(321, name="name", msg="msg")),
-            "msg (pid=321, name='name')",
+        assert str(psutil.AccessDenied(321)) == "(pid=321)"
+        assert (
+            str(psutil.AccessDenied(321, name="name", msg="msg"))
+            == "msg (pid=321, name='name')"
         )
 
     def test_timeout_expired__repr__(self):
-        self.assertEqual(
-            repr(psutil.TimeoutExpired(5)),
-            "psutil.TimeoutExpired(seconds=5, msg='timeout after 5 seconds')",
+        assert (
+            repr(psutil.TimeoutExpired(5))
+            == "psutil.TimeoutExpired(seconds=5, msg='timeout after 5"
+            " seconds')"
         )
-        self.assertEqual(
-            repr(psutil.TimeoutExpired(5, pid=321, name="name")),
-            "psutil.TimeoutExpired(pid=321, name='name', seconds=5, "
-            "msg='timeout after 5 seconds')",
+        assert (
+            repr(psutil.TimeoutExpired(5, pid=321, name="name"))
+            == "psutil.TimeoutExpired(pid=321, name='name', seconds=5, "
+            "msg='timeout after 5 seconds')"
         )
 
     def test_timeout_expired__str__(self):
-        self.assertEqual(
-            str(psutil.TimeoutExpired(5)), "timeout after 5 seconds"
-        )
-        self.assertEqual(
-            str(psutil.TimeoutExpired(5, pid=321, name="name")),
-            "timeout after 5 seconds (pid=321, name='name')",
+        assert str(psutil.TimeoutExpired(5)) == "timeout after 5 seconds"
+        assert (
+            str(psutil.TimeoutExpired(5, pid=321, name="name"))
+            == "timeout after 5 seconds (pid=321, name='name')"
         )
 
     def test_process__eq__(self):
         p1 = psutil.Process()
         p2 = psutil.Process()
-        self.assertEqual(p1, p2)
+        assert p1 == p2
         p2._ident = (0, 0)
-        self.assertNotEqual(p1, p2)
-        self.assertNotEqual(p1, 'foo')
+        assert p1 != p2
+        assert p1 != 'foo'
 
     def test_process__hash__(self):
         s = set([psutil.Process(), psutil.Process()])
-        self.assertEqual(len(s), 1)
+        assert len(s) == 1
 
 
 # ===================================================================
@@ -247,18 +245,19 @@ class TestMisc(PsutilTestCase):
         # Can't do `from psutil import *` as it won't work on python 3
         # so we simply iterate over __all__.
         for name in psutil.__all__:
-            self.assertIn(name, dir_psutil)
+            assert name in dir_psutil
 
     def test_version(self):
-        self.assertEqual(
-            '.'.join([str(x) for x in psutil.version_info]), psutil.__version__
+        assert (
+            '.'.join([str(x) for x in psutil.version_info])
+            == psutil.__version__
         )
 
     def test_process_as_dict_no_new_names(self):
         # See https://github.com/giampaolo/psutil/issues/813
         p = psutil.Process()
         p.foo = '1'
-        self.assertNotIn('foo', p.as_dict())
+        assert 'foo' not in p.as_dict()
 
     def test_serialization(self):
         def check(ret):
@@ -266,7 +265,7 @@ class TestMisc(PsutilTestCase):
 
             a = pickle.dumps(ret)
             b = pickle.loads(a)
-            self.assertEqual(ret, b)
+            assert ret == b
 
         # --- process APIs
 
@@ -307,39 +306,39 @@ class TestMisc(PsutilTestCase):
                 psutil.NoSuchProcess(pid=4567, name='name', msg='msg')
             )
         )
-        self.assertIsInstance(b, psutil.NoSuchProcess)
-        self.assertEqual(b.pid, 4567)
-        self.assertEqual(b.name, 'name')
-        self.assertEqual(b.msg, 'msg')
+        assert isinstance(b, psutil.NoSuchProcess)
+        assert b.pid == 4567
+        assert b.name == 'name'
+        assert b.msg == 'msg'
 
         b = pickle.loads(
             pickle.dumps(
                 psutil.ZombieProcess(pid=4567, name='name', ppid=42, msg='msg')
             )
         )
-        self.assertIsInstance(b, psutil.ZombieProcess)
-        self.assertEqual(b.pid, 4567)
-        self.assertEqual(b.ppid, 42)
-        self.assertEqual(b.name, 'name')
-        self.assertEqual(b.msg, 'msg')
+        assert isinstance(b, psutil.ZombieProcess)
+        assert b.pid == 4567
+        assert b.ppid == 42
+        assert b.name == 'name'
+        assert b.msg == 'msg'
 
         b = pickle.loads(
             pickle.dumps(psutil.AccessDenied(pid=123, name='name', msg='msg'))
         )
-        self.assertIsInstance(b, psutil.AccessDenied)
-        self.assertEqual(b.pid, 123)
-        self.assertEqual(b.name, 'name')
-        self.assertEqual(b.msg, 'msg')
+        assert isinstance(b, psutil.AccessDenied)
+        assert b.pid == 123
+        assert b.name == 'name'
+        assert b.msg == 'msg'
 
         b = pickle.loads(
             pickle.dumps(
                 psutil.TimeoutExpired(seconds=33, pid=4567, name='name')
             )
         )
-        self.assertIsInstance(b, psutil.TimeoutExpired)
-        self.assertEqual(b.seconds, 33)
-        self.assertEqual(b.pid, 4567)
-        self.assertEqual(b.name, 'name')
+        assert isinstance(b, psutil.TimeoutExpired)
+        assert b.seconds == 33
+        assert b.pid == 4567
+        assert b.name == 'name'
 
     # # XXX: https://github.com/pypa/setuptools/pull/2896
     # @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
@@ -367,7 +366,7 @@ class TestMisc(PsutilTestCase):
         with mock.patch.object(
             psutil.Process, 'create_time', side_effect=ValueError
         ) as meth:
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 psutil.Process()
             assert meth.called
 
@@ -376,9 +375,9 @@ class TestMisc(PsutilTestCase):
         with mock.patch(
             "psutil._psplatform.cext.version", return_value="0.0.0"
         ):
-            with self.assertRaises(ImportError) as cm:
+            with pytest.raises(ImportError) as cm:
                 reload_module(psutil)
-            self.assertIn("version conflict", str(cm.exception).lower())
+            assert "version conflict" in str(cm.value).lower()
 
 
 # ===================================================================
@@ -396,32 +395,30 @@ class TestMemoizeDecorator(PsutilTestCase):
         # no args
         for _ in range(2):
             ret = obj()
-            self.assertEqual(self.calls, [((), {})])
+            assert self.calls == [((), {})]
             if expected_retval is not None:
-                self.assertEqual(ret, expected_retval)
+                assert ret == expected_retval
         # with args
         for _ in range(2):
             ret = obj(1)
-            self.assertEqual(self.calls, [((), {}), ((1,), {})])
+            assert self.calls == [((), {}), ((1,), {})]
             if expected_retval is not None:
-                self.assertEqual(ret, expected_retval)
+                assert ret == expected_retval
         # with args + kwargs
         for _ in range(2):
             ret = obj(1, bar=2)
-            self.assertEqual(
-                self.calls, [((), {}), ((1,), {}), ((1,), {'bar': 2})]
-            )
+            assert self.calls == [((), {}), ((1,), {}), ((1,), {'bar': 2})]
             if expected_retval is not None:
-                self.assertEqual(ret, expected_retval)
+                assert ret == expected_retval
         # clear cache
-        self.assertEqual(len(self.calls), 3)
+        assert len(self.calls) == 3
         obj.cache_clear()
         ret = obj()
         if expected_retval is not None:
-            self.assertEqual(ret, expected_retval)
-        self.assertEqual(len(self.calls), 4)
+            assert ret == expected_retval
+        assert len(self.calls) == 4
         # docstring
-        self.assertEqual(obj.__doc__, "My docstring.")
+        assert obj.__doc__ == "My docstring."
 
     def test_function(self):
         @memoize
@@ -446,7 +443,7 @@ class TestMemoizeDecorator(PsutilTestCase):
 
         baseclass = self
         self.run_against(Foo, expected_retval=None)
-        self.assertEqual(Foo().bar(), 22)
+        assert Foo().bar() == 22
 
     def test_class_singleton(self):
         # @memoize can be used against classes to create singletons
@@ -455,11 +452,11 @@ class TestMemoizeDecorator(PsutilTestCase):
             def __init__(self, *args, **kwargs):
                 pass
 
-        self.assertIs(Bar(), Bar())
-        self.assertEqual(id(Bar()), id(Bar()))
-        self.assertEqual(id(Bar(1)), id(Bar(1)))
-        self.assertEqual(id(Bar(1, foo=3)), id(Bar(1, foo=3)))
-        self.assertNotEqual(id(Bar(1)), id(Bar(2)))
+        assert Bar() is Bar()
+        assert id(Bar()) == id(Bar())
+        assert id(Bar(1)) == id(Bar(1))
+        assert id(Bar(1, foo=3)) == id(Bar(1, foo=3))
+        assert id(Bar(1)) != id(Bar(2))
 
     def test_staticmethod(self):
         class Foo:
@@ -499,28 +496,28 @@ class TestMemoizeDecorator(PsutilTestCase):
         for _ in range(2):
             ret = foo()
             expected = ((), {})
-            self.assertEqual(ret, expected)
-            self.assertEqual(len(calls), 1)
+            assert ret == expected
+            assert len(calls) == 1
         # with args
         for _ in range(2):
             ret = foo(1)
             expected = ((1,), {})
-            self.assertEqual(ret, expected)
-            self.assertEqual(len(calls), 2)
+            assert ret == expected
+            assert len(calls) == 2
         # with args + kwargs
         for _ in range(2):
             ret = foo(1, bar=2)
             expected = ((1,), {'bar': 2})
-            self.assertEqual(ret, expected)
-            self.assertEqual(len(calls), 3)
+            assert ret == expected
+            assert len(calls) == 3
         # clear cache
         foo.cache_clear()
         ret = foo()
         expected = ((), {})
-        self.assertEqual(ret, expected)
-        self.assertEqual(len(calls), 4)
+        assert ret == expected
+        assert len(calls) == 4
         # docstring
-        self.assertEqual(foo.__doc__, "Foo docstring.")
+        assert foo.__doc__ == "Foo docstring."
 
 
 class TestCommonModule(PsutilTestCase):
@@ -534,43 +531,42 @@ class TestCommonModule(PsutilTestCase):
         calls = []
         f.foo()
         f.foo()
-        self.assertEqual(len(calls), 2)
+        assert len(calls) == 2
 
         # activate
         calls = []
         f.foo.cache_activate(f)
         f.foo()
         f.foo()
-        self.assertEqual(len(calls), 1)
+        assert len(calls) == 1
 
         # deactivate
         calls = []
         f.foo.cache_deactivate(f)
         f.foo()
         f.foo()
-        self.assertEqual(len(calls), 2)
+        assert len(calls) == 2
 
     def test_parse_environ_block(self):
         def k(s):
             return s.upper() if WINDOWS else s
 
-        self.assertEqual(parse_environ_block("a=1\0"), {k("a"): "1"})
-        self.assertEqual(
-            parse_environ_block("a=1\0b=2\0\0"), {k("a"): "1", k("b"): "2"}
-        )
-        self.assertEqual(
-            parse_environ_block("a=1\0b=\0\0"), {k("a"): "1", k("b"): ""}
-        )
+        assert parse_environ_block("a=1\0") == {k("a"): "1"}
+        assert parse_environ_block("a=1\0b=2\0\0") == {
+            k("a"): "1",
+            k("b"): "2",
+        }
+        assert parse_environ_block("a=1\0b=\0\0") == {k("a"): "1", k("b"): ""}
         # ignore everything after \0\0
-        self.assertEqual(
-            parse_environ_block("a=1\0b=2\0\0c=3\0"),
-            {k("a"): "1", k("b"): "2"},
-        )
+        assert parse_environ_block("a=1\0b=2\0\0c=3\0") == {
+            k("a"): "1",
+            k("b"): "2",
+        }
         # ignore everything that is not an assignment
-        self.assertEqual(parse_environ_block("xxx\0a=1\0"), {k("a"): "1"})
-        self.assertEqual(parse_environ_block("a=1\0=b=2\0"), {k("a"): "1"})
+        assert parse_environ_block("xxx\0a=1\0") == {k("a"): "1"}
+        assert parse_environ_block("a=1\0=b=2\0") == {k("a"): "1"}
         # do not fail if the block is incomplete
-        self.assertEqual(parse_environ_block("a=1\0b=2"), {k("a"): "1"})
+        assert parse_environ_block("a=1\0b=2") == {k("a"): "1"}
 
     def test_supports_ipv6(self):
         self.addCleanup(supports_ipv6.cache_clear)
@@ -604,7 +600,7 @@ class TestCommonModule(PsutilTestCase):
                 supports_ipv6.cache_clear()
                 assert s.called
         else:
-            with self.assertRaises(socket.error):
+            with pytest.raises(socket.error):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
                 try:
                     sock.bind(("::1", 0))
@@ -618,11 +614,13 @@ class TestCommonModule(PsutilTestCase):
         with mock.patch(
             'psutil._common.os.stat', side_effect=OSError(errno.EPERM, "foo")
         ):
-            self.assertRaises(OSError, isfile_strict, this_file)
+            with pytest.raises(OSError):
+                isfile_strict(this_file)
         with mock.patch(
             'psutil._common.os.stat', side_effect=OSError(errno.EACCES, "foo")
         ):
-            self.assertRaises(OSError, isfile_strict, this_file)
+            with pytest.raises(OSError):
+                isfile_strict(this_file)
         with mock.patch(
             'psutil._common.os.stat', side_effect=OSError(errno.ENOENT, "foo")
         ):
@@ -641,15 +639,15 @@ class TestCommonModule(PsutilTestCase):
             sys.stderr.flush()
         msg = f.getvalue()
         assert msg.startswith("psutil-debug"), msg
-        self.assertIn("hello", msg)
-        self.assertIn(__file__.replace('.pyc', '.py'), msg)
+        assert "hello" in msg
+        assert __file__.replace('.pyc', '.py') in msg
 
         # supposed to use repr(exc)
         with redirect_stderr(StringIO()) as f:
             debug(ValueError("this is an error"))
         msg = f.getvalue()
-        self.assertIn("ignoring ValueError", msg)
-        self.assertIn("'this is an error'", msg)
+        assert "ignoring ValueError" in msg
+        assert "'this is an error'" in msg
 
         # supposed to use str(exc), because of extra info about file name
         with redirect_stderr(StringIO()) as f:
@@ -657,19 +655,21 @@ class TestCommonModule(PsutilTestCase):
             exc.filename = "/foo"
             debug(exc)
         msg = f.getvalue()
-        self.assertIn("no such file", msg)
-        self.assertIn("/foo", msg)
+        assert "no such file" in msg
+        assert "/foo" in msg
 
     def test_cat_bcat(self):
         testfn = self.get_testfn()
         with open(testfn, "w") as f:
             f.write("foo")
-        self.assertEqual(cat(testfn), "foo")
-        self.assertEqual(bcat(testfn), b"foo")
-        self.assertRaises(FileNotFoundError, cat, testfn + '-invalid')
-        self.assertRaises(FileNotFoundError, bcat, testfn + '-invalid')
-        self.assertEqual(cat(testfn + '-invalid', fallback="bar"), "bar")
-        self.assertEqual(bcat(testfn + '-invalid', fallback="bar"), "bar")
+        assert cat(testfn) == "foo"
+        assert bcat(testfn) == b"foo"
+        with pytest.raises(FileNotFoundError):
+            cat(testfn + '-invalid')
+        with pytest.raises(FileNotFoundError):
+            bcat(testfn + '-invalid')
+        assert cat(testfn + '-invalid', fallback="bar") == "bar"
+        assert bcat(testfn + '-invalid', fallback="bar") == "bar"
 
 
 # ===================================================================
@@ -688,105 +688,89 @@ class TestWrapNumbers(PsutilTestCase):
 
     def test_first_call(self):
         input = {'disk1': nt(5, 5, 5)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
 
     def test_input_hasnt_changed(self):
         input = {'disk1': nt(5, 5, 5)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
+        assert wrap_numbers(input, 'disk_io') == input
 
     def test_increase_but_no_wrap(self):
         input = {'disk1': nt(5, 5, 5)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         input = {'disk1': nt(10, 15, 20)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         input = {'disk1': nt(20, 25, 30)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         input = {'disk1': nt(20, 25, 30)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
 
     def test_wrap(self):
         # let's say 100 is the threshold
         input = {'disk1': nt(100, 100, 100)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         # first wrap restarts from 10
         input = {'disk1': nt(100, 100, 10)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(100, 100, 110)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 110)}
         # then it remains the same
         input = {'disk1': nt(100, 100, 10)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(100, 100, 110)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 110)}
         # then it goes up
         input = {'disk1': nt(100, 100, 90)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(100, 100, 190)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 190)}
         # then it wraps again
         input = {'disk1': nt(100, 100, 20)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(100, 100, 210)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 210)}
         # and remains the same
         input = {'disk1': nt(100, 100, 20)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(100, 100, 210)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(100, 100, 210)}
         # now wrap another num
         input = {'disk1': nt(50, 100, 20)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(150, 100, 210)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(150, 100, 210)}
         # and again
         input = {'disk1': nt(40, 100, 20)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(190, 100, 210)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(190, 100, 210)}
         # keep it the same
         input = {'disk1': nt(40, 100, 20)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'), {'disk1': nt(190, 100, 210)}
-        )
+        assert wrap_numbers(input, 'disk_io') == {'disk1': nt(190, 100, 210)}
 
     def test_changing_keys(self):
         # Emulate a case where the second call to disk_io()
         # (or whatever) provides a new disk, then the new disk
         # disappears on the third call.
         input = {'disk1': nt(5, 5, 5)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         input = {'disk1': nt(5, 5, 5), 'disk2': nt(7, 7, 7)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         input = {'disk1': nt(8, 8, 8)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
 
     def test_changing_keys_w_wrap(self):
         input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 100)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         # disk 2 wraps
         input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 10)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'),
-            {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 110)},
-        )
+        assert wrap_numbers(input, 'disk_io') == {
+            'disk1': nt(50, 50, 50),
+            'disk2': nt(100, 100, 110),
+        }
         # disk 2 disappears
         input = {'disk1': nt(50, 50, 50)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
 
         # then it appears again; the old wrap is supposed to be
         # gone.
         input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 100)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         # remains the same
         input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 100)}
-        self.assertEqual(wrap_numbers(input, 'disk_io'), input)
+        assert wrap_numbers(input, 'disk_io') == input
         # and then wraps again
         input = {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 10)}
-        self.assertEqual(
-            wrap_numbers(input, 'disk_io'),
-            {'disk1': nt(50, 50, 50), 'disk2': nt(100, 100, 110)},
-        )
+        assert wrap_numbers(input, 'disk_io') == {
+            'disk1': nt(50, 50, 50),
+            'disk2': nt(100, 100, 110),
+        }
 
     def test_real_data(self):
         d = {
@@ -795,8 +779,8 @@ class TestWrapNumbers(PsutilTestCase):
             'nvme0n1p2': (54, 54, 2396160, 5165056, 4, 24, 30, 1207, 28),
             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348),
         }
-        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
-        self.assertEqual(wrap_numbers(d, 'disk_io'), d)
+        assert wrap_numbers(d, 'disk_io') == d
+        assert wrap_numbers(d, 'disk_io') == d
         # decrease this   ↓
         d = {
             'nvme0n1': (100, 508, 640, 1571, 5970, 1987, 2049, 451751, 47048),
@@ -805,7 +789,7 @@ class TestWrapNumbers(PsutilTestCase):
             'nvme0n1p3': (2389, 4539, 5154, 150, 4828, 1844, 2019, 398, 348),
         }
         out = wrap_numbers(d, 'disk_io')
-        self.assertEqual(out['nvme0n1'][0], 400)
+        assert out['nvme0n1'][0] == 400
 
     # --- cache tests
 
@@ -813,9 +797,9 @@ class TestWrapNumbers(PsutilTestCase):
         input = {'disk1': nt(5, 5, 5)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
-        self.assertEqual(cache[1], {'disk_io': {}})
-        self.assertEqual(cache[2], {'disk_io': {}})
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {'disk_io': {}}
+        assert cache[2] == {'disk_io': {}}
 
     def test_cache_call_twice(self):
         input = {'disk1': nt(5, 5, 5)}
@@ -823,12 +807,11 @@ class TestWrapNumbers(PsutilTestCase):
         input = {'disk1': nt(10, 10, 10)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
-        self.assertEqual(
-            cache[1],
-            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}},
-        )
-        self.assertEqual(cache[2], {'disk_io': {}})
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}
+        }
+        assert cache[2] == {'disk_io': {}}
 
     def test_cache_wrap(self):
         # let's say 100 is the threshold
@@ -839,53 +822,46 @@ class TestWrapNumbers(PsutilTestCase):
         input = {'disk1': nt(100, 100, 10)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
-        self.assertEqual(
-            cache[1],
-            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}},
-        )
-        self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}
+        }
+        assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
 
         def check_cache_info():
             cache = wrap_numbers.cache_info()
-            self.assertEqual(
-                cache[1],
-                {
-                    'disk_io': {
-                        ('disk1', 0): 0,
-                        ('disk1', 1): 0,
-                        ('disk1', 2): 100,
-                    }
-                },
-            )
-            self.assertEqual(
-                cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}}
-            )
+            assert cache[1] == {
+                'disk_io': {
+                    ('disk1', 0): 0,
+                    ('disk1', 1): 0,
+                    ('disk1', 2): 100,
+                }
+            }
+            assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
 
         # then it remains the same
         input = {'disk1': nt(100, 100, 10)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
+        assert cache[0] == {'disk_io': input}
         check_cache_info()
 
         # then it goes up
         input = {'disk1': nt(100, 100, 90)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
+        assert cache[0] == {'disk_io': input}
         check_cache_info()
 
         # then it wraps again
         input = {'disk1': nt(100, 100, 20)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
-        self.assertEqual(
-            cache[1],
-            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}},
-        )
-        self.assertEqual(cache[2], {'disk_io': {'disk1': set([('disk1', 2)])}})
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}
+        }
+        assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
 
     def test_cache_changing_keys(self):
         input = {'disk1': nt(5, 5, 5)}
@@ -893,19 +869,18 @@ class TestWrapNumbers(PsutilTestCase):
         input = {'disk1': nt(5, 5, 5), 'disk2': nt(7, 7, 7)}
         wrap_numbers(input, 'disk_io')
         cache = wrap_numbers.cache_info()
-        self.assertEqual(cache[0], {'disk_io': input})
-        self.assertEqual(
-            cache[1],
-            {'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}},
-        )
-        self.assertEqual(cache[2], {'disk_io': {}})
+        assert cache[0] == {'disk_io': input}
+        assert cache[1] == {
+            'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 0}
+        }
+        assert cache[2] == {'disk_io': {}}
 
     def test_cache_clear(self):
         input = {'disk1': nt(5, 5, 5)}
         wrap_numbers(input, 'disk_io')
         wrap_numbers(input, 'disk_io')
         wrap_numbers.cache_clear('disk_io')
-        self.assertEqual(wrap_numbers.cache_info(), ({}, {}, {}))
+        assert wrap_numbers.cache_info() == ({}, {}, {})
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
@@ -917,18 +892,18 @@ class TestWrapNumbers(PsutilTestCase):
         psutil.net_io_counters()
         caches = wrap_numbers.cache_info()
         for cache in caches:
-            self.assertIn('psutil.disk_io_counters', cache)
-            self.assertIn('psutil.net_io_counters', cache)
+            assert 'psutil.disk_io_counters' in cache
+            assert 'psutil.net_io_counters' in cache
 
         psutil.disk_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         for cache in caches:
-            self.assertIn('psutil.net_io_counters', cache)
-            self.assertNotIn('psutil.disk_io_counters', cache)
+            assert 'psutil.net_io_counters' in cache
+            assert 'psutil.disk_io_counters' not in cache
 
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
-        self.assertEqual(caches, ({}, {}, {}))
+        assert caches == ({}, {}, {})
 
 
 # ===================================================================
@@ -1039,7 +1014,7 @@ class TestScripts(PsutilTestCase):
 
     def test_pidof(self):
         output = self.assert_stdout('pidof.py', psutil.Process().name())
-        self.assertIn(str(os.getpid()), output)
+        assert str(os.getpid()) in output
 
     @unittest.skipIf(not WINDOWS, "WINDOWS only")
     def test_winservices(self):

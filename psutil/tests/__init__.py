@@ -36,6 +36,8 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
+import pytest
+
 import psutil
 from psutil import AIX
 from psutil import LINUX
@@ -982,29 +984,29 @@ class PsutilTestCase(TestCase):
         return sproc
 
     def _check_proc_exc(self, proc, exc):
-        self.assertIsInstance(exc, psutil.Error)
-        self.assertEqual(exc.pid, proc.pid)
-        self.assertEqual(exc.name, proc._name)
+        assert isinstance(exc, psutil.Error)
+        assert exc.pid == proc.pid
+        assert exc.name == proc._name
         if exc.name:
-            self.assertNotEqual(exc.name, "")
+            assert exc.name
         if isinstance(exc, psutil.ZombieProcess):
-            self.assertEqual(exc.ppid, proc._ppid)
+            assert exc.ppid == proc._ppid
             if exc.ppid is not None:
-                self.assertGreaterEqual(exc.ppid, 0)
+                assert exc.ppid >= 0
         str(exc)
         repr(exc)
 
     def assertPidGone(self, pid):
-        with self.assertRaises(psutil.NoSuchProcess) as cm:
+        with pytest.raises(psutil.NoSuchProcess) as cm:
             try:
                 psutil.Process(pid)
             except psutil.ZombieProcess:
                 raise AssertionError("wasn't supposed to raise ZombieProcess")
-        self.assertEqual(cm.exception.pid, pid)
-        self.assertEqual(cm.exception.name, None)
+        assert cm.value.pid == pid
+        assert cm.value.name is None
         assert not psutil.pid_exists(pid), pid
-        self.assertNotIn(pid, psutil.pids())
-        self.assertNotIn(pid, [x.pid for x in psutil.process_iter()])
+        assert pid not in psutil.pids()
+        assert pid not in [x.pid for x in psutil.process_iter()]
 
     def assertProcessGone(self, proc):
         self.assertPidGone(proc.pid)
@@ -1030,21 +1032,21 @@ class PsutilTestCase(TestCase):
         clone = psutil.Process(proc.pid)
         # Cloned zombie on Open/NetBSD has null creation time, see:
         # https://github.com/giampaolo/psutil/issues/2287
-        self.assertEqual(proc, clone)
+        assert proc == clone
         if not (OPENBSD or NETBSD):
-            self.assertEqual(hash(proc), hash(clone))
+            assert hash(proc) == hash(clone)
         # Its status always be querable.
-        self.assertEqual(proc.status(), psutil.STATUS_ZOMBIE)
+        assert proc.status() == psutil.STATUS_ZOMBIE
         # It should be considered 'running'.
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
         # as_dict() shouldn't crash.
         proc.as_dict()
         # It should show up in pids() and process_iter().
-        self.assertIn(proc.pid, psutil.pids())
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in psutil.pids()
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
         psutil._pmap = {}
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
         # Call all methods.
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
@@ -1055,15 +1057,15 @@ class PsutilTestCase(TestCase):
                     self._check_proc_exc(proc, exc)
         if LINUX:
             # https://github.com/giampaolo/psutil/pull/2288
-            with self.assertRaises(psutil.ZombieProcess) as cm:
+            with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.cmdline()
-            self._check_proc_exc(proc, cm.exception)
-            with self.assertRaises(psutil.ZombieProcess) as cm:
+            self._check_proc_exc(proc, cm.value)
+            with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.exe()
-            self._check_proc_exc(proc, cm.exception)
-            with self.assertRaises(psutil.ZombieProcess) as cm:
+            self._check_proc_exc(proc, cm.value)
+            with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.memory_maps()
-            self._check_proc_exc(proc, cm.exception)
+            self._check_proc_exc(proc, cm.value)
         # Zombie cannot be signaled or terminated.
         proc.suspend()
         proc.resume()
@@ -1071,10 +1073,10 @@ class PsutilTestCase(TestCase):
         proc.kill()
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
-        self.assertIn(proc.pid, psutil.pids())
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in psutil.pids()
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
         psutil._pmap = {}
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
 
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(
@@ -1188,7 +1190,7 @@ class TestMemoryLeak(PsutilTestCase):
             del x, ret
         gc.collect(generation=1)
         mem2 = self._get_mem()
-        self.assertEqual(gc.garbage, [])
+        assert gc.garbage == []
         diff = mem2 - mem1  # can also be negative
         return diff
 
