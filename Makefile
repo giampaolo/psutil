@@ -2,46 +2,24 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
+# Configurable
 PYTHON = python3
-PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
-PYTEST_ARGS = -v -s --tb=short
 ARGS =
 
-# mandatory deps for running tests
-PY3_DEPS = \
-	setuptools \
-	pytest \
-	pytest-xdist
-
-# python 2 deps
-PY2_DEPS = \
-	futures \
-	ipaddress \
-	mock==1.0.1 \
-	pytest==4.6.11 \
-	pytest-xdist \
-	setuptools
-
-PY_DEPS = `$(PYTHON) -c \
-	"import sys; \
-	py3 = sys.version_info[0] == 3; \
-	py38 = sys.version_info[:2] >= (3, 8); \
-	py3_extra = ' abi3audit' if py38 else ''; \
-	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
-
-NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
-
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
-BUILD_OPTS = `$(PYTHON) -c \
+SETUP_BUILD_EXT_ARGS = `$(PYTHON) -c \
 	"import sys, os; \
 	py36 = sys.version_info[:2] >= (3, 6); \
 	cpus = os.cpu_count() or 1 if py36 else 1; \
 	print('--parallel %s' % cpus if cpus > 1 else '')"`
 
 # In not in a virtualenv, add --user options for install commands.
-SETUP_INSTALL_OPTS = `$(PYTHON) -c \
+SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-PIP_INSTALL_OPTS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
+
+PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
+PYTEST_ARGS = -v -s --tb=short
+PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -84,52 +62,33 @@ build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i $(SETUP_BUILD_EXT_ARGS)
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_OPTS)
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS)
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
-	@$(PYTHON) -c \
-		"import sys, ssl, os, pkgutil, tempfile, atexit; \
-		print('pip already installed') if pkgutil.find_loader('pip') else None; \
-		sys.exit(0) if pkgutil.find_loader('pip') else None; \
-		PY3 = sys.version_info[0] == 3; \
-		pyexc = 'from urllib.request import urlopen' if PY3 else 'from urllib2 import urlopen'; \
-		exec(pyexc); \
-		ctx = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
-		url = 'https://bootstrap.pypa.io/pip/2.7/get-pip.py' if not PY3 else 'https://bootstrap.pypa.io/get-pip.py'; \
-		kw = dict(context=ctx) if ctx else {}; \
-		req = urlopen(url, **kw); \
-		data = req.read(); \
-		f = tempfile.NamedTemporaryFile(suffix='.py'); \
-		atexit.register(f.close); \
-		f.write(data); \
-		f.flush(); \
-		print('downloaded %s' % f.name); \
-		code = os.system('%s %s --user --upgrade' % (sys.executable, f.name)); \
-		f.close(); \
-		sys.exit(code);"
+	$(PYTHON) scripts/internal/install_pip.py
 
 install-sysdeps:
 	./scripts/internal/install-sysdeps.sh
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	${MAKE} install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
-	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) pip  # upgrade pip to latest version
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) pip  # upgrade pip to latest version
-	$(PYTHON) -m pip install $(PIP_INSTALL_OPTS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS + setup.DEV_DEPS))"`
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) pip  # upgrade pip to latest version
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS + setup.DEV_DEPS))"`
 
 install-git-hooks:  ## Install GIT pre-commit hook.
 	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
@@ -216,7 +175,7 @@ black:  ## Python files linting (via black)
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 _pylint:  ## Python pylint (not mandatory, just run it from time to time)
-	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -287,20 +246,20 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} sdist
 	${MAKE} check-sdist
 	${MAKE} install
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"import requests, sys; \
 		from packaging.version import parse; \
 		from psutil import __version__; \
 		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
 		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
 		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
 		history = open('HISTORY.rst').read(); \
-		assert ver in doc, '%r not in docs/index.rst' % ver; \
-		assert ver in history, '%r not in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
+		assert ver in doc, '%r not found in docs/index.rst' % ver; \
+		assert ver in history, '%r not found in HISTORY.rst' % ver; \
+		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
 	${MAKE} download-wheels-github
 	${MAKE} download-wheels-appveyor
 	${MAKE} check-wheels

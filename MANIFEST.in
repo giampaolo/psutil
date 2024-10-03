@@ -188,6 +188,7 @@ include scripts/internal/download_wheels_github.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
 include scripts/internal/install-sysdeps.sh
+include scripts/internal/install_pip.py
 include scripts/internal/print_access_denied.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_api_speed.py

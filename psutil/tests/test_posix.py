@@ -137,6 +137,22 @@ def ps_vsz(pid):
     return ps(field, pid)
 
 
+def df(device):
+    try:
+        out = sh("df -k %s" % device).strip()
+    except RuntimeError as err:
+        if "device busy" in str(err).lower():
+            raise unittest.SkipTest("df returned EBUSY")
+        raise
+    line = out.split('\n')[1]
+    fields = line.split()
+    sys_total = int(fields[1]) * 1024
+    sys_used = int(fields[2]) * 1024
+    sys_free = int(fields[3]) * 1024
+    sys_percent = float(fields[4].replace('%', ''))
+    return (sys_total, sys_used, sys_free, sys_percent)
+
+
 @unittest.skipIf(not POSIX, "POSIX only")
 class TestProcess(PsutilTestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
@@ -448,26 +464,11 @@ class TestSystemAPIs(PsutilTestCase):
     @unittest.skipIf(AIX, "unreliable on AIX")
     @retry_on_failure()
     def test_disk_usage(self):
-        def df(device):
-            try:
-                out = sh("df -k %s" % device).strip()
-            except RuntimeError as err:
-                if "device busy" in str(err).lower():
-                    raise unittest.SkipTest("df returned EBUSY")
-                raise
-            line = out.split('\n')[1]
-            fields = line.split()
-            total = int(fields[1]) * 1024
-            used = int(fields[2]) * 1024
-            free = int(fields[3]) * 1024
-            percent = float(fields[4].replace('%', ''))
-            return (total, used, free, percent)
-
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             try:
-                total, used, free, percent = df(part.device)
+                sys_total, sys_used, sys_free, sys_percent = df(part.device)
             except RuntimeError as err:
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
@@ -481,10 +482,10 @@ class TestSystemAPIs(PsutilTestCase):
                     continue
                 raise
             else:
-                assert abs(usage.total - total) < tolerance
-                assert abs(usage.used - used) < tolerance
-                assert abs(usage.free - free) < tolerance
-                assert abs(usage.percent - percent) < 1
+                assert abs(usage.total - sys_total) < tolerance
+                assert abs(usage.used - sys_used) < tolerance
+                assert abs(usage.free - sys_free) < tolerance
+                assert abs(usage.percent - sys_percent) <= 1
 
 
 @unittest.skipIf(not POSIX, "POSIX only")
