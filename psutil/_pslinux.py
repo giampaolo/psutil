@@ -1410,10 +1410,15 @@ def sensors_temperatures():
 
     for base in basenames:
         try:
-            path = base + '_input'
-            current = float(bcat(path)) / 1000.0
+            # First find the name. Skip if it's a w1-bus sensor as reading such sensors will
+            # take a lot of time, and makes no sense for us
             path = os.path.join(os.path.dirname(base), 'name')
             unit_name = cat(path).strip()
+            if unit_name == "w1_slave_temp":
+                continue
+            # If it was not a w1-bus sensor it's ours.
+            path = base + '_input'
+            current = float(bcat(path)) / 1000.0
         except (IOError, OSError, ValueError):
             # A lot of things can go wrong here, so let's just skip the
             # whole entry. Sure thing is Linux's /sys/class/hwmon really
@@ -1458,10 +1463,12 @@ def sensors_temperatures():
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
-            trip_points = set([
-                '_'.join(os.path.basename(p).split('_')[0:3])
-                for p in trip_paths
-            ])
+            trip_points = set(
+                [
+                    '_'.join(os.path.basename(p).split('_')[0:3])
+                    for p in trip_paths
+                ]
+            )
             critical = None
             high = None
             for trip_point in trip_points:
