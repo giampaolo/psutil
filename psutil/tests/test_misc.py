@@ -377,7 +377,7 @@ class TestMisc(PsutilTestCase):
         ):
             with pytest.raises(ImportError) as cm:
                 reload_module(psutil)
-            assert "version conflict" in str(cm.exception).lower()
+            assert "version conflict" in str(cm.value).lower()
 
 
 # ===================================================================

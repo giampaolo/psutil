@@ -1002,8 +1002,8 @@ class PsutilTestCase(TestCase):
                 psutil.Process(pid)
             except psutil.ZombieProcess:
                 raise AssertionError("wasn't supposed to raise ZombieProcess")
-        assert cm.exception.pid == pid
-        assert cm.exception.name is None
+        assert cm.value.pid == pid
+        assert cm.value.name is None
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids()
         assert pid not in [x.pid for x in psutil.process_iter()]
@@ -1059,13 +1059,13 @@ class PsutilTestCase(TestCase):
             # https://github.com/giampaolo/psutil/pull/2288
             with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.cmdline()
-            self._check_proc_exc(proc, cm.exception)
+            self._check_proc_exc(proc, cm.value)
             with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.exe()
-            self._check_proc_exc(proc, cm.exception)
+            self._check_proc_exc(proc, cm.value)
             with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.memory_maps()
-            self._check_proc_exc(proc, cm.exception)
+            self._check_proc_exc(proc, cm.value)
         # Zombie cannot be signaled or terminated.
         proc.suspend()
         proc.resume()

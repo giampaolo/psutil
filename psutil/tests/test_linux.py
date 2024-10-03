@@ -2176,12 +2176,12 @@ class TestProcess(PsutilTestCase):
             ) as m2:
                 p = psutil.Process()
                 p.name()
-                with pytest.raises(psutil.ZombieProcess) as exc:
+                with pytest.raises(psutil.ZombieProcess) as cm:
                     p.rlimit(psutil.RLIMIT_NOFILE)
         assert m1.called
         assert m2.called
-        assert exc.exception.pid == p.pid
-        assert exc.exception.name == p.name()
+        assert cm.value.pid == p.pid
+        assert cm.value.name == p.name()
 
     def test_stat_file_parsing(self):
         args = [

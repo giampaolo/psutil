@@ -902,7 +902,7 @@ class TestServices(PsutilTestCase):
         name = next(psutil.win_service_iter()).name()
         with pytest.raises(psutil.NoSuchProcess) as cm:
             psutil.win_service_get(name + '???')
-        assert cm.exception.name == name + '???'
+        assert cm.value.name == name + '???'
 
         # test NoSuchProcess
         service = psutil.win_service_get(name)
