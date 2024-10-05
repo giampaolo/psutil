@@ -988,7 +988,7 @@ class TestProcess(PsutilTestCase):
             ),
         ]
         p = self.spawn_psproc(cmd)
-        call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
+        call_until(lambda: p.cwd() == os.path.dirname(os.getcwd()))
 
     @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
     def test_cpu_affinity(self):
@@ -1075,7 +1075,8 @@ class TestProcess(PsutilTestCase):
             f.write(b'x' * 1024)
             f.flush()
             # give the kernel some time to see the new file
-            files = call_until(p.open_files, "len(ret) != %i" % len(files))
+            call_until(lambda: len(p.open_files()) != len(files))
+            files = p.open_files()
             filenames = [os.path.normcase(x.path) for x in files]
             assert os.path.normcase(testfn) in filenames
             if LINUX:
@@ -1399,7 +1400,7 @@ class TestProcess(PsutilTestCase):
         p.terminate()
         p.wait()
         if WINDOWS:  # XXX
-            call_until(psutil.pids, "%s not in ret" % p.pid)
+            call_until(lambda: p.pid not in psutil.pids())
         self.assertProcessGone(p)
 
         ns = process_namespace(p)
