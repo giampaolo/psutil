@@ -966,6 +966,13 @@ class fake_pytest:
 
         return context(exc, match=match)
 
+    @staticmethod
+    def warns(warning, match=None):
+        """Mimics `pytest.warns`."""
+        if match:
+            return unittest.TestCase().assertWarnsRegex(warning, match)
+        return unittest.TestCase().assertWarns(warning)
+
     class mark:
         class xdist_group:
             """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""

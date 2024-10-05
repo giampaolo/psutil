@@ -16,6 +16,7 @@ import stat
 import subprocess
 import textwrap
 import unittest
+import warnings
 
 import psutil
 import psutil.tests
@@ -494,10 +495,38 @@ class TestFakePytest(PsutilTestCase):
                             pass
                 """.format(tmpdir)).lstrip())
         with mock.patch.object(psutil.tests, "HERE", tmpdir):
-            with self.assertWarns(UserWarning) as cm:
+            with self.assertWarnsRegex(
+                UserWarning, "Fake pytest module was used"
+            ):
                 fake_pytest.main()
-        assert "Fake pytest module was used" in str(cm.warning)
         assert os.path.isfile(os.path.join(tmpdir, "hello.txt"))
+
+    def test_warns(self):
+        # success
+        with fake_pytest.warns(UserWarning):
+            warnings.warn("foo", UserWarning, stacklevel=1)
+
+        # failure
+        try:
+            with fake_pytest.warns(UserWarning):
+                warnings.warn("foo", DeprecationWarning, stacklevel=1)
+        except AssertionError:
+            pass
+        else:
+            raise self.fail("exception not raised")
+
+        # match success
+        with fake_pytest.warns(UserWarning, match="foo"):
+            warnings.warn("foo", UserWarning, stacklevel=1)
+
+        # match failure
+        try:
+            with fake_pytest.warns(UserWarning, match="foo"):
+                warnings.warn("bar", UserWarning, stacklevel=1)
+        except AssertionError:
+            pass
+        else:
+            raise self.fail("exception not raised")
 
 
 class TestTestingUtils(PsutilTestCase):
