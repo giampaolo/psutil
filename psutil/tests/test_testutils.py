@@ -14,6 +14,7 @@ import os
 import socket
 import stat
 import subprocess
+import textwrap
 import unittest
 
 import psutil
@@ -27,6 +28,7 @@ from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
 from psutil.tests import COVERAGE
 from psutil.tests import HAS_NET_CONNECTIONS_UNIX
+from psutil.tests import HERE
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
@@ -475,6 +477,27 @@ class TestFakePytest(PsutilTestCase):
                 return 1
 
         assert Foo().bar() == 1
+
+    def test_main(self):
+        tmpdir = self.get_testfn(dir=HERE)
+        os.mkdir(tmpdir)
+        with open(os.path.join(tmpdir, "__init__.py"), "w"):
+            pass
+        with open(os.path.join(tmpdir, "test_file.py"), "w") as f:
+            f.write(textwrap.dedent("""\
+                import unittest, os
+
+                class TestCase(unittest.TestCase):
+                    def test_foo(self):
+                        path = os.path.join("{}", "hello.txt")
+                        with open(path, "w") as f:
+                            pass
+                """.format(tmpdir)).lstrip())
+        with mock.patch.object(psutil.tests, "HERE", tmpdir):
+            with self.assertWarns(UserWarning) as cm:
+                fake_pytest.main()
+        assert "Fake pytest module was used" in str(cm.warning)
+        assert os.path.isfile(os.path.join(tmpdir, "hello.txt"))
 
 
 class TestTestingUtils(PsutilTestCase):
