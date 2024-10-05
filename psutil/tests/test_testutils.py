@@ -36,6 +36,7 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_sockets
+from psutil.tests import fake_pytest
 from psutil.tests import filter_proc_net_connections
 from psutil.tests import get_free_port
 from psutil.tests import is_namedtuple
@@ -442,6 +443,24 @@ class TestMemLeakClass(TestMemoryLeak):
 
         with pytest.raises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun_2)
+
+
+class TestFakePytest(PsutilTestCase):
+    def test_raises(self):
+        with fake_pytest.raises(ZeroDivisionError) as cm:
+            1 / 0  # noqa
+        assert isinstance(cm.value, ZeroDivisionError)
+
+        with fake_pytest.raises(ValueError, match="foo") as cm:
+            raise ValueError("foo")
+
+        try:
+            with fake_pytest.raises(ValueError, match="foo") as cm:
+                raise ValueError("bar")
+        except AssertionError as err:
+            assert str(err) == '"foo" does not match "bar"'
+        else:
+            raise self.fail("exception not raised")
 
 
 class TestTestingUtils(PsutilTestCase):
