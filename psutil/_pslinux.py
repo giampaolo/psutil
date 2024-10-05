@@ -1796,7 +1796,12 @@ class Process:
         ret['children_stime'] = fields[14]
         ret['create_time'] = fields[19]
         ret['cpu_num'] = fields[36]
-        ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
+        try:
+            ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
+        except IndexError:
+            # https://github.com/giampaolo/psutil/issues/2455
+            debug("can't get blkio_ticks, set iowait to 0")
+            ret['blkio_ticks'] = 0
 
         return ret
 

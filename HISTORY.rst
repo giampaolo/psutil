@@ -19,6 +19,8 @@ XXXX-XX-XX
 
 - 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
   Python 3.13.  (patch by Sam Gross)
+- 2455_, [Linux]: ``IndexError`` may occur when reading /proc/pid/stat and
+  field 40 (blkio_ticks) is missing.
 
 6.0.0
 ======
