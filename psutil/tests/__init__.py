@@ -936,7 +936,7 @@ class fake_pytest:
                 return self._exc
 
         @contextlib.contextmanager
-        def raises(exc, match=None):
+        def context(exc, match=None):
             einfo = ExceptionInfo()
             try:
                 yield einfo
@@ -948,7 +948,7 @@ class fake_pytest:
             else:
                 raise AssertionError("%r not raised" % exc)
 
-        return raises(exc, match=match)
+        return context(exc, match=match)
 
     class mark:
         class xdist_group:
