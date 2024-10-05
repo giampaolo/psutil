@@ -932,9 +932,9 @@ class fake_pytest:
         def raises(exc, match=None):
             try:
                 yield
-            except exc:
-                if match and not re.search(match, str(exc)):
-                    msg = '"{}" does not match "{}"'.format(match, str(exc))
+            except exc as err:
+                if match and not re.search(match, str(err)):
+                    msg = '"{}" does not match "{}"'.format(match, str(err))
                     raise AssertionError(msg)
             else:
                 raise AssertionError("%r not raised" % exc)
