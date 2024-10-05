@@ -633,26 +633,29 @@ class TestCommonModule(PsutilTestCase):
         else:
             from StringIO import StringIO
 
-        with redirect_stderr(StringIO()) as f:
-            debug("hello")
-            sys.stderr.flush()
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with redirect_stderr(StringIO()) as f:
+                debug("hello")
+                sys.stderr.flush()
         msg = f.getvalue()
         assert msg.startswith("psutil-debug"), msg
         assert "hello" in msg
         assert __file__.replace('.pyc', '.py') in msg
 
         # supposed to use repr(exc)
-        with redirect_stderr(StringIO()) as f:
-            debug(ValueError("this is an error"))
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with redirect_stderr(StringIO()) as f:
+                debug(ValueError("this is an error"))
         msg = f.getvalue()
         assert "ignoring ValueError" in msg
         assert "'this is an error'" in msg
 
         # supposed to use str(exc), because of extra info about file name
-        with redirect_stderr(StringIO()) as f:
-            exc = OSError(2, "no such file")
-            exc.filename = "/foo"
-            debug(exc)
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with redirect_stderr(StringIO()) as f:
+                exc = OSError(2, "no such file")
+                exc.filename = "/foo"
+                debug(exc)
         msg = f.getvalue()
         assert "no such file" in msg
         assert "/foo" in msg

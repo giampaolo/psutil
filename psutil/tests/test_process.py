@@ -1450,8 +1450,9 @@ class TestProcess(PsutilTestCase):
 
         # make sure is_running() removed PID from process_iter()
         # internal cache
-        with redirect_stderr(StringIO()) as f:
-            list(psutil.process_iter())
+        with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
+            with redirect_stderr(StringIO()) as f:
+                list(psutil.process_iter())
         assert (
             "refreshing Process instance for reused PID %s" % p.pid
             in f.getvalue()
