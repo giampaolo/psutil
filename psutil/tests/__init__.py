@@ -915,42 +915,7 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 
 
-class TestCase(unittest.TestCase):
-
-    # Print a full path representation of the single unit tests
-    # being run.
-    def __str__(self):
-        fqmod = self.__class__.__module__
-        if not fqmod.startswith('psutil.'):
-            fqmod = 'psutil.tests.' + fqmod
-        return "%s.%s.%s" % (
-            fqmod,
-            self.__class__.__name__,
-            self._testMethodName,
-        )
-
-    # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
-    # add support for the new name.
-    if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp  # noqa
-
-    # ...otherwise multiprocessing.Pool complains
-    if not PY3:
-
-        def runTest(self):
-            pass
-
-        @contextlib.contextmanager
-        def subTest(self, *args, **kw):
-            # fake it for python 2.7
-            yield
-
-
-# monkey patch default unittest.TestCase
-unittest.TestCase = TestCase
-
-
-class PsutilTestCase(TestCase):
+class PsutilTestCase(unittest.TestCase):
     """Test class providing auto-cleanup wrappers on top of process
     test utilities.
     """
