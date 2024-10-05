@@ -499,7 +499,7 @@ class TestFakePytest(PsutilTestCase):
                 UserWarning, "Fake pytest module was used"
             ):
                 fake_pytest.main()
-        assert os.path.isfile(os.path.join(tmpdir, "hello.txt"))
+        call_until(lambda: os.path.isfile(os.path.join(tmpdir, "hello.txt")))
 
     def test_warns(self):
         # success
