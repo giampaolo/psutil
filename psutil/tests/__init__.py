@@ -928,14 +928,23 @@ class fake_pytest:
 
     @staticmethod
     def raises(exc, match=None):
+        class ExceptionInfo:
+            _exc = None
+
+            @property
+            def value(self):
+                return self._exc
+
         @contextlib.contextmanager
         def raises(exc, match=None):
+            einfo = ExceptionInfo()
             try:
-                yield
+                yield einfo
             except exc as err:
                 if match and not re.search(match, str(err)):
                     msg = '"{}" does not match "{}"'.format(match, str(err))
                     raise AssertionError(msg)
+                einfo._exc = err
             else:
                 raise AssertionError("%r not raised" % exc)
 
