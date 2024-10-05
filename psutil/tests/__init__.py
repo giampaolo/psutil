@@ -920,9 +920,19 @@ def get_testfn(suffix="", dir=None):
 
 
 class fake_pytest:
+    """A class that mimics some basic pytest APIs. This is meant for
+    when unit tests are run in production, where pytest may not be
+    installed. Still, the user may want to test psutil installation
+    via:
+
+        $ python3 -m psutil.tests
+    """
 
     @staticmethod
     def main(*args, **kw):  # noqa ARG004
+        """Mimics pytest.main(). It has the same effect as running
+        `python3 -m unittest -v` from the project root directory.
+        """
         suite = unittest.TestLoader().discover(HERE)
         unittest.TextTestRunner(verbosity=2).run(suite)
         warnings.warn(
@@ -933,6 +943,8 @@ class fake_pytest:
 
     @staticmethod
     def raises(exc, match=None):
+        """Mimics `pytest.raises`."""
+
         class ExceptionInfo:
             _exc = None
 
@@ -957,11 +969,13 @@ class fake_pytest:
 
     class mark:
         class xdist_group:
+            """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
+
             def __init__(self, name=None):
                 pass
 
             def __call__(self, cls):
-                return cls  # no-op: just return the class as-is
+                return cls
 
 
 if pytest is None:
