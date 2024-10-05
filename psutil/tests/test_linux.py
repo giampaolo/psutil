@@ -1952,7 +1952,7 @@ class TestProcess(PsutilTestCase):
         files = p.open_files()
         with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
-            call_until(p.open_files, "len(ret) != %i" % len(files))
+            call_until(lambda: len(p.open_files()) != len(files))
             with mock.patch(
                 'psutil._pslinux.os.readlink',
                 side_effect=OSError(errno.ENOENT, ""),
@@ -1976,7 +1976,7 @@ class TestProcess(PsutilTestCase):
         files = p.open_files()
         with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
-            call_until(p.open_files, "len(ret) != %i" % len(files))
+            call_until(lambda: len(p.open_files()) != len(files))
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(
                 patch_point, side_effect=IOError(errno.ENOENT, "")
@@ -1992,7 +1992,7 @@ class TestProcess(PsutilTestCase):
         files = p.open_files()
         with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
-            call_until(p.open_files, "len(ret) != %i" % len(files))
+            call_until(lambda: len(p.open_files()) != len(files))
             patch_point = 'psutil._pslinux.os.readlink'
             with mock.patch(
                 patch_point, side_effect=OSError(errno.ENAMETOOLONG, "")

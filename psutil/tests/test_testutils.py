@@ -169,8 +169,8 @@ class TestSyncTestUtils(PsutilTestCase):
         assert os.path.exists(testfn)
 
     def test_call_until(self):
-        ret = call_until(lambda: 1, "ret == 1")
-        assert ret == 1
+        call_until(lambda: 1)
+        # TODO: test for timeout
 
 
 class TestFSTestUtils(PsutilTestCase):

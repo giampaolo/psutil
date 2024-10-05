@@ -476,7 +476,7 @@ def spawn_zombie():
             zpid = int(conn.recv(1024))
             _pids_started.add(zpid)
             zombie = psutil.Process(zpid)
-            call_until(zombie.status, "ret == psutil.STATUS_ZOMBIE")
+            call_until(lambda: zombie.status() == psutil.STATUS_ZOMBIE)
             return (parent, zombie)
         finally:
             conn.close()
@@ -796,12 +796,10 @@ def wait_for_file(fname, delete=True, empty=False):
     timeout=GLOBAL_TIMEOUT,
     interval=0.001,
 )
-def call_until(fun, expr):
-    """Keep calling function for timeout secs and exit if eval()
-    expression is True.
-    """
+def call_until(fun):
+    """Keep calling function until it evaluates to True."""
     ret = fun()
-    assert eval(expr)  # noqa
+    assert ret
     return ret
 
 
