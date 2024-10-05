@@ -16,8 +16,6 @@ import stat
 import subprocess
 import unittest
 
-import pytest
-
 import psutil
 import psutil.tests
 from psutil import FREEBSD
@@ -43,6 +41,7 @@ from psutil.tests import get_free_port
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import process_namespace
+from psutil.tests import pytest
 from psutil.tests import reap_children
 from psutil.tests import retry
 from psutil.tests import retry_on_failure

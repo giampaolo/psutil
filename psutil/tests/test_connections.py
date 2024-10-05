@@ -16,8 +16,6 @@ from socket import AF_INET6
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
-import pytest
-
 import psutil
 from psutil import FREEBSD
 from psutil import LINUX
@@ -38,6 +36,7 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_sockets
 from psutil.tests import filter_proc_net_connections
+from psutil.tests import pytest
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import skip_on_access_denied

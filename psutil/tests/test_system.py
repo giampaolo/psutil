@@ -19,8 +19,6 @@ import sys
 import time
 import unittest
 
-import pytest
-
 import psutil
 from psutil import AIX
 from psutil import BSD
@@ -56,6 +54,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import check_net_address
 from psutil.tests import enum
 from psutil.tests import mock
+from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 
 

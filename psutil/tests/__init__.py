@@ -36,7 +36,11 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
-import pytest
+
+try:
+    import pytest
+except ImportError:
+    pytest = None
 
 import psutil
 from psutil import AIX
@@ -913,6 +917,41 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 # --- testing
 # ===================================================================
+
+
+class fake_pytest:
+
+    @staticmethod
+    def main(*args, **kw):  # noqa ARG004
+        suite = unittest.TestLoader().discover(HERE)
+        unittest.TextTestRunner(verbosity=2).run(suite)
+
+    @staticmethod
+    def raises(exc, match=None):
+        @contextlib.contextmanager
+        def raises(exc, match=None):
+            try:
+                yield
+            except exc:
+                if match and not re.search(match, str(exc)):
+                    msg = '"{}" does not match "{}"'.format(match, str(exc))
+                    raise AssertionError(msg)
+            else:
+                raise AssertionError("%r not raised" % exc)
+
+        return raises(exc, match=match)
+
+    class mark:
+        class xdist_group:
+            def __init__(self, name=None):
+                pass
+
+            def __call__(self, cls):
+                return cls  # no-op: just return the class as-is
+
+
+if pytest is None:
+    pytest = fake_pytest
 
 
 class PsutilTestCase(unittest.TestCase):

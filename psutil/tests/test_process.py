@@ -21,8 +21,6 @@ import time
 import types
 import unittest
 
-import pytest
-
 import psutil
 from psutil import AIX
 from psutil import BSD
@@ -65,6 +63,7 @@ from psutil.tests import create_c_exe
 from psutil.tests import create_py_exe
 from psutil.tests import mock
 from psutil.tests import process_namespace
+from psutil.tests import pytest
 from psutil.tests import reap_children
 from psutil.tests import retry_on_failure
 from psutil.tests import sh

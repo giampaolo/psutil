@@ -16,8 +16,6 @@ import stat
 import time
 import traceback
 
-import pytest
-
 import psutil
 from psutil import AIX
 from psutil import BSD
@@ -43,6 +41,7 @@ from psutil.tests import create_sockets
 from psutil.tests import is_namedtuple
 from psutil.tests import is_win_secure_system_proc
 from psutil.tests import process_namespace
+from psutil.tests import pytest
 
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays

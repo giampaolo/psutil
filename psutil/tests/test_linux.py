@@ -23,8 +23,6 @@ import time
 import unittest
 import warnings
 
-import pytest
-
 import psutil
 from psutil import LINUX
 from psutil._compat import PY3
@@ -46,6 +44,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
 from psutil.tests import mock
+from psutil.tests import pytest
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath

@@ -79,8 +79,6 @@ import unittest
 import warnings
 from contextlib import closing
 
-import pytest
-
 import psutil
 from psutil import BSD
 from psutil import POSIX
@@ -103,6 +101,7 @@ from psutil.tests import chdir
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_py_exe
 from psutil.tests import get_testfn
+from psutil.tests import pytest
 from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied

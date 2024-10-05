@@ -18,8 +18,6 @@ import stat
 import sys
 import unittest
 
-import pytest
-
 import psutil
 import psutil.tests
 from psutil import POSIX
@@ -50,6 +48,7 @@ from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
 from psutil.tests import process_namespace
+from psutil.tests import pytest
 from psutil.tests import reload_module
 from psutil.tests import sh
 from psutil.tests import system_namespace

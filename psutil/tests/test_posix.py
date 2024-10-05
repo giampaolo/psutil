@@ -15,8 +15,6 @@ import subprocess
 import time
 import unittest
 
-import pytest
-
 import psutil
 from psutil import AIX
 from psutil import BSD
@@ -31,6 +29,7 @@ from psutil.tests import PYTHON_EXE
 from psutil.tests import QEMU_USER
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
+from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
