@@ -973,8 +973,8 @@ class fake_pytest:
             def __init__(self, name=None):
                 pass
 
-            def __call__(self, cls):
-                return cls
+            def __call__(self, cls_or_meth):
+                return cls_or_meth
 
 
 if pytest is None:

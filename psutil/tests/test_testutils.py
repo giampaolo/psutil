@@ -462,6 +462,20 @@ class TestFakePytest(PsutilTestCase):
         else:
             raise self.fail("exception not raised")
 
+    def test_mark(self):
+        @fake_pytest.mark.xdist_group(name="serial")
+        def foo():
+            return 1
+
+        assert foo() == 1
+
+        @fake_pytest.mark.xdist_group(name="serial")
+        class Foo:
+            def bar(self):
+                return 1
+
+        assert Foo().bar() == 1
+
 
 class TestTestingUtils(PsutilTestCase):
     def test_process_namespace(self):
