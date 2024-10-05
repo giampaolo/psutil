@@ -925,6 +925,11 @@ class fake_pytest:
     def main(*args, **kw):  # noqa ARG004
         suite = unittest.TestLoader().discover(HERE)
         unittest.TextTestRunner(verbosity=2).run(suite)
+        warnings.warn(
+            "Fake pytest module was used. Test results may be inaccurate.",
+            UserWarning,
+            stacklevel=1,
+        )
 
     @staticmethod
     def raises(exc, match=None):
