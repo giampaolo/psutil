@@ -913,9 +913,27 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 
 
-class PsutilTestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):
+    # ...otherwise multiprocessing.Pool complains
+    if not PY3:
+
+        def runTest(self):
+            pass
+
+        @contextlib.contextmanager
+        def subTest(self, *args, **kw):
+            # fake it for python 2.7
+            yield
+
+
+# monkey patch default unittest.TestCase
+unittest.TestCase = TestCase
+
+
+class PsutilTestCase(TestCase):
     """Test class providing auto-cleanup wrappers on top of process
-    test utilities.
+    test utilities. All test classes should derive from this one, even
+    if we use pytest.
     """
 
     def get_testfn(self, suffix="", dir=None):

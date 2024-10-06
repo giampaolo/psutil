@@ -80,7 +80,6 @@ else:
         "pytest-xdist",
         "pytest==4.6.11",
         "setuptools",
-        "unittest2",
     ]
 if WINDOWS and not PYPY:
     TEST_DEPS.append("pywin32")
