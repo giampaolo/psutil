@@ -350,13 +350,13 @@ class Process(object):  # noqa: UP004
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
-        # cache creation time for later use in is_running() method
+        self._ident = (self.pid, None)
         try:
-            self.create_time()
+            self._ident = self._get_ident()
         except AccessDenied:
-            # We should never get here as AFAIK we're able to get
-            # process creation time on all platforms even as a
-            # limited user.
+            # This should happen on Windows only, since we use the fast
+            # create time method. AFAIK, on all other platforms we are
+            # able to get create time for all PIDs.
             pass
         except ZombieProcess:
             # Zombies can still be queried by this class (although
@@ -368,11 +368,32 @@ class Process(object):  # noqa: UP004
                 raise NoSuchProcess(pid, msg=msg)
             else:
                 self._gone = True
-        # This pair is supposed to identify a Process instance
-        # univocally over time (the PID alone is not enough as
-        # it might refer to a process whose PID has been reused).
-        # This will be used later in __eq__() and is_running().
-        self._ident = (self.pid, self._create_time)
+
+    def _get_ident(self):
+        """Return a (pid, uid) tuple which is supposed to identify a
+        Process instance univocally over time. The PID alone is not
+        enough, as it can be assigned to a new process after this one
+        terminates, so we add process creation time to the mix. We need
+        this in order to prevent killing the wrong process later on.
+        This is also known as PID reuse or PID recycling problem.
+
+        The reliability of this strategy mostly depends on
+        create_time() precision, which is 0.01 secs on Linux. The
+        assumption is that, after a process terminates, the kernel
+        won't reuse the same PID after such a short period of time
+        (0.01 secs). Technically this is inherently racy, but
+        practically it should be good enough.
+        """
+        if WINDOWS:
+            # Use create_time() fast method in order to speedup
+            # `process_iter()`. This means we'll get AccessDenied for
+            # most ADMIN processes, but that's fine since it means
+            # we'll also get AccessDenied on kill().
+            # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
+            self._create_time = self._proc.create_time(fast_only=True)
+            return (self.pid, self._create_time)
+        else:
+            return (self.pid, self.create_time())
 
     def __str__(self):
         info = collections.OrderedDict()
@@ -417,10 +438,10 @@ class Process(object):  # noqa: UP004
             # (so it has a ctime), then it turned into a zombie. It's
             # important to do this because is_running() depends on
             # __eq__.
-            pid1, ctime1 = self._ident
-            pid2, ctime2 = other._ident
+            pid1, ident1 = self._ident
+            pid2, ident2 = other._ident
             if pid1 == pid2:
-                if ctime1 and not ctime2:
+                if ident1 and not ident2:
                     try:
                         return self.status() == STATUS_ZOMBIE
                     except Error:
