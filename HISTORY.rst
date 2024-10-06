@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-6.0.1 (IN DEVELOPMENT)
+6.1.0 (IN DEVELOPMENT)
 ======================
 
 XXXX-XX-XX
@@ -14,6 +14,10 @@ XXXX-XX-XX
   targets. They can be used to install dependencies meant for running tests and
   for local development. They can also be installed via ``pip install .[test]``
   and ``pip install .[dev]``.
+- 2456_: allow to run tests via ``python3 -m psutil.tests`` even if ``pytest``
+  module is not installed. This is useful for production environments that
+  don't have pytest installed, but still want to be able to test psutil
+  installation.
 
 **Bug fixes**
 

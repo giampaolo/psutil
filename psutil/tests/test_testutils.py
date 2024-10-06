@@ -14,9 +14,9 @@ import os
 import socket
 import stat
 import subprocess
+import textwrap
 import unittest
-
-import pytest
+import warnings
 
 import psutil
 import psutil.tests
@@ -29,6 +29,7 @@ from psutil._common import supports_ipv6
 from psutil.tests import CI_TESTING
 from psutil.tests import COVERAGE
 from psutil.tests import HAS_NET_CONNECTIONS_UNIX
+from psutil.tests import HERE
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import PsutilTestCase
@@ -38,11 +39,13 @@ from psutil.tests import bind_unix_socket
 from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import create_sockets
+from psutil.tests import fake_pytest
 from psutil.tests import filter_proc_net_connections
 from psutil.tests import get_free_port
 from psutil.tests import is_namedtuple
 from psutil.tests import mock
 from psutil.tests import process_namespace
+from psutil.tests import pytest
 from psutil.tests import reap_children
 from psutil.tests import retry
 from psutil.tests import retry_on_failure
@@ -167,6 +170,7 @@ class TestSyncTestUtils(PsutilTestCase):
 
     def test_call_until(self):
         call_until(lambda: 1)
+        # TODO: test for timeout
 
 
 class TestFSTestUtils(PsutilTestCase):
@@ -442,6 +446,85 @@ class TestMemLeakClass(TestMemoryLeak):
 
         with pytest.raises(AssertionError):
             self.execute_w_exc(ZeroDivisionError, fun_2)
+
+
+class TestFakePytest(PsutilTestCase):
+    def test_raises(self):
+        with fake_pytest.raises(ZeroDivisionError) as cm:
+            1 / 0  # noqa
+        assert isinstance(cm.value, ZeroDivisionError)
+
+        with fake_pytest.raises(ValueError, match="foo") as cm:
+            raise ValueError("foo")
+
+        try:
+            with fake_pytest.raises(ValueError, match="foo") as cm:
+                raise ValueError("bar")
+        except AssertionError as err:
+            assert str(err) == '"foo" does not match "bar"'
+        else:
+            raise self.fail("exception not raised")
+
+    def test_mark(self):
+        @fake_pytest.mark.xdist_group(name="serial")
+        def foo():
+            return 1
+
+        assert foo() == 1
+
+        @fake_pytest.mark.xdist_group(name="serial")
+        class Foo:
+            def bar(self):
+                return 1
+
+        assert Foo().bar() == 1
+
+    def test_main(self):
+        tmpdir = self.get_testfn(dir=HERE)
+        os.mkdir(tmpdir)
+        with open(os.path.join(tmpdir, "__init__.py"), "w"):
+            pass
+        with open(os.path.join(tmpdir, "test_file.py"), "w") as f:
+            f.write(textwrap.dedent("""\
+                import unittest
+
+                class TestCase(unittest.TestCase):
+                    def test_passed(self):
+                        pass
+                """).lstrip())
+        with mock.patch.object(psutil.tests, "HERE", tmpdir):
+            with self.assertWarnsRegex(
+                UserWarning, "Fake pytest module was used"
+            ):
+                suite = fake_pytest.main()
+                assert suite.countTestCases() == 1
+
+    def test_warns(self):
+        # success
+        with fake_pytest.warns(UserWarning):
+            warnings.warn("foo", UserWarning, stacklevel=1)
+
+        # failure
+        try:
+            with fake_pytest.warns(UserWarning):
+                warnings.warn("foo", DeprecationWarning, stacklevel=1)
+        except AssertionError:
+            pass
+        else:
+            raise self.fail("exception not raised")
+
+        # match success
+        with fake_pytest.warns(UserWarning, match="foo"):
+            warnings.warn("foo", UserWarning, stacklevel=1)
+
+        # match failure
+        try:
+            with fake_pytest.warns(UserWarning, match="foo"):
+                warnings.warn("bar", UserWarning, stacklevel=1)
+        except AssertionError:
+            pass
+        else:
+            raise self.fail("exception not raised")
 
 
 class TestTestingUtils(PsutilTestCase):

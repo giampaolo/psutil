@@ -1,40 +1,35 @@
 Instructions for running tests
 ==============================
 
-Setup:
+There are 2 ways of running tests. If you have the source code:
 
 .. code-block:: bash
 
     make install-pydeps-test  # install pytest
+    make test
 
-There are two ways of running tests. As a "user", if psutil is already
-installed and you just want to test it works on your system:
+If you don't have the source code, and just want to test psutil installation.
+This will work also if ``pytest`` module is not installed (e.g. production
+environments) by using unittest's test runner:
 
 .. code-block:: bash
 
     python -m psutil.tests
 
-As a "developer", if you have a copy of the source code and you're working on
-it:
-
-.. code-block:: bash
-
-    make test
-
-You can run tests in parallel with:
+To run tests in parallel (faster):
 
 .. code-block:: bash
 
     make test-parallel
 
-You can run a specific test with:
+Run a specific test:
 
 .. code-block:: bash
 
     make test ARGS=psutil.tests.test_system.TestDiskAPIs
 
-You can run memory leak tests with:
+Test C extension memory leaks:
 
 .. code-block:: bash
 
-    make test-parallel
+    make test-memleaks

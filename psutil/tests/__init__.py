@@ -36,7 +36,11 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
-import pytest
+
+try:
+    import pytest
+except ImportError:
+    pytest = None
 
 import psutil
 from psutil import AIX
@@ -71,6 +75,8 @@ except ImportError:
 if PY3:
     import enum
 else:
+    import unittest2 as unittest
+
     enum = None
 
 if POSIX:
@@ -911,6 +917,76 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 # --- testing
 # ===================================================================
+
+
+class fake_pytest:
+    """A class that mimics some basic pytest APIs. This is meant for
+    when unit tests are run in production, where pytest may not be
+    installed. Still, the user can test psutil installation via:
+
+        $ python3 -m psutil.tests
+    """
+
+    @staticmethod
+    def main(*args, **kw):  # noqa ARG004
+        """Mimics pytest.main(). It has the same effect as running
+        `python3 -m unittest -v` from the project root directory.
+        """
+        suite = unittest.TestLoader().discover(HERE)
+        unittest.TextTestRunner(verbosity=2).run(suite)
+        warnings.warn(
+            "Fake pytest module was used. Test results may be inaccurate.",
+            UserWarning,
+            stacklevel=1,
+        )
+        return suite
+
+    @staticmethod
+    def raises(exc, match=None):
+        """Mimics `pytest.raises`."""
+
+        class ExceptionInfo:
+            _exc = None
+
+            @property
+            def value(self):
+                return self._exc
+
+        @contextlib.contextmanager
+        def context(exc, match=None):
+            einfo = ExceptionInfo()
+            try:
+                yield einfo
+            except exc as err:
+                if match and not re.search(match, str(err)):
+                    msg = '"{}" does not match "{}"'.format(match, str(err))
+                    raise AssertionError(msg)
+                einfo._exc = err
+            else:
+                raise AssertionError("%r not raised" % exc)
+
+        return context(exc, match=match)
+
+    @staticmethod
+    def warns(warning, match=None):
+        """Mimics `pytest.warns`."""
+        if match:
+            return unittest.TestCase().assertWarnsRegex(warning, match)
+        return unittest.TestCase().assertWarns(warning)
+
+    class mark:
+        class xdist_group:
+            """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
+
+            def __init__(self, name=None):
+                pass
+
+            def __call__(self, cls_or_meth):
+                return cls_or_meth
+
+
+if pytest is None:
+    pytest = fake_pytest
 
 
 class TestCase(unittest.TestCase):

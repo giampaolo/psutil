@@ -18,6 +18,14 @@ Once you have a compiler installed run:
     make install
     make test
 
+- If you don't have the source code, and just want to test psutil installation.
+  This will work also if ``pytest`` module is not installed (e.g. production
+  environments) by using unittest's test runner:
+
+.. code-block:: bash
+
+    python3 -m psutil.tests
+
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
   install, run tests and do pretty much anything that involves development.
   This also includes Windows, meaning that you can run `make command` similarly

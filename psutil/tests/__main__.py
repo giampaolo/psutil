@@ -6,7 +6,7 @@
 $ python -m psutil.tests.
 """
 
-import pytest
+from psutil.tests import pytest
 
 
 pytest.main(["-v", "-s", "--tb=short"])
