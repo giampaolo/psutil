@@ -402,7 +402,7 @@ class TestMemLeakClass(TestMemoryLeak):
         ls = []
 
         def fun(ls=ls):
-            ls.append("x" * 124 * 1024)
+            ls.append("x" * 248 * 1024)
 
         try:
             # will consume around 60M in total
