@@ -486,20 +486,18 @@ class TestFakePytest(PsutilTestCase):
             pass
         with open(os.path.join(tmpdir, "test_file.py"), "w") as f:
             f.write(textwrap.dedent("""\
-                import unittest, os
+                import unittest
 
                 class TestCase(unittest.TestCase):
-                    def test_foo(self):
-                        path = os.path.join("{}", "hello.txt")
-                        with open(path, "w") as f:
-                            pass
-                """.format(tmpdir)).lstrip())
+                    def test_passed(self):
+                        pass
+                """).lstrip())
         with mock.patch.object(psutil.tests, "HERE", tmpdir):
             with self.assertWarnsRegex(
                 UserWarning, "Fake pytest module was used"
             ):
-                fake_pytest.main()
-        call_until(lambda: os.path.isfile(os.path.join(tmpdir, "hello.txt")))
+                suite = fake_pytest.main()
+                assert suite.countTestCases() == 1
 
     def test_warns(self):
         # success

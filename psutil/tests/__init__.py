@@ -939,6 +939,7 @@ class fake_pytest:
             UserWarning,
             stacklevel=1,
         )
+        return suite
 
     @staticmethod
     def raises(exc, match=None):
