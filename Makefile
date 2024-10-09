@@ -169,7 +169,7 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 ruff:  ## Run ruff linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --output-format=concise
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --output-format=concise
 
 black:  ## Python files linting (via black)
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
@@ -201,7 +201,7 @@ fix-black:
 	@git ls-files '*.py' | xargs $(PYTHON) -m black
 
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache --fix --output-format=concise $(ARGS)
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
