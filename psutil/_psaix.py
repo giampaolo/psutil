@@ -539,7 +539,7 @@ class Process:
             )
         if "no such process" in stderr.lower():
             raise NoSuchProcess(self.pid, self._name)
-        procfiles = re.findall(r"(\d+): S_IFREG.*\s*.*name:(.*)\n", stdout)
+        procfiles = re.findall(r"(\d+): S_IFREG.*name:(.*)\n", stdout)
         retlist = []
         for fd, path in procfiles:
             path = path.strip()
