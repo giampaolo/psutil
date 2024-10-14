@@ -15,7 +15,6 @@ import socket
 import stat
 import subprocess
 import textwrap
-import unittest
 import warnings
 
 import psutil
@@ -249,7 +248,7 @@ class TestProcessUtils(PsutilTestCase):
         terminate(grandchild)
         assert not grandchild.is_running()
 
-    @unittest.skipIf(not POSIX, "POSIX only")
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_spawn_zombie(self):
         _parent, zombie = self.spawn_zombie()
         assert zombie.status() == psutil.STATUS_ZOMBIE
@@ -300,7 +299,7 @@ class TestNetUtils(PsutilTestCase):
         with contextlib.closing(bind_socket(addr=('', port))) as s:
             assert s.getsockname()[1] == port
 
-    @unittest.skipIf(not POSIX, "POSIX only")
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_bind_unix_socket(self):
         name = self.get_testfn()
         sock = bind_unix_socket(name)
@@ -327,9 +326,9 @@ class TestNetUtils(PsutilTestCase):
                 assert client.getpeername() == addr
                 assert client.getsockname() != addr
 
-    @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(
-        NETBSD or FREEBSD, "/var/run/log UNIX socket opened by default"
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @pytest.mark.skipif(
+        NETBSD or FREEBSD, reason="/var/run/log UNIX socket opened by default"
     )
     def test_unix_socketpair(self):
         p = psutil.Process()
@@ -396,8 +395,8 @@ class TestMemLeakClass(TestMemoryLeak):
             self.execute(lambda: 0, retries=-1)
 
     @retry_on_failure()
-    @unittest.skipIf(CI_TESTING, "skipped on CI")
-    @unittest.skipIf(COVERAGE, "skipped during test coverage")
+    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI")
+    @pytest.mark.skipif(COVERAGE, reason="skipped during test coverage")
     def test_leak_mem(self):
         ls = []
 

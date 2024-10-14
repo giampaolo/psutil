@@ -1150,7 +1150,7 @@ class PsutilTestCase(TestCase):
         # self.assertEqual(proc.ppid(), os.getpid())
 
 
-@unittest.skipIf(PYPY, "unreliable on PYPY")
+@pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory

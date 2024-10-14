@@ -127,7 +127,7 @@ class TestProcess(PsutilTestCase):
             assert code == -sig
         self.assertProcessGone(p)
 
-    @unittest.skipIf(not POSIX, "not POSIX")
+    @pytest.mark.skipif(not POSIX, reason="not POSIX")
     def test_send_signal_mocked(self):
         sig = signal.SIGTERM
         p = self.spawn_psproc()
@@ -171,7 +171,7 @@ class TestProcess(PsutilTestCase):
         assert code == 5
         self.assertProcessGone(p)
 
-    @unittest.skipIf(NETBSD, "fails on NETBSD")
+    @pytest.mark.skipif(NETBSD, reason="fails on NETBSD")
     def test_wait_stopped(self):
         p = self.spawn_psproc()
         if POSIX:
@@ -267,7 +267,7 @@ class TestProcess(PsutilTestCase):
             psutil.Process().cpu_percent()
             assert m.called
 
-    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
         assert times.user >= 0.0, times
@@ -280,7 +280,7 @@ class TestProcess(PsutilTestCase):
         for name in times._fields:
             time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
 
-    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_cpu_times_2(self):
         user_time, kernel_time = psutil.Process().cpu_times()[:2]
         utime, ktime = os.times()[:2]
@@ -294,7 +294,7 @@ class TestProcess(PsutilTestCase):
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             raise self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
-    @unittest.skipIf(not HAS_PROC_CPU_NUM, "not supported")
+    @pytest.mark.skipif(not HAS_PROC_CPU_NUM, reason="not supported")
     def test_cpu_num(self):
         p = psutil.Process()
         num = p.cpu_num()
@@ -321,7 +321,7 @@ class TestProcess(PsutilTestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if terminal is not None:
@@ -333,7 +333,7 @@ class TestProcess(PsutilTestCase):
             else:
                 assert terminal == tty
 
-    @unittest.skipIf(not HAS_PROC_IO_COUNTERS, 'not supported')
+    @pytest.mark.skipif(not HAS_PROC_IO_COUNTERS, reason="not supported")
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
@@ -376,8 +376,8 @@ class TestProcess(PsutilTestCase):
             assert io2[i] >= 0
             assert io2[i] >= 0
 
-    @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(not LINUX, "linux only")
+    @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    @pytest.mark.skipif(not LINUX, reason="linux only")
     def test_ionice_linux(self):
         def cleanup(init):
             ioclass, value = init
@@ -421,8 +421,10 @@ class TestProcess(PsutilTestCase):
         ):
             p.ionice(value=1)
 
-    @unittest.skipIf(not HAS_IONICE, "not supported")
-    @unittest.skipIf(not WINDOWS, 'not supported on this win version')
+    @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    @pytest.mark.skipif(
+        not WINDOWS, reason="not supported on this win version"
+    )
     def test_ionice_win(self):
         p = psutil.Process()
         if not CI_TESTING:
@@ -449,7 +451,7 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError, match="is not a valid priority"):
             p.ionice(psutil.IOPRIO_HIGH + 1)
 
-    @unittest.skipIf(not HAS_RLIMIT, "not supported")
+    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_get(self):
         import resource
 
@@ -473,7 +475,7 @@ class TestProcess(PsutilTestCase):
                 assert ret[0] >= -1
                 assert ret[1] >= -1
 
-    @unittest.skipIf(not HAS_RLIMIT, "not supported")
+    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_set(self):
         p = self.spawn_psproc()
         p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))
@@ -486,7 +488,7 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
-    @unittest.skipIf(not HAS_RLIMIT, "not supported")
+    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -505,7 +507,7 @@ class TestProcess(PsutilTestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)
 
-    @unittest.skipIf(not HAS_RLIMIT, "not supported")
+    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
@@ -520,7 +522,7 @@ class TestProcess(PsutilTestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)
 
-    @unittest.skipIf(not HAS_RLIMIT, "not supported")
+    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_infinity_value(self):
         # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
         # big number on a platform with large file support.  On these
@@ -549,13 +551,13 @@ class TestProcess(PsutilTestCase):
             step2 = p.num_threads()
             assert step2 == step1 + 1
 
-    @unittest.skipIf(not WINDOWS, 'WINDOWS only')
+    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     def test_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process()
         assert p.num_handles() > 0
 
-    @unittest.skipIf(not HAS_THREADS, 'not supported')
+    @pytest.mark.skipif(not HAS_THREADS, reason="not supported")
     def test_threads(self):
         p = psutil.Process()
         if OPENBSD:
@@ -577,7 +579,7 @@ class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
     @skip_on_access_denied(only_if=MACOS)
-    @unittest.skipIf(not HAS_THREADS, 'not supported')
+    @pytest.mark.skipif(not HAS_THREADS, reason='not supported')
     def test_threads_2(self):
         p = self.spawn_psproc()
         if OPENBSD:
@@ -644,7 +646,7 @@ class TestProcess(PsutilTestCase):
             assert mem.pss >= 0
             assert mem.swap >= 0
 
-    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
@@ -692,7 +694,7 @@ class TestProcess(PsutilTestCase):
                     assert isinstance(value, (int, long))
                     assert value >= 0, value
 
-    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     def test_memory_maps_lists_lib(self):
         # Make sure a newly loaded shared lib is listed.
         p = psutil.Process()
@@ -721,7 +723,7 @@ class TestProcess(PsutilTestCase):
         assert not p.is_running()
         assert not p.is_running()
 
-    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_exe(self):
         p = self.spawn_psproc()
         exe = p.exe()
@@ -779,7 +781,7 @@ class TestProcess(PsutilTestCase):
                 return
             assert ' '.join(p.cmdline()) == ' '.join(cmdline)
 
-    @unittest.skipIf(PYPY, "broken on PYPY")
+    @pytest.mark.skipif(PYPY, reason="broken on PYPY")
     def test_long_cmdline(self):
         cmdline = [PYTHON_EXE]
         cmdline.extend(["-v"] * 50)
@@ -809,8 +811,8 @@ class TestProcess(PsutilTestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @unittest.skipIf(PYPY or QEMU_USER, "unreliable on PYPY")
-    @unittest.skipIf(QEMU_USER, "unreliable on QEMU user")
+    @pytest.mark.skipif(PYPY or QEMU_USER, reason="unreliable on PYPY")
+    @pytest.mark.skipif(QEMU_USER, reason="unreliable on QEMU user")
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix="0123456789" * 2))
         cmdline = [
@@ -838,10 +840,10 @@ class TestProcess(PsutilTestCase):
             assert p.name() == os.path.basename(pyexe)
 
     # XXX
-    @unittest.skipIf(SUNOS, "broken on SUNOS")
-    @unittest.skipIf(AIX, "broken on AIX")
-    @unittest.skipIf(PYPY, "broken on PYPY")
-    @unittest.skipIf(QEMU_USER, "broken on QEMU user")
+    @pytest.mark.skipif(SUNOS, reason="broken on SUNOS")
+    @pytest.mark.skipif(AIX, reason="broken on AIX")
+    @pytest.mark.skipif(PYPY, reason="broken on PYPY")
+    @pytest.mark.skipif(QEMU_USER, reason="broken on QEMU user")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
@@ -857,7 +859,7 @@ class TestProcess(PsutilTestCase):
         assert p.name() == os.path.basename(pyexe)
         assert os.path.normcase(p.exe()) == os.path.normcase(pyexe)
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_uids(self):
         p = psutil.Process()
         real, effective, _saved = p.uids()
@@ -871,7 +873,7 @@ class TestProcess(PsutilTestCase):
         if hasattr(os, "getresuid"):
             assert os.getresuid() == p.uids()
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_gids(self):
         p = psutil.Process()
         real, effective, _saved = p.gids()
@@ -951,7 +953,7 @@ class TestProcess(PsutilTestCase):
             except psutil.AccessDenied:
                 pass
 
-    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_status(self):
         p = psutil.Process()
         assert p.status() == psutil.STATUS_RUNNING
@@ -989,7 +991,7 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc(cmd)
         call_until(lambda: p.cwd() == os.path.dirname(os.getcwd()))
 
-    @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason='not supported')
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -1028,7 +1030,7 @@ class TestProcess(PsutilTestCase):
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
 
-    @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason='not supported')
     def test_cpu_affinity_errs(self):
         p = self.spawn_psproc()
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
@@ -1041,7 +1043,7 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError):
             p.cpu_affinity([0, -1])
 
-    @unittest.skipIf(not HAS_CPU_AFFINITY, 'not supported')
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason='not supported')
     def test_cpu_affinity_all_combinations(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -1062,9 +1064,9 @@ class TestProcess(PsutilTestCase):
             assert sorted(p.cpu_affinity()) == sorted(combo)
 
     # TODO: #595
-    @unittest.skipIf(BSD, "broken on BSD")
+    @pytest.mark.skipif(BSD, reason="broken on BSD")
     # can't find any process file on Appveyor
-    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
+    @pytest.mark.skipif(APPVEYOR, reason="unreliable on APPVEYOR")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -1103,9 +1105,9 @@ class TestProcess(PsutilTestCase):
             assert os.path.isfile(file), file
 
     # TODO: #595
-    @unittest.skipIf(BSD, "broken on BSD")
+    @pytest.mark.skipif(BSD, reason="broken on BSD")
     # can't find any process file on Appveyor
-    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
+    @pytest.mark.skipif(APPVEYOR, reason="unreliable on APPVEYOR")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()
@@ -1134,7 +1136,7 @@ class TestProcess(PsutilTestCase):
             # test file is gone
             assert fileobj.name not in p.open_files()
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_num_fds(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -1150,7 +1152,9 @@ class TestProcess(PsutilTestCase):
         assert p.num_fds() == start
 
     @skip_on_not_implemented(only_if=LINUX)
-    @unittest.skipIf(OPENBSD or NETBSD, "not reliable on OPENBSD & NETBSD")
+    @pytest.mark.skipif(
+        OPENBSD or NETBSD, reason="not reliable on OPENBSD & NETBSD"
+    )
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -1181,7 +1185,7 @@ class TestProcess(PsutilTestCase):
         assert grandchild.parent() == child
         assert child.parent() == parent
 
-    @unittest.skipIf(QEMU_USER, "QEMU user not supported")
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     @retry_on_failure()
     def test_parents(self):
         parent = psutil.Process()
@@ -1406,12 +1410,12 @@ class TestProcess(PsutilTestCase):
         for fun, name in ns.iter(ns.all):
             assert_raises_nsp(fun, name)
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process(self):
         _parent, zombie = self.spawn_zombie()
         self.assertProcessZombie(zombie)
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process_is_running_w_exc(self):
         # Emulate a case where internally is_running() raises
         # ZombieProcess.
@@ -1422,7 +1426,7 @@ class TestProcess(PsutilTestCase):
             assert p.is_running()
             assert m.called
 
-    @unittest.skipIf(not POSIX, 'POSIX only')
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process_status_w_exc(self):
         # Emulate a case where internally status() raises
         # ZombieProcess.
@@ -1526,7 +1530,7 @@ class TestProcess(PsutilTestCase):
             assert 0 in psutil.pids()
             assert psutil.pid_exists(0)
 
-    @unittest.skipIf(not HAS_ENVIRON, "not supported")
+    @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
     def test_environ(self):
         def clean_dict(d):
             exclude = ["PLAT", "HOME", "PYTEST_CURRENT_TEST", "PYTEST_VERSION"]
@@ -1554,13 +1558,15 @@ class TestProcess(PsutilTestCase):
         if not OSX and GITHUB_ACTIONS:
             assert d1 == d2
 
-    @unittest.skipIf(not HAS_ENVIRON, "not supported")
-    @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(
+    @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @pytest.mark.skipif(
         MACOS_11PLUS,
-        "macOS 11+ can't get another process environment, issue #2084",
+        reason="macOS 11+ can't get another process environment, issue #2084",
     )
-    @unittest.skipIf(NETBSD, "sometimes fails on `assert is_running()`")
+    @pytest.mark.skipif(
+        NETBSD, reason="sometimes fails on `assert is_running()`"
+    )
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
         code = textwrap.dedent("""
@@ -1652,7 +1658,7 @@ if POSIX and os.getuid() == 0:
             else:
                 raise self.fail("exception not raised")
 
-        @unittest.skipIf(1, "causes problem as root")
+        @pytest.mark.skipif(True, reason="causes problem as root")
         def test_zombie_process(self):
             pass
 

@@ -37,6 +37,7 @@ from psutil.tests import create_sockets
 from psutil.tests import enum
 from psutil.tests import is_namedtuple
 from psutil.tests import kernel_version
+from psutil.tests import pytest
 
 
 # ===================================================================
@@ -74,8 +75,9 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         ae(hasattr(psutil, "IOPRIO_LOW"), WINDOWS)
         ae(hasattr(psutil, "IOPRIO_VERYLOW"), WINDOWS)
 
-    @unittest.skipIf(
-        GITHUB_ACTIONS and LINUX, "unsupported on GITHUB_ACTIONS + LINUX"
+    @pytest.mark.skipif(
+        GITHUB_ACTIONS and LINUX,
+        reason="unsupported on GITHUB_ACTIONS + LINUX",
     )
     def test_rlimit(self):
         ae = self.assertEqual
@@ -158,8 +160,9 @@ class TestAvailProcessAPIs(PsutilTestCase):
     def test_ionice(self):
         assert hasattr(psutil.Process, "ionice") == (LINUX or WINDOWS)
 
-    @unittest.skipIf(
-        GITHUB_ACTIONS and LINUX, "unsupported on GITHUB_ACTIONS + LINUX"
+    @pytest.mark.skipif(
+        GITHUB_ACTIONS and LINUX,
+        reason="unsupported on GITHUB_ACTIONS + LINUX",
     )
     def test_rlimit(self):
         assert hasattr(psutil.Process, "rlimit") == (LINUX or FREEBSD)
@@ -228,10 +231,10 @@ class TestSystemAPITypes(PsutilTestCase):
         assert isinstance(psutil.cpu_count(), int)
 
     # TODO: remove this once 1892 is fixed
-    @unittest.skipIf(
-        MACOS and platform.machine() == 'arm64', "skipped due to #1892"
+    @pytest.mark.skipif(
+        MACOS and platform.machine() == 'arm64', reason="skipped due to #1892"
     )
-    @unittest.skipIf(not HAS_CPU_FREQ, "not supported")
+    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             raise unittest.SkipTest("cpu_freq() returns None")
@@ -251,7 +254,7 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(disk.fstype, str)
             assert isinstance(disk.opts, str)
 
-    @unittest.skipIf(SKIP_SYSCONS, "requires root")
+    @pytest.mark.skipif(SKIP_SYSCONS, reason="requires root")
     def test_net_connections(self):
         with create_sockets():
             ret = psutil.net_connections('all')
@@ -272,7 +275,7 @@ class TestSystemAPITypes(PsutilTestCase):
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
 
-    @unittest.skipIf(QEMU_USER, 'QEMU user not supported')
+    @pytest.mark.skipif(QEMU_USER, reason='QEMU user not supported')
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, info in psutil.net_if_stats().items():
@@ -285,13 +288,13 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(info.speed, int)
             assert isinstance(info.mtu, int)
 
-    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
+    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason='not supported')
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname in psutil.net_io_counters(pernic=True):
             assert isinstance(ifname, str)
 
-    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
+    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_fans().items():
@@ -300,7 +303,7 @@ class TestSystemAPITypes(PsutilTestCase):
                 assert isinstance(unit.label, str)
                 assert isinstance(unit.current, (float, int, type(None)))
 
-    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
+    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_sensors_temperatures(self):
         # Duplicate of test_system.py. Keep it anyway.
         for name, units in psutil.sensors_temperatures().items():
@@ -325,7 +328,7 @@ class TestSystemAPITypes(PsutilTestCase):
 
 
 class TestProcessWaitType(PsutilTestCase):
-    @unittest.skipIf(not POSIX, "not POSIX")
+    @pytest.mark.skipif(not POSIX, reason="not POSIX")
     def test_negative_signal(self):
         p = psutil.Process(self.spawn_testproc().pid)
         p.terminate()

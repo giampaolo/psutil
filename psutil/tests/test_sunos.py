@@ -7,15 +7,15 @@
 """Sun OS specific tests."""
 
 import os
-import unittest
 
 import psutil
 from psutil import SUNOS
 from psutil.tests import PsutilTestCase
+from psutil.tests import pytest
 from psutil.tests import sh
 
 
-@unittest.skipIf(not SUNOS, "SUNOS only")
+@pytest.mark.skipif(not SUNOS, reason="SUNOS only")
 class SunOSSpecificTestCase(PsutilTestCase):
     def test_swap_memory(self):
         out = sh('env PATH=/usr/sbin:/sbin:%s swap -l' % os.environ['PATH'])

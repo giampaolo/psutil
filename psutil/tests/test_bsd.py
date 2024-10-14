@@ -74,7 +74,7 @@ def muse(field):
 # =====================================================================
 
 
-@unittest.skipIf(not BSD, "BSD only")
+@pytest.mark.skipif(not BSD, reason="BSD only")
 class BSDTestCase(PsutilTestCase):
     """Generic tests common to all BSD variants."""
 
@@ -86,7 +86,7 @@ class BSDTestCase(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    @unittest.skipIf(NETBSD, "-o lstart doesn't work on NETBSD")
+    @pytest.mark.skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
     def test_process_create_time(self):
         output = sh("ps -o lstart -p %s" % self.pid)
         start_ps = output.replace('STARTED', '').strip()
@@ -123,18 +123,22 @@ class BSDTestCase(PsutilTestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 raise self.fail("psutil=%s, df=%s" % (usage.used, used))
 
-    @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
+    @pytest.mark.skipif(not which('sysctl'), reason="sysctl cmd not available")
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
-    @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
-    @unittest.skipIf(NETBSD, "skipped on NETBSD")  # we check /proc/meminfo
+    @pytest.mark.skipif(not which('sysctl'), reason="sysctl cmd not available")
+    @pytest.mark.skipif(
+        NETBSD, reason="skipped on NETBSD"
+    )  # we check /proc/meminfo
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total
 
-    @unittest.skipIf(not which('ifconfig'), "ifconfig cmd not available")
+    @pytest.mark.skipif(
+        not which('ifconfig'), reason="ifconfig cmd not available"
+    )
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
             try:
@@ -152,7 +156,7 @@ class BSDTestCase(PsutilTestCase):
 # =====================================================================
 
 
-@unittest.skipIf(not FREEBSD, "FREEBSD only")
+@pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
 class FreeBSDPsutilTestCase(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
@@ -241,7 +245,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
             raise RuntimeError("couldn't find lines match in procstat out")
 
 
-@unittest.skipIf(not FREEBSD, "FREEBSD only")
+@pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
 class FreeBSDSystemTestCase(PsutilTestCase):
     @staticmethod
     def parse_swapinfo():
@@ -310,42 +314,42 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- virtual_memory(); tests against muse
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     def test_muse_vmem_total(self):
         num = muse('Total')
         assert psutil.virtual_memory().total == num
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     @retry_on_failure()
     def test_muse_vmem_active(self):
         num = muse('Active')
         assert abs(psutil.virtual_memory().active - num) < TOLERANCE_SYS_MEM
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     @retry_on_failure()
     def test_muse_vmem_inactive(self):
         num = muse('Inactive')
         assert abs(psutil.virtual_memory().inactive - num) < TOLERANCE_SYS_MEM
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     @retry_on_failure()
     def test_muse_vmem_wired(self):
         num = muse('Wired')
         assert abs(psutil.virtual_memory().wired - num) < TOLERANCE_SYS_MEM
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     @retry_on_failure()
     def test_muse_vmem_cached(self):
         num = muse('Cache')
         assert abs(psutil.virtual_memory().cached - num) < TOLERANCE_SYS_MEM
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     @retry_on_failure()
     def test_muse_vmem_free(self):
         num = muse('Free')
         assert abs(psutil.virtual_memory().free - num) < TOLERANCE_SYS_MEM
 
-    @unittest.skipIf(not MUSE_AVAILABLE, "muse not installed")
+    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
     @retry_on_failure()
     def test_muse_vmem_buffers(self):
         num = muse('Buffer')
@@ -412,7 +416,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
     # --- sensors_battery
 
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         def secs2hours(secs):
             m, _s = divmod(secs, 60)
@@ -432,7 +436,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         else:
             assert secs2hours(metrics.secsleft) == remaining_time
 
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery_against_sysctl(self):
         assert psutil.sensors_battery().percent == sysctl(
             "hw.acpi.battery.life"
@@ -446,7 +450,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         else:
             assert secsleft == sysctl("hw.acpi.battery.time") * 60
 
-    @unittest.skipIf(HAS_BATTERY, "has battery")
+    @pytest.mark.skipif(HAS_BATTERY, reason="has battery")
     def test_sensors_battery_no_battery(self):
         # If no battery is present one of these calls is supposed
         # to fail, see:
@@ -489,7 +493,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 # =====================================================================
 
 
-@unittest.skipIf(not OPENBSD, "OPENBSD only")
+@pytest.mark.skipif(not OPENBSD, reason="OPENBSD only")
 class OpenBSDTestCase(PsutilTestCase):
     def test_boot_time(self):
         s = sysctl('kern.boottime')
@@ -503,7 +507,7 @@ class OpenBSDTestCase(PsutilTestCase):
 # =====================================================================
 
 
-@unittest.skipIf(not NETBSD, "NETBSD only")
+@pytest.mark.skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
     @staticmethod
     def parse_meminfo(look_for):
