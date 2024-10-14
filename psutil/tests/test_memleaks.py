@@ -425,7 +425,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
     @fewtimes_if_linux()
-    @pytest.mark.skipif(MACOS and os.getuid() != 0, "need root access")
+    @pytest.mark.skipif(MACOS and os.getuid() != 0, reason="need root access")
     def test_net_connections(self):
         # always opens and handle on Windows() (once)
         psutil.net_connections(kind='all')
