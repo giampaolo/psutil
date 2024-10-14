@@ -41,7 +41,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_proc)");
         return -1;
     }
     // sysctl stores 0 in the size if we can't find the process information.
@@ -69,7 +69,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
 
     /* get the size of what would be returned */
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_file) (1/2)");
         return NULL;
     }
     if ((kf = malloc(len)) == NULL) {
@@ -79,7 +79,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
     mib[5] = (int)(len / sizeof(struct kinfo_file));
     if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
         free(kf);
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_file) (2/2)");
         return NULL;
     }
 
@@ -288,8 +288,19 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
         return NULL;
 
     freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL)
+
+    if (freep == NULL) {
+#if defined(PSUTIL_OPENBSD)
+        if ((pid == 0) && (errno == ESRCH)) {
+            psutil_debug(
+                "num_fds() returned ESRCH for PID 0; forcing `return 0`"
+            );
+            PyErr_Clear();
+            return Py_BuildValue("i", 0);
+        }
+#endif
         return NULL;
+    }
 
     free(freep);
     return Py_BuildValue("i", cnt);
