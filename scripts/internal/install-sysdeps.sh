@@ -53,7 +53,8 @@ main() {
         $SUDO pkgin update
         $SUDO pkgin -y install python311-* gcc12-*
     elif [ $OPENBSD ]; then
-        $SUDO pkg_add gcc python3
+        export PKG_PATH=https://cdn.openbsd.org/pub/OpenBSD/`uname -r`/packages/`uname -m`/
+        $SUDO -E bash -c "pkg_add -v python3 gcc"
     else
         echo "Unsupported platform: $UNAME_S"
     fi
