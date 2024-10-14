@@ -975,6 +975,12 @@ class fake_pytest:
         return unittest.TestCase().assertWarns(warning)
 
     class mark:
+
+        @staticmethod
+        def skipif(condition, reason=""):
+            """Mimics `@pytest.mark.skipif` decorator."""
+            return unittest.skipIf(condition, reason)
+
         class xdist_group:
             """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
 
