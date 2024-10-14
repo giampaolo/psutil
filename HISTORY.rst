@@ -25,6 +25,7 @@ XXXX-XX-XX
   Python 3.13.  (patch by Sam Gross)
 - 2455_, [Linux]: ``IndexError`` may occur when reading /proc/pid/stat and
   field 40 (blkio_ticks) is missing.
+- 2457_, [AIX]: significantly improve speed of ``Process.open_files`` for some edge cases.
 
 6.0.0
 ======
