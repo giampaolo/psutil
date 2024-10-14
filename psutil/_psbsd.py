@@ -925,7 +925,7 @@ class Process:
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
             ret = cext.proc_num_fds(self.pid)
-            if NETBSD:
+            if NETBSD or OPENBSD:
                 self._assert_alive()
             return ret
 
