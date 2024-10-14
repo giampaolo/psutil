@@ -924,10 +924,17 @@ class Process:
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
-            ret = cext.proc_num_fds(self.pid)
-            if NETBSD or OPENBSD:
+            if OPENBSD and self.pid == 0:
+                try:
+                    return cext.proc_num_fds(self.pid)
+                except ProcessLookupError:
+                    return 0
+            elif NETBSD:
+                ret = cext.proc_num_fds(self.pid)
                 self._assert_alive()
-            return ret
+                return ret
+
+            return cext.proc_num_fds(self.pid)
 
     else:
         num_fds = _not_implemented
