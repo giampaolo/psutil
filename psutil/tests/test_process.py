@@ -579,7 +579,7 @@ class TestProcess(PsutilTestCase):
 
     @retry_on_failure()
     @skip_on_access_denied(only_if=MACOS)
-    @pytest.mark.skipif(not HAS_THREADS, reason='not supported')
+    @pytest.mark.skipif(not HAS_THREADS, reason="not supported")
     def test_threads_2(self):
         p = self.spawn_psproc()
         if OPENBSD:
@@ -991,7 +991,7 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc(cmd)
         call_until(lambda: p.cwd() == os.path.dirname(os.getcwd()))
 
-    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason='not supported')
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -1030,7 +1030,7 @@ class TestProcess(PsutilTestCase):
         p.cpu_affinity(set(all_cpus))
         p.cpu_affinity(tuple(all_cpus))
 
-    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason='not supported')
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity_errs(self):
         p = self.spawn_psproc()
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
@@ -1043,7 +1043,7 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError):
             p.cpu_affinity([0, -1])
 
-    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason='not supported')
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity_all_combinations(self):
         p = psutil.Process()
         initial = p.cpu_affinity()

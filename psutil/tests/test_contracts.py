@@ -275,7 +275,7 @@ class TestSystemAPITypes(PsutilTestCase):
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
 
-    @pytest.mark.skipif(QEMU_USER, reason='QEMU user not supported')
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, info in psutil.net_if_stats().items():
@@ -288,7 +288,7 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(info.speed, int)
             assert isinstance(info.mtu, int)
 
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason='not supported')
+    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname in psutil.net_io_counters(pernic=True):

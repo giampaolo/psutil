@@ -130,8 +130,8 @@ class BSDTestCase(PsutilTestCase):
 
     @pytest.mark.skipif(not which('sysctl'), reason="sysctl cmd not available")
     @pytest.mark.skipif(
-        NETBSD, reason="skipped on NETBSD"
-    )  # we check /proc/meminfo
+        NETBSD, reason="skipped on NETBSD"  # we check /proc/meminfo
+    )
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         assert num == psutil.virtual_memory().total

@@ -405,7 +405,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     @pytest.mark.skipif(
         LINUX and not os.path.exists('/proc/diskstats'),
-        reason='/proc/diskstats not available on this Linux version',
+        reason="/proc/diskstats not available on this Linux version",
     )
     @fewtimes_if_linux()
     def test_disk_io_counters(self):
@@ -420,7 +420,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
     # --- net
 
     @fewtimes_if_linux()
-    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason='not supported')
+    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 

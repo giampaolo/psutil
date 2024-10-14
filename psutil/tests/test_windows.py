@@ -107,7 +107,7 @@ def wmic(path, what, converter=int):
 class TestCpuAPIs(WindowsTestCase):
     @pytest.mark.skipif(
         'NUMBER_OF_PROCESSORS' not in os.environ,
-        reason='NUMBER_OF_PROCESSORS env var is not available',
+        reason="NUMBER_OF_PROCESSORS env var is not available",
     )
     def test_cpu_count_vs_NUMBER_OF_PROCESSORS(self):
         # Will likely fail on many-cores systems:

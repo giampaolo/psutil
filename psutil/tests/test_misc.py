@@ -991,7 +991,7 @@ class TestScripts(PsutilTestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    @pytest.mark.skipif(QEMU_USER, reason='QEMU user not supported')
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
