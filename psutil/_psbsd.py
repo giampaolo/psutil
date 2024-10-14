@@ -911,14 +911,7 @@ class Process:
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
-            if OPENBSD and self.pid == 0:
-                try:
-                    rawlist = cext.proc_open_files(self.pid)
-                except ProcessLookupError:
-                    return []
-            else:
-                rawlist = cext.proc_open_files(self.pid)
-
+            rawlist = cext.proc_open_files(self.pid)
             return [_common.popenfile(path, fd) for path, fd in rawlist]
 
     else:
@@ -931,15 +924,10 @@ class Process:
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
-            if OPENBSD and self.pid == 0:
-                try:
-                    return cext.proc_num_fds(self.pid)
-                except ProcessLookupError:
-                    return 0
-            elif NETBSD:
+            ret = cext.proc_num_fds(self.pid)
+            if NETBSD:
                 self._assert_alive()
-
-            return cext.proc_num_fds(self.pid)
+            return ret
 
     else:
         num_fds = _not_implemented
