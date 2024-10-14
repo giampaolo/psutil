@@ -442,8 +442,17 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
     errno = 0;
     freep = kinfo_getfile(pid, &cnt);
+
     if (freep == NULL) {
-#if !defined(PSUTIL_OPENBSD)
+#if defined(PSUTIL_OPENBSD)
+        if ((pid == 0) && (errno == ESRCH)) {
+            psutil_debug(
+                "open_files() returned ESRCH for PID 0; forcing `return []`"
+            );
+            PyErr_Clear();
+            return py_retlist;
+        }
+#else
         psutil_raise_for_pid(pid, "kinfo_getfile()");
 #endif
         goto error;
