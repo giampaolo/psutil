@@ -288,12 +288,14 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
         return NULL;
 
     freep = kinfo_getfile(pid, &cnt);
+
     if (freep == NULL) {
 #if defined(PSUTIL_OPENBSD)
         if ((pid == 0) && (errno == ESRCH)) {
             psutil_debug(
                 "num_fds() returned ESRCH for PID 0; forcing `return 0`"
             );
+            PyErr_Clear();
             return Py_BuildValue("i", 0);
         }
 #endif

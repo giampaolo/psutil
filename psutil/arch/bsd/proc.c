@@ -449,6 +449,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             psutil_debug(
                 "open_files() returned ESRCH for PID 0; forcing `return []`"
             );
+            PyErr_Clear();
             return py_retlist;
         }
 #else
