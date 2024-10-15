@@ -45,6 +45,7 @@ except ImportError:
 import psutil
 from psutil import AIX
 from psutil import LINUX
+from psutil import GNU
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
@@ -1535,7 +1536,7 @@ class process_namespace:
     if HAS_RLIMIT:
         setters += [('rlimit', (psutil.RLIMIT_NOFILE, (1024, 4096)), {})]
     if HAS_IONICE:
-        if LINUX:
+        if LINUX | GNU:
             setters += [('ionice', (psutil.IOPRIO_CLASS_NONE, 0), {})]
         else:
             setters += [('ionice', (psutil.IOPRIO_NORMAL,), {})]

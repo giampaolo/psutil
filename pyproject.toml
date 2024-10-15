@@ -127,6 +127,7 @@ exclude_lines = [
     "if BSD",
     "if FREEBSD",
     "if LINUX",
+    "if GNU",
     "if LITTLE_ENDIAN:",
     "if MACOS",
     "if NETBSD",

@@ -45,6 +45,7 @@ sys.path.insert(0, os.path.join(HERE, "psutil"))
 from _common import AIX  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
+from _common import GNU  # NOQA
 from _common import LINUX  # NOQA
 from _common import MACOS  # NOQA
 from _common import NETBSD  # NOQA
@@ -375,6 +376,22 @@ elif LINUX:
             sources
             + ["psutil/_psutil_linux.c"]
             + glob.glob("psutil/arch/linux/*.c")
+        ),
+        define_macros=macros,
+        # fmt: off
+        # python 2.7 compatibility requires no comma
+        **py_limited_api
+        # fmt: on
+    )
+
+elif GNU:
+    macros.append(("PSUTIL_GNU", 1))
+    ext = Extension(
+        'psutil._psutil_gnu',
+        sources=(
+            sources
+            + ["psutil/_psutil_gnu.c"]
+            + glob.glob("psutil/arch/gnu/*.c")
         ),
         define_macros=macros,
         # fmt: off
