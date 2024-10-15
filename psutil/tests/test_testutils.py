@@ -506,6 +506,18 @@ class TestFakePytest(PsutilTestCase):
         assert not result.wasSuccessful()
         assert len(result.skipped) == 0
 
+    def test_skip(self):
+        class TestCase(unittest.TestCase):
+            def foo(self):
+                fake_pytest.skip("reason")
+
+                assert 1 == 1  # noqa
+
+        result = self.run_test_class(TestCase("foo"))
+        assert result.wasSuccessful()
+        assert len(result.skipped) == 1
+        assert result.skipped[0][1] == "reason"
+
     def test_main(self):
         tmpdir = self.get_testfn(dir=HERE)
         os.mkdir(tmpdir)
