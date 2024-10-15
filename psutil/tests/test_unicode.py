@@ -179,8 +179,8 @@ class BaseUnicodeTest(PsutilTestCase):
 
 
 @pytest.mark.xdist_group(name="serial")
-@unittest.skipIf(ASCII_FS, "ASCII fs")
-@unittest.skipIf(PYPY and not PY3, "too much trouble on PYPY2")
+@pytest.mark.skipif(ASCII_FS, reason="ASCII fs")
+@pytest.mark.skipif(PYPY and not PY3, reason="too much trouble on PYPY2")
 class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""
 
@@ -246,7 +246,7 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert cwd == dname
 
-    @unittest.skipIf(PYPY and WINDOWS, "fails on PYPY + WINDOWS")
+    @pytest.mark.skipif(PYPY and WINDOWS, reason="fails on PYPY + WINDOWS")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -260,7 +260,7 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert os.path.normcase(path) == os.path.normcase(self.funky_name)
 
-    @unittest.skipIf(not POSIX, "POSIX only")
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
         try:
@@ -275,8 +275,10 @@ class TestFSAPIs(BaseUnicodeTest):
             assert isinstance(conn.laddr, str)
             assert conn.laddr == name
 
-    @unittest.skipIf(not POSIX, "POSIX only")
-    @unittest.skipIf(not HAS_NET_CONNECTIONS_UNIX, "can't list UNIX sockets")
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @pytest.mark.skipif(
+        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
+    )
     @skip_on_access_denied()
     def test_net_connections(self):
         def find_sock(cons):
@@ -305,9 +307,11 @@ class TestFSAPIs(BaseUnicodeTest):
         safe_mkdir(dname)
         psutil.disk_usage(dname)
 
-    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
-    @unittest.skipIf(not PY3, "ctypes does not support unicode on PY2")
-    @unittest.skipIf(PYPY, "unstable on PYPY")
+    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
+    @pytest.mark.skipif(
+        not PY3, reason="ctypes does not support unicode on PY2"
+    )
+    @pytest.mark.skipif(PYPY, reason="unstable on PYPY")
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
         # opens a message box which blocks the test run.
@@ -326,7 +330,7 @@ class TestFSAPIs(BaseUnicodeTest):
                 assert isinstance(path, str)
 
 
-@unittest.skipIf(CI_TESTING, "unreliable on CI")
+@pytest.mark.skipif(CI_TESTING, reason="unreliable on CI")
 class TestFSAPIsWithInvalidPath(TestFSAPIs):
     """Test FS APIs with a funky, invalid path name."""
 
@@ -347,8 +351,8 @@ class TestNonFSAPIS(BaseUnicodeTest):
 
     funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
 
-    @unittest.skipIf(not HAS_ENVIRON, "not supported")
-    @unittest.skipIf(PYPY and WINDOWS, "segfaults on PYPY + WINDOWS")
+    @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
+    @pytest.mark.skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
         # with fs paths. On Python 2 subprocess module is broken as

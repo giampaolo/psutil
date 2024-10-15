@@ -9,15 +9,15 @@
 """AIX specific tests."""
 
 import re
-import unittest
 
 import psutil
 from psutil import AIX
 from psutil.tests import PsutilTestCase
+from psutil.tests import pytest
 from psutil.tests import sh
 
 
-@unittest.skipIf(not AIX, "AIX only")
+@pytest.mark.skipif(not AIX, reason="AIX only")
 class AIXSpecificTestCase(PsutilTestCase):
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')

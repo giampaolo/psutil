@@ -340,7 +340,9 @@ class TestMisc(PsutilTestCase):
         assert b.name == 'name'
 
     # # XXX: https://github.com/pypa/setuptools/pull/2896
-    # @unittest.skipIf(APPVEYOR, "temporarily disabled due to setuptools bug")
+    # @pytest.mark.skipif(APPVEYOR,
+    #     reason="temporarily disabled due to setuptools bug"
+    # )
     # def test_setup_script(self):
     #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
     #     if CI_TESTING and not os.path.exists(setup_py):
@@ -886,7 +888,7 @@ class TestWrapNumbers(PsutilTestCase):
         wrap_numbers.cache_clear('disk_io')
         wrap_numbers.cache_clear('?!?')
 
-    @unittest.skipIf(not HAS_NET_IO_COUNTERS, 'not supported')
+    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_cache_clear_public_apis(self):
         if not psutil.disk_io_counters() or not psutil.net_io_counters():
             raise unittest.SkipTest("no disks or NICs available")
@@ -913,8 +915,8 @@ class TestWrapNumbers(PsutilTestCase):
 # ===================================================================
 
 
-@unittest.skipIf(
-    not os.path.exists(SCRIPTS_DIR), "can't locate scripts directory"
+@pytest.mark.skipif(
+    not os.path.exists(SCRIPTS_DIR), reason="can't locate scripts directory"
 )
 class TestScripts(PsutilTestCase):
     """Tests for scripts in the "scripts" directory."""
@@ -955,7 +957,7 @@ class TestScripts(PsutilTestCase):
                         % os.path.join(SCRIPTS_DIR, name)
                     )
 
-    @unittest.skipIf(not POSIX, "POSIX only")
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_executable(self):
         for root, dirs, files in os.walk(SCRIPTS_DIR):
             for file in files:
@@ -976,7 +978,7 @@ class TestScripts(PsutilTestCase):
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', str(os.getpid()))
 
-    @unittest.skipIf(CI_TESTING and not psutil.users(), "no users")
+    @pytest.mark.skipif(CI_TESTING and not psutil.users(), reason="no users")
     def test_who(self):
         self.assert_stdout('who.py')
 
@@ -989,11 +991,11 @@ class TestScripts(PsutilTestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    @unittest.skipIf(QEMU_USER, 'QEMU user not supported')
+    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @unittest.skipIf(not HAS_MEMORY_MAPS, "not supported")
+    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 
@@ -1018,31 +1020,31 @@ class TestScripts(PsutilTestCase):
         output = self.assert_stdout('pidof.py', psutil.Process().name())
         assert str(os.getpid()) in output
 
-    @unittest.skipIf(not WINDOWS, "WINDOWS only")
+    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     def test_winservices(self):
         self.assert_stdout('winservices.py')
 
     def test_cpu_distribution(self):
         self.assert_syntax('cpu_distribution.py')
 
-    @unittest.skipIf(not HAS_SENSORS_TEMPERATURES, "not supported")
+    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
             raise unittest.SkipTest("no temperatures")
         self.assert_stdout('temperatures.py')
 
-    @unittest.skipIf(not HAS_SENSORS_FANS, "not supported")
+    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_fans(self):
         if not psutil.sensors_fans():
             raise unittest.SkipTest("no fans")
         self.assert_stdout('fans.py')
 
-    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_battery(self):
         self.assert_stdout('battery.py')
 
-    @unittest.skipIf(not HAS_SENSORS_BATTERY, "not supported")
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')

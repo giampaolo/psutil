@@ -9,7 +9,6 @@
 import platform
 import re
 import time
-import unittest
 
 import psutil
 from psutil import MACOS
@@ -18,6 +17,7 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
+from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
@@ -51,7 +51,7 @@ def vm_stat(field):
     return int(re.search(r'\d+', line).group(0)) * getpagesize()
 
 
-@unittest.skipIf(not MACOS, "MACOS only")
+@pytest.mark.skipif(not MACOS, reason="MACOS only")
 class TestProcess(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
@@ -73,7 +73,7 @@ class TestProcess(PsutilTestCase):
         assert year == time.strftime("%Y", time.localtime(start_psutil))
 
 
-@unittest.skipIf(not MACOS, "MACOS only")
+@pytest.mark.skipif(not MACOS, reason="MACOS only")
 class TestSystemAPIs(PsutilTestCase):
 
     # --- disk
@@ -114,8 +114,8 @@ class TestSystemAPIs(PsutilTestCase):
         assert num == psutil.cpu_count(logical=False)
 
     # TODO: remove this once 1892 is fixed
-    @unittest.skipIf(
-        MACOS and platform.machine() == 'arm64', "skipped due to #1892"
+    @pytest.mark.skipif(
+        MACOS and platform.machine() == 'arm64', reason="skipped due to #1892"
     )
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
@@ -181,7 +181,7 @@ class TestSystemAPIs(PsutilTestCase):
 
     # --- sensors_battery
 
-    @unittest.skipIf(not HAS_BATTERY, "no battery")
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
         out = sh("pmset -g batt")
         percent = re.search(r"(\d+)%", out).group(1)

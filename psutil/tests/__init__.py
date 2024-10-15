@@ -975,6 +975,12 @@ class fake_pytest:
         return unittest.TestCase().assertWarns(warning)
 
     class mark:
+
+        @staticmethod
+        def skipif(condition, reason=""):
+            """Mimics `@pytest.mark.skipif` decorator."""
+            return unittest.skipIf(condition, reason)
+
         class xdist_group:
             """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
 
@@ -1150,7 +1156,7 @@ class PsutilTestCase(TestCase):
         # self.assertEqual(proc.ppid(), os.getpid())
 
 
-@unittest.skipIf(PYPY, "unreliable on PYPY")
+@pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory
