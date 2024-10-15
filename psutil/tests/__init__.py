@@ -974,6 +974,11 @@ class fake_pytest:
             return unittest.TestCase().assertWarnsRegex(warning, match)
         return unittest.TestCase().assertWarns(warning)
 
+    @staticmethod
+    def skip(reason=""):
+        """Mimics `unittest.SkipTest`."""
+        raise unittest.SkipTest(reason)
+
     class mark:
 
         @staticmethod
