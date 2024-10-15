@@ -13,7 +13,6 @@ import os
 import re
 import subprocess
 import time
-import unittest
 
 import psutil
 from psutil import AIX
@@ -141,7 +140,7 @@ def df(device):
         out = sh("df -k %s" % device).strip()
     except RuntimeError as err:
         if "device busy" in str(err).lower():
-            raise unittest.SkipTest("df returned EBUSY")
+            raise pytest.skip("df returned EBUSY")
         raise
     line = out.split('\n')[1]
     fields = line.split()
@@ -370,7 +369,7 @@ class TestSystemAPIs(PsutilTestCase):
     def test_users(self):
         out = sh("who -u")
         if not out.strip():
-            raise unittest.SkipTest("no users on this system")
+            raise pytest.skip("no users on this system")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
@@ -386,7 +385,7 @@ class TestSystemAPIs(PsutilTestCase):
     def test_users_started(self):
         out = sh("who -u")
         if not out.strip():
-            raise unittest.SkipTest("no users on this system")
+            raise pytest.skip("no users on this system")
         tstamp = None
         # '2023-04-11 09:31' (Linux)
         started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
@@ -410,7 +409,7 @@ class TestSystemAPIs(PsutilTestCase):
                         started = [x.capitalize() for x in started]
 
         if not tstamp:
-            raise unittest.SkipTest(
+            raise pytest.skip(
                 "cannot interpret tstamp in who output\n%s" % (out)
             )
 

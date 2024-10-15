@@ -75,7 +75,6 @@ etc.) and make sure that:
 import os
 import shutil
 import traceback
-import unittest
 import warnings
 from contextlib import closing
 
@@ -175,7 +174,7 @@ class BaseUnicodeTest(PsutilTestCase):
     def setUp(self):
         super().setUp()
         if self.skip_tests:
-            raise unittest.SkipTest("can't handle unicode str")
+            raise pytest.skip("can't handle unicode str")
 
 
 @pytest.mark.xdist_group(name="serial")
@@ -256,7 +255,7 @@ class TestFSAPIs(BaseUnicodeTest):
         assert isinstance(path, str)
         if BSD and not path:
             # XXX - see https://github.com/giampaolo/psutil/issues/595
-            raise unittest.SkipTest("open_files on BSD is broken")
+            raise pytest.skip("open_files on BSD is broken")
         if self.expect_exact_path_match():
             assert os.path.normcase(path) == os.path.normcase(self.funky_name)
 
@@ -269,7 +268,7 @@ class TestFSAPIs(BaseUnicodeTest):
             if PY3:
                 raise
             else:
-                raise unittest.SkipTest("not supported")
+                raise pytest.skip("not supported")
         with closing(sock):
             conn = psutil.Process().net_connections('unix')[0]
             assert isinstance(conn.laddr, str)
@@ -294,7 +293,7 @@ class TestFSAPIs(BaseUnicodeTest):
             if PY3:
                 raise
             else:
-                raise unittest.SkipTest("not supported")
+                raise pytest.skip("not supported")
         with closing(sock):
             cons = psutil.net_connections(kind='unix')
             conn = find_sock(cons)

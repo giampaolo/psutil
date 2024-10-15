@@ -19,7 +19,6 @@ import sys
 import textwrap
 import time
 import types
-import unittest
 
 import psutil
 from psutil import AIX
@@ -329,7 +328,7 @@ class TestProcess(PsutilTestCase):
                 tty = os.path.realpath(sh('tty'))
             except RuntimeError:
                 # Note: happens if pytest is run without the `-s` opt.
-                raise unittest.SkipTest("can't rely on `tty` CLI")
+                raise pytest.skip("can't rely on `tty` CLI")
             else:
                 assert terminal == tty
 
@@ -543,7 +542,7 @@ class TestProcess(PsutilTestCase):
             try:
                 step1 = p.num_threads()
             except psutil.AccessDenied:
-                raise unittest.SkipTest("on OpenBSD this requires root access")
+                raise pytest.skip("on OpenBSD this requires root access")
         else:
             step1 = p.num_threads()
 
@@ -564,7 +563,7 @@ class TestProcess(PsutilTestCase):
             try:
                 step1 = p.threads()
             except psutil.AccessDenied:
-                raise unittest.SkipTest("on OpenBSD this requires root access")
+                raise pytest.skip("on OpenBSD this requires root access")
         else:
             step1 = p.threads()
 
@@ -586,7 +585,7 @@ class TestProcess(PsutilTestCase):
             try:
                 p.threads()
             except psutil.AccessDenied:
-                raise unittest.SkipTest("on OpenBSD this requires root access")
+                raise pytest.skip("on OpenBSD this requires root access")
         assert (
             abs(p.cpu_times().user - sum([x.user_time for x in p.threads()]))
             < 0.1
@@ -761,7 +760,7 @@ class TestProcess(PsutilTestCase):
 
         if NETBSD and p.cmdline() == []:
             # https://github.com/giampaolo/psutil/issues/2250
-            raise unittest.SkipTest("OPENBSD: returned EBUSY")
+            raise pytest.skip("OPENBSD: returned EBUSY")
 
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
@@ -795,14 +794,14 @@ class TestProcess(PsutilTestCase):
             try:
                 assert p.cmdline() == cmdline
             except psutil.ZombieProcess:
-                raise unittest.SkipTest("OPENBSD: process turned into zombie")
+                raise pytest.skip("OPENBSD: process turned into zombie")
         elif QEMU_USER:
             assert p.cmdline()[2:] == cmdline
         else:
             ret = p.cmdline()
             if NETBSD and ret == []:
                 # https://github.com/giampaolo/psutil/issues/2250
-                raise unittest.SkipTest("OPENBSD: returned EBUSY")
+                raise pytest.skip("OPENBSD: returned EBUSY")
             assert ret == cmdline
 
     def test_name(self):
@@ -968,7 +967,7 @@ class TestProcess(PsutilTestCase):
                 # When running as a service account (most likely to be
                 # NetworkService), these user name calculations don't produce
                 # the same result, causing the test to fail.
-                raise unittest.SkipTest('running as service account')
+                raise pytest.skip('running as service account')
             assert username == getpass_user
             if 'USERDOMAIN' in os.environ:
                 assert domain == os.environ['USERDOMAIN']
@@ -1234,7 +1233,7 @@ class TestProcess(PsutilTestCase):
         # this is the one, now let's make sure there are no duplicates
         pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
         if LINUX and pid == 0:
-            raise unittest.SkipTest("PID 0")
+            raise pytest.skip("PID 0")
         p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)

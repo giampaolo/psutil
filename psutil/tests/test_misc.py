@@ -16,7 +16,6 @@ import pickle
 import socket
 import stat
 import sys
-import unittest
 
 import psutil
 import psutil.tests
@@ -346,7 +345,7 @@ class TestMisc(PsutilTestCase):
     # def test_setup_script(self):
     #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
     #     if CI_TESTING and not os.path.exists(setup_py):
-    #         raise unittest.SkipTest("can't find setup.py")
+    #         raise pytest.skip("can't find setup.py")
     #     module = import_module_by_path(setup_py)
     #     self.assertRaises(SystemExit, module.setup)
     #     self.assertEqual(module.get_version(), psutil.__version__)
@@ -891,7 +890,7 @@ class TestWrapNumbers(PsutilTestCase):
     @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_cache_clear_public_apis(self):
         if not psutil.disk_io_counters() or not psutil.net_io_counters():
-            raise unittest.SkipTest("no disks or NICs available")
+            raise pytest.skip("no disks or NICs available")
         psutil.disk_io_counters()
         psutil.net_io_counters()
         caches = wrap_numbers.cache_info()
@@ -1001,7 +1000,7 @@ class TestScripts(PsutilTestCase):
 
     def test_procsmem(self):
         if 'uss' not in psutil.Process().memory_full_info()._fields:
-            raise unittest.SkipTest("not supported")
+            raise pytest.skip("not supported")
         self.assert_stdout('procsmem.py')
 
     def test_killall(self):
@@ -1030,13 +1029,13 @@ class TestScripts(PsutilTestCase):
     @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
-            raise unittest.SkipTest("no temperatures")
+            raise pytest.skip("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_fans(self):
         if not psutil.sensors_fans():
-            raise unittest.SkipTest("no fans")
+            raise pytest.skip("no fans")
         self.assert_stdout('fans.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")

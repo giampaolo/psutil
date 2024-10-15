@@ -878,7 +878,7 @@ def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
     if not which("gcc"):
-        raise unittest.SkipTest("gcc is not installed")
+        raise pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
             #include <unistd.h>
@@ -1689,7 +1689,7 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                raise unittest.SkipTest("raises AccessDenied")
+                raise pytest.skip("raises AccessDenied")
 
         return wrapper
 
@@ -1712,7 +1712,7 @@ def skip_on_not_implemented(only_if=None):
                     "%r was skipped because it raised NotImplementedError"
                     % fun.__name__
                 )
-                raise unittest.SkipTest(msg)
+                raise pytest.skip(msg)
 
         return wrapper
 
