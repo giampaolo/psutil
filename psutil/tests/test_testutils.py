@@ -15,6 +15,7 @@ import socket
 import stat
 import subprocess
 import textwrap
+import unittest
 import warnings
 
 import psutil
@@ -448,6 +449,13 @@ class TestMemLeakClass(TestMemoryLeak):
 
 
 class TestFakePytest(PsutilTestCase):
+    def run_test_class(self, klass):
+        suite = unittest.TestSuite()
+        suite.addTest(klass)
+        runner = unittest.TextTestRunner()
+        result = runner.run(suite)
+        return result
+
     def test_raises(self):
         with fake_pytest.raises(ZeroDivisionError) as cm:
             1 / 0  # noqa
@@ -477,6 +485,26 @@ class TestFakePytest(PsutilTestCase):
                 return 1
 
         assert Foo().bar() == 1
+
+    def test_skipif(self):
+        class TestCase(unittest.TestCase):
+            @fake_pytest.mark.skipif(True, reason="reason")
+            def foo(self):
+                assert 1 == 1  # noqa
+
+        result = self.run_test_class(TestCase("foo"))
+        assert result.wasSuccessful()
+        assert len(result.skipped) == 1
+        assert result.skipped[0][1] == "reason"
+
+        class TestCase(unittest.TestCase):
+            @fake_pytest.mark.skipif(False, reason="reason")
+            def foo(self):
+                assert 1 == 1  # noqa
+
+        result = self.run_test_class(TestCase("foo"))
+        assert not result.wasSuccessful()
+        assert len(result.skipped) == 0
 
     def test_main(self):
         tmpdir = self.get_testfn(dir=HERE)
