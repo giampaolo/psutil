@@ -11,7 +11,6 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 
 import platform
 import signal
-import unittest
 
 import psutil
 from psutil import AIX
@@ -237,7 +236,7 @@ class TestSystemAPITypes(PsutilTestCase):
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
-            raise unittest.SkipTest("cpu_freq() returns None")
+            raise pytest.skip("cpu_freq() returns None")
         self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int, long))
 
     def test_disk_io_counters(self):

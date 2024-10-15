@@ -17,7 +17,6 @@ import signal
 import subprocess
 import sys
 import time
-import unittest
 import warnings
 
 import psutil
@@ -74,7 +73,7 @@ def powershell(cmd):
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
     """
     if not which("powershell.exe"):
-        raise unittest.SkipTest("powershell.exe not available")
+        raise pytest.skip("powershell.exe not available")
     cmdline = (
         'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive '
         + '-NoProfile -WindowStyle Hidden -Command "%s"' % cmd
@@ -440,7 +439,7 @@ class TestProcess(WindowsTestCase):
             # When running as a service account (most likely to be
             # NetworkService), these user name calculations don't produce the
             # same result, causing the test to fail.
-            raise unittest.SkipTest('running as service account')
+            raise pytest.skip('running as service account')
         assert psutil.Process().username() == name
 
     def test_cmdline(self):
@@ -775,7 +774,7 @@ class RemoteProcessTestCase(PsutilTestCase):
 
         other_python = self.find_other_interpreter()
         if other_python is None:
-            raise unittest.SkipTest(
+            raise pytest.skip(
                 "could not find interpreter with opposite bitness"
             )
         if IS_64BIT:

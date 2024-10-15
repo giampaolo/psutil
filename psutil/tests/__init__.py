@@ -104,7 +104,7 @@ __all__ = [
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace', 'print_sysinfo',
-    'is_win_secure_system_proc',
+    'is_win_secure_system_proc', 'fake_pytest',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -878,7 +878,7 @@ def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
     if not which("gcc"):
-        raise unittest.SkipTest("gcc is not installed")
+        raise pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
             #include <unistd.h>
@@ -973,6 +973,11 @@ class fake_pytest:
         if match:
             return unittest.TestCase().assertWarnsRegex(warning, match)
         return unittest.TestCase().assertWarns(warning)
+
+    @staticmethod
+    def skip(reason=""):
+        """Mimics `unittest.SkipTest`."""
+        raise unittest.SkipTest(reason)
 
     class mark:
 
@@ -1689,7 +1694,7 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                raise unittest.SkipTest("raises AccessDenied")
+                raise pytest.skip("raises AccessDenied")
 
         return wrapper
 
@@ -1712,7 +1717,7 @@ def skip_on_not_implemented(only_if=None):
                     "%r was skipped because it raised NotImplementedError"
                     % fun.__name__
                 )
-                raise unittest.SkipTest(msg)
+                raise pytest.skip(msg)
 
         return wrapper
 
