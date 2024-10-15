@@ -104,7 +104,7 @@ __all__ = [
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace', 'print_sysinfo',
-    'is_win_secure_system_proc',
+    'is_win_secure_system_proc', 'fake_pytest',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
