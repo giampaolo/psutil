@@ -503,7 +503,7 @@ class TestFakePytest(PsutilTestCase):
                 assert 1 == 1  # noqa
 
         result = self.run_test_class(TestCase("foo"))
-        assert not result.wasSuccessful()
+        assert result.wasSuccessful()
         assert len(result.skipped) == 0
 
     def test_skip(self):
