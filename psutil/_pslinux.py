@@ -629,19 +629,15 @@ def apply_zfs_arcstats(vm_stats: svmem):
     # ZFS ARC memory consumption is not reported by /proc/meminfo.
     # Running this func will include reclaimable ZFS ARC
     # memory in the returned values.
-    # N.B. this will make psutil match the output of "htop" instead
-    # of "free" CLI tool.
     # See:
     # https://www.reddit.com/r/zfs/comments/ha0p7f/understanding_arcstat_and_free/
     # https://github.com/openzfs/zfs/issues/10255
 
-    # When accounting for zfs memory, we need to keep track of "shared"
-    # So "used" memory is more relevant than "available"
     shrinkable_size = max(zfs_size - zfs_min, 0)
     used = vm_stats.used + vm_stats.shared - shrinkable_size
     cached = vm_stats.cached - vm_stats.shared + shrinkable_size
     available = vm_stats.available + shrinkable_size
-    percent = usage_percent(used, vm_stats.total, round_=1)
+    percent = usage_percent(vm_stats.total - available, vm_stats.total, round_=1)
 
     return svmem(
         vm_stats.total,
