@@ -45,7 +45,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     size = sizeof(struct kinfo_proc);
     if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PID)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PID)");
         return -1;
     }
 
@@ -92,7 +92,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     // Call sysctl with a NULL buffer in order to get buffer length.
     err = sysctl(name, 3, NULL, &length, NULL, 0);
     if (err == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl (null buffer)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl (null buffer)");
         return 1;
     }
 
@@ -120,7 +120,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
                 }
             }
 
-            PyErr_SetFromOSErrnoWithSyscall("sysctl()");
+            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
             return 1;
         }
         else {
@@ -177,7 +177,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGS)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGS)");
         goto error;
     }
 
@@ -238,8 +238,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             return PyUnicode_DecodeFSDefault("");
         }
         else {
-            return \
-                PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PATHNAME)");
+            return psutil_PyErr_SetFromOSErrnoWithSyscall(
+                "sysctl(KERN_PROC_PATHNAME)"
+            );
         }
     }
     if (size == 0 || strlen(pathname) == 0) {
@@ -300,7 +301,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     size = 0;
     error = sysctl(mib, 4, NULL, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
         goto error;
     }
     if (size == 0) {
@@ -316,7 +317,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     error = sysctl(mib, 4, kip, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
         goto error;
     }
     if (size == 0) {

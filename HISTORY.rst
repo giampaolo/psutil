@@ -1,14 +1,35 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-6.0.1 (IN DEVELOPMENT)
+6.1.0 (IN DEVELOPMENT)
 ======================
 
 XXXX-XX-XX
+
+**Enhancements**
+
+- 2446_: use pytest instead of unittest.
+- 2448_: add ``make install-sysdeps`` target to install the necessary system
+  dependencies (python-dev, gcc, etc.) on all supported UNIX flavors.
+- 2449_: add ``make install-pydeps-test`` and ``make install-pydeps-dev``
+  targets. They can be used to install dependencies meant for running tests and
+  for local development. They can also be installed via ``pip install .[test]``
+  and ``pip install .[dev]``.
+- 2456_: allow to run tests via ``python3 -m psutil.tests`` even if ``pytest``
+  module is not installed. This is useful for production environments that
+  don't have pytest installed, but still want to be able to test psutil
+  installation.
 
 **Bug fixes**
 
 - 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
   Python 3.13.  (patch by Sam Gross)
+- 2455_, [Linux]: ``IndexError`` may occur when reading /proc/pid/stat and
+  field 40 (blkio_ticks) is missing.
+- 2457_, [AIX]: significantly improve the speed of `Process.open_files()`_ for 
+  some edge cases.
+- 2460_, [OpenBSD]: `Process.num_fds()`_ and `Process.open_files()`_ may fail
+  with `NoSuchProcess`_ for PID 0. Instead, we now return "null" values (0 and
+  [] respectively).
 
 6.0.0
 ======

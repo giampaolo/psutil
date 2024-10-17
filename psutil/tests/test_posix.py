@@ -13,7 +13,6 @@ import os
 import re
 import subprocess
 import time
-import unittest
 
 import psutil
 from psutil import AIX
@@ -23,11 +22,13 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
+from psutil.tests import AARCH64
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
 from psutil.tests import QEMU_USER
 from psutil.tests import PsutilTestCase
 from psutil.tests import mock
+from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
@@ -134,7 +135,23 @@ def ps_vsz(pid):
     return ps(field, pid)
 
 
-@unittest.skipIf(not POSIX, "POSIX only")
+def df(device):
+    try:
+        out = sh("df -k %s" % device).strip()
+    except RuntimeError as err:
+        if "device busy" in str(err).lower():
+            raise pytest.skip("df returned EBUSY")
+        raise
+    line = out.split('\n')[1]
+    fields = line.split()
+    sys_total = int(fields[1]) * 1024
+    sys_used = int(fields[2]) * 1024
+    sys_free = int(fields[3]) * 1024
+    sys_percent = float(fields[4].replace('%', ''))
+    return (sys_total, sys_used, sys_free, sys_percent)
+
+
+@pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestProcess(PsutilTestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
@@ -151,22 +168,22 @@ class TestProcess(PsutilTestCase):
     def test_ppid(self):
         ppid_ps = ps('ppid', self.pid)
         ppid_psutil = psutil.Process(self.pid).ppid()
-        self.assertEqual(ppid_ps, ppid_psutil)
+        assert ppid_ps == ppid_psutil
 
     def test_uid(self):
         uid_ps = ps('uid', self.pid)
         uid_psutil = psutil.Process(self.pid).uids().real
-        self.assertEqual(uid_ps, uid_psutil)
+        assert uid_ps == uid_psutil
 
     def test_gid(self):
         gid_ps = ps('rgid', self.pid)
         gid_psutil = psutil.Process(self.pid).gids().real
-        self.assertEqual(gid_ps, gid_psutil)
+        assert gid_ps == gid_psutil
 
     def test_username(self):
         username_ps = ps('user', self.pid)
         username_psutil = psutil.Process(self.pid).username()
-        self.assertEqual(username_ps, username_psutil)
+        assert username_ps == username_psutil
 
     def test_username_no_resolution(self):
         # Emulate a case where the system can't resolve the uid to
@@ -174,7 +191,7 @@ class TestProcess(PsutilTestCase):
         # the stringified uid.
         p = psutil.Process()
         with mock.patch("psutil.pwd.getpwuid", side_effect=KeyError) as fun:
-            self.assertEqual(p.username(), str(p.uids().real))
+            assert p.username() == str(p.uids().real)
             assert fun.called
 
     @skip_on_access_denied()
@@ -185,7 +202,7 @@ class TestProcess(PsutilTestCase):
         time.sleep(0.1)
         rss_ps = ps_rss(self.pid)
         rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
-        self.assertEqual(rss_ps, rss_psutil)
+        assert rss_ps == rss_psutil
 
     @skip_on_access_denied()
     @retry_on_failure()
@@ -195,7 +212,7 @@ class TestProcess(PsutilTestCase):
         time.sleep(0.1)
         vsz_ps = ps_vsz(self.pid)
         vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
-        self.assertEqual(vsz_ps, vsz_psutil)
+        assert vsz_ps == vsz_psutil
 
     def test_name(self):
         name_ps = ps_name(self.pid)
@@ -209,7 +226,7 @@ class TestProcess(PsutilTestCase):
         # ...may also be "python.X"
         name_ps = re.sub(r"\d", "", name_ps)
         name_psutil = re.sub(r"\d", "", name_psutil)
-        self.assertEqual(name_ps, name_psutil)
+        assert name_ps == name_psutil
 
     def test_name_long(self):
         # On UNIX the kernel truncates the name to the first 15
@@ -222,7 +239,7 @@ class TestProcess(PsutilTestCase):
                 "psutil._psplatform.Process.cmdline", return_value=cmdline
             ):
                 p = psutil.Process()
-                self.assertEqual(p.name(), "long-program-name-extended")
+                assert p.name() == "long-program-name-extended"
 
     def test_name_long_cmdline_ad_exc(self):
         # Same as above but emulates a case where cmdline() raises
@@ -235,7 +252,7 @@ class TestProcess(PsutilTestCase):
                 side_effect=psutil.AccessDenied(0, ""),
             ):
                 p = psutil.Process()
-                self.assertEqual(p.name(), "long-program-name")
+                assert p.name() == "long-program-name"
 
     def test_name_long_cmdline_nsp_exc(self):
         # Same as above but emulates a case where cmdline() raises NSP
@@ -247,9 +264,10 @@ class TestProcess(PsutilTestCase):
                 side_effect=psutil.NoSuchProcess(0, ""),
             ):
                 p = psutil.Process()
-                self.assertRaises(psutil.NoSuchProcess, p.name)
+                with pytest.raises(psutil.NoSuchProcess):
+                    p.name()
 
-    @unittest.skipIf(MACOS or BSD, 'ps -o start not available')
+    @pytest.mark.skipif(MACOS or BSD, reason="ps -o start not available")
     def test_create_time(self):
         time_ps = ps('start', self.pid)
         time_psutil = psutil.Process(self.pid).create_time()
@@ -262,13 +280,13 @@ class TestProcess(PsutilTestCase):
         round_time_psutil_tstamp = datetime.datetime.fromtimestamp(
             round_time_psutil
         ).strftime("%H:%M:%S")
-        self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
+        assert time_ps in [time_psutil_tstamp, round_time_psutil_tstamp]
 
     def test_exe(self):
         ps_pathname = ps_name(self.pid)
         psutil_pathname = psutil.Process(self.pid).exe()
         try:
-            self.assertEqual(ps_pathname, psutil_pathname)
+            assert ps_pathname == psutil_pathname
         except AssertionError:
             # certain platforms such as BSD are more accurate returning:
             # "/usr/local/bin/python2.7"
@@ -277,7 +295,7 @@ class TestProcess(PsutilTestCase):
             # We do not want to consider this difference in accuracy
             # an error.
             adjusted_ps_pathname = ps_pathname[: len(ps_pathname)]
-            self.assertEqual(ps_pathname, adjusted_ps_pathname)
+            assert ps_pathname == adjusted_ps_pathname
 
     # On macOS the official python installer exposes a python wrapper that
     # executes a python executable hidden inside an application bundle inside
@@ -288,22 +306,25 @@ class TestProcess(PsutilTestCase):
     def test_cmdline(self):
         ps_cmdline = ps_args(self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
-        self.assertEqual(ps_cmdline, psutil_cmdline)
+        if AARCH64 and len(ps_cmdline) < len(psutil_cmdline):
+            assert psutil_cmdline.startswith(ps_cmdline)
+        else:
+            assert ps_cmdline == psutil_cmdline
 
     # On SUNOS "ps" reads niceness /proc/pid/psinfo which returns an
     # incorrect value (20); the real deal is getpriority(2) which
     # returns 0; psutil relies on it, see:
     # https://github.com/giampaolo/psutil/issues/1082
     # AIX has the same issue
-    @unittest.skipIf(SUNOS, "not reliable on SUNOS")
-    @unittest.skipIf(AIX, "not reliable on AIX")
+    @pytest.mark.skipif(SUNOS, reason="not reliable on SUNOS")
+    @pytest.mark.skipif(AIX, reason="not reliable on AIX")
     def test_nice(self):
         ps_nice = ps('nice', self.pid)
         psutil_nice = psutil.Process().nice()
-        self.assertEqual(ps_nice, psutil_nice)
+        assert ps_nice == psutil_nice
 
 
-@unittest.skipIf(not POSIX, "POSIX only")
+@pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestSystemAPIs(PsutilTestCase):
     """Test some system APIs."""
 
@@ -315,7 +336,7 @@ class TestSystemAPIs(PsutilTestCase):
         pids_psutil = psutil.pids()
 
         # on MACOS and OPENBSD ps doesn't show pid 0
-        if MACOS or OPENBSD and 0 not in pids_ps:
+        if MACOS or (OPENBSD and 0 not in pids_ps):
             pids_ps.insert(0, 0)
 
         # There will often be one more process in pids_ps for ps itself
@@ -327,9 +348,9 @@ class TestSystemAPIs(PsutilTestCase):
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
-    @unittest.skipIf(SUNOS, "unreliable on SUNOS")
-    @unittest.skipIf(not which('ifconfig'), "no ifconfig cmd")
-    @unittest.skipIf(not HAS_NET_IO_COUNTERS, "not supported")
+    @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
+    @pytest.mark.skipif(not which('ifconfig'), reason="no ifconfig cmd")
+    @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")
         for nic in psutil.net_io_counters(pernic=True):
@@ -342,20 +363,21 @@ class TestSystemAPIs(PsutilTestCase):
                     % (nic, output)
                 )
 
-    # @unittest.skipIf(CI_TESTING and not psutil.users(), "unreliable on CI")
+    # @pytest.mark.skipif(CI_TESTING and not psutil.users(),
+    #                     reason="unreliable on CI")
     @retry_on_failure()
     def test_users(self):
         out = sh("who -u")
         if not out.strip():
-            raise unittest.SkipTest("no users on this system")
+            raise pytest.skip("no users on this system")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         terminals = [x.split()[1] for x in lines]
-        self.assertEqual(len(users), len(psutil.users()))
+        assert len(users) == len(psutil.users())
         with self.subTest(psutil=psutil.users(), who=out):
             for idx, u in enumerate(psutil.users()):
-                self.assertEqual(u.name, users[idx])
-                self.assertEqual(u.terminal, terminals[idx])
+                assert u.name == users[idx]
+                assert u.terminal == terminals[idx]
                 if u.pid is not None:  # None on OpenBSD
                     psutil.Process(u.pid)
 
@@ -363,7 +385,7 @@ class TestSystemAPIs(PsutilTestCase):
     def test_users_started(self):
         out = sh("who -u")
         if not out.strip():
-            raise unittest.SkipTest("no users on this system")
+            raise pytest.skip("no users on this system")
         tstamp = None
         # '2023-04-11 09:31' (Linux)
         started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
@@ -387,7 +409,7 @@ class TestSystemAPIs(PsutilTestCase):
                         started = [x.capitalize() for x in started]
 
         if not tstamp:
-            raise unittest.SkipTest(
+            raise pytest.skip(
                 "cannot interpret tstamp in who output\n%s" % (out)
             )
 
@@ -396,7 +418,7 @@ class TestSystemAPIs(PsutilTestCase):
                 psutil_value = datetime.datetime.fromtimestamp(
                     u.started
                 ).strftime(tstamp)
-                self.assertEqual(psutil_value, started[idx])
+                assert psutil_value == started[idx]
 
     def test_pid_exists_let_raise(self):
         # According to "man 2 kill" possible error values for kill
@@ -405,7 +427,8 @@ class TestSystemAPIs(PsutilTestCase):
         with mock.patch(
             "psutil._psposix.os.kill", side_effect=OSError(errno.EBADF, "")
         ) as m:
-            self.assertRaises(OSError, psutil._psposix.pid_exists, os.getpid())
+            with pytest.raises(OSError):
+                psutil._psposix.pid_exists(os.getpid())
             assert m.called
 
     def test_os_waitpid_let_raise(self):
@@ -414,7 +437,8 @@ class TestSystemAPIs(PsutilTestCase):
         with mock.patch(
             "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
         ) as m:
-            self.assertRaises(OSError, psutil._psposix.wait_pid, os.getpid())
+            with pytest.raises(OSError):
+                psutil._psposix.wait_pid(os.getpid())
             assert m.called
 
     def test_os_waitpid_eintr(self):
@@ -422,12 +446,8 @@ class TestSystemAPIs(PsutilTestCase):
         with mock.patch(
             "psutil._psposix.os.waitpid", side_effect=OSError(errno.EINTR, "")
         ) as m:
-            self.assertRaises(
-                psutil._psposix.TimeoutExpired,
-                psutil._psposix.wait_pid,
-                os.getpid(),
-                timeout=0.01,
-            )
+            with pytest.raises(psutil._psposix.TimeoutExpired):
+                psutil._psposix.wait_pid(os.getpid(), timeout=0.01)
             assert m.called
 
     def test_os_waitpid_bad_ret_status(self):
@@ -435,35 +455,19 @@ class TestSystemAPIs(PsutilTestCase):
         with mock.patch(
             "psutil._psposix.os.waitpid", return_value=(1, -1)
         ) as m:
-            self.assertRaises(
-                ValueError, psutil._psposix.wait_pid, os.getpid()
-            )
+            with pytest.raises(ValueError):
+                psutil._psposix.wait_pid(os.getpid())
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
-    @unittest.skipIf(AIX, "unreliable on AIX")
+    @pytest.mark.skipif(AIX, reason="unreliable on AIX")
     @retry_on_failure()
     def test_disk_usage(self):
-        def df(device):
-            try:
-                out = sh("df -k %s" % device).strip()
-            except RuntimeError as err:
-                if "device busy" in str(err).lower():
-                    raise unittest.SkipTest("df returned EBUSY")
-                raise
-            line = out.split('\n')[1]
-            fields = line.split()
-            total = int(fields[1]) * 1024
-            used = int(fields[2]) * 1024
-            free = int(fields[3]) * 1024
-            percent = float(fields[4].replace('%', ''))
-            return (total, used, free, percent)
-
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             try:
-                total, used, free, percent = df(part.device)
+                sys_total, sys_used, sys_free, sys_percent = df(part.device)
             except RuntimeError as err:
                 # see:
                 # https://travis-ci.org/giampaolo/psutil/jobs/138338464
@@ -477,22 +481,16 @@ class TestSystemAPIs(PsutilTestCase):
                     continue
                 raise
             else:
-                self.assertAlmostEqual(usage.total, total, delta=tolerance)
-                self.assertAlmostEqual(usage.used, used, delta=tolerance)
-                self.assertAlmostEqual(usage.free, free, delta=tolerance)
-                self.assertAlmostEqual(usage.percent, percent, delta=1)
+                assert abs(usage.total - sys_total) < tolerance
+                assert abs(usage.used - sys_used) < tolerance
+                assert abs(usage.free - sys_free) < tolerance
+                assert abs(usage.percent - sys_percent) <= 1
 
 
-@unittest.skipIf(not POSIX, "POSIX only")
+@pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestMisc(PsutilTestCase):
     def test_getpagesize(self):
         pagesize = getpagesize()
-        self.assertGreater(pagesize, 0)
-        self.assertEqual(pagesize, resource.getpagesize())
-        self.assertEqual(pagesize, mmap.PAGESIZE)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)
+        assert pagesize > 0
+        assert pagesize == resource.getpagesize()
+        assert pagesize == mmap.PAGESIZE

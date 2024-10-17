@@ -1732,7 +1732,7 @@ def wrap_exceptions(fun):
 class Process:
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
+    __slots__ = ["_cache", "_name", "_ppid", "_procfs_path", "pid"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -1796,7 +1796,12 @@ class Process:
         ret['children_stime'] = fields[14]
         ret['create_time'] = fields[19]
         ret['cpu_num'] = fields[36]
-        ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
+        try:
+            ret['blkio_ticks'] = fields[39]  # aka 'delayacct_blkio_ticks'
+        except IndexError:
+            # https://github.com/giampaolo/psutil/issues/2455
+            debug("can't get blkio_ticks, set iowait to 0")
+            ret['blkio_ticks'] = 0
 
         return ret
 

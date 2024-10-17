@@ -32,6 +32,7 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import CI_TESTING
+from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import PsutilTestCase
@@ -40,12 +41,12 @@ from psutil.tests import create_sockets
 from psutil.tests import is_namedtuple
 from psutil.tests import is_win_secure_system_proc
 from psutil.tests import process_namespace
-from psutil.tests import serialrun
+from psutil.tests import pytest
 
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
-USE_PROC_POOL = LINUX and not CI_TESTING
+USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
 
 
 def proc_info(pid):
@@ -97,7 +98,6 @@ def proc_info(pid):
         return info
 
 
-@serialrun
 class TestFetchAllProcesses(PsutilTestCase):
     """Test which iterates over all running processes and performs
     some sanity checks against Process API's returned values.
@@ -156,13 +156,13 @@ class TestFetchAllProcesses(PsutilTestCase):
             raise self.fail(''.join(failures))
 
     def cmdline(self, ret, info):
-        self.assertIsInstance(ret, list)
+        assert isinstance(ret, list)
         for part in ret:
-            self.assertIsInstance(part, str)
+            assert isinstance(part, str)
 
     def exe(self, ret, info):
-        self.assertIsInstance(ret, (str, unicode))
-        self.assertEqual(ret.strip(), ret)
+        assert isinstance(ret, (str, unicode))
+        assert ret.strip() == ret
         if ret:
             if WINDOWS and not ret.endswith('.exe'):
                 return  # May be "Registry", "MemCompression", ...
@@ -180,16 +180,16 @@ class TestFetchAllProcesses(PsutilTestCase):
                             raise
 
     def pid(self, ret, info):
-        self.assertIsInstance(ret, int)
-        self.assertGreaterEqual(ret, 0)
+        assert isinstance(ret, int)
+        assert ret >= 0
 
     def ppid(self, ret, info):
-        self.assertIsInstance(ret, (int, long))
-        self.assertGreaterEqual(ret, 0)
+        assert isinstance(ret, (int, long))
+        assert ret >= 0
         proc_info(ret)
 
     def name(self, ret, info):
-        self.assertIsInstance(ret, (str, unicode))
+        assert isinstance(ret, (str, unicode))
         if WINDOWS and not ret and is_win_secure_system_proc(info['pid']):
             # https://github.com/giampaolo/psutil/issues/2338
             return
@@ -198,9 +198,9 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert ret, repr(ret)
 
     def create_time(self, ret, info):
-        self.assertIsInstance(ret, float)
+        assert isinstance(ret, float)
         try:
-            self.assertGreaterEqual(ret, 0)
+            assert ret >= 0
         except AssertionError:
             # XXX
             if OPENBSD and info['status'] == psutil.STATUS_ZOMBIE:
@@ -216,45 +216,45 @@ class TestFetchAllProcesses(PsutilTestCase):
     def uids(self, ret, info):
         assert is_namedtuple(ret)
         for uid in ret:
-            self.assertIsInstance(uid, int)
-            self.assertGreaterEqual(uid, 0)
+            assert isinstance(uid, int)
+            assert uid >= 0
 
     def gids(self, ret, info):
         assert is_namedtuple(ret)
         # note: testing all gids as above seems not to be reliable for
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
-            self.assertIsInstance(gid, int)
+            assert isinstance(gid, int)
             if not MACOS and not NETBSD:
-                self.assertGreaterEqual(gid, 0)
+                assert gid >= 0
 
     def username(self, ret, info):
-        self.assertIsInstance(ret, str)
-        self.assertEqual(ret.strip(), ret)
+        assert isinstance(ret, str)
+        assert ret.strip() == ret
         assert ret.strip()
 
     def status(self, ret, info):
-        self.assertIsInstance(ret, str)
+        assert isinstance(ret, str)
         assert ret, ret
         if QEMU_USER:
             # status does not work under qemu user
             return
-        self.assertNotEqual(ret, '?')  # XXX
-        self.assertIn(ret, VALID_PROC_STATUSES)
+        assert ret != '?'  # XXX
+        assert ret in VALID_PROC_STATUSES
 
     def io_counters(self, ret, info):
         assert is_namedtuple(ret)
         for field in ret:
-            self.assertIsInstance(field, (int, long))
+            assert isinstance(field, (int, long))
             if field != -1:
-                self.assertGreaterEqual(field, 0)
+                assert field >= 0
 
     def ionice(self, ret, info):
         if LINUX:
-            self.assertIsInstance(ret.ioclass, int)
-            self.assertIsInstance(ret.value, int)
-            self.assertGreaterEqual(ret.ioclass, 0)
-            self.assertGreaterEqual(ret.value, 0)
+            assert isinstance(ret.ioclass, int)
+            assert isinstance(ret.value, int)
+            assert ret.ioclass >= 0
+            assert ret.value >= 0
         else:  # Windows, Cygwin
             choices = [
                 psutil.IOPRIO_VERYLOW,
@@ -262,89 +262,89 @@ class TestFetchAllProcesses(PsutilTestCase):
                 psutil.IOPRIO_NORMAL,
                 psutil.IOPRIO_HIGH,
             ]
-            self.assertIsInstance(ret, int)
-            self.assertGreaterEqual(ret, 0)
-            self.assertIn(ret, choices)
+            assert isinstance(ret, int)
+            assert ret >= 0
+            assert ret in choices
 
     def num_threads(self, ret, info):
-        self.assertIsInstance(ret, int)
+        assert isinstance(ret, int)
         if WINDOWS and ret == 0 and is_win_secure_system_proc(info['pid']):
             # https://github.com/giampaolo/psutil/issues/2338
             return
-        self.assertGreaterEqual(ret, 1)
+        assert ret >= 1
 
     def threads(self, ret, info):
-        self.assertIsInstance(ret, list)
+        assert isinstance(ret, list)
         for t in ret:
             assert is_namedtuple(t)
-            self.assertGreaterEqual(t.id, 0)
-            self.assertGreaterEqual(t.user_time, 0)
-            self.assertGreaterEqual(t.system_time, 0)
+            assert t.id >= 0
+            assert t.user_time >= 0
+            assert t.system_time >= 0
             for field in t:
-                self.assertIsInstance(field, (int, float))
+                assert isinstance(field, (int, float))
 
     def cpu_times(self, ret, info):
         assert is_namedtuple(ret)
         for n in ret:
-            self.assertIsInstance(n, float)
-            self.assertGreaterEqual(n, 0)
+            assert isinstance(n, float)
+            assert n >= 0
         # TODO: check ntuple fields
 
     def cpu_percent(self, ret, info):
-        self.assertIsInstance(ret, float)
+        assert isinstance(ret, float)
         assert 0.0 <= ret <= 100.0, ret
 
     def cpu_num(self, ret, info):
-        self.assertIsInstance(ret, int)
+        assert isinstance(ret, int)
         if FREEBSD and ret == -1:
             return
-        self.assertGreaterEqual(ret, 0)
+        assert ret >= 0
         if psutil.cpu_count() == 1:
-            self.assertEqual(ret, 0)
-        self.assertIn(ret, list(range(psutil.cpu_count())))
+            assert ret == 0
+        assert ret in list(range(psutil.cpu_count()))
 
     def memory_info(self, ret, info):
         assert is_namedtuple(ret)
         for value in ret:
-            self.assertIsInstance(value, (int, long))
-            self.assertGreaterEqual(value, 0)
+            assert isinstance(value, (int, long))
+            assert value >= 0
         if WINDOWS:
-            self.assertGreaterEqual(ret.peak_wset, ret.wset)
-            self.assertGreaterEqual(ret.peak_paged_pool, ret.paged_pool)
-            self.assertGreaterEqual(ret.peak_nonpaged_pool, ret.nonpaged_pool)
-            self.assertGreaterEqual(ret.peak_pagefile, ret.pagefile)
+            assert ret.peak_wset >= ret.wset
+            assert ret.peak_paged_pool >= ret.paged_pool
+            assert ret.peak_nonpaged_pool >= ret.nonpaged_pool
+            assert ret.peak_pagefile >= ret.pagefile
 
     def memory_full_info(self, ret, info):
         assert is_namedtuple(ret)
         total = psutil.virtual_memory().total
         for name in ret._fields:
             value = getattr(ret, name)
-            self.assertIsInstance(value, (int, long))
-            self.assertGreaterEqual(value, 0, msg=(name, value))
-            if LINUX or OSX and name in ('vms', 'data'):
+            assert isinstance(value, (int, long))
+            assert value >= 0
+            if LINUX or (OSX and name in ('vms', 'data')):
                 # On Linux there are processes (e.g. 'goa-daemon') whose
                 # VMS is incredibly high for some reason.
                 continue
-            self.assertLessEqual(value, total, msg=(name, value, total))
+            assert value <= total, name
 
         if LINUX:
-            self.assertGreaterEqual(ret.pss, ret.uss)
+            assert ret.pss >= ret.uss
 
     def open_files(self, ret, info):
-        self.assertIsInstance(ret, list)
+        assert isinstance(ret, list)
         for f in ret:
-            self.assertIsInstance(f.fd, int)
-            self.assertIsInstance(f.path, str)
-            self.assertEqual(f.path.strip(), f.path)
+            assert isinstance(f.fd, int)
+            assert isinstance(f.path, str)
+            assert f.path.strip() == f.path
             if WINDOWS:
-                self.assertEqual(f.fd, -1)
+                assert f.fd == -1
             elif LINUX:
-                self.assertIsInstance(f.position, int)
-                self.assertIsInstance(f.mode, str)
-                self.assertIsInstance(f.flags, int)
-                self.assertGreaterEqual(f.position, 0)
-                self.assertIn(f.mode, ('r', 'w', 'a', 'r+', 'a+'))
-                self.assertGreater(f.flags, 0)
+                assert isinstance(f.position, int)
+                assert isinstance(f.mode, str)
+                assert isinstance(f.flags, int)
+                assert f.position >= 0
+                assert f.mode in ('r', 'w', 'a', 'r+', 'a+')
+                assert f.flags > 0
             elif BSD and not f.path:
                 # XXX see: https://github.com/giampaolo/psutil/issues/595
                 continue
@@ -357,19 +357,19 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert stat.S_ISREG(st.st_mode), f
 
     def num_fds(self, ret, info):
-        self.assertIsInstance(ret, int)
-        self.assertGreaterEqual(ret, 0)
+        assert isinstance(ret, int)
+        assert ret >= 0
 
     def net_connections(self, ret, info):
         with create_sockets():
-            self.assertEqual(len(ret), len(set(ret)))
+            assert len(ret) == len(set(ret))
             for conn in ret:
                 assert is_namedtuple(conn)
                 check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
-        self.assertIsInstance(ret, (str, unicode))
-        self.assertEqual(ret.strip(), ret)
+        assert isinstance(ret, (str, unicode))
+        assert ret.strip() == ret
         if ret:
             assert os.path.isabs(ret), ret
             try:
@@ -384,31 +384,31 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert stat.S_ISDIR(st.st_mode)
 
     def memory_percent(self, ret, info):
-        self.assertIsInstance(ret, float)
+        assert isinstance(ret, float)
         assert 0 <= ret <= 100, ret
 
     def is_running(self, ret, info):
-        self.assertIsInstance(ret, bool)
+        assert isinstance(ret, bool)
 
     def cpu_affinity(self, ret, info):
-        self.assertIsInstance(ret, list)
-        self.assertNotEqual(ret, [])
+        assert isinstance(ret, list)
+        assert ret != []
         cpus = list(range(psutil.cpu_count()))
         for n in ret:
-            self.assertIsInstance(n, int)
-            self.assertIn(n, cpus)
+            assert isinstance(n, int)
+            assert n in cpus
 
     def terminal(self, ret, info):
-        self.assertIsInstance(ret, (str, type(None)))
+        assert isinstance(ret, (str, type(None)))
         if ret is not None:
             assert os.path.isabs(ret), ret
             assert os.path.exists(ret), ret
 
     def memory_maps(self, ret, info):
         for nt in ret:
-            self.assertIsInstance(nt.addr, str)
-            self.assertIsInstance(nt.perms, str)
-            self.assertIsInstance(nt.path, str)
+            assert isinstance(nt.addr, str)
+            assert isinstance(nt.perms, str)
+            assert isinstance(nt.path, str)
             for fname in nt._fields:
                 value = getattr(nt, fname)
                 if fname == 'path':
@@ -423,15 +423,15 @@ class TestFetchAllProcesses(PsutilTestCase):
                     if not WINDOWS:
                         assert value, repr(value)
                 else:
-                    self.assertIsInstance(value, (int, long))
-                    self.assertGreaterEqual(value, 0)
+                    assert isinstance(value, (int, long))
+                    assert value >= 0
 
     def num_handles(self, ret, info):
-        self.assertIsInstance(ret, int)
-        self.assertGreaterEqual(ret, 0)
+        assert isinstance(ret, int)
+        assert ret >= 0
 
     def nice(self, ret, info):
-        self.assertIsInstance(ret, int)
+        assert isinstance(ret, int)
         if POSIX:
             assert -20 <= ret <= 20, ret
         else:
@@ -440,29 +440,29 @@ class TestFetchAllProcesses(PsutilTestCase):
                 for x in dir(psutil)
                 if x.endswith('_PRIORITY_CLASS')
             ]
-            self.assertIn(ret, priorities)
+            assert ret in priorities
             if PY3:
-                self.assertIsInstance(ret, enum.IntEnum)
+                assert isinstance(ret, enum.IntEnum)
             else:
-                self.assertIsInstance(ret, int)
+                assert isinstance(ret, int)
 
     def num_ctx_switches(self, ret, info):
         assert is_namedtuple(ret)
         for value in ret:
-            self.assertIsInstance(value, (int, long))
-            self.assertGreaterEqual(value, 0)
+            assert isinstance(value, (int, long))
+            assert value >= 0
 
     def rlimit(self, ret, info):
-        self.assertIsInstance(ret, tuple)
-        self.assertEqual(len(ret), 2)
-        self.assertGreaterEqual(ret[0], -1)
-        self.assertGreaterEqual(ret[1], -1)
+        assert isinstance(ret, tuple)
+        assert len(ret) == 2
+        assert ret[0] >= -1
+        assert ret[1] >= -1
 
     def environ(self, ret, info):
-        self.assertIsInstance(ret, dict)
+        assert isinstance(ret, dict)
         for k, v in ret.items():
-            self.assertIsInstance(k, str)
-            self.assertIsInstance(v, str)
+            assert isinstance(k, str)
+            assert isinstance(v, str)
 
 
 class TestPidsRange(PsutilTestCase):
@@ -516,16 +516,16 @@ class TestPidsRange(PsutilTestCase):
                     if exists:
                         psutil.Process(pid)
                         if not WINDOWS:  # see docstring
-                            self.assertIn(pid, psutil.pids())
+                            assert pid in psutil.pids()
                     else:
                         # On OpenBSD thread IDs can be instantiated,
                         # and oneshot() succeeds, but other APIs fail
                         # with EINVAL.
                         if not OPENBSD:
-                            with self.assertRaises(psutil.NoSuchProcess):
+                            with pytest.raises(psutil.NoSuchProcess):
                                 psutil.Process(pid)
                         if not WINDOWS:  # see docstring
-                            self.assertNotIn(pid, psutil.pids())
+                            assert pid not in psutil.pids()
                 except (psutil.Error, AssertionError):
                     x -= 1
                     if x == 0:
@@ -541,9 +541,3 @@ class TestPidsRange(PsutilTestCase):
                 continue
             with self.subTest(pid=pid):
                 check(pid)
-
-
-if __name__ == '__main__':
-    from psutil.tests.runner import run_from_name
-
-    run_from_name(__file__)

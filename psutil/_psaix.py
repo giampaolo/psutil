@@ -349,7 +349,7 @@ def wrap_exceptions(fun):
 class Process:
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_cache"]
+    __slots__ = ["_cache", "_name", "_ppid", "_procfs_path", "pid"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -539,7 +539,7 @@ class Process:
             )
         if "no such process" in stderr.lower():
             raise NoSuchProcess(self.pid, self._name)
-        procfiles = re.findall(r"(\d+): S_IFREG.*\s*.*name:(.*)\n", stdout)
+        procfiles = re.findall(r"(\d+): S_IFREG.*name:(.*)\n", stdout)
         retlist = []
         for fd, path in procfiles:
             path = path.strip()

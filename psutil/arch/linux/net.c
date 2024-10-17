@@ -71,7 +71,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        return PyErr_SetFromOSErrnoWithSyscall("socket()");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall("socket()");
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // duplex and speed
@@ -102,7 +102,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
             speed = 0;
         }
         else {
-            PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCETHTOOL)");
+            psutil_PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCETHTOOL)");
             goto error;
         }
     }
