@@ -14,6 +14,7 @@ import os
 import signal
 import socket
 import stat
+import string
 import subprocess
 import sys
 import textwrap
@@ -813,7 +814,7 @@ class TestProcess(PsutilTestCase):
     @pytest.mark.skipif(PYPY or QEMU_USER, reason="unreliable on PYPY")
     @pytest.mark.skipif(QEMU_USER, reason="unreliable on QEMU user")
     def test_long_name(self):
-        pyexe = create_py_exe(self.get_testfn(suffix="0123456789" * 2))
+        pyexe = create_py_exe(self.get_testfn(suffix=string.digits * 2))
         cmdline = [
             pyexe,
             "-c",
