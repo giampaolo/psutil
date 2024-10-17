@@ -89,6 +89,7 @@ if WINDOWS and not PYPY:
 
 # Development deps, installable via `pip install .[dev]`.
 DEV_DEPS = [
+    "abi3audit",
     "black",
     "check-manifest",
     "coverage",

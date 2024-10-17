@@ -2672,6 +2672,10 @@ PyPy3.
 Timeline
 ========
 
+- 2024-10-17:
+  `6.1.0 <https://pypi.org/project/psutil/6.1.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#610>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-6.0.0...release-6.1.0#files_bucket>`__
 - 2024-06-18:
   `6.0.0 <https://pypi.org/project/psutil/6.0.0/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#600>`__ -
