@@ -7,6 +7,10 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 2366_, [Windows]: drastically speedup `process_iter()`_. We now determine
+  process unique identity by using process "fast" create time method. This
+  will considerably speedup those apps which use `process_iter()`_ only once,
+  e.g. to look for a process with a certain name.
 - 2446_: use pytest instead of unittest.
 - 2448_: add ``make install-sysdeps`` target to install the necessary system
   dependencies (python-dev, gcc, etc.) on all supported UNIX flavors.
@@ -25,7 +29,7 @@ XXXX-XX-XX
   Python 3.13.  (patch by Sam Gross)
 - 2455_, [Linux]: ``IndexError`` may occur when reading /proc/pid/stat and
   field 40 (blkio_ticks) is missing.
-- 2457_, [AIX]: significantly improve the speed of `Process.open_files()`_ for 
+- 2457_, [AIX]: significantly improve the speed of `Process.open_files()`_ for
   some edge cases.
 - 2460_, [OpenBSD]: `Process.num_fds()`_ and `Process.open_files()`_ may fail
   with `NoSuchProcess`_ for PID 0. Instead, we now return "null" values (0 and

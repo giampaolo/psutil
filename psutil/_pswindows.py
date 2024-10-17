@@ -982,7 +982,7 @@ class Process:
         return py2_strencode(domain) + '\\' + py2_strencode(user)
 
     @wrap_exceptions
-    def create_time(self):
+    def create_time(self, fast_only=False):
         # Note: proc_times() not put under oneshot() 'cause create_time()
         # is already cached by the main Process class.
         try:
@@ -990,6 +990,8 @@ class Process:
             return created
         except OSError as err:
             if is_permission_err(err):
+                if fast_only:
+                    raise
                 debug("attempting create_time() fallback (slower)")
                 return self._proc_info()[pinfo_map['create_time']]
             raise
