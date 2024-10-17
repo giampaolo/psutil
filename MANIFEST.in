@@ -27,6 +27,7 @@ include psutil/_common.py
 include psutil/_compat.py
 include psutil/_psaix.py
 include psutil/_psbsd.py
+include psutil/_psgnu.py
 include psutil/_pslinux.py
 include psutil/_psosx.py
 include psutil/_psposix.py
@@ -35,6 +36,7 @@ include psutil/_psutil_aix.c
 include psutil/_psutil_bsd.c
 include psutil/_psutil_common.c
 include psutil/_psutil_common.h
+include psutil/_psutil_gnu.c
 include psutil/_psutil_linux.c
 include psutil/_psutil_osx.c
 include psutil/_psutil_posix.c
@@ -83,6 +85,16 @@ include psutil/arch/linux/proc.c
 include psutil/arch/linux/proc.h
 include psutil/arch/linux/users.c
 include psutil/arch/linux/users.h
+include psutil/arch/gnu/disk.c
+include psutil/arch/gnu/disk.h
+include psutil/arch/gnu/mem.c
+include psutil/arch/gnu/mem.h
+include psutil/arch/gnu/net.c
+include psutil/arch/gnu/net.h
+include psutil/arch/gnu/proc.c
+include psutil/arch/gnu/proc.h
+include psutil/arch/gnu/users.c
+include psutil/arch/gnu/users.h
 include psutil/arch/netbsd/cpu.c
 include psutil/arch/netbsd/cpu.h
 include psutil/arch/netbsd/disk.c
