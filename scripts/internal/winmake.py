@@ -21,26 +21,19 @@ import fnmatch
 import os
 import shutil
 import site
-import ssl
 import subprocess
 import sys
-import tempfile
 
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
 PY3 = sys.version_info[0] >= 3
 PYTEST_ARGS = "-v -s --tb=short"
-if PY3:
-    PYTEST_ARGS += "-o "
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 PYPY = '__pypy__' in sys.builtin_module_names
 WINDOWS = os.name == "nt"
-if PY3:
-    GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
-else:
-    GET_PIP_URL = "https://bootstrap.pypa.io/pip/2.7/get-pip.py"
+
 
 sys.path.insert(0, ROOT_DIR)  # so that we can import setup.py
 
@@ -259,31 +252,7 @@ def upload_wheels():
 
 def install_pip():
     """Install pip."""
-    try:
-        sh('%s -c "import pip"' % PYTHON)
-    except SystemExit:
-        if PY3:
-            from urllib.request import urlopen
-        else:
-            from urllib2 import urlopen
-
-        if hasattr(ssl, '_create_unverified_context'):
-            ctx = ssl._create_unverified_context()
-        else:
-            ctx = None
-        kw = dict(context=ctx) if ctx else {}
-        safe_print("downloading %s" % GET_PIP_URL)
-        req = urlopen(GET_PIP_URL, **kw)
-        data = req.read()
-
-        tfile = os.path.join(tempfile.gettempdir(), 'get-pip.py')
-        with open(tfile, 'wb') as f:
-            f.write(data)
-
-        try:
-            sh('%s %s --user' % (PYTHON, tfile))
-        finally:
-            os.remove(tfile)
+    sh('%s %s' % (PYTHON, os.path.join(HERE, "install_pip.py")))
 
 
 def install():
@@ -368,14 +337,14 @@ def install_pydeps_test():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
-    sh("%s -m pip install -U %s" % (PYTHON, " ".join(TEST_DEPS)))
+    sh("%s -m pip install --user -U %s" % (PYTHON, " ".join(TEST_DEPS)))
 
 
 def install_pydeps_dev():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
-    sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEV_DEPS)))
+    sh("%s -m pip install --user -U %s" % (PYTHON, " ".join(DEV_DEPS)))
 
 
 def test(args=""):
