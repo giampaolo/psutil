@@ -515,7 +515,6 @@ class TestCpuAPIs(PsutilTestCase):
         try:
             assert isinstance(percent, float)
             assert percent >= 0.0
-            assert percent is not -0.0
             assert percent <= 100.0 * psutil.cpu_count()
         except AssertionError as err:
             raise AssertionError(

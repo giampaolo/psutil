@@ -31,7 +31,6 @@ PY3 = sys.version_info[0] >= 3
 PYTEST_ARGS = "-v -s --tb=short"
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
-PYPY = '__pypy__' in sys.builtin_module_names
 WINDOWS = os.name == "nt"
 
 
