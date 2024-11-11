@@ -1,5 +1,13 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+6.1.1 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+- 2470_, [Linux]: `users()`_ may return "localhost" instead of the actual IP
+  address of the user logged in.
+
 6.1.0
 =====
 

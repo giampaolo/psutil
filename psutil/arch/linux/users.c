@@ -33,7 +33,7 @@ psutil_users(PyObject *self, PyObject *args) {
         py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
         if (! py_tty)
             goto error;
-        if (strcmp(ut->ut_host, ":0") || strcmp(ut->ut_host, ":0.0"))
+        if (strcmp(ut->ut_host, ":0") == 0 || strcmp(ut->ut_host, ":0.0") == 0)
             py_hostname = PyUnicode_DecodeFSDefault("localhost");
         else
             py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
