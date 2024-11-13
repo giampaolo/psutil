@@ -31,10 +31,6 @@ def call_oneshot():
             fun()
 
 
-def add_cmdline_args(cmd, args):
-    cmd.append(args.benchmark)
-
-
 def main():
     runner = pyperf.Runner()
 

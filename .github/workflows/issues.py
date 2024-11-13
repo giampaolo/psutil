@@ -144,11 +144,6 @@ def has_label(issue, label):
     return label in assigned
 
 
-def has_os_label(issue):
-    labels = set([x.name for x in issue.labels])
-    return any(x in labels for x in OS_LABELS)
-
-
 def get_repo():
     repo = os.environ['GITHUB_REPOSITORY']
     token = os.environ['GITHUB_TOKEN']

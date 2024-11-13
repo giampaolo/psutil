@@ -35,7 +35,7 @@ jobs:
             PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
 
   netbsd:
-    # if: false
+    if: false  # XXX: disabled
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

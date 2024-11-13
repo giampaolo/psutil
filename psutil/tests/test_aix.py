@@ -22,7 +22,15 @@ class AIXSpecificTestCase(PsutilTestCase):
     def test_virtual_memory(self):
         out = sh('/usr/bin/svmon -O unit=KB')
         re_pattern = r"memory\s*"
-        for field in ("size inuse free pin virtual available mmode").split():
+        for field in [
+            "size",
+            "inuse",
+            "free",
+            "pin",
+            "virtual",
+            "available",
+            "mmode",
+        ]:
             re_pattern += r"(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
@@ -72,11 +80,30 @@ class AIXSpecificTestCase(PsutilTestCase):
         out = sh('/usr/bin/mpstat -a')
 
         re_pattern = r"ALL\s*"
-        for field in (
-            "min maj mpcs mpcr dev soft dec ph cs ics bound rq "
-            "push S3pull S3grd S0rd S1rd S2rd S3rd S4rd S5rd "
-            "sysc"
-        ).split():
+        for field in [
+            "min",
+            "maj",
+            "mpcs",
+            "mpcr",
+            "dev",
+            "soft",
+            "dec",
+            "ph",
+            "cs",
+            "ics",
+            "bound",
+            "rq",
+            "push",
+            "S3pull",
+            "S3grd",
+            "S0rd",
+            "S1rd",
+            "S2rd",
+            "S3rd",
+            "S4rd",
+            "S5rd",
+            "sysc",
+        ]:
             re_pattern += r"(?P<%s>\S+)\s+" % (field,)
         matchobj = re.search(re_pattern, out)
 
