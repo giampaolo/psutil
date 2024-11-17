@@ -193,7 +193,7 @@ lint-all:  ## Run all linters
 # --- not mandatory linters (just run from time to time)
 
 pylint:  ## Python pylint
-	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
 
 vulture:  ## Find unused code
 	@git ls-files '*.py' | xargs $(PYTHON) -m vulture $(ARGS)
