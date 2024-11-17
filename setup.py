@@ -106,6 +106,7 @@ DEV_DEPS = [
     "toml-sort",
     "twine",
     "virtualenv",
+    "vulture",
     "wheel",
 ]
 if WINDOWS:
