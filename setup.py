@@ -64,7 +64,8 @@ CP36_PLUS = PY36_PLUS and sys.implementation.name == "cpython"
 CP37_PLUS = PY37_PLUS and sys.implementation.name == "cpython"
 Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
-# Test deps, installable via `pip install .[test]`.
+# Test deps, installable via `pip install .[test]` or
+# `make install-pydeps-test`.
 if PY3:
     TEST_DEPS = [
         "pytest",
@@ -87,7 +88,8 @@ if WINDOWS and not PYPY:
     TEST_DEPS.append("wheel")
     TEST_DEPS.append("wmi")
 
-# Development deps, installable via `pip install .[dev]`.
+# Development deps, installable via `pip install .[dev]` or
+# `make install-pydeps-dev`.
 DEV_DEPS = [
     "abi3audit",
     "black",
@@ -106,6 +108,7 @@ DEV_DEPS = [
     "toml-sort",
     "twine",
     "virtualenv",
+    "vulture",
     "wheel",
 ]
 if WINDOWS:
