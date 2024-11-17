@@ -5,6 +5,12 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2471_: use Vulture CLI tool to detect dead code.
+
+**Bug fixes**
+
 - 2470_, [Linux]: `users()`_ may return "localhost" instead of the actual IP
   address of the user logged in.
 
