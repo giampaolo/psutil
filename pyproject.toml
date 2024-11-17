@@ -189,6 +189,18 @@ disable = [
     "wrong-import-position",
 ]
 
+[tool.vulture]
+exclude = [
+    "docs/conf.py",
+    "psutil/_compat.py",
+    "scripts/internal/winmake.py",
+]
+ignore_decorators = [
+    "@_common.deprecated_method",
+    "@atexit.register",
+    "@pytest.fixture",
+]
+
 [tool.rstcheck]
 ignore_messages = [
     "Duplicate explicit target name",

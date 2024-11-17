@@ -174,9 +174,6 @@ ruff:  ## Run ruff linter.
 black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
-_pylint:  ## Python pylint (not mandatory, just run it from time to time)
-	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0
-
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
@@ -192,6 +189,14 @@ lint-all:  ## Run all linters
 	${MAKE} lint-c
 	${MAKE} lint-rst
 	${MAKE} lint-toml
+
+# --- not mandatory linters (just run from time to time)
+
+pylint:  ## Python pylint
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
+
+vulture:  ## Find unused code
+	@git ls-files '*.py' | xargs $(PYTHON) -m vulture $(ARGS)
 
 # ===================================================================
 # Fixers

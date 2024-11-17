@@ -317,7 +317,7 @@ class TestNetUtils(PsutilTestCase):
         with contextlib.closing(sock):
             assert sock.type == socket.SOCK_DGRAM
 
-    def tcp_tcp_socketpair(self):
+    def test_tcp_socketpair(self):
         addr = ("127.0.0.1", get_free_port())
         server, client = tcp_socketpair(socket.AF_INET, addr=addr)
         with contextlib.closing(server):
