@@ -189,6 +189,13 @@ disable = [
     "wrong-import-position",
 ]
 
+[tool.vulture]
+ignore_decorators = ["@pytest.fixture"]
+exclude = [
+    "docs/conf.py",
+    "scripts/internal/winmake.py",
+]
+
 [tool.rstcheck]
 ignore_messages = [
     "Duplicate explicit target name",
