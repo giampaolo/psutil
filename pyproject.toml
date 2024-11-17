@@ -190,15 +190,15 @@ disable = [
 ]
 
 [tool.vulture]
-ignore_decorators = [
-    "@_common.deprecated_method",
-    "@atexit.register",
-    "@pytest.fixture",
-]
 exclude = [
     "docs/conf.py",
     "psutil/_compat.py",
     "scripts/internal/winmake.py",
+]
+ignore_decorators = [
+    "@_common.deprecated_method",
+    "@atexit.register",
+    "@pytest.fixture",
 ]
 
 [tool.rstcheck]
