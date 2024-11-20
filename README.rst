@@ -61,6 +61,10 @@
     :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
     :alt: Tidelift
 
+.. |gurubase| image:: https://img.shields.io/badge/Gurubase-Ask%20psutil%20Guru-006BFF
+    :target: https://gurubase.io/g/psutil
+    :alt: Gurubase
+
 -----
 
 .. raw:: html
