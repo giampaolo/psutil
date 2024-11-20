@@ -193,6 +193,7 @@ disable = [
 exclude = [
     "docs/conf.py",
     "psutil/_compat.py",
+    "psutil/tests/",
     "scripts/internal/winmake.py",
 ]
 ignore_decorators = [
