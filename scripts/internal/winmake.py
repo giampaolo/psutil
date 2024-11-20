@@ -103,9 +103,10 @@ def sh(cmd, nolog=False):
     assert isinstance(cmd, list), repr(cmd)
     if not nolog:
         safe_print("cmd: %s" % cmd)
-    return subprocess.check_output(
-        cmd, env=os.environ, universal_newlines=True
-    )
+    p = subprocess.Popen(cmd, env=os.environ, universal_newlines=True)
+    p.communicate()  # print stdout/stderr in real time
+    if p.returncode != 0:
+        sys.exit(p.returncode)
 
 
 def rm(pattern, directory=False):
@@ -318,15 +319,10 @@ def install_pydeps_dev():
     sh([PYTHON, "-m", "pip", "install", "--user", "-U"] + DEV_DEPS)
 
 
-def test(args=None):
+def test():
     """Run tests."""
-    if args:
-        assert isinstance(args, list), args
     build()
-    cmd = [PYTHON, "-m", "pytest"] + PYTEST_ARGS
-    if args:
-        cmd.extend(args)
-    sh(cmd)
+    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS)
 
 
 def test_parallel():
@@ -395,12 +391,6 @@ def test_testutils():
     """Run test utilities tests."""
     build()
     sh([PYTHON, "psutil\\tests\\test_testutils.py"])
-
-
-def test_by_name(name):
-    """Run test by name."""
-    build()
-    test([name])
 
 
 def test_last_failed():
@@ -566,16 +556,10 @@ def main():
 
     fname = args.command.replace('-', '_')
     fun = getattr(sys.modules[__name__], fname)  # err if fun not defined
-    funargs = []
-    # mandatory args
-    if args.command in ('test-by-name', 'test-script'):
-        if not args.arg:
-            sys.exit('command needs an argument')
-        funargs = [args.arg]
-    # optional args
     if args.command == 'test' and args.arg:
-        funargs = [args.arg]
-    fun(*funargs)
+        sh([PYTHON, args.arg])  # test a script
+    else:
+        fun()
 
 
 if __name__ == '__main__':
