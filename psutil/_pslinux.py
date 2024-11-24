@@ -1722,7 +1722,12 @@ def wrap_exceptions(fun):
             raise NoSuchProcess(self.pid, self._name)
         except FileNotFoundError:
             self._raise_if_zombie()
-            if not os.path.exists("%s/%s" % (self._procfs_path, self.pid)):
+            # /proc/PID directory may still exist, but the files within
+            # it may not, indicating the process is gone, see:
+            # https://github.com/giampaolo/psutil/issues/2418
+            if not os.path.exists(
+                "%s/%s/stat" % (self._procfs_path, self.pid)
+            ):
                 raise NoSuchProcess(self.pid, self._name)
             raise
 

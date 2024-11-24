@@ -2133,6 +2133,15 @@ class TestProcess(PsutilTestCase):
                 p.memory_maps()
             assert m.called
 
+    def test_issue_2418(self):
+        p = psutil.Process()
+        with mock_open_exception(
+            '/proc/%s/statm' % os.getpid(), FileNotFoundError
+        ):
+            with mock.patch("os.path.exists", return_value=False):
+                with pytest.raises(psutil.NoSuchProcess):
+                    p.memory_info()
+
     @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may

@@ -11,6 +11,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 2418_, [Linux]: fix race condition in case /proc/PID/stat does not exist, but
+  /proc/PID does, resulting in FileNotFoundError.
 - 2470_, [Linux]: `users()`_ may return "localhost" instead of the actual IP
   address of the user logged in.
 
