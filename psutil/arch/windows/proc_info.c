@@ -41,7 +41,7 @@ psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
 
     if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
-        PyErr_SetFromOSErrnoWithSyscall("VirtualQueryEx");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("VirtualQueryEx");
         return -1;
     }
 
@@ -67,7 +67,7 @@ psutil_convert_winerr(ULONG err, char* syscall) {
         AccessDenied(fullmsg);
     }
     else {
-        PyErr_SetFromOSErrnoWithSyscall(syscall);
+        psutil_PyErr_SetFromOSErrnoWithSyscall(syscall);
     }
 }
 
@@ -226,7 +226,7 @@ psutil_get_process_data(DWORD pid,
     // 32 bit case.  Check if the target is also 32 bit.
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
             !IsWow64Process(hProcess, &theyAreWow64)) {
-        PyErr_SetFromOSErrnoWithSyscall("IsWow64Process");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("IsWow64Process");
         goto error;
     }
 
@@ -594,7 +594,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
-        PyErr_SetFromOSErrnoWithSyscall("CommandLineToArgvW");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("CommandLineToArgvW");
         goto error;
     }
 

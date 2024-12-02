@@ -37,12 +37,10 @@ def download_file(url):
     local_fname = os.path.join('dist', local_fname)
     os.makedirs('dist', exist_ok=True)
     r = requests.get(url, stream=True, timeout=TIMEOUT)
-    tot_bytes = 0
     with open(local_fname, 'wb') as f:
         for chunk in r.iter_content(chunk_size=16384):
             if chunk:  # filter out keep-alive new chunks
                 f.write(chunk)
-                tot_bytes += len(chunk)
     return local_fname
 
 

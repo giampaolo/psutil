@@ -62,6 +62,11 @@ LABELS_MAP = {
         "/dev/pts", "posix",
     ],
     "pypy": ["pypy"],
+    "docker": ["docker", "docker-compose"],
+    "vm": [
+        "docker", "docker-compose", "vmware", "lxc", "hyperv", "virtualpc",
+        "virtualbox", "bhyve", "openvz", "lxc", "xen", "kvm", "qemu", "heroku",
+    ],
     # types
     "enhancement": ["enhancement"],
     "memleak": ["memory leak", "leaks memory", "memleak", "mem leak"],
@@ -88,10 +93,10 @@ LABELS_MAP = {
         "continuous integration", "unittest", "pytest", "unit test",
     ],
     # critical errors
-    "priority-high": [
+    "critical": [
         "WinError", "WindowsError", "RuntimeError", "ZeroDivisionError",
-        "SystemError", "MemoryError", "core dumped",
-        "segfault", "segmentation fault",
+        "SystemError", "MemoryError", "core dump", "segfault",
+        "segmentation fault",
     ],
 }
 
@@ -142,11 +147,6 @@ def is_pr(issue):
 def has_label(issue, label):
     assigned = [x.name for x in issue.labels]
     return label in assigned
-
-
-def has_os_label(issue):
-    labels = set([x.name for x in issue.labels])
-    return any(x in labels for x in OS_LABELS)
 
 
 def get_repo():

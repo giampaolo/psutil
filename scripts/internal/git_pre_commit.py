@@ -20,7 +20,6 @@ import sys
 
 PYTHON = sys.executable
 PY3 = sys.version_info[0] >= 3
-THIS_SCRIPT = os.path.realpath(__file__)
 
 
 def term_supports_colors():

@@ -1,21 +1,110 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-5.9.9 (IN DEVELOPMENT)
+6.1.1 (IN DEVELOPMENT)
 ======================
+
+XXXX-XX-XX
 
 **Enhancements**
 
-- 2366_, [Windows]: log debug message when using slower process APIs.
-- 2375_, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
+- 2471_: use Vulture CLI tool to detect dead code.
 - 2385_, [Linux]: add support for zfs arc memory stats. (patch by Hudson Gerwing)
 
 **Bug fixes**
 
-- 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch by Shade Gladden)
+- 2418_, [Linux]: fix race condition in case /proc/PID/stat does not exist, but
+  /proc/PID does, resulting in FileNotFoundError.
+- 2470_, [Linux]: `users()`_ may return "localhost" instead of the actual IP
+  address of the user logged in.
+
+6.1.0
+=====
+
+2024-10-17
+
+**Enhancements**
+
+- 2366_, [Windows]: drastically speedup `process_iter()`_. We now determine
+  process unique identity by using process "fast" create time method. This
+  will considerably speedup those apps which use `process_iter()`_ only once,
+  e.g. to look for a process with a certain name.
+- 2446_: use pytest instead of unittest.
+- 2448_: add ``make install-sysdeps`` target to install the necessary system
+  dependencies (python-dev, gcc, etc.) on all supported UNIX flavors.
+- 2449_: add ``make install-pydeps-test`` and ``make install-pydeps-dev``
+  targets. They can be used to install dependencies meant for running tests and
+  for local development. They can also be installed via ``pip install .[test]``
+  and ``pip install .[dev]``.
+- 2456_: allow to run tests via ``python3 -m psutil.tests`` even if ``pytest``
+  module is not installed. This is useful for production environments that
+  don't have pytest installed, but still want to be able to test psutil
+  installation.
+
+**Bug fixes**
+
+- 2427_: psutil (segfault) on import in the free-threaded (no GIL) version of
+  Python 3.13.  (patch by Sam Gross)
+- 2455_, [Linux]: ``IndexError`` may occur when reading /proc/pid/stat and
+  field 40 (blkio_ticks) is missing.
+- 2457_, [AIX]: significantly improve the speed of `Process.open_files()`_ for
+  some edge cases.
+- 2460_, [OpenBSD]: `Process.num_fds()`_ and `Process.open_files()`_ may fail
+  with `NoSuchProcess`_ for PID 0. Instead, we now return "null" values (0 and
+  [] respectively).
+
+6.0.0
+======
+
+2024-06-18
+
+**Enhancements**
+
+- 2109_: ``maxfile`` and ``maxpath`` fields were removed from the namedtuple
+  returned by `disk_partitions()`_. Reason: on network filesystems (NFS) this
+  can potentially take a very long time to complete.
+- 2366_, [Windows]: log debug message when using slower process APIs.
+- 2375_, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
+- 2396_: `process_iter()`_ no longer pre-emptively checks whether PIDs have
+  been reused. This makes `process_iter()`_ around 20x times faster.
+- 2396_: a new ``psutil.process_iter.cache_clear()`` API can be used the clear
+  `process_iter()`_ internal cache.
+- 2401_, Support building with free-threaded CPython 3.13. (patch by Sam Gross)
+- 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
+  The old name is still available, but it's deprecated (triggers a
+  ``DeprecationWarning``) and will be removed in the future.
+- 2425_: [Linux]: provide aarch64 wheels.  (patch by Matthieu Darbois / Ben Raz)
+
+**Bug fixes**
+
+- 2250_, [NetBSD]: `Process.cmdline()`_ sometimes fail with EBUSY. It usually
+  happens for long cmdlines with lots of arguments. In this case retry getting
+  the cmdline for up to 50 times, and return an empty list as last resort.
+- 2254_, [Linux]: offline cpus raise NotImplementedError in cpu_freq() (patch
+  by Shade Gladden)
 - 2272_: Add pickle support to psutil Exceptions.
+- 2359_, [Windows], [CRITICAL]: `pid_exists()`_ disagrees with `Process`_ on
+  whether a pid exists when ERROR_ACCESS_DENIED.
 - 2360_, [macOS]: can't compile on macOS < 10.13.  (patch by Ryan Schmidt)
 - 2362_, [macOS]: can't compile on macOS 10.11.  (patch by Ryan Schmidt)
 - 2365_, [macOS]: can't compile on macOS < 10.9.  (patch by Ryan Schmidt)
+- 2395_, [OpenBSD]: `pid_exists()`_ erroneously return True if the argument is
+  a thread ID (TID) instead of a PID (process ID).
+- 2412_, [macOS]: can't compile on macOS 10.4 PowerPC due to missing `MNT_`
+  constants.
+
+**Porting notes**
+
+Version 6.0.0 introduces some changes which affect backward compatibility:
+
+- 2109_: the namedtuple returned by `disk_partitions()`_' no longer has
+  ``maxfile`` and ``maxpath`` fields.
+- 2396_: `process_iter()`_ no longer pre-emptively checks whether PIDs have
+  been reused. If you want to check for PID reusage you are supposed to use
+  `Process.is_running()`_ against the yielded `Process`_ instances. That will
+  also automatically remove reused PIDs from `process_iter()`_ internal cache.
+- 2407_: `Process.connections()`_ was renamed to `Process.net_connections()`_.
+  The old name is still available, but it's deprecated (triggers a
+  ``DeprecationWarning``) and will be removed in the future.
 
 5.9.8
 =====
@@ -2623,6 +2712,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.memory_maps()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_maps
 .. _`Process.memory_percent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_percent
 .. _`Process.name()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.name
+.. _`Process.net_connections()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.net_connections
 .. _`Process.nice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.nice
 .. _`Process.num_ctx_switches()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_ctx_switches
 .. _`Process.num_fds()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_fds

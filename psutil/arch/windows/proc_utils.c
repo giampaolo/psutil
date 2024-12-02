@@ -103,7 +103,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
             }
             return NULL;
         }
-        PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
         return NULL;
     }
 
@@ -129,7 +129,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
         SetLastError(0);
         return hProcess;
     }
-    PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
+    psutil_PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
     CloseHandle(hProcess);
     return NULL;
 }
@@ -151,7 +151,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
     hProcess = OpenProcess(access, FALSE, pid);
 
     if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
         return NULL;
     }
 
@@ -173,17 +173,15 @@ psutil_pid_is_running(DWORD pid) {
 
     hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
 
-    // Access denied means there's a process to deny access to.
-    if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED))
-        return 1;
-
-    hProcess = psutil_check_phandle(hProcess, pid, 1);
     if (hProcess != NULL) {
+        hProcess = psutil_check_phandle(hProcess, pid, 1);
+        if (hProcess != NULL) {
+            CloseHandle(hProcess);
+            return 1;
+        }
         CloseHandle(hProcess);
-        return 1;
     }
 
-    CloseHandle(hProcess);
     PyErr_Clear();
     return psutil_pid_in_pids(pid);
 }

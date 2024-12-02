@@ -225,7 +225,7 @@ except ImportError:
         "CacheInfo", ["hits", "misses", "maxsize", "currsize"]
     )
 
-    class _HashedSeq(list):
+    class _HashedSeq(list):  # noqa: FURB189
         __slots__ = ('hashvalue',)
 
         def __init__(self, tup, hash=hash):

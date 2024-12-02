@@ -2,55 +2,30 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-# Configurable.
+# Configurable
 PYTHON = python3
-PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 ARGS =
-TSCRIPT = psutil/tests/runner.py
 
-# Internal.
-PY3_DEPS = \
-	black \
-	check-manifest \
-	concurrencytest \
-	coverage \
-	packaging \
-	pylint \
-	pyperf \
-	pypinfo \
-	requests \
-	rstcheck \
-	ruff \
-	setuptools \
-	sphinx_rtd_theme \
-	teyit \
-	toml-sort \
-	twine \
-	virtualenv \
-	wheel
-PY2_DEPS = \
-	futures \
-	ipaddress \
-	mock
-PY_DEPS = `$(PYTHON) -c \
-	"import sys; \
-	py3 = sys.version_info[0] == 3; \
-	py38 = sys.version_info[:2] >= (3, 8); \
-	py3_extra = ' abi3audit' if py38 else ''; \
-	print('$(PY3_DEPS)' + py3_extra if py3 else '$(PY2_DEPS)')"`
-NUM_WORKERS = `$(PYTHON) -c "import os; print(os.cpu_count() or 1)"`
 # "python3 setup.py build" can be parallelized on Python >= 3.6.
-BUILD_OPTS = `$(PYTHON) -c \
+SETUP_BUILD_EXT_ARGS = `$(PYTHON) -c \
 	"import sys, os; \
 	py36 = sys.version_info[:2] >= (3, 6); \
 	cpus = os.cpu_count() or 1 if py36 else 1; \
 	print('--parallel %s' % cpus if cpus > 1 else '')"`
+
 # In not in a virtualenv, add --user options for install commands.
-INSTALL_OPTS = `$(PYTHON) -c \
+SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
+
+PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
+PYTEST_ARGS = -v -s --tb=short
+PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
+
+# install git hook
+_ := $(shell mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit)
 
 # ===================================================================
 # Install
@@ -87,44 +62,37 @@ build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i $(BUILD_OPTS)
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i $(SETUP_BUILD_EXT_ARGS)
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(INSTALL_OPTS)
-	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS)
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/purge_installation.py
 
 install-pip:  ## Install pip (no-op if already installed).
-	@$(PYTHON) -c \
-		"import sys, ssl, os, pkgutil, tempfile, atexit; \
-		sys.exit(0) if pkgutil.find_loader('pip') else None; \
-		PY3 = sys.version_info[0] == 3; \
-		pyexc = 'from urllib.request import urlopen' if PY3 else 'from urllib2 import urlopen'; \
-		exec(pyexc); \
-		ctx = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
-		url = 'https://bootstrap.pypa.io/pip/2.7/get-pip.py' if not PY3 else 'https://bootstrap.pypa.io/get-pip.py'; \
-		kw = dict(context=ctx) if ctx else {}; \
-		req = urlopen(url, **kw); \
-		data = req.read(); \
-		f = tempfile.NamedTemporaryFile(suffix='.py'); \
-		atexit.register(f.close); \
-		f.write(data); \
-		f.flush(); \
-		print('downloaded %s' % f.name); \
-		code = os.system('%s %s --user --upgrade' % (sys.executable, f.name)); \
-		f.close(); \
-		sys.exit(code);"
+	$(PYTHON) scripts/internal/install_pip.py
 
-setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
+install-sysdeps:
+	./scripts/internal/install-sysdeps.sh
+
+install-pydeps-test:  ## Install python deps necessary to run unit tests.
+	${MAKE} install-pip
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) pip setuptools
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
+
+install-pydeps-dev:  ## Install python deps meant for local development.
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pip install $(INSTALL_OPTS) --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade $(PY_DEPS)
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) pip setuptools
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS + setup.DEV_DEPS))"`
+
+install-git-hooks:  ## Install GIT pre-commit hook.
+	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
 # Tests
@@ -132,65 +100,65 @@ setup-dev-env:  ## Install GIT hooks, pip, test deps (also upgrades them).
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) --parallel
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process.py
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_process_all.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process_all.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_system.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_misc.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_misc.py
 
 test-testutils:  ## Run test utils tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_testutils.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_testutils.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_unicode.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_contracts.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_contracts.py
 
-test-connections:  ## Test net_connections() and Process.connections().
+test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_connections.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_posix.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) psutil/tests/test_memleaks.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_memleaks.py
 
 test-last-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) $(TSCRIPT) $(ARGS) --last-failed
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --last-failed $(ARGS)
 
 test-coverage:  ## Run test coverage.
 	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m unittest -v
+	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py $(ARGS)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
@@ -201,21 +169,18 @@ test-coverage:  ## Run test coverage.
 # ===================================================================
 
 ruff:  ## Run ruff linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --no-cache
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --output-format=concise
 
-black:  ## Python files linting (via black)
+black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
-
-_pylint:  ## Python pylint (not mandatory, just run it from time to time)
-	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=${NUM_WORKERS}
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
 
-lint-rst:  ## Run C linter.
+lint-rst:  ## Run linter for .rst files.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
 
-lint-toml:  ## Linter for pyproject.toml
+lint-toml:  ## Run linter for pyproject.toml.
 	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-all:  ## Run all linters
@@ -225,18 +190,23 @@ lint-all:  ## Run all linters
 	${MAKE} lint-rst
 	${MAKE} lint-toml
 
+# --- not mandatory linters (just run from time to time)
+
+pylint:  ## Python pylint
+	@git ls-files '*.py' | xargs $(PYTHON) -m pylint --rcfile=pyproject.toml --jobs=0 $(ARGS)
+
+vulture:  ## Find unused code
+	@git ls-files '*.py' | xargs $(PYTHON) -m vulture $(ARGS)
+
 # ===================================================================
 # Fixers
 # ===================================================================
 
 fix-black:
-	git ls-files '*.py' | xargs $(PYTHON) -m black
+	@git ls-files '*.py' | xargs $(PYTHON) -m black
 
 fix-ruff:
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff --no-cache --fix
-
-fix-unittests:  ## Fix unittest idioms.
-	@git ls-files '*test_*.py' | xargs $(PYTHON) -m teyit --show-stats
+	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
@@ -244,16 +214,7 @@ fix-toml:  ## Fix pyproject.toml
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
 	${MAKE} fix-black
-	${MAKE} fix-unittests
 	${MAKE} fix-toml
-
-# ===================================================================
-# GIT
-# ===================================================================
-
-install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
-	chmod +x .git/hooks/pre-commit
 
 # ===================================================================
 # Distribution
@@ -271,6 +232,10 @@ download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels_appveyor.py
 	${MAKE} print-dist
 
+create-wheels:  ## Create .whl files
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
+	${MAKE} check-wheels
+
 check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON_ENV_VARS) $(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	$(PYTHON_ENV_VARS) build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
@@ -286,20 +251,20 @@ pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} sdist
 	${MAKE} check-sdist
 	${MAKE} install
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"import requests, sys; \
 		from packaging.version import parse; \
 		from psutil import __version__; \
 		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
 		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
 		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
-	$(PYTHON) -c \
+	@$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
 		doc = open('docs/index.rst').read(); \
 		history = open('HISTORY.rst').read(); \
-		assert ver in doc, '%r not in docs/index.rst' % ver; \
-		assert ver in history, '%r not in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history, 'XXXX in HISTORY.rst';"
+		assert ver in doc, '%r not found in docs/index.rst' % ver; \
+		assert ver in history, '%r not found in HISTORY.rst' % ver; \
+		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
 	${MAKE} download-wheels-github
 	${MAKE} download-wheels-appveyor
 	${MAKE} check-wheels
@@ -346,6 +311,9 @@ print-downloads:  ## Print PYPI download statistics
 
 print-hashes:  ## Prints hashes of files in dist/ directory
 	$(PYTHON) scripts/internal/print_hashes.py dist/
+
+print-sysinfo:  ## Prints system info
+	$(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 
 # ===================================================================
 # Misc

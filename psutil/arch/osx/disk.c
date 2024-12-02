@@ -86,8 +86,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",async", sizeof(opts));
         if (flags & MNT_EXPORTED)
             strlcat(opts, ",exported", sizeof(opts));
-        if (flags & MNT_QUARANTINE)
-            strlcat(opts, ",quarantine", sizeof(opts));
         if (flags & MNT_LOCAL)
             strlcat(opts, ",local", sizeof(opts));
         if (flags & MNT_QUOTA)
@@ -108,10 +106,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",nouserxattr", sizeof(opts));
         if (flags & MNT_DEFWRITE)
             strlcat(opts, ",defwrite", sizeof(opts));
-        if (flags & MNT_MULTILABEL)
-            strlcat(opts, ",multilabel", sizeof(opts));
-        if (flags & MNT_NOATIME)
-            strlcat(opts, ",noatime", sizeof(opts));
         if (flags & MNT_UPDATE)
             strlcat(opts, ",update", sizeof(opts));
         if (flags & MNT_RELOAD)
@@ -120,7 +114,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",force", sizeof(opts));
         if (flags & MNT_CMDFLAGS)
             strlcat(opts, ",cmdflags", sizeof(opts));
-
+        // requires macOS >= 10.5
+#ifdef MNT_QUARANTINE
+        if (flags & MNT_QUARANTINE)
+            strlcat(opts, ",quarantine", sizeof(opts));
+#endif
+#ifdef MNT_MULTILABEL
+        if (flags & MNT_MULTILABEL)
+            strlcat(opts, ",multilabel", sizeof(opts));
+#endif
+#ifdef MNT_NOATIME
+        if (flags & MNT_NOATIME)
+            strlcat(opts, ",noatime", sizeof(opts));
+#endif
         py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
         if (! py_dev)
             goto error;

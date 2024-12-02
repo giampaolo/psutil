@@ -14,7 +14,6 @@ import ctypes
 import errno
 import functools
 import gc
-import inspect
 import os
 import platform
 import random
@@ -36,6 +35,12 @@ import warnings
 from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
+
+
+try:
+    import pytest
+except ImportError:
+    pytest = None
 
 import psutil
 from psutil import AIX
@@ -70,6 +75,8 @@ except ImportError:
 if PY3:
     import enum
 else:
+    import unittest2 as unittest
+
     enum = None
 
 if POSIX:
@@ -86,8 +93,8 @@ __all__ = [
     "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "MACOS_11PLUS",
-    "MACOS_12PLUS", "COVERAGE",
+    "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
+    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "QEMU_USER", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -97,7 +104,7 @@ __all__ = [
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace', 'print_sysinfo',
-    'is_win_secure_system_proc',
+    'is_win_secure_system_proc', 'fake_pytest',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -105,7 +112,7 @@ __all__ = [
     # sync primitives
     'call_until', 'wait_for_pid', 'wait_for_file',
     # network
-    'check_net_address', 'filter_proc_connections',
+    'check_net_address', 'filter_proc_net_connections',
     'get_free_port', 'bind_socket', 'bind_unix_socket', 'tcp_socketpair',
     'unix_socketpair', 'create_sockets',
     # compat
@@ -128,8 +135,15 @@ APPVEYOR = 'APPVEYOR' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
 CI_TESTING = APPVEYOR or GITHUB_ACTIONS
 COVERAGE = 'COVERAGE_RUN' in os.environ
+PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
+if LINUX and GITHUB_ACTIONS:
+    with open('/proc/1/cmdline') as f:
+        QEMU_USER = "/bin/qemu-" in f.read()
+else:
+    QEMU_USER = False
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2**32
+AARCH64 = platform.machine() == "aarch64"
 
 
 @memoize
@@ -205,13 +219,13 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 
-HAS_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
-HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
+HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
+HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
 HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
@@ -408,7 +422,7 @@ def spawn_children_pair():
             s += "f = open('%s', 'w');"
             s += "f.write(str(os.getpid()));"
             s += "f.close();"
-            s += "time.sleep(60);"
+            s += "[time.sleep(0.1) for x in range(100 * 6)];"
             p = subprocess.Popen([r'%s', '-c', s])
             p.wait()
             """ % (os.path.basename(testfn), PYTHON_EXE))
@@ -464,7 +478,7 @@ def spawn_zombie():
             zpid = int(conn.recv(1024))
             _pids_started.add(zpid)
             zombie = psutil.Process(zpid)
-            call_until(zombie.status, "ret == psutil.STATUS_ZOMBIE")
+            call_until(lambda: zombie.status() == psutil.STATUS_ZOMBIE)
             return (parent, zombie)
         finally:
             conn.close()
@@ -515,7 +529,7 @@ def sh(cmd, **kwds):
     else:
         stdout, stderr = p.communicate()
     if p.returncode != 0:
-        raise RuntimeError(stderr)
+        raise RuntimeError(stdout + stderr)
     if stderr:
         warn(stderr)
     if stdout.endswith('\n'):
@@ -784,12 +798,10 @@ def wait_for_file(fname, delete=True, empty=False):
     timeout=GLOBAL_TIMEOUT,
     interval=0.001,
 )
-def call_until(fun, expr):
-    """Keep calling function for timeout secs and exit if eval()
-    expression is True.
-    """
+def call_until(fun):
+    """Keep calling function until it evaluates to True."""
     ret = fun()
-    assert eval(expr)  # noqa
+    assert ret
     return ret
 
 
@@ -866,7 +878,7 @@ def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
     if not which("gcc"):
-        raise unittest.SkipTest("gcc is not installed")
+        raise pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
             #include <unistd.h>
@@ -907,25 +919,88 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 
 
-class TestCase(unittest.TestCase):
+class fake_pytest:
+    """A class that mimics some basic pytest APIs. This is meant for
+    when unit tests are run in production, where pytest may not be
+    installed. Still, the user can test psutil installation via:
 
-    # Print a full path representation of the single unit tests
-    # being run.
-    def __str__(self):
-        fqmod = self.__class__.__module__
-        if not fqmod.startswith('psutil.'):
-            fqmod = 'psutil.tests.' + fqmod
-        return "%s.%s.%s" % (
-            fqmod,
-            self.__class__.__name__,
-            self._testMethodName,
+        $ python3 -m psutil.tests
+    """
+
+    @staticmethod
+    def main(*args, **kw):  # noqa ARG004
+        """Mimics pytest.main(). It has the same effect as running
+        `python3 -m unittest -v` from the project root directory.
+        """
+        suite = unittest.TestLoader().discover(HERE)
+        unittest.TextTestRunner(verbosity=2).run(suite)
+        warnings.warn(
+            "Fake pytest module was used. Test results may be inaccurate.",
+            UserWarning,
+            stacklevel=1,
         )
+        return suite
 
-    # assertRaisesRegexp renamed to assertRaisesRegex in 3.3;
-    # add support for the new name.
-    if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp  # noqa
+    @staticmethod
+    def raises(exc, match=None):
+        """Mimics `pytest.raises`."""
 
+        class ExceptionInfo:
+            _exc = None
+
+            @property
+            def value(self):
+                return self._exc
+
+        @contextlib.contextmanager
+        def context(exc, match=None):
+            einfo = ExceptionInfo()
+            try:
+                yield einfo
+            except exc as err:
+                if match and not re.search(match, str(err)):
+                    msg = '"{}" does not match "{}"'.format(match, str(err))
+                    raise AssertionError(msg)
+                einfo._exc = err
+            else:
+                raise AssertionError("%r not raised" % exc)
+
+        return context(exc, match=match)
+
+    @staticmethod
+    def warns(warning, match=None):
+        """Mimics `pytest.warns`."""
+        if match:
+            return unittest.TestCase().assertWarnsRegex(warning, match)
+        return unittest.TestCase().assertWarns(warning)
+
+    @staticmethod
+    def skip(reason=""):
+        """Mimics `unittest.SkipTest`."""
+        raise unittest.SkipTest(reason)
+
+    class mark:
+
+        @staticmethod
+        def skipif(condition, reason=""):
+            """Mimics `@pytest.mark.skipif` decorator."""
+            return unittest.skipIf(condition, reason)
+
+        class xdist_group:
+            """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
+
+            def __init__(self, name=None):
+                pass
+
+            def __call__(self, cls_or_meth):
+                return cls_or_meth
+
+
+if pytest is None:
+    pytest = fake_pytest
+
+
+class TestCase(unittest.TestCase):
     # ...otherwise multiprocessing.Pool complains
     if not PY3:
 
@@ -944,7 +1019,8 @@ unittest.TestCase = TestCase
 
 class PsutilTestCase(TestCase):
     """Test class providing auto-cleanup wrappers on top of process
-    test utilities.
+    test utilities. All test classes should derive from this one, even
+    if we use pytest.
     """
 
     def get_testfn(self, suffix="", dir=None):
@@ -976,29 +1052,29 @@ class PsutilTestCase(TestCase):
         return sproc
 
     def _check_proc_exc(self, proc, exc):
-        self.assertIsInstance(exc, psutil.Error)
-        self.assertEqual(exc.pid, proc.pid)
-        self.assertEqual(exc.name, proc._name)
+        assert isinstance(exc, psutil.Error)
+        assert exc.pid == proc.pid
+        assert exc.name == proc._name
         if exc.name:
-            self.assertNotEqual(exc.name, "")
+            assert exc.name
         if isinstance(exc, psutil.ZombieProcess):
-            self.assertEqual(exc.ppid, proc._ppid)
+            assert exc.ppid == proc._ppid
             if exc.ppid is not None:
-                self.assertGreaterEqual(exc.ppid, 0)
+                assert exc.ppid >= 0
         str(exc)
         repr(exc)
 
     def assertPidGone(self, pid):
-        with self.assertRaises(psutil.NoSuchProcess) as cm:
+        with pytest.raises(psutil.NoSuchProcess) as cm:
             try:
                 psutil.Process(pid)
             except psutil.ZombieProcess:
                 raise AssertionError("wasn't supposed to raise ZombieProcess")
-        self.assertEqual(cm.exception.pid, pid)
-        self.assertEqual(cm.exception.name, None)
+        assert cm.value.pid == pid
+        assert cm.value.name is None
         assert not psutil.pid_exists(pid), pid
-        self.assertNotIn(pid, psutil.pids())
-        self.assertNotIn(pid, [x.pid for x in psutil.process_iter()])
+        assert pid not in psutil.pids()
+        assert pid not in [x.pid for x in psutil.process_iter()]
 
     def assertProcessGone(self, proc):
         self.assertPidGone(proc.pid)
@@ -1024,21 +1100,21 @@ class PsutilTestCase(TestCase):
         clone = psutil.Process(proc.pid)
         # Cloned zombie on Open/NetBSD has null creation time, see:
         # https://github.com/giampaolo/psutil/issues/2287
-        self.assertEqual(proc, clone)
+        assert proc == clone
         if not (OPENBSD or NETBSD):
-            self.assertEqual(hash(proc), hash(clone))
+            assert hash(proc) == hash(clone)
         # Its status always be querable.
-        self.assertEqual(proc.status(), psutil.STATUS_ZOMBIE)
+        assert proc.status() == psutil.STATUS_ZOMBIE
         # It should be considered 'running'.
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
         # as_dict() shouldn't crash.
         proc.as_dict()
         # It should show up in pids() and process_iter().
-        self.assertIn(proc.pid, psutil.pids())
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in psutil.pids()
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
         psutil._pmap = {}
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
         # Call all methods.
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
@@ -1049,15 +1125,15 @@ class PsutilTestCase(TestCase):
                     self._check_proc_exc(proc, exc)
         if LINUX:
             # https://github.com/giampaolo/psutil/pull/2288
-            with self.assertRaises(psutil.ZombieProcess) as cm:
+            with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.cmdline()
-            self._check_proc_exc(proc, cm.exception)
-            with self.assertRaises(psutil.ZombieProcess) as cm:
+            self._check_proc_exc(proc, cm.value)
+            with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.exe()
-            self._check_proc_exc(proc, cm.exception)
-            with self.assertRaises(psutil.ZombieProcess) as cm:
+            self._check_proc_exc(proc, cm.value)
+            with pytest.raises(psutil.ZombieProcess) as cm:
                 proc.memory_maps()
-            self._check_proc_exc(proc, cm.exception)
+            self._check_proc_exc(proc, cm.value)
         # Zombie cannot be signaled or terminated.
         proc.suspend()
         proc.resume()
@@ -1065,10 +1141,10 @@ class PsutilTestCase(TestCase):
         proc.kill()
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
-        self.assertIn(proc.pid, psutil.pids())
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in psutil.pids()
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
         psutil._pmap = {}
-        self.assertIn(proc.pid, [x.pid for x in psutil.process_iter()])
+        assert proc.pid in [x.pid for x in psutil.process_iter()]
 
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(
@@ -1085,7 +1161,7 @@ class PsutilTestCase(TestCase):
         # self.assertEqual(proc.ppid(), os.getpid())
 
 
-@unittest.skipIf(PYPY, "unreliable on PYPY")
+@pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory
@@ -1182,7 +1258,7 @@ class TestMemoryLeak(PsutilTestCase):
             del x, ret
         gc.collect(generation=1)
         mem2 = self._get_mem()
-        self.assertEqual(gc.garbage, [])
+        assert gc.garbage == []
         diff = mem2 - mem1  # can also be negative
         return diff
 
@@ -1349,11 +1425,12 @@ def print_sysinfo():
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
 
-    if WINDOWS:
-        os.system("tasklist")
-    elif which("ps"):
-        os.system("ps aux")
-    print("=" * 70, file=sys.stderr)  # NOQA
+    # if WINDOWS:
+    #     os.system("tasklist")
+    # elif which("ps"):
+    #     os.system("ps aux")
+    # print("=" * 70, file=sys.stderr)  # NOQA
+
     sys.stdout.flush()
 
 
@@ -1399,8 +1476,9 @@ class process_namespace:
     ignored = [
         ('as_dict', (), {}),
         ('children', (), {'recursive': True}),
+        ('connections', (), {}),  # deprecated
         ('is_running', (), {}),
-        ('memory_info_ex', (), {}),
+        ('memory_info_ex', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
@@ -1410,7 +1488,6 @@ class process_namespace:
 
     getters = [
         ('cmdline', (), {}),
-        ('connections', (), {'kind': 'all'}),
         ('cpu_times', (), {}),
         ('create_time', (), {}),
         ('cwd', (), {}),
@@ -1418,6 +1495,7 @@ class process_namespace:
         ('memory_full_info', (), {}),
         ('memory_info', (), {}),
         ('name', (), {}),
+        ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
         ('num_ctx_switches', (), {}),
         ('num_threads', (), {}),
@@ -1551,7 +1629,10 @@ class system_namespace:
         ('virtual_memory', (), {}),
     ]
     if HAS_CPU_FREQ:
-        getters += [('cpu_freq', (), {'percpu': True})]
+        if MACOS and platform.machine() == 'arm64':  # skipped due to #1892
+            pass
+        else:
+            getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_GETLOADAVG:
         getters += [('getloadavg', (), {})]
     if HAS_SENSORS_TEMPERATURES:
@@ -1588,16 +1669,6 @@ class system_namespace:
     test_class_coverage = process_namespace.test_class_coverage
 
 
-def serialrun(klass):
-    """A decorator to mark a TestCase class. When running parallel tests,
-    class' unit tests will be run serially (1 process).
-    """
-    # assert issubclass(klass, unittest.TestCase), klass
-    assert inspect.isclass(klass), klass
-    klass._serialrun = True
-    return klass
-
-
 def retry_on_failure(retries=NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     actually failing.
@@ -1623,7 +1694,7 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                raise unittest.SkipTest("raises AccessDenied")
+                raise pytest.skip("raises AccessDenied")
 
         return wrapper
 
@@ -1646,7 +1717,7 @@ def skip_on_not_implemented(only_if=None):
                     "%r was skipped because it raised NotImplementedError"
                     % fun.__name__
                 )
-                raise unittest.SkipTest(msg)
+                raise pytest.skip(msg)
 
         return wrapper
 
@@ -1755,7 +1826,7 @@ def create_sockets():
         if supports_ipv6():
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
-        if POSIX and HAS_CONNECTIONS_UNIX:
+        if POSIX and HAS_NET_CONNECTIONS_UNIX:
             fname1 = get_testfn()
             fname2 = get_testfn()
             s1, s2 = unix_socketpair(fname1)
@@ -1880,7 +1951,7 @@ def check_connection_ntuple(conn):
     check_status(conn)
 
 
-def filter_proc_connections(cons):
+def filter_proc_net_connections(cons):
     """Our process may start with some open UNIX sockets which are not
     initialized by us, invalidating unit tests.
     """

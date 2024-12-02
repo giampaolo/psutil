@@ -80,7 +80,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 
     event = CreateEventW(NULL, FALSE, FALSE, L"LoadUpdateEvent");
     if (event == NULL) {
-        PyErr_SetFromOSErrnoWithSyscall("CreateEventW");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("CreateEventW");
         return NULL;
     }
 
@@ -100,7 +100,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
         WT_EXECUTEDEFAULT);
 
     if (ret == 0) {
-        PyErr_SetFromOSErrnoWithSyscall("RegisterWaitForSingleObject");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("RegisterWaitForSingleObject");
         return NULL;
     }
 

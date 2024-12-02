@@ -85,6 +85,7 @@ from ._common import Error
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
+from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._compat import PY3 as _PY3
@@ -213,7 +214,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "5.9.9"
+__version__ = "6.1.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -291,11 +292,9 @@ class Process(object):  # noqa: UP004
     If PID is omitted current process PID (os.getpid()) is used.
     Raise NoSuchProcess if PID does not exist.
 
-    Note that most of the methods of this class do not make sure
-    the PID of the process being queried has been reused over time.
-    That means you might end up retrieving an information referring
-    to another process in case the original one this instance
-    refers to is gone in the meantime.
+    Note that most of the methods of this class do not make sure that
+    the PID of the process being queried has been reused. That means
+    that you may end up retrieving information for another process.
 
     The only exceptions for which process identity is pre-emptively
     checked and guaranteed are:
@@ -312,11 +311,8 @@ class Process(object):  # noqa: UP004
      - terminate()
      - kill()
 
-    To prevent this problem for all other methods you can:
-     - use is_running() before querying the process
-     - if you're continuously iterating over a set of Process
-       instances use process_iter() which pre-emptively checks
-       process identity for every yielded instance
+    To prevent this problem for all other methods you can use
+    is_running() before querying the process.
     """
 
     def __init__(self, pid=None):
@@ -354,13 +350,13 @@ class Process(object):  # noqa: UP004
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
-        # cache creation time for later use in is_running() method
+        self._ident = (self.pid, None)
         try:
-            self.create_time()
+            self._ident = self._get_ident()
         except AccessDenied:
-            # We should never get here as AFAIK we're able to get
-            # process creation time on all platforms even as a
-            # limited user.
+            # This should happen on Windows only, since we use the fast
+            # create time method. AFAIK, on all other platforms we are
+            # able to get create time for all PIDs.
             pass
         except ZombieProcess:
             # Zombies can still be queried by this class (although
@@ -372,11 +368,32 @@ class Process(object):  # noqa: UP004
                 raise NoSuchProcess(pid, msg=msg)
             else:
                 self._gone = True
-        # This pair is supposed to identify a Process instance
-        # univocally over time (the PID alone is not enough as
-        # it might refer to a process whose PID has been reused).
-        # This will be used later in __eq__() and is_running().
-        self._ident = (self.pid, self._create_time)
+
+    def _get_ident(self):
+        """Return a (pid, uid) tuple which is supposed to identify a
+        Process instance univocally over time. The PID alone is not
+        enough, as it can be assigned to a new process after this one
+        terminates, so we add process creation time to the mix. We need
+        this in order to prevent killing the wrong process later on.
+        This is also known as PID reuse or PID recycling problem.
+
+        The reliability of this strategy mostly depends on
+        create_time() precision, which is 0.01 secs on Linux. The
+        assumption is that, after a process terminates, the kernel
+        won't reuse the same PID after such a short period of time
+        (0.01 secs). Technically this is inherently racy, but
+        practically it should be good enough.
+        """
+        if WINDOWS:
+            # Use create_time() fast method in order to speedup
+            # `process_iter()`. This means we'll get AccessDenied for
+            # most ADMIN processes, but that's fine since it means
+            # we'll also get AccessDenied on kill().
+            # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
+            self._create_time = self._proc.create_time(fast_only=True)
+            return (self.pid, self._create_time)
+        else:
+            return (self.pid, self.create_time())
 
     def __str__(self):
         info = collections.OrderedDict()
@@ -384,19 +401,24 @@ class Process(object):  # noqa: UP004
         if self._name:
             info['name'] = self._name
         with self.oneshot():
-            try:
-                info["name"] = self.name()
-                info["status"] = self.status()
-            except ZombieProcess:
-                info["status"] = "zombie"
-            except NoSuchProcess:
-                info["status"] = "terminated"
-            except AccessDenied:
-                pass
+            if self._pid_reused:
+                info["status"] = "terminated + PID reused"
+            else:
+                try:
+                    info["name"] = self.name()
+                    info["status"] = self.status()
+                except ZombieProcess:
+                    info["status"] = "zombie"
+                except NoSuchProcess:
+                    info["status"] = "terminated"
+                except AccessDenied:
+                    pass
+
             if self._exitcode not in (_SENTINEL, None):
                 info["exitcode"] = self._exitcode
             if self._create_time is not None:
                 info['started'] = _pprint_secs(self._create_time)
+
             return "%s.%s(%s)" % (
                 self.__class__.__module__,
                 self.__class__.__name__,
@@ -416,10 +438,10 @@ class Process(object):  # noqa: UP004
             # (so it has a ctime), then it turned into a zombie. It's
             # important to do this because is_running() depends on
             # __eq__.
-            pid1, ctime1 = self._ident
-            pid2, ctime2 = other._ident
+            pid1, ident1 = self._ident
+            pid2, ident2 = other._ident
             if pid1 == pid2:
-                if ctime1 and not ctime2:
+                if ident1 and not ident2:
                     try:
                         return self.status() == STATUS_ZOMBIE
                     except Error:
@@ -436,7 +458,7 @@ class Process(object):  # noqa: UP004
 
     def _raise_if_pid_reused(self):
         """Raises NoSuchProcess in case process PID has been reused."""
-        if not self.is_running() and self._pid_reused:
+        if self._pid_reused or (not self.is_running() and self._pid_reused):
             # We may directly raise NSP in here already if PID is just
             # not running, but I prefer NSP to be raised naturally by
             # the actual Process API call. This way unit tests will tell
@@ -599,19 +621,23 @@ class Process(object):  # noqa: UP004
 
     def is_running(self):
         """Return whether this process is running.
-        It also checks if PID has been reused by another process in
-        which case return False.
+
+        It also checks if PID has been reused by another process, in
+        which case it will remove the process from `process_iter()`
+        internal cache and return False.
         """
         if self._gone or self._pid_reused:
             return False
         try:
             # Checking if PID is alive is not enough as the PID might
-            # have been reused by another process: we also want to
-            # verify process identity.
-            # Process identity / uniqueness over time is guaranteed by
-            # (PID + creation time) and that is verified in __eq__.
+            # have been reused by another process. Process identity /
+            # uniqueness over time is guaranteed by (PID + creation
+            # time) and that is verified in __eq__.
             self._pid_reused = self != Process(self.pid)
-            return not self._pid_reused
+            if self._pid_reused:
+                _pids_reused.add(self.pid)
+                raise NoSuchProcess(self.pid)
+            return True
         except ZombieProcess:
             # We should never get here as it's already handled in
             # Process.__init__; here just for extra safety.
@@ -1193,7 +1219,7 @@ class Process(object):  # noqa: UP004
         """
         return self._proc.open_files()
 
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         """Return socket connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) namedtuples.
         The *kind* parameter filters for connections that match the
@@ -1215,7 +1241,11 @@ class Process(object):  # noqa: UP004
         | all        | the sum of all the possible families and protocols |
         +------------+----------------------------------------------------+
         """
-        return self._proc.connections(kind)
+        return self._proc.net_connections(kind)
+
+    @_common.deprecated_method(replacement="net_connections")
+    def connections(self, kind="inet"):
+        return self.net_connections(kind=kind)
 
     # --- signals
 
@@ -1332,7 +1362,7 @@ _as_dict_attrnames = set(
     [x for x in dir(Process) if not x.startswith('_') and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'memory_info_ex', 'oneshot'}])
+      'memory_info_ex', 'connections', 'oneshot'}])
 # fmt: on
 
 
@@ -1455,6 +1485,7 @@ def pid_exists(pid):
 
 
 _pmap = {}
+_pids_reused = set()
 
 
 def process_iter(attrs=None, ad_value=None):
@@ -1463,10 +1494,7 @@ def process_iter(attrs=None, ad_value=None):
 
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
-
-    Cached Process instances are checked for identity so that you're
-    safe in case a PID has been reused by another process, in which
-    case the cached instance is updated.
+    Cache can optionally be cleared via `process_iter.clear_cache()`.
 
     The sorting order in which processes are yielded is based on
     their PIDs.
@@ -1482,8 +1510,6 @@ def process_iter(attrs=None, ad_value=None):
 
     def add(pid):
         proc = Process(pid)
-        if attrs is not None:
-            proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
         pmap[proc.pid] = proc
         return proc
 
@@ -1497,41 +1523,27 @@ def process_iter(attrs=None, ad_value=None):
     gone_pids = b - a
     for pid in gone_pids:
         remove(pid)
+    while _pids_reused:
+        pid = _pids_reused.pop()
+        debug("refreshing Process instance for reused PID %s" % pid)
+        remove(pid)
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
         for pid, proc in ls:
             try:
                 if proc is None:  # new process
-                    yield add(pid)
-                else:
-                    # use is_running() to check whether PID has been
-                    # reused by another process in which case yield a
-                    # new Process instance
-                    if proc.is_running():
-                        if attrs is not None:
-                            proc.info = proc.as_dict(
-                                attrs=attrs, ad_value=ad_value
-                            )
-                        yield proc
-                    else:
-                        yield add(pid)
+                    proc = add(pid)
+                if attrs is not None:
+                    proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                yield proc
             except NoSuchProcess:
                 remove(pid)
-            except AccessDenied:
-                # Process creation time can't be determined hence there's
-                # no way to tell whether the pid of the cached process
-                # has been reused. Just return the cached version.
-                if proc is None and pid in pmap:
-                    try:
-                        yield pmap[pid]
-                    except KeyError:
-                        # If we get here it is likely that 2 threads were
-                        # using process_iter().
-                        pass
-                else:
-                    raise
     finally:
         _pmap = pmap
+
+
+process_iter.cache_clear = lambda: _pmap.clear()  # noqa
+process_iter.cache_clear.__doc__ = "Clear process_iter() internal cache."
 
 
 def wait_procs(procs, timeout=None, callback=None):
@@ -1615,14 +1627,14 @@ def wait_procs(procs, timeout=None, callback=None):
                 check_gone(proc, timeout)
             else:
                 check_gone(proc, max_timeout)
-        alive = alive - gone
+        alive = alive - gone  # noqa PLR6104
 
     if alive:
         # Last attempt over processes survived so far.
         # timeout == 0 won't make this function wait any further.
         for proc in alive:
             check_gone(proc, 0)
-        alive = alive - gone
+        alive = alive - gone  # noqa: PLR6104
 
     return (list(gone), list(alive))
 
@@ -2045,7 +2057,7 @@ def apply_zfs_arcstats(vm_stats):
 
 
 # =====================================================================
-# --- disks/paritions related functions
+# --- disks/partitions related functions
 # =====================================================================
 
 
@@ -2066,25 +2078,7 @@ def disk_partitions(all=False):
     If *all* parameter is False return physical devices only and ignore
     all others.
     """
-
-    def pathconf(path, name):
-        try:
-            return os.pathconf(path, name)
-        except (OSError, AttributeError):
-            pass
-
-    ret = _psplatform.disk_partitions(all)
-    if POSIX:
-        new = []
-        for item in ret:
-            nt = item._replace(
-                maxfile=pathconf(item.mountpoint, 'PC_NAME_MAX'),
-                maxpath=pathconf(item.mountpoint, 'PC_PATH_MAX'),
-            )
-            new.append(nt)
-        return new
-    else:
-        return ret
+    return _psplatform.disk_partitions(all)
 
 
 def disk_io_counters(perdisk=False, nowrap=True):

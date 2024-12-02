@@ -238,7 +238,7 @@ def getpagesize():
 def virtual_memory():
     """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
-    totphys, availphys, totsys, availsys = mem
+    totphys, availphys, _totsys, _availsys = mem
     total = totphys
     avail = availphys
     free = availphys
@@ -337,7 +337,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return CPU statistics."""
-    ctx_switches, interrupts, dpcs, syscalls = cext.cpu_stats()
+    ctx_switches, interrupts, _dpcs, syscalls = cext.cpu_stats()
     soft_interrupts = 0
     return _common.scpustats(
         ctx_switches, interrupts, soft_interrupts, syscalls
@@ -702,12 +702,10 @@ def is_permission_err(exc):
     # On Python 2 OSError doesn't always have 'winerror'. Sometimes
     # it does, in which case the original exception was WindowsError
     # (which is a subclass of OSError).
-    if getattr(exc, "winerror", -1) in (
+    return getattr(exc, "winerror", -1) in (
         cext.ERROR_ACCESS_DENIED,
         cext.ERROR_PRIVILEGE_NOT_HELD,
-    ):
-        return True
-    return False
+    )
 
 
 def convert_oserror(exc, pid=None, name=None):
@@ -764,7 +762,7 @@ def retry_error_partial_copy(fun):
 class Process:
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_cache"]
+    __slots__ = ["_cache", "_name", "_ppid", "pid"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -984,14 +982,16 @@ class Process:
         return py2_strencode(domain) + '\\' + py2_strencode(user)
 
     @wrap_exceptions
-    def create_time(self):
+    def create_time(self, fast_only=False):
         # Note: proc_times() not put under oneshot() 'cause create_time()
         # is already cached by the main Process class.
         try:
-            user, system, created = cext.proc_times(self.pid)
+            _user, _system, created = cext.proc_times(self.pid)
             return created
         except OSError as err:
             if is_permission_err(err):
+                if fast_only:
+                    raise
                 debug("attempting create_time() fallback (slower)")
                 return self._proc_info()[pinfo_map['create_time']]
             raise
@@ -1012,7 +1012,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         try:
-            user, system, created = cext.proc_times(self.pid)
+            user, system, _created = cext.proc_times(self.pid)
         except OSError as err:
             if not is_permission_err(err):
                 raise
@@ -1061,7 +1061,7 @@ class Process:
         return list(ret)
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         return net_connections(kind, _pid=self.pid)
 
     @wrap_exceptions

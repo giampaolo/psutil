@@ -49,6 +49,7 @@ def sh(cmd):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
+        env=env,
     )
     stdout, stderr = p.communicate()
     if p.returncode != 0:

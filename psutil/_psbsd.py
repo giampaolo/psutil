@@ -10,7 +10,7 @@ import functools
 import os
 from collections import defaultdict
 from collections import namedtuple
-from xml.etree import ElementTree
+from xml.etree import ElementTree  # noqa ICN001
 
 from . import _common
 from . import _psposix
@@ -321,7 +321,7 @@ def cpu_stats():
     if FREEBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps.
-        ctxsw, intrs, soft_intrs, syscalls, traps = cext.cpu_stats()
+        ctxsw, intrs, soft_intrs, syscalls, _traps = cext.cpu_stats()
     elif NETBSD:
         # XXX
         # Note about intrs: the C extension returns 0. intrs
@@ -332,7 +332,7 @@ def cpu_stats():
         #
         # Note: the C ext is returning some metrics we are not exposing:
         # traps, faults and forks.
-        ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = (
+        ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
             cext.cpu_stats()
         )
         with open('/proc/stat', 'rb') as f:
@@ -342,7 +342,7 @@ def cpu_stats():
     elif OPENBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps, faults and forks.
-        ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = (
+        ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
             cext.cpu_stats()
         )
     return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
@@ -395,10 +395,7 @@ def disk_partitions(all=False):
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        maxfile = maxpath = None  # set later
-        ntuple = _common.sdiskpart(
-            device, mountpoint, fstype, opts, maxfile, maxpath
-        )
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -561,10 +558,9 @@ def pids():
     return ret
 
 
-if OPENBSD or NETBSD:
+if NETBSD:
 
     def pid_exists(pid):
-        """Return True if pid exists."""
         exists = _psposix.pid_exists(pid)
         if not exists:
             # We do this because _psposix.pid_exists() lies in case of
@@ -573,7 +569,19 @@ if OPENBSD or NETBSD:
         else:
             return True
 
-else:
+elif OPENBSD:
+
+    def pid_exists(pid):
+        exists = _psposix.pid_exists(pid)
+        if not exists:
+            return False
+        else:
+            # OpenBSD seems to be the only BSD platform where
+            # _psposix.pid_exists() returns True for thread IDs (tids),
+            # so we can't use it.
+            return pid in pids()
+
+else:  # FreeBSD
     pid_exists = _psposix.pid_exists
 
 
@@ -632,7 +640,7 @@ def wrap_exceptions_procfs(inst):
 class Process:
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_cache"]
+    __slots__ = ["_cache", "_name", "_ppid", "pid"]
 
     def __init__(self, pid):
         self.pid = pid
@@ -813,7 +821,7 @@ class Process:
         return retlist
 
     @wrap_exceptions
-    def connections(self, kind='inet'):
+    def net_connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError(
                 "invalid %r kind argument; choose between %s"
@@ -827,7 +835,7 @@ class Process:
         elif OPENBSD:
             rawlist = cext.net_connections(self.pid, families, types)
         else:
-            rawlist = cext.proc_connections(self.pid, families, types)
+            rawlist = cext.proc_net_connections(self.pid, families, types)
 
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item[:6]

@@ -21,39 +21,25 @@ import fnmatch
 import os
 import shutil
 import site
-import ssl
 import subprocess
 import sys
-import tempfile
 
 
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
-RUNNER_PY = 'psutil\\tests\\runner.py'
-GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] >= 3
+PYTEST_ARGS = ["-v", "-s", "--tb=short"]
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
-PYPY = '__pypy__' in sys.builtin_module_names
-DEPS = [
-    "coverage",
-    "pdbpp",
-    "pip",
-    "pyperf",
-    "pyreadline",
-    "requests",
-    "setuptools",
-    "wheel",
-]
+WINDOWS = os.name == "nt"
 
-if sys.version_info[0] < 3:
-    DEPS.append('mock')
-    DEPS.append('ipaddress')
-    DEPS.append('enum34')
 
-if not PYPY:
-    DEPS.append("pywin32")
-    DEPS.append("wmi")
+sys.path.insert(0, ROOT_DIR)  # so that we can import setup.py
+
+import setup  # NOQA
+
+TEST_DEPS = setup.TEST_DEPS
+DEV_DEPS = setup.DEV_DEPS
 
 _cmds = {}
 if PY3:
@@ -101,6 +87,8 @@ def stderr_handle():
 
 
 def win_colorprint(s, color=LIGHTBLUE):
+    if not WINDOWS:
+        return print(s)
     color += 8  # bold
     handle = stderr_handle()
     SetConsoleTextAttribute = ctypes.windll.Kernel32.SetConsoleTextAttribute
@@ -112,39 +100,17 @@ def win_colorprint(s, color=LIGHTBLUE):
 
 
 def sh(cmd, nolog=False):
+    assert isinstance(cmd, list), repr(cmd)
     if not nolog:
-        safe_print("cmd: " + cmd)
-    p = subprocess.Popen(
-        cmd, shell=True, env=os.environ, cwd=os.getcwd()  # noqa
-    )
-    p.communicate()
+        safe_print("cmd: %s" % cmd)
+    p = subprocess.Popen(cmd, env=os.environ, universal_newlines=True)
+    p.communicate()  # print stdout/stderr in real time
     if p.returncode != 0:
         sys.exit(p.returncode)
 
 
 def rm(pattern, directory=False):
     """Recursively remove a file or dir by pattern."""
-
-    def safe_remove(path):
-        try:
-            os.remove(path)
-        except OSError as err:
-            if err.errno != errno.ENOENT:
-                raise
-        else:
-            safe_print("rm %s" % path)
-
-    def safe_rmtree(path):
-        def onerror(fun, path, excinfo):
-            exc = excinfo[1]
-            if exc.errno != errno.ENOENT:
-                raise  # noqa: PLE0704
-
-        existed = os.path.isdir(path)
-        shutil.rmtree(path, onerror=onerror)
-        if existed:
-            safe_print("rmdir -f %s" % path)
-
     if "*" not in pattern:
         if directory:
             safe_rmtree(pattern)
@@ -178,14 +144,9 @@ def safe_remove(path):
 
 
 def safe_rmtree(path):
-    def onerror(fun, path, excinfo):
-        exc = excinfo[1]
-        if exc.errno != errno.ENOENT:
-            raise  # noqa: PLE0704
-
     existed = os.path.isdir(path)
-    shutil.rmtree(path, onerror=onerror)
-    if existed:
+    shutil.rmtree(path, ignore_errors=True)
+    if existed and not os.path.isdir(path):
         safe_print("rmdir -f %s" % path)
 
 
@@ -214,7 +175,7 @@ def build():
     """Build / compile."""
     # Make sure setuptools is installed (needed for 'develop' /
     # edit mode).
-    sh('%s -c "import setuptools"' % PYTHON)
+    sh([PYTHON, "-c", "import setuptools"])
 
     # "build_ext -i" copies compiled *.pyd files in ./psutil directory in
     # order to allow "import psutil" when using the interactive interpreter
@@ -245,55 +206,31 @@ def build():
         p.wait()
 
     # Make sure it actually worked.
-    sh('%s -c "import psutil"' % PYTHON)
+    sh([PYTHON, "-c", "import psutil"])
     win_colorprint("build + import successful", GREEN)
 
 
 def wheel():
     """Create wheel file."""
     build()
-    sh("%s setup.py bdist_wheel" % PYTHON)
+    sh([PYTHON, "setup.py", "bdist_wheel"])
 
 
 def upload_wheels():
     """Upload wheel files on PyPI."""
     build()
-    sh("%s -m twine upload dist/*.whl" % PYTHON)
+    sh([PYTHON, "-m", "twine", "upload", "dist/*.whl"])
 
 
 def install_pip():
     """Install pip."""
-    try:
-        sh('%s -c "import pip"' % PYTHON)
-    except SystemExit:
-        if PY3:
-            from urllib.request import urlopen
-        else:
-            from urllib2 import urlopen
-
-        if hasattr(ssl, '_create_unverified_context'):
-            ctx = ssl._create_unverified_context()
-        else:
-            ctx = None
-        kw = dict(context=ctx) if ctx else {}
-        safe_print("downloading %s" % GET_PIP_URL)
-        req = urlopen(GET_PIP_URL, **kw)
-        data = req.read()
-
-        tfile = os.path.join(tempfile.gettempdir(), 'get-pip.py')
-        with open(tfile, 'wb') as f:
-            f.write(data)
-
-        try:
-            sh('%s %s --user' % (PYTHON, tfile))
-        finally:
-            os.remove(tfile)
+    sh([PYTHON, os.path.join(HERE, "install_pip.py")])
 
 
 def install():
     """Install in develop / edit mode."""
     build()
-    sh("%s setup.py develop" % PYTHON)
+    sh([PYTHON, "setup.py", "develop"])
 
 
 def uninstall():
@@ -314,7 +251,7 @@ def uninstall():
             except ImportError:
                 break
             else:
-                sh("%s -m pip uninstall -y psutil" % PYTHON)
+                sh([PYTHON, "-m", "pip", "uninstall", "-y", "psutil"])
     finally:
         os.chdir(here)
 
@@ -368,99 +305,104 @@ def clean():
     safe_rmtree("tmp")
 
 
-def setup_dev_env():
+def install_pydeps_test():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
-    sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
+    sh([PYTHON, "-m", "pip", "install", "--user", "-U"] + TEST_DEPS)
 
 
-def test(name=RUNNER_PY):
+def install_pydeps_dev():
+    """Install useful deps."""
+    install_pip()
+    install_git_hooks()
+    sh([PYTHON, "-m", "pip", "install", "--user", "-U"] + DEV_DEPS)
+
+
+def test():
     """Run tests."""
     build()
-    sh("%s %s" % (PYTHON, name))
+    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS)
+
+
+def test_parallel():
+    test(["-n", "auto", "--dist", "loadgroup"])
 
 
 def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    sh("%s -m coverage run %s" % (PYTHON, RUNNER_PY))
-    sh("%s -m coverage report" % PYTHON)
-    sh("%s -m coverage html" % PYTHON)
-    sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
+    sh([PYTHON, "-m", "coverage", "run", "-m", "pytest"] + PYTEST_ARGS)
+    sh([PYTHON, "-m", "coverage", "report"])
+    sh([PYTHON, "-m", "coverage", "html"])
+    sh([PYTHON, "-m", "webbrowser", "-t", "htmlcov/index.html"])
 
 
 def test_process():
     """Run process tests."""
     build()
-    sh("%s psutil\\tests\\test_process.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_process.py"])
 
 
 def test_process_all():
     """Run process all tests."""
     build()
-    sh("%s psutil\\tests\\test_process_all.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_process_all.py"])
 
 
 def test_system():
     """Run system tests."""
     build()
-    sh("%s psutil\\tests\\test_system.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_system.py"])
 
 
 def test_platform():
     """Run windows only tests."""
     build()
-    sh("%s psutil\\tests\\test_windows.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_windows.py"])
 
 
 def test_misc():
     """Run misc tests."""
     build()
-    sh("%s psutil\\tests\\test_misc.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_misc.py"])
 
 
 def test_unicode():
     """Run unicode tests."""
     build()
-    sh("%s psutil\\tests\\test_unicode.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_unicode.py"])
 
 
 def test_connections():
     """Run connections tests."""
     build()
-    sh("%s psutil\\tests\\test_connections.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_connections.py"])
 
 
 def test_contracts():
     """Run contracts tests."""
     build()
-    sh("%s psutil\\tests\\test_contracts.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_contracts.py"])
 
 
 def test_testutils():
     """Run test utilities tests."""
     build()
-    sh("%s psutil\\tests\\test_testutils.py" % PYTHON)
-
-
-def test_by_name(name):
-    """Run test by name."""
-    build()
-    sh("%s -m unittest -v %s" % (PYTHON, name))
+    sh([PYTHON, "psutil\\tests\\test_testutils.py"])
 
 
 def test_last_failed():
     """Re-run tests which failed on last run."""
     build()
-    sh("%s %s --last-failed" % (PYTHON, RUNNER_PY))
+    test(["--last-failed"])
 
 
 def test_memleaks():
     """Run memory leaks tests."""
     build()
-    sh("%s psutil\\tests\\test_memleaks.py" % PYTHON)
+    sh([PYTHON, "psutil\\tests\\test_memleaks.py"])
 
 
 def install_git_hooks():
@@ -479,32 +421,44 @@ def install_git_hooks():
 
 def bench_oneshot():
     """Benchmarks for oneshot() ctx manager (see #799)."""
-    sh("%s -Wa scripts\\internal\\bench_oneshot.py" % PYTHON)
+    sh([PYTHON, "scripts\\internal\\bench_oneshot.py"])
 
 
 def bench_oneshot_2():
     """Same as above but using perf module (supposed to be more precise)."""
-    sh("%s -Wa scripts\\internal\\bench_oneshot_2.py" % PYTHON)
+    sh([PYTHON, "scripts\\internal\\bench_oneshot_2.py"])
 
 
 def print_access_denied():
     """Print AD exceptions raised by all Process methods."""
     build()
-    sh("%s -Wa scripts\\internal\\print_access_denied.py" % PYTHON)
+    sh([PYTHON, "scripts\\internal\\print_access_denied.py"])
 
 
 def print_api_speed():
     """Benchmark all API calls."""
     build()
-    sh("%s -Wa scripts\\internal\\print_api_speed.py" % PYTHON)
+    sh([PYTHON, "scripts\\internal\\print_api_speed.py"])
+
+
+def print_sysinfo():
+    """Print system info."""
+    build()
+    from psutil.tests import print_sysinfo
+
+    print_sysinfo()
 
 
 def download_appveyor_wheels():
     """Download appveyor wheels."""
-    sh(
-        "%s -Wa scripts\\internal\\download_wheels_appveyor.py "
-        "--user giampaolo --project psutil" % PYTHON
-    )
+    sh([
+        PYTHON,
+        "scripts\\internal\\download_wheels_appveyor.py",
+        "--user",
+        "giampaolo",
+        "--project",
+        "psutil",
+    ])
 
 
 def generate_manifest():
@@ -524,13 +478,9 @@ def get_python(path):
     path = path.replace('.', '')
     vers = (
         '27',
-        '27-32',
         '27-64',
-        '310-32',
         '310-64',
-        '311-32',
         '311-64',
-        '312-32',
         '312-64',
     )
     for v in vers:
@@ -555,9 +505,12 @@ def parse_args():
     sp.add_parser('install', help="build + install in develop/edit mode")
     sp.add_parser('install-git-hooks', help="install GIT pre-commit hook")
     sp.add_parser('install-pip', help="install pip")
+    sp.add_parser('install-pydeps-dev', help="install dev python deps")
+    sp.add_parser('install-pydeps-test', help="install python test deps")
     sp.add_parser('print-access-denied', help="print AD exceptions")
     sp.add_parser('print-api-speed', help="benchmark all API calls")
-    sp.add_parser('setup-dev-env', help="install deps")
+    sp.add_parser('print-sysinfo', help="print system info")
+    sp.add_parser('test-parallel', help="run tests in parallel")
     test = sp.add_parser('test', help="[ARG] run tests")
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
     sp.add_parser('test-connections', help="run connections tests")
@@ -603,16 +556,10 @@ def main():
 
     fname = args.command.replace('-', '_')
     fun = getattr(sys.modules[__name__], fname)  # err if fun not defined
-    funargs = []
-    # mandatory args
-    if args.command in ('test-by-name', 'test-script'):
-        if not args.arg:
-            sys.exit('command needs an argument')
-        funargs = [args.arg]
-    # optional args
     if args.command == 'test' and args.arg:
-        funargs = [args.arg]
-    fun(*funargs)
+        sh([PYTHON, args.arg])  # test a script
+    else:
+        fun()
 
 
 if __name__ == '__main__':
