@@ -13,7 +13,7 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
-from . import _common
+from . import CPUCoreType, _common
 from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
@@ -202,7 +202,7 @@ def cpu_count_logical():
         return None
 
 
-def cpu_count_cores():
+def cpu_count_cores(core_type: CPUCoreType=CPUCoreType.ALL):
     """Return the number of CPU cores in the system."""
     return cext.cpu_count_cores()
 

@@ -12,7 +12,7 @@ from collections import defaultdict
 from collections import namedtuple
 from xml.etree import ElementTree  # noqa ICN001
 
-from . import _common
+from . import CPUCoreType, _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
@@ -283,13 +283,13 @@ def cpu_count_logical():
 
 if OPENBSD or NETBSD:
 
-    def cpu_count_cores():
+    def cpu_count_cores(core_type: CPUCoreType=CPUCoreType.ALL):
         # OpenBSD and NetBSD do not implement this.
         return 1 if cpu_count_logical() == 1 else None
 
 else:
 
-    def cpu_count_cores():
+    def cpu_count_cores(core_type: CPUCoreType=CPUCoreType.ALL):
         """Return the number of CPU cores in the system."""
         # From the C module we'll get an XML string similar to this:
         # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
