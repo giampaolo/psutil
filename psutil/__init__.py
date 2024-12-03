@@ -25,6 +25,7 @@ from __future__ import division
 import collections
 import contextlib
 import datetime
+import enum
 import functools
 import os
 import signal
@@ -221,6 +222,12 @@ _timer = getattr(time, 'monotonic', time.time)
 _TOTAL_PHYMEM = None
 _LOWEST_PID = None
 _SENTINEL = object()
+
+class CPUCoreType(enum.Flag):
+    PERFORMANCE = enum.auto()
+    EFFICIENCY = enum.auto()
+    ALL = PERFORMANCE | EFFICIENCY
+
 
 # Sanity check in case the user messed up with psutil installation
 # or did something weird with sys.path. In this case we might end
@@ -1644,7 +1651,7 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 
 
-def cpu_count(logical=True):
+def cpu_count(logical=True, core_type: CPUCoreType=CPUCoreType.ALL):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
 
@@ -1661,7 +1668,7 @@ def cpu_count(logical=True):
     if logical:
         ret = _psplatform.cpu_count_logical()
     else:
-        ret = _psplatform.cpu_count_cores()
+        ret = _psplatform.cpu_count_cores(core_type=core_type)
     if ret is not None and ret < 1:
         ret = None
     return ret

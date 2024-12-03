@@ -13,7 +13,7 @@ import sys
 import time
 from collections import namedtuple
 
-from . import _common
+from . import CPUCoreType, _common
 from ._common import ENCODING
 from ._common import ENCODING_ERRS
 from ._common import AccessDenied
@@ -330,7 +330,7 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-def cpu_count_cores():
+def cpu_count_cores(core_type: CPUCoreType=CPUCoreType.ALL):
     """Return the number of CPU cores in the system."""
     return cext.cpu_count_cores()
 

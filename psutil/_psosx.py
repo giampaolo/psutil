@@ -9,7 +9,7 @@ import functools
 import os
 from collections import namedtuple
 
-from . import _common
+from . import CPUCoreType, _common
 from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
@@ -159,7 +159,7 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-def cpu_count_cores():
+def cpu_count_cores(core_type: CPUCoreType=CPUCoreType.ALL):
     """Return the number of CPU cores in the system."""
     return cext.cpu_count_cores()
 

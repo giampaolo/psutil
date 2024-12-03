@@ -14,7 +14,7 @@ import subprocess
 import sys
 from collections import namedtuple
 
-from . import _common
+from . import CPUCoreType, _common
 from . import _psposix
 from . import _psutil_aix as cext
 from . import _psutil_posix as cext_posix
@@ -144,7 +144,7 @@ def cpu_count_logical():
         return None
 
 
-def cpu_count_cores():
+def cpu_count_cores(core_type: CPUCoreType=CPUCoreType.ALL):
     cmd = ["lsdev", "-Cc", "processor"]
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
