@@ -15,6 +15,7 @@ import enum
 import errno
 import functools
 import gc
+import ipaddress
 import os
 import platform
 import random
@@ -1833,8 +1834,6 @@ def check_net_address(addr, family):
     """Check a net address validity. Supported families are IPv4,
     IPv6 and MAC addresses.
     """
-    import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
-
     assert isinstance(family, enum.IntEnum), family
     if family == socket.AF_INET:
         octs = [int(x) for x in addr.split('.')]

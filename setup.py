@@ -78,7 +78,7 @@ if WINDOWS and not PYPY:
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
-DEV_DEPS = [
+DEV_DEPS = TEST_DEPS + [
     "abi3audit",
     "black",
     "check-manifest",
@@ -99,6 +99,7 @@ DEV_DEPS = [
     "vulture",
     "wheel",
 ]
+
 if WINDOWS:
     DEV_DEPS.append("pyreadline")
     DEV_DEPS.append("pdbpp")
