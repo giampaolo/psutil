@@ -552,7 +552,7 @@ class TestProcess(WindowsTestCase):
 
     def test_error_partial_copy(self):
         # https://github.com/giampaolo/psutil/issues/875
-        exc = WindowsError()
+        exc = OSError()
         exc.winerror = 299
         with mock.patch("psutil._psplatform.cext.proc_cwd", side_effect=exc):
             with mock.patch("time.sleep") as m:
@@ -883,7 +883,7 @@ class TestServices(PsutilTestCase):
 
         # test NoSuchProcess
         service = psutil.win_service_get(name)
-        exc = WindowsError(0, "msg", 0, ERROR_SERVICE_DOES_NOT_EXIST)
+        exc = OSError(0, "msg", 0, winerror=ERROR_SERVICE_DOES_NOT_EXIST)
         with mock.patch(
             "psutil._psplatform.cext.winservice_query_status", side_effect=exc
         ):
@@ -896,7 +896,7 @@ class TestServices(PsutilTestCase):
                 service.username()
 
         # test AccessDenied
-        exc = WindowsError(0, "msg", 0, ERROR_ACCESS_DENIED)
+        exc = OSError(0, "msg", 0, winerror=ERROR_ACCESS_DENIED)
         with mock.patch(
             "psutil._psplatform.cext.winservice_query_status", side_effect=exc
         ):
