@@ -2105,7 +2105,7 @@ class TestProcess(PsutilTestCase):
         # happen in case of zombie process:
         # https://travis-ci.org/giampaolo/psutil/jobs/51368273
         with mock.patch(
-            "psutil._pslinux.prlimit", side_effect=OSError(errno.ENOSYS, "")
+            "resource.prlimit", side_effect=OSError(errno.ENOSYS, "")
         ) as m1:
             with mock.patch(
                 "psutil._pslinux.Process._is_zombie", return_value=True

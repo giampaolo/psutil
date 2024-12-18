@@ -14,6 +14,7 @@ import functools
 import glob
 import os
 import re
+import resource
 import socket
 import struct
 import sys
@@ -59,6 +60,11 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
 ]
+
+if hasattr(resource, "prlimit"):
+    __extra__all__.extend(
+        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()]
+    )
 # fmt: on
 
 
@@ -274,58 +280,6 @@ except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
     debug("ignoring exception on import: %r" % err)
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
-
-
-# =====================================================================
-# --- prlimit
-# =====================================================================
-
-# Backport of resource.prlimit() for Python 2. Originally this was done
-# in C, but CentOS-6 which we use to create manylinux wheels is too old
-# and does not support prlimit() syscall. As such the resulting wheel
-# would not include prlimit(), even when installed on newer systems.
-# This is the only part of psutil using ctypes.
-
-prlimit = None
-try:
-    from resource import prlimit  # python >= 3.4
-except ImportError:
-    import ctypes
-
-    libc = ctypes.CDLL(None, use_errno=True)
-
-    if hasattr(libc, "prlimit"):
-
-        def prlimit(pid, resource_, limits=None):
-            class StructRlimit(ctypes.Structure):
-                _fields_ = [
-                    ('rlim_cur', ctypes.c_longlong),
-                    ('rlim_max', ctypes.c_longlong),
-                ]
-
-            current = StructRlimit()
-            if limits is None:
-                # get
-                ret = libc.prlimit(pid, resource_, None, ctypes.byref(current))
-            else:
-                # set
-                new = StructRlimit()
-                new.rlim_cur = limits[0]
-                new.rlim_max = limits[1]
-                ret = libc.prlimit(
-                    pid, resource_, ctypes.byref(new), ctypes.byref(current)
-                )
-
-            if ret != 0:
-                errno_ = ctypes.get_errno()
-                raise OSError(errno_, os.strerror(errno_))
-            return (current.rlim_cur, current.rlim_max)
-
-
-if prlimit is not None:
-    __extra__all__.extend(
-        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()]
-    )
 
 
 # =====================================================================
@@ -2245,7 +2199,7 @@ class Process:
                 raise ValueError(msg)
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
-    if prlimit is not None:
+    if hasattr(resource, "prlimit"):
 
         @wrap_exceptions
         def rlimit(self, resource_, limits=None):
@@ -2258,7 +2212,7 @@ class Process:
             try:
                 if limits is None:
                     # get
-                    return prlimit(self.pid, resource_)
+                    return resource.prlimit(self.pid, resource_)
                 else:
                     # set
                     if len(limits) != 2:
@@ -2267,7 +2221,7 @@ class Process:
                             + "tuple, got %s" % repr(limits)
                         )
                         raise ValueError(msg)
-                    prlimit(self.pid, resource_, limits)
+                    resource.prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS:
                     # I saw this happening on Travis:
