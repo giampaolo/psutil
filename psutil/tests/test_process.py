@@ -860,9 +860,8 @@ class TestProcess(PsutilTestCase):
         assert real == os.getuid()
         # os.geteuid() refers to "effective" uid
         assert effective == os.geteuid()
-        # No such thing as os.getsuid() ("saved" uid), but starting
-        # from python 2.7 we have os.getresuid() which returns all
-        # of them.
+        # No such thing as os.getsuid() ("saved" uid), but we have
+        # os.getresuid() which returns all of them.
         if hasattr(os, "getresuid"):
             assert os.getresuid() == p.uids()
 
@@ -874,9 +873,8 @@ class TestProcess(PsutilTestCase):
         assert real == os.getgid()
         # os.geteuid() refers to "effective" uid
         assert effective == os.getegid()
-        # No such thing as os.getsgid() ("saved" gid), but starting
-        # from python 2.7 we have os.getresgid() which returns all
-        # of them.
+        # No such thing as os.getsgid() ("saved" gid), but we have
+        # os.getresgid() which returns all of them.
         if hasattr(os, "getresuid"):
             assert os.getresgid() == p.gids()
 

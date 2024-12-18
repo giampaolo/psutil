@@ -22,11 +22,6 @@ process exe(), cwd() or username():
   the string:
     * Python 3: sys.getfilesystemencodeerrors() (PY 3.6+) or
       "surrogatescape" on POSIX and "replace" on Windows
-    * Python 2: "replace"
-* on Python 2 all APIs return bytes (str type), never unicode
-* on Python 2, you can go back to unicode by doing:
-
-    >>> unicode(p.exe(), sys.getdefaultencoding(), errors="replace")
 
 For a detailed explanation of how psutil handles unicode see #1040.
 
@@ -160,8 +155,6 @@ class TestFSAPIs(BaseUnicodeTest):
     funky_suffix = UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
-        # Do not expect psutil to correctly handle unicode paths on
-        # Python 2 if os.listdir() is not able either.
         here = '.' if isinstance(self.funky_name, str) else u'.'
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -271,8 +264,6 @@ class TestFSAPIs(BaseUnicodeTest):
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     @pytest.mark.skipif(PYPY, reason="unstable on PYPY")
     def test_memory_maps(self):
-        # XXX: on Python 2, using ctypes.CDLL with a unicode path
-        # opens a message box which blocks the test run.
         with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
 
             def normpath(p):
@@ -295,7 +286,6 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
     funky_suffix = INVALID_UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
-        # Invalid unicode names are supposed to work on Python 2.
         return True
 
 
@@ -313,10 +303,7 @@ class TestNonFSAPIS(BaseUnicodeTest):
     @pytest.mark.skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
-        # with fs paths. On Python 2 subprocess module is broken as
-        # it's not able to handle with non-ASCII env vars, so
-        # we use "è", which is part of the extended ASCII table
-        # (unicode point <= 255).
+        # with fs paths.
         env = os.environ.copy()
         env['FUNNY_ARG'] = self.funky_suffix
         sproc = self.spawn_testproc(env=env)

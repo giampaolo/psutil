@@ -1956,8 +1956,6 @@ class Process:
 
             # Note: using 3 regexes is faster than reading the file
             # line by line.
-            # XXX: on Python 3 the 2 regexes are 30% slower than on
-            # Python 2 though. Figure out why.
             #
             # You might be tempted to calculate USS by subtracting
             # the "shared" value from the "resident" value in
@@ -2087,9 +2085,7 @@ class Process:
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):
-        # Note: on Python 3 using a re is faster than iterating over file
-        # line by line. On Python 2 is the exact opposite, and iterating
-        # over a file on Python 3 is slower than on Python 2.
+        # Using a re is faster than iterating over file line by line.
         data = self._read_status_file()
         return int(_num_threads_re.findall(data)[0])
 

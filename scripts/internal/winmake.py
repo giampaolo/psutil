@@ -57,7 +57,6 @@ def safe_print(text, file=sys.stdout):
     """Prints a (unicode) string to the console, encoded depending on
     the stdout/file encoding (eg. cp437 on Windows). This is to avoid
     encoding errors in case of funky path names.
-    Works with Python 2 and 3.
     """
     if not isinstance(text, str):
         return print(text, file=file)

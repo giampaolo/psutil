@@ -109,7 +109,7 @@ if POSIX:
 if BSD:
     macros.append(("PSUTIL_BSD", 1))
 
-# Needed to determine _Py_PARSE_PID in case it's missing (Python 2, PyPy).
+# Needed to determine _Py_PARSE_PID in case it's missing (PyPy).
 # Taken from Lib/test/test_fcntl.py.
 # XXX: not bullet proof as the (long long) case is missing.
 if struct.calcsize('l') <= 8:

@@ -196,7 +196,6 @@ class TestAvailProcessAPIs(PsutilTestCase):
 
 class TestSystemAPITypes(PsutilTestCase):
     """Check the return types of system related APIs.
-    Mainly we want to test we never return unicode on Python 2, see:
     https://github.com/giampaolo/psutil/issues/1039.
     """
 
