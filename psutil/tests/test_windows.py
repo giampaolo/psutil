@@ -22,7 +22,6 @@ from unittest import mock
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import FileNotFoundError
 from psutil._compat import which
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY

@@ -58,8 +58,6 @@ from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-from psutil._compat import FileExistsError
-from psutil._compat import FileNotFoundError
 from psutil._compat import which
 
 

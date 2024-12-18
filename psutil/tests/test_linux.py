@@ -24,7 +24,6 @@ from unittest import mock
 
 import psutil
 from psutil import LINUX
-from psutil._compat import FileNotFoundError
 from psutil.tests import AARCH64
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT

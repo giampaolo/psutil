@@ -28,9 +28,6 @@ from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
-from ._compat import FileNotFoundError
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
 
 
 __extra__all__ = ["PROCFS_PATH"]

@@ -28,7 +28,6 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._compat import ProcessLookupError
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON

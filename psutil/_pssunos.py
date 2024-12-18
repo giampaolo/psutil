@@ -29,9 +29,6 @@ from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
-from ._compat import FileNotFoundError
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]

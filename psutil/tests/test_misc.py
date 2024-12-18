@@ -32,7 +32,6 @@ from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil._compat import FileNotFoundError
 from psutil._compat import redirect_stderr
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY

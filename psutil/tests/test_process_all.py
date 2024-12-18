@@ -27,7 +27,6 @@ from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil._compat import FileNotFoundError
 from psutil.tests import CI_TESTING
 from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER

@@ -89,8 +89,6 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
 from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
 
 
