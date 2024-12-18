@@ -21,7 +21,7 @@ __all__ = [
     # constants
     "PY3",
     # builtins
-    "long", "range", "super", "unicode", "basestring",
+    "range", "super", "unicode", "basestring",
     # literals
     "b",
     # collections module
@@ -41,7 +41,6 @@ PY3 = sys.version_info[0] >= 3
 _SENTINEL = object()
 
 if PY3:
-    long = int
     xrange = range
     unicode = str
     basestring = str
@@ -51,7 +50,6 @@ if PY3:
         return s.encode("latin-1")
 
 else:
-    long = long
     range = xrange
     unicode = unicode
     basestring = basestring

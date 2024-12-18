@@ -28,7 +28,6 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
-from psutil._compat import long
 from psutil._compat import unicode
 from psutil.tests import CI_TESTING
 from psutil.tests import PYTEST_PARALLEL
@@ -183,7 +182,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def ppid(self, ret, info):
-        assert isinstance(ret, (int, long))
+        assert isinstance(ret, int)
         assert ret >= 0
         proc_info(ret)
 
@@ -244,7 +243,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def io_counters(self, ret, info):
         assert is_namedtuple(ret)
         for field in ret:
-            assert isinstance(field, (int, long))
+            assert isinstance(field, int)
             if field != -1:
                 assert field >= 0
 
@@ -305,7 +304,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def memory_info(self, ret, info):
         assert is_namedtuple(ret)
         for value in ret:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, int)
             assert value >= 0
         if WINDOWS:
             assert ret.peak_wset >= ret.wset
@@ -318,7 +317,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         total = psutil.virtual_memory().total
         for name in ret._fields:
             value = getattr(ret, name)
-            assert isinstance(value, (int, long))
+            assert isinstance(value, int)
             assert value >= 0
             if LINUX or (OSX and name in ('vms', 'data')):
                 # On Linux there are processes (e.g. 'goa-daemon') whose
@@ -422,7 +421,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                     if not WINDOWS:
                         assert value, repr(value)
                 else:
-                    assert isinstance(value, (int, long))
+                    assert isinstance(value, int)
                     assert value >= 0
 
     def num_handles(self, ret, info):
@@ -445,7 +444,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def num_ctx_switches(self, ret, info):
         assert is_namedtuple(ret)
         for value in ret:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, int)
             assert value >= 0
 
     def rlimit(self, ret, info):

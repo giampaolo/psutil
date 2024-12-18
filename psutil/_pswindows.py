@@ -27,7 +27,6 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
-from ._compat import long
 from ._compat import lru_cache
 from ._compat import range
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
@@ -1096,7 +1095,7 @@ class Process:
         allcpus = list(range(len(per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                if not isinstance(cpu, (int, long)):
+                if not isinstance(cpu, int):
                     raise TypeError(
                         "invalid CPU %r; an integer is required" % cpu
                     )

@@ -217,7 +217,6 @@ class TestMisc(PsutilTestCase):
         for name in dir_psutil:
             if name in (
                 'debug',
-                'long',
                 'tests',
                 'test',
                 'PermissionError',

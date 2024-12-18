@@ -130,7 +130,6 @@ exclude_lines = [
     "if MACOS",
     "if NETBSD",
     "if OPENBSD",
-    "if PY3:",
     "if SUNOS",
     "if WINDOWS",
     "if _WINDOWS:",

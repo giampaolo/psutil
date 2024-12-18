@@ -32,7 +32,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
-from psutil._compat import long
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
@@ -334,7 +333,7 @@ class TestMemoryAPIs(PsutilTestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             if name != 'percent':
-                assert isinstance(value, (int, long))
+                assert isinstance(value, int)
             if name != 'total':
                 if not value >= 0:
                     raise self.fail("%r < 0 (%s)" % (name, value))
@@ -604,7 +603,7 @@ class TestCpuAPIs(PsutilTestCase):
                     assert nt.current <= nt.max
                 for name in nt._fields:
                     value = getattr(nt, name)
-                    assert isinstance(value, (int, long, float))
+                    assert isinstance(value, (int, float))
                     assert value >= 0
 
         ls = psutil.cpu_freq(percpu=True)
@@ -980,5 +979,5 @@ class TestSensorsAPIs(PsutilTestCase):
             assert isinstance(name, str)
             for entry in entries:
                 assert isinstance(entry.label, str)
-                assert isinstance(entry.current, (int, long))
+                assert isinstance(entry.current, int)
                 assert entry.current >= 0

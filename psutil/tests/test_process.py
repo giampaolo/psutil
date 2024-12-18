@@ -36,7 +36,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
 from psutil._compat import FileNotFoundError
-from psutil._compat import long
 from psutil._compat import redirect_stderr
 from psutil._compat import super
 from psutil.tests import CI_TESTING
@@ -687,7 +686,7 @@ class TestProcess(PsutilTestCase):
                 if fname in ('addr', 'perms'):
                     assert value, value
                 else:
-                    assert isinstance(value, (int, long))
+                    assert isinstance(value, int)
                     assert value >= 0, value
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")

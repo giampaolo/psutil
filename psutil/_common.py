@@ -37,10 +37,6 @@ except ImportError:
     AF_UNIX = None
 
 
-# can't take it from _common.py as this script is imported by setup.py
-PY3 = sys.version_info[0] >= 3
-
-
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
 _DEFAULT = object()
 
