@@ -153,13 +153,10 @@ globals().update(BatteryTime.__members__)
 # --- others
 
 ENCODING = sys.getfilesystemencoding()
-if not PY3:
-    ENCODING_ERRS = "replace"
-else:
-    try:
-        ENCODING_ERRS = sys.getfilesystemencodeerrors()  # py 3.6
-    except AttributeError:
-        ENCODING_ERRS = "surrogateescape" if POSIX else "replace"
+try:
+    ENCODING_ERRS = sys.getfilesystemencodeerrors()  # py 3.6
+except AttributeError:
+    ENCODING_ERRS = "surrogateescape" if POSIX else "replace"
 
 
 # ===================================================================
@@ -381,26 +378,6 @@ class TimeoutExpired(Error):
 # ===================================================================
 
 
-# This should be in _compat.py rather than here, but does not work well
-# with setup.py importing this module via a sys.path trick.
-if PY3:
-    if isinstance(__builtins__, dict):  # cpython
-        exec_ = __builtins__["exec"]
-    else:  # pypy
-        exec_ = getattr(__builtins__, "exec")  # noqa
-
-    exec_("""def raise_from(value, from_value):
-    try:
-        raise value from from_value
-    finally:
-        value = None
-    """)
-else:
-
-    def raise_from(value, from_value):
-        raise value
-
-
 def usage_percent(used, total, round_=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
@@ -446,7 +423,7 @@ def memoize(fun):
             try:
                 ret = cache[key] = fun(*args, **kwargs)
             except Exception as err:  # noqa: BLE001
-                raise raise_from(err, None)
+                raise err from None
             return ret
 
     def cache_clear():
@@ -495,14 +472,14 @@ def memoize_when_activated(fun):
             try:
                 return fun(self)
             except Exception as err:  # noqa: BLE001
-                raise raise_from(err, None)
+                raise err from None
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
             try:
                 ret = fun(self)
             except Exception as err:  # noqa: BLE001
-                raise raise_from(err, None)
+                raise err from None
             try:
                 self._cache[fun] = ret
             except AttributeError:
