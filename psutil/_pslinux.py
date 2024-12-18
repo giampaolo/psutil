@@ -45,7 +45,6 @@ from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
-from ._compat import PY3
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
@@ -902,8 +901,7 @@ class NetConnections:
         # no end-points connected
         if not port:
             return ()
-        if PY3:
-            ip = ip.encode('ascii')
+        ip = ip.encode('ascii')
         if family == socket.AF_INET:
             # see: https://github.com/giampaolo/psutil/issues/201
             if LITTLE_ENDIAN:
@@ -1826,8 +1824,7 @@ class Process:
     @wrap_exceptions
     def name(self):
         name = self._parse_stat_file()['name']
-        if PY3:
-            name = decode(name)
+        name = decode(name)
         # XXX - gets changed later and probably needs refactoring
         return name
 
@@ -2094,8 +2091,7 @@ class Process:
                 if not path:
                     path = '[anon]'
                 else:
-                    if PY3:
-                        path = decode(path)
+                    path = decode(path)
                     path = path.strip()
                     if path.endswith(' (deleted)') and not path_exists_strict(
                         path
@@ -2285,8 +2281,7 @@ class Process:
     @wrap_exceptions
     def status(self):
         letter = self._parse_stat_file()['status']
-        if PY3:
-            letter = letter.decode()
+        letter = letter.decode()
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(letter, '?')
 

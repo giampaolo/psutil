@@ -836,15 +836,8 @@ def get_procfs_path():
     return sys.modules['psutil'].PROCFS_PATH
 
 
-if PY3:
-
-    def decode(s):
-        return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
-
-else:
-
-    def decode(s):
-        return s
+def decode(s):
+    return s.decode(encoding=ENCODING, errors=ENCODING_ERRS)
 
 
 # =====================================================================
