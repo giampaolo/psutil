@@ -49,7 +49,7 @@ running processes. It implements many functionalities offered by command \
 line tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, \
 nice, ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It \
 currently supports Linux, Windows, macOS, Sun Solaris, FreeBSD, OpenBSD, \
-NetBSD and AIX.  Supported Python versions are cPython 3.6+ and PyPy.
+NetBSD and AIX. Supported Python versions are cPython 3.6+ and PyPy.
 
 What's new
 ==========

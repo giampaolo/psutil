@@ -865,11 +865,7 @@ class Process:
     def send_signal(self, sig):
         if sig == signal.SIGTERM:
             cext.proc_kill(self.pid)
-        # py >= 2.7
-        elif sig in (
-            getattr(signal, "CTRL_C_EVENT", object()),
-            getattr(signal, "CTRL_BREAK_EVENT", object()),
-        ):
+        elif sig in {signal.CTRL_C_EVENT, signal.CTRL_BREAK_EVENT}:
             os.kill(self.pid, sig)
         else:
             msg = (

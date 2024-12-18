@@ -9,9 +9,9 @@
 
 $ python3 scripts/pmap.py 32402
 Address                 RSS  Mode    Mapping
-0000000000400000      1200K  r-xp    /usr/bin/python2.7
-0000000000838000         4K  r--p    /usr/bin/python2.7
-0000000000839000       304K  rw-p    /usr/bin/python2.7
+0000000000400000      1200K  r-xp    /usr/bin/python3.7
+0000000000838000         4K  r--p    /usr/bin/python3.7
+0000000000839000       304K  rw-p    /usr/bin/python3.7
 00000000008ae000        68K  rw-p    [anon]
 000000000275e000      5396K  rw-p    [heap]
 00002b29bb1e0000       124K  r-xp    /lib/x86_64-linux-gnu/ld-2.17.so

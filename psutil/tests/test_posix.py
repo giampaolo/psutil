@@ -289,7 +289,7 @@ class TestProcess(PsutilTestCase):
             assert ps_pathname == psutil_pathname
         except AssertionError:
             # certain platforms such as BSD are more accurate returning:
-            # "/usr/local/bin/python2.7"
+            # "/usr/local/bin/python3.7"
             # ...instead of:
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy

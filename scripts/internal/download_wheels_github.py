@@ -60,27 +60,12 @@ def download_zip(url):
     print("got %s, size %s)" % (OUTFILE, bytes2human(totbytes)))
 
 
-def rename_win27_wheels():
-    # See: https://github.com/giampaolo/psutil/issues/810
-    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PROJECT_VERSION
-    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PROJECT_VERSION
-    if os.path.exists(src):
-        print("rename: %s\n        %s" % (src, dst))
-        os.rename(src, dst)
-    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PROJECT_VERSION
-    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PROJECT_VERSION
-    if os.path.exists(src):
-        print("rename: %s\n        %s" % (src, dst))
-        os.rename(src, dst)
-
-
 def run():
     data = get_artifacts()
     download_zip(data['artifacts'][0]['archive_download_url'])
     os.makedirs('dist', exist_ok=True)
     with zipfile.ZipFile(OUTFILE, 'r') as zf:
         zf.extractall('dist')
-    rename_win27_wheels()
 
 
 def main():

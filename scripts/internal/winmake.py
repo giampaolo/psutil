@@ -462,8 +462,6 @@ def get_python(path):
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
     vers = (
-        '27',
-        '27-64',
         '310-64',
         '311-64',
         '312-64',
