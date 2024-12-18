@@ -53,7 +53,6 @@ from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
 from _common import hilite  # NOQA
-from _compat import PY3  # NOQA
 from _compat import which  # NOQA
 
 
@@ -66,23 +65,12 @@ Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 # Test deps, installable via `pip install .[test]` or
 # `make install-pydeps-test`.
-if PY3:
-    TEST_DEPS = [
-        "pytest",
-        "pytest-xdist",
-        "setuptools",
-    ]
-else:
-    TEST_DEPS = [
-        "futures",
-        "ipaddress",
-        "enum34",
-        "mock==1.0.1",
-        "pytest-xdist",
-        "pytest==4.6.11",
-        "setuptools",
-        "unittest2",
-    ]
+TEST_DEPS = [
+    "pytest",
+    "pytest-xdist",
+    "setuptools",
+]
+
 if WINDOWS and not PYPY:
     TEST_DEPS.append("pywin32")
     TEST_DEPS.append("wheel")
@@ -563,19 +551,16 @@ def main():
                 ("build", "install", "sdist", "bdist", "develop")
             )
         ):
-            py3 = "3" if PY3 else ""
             if LINUX:
                 pyimpl = "pypy" if PYPY else "python"
                 if which('dpkg'):
-                    missdeps(
-                        "sudo apt-get install gcc %s%s-dev" % (pyimpl, py3)
-                    )
+                    missdeps("sudo apt-get install gcc %s3-dev" % (pyimpl))
                 elif which('rpm'):
-                    missdeps("sudo yum install gcc %s%s-devel" % (pyimpl, py3))
+                    missdeps("sudo yum install gcc %s-devel" % (pyimpl))
                 elif which('apk'):
                     missdeps(
                         "sudo apk add gcc %s%s-dev musl-dev linux-headers"
-                        % (pyimpl, py3)
+                        % (pyimpl)
                     )
             elif MACOS:
                 msg = (
@@ -585,13 +570,13 @@ def main():
                 print(hilite(msg, color="red"), file=sys.stderr)
             elif FREEBSD:
                 if which('pkg'):
-                    missdeps("pkg install gcc python%s" % py3)
+                    missdeps("pkg install gcc python3")
                 elif which('mport'):  # MidnightBSD
-                    missdeps("mport install gcc python%s" % py3)
+                    missdeps("mport install gcc python3")
             elif OPENBSD:
-                missdeps("pkg_add -v gcc python%s" % py3)
+                missdeps("pkg_add -v gcc python3")
             elif NETBSD:
-                missdeps("pkgin install gcc python%s" % py3)
+                missdeps("pkgin install gcc python3")
             elif SUNOS:
                 missdeps(
                     "sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "
