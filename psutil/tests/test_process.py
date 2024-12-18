@@ -9,6 +9,7 @@
 import collections
 import errno
 import getpass
+import io
 import itertools
 import os
 import signal
@@ -1440,11 +1441,6 @@ class TestProcess(PsutilTestCase):
 
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.
-        if PY3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
-
         subp = self.spawn_testproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
@@ -1456,7 +1452,7 @@ class TestProcess(PsutilTestCase):
         # make sure is_running() removed PID from process_iter()
         # internal cache
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with redirect_stderr(io.StringIO()) as f:
                 list(psutil.process_iter())
         assert (
             "refreshing Process instance for reused PID %s" % p.pid

@@ -10,6 +10,7 @@
 import ast
 import collections
 import errno
+import io
 import json
 import os
 import pickle
@@ -31,7 +32,6 @@ from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import redirect_stderr
 from psutil.tests import CI_TESTING
@@ -638,13 +638,8 @@ class TestCommonModule(PsutilTestCase):
             assert not isfile_strict(this_file)
 
     def test_debug(self):
-        if PY3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
-
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with redirect_stderr(io.StringIO()) as f:
                 debug("hello")
                 sys.stderr.flush()
         msg = f.getvalue()
@@ -654,7 +649,7 @@ class TestCommonModule(PsutilTestCase):
 
         # supposed to use repr(exc)
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with redirect_stderr(io.StringIO()) as f:
                 debug(ValueError("this is an error"))
         msg = f.getvalue()
         assert "ignoring ValueError" in msg
@@ -662,7 +657,7 @@ class TestCommonModule(PsutilTestCase):
 
         # supposed to use str(exc), because of extra info about file name
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with redirect_stderr(io.StringIO()) as f:
                 exc = OSError(2, "no such file")
                 exc.filename = "/foo"
                 debug(exc)
@@ -949,7 +944,7 @@ class TestScripts(PsutilTestCase):
     @staticmethod
     def assert_syntax(exe):
         exe = os.path.join(SCRIPTS_DIR, exe)
-        with open(exe, encoding="utf8") if PY3 else open(exe) as f:
+        with open(exe, encoding="utf8") as f:
             src = f.read()
         ast.parse(src)
 
