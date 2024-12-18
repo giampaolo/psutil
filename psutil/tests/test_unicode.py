@@ -81,7 +81,6 @@ import psutil
 from psutil import BSD
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil._compat import PY3
 from psutil._compat import super
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
@@ -156,7 +155,6 @@ class BaseUnicodeTest(PsutilTestCase):
 
 @pytest.mark.xdist_group(name="serial")
 @pytest.mark.skipif(ASCII_FS, reason="ASCII fs")
-@pytest.mark.skipif(PYPY and not PY3, reason="too much trouble on PYPY2")
 class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""
 
@@ -239,13 +237,7 @@ class TestFSAPIs(BaseUnicodeTest):
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
-        try:
-            sock = bind_unix_socket(name)
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise pytest.skip("not supported")
+        sock = bind_unix_socket(name)
         with closing(sock):
             conn = psutil.Process().net_connections('unix')[0]
             assert isinstance(conn.laddr, str)
@@ -264,13 +256,7 @@ class TestFSAPIs(BaseUnicodeTest):
             raise ValueError("connection not found")
 
         name = self.get_testfn(suffix=self.funky_suffix)
-        try:
-            sock = bind_unix_socket(name)
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise pytest.skip("not supported")
+        sock = bind_unix_socket(name)
         with closing(sock):
             cons = psutil.net_connections(kind='unix')
             conn = find_sock(cons)
@@ -284,9 +270,6 @@ class TestFSAPIs(BaseUnicodeTest):
         psutil.disk_usage(dname)
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
-    @pytest.mark.skipif(
-        not PY3, reason="ctypes does not support unicode on PY2"
-    )
     @pytest.mark.skipif(PYPY, reason="unstable on PYPY")
     def test_memory_maps(self):
         # XXX: on Python 2, using ctypes.CDLL with a unicode path
@@ -325,7 +308,7 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
 class TestNonFSAPIS(BaseUnicodeTest):
     """Unicode tests for non fs-related APIs."""
 
-    funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
+    funky_suffix = UNICODE_SUFFIX
 
     @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
     @pytest.mark.skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")

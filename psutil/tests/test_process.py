@@ -35,7 +35,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
-from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import redirect_stderr
@@ -499,7 +498,7 @@ class TestProcess(PsutilTestCase):
             with pytest.raises(IOError) as exc:
                 with open(testfn, "wb") as f:
                     f.write(b"X" * 1025)
-            assert (exc.value.errno if PY3 else exc.value[0]) == errno.EFBIG
+            assert exc.value.errno == errno.EFBIG
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             assert p.rlimit(psutil.RLIMIT_FSIZE) == (soft, hard)

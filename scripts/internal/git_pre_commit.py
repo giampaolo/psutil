@@ -19,7 +19,6 @@ import sys
 
 
 PYTHON = sys.executable
-PY3 = sys.version_info[0] >= 3
 
 
 def term_supports_colors():
@@ -72,11 +71,6 @@ def sh(cmd):
     if stdout.endswith('\n'):
         stdout = stdout[:-1]
     return stdout
-
-
-def open_text(path):
-    kw = {'encoding': 'utf8'} if PY3 else {}
-    return open(path, **kw)
 
 
 def git_commit_files():
@@ -158,7 +152,7 @@ def main():
         toml_sort(toml_files)
     if new_rm_mv:
         out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
-        with open_text('MANIFEST.in') as f:
+        with open("MANIFEST.in", encoding="utf8") as f:
             if out.strip() != f.read().strip():
                 sys.exit(
                     "some files were added, deleted or renamed; "

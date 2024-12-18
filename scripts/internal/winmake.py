@@ -26,7 +26,6 @@ import sys
 
 
 PYTHON = os.getenv('PYTHON', sys.executable)
-PY3 = sys.version_info[0] >= 3
 PYTEST_ARGS = ["-v", "-s", "--tb=short"]
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
@@ -41,8 +40,6 @@ TEST_DEPS = setup.TEST_DEPS
 DEV_DEPS = setup.DEV_DEPS
 
 _cmds = {}
-if PY3:
-    basestring = str
 
 GREEN = 2
 LIGHTBLUE = 3
@@ -62,7 +59,7 @@ def safe_print(text, file=sys.stdout):
     encoding errors in case of funky path names.
     Works with Python 2 and 3.
     """
-    if not isinstance(text, basestring):
+    if not isinstance(text, str):
         return print(text, file=file)
     try:
         file.write(text)
@@ -186,8 +183,7 @@ def build():
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
         for line in iter(p.stdout.readline, b''):
-            if PY3:
-                line = line.decode()
+            line = line.decode()
             line = line.strip()
             if 'warning' in line:
                 win_colorprint(line, YELLOW)

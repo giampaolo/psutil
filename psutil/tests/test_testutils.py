@@ -27,7 +27,6 @@ from psutil import POSIX
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
-from psutil._compat import PY3
 from psutil.tests import CI_TESTING
 from psutil.tests import COVERAGE
 from psutil.tests import HAS_NET_CONNECTIONS_UNIX
@@ -507,7 +506,6 @@ class TestFakePytest(PsutilTestCase):
         assert result.wasSuccessful()
         assert len(result.skipped) == 0
 
-    @pytest.mark.skipif(not PY3, reason="not PY3")
     def test_skip(self):
         class TestCase(unittest.TestCase):
             def foo(self):
