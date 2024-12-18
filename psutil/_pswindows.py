@@ -659,13 +659,10 @@ def is_permission_err(exc):
     assert isinstance(exc, OSError), exc
     if exc.errno in (errno.EPERM, errno.EACCES):
         return True
-    # On Python 2 OSError doesn't always have 'winerror'. Sometimes
-    # it does, in which case the original exception was WindowsError
-    # (which is a subclass of OSError).
-    return getattr(exc, "winerror", -1) in (
+    return exc.winerror in {
         cext.ERROR_ACCESS_DENIED,
         cext.ERROR_PRIVILEGE_NOT_HELD,
-    )
+    }
 
 
 def convert_oserror(exc, pid=None, name=None):

@@ -744,8 +744,6 @@ wrap_numbers.cache_info = _wn.cache_info
 # is 8K. We use a bigger buffer (32K) in order to have more consistent
 # results when reading /proc pseudo files on Linux, see:
 # https://github.com/giampaolo/psutil/issues/2050
-# On Python 2 this also speeds up the reading of big files:
-# (namely /proc/{pid}/smaps and /proc/net/*):
 # https://github.com/giampaolo/psutil/issues/708
 FILE_READ_BUFFER_SIZE = 32 * 1024
 
