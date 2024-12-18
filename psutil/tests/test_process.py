@@ -20,6 +20,7 @@ import sys
 import textwrap
 import time
 import types
+from unittest import mock
 
 import psutil
 from psutil import AIX
@@ -61,7 +62,6 @@ from psutil.tests import call_until
 from psutil.tests import copyload_shared_lib
 from psutil.tests import create_c_exe
 from psutil.tests import create_py_exe
-from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import reap_children

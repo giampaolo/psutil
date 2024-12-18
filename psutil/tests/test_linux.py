@@ -20,6 +20,7 @@ import struct
 import textwrap
 import time
 import warnings
+from unittest import mock
 
 import psutil
 from psutil import LINUX
@@ -41,7 +42,6 @@ from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure

@@ -17,6 +17,7 @@ import subprocess
 import textwrap
 import unittest
 import warnings
+from unittest import mock
 
 import psutil
 import psutil.tests
@@ -44,7 +45,6 @@ from psutil.tests import fake_pytest
 from psutil.tests import filter_proc_net_connections
 from psutil.tests import get_free_port
 from psutil.tests import is_namedtuple
-from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import reap_children

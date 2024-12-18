@@ -18,6 +18,7 @@ import signal
 import socket
 import sys
 import time
+from unittest import mock
 
 import psutil
 from psutil import AIX
@@ -51,7 +52,6 @@ from psutil.tests import QEMU_USER
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_net_address
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 

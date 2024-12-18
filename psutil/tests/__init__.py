@@ -66,16 +66,6 @@ from psutil._compat import unicode
 from psutil._compat import which
 
 
-try:
-    from unittest import mock  # py3
-except ImportError:
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        import mock  # NOQA - requires "pip install mock"
-
-if not PY3:
-    import unittest2 as unittest
-
 if POSIX:
     from psutil._psposix import wait_pid
 

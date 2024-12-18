@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import warnings
+from unittest import mock
 
 import psutil
 from psutil import WINDOWS
@@ -33,7 +34,6 @@ from psutil.tests import PYPY
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh

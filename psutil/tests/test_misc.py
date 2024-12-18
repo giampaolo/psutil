@@ -16,6 +16,7 @@ import pickle
 import socket
 import stat
 import sys
+from unittest import mock
 
 import psutil
 import psutil.tests
@@ -45,7 +46,6 @@ from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import QEMU_USER
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
-from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import reload_module
