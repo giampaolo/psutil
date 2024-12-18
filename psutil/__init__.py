@@ -2394,8 +2394,9 @@ def _set_debug(value):
 
 
 def test():  # pragma: no cover
+    import shutil
+
     from ._common import bytes2human
-    from ._compat import get_terminal_size
 
     today_day = datetime.date.today()
     # fmt: off
@@ -2464,7 +2465,7 @@ def test():  # pragma: no cover
             cputime,
             cmdline,
         )
-        print(line[: get_terminal_size()[0]])  # NOQA
+        print(line[: shutil.get_terminal_size()[0]])  # NOQA
 
 
 del memoize_when_activated, division

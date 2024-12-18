@@ -28,15 +28,15 @@ ffffffffff600000         0K  r-xp    [vsyscall]
 ...
 """
 
+import shutil
 import sys
 
 import psutil
 from psutil._common import bytes2human
-from psutil._compat import get_terminal_size
 
 
 def safe_print(s):
-    s = s[: get_terminal_size()[0]]
+    s = s[: shutil.get_terminal_size()[0]]
     try:
         print(s)
     except UnicodeEncodeError:

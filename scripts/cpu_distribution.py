@@ -42,11 +42,11 @@ from __future__ import print_function
 
 import collections
 import os
+import shutil
 import sys
 import time
 
 import psutil
-from psutil._compat import get_terminal_size
 
 
 if not hasattr(psutil.Process, "cpu_num"):
@@ -97,7 +97,7 @@ def main():
                 print("%-10s" % pname[:10], end="")
             print()
             curr_line += 1
-            if curr_line >= get_terminal_size()[1]:
+            if curr_line >= shutil.get_terminal_size()[1]:
                 break
 
         time.sleep(1)

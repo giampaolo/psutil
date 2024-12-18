@@ -15,8 +15,6 @@ import sys
 __all__ = [
     # constants
     "PY3",
-    # shutil module
-    "get_terminal_size",
     # contextlib module
     "redirect_stderr",
 ]
@@ -28,29 +26,6 @@ _SENTINEL = object()
 
 
 # --- stdlib additions
-
-
-# python 3.3
-try:
-    from shutil import get_terminal_size
-except ImportError:
-
-    def get_terminal_size(fallback=(80, 24)):
-        try:
-            import fcntl
-            import struct
-            import termios
-        except ImportError:
-            return fallback
-        else:
-            try:
-                # This should work on Linux.
-                res = struct.unpack(
-                    'hh', fcntl.ioctl(1, termios.TIOCGWINSZ, '1234')
-                )
-                return (res[1], res[0])
-            except Exception:  # noqa: BLE001
-                return fallback
 
 
 # python 3.3
