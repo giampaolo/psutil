@@ -89,7 +89,6 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
-from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
 
 
 if LINUX:
@@ -1580,9 +1579,7 @@ def wait_procs(procs, timeout=None, callback=None):
     def check_gone(proc, timeout):
         try:
             returncode = proc.wait(timeout=timeout)
-        except TimeoutExpired:
-            pass
-        except _SubprocessTimeoutExpired:
+        except (TimeoutExpired, subprocess.TimeoutExpired):
             pass
         else:
             if returncode is not None or not proc.is_running():

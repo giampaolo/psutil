@@ -28,15 +28,6 @@ _SENTINEL = object()
 # --- stdlib additions
 
 
-# python 3.3
-try:
-    from subprocess import TimeoutExpired as SubprocessTimeoutExpired
-except ImportError:
-
-    class SubprocessTimeoutExpired(Exception):
-        pass
-
-
 # python 3.5
 try:
     from contextlib import redirect_stderr
