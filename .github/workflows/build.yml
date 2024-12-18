@@ -1,8 +1,8 @@
 # Runs CI tests and generates wheels on the following platforms:
 #
-# * Linux
-# * macOS
-# * Windows
+# * Linux (py2 and py3)
+# * macOS (py2 and py3)
+# * Windows (py3, py2 is done by appveyor)
 #
 # Useful URLs:
 # * https://github.com/pypa/cibuildwheel
@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   # Linux + macOS + Windows Python 3
-  tests:
-    name: "tests, ${{ matrix.os }}, ${{ matrix.arch }}"
+  py3:
+    name: "py3, ${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -28,7 +28,7 @@ jobs:
         - {os: ubuntu-latest, arch: x86_64}
         - {os: ubuntu-latest, arch: i686}
         - {os: ubuntu-latest, arch: aarch64}
-        - {os: macos-12, arch: x86_64}
+        - {os: macos-13, arch: x86_64}
         - {os: macos-14, arch: arm64}
         - {os: windows-2019, arch: AMD64}
         - {os: windows-2019, arch: x86}
@@ -53,10 +53,10 @@ jobs:
       if: matrix.arch == 'aarch64'
 
     - name: Create wheels + run tests
-      uses: pypa/cibuildwheel@v2.21.2
+      uses: pypa/cibuildwheel@v2.22.0
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
-        CIBW_PRERELEASE_PYTHONS: True
+        CIBW_ENABLE: "cpython-prerelease"
         CIBW_TEST_EXTRAS: test
         CIBW_TEST_COMMAND:
           make -C {project} PYTHON="env python" PSUTIL_SCRIPTS_DIR="{project}/scripts" install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
@@ -64,7 +64,7 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.os }}-${{ matrix.arch }}
+        name: wheels-py3-${{ matrix.os }}-${{ matrix.arch }}
         path: wheelhouse
 
     - name: Generate .tar.gz
@@ -89,7 +89,7 @@ jobs:
 
   # upload weels as a single artefact
   upload-wheels:
-    needs: [tests]
+    needs: [py3]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/upload-artifact/merge@v4
