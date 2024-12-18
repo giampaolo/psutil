@@ -331,7 +331,7 @@ def calculate_avail_vmem(mems):
         return fallback
     try:
         f = open_binary('%s/zoneinfo' % get_procfs_path())
-    except IOError:
+    except OSError:
         return fallback  # kernel 2.6.13
 
     watermark_low = 0
@@ -507,7 +507,7 @@ def swap_memory():
     # get pgin/pgouts
     try:
         f = open_binary("%s/vmstat" % get_procfs_path())
-    except IOError as err:
+    except OSError as err:
         # see https://github.com/giampaolo/psutil/issues/722
         msg = (
             "'sin' and 'sout' swap memory stats couldn't "
@@ -1246,17 +1246,17 @@ class RootFsDeviceFinder:
         if path is None:
             try:
                 path = self.ask_proc_partitions()
-            except (IOError, OSError) as err:
+            except OSError as err:
                 debug(err)
         if path is None:
             try:
                 path = self.ask_sys_dev_block()
-            except (IOError, OSError) as err:
+            except OSError as err:
                 debug(err)
         if path is None:
             try:
                 path = self.ask_sys_class_block()
-            except (IOError, OSError) as err:
+            except OSError as err:
                 debug(err)
         # We use exists() because the "/dev/*" part of the path is hard
         # coded, so we want to be sure.
@@ -1348,7 +1348,7 @@ def sensors_temperatures():
             current = float(bcat(path)) / 1000.0
             path = os.path.join(os.path.dirname(base), 'name')
             unit_name = cat(path).strip()
-        except (IOError, OSError, ValueError):
+        except (OSError, ValueError):
             # A lot of things can go wrong here, so let's just skip the
             # whole entry. Sure thing is Linux's /sys/class/hwmon really
             # is a stinky broken mess.
@@ -1387,7 +1387,7 @@ def sensors_temperatures():
                 current = float(bcat(path)) / 1000.0
                 path = os.path.join(base, 'type')
                 unit_name = cat(path).strip()
-            except (IOError, OSError, ValueError) as err:
+            except (OSError, ValueError) as err:
                 debug(err)
                 continue
 
@@ -1447,7 +1447,7 @@ def sensors_fans():
     for base in basenames:
         try:
             current = int(bcat(base + '_input'))
-        except (IOError, OSError) as err:
+        except OSError as err:
             debug(err)
             continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
@@ -1615,7 +1615,7 @@ def pid_exists(pid):
                         # dealing with a process PID.
                         return tgid == pid
                 raise ValueError("'Tgid' line not found in %s" % path)
-        except (EnvironmentError, ValueError):
+        except (OSError, ValueError):
             return pid in pids()
 
 
@@ -1642,7 +1642,7 @@ def ppid_map():
 
 
 def wrap_exceptions(fun):
-    """Decorator which translates bare OSError and IOError exceptions
+    """Decorator which translates bare OSError and OSError exceptions
     into NoSuchProcess and AccessDenied.
     """
 
@@ -1689,7 +1689,7 @@ class Process:
         # exception.
         try:
             data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
-        except (IOError, OSError):
+        except OSError:
             return False
         else:
             rpar = data.rfind(b')')

@@ -10,7 +10,6 @@
 
 import collections
 import enum
-import errno
 import functools
 import os
 import socket
@@ -506,9 +505,9 @@ def isfile_strict(path):
     """
     try:
         st = os.stat(path)
-    except OSError as err:
-        if err.errno in (errno.EPERM, errno.EACCES):
-            raise
+    except PermissionError:
+        raise
+    except OSError:
         return False
     else:
         return stat.S_ISREG(st.st_mode)
@@ -521,9 +520,9 @@ def path_exists_strict(path):
     """
     try:
         os.stat(path)
-    except OSError as err:
-        if err.errno in (errno.EPERM, errno.EACCES):
-            raise
+    except PermissionError:
+        raise
+    except OSError:
         return False
     else:
         return True
@@ -789,7 +788,7 @@ def cat(fname, fallback=_DEFAULT, _open=open_text):
         try:
             with _open(fname) as f:
                 return f.read()
-        except (IOError, OSError):
+        except OSError:
             return fallback
 
 
@@ -924,7 +923,7 @@ def debug(msg):
             inspect.currentframe().f_back
         )
         if isinstance(msg, Exception):
-            if isinstance(msg, (OSError, IOError, EnvironmentError)):
+            if isinstance(msg, OSError):
                 # ...because str(exc) may contain info about the file name
                 msg = "ignoring %s" % msg
             else:

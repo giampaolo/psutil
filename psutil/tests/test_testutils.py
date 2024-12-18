@@ -156,7 +156,7 @@ class TestSyncTestUtils(PsutilTestCase):
     def test_wait_for_file_no_file(self):
         testfn = self.get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 wait_for_file(testfn)
 
     def test_wait_for_file_no_delete(self):

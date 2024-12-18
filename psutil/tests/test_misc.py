@@ -9,7 +9,6 @@
 import ast
 import collections
 import contextlib
-import errno
 import io
 import json
 import os
@@ -613,18 +612,11 @@ class TestCommonModule(PsutilTestCase):
         this_file = os.path.abspath(__file__)
         assert isfile_strict(this_file)
         assert not isfile_strict(os.path.dirname(this_file))
-        with mock.patch(
-            'psutil._common.os.stat', side_effect=OSError(errno.EPERM, "foo")
-        ):
+        with mock.patch('psutil._common.os.stat', side_effect=PermissionError):
             with pytest.raises(OSError):
                 isfile_strict(this_file)
         with mock.patch(
-            'psutil._common.os.stat', side_effect=OSError(errno.EACCES, "foo")
-        ):
-            with pytest.raises(OSError):
-                isfile_strict(this_file)
-        with mock.patch(
-            'psutil._common.os.stat', side_effect=OSError(errno.ENOENT, "foo")
+            'psutil._common.os.stat', side_effect=FileNotFoundError
         ):
             assert not isfile_strict(this_file)
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
