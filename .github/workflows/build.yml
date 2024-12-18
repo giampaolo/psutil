@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   # Linux + macOS + Windows Python 3
-  py3:
-    name: "py3, ${{ matrix.os }}, ${{ matrix.arch }}"
+  tests:
+    name: "tests, ${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -64,7 +64,7 @@ jobs:
     - name: Upload wheels
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-py3-${{ matrix.os }}-${{ matrix.arch }}
+        name: wheels-${{ matrix.os }}-${{ matrix.arch }}
         path: wheelhouse
 
     - name: Generate .tar.gz
@@ -89,7 +89,7 @@ jobs:
 
   # upload weels as a single artefact
   upload-wheels:
-    needs: [py2, py3]
+    needs: [tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/upload-artifact/merge@v4
