@@ -28,7 +28,6 @@ from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
-from ._compat import PY3
 from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
@@ -154,8 +153,7 @@ def swap_memory():
         stdout=subprocess.PIPE,
     )
     stdout, _ = p.communicate()
-    if PY3:
-        stdout = stdout.decode(sys.stdout.encoding)
+    stdout = stdout.decode(sys.stdout.encoding)
     if p.returncode != 0:
         raise RuntimeError("'swap -l' failed (retcode=%s)" % p.returncode)
 
@@ -640,10 +638,9 @@ class Process:
             cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         stdout, stderr = p.communicate()
-        if PY3:
-            stdout, stderr = (
-                x.decode(sys.stdout.encoding) for x in (stdout, stderr)
-            )
+        stdout, stderr = (
+            x.decode(sys.stdout.encoding) for x in (stdout, stderr)
+        )
         if p.returncode != 0:
             if 'permission denied' in stderr.lower():
                 raise AccessDenied(self.pid, self._name)
