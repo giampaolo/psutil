@@ -39,7 +39,7 @@ with warnings.catch_warnings():
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-# ...so we can import _common.py and _compat.py
+# ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
 from _common import AIX  # NOQA
