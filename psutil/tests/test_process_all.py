@@ -28,7 +28,6 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
-from psutil._compat import unicode
 from psutil.tests import CI_TESTING
 from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import QEMU_USER
@@ -159,7 +158,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert isinstance(part, str)
 
     def exe(self, ret, info):
-        assert isinstance(ret, (str, unicode))
+        assert isinstance(ret, str)
         assert ret.strip() == ret
         if ret:
             if WINDOWS and not ret.endswith('.exe'):
@@ -187,7 +186,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         proc_info(ret)
 
     def name(self, ret, info):
-        assert isinstance(ret, (str, unicode))
+        assert isinstance(ret, str)
         if WINDOWS and not ret and is_win_secure_system_proc(info['pid']):
             # https://github.com/giampaolo/psutil/issues/2338
             return
@@ -366,7 +365,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
-        assert isinstance(ret, (str, unicode))
+        assert isinstance(ret, str)
         assert ret.strip() == ret
         if ret:
             assert os.path.isabs(ret), ret

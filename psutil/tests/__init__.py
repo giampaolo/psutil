@@ -61,7 +61,6 @@ from psutil._common import supports_ipv6
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
-from psutil._compat import unicode
 from psutil._compat import which
 
 
@@ -104,7 +103,7 @@ __all__ = [
     # compat
     'reload_module', 'import_module_by_path',
     # others
-    'warn', 'copyload_shared_lib', 'is_namedtuple', 'unicode',
+    'warn', 'copyload_shared_lib', 'is_namedtuple',
 ]
 # fmt: on
 
