@@ -93,7 +93,6 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "UP024",  # [*] Replace aliased errors with `OSError` (PYTHON2.7 COMPAT)
     "UP031",  # [*] Use format specifiers instead of percent format
-    "UP036",  # Version block is outdated for minimum Python version (PYTHON2.7 COMPAT)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -101,7 +100,6 @@ ignore = [
 # EM101 == raw-string-in-exception
 # TRY003 == raise-vanilla-args
 ".github/workflows/*" = ["T201", "T203"]
-"psutil/_compat.py" = ["PLW0127"]  # self-assigning-variable
 "psutil/tests/*" = ["EM101", "TRY003"]
 "scripts/*" = ["T201", "T203"]
 "scripts/internal/*" = ["EM101", "T201", "T203", "TRY003"]
@@ -133,7 +131,6 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 omit = [
-    "psutil/_compat.py",
     "psutil/tests/*",
     "setup.py",
 ]
@@ -179,7 +176,6 @@ disable = [
 [tool.vulture]
 exclude = [
     "docs/conf.py",
-    "psutil/_compat.py",
     "psutil/tests/",
     "scripts/internal/winmake.py",
 ]
