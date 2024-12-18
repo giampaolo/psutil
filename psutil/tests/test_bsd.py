@@ -426,9 +426,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             return "%d:%02d" % (h, m)
 
         out = sh("acpiconf -i 0")
-        fields = dict(
-            [(x.split('\t')[0], x.split('\t')[-1]) for x in out.split("\n")]
-        )
+        fields = {x.split('\t')[0]: x.split('\t')[-1] for x in out.split("\n")}
         metrics = psutil.sensors_battery()
         percent = int(fields['Remaining capacity:'].replace('%', ''))
         remaining_time = fields['Remaining time:']

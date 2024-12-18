@@ -194,7 +194,7 @@ class TestSystemAPIs(WindowsTestCase):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
         w = wmi.WMI().Win32_Process()
-        wmi_pids = set([x.ProcessId for x in w])
+        wmi_pids = {x.ProcessId for x in w}
         psutil_pids = set(psutil.pids())
         assert wmi_pids == psutil_pids
 
@@ -827,7 +827,7 @@ class RemoteProcessTestCase(PsutilTestCase):
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
-        valid_statuses = set([
+        valid_statuses = {
             "running",
             "paused",
             "start",
@@ -835,9 +835,9 @@ class TestServices(PsutilTestCase):
             "continue",
             "stop",
             "stopped",
-        ])
-        valid_start_types = set(["automatic", "manual", "disabled"])
-        valid_statuses = set([
+        }
+        valid_start_types = {"automatic", "manual", "disabled"}
+        valid_statuses = {
             "running",
             "paused",
             "start_pending",
@@ -845,7 +845,7 @@ class TestServices(PsutilTestCase):
             "continue_pending",
             "stop_pending",
             "stopped",
-        ])
+        }
         for serv in psutil.win_service_iter():
             data = serv.as_dict()
             assert isinstance(data['name'], str)

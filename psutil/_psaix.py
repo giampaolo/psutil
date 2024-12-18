@@ -236,7 +236,7 @@ def net_connections(kind, _pid=-1):
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {"Full": NIC_DUPLEX_FULL, "Half": NIC_DUPLEX_HALF}
-    names = set([x[0] for x in net_if_addrs()])
+    names = {x[0] for x in net_if_addrs()}
     ret = {}
     for name in names:
         mtu = cext_posix.net_if_mtu(name)

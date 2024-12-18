@@ -33,7 +33,6 @@ ignore = [
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
     "B007",  # Loop control variable `x` not used within loop body
-    "B904",  # Within an `except` clause, raise exceptions with `raise ... from err` (PYTHON2.7 COMPAT)
     "B904",  # Use `raise from` to specify exception cause (PYTHON2.7 COMPAT)
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
     "C90",  # mccabe (function `X` is too complex)

@@ -1392,10 +1392,10 @@ def sensors_temperatures():
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
-            trip_points = set([
+            trip_points = {
                 '_'.join(os.path.basename(p).split('_')[0:3])
                 for p in trip_paths
-            ])
+            }
             critical = None
             high = None
             for trip_point in trip_points:
@@ -1443,7 +1443,7 @@ def sensors_fans():
         # https://github.com/giampaolo/psutil/issues/971
         basenames = glob.glob('/sys/class/hwmon/hwmon*/device/fan*_*')
 
-    basenames = sorted(set([x.split('_')[0] for x in basenames]))
+    basenames = sorted({x.split("_")[0] for x in basenames})
     for base in basenames:
         try:
             current = int(bcat(base + '_input'))

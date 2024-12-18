@@ -199,7 +199,7 @@ class TestSpecialMethods(PsutilTestCase):
         assert p1 != 'foo'
 
     def test_process__hash__(self):
-        s = set([psutil.Process(), psutil.Process()])
+        s = {psutil.Process(), psutil.Process()}
         assert len(s) == 1
 
 
@@ -579,7 +579,7 @@ class TestCommonModule(PsutilTestCase):
 
             supports_ipv6.cache_clear()
             with mock.patch(
-                'psutil._common.socket.socket', side_effect=socket.error
+                'psutil._common.socket.socket', side_effect=OSError
             ) as s:
                 assert not supports_ipv6()
                 assert s.called
@@ -601,7 +601,7 @@ class TestCommonModule(PsutilTestCase):
                 supports_ipv6.cache_clear()
                 assert s.called
         else:
-            with pytest.raises(socket.error):
+            with pytest.raises(OSError):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
                 try:
                     sock.bind(("::1", 0))
@@ -818,7 +818,7 @@ class TestWrapNumbers(PsutilTestCase):
         assert cache[1] == {
             'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}
         }
-        assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
+        assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
 
         def check_cache_info():
             cache = wrap_numbers.cache_info()
@@ -829,7 +829,7 @@ class TestWrapNumbers(PsutilTestCase):
                     ('disk1', 2): 100,
                 }
             }
-            assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
+            assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
 
         # then it remains the same
         input = {'disk1': nt(100, 100, 10)}
@@ -853,7 +853,7 @@ class TestWrapNumbers(PsutilTestCase):
         assert cache[1] == {
             'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}
         }
-        assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
+        assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
 
     def test_cache_changing_keys(self):
         input = {'disk1': nt(5, 5, 5)}

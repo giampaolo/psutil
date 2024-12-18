@@ -280,7 +280,7 @@ def _pprint_secs(secs):
 # =====================================================================
 
 
-class Process(object):  # noqa: UP004
+class Process:
     """Represents an OS process with the given PID.
     If PID is omitted current process PID (os.getpid()) is used.
     Raise NoSuchProcess if PID does not exist.
@@ -1348,11 +1348,12 @@ class Process(object):  # noqa: UP004
 
 # The valid attr names which can be processed by Process.as_dict().
 # fmt: off
-_as_dict_attrnames = set(
-    [x for x in dir(Process) if not x.startswith('_') and x not in
+_as_dict_attrnames = {
+    x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'memory_info_ex', 'connections', 'oneshot'}])
+      'memory_info_ex', 'connections', 'oneshot'}
+}
 # fmt: on
 
 
@@ -1438,7 +1439,7 @@ class Popen(Process):
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
             return self.__subproc.returncode
-        ret = super(Popen, self).wait(timeout)  # noqa
+        ret = super().wait(timeout)  # noqa
         self.__subproc.returncode = ret
         return ret
 

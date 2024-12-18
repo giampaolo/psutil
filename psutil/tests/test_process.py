@@ -1521,13 +1521,12 @@ class TestProcess(PsutilTestCase):
                 ])
             for name in exclude:
                 d.pop(name, None)
-            return dict([
-                (
-                    k.replace("\r", "").replace("\n", ""),
-                    v.replace("\r", "").replace("\n", ""),
-                )
+            return {
+                k.replace("\r", "").replace("\n", ""): v.replace(
+                    "\r", ""
+                ).replace("\n", "")
                 for k, v in d.items()
-            ])
+            }
 
         self.maxDiff = None
         p = psutil.Process()

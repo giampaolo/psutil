@@ -177,7 +177,7 @@ if os.name == 'java':
     TESTFN_PREFIX = '$psutil-%s-' % os.getpid()
 else:
     TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
-UNICODE_SUFFIX = u"-ƒőő"
+UNICODE_SUFFIX = "-ƒőő"
 # An invalid unicode string.
 INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
@@ -784,7 +784,7 @@ def safe_rmpath(path):
                 return fun()
             except FileNotFoundError:
                 pass
-            except WindowsError as _:
+            except OSError as _:
                 err = _
                 warn("ignoring %s" % (str(err)))
             time.sleep(0.01)
@@ -1534,9 +1534,9 @@ class process_namespace:
 
     @classmethod
     def test(cls):
-        this = set([x[0] for x in cls.all])
-        ignored = set([x[0] for x in cls.ignored])
-        klass = set([x for x in dir(psutil.Process) if x[0] != '_'])
+        this = {x[0] for x in cls.all}
+        ignored = {x[0] for x in cls.ignored}
+        klass = {x for x in dir(psutil.Process) if x[0] != '_'}
         leftout = (this | ignored) ^ klass
         if leftout:
             raise ValueError("uncovered Process class names: %r" % leftout)
@@ -1831,7 +1831,7 @@ def check_connection_ntuple(conn):
             with socket.socket(conn.family, conn.type) as s:
                 try:
                     s.bind((conn.laddr[0], 0))
-                except socket.error as err:
+                except OSError as err:
                     if err.errno != errno.EADDRNOTAVAIL:
                         raise
         elif conn.family == AF_UNIX:

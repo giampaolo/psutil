@@ -47,7 +47,7 @@ def pid_exists(pid):
 
 
 Negsignal = enum.IntEnum(
-    'Negsignal', dict([(x.name, -x.value) for x in signal.Signals])
+    'Negsignal', {x.name: -x.value for x in signal.Signals}
 )
 
 

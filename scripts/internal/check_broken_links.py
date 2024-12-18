@@ -92,7 +92,7 @@ def sanitize_url(url):
 
 def find_urls(s):
     matches = REGEX.findall(s) or []
-    return list(set([sanitize_url(x) for x in matches]))
+    return list({sanitize_url(x) for x in matches})
 
 
 def parse_rst(fname):

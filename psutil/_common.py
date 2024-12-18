@@ -537,7 +537,7 @@ def supports_ipv6():
         with socket.socket(AF_INET6, socket.SOCK_STREAM) as sock:
             sock.bind(("::1", 0))
         return True
-    except socket.error:
+    except OSError:
         return False
 
 

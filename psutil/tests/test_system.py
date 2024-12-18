@@ -190,7 +190,7 @@ class TestProcessAPIs(PsutilTestCase):
         sproc1.terminate()
         sproc2.terminate()
         gone, alive = test_2(procs, callback)
-        assert set(pids) == set([sproc1.pid, sproc2.pid, sproc3.pid])
+        assert set(pids) == {sproc1.pid, sproc2.pid, sproc3.pid}
         for p in gone:
             assert hasattr(p, 'returncode')
 
@@ -819,7 +819,7 @@ class TestNetAPIs(PsutilTestCase):
         # self.assertEqual(sorted(nics.keys()),
         #                  sorted(psutil.net_io_counters(pernic=True).keys()))
 
-        families = set([socket.AF_INET, socket.AF_INET6, psutil.AF_LINK])
+        families = {socket.AF_INET, socket.AF_INET6, psutil.AF_LINK}
         for nic, addrs in nics.items():
             assert isinstance(nic, str)
             assert len(set(addrs)) == len(addrs)

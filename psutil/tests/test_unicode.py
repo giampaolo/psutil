@@ -154,10 +154,9 @@ class TestFSAPIs(BaseUnicodeTest):
     funky_suffix = UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
-        here = '.' if isinstance(self.funky_name, str) else u'.'
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            return self.funky_name in os.listdir(here)
+            return self.funky_name in os.listdir(".")
 
     # ---
 
