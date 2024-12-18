@@ -8,7 +8,6 @@ import enum
 import glob
 import os
 import signal
-import sys
 import time
 
 from ._common import MACOS
@@ -16,13 +15,11 @@ from ._common import TimeoutExpired
 from ._common import memoize
 from ._common import sdiskusage
 from ._common import usage_percent
-from ._compat import PY3
 from ._compat import ChildProcessError
 from ._compat import FileNotFoundError
 from ._compat import InterruptedError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
-from ._compat import unicode
 
 
 if MACOS:
@@ -169,24 +166,7 @@ def disk_usage(path):
     total and used disk space whereas "free" and "percent" represent
     the "free" and "used percent" user disk space.
     """
-    if PY3:
-        st = os.statvfs(path)
-    else:  # pragma: no cover
-        # os.statvfs() does not support unicode on Python 2:
-        # - https://github.com/giampaolo/psutil/issues/416
-        # - http://bugs.python.org/issue18695
-        try:
-            st = os.statvfs(path)
-        except UnicodeEncodeError:
-            if isinstance(path, unicode):
-                try:
-                    path = path.encode(sys.getfilesystemencoding())
-                except UnicodeEncodeError:
-                    pass
-                st = os.statvfs(path)
-            else:
-                raise
-
+    st = os.statvfs(path)
     # Total space which is only available to root (unless changed
     # at system level).
     total = st.f_blocks * st.f_frsize
