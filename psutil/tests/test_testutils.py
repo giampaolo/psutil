@@ -8,7 +8,6 @@
 """Tests for testing utils (psutil.tests namespace)."""
 
 import collections
-import contextlib
 import errno
 import os
 import socket
@@ -297,14 +296,13 @@ class TestProcessUtils(PsutilTestCase):
 class TestNetUtils(PsutilTestCase):
     def bind_socket(self):
         port = get_free_port()
-        with contextlib.closing(bind_socket(addr=('', port))) as s:
+        with bind_socket(addr=('', port)) as s:
             assert s.getsockname()[1] == port
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_bind_unix_socket(self):
         name = self.get_testfn()
-        sock = bind_unix_socket(name)
-        with contextlib.closing(sock):
+        with bind_unix_socket(name) as sock:
             assert sock.family == socket.AF_UNIX
             assert sock.type == socket.SOCK_STREAM
             assert sock.getsockname() == name
@@ -312,20 +310,17 @@ class TestNetUtils(PsutilTestCase):
             assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
         name = self.get_testfn()
-        sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
-        with contextlib.closing(sock):
+        with bind_unix_socket(name, type=socket.SOCK_DGRAM) as sock:
             assert sock.type == socket.SOCK_DGRAM
 
     def test_tcp_socketpair(self):
         addr = ("127.0.0.1", get_free_port())
         server, client = tcp_socketpair(socket.AF_INET, addr=addr)
-        with contextlib.closing(server):
-            with contextlib.closing(client):
-                # Ensure they are connected and the positions are
-                # correct.
-                assert server.getsockname() == addr
-                assert client.getpeername() == addr
-                assert client.getsockname() != addr
+        with server, client:
+            # Ensure they are connected and the positions are correct.
+            assert server.getsockname() == addr
+            assert client.getpeername() == addr
+            assert client.getsockname() != addr
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     @pytest.mark.skipif(

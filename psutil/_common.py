@@ -11,7 +11,6 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
-import contextlib
 import enum
 import errno
 import functools
@@ -538,8 +537,7 @@ def supports_ipv6():
     if not socket.has_ipv6 or AF_INET6 is None:
         return False
     try:
-        sock = socket.socket(AF_INET6, socket.SOCK_STREAM)
-        with contextlib.closing(sock):
+        with socket.socket(AF_INET6, socket.SOCK_STREAM) as sock:
             sock.bind(("::1", 0))
         return True
     except socket.error:

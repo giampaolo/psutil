@@ -70,8 +70,7 @@ def get_ipv4_address(ifname):
     import fcntl
 
     ifname = bytes(ifname[:15], "ascii")
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         return socket.inet_ntoa(
             fcntl.ioctl(s.fileno(), SIOCGIFADDR, struct.pack('256s', ifname))[
                 20:24
@@ -83,8 +82,7 @@ def get_ipv4_netmask(ifname):
     import fcntl
 
     ifname = bytes(ifname[:15], "ascii")
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         return socket.inet_ntoa(
             fcntl.ioctl(
                 s.fileno(), SIOCGIFNETMASK, struct.pack('256s', ifname)
@@ -96,8 +94,7 @@ def get_ipv4_broadcast(ifname):
     import fcntl
 
     ifname = bytes(ifname[:15], "ascii")
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         return socket.inet_ntoa(
             fcntl.ioctl(
                 s.fileno(), SIOCGIFBRDADDR, struct.pack('256s', ifname)
@@ -131,8 +128,7 @@ def get_mac_address(ifname):
     import fcntl
 
     ifname = bytes(ifname[:15], "ascii")
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname)
         )

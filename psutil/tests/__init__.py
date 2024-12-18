@@ -435,8 +435,7 @@ def spawn_zombie():
             time.sleep(3000)
         else:
             # this is the zombie process
-            s = socket.socket(socket.AF_UNIX)
-            with contextlib.closing(s):
+            with socket.socket(socket.AF_UNIX) as s:
                 s.connect('%s')
                 if sys.version_info < (3, ):
                     pid = str(os.getpid())
@@ -1684,7 +1683,7 @@ def skip_on_not_implemented(only_if=None):
 # XXX: no longer used
 def get_free_port(host='127.0.0.1'):
     """Return an unused TCP port. Subject to race conditions."""
-    with contextlib.closing(socket.socket()) as sock:
+    with socket.socket() as sock:
         sock.bind((host, 0))
         return sock.getsockname()[1]
 
@@ -1725,7 +1724,7 @@ def tcp_socketpair(family, addr=("", 0)):
     """Build a pair of TCP sockets connected to each other.
     Return a (server, client) tuple.
     """
-    with contextlib.closing(socket.socket(family, SOCK_STREAM)) as ll:
+    with socket.socket(family, SOCK_STREAM) as ll:
         ll.bind(addr)
         ll.listen(5)
         addr = ll.getsockname()
@@ -1837,8 +1836,7 @@ def check_connection_ntuple(conn):
             # sockets as their address might be represented as
             # an IPv4-mapped-address (e.g. "::127.0.0.1")
             # and that's rejected by bind()
-            s = socket.socket(conn.family, conn.type)
-            with contextlib.closing(s):
+            with socket.socket(conn.family, conn.type) as s:
                 try:
                     s.bind((conn.laddr[0], 0))
                 except socket.error as err:

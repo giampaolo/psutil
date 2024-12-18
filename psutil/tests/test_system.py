@@ -6,7 +6,6 @@
 
 """Tests for system APIS."""
 
-import contextlib
 import datetime
 import enum
 import errno
@@ -835,8 +834,7 @@ class TestNetAPIs(PsutilTestCase):
                     # Do not test binding to addresses of interfaces
                     # that are down
                     if addr.family == socket.AF_INET:
-                        s = socket.socket(addr.family)
-                        with contextlib.closing(s):
+                        with socket.socket(addr.family) as s:
                             s.bind((addr.address, 0))
                     elif addr.family == socket.AF_INET6:
                         info = socket.getaddrinfo(
@@ -848,8 +846,7 @@ class TestNetAPIs(PsutilTestCase):
                             socket.AI_PASSIVE,
                         )[0]
                         af, socktype, proto, _canonname, sa = info
-                        s = socket.socket(af, socktype, proto)
-                        with contextlib.closing(s):
+                        with socket.socket(af, socktype, proto) as s:
                             s.bind(sa)
                 for ip in (
                     addr.address,
