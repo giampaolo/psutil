@@ -58,7 +58,6 @@ from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-from psutil._compat import which
 
 
 if POSIX:
@@ -251,7 +250,7 @@ def _get_py_exe():
         exe = (
             attempt(sys.executable)
             or attempt(os.path.realpath(sys.executable))
-            or attempt(which("python%s.%s" % sys.version_info[:2]))
+            or attempt(shutil.which("python%s.%s" % sys.version_info[:2]))
             or attempt(psutil.Process().exe())
         )
         if not exe:
@@ -847,7 +846,7 @@ def create_py_exe(path):
 def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
-    if not which("gcc"):
+    if not shutil.which("gcc"):
         raise pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
@@ -1298,7 +1297,7 @@ def print_sysinfo():
     info = collections.OrderedDict()
 
     # OS
-    if psutil.LINUX and which('lsb_release'):
+    if psutil.LINUX and shutil.which("lsb_release"):
         info['OS'] = sh('lsb_release -d -s')
     elif psutil.OSX:
         info['OS'] = 'Darwin %s' % platform.mac_ver()[0]
@@ -1326,7 +1325,7 @@ def print_sysinfo():
 
     # UNIX
     if psutil.POSIX:
-        if which('gcc'):
+        if shutil.which("gcc"):
             out = sh(['gcc', '--version'])
             info['gcc'] = str(out).split('\n')[0]
         else:
@@ -1380,7 +1379,7 @@ def print_sysinfo():
 
     # if WINDOWS:
     #     os.system("tasklist")
-    # elif which("ps"):
+    # elif shutil.which("ps"):
     #     os.system("ps aux")
     # print("=" * 70, file=sys.stderr)  # NOQA
 

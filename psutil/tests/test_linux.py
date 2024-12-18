@@ -45,7 +45,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import which
 
 
 if LINUX:
@@ -689,14 +688,14 @@ class TestSystemCPUCountLogical(PsutilTestCase):
         assert psutil.cpu_count() == count
 
     @pytest.mark.skipif(
-        not which("nproc"), reason="nproc utility not available"
+        not shutil.which("nproc"), reason="nproc utility not available"
     )
     def test_against_nproc(self):
         num = int(sh("nproc --all"))
         assert psutil.cpu_count(logical=True) == num
 
     @pytest.mark.skipif(
-        not which("lscpu"), reason="lscpu utility not available"
+        not shutil.which("lscpu"), reason="lscpu utility not available"
     )
     def test_against_lscpu(self):
         out = sh("lscpu -p")
@@ -743,7 +742,7 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemCPUCountCores(PsutilTestCase):
     @pytest.mark.skipif(
-        not which("lscpu"), reason="lscpu utility not available"
+        not shutil.which("lscpu"), reason="lscpu utility not available"
     )
     def test_against_lscpu(self):
         out = sh("lscpu -p")
@@ -979,7 +978,8 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     assert address in get_ipv6_addresses(name)
 
     # XXX - not reliable when having virtual NICs installed by Docker.
-    # @pytest.mark.skipif(not which('ip'), reason="'ip' utility not available")
+    # @pytest.mark.skipif(not shutil.which("ip"),
+    #                     reason="'ip' utility not available")
     # def test_net_if_names(self):
     #     out = sh("ip addr").strip()
     #     nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
@@ -998,7 +998,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
 class TestSystemNetIfStats(PsutilTestCase):
     @pytest.mark.skipif(
-        not which("ifconfig"), reason="ifconfig utility not available"
+        not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
@@ -1018,7 +1018,7 @@ class TestSystemNetIfStats(PsutilTestCase):
                 assert stats.mtu == int(f.read().strip())
 
     @pytest.mark.skipif(
-        not which("ifconfig"), reason="ifconfig utility not available"
+        not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     def test_flags(self):
         # first line looks like this:
@@ -1053,7 +1053,7 @@ class TestSystemNetIfStats(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
     @pytest.mark.skipif(
-        not which("ifconfig"), reason="ifconfig utility not available"
+        not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     @retry_on_failure()
     def test_against_ifconfig(self):
@@ -1381,7 +1381,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
             assert base == c
 
     @pytest.mark.skipif(
-        not which("findmnt"), reason="findmnt utility not available"
+        not shutil.which("findmnt"), reason="findmnt utility not available"
     )
     @pytest.mark.skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
     def test_against_findmnt(self):
@@ -1594,7 +1594,9 @@ class TestMisc(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
 class TestSensorsBattery(PsutilTestCase):
-    @pytest.mark.skipif(not which("acpi"), reason="acpi utility not available")
+    @pytest.mark.skipif(
+        not shutil.which("acpi"), reason="acpi utility not available"
+    )
     def test_percent(self):
         out = sh("acpi -b")
         acpi_value = int(out.split(",")[1].strip().replace('%', ''))

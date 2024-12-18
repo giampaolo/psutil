@@ -53,7 +53,6 @@ from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
 from _common import hilite  # NOQA
-from _compat import which  # NOQA
 
 
 PYPY = '__pypy__' in sys.builtin_module_names
@@ -192,7 +191,7 @@ def silenced_output(stream_name):
 
 def missdeps(cmdline):
     s = "psutil could not be installed from sources"
-    if not SUNOS and not which("gcc"):
+    if not SUNOS and not shutil.which("gcc"):
         s += " because gcc is not installed. "
     else:
         s += ". Perhaps Python header files are not installed. "
@@ -554,11 +553,11 @@ def main():
         ):
             if LINUX:
                 pyimpl = "pypy" if PYPY else "python"
-                if which('dpkg'):
+                if shutil.which("dpkg"):
                     missdeps("sudo apt-get install gcc %s3-dev" % (pyimpl))
-                elif which('rpm'):
+                elif shutil.which("rpm"):
                     missdeps("sudo yum install gcc %s-devel" % (pyimpl))
-                elif which('apk'):
+                elif shutil.which("apk"):
                     missdeps(
                         "sudo apk add gcc %s%s-dev musl-dev linux-headers"
                         % (pyimpl)
@@ -570,9 +569,9 @@ def main():
                 )
                 print(hilite(msg, color="red"), file=sys.stderr)
             elif FREEBSD:
-                if which('pkg'):
+                if shutil.which("pkg"):
                     missdeps("pkg install gcc python3")
-                elif which('mport'):  # MidnightBSD
+                elif shutil.which("mport"):  # MidnightBSD
                     missdeps("mport install gcc python3")
             elif OPENBSD:
                 missdeps("pkg_add -v gcc python3")

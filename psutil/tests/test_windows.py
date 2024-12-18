@@ -13,6 +13,7 @@ import glob
 import os
 import platform
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -22,7 +23,6 @@ from unittest import mock
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import which
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY
 from psutil.tests import IS_64BIT
@@ -64,7 +64,7 @@ def powershell(cmd):
     >>> powershell(
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
     """
-    if not which("powershell.exe"):
+    if not shutil.which("powershell.exe"):
         raise pytest.skip("powershell.exe not available")
     cmdline = (
         'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive '
