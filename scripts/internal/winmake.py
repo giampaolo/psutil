@@ -312,12 +312,14 @@ def install_pydeps_dev():
     sh([PYTHON, "-m", "pip", "install", "--user", "-U"] + DEV_DEPS)
 
 
-def test():
+def test(args=None):
     """Run tests."""
     build()
+    args = args or []
     sh(
         [PYTHON, "-m", "pytest", "--ignore=psutil/tests/test_memleaks.py"]
         + PYTEST_ARGS
+        + args
     )
 
 
