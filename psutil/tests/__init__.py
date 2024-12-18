@@ -58,7 +58,6 @@ from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-from psutil._compat import PY3
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
 from psutil._compat import range
@@ -106,7 +105,7 @@ __all__ = [
     # compat
     'reload_module', 'import_module_by_path',
     # others
-    'warn', 'copyload_shared_lib', 'is_namedtuple',
+    'warn', 'copyload_shared_lib', 'is_namedtuple', 'unicode',
 ]
 # fmt: on
 
@@ -189,10 +188,7 @@ else:
     TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
 UNICODE_SUFFIX = u"-ƒőő"
 # An invalid unicode string.
-if PY3:
-    INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
-else:
-    INVALID_UNICODE_SUFFIX = "f\xc0\x80"
+INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
 ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
 
 # --- paths
@@ -512,10 +508,7 @@ def sh(cmd, **kwds):
         cmd = shlex.split(cmd)
     p = subprocess.Popen(cmd, **kwds)
     _subprocesses_started.add(p)
-    if PY3:
-        stdout, stderr = p.communicate(timeout=GLOBAL_TIMEOUT)
-    else:
-        stdout, stderr = p.communicate()
+    stdout, stderr = p.communicate(timeout=GLOBAL_TIMEOUT)
     if p.returncode != 0:
         raise RuntimeError(stdout + stderr)
     if stderr:
@@ -537,10 +530,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     """
 
     def wait(proc, timeout):
-        if isinstance(proc, subprocess.Popen) and not PY3:
-            proc.wait()
-        else:
-            proc.wait(timeout)
+        proc.wait(timeout)
         if WINDOWS and isinstance(proc, subprocess.Popen):
             # Otherwise PID may still hang around.
             try:
@@ -737,10 +727,8 @@ class retry:
                         self.logfun(exc)
                     self.sleep()
                     continue
-            if PY3:
-                raise exc  # noqa: PLE0704
-            else:
-                raise  # noqa: PLE0704
+
+            raise exc  # noqa: PLE0704
 
         # This way the user of the decorated function can change config
         # parameters.
@@ -988,24 +976,7 @@ if pytest is None:
     pytest = fake_pytest
 
 
-class TestCase(unittest.TestCase):
-    # ...otherwise multiprocessing.Pool complains
-    if not PY3:
-
-        def runTest(self):
-            pass
-
-        @contextlib.contextmanager
-        def subTest(self, *args, **kw):
-            # fake it for python 2.7
-            yield
-
-
-# monkey patch default unittest.TestCase
-unittest.TestCase = TestCase
-
-
-class PsutilTestCase(TestCase):
+class PsutilTestCase(unittest.TestCase):
     """Test class providing auto-cleanup wrappers on top of process
     test utilities. All test classes should derive from this one, even
     if we use pytest.
@@ -1840,13 +1811,9 @@ def check_net_address(addr, family):
         assert len(octs) == 4, addr
         for num in octs:
             assert 0 <= num <= 255, addr
-        if not PY3:
-            addr = unicode(addr)
         ipaddress.IPv4Address(addr)
     elif family == socket.AF_INET6:
         assert isinstance(addr, str), addr
-        if not PY3:
-            addr = unicode(addr)
         ipaddress.IPv6Address(addr)
     elif family == psutil.AF_LINK:
         assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
