@@ -22,8 +22,6 @@ __all__ = [
     "PY3",
     # builtins
     "super",
-    # literals
-    "b",
     # collections module
     "lru_cache",
     # shutil module
@@ -39,17 +37,6 @@ __all__ = [
 
 PY3 = sys.version_info[0] >= 3
 _SENTINEL = object()
-
-if PY3:
-    range = range
-
-    def b(s):
-        return s.encode("latin-1")
-
-else:
-
-    def b(s):
-        return s
 
 
 # --- builtins
