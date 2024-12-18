@@ -15,6 +15,7 @@ import enum
 import errno
 import functools
 import gc
+import importlib
 import ipaddress
 import os
 import platform
@@ -1899,38 +1900,20 @@ def filter_proc_net_connections(cons):
 
 
 # ===================================================================
-# --- compatibility
+# --- import utils
 # ===================================================================
 
 
 def reload_module(module):
-    """Backport of importlib.reload of Python 3.3+."""
-    try:
-        import importlib
-
-        if not hasattr(importlib, 'reload'):  # python <=3.3
-            raise ImportError
-    except ImportError:
-        import imp
-
-        return imp.reload(module)
-    else:
-        return importlib.reload(module)
+    return importlib.reload(module)
 
 
 def import_module_by_path(path):
     name = os.path.splitext(os.path.basename(path))[0]
-    if sys.version_info[0] < 3:
-        import imp
-
-        return imp.load_source(name, path)
-    else:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(name, path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 # ===================================================================

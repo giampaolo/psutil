@@ -1658,7 +1658,7 @@ class TestPopen(PsutilTestCase):
         reap_children()
 
     def test_misc(self):
-        # XXX this test causes a ResourceWarning on Python 3 because
+        # XXX this test causes a ResourceWarning because
         # psutil.__subproc instance doesn't get properly freed.
         # Not sure what to do though.
         cmd = [

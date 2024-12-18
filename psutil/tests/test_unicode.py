@@ -20,8 +20,8 @@ process exe(), cwd() or username():
 * instead, in case of badly encoded data returned by the OS, the
   following error handlers are used to replace the corrupted characters in
   the string:
-    * Python 3: sys.getfilesystemencodeerrors() (PY 3.6+) or
-      "surrogatescape" on POSIX and "replace" on Windows
+    * sys.getfilesystemencodeerrors() or "surrogatescape" on POSIX and
+      "replace" on Windows.
 
 For a detailed explanation of how psutil handles unicode see #1040.
 

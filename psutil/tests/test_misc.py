@@ -238,7 +238,7 @@ class TestMisc(PsutilTestCase):
 
         # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
-        # Can't do `from psutil import *` as it won't work on python 3
+        # Can't do `from psutil import *` as it won't work
         # so we simply iterate over __all__.
         for name in psutil.__all__:
             assert name in dir_psutil
