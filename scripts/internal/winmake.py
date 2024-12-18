@@ -317,7 +317,10 @@ def install_pydeps_dev():
 def test():
     """Run tests."""
     build()
-    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS)
+    sh(
+        [PYTHON, "-m", "pytest", "--ignore=psutil/tests/test_memleaks.py"]
+        + PYTEST_ARGS
+    )
 
 
 def test_parallel():

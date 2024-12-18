@@ -48,6 +48,7 @@ clean:  ## Remove all build files.
 		dist/ \
 		docs/_build/ \
 		htmlcov/ \
+		pytest-cache* \
 		wheelhouse
 
 .PHONY: build
