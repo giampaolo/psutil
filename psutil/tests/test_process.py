@@ -37,7 +37,6 @@ from psutil import WINDOWS
 from psutil._common import open_text
 from psutil._compat import FileNotFoundError
 from psutil._compat import redirect_stderr
-from psutil._compat import super
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT

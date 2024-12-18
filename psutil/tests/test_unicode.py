@@ -81,7 +81,6 @@ import psutil
 from psutil import BSD
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil._compat import super
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_ENVIRON
