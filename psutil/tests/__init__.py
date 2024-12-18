@@ -73,7 +73,7 @@ if POSIX:
 # fmt: off
 __all__ = [
     # constants
-    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
+    'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
     'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
@@ -118,9 +118,8 @@ __all__ = [
 
 PYPY = '__pypy__' in sys.builtin_module_names
 # whether we're running this test suite on a Continuous Integration service
-APPVEYOR = 'APPVEYOR' in os.environ
 GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
-CI_TESTING = APPVEYOR or GITHUB_ACTIONS
+CI_TESTING = GITHUB_ACTIONS
 COVERAGE = 'COVERAGE_RUN' in os.environ
 PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 if LINUX and GITHUB_ACTIONS:

@@ -224,12 +224,8 @@ sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
 
-download-wheels-github:  ## Download latest wheels hosted on github.
+download-wheels:  ## Download latest wheels hosted on github.
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
-	${MAKE} print-dist
-
-download-wheels-appveyor:  ## Download latest wheels hosted on appveyor.
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels_appveyor.py
 	${MAKE} print-dist
 
 create-wheels:  ## Create .whl files
@@ -265,8 +261,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not found in docs/index.rst' % ver; \
 		assert ver in history, '%r not found in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
-	${MAKE} download-wheels-github
-	${MAKE} download-wheels-appveyor
+	${MAKE} download-wheels
 	${MAKE} check-wheels
 	${MAKE} print-hashes
 	${MAKE} print-dist

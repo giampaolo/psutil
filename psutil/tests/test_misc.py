@@ -338,10 +338,6 @@ class TestMisc(PsutilTestCase):
         assert b.pid == 4567
         assert b.name == 'name'
 
-    # # XXX: https://github.com/pypa/setuptools/pull/2896
-    # @pytest.mark.skipif(APPVEYOR,
-    #     reason="temporarily disabled due to setuptools bug"
-    # )
     # def test_setup_script(self):
     #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
     #     if CI_TESTING and not os.path.exists(setup_py):

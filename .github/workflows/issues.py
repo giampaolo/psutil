@@ -42,7 +42,7 @@ LABELS_MAP = {
         "windows", "win32", "WinError", "WindowsError", "win10", "win7",
         "win ", "mingw", "msys", "studio", "microsoft", "make.bat",
         "CloseHandle", "GetLastError", "NtQuery", "DLL", "MSVC", "TCHAR",
-        "WCHAR", ".bat", "OpenProcess", "TerminateProcess", "appveyor",
+        "WCHAR", ".bat", "OpenProcess", "TerminateProcess",
         "windows error", "NtWow64", "NTSTATUS", "Visual Studio",
     ],
     "macos": [
@@ -89,7 +89,7 @@ LABELS_MAP = {
     ],
     # tests
     "tests": [
-        " test ", "tests", "travis", "coverage", "cirrus", "appveyor",
+        " test ", "tests", "travis", "coverage", "cirrus",
         "continuous integration", "unittest", "pytest", "unit test",
     ],
     # critical errors

@@ -74,7 +74,6 @@ etc.) and make sure that:
 
 import os
 import shutil
-import traceback
 import warnings
 from contextlib import closing
 
@@ -84,7 +83,6 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
 from psutil._compat import super
-from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_ENVIRON
@@ -106,27 +104,6 @@ from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-
-
-if APPVEYOR:
-
-    def safe_rmpath(path):  # NOQA
-        # TODO - this is quite random and I'm not sure why it happens,
-        # nor I can reproduce it locally:
-        # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
-        #     jiq2cgd6stsbtn60
-        # safe_rmpath() happens after reap_children() so this is weird
-        # Perhaps wait_procs() on Windows is broken? Maybe because
-        # of STILL_ACTIVE?
-        # https://github.com/giampaolo/psutil/blob/
-        #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
-        #     windows/process_info.c#L146
-        from psutil.tests import safe_rmpath as rm
-
-        try:
-            return rm(path)
-        except WindowsError:
-            traceback.print_exc()
 
 
 def try_unicode(suffix):

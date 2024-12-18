@@ -177,13 +177,11 @@ include scripts/fans.py
 include scripts/free.py
 include scripts/ifconfig.py
 include scripts/internal/README
-include scripts/internal/appveyor_run_with_compiler.cmd
 include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
 include scripts/internal/clinter.py
 include scripts/internal/convert_readme.py
-include scripts/internal/download_wheels_appveyor.py
 include scripts/internal/download_wheels_github.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py

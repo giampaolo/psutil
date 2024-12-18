@@ -25,8 +25,7 @@ import subprocess
 import sys
 
 
-APPVEYOR = bool(os.environ.get('APPVEYOR'))
-PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
+PYTHON = os.getenv('PYTHON', sys.executable)
 PY3 = sys.version_info[0] >= 3
 PYTEST_ARGS = ["-v", "-s", "--tb=short"]
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -449,18 +448,6 @@ def print_sysinfo():
     print_sysinfo()
 
 
-def download_appveyor_wheels():
-    """Download appveyor wheels."""
-    sh([
-        PYTHON,
-        "scripts\\internal\\download_wheels_appveyor.py",
-        "--user",
-        "giampaolo",
-        "--project",
-        "psutil",
-    ])
-
-
 def generate_manifest():
     """Generate MANIFEST.in file."""
     script = "scripts\\internal\\generate_manifest.py"
@@ -499,7 +486,6 @@ def parse_args():
     sp.add_parser('build', help="build")
     sp.add_parser('clean', help="deletes dev files")
     sp.add_parser('coverage', help="run coverage tests.")
-    sp.add_parser('download-appveyor-wheels', help="download wheels.")
     sp.add_parser('generate-manifest', help="generate MANIFEST.in file")
     sp.add_parser('help', help="print this help")
     sp.add_parser('install', help="build + install in develop/edit mode")

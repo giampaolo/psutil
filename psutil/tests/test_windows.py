@@ -25,7 +25,6 @@ from psutil import WINDOWS
 from psutil._compat import FileNotFoundError
 from psutil._compat import super
 from psutil._compat import which
-from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY
 from psutil.tests import IS_64BIT
@@ -194,7 +193,6 @@ class TestSystemAPIs(WindowsTestCase):
     #                                   time.localtime(p.create_time()))
 
     # Note: this test is not very reliable
-    @pytest.mark.skipif(APPVEYOR, reason="test not relieable on appveyor")
     @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing

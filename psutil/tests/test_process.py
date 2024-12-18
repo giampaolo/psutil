@@ -40,7 +40,6 @@ from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import redirect_stderr
 from psutil._compat import super
-from psutil.tests import APPVEYOR
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
@@ -1063,8 +1062,6 @@ class TestProcess(PsutilTestCase):
 
     # TODO: #595
     @pytest.mark.skipif(BSD, reason="broken on BSD")
-    # can't find any process file on Appveyor
-    @pytest.mark.skipif(APPVEYOR, reason="unreliable on APPVEYOR")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -1104,8 +1101,6 @@ class TestProcess(PsutilTestCase):
 
     # TODO: #595
     @pytest.mark.skipif(BSD, reason="broken on BSD")
-    # can't find any process file on Appveyor
-    @pytest.mark.skipif(APPVEYOR, reason="unreliable on APPVEYOR")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()
