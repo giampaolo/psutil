@@ -27,7 +27,6 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
-from ._compat import lru_cache
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -183,7 +182,7 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 
 
-@lru_cache(maxsize=512)
+@functools.lru_cache(maxsize=512)
 def convert_dos_path(s):
     r"""Convert paths using native DOS format like:
         "\Device\HarddiskVolume1\Windows\systemew\file.txt"
