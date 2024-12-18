@@ -705,8 +705,8 @@ def retry_error_partial_copy(fun):
                     continue
                 raise
         msg = (
-            "{} retried {} times, converted to AccessDenied as it's still"
-            "returning {}".format(fun, times, err)
+            f"{fun} retried {times} times, converted to AccessDenied as it's "
+            f"still returning {err}"
         )
         raise AccessDenied(pid=self.pid, name=self._name, msg=msg)
 

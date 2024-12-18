@@ -24,7 +24,7 @@ def sh(cmd):
 
 
 def get_tag_date(tag):
-    out = sh(r"git log -1 --format=%ai {}".format(tag))
+    out = sh(f"git log -1 --format=%ai {tag}")
     return out.split(' ')[0]
 
 

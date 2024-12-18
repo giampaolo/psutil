@@ -714,9 +714,7 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
-                    online_path = (
-                        "/sys/devices/system/cpu/cpu{}/online".format(i)
-                    )
+                    online_path = f"/sys/devices/system/cpu/cpu{i}/online"
                     # if cpu core is offline, set to all zeroes
                     if cat(online_path, fallback=None) == "0\n":
                         ret.append(_common.scpufreq(0.0, 0.0, 0.0))
@@ -1930,7 +1928,7 @@ class Process:
             # compared to /proc/pid/smaps_rollup.
             uss = pss = swap = 0
             with open_binary(
-                "{}/{}/smaps_rollup".format(self._procfs_path, self.pid)
+                f"{self._procfs_path}/{self.pid}/smaps_rollup"
             ) as f:
                 for line in f:
                     if line.startswith(b"Private_"):

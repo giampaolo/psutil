@@ -919,7 +919,7 @@ class fake_pytest:
                 yield einfo
             except exc as err:
                 if match and not re.search(match, str(err)):
-                    msg = '"{}" does not match "{}"'.format(match, str(err))
+                    msg = f'"{match}" does not match "{str(err)}"'
                     raise AssertionError(msg)
                 einfo._exc = err
             else:
