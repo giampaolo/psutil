@@ -60,7 +60,6 @@ from psutil._common import print_color
 from psutil._common import supports_ipv6
 from psutil._compat import FileExistsError
 from psutil._compat import FileNotFoundError
-from psutil._compat import range
 from psutil._compat import super
 from psutil._compat import unicode
 from psutil._compat import which

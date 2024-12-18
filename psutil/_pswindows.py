@@ -28,7 +28,6 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 from ._compat import lru_cache
-from ._compat import range
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
