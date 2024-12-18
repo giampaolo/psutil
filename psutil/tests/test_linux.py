@@ -24,9 +24,7 @@ from unittest import mock
 
 import psutil
 from psutil import LINUX
-from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
-from psutil._compat import basestring
 from psutil.tests import AARCH64
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
@@ -73,9 +71,7 @@ if LINUX:
 def get_ipv4_address(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
+    ifname = bytes(ifname[:15], "ascii")
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         return socket.inet_ntoa(
@@ -88,9 +84,7 @@ def get_ipv4_address(ifname):
 def get_ipv4_netmask(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
+    ifname = bytes(ifname[:15], "ascii")
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         return socket.inet_ntoa(
@@ -103,9 +97,7 @@ def get_ipv4_netmask(ifname):
 def get_ipv4_broadcast(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
+    ifname = bytes(ifname[:15], "ascii")
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         return socket.inet_ntoa(
@@ -140,24 +132,13 @@ def get_ipv6_addresses(ifname):
 def get_mac_address(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
+    ifname = bytes(ifname[:15], "ascii")
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     with contextlib.closing(s):
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname)
         )
-        if PY3:
-
-            def ord(x):
-                return x
-
-        else:
-            import __builtin__
-
-            ord = __builtin__.ord
-        return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+        return ''.join(['%02x:' % char for char in info[18:24]])[:-1]
 
 
 def free_swap():
@@ -223,11 +204,8 @@ def mock_open_content(pairs):
     def open_mock(name, *args, **kwargs):
         if name in pairs:
             content = pairs[name]
-            if PY3:
-                if isinstance(content, basestring):
-                    return io.StringIO(content)
-                else:
-                    return io.BytesIO(content)
+            if isinstance(content, str):
+                return io.StringIO(content)
             else:
                 return io.BytesIO(content)
         else:
@@ -1933,14 +1911,13 @@ class TestProcess(PsutilTestCase):
             assert get_test_file(testfn).mode == "r+"
         with open(testfn, "a+"):
             assert get_test_file(testfn).mode == "a+"
-        # note: "x" bit is not supported
-        if PY3:
-            safe_rmpath(testfn)
-            with open(testfn, "x"):
-                assert get_test_file(testfn).mode == "w"
-            safe_rmpath(testfn)
-            with open(testfn, "x+"):
-                assert get_test_file(testfn).mode == "r+"
+
+        safe_rmpath(testfn)
+        with open(testfn, "x"):
+            assert get_test_file(testfn).mode == "w"
+        safe_rmpath(testfn)
+        with open(testfn, "x+"):
+            assert get_test_file(testfn).mode == "r+"
 
     def test_open_files_file_gone(self):
         # simulates a file which gets deleted during open_files()
