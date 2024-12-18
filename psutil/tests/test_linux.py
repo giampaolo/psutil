@@ -234,8 +234,7 @@ def mock_open_content(pairs):
             return orig_open(name, *args, **kwargs)
 
     orig_open = open
-    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+    with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
         yield m
 
 
@@ -252,8 +251,7 @@ def mock_open_exception(for_path, exc):
             return orig_open(name, *args, **kwargs)
 
     orig_open = open
-    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+    with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
         yield m
 
 
@@ -861,8 +859,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
                 freq = psutil.cpu_freq()
                 assert freq.current == 500.0
@@ -907,8 +904,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
                 with mock.patch(
                     'psutil._pslinux.cpu_count_logical', return_value=2
@@ -939,8 +935,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
                 with mock.patch(
                     'psutil._pslinux.cpu_count_logical', return_value=1
@@ -1460,8 +1455,7 @@ class TestMisc(PsutilTestCase):
                     raise IOError(errno.ENOENT, 'rejecting access for test')
                 return orig_open(name, *args, **kwargs)
 
-            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-            with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch("builtins.open", side_effect=open_mock):
                 reload_module(psutil)
 
                 with pytest.raises(IOError):
@@ -1639,8 +1633,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert (
                 psutil.sensors_battery().secsleft
@@ -1660,8 +1653,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert m.called
 
@@ -1674,8 +1666,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
@@ -1691,8 +1682,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
@@ -1711,8 +1701,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is None
             assert m.called
 
@@ -1769,9 +1758,8 @@ class TestSensorsBatteryEmulated(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch('os.listdir', return_value=["BAT0"]) as mlistdir:
-            with mock.patch(patch_point, side_effect=open_mock) as mopen:
+            with mock.patch("builtins.open", side_effect=open_mock) as mopen:
                 assert psutil.sensors_battery() is not None
         assert mlistdir.called
         assert mopen.called
@@ -1795,8 +1783,7 @@ class TestSensorsTemperatures(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             # Test case with /sys/class/hwmon
             with mock.patch(
                 'glob.glob', return_value=['/sys/class/hwmon/hwmon0/temp1']
@@ -1835,8 +1822,7 @@ class TestSensorsTemperatures(PsutilTestCase):
             return []
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('glob.glob', create=True, side_effect=glob_mock):
                 temp = psutil.sensors_temperatures()['name'][0]
                 assert temp.label == ''  # noqa
@@ -1859,8 +1845,7 @@ class TestSensorsFans(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch(
                 'glob.glob', return_value=['/sys/class/hwmon/hwmon2/fan1']
             ):
@@ -1989,9 +1974,8 @@ class TestProcess(PsutilTestCase):
         with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(lambda: len(p.open_files()) != len(files))
-            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(
-                patch_point, side_effect=IOError(errno.ENOENT, "")
+                "builtins.open", side_effect=IOError(errno.ENOENT, "")
             ) as m:
                 assert p.open_files() == []
                 assert m.called
@@ -2092,8 +2076,7 @@ class TestProcess(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock_1) as m:
+        with mock.patch("builtins.open", side_effect=open_mock_1) as m:
             ret = psutil.Process().threads()
             assert m.called
             assert ret == []
@@ -2106,7 +2089,7 @@ class TestProcess(PsutilTestCase):
             else:
                 return orig_open(name, *args, **kwargs)
 
-        with mock.patch(patch_point, side_effect=open_mock_2):
+        with mock.patch("builtins.open", side_effect=open_mock_2):
             with pytest.raises(psutil.AccessDenied):
                 psutil.Process().threads()
 
