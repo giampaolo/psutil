@@ -6,7 +6,6 @@
 
 import contextlib
 import enum
-import errno
 import functools
 import os
 import signal
@@ -657,9 +656,7 @@ ppid_map = cext.ppid_map  # used internally by Process.children()
 def is_permission_err(exc):
     """Return True if this is a permission error."""
     assert isinstance(exc, OSError), exc
-    if exc.errno in (errno.EPERM, errno.EACCES):
-        return True
-    return exc.winerror in {
+    return isinstance(exc, PermissionError) or exc.winerror in {
         cext.ERROR_ACCESS_DENIED,
         cext.ERROR_PRIVILEGE_NOT_HELD,
     }
@@ -670,7 +667,7 @@ def convert_oserror(exc, pid=None, name=None):
     assert isinstance(exc, OSError), exc
     if is_permission_err(exc):
         return AccessDenied(pid=pid, name=name)
-    if exc.errno == errno.ESRCH:
+    if isinstance(exc, ProcessLookupError):
         return NoSuchProcess(pid=pid, name=name)
     raise exc
 

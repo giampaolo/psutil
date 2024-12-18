@@ -584,7 +584,7 @@ class Process:
                 utime, stime = cext.query_process_thread(
                     self.pid, tid, procfs_path
                 )
-            except EnvironmentError as err:
+            except OSError as err:
                 if err.errno == errno.EOVERFLOW and not IS_64_BIT:
                     # We may get here if we attempt to query a 64bit process
                     # with a 32bit python.

@@ -127,16 +127,12 @@ class TestProcess(PsutilTestCase):
     def test_send_signal_mocked(self):
         sig = signal.SIGTERM
         p = self.spawn_psproc()
-        with mock.patch(
-            'psutil.os.kill', side_effect=OSError(errno.ESRCH, "")
-        ):
+        with mock.patch('psutil.os.kill', side_effect=ProcessLookupError):
             with pytest.raises(psutil.NoSuchProcess):
                 p.send_signal(sig)
 
         p = self.spawn_psproc()
-        with mock.patch(
-            'psutil.os.kill', side_effect=OSError(errno.EPERM, "")
-        ):
+        with mock.patch('psutil.os.kill', side_effect=PermissionError):
             with pytest.raises(psutil.AccessDenied):
                 p.send_signal(sig)
 
@@ -492,7 +488,7 @@ class TestProcess(PsutilTestCase):
                 f.write(b"X" * 1024)
             # write() or flush() doesn't always cause the exception
             # but close() will.
-            with pytest.raises(IOError) as exc:
+            with pytest.raises(OSError) as exc:
                 with open(testfn, "wb") as f:
                     f.write(b"X" * 1025)
             assert exc.value.errno == errno.EFBIG

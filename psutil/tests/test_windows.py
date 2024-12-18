@@ -7,7 +7,6 @@
 """Windows specific tests."""
 
 import datetime
-import errno
 import glob
 import os
 import platform
@@ -666,7 +665,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         mem_1 = psutil.Process(self.pid).memory_info()
         with mock.patch(
             "psutil._psplatform.cext.proc_memory_info",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             mem_2 = psutil.Process(self.pid).memory_info()
             assert len(mem_1) == len(mem_2)
@@ -680,7 +679,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         ctime = psutil.Process(self.pid).create_time()
         with mock.patch(
             "psutil._psplatform.cext.proc_times",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             assert psutil.Process(self.pid).create_time() == ctime
             assert fun.called
@@ -689,7 +688,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         cpu_times_1 = psutil.Process(self.pid).cpu_times()
         with mock.patch(
             "psutil._psplatform.cext.proc_times",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             cpu_times_2 = psutil.Process(self.pid).cpu_times()
             assert fun.called
@@ -700,7 +699,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         io_counters_1 = psutil.Process(self.pid).io_counters()
         with mock.patch(
             "psutil._psplatform.cext.proc_io_counters",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             io_counters_2 = psutil.Process(self.pid).io_counters()
             for i in range(len(io_counters_1)):
@@ -711,7 +710,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         num_handles = psutil.Process(self.pid).num_handles()
         with mock.patch(
             "psutil._psplatform.cext.proc_num_handles",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             assert psutil.Process(self.pid).num_handles() == num_handles
             assert fun.called

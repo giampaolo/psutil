@@ -538,11 +538,12 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
     def term_subprocess_proc(proc, timeout):
         try:
             sendsig(proc, sig)
+        except ProcessLookupError:
+            pass
         except OSError as err:
             if WINDOWS and err.winerror == 6:  # "invalid handle"
                 pass
-            elif err.errno != errno.ESRCH:
-                raise
+            raise
         return wait(proc, timeout)
 
     def term_psutil_proc(proc, timeout):

@@ -464,10 +464,7 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
             SReclaimable:     346648 kB
             """).encode()
         with mock_open_content({"/proc/meminfo": content}):
-            with mock_open_exception(
-                "/proc/zoneinfo",
-                IOError(errno.ENOENT, 'no such file or directory'),
-            ):
+            with mock_open_exception("/proc/zoneinfo", FileNotFoundError):
                 with warnings.catch_warnings(record=True) as ws:
                     ret = psutil.virtual_memory()
                     assert ret.available == 2057400 * 1024 + 4818144 * 1024
@@ -592,9 +589,7 @@ class TestSystemSwapMemory(PsutilTestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        with mock_open_exception(
-            "/proc/vmstat", IOError(errno.ENOENT, 'no such file or directory')
-        ) as m:
+        with mock_open_exception("/proc/vmstat", FileNotFoundError) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -897,7 +892,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
         # See: https://github.com/giampaolo/psutil/issues/1071
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.endswith('/cpuinfo_cur_freq'):
                 return io.BytesIO(b"200000")
             elif name == '/proc/cpuinfo':
@@ -1424,23 +1419,23 @@ class TestMisc(PsutilTestCase):
 
             def open_mock(name, *args, **kwargs):
                 if name.startswith('/proc'):
-                    raise IOError(errno.ENOENT, 'rejecting access for test')
+                    raise FileNotFoundError
                 return orig_open(name, *args, **kwargs)
 
             with mock.patch("builtins.open", side_effect=open_mock):
                 reload_module(psutil)
 
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times()
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times(percpu=True)
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_percent()
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_percent(percpu=True)
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times_percent()
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times_percent(percpu=True)
 
                 psutil.PROCFS_PATH = my_procfs
@@ -1531,23 +1526,23 @@ class TestMisc(PsutilTestCase):
         os.mkdir(tdir)
         try:
             psutil.PROCFS_PATH = tdir
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.virtual_memory()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.cpu_times()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.cpu_times(percpu=True)
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.boot_time()
-            # self.assertRaises(IOError, psutil.pids)
-            with pytest.raises(IOError):
+            # self.assertRaises(OSError, psutil.pids)
+            with pytest.raises(OSError):
                 psutil.net_connections()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.net_io_counters()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.net_if_stats()
-            # self.assertRaises(IOError, psutil.disk_io_counters)
-            with pytest.raises(IOError):
+            # self.assertRaises(OSError, psutil.disk_io_counters)
+            with pytest.raises(OSError):
                 psutil.disk_partitions()
             with pytest.raises(psutil.NoSuchProcess):
                 psutil.Process()
@@ -1620,7 +1615,7 @@ class TestSensorsBattery(PsutilTestCase):
         # case code relies on /status file.
         def open_mock(name, *args, **kwargs):
             if name.endswith(('AC0/online', 'AC/online')):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.endswith("/status"):
                 return io.StringIO(u"charging")
             else:
@@ -1649,7 +1644,7 @@ class TestSensorsBattery(PsutilTestCase):
         # case code relies on /status file.
         def open_mock(name, *args, **kwargs):
             if name.endswith(('AC0/online', 'AC/online')):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.endswith("/status"):
                 return io.StringIO(u"discharging")
             else:
@@ -1668,7 +1663,7 @@ class TestSensorsBattery(PsutilTestCase):
                 '/sys/class/power_supply/AC0/online',
                 '/sys/class/power_supply/AC/online',
             )):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")
             else:
@@ -1692,11 +1687,11 @@ class TestSensorsBattery(PsutilTestCase):
         # Expected fallback on /capacity.
         with mock_open_exception(
             "/sys/class/power_supply/BAT0/energy_full",
-            IOError(errno.ENOENT, ""),
+            FileNotFoundError,
         ):
             with mock_open_exception(
                 "/sys/class/power_supply/BAT0/charge_full",
-                IOError(errno.ENOENT, ""),
+                FileNotFoundError,
             ):
                 with mock_open_content(
                     {"/sys/class/power_supply/BAT0/capacity": b"88"}
@@ -1706,14 +1701,14 @@ class TestSensorsBattery(PsutilTestCase):
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
         with mock_open_exception(
-            "/sys/class/power_supply/AC/online", IOError(errno.ENOENT, "")
+            "/sys/class/power_supply/AC/online", FileNotFoundError
         ):
             with mock_open_exception(
-                "/sys/class/power_supply/AC0/online", IOError(errno.ENOENT, "")
+                "/sys/class/power_supply/AC0/online", FileNotFoundError
             ):
                 with mock_open_exception(
                     "/sys/class/power_supply/BAT0/status",
-                    IOError(errno.ENOENT, ""),
+                    FileNotFoundError,
                 ):
                     assert psutil.sensors_battery().power_plugged is None
 
@@ -1925,7 +1920,7 @@ class TestProcess(PsutilTestCase):
             call_until(lambda: len(p.open_files()) != len(files))
             with mock.patch(
                 'psutil._pslinux.os.readlink',
-                side_effect=OSError(errno.ENOENT, ""),
+                side_effect=FileNotFoundError,
             ) as m:
                 assert p.open_files() == []
                 assert m.called
@@ -1948,7 +1943,7 @@ class TestProcess(PsutilTestCase):
             # give the kernel some time to see the new file
             call_until(lambda: len(p.open_files()) != len(files))
             with mock.patch(
-                "builtins.open", side_effect=IOError(errno.ENOENT, "")
+                "builtins.open", side_effect=FileNotFoundError
             ) as m:
                 assert p.open_files() == []
                 assert m.called
@@ -2044,7 +2039,7 @@ class TestProcess(PsutilTestCase):
         # of raising NSP.
         def open_mock_1(name, *args, **kwargs):
             if name.startswith('/proc/%s/task' % os.getpid()):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -2058,7 +2053,7 @@ class TestProcess(PsutilTestCase):
         # exception.
         def open_mock_2(name, *args, **kwargs):
             if name.startswith('/proc/%s/task' % os.getpid()):
-                raise IOError(errno.EPERM, "")
+                raise PermissionError
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -2068,7 +2063,7 @@ class TestProcess(PsutilTestCase):
 
     def test_exe_mocked(self):
         with mock.patch(
-            'psutil._pslinux.readlink', side_effect=OSError(errno.ENOENT, "")
+            'psutil._pslinux.readlink', side_effect=FileNotFoundError
         ) as m:
             # de-activate guessing from cmdline()
             with mock.patch(
@@ -2082,7 +2077,7 @@ class TestProcess(PsutilTestCase):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.
         with mock_open_exception(
-            '/proc/%s/smaps' % os.getpid(), IOError(errno.ENOENT, "")
+            '/proc/%s/smaps' % os.getpid(), FileNotFoundError
         ) as m:
             p = psutil.Process()
             with pytest.raises(FileNotFoundError):

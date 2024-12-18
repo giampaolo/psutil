@@ -110,7 +110,7 @@ def try_unicode(suffix):
         sproc = spawn_testproc(cmd=[testfn])
         shutil.copyfile(testfn, testfn + '-2')
         safe_rmpath(testfn + '-2')
-    except (UnicodeEncodeError, IOError):
+    except (UnicodeEncodeError, OSError):
         return False
     else:
         return True
