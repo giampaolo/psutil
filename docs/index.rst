@@ -224,8 +224,8 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of logical CPUs in the system (same as `os.cpu_count`_
-  in Python 3.4) or ``None`` if undetermined.
+  Return the number of logical CPUs in the system (same as `os.cpu_count`_)
+  or ``None`` if undetermined.
   "logical CPUs" means the number of physical cores multiplied by the number
   of threads that can run on each core (this is known as Hyper Threading).
   If *logical* is ``False`` return the number of physical cores only, or
