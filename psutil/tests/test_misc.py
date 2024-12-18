@@ -9,6 +9,7 @@
 
 import ast
 import collections
+import contextlib
 import errno
 import io
 import json
@@ -32,7 +33,6 @@ from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil._compat import redirect_stderr
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_MEMORY_MAPS
@@ -633,7 +633,7 @@ class TestCommonModule(PsutilTestCase):
 
     def test_debug(self):
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(io.StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 debug("hello")
                 sys.stderr.flush()
         msg = f.getvalue()
@@ -643,7 +643,7 @@ class TestCommonModule(PsutilTestCase):
 
         # supposed to use repr(exc)
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(io.StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 debug(ValueError("this is an error"))
         msg = f.getvalue()
         assert "ignoring ValueError" in msg
@@ -651,7 +651,7 @@ class TestCommonModule(PsutilTestCase):
 
         # supposed to use str(exc), because of extra info about file name
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(io.StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 exc = OSError(2, "no such file")
                 exc.filename = "/foo"
                 debug(exc)

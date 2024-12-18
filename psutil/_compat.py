@@ -7,7 +7,6 @@ This is more future-compatible rather than the opposite (prefer latest
 Python 3 way of doing things).
 """
 
-import contextlib
 import sys
 
 
@@ -15,29 +14,9 @@ import sys
 __all__ = [
     # constants
     "PY3",
-    # contextlib module
-    "redirect_stderr",
 ]
 # fmt: on
 
 
 PY3 = sys.version_info[0] >= 3
 _SENTINEL = object()
-
-
-# --- stdlib additions
-
-
-# python 3.5
-try:
-    from contextlib import redirect_stderr
-except ImportError:
-
-    @contextlib.contextmanager
-    def redirect_stderr(new_target):
-        original = sys.stderr
-        try:
-            sys.stderr = new_target
-            yield new_target
-        finally:
-            sys.stderr = original

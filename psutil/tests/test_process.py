@@ -7,6 +7,7 @@
 """Tests for psutil.Process class."""
 
 import collections
+import contextlib
 import errno
 import getpass
 import io
@@ -35,7 +36,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import open_text
-from psutil._compat import redirect_stderr
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
@@ -1440,7 +1440,7 @@ class TestProcess(PsutilTestCase):
         # make sure is_running() removed PID from process_iter()
         # internal cache
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(io.StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 list(psutil.process_iter())
         assert (
             "refreshing Process instance for reused PID %s" % p.pid
