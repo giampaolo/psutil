@@ -273,10 +273,7 @@ if WINDOWS:
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif MACOS:
@@ -295,10 +292,7 @@ elif MACOS:
             '-framework',
             'IOKit',
         ],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif FREEBSD:
@@ -313,10 +307,7 @@ elif FREEBSD:
         ),
         define_macros=macros,
         libraries=["devstat"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif OPENBSD:
@@ -331,10 +322,7 @@ elif OPENBSD:
         ),
         define_macros=macros,
         libraries=["kvm"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif NETBSD:
@@ -349,10 +337,7 @@ elif NETBSD:
         ),
         define_macros=macros,
         libraries=["kvm"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif LINUX:
@@ -369,10 +354,7 @@ elif LINUX:
             + glob.glob("psutil/arch/linux/*.c")
         ),
         define_macros=macros,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif SUNOS:
@@ -387,10 +369,7 @@ elif SUNOS:
         ],
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif AIX:
@@ -406,10 +385,7 @@ elif AIX:
         ],
         libraries=['perfstat'],
         define_macros=macros,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 else:
@@ -421,10 +397,7 @@ if POSIX:
         'psutil._psutil_posix',
         define_macros=macros,
         sources=sources,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
     if SUNOS:
 
