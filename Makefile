@@ -6,13 +6,6 @@
 PYTHON = python3
 ARGS =
 
-# "python3 setup.py build" can be parallelized on Python >= 3.6.
-SETUP_BUILD_EXT_ARGS = `$(PYTHON) -c \
-	"import sys, os; \
-	py36 = sys.version_info[:2] >= (3, 6); \
-	cpus = os.cpu_count() or 1 if py36 else 1; \
-	print('--parallel %s' % cpus if cpus > 1 else '')"`
-
 # In not in a virtualenv, add --user options for install commands.
 SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
@@ -62,7 +55,7 @@ build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i $(SETUP_BUILD_EXT_ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i --parallel 4
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
