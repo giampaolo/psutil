@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -22,7 +21,6 @@ coretemp
     Core 3               54.0 °C (high = 100.0 °C, critical = 100.0 °C)
 """
 
-from __future__ import print_function
 
 import sys
 

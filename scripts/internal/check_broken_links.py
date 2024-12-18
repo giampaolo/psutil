@@ -38,7 +38,6 @@ Using [1] with some modifications for including ftp
 Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 """
 
-from __future__ import print_function
 
 import argparse
 import concurrent.futures

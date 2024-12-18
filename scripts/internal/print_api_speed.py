@@ -68,8 +68,6 @@ memory_full_info                 300      0.07066
 memory_maps                      300      0.74281
 """
 
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import inspect

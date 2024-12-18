@@ -6,7 +6,6 @@
 
 """Cross-platform lib for process and system monitoring in Python."""
 
-from __future__ import print_function
 
 import ast
 import contextlib

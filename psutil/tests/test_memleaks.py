@@ -14,7 +14,6 @@ PyPy appears to be completely unstable for this framework, probably
 because of how its JIT handles memory, so tests are skipped.
 """
 
-from __future__ import print_function
 
 import functools
 import os

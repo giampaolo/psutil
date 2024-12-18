@@ -11,7 +11,6 @@ Useful sites:
 * https://hugovk.github.io/top-pypi-packages/.
 """
 
-from __future__ import print_function
 
 import json
 import os

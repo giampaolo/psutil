@@ -38,7 +38,6 @@ rcu_b                                                                 cpuhp
 kwork
 """
 
-from __future__ import print_function
 
 import collections
 import os

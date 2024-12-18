@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -20,7 +18,6 @@ sensors) in Python. Supported platforms:
 Supported Python versions are cPython 3.6+ and PyPy.
 """
 
-from __future__ import division
 
 import collections
 import contextlib
@@ -2465,7 +2462,7 @@ def test():  # pragma: no cover
         print(line[: shutil.get_terminal_size()[0]])  # NOQA
 
 
-del memoize_when_activated, division
+del memoize_when_activated
 
 if __name__ == "__main__":
     test()

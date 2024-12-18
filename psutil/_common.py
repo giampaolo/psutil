@@ -7,8 +7,6 @@
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
 
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import enum

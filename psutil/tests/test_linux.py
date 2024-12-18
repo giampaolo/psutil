@@ -6,7 +6,6 @@
 
 """Linux specific tests."""
 
-from __future__ import division
 
 import collections
 import contextlib
