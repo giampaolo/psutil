@@ -49,7 +49,6 @@ from ._compat import FileNotFoundError
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import b
-from ._compat import basestring
 
 
 # fmt: off
@@ -197,7 +196,7 @@ pcputimes = namedtuple('pcputimes',
 
 def readlink(path):
     """Wrapper around os.readlink()."""
-    assert isinstance(path, basestring), path
+    assert isinstance(path, str), path
     path = os.readlink(path)
     # readlink() might return paths containing null bytes ('\x00')
     # resulting in "TypeError: must be encoded string without NULL
