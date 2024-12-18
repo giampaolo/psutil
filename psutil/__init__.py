@@ -89,11 +89,9 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
-from ._compat import PY3 as _PY3
 from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import SubprocessTimeoutExpired as _SubprocessTimeoutExpired
-from ._compat import long
 
 
 if LINUX:
@@ -323,9 +321,6 @@ class Process(object):  # noqa: UP004
         if pid is None:
             pid = os.getpid()
         else:
-            if not _PY3 and not isinstance(pid, (int, long)):
-                msg = "pid must be an integer (got %r)" % pid
-                raise TypeError(msg)
             if pid < 0:
                 msg = "pid must be a positive integer (got %s)" % pid
                 raise ValueError(msg)

@@ -356,10 +356,7 @@ class TestProcess(PsutilTestCase):
         # test writes
         io1 = p.io_counters()
         with open(self.get_testfn(), 'wb') as f:
-            if PY3:
-                f.write(bytes("x" * 1000000, 'ascii'))
-            else:
-                f.write("x" * 1000000)
+            f.write(bytes("x" * 1000000, 'ascii'))
         io2 = p.io_counters()
         assert io2.write_count >= io1.write_count
         assert io2.write_bytes >= io1.write_bytes

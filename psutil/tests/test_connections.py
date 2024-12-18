@@ -25,7 +25,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
-from psutil._compat import PY3
 from psutil.tests import AF_UNIX
 from psutil.tests import HAS_NET_CONNECTIONS_UNIX
 from psutil.tests import SKIP_SYSCONS
@@ -137,7 +136,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
 
         # local address
         laddr = sock.getsockname()
-        if not laddr and PY3 and isinstance(laddr, bytes):
+        if not laddr and isinstance(laddr, bytes):
             # See: http://bugs.python.org/issue30205
             laddr = laddr.decode()
         if sock.family == AF_INET6:

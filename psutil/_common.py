@@ -761,13 +761,9 @@ def open_binary(fname):
 
 
 def open_text(fname):
-    """On Python 3 opens a file in text mode by using fs encoding and
-    a proper en/decoding errors handler.
-    On Python 2 this is just an alias for open(name, 'rt').
+    """Open a file in text mode by using the proper FS encoding and
+    en/decoding error handlers.
     """
-    if not PY3:
-        return open(fname, buffering=FILE_READ_BUFFER_SIZE)
-
     # See:
     # https://github.com/giampaolo/psutil/issues/675
     # https://github.com/giampaolo/psutil/pull/733
