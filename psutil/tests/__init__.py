@@ -658,11 +658,7 @@ def get_winver():
     if not WINDOWS:
         raise NotImplementedError("not WINDOWS")
     wv = sys.getwindowsversion()
-    if hasattr(wv, 'service_pack_major'):  # python >= 2.7
-        sp = wv.service_pack_major or 0
-    else:
-        r = re.search(r"\s\d$", wv[4])
-        sp = int(r.group(0)) if r else 0
+    sp = wv.service_pack_major or 0
     return (wv[0], wv[1], sp)
 
 

@@ -17,7 +17,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Works with Python versions 2.7 and 3.6+.
+Supported Python versions are cPython 3.6+ and PyPy.
 """
 
 from __future__ import division
@@ -1637,7 +1637,7 @@ def wait_procs(procs, timeout=None, callback=None):
 
 def cpu_count(logical=True):
     """Return the number of logical CPUs in the system (same as
-    os.cpu_count() in Python 3.4).
+    os.cpu_count()).
 
     If *logical* is False return the number of physical cores only
     (e.g. hyper thread CPUs are excluded).
