@@ -438,10 +438,7 @@ def spawn_zombie():
             # this is the zombie process
             with socket.socket(socket.AF_UNIX) as s:
                 s.connect('%s')
-                if sys.version_info < (3, ):
-                    pid = str(os.getpid())
-                else:
-                    pid = bytes(str(os.getpid()), 'ascii')
+                pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
         """ % unix_file)
     tfile = None

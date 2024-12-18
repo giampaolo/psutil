@@ -176,7 +176,7 @@ def build():
     # order to allow "import psutil" when using the interactive interpreter
     # from within psutil root directory.
     cmd = [PYTHON, "setup.py", "build_ext", "-i"]
-    if sys.version_info[:2] >= (3, 6) and (os.cpu_count() or 1) > 1:
+    if os.cpu_count() or 1 > 1:  # noqa: PLR0133
         cmd += ['--parallel', str(os.cpu_count())]
     # Print coloured warnings in real time.
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
