@@ -11,6 +11,7 @@ from __future__ import print_function
 import atexit
 import contextlib
 import ctypes
+import enum
 import errno
 import functools
 import gc
@@ -72,12 +73,8 @@ except ImportError:
         warnings.simplefilter("ignore")
         import mock  # NOQA - requires "pip install mock"
 
-if PY3:
-    import enum
-else:
+if not PY3:
     import unittest2 as unittest
-
-    enum = None
 
 if POSIX:
     from psutil._psposix import wait_pid
@@ -1848,8 +1845,7 @@ def check_net_address(addr, family):
     """
     import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
 
-    if enum and PY3 and not PYPY:
-        assert isinstance(family, enum.IntEnum), family
+    assert isinstance(family, enum.IntEnum), family
     if family == socket.AF_INET:
         octs = [int(x) for x in addr.split('.')]
         assert len(octs) == 4, addr
@@ -1886,10 +1882,7 @@ def check_connection_ntuple(conn):
 
     def check_family(conn):
         assert conn.family in (AF_INET, AF_INET6, AF_UNIX), conn.family
-        if enum is not None:
-            assert isinstance(conn.family, enum.IntEnum), conn
-        else:
-            assert isinstance(conn.family, int), conn
+        assert isinstance(conn.family, enum.IntEnum), conn
         if conn.family == AF_INET:
             # actually try to bind the local socket; ignore IPv6
             # sockets as their address might be represented as
@@ -1913,10 +1906,7 @@ def check_connection_ntuple(conn):
             socket.SOCK_DGRAM,
             SOCK_SEQPACKET,
         ), conn.type
-        if enum is not None:
-            assert isinstance(conn.type, enum.IntEnum), conn
-        else:
-            assert isinstance(conn.type, int), conn
+        assert isinstance(conn.type, enum.IntEnum), conn
         if conn.type == socket.SOCK_DGRAM:
             assert conn.status == psutil.CONN_NONE, conn.status
 

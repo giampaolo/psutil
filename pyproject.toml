@@ -121,7 +121,6 @@ lines-after-imports = 2
 
 [tool.coverage.report]
 exclude_lines = [
-    "enum.IntEnum",
     "except ImportError:",
     "globals().update",
     "if BSD",
@@ -136,12 +135,8 @@ exclude_lines = [
     "if WINDOWS",
     "if _WINDOWS:",
     "if __name__ == .__main__.:",
-    "if enum is None:",
-    "if enum is not None:",
-    "if has_enums:",
     "if ppid_map is None:",
     "if sys.platform.startswith",
-    "import enum",
     "pragma: no cover",
     "raise NotImplementedError",
 ]

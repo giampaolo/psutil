@@ -8,6 +8,7 @@
 
 import contextlib
 import datetime
+import enum
 import errno
 import os
 import platform
@@ -29,7 +30,6 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil.tests import ASCII_FS
@@ -51,7 +51,6 @@ from psutil.tests import QEMU_USER
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_net_address
-from psutil.tests import enum
 from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
@@ -833,8 +832,7 @@ class TestNetAPIs(PsutilTestCase):
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
                 assert addr.family in families
-                if PY3 and not PYPY:
-                    assert isinstance(addr.family, enum.IntEnum)
+                assert isinstance(addr.family, enum.IntEnum)
                 if nic_stats[nic].isup:
                     # Do not test binding to addresses of interfaces
                     # that are down

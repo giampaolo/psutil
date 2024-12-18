@@ -12,6 +12,7 @@ from __future__ import print_function
 
 import collections
 import contextlib
+import enum
 import errno
 import functools
 import os
@@ -38,10 +39,6 @@ except ImportError:
 
 # can't take it from _common.py as this script is imported by setup.py
 PY3 = sys.version_info[0] >= 3
-if PY3:
-    import enum
-else:
-    enum = None
 
 
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
@@ -57,7 +54,7 @@ __all__ = [
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
     'CONN_NONE', 'CONN_SYN_RECV', 'CONN_SYN_SENT', 'CONN_TIME_WAIT',
     # net constants
-    'NIC_DUPLEX_FULL', 'NIC_DUPLEX_HALF', 'NIC_DUPLEX_UNKNOWN',
+    'NIC_DUPLEX_FULL', 'NIC_DUPLEX_HALF', 'NIC_DUPLEX_UNKNOWN',  # noqa: F822
     # process status constants
     'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
     'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
@@ -134,31 +131,24 @@ CONN_LISTEN = "LISTEN"
 CONN_CLOSING = "CLOSING"
 CONN_NONE = "NONE"
 
+
 # net_if_stats()
-if enum is None:
+class NicDuplex(enum.IntEnum):
     NIC_DUPLEX_FULL = 2
     NIC_DUPLEX_HALF = 1
     NIC_DUPLEX_UNKNOWN = 0
-else:
 
-    class NicDuplex(enum.IntEnum):
-        NIC_DUPLEX_FULL = 2
-        NIC_DUPLEX_HALF = 1
-        NIC_DUPLEX_UNKNOWN = 0
 
-    globals().update(NicDuplex.__members__)
+globals().update(NicDuplex.__members__)
+
 
 # sensors_battery()
-if enum is None:
+class BatteryTime(enum.IntEnum):
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2
-else:
 
-    class BatteryTime(enum.IntEnum):
-        POWER_TIME_UNKNOWN = -1
-        POWER_TIME_UNLIMITED = -2
 
-    globals().update(BatteryTime.__members__)
+globals().update(BatteryTime.__members__)
 
 # --- others
 
@@ -615,26 +605,20 @@ def sockfam_to_enum(num):
     """Convert a numeric socket family value to an IntEnum member.
     If it's not a known member, return the numeric value itself.
     """
-    if enum is None:
+    try:
+        return socket.AddressFamily(num)
+    except ValueError:
         return num
-    else:  # pragma: no cover
-        try:
-            return socket.AddressFamily(num)
-        except ValueError:
-            return num
 
 
 def socktype_to_enum(num):
     """Convert a numeric socket type value to an IntEnum member.
     If it's not a known member, return the numeric value itself.
     """
-    if enum is None:
+    try:
+        return socket.SocketKind(num)
+    except ValueError:
         return num
-    else:  # pragma: no cover
-        try:
-            return socket.SocketKind(num)
-        except ValueError:
-            return num
 
 
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):

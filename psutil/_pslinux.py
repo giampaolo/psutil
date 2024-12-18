@@ -8,6 +8,7 @@ from __future__ import division
 
 import base64
 import collections
+import enum
 import errno
 import functools
 import glob
@@ -50,12 +51,6 @@ from ._compat import PermissionError
 from ._compat import ProcessLookupError
 from ._compat import b
 from ._compat import basestring
-
-
-if PY3:
-    import enum
-else:
-    enum = None
 
 
 # fmt: off
@@ -102,29 +97,21 @@ LITTLE_ENDIAN = sys.byteorder == 'little'
 # * https://lkml.org/lkml/2015/8/17/234
 DISK_SECTOR_SIZE = 512
 
-if enum is None:
-    AF_LINK = socket.AF_PACKET
-else:
-    AddressFamily = enum.IntEnum(
-        'AddressFamily', {'AF_LINK': int(socket.AF_PACKET)}
-    )
-    AF_LINK = AddressFamily.AF_LINK
+AddressFamily = enum.IntEnum(
+    'AddressFamily', {'AF_LINK': int(socket.AF_PACKET)}
+)
+AF_LINK = AddressFamily.AF_LINK
+
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
-if enum is None:
+class IOPriority(enum.IntEnum):
     IOPRIO_CLASS_NONE = 0
     IOPRIO_CLASS_RT = 1
     IOPRIO_CLASS_BE = 2
     IOPRIO_CLASS_IDLE = 3
-else:
 
-    class IOPriority(enum.IntEnum):
-        IOPRIO_CLASS_NONE = 0
-        IOPRIO_CLASS_RT = 1
-        IOPRIO_CLASS_BE = 2
-        IOPRIO_CLASS_IDLE = 3
 
-    globals().update(IOPriority.__members__)
+globals().update(IOPriority.__members__)
 
 # See:
 # https://github.com/torvalds/linux/blame/master/fs/proc/array.c
@@ -2248,15 +2235,17 @@ class Process:
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
-            if enum is not None:
-                ioclass = IOPriority(ioclass)
+            ioclass = IOPriority(ioclass)
             return _common.pionice(ioclass, value)
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
             if value is None:
                 value = 0
-            if value and ioclass in (IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE):
+            if value and ioclass in (
+                IOPriority.IOPRIO_CLASS_IDLE,
+                IOPriority.IOPRIO_CLASS_NONE,
+            ):
                 raise ValueError("%r ioclass accepts no value" % ioclass)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"

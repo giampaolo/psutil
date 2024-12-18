@@ -4,6 +4,7 @@
 
 """Routines common to all posix systems."""
 
+import enum
 import glob
 import os
 import signal
@@ -26,12 +27,6 @@ from ._compat import unicode
 
 if MACOS:
     from . import _psutil_osx
-
-
-if PY3:
-    import enum
-else:
-    enum = None
 
 
 __all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
@@ -59,23 +54,16 @@ def pid_exists(pid):
         return True
 
 
-# Python 3.5 signals enum (contributed by me ^^):
-# https://bugs.python.org/issue21076
-if enum is not None and hasattr(signal, "Signals"):
-    Negsignal = enum.IntEnum(
-        'Negsignal', dict([(x.name, -x.value) for x in signal.Signals])
-    )
+Negsignal = enum.IntEnum(
+    'Negsignal', dict([(x.name, -x.value) for x in signal.Signals])
+)
 
-    def negsig_to_enum(num):
-        """Convert a negative signal value to an enum."""
-        try:
-            return Negsignal(num)
-        except ValueError:
-            return num
 
-else:  # pragma: no cover
-
-    def negsig_to_enum(num):
+def negsig_to_enum(num):
+    """Convert a negative signal value to an enum."""
+    try:
+        return Negsignal(num)
+    except ValueError:
         return num
 
 

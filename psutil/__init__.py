@@ -28,6 +28,7 @@ import datetime
 import functools
 import os
 import signal
+import socket
 import subprocess
 import sys
 import threading
@@ -2223,27 +2224,22 @@ def net_if_addrs():
     Note: you can have more than one address of the same family
     associated with each interface.
     """
-    has_enums = _PY3
-    if has_enums:
-        import socket
     rawlist = _psplatform.net_if_addrs()
     rawlist.sort(key=lambda x: x[1])  # sort by family
     ret = collections.defaultdict(list)
     for name, fam, addr, mask, broadcast, ptp in rawlist:
-        if has_enums:
-            try:
-                fam = socket.AddressFamily(fam)
-            except ValueError:
-                if WINDOWS and fam == -1:
-                    fam = _psplatform.AF_LINK
-                elif (
-                    hasattr(_psplatform, "AF_LINK")
-                    and fam == _psplatform.AF_LINK
-                ):
-                    # Linux defines AF_LINK as an alias for AF_PACKET.
-                    # We re-set the family here so that repr(family)
-                    # will show AF_LINK rather than AF_PACKET
-                    fam = _psplatform.AF_LINK
+        try:
+            fam = socket.AddressFamily(fam)
+        except ValueError:
+            if WINDOWS and fam == -1:
+                fam = _psplatform.AF_LINK
+            elif (
+                hasattr(_psplatform, "AF_LINK") and fam == _psplatform.AF_LINK
+            ):
+                # Linux defines AF_LINK as an alias for AF_PACKET.
+                # We re-set the family here so that repr(family)
+                # will show AF_LINK rather than AF_PACKET
+                fam = _psplatform.AF_LINK
         if fam == _psplatform.AF_LINK:
             # The underlying C function may return an incomplete MAC
             # address in which case we fill it with null bytes, see:

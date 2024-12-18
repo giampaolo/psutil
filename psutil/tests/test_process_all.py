@@ -27,7 +27,6 @@ from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil._compat import PY3
 from psutil._compat import FileNotFoundError
 from psutil._compat import long
 from psutil._compat import unicode
@@ -441,10 +440,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 if x.endswith('_PRIORITY_CLASS')
             ]
             assert ret in priorities
-            if PY3:
-                assert isinstance(ret, enum.IntEnum)
-            else:
-                assert isinstance(ret, int)
+            assert isinstance(ret, enum.IntEnum)
 
     def num_ctx_switches(self, ret, info):
         assert is_namedtuple(ret)

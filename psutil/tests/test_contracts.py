@@ -28,7 +28,6 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import PYPY
 from psutil.tests import QEMU_USER
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import PsutilTestCase
@@ -266,10 +265,7 @@ class TestSystemAPITypes(PsutilTestCase):
         for ifname, addrs in psutil.net_if_addrs().items():
             assert isinstance(ifname, str)
             for addr in addrs:
-                if enum is not None and not PYPY:
-                    assert isinstance(addr.family, enum.IntEnum)
-                else:
-                    assert isinstance(addr.family, int)
+                assert isinstance(addr.family, enum.IntEnum)
                 assert isinstance(addr.address, str)
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
@@ -280,10 +276,7 @@ class TestSystemAPITypes(PsutilTestCase):
         for ifname, info in psutil.net_if_stats().items():
             assert isinstance(ifname, str)
             assert isinstance(info.isup, bool)
-            if enum is not None:
-                assert isinstance(info.duplex, enum.IntEnum)
-            else:
-                assert isinstance(info.duplex, int)
+            assert isinstance(info.duplex, enum.IntEnum)
             assert isinstance(info.speed, int)
             assert isinstance(info.mtu, int)
 
@@ -333,7 +326,4 @@ class TestProcessWaitType(PsutilTestCase):
         p.terminate()
         code = p.wait()
         assert code == -signal.SIGTERM
-        if enum is not None:
-            assert isinstance(code, enum.IntEnum)
-        else:
-            assert isinstance(code, int)
+        assert isinstance(code, enum.IntEnum)

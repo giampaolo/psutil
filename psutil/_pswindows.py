@@ -5,6 +5,7 @@
 """Windows platform implementation."""
 
 import contextlib
+import enum
 import errno
 import functools
 import os
@@ -58,10 +59,6 @@ except ImportError as err:
     else:
         raise
 
-if PY3:
-    import enum
-else:
-    enum = None
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -88,11 +85,8 @@ CONN_DELETE_TCB = "DELETE_TCB"
 ERROR_PARTIAL_COPY = 299
 PYPY = '__pypy__' in sys.builtin_module_names
 
-if enum is None:
-    AF_LINK = -1
-else:
-    AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
-    AF_LINK = AddressFamily.AF_LINK
+AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
+AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
@@ -110,32 +104,27 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
-if enum is not None:
 
-    class Priority(enum.IntEnum):
-        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
-        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
-        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
-        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
-        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
-        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
+class Priority(enum.IntEnum):
+    ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
+    BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
+    HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
+    IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
+    NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
+    REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
-    globals().update(Priority.__members__)
 
-if enum is None:
+globals().update(Priority.__members__)
+
+
+class IOPriority(enum.IntEnum):
     IOPRIO_VERYLOW = 0
     IOPRIO_LOW = 1
     IOPRIO_NORMAL = 2
     IOPRIO_HIGH = 3
-else:
 
-    class IOPriority(enum.IntEnum):
-        IOPRIO_VERYLOW = 0
-        IOPRIO_LOW = 1
-        IOPRIO_NORMAL = 2
-        IOPRIO_HIGH = 3
 
-    globals().update(IOPriority.__members__)
+globals().update(IOPriority.__members__)
 
 pinfo_map = dict(
     num_handles=0,
@@ -1067,8 +1056,7 @@ class Process:
     @wrap_exceptions
     def nice_get(self):
         value = cext.proc_priority_get(self.pid)
-        if enum is not None:
-            value = Priority(value)
+        value = Priority(value)
         return value
 
     @wrap_exceptions
@@ -1078,8 +1066,7 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = cext.proc_io_priority_get(self.pid)
-        if enum is not None:
-            ret = IOPriority(ret)
+        ret = IOPriority(ret)
         return ret
 
     @wrap_exceptions
@@ -1087,12 +1074,12 @@ class Process:
         if value:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
-        if ioclass not in (
-            IOPRIO_VERYLOW,
-            IOPRIO_LOW,
-            IOPRIO_NORMAL,
-            IOPRIO_HIGH,
-        ):
+        if ioclass not in {
+            IOPriority.IOPRIO_VERYLOW,
+            IOPriority.IOPRIO_LOW,
+            IOPriority.IOPRIO_NORMAL,
+            IOPriority.IOPRIO_HIGH,
+        }:
             raise ValueError("%s is not a valid priority" % ioclass)
         cext.proc_io_priority_set(self.pid, ioclass)
 
