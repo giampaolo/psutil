@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage|
 |  |version| |py-versions| |packages| |license|
-|  |github-actions-wheels|  |github-actions-bsd| |appveyor| |doc| |twitter| |tidelift|
+|  |github-actions-wheels|  |github-actions-bsd| |appveyor| |doc| |twitter| |tidelift| |gurubase|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -60,6 +60,10 @@
 .. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
     :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
     :alt: Tidelift
+
+.. |gurubase| image:: https://img.shields.io/badge/Gurubase-Ask%20psutil%20Guru-006BFF
+    :target: https://gurubase.io/g/psutil
+    :alt: Gurubase
 
 -----
 
