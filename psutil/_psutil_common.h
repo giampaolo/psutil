@@ -23,14 +23,6 @@ static const int PSUTIL_CONN_NONE = 128;
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
-#if PY_MAJOR_VERSION < 3
-    // On Python 2 we just return a plain byte string, which is never
-    // supposed to raise decoding errors, see:
-    // https://github.com/giampaolo/psutil/issues/1040
-    #define PyUnicode_DecodeFSDefault          PyString_FromString
-    #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
-#endif
-
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
     #if !defined(PyErr_SetFromWindowsErrWithFilename)
         PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
