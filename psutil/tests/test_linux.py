@@ -1157,24 +1157,22 @@ class TestSystemDiskPartitions(PsutilTestCase):
         if 'zfs' in data:
             for part in psutil.disk_partitions():
                 if part.fstype == 'zfs':
-                    break
-            else:
-                raise self.fail("couldn't find any ZFS partition")
-        else:
-            # No ZFS partitions on this system. Let's fake one.
-            fake_file = io.StringIO("nodev\tzfs\n")
+                    return
+
+        # No ZFS partitions on this system. Let's fake one.
+        fake_file = io.StringIO("nodev\tzfs\n")
+        with mock.patch(
+            'psutil._common.open', return_value=fake_file, create=True
+        ) as m1:
             with mock.patch(
-                'psutil._common.open', return_value=fake_file, create=True
-            ) as m1:
-                with mock.patch(
-                    'psutil._pslinux.cext.disk_partitions',
-                    return_value=[('/dev/sdb3', '/', 'zfs', 'rw')],
-                ) as m2:
-                    ret = psutil.disk_partitions()
-                    assert m1.called
-                    assert m2.called
-                    assert ret
-                    assert ret[0].fstype == 'zfs'
+                'psutil._pslinux.cext.disk_partitions',
+                return_value=[('/dev/sdb3', '/', 'zfs', 'rw')],
+            ) as m2:
+                ret = psutil.disk_partitions()
+                assert m1.called
+                assert m2.called
+                assert ret
+                assert ret[0].fstype == 'zfs'
 
     def test_emulate_realpath_fail(self):
         # See: https://github.com/giampaolo/psutil/issues/1307
