@@ -1771,10 +1771,8 @@ class Process:
 
     @wrap_exceptions
     def name(self):
-        name = self._parse_stat_file()['name']
-        name = decode(name)
         # XXX - gets changed later and probably needs refactoring
-        return name
+        return decode(self._parse_stat_file()['name'])
 
     @wrap_exceptions
     def exe(self):
@@ -2182,10 +2180,10 @@ class Process:
         def ionice_set(self, ioclass, value):
             if value is None:
                 value = 0
-            if value and ioclass in (
+            if value and ioclass in {
                 IOPriority.IOPRIO_CLASS_IDLE,
                 IOPriority.IOPRIO_CLASS_NONE,
-            ):
+            }:
                 raise ValueError("%r ioclass accepts no value" % ioclass)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
