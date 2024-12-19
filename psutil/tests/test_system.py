@@ -963,9 +963,8 @@ class TestSensorsAPIs(PsutilTestCase):
             psutil.POWER_TIME_UNLIMITED,
         }:
             assert ret.secsleft >= 0
-        else:
-            if ret.secsleft == psutil.POWER_TIME_UNLIMITED:
-                assert ret.power_plugged
+        elif ret.secsleft == psutil.POWER_TIME_UNLIMITED:
+            assert ret.power_plugged
         assert isinstance(ret.power_plugged, bool)
 
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")

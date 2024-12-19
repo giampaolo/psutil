@@ -641,11 +641,10 @@ def cpu_count_cores():
                 except KeyError:
                     pass
                 current_info = {}
-            else:
+            elif line.startswith((b'physical id', b'cpu cores')):
                 # ongoing section
-                if line.startswith((b'physical id', b'cpu cores')):
-                    key, value = line.split(b'\t:', 1)
-                    current_info[key] = int(value)
+                key, value = line.split(b'\t:', 1)
+                current_info[key] = int(value)
 
     result = sum(mapping.values())
     return result or None  # mimic os.cpu_count()
