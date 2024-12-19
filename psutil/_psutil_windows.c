@@ -34,6 +34,10 @@
 #include "arch/windows/wmi.h"
 
 
+#define INITERROR return NULL
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -116,21 +120,15 @@ struct module_state {
     PyObject *error;
 };
 
-#if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-static struct module_state _state;
-#endif
 
-#if PY_MAJOR_VERSION >= 3
-
-static int psutil_windows_traverse(PyObject *m, visitproc visit, void *arg) {
+static int
+psutil_windows_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
 
-static int psutil_windows_clear(PyObject *m) {
+static int
+psutil_windows_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
@@ -147,21 +145,12 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-#define INITERROR return NULL
 
-PyMODINIT_FUNC PyInit__psutil_windows(void)
-
-#else
-#define INITERROR return
-void init_psutil_windows(void)
-#endif
-{
+PyMODINIT_FUNC
+PyInit__psutil_windows(void) {
     struct module_state *st = NULL;
-#if PY_MAJOR_VERSION >= 3
+
     PyObject *module = PyModule_Create(&moduledef);
-#else
-    PyObject *module = Py_InitModule("_psutil_windows", PsutilMethods);
-#endif
     if (module == NULL)
         INITERROR;
 
@@ -283,7 +272,5 @@ void init_psutil_windows(void)
     PyModule_AddIntConstant(
         module, "WINDOWS_10", PSUTIL_WINDOWS_10);
 
-#if PY_MAJOR_VERSION >= 3
     return module;
-#endif
 }
