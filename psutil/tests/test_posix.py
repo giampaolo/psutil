@@ -56,11 +56,10 @@ def ps(fmt, pid=None):
 
     if pid is not None:
         cmd.extend(['-p', str(pid)])
+    elif SUNOS or AIX:
+        cmd.append('-A')
     else:
-        if SUNOS or AIX:
-            cmd.append('-A')
-        else:
-            cmd.append('ax')
+        cmd.append('ax')
 
     if SUNOS:
         fmt = fmt.replace("start", "stime")

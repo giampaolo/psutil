@@ -218,11 +218,10 @@ def py2_strencode(s):
     """
     if PY3:
         return s
+    if isinstance(s, str):
+        return s
     else:
-        if isinstance(s, str):
-            return s
-        else:
-            return s.encode(ENCODING, ENCODING_ERRS)
+        return s.encode(ENCODING, ENCODING_ERRS)
 
 
 @memoize

@@ -671,17 +671,16 @@ class TestProcess(PsutilTestCase):
                                 data = f.read()
                             if "%s (deleted)" % nt.path not in data:
                                 raise
-                else:
+                elif '64' not in os.path.basename(nt.path):
                     # XXX - On Windows we have this strange behavior with
                     # 64 bit dlls: they are visible via explorer but cannot
                     # be accessed via os.stat() (wtf?).
-                    if '64' not in os.path.basename(nt.path):
-                        try:
-                            st = os.stat(nt.path)
-                        except FileNotFoundError:
-                            pass
-                        else:
-                            assert stat.S_ISREG(st.st_mode), nt.path
+                    try:
+                        st = os.stat(nt.path)
+                    except FileNotFoundError:
+                        pass
+                    else:
+                        assert stat.S_ISREG(st.st_mode), nt.path
         for nt in ext_maps:
             for fname in nt._fields:
                 value = getattr(nt, fname)
