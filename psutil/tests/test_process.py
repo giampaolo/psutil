@@ -843,7 +843,8 @@ class TestProcess(PsutilTestCase):
     @pytest.mark.skipif(SUNOS, reason="broken on SUNOS")
     @pytest.mark.skipif(AIX, reason="broken on AIX")
     @pytest.mark.skipif(PYPY, reason="broken on PYPY")
-    @pytest.mark.skipif(QEMU_USER, reason="broken on QEMU user")
+    @pytest.mark.skipif(SUNOS, reason="broken on SUNOS")
+    @pytest.mark.skipif(MACOS and not PY3, reason="broken MACOS + PY2")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:

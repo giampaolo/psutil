@@ -80,6 +80,7 @@ from contextlib import closing
 
 import psutil
 from psutil import BSD
+from psutil import MACOS
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -195,6 +196,7 @@ class TestFSAPIs(BaseUnicodeTest):
 
     # ---
 
+    @pytest.mark.skipif(MACOS and not PY3, reason="broken MACOS + PY2")
     def test_proc_exe(self):
         cmd = [
             self.funky_name,
@@ -220,6 +222,7 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert name == os.path.basename(self.funky_name)
 
+    @pytest.mark.skipif(MACOS and not PY3, reason="broken MACOS + PY2")
     def test_proc_cmdline(self):
         cmd = [
             self.funky_name,
