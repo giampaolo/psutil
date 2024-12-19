@@ -2637,6 +2637,17 @@ On Windows:
   set PSUTIL_DEBUG=1 python.exe script.py
   psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
 
+Python 2.7
+==========
+
+Latest version spporting Python 2.7 is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
+To install it:
+
+::
+
+    $ python2 -m pip install psutil==6.1.1
+
+The 6.1.X branch may receive critical bugfixes but no new features.
 
 Security
 ========
