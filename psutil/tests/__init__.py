@@ -246,9 +246,10 @@ SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 def _get_py_exe():
     def attempt(exe):
         exe = os.path.realpath(exe)
+        pycode = "import psutil" if GITHUB_ACTIONS else "pass"
         try:
             subprocess.check_call(
-                [exe, "-c import psutil"],
+                [exe, "-c", pycode],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
