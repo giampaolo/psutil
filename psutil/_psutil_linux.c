@@ -25,6 +25,8 @@
     #define DUPLEX_UNKNOWN 0xff
 #endif
 
+#define INITERR return NULL
+
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
 #ifdef PSUTIL_HAVE_IOPRIO
@@ -47,7 +49,6 @@ static PyMethodDef mod_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-#define INITERR return NULL
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
@@ -62,7 +63,8 @@ static struct PyModuleDef moduledef = {
 };
 
 
-PyObject *PyInit__psutil_linux(void) {
+PyObject *
+PyInit__psutil_linux(void) {
     PyObject *mod = PyModule_Create(&moduledef);
     if (mod == NULL)
         INITERR;

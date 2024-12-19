@@ -52,6 +52,9 @@
 #include "_psutil_common.h"
 
 
+#define INITERR return NULL
+
+
 // ====================================================================
 // --- Utils
 // ====================================================================
@@ -434,11 +437,7 @@ append_flag(PyObject *py_retlist, const char * flag_name)
 {
     PyObject *py_str = NULL;
 
-#if PY_MAJOR_VERSION >= 3
     py_str = PyUnicode_FromString(flag_name);
-#else
-    py_str = PyString_FromString(flag_name);
-#endif
     if (! py_str)
         return 0;
     if (PyList_Append(py_retlist, py_str)) {
@@ -883,33 +882,21 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-#if PY_MAJOR_VERSION >= 3
-    #define INITERR return NULL
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_psutil_posix",
+    NULL,
+    -1,
+    mod_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_psutil_posix",
-        NULL,
-        -1,
-        mod_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
-
-    PyObject *PyInit__psutil_posix(void)
-#else  /* PY_MAJOR_VERSION */
-    #define INITERR return
-
-    void init_psutil_posix(void)
-#endif  /* PY_MAJOR_VERSION */
-{
-#if PY_MAJOR_VERSION >= 3
+PyObject *
+PyInit__psutil_posix(void) {
     PyObject *mod = PyModule_Create(&moduledef);
-#else
-    PyObject *mod = Py_InitModule("_psutil_posix", mod_methods);
-#endif
     if (mod == NULL)
         INITERR;
 
@@ -1022,9 +1009,7 @@ static PyMethodDef mod_methods[] = {
 
     if (mod == NULL)
         INITERR;
-#if PY_MAJOR_VERSION >= 3
     return mod;
-#endif
 }
 
 #ifdef __cplusplus
