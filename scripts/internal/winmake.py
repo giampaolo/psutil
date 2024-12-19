@@ -181,8 +181,7 @@ def build():
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
         for line in iter(p.stdout.readline, b''):
-            line = line.decode()
-            line = line.strip()
+            line = line.decode().strip()
             if 'warning' in line:
                 win_colorprint(line, YELLOW)
             elif 'error' in line:

@@ -145,10 +145,7 @@ globals().update(BatteryTime.__members__)
 # --- others
 
 ENCODING = sys.getfilesystemencoding()
-try:
-    ENCODING_ERRS = sys.getfilesystemencodeerrors()  # py 3.6
-except AttributeError:
-    ENCODING_ERRS = "surrogateescape" if POSIX else "replace"
+ENCODING_ERRS = sys.getfilesystemencodeerrors()
 
 
 # ===================================================================
