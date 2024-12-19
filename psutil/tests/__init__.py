@@ -248,7 +248,9 @@ def _get_py_exe():
         exe = os.path.realpath(exe)
         try:
             subprocess.check_call(
-                [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                [exe, "-c import psutil"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError:
             return None

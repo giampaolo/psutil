@@ -41,7 +41,6 @@ from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYTHON_EXE
-from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import QEMU_USER
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
@@ -931,7 +930,6 @@ class TestScripts(PsutilTestCase):
 
     @staticmethod
     def assert_stdout(exe, *args, **kwargs):
-        kwargs.setdefault("env", PYTHON_EXE_ENV)
         exe = '%s' % os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe]
         for arg in args:
