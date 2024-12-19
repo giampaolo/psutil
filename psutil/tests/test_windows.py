@@ -883,7 +883,8 @@ class TestServices(PsutilTestCase):
 
         # test NoSuchProcess
         service = psutil.win_service_get(name)
-        exc = OSError(0, "msg", 0, winerror=ERROR_SERVICE_DOES_NOT_EXIST)
+        exc = OSError(0, "msg", 0)
+        exc.winerror = ERROR_SERVICE_DOES_NOT_EXIST
         with mock.patch(
             "psutil._psplatform.cext.winservice_query_status", side_effect=exc
         ):
@@ -896,7 +897,8 @@ class TestServices(PsutilTestCase):
                 service.username()
 
         # test AccessDenied
-        exc = OSError(0, "msg", 0, winerror=ERROR_ACCESS_DENIED)
+        exc = OSError(0, "msg", 0)
+        exc.winerror = ERROR_ACCESS_DENIED
         with mock.patch(
             "psutil._psplatform.cext.winservice_query_status", side_effect=exc
         ):
