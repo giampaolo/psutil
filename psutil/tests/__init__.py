@@ -245,6 +245,7 @@ SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 def _get_py_exe():
     def attempt(exe):
+        exe = os.path.realpath(exe)
         try:
             subprocess.check_call(
                 [exe, "-V"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -266,22 +267,21 @@ def _get_py_exe():
         # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
         # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
-        exe = base
+        exe = os.path.realpath(base)
     elif GITHUB_ACTIONS:
-        exe = sys.executable
+        exe = os.path.realpath(sys.executable)
     elif MACOS:
         exe = (
             attempt(sys.executable)
-            or attempt(os.path.realpath(sys.executable))
             or attempt(shutil.which("python%s.%s" % sys.version_info[:2]))
             or attempt(psutil.Process().exe())
         )
         if not exe:
             raise ValueError("can't find python exe real abspath")
     else:
-        exe = sys.executable
+        exe = os.path.realpath(sys.executable)
 
-    return os.path.realpath(exe), env
+    return exe, env
 
 
 PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
