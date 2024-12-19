@@ -1430,11 +1430,8 @@ class Popen(Process):
             try:
                 return object.__getattribute__(self.__subproc, name)
             except AttributeError:
-                msg = "%s instance has no attribute '%s'" % (
-                    self.__class__.__name__,
-                    name,
-                )
-                raise AttributeError(msg)
+                msg = f"{self.__class__!r} has no attribute {name!r}"
+                raise AttributeError(msg) from None
 
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
