@@ -180,7 +180,7 @@ else:
 UNICODE_SUFFIX = "-ƒőő"
 # An invalid unicode string.
 INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
-ASCII_FS = sys.getfilesystemencoding().lower() in ('ascii', 'us-ascii')
+ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
@@ -1682,11 +1682,11 @@ def get_free_port(host='127.0.0.1'):
 
 def bind_socket(family=AF_INET, type=SOCK_STREAM, addr=None):
     """Binds a generic socket."""
-    if addr is None and family in (AF_INET, AF_INET6):
+    if addr is None and family in {AF_INET, AF_INET6}:
         addr = ("", 0)
     sock = socket.socket(family, type)
     try:
-        if os.name not in ('nt', 'cygwin'):
+        if os.name not in {'nt', 'cygwin'}:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(addr)
         if type == socket.SOCK_STREAM:
@@ -1810,7 +1810,7 @@ def check_connection_ntuple(conn):
 
     def check_ntuple(conn):
         has_pid = len(conn) == 7
-        assert len(conn) in (6, 7), len(conn)
+        assert len(conn) in {6, 7}, len(conn)
         assert conn[0] == conn.fd, conn.fd
         assert conn[1] == conn.family, conn.family
         assert conn[2] == conn.type, conn.type
@@ -1821,7 +1821,7 @@ def check_connection_ntuple(conn):
             assert conn[6] == conn.pid, conn.pid
 
     def check_family(conn):
-        assert conn.family in (AF_INET, AF_INET6, AF_UNIX), conn.family
+        assert conn.family in {AF_INET, AF_INET6, AF_UNIX}, conn.family
         assert isinstance(conn.family, enum.IntEnum), conn
         if conn.family == AF_INET:
             # actually try to bind the local socket; ignore IPv6
@@ -1840,11 +1840,11 @@ def check_connection_ntuple(conn):
     def check_type(conn):
         # SOCK_SEQPACKET may happen in case of AF_UNIX socks
         SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
-        assert conn.type in (
+        assert conn.type in {
             socket.SOCK_STREAM,
             socket.SOCK_DGRAM,
             SOCK_SEQPACKET,
-        ), conn.type
+        }, conn.type
         assert isinstance(conn.type, enum.IntEnum), conn
         if conn.type == socket.SOCK_DGRAM:
             assert conn.status == psutil.CONN_NONE, conn.status
@@ -1852,7 +1852,7 @@ def check_connection_ntuple(conn):
     def check_addrs(conn):
         # check IP address and port sanity
         for addr in (conn.laddr, conn.raddr):
-            if conn.family in (AF_INET, AF_INET6):
+            if conn.family in {AF_INET, AF_INET6}:
                 assert isinstance(addr, tuple), type(addr)
                 if not addr:
                     continue
@@ -1868,7 +1868,7 @@ def check_connection_ntuple(conn):
             getattr(psutil, x) for x in dir(psutil) if x.startswith('CONN_')
         ]
         assert conn.status in valids, conn.status
-        if conn.family in (AF_INET, AF_INET6) and conn.type == SOCK_STREAM:
+        if conn.family in {AF_INET, AF_INET6} and conn.type == SOCK_STREAM:
             assert conn.status != psutil.CONN_NONE, conn.status
         else:
             assert conn.status == psutil.CONN_NONE, conn.status

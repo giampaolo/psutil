@@ -71,7 +71,6 @@ ignore = [
     "PLR1704",  # Redefining argument with the local name `type_`
     "PLR2004",  # Magic value used in comparison, consider replacing X with a constant variable
     "PLR5501",  # Use `elif` instead of `else` then `if`, to reduce indentation
-    "PLR6201",  # Use a `set` literal when testing for membership
     "PLR6301",  # Method `x` could be a function, class method, or static method
     "PLW0603",  # Using the global statement to update `lineno` is discouraged
     "PLW1514",  # `open` in text mode without explicit `encoding` argument

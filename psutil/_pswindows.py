@@ -534,10 +534,10 @@ class WindowsService:  # noqa: PLW1641
                     % self._name
                 )
                 raise AccessDenied(pid=None, name=self._name, msg=msg)
-            elif err.winerror in (
+            elif err.winerror in {
                 cext.ERROR_INVALID_NAME,
                 cext.ERROR_SERVICE_DOES_NOT_EXIST,
-            ):
+            }:
                 msg = "service %r does not exist" % self._name
                 raise NoSuchProcess(pid=None, name=self._name, msg=msg)
             else:
@@ -916,7 +916,7 @@ class Process:
 
     @wrap_exceptions
     def username(self):
-        if self.pid in (0, 4):
+        if self.pid in {0, 4}:
             return 'NT AUTHORITY\\SYSTEM'
         domain, user = cext.proc_username(self.pid)
         return f"{domain}\\{user}"
@@ -974,7 +974,7 @@ class Process:
     @wrap_exceptions
     @retry_error_partial_copy
     def cwd(self):
-        if self.pid in (0, 4):
+        if self.pid in {0, 4}:
             raise AccessDenied(self.pid, self._name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
@@ -983,7 +983,7 @@ class Process:
 
     @wrap_exceptions
     def open_files(self):
-        if self.pid in (0, 4):
+        if self.pid in {0, 4}:
             return []
         ret = set()
         # Filenames come in in native format like:

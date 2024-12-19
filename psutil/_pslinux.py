@@ -972,7 +972,7 @@ class NetConnections:
         ret = set()
         for proto_name, family, type_ in self.tmap[kind]:
             path = "%s/net/%s" % (self._procfs_path, proto_name)
-            if family in (socket.AF_INET, socket.AF_INET6):
+            if family in {socket.AF_INET, socket.AF_INET6}:
                 ls = self.process_inet(
                     path, family, type_, inodes, filter_pid=pid
                 )
@@ -1290,7 +1290,7 @@ def disk_partitions(all=False):
         device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
-        if device in ("/dev/root", "rootfs"):
+        if device in {"/dev/root", "rootfs"}:
             device = RootFsDeviceFinder().find() or device
         if not all:
             if not device or fstype not in fstypes:
@@ -1521,7 +1521,7 @@ def sensors_battery():
         status = cat(root + "/status", fallback="").strip().lower()
         if status == "discharging":
             power_plugged = False
-        elif status in ("charging", "full"):
+        elif status in {"charging", "full"}:
             power_plugged = True
 
     # Seconds left.

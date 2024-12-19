@@ -161,7 +161,7 @@ def print_header(procs_status, num_procs):
     for x, y in procs_status.items():
         if y:
             st.append("%s=%s" % (x, y))
-    st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
+    st.sort(key=lambda x: x[:3] in {'run', 'sle'}, reverse=1)
     printl(" Processes: %s (%s)" % (num_procs, ', '.join(st)))
     # load average, uptime
     uptime = datetime.datetime.now() - datetime.datetime.fromtimestamp(

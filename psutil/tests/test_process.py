@@ -676,7 +676,7 @@ class TestProcess(PsutilTestCase):
                 value = getattr(nt, fname)
                 if fname == 'path':
                     continue
-                if fname in ('addr', 'perms'):
+                if fname in {'addr', 'perms'}:
                     assert value, value
                 else:
                     assert isinstance(value, int)
@@ -907,11 +907,11 @@ class TestProcess(PsutilTestCase):
                         # even if the function succeeds. For higher
                         # priorities, we match either the expected
                         # value or the highest so far.
-                        if prio in (
+                        if prio in {
                             psutil.ABOVE_NORMAL_PRIORITY_CLASS,
                             psutil.HIGH_PRIORITY_CLASS,
                             psutil.REALTIME_PRIORITY_CLASS,
-                        ):
+                        }:
                             if new_prio == prio or highest_prio is None:
                                 highest_prio = prio
                                 assert new_prio == highest_prio
@@ -1370,12 +1370,12 @@ class TestProcess(PsutilTestCase):
             except psutil.NoSuchProcess:
                 pass
             except psutil.AccessDenied:
-                if OPENBSD and fun_name in ('threads', 'num_threads'):
+                if OPENBSD and fun_name in {'threads', 'num_threads'}:
                     return
                 raise
             else:
                 # NtQuerySystemInformation succeeds even if process is gone.
-                if WINDOWS and fun_name in ('exe', 'name'):
+                if WINDOWS and fun_name in {'exe', 'name'}:
                     return
                 raise self.fail(
                     "%r didn't raise NSP and returned %r instead" % (fun, ret)
@@ -1495,7 +1495,7 @@ class TestProcess(PsutilTestCase):
             except psutil.AccessDenied:
                 pass
             else:
-                if name in ("uids", "gids"):
+                if name in {"uids", "gids"}:
                     assert ret.real == 0
                 elif name == "username":
                     user = 'NT AUTHORITY\\SYSTEM' if WINDOWS else 'root'
