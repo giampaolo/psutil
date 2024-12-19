@@ -118,11 +118,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
-#if PY_MAJOR_VERSION >= 3
             PyObject *cpu_num = PyLong_FromLong(cpu);
-#else
-            PyObject *cpu_num = PyInt_FromLong(cpu);
-#endif
             if (cpu_num == NULL)
                 goto error;
             if (PyList_Append(py_list, cpu_num)) {
@@ -159,11 +155,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     if (!PySequence_Check(py_cpu_set)) {
         return PyErr_Format(
             PyExc_TypeError,
-#if PY_MAJOR_VERSION >= 3
             "sequence argument expected, got %R", Py_TYPE(py_cpu_set)
-#else
-            "sequence argument expected, got %s", Py_TYPE(py_cpu_set)->tp_name
-#endif
         );
     }
 
@@ -177,11 +169,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         if (!item) {
             return NULL;
         }
-#if PY_MAJOR_VERSION >= 3
         long value = PyLong_AsLong(item);
-#else
-        long value = PyInt_AsLong(item);
-#endif
         Py_XDECREF(item);
         if ((value == -1) || PyErr_Occurred()) {
             if (!PyErr_Occurred())
