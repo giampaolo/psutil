@@ -280,7 +280,7 @@ class TestProcess(PsutilTestCase):
         round_time_psutil_tstamp = datetime.datetime.fromtimestamp(
             round_time_psutil
         ).strftime("%H:%M:%S")
-        assert time_ps in [time_psutil_tstamp, round_time_psutil_tstamp]
+        assert time_ps in {time_psutil_tstamp, round_time_psutil_tstamp}
 
     def test_exe(self):
         ps_pathname = ps_name(self.pid)

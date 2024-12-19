@@ -1556,7 +1556,7 @@ class TestMisc(PsutilTestCase):
         # Make sure the C extension converts ':0' and ':0.0' to
         # 'localhost'.
         for user in psutil.users():
-            assert user.host not in (":0", ":0.0")
+            assert user.host not in {":0", ":0.0"}
 
     def test_procfs_path(self):
         tdir = self.get_testfn()

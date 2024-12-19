@@ -547,7 +547,7 @@ def isfile_strict(path):
     try:
         st = os.stat(path)
     except OSError as err:
-        if err.errno in (errno.EPERM, errno.EACCES):
+        if err.errno in {errno.EPERM, errno.EACCES}:
             raise
         return False
     else:
@@ -562,7 +562,7 @@ def path_exists_strict(path):
     try:
         os.stat(path)
     except OSError as err:
-        if err.errno in (errno.EPERM, errno.EACCES):
+        if err.errno in {errno.EPERM, errno.EACCES}:
             raise
         return False
     else:
@@ -639,12 +639,12 @@ def socktype_to_enum(num):
 
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     """Convert a raw connection tuple to a proper ntuple."""
-    if fam in (socket.AF_INET, AF_INET6):
+    if fam in {socket.AF_INET, AF_INET6}:
         if laddr:
             laddr = addr(*laddr)
         if raddr:
             raddr = addr(*raddr)
-    if type_ == socket.SOCK_STREAM and fam in (AF_INET, AF_INET6):
+    if type_ == socket.SOCK_STREAM and fam in {AF_INET, AF_INET6}:
         status = status_map.get(status, CONN_NONE)
     else:
         status = CONN_NONE  # ignore whatever C returned to us

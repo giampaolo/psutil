@@ -321,7 +321,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             value = getattr(ret, name)
             assert isinstance(value, (int, long))
             assert value >= 0
-            if LINUX or (OSX and name in ('vms', 'data')):
+            if LINUX or (OSX and name in {'vms', 'data'}):
                 # On Linux there are processes (e.g. 'goa-daemon') whose
                 # VMS is incredibly high for some reason.
                 continue
@@ -343,7 +343,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert isinstance(f.mode, str)
                 assert isinstance(f.flags, int)
                 assert f.position >= 0
-                assert f.mode in ('r', 'w', 'a', 'r+', 'a+')
+                assert f.mode in {'r', 'w', 'a', 'r+', 'a+'}
                 assert f.flags > 0
             elif BSD and not f.path:
                 # XXX see: https://github.com/giampaolo/psutil/issues/595
