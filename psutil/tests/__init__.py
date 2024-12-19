@@ -266,23 +266,22 @@ def _get_py_exe():
         # We need to set __PYVENV_LAUNCHER__ to sys.executable for the
         # base python executable to know about the environment.
         env["__PYVENV_LAUNCHER__"] = sys.executable
-        return base, env
+        exe = base
     elif GITHUB_ACTIONS:
-        return sys.executable, env
+        exe = sys.executable
     elif MACOS:
         exe = (
             attempt(sys.executable)
             or attempt(os.path.realpath(sys.executable))
-            or attempt(which("python%s.%s" % sys.version_info[:2]))
+            or attempt(shutil.which("python%s.%s" % sys.version_info[:2]))
             or attempt(psutil.Process().exe())
         )
         if not exe:
             raise ValueError("can't find python exe real abspath")
-        return exe, env
     else:
-        exe = os.path.realpath(sys.executable)
-        assert os.path.exists(exe), exe
-        return exe, env
+        exe = sys.executable
+
+    return os.path.realpath(exe), env
 
 
 PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
