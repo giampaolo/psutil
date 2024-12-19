@@ -70,11 +70,7 @@ static const int PSUTIL_CONN_NONE = 128;
 // Python 2 or PyPy on Windows
 #ifndef PyLong_FromPid
     #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
-        #if PY_MAJOR_VERSION >= 3
-            #define PyLong_FromPid PyLong_FromLong
-        #else
-            #define PyLong_FromPid PyInt_FromLong
-        #endif
+        #define PyLong_FromPid PyLong_FromLong
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
     #else
