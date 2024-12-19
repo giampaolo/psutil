@@ -958,7 +958,7 @@ class Process:
                 # <<the call would leave a thread without a valid CPU to run
                 # on because the set does not overlap with the thread's
                 # anonymous mask>>
-                if err.errno in (errno.EINVAL, errno.EDEADLK):
+                if err.errno in {errno.EINVAL, errno.EDEADLK}:
                     for cpu in cpus:
                         if cpu not in allcpus:
                             raise ValueError(

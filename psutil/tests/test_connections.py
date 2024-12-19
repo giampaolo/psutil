@@ -49,7 +49,7 @@ SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 def this_proc_net_connections(kind):
     cons = psutil.Process().net_connections(kind=kind)
-    if kind in ("all", "unix"):
+    if kind in {"all", "unix"}:
         return filter_proc_net_connections(cons)
     return cons
 
@@ -430,7 +430,7 @@ class TestFilters(ConnectionTestCase):
             cons = this_proc_net_connections(kind='tcp')
             assert len(cons) == (2 if supports_ipv6() else 1)
             for conn in cons:
-                assert conn.family in (AF_INET, AF_INET6)
+                assert conn.family in {AF_INET, AF_INET6}
                 assert conn.type == SOCK_STREAM
             # tcp4
             cons = this_proc_net_connections(kind='tcp4')
@@ -447,7 +447,7 @@ class TestFilters(ConnectionTestCase):
             cons = this_proc_net_connections(kind='udp')
             assert len(cons) == (2 if supports_ipv6() else 1)
             for conn in cons:
-                assert conn.family in (AF_INET, AF_INET6)
+                assert conn.family in {AF_INET, AF_INET6}
                 assert conn.type == SOCK_DGRAM
             # udp4
             cons = this_proc_net_connections(kind='udp4')
@@ -464,15 +464,15 @@ class TestFilters(ConnectionTestCase):
             cons = this_proc_net_connections(kind='inet')
             assert len(cons) == (4 if supports_ipv6() else 2)
             for conn in cons:
-                assert conn.family in (AF_INET, AF_INET6)
-                assert conn.type in (SOCK_STREAM, SOCK_DGRAM)
+                assert conn.family in {AF_INET, AF_INET6}
+                assert conn.type in {SOCK_STREAM, SOCK_DGRAM}
             # inet6
             if supports_ipv6():
                 cons = this_proc_net_connections(kind='inet6')
                 assert len(cons) == 2
                 for conn in cons:
                     assert conn.family == AF_INET6
-                    assert conn.type in (SOCK_STREAM, SOCK_DGRAM)
+                    assert conn.type in {SOCK_STREAM, SOCK_DGRAM}
             # Skipped on BSD becayse by default the Python process
             # creates a UNIX socket to '/var/run/log'.
             if HAS_NET_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
@@ -480,7 +480,7 @@ class TestFilters(ConnectionTestCase):
                 assert len(cons) == 3
                 for conn in cons:
                     assert conn.family == AF_UNIX
-                    assert conn.type in (SOCK_STREAM, SOCK_DGRAM)
+                    assert conn.type in {SOCK_STREAM, SOCK_DGRAM}
 
 
 @pytest.mark.skipif(SKIP_SYSCONS, reason="requires root")

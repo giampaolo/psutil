@@ -215,14 +215,14 @@ class TestMisc(PsutilTestCase):
     def test__all__(self):
         dir_psutil = dir(psutil)
         for name in dir_psutil:
-            if name in (
+            if name in {
                 'debug',
                 'long',
                 'tests',
                 'test',
                 'PermissionError',
                 'ProcessLookupError',
-            ):
+            }:
                 continue
             if not name.startswith('_'):
                 try:

@@ -706,11 +706,10 @@ def cpu_count_cores():
                 except KeyError:
                     pass
                 current_info = {}
-            else:
+            elif line.startswith((b'physical id', b'cpu cores')):
                 # ongoing section
-                if line.startswith((b'physical id', b'cpu cores')):
-                    key, value = line.split(b'\t:', 1)
-                    current_info[key] = int(value)
+                key, value = line.split(b'\t:', 1)
+                current_info[key] = int(value)
 
     result = sum(mapping.values())
     return result or None  # mimic os.cpu_count()
@@ -1040,7 +1039,7 @@ class NetConnections:
         ret = set()
         for proto_name, family, type_ in self.tmap[kind]:
             path = "%s/net/%s" % (self._procfs_path, proto_name)
-            if family in (socket.AF_INET, socket.AF_INET6):
+            if family in {socket.AF_INET, socket.AF_INET6}:
                 ls = self.process_inet(
                     path, family, type_, inodes, filter_pid=pid
                 )
@@ -1358,7 +1357,7 @@ def disk_partitions(all=False):
         device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
-        if device in ("/dev/root", "rootfs"):
+        if device in {"/dev/root", "rootfs"}:
             device = RootFsDeviceFinder().find() or device
         if not all:
             if not device or fstype not in fstypes:
@@ -1589,7 +1588,7 @@ def sensors_battery():
         status = cat(root + "/status", fallback="").strip().lower()
         if status == "discharging":
             power_plugged = False
-        elif status in ("charging", "full"):
+        elif status in {"charging", "full"}:
             power_plugged = True
 
     # Seconds left.
@@ -2256,7 +2255,7 @@ class Process:
         def ionice_set(self, ioclass, value):
             if value is None:
                 value = 0
-            if value and ioclass in (IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE):
+            if value and ioclass in {IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE}:
                 raise ValueError("%r ioclass accepts no value" % ioclass)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"

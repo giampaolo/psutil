@@ -589,7 +589,7 @@ class TestCpuAPIs(PsutilTestCase):
             value = getattr(infos, name)
             assert value >= 0
             # on AIX, ctx_switches is always 0
-            if not AIX and name in ('ctx_switches', 'interrupts'):
+            if not AIX and name in {'ctx_switches', 'interrupts'}:
                 assert value > 0
 
     # TODO: remove this once 1892 is fixed
@@ -703,7 +703,7 @@ class TestDiskAPIs(PsutilTestCase):
                         continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
-                    if err.errno not in (errno.EPERM, errno.EACCES):
+                    if err.errno not in {errno.EPERM, errno.EACCES}:
                         raise
                 else:
                     assert os.path.exists(disk.mountpoint), disk
@@ -965,14 +965,13 @@ class TestSensorsAPIs(PsutilTestCase):
         ret = psutil.sensors_battery()
         assert ret.percent >= 0
         assert ret.percent <= 100
-        if ret.secsleft not in (
+        if ret.secsleft not in {
             psutil.POWER_TIME_UNKNOWN,
             psutil.POWER_TIME_UNLIMITED,
-        ):
+        }:
             assert ret.secsleft >= 0
-        else:
-            if ret.secsleft == psutil.POWER_TIME_UNLIMITED:
-                assert ret.power_plugged
+        elif ret.secsleft == psutil.POWER_TIME_UNLIMITED:
+            assert ret.power_plugged
         assert isinstance(ret.power_plugged, bool)
 
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")

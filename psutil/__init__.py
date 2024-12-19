@@ -214,7 +214,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "6.1.0"
+__version__ = "6.1.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -414,7 +414,7 @@ class Process(object):  # noqa: UP004
                 except AccessDenied:
                     pass
 
-            if self._exitcode not in (_SENTINEL, None):
+            if self._exitcode not in {_SENTINEL, None}:
                 info["exitcode"] = self._exitcode
             if self._create_time is not None:
                 info['started'] = _pprint_secs(self._create_time)

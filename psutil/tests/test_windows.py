@@ -401,7 +401,7 @@ class TestProcess(WindowsTestCase):
             rss, _vms = p.memory_info()[:2]
         except psutil.AccessDenied:
             # expected on Windows Vista and Windows 7
-            if platform.uname()[1] not in ('vista', 'win-7', 'win7'):
+            if platform.uname()[1] not in {'vista', 'win-7', 'win7'}:
                 raise
         else:
             assert rss > 0
@@ -637,7 +637,7 @@ class TestProcessWMI(WindowsTestCase):
         # bytes but funnily enough on certain platforms bytes are
         # returned instead.
         wmi_usage = int(w.PageFileUsage)
-        if vms not in (wmi_usage, wmi_usage * 1024):
+        if vms not in {wmi_usage, wmi_usage * 1024}:
             raise self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
     def test_create_time(self):

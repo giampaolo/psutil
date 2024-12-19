@@ -218,11 +218,10 @@ def py2_strencode(s):
     """
     if PY3:
         return s
+    if isinstance(s, str):
+        return s
     else:
-        if isinstance(s, str):
-            return s
-        else:
-            return s.encode(ENCODING, ENCODING_ERRS)
+        return s.encode(ENCODING, ENCODING_ERRS)
 
 
 @memoize
@@ -575,10 +574,10 @@ class WindowsService:  # noqa: PLW1641
                     % self._name
                 )
                 raise AccessDenied(pid=None, name=self._name, msg=msg)
-            elif err.winerror in (
+            elif err.winerror in {
                 cext.ERROR_INVALID_NAME,
                 cext.ERROR_SERVICE_DOES_NOT_EXIST,
-            ):
+            }:
                 msg = "service %r does not exist" % self._name
                 raise NoSuchProcess(pid=None, name=self._name, msg=msg)
             else:
@@ -697,15 +696,15 @@ ppid_map = cext.ppid_map  # used internally by Process.children()
 def is_permission_err(exc):
     """Return True if this is a permission error."""
     assert isinstance(exc, OSError), exc
-    if exc.errno in (errno.EPERM, errno.EACCES):
+    if exc.errno in {errno.EPERM, errno.EACCES}:
         return True
     # On Python 2 OSError doesn't always have 'winerror'. Sometimes
     # it does, in which case the original exception was WindowsError
     # (which is a subclass of OSError).
-    return getattr(exc, "winerror", -1) in (
+    return getattr(exc, "winerror", -1) in {
         cext.ERROR_ACCESS_DENIED,
         cext.ERROR_PRIVILEGE_NOT_HELD,
-    )
+    }
 
 
 def convert_oserror(exc, pid=None, name=None):
@@ -919,10 +918,10 @@ class Process:
         if sig == signal.SIGTERM:
             cext.proc_kill(self.pid)
         # py >= 2.7
-        elif sig in (
+        elif sig in {
             getattr(signal, "CTRL_C_EVENT", object()),
             getattr(signal, "CTRL_BREAK_EVENT", object()),
-        ):
+        }:
             os.kill(self.pid, sig)
         else:
             msg = (
@@ -976,7 +975,7 @@ class Process:
 
     @wrap_exceptions
     def username(self):
-        if self.pid in (0, 4):
+        if self.pid in {0, 4}:
             return 'NT AUTHORITY\\SYSTEM'
         domain, user = cext.proc_username(self.pid)
         return py2_strencode(domain) + '\\' + py2_strencode(user)
@@ -1034,7 +1033,7 @@ class Process:
     @wrap_exceptions
     @retry_error_partial_copy
     def cwd(self):
-        if self.pid in (0, 4):
+        if self.pid in {0, 4}:
             raise AccessDenied(self.pid, self._name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
@@ -1043,7 +1042,7 @@ class Process:
 
     @wrap_exceptions
     def open_files(self):
-        if self.pid in (0, 4):
+        if self.pid in {0, 4}:
             return []
         ret = set()
         # Filenames come in in native format like:
@@ -1087,12 +1086,12 @@ class Process:
         if value:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
-        if ioclass not in (
+        if ioclass not in {
             IOPRIO_VERYLOW,
             IOPRIO_LOW,
             IOPRIO_NORMAL,
             IOPRIO_HIGH,
-        ):
+        }:
             raise ValueError("%s is not a valid priority" % ioclass)
         cext.proc_io_priority_set(self.pid, ioclass)
 

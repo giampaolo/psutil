@@ -180,7 +180,7 @@ else:
 
     @_instance_checking_exception(EnvironmentError)
     def PermissionError(inst):
-        return getattr(inst, 'errno', _SENTINEL) in (errno.EACCES, errno.EPERM)
+        return getattr(inst, 'errno', _SENTINEL) in {errno.EACCES, errno.EPERM}
 
     @_instance_checking_exception(EnvironmentError)
     def InterruptedError(inst):
