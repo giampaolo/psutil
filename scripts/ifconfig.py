@@ -66,7 +66,7 @@ def main():
     stats = psutil.net_if_stats()
     io_counters = psutil.net_io_counters(pernic=True)
     for nic, addrs in psutil.net_if_addrs().items():
-        print("%s:" % (nic))
+        print(f"{nic}:")
         if nic in stats:
             st = stats[nic]
             print("    stats          : ", end='')
@@ -103,13 +103,13 @@ def main():
             )
         for addr in addrs:
             print("    %-4s" % af_map.get(addr.family, addr.family), end="")
-            print(" address   : %s" % addr.address)
+            print(f" address   : {addr.address}")
             if addr.broadcast:
-                print("         broadcast : %s" % addr.broadcast)
+                print(f"         broadcast : {addr.broadcast}")
             if addr.netmask:
-                print("         netmask   : %s" % addr.netmask)
+                print(f"         netmask   : {addr.netmask}")
             if addr.ptp:
-                print("      p2p       : %s" % addr.ptp)
+                print(f"      p2p       : {addr.ptp}")
         print()
 
 

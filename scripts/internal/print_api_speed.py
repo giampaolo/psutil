@@ -95,7 +95,7 @@ def print_timings():
     i = 0
     while timings[:]:
         title, times, elapsed = timings.pop(0)
-        s = templ % (title, str(times), "%.5f" % elapsed)
+        s = templ % (title, str(times), f"{elapsed:.5f}")
         if i > len(timings) - 5:
             print_color(s, color="red")
         else:

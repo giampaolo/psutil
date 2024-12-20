@@ -96,7 +96,7 @@ def win_colorprint(s, color=LIGHTBLUE):
 def sh(cmd, nolog=False):
     assert isinstance(cmd, list), repr(cmd)
     if not nolog:
-        safe_print("cmd: %s" % cmd)
+        safe_print(f"cmd: {cmd}")
     p = subprocess.Popen(cmd, env=os.environ, universal_newlines=True)
     p.communicate()  # print stdout/stderr in real time
     if p.returncode != 0:
@@ -120,10 +120,10 @@ def rm(pattern, directory=False):
         for name in found:
             path = os.path.join(root, name)
             if directory:
-                safe_print("rmdir -f %s" % path)
+                safe_print(f"rmdir -f {path}")
                 safe_rmtree(path)
             else:
-                safe_print("rm %s" % path)
+                safe_print(f"rm {path}")
                 safe_remove(path)
 
 
@@ -134,14 +134,14 @@ def safe_remove(path):
         if err.errno != errno.ENOENT:
             raise
     else:
-        safe_print("rm %s" % path)
+        safe_print(f"rm {path}")
 
 
 def safe_rmtree(path):
     existed = os.path.isdir(path)
     shutil.rmtree(path, ignore_errors=True)
     if existed and not os.path.isdir(path):
-        safe_print("rmdir -f %s" % path)
+        safe_print(f"rmdir -f {path}")
 
 
 def recursive_rm(*patterns):
@@ -268,7 +268,7 @@ def uninstall():
                             if 'psutil' not in line:
                                 f.write(line)
                             else:
-                                print("removed line %r from %r" % (line, path))
+                                print(f"removed line {line!r} from {path!r}")
 
 
 def clean():
@@ -531,7 +531,7 @@ def main():
     PYTHON = get_python(args.python)
     if not PYTHON:
         return sys.exit(
-            "can't find any python installation matching %r" % args.python
+            f"can't find any python installation matching {args.python!r}"
         )
     os.putenv('PYTHON', PYTHON)
     win_colorprint("using " + PYTHON)

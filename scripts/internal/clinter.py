@@ -17,7 +17,7 @@ warned = False
 def warn(path, line, lineno, msg):
     global warned
     warned = True
-    print("%s:%s: %s" % (path, lineno, msg), file=sys.stderr)
+    print(f"{path}:{lineno}: {msg}", file=sys.stderr)
 
 
 def check_line(path, line, idx, lines):
@@ -49,7 +49,7 @@ def check_line(path, line, idx, lines):
     keywords = ("if", "else", "while", "do", "enum", "for")
     for kw in keywords:
         if sls.startswith(kw + '('):
-            warn(path, line, lineno, "missing space between %r and '('" % kw)
+            warn(path, line, lineno, f"missing space between {kw!r} and '('")
     # eof
     if eof and not line.endswith('\n'):
         warn(path, line, lineno, "no blank line at EOF")

@@ -142,7 +142,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                         info,
                     )
                     s += '-' * 70
-                    s += "\n%s" % traceback.format_exc()
+                    s += f"\n{traceback.format_exc()}"
                     s = "\n".join((" " * 4) + i for i in s.splitlines()) + "\n"
                     failures.append(s)
                 else:
@@ -484,7 +484,7 @@ class TestPidsRange(PsutilTestCase):
     def test_it(self):
         def is_linux_tid(pid):
             try:
-                f = open("/proc/%s/status" % pid, "rb")
+                f = open(f"/proc/{pid}/status", "rb")
             except FileNotFoundError:
                 return False
             else:

@@ -151,7 +151,7 @@ def wait_pid(
             #     continue
             else:
                 # Should never happen.
-                raise ValueError("unknown process exit status %r" % status)
+                raise ValueError(f"unknown process exit status {status!r}")
 
 
 def disk_usage(path):

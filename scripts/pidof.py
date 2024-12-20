@@ -32,7 +32,7 @@ def pidof(pgname):
 
 def main():
     if len(sys.argv) != 2:
-        sys.exit('usage: %s pgname' % __file__)
+        sys.exit(f'usage: {__file__} pgname')
     else:
         pgname = sys.argv[1]
     pids = pidof(pgname)

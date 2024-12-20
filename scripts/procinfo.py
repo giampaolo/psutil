@@ -130,10 +130,10 @@ def str_ntuple(nt, convert_bytes=False):
     if nt == ACCESS_DENIED:
         return ""
     if not convert_bytes:
-        return ", ".join(["%s=%s" % (x, getattr(nt, x)) for x in nt._fields])
+        return ", ".join([f"{x}={getattr(nt, x)}" for x in nt._fields])
     else:
         return ", ".join(
-            ["%s=%s" % (x, bytes2human(getattr(nt, x))) for x in nt._fields]
+            [f"{x}={bytes2human(getattr(nt, x))}" for x in nt._fields]
         )
 
 
@@ -148,7 +148,7 @@ def run(pid, verbose=False):
     with proc.oneshot():
         try:
             parent = proc.parent()
-            parent = '(%s)' % parent.name() if parent else ''
+            parent = f'({parent.name()})' if parent else ''
         except psutil.Error:
             parent = ''
         try:
@@ -165,7 +165,7 @@ def run(pid, verbose=False):
     # here we go
     print_('pid', pinfo['pid'])
     print_('name', pinfo['name'])
-    print_('parent', '%s %s' % (pinfo['ppid'], parent))
+    print_('parent', f"{pinfo['ppid']} {parent}")
     print_('exe', pinfo['exe'])
     print_('cwd', pinfo['cwd'])
     print_('cmdline', ' '.join(pinfo['cmdline']))
@@ -207,7 +207,7 @@ def run(pid, verbose=False):
             else:
                 print_(
                     "ionice",
-                    "class=%s, value=%s" % (str(ionice.ioclass), ionice.value),
+                    f"class={str(ionice.ioclass)}, value={ionice.value}",
                 )
 
     print_('num-threads', pinfo['num_threads'])
@@ -261,8 +261,8 @@ def run(pid, verbose=False):
                 rip, rport = conn.raddr
             line = template % (
                 type,
-                "%s:%s" % (lip, lport),
-                "%s:%s" % (rip, rport),
+                f"{lip}:{lport}",
+                f"{rip}:{rport}",
                 conn.status,
             )
             print_('', line)
@@ -277,7 +277,7 @@ def run(pid, verbose=False):
                 print_("", "[...]")
                 break
             print_('', template % thread)
-        print_('', "total=%s" % len(pinfo['threads']))
+        print_('', f"total={len(pinfo['threads'])}")
     else:
         print_('threads', '')
 

@@ -334,11 +334,10 @@ class TestMemoryAPIs(PsutilTestCase):
                 assert isinstance(value, int)
             if name != 'total':
                 if not value >= 0:
-                    raise self.fail("%r < 0 (%s)" % (name, value))
+                    raise self.fail(f"{name!r} < 0 ({value})")
                 if value > mem.total:
                     raise self.fail(
-                        "%r > total (total=%s, %s=%s)"
-                        % (name, mem.total, name, value)
+                        f"{name!r} > total (total={mem.total}, {name}={value})"
                     )
 
     def test_swap_memory(self):

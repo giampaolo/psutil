@@ -136,7 +136,7 @@ elif AIX:
     PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
-    raise NotImplementedError('platform %s is not supported' % sys.platform)
+    raise NotImplementedError(f'platform {sys.platform} is not supported')
 
 
 # fmt: off
@@ -224,7 +224,7 @@ _SENTINEL = object()
 if int(__version__.replace('.', '')) != getattr(
     _psplatform.cext, 'version', None
 ):
-    msg = "version conflict: %r C extension " % _psplatform.cext.__file__
+    msg = f"version conflict: {_psplatform.cext.__file__!r} C extension "
     msg += "module was built for another version of psutil"
     if hasattr(_psplatform.cext, 'version'):
         msg += " (%s instead of %s)" % (
@@ -232,7 +232,7 @@ if int(__version__.replace('.', '')) != getattr(
             __version__,
         )
     else:
-        msg += " (different than %s)" % __version__
+        msg += f" (different than {__version__})"
     msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
         getattr(
             _psplatform.cext,
@@ -316,12 +316,12 @@ class Process:
             pid = os.getpid()
         else:
             if pid < 0:
-                msg = "pid must be a positive integer (got %s)" % pid
+                msg = f"pid must be a positive integer (got {pid})"
                 raise ValueError(msg)
             try:
                 _psplatform.cext.check_pid_range(pid)
             except OverflowError:
-                msg = "process PID out of range (got %s)" % pid
+                msg = f"process PID out of range (got {pid})"
                 raise NoSuchProcess(pid, msg=msg)
 
         self._pid = pid
@@ -546,7 +546,7 @@ class Process:
         valid_names = _as_dict_attrnames
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
-                msg = "invalid attrs type %s" % type(attrs)
+                msg = f"invalid attrs type {type(attrs)}"
                 raise TypeError(msg)
             attrs = set(attrs)
             invalid_names = attrs - valid_names
@@ -1039,7 +1039,7 @@ class Process:
         """
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
-            msg = "interval is not positive (got %r)" % interval
+            msg = f"interval is not positive (got {interval!r})"
             raise ValueError(msg)
         num_cpus = cpu_count() or 1
 
@@ -1149,9 +1149,9 @@ class Process:
         """
         valid_types = list(_psplatform.pfullmem._fields)
         if memtype not in valid_types:
-            msg = "invalid memtype %r; valid types are %r" % (
-                memtype,
-                tuple(valid_types),
+            msg = (
+                f"invalid memtype {memtype!r}; valid types are"
+                f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
         fun = (
@@ -1430,9 +1430,9 @@ class Popen(Process):
             try:
                 return object.__getattribute__(self.__subproc, name)
             except AttributeError:
-                msg = "%s instance has no attribute '%s'" % (
-                    self.__class__.__name__,
-                    name,
+                msg = (
+                    f"{self.__class__.__name__} instance has no attribute"
+                    f" '{name}'"
                 )
                 raise AttributeError(msg)
 
@@ -1516,7 +1516,7 @@ def process_iter(attrs=None, ad_value=None):
         remove(pid)
     while _pids_reused:
         pid = _pids_reused.pop()
-        debug("refreshing Process instance for reused PID %s" % pid)
+        debug(f"refreshing Process instance for reused PID {pid}")
         remove(pid)
     try:
         ls = sorted(list(pmap.items()) + list(dict.fromkeys(new_pids).items()))
@@ -1588,12 +1588,12 @@ def wait_procs(procs, timeout=None, callback=None):
                     callback(proc)
 
     if timeout is not None and not timeout >= 0:
-        msg = "timeout must be a positive integer, got %s" % timeout
+        msg = f"timeout must be a positive integer, got {timeout}"
         raise ValueError(msg)
     gone = set()
     alive = set(procs)
     if callback is not None and not callable(callback):
-        msg = "callback %r is not a callable" % callback
+        msg = f"callback {callback!r} is not a callable"
         raise TypeError(msg)
     if timeout is not None:
         deadline = _timer() + timeout
@@ -1793,7 +1793,7 @@ def cpu_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        msg = "interval is not positive (got %r)" % interval
+        msg = f"interval is not positive (got {interval!r})"
         raise ValueError(msg)
 
     def calculate(t1, t2):
@@ -1853,7 +1853,7 @@ def cpu_times_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        msg = "interval is not positive (got %r)" % interval
+        msg = f"interval is not positive (got {interval!r})"
         raise ValueError(msg)
 
     def calculate(t1, t2):
@@ -2234,7 +2234,7 @@ def net_if_addrs():
             # https://github.com/giampaolo/psutil/issues/786
             separator = ":" if POSIX else "-"
             while addr.count(separator) < 5:
-                addr += "%s00" % separator
+                addr += f"{separator}00"
         ret[name].append(_common.snicaddr(fam, addr, mask, broadcast, ptp))
     return dict(ret)
 

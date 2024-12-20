@@ -34,7 +34,7 @@ import psutil
 def secs2hours(secs):
     mm, ss = divmod(secs, 60)
     hh, mm = divmod(mm, 60)
-    return "%d:%02d:%02d" % (hh, mm, ss)
+    return f"{int(hh)}:{int(mm):02}:{int(ss):02}"
 
 
 def main():
@@ -78,7 +78,7 @@ def main():
     # Battery.
     if battery:
         print("Battery:")
-        print("    charge:     %s%%" % round(battery.percent, 2))
+        print(f"    charge:     {round(battery.percent, 2)}%")
         if battery.power_plugged:
             print(
                 "    status:     %s"
@@ -86,8 +86,8 @@ def main():
             )
             print("    plugged in: yes")
         else:
-            print("    left:       %s" % secs2hours(battery.secsleft))
-            print("    status:     %s" % "discharging")
+            print(f"    left:       {secs2hours(battery.secsleft)}")
+            print("    status:     discharging")
             print("    plugged in: no")
 
 

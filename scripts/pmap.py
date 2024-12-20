@@ -61,7 +61,7 @@ def main():
         safe_print(line)
     print("-" * 31)
     print(templ % ("Total", bytes2human(total_rss), '', ''))
-    safe_print("PID = %s, name = %s" % (p.pid, p.name()))
+    safe_print(f"PID = {p.pid}, name = {p.name()}")
 
 
 if __name__ == '__main__':

@@ -66,8 +66,8 @@ class TestSpecialMethods(PsutilTestCase):
         p = psutil.Process(self.spawn_testproc().pid)
         r = func(p)
         assert "psutil.Process" in r
-        assert "pid=%s" % p.pid in r
-        assert "name='%s'" % str(p.name()) in r.replace("name=u'", "name='")
+        assert f"pid={p.pid}" in r
+        assert f"name='{str(p.name())}'" in r.replace("name=u'", "name='")
         assert "status=" in r
         assert "exitcode=" not in r
         p.terminate()
@@ -83,7 +83,7 @@ class TestSpecialMethods(PsutilTestCase):
         ):
             p = psutil.Process()
             r = func(p)
-            assert "pid=%s" % p.pid in r
+            assert f"pid={p.pid}" in r
             assert "status='zombie'" in r
             assert "name=" not in r
         with mock.patch.object(
@@ -93,7 +93,7 @@ class TestSpecialMethods(PsutilTestCase):
         ):
             p = psutil.Process()
             r = func(p)
-            assert "pid=%s" % p.pid in r
+            assert f"pid={p.pid}" in r
             assert "terminated" in r
             assert "name=" not in r
         with mock.patch.object(
@@ -103,7 +103,7 @@ class TestSpecialMethods(PsutilTestCase):
         ):
             p = psutil.Process()
             r = func(p)
-            assert "pid=%s" % p.pid in r
+            assert f"pid={p.pid}" in r
             assert "name=" not in r
 
     def test_process__str__(self):
@@ -232,7 +232,7 @@ class TestMisc(PsutilTestCase):
                             fun.__doc__ is not None
                             and 'deprecated' not in fun.__doc__.lower()
                         ):
-                            raise self.fail('%r not in psutil.__all__' % name)
+                            raise self.fail(f'{name!r} not in psutil.__all__')
 
         # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
@@ -912,7 +912,7 @@ class TestScripts(PsutilTestCase):
     @staticmethod
     def assert_stdout(exe, *args, **kwargs):
         kwargs.setdefault("env", PYTHON_EXE_ENV)
-        exe = '%s' % os.path.join(SCRIPTS_DIR, exe)
+        exe = f'{os.path.join(SCRIPTS_DIR, exe)}'
         cmd = [PYTHON_EXE, exe]
         for arg in args:
             cmd.append(arg)
@@ -952,7 +952,7 @@ class TestScripts(PsutilTestCase):
                 if file.endswith('.py'):
                     path = os.path.join(root, file)
                     if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
-                        raise self.fail('%r is not executable' % path)
+                        raise self.fail(f'{path!r} is not executable')
 
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')

@@ -31,7 +31,7 @@ def main():
         else None
     )
     with tempfile.NamedTemporaryFile(suffix=".py") as f:
-        print("downloading %s into %s" % (URL, f.name))
+        print(f"downloading {URL} into {f.name}")
         kwargs = dict(context=ssl_context) if ssl_context else {}
         req = urlopen(URL, **kwargs)
         data = req.read()
@@ -41,7 +41,7 @@ def main():
         f.flush()
         print("download finished, installing pip")
 
-        code = os.system("%s %s --user --upgrade" % (sys.executable, f.name))
+        code = os.system(f"{sys.executable} {f.name} --user --upgrade")
 
     sys.exit(code)
 

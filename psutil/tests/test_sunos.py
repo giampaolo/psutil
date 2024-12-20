@@ -18,7 +18,7 @@ from psutil.tests import sh
 @pytest.mark.skipif(not SUNOS, reason="SUNOS only")
 class SunOSSpecificTestCase(PsutilTestCase):
     def test_swap_memory(self):
-        out = sh('env PATH=/usr/sbin:/sbin:%s swap -l' % os.environ['PATH'])
+        out = sh(f"env PATH=/usr/sbin:/sbin:{os.environ['PATH']} swap -l")
         lines = out.strip().split('\n')[1:]
         if not lines:
             raise ValueError('no swap device(s) configured')

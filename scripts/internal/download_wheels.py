@@ -34,10 +34,10 @@ TIMEOUT = 30
 
 
 def get_artifacts():
-    base_url = "https://api.github.com/repos/%s/%s" % (USER, PROJECT)
+    base_url = f"https://api.github.com/repos/{USER}/{PROJECT}"
     url = base_url + "/actions/artifacts"
     res = requests.get(
-        url=url, headers={"Authorization": "token %s" % TOKEN}, timeout=TIMEOUT
+        url=url, headers={"Authorization": f"token {TOKEN}"}, timeout=TIMEOUT
     )
     res.raise_for_status()
     data = json.loads(res.content)
@@ -47,7 +47,7 @@ def get_artifacts():
 def download_zip(url):
     print("downloading: " + url)
     res = requests.get(
-        url=url, headers={"Authorization": "token %s" % TOKEN}, timeout=TIMEOUT
+        url=url, headers={"Authorization": f"token {TOKEN}"}, timeout=TIMEOUT
     )
     res.raise_for_status()
     totbytes = 0
@@ -55,7 +55,7 @@ def download_zip(url):
         for chunk in res.iter_content(chunk_size=16384):
             f.write(chunk)
             totbytes += len(chunk)
-    print("got %s, size %s)" % (OUTFILE, bytes2human(totbytes)))
+    print(f"got {OUTFILE}, size {bytes2human(totbytes)})")
 
 
 def run():

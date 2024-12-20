@@ -491,7 +491,7 @@ if FREEBSD:
                 current, high = cext.sensors_cpu_temperature(cpu)
                 if high <= 0:
                     high = None
-                name = "Core %s" % cpu
+                name = f"Core {cpu}"
                 ret["coretemp"].append(
                     _common.shwtemp(name, current, high, high)
                 )
@@ -679,7 +679,7 @@ class Process:
                 # /proc/0 dir exists but /proc/0/exe doesn't
                 return ""
             with wrap_exceptions_procfs(self):
-                return os.readlink("/proc/%s/exe" % self.pid)
+                return os.readlink(f"/proc/{self.pid}/exe")
         else:
             # OpenBSD: exe cannot be determined; references:
             # https://chromium.googlesource.com/chromium/src/base/+/
@@ -714,7 +714,7 @@ class Process:
                     else:
                         # XXX: this happens with unicode tests. It means the C
                         # routine is unable to decode invalid unicode chars.
-                        debug("ignoring %r and returning an empty list" % err)
+                        debug(f"ignoring {err!r} and returning an empty list")
                         return []
                 else:
                     raise
@@ -947,7 +947,7 @@ class Process:
             for cpu in cpus:
                 if cpu not in allcpus:
                     raise ValueError(
-                        "invalid CPU #%i (choose between %s)" % (cpu, allcpus)
+                        f"invalid CPU #{int(cpu)} (choose between {allcpus})"
                     )
             try:
                 cext.proc_cpu_affinity_set(self.pid, cpus)
@@ -960,8 +960,8 @@ class Process:
                     for cpu in cpus:
                         if cpu not in allcpus:
                             raise ValueError(
-                                "invalid CPU #%i (choose between %s)"
-                                % (cpu, allcpus)
+                                f"invalid CPU #{int(cpu)} (choose between"
+                                f" {allcpus})"
                             )
                 raise
 

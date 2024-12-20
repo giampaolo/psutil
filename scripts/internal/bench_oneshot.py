@@ -136,19 +136,19 @@ def main():
     elapsed1 = timeit.timeit(
         "call_normal(funs)", setup=setup, number=ITERATIONS
     )
-    print("normal:  %.3f secs" % elapsed1)
+    print(f"normal:  {elapsed1:.3f} secs")
 
     # "one shot" run
     elapsed2 = timeit.timeit(
         "call_oneshot(funs)", setup=setup, number=ITERATIONS
     )
-    print("onshot:  %.3f secs" % elapsed2)
+    print(f"onshot:  {elapsed2:.3f} secs")
 
     # done
     if elapsed2 < elapsed1:
-        print("speedup: +%.2fx" % (elapsed1 / elapsed2))
+        print(f"speedup: +{elapsed1 / elapsed2:.2f}x")
     elif elapsed2 > elapsed1:
-        print("slowdown: -%.2fx" % (elapsed2 / elapsed1))
+        print(f"slowdown: -{elapsed2 / elapsed1:.2f}x")
     else:
         print("same speed")
 

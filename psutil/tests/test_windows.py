@@ -66,7 +66,7 @@ def powershell(cmd):
         raise pytest.skip("powershell.exe not available")
     cmdline = (
         'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive '
-        + '-NoProfile -WindowStyle Hidden -Command "%s"' % cmd
+        + f'-NoProfile -WindowStyle Hidden -Command "{cmd}"'
     )
     return sh(cmdline)
 
@@ -77,7 +77,7 @@ def wmic(path, what, converter=int):
     >>> wmic("Win32_OperatingSystem", "FreePhysicalMemory")
     2134124534
     """
-    out = sh("wmic path %s get %s" % (path, what)).strip()
+    out = sh(f"wmic path {path} get {what}").strip()
     data = "".join(out.splitlines()[1:]).strip()  # get rid of the header
     if converter is not None:
         if "," in what:
@@ -142,7 +142,7 @@ class TestSystemAPIs(WindowsTestCase):
                 continue
             if nic not in out:
                 raise self.fail(
-                    "%r nic wasn't found in 'ipconfig /all' output" % nic
+                    f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
 
     def test_total_phymem(self):
@@ -222,12 +222,10 @@ class TestSystemAPIs(WindowsTestCase):
                     assert usage.free == wmi_free
                     # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
-                        raise self.fail(
-                            "psutil=%s, wmi=%s" % (usage.free, wmi_free)
-                        )
+                        raise self.fail(f"psutil={usage.free}, wmi={wmi_free}")
                     break
             else:
-                raise self.fail("can't find partition %s" % repr(ps_part))
+                raise self.fail(f"can't find partition {repr(ps_part)}")
 
     @retry_on_failure()
     def test_disk_usage(self):
@@ -262,10 +260,9 @@ class TestSystemAPIs(WindowsTestCase):
         for wmi_adapter in wmi_adapters:
             wmi_names.add(wmi_adapter.Name)
             wmi_names.add(wmi_adapter.NetConnectionID)
-        assert ps_names & wmi_names, "no common entries in %s, %s" % (
-            ps_names,
-            wmi_names,
-        )
+        assert (
+            ps_names & wmi_names
+        ), f"no common entries in {ps_names}, {wmi_names}"
 
     def test_boot_time(self):
         wmi_os = wmi.WMI().Win32_OperatingSystem()
@@ -606,7 +603,7 @@ class TestProcessWMI(WindowsTestCase):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         domain, _, username = w.GetOwner()
-        username = "%s\\%s" % (domain, username)
+        username = f"{domain}\\{username}"
         assert p.username() == username
 
     @retry_on_failure()
@@ -627,7 +624,7 @@ class TestProcessWMI(WindowsTestCase):
         # returned instead.
         wmi_usage = int(w.PageFileUsage)
         if vms not in {wmi_usage, wmi_usage * 1024}:
-            raise self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
+            raise self.fail(f"wmi={wmi_usage}, psutil={vms}")
 
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]

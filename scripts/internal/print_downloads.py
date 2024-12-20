@@ -68,7 +68,7 @@ def query(cmd):
 def top_packages():
     global LAST_UPDATE
     ret = query(
-        "pypinfo --all --json --days %s --limit %s '' project" % (DAYS, LIMIT)
+        f"pypinfo --all --json --days {DAYS} --limit {LIMIT} '' project"
     )
     LAST_UPDATE = ret['last_update']
     return [(x['project'], x['download_count']) for x in ret['rows']]
@@ -81,7 +81,7 @@ def ranking():
         if name == PKGNAME:
             return i
         i += 1
-    raise ValueError("can't find %s" % PKGNAME)
+    raise ValueError(f"can't find {PKGNAME}")
 
 
 def downloads():
@@ -89,23 +89,23 @@ def downloads():
     for name, downloads in data:
         if name == PKGNAME:
             return downloads
-    raise ValueError("can't find %s" % PKGNAME)
+    raise ValueError(f"can't find {PKGNAME}")
 
 
 def downloads_pyver():
-    return query("pypinfo --json --days %s %s pyversion" % (DAYS, PKGNAME))
+    return query(f"pypinfo --json --days {DAYS} {PKGNAME} pyversion")
 
 
 def downloads_by_country():
-    return query("pypinfo --json --days %s %s country" % (DAYS, PKGNAME))
+    return query(f"pypinfo --json --days {DAYS} {PKGNAME} country")
 
 
 def downloads_by_system():
-    return query("pypinfo --json --days %s %s system" % (DAYS, PKGNAME))
+    return query(f"pypinfo --json --days {DAYS} {PKGNAME} system")
 
 
 def downloads_by_distro():
-    return query("pypinfo --json --days %s %s distro" % (DAYS, PKGNAME))
+    return query(f"pypinfo --json --days {DAYS} {PKGNAME} distro")
 
 
 # --- print
@@ -142,9 +142,9 @@ def main():
 
     print("# Download stats")
     print()
-    s = "psutil download statistics of the last %s days (last update " % DAYS
-    s += "*%s*).\n" % LAST_UPDATE
-    s += "Generated via [pypistats.py](%s) script.\n" % GITHUB_SCRIPT_URL
+    s = f"psutil download statistics of the last {DAYS} days (last update "
+    s += f"*{LAST_UPDATE}*).\n"
+    s += f"Generated via [pypistats.py]({GITHUB_SCRIPT_URL}) script.\n"
     print(s)
 
     data = [
@@ -171,4 +171,4 @@ if __name__ == '__main__':
     try:
         main()
     finally:
-        print("bytes billed: %s" % bytes_billed, file=sys.stderr)
+        print(f"bytes billed: {bytes_billed}", file=sys.stderr)

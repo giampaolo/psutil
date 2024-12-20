@@ -481,14 +481,11 @@ class WindowsService:  # noqa: PLW1641
         self._display_name = display_name
 
     def __str__(self):
-        details = "(name=%r, display_name=%r)" % (
-            self._name,
-            self._display_name,
-        )
-        return "%s%s" % (self.__class__.__name__, details)
+        details = f"(name={self._name!r}, display_name={self._display_name!r})"
+        return f"{self.__class__.__name__}{details}"
 
     def __repr__(self):
-        return "<%s at %s>" % (self.__str__(), id(self))
+        return f"<{self.__str__()} at {id(self)}>"
 
     def __eq__(self, other):
         # Test for equality with another WindosService object based
@@ -530,15 +527,15 @@ class WindowsService:  # noqa: PLW1641
         except OSError as err:
             if is_permission_err(err):
                 msg = (
-                    "service %r is not querable (not enough privileges)"
-                    % self._name
+                    f"service {self._name!r} is not querable (not enough"
+                    " privileges)"
                 )
                 raise AccessDenied(pid=None, name=self._name, msg=msg)
             elif err.winerror in {
                 cext.ERROR_INVALID_NAME,
                 cext.ERROR_SERVICE_DOES_NOT_EXIST,
             }:
-                msg = "service %r does not exist" % self._name
+                msg = f"service {self._name!r} does not exist"
                 raise NoSuchProcess(pid=None, name=self._name, msg=msg)
             else:
                 raise
@@ -764,7 +761,7 @@ class Process:
                 # 24 = ERROR_TOO_MANY_OPEN_FILES. Not sure why this happens
                 # (perhaps PyPy's JIT delaying garbage collection of files?).
                 if err.errno == 24:
-                    debug("%r translated into AccessDenied" % err)
+                    debug(f"{err!r} translated into AccessDenied")
                     raise AccessDenied(self.pid, self._name)
                 raise
         else:
@@ -1029,7 +1026,7 @@ class Process:
             IOPriority.IOPRIO_NORMAL,
             IOPriority.IOPRIO_HIGH,
         }:
-            raise ValueError("%s is not a valid priority" % ioclass)
+            raise ValueError(f"{ioclass} is not a valid priority")
         cext.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
@@ -1071,7 +1068,7 @@ class Process:
     def cpu_affinity_set(self, value):
         def to_bitmask(ls):
             if not ls:
-                raise ValueError("invalid argument %r" % ls)
+                raise ValueError(f"invalid argument {ls!r}")
             out = 0
             for b in ls:
                 out |= 2**b
@@ -1085,10 +1082,10 @@ class Process:
             if cpu not in allcpus:
                 if not isinstance(cpu, int):
                     raise TypeError(
-                        "invalid CPU %r; an integer is required" % cpu
+                        f"invalid CPU {cpu!r}; an integer is required"
                     )
                 else:
-                    raise ValueError("invalid CPU %r" % cpu)
+                    raise ValueError(f"invalid CPU {cpu!r}")
 
         bitmask = to_bitmask(value)
         cext.proc_cpu_affinity_set(self.pid, bitmask)
