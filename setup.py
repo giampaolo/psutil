@@ -247,7 +247,7 @@ if WINDOWS:
 
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
-        return '0x0%s' % ((maj * 100) + min)
+        return "0x0{}".format((maj * 100) + min)
 
     if sys.getwindowsversion()[0] < 6:
         msg = "this Windows version is too old (< Windows Vista); "
