@@ -11,27 +11,27 @@ supposed to be more precise.
 import sys
 
 import pyperf  # requires "pip install pyperf"
-from bench_oneshot import names
 
 import psutil
 
 
 p = psutil.Process()
-funs = [getattr(p, n) for n in names]
 
 
-def call_normal():
+def call_normal(funs):
     for fun in funs:
         fun()
 
 
-def call_oneshot():
+def call_oneshot(funs):
     with p.oneshot():
         for fun in funs:
             fun()
 
 
 def main():
+    from bench_oneshot import names
+
     runner = pyperf.Runner()
 
     args = runner.parse_args()
@@ -43,8 +43,10 @@ def main():
         for name in sorted(names):
             print("    " + name)
 
-    runner.bench_func("normal", call_normal)
-    runner.bench_func("oneshot", call_oneshot)
+    funs = [getattr(p, n) for n in names]
+    runner.bench_func("normal", call_normal, funs)
+    runner.bench_func("oneshot", call_oneshot, funs)
 
 
-main()
+if __name__ == "__main__":
+    main()

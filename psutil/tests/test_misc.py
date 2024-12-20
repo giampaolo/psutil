@@ -6,7 +6,6 @@
 
 """Miscellaneous tests."""
 
-import ast
 import collections
 import contextlib
 import io
@@ -14,13 +13,11 @@ import json
 import os
 import pickle
 import socket
-import stat
 import sys
 from unittest import mock
 
 import psutil
 import psutil.tests
-from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import bcat
 from psutil._common import cat
@@ -31,22 +28,12 @@ from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil.tests import CI_TESTING
-from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_MEMORY_MAPS
 from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import HAS_SENSORS_BATTERY
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import PYTHON_EXE
-from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import QEMU_USER
-from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import reload_module
-from psutil.tests import sh
 from psutil.tests import system_namespace
 
 
@@ -333,14 +320,6 @@ class TestMisc(PsutilTestCase):
         assert b.seconds == 33
         assert b.pid == 4567
         assert b.name == 'name'
-
-    # def test_setup_script(self):
-    #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
-    #     if CI_TESTING and not os.path.exists(setup_py):
-    #         raise pytest.skip("can't find setup.py")
-    #     module = import_module_by_path(setup_py)
-    #     self.assertRaises(SystemExit, module.setup)
-    #     self.assertEqual(module.get_version(), psutil.__version__)
 
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case
@@ -896,143 +875,3 @@ class TestWrapNumbers(PsutilTestCase):
         psutil.net_io_counters.cache_clear()
         caches = wrap_numbers.cache_info()
         assert caches == ({}, {}, {})
-
-
-# ===================================================================
-# --- Example script tests
-# ===================================================================
-
-
-@pytest.mark.skipif(
-    not os.path.exists(SCRIPTS_DIR), reason="can't locate scripts directory"
-)
-class TestScripts(PsutilTestCase):
-    """Tests for scripts in the "scripts" directory."""
-
-    @staticmethod
-    def assert_stdout(exe, *args, **kwargs):
-        kwargs.setdefault("env", PYTHON_EXE_ENV)
-        exe = os.path.join(SCRIPTS_DIR, exe)
-        cmd = [PYTHON_EXE, exe]
-        for arg in args:
-            cmd.append(arg)
-        try:
-            out = sh(cmd, **kwargs).strip()
-        except RuntimeError as err:
-            if 'AccessDenied' in str(err):
-                return str(err)
-            else:
-                raise
-        assert out, out
-        return out
-
-    @staticmethod
-    def assert_syntax(exe):
-        exe = os.path.join(SCRIPTS_DIR, exe)
-        with open(exe, encoding="utf8") as f:
-            src = f.read()
-        ast.parse(src)
-
-    def test_coverage(self):
-        # make sure all example scripts have a test method defined
-        meths = dir(self)
-        for name in os.listdir(SCRIPTS_DIR):
-            if name.endswith('.py'):
-                if 'test_' + os.path.splitext(name)[0] not in meths:
-                    # self.assert_stdout(name)
-                    raise self.fail(
-                        "no test defined for"
-                        f" {os.path.join(SCRIPTS_DIR, name)!r} script"
-                    )
-
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    def test_executable(self):
-        for root, dirs, files in os.walk(SCRIPTS_DIR):
-            for file in files:
-                if file.endswith('.py'):
-                    path = os.path.join(root, file)
-                    if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
-                        raise self.fail(f"{path!r} is not executable")
-
-    def test_disk_usage(self):
-        self.assert_stdout('disk_usage.py')
-
-    def test_free(self):
-        self.assert_stdout('free.py')
-
-    def test_meminfo(self):
-        self.assert_stdout('meminfo.py')
-
-    def test_procinfo(self):
-        self.assert_stdout('procinfo.py', str(os.getpid()))
-
-    @pytest.mark.skipif(CI_TESTING and not psutil.users(), reason="no users")
-    def test_who(self):
-        self.assert_stdout('who.py')
-
-    def test_ps(self):
-        self.assert_stdout('ps.py')
-
-    def test_pstree(self):
-        self.assert_stdout('pstree.py')
-
-    def test_netstat(self):
-        self.assert_stdout('netstat.py')
-
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
-    def test_ifconfig(self):
-        self.assert_stdout('ifconfig.py')
-
-    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
-    def test_pmap(self):
-        self.assert_stdout('pmap.py', str(os.getpid()))
-
-    def test_procsmem(self):
-        if 'uss' not in psutil.Process().memory_full_info()._fields:
-            raise pytest.skip("not supported")
-        self.assert_stdout('procsmem.py')
-
-    def test_killall(self):
-        self.assert_syntax('killall.py')
-
-    def test_nettop(self):
-        self.assert_syntax('nettop.py')
-
-    def test_top(self):
-        self.assert_syntax('top.py')
-
-    def test_iotop(self):
-        self.assert_syntax('iotop.py')
-
-    def test_pidof(self):
-        output = self.assert_stdout('pidof.py', psutil.Process().name())
-        assert str(os.getpid()) in output
-
-    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-    def test_winservices(self):
-        self.assert_stdout('winservices.py')
-
-    def test_cpu_distribution(self):
-        self.assert_syntax('cpu_distribution.py')
-
-    @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
-    def test_temperatures(self):
-        if not psutil.sensors_temperatures():
-            raise pytest.skip("no temperatures")
-        self.assert_stdout('temperatures.py')
-
-    @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
-    def test_fans(self):
-        if not psutil.sensors_fans():
-            raise pytest.skip("no fans")
-        self.assert_stdout('fans.py')
-
-    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
-    def test_battery(self):
-        self.assert_stdout('battery.py')
-
-    @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
-    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
-    def test_sensors(self):
-        self.assert_stdout('sensors.py')

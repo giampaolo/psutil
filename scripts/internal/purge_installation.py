@@ -38,4 +38,5 @@ def main():
                     rmpath(abspath)
 
 
-main()
+if __name__ == "__main__":
+    main()
