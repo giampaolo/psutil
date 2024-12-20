@@ -573,8 +573,7 @@ def main():
                     missdeps(f"sudo yum install gcc {pyimpl}-devel")
                 elif shutil.which("apk"):
                     missdeps(
-                        "sudo apk add gcc %s%s-dev musl-dev linux-headers"
-                        % (pyimpl)
+                        f"sudo apk add gcc {pyimpl}-dev musl-dev linux-headers"
                     )
             elif MACOS:
                 msg = (

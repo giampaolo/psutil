@@ -2161,10 +2161,11 @@ class Process:
                             )
                             raise ValueError(msg)
                         if cpu not in eligible_cpus:
-                            raise ValueError(
-                                "CPU number %r is not eligible; choose "
-                                "between %s" % (cpu, eligible_cpus)
+                            msg = (
+                                f"CPU number {cpu} is not eligible; choose"
+                                f" between {eligible_cpus}"
                             )
+                            raise ValueError(msg)
                 raise
 
     # only starting from kernel 2.6.13

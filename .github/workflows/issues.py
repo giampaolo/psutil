@@ -207,7 +207,7 @@ def add_label(issue, label):
 
         for left, right in ILLOGICAL_PAIRS:
             if label == left and has_label(issue, right):
-                log("already has label" % (label))
+                log(f"already has label f{label}")
                 return False
 
         return not has_label(issue, label)
