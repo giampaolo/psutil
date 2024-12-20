@@ -276,7 +276,7 @@ def run(pid, verbose=False):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_("", template.format(thread))
+            print_("", template.format(*thread))
         print_('', f"total={len(pinfo['threads'])}")
     else:
         print_('threads', '')
