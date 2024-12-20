@@ -115,7 +115,7 @@ def poll(interval):
 def refresh_window(procs, disks_read, disks_write):
     """Print results on screen by using curses."""
     curses.endwin()
-    templ = "%-5s %-7s %11s %11s  %s"
+    templ = "{:<5} {:<7} {:>11} {:>11}  {}"
     win.erase()
 
     disks_tot = "Total DISK READ: {} | Total DISK WRITE: {}".format(
@@ -124,11 +124,11 @@ def refresh_window(procs, disks_read, disks_write):
     )
     printl(disks_tot)
 
-    header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
+    header = templ.format("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
     printl(header, highlight=True)
 
     for p in procs:
-        line = templ % (
+        line = templ.format(
             p.pid,
             p._username[:7],
             bytes2human(p._read_per_sec),
