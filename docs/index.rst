@@ -2641,13 +2641,14 @@ Python 2.7
 ==========
 
 Latest version spporting Python 2.7 is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
+The 6.1.X serie may receive critical bug-fixes but no new features. It will
+be maintained in the dedicated
+`python2 <https://github.com/giampaolo/psutil/tree/python2>`__ branch.
 To install it:
 
 ::
 
-    $ python2 -m pip install psutil==6.1.1
-
-The 6.1.X branch may receive critical bug-fixes but no new features.
+    $ python2 -m pip install psutil==6.1.*
 
 Security
 ========
