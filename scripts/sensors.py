@@ -82,8 +82,9 @@ def main():
         print(f"    charge:     {round(battery.percent, 2)}%")
         if battery.power_plugged:
             print(
-                "    status:     %s"
-                % ("charging" if battery.percent < 100 else "fully charged")
+                "    status:     {}".format(
+                    "charging" if battery.percent < 100 else "fully charged"
+                )
             )
             print("    plugged in: yes")
         else:

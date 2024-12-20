@@ -182,9 +182,9 @@ def print_header(procs_status, num_procs):
 def refresh_window(procs, procs_status):
     """Print results on screen by using curses."""
     curses.endwin()
-    templ = "%-6s %-8s %4s %6s %6s %5s %5s %9s  %2s"
+    templ = "{:<6} {:<8} {:>4} {:>6} {:>6} {:>5} {:>5} {:>9}  {:>2}"
     win.erase()
-    header = templ % (
+    header = templ.format(
         "PID",
         "USER",
         "NI",
@@ -217,7 +217,7 @@ def refresh_window(procs, procs_status):
         if p.dict['cpu_percent'] is None:
             p.dict['cpu_percent'] = ''
         username = p.dict['username'][:8] if p.dict['username'] else ''
-        line = templ % (
+        line = templ.format(
             p.pid,
             username,
             p.dict['nice'],
