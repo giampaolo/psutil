@@ -81,11 +81,11 @@ from psutil._common import print_color
 
 TIMES = 300
 timings = []
-templ = "%-25s %10s   %10s"
+templ = "{:<25} {:>10}   {:>10}"
 
 
 def print_header(what):
-    s = templ % (what, "NUM CALLS", "SECONDS")
+    s = templ.format(what, "NUM CALLS", "SECONDS")
     print_color(s, color=None, bold=True)
     print("-" * len(s))
 
@@ -95,7 +95,7 @@ def print_timings():
     i = 0
     while timings[:]:
         title, times, elapsed = timings.pop(0)
-        s = templ % (title, str(times), f"{elapsed:.5f}")
+        s = templ.format(title, str(times), f"{elapsed:.5f}")
         if i > len(timings) - 5:
             print_color(s, color="red")
         else:
