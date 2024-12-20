@@ -99,7 +99,8 @@ def main():
                 )
             )
         for addr in addrs:
-            print("    %-4s" % af_map.get(addr.family, addr.family), end="")
+            fam = "    {:<4}".format(af_map.get(addr.family, addr.family))
+            print(fam, end="")
             print(f" address   : {addr.address}")
             if addr.broadcast:
                 print(f"         broadcast : {addr.broadcast}")

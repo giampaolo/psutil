@@ -59,7 +59,7 @@ def main():
         if name in temps:
             print("    Temperatures:")
             for entry in temps[name]:
-                s = "        %-20s %s°C (high=%s°C, critical=%s°C)" % (
+                s = "        {:<20} {}°C (high={}°C, critical={}°C)".format(
                     entry.label or name,
                     entry.current,
                     entry.high,
@@ -71,8 +71,9 @@ def main():
             print("    Fans:")
             for entry in fans[name]:
                 print(
-                    "        %-20s %s RPM"
-                    % (entry.label or name, entry.current)
+                    "        {:<20} {} RPM".format(
+                        entry.label or name, entry.current
+                    )
                 )
 
     # Battery.

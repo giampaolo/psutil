@@ -99,11 +99,10 @@ ignore = [
 # T201 == print()
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
-# UP031 == Use format specifiers instead of percent format
 ".github/workflows/*" = ["EM101", "EM102", "EM103", "T201", "T203"]
 "psutil/tests/*" = ["EM101", "EM102", "EM103", "TRY003"]
-"scripts/*" = ["EM101", "EM102", "EM103", "T201", "T203", "UP031"]
-"scripts/internal/*" = ["EM101", "EM102", "EM103", "T201", "T203", "TRY003", "UP031"]
+"scripts/*" = ["EM101", "EM102", "EM103", "T201", "T203"]
+"scripts/internal/*" = ["EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [
     "B904",  # Use ` raise from` to specify exception cause (PYTHON2.7 COMPAT)
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)

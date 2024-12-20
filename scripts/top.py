@@ -129,13 +129,15 @@ def print_header(procs_status, num_procs):
     percs = psutil.cpu_percent(interval=0, percpu=True)
     for cpu_num, perc in enumerate(percs):
         dashes, empty_dashes = get_dashes(perc)
-        line = " CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes, perc)
+        line = " CPU{:<2} [{}{}] {:>5}%".format(
+            cpu_num, dashes, empty_dashes, perc
+        )
         printl(line, color=get_color(perc))
 
     # memory usage
     mem = psutil.virtual_memory()
     dashes, empty_dashes = get_dashes(mem.percent)
-    line = " Mem   [%s%s] %5s%% %6s / %s" % (
+    line = " Mem   [{}{}] {:>5}% {:>6} / {}".format(
         dashes,
         empty_dashes,
         mem.percent,
@@ -147,7 +149,7 @@ def print_header(procs_status, num_procs):
     # swap usage
     swap = psutil.swap_memory()
     dashes, empty_dashes = get_dashes(swap.percent)
-    line = " Swap  [%s%s] %5s%% %6s / %s" % (
+    line = " Swap  [{}{}] {:>5}% {:>6} / {}".format(
         dashes,
         empty_dashes,
         swap.percent,

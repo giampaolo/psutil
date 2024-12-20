@@ -27,7 +27,9 @@ def main():
     for name, entries in fans.items():
         print(name)
         for entry in entries:
-            print("    %-20s %s RPM" % (entry.label or name, entry.current))
+            print(
+                "    {:<20} {} RPM".format(entry.label or name, entry.current)
+            )
         print()
 
 

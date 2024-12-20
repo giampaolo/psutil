@@ -252,7 +252,7 @@ def main():
     else:
         for fail in fails:
             fname, url = fail
-            print("%-30s: %s " % (fname, url))
+            print("{:<30}: {} ".format(fname, url))
         print('-' * 20)
         print(f"total: {len(fails)} fails!")
         sys.exit(1)

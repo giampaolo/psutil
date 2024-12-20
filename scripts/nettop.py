@@ -81,8 +81,7 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
 
     # totals
     printl(
-        "total bytes:           sent: %-10s   received: %s"
-        % (
+        "total bytes:           sent: {:<10}   received: {}".format(
             bytes2human(tot_after.bytes_sent),
             bytes2human(tot_after.bytes_recv),
         )

@@ -120,9 +120,9 @@ RLIMITS_MAP = {
 
 def print_(a, b):
     if sys.stdout.isatty() and psutil.POSIX:
-        fmt = '\x1b[1;32m%-13s\x1b[0m %s' % (a, b)
+        fmt = "\x1b[1;32m{:<13}\x1b[0m {}".format(a, b)
     else:
-        fmt = '%-11s %s' % (a, b)
+        fmt = "{:<11} {}".format(a, b)
     print(fmt)
 
 
