@@ -118,7 +118,7 @@ def refresh_window(procs, disks_read, disks_write):
     templ = "%-5s %-7s %11s %11s  %s"
     win.erase()
 
-    disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" % (
+    disks_tot = "Total DISK READ: {} | Total DISK WRITE: {}".format(
         bytes2human(disks_read),
         bytes2human(disks_write),
     )

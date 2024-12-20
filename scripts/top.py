@@ -168,7 +168,7 @@ def print_header(procs_status, num_procs):
         psutil.boot_time()
     )
     av1, av2, av3 = psutil.getloadavg()
-    line = " Load average: %.2f %.2f %.2f  Uptime: %s" % (
+    line = " Load average: {:.2f} {:.2f} {:.2f}  Uptime: {}".format(
         av1,
         av2,
         av3,
@@ -201,7 +201,7 @@ def refresh_window(procs, procs_status):
         # is expressed as: "mm:ss.ms"
         if p.dict['cpu_times'] is not None:
             ctime = datetime.timedelta(seconds=sum(p.dict['cpu_times']))
-            ctime = "%s:%s.%s" % (
+            ctime = "{}:{}.{}".format(
                 ctime.seconds // 60 % 60,
                 str(ctime.seconds % 60).zfill(2),
                 str(ctime.microseconds)[:2],

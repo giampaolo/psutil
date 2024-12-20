@@ -513,8 +513,9 @@ class TestCpuAPIs(PsutilTestCase):
             assert percent <= 100.0 * psutil.cpu_count()
         except AssertionError as err:
             raise AssertionError(
-                "\n%s\nlast=%s\nnew=%s"
-                % (err, pprint.pformat(last_ret), pprint.pformat(new_ret))
+                "\n{}\nlast={}\nnew={}".format(
+                    err, pprint.pformat(last_ret), pprint.pformat(new_ret)
+                )
             )
 
     def test_cpu_percent(self):

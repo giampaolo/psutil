@@ -20,7 +20,7 @@ class Wheel:
         self._name = os.path.basename(path)
 
     def __repr__(self):
-        return "<%s(name=%s, plat=%s, arch=%s, pyver=%s)>" % (
+        return "<{}(name={}, plat={}, arch={}, pyver={})>".format(
             self.__class__.__name__,
             self.name,
             self.platform(),

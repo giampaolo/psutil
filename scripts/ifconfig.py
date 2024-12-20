@@ -71,8 +71,7 @@ def main():
             st = stats[nic]
             print("    stats          : ", end='')
             print(
-                "speed=%sMB, duplex=%s, mtu=%s, up=%s"
-                % (
+                "speed={}MB, duplex={}, mtu={}, up={}".format(
                     st.speed,
                     duplex_map[st.duplex],
                     st.mtu,
@@ -83,8 +82,7 @@ def main():
             io = io_counters[nic]
             print("    incoming       : ", end='')
             print(
-                "bytes=%s, pkts=%s, errs=%s, drops=%s"
-                % (
+                "bytes={}, pkts={}, errs={}, drops={}".format(
                     bytes2human(io.bytes_recv),
                     io.packets_recv,
                     io.errin,
@@ -93,8 +91,7 @@ def main():
             )
             print("    outgoing       : ", end='')
             print(
-                "bytes=%s, pkts=%s, errs=%s, drops=%s"
-                % (
+                "bytes={}, pkts={}, errs={}, drops={}".format(
                     bytes2human(io.bytes_sent),
                     io.packets_sent,
                     io.errout,

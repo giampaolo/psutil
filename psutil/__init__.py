@@ -227,19 +227,16 @@ if int(__version__.replace('.', '')) != getattr(
     msg = f"version conflict: {_psplatform.cext.__file__!r} C extension "
     msg += "module was built for another version of psutil"
     if hasattr(_psplatform.cext, 'version'):
-        msg += " (%s instead of %s)" % (
-            '.'.join([x for x in str(_psplatform.cext.version)]),
-            __version__,
-        )
+        v = ".".join([x for x in str(_psplatform.cext.version)])
+        msg += f" ({v} instead of {__version__})"
     else:
         msg += f" (different than {__version__})"
-    msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
-        getattr(
-            _psplatform.cext,
-            "__file__",
-            "the existing psutil install directory",
-        )
+    what = getattr(
+        _psplatform.cext,
+        "__file__",
+        "the existing psutil install directory",
     )
+    msg += f"; you may try to 'pip uninstall psutil', manually remove {what}"
     msg += " or clean the virtual env somehow, then reinstall"
     raise ImportError(msg)
 
@@ -417,7 +414,7 @@ class Process:
             if self._create_time is not None:
                 info['started'] = _pprint_secs(self._create_time)
 
-            return "%s.%s(%s)" % (
+            return "{}.{}({})".format(
                 self.__class__.__module__,
                 self.__class__.__name__,
                 ", ".join([f"{k}={v!r}" for k, v in info.items()]),
@@ -559,7 +556,7 @@ class Process:
             attrs = set(attrs)
             invalid_names = attrs - valid_names
             if invalid_names:
-                msg = "invalid attr name%s %s" % (
+                msg = "invalid attr name{} {}".format(
                     "s" if len(invalid_names) > 1 else "",
                     ", ".join(map(repr, invalid_names)),
                 )

@@ -461,7 +461,7 @@ def virtual_memory():
 
     # Warn about missing metrics which are set to 0.
     if missing_fields:
-        msg = "%s memory stats couldn't be determined and %s set to 0" % (
+        msg = "{} memory stats couldn't be determined and {} set to 0".format(
             ", ".join(missing_fields),
             "was" if len(missing_fields) == 1 else "were",
         )

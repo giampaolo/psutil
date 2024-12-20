@@ -44,7 +44,7 @@ def main():
     for service in psutil.win_service_iter():
         info = service.as_dict()
         print(f"{info['name']!r} ({info['display_name']!r})")
-        s = "status: %s, start: %s, username: %s, pid: %s" % (
+        s = "status: {}, start: {}, username: {}, pid: {}".format(
             info['status'],
             info['start_type'],
             info['username'],

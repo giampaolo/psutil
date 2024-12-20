@@ -279,8 +279,8 @@ class Error(Exception):
         # invoked on `raise Error`
         info = self._infodict(("pid", "ppid", "name"))
         if info:
-            details = "(%s)" % ", ".join(
-                ["%s=%r" % (k, v) for k, v in info.items()]
+            details = "({})".format(
+                ", ".join([f"{k}={v!r}" for k, v in info.items()])
             )
         else:
             details = None
@@ -611,9 +611,9 @@ def deprecated_method(replacement):
     """
 
     def outer(fun):
-        msg = "%s() is deprecated and will be removed; use %s() instead" % (
-            fun.__name__,
-            replacement,
+        msg = (
+            f"{fun.__name__}() is deprecated and will be removed; use"
+            f" {replacement}() instead"
         )
         if fun.__doc__ is None:
             fun.__doc__ = msg

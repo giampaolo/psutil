@@ -135,11 +135,13 @@ class TestFetchAllProcesses(PsutilTestCase):
                     meth(value, info)
                 except Exception:  # noqa: BLE001
                     s = '\n' + '=' * 70 + '\n'
-                    s += "FAIL: name=test_%s, pid=%s, ret=%s\ninfo=%s\n" % (
-                        name,
-                        info['pid'],
-                        repr(value),
-                        info,
+                    s += (
+                        "FAIL: name=test_{}, pid={}, ret={}\ninfo={}\n".format(
+                            name,
+                            info['pid'],
+                            repr(value),
+                            info,
+                        )
                     )
                     s += '-' * 70
                     s += f"\n{traceback.format_exc()}"

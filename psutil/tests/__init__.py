@@ -248,7 +248,9 @@ def _get_py_exe():
         exe = (
             attempt(sys.executable)
             or attempt(os.path.realpath(sys.executable))
-            or attempt(shutil.which("python%s.%s" % sys.version_info[:2]))
+            or attempt(
+                shutil.which("python{}.{}".format(*sys.version_info[:2]))
+            )
             or attempt(psutil.Process().exe())
         )
         if not exe:
@@ -1212,7 +1214,7 @@ class TestMemoryLeak(PsutilTestCase):
         increase = times
         for idx in range(1, retries + 1):
             mem = self._call_ntimes(fun, times)
-            msg = "Run #%s: extra-mem=%s, per-call=%s, calls=%s" % (
+            msg = "Run #{}: extra-mem={}, per-call={}, calls={}".format(
                 idx,
                 bytes2human(mem),
                 bytes2human(mem / times),
@@ -1343,17 +1345,17 @@ def print_sysinfo():
 
     # metrics
     info['cpus'] = psutil.cpu_count()
-    info['loadavg'] = "%.1f%%, %.1f%%, %.1f%%" % (
-        tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()])
+    info['loadavg'] = "{:.1f}%, {:.1f}%, {:.1f}%".format(
+        *tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()])
     )
     mem = psutil.virtual_memory()
-    info['memory'] = "%s%%, used=%s, total=%s" % (
+    info['memory'] = "{}%%, used={}, total={}".format(
         int(mem.percent),
         bytes2human(mem.used),
         bytes2human(mem.total),
     )
     swap = psutil.swap_memory()
-    info['swap'] = "%s%%, used=%s, total=%s" % (
+    info['swap'] = "{}%%, used={}, total={}".format(
         int(swap.percent),
         bytes2human(swap.used),
         bytes2human(swap.total),

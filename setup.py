@@ -212,7 +212,7 @@ def missdeps(cmdline):
     else:
         s += ". Perhaps Python header files are not installed. "
     s += "Try running:\n"
-    s += "  %s" % cmdline
+    s += "  {}".format(cmdline)
     print(hilite(s, color="red", bold=True), file=sys.stderr)
 
 
@@ -429,7 +429,7 @@ elif AIX:
     )
 
 else:
-    sys.exit('platform %s is not supported' % sys.platform)
+    sys.exit("platform {} is not supported".format(sys.platform))
 
 
 if POSIX:
@@ -568,13 +568,13 @@ def main():
             if LINUX:
                 pyimpl = "pypy" if PYPY else "python"
                 if shutil.which("dpkg"):
-                    missdeps("sudo apt-get install gcc %s3-dev" % (pyimpl))
+                    missdeps("sudo apt-get install gcc {}3-dev".format(pyimpl))
                 elif shutil.which("rpm"):
-                    missdeps("sudo yum install gcc %s-devel" % (pyimpl))
+                    missdeps("sudo yum install gcc {}3-devel".format(pyimpl))
                 elif shutil.which("apk"):
                     missdeps(
-                        "sudo apk add gcc %s%s-dev musl-dev linux-headers"
-                        % (pyimpl)
+                        "sudo apk add gcc {}3-dev musl-dev linux-headers"
+                        .format(*pyimpl)
                     )
             elif MACOS:
                 msg = (
