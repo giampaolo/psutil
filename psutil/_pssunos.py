@@ -676,7 +676,9 @@ class Process:
     @wrap_exceptions
     def memory_maps(self):
         def toaddr(start, end):
-            return f"{hex(start)[2:].strip('L')}-{hex(end)[2:].strip('L')}"
+            return "{}-{}".format(
+                hex(start)[2:].strip('L'), hex(end)[2:].strip('L')
+            )
 
         procfs_path = self._procfs_path
         retlist = []

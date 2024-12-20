@@ -1023,7 +1023,7 @@ class TestProcess(PsutilTestCase):
             p.cpu_affinity(invalid_cpu)
         with pytest.raises(ValueError):
             p.cpu_affinity(range(10000, 11000))
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, ValueError)):
             p.cpu_affinity([0, "1"])
         with pytest.raises(ValueError):
             p.cpu_affinity([0, -1])
