@@ -946,7 +946,7 @@ class Process:
             allcpus = tuple(range(len(per_cpu_times())))
             for cpu in cpus:
                 if cpu not in allcpus:
-                    msg = f"invalid CPU #{int(cpu)} (choose between {allcpus})"
+                    msg = f"invalid CPU #{cpu} (choose between {allcpus})"
                     raise ValueError(msg)
             try:
                 cext.proc_cpu_affinity_set(self.pid, cpus)
@@ -959,7 +959,7 @@ class Process:
                     for cpu in cpus:
                         if cpu not in allcpus:
                             msg = (
-                                f"invalid CPU #{int(cpu)} (choose between"
+                                f"invalid CPU #{cpu} (choose between"
                                 f" {allcpus})"
                             )
                             raise ValueError(msg)

@@ -534,9 +534,7 @@ class Process:
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
-                    return os.readlink(
-                        f"{procfs_path}/{int(self.pid)}/path/{x}"
-                    )
+                    return os.readlink(f"{procfs_path}/{self.pid}/path/{x}")
                 except FileNotFoundError:
                     hit_enoent = True
                     continue
