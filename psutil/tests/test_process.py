@@ -1072,8 +1072,8 @@ class TestProcess(PsutilTestCase):
 
         # another process
         cmdline = (
-            "import time; f = open(r'%s', 'r'); [time.sleep(0.1) for x in"
-            " range(100)];" % testfn
+            f"import time; f = open(r'{testfn}', 'r'); [time.sleep(0.1) for x"
+            " in range(100)];"
         )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 

@@ -467,7 +467,7 @@ def get_python(path):
         '312-64',
     )
     for v in vers:
-        pypath = r'C:\\python%s\python.exe' % v
+        pypath = rf"C:\\python{v}\python.exe"
         if path in pypath and os.path.isfile(pypath):
             return pypath
 

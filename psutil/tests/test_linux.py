@@ -146,7 +146,7 @@ def free_swap():
             nt = collections.namedtuple('free', 'total used free')
             return nt(int(total), int(used), int(free))
     raise ValueError(
-        "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines)
+        f"can't find 'Swap' in 'free' output:\n{'\n'.join(lines)}"
     )
 
 
@@ -167,9 +167,7 @@ def free_physmem():
                 'free', 'total used free shared output'
             )
             return nt(total, used, free, shared, out)
-    raise ValueError(
-        "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines)
-    )
+    raise ValueError(f"can't find 'Mem' in 'free' output:\n{'\n'.join(lines)}")
 
 
 def vmstat(stat):

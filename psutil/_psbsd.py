@@ -964,9 +964,10 @@ class Process:
                 return cext.proc_getrlimit(self.pid, resource)
             else:
                 if len(limits) != 2:
-                    raise ValueError(
-                        "second argument must be a (soft, hard) tuple, got %s"
-                        % repr(limits)
+                    msg = (
+                        "second argument must be a (soft, hard) tuple, got"
+                        f" {limits!r}"
                     )
+                    raise ValueError(msg)
                 soft, hard = limits
                 return cext.proc_setrlimit(self.pid, resource, soft, hard)

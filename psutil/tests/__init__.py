@@ -289,7 +289,7 @@ class ThreadTask(threading.Thread):
 
     def __repr__(self):
         name = self.__class__.__name__
-        return '<%s running=%s at %#x>' % (name, self._running, id(self))
+        return f"<{name} running={self._running} at {id(self):#x}>"
 
     def __enter__(self):
         self.start()
@@ -391,16 +391,16 @@ def spawn_children_pair():
     tfile = None
     testfn = get_testfn(dir=os.getcwd())
     try:
-        s = textwrap.dedent("""\
+        s = textwrap.dedent(f"""\
             import subprocess, os, sys, time
             s = "import os, time;"
-            s += "f = open('%s', 'w');"
+            s += "f = open('{os.path.basename(testfn)}', 'w');"
             s += "f.write(str(os.getpid()));"
             s += "f.close();"
             s += "[time.sleep(0.1) for x in range(100 * 6)];"
-            p = subprocess.Popen([r'%s', '-c', s])
+            p = subprocess.Popen([r'{PYTHON_EXE}', '-c', s])
             p.wait()
-            """ % (os.path.basename(testfn), PYTHON_EXE))
+            """)
         # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
@@ -1179,10 +1179,11 @@ class TestMemoryLeak(PsutilTestCase):
         after = self._get_num_fds()
         diff = after - before
         if diff < 0:
-            raise self.fail(
-                "negative diff %r (gc probably collected a "
-                "resource from a previous test)" % diff
+            msg = (
+                f"negative diff {diff!r} (gc probably collected a"
+                " resource from a previous test)"
             )
+            raise self.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
@@ -1526,9 +1527,9 @@ class process_namespace:
         for fun_name, _, _ in ls:
             meth_name = 'test_' + fun_name
             if not hasattr(test_class, meth_name):
-                msg = "%r class should define a '%s' method" % (
-                    test_class.__class__.__name__,
-                    meth_name,
+                msg = (
+                    f"{test_class.__class__.__name__!r} class should define a"
+                    f" {meth_name!r} method"
                 )
                 raise AttributeError(msg)
 
@@ -1657,8 +1658,8 @@ def skip_on_not_implemented(only_if=None):
                     if not only_if:
                         raise
                 msg = (
-                    "%r was skipped because it raised NotImplementedError"
-                    % fun.__name__
+                    f"{fun.__name__!r} was skipped because it raised"
+                    " NotImplementedError"
                 )
                 raise pytest.skip(msg)
 

@@ -863,9 +863,8 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
     try:
         color = colors[color]
     except KeyError:
-        raise ValueError(
-            "invalid color %r; choose between %s" % (list(colors.keys()))
-        )
+        msg = f"invalid color {color!r}; choose amongst {list(colors.keys())}"
+        raise ValueError(msg)
     attr.append(color)
     if bold:
         attr.append('1')

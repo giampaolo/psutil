@@ -324,9 +324,8 @@ def calculate_avail_vmem(mems):
         slab_reclaimable = mems[b'SReclaimable:']
     except KeyError as err:
         debug(
-            "%s is missing from /proc/meminfo; using an approximation for "
-            "calculating available memory"
-            % err.args[0]
+            f"{err.args[0]} is missing from /proc/meminfo; using an"
+            " approximation for calculating available memory"
         )
         return fallback
     try:
@@ -1149,11 +1148,11 @@ def disk_io_counters(perdisk=False):
     elif os.path.exists('/sys/block'):
         gen = read_sysfs()
     else:
-        raise NotImplementedError(
-            "%s/diskstats nor /sys/block filesystem are available on this "
-            "system"
-            % get_procfs_path()
+        msg = (
+            f"{get_procfs_path()}/diskstats nor /sys/block are available on"
+            " this system"
         )
+        raise NotImplementedError(msg)
 
     retdict = {}
     for entry in gen:
@@ -1856,10 +1855,11 @@ class Process:
                     fields[b'wchar'],  # write chars
                 )
             except KeyError as err:
-                raise ValueError(
-                    "%r field was not found in %s; found fields are %r"
-                    % (err.args[0], fname, fields)
+                msg = (
+                    f"{err.args[0]!r} field was not found in {fname}; found"
+                    f" fields are {fields!r}"
                 )
+                raise ValueError(msg)
 
     @wrap_exceptions
     def cpu_times(self):
@@ -2068,11 +2068,13 @@ class Process:
         data = self._read_status_file()
         ctxsw = _ctxsw_re.findall(data)
         if not ctxsw:
-            raise NotImplementedError(
-                "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
-                "lines were not found in %s/%s/status; the kernel is "
-                "probably older than 2.6.23" % (self._procfs_path, self.pid)
+            msg = (
+                "'voluntary_ctxt_switches' and"
+                " 'nonvoluntary_ctxt_switches'lines were not found in"
+                f" {self._procfs_path}/{self.pid}/status; the kernel is"
+                " probably older than 2.6.23"
             )
+            raise NotImplementedError(msg)
         else:
             return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 

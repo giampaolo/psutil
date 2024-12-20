@@ -522,14 +522,14 @@ class TestSystemWideConnections(ConnectionTestCase):
         for _ in range(times):
             fname = self.get_testfn()
             fnames.append(fname)
-            src = textwrap.dedent("""\
+            src = textwrap.dedent(f"""\
                 import time, os
                 from psutil.tests import create_sockets
                 with create_sockets():
-                    with open(r'%s', 'w') as f:
+                    with open(r'{fname}', 'w') as f:
                         f.write("hello")
                     [time.sleep(0.1) for x in range(100)]
-                """ % fname)
+                """)
             sproc = self.pyrun(src)
             pids.append(sproc.pid)
 

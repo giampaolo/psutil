@@ -941,8 +941,8 @@ class TestScripts(PsutilTestCase):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
                     # self.assert_stdout(name)
                     raise self.fail(
-                        'no test defined for %r script'
-                        % os.path.join(SCRIPTS_DIR, name)
+                        "no test defined for"
+                        f" {os.path.join(SCRIPTS_DIR, name)!r} script"
                     )
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")

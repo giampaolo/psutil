@@ -420,7 +420,7 @@ class Process:
             return "%s.%s(%s)" % (
                 self.__class__.__module__,
                 self.__class__.__name__,
-                ", ".join(["%s=%r" % (k, v) for k, v in info.items()]),
+                ", ".join([f"{k}={v!r}" for k, v in info.items()]),
             )
 
     __repr__ = __str__
@@ -1176,7 +1176,7 @@ class Process:
             # we should never get here
             msg = (
                 "can't calculate process memory percent because total physical"
-                " system memory is not positive (%r)" % (total_phymem)
+                f" system memory is not positive ({total_phymem!r})"
             )
             raise ValueError(msg)
         return (value / float(total_phymem)) * 100
