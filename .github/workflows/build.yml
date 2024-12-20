@@ -74,6 +74,20 @@ jobs:
         python setup.py sdist
         mv dist/psutil*.tar.gz wheelhouse/
 
+  # Test python 2.7 fallback installation message
+  py2:
+    name: py2.7 setup.py check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v4
+    - uses: LizardByte/setup-python-action@master
+      with:
+        python-version: '2.7'
+    - run: python scripts/internal/test_python2_setup_py.py
+
   # Run linters
   linters:
     runs-on: ubuntu-latest
