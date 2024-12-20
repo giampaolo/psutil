@@ -168,7 +168,6 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
     PyObject *py_mount_point_bytes = NULL;
     char* mount_point;
 
-#if PY_MAJOR_VERSION >= 3
     if (!PyArg_ParseTuple(args, "O&O", PyUnicode_FSConverter, &py_mount_point_bytes, &py_default_value)) {
         return NULL;
     }
@@ -177,11 +176,6 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
         Py_XDECREF(py_mount_point_bytes);
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "sO", &mount_point, &py_default_value)) {
-        return NULL;
-    }
-#endif
 
 #ifdef ATTR_VOL_SPACEUSED
     /* Call getattrlist(ATTR_VOL_SPACEUSED) to get used space info. */

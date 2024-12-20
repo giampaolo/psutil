@@ -22,8 +22,6 @@ from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
 
 
 __extra__all__ = []

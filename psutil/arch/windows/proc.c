@@ -192,11 +192,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
 
-#if PY_MAJOR_VERSION >= 3
     return PyLong_FromLong((long) ExitCode);
-#else
-    return PyInt_FromLong((long) ExitCode);
-#endif
 }
 
 

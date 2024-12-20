@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -20,13 +19,8 @@ process exe(), cwd() or username():
 * instead, in case of badly encoded data returned by the OS, the
   following error handlers are used to replace the corrupted characters in
   the string:
-    * Python 3: sys.getfilesystemencodeerrors() (PY 3.6+) or
-      "surrogatescape" on POSIX and "replace" on Windows
-    * Python 2: "replace"
-* on Python 2 all APIs return bytes (str type), never unicode
-* on Python 2, you can go back to unicode by doing:
-
-    >>> unicode(p.exe(), sys.getdefaultencoding(), errors="replace")
+    * sys.getfilesystemencodeerrors() or "surrogatescape" on POSIX and
+      "replace" on Windows.
 
 For a detailed explanation of how psutil handles unicode see #1040.
 
@@ -74,18 +68,13 @@ etc.) and make sure that:
 
 import os
 import shutil
-import traceback
 import warnings
 from contextlib import closing
 
 import psutil
 from psutil import BSD
-from psutil import MACOS
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil._compat import PY3
-from psutil._compat import super
-from psutil.tests import APPVEYOR
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_ENVIRON
@@ -109,27 +98,6 @@ from psutil.tests import spawn_testproc
 from psutil.tests import terminate
 
 
-if APPVEYOR:
-
-    def safe_rmpath(path):  # NOQA
-        # TODO - this is quite random and I'm not sure why it happens,
-        # nor I can reproduce it locally:
-        # https://ci.appveyor.com/project/giampaolo/psutil/build/job/
-        #     jiq2cgd6stsbtn60
-        # safe_rmpath() happens after reap_children() so this is weird
-        # Perhaps wait_procs() on Windows is broken? Maybe because
-        # of STILL_ACTIVE?
-        # https://github.com/giampaolo/psutil/blob/
-        #     68c7a70728a31d8b8b58f4be6c4c0baa2f449eda/psutil/arch/
-        #     windows/process_info.c#L146
-        from psutil.tests import safe_rmpath as rm
-
-        try:
-            return rm(path)
-        except WindowsError:
-            traceback.print_exc()
-
-
 def try_unicode(suffix):
     """Return True if both the fs and the subprocess module can
     deal with a unicode file name.
@@ -142,7 +110,7 @@ def try_unicode(suffix):
         sproc = spawn_testproc(cmd=[testfn])
         shutil.copyfile(testfn, testfn + '-2')
         safe_rmpath(testfn + '-2')
-    except (UnicodeEncodeError, IOError):
+    except (UnicodeEncodeError, OSError):
         return False
     else:
         return True
@@ -180,23 +148,18 @@ class BaseUnicodeTest(PsutilTestCase):
 
 @pytest.mark.xdist_group(name="serial")
 @pytest.mark.skipif(ASCII_FS, reason="ASCII fs")
-@pytest.mark.skipif(PYPY and not PY3, reason="too much trouble on PYPY2")
 class TestFSAPIs(BaseUnicodeTest):
     """Test FS APIs with a funky, valid, UTF8 path name."""
 
     funky_suffix = UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
-        # Do not expect psutil to correctly handle unicode paths on
-        # Python 2 if os.listdir() is not able either.
-        here = '.' if isinstance(self.funky_name, str) else u'.'
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            return self.funky_name in os.listdir(here)
+            return self.funky_name in os.listdir(".")
 
     # ---
 
-    @pytest.mark.skipif(MACOS and not PY3, reason="broken MACOS + PY2")
     def test_proc_exe(self):
         cmd = [
             self.funky_name,
@@ -222,7 +185,6 @@ class TestFSAPIs(BaseUnicodeTest):
         if self.expect_exact_path_match():
             assert name == os.path.basename(self.funky_name)
 
-    @pytest.mark.skipif(MACOS and not PY3, reason="broken MACOS + PY2")
     def test_proc_cmdline(self):
         cmd = [
             self.funky_name,
@@ -265,13 +227,7 @@ class TestFSAPIs(BaseUnicodeTest):
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
-        try:
-            sock = bind_unix_socket(name)
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise pytest.skip("not supported")
+        sock = bind_unix_socket(name)
         with closing(sock):
             conn = psutil.Process().net_connections('unix')[0]
             assert isinstance(conn.laddr, str)
@@ -290,13 +246,7 @@ class TestFSAPIs(BaseUnicodeTest):
             raise ValueError("connection not found")
 
         name = self.get_testfn(suffix=self.funky_suffix)
-        try:
-            sock = bind_unix_socket(name)
-        except UnicodeEncodeError:
-            if PY3:
-                raise
-            else:
-                raise pytest.skip("not supported")
+        sock = bind_unix_socket(name)
         with closing(sock):
             cons = psutil.net_connections(kind='unix')
             conn = find_sock(cons)
@@ -310,13 +260,8 @@ class TestFSAPIs(BaseUnicodeTest):
         psutil.disk_usage(dname)
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
-    @pytest.mark.skipif(
-        not PY3, reason="ctypes does not support unicode on PY2"
-    )
     @pytest.mark.skipif(PYPY, reason="unstable on PYPY")
     def test_memory_maps(self):
-        # XXX: on Python 2, using ctypes.CDLL with a unicode path
-        # opens a message box which blocks the test run.
         with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
 
             def normpath(p):
@@ -339,7 +284,6 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
     funky_suffix = INVALID_UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
-        # Invalid unicode names are supposed to work on Python 2.
         return True
 
 
@@ -351,16 +295,13 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
 class TestNonFSAPIS(BaseUnicodeTest):
     """Unicode tests for non fs-related APIs."""
 
-    funky_suffix = UNICODE_SUFFIX if PY3 else 'è'
+    funky_suffix = UNICODE_SUFFIX
 
     @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
     @pytest.mark.skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal
-        # with fs paths. On Python 2 subprocess module is broken as
-        # it's not able to handle with non-ASCII env vars, so
-        # we use "è", which is part of the extended ASCII table
-        # (unicode point <= 255).
+        # with fs paths.
         env = os.environ.copy()
         env['FUNNY_ARG'] = self.funky_suffix
         sproc = self.spawn_testproc(env=env)

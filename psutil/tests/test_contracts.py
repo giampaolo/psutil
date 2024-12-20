@@ -22,13 +22,11 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._compat import long
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import PYPY
 from psutil.tests import QEMU_USER
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import PsutilTestCase
@@ -198,7 +196,6 @@ class TestAvailProcessAPIs(PsutilTestCase):
 
 class TestSystemAPITypes(PsutilTestCase):
     """Check the return types of system related APIs.
-    Mainly we want to test we never return unicode on Python 2, see:
     https://github.com/giampaolo/psutil/issues/1039.
     """
 
@@ -237,13 +234,13 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
             raise pytest.skip("cpu_freq() returns None")
-        self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int, long))
+        self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
 
     def test_disk_io_counters(self):
         # Duplicate of test_system.py. Keep it anyway.
         for k, v in psutil.disk_io_counters(perdisk=True).items():
             assert isinstance(k, str)
-            self.assert_ntuple_of_nums(v, type_=(int, long))
+            self.assert_ntuple_of_nums(v, type_=int)
 
     def test_disk_partitions(self):
         # Duplicate of test_system.py. Keep it anyway.
@@ -266,10 +263,7 @@ class TestSystemAPITypes(PsutilTestCase):
         for ifname, addrs in psutil.net_if_addrs().items():
             assert isinstance(ifname, str)
             for addr in addrs:
-                if enum is not None and not PYPY:
-                    assert isinstance(addr.family, enum.IntEnum)
-                else:
-                    assert isinstance(addr.family, int)
+                assert isinstance(addr.family, enum.IntEnum)
                 assert isinstance(addr.address, str)
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
@@ -280,10 +274,7 @@ class TestSystemAPITypes(PsutilTestCase):
         for ifname, info in psutil.net_if_stats().items():
             assert isinstance(ifname, str)
             assert isinstance(info.isup, bool)
-            if enum is not None:
-                assert isinstance(info.duplex, enum.IntEnum)
-            else:
-                assert isinstance(info.duplex, int)
+            assert isinstance(info.duplex, enum.IntEnum)
             assert isinstance(info.speed, int)
             assert isinstance(info.mtu, int)
 
@@ -333,7 +324,4 @@ class TestProcessWaitType(PsutilTestCase):
         p.terminate()
         code = p.wait()
         assert code == -signal.SIGTERM
-        if enum is not None:
-            assert isinstance(code, enum.IntEnum)
-        else:
-            assert isinstance(code, int)
+        assert isinstance(code, enum.IntEnum)

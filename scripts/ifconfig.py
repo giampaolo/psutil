@@ -42,7 +42,6 @@ wlp3s0:
          broadcast : ff:ff:ff:ff:ff:ff
 """
 
-from __future__ import print_function
 
 import socket
 

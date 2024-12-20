@@ -4,15 +4,16 @@
 
 """Linux platform implementation."""
 
-from __future__ import division
 
 import base64
 import collections
+import enum
 import errno
 import functools
 import glob
 import os
 import re
+import resource
 import socket
 import struct
 import sys
@@ -24,6 +25,7 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
+from ._common import ENCODING
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
@@ -44,18 +46,6 @@ from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
-from ._compat import PY3
-from ._compat import FileNotFoundError
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
-from ._compat import b
-from ._compat import basestring
-
-
-if PY3:
-    import enum
-else:
-    enum = None
 
 
 # fmt: off
@@ -69,6 +59,11 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
 ]
+
+if hasattr(resource, "prlimit"):
+    __extra__all__.extend(
+        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()]
+    )
 # fmt: on
 
 
@@ -102,29 +97,21 @@ LITTLE_ENDIAN = sys.byteorder == 'little'
 # * https://lkml.org/lkml/2015/8/17/234
 DISK_SECTOR_SIZE = 512
 
-if enum is None:
-    AF_LINK = socket.AF_PACKET
-else:
-    AddressFamily = enum.IntEnum(
-        'AddressFamily', {'AF_LINK': int(socket.AF_PACKET)}
-    )
-    AF_LINK = AddressFamily.AF_LINK
+AddressFamily = enum.IntEnum(
+    'AddressFamily', {'AF_LINK': int(socket.AF_PACKET)}
+)
+AF_LINK = AddressFamily.AF_LINK
+
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
-if enum is None:
+class IOPriority(enum.IntEnum):
     IOPRIO_CLASS_NONE = 0
     IOPRIO_CLASS_RT = 1
     IOPRIO_CLASS_BE = 2
     IOPRIO_CLASS_IDLE = 3
-else:
 
-    class IOPriority(enum.IntEnum):
-        IOPRIO_CLASS_NONE = 0
-        IOPRIO_CLASS_RT = 1
-        IOPRIO_CLASS_BE = 2
-        IOPRIO_CLASS_IDLE = 3
 
-    globals().update(IOPriority.__members__)
+globals().update(IOPriority.__members__)
 
 # See:
 # https://github.com/torvalds/linux/blame/master/fs/proc/array.c
@@ -211,7 +198,7 @@ pcputimes = namedtuple('pcputimes',
 
 def readlink(path):
     """Wrapper around os.readlink()."""
-    assert isinstance(path, basestring), path
+    assert isinstance(path, str), path
     path = os.readlink(path)
     # readlink() might return paths containing null bytes ('\x00')
     # resulting in "TypeError: must be encoded string without NULL
@@ -295,58 +282,6 @@ except Exception as err:  # noqa: BLE001
 
 
 # =====================================================================
-# --- prlimit
-# =====================================================================
-
-# Backport of resource.prlimit() for Python 2. Originally this was done
-# in C, but CentOS-6 which we use to create manylinux wheels is too old
-# and does not support prlimit() syscall. As such the resulting wheel
-# would not include prlimit(), even when installed on newer systems.
-# This is the only part of psutil using ctypes.
-
-prlimit = None
-try:
-    from resource import prlimit  # python >= 3.4
-except ImportError:
-    import ctypes
-
-    libc = ctypes.CDLL(None, use_errno=True)
-
-    if hasattr(libc, "prlimit"):
-
-        def prlimit(pid, resource_, limits=None):
-            class StructRlimit(ctypes.Structure):
-                _fields_ = [
-                    ('rlim_cur', ctypes.c_longlong),
-                    ('rlim_max', ctypes.c_longlong),
-                ]
-
-            current = StructRlimit()
-            if limits is None:
-                # get
-                ret = libc.prlimit(pid, resource_, None, ctypes.byref(current))
-            else:
-                # set
-                new = StructRlimit()
-                new.rlim_cur = limits[0]
-                new.rlim_max = limits[1]
-                ret = libc.prlimit(
-                    pid, resource_, ctypes.byref(new), ctypes.byref(current)
-                )
-
-            if ret != 0:
-                errno_ = ctypes.get_errno()
-                raise OSError(errno_, os.strerror(errno_))
-            return (current.rlim_cur, current.rlim_max)
-
-
-if prlimit is not None:
-    __extra__all__.extend(
-        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()]
-    )
-
-
-# =====================================================================
 # --- system memory
 # =====================================================================
 
@@ -396,7 +331,7 @@ def calculate_avail_vmem(mems):
         return fallback
     try:
         f = open_binary('%s/zoneinfo' % get_procfs_path())
-    except IOError:
+    except OSError:
         return fallback  # kernel 2.6.13
 
     watermark_low = 0
@@ -572,7 +507,7 @@ def swap_memory():
     # get pgin/pgouts
     try:
         f = open_binary("%s/vmstat" % get_procfs_path())
-    except IOError as err:
+    except OSError as err:
         # see https://github.com/giampaolo/psutil/issues/722
         msg = (
             "'sin' and 'sout' swap memory stats couldn't "
@@ -778,9 +713,7 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 # https://github.com/giampaolo/psutil/issues/1071
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
-                    online_path = (
-                        "/sys/devices/system/cpu/cpu{}/online".format(i)
-                    )
+                    online_path = f"/sys/devices/system/cpu/cpu{i}/online"
                     # if cpu core is offline, set to all zeroes
                     if cat(online_path, fallback=None) == "0\n":
                         ret.append(_common.scpufreq(0.0, 0.0, 0.0))
@@ -914,8 +847,7 @@ class NetConnections:
         # no end-points connected
         if not port:
             return ()
-        if PY3:
-            ip = ip.encode('ascii')
+        ip = ip.encode('ascii')
         if family == socket.AF_INET:
             # see: https://github.com/giampaolo/psutil/issues/201
             if LITTLE_ENDIAN:
@@ -1311,17 +1243,17 @@ class RootFsDeviceFinder:
         if path is None:
             try:
                 path = self.ask_proc_partitions()
-            except (IOError, OSError) as err:
+            except OSError as err:
                 debug(err)
         if path is None:
             try:
                 path = self.ask_sys_dev_block()
-            except (IOError, OSError) as err:
+            except OSError as err:
                 debug(err)
         if path is None:
             try:
                 path = self.ask_sys_class_block()
-            except (IOError, OSError) as err:
+            except OSError as err:
                 debug(err)
         # We use exists() because the "/dev/*" part of the path is hard
         # coded, so we want to be sure.
@@ -1392,7 +1324,7 @@ def sensors_temperatures():
     # https://github.com/giampaolo/psutil/issues/971
     # https://github.com/nicolargo/glances/issues/1060
     basenames.extend(glob.glob('/sys/class/hwmon/hwmon*/device/temp*_*'))
-    basenames = sorted(set([x.split('_')[0] for x in basenames]))
+    basenames = sorted({x.split('_')[0] for x in basenames})
 
     # Only add the coretemp hwmon entries if they're not already in
     # /sys/class/hwmon/
@@ -1413,7 +1345,7 @@ def sensors_temperatures():
             current = float(bcat(path)) / 1000.0
             path = os.path.join(os.path.dirname(base), 'name')
             unit_name = cat(path).strip()
-        except (IOError, OSError, ValueError):
+        except (OSError, ValueError):
             # A lot of things can go wrong here, so let's just skip the
             # whole entry. Sure thing is Linux's /sys/class/hwmon really
             # is a stinky broken mess.
@@ -1452,15 +1384,15 @@ def sensors_temperatures():
                 current = float(bcat(path)) / 1000.0
                 path = os.path.join(base, 'type')
                 unit_name = cat(path).strip()
-            except (IOError, OSError, ValueError) as err:
+            except (OSError, ValueError) as err:
                 debug(err)
                 continue
 
             trip_paths = glob.glob(base + '/trip_point*')
-            trip_points = set([
+            trip_points = {
                 '_'.join(os.path.basename(p).split('_')[0:3])
                 for p in trip_paths
-            ])
+            }
             critical = None
             high = None
             for trip_point in trip_points:
@@ -1508,11 +1440,11 @@ def sensors_fans():
         # https://github.com/giampaolo/psutil/issues/971
         basenames = glob.glob('/sys/class/hwmon/hwmon*/device/fan*_*')
 
-    basenames = sorted(set([x.split('_')[0] for x in basenames]))
+    basenames = sorted({x.split("_")[0] for x in basenames})
     for base in basenames:
         try:
             current = int(bcat(base + '_input'))
-        except (IOError, OSError) as err:
+        except OSError as err:
             debug(err)
             continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
@@ -1648,7 +1580,8 @@ def boot_time():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]
+    path = get_procfs_path().encode(ENCODING)
+    return [int(x) for x in os.listdir(path) if x.isdigit()]
 
 
 def pid_exists(pid):
@@ -1679,7 +1612,7 @@ def pid_exists(pid):
                         # dealing with a process PID.
                         return tgid == pid
                 raise ValueError("'Tgid' line not found in %s" % path)
-        except (EnvironmentError, ValueError):
+        except (OSError, ValueError):
             return pid in pids()
 
 
@@ -1706,7 +1639,7 @@ def ppid_map():
 
 
 def wrap_exceptions(fun):
-    """Decorator which translates bare OSError and IOError exceptions
+    """Decorator which translates bare OSError and OSError exceptions
     into NoSuchProcess and AccessDenied.
     """
 
@@ -1753,7 +1686,7 @@ class Process:
         # exception.
         try:
             data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
-        except (IOError, OSError):
+        except OSError:
             return False
         else:
             rpar = data.rfind(b')')
@@ -1837,11 +1770,8 @@ class Process:
 
     @wrap_exceptions
     def name(self):
-        name = self._parse_stat_file()['name']
-        if PY3:
-            name = decode(name)
         # XXX - gets changed later and probably needs refactoring
-        return name
+        return decode(self._parse_stat_file()['name'])
 
     @wrap_exceptions
     def exe(self):
@@ -1995,7 +1925,7 @@ class Process:
             # compared to /proc/pid/smaps_rollup.
             uss = pss = swap = 0
             with open_binary(
-                "{}/{}/smaps_rollup".format(self._procfs_path, self.pid)
+                f"{self._procfs_path}/{self.pid}/smaps_rollup"
             ) as f:
                 for line in f:
                     if line.startswith(b"Private_"):
@@ -2020,8 +1950,6 @@ class Process:
 
             # Note: using 3 regexes is faster than reading the file
             # line by line.
-            # XXX: on Python 3 the 2 regexes are 30% slower than on
-            # Python 2 though. Figure out why.
             #
             # You might be tempted to calculate USS by subtracting
             # the "shared" value from the "resident" value in
@@ -2106,8 +2034,7 @@ class Process:
                 if not path:
                     path = '[anon]'
                 else:
-                    if PY3:
-                        path = decode(path)
+                    path = decode(path)
                     path = path.strip()
                     if path.endswith(' (deleted)') and not path_exists_strict(
                         path
@@ -2152,9 +2079,7 @@ class Process:
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):
-        # Note: on Python 3 using a re is faster than iterating over file
-        # line by line. On Python 2 is the exact opposite, and iterating
-        # over a file on Python 3 is slower than on Python 2.
+        # Using a re is faster than iterating over file line by line.
         data = self._read_status_file()
         return int(_num_threads_re.findall(data)[0])
 
@@ -2247,22 +2172,24 @@ class Process:
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
-            if enum is not None:
-                ioclass = IOPriority(ioclass)
+            ioclass = IOPriority(ioclass)
             return _common.pionice(ioclass, value)
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
             if value is None:
                 value = 0
-            if value and ioclass in {IOPRIO_CLASS_IDLE, IOPRIO_CLASS_NONE}:
+            if value and ioclass in {
+                IOPriority.IOPRIO_CLASS_IDLE,
+                IOPriority.IOPRIO_CLASS_NONE,
+            }:
                 raise ValueError("%r ioclass accepts no value" % ioclass)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
                 raise ValueError(msg)
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
-    if prlimit is not None:
+    if hasattr(resource, "prlimit"):
 
         @wrap_exceptions
         def rlimit(self, resource_, limits=None):
@@ -2275,7 +2202,7 @@ class Process:
             try:
                 if limits is None:
                     # get
-                    return prlimit(self.pid, resource_)
+                    return resource.prlimit(self.pid, resource_)
                 else:
                     # set
                     if len(limits) != 2:
@@ -2284,7 +2211,7 @@ class Process:
                             + "tuple, got %s" % repr(limits)
                         )
                         raise ValueError(msg)
-                    prlimit(self.pid, resource_, limits)
+                    resource.prlimit(self.pid, resource_, limits)
             except OSError as err:
                 if err.errno == errno.ENOSYS:
                     # I saw this happening on Travis:
@@ -2295,8 +2222,7 @@ class Process:
     @wrap_exceptions
     def status(self):
         letter = self._parse_stat_file()['status']
-        if PY3:
-            letter = letter.decode()
+        letter = letter.decode()
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(letter, '?')
 

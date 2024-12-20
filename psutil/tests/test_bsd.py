@@ -9,10 +9,10 @@
 
 """Tests specific to all BSD platforms."""
 
-
 import datetime
 import os
 import re
+import shutil
 import time
 
 import psutil
@@ -28,7 +28,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import which
 
 
 if BSD:
@@ -36,7 +35,7 @@ if BSD:
 
     PAGESIZE = getpagesize()
     # muse requires root privileges
-    MUSE_AVAILABLE = os.getuid() == 0 and which('muse')
+    MUSE_AVAILABLE = os.getuid() == 0 and shutil.which("muse")
 else:
     PAGESIZE = None
     MUSE_AVAILABLE = False
@@ -122,12 +121,16 @@ class BSDTestCase(PsutilTestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 raise self.fail("psutil=%s, df=%s" % (usage.used, used))
 
-    @pytest.mark.skipif(not which('sysctl'), reason="sysctl cmd not available")
+    @pytest.mark.skipif(
+        not shutil.which("sysctl"), reason="sysctl cmd not available"
+    )
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         assert psutil.cpu_count(logical=True) == syst
 
-    @pytest.mark.skipif(not which('sysctl'), reason="sysctl cmd not available")
+    @pytest.mark.skipif(
+        not shutil.which("sysctl"), reason="sysctl cmd not available"
+    )
     @pytest.mark.skipif(
         NETBSD, reason="skipped on NETBSD"  # we check /proc/meminfo
     )
@@ -136,7 +139,7 @@ class BSDTestCase(PsutilTestCase):
         assert num == psutil.virtual_memory().total
 
     @pytest.mark.skipif(
-        not which('ifconfig'), reason="ifconfig cmd not available"
+        not shutil.which("ifconfig"), reason="ifconfig cmd not available"
     )
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
@@ -423,9 +426,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             return "%d:%02d" % (h, m)
 
         out = sh("acpiconf -i 0")
-        fields = dict(
-            [(x.split('\t')[0], x.split('\t')[-1]) for x in out.split("\n")]
-        )
+        fields = {x.split('\t')[0]: x.split('\t')[-1] for x in out.split("\n")}
         metrics = psutil.sensors_battery()
         percent = int(fields['Remaining capacity:'].replace('%', ''))
         remaining_time = fields['Remaining time:']

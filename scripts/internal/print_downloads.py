@@ -11,7 +11,6 @@ Useful sites:
 * https://hugovk.github.io/top-pypi-packages/.
 """
 
-from __future__ import print_function
 
 import json
 import os
@@ -117,7 +116,7 @@ templ = "| %-30s | %15s |"
 
 def print_row(left, right):
     if isinstance(right, int):
-        right = '{:,}'.format(right)
+        right = f'{right:,}'
     print(templ % (left, right))
 
 

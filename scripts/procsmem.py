@@ -35,7 +35,6 @@ PID     User    Cmdline                            USS     PSS    Swap     RSS
 
 """
 
-from __future__ import print_function
 
 import sys
 

@@ -11,7 +11,6 @@ This was originally written as a bat file but they suck so much
 that they should be deemed illegal!
 """
 
-from __future__ import print_function
 
 import argparse
 import atexit
@@ -25,9 +24,7 @@ import subprocess
 import sys
 
 
-APPVEYOR = bool(os.environ.get('APPVEYOR'))
-PYTHON = sys.executable if APPVEYOR else os.getenv('PYTHON', sys.executable)
-PY3 = sys.version_info[0] >= 3
+PYTHON = os.getenv('PYTHON', sys.executable)
 PYTEST_ARGS = ["-v", "-s", "--tb=short"]
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
@@ -42,8 +39,6 @@ TEST_DEPS = setup.TEST_DEPS
 DEV_DEPS = setup.DEV_DEPS
 
 _cmds = {}
-if PY3:
-    basestring = str
 
 GREEN = 2
 LIGHTBLUE = 3
@@ -61,9 +56,8 @@ def safe_print(text, file=sys.stdout):
     """Prints a (unicode) string to the console, encoded depending on
     the stdout/file encoding (eg. cp437 on Windows). This is to avoid
     encoding errors in case of funky path names.
-    Works with Python 2 and 3.
     """
-    if not isinstance(text, basestring):
+    if not isinstance(text, str):
         return print(text, file=file)
     try:
         file.write(text)
@@ -181,15 +175,13 @@ def build():
     # order to allow "import psutil" when using the interactive interpreter
     # from within psutil root directory.
     cmd = [PYTHON, "setup.py", "build_ext", "-i"]
-    if sys.version_info[:2] >= (3, 6) and (os.cpu_count() or 1) > 1:
+    if os.cpu_count() or 1 > 1:  # noqa: PLR0133
         cmd += ['--parallel', str(os.cpu_count())]
     # Print coloured warnings in real time.
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
         for line in iter(p.stdout.readline, b''):
-            if PY3:
-                line = line.decode()
-            line = line.strip()
+            line = line.decode().strip()
             if 'warning' in line:
                 win_colorprint(line, YELLOW)
             elif 'error' in line:
@@ -454,18 +446,6 @@ def print_sysinfo():
     print_sysinfo()
 
 
-def download_appveyor_wheels():
-    """Download appveyor wheels."""
-    sh([
-        PYTHON,
-        "scripts\\internal\\download_wheels_appveyor.py",
-        "--user",
-        "giampaolo",
-        "--project",
-        "psutil",
-    ])
-
-
 def generate_manifest():
     """Generate MANIFEST.in file."""
     script = "scripts\\internal\\generate_manifest.py"
@@ -482,8 +462,6 @@ def get_python(path):
     # try to look for a python installation given a shortcut name
     path = path.replace('.', '')
     vers = (
-        '27',
-        '27-64',
         '310-64',
         '311-64',
         '312-64',
@@ -504,7 +482,6 @@ def parse_args():
     sp.add_parser('build', help="build")
     sp.add_parser('clean', help="deletes dev files")
     sp.add_parser('coverage', help="run coverage tests.")
-    sp.add_parser('download-appveyor-wheels', help="download wheels.")
     sp.add_parser('generate-manifest', help="generate MANIFEST.in file")
     sp.add_parser('help', help="print this help")
     sp.add_parser('install', help="build + install in develop/edit mode")

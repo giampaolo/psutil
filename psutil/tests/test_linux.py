@@ -6,7 +6,6 @@
 
 """Linux specific tests."""
 
-from __future__ import division
 
 import collections
 import contextlib
@@ -20,12 +19,10 @@ import struct
 import textwrap
 import time
 import warnings
+from unittest import mock
 
 import psutil
 from psutil import LINUX
-from psutil._compat import PY3
-from psutil._compat import FileNotFoundError
-from psutil._compat import basestring
 from psutil.tests import AARCH64
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
@@ -41,14 +38,12 @@ from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
 from psutil.tests import ThreadTask
 from psutil.tests import call_until
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import reload_module
 from psutil.tests import retry_on_failure
 from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import which
 
 
 if LINUX:
@@ -73,11 +68,8 @@ if LINUX:
 def get_ipv4_address(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    ifname = bytes(ifname[:15], "ascii")
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         return socket.inet_ntoa(
             fcntl.ioctl(s.fileno(), SIOCGIFADDR, struct.pack('256s', ifname))[
                 20:24
@@ -88,11 +80,8 @@ def get_ipv4_address(ifname):
 def get_ipv4_netmask(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    ifname = bytes(ifname[:15], "ascii")
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         return socket.inet_ntoa(
             fcntl.ioctl(
                 s.fileno(), SIOCGIFNETMASK, struct.pack('256s', ifname)
@@ -103,11 +92,8 @@ def get_ipv4_netmask(ifname):
 def get_ipv4_broadcast(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    ifname = bytes(ifname[:15], "ascii")
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         return socket.inet_ntoa(
             fcntl.ioctl(
                 s.fileno(), SIOCGIFBRDADDR, struct.pack('256s', ifname)
@@ -140,24 +126,12 @@ def get_ipv6_addresses(ifname):
 def get_mac_address(ifname):
     import fcntl
 
-    ifname = ifname[:15]
-    if PY3:
-        ifname = bytes(ifname, 'ascii')
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
+    ifname = bytes(ifname[:15], "ascii")
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname)
         )
-        if PY3:
-
-            def ord(x):
-                return x
-
-        else:
-            import __builtin__
-
-            ord = __builtin__.ord
-        return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+        return ''.join(['%02x:' % char for char in info[18:24]])[:-1]
 
 
 def free_swap():
@@ -223,19 +197,15 @@ def mock_open_content(pairs):
     def open_mock(name, *args, **kwargs):
         if name in pairs:
             content = pairs[name]
-            if PY3:
-                if isinstance(content, basestring):
-                    return io.StringIO(content)
-                else:
-                    return io.BytesIO(content)
+            if isinstance(content, str):
+                return io.StringIO(content)
             else:
                 return io.BytesIO(content)
         else:
             return orig_open(name, *args, **kwargs)
 
     orig_open = open
-    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+    with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
         yield m
 
 
@@ -252,8 +222,7 @@ def mock_open_exception(for_path, exc):
             return orig_open(name, *args, **kwargs)
 
     orig_open = open
-    patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-    with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+    with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
         yield m
 
 
@@ -495,10 +464,7 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
             SReclaimable:     346648 kB
             """).encode()
         with mock_open_content({"/proc/meminfo": content}):
-            with mock_open_exception(
-                "/proc/zoneinfo",
-                IOError(errno.ENOENT, 'no such file or directory'),
-            ):
+            with mock_open_exception("/proc/zoneinfo", FileNotFoundError):
                 with warnings.catch_warnings(record=True) as ws:
                     ret = psutil.virtual_memory()
                     assert ret.available == 2057400 * 1024 + 4818144 * 1024
@@ -623,9 +589,7 @@ class TestSystemSwapMemory(PsutilTestCase):
 
     def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
-        with mock_open_exception(
-            "/proc/vmstat", IOError(errno.ENOENT, 'no such file or directory')
-        ) as m:
+        with mock_open_exception("/proc/vmstat", FileNotFoundError) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.swap_memory()
@@ -714,14 +678,14 @@ class TestSystemCPUCountLogical(PsutilTestCase):
         assert psutil.cpu_count() == count
 
     @pytest.mark.skipif(
-        not which("nproc"), reason="nproc utility not available"
+        not shutil.which("nproc"), reason="nproc utility not available"
     )
     def test_against_nproc(self):
         num = int(sh("nproc --all"))
         assert psutil.cpu_count(logical=True) == num
 
     @pytest.mark.skipif(
-        not which("lscpu"), reason="lscpu utility not available"
+        not shutil.which("lscpu"), reason="lscpu utility not available"
     )
     def test_against_lscpu(self):
         out = sh("lscpu -p")
@@ -768,7 +732,7 @@ class TestSystemCPUCountLogical(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemCPUCountCores(PsutilTestCase):
     @pytest.mark.skipif(
-        not which("lscpu"), reason="lscpu utility not available"
+        not shutil.which("lscpu"), reason="lscpu utility not available"
     )
     def test_against_lscpu(self):
         out = sh("lscpu -p")
@@ -861,8 +825,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
                 freq = psutil.cpu_freq()
                 assert freq.current == 500.0
@@ -907,8 +870,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
                 with mock.patch(
                     'psutil._pslinux.cpu_count_logical', return_value=2
@@ -930,7 +892,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
         # See: https://github.com/giampaolo/psutil/issues/1071
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.endswith('/cpuinfo_cur_freq'):
                 return io.BytesIO(b"200000")
             elif name == '/proc/cpuinfo':
@@ -939,8 +901,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('os.path.exists', return_value=True):
                 with mock.patch(
                     'psutil._pslinux.cpu_count_logical', return_value=1
@@ -1007,7 +968,8 @@ class TestSystemNetIfAddrs(PsutilTestCase):
                     assert address in get_ipv6_addresses(name)
 
     # XXX - not reliable when having virtual NICs installed by Docker.
-    # @pytest.mark.skipif(not which('ip'), reason="'ip' utility not available")
+    # @pytest.mark.skipif(not shutil.which("ip"),
+    #                     reason="'ip' utility not available")
     # def test_net_if_names(self):
     #     out = sh("ip addr").strip()
     #     nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
@@ -1026,7 +988,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
 class TestSystemNetIfStats(PsutilTestCase):
     @pytest.mark.skipif(
-        not which("ifconfig"), reason="ifconfig utility not available"
+        not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
@@ -1046,7 +1008,7 @@ class TestSystemNetIfStats(PsutilTestCase):
                 assert stats.mtu == int(f.read().strip())
 
     @pytest.mark.skipif(
-        not which("ifconfig"), reason="ifconfig utility not available"
+        not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     def test_flags(self):
         # first line looks like this:
@@ -1081,7 +1043,7 @@ class TestSystemNetIfStats(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemNetIOCounters(PsutilTestCase):
     @pytest.mark.skipif(
-        not which("ifconfig"), reason="ifconfig utility not available"
+        not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
     @retry_on_failure()
     def test_against_ifconfig(self):
@@ -1140,7 +1102,7 @@ class TestSystemNetConnections(PsutilTestCase):
             s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
             self.addCleanup(s.close)
             s.bind(("::1", 0))
-        except socket.error:
+        except OSError:
             pass
         psutil.net_connections(kind='inet6')
 
@@ -1198,7 +1160,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
                     return
 
         # No ZFS partitions on this system. Let's fake one.
-        fake_file = io.StringIO(u"nodev\tzfs\n")
+        fake_file = io.StringIO("nodev\tzfs\n")
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m1:
@@ -1407,7 +1369,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
             assert base == c
 
     @pytest.mark.skipif(
-        not which("findmnt"), reason="findmnt utility not available"
+        not shutil.which("findmnt"), reason="findmnt utility not available"
     )
     @pytest.mark.skipif(GITHUB_ACTIONS, reason="unsupported on GITHUB_ACTIONS")
     def test_against_findmnt(self):
@@ -1455,24 +1417,23 @@ class TestMisc(PsutilTestCase):
 
             def open_mock(name, *args, **kwargs):
                 if name.startswith('/proc'):
-                    raise IOError(errno.ENOENT, 'rejecting access for test')
+                    raise FileNotFoundError
                 return orig_open(name, *args, **kwargs)
 
-            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-            with mock.patch(patch_point, side_effect=open_mock):
+            with mock.patch("builtins.open", side_effect=open_mock):
                 reload_module(psutil)
 
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times()
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times(percpu=True)
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_percent()
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_percent(percpu=True)
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times_percent()
-                with pytest.raises(IOError):
+                with pytest.raises(OSError):
                     psutil.cpu_times_percent(percpu=True)
 
                 psutil.PROCFS_PATH = my_procfs
@@ -1563,23 +1524,23 @@ class TestMisc(PsutilTestCase):
         os.mkdir(tdir)
         try:
             psutil.PROCFS_PATH = tdir
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.virtual_memory()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.cpu_times()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.cpu_times(percpu=True)
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.boot_time()
-            # self.assertRaises(IOError, psutil.pids)
-            with pytest.raises(IOError):
+            # self.assertRaises(OSError, psutil.pids)
+            with pytest.raises(OSError):
                 psutil.net_connections()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.net_io_counters()
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 psutil.net_if_stats()
-            # self.assertRaises(IOError, psutil.disk_io_counters)
-            with pytest.raises(IOError):
+            # self.assertRaises(OSError, psutil.disk_io_counters)
+            with pytest.raises(OSError):
                 psutil.disk_partitions()
             with pytest.raises(psutil.NoSuchProcess):
                 psutil.Process()
@@ -1621,7 +1582,9 @@ class TestMisc(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
 class TestSensorsBattery(PsutilTestCase):
-    @pytest.mark.skipif(not which("acpi"), reason="acpi utility not available")
+    @pytest.mark.skipif(
+        not shutil.which("acpi"), reason="acpi utility not available"
+    )
     def test_percent(self):
         out = sh("acpi -b")
         acpi_value = int(out.split(",")[1].strip().replace('%', ''))
@@ -1637,8 +1600,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert (
                 psutil.sensors_battery().secsleft
@@ -1651,15 +1613,14 @@ class TestSensorsBattery(PsutilTestCase):
         # case code relies on /status file.
         def open_mock(name, *args, **kwargs):
             if name.endswith(('AC0/online', 'AC/online')):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.endswith("/status"):
-                return io.StringIO(u"charging")
+                return io.StringIO("charging")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is True
             assert m.called
 
@@ -1672,8 +1633,7 @@ class TestSensorsBattery(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
@@ -1682,15 +1642,14 @@ class TestSensorsBattery(PsutilTestCase):
         # case code relies on /status file.
         def open_mock(name, *args, **kwargs):
             if name.endswith(('AC0/online', 'AC/online')):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.endswith("/status"):
-                return io.StringIO(u"discharging")
+                return io.StringIO("discharging")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is False
             assert m.called
 
@@ -1702,15 +1661,14 @@ class TestSensorsBattery(PsutilTestCase):
                 '/sys/class/power_supply/AC0/online',
                 '/sys/class/power_supply/AC/online',
             )):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             elif name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock) as m:
+        with mock.patch("builtins.open", side_effect=open_mock) as m:
             assert psutil.sensors_battery().power_plugged is None
             assert m.called
 
@@ -1727,11 +1685,11 @@ class TestSensorsBattery(PsutilTestCase):
         # Expected fallback on /capacity.
         with mock_open_exception(
             "/sys/class/power_supply/BAT0/energy_full",
-            IOError(errno.ENOENT, ""),
+            FileNotFoundError,
         ):
             with mock_open_exception(
                 "/sys/class/power_supply/BAT0/charge_full",
-                IOError(errno.ENOENT, ""),
+                FileNotFoundError,
             ):
                 with mock_open_content(
                     {"/sys/class/power_supply/BAT0/capacity": b"88"}
@@ -1741,14 +1699,14 @@ class TestSensorsBattery(PsutilTestCase):
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
         with mock_open_exception(
-            "/sys/class/power_supply/AC/online", IOError(errno.ENOENT, "")
+            "/sys/class/power_supply/AC/online", FileNotFoundError
         ):
             with mock_open_exception(
-                "/sys/class/power_supply/AC0/online", IOError(errno.ENOENT, "")
+                "/sys/class/power_supply/AC0/online", FileNotFoundError
             ):
                 with mock_open_exception(
                     "/sys/class/power_supply/BAT0/status",
-                    IOError(errno.ENOENT, ""),
+                    FileNotFoundError,
                 ):
                     assert psutil.sensors_battery().power_plugged is None
 
@@ -1758,18 +1716,17 @@ class TestSensorsBatteryEmulated(PsutilTestCase):
     def test_it(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith("/energy_now"):
-                return io.StringIO(u"60000000")
+                return io.StringIO("60000000")
             elif name.endswith("/power_now"):
-                return io.StringIO(u"0")
+                return io.StringIO("0")
             elif name.endswith("/energy_full"):
-                return io.StringIO(u"60000001")
+                return io.StringIO("60000001")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
         with mock.patch('os.listdir', return_value=["BAT0"]) as mlistdir:
-            with mock.patch(patch_point, side_effect=open_mock) as mopen:
+            with mock.patch("builtins.open", side_effect=open_mock) as mopen:
                 assert psutil.sensors_battery() is not None
         assert mlistdir.called
         assert mopen.called
@@ -1780,9 +1737,9 @@ class TestSensorsTemperatures(PsutilTestCase):
     def test_emulate_class_hwmon(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
-                return io.StringIO(u"name")
+                return io.StringIO("name")
             elif name.endswith('/temp1_label'):
-                return io.StringIO(u"label")
+                return io.StringIO("label")
             elif name.endswith('/temp1_input'):
                 return io.BytesIO(b"30000")
             elif name.endswith('/temp1_max'):
@@ -1793,8 +1750,7 @@ class TestSensorsTemperatures(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             # Test case with /sys/class/hwmon
             with mock.patch(
                 'glob.glob', return_value=['/sys/class/hwmon/hwmon0/temp1']
@@ -1812,9 +1768,9 @@ class TestSensorsTemperatures(PsutilTestCase):
             elif name.endswith('temp'):
                 return io.BytesIO(b"30000")
             elif name.endswith('0_type'):
-                return io.StringIO(u"critical")
+                return io.StringIO("critical")
             elif name.endswith('type'):
-                return io.StringIO(u"name")
+                return io.StringIO("name")
             else:
                 return orig_open(name, *args, **kwargs)
 
@@ -1833,8 +1789,7 @@ class TestSensorsTemperatures(PsutilTestCase):
             return []
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('glob.glob', create=True, side_effect=glob_mock):
                 temp = psutil.sensors_temperatures()['name'][0]
                 assert temp.label == ''  # noqa
@@ -1848,17 +1803,16 @@ class TestSensorsFans(PsutilTestCase):
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
-                return io.StringIO(u"name")
+                return io.StringIO("name")
             elif name.endswith('/fan1_label'):
-                return io.StringIO(u"label")
+                return io.StringIO("label")
             elif name.endswith('/fan1_input'):
-                return io.StringIO(u"2000")
+                return io.StringIO("2000")
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock):
+        with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch(
                 'glob.glob', return_value=['/sys/class/hwmon/hwmon2/fan1']
             ):
@@ -1946,14 +1900,13 @@ class TestProcess(PsutilTestCase):
             assert get_test_file(testfn).mode == "r+"
         with open(testfn, "a+"):
             assert get_test_file(testfn).mode == "a+"
-        # note: "x" bit is not supported
-        if PY3:
-            safe_rmpath(testfn)
-            with open(testfn, "x"):
-                assert get_test_file(testfn).mode == "w"
-            safe_rmpath(testfn)
-            with open(testfn, "x+"):
-                assert get_test_file(testfn).mode == "r+"
+
+        safe_rmpath(testfn)
+        with open(testfn, "x"):
+            assert get_test_file(testfn).mode == "w"
+        safe_rmpath(testfn)
+        with open(testfn, "x+"):
+            assert get_test_file(testfn).mode == "r+"
 
     def test_open_files_file_gone(self):
         # simulates a file which gets deleted during open_files()
@@ -1965,7 +1918,7 @@ class TestProcess(PsutilTestCase):
             call_until(lambda: len(p.open_files()) != len(files))
             with mock.patch(
                 'psutil._pslinux.os.readlink',
-                side_effect=OSError(errno.ENOENT, ""),
+                side_effect=FileNotFoundError,
             ) as m:
                 assert p.open_files() == []
                 assert m.called
@@ -1987,9 +1940,8 @@ class TestProcess(PsutilTestCase):
         with open(self.get_testfn(), 'w'):
             # give the kernel some time to see the new file
             call_until(lambda: len(p.open_files()) != len(files))
-            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(
-                patch_point, side_effect=IOError(errno.ENOENT, "")
+                "builtins.open", side_effect=FileNotFoundError
             ) as m:
                 assert p.open_files() == []
                 assert m.called
@@ -2031,13 +1983,13 @@ class TestProcess(PsutilTestCase):
     def test_cmdline_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/639
         p = psutil.Process()
-        fake_file = io.StringIO(u'foo\x00bar\x00')
+        fake_file = io.StringIO('foo\x00bar\x00')
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m:
             assert p.cmdline() == ['foo', 'bar']
             assert m.called
-        fake_file = io.StringIO(u'foo\x00bar\x00\x00')
+        fake_file = io.StringIO('foo\x00bar\x00\x00')
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m:
@@ -2047,13 +1999,13 @@ class TestProcess(PsutilTestCase):
     def test_cmdline_spaces_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/1179
         p = psutil.Process()
-        fake_file = io.StringIO(u'foo bar ')
+        fake_file = io.StringIO('foo bar ')
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m:
             assert p.cmdline() == ['foo', 'bar']
             assert m.called
-        fake_file = io.StringIO(u'foo bar  ')
+        fake_file = io.StringIO('foo bar  ')
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m:
@@ -2064,7 +2016,7 @@ class TestProcess(PsutilTestCase):
         # https://github.com/giampaolo/psutil/issues/
         #    1179#issuecomment-552984549
         p = psutil.Process()
-        fake_file = io.StringIO(u'foo\x20bar\x00')
+        fake_file = io.StringIO('foo\x20bar\x00')
         with mock.patch(
             'psutil._common.open', return_value=fake_file, create=True
         ) as m:
@@ -2085,13 +2037,12 @@ class TestProcess(PsutilTestCase):
         # of raising NSP.
         def open_mock_1(name, *args, **kwargs):
             if name.startswith('/proc/%s/task' % os.getpid()):
-                raise IOError(errno.ENOENT, "")
+                raise FileNotFoundError
             else:
                 return orig_open(name, *args, **kwargs)
 
         orig_open = open
-        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
-        with mock.patch(patch_point, side_effect=open_mock_1) as m:
+        with mock.patch("builtins.open", side_effect=open_mock_1) as m:
             ret = psutil.Process().threads()
             assert m.called
             assert ret == []
@@ -2100,17 +2051,17 @@ class TestProcess(PsutilTestCase):
         # exception.
         def open_mock_2(name, *args, **kwargs):
             if name.startswith('/proc/%s/task' % os.getpid()):
-                raise IOError(errno.EPERM, "")
+                raise PermissionError
             else:
                 return orig_open(name, *args, **kwargs)
 
-        with mock.patch(patch_point, side_effect=open_mock_2):
+        with mock.patch("builtins.open", side_effect=open_mock_2):
             with pytest.raises(psutil.AccessDenied):
                 psutil.Process().threads()
 
     def test_exe_mocked(self):
         with mock.patch(
-            'psutil._pslinux.readlink', side_effect=OSError(errno.ENOENT, "")
+            'psutil._pslinux.readlink', side_effect=FileNotFoundError
         ) as m:
             # de-activate guessing from cmdline()
             with mock.patch(
@@ -2124,7 +2075,7 @@ class TestProcess(PsutilTestCase):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.
         with mock_open_exception(
-            '/proc/%s/smaps' % os.getpid(), IOError(errno.ENOENT, "")
+            '/proc/%s/smaps' % os.getpid(), FileNotFoundError
         ) as m:
             p = psutil.Process()
             with pytest.raises(FileNotFoundError):
@@ -2146,7 +2097,7 @@ class TestProcess(PsutilTestCase):
         # happen in case of zombie process:
         # https://travis-ci.org/giampaolo/psutil/jobs/51368273
         with mock.patch(
-            "psutil._pslinux.prlimit", side_effect=OSError(errno.ENOSYS, "")
+            "resource.prlimit", side_effect=OSError(errno.ENOSYS, "")
         ) as m1:
             with mock.patch(
                 "psutil._pslinux.Process._is_zombie", return_value=True

@@ -23,14 +23,6 @@ static const int PSUTIL_CONN_NONE = 128;
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
-#if PY_MAJOR_VERSION < 3
-    // On Python 2 we just return a plain byte string, which is never
-    // supposed to raise decoding errors, see:
-    // https://github.com/giampaolo/psutil/issues/1040
-    #define PyUnicode_DecodeFSDefault          PyString_FromString
-    #define PyUnicode_DecodeFSDefaultAndSize   PyString_FromStringAndSize
-#endif
-
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
     #if !defined(PyErr_SetFromWindowsErrWithFilename)
         PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,
@@ -45,7 +37,6 @@ static const int PSUTIL_CONN_NONE = 128;
 // --- _Py_PARSE_PID
 
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
-// SIZEOF_PID_T is missing on Windows + Python2.
 // In this case we guess it from setup.py. It's not 100% bullet proof,
 // If wrong we'll probably get compiler warnings.
 // FWIW on all UNIX platforms I've seen pid_t is defined as an int.
@@ -60,8 +51,8 @@ static const int PSUTIL_CONN_NONE = 128;
     #define SIZEOF_PID_T PSUTIL_SIZEOF_PID_T  // set as a macro in setup.py
 #endif
 
-// _Py_PARSE_PID is Python 3 only, but since it's private make sure it's
-// always present.
+// _Py_PARSE_PID was added in Python 3, but since it's private we make
+// sure it's always present.
 #ifndef _Py_PARSE_PID
     #if SIZEOF_PID_T == SIZEOF_INT
         #define _Py_PARSE_PID "i"
@@ -75,14 +66,10 @@ static const int PSUTIL_CONN_NONE = 128;
     #endif
 #endif
 
-// Python 2 or PyPy on Windows
+// PyPy on Windows
 #ifndef PyLong_FromPid
     #if ((SIZEOF_PID_T == SIZEOF_INT) || (SIZEOF_PID_T == SIZEOF_LONG))
-        #if PY_MAJOR_VERSION >= 3
-            #define PyLong_FromPid PyLong_FromLong
-        #else
-            #define PyLong_FromPid PyInt_FromLong
-        #endif
+        #define PyLong_FromPid PyLong_FromLong
     #elif defined(SIZEOF_LONG_LONG) && SIZEOF_PID_T == SIZEOF_LONG_LONG
         #define PyLong_FromPid PyLong_FromLongLong
     #else

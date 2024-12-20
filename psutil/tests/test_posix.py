@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -11,8 +10,10 @@ import datetime
 import errno
 import os
 import re
+import shutil
 import subprocess
 import time
+from unittest import mock
 
 import psutil
 from psutil import AIX
@@ -27,14 +28,12 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import PYTHON_EXE
 from psutil.tests import QEMU_USER
 from psutil.tests import PsutilTestCase
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import terminate
-from psutil.tests import which
 
 
 if POSIX:
@@ -288,7 +287,7 @@ class TestProcess(PsutilTestCase):
             assert ps_pathname == psutil_pathname
         except AssertionError:
             # certain platforms such as BSD are more accurate returning:
-            # "/usr/local/bin/python2.7"
+            # "/usr/local/bin/python3.7"
             # ...instead of:
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy
@@ -348,7 +347,7 @@ class TestSystemAPIs(PsutilTestCase):
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
     @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
-    @pytest.mark.skipif(not which('ifconfig'), reason="no ifconfig cmd")
+    @pytest.mark.skipif(not shutil.which("ifconfig"), reason="no ifconfig cmd")
     @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_nic_names(self):
         output = sh("ifconfig -a")

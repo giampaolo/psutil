@@ -28,10 +28,6 @@ from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import usage_percent
-from ._compat import FileNotFoundError
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
-from ._compat import which
 
 
 __extra__all__ = []
@@ -690,9 +686,11 @@ class Process:
             #     master/base_paths_posix.cc
             # We try our best guess by using which against the first
             # cmdline arg (may return None).
+            import shutil
+
             cmdline = self.cmdline()
             if cmdline:
-                return which(cmdline[0]) or ""
+                return shutil.which(cmdline[0]) or ""
             else:
                 return ""
 

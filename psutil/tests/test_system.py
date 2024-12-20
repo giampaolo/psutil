@@ -6,8 +6,8 @@
 
 """Tests for system APIS."""
 
-import contextlib
 import datetime
+import enum
 import errno
 import os
 import platform
@@ -17,6 +17,7 @@ import signal
 import socket
 import sys
 import time
+from unittest import mock
 
 import psutil
 from psutil import AIX
@@ -29,9 +30,6 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._compat import PY3
-from psutil._compat import FileNotFoundError
-from psutil._compat import long
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import DEVNULL
@@ -51,8 +49,6 @@ from psutil.tests import QEMU_USER
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_net_address
-from psutil.tests import enum
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 
@@ -194,7 +190,7 @@ class TestProcessAPIs(PsutilTestCase):
         sproc1.terminate()
         sproc2.terminate()
         gone, alive = test_2(procs, callback)
-        assert set(pids) == set([sproc1.pid, sproc2.pid, sproc3.pid])
+        assert set(pids) == {sproc1.pid, sproc2.pid, sproc3.pid}
         for p in gone:
             assert hasattr(p, 'returncode')
 
@@ -335,7 +331,7 @@ class TestMemoryAPIs(PsutilTestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             if name != 'percent':
-                assert isinstance(value, (int, long))
+                assert isinstance(value, int)
             if name != 'total':
                 if not value >= 0:
                     raise self.fail("%r < 0 (%s)" % (name, value))
@@ -605,7 +601,7 @@ class TestCpuAPIs(PsutilTestCase):
                     assert nt.current <= nt.max
                 for name in nt._fields:
                     value = getattr(nt, name)
-                    assert isinstance(value, (int, long, float))
+                    assert isinstance(value, (int, float))
                     assert value >= 0
 
         ls = psutil.cpu_freq(percpu=True)
@@ -823,7 +819,7 @@ class TestNetAPIs(PsutilTestCase):
         # self.assertEqual(sorted(nics.keys()),
         #                  sorted(psutil.net_io_counters(pernic=True).keys()))
 
-        families = set([socket.AF_INET, socket.AF_INET6, psutil.AF_LINK])
+        families = {socket.AF_INET, socket.AF_INET6, psutil.AF_LINK}
         for nic, addrs in nics.items():
             assert isinstance(nic, str)
             assert len(set(addrs)) == len(addrs)
@@ -833,14 +829,12 @@ class TestNetAPIs(PsutilTestCase):
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
                 assert addr.family in families
-                if PY3 and not PYPY:
-                    assert isinstance(addr.family, enum.IntEnum)
+                assert isinstance(addr.family, enum.IntEnum)
                 if nic_stats[nic].isup:
                     # Do not test binding to addresses of interfaces
                     # that are down
                     if addr.family == socket.AF_INET:
-                        s = socket.socket(addr.family)
-                        with contextlib.closing(s):
+                        with socket.socket(addr.family) as s:
                             s.bind((addr.address, 0))
                     elif addr.family == socket.AF_INET6:
                         info = socket.getaddrinfo(
@@ -852,8 +846,7 @@ class TestNetAPIs(PsutilTestCase):
                             socket.AI_PASSIVE,
                         )[0]
                         af, socktype, proto, _canonname, sa = info
-                        s = socket.socket(af, socktype, proto)
-                        with contextlib.closing(s):
+                        with socket.socket(af, socktype, proto) as s:
                             s.bind(sa)
                 for ip in (
                     addr.address,
@@ -981,5 +974,5 @@ class TestSensorsAPIs(PsutilTestCase):
             assert isinstance(name, str)
             for entry in entries:
                 assert isinstance(entry.label, str)
-                assert isinstance(entry.current, (int, long))
+                assert isinstance(entry.current, int)
                 assert entry.current >= 0

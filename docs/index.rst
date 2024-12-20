@@ -224,8 +224,8 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of logical CPUs in the system (same as `os.cpu_count`_
-  in Python 3.4) or ``None`` if undetermined.
+  Return the number of logical CPUs in the system (same as `os.cpu_count`_)
+  or ``None`` if undetermined.
   "logical CPUs" means the number of physical cores multiplied by the number
   of threads that can run on each core (this is known as Hyper Threading).
   If *logical* is ``False`` return the number of physical cores only, or
@@ -1203,7 +1203,7 @@ Process class
 
     >>> import psutil
     >>> psutil.Process().exe()
-    '/usr/bin/python2.7'
+    '/usr/bin/python3'
 
   .. method:: cmdline()
 
@@ -2637,6 +2637,18 @@ On Windows:
   set PSUTIL_DEBUG=1 python.exe script.py
   psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
 
+Python 2.7
+==========
+
+Latest version spporting Python 2.7 is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
+The 6.1.X serie may receive critical bug-fixes but no new features. It will
+be maintained in the dedicated
+`python2 <https://github.com/giampaolo/psutil/tree/python2>`__ branch.
+To install it:
+
+::
+
+    $ python2 -m pip install psutil==6.1.*
 
 Security
 ========

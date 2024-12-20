@@ -611,11 +611,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     CPU_ZERO(&cpu_set);
     for (i = 0; i < seq_len; i++) {
         PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
-#if PY_MAJOR_VERSION >= 3
         long value = PyLong_AsLong(item);
-#else
-        long value = PyInt_AsLong(item);
-#endif
         if (value == -1 || PyErr_Occurred())
             goto error;
         CPU_SET(value, &cpu_set);

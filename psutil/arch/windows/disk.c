@@ -44,33 +44,6 @@ PyObject *
 psutil_disk_usage(PyObject *self, PyObject *args) {
     BOOL retval;
     ULARGE_INTEGER _, total, free;
-
-#if PY_MAJOR_VERSION <= 2
-    char *path;
-
-    if (PyArg_ParseTuple(args, "u", &path)) {
-        Py_BEGIN_ALLOW_THREADS
-        retval = GetDiskFreeSpaceExW((LPCWSTR)path, &_, &total, &free);
-        Py_END_ALLOW_THREADS
-        goto return_;
-    }
-
-    // on Python 2 we also want to accept plain strings other
-    // than Unicode
-    PyErr_Clear();  // drop the argument parsing error
-    if (PyArg_ParseTuple(args, "s", &path)) {
-        Py_BEGIN_ALLOW_THREADS
-        retval = GetDiskFreeSpaceEx(path, &_, &total, &free);
-        Py_END_ALLOW_THREADS
-        goto return_;
-    }
-
-    return NULL;
-
-return_:
-    if (retval == 0)
-        return PyErr_SetFromWindowsErrWithFilename(0, path);
-#else
     PyObject *py_path;
     wchar_t *path;
 
@@ -91,7 +64,7 @@ return_:
 
     if (retval == 0)
         return PyErr_SetExcFromWindowsErrWithFilenameObject(PyExc_OSError, 0, py_path);
-#endif
+
     return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
 }
 

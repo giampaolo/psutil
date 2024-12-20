@@ -24,7 +24,6 @@ include docs/requirements.txt
 include make.bat
 include psutil/__init__.py
 include psutil/_common.py
-include psutil/_compat.py
 include psutil/_psaix.py
 include psutil/_psbsd.py
 include psutil/_pslinux.py
@@ -177,14 +176,12 @@ include scripts/fans.py
 include scripts/free.py
 include scripts/ifconfig.py
 include scripts/internal/README
-include scripts/internal/appveyor_run_with_compiler.cmd
 include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
 include scripts/internal/clinter.py
 include scripts/internal/convert_readme.py
-include scripts/internal/download_wheels_appveyor.py
-include scripts/internal/download_wheels_github.py
+include scripts/internal/download_wheels.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
 include scripts/internal/install-sysdeps.sh
@@ -197,6 +194,7 @@ include scripts/internal/print_downloads.py
 include scripts/internal/print_hashes.py
 include scripts/internal/print_timeline.py
 include scripts/internal/purge_installation.py
+include scripts/internal/test_python2_setup_py.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py

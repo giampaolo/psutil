@@ -18,18 +18,10 @@ else:
 import os
 import ssl
 import tempfile
+from urllib.request import urlopen
 
 
-PY3 = sys.version_info[0] >= 3
-if PY3:
-    from urllib.request import urlopen
-
-    URL = "https://bootstrap.pypa.io/get-pip.py"
-
-else:
-    from urllib2 import urlopen
-
-    URL = "https://bootstrap.pypa.io/pip/2.7/get-pip.py"
+URL = "https://bootstrap.pypa.io/get-pip.py"
 
 
 def main():

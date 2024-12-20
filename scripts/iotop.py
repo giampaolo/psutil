@@ -71,7 +71,7 @@ def poll(interval):
     """
     # first get a list of all processes and disk io counters
     procs = list(psutil.process_iter())
-    for p in procs[:]:
+    for p in procs.copy():
         try:
             p._before = p.io_counters()
         except psutil.Error:
@@ -83,7 +83,7 @@ def poll(interval):
     time.sleep(interval)
 
     # then retrieve the same info again
-    for p in procs[:]:
+    for p in procs.copy():
         with p.oneshot():
             try:
                 p._after = p.io_counters()

@@ -33,9 +33,8 @@ ignore = [
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
     "B007",  # Loop control variable `x` not used within loop body
-    "B904",  # Within an `except` clause, raise exceptions with `raise ... from err` (PYTHON2.7 COMPAT)
-    "B904",  # Use `raise from` to specify exception cause (PYTHON2.7 COMPAT)
-    "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
+    "B904",  # Use `raise from` to specify exception cause
+    "C4",  # flake8-comprehensions
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
@@ -44,14 +43,13 @@ ignore = [
     "ERA001",  # Found commented-out code
     "FBT",  # flake8-boolean-trap (makes zero sense)
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
-    "FLY",  # flynt (PYTHON2.7 COMPAT)
+    "FLY002",  # static-join-to-f-string / Consider {expression} instead of string join
     "FURB101",  # `open` and `read` should be replaced by `Path(src).read_text()`
     "FURB103",  # `open` and `write` should be replaced by `Path(src).write_text()`
     "FURB113",  # Use `ls.extend(...)` instead of repeatedly calling `ls.append()`
     "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator
-    "FURB145",  # [*] Prefer `copy` method over slicing (PYTHON2.7 COMPAT)
     "FURB192",  # [*] Prefer `min` over `sorted()` to compute the minimum value in a sequence
     "INP",  # flake8-no-pep420
     "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
@@ -91,14 +89,7 @@ ignore = [
     "TD",  # all TODOs, XXXs, etc.
     "TRY300",  # Consider moving this statement to an `else` block
     "TRY301",  # Abstract `raise` to an inner function
-    "UP009",  # [*] UTF-8 encoding declaration is unnecessary (PYTHON2.7 COMPAT)
-    "UP010",  # [*] Unnecessary `__future__` import `print_function` for target Python version (PYTHON2.7 COMPAT)
-    "UP024",  # [*] Replace aliased errors with `OSError` (PYTHON2.7 COMPAT)
-    "UP025",  # [*] Remove unicode literals from strings (PYTHON2.7 COMPAT)
-    "UP028",  # [*] Replace `yield` over `for` loop with `yield from` (PYTHON2.7 COMPAT)
     "UP031",  # [*] Use format specifiers instead of percent format
-    "UP032",  # [*] Use f-string instead of `format` call (PYTHON2.7 COMPAT)
-    "UP036",  # Version block is outdated for minimum Python version (PYTHON2.7 COMPAT)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -106,7 +97,6 @@ ignore = [
 # EM101 == raw-string-in-exception
 # TRY003 == raise-vanilla-args
 ".github/workflows/*" = ["T201", "T203"]
-"psutil/_compat.py" = ["PLW0127"]  # self-assigning-variable
 "psutil/tests/*" = ["EM101", "TRY003"]
 "scripts/*" = ["T201", "T203"]
 "scripts/internal/*" = ["EM101", "T201", "T203", "TRY003"]
@@ -119,7 +109,6 @@ lines-after-imports = 2
 
 [tool.coverage.report]
 exclude_lines = [
-    "enum.IntEnum",
     "except ImportError:",
     "globals().update",
     "if BSD",
@@ -129,22 +118,16 @@ exclude_lines = [
     "if MACOS",
     "if NETBSD",
     "if OPENBSD",
-    "if PY3:",
     "if SUNOS",
     "if WINDOWS",
     "if _WINDOWS:",
     "if __name__ == .__main__.:",
-    "if enum is None:",
-    "if enum is not None:",
-    "if has_enums:",
     "if ppid_map is None:",
     "if sys.platform.startswith",
-    "import enum",
     "pragma: no cover",
     "raise NotImplementedError",
 ]
 omit = [
-    "psutil/_compat.py",
     "psutil/tests/*",
     "setup.py",
 ]
@@ -190,7 +173,6 @@ disable = [
 [tool.vulture]
 exclude = [
     "docs/conf.py",
-    "psutil/_compat.py",
     "psutil/tests/",
     "scripts/internal/winmake.py",
 ]

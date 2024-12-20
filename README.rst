@@ -1,6 +1,6 @@
 |  |downloads| |stars| |forks| |contributors| |coverage|
 |  |version| |py-versions| |packages| |license|
-|  |github-actions-wheels|  |github-actions-bsd| |appveyor| |doc| |twitter| |tidelift|
+|  |github-actions-wheels|  |github-actions-bsd| |doc| |twitter| |tidelift|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://pepy.tech/project/psutil
@@ -25,10 +25,6 @@
 .. |github-actions-bsd| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=FreeBSD,%20NetBSD,%20OpenBSD
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests
     :alt: FreeBSD, NetBSD, OpenBSD
-
-.. |appveyor| image:: https://img.shields.io/appveyor/build/giampaolo/psutil/master.svg?maxAge=3600&label=Windows%20(py2)
-    :target: https://ci.appveyor.com/project/giampaolo/psutil
-    :alt: Windows (Appveyor)
 
 .. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
@@ -98,8 +94,9 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-Supported Python versions are **2.7**, **3.6+** and
-`PyPy <http://pypy.org/>`__.
+Supported Python versions are cPython 3.6+ and `PyPy <https://pypy.org/>`__.
+Latest psutil version supporting Python 2.7 is
+`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
 
 Funding
 =======

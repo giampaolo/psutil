@@ -255,21 +255,14 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     continue;
                 }
 
-#if PY_MAJOR_VERSION >= 3
                 py_address = PyUnicode_FromString(buff_addr);
-#else
-                py_address = PyString_FromString(buff_addr);
-#endif
                 if (py_address == NULL)
                     goto error;
 
                 if (netmaskIntRet != NULL) {
-#if PY_MAJOR_VERSION >= 3
                     py_netmask = PyUnicode_FromString(buff_netmask);
-#else
-                    py_netmask = PyString_FromString(buff_netmask);
-#endif
-                } else {
+                }
+                else {
                     Py_INCREF(Py_None);
                     py_netmask = Py_None;
                 }

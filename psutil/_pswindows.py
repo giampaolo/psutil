@@ -5,7 +5,7 @@
 """Windows platform implementation."""
 
 import contextlib
-import errno
+import enum
 import functools
 import os
 import signal
@@ -15,7 +15,6 @@ from collections import namedtuple
 
 from . import _common
 from ._common import ENCODING
-from ._common import ENCODING_ERRS
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
@@ -27,11 +26,6 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
-from ._compat import PY3
-from ._compat import long
-from ._compat import lru_cache
-from ._compat import range
-from ._compat import unicode
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -58,10 +52,6 @@ except ImportError as err:
     else:
         raise
 
-if PY3:
-    import enum
-else:
-    enum = None
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -88,11 +78,8 @@ CONN_DELETE_TCB = "DELETE_TCB"
 ERROR_PARTIAL_COPY = 299
 PYPY = '__pypy__' in sys.builtin_module_names
 
-if enum is None:
-    AF_LINK = -1
-else:
-    AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
-    AF_LINK = AddressFamily.AF_LINK
+AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
+AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
@@ -110,32 +97,27 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
-if enum is not None:
 
-    class Priority(enum.IntEnum):
-        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
-        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
-        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
-        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
-        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
-        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
+class Priority(enum.IntEnum):
+    ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
+    BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
+    HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
+    IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
+    NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
+    REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
-    globals().update(Priority.__members__)
 
-if enum is None:
+globals().update(Priority.__members__)
+
+
+class IOPriority(enum.IntEnum):
     IOPRIO_VERYLOW = 0
     IOPRIO_LOW = 1
     IOPRIO_NORMAL = 2
     IOPRIO_HIGH = 3
-else:
 
-    class IOPriority(enum.IntEnum):
-        IOPRIO_VERYLOW = 0
-        IOPRIO_LOW = 1
-        IOPRIO_NORMAL = 2
-        IOPRIO_HIGH = 3
 
-    globals().update(IOPriority.__members__)
+globals().update(IOPriority.__members__)
 
 pinfo_map = dict(
     num_handles=0,
@@ -199,7 +181,7 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 
 
-@lru_cache(maxsize=512)
+@functools.lru_cache(maxsize=512)
 def convert_dos_path(s):
     r"""Convert paths using native DOS format like:
         "\Device\HarddiskVolume1\Windows\systemew\file.txt"
@@ -210,18 +192,6 @@ def convert_dos_path(s):
     driveletter = cext.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive) :]
     return os.path.join(driveletter, remainder)
-
-
-def py2_strencode(s):
-    """Encode a unicode string to a byte string by using the default fs
-    encoding + "replace" error handler.
-    """
-    if PY3:
-        return s
-    if isinstance(s, str):
-        return s
-    else:
-        return s.encode(ENCODING, ENCODING_ERRS)
 
 
 @memoize
@@ -282,7 +252,7 @@ disk_io_counters = cext.disk_io_counters
 
 def disk_usage(path):
     """Return disk usage associated with path."""
-    if PY3 and isinstance(path, bytes):
+    if isinstance(path, bytes):
         # XXX: do we want to use "strict"? Probably yes, in order
         # to fail immediately. After all we are accepting input here...
         path = path.decode(ENCODING, errors="strict")
@@ -408,9 +378,6 @@ def net_if_stats():
     ret = {}
     rawdict = cext.net_if_stats()
     for name, items in rawdict.items():
-        if not PY3:
-            assert isinstance(name, unicode), type(name)
-            name = py2_strencode(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
@@ -422,18 +389,12 @@ def net_io_counters():
     """Return network I/O statistics for every network interface
     installed on the system as a dict of raw tuples.
     """
-    ret = cext.net_io_counters()
-    return dict([(py2_strencode(k), v) for k, v in ret.items()])
+    return cext.net_io_counters()
 
 
 def net_if_addrs():
     """Return the addresses associated to each NIC."""
-    ret = []
-    for items in cext.net_if_addrs():
-        items = list(items)
-        items[0] = py2_strencode(items[0])
-        ret.append(items)
-    return ret
+    return cext.net_if_addrs()
 
 
 # =====================================================================
@@ -489,7 +450,6 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, hostname, tstamp = item
-        user = py2_strencode(user)
         nt = _common.suser(user, None, hostname, tstamp, None)
         retlist.append(nt)
     return retlist
@@ -503,7 +463,7 @@ def users():
 def win_service_iter():
     """Yields a list of WindowsService instances."""
     for name, display_name in cext.winservice_enumerate():
-        yield WindowsService(py2_strencode(name), py2_strencode(display_name))
+        yield WindowsService(name, display_name)
 
 
 def win_service_get(name):
@@ -547,10 +507,10 @@ class WindowsService:  # noqa: PLW1641
             )
         # XXX - update _self.display_name?
         return dict(
-            display_name=py2_strencode(display_name),
-            binpath=py2_strencode(binpath),
-            username=py2_strencode(username),
-            start_type=py2_strencode(start_type),
+            display_name=display_name,
+            binpath=binpath,
+            username=username,
+            start_type=start_type,
         )
 
     def _query_status(self):
@@ -628,7 +588,7 @@ class WindowsService:  # noqa: PLW1641
 
     def description(self):
         """Service long description."""
-        return py2_strencode(cext.winservice_query_descr(self.name()))
+        return cext.winservice_query_descr(self.name())
 
     # utils
 
@@ -696,12 +656,7 @@ ppid_map = cext.ppid_map  # used internally by Process.children()
 def is_permission_err(exc):
     """Return True if this is a permission error."""
     assert isinstance(exc, OSError), exc
-    if exc.errno in {errno.EPERM, errno.EACCES}:
-        return True
-    # On Python 2 OSError doesn't always have 'winerror'. Sometimes
-    # it does, in which case the original exception was WindowsError
-    # (which is a subclass of OSError).
-    return getattr(exc, "winerror", -1) in {
+    return isinstance(exc, PermissionError) or exc.winerror in {
         cext.ERROR_ACCESS_DENIED,
         cext.ERROR_PRIVILEGE_NOT_HELD,
     }
@@ -712,7 +667,7 @@ def convert_oserror(exc, pid=None, name=None):
     assert isinstance(exc, OSError), exc
     if is_permission_err(exc):
         return AccessDenied(pid=pid, name=name)
-    if exc.errno == errno.ESRCH:
+    if isinstance(exc, ProcessLookupError):
         return NoSuchProcess(pid=pid, name=name)
     raise exc
 
@@ -742,7 +697,7 @@ def retry_error_partial_copy(fun):
         for _ in range(times):  # retries for roughly 1 second
             try:
                 return fun(self, *args, **kwargs)
-            except WindowsError as _:
+            except OSError as _:
                 err = _
                 if err.winerror == ERROR_PARTIAL_COPY:
                     time.sleep(delay)
@@ -750,8 +705,8 @@ def retry_error_partial_copy(fun):
                     continue
                 raise
         msg = (
-            "{} retried {} times, converted to AccessDenied as it's still"
-            "returning {}".format(fun, times, err)
+            f"{fun} retried {times} times, converted to AccessDenied as it's "
+            f"still returning {err}"
         )
         raise AccessDenied(pid=self.pid, name=self._name, msg=msg)
 
@@ -805,7 +760,7 @@ class Process:
         if PYPY:
             try:
                 exe = cext.proc_exe(self.pid)
-            except WindowsError as err:
+            except OSError as err:
                 # 24 = ERROR_TOO_MANY_OPEN_FILES. Not sure why this happens
                 # (perhaps PyPy's JIT delaying garbage collection of files?).
                 if err.errno == 24:
@@ -814,8 +769,6 @@ class Process:
                 raise
         else:
             exe = cext.proc_exe(self.pid)
-        if not PY3:
-            exe = py2_strencode(exe)
         if exe.startswith('\\'):
             return convert_dos_path(exe)
         return exe  # May be "Registry", "MemCompression", ...
@@ -827,26 +780,20 @@ class Process:
             # PEB method detects cmdline changes but requires more
             # privileges: https://github.com/giampaolo/psutil/pull/1398
             try:
-                ret = cext.proc_cmdline(self.pid, use_peb=True)
+                return cext.proc_cmdline(self.pid, use_peb=True)
             except OSError as err:
                 if is_permission_err(err):
-                    ret = cext.proc_cmdline(self.pid, use_peb=False)
+                    return cext.proc_cmdline(self.pid, use_peb=False)
                 else:
                     raise
         else:
-            ret = cext.proc_cmdline(self.pid, use_peb=True)
-        if PY3:
-            return ret
-        else:
-            return [py2_strencode(s) for s in ret]
+            return cext.proc_cmdline(self.pid, use_peb=True)
 
     @wrap_exceptions
     @retry_error_partial_copy
     def environ(self):
-        ustr = cext.proc_environ(self.pid)
-        if ustr and not PY3:
-            assert isinstance(ustr, unicode), type(ustr)
-        return parse_environ_block(py2_strencode(ustr))
+        s = cext.proc_environ(self.pid)
+        return parse_environ_block(s)
 
     def ppid(self):
         try:
@@ -904,8 +851,6 @@ class Process:
         else:
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
-                if not PY3:
-                    path = py2_strencode(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
 
@@ -917,11 +862,7 @@ class Process:
     def send_signal(self, sig):
         if sig == signal.SIGTERM:
             cext.proc_kill(self.pid)
-        # py >= 2.7
-        elif sig in {
-            getattr(signal, "CTRL_C_EVENT", object()),
-            getattr(signal, "CTRL_BREAK_EVENT", object()),
-        }:
+        elif sig in {signal.CTRL_C_EVENT, signal.CTRL_BREAK_EVENT}:
             os.kill(self.pid, sig)
         else:
             msg = (
@@ -978,7 +919,7 @@ class Process:
         if self.pid in {0, 4}:
             return 'NT AUTHORITY\\SYSTEM'
         domain, user = cext.proc_username(self.pid)
-        return py2_strencode(domain) + '\\' + py2_strencode(user)
+        return f"{domain}\\{user}"
 
     @wrap_exceptions
     def create_time(self, fast_only=False):
@@ -1038,7 +979,7 @@ class Process:
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = cext.proc_cwd(self.pid)
-        return py2_strencode(os.path.normpath(path))
+        return os.path.normpath(path)
 
     @wrap_exceptions
     def open_files(self):
@@ -1053,8 +994,6 @@ class Process:
         for _file in raw_file_names:
             _file = convert_dos_path(_file)
             if isfile_strict(_file):
-                if not PY3:
-                    _file = py2_strencode(_file)
                 ntuple = _common.popenfile(_file, -1)
                 ret.add(ntuple)
         return list(ret)
@@ -1066,8 +1005,7 @@ class Process:
     @wrap_exceptions
     def nice_get(self):
         value = cext.proc_priority_get(self.pid)
-        if enum is not None:
-            value = Priority(value)
+        value = Priority(value)
         return value
 
     @wrap_exceptions
@@ -1077,8 +1015,7 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = cext.proc_io_priority_get(self.pid)
-        if enum is not None:
-            ret = IOPriority(ret)
+        ret = IOPriority(ret)
         return ret
 
     @wrap_exceptions
@@ -1087,10 +1024,10 @@ class Process:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
         if ioclass not in {
-            IOPRIO_VERYLOW,
-            IOPRIO_LOW,
-            IOPRIO_NORMAL,
-            IOPRIO_HIGH,
+            IOPriority.IOPRIO_VERYLOW,
+            IOPriority.IOPRIO_LOW,
+            IOPriority.IOPRIO_NORMAL,
+            IOPriority.IOPRIO_HIGH,
         }:
             raise ValueError("%s is not a valid priority" % ioclass)
         cext.proc_io_priority_set(self.pid, ioclass)
@@ -1146,7 +1083,7 @@ class Process:
         allcpus = list(range(len(per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                if not isinstance(cpu, (int, long)):
+                if not isinstance(cpu, int):
                     raise TypeError(
                         "invalid CPU %r; an integer is required" % cpu
                     )

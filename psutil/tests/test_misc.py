@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -9,13 +8,15 @@
 
 import ast
 import collections
-import errno
+import contextlib
+import io
 import json
 import os
 import pickle
 import socket
 import stat
 import sys
+from unittest import mock
 
 import psutil
 import psutil.tests
@@ -30,9 +31,6 @@ from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil._compat import PY3
-from psutil._compat import FileNotFoundError
-from psutil._compat import redirect_stderr
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_MEMORY_MAPS
@@ -45,7 +43,6 @@ from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import QEMU_USER
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
-from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import reload_module
@@ -202,7 +199,7 @@ class TestSpecialMethods(PsutilTestCase):
         assert p1 != 'foo'
 
     def test_process__hash__(self):
-        s = set([psutil.Process(), psutil.Process()])
+        s = {psutil.Process(), psutil.Process()}
         assert len(s) == 1
 
 
@@ -217,7 +214,6 @@ class TestMisc(PsutilTestCase):
         for name in dir_psutil:
             if name in {
                 'debug',
-                'long',
                 'tests',
                 'test',
                 'PermissionError',
@@ -240,7 +236,7 @@ class TestMisc(PsutilTestCase):
 
         # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
-        # Can't do `from psutil import *` as it won't work on python 3
+        # Can't do `from psutil import *` as it won't work
         # so we simply iterate over __all__.
         for name in psutil.__all__:
             assert name in dir_psutil
@@ -338,10 +334,6 @@ class TestMisc(PsutilTestCase):
         assert b.pid == 4567
         assert b.name == 'name'
 
-    # # XXX: https://github.com/pypa/setuptools/pull/2896
-    # @pytest.mark.skipif(APPVEYOR,
-    #     reason="temporarily disabled due to setuptools bug"
-    # )
     # def test_setup_script(self):
     #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
     #     if CI_TESTING and not os.path.exists(setup_py):
@@ -587,7 +579,7 @@ class TestCommonModule(PsutilTestCase):
 
             supports_ipv6.cache_clear()
             with mock.patch(
-                'psutil._common.socket.socket', side_effect=socket.error
+                'psutil._common.socket.socket', side_effect=OSError
             ) as s:
                 assert not supports_ipv6()
                 assert s.called
@@ -609,7 +601,7 @@ class TestCommonModule(PsutilTestCase):
                 supports_ipv6.cache_clear()
                 assert s.called
         else:
-            with pytest.raises(socket.error):
+            with pytest.raises(OSError):
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
                 try:
                     sock.bind(("::1", 0))
@@ -620,31 +612,19 @@ class TestCommonModule(PsutilTestCase):
         this_file = os.path.abspath(__file__)
         assert isfile_strict(this_file)
         assert not isfile_strict(os.path.dirname(this_file))
-        with mock.patch(
-            'psutil._common.os.stat', side_effect=OSError(errno.EPERM, "foo")
-        ):
+        with mock.patch('psutil._common.os.stat', side_effect=PermissionError):
             with pytest.raises(OSError):
                 isfile_strict(this_file)
         with mock.patch(
-            'psutil._common.os.stat', side_effect=OSError(errno.EACCES, "foo")
-        ):
-            with pytest.raises(OSError):
-                isfile_strict(this_file)
-        with mock.patch(
-            'psutil._common.os.stat', side_effect=OSError(errno.ENOENT, "foo")
+            'psutil._common.os.stat', side_effect=FileNotFoundError
         ):
             assert not isfile_strict(this_file)
         with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
             assert not isfile_strict(this_file)
 
     def test_debug(self):
-        if PY3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
-
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 debug("hello")
                 sys.stderr.flush()
         msg = f.getvalue()
@@ -654,7 +634,7 @@ class TestCommonModule(PsutilTestCase):
 
         # supposed to use repr(exc)
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 debug(ValueError("this is an error"))
         msg = f.getvalue()
         assert "ignoring ValueError" in msg
@@ -662,7 +642,7 @@ class TestCommonModule(PsutilTestCase):
 
         # supposed to use str(exc), because of extra info about file name
         with mock.patch.object(psutil._common, "PSUTIL_DEBUG", True):
-            with redirect_stderr(StringIO()) as f:
+            with contextlib.redirect_stderr(io.StringIO()) as f:
                 exc = OSError(2, "no such file")
                 exc.filename = "/foo"
                 debug(exc)
@@ -838,7 +818,7 @@ class TestWrapNumbers(PsutilTestCase):
         assert cache[1] == {
             'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 100}
         }
-        assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
+        assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
 
         def check_cache_info():
             cache = wrap_numbers.cache_info()
@@ -849,7 +829,7 @@ class TestWrapNumbers(PsutilTestCase):
                     ('disk1', 2): 100,
                 }
             }
-            assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
+            assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
 
         # then it remains the same
         input = {'disk1': nt(100, 100, 10)}
@@ -873,7 +853,7 @@ class TestWrapNumbers(PsutilTestCase):
         assert cache[1] == {
             'disk_io': {('disk1', 0): 0, ('disk1', 1): 0, ('disk1', 2): 190}
         }
-        assert cache[2] == {'disk_io': {'disk1': set([('disk1', 2)])}}
+        assert cache[2] == {'disk_io': {'disk1': {('disk1', 2)}}}
 
     def test_cache_changing_keys(self):
         input = {'disk1': nt(5, 5, 5)}
@@ -949,7 +929,7 @@ class TestScripts(PsutilTestCase):
     @staticmethod
     def assert_syntax(exe):
         exe = os.path.join(SCRIPTS_DIR, exe)
-        with open(exe, encoding="utf8") if PY3 else open(exe) as f:
+        with open(exe, encoding="utf8") as f:
             src = f.read()
         ast.parse(src)
 

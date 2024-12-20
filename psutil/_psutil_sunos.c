@@ -59,6 +59,8 @@
 #include "arch/solaris/environ.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#define INITERROR return NULL
 
 
 /*
@@ -1671,13 +1673,6 @@ struct module_state {
     PyObject *error;
 };
 
-#if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-#endif
-
-#if PY_MAJOR_VERSION >= 3
 
 static int
 psutil_sunos_traverse(PyObject *m, visitproc visit, void *arg) {
@@ -1703,21 +1698,10 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-#define INITERROR return NULL
 
-PyMODINIT_FUNC PyInit__psutil_sunos(void)
-
-#else
-#define INITERROR return
-
-void init_psutil_sunos(void)
-#endif
-{
-#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC
+PyInit__psutil_sunos(void) {
     PyObject *module = PyModule_Create(&moduledef);
-#else
-    PyObject *module = Py_InitModule("_psutil_sunos", PsutilMethods);
-#endif
     if (module == NULL)
         INITERROR;
 
@@ -1766,7 +1750,6 @@ void init_psutil_sunos(void)
 
     if (module == NULL)
         INITERROR;
-#if PY_MAJOR_VERSION >= 3
+
     return module;
-#endif
 }

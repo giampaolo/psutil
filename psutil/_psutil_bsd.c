@@ -52,6 +52,9 @@
 #endif
 
 
+#define INITERR return NULL
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -112,34 +115,23 @@ static PyMethodDef mod_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-#if PY_MAJOR_VERSION >= 3
-    #define INITERR return NULL
 
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_psutil_bsd",
-        NULL,
-        -1,
-        mod_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_psutil_bsd",
+    NULL,
+    -1,
+    mod_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
-    PyObject *PyInit__psutil_bsd(void)
-#else  /* PY_MAJOR_VERSION */
-    #define INITERR return
-
-    void init_psutil_bsd(void)
-#endif  /* PY_MAJOR_VERSION */
-{
+PyObject
+*PyInit__psutil_bsd(void) {
     PyObject *v;
-#if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
-#else
-    PyObject *mod = Py_InitModule("_psutil_bsd", mod_methods);
-#endif
     if (mod == NULL)
         INITERR;
 
@@ -210,7 +202,5 @@ static PyMethodDef mod_methods[] = {
 
     if (mod == NULL)
         INITERR;
-#if PY_MAJOR_VERSION >= 3
     return mod;
-#endif
 }

@@ -38,7 +38,6 @@ Using [1] with some modifications for including ftp
 Author: Himanshu Shekhar <https://github.com/himanshub16> (2017)
 """
 
-from __future__ import print_function
 
 import argparse
 import concurrent.futures
@@ -93,7 +92,7 @@ def sanitize_url(url):
 
 def find_urls(s):
     matches = REGEX.findall(s) or []
-    return list(set([sanitize_url(x) for x in matches]))
+    return list({sanitize_url(x) for x in matches})
 
 
 def parse_rst(fname):

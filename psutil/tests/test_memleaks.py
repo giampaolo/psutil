@@ -14,7 +14,6 @@ PyPy appears to be completely unstable for this framework, probably
 because of how its JIT handles memory, so tests are skipped.
 """
 
-from __future__ import print_function
 
 import functools
 import os
@@ -28,8 +27,6 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil._compat import ProcessLookupError
-from psutil._compat import super
 from psutil.tests import HAS_CPU_AFFINITY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_ENVIRON

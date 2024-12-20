@@ -4,9 +4,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Cross-platform lib for process and system monitoring in Python."""
+"""Cross-platform lib for process and system monitoring in Python.
 
-from __future__ import print_function
+NOTE: the syntax of this script MUST be kept compatible with Python 2.7.
+"""
+
+from __future__ import print_function  # noqa: UP010
 
 import ast
 import contextlib
@@ -21,7 +24,19 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
+import textwrap
 import warnings
+
+
+if sys.version_info[0] == 2:  # noqa: UP036
+    sys.exit(textwrap.dedent("""\
+        As of version 7.0.0 psutil no longer supports Python 2.7, see:
+        https://github.com/giampaolo/psutil/issues/2480
+        Latest version supporting Python 2.7 is psutil 6.1.X.
+        Install it with:
+
+            python2 -m pip install psutil==6.1.*\
+        """))
 
 
 with warnings.catch_warnings():
@@ -37,9 +52,10 @@ with warnings.catch_warnings():
         from distutils.core import Extension
         from distutils.core import setup
 
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-# ...so we can import _common.py and _compat.py
+# ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
 from _common import AIX  # NOQA
@@ -53,8 +69,6 @@ from _common import POSIX  # NOQA
 from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
 from _common import hilite  # NOQA
-from _compat import PY3  # NOQA
-from _compat import which  # NOQA
 
 
 PYPY = '__pypy__' in sys.builtin_module_names
@@ -66,23 +80,12 @@ Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 
 # Test deps, installable via `pip install .[test]` or
 # `make install-pydeps-test`.
-if PY3:
-    TEST_DEPS = [
-        "pytest",
-        "pytest-xdist",
-        "setuptools",
-    ]
-else:
-    TEST_DEPS = [
-        "futures",
-        "ipaddress",
-        "enum34",
-        "mock==1.0.1",
-        "pytest-xdist",
-        "pytest==4.6.11",
-        "setuptools",
-        "unittest2",
-    ]
+TEST_DEPS = [
+    "pytest",
+    "pytest-xdist",
+    "setuptools",
+]
+
 if WINDOWS and not PYPY:
     TEST_DEPS.append("pywin32")
     TEST_DEPS.append("wheel")
@@ -90,7 +93,7 @@ if WINDOWS and not PYPY:
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
-DEV_DEPS = [
+DEV_DEPS = TEST_DEPS + [
     "abi3audit",
     "black",
     "check-manifest",
@@ -111,6 +114,7 @@ DEV_DEPS = [
     "vulture",
     "wheel",
 ]
+
 if WINDOWS:
     DEV_DEPS.append("pyreadline")
     DEV_DEPS.append("pdbpp")
@@ -121,7 +125,7 @@ if POSIX:
 if BSD:
     macros.append(("PSUTIL_BSD", 1))
 
-# Needed to determine _Py_PARSE_PID in case it's missing (Python 2, PyPy).
+# Needed to determine _Py_PARSE_PID in case it's missing (PyPy).
 # Taken from Lib/test/test_fcntl.py.
 # XXX: not bullet proof as the (long long) case is missing.
 if struct.calcsize('l') <= 8:
@@ -203,7 +207,7 @@ def silenced_output(stream_name):
 
 def missdeps(cmdline):
     s = "psutil could not be installed from sources"
-    if not SUNOS and not which("gcc"):
+    if not SUNOS and not shutil.which("gcc"):
         s += " because gcc is not installed. "
     else:
         s += ". Perhaps Python header files are not installed. "
@@ -518,8 +522,6 @@ def main():
             'Operating System :: POSIX :: SunOS/Solaris',
             'Operating System :: POSIX',
             'Programming Language :: C',
-            'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: Implementation :: CPython',
             'Programming Language :: Python :: Implementation :: PyPy',
@@ -545,7 +547,7 @@ def main():
         }
         kwargs.update(
             python_requires=(
-                ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+                "!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
             ),
             extras_require=extras_require,
             zip_safe=False,
@@ -563,19 +565,16 @@ def main():
                 ("build", "install", "sdist", "bdist", "develop")
             )
         ):
-            py3 = "3" if PY3 else ""
             if LINUX:
                 pyimpl = "pypy" if PYPY else "python"
-                if which('dpkg'):
-                    missdeps(
-                        "sudo apt-get install gcc %s%s-dev" % (pyimpl, py3)
-                    )
-                elif which('rpm'):
-                    missdeps("sudo yum install gcc %s%s-devel" % (pyimpl, py3))
-                elif which('apk'):
+                if shutil.which("dpkg"):
+                    missdeps("sudo apt-get install gcc %s3-dev" % (pyimpl))
+                elif shutil.which("rpm"):
+                    missdeps("sudo yum install gcc %s-devel" % (pyimpl))
+                elif shutil.which("apk"):
                     missdeps(
                         "sudo apk add gcc %s%s-dev musl-dev linux-headers"
-                        % (pyimpl, py3)
+                        % (pyimpl)
                     )
             elif MACOS:
                 msg = (
@@ -584,14 +583,14 @@ def main():
                 )
                 print(hilite(msg, color="red"), file=sys.stderr)
             elif FREEBSD:
-                if which('pkg'):
-                    missdeps("pkg install gcc python%s" % py3)
-                elif which('mport'):  # MidnightBSD
-                    missdeps("mport install gcc python%s" % py3)
+                if shutil.which("pkg"):
+                    missdeps("pkg install gcc python3")
+                elif shutil.which("mport"):  # MidnightBSD
+                    missdeps("mport install gcc python3")
             elif OPENBSD:
-                missdeps("pkg_add -v gcc python%s" % py3)
+                missdeps("pkg_add -v gcc python3")
             elif NETBSD:
-                missdeps("pkgin install gcc python%s" % py3)
+                missdeps("pkgin install gcc python3")
             elif SUNOS:
                 missdeps(
                     "sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "

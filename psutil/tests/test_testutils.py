@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -8,7 +7,6 @@
 """Tests for testing utils (psutil.tests namespace)."""
 
 import collections
-import contextlib
 import errno
 import os
 import socket
@@ -17,6 +15,7 @@ import subprocess
 import textwrap
 import unittest
 import warnings
+from unittest import mock
 
 import psutil
 import psutil.tests
@@ -26,7 +25,6 @@ from psutil import POSIX
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
-from psutil._compat import PY3
 from psutil.tests import CI_TESTING
 from psutil.tests import COVERAGE
 from psutil.tests import HAS_NET_CONNECTIONS_UNIX
@@ -44,7 +42,6 @@ from psutil.tests import fake_pytest
 from psutil.tests import filter_proc_net_connections
 from psutil.tests import get_free_port
 from psutil.tests import is_namedtuple
-from psutil.tests import mock
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import reap_children
@@ -159,7 +156,7 @@ class TestSyncTestUtils(PsutilTestCase):
     def test_wait_for_file_no_file(self):
         testfn = self.get_testfn()
         with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
-            with pytest.raises(IOError):
+            with pytest.raises(OSError):
                 wait_for_file(testfn)
 
     def test_wait_for_file_no_delete(self):
@@ -298,14 +295,13 @@ class TestProcessUtils(PsutilTestCase):
 class TestNetUtils(PsutilTestCase):
     def bind_socket(self):
         port = get_free_port()
-        with contextlib.closing(bind_socket(addr=('', port))) as s:
+        with bind_socket(addr=('', port)) as s:
             assert s.getsockname()[1] == port
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_bind_unix_socket(self):
         name = self.get_testfn()
-        sock = bind_unix_socket(name)
-        with contextlib.closing(sock):
+        with bind_unix_socket(name) as sock:
             assert sock.family == socket.AF_UNIX
             assert sock.type == socket.SOCK_STREAM
             assert sock.getsockname() == name
@@ -313,20 +309,17 @@ class TestNetUtils(PsutilTestCase):
             assert stat.S_ISSOCK(os.stat(name).st_mode)
         # UDP
         name = self.get_testfn()
-        sock = bind_unix_socket(name, type=socket.SOCK_DGRAM)
-        with contextlib.closing(sock):
+        with bind_unix_socket(name, type=socket.SOCK_DGRAM) as sock:
             assert sock.type == socket.SOCK_DGRAM
 
     def test_tcp_socketpair(self):
         addr = ("127.0.0.1", get_free_port())
         server, client = tcp_socketpair(socket.AF_INET, addr=addr)
-        with contextlib.closing(server):
-            with contextlib.closing(client):
-                # Ensure they are connected and the positions are
-                # correct.
-                assert server.getsockname() == addr
-                assert client.getpeername() == addr
-                assert client.getsockname() != addr
+        with server, client:
+            # Ensure they are connected and the positions are correct.
+            assert server.getsockname() == addr
+            assert client.getpeername() == addr
+            assert client.getsockname() != addr
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     @pytest.mark.skipif(
@@ -507,7 +500,6 @@ class TestFakePytest(PsutilTestCase):
         assert result.wasSuccessful()
         assert len(result.skipped) == 0
 
-    @pytest.mark.skipif(not PY3, reason="not PY3")
     def test_skip(self):
         class TestCase(unittest.TestCase):
             def foo(self):

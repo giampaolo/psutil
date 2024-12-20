@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -8,32 +7,27 @@
 """Windows specific tests."""
 
 import datetime
-import errno
 import glob
 import os
 import platform
 import re
+import shutil
 import signal
 import subprocess
 import sys
 import time
 import warnings
+from unittest import mock
 
 import psutil
 from psutil import WINDOWS
-from psutil._compat import FileNotFoundError
-from psutil._compat import super
-from psutil._compat import which
-from psutil.tests import APPVEYOR
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_BATTERY
 from psutil.tests import IS_64BIT
-from psutil.tests import PY3
 from psutil.tests import PYPY
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
-from psutil.tests import mock
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
@@ -58,10 +52,6 @@ cext = psutil._psplatform.cext
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 @pytest.mark.skipif(PYPY, reason="pywin32 not available on PYPY")
-# https://github.com/giampaolo/psutil/pull/1762#issuecomment-632892692
-@pytest.mark.skipif(
-    GITHUB_ACTIONS and not PY3, reason="pywin32 broken on GITHUB + PY2"
-)
 class WindowsTestCase(PsutilTestCase):
     pass
 
@@ -72,7 +62,7 @@ def powershell(cmd):
     >>> powershell(
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
     """
-    if not which("powershell.exe"):
+    if not shutil.which("powershell.exe"):
         raise pytest.skip("powershell.exe not available")
     cmdline = (
         'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive '
@@ -199,13 +189,12 @@ class TestSystemAPIs(WindowsTestCase):
     #                                   time.localtime(p.create_time()))
 
     # Note: this test is not very reliable
-    @pytest.mark.skipif(APPVEYOR, reason="test not relieable on appveyor")
     @retry_on_failure()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
         w = wmi.WMI().Win32_Process()
-        wmi_pids = set([x.ProcessId for x in w])
+        wmi_pids = {x.ProcessId for x in w}
         psutil_pids = set(psutil.pids())
         assert wmi_pids == psutil_pids
 
@@ -563,7 +552,7 @@ class TestProcess(WindowsTestCase):
 
     def test_error_partial_copy(self):
         # https://github.com/giampaolo/psutil/issues/875
-        exc = WindowsError()
+        exc = OSError()
         exc.winerror = 299
         with mock.patch("psutil._psplatform.cext.proc_cwd", side_effect=exc):
             with mock.patch("time.sleep") as m:
@@ -676,7 +665,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         mem_1 = psutil.Process(self.pid).memory_info()
         with mock.patch(
             "psutil._psplatform.cext.proc_memory_info",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             mem_2 = psutil.Process(self.pid).memory_info()
             assert len(mem_1) == len(mem_2)
@@ -690,7 +679,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         ctime = psutil.Process(self.pid).create_time()
         with mock.patch(
             "psutil._psplatform.cext.proc_times",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             assert psutil.Process(self.pid).create_time() == ctime
             assert fun.called
@@ -699,7 +688,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         cpu_times_1 = psutil.Process(self.pid).cpu_times()
         with mock.patch(
             "psutil._psplatform.cext.proc_times",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             cpu_times_2 = psutil.Process(self.pid).cpu_times()
             assert fun.called
@@ -710,7 +699,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         io_counters_1 = psutil.Process(self.pid).io_counters()
         with mock.patch(
             "psutil._psplatform.cext.proc_io_counters",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             io_counters_2 = psutil.Process(self.pid).io_counters()
             for i in range(len(io_counters_1)):
@@ -721,7 +710,7 @@ class TestDualProcessImplementation(PsutilTestCase):
         num_handles = psutil.Process(self.pid).num_handles()
         with mock.patch(
             "psutil._psplatform.cext.proc_num_handles",
-            side_effect=OSError(errno.EPERM, "msg"),
+            side_effect=PermissionError,
         ) as fun:
             assert psutil.Process(self.pid).num_handles() == num_handles
             assert fun.called
@@ -838,7 +827,7 @@ class RemoteProcessTestCase(PsutilTestCase):
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 class TestServices(PsutilTestCase):
     def test_win_service_iter(self):
-        valid_statuses = set([
+        valid_statuses = {
             "running",
             "paused",
             "start",
@@ -846,9 +835,9 @@ class TestServices(PsutilTestCase):
             "continue",
             "stop",
             "stopped",
-        ])
-        valid_start_types = set(["automatic", "manual", "disabled"])
-        valid_statuses = set([
+        }
+        valid_start_types = {"automatic", "manual", "disabled"}
+        valid_statuses = {
             "running",
             "paused",
             "start_pending",
@@ -856,7 +845,7 @@ class TestServices(PsutilTestCase):
             "continue_pending",
             "stop_pending",
             "stopped",
-        ])
+        }
         for serv in psutil.win_service_iter():
             data = serv.as_dict()
             assert isinstance(data['name'], str)
@@ -894,11 +883,8 @@ class TestServices(PsutilTestCase):
 
         # test NoSuchProcess
         service = psutil.win_service_get(name)
-        if PY3:
-            args = (0, "msg", 0, ERROR_SERVICE_DOES_NOT_EXIST)
-        else:
-            args = (ERROR_SERVICE_DOES_NOT_EXIST, "msg")
-        exc = WindowsError(*args)
+        exc = OSError(0, "msg", 0)
+        exc.winerror = ERROR_SERVICE_DOES_NOT_EXIST
         with mock.patch(
             "psutil._psplatform.cext.winservice_query_status", side_effect=exc
         ):
@@ -911,11 +897,8 @@ class TestServices(PsutilTestCase):
                 service.username()
 
         # test AccessDenied
-        if PY3:
-            args = (0, "msg", 0, ERROR_ACCESS_DENIED)
-        else:
-            args = (ERROR_ACCESS_DENIED, "msg")
-        exc = WindowsError(*args)
+        exc = OSError(0, "msg", 0)
+        exc.winerror = ERROR_ACCESS_DENIED
         with mock.patch(
             "psutil._psplatform.cext.winservice_query_status", side_effect=exc
         ):

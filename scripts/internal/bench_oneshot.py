@@ -9,8 +9,6 @@ Process.oneshot() ctx manager.
 See: https://github.com/giampaolo/psutil/issues/799.
 """
 
-from __future__ import division
-from __future__ import print_function
 
 import sys
 import textwrap
