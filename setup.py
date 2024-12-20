@@ -247,7 +247,7 @@ if WINDOWS:
 
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
-        return f'0x0{maj * 100 + min}'
+        return f"0x0{maj * 100 + min}"
 
     if sys.getwindowsversion()[0] < 6:
         msg = "this Windows version is too old (< Windows Vista); "
@@ -429,7 +429,7 @@ elif AIX:
     )
 
 else:
-    sys.exit(f'platform {sys.platform} is not supported')
+    sys.exit(f"platform {sys.platform} is not supported")
 
 
 if POSIX:

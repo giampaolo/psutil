@@ -131,7 +131,7 @@ def get_mac_address(ifname):
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname)
         )
-        return ''.join([f'{char:02x}:' for char in info[18:24]])[:-1]
+        return "".join([f"{char:02x}:" for char in info[18:24]])[:-1]
 
 
 def free_swap():
@@ -271,7 +271,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         psutil_value = psutil.virtual_memory().shared
         assert (
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
-        ), f'{free_value} {psutil_value} \n{free.output}'
+        ), f"{free_value} {psutil_value} \n{free.output}"
 
     @retry_on_failure()
     def test_available(self):
@@ -286,7 +286,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
             psutil_value = psutil.virtual_memory().available
             assert (
                 abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
-            ), f'{free_value} {psutil_value} \n{out}'
+            ), f"{free_value} {psutil_value} \n{out}"
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
@@ -2032,7 +2032,7 @@ class TestProcess(PsutilTestCase):
         # condition). threads() is supposed to ignore that instead
         # of raising NSP.
         def open_mock_1(name, *args, **kwargs):
-            if name.startswith(f'/proc/{os.getpid()}/task'):
+            if name.startswith(f"/proc/{os.getpid()}/task"):
                 raise FileNotFoundError
             else:
                 return orig_open(name, *args, **kwargs)
@@ -2046,7 +2046,7 @@ class TestProcess(PsutilTestCase):
         # ...but if it bumps into something != ENOENT we want an
         # exception.
         def open_mock_2(name, *args, **kwargs):
-            if name.startswith(f'/proc/{os.getpid()}/task'):
+            if name.startswith(f"/proc/{os.getpid()}/task"):
                 raise PermissionError
             else:
                 return orig_open(name, *args, **kwargs)
@@ -2071,7 +2071,7 @@ class TestProcess(PsutilTestCase):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.
         with mock_open_exception(
-            f'/proc/{os.getpid()}/smaps', FileNotFoundError
+            f"/proc/{os.getpid()}/smaps", FileNotFoundError
         ) as m:
             p = psutil.Process()
             with pytest.raises(FileNotFoundError):
@@ -2081,7 +2081,7 @@ class TestProcess(PsutilTestCase):
     def test_issue_2418(self):
         p = psutil.Process()
         with mock_open_exception(
-            f'/proc/{os.getpid()}/statm', FileNotFoundError
+            f"/proc/{os.getpid()}/statm", FileNotFoundError
         ):
             with mock.patch("os.path.exists", return_value=False):
                 with pytest.raises(psutil.NoSuchProcess):
@@ -2220,7 +2220,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
 
     def read_status_file(self, linestart):
         with psutil._psplatform.open_text(
-            f'/proc/{self.proc.pid}/status'
+            f"/proc/{self.proc.pid}/status"
         ) as f:
             for line in f:
                 line = line.strip()

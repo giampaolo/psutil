@@ -148,7 +148,7 @@ def run(pid, verbose=False):
     with proc.oneshot():
         try:
             parent = proc.parent()
-            parent = f'({parent.name()})' if parent else ''
+            parent = f"({parent.name()})" if parent else ""
         except psutil.Error:
             parent = ''
         try:

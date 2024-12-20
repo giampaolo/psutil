@@ -437,7 +437,7 @@ class Process:
             # is no longer there.
             if not retlist:
                 # will raise NSP if process is gone
-                os.stat(f'{self._procfs_path}/{self.pid}')
+                os.stat(f"{self._procfs_path}/{self.pid}")
             return retlist
 
     @wrap_exceptions
@@ -450,7 +450,7 @@ class Process:
         # is no longer there.
         if not ret:
             # will raise NSP if process is gone
-            os.stat(f'{self._procfs_path}/{self.pid}')
+            os.stat(f"{self._procfs_path}/{self.pid}")
         return ret
 
     @wrap_exceptions

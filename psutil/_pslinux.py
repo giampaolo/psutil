@@ -73,8 +73,8 @@ if hasattr(resource, "prlimit"):
 
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
-HAS_PROC_SMAPS = os.path.exists(f'/proc/{os.getpid()}/smaps')
-HAS_PROC_SMAPS_ROLLUP = os.path.exists(f'/proc/{os.getpid()}/smaps_rollup')
+HAS_PROC_SMAPS = os.path.exists(f"/proc/{os.getpid()}/smaps")
+HAS_PROC_SMAPS_ROLLUP = os.path.exists(f"/proc/{os.getpid()}/smaps_rollup")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 
@@ -257,7 +257,7 @@ def set_scputimes_ntuple(procfs_path):
     Used by cpu_times() function.
     """
     global scputimes
-    with open_binary(f'{procfs_path}/stat') as f:
+    with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()[1:]
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
     vlen = len(values)
@@ -330,7 +330,7 @@ def calculate_avail_vmem(mems):
         )
         return fallback
     try:
-        f = open_binary(f'{get_procfs_path()}/zoneinfo')
+        f = open_binary(f"{get_procfs_path()}/zoneinfo")
     except OSError:
         return fallback  # kernel 2.6.13
 
@@ -360,7 +360,7 @@ def virtual_memory():
     """
     missing_fields = []
     mems = {}
-    with open_binary(f'{get_procfs_path()}/meminfo') as f:
+    with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
@@ -486,7 +486,7 @@ def virtual_memory():
 def swap_memory():
     """Return swap memory metrics."""
     mems = {}
-    with open_binary(f'{get_procfs_path()}/meminfo') as f:
+    with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
@@ -552,7 +552,7 @@ def cpu_times():
     """
     procfs_path = get_procfs_path()
     set_scputimes_ntuple(procfs_path)
-    with open_binary(f'{procfs_path}/stat') as f:
+    with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
     fields = values[1 : len(scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
@@ -566,7 +566,7 @@ def per_cpu_times():
     procfs_path = get_procfs_path()
     set_scputimes_ntuple(procfs_path)
     cpus = []
-    with open_binary(f'{procfs_path}/stat') as f:
+    with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
         for line in f:
@@ -586,7 +586,7 @@ def cpu_count_logical():
     except ValueError:
         # as a second fallback we try to parse /proc/cpuinfo
         num = 0
-        with open_binary(f'{get_procfs_path()}/cpuinfo') as f:
+        with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
             for line in f:
                 if line.lower().startswith(b'processor'):
                     num += 1
@@ -596,7 +596,7 @@ def cpu_count_logical():
         # try to parse /proc/stat as a last resort
         if num == 0:
             search = re.compile(r'cpu\d')
-            with open_text(f'{get_procfs_path()}/stat') as f:
+            with open_text(f"{get_procfs_path()}/stat") as f:
                 for line in f:
                     line = line.split(' ')[0]
                     if search.match(line):
@@ -629,7 +629,7 @@ def cpu_count_cores():
     # Method #2
     mapping = {}
     current_info = {}
-    with open_binary(f'{get_procfs_path()}/cpuinfo') as f:
+    with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
         for line in f:
             line = line.strip().lower()
             if not line:
@@ -652,7 +652,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    with open_binary(f'{get_procfs_path()}/stat') as f:
+    with open_binary(f"{get_procfs_path()}/stat") as f:
         ctx_switches = None
         interrupts = None
         soft_interrupts = None
@@ -678,7 +678,7 @@ def cpu_stats():
 def _cpu_get_cpuinfo_freq():
     """Return current CPU frequency from cpuinfo if available."""
     ret = []
-    with open_binary(f'{get_procfs_path()}/cpuinfo') as f:
+    with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
         for line in f:
             if line.lower().startswith(b'cpu mhz'):
                 ret.append(float(line.split(b':', 1)[1]))
@@ -1149,7 +1149,7 @@ def disk_io_counters(perdisk=False):
                        wtime, reads_merged, writes_merged, busy_time)
                 # fmt: on
 
-    if os.path.exists(f'{get_procfs_path()}/diskstats'):
+    if os.path.exists(f"{get_procfs_path()}/diskstats"):
         gen = read_procfs()
     elif os.path.exists('/sys/block'):
         gen = read_sysfs()
@@ -1565,7 +1565,7 @@ def users():
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
     global BOOT_TIME
-    path = f'{get_procfs_path()}/stat'
+    path = f"{get_procfs_path()}/stat"
     with open_binary(path) as f:
         for line in f:
             if line.startswith(b'btime'):
@@ -1703,7 +1703,7 @@ class Process:
         """Raise NSP if the process disappeared on us."""
         # For those C function who do not raise NSP, possibly returning
         # incorrect or incomplete result.
-        os.stat(f'{self._procfs_path}/{self.pid}')
+        os.stat(f"{self._procfs_path}/{self.pid}")
 
     @wrap_exceptions
     @memoize_when_activated
@@ -1830,7 +1830,7 @@ class Process:
             return None
 
     # May not be available on old kernels.
-    if os.path.exists(f'/proc/{os.getpid()}/io'):
+    if os.path.exists(f"/proc/{os.getpid()}/io"):
 
         @wrap_exceptions
         def io_counters(self):

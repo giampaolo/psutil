@@ -174,9 +174,9 @@ if CI_TESTING:
 # Disambiguate TESTFN for parallel testing.
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFN_PREFIX = f'$psutil-{os.getpid()}-'
+    TESTFN_PREFIX = f"$psutil-{os.getpid()}-"
 else:
-    TESTFN_PREFIX = f'@psutil-{os.getpid()}-'
+    TESTFN_PREFIX = f"@psutil-{os.getpid()}-"
 UNICODE_SUFFIX = "-ƒőő"
 # An invalid unicode string.
 INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
@@ -918,7 +918,7 @@ class fake_pytest:
                 yield einfo
             except exc as err:
                 if match and not re.search(match, str(err)):
-                    msg = f'"{match}" does not match "{str(err)}"'
+                    msg = f'"{match}" does not match "{err}"'
                     raise AssertionError(msg)
                 einfo._exc = err
             else:
@@ -1290,7 +1290,7 @@ def print_sysinfo():
     if psutil.LINUX and shutil.which("lsb_release"):
         info['OS'] = sh('lsb_release -d -s')
     elif psutil.OSX:
-        info['OS'] = f'Darwin {platform.mac_ver()[0]}'
+        info['OS'] = f"Darwin {platform.mac_ver()[0]}"
     elif psutil.WINDOWS:
         info['OS'] = "Windows " + ' '.join(map(str, platform.win32_ver()))
         if hasattr(platform, 'win32_edition'):
@@ -1327,7 +1327,7 @@ def print_sysinfo():
     # system
     info['fs-encoding'] = sys.getfilesystemencoding()
     lang = locale.getlocale()
-    info['lang'] = f'{lang[0]}, {lang[1]}'
+    info['lang'] = f"{lang[0]}, {lang[1]}"
     info['boot-time'] = datetime.datetime.fromtimestamp(
         psutil.boot_time()
     ).strftime("%Y-%m-%d %H:%M:%S")

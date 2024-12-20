@@ -65,8 +65,8 @@ def powershell(cmd):
     if not shutil.which("powershell.exe"):
         raise pytest.skip("powershell.exe not available")
     cmdline = (
-        'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive '
-        f'-NoProfile -WindowStyle Hidden -Command "{cmd}"'
+        "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive "
+        f"-NoProfile -WindowStyle Hidden -Command \"{cmd}\""  # noqa: Q003
     )
     return sh(cmdline)
 

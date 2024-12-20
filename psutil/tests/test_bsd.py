@@ -170,7 +170,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
 
     @retry_on_failure()
     def test_memory_maps(self):
-        out = sh(f'procstat -v {self.pid}')
+        out = sh(f"procstat -v {self.pid}")
         maps = psutil.Process(self.pid).memory_maps(grouped=False)
         lines = out.split('\n')[1:]
         while lines:
@@ -184,17 +184,17 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
                 assert fields[10] == map.path
 
     def test_exe(self):
-        out = sh(f'procstat -b {self.pid}')
+        out = sh(f"procstat -b {self.pid}")
         assert psutil.Process(self.pid).exe() == out.split('\n')[1].split()[-1]
 
     def test_cmdline(self):
-        out = sh(f'procstat -c {self.pid}')
+        out = sh(f"procstat -c {self.pid}")
         assert ' '.join(psutil.Process(self.pid).cmdline()) == ' '.join(
             out.split('\n')[1].split()[2:]
         )
 
     def test_uids_gids(self):
-        out = sh(f'procstat -s {self.pid}')
+        out = sh(f"procstat -s {self.pid}")
         euid, ruid, suid, egid, rgid, sgid = out.split('\n')[1].split()[2:8]
         p = psutil.Process(self.pid)
         uids = p.uids()
@@ -209,7 +209,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
     @retry_on_failure()
     def test_ctx_switches(self):
         tested = []
-        out = sh(f'procstat -r {self.pid}')
+        out = sh(f"procstat -r {self.pid}")
         p = psutil.Process(self.pid)
         for line in out.split('\n'):
             line = line.lower().strip()
@@ -229,7 +229,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
     @retry_on_failure()
     def test_cpu_times(self):
         tested = []
-        out = sh(f'procstat -r {self.pid}')
+        out = sh(f"procstat -r {self.pid}")
         p = psutil.Process(self.pid)
         for line in out.split('\n'):
             line = line.lower().strip()

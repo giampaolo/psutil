@@ -14,7 +14,7 @@ import psutil
 
 def main():
     if len(sys.argv) != 2:
-        sys.exit(f'usage: {__file__} name')
+        sys.exit(f"usage: {__file__} name")
     else:
         name = sys.argv[1]
 
@@ -24,7 +24,7 @@ def main():
             proc.kill()
             killed.append(proc.pid)
     if not killed:
-        sys.exit(f'{name}: no process found')
+        sys.exit(f"{name}: no process found")
     else:
         sys.exit(0)
 

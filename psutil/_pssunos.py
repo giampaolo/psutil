@@ -396,7 +396,7 @@ class Process:
         """Raise NSP if the process disappeared on us."""
         # For those C function who do not raise NSP, possibly returning
         # incorrect or incomplete result.
-        os.stat(f'{self._procfs_path}/{self.pid}')
+        os.stat(f"{self._procfs_path}/{self.pid}")
 
     def oneshot_enter(self):
         self._proc_name_and_args.cache_activate(self)
@@ -417,7 +417,7 @@ class Process:
     @memoize_when_activated
     def _proc_basic_info(self):
         if self.pid == 0 and not os.path.exists(
-            f'{self._procfs_path}/{self.pid}/psinfo'
+            f"{self._procfs_path}/{self.pid}/psinfo"
         ):
             raise AccessDenied(self.pid)
         ret = cext.proc_basic_info(self.pid, self._procfs_path)
@@ -535,7 +535,7 @@ class Process:
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink(
-                        f'{procfs_path}/{int(self.pid)}/path/{int(x)}'
+                        f"{procfs_path}/{int(self.pid)}/path/{x}"
                     )
                 except FileNotFoundError:
                     hit_enoent = True
@@ -575,7 +575,7 @@ class Process:
     def threads(self):
         procfs_path = self._procfs_path
         ret = []
-        tids = os.listdir(f'{procfs_path}/{int(self.pid)}/lwp')
+        tids = os.listdir(f"{procfs_path}/{self.pid}/lwp")
         hit_enoent = False
         for tid in tids:
             tid = int(tid)
@@ -610,8 +610,8 @@ class Process:
         retlist = []
         hit_enoent = False
         procfs_path = self._procfs_path
-        pathdir = f'{procfs_path}/{int(self.pid)}/path'
-        for fd in os.listdir(f'{procfs_path}/{int(self.pid)}/fd'):
+        pathdir = f"{procfs_path}/{self.pid}/path"
+        for fd in os.listdir(f"{procfs_path}/{self.pid}/fd"):
             path = os.path.join(pathdir, fd)
             if os.path.islink(path):
                 try:
@@ -670,7 +670,7 @@ class Process:
         # is no longer there.
         if not ret:
             # will raise NSP if process is gone
-            os.stat(f'{self._procfs_path}/{self.pid}')
+            os.stat(f"{self._procfs_path}/{self.pid}")
 
         # UNIX sockets
         if kind in {'all', 'unix'}:
@@ -710,7 +710,7 @@ class Process:
             addr = toaddr(addr, addrsize)
             if not name.startswith('['):
                 try:
-                    name = os.readlink(f'{procfs_path}/{self.pid}/path/{name}')
+                    name = os.readlink(f"{procfs_path}/{self.pid}/path/{name}")
                 except OSError as err:
                     if err.errno == errno.ENOENT:
                         # sometimes the link may not be resolved by
@@ -719,7 +719,7 @@ class Process:
                         # unresolved link path.
                         # This seems an inconsistency with /proc similar
                         # to: http://goo.gl/55XgO
-                        name = f'{procfs_path}/{self.pid}/path/{name}'
+                        name = f"{procfs_path}/{self.pid}/path/{name}"
                         hit_enoent = True
                     else:
                         raise
