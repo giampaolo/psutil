@@ -42,11 +42,11 @@ from psutil._common import bytes2human
 def main():
     today_day = datetime.date.today()
     # fmt: off
-    templ = "%-10s %5s %5s %7s %7s %5s %6s %6s %6s  %s"
+    templ = "{:<10} {:>5} {:>5} {:>7} {:>7} {:>5} {:>6} {:>6} {:>6}  {}"
     attrs = ['pid', 'memory_percent', 'name', 'cmdline', 'cpu_times',
              'create_time', 'memory_info', 'status', 'nice', 'username']
-    print(templ % ("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
-                   "STATUS", "START", "TIME", "CMDLINE"))
+    print(templ.format("USER", "PID", "%MEM", "VSZ", "RSS", "NICE",
+                       "STATUS", "START", "TIME", "CMDLINE"))
     # fmt: on
     for p in psutil.process_iter(attrs, ad_value=None):
         if p.info['create_time']:
@@ -97,7 +97,7 @@ def main():
             cmdline = p.info['name']
         status = p.info['status'][:5] if p.info['status'] else ''
 
-        line = templ % (
+        line = templ.format(
             user,
             p.info['pid'],
             memp,
