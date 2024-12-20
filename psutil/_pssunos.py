@@ -152,7 +152,8 @@ def swap_memory():
     stdout, _ = p.communicate()
     stdout = stdout.decode(sys.stdout.encoding)
     if p.returncode != 0:
-        raise RuntimeError(f"'swap -l' failed (retcode={p.returncode})")
+        msg = f"'swap -l' failed (retcode={p.returncode})"
+        raise RuntimeError(msg)
 
     lines = stdout.strip().split('\n')[1:]
     if not lines:
@@ -642,7 +643,8 @@ class Process:
                 raise AccessDenied(self.pid, self._name)
             if 'no such process' in stderr.lower():
                 raise NoSuchProcess(self.pid, self._name)
-            raise RuntimeError(f"{cmd!r} command error\n{stderr}")
+            msg = f"{cmd!r} command error\n{stderr}"
+            raise RuntimeError(msg)
 
         lines = stdout.split('\n')[2:]
         for i, line in enumerate(lines):

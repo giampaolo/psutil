@@ -946,9 +946,8 @@ class Process:
             allcpus = tuple(range(len(per_cpu_times())))
             for cpu in cpus:
                 if cpu not in allcpus:
-                    raise ValueError(
-                        f"invalid CPU #{int(cpu)} (choose between {allcpus})"
-                    )
+                    msg = f"invalid CPU #{int(cpu)} (choose between {allcpus})"
+                    raise ValueError(msg)
             try:
                 cext.proc_cpu_affinity_set(self.pid, cpus)
             except OSError as err:
@@ -959,10 +958,11 @@ class Process:
                 if err.errno in {errno.EINVAL, errno.EDEADLK}:
                     for cpu in cpus:
                         if cpu not in allcpus:
-                            raise ValueError(
+                            msg = (
                                 f"invalid CPU #{int(cpu)} (choose between"
                                 f" {allcpus})"
                             )
+                            raise ValueError(msg)
                 raise
 
         @wrap_exceptions

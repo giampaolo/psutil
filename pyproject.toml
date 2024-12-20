@@ -96,10 +96,11 @@ ignore = [
 # T201 == print(), T203 == pprint()
 # EM101 == raw-string-in-exception
 # TRY003 == raise-vanilla-args
-".github/workflows/*" = ["T201", "T203"]
-"psutil/tests/*" = ["EM101", "TRY003"]
-"scripts/*" = ["T201", "T203"]
-"scripts/internal/*" = ["EM101", "T201", "T203", "TRY003"]
+# EM102 == Exception must not use an f-string literal, assign to variable first
+".github/workflows/*" = ["EM102", "T201", "T203"]
+"psutil/tests/*" = ["EM101", "EM102", "TRY003"]
+"scripts/*" = ["EM102", "T201", "T203"]
+"scripts/internal/*" = ["EM101", "EM102", "T201", "T203", "TRY003"]
 "setup.py" = ["T201", "T203"]
 
 [tool.ruff.lint.isort]

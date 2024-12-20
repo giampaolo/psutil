@@ -364,8 +364,8 @@ def spawn_testproc(cmd=None, **kwds):
             safe_rmpath(testfn)
             pyline = (
                 "import time;"
-                + f"open(r'{testfn}', 'w').close();"
-                + "[time.sleep(0.1) for x in range(100)];"  # 10 secs
+                f"open(r'{testfn}', 'w').close();"
+                "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)

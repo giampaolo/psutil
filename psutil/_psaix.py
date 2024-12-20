@@ -146,7 +146,8 @@ def cpu_count_cores():
     stdout, stderr = p.communicate()
     stdout, stderr = (x.decode(sys.stdout.encoding) for x in (stdout, stderr))
     if p.returncode != 0:
-        raise RuntimeError(f"{cmd!r} command error\n{stderr}")
+        msg = f"{cmd!r} command error\n{stderr}"
+        raise RuntimeError(msg)
     processors = stdout.strip().splitlines()
     return len(processors) or None
 

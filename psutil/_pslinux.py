@@ -511,7 +511,7 @@ def swap_memory():
         # see https://github.com/giampaolo/psutil/issues/722
         msg = (
             "'sin' and 'sout' swap memory stats couldn't "
-            + f"be determined and were set to 0 ({str(err)})"
+            f"be determined and were set to 0 ({err})"
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
         sin = sout = 0
@@ -890,10 +890,11 @@ class NetConnections:
                         line.split()[:10]
                     )
                 except ValueError:
-                    raise RuntimeError(
+                    msg = (
                         f"error while parsing {file}; malformed line"
                         f" {lineno} {line!r}"
                     )
+                    raise RuntimeError(msg)
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
@@ -931,9 +932,10 @@ class NetConnections:
                     if ' ' not in line:
                         # see: https://github.com/giampaolo/psutil/issues/766
                         continue
-                    raise RuntimeError(
+                    msg = (
                         f"error while parsing {file}; malformed line {line!r}"
                     )
+                    raise RuntimeError(msg)
                 if inode in inodes:  # noqa
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
@@ -1126,7 +1128,8 @@ def disk_io_counters(perdisk=False):
                 reads, rbytes, writes, wbytes = map(int, fields[3:])
                 rtime = wtime = reads_merged = writes_merged = busy_time = 0
             else:
-                raise ValueError(f"not sure how to interpret line {line!r}")
+                msg = f"not sure how to interpret line {line!r}"
+                raise ValueError(msg)
             yield (name, reads, writes, rbytes, wbytes, rtime, wtime,
                    reads_merged, writes_merged, busy_time)
             # fmt: on
@@ -1569,7 +1572,8 @@ def boot_time():
                 ret = float(line.strip().split()[1])
                 BOOT_TIME = ret
                 return ret
-        raise RuntimeError(f"line 'btime' not found in {path}")
+        msg = f"line 'btime' not found in {path}"
+        raise RuntimeError(msg)
 
 
 # =====================================================================
@@ -1610,7 +1614,8 @@ def pid_exists(pid):
                         # If tgid and pid are the same then we're
                         # dealing with a process PID.
                         return tgid == pid
-                raise ValueError(f"'Tgid' line not found in {path}")
+                msg = f"'Tgid' line not found in {path}"
+                raise ValueError(msg)
         except (OSError, ValueError):
             return pid in pids()
 
@@ -1844,7 +1849,8 @@ class Process:
                         else:
                             fields[name] = int(value)
             if not fields:
-                raise RuntimeError(f"{fname} file was empty")
+                msg = f"{fname} file was empty"
+                raise RuntimeError(msg)
             try:
                 return pio(
                     fields[b'syscr'],  # read syscalls
@@ -2006,10 +2012,11 @@ class Process:
                                 # see issue #369
                                 continue
                             else:
-                                raise ValueError(
+                                msg = (
                                     "don't know how to interpret line"
                                     f" {line!r}"
                                 )
+                                raise ValueError(msg)
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
@@ -2176,7 +2183,8 @@ class Process:
                 IOPriority.IOPRIO_CLASS_IDLE,
                 IOPriority.IOPRIO_CLASS_NONE,
             }:
-                raise ValueError(f"{ioclass!r} ioclass accepts no value")
+                msg = f"{ioclass!r} ioclass accepts no value"
+                raise ValueError(msg)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
                 raise ValueError(msg)
@@ -2201,7 +2209,7 @@ class Process:
                     if len(limits) != 2:
                         msg = (
                             "second argument must be a (soft, hard) "
-                            + f"tuple, got {repr(limits)}"
+                            f"tuple, got {repr(limits)}"
                         )
                         raise ValueError(msg)
                     resource.prlimit(self.pid, resource_, limits)

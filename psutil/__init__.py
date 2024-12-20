@@ -136,7 +136,8 @@ elif AIX:
     PROCFS_PATH = "/proc"
 
 else:  # pragma: no cover
-    raise NotImplementedError(f'platform {sys.platform} is not supported')
+    msg = f'platform {sys.platform} is not supported'
+    raise NotImplementedError(msg)
 
 
 # fmt: off

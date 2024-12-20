@@ -894,10 +894,11 @@ def print_color(
         try:
             color = colors[color]
         except KeyError:
-            raise ValueError(
+            msg = (
                 f"invalid color {color!r}; choose between"
                 f" {list(colors.keys())!r}"
             )
+            raise ValueError(msg)
         if bold and color <= 7:
             color += 8
 

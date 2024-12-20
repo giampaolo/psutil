@@ -66,7 +66,7 @@ def powershell(cmd):
         raise pytest.skip("powershell.exe not available")
     cmdline = (
         'powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive '
-        + f'-NoProfile -WindowStyle Hidden -Command "{cmd}"'
+        f'-NoProfile -WindowStyle Hidden -Command "{cmd}"'
     )
     return sh(cmdline)
 

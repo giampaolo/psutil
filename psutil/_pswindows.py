@@ -1026,7 +1026,8 @@ class Process:
             IOPriority.IOPRIO_NORMAL,
             IOPriority.IOPRIO_HIGH,
         }:
-            raise ValueError(f"{ioclass} is not a valid priority")
+            msg = f"{ioclass} is not a valid priority"
+            raise ValueError(msg)
         cext.proc_io_priority_set(self.pid, ioclass)
 
     @wrap_exceptions
@@ -1068,7 +1069,8 @@ class Process:
     def cpu_affinity_set(self, value):
         def to_bitmask(ls):
             if not ls:
-                raise ValueError(f"invalid argument {ls!r}")
+                msg = f"invalid argument {ls!r}"
+                raise ValueError(msg)
             out = 0
             for b in ls:
                 out |= 2**b
@@ -1081,11 +1083,11 @@ class Process:
         for cpu in value:
             if cpu not in allcpus:
                 if not isinstance(cpu, int):
-                    raise TypeError(
-                        f"invalid CPU {cpu!r}; an integer is required"
-                    )
+                    msg = f"invalid CPU {cpu!r}; an integer is required"
+                    raise TypeError(msg)
                 else:
-                    raise ValueError(f"invalid CPU {cpu!r}")
+                    msg = f"invalid CPU {cpu!r}"
+                    raise ValueError(msg)
 
         bitmask = to_bitmask(value)
         cext.proc_cpu_affinity_set(self.pid, bitmask)
