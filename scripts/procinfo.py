@@ -221,13 +221,13 @@ def run(pid, verbose=False):
     if 'num_ctx_switches' in pinfo:
         print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
     if pinfo['children']:
-        template = "%-6s %s"
-        print_("children", template % ("PID", "NAME"))
+        template = "{:<6} {}"
+        print_("children", template.format("PID", "NAME"))
         for child in pinfo['children']:
             try:
-                print_('', template % (child.pid, child.name()))
+                print_("", template.format(child.pid, child.name()))
             except psutil.AccessDenied:
-                print_('', template % (child.pid, ""))
+                print_("", template.format(child.pid, ""))
             except psutil.NoSuchProcess:
                 pass
 
@@ -242,10 +242,10 @@ def run(pid, verbose=False):
         print_('open-files', '')
 
     if pinfo['net_connections']:
-        template = '%-5s %-25s %-25s %s'
+        template = "{:<5} {:<25} {:<25} {}"
         print_(
             'connections',
-            template % ('PROTO', 'LOCAL ADDR', 'REMOTE ADDR', 'STATUS'),
+            template.format("PROTO", "LOCAL ADDR", "REMOTE ADDR", "STATUS"),
         )
         for conn in pinfo['net_connections']:
             if conn.type == socket.SOCK_STREAM:
@@ -259,7 +259,7 @@ def run(pid, verbose=False):
                 rip, rport = '*', '*'
             else:
                 rip, rport = conn.raddr
-            line = template % (
+            line = template.format(
                 type,
                 f"{lip}:{lport}",
                 f"{rip}:{rport}",
@@ -270,13 +270,13 @@ def run(pid, verbose=False):
         print_('connections', '')
 
     if pinfo['threads'] and len(pinfo['threads']) > 1:
-        template = "%-5s %12s %12s"
-        print_('threads', template % ("TID", "USER", "SYSTEM"))
+        template = "{:<5} {:>12} {:>12}"
+        print_('threads', template.format("TID", "USER", "SYSTEM"))
         for i, thread in enumerate(pinfo['threads']):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_('', template % thread)
+            print_("", template.format(thread))
         print_('', f"total={len(pinfo['threads'])}")
     else:
         print_('threads', '')
@@ -292,8 +292,8 @@ def run(pid, verbose=False):
             else:
                 resources.append((res_name, soft, hard))
         if resources:
-            template = "%-12s %15s %15s"
-            print_("res-limits", template % ("RLIMIT", "SOFT", "HARD"))
+            template = "{:<12} {:>15} {:>15}"
+            print_("res-limits", template.format("RLIMIT", "SOFT", "HARD"))
             for res_name, soft, hard in resources:
                 if soft == psutil.RLIM_INFINITY:
                     soft = "infinity"
@@ -301,28 +301,29 @@ def run(pid, verbose=False):
                     hard = "infinity"
                 print_(
                     '',
-                    template
-                    % (RLIMITS_MAP.get(res_name, res_name), soft, hard),
+                    template.format(
+                        RLIMITS_MAP.get(res_name, res_name), soft, hard
+                    ),
                 )
 
     if hasattr(proc, "environ") and pinfo['environ']:
-        template = "%-25s %s"
-        print_("environ", template % ("NAME", "VALUE"))
+        template = "{:<25} {}"
+        print_("environ", template.format("NAME", "VALUE"))
         for i, k in enumerate(sorted(pinfo['environ'])):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_("", template % (k, pinfo['environ'][k]))
+            print_("", template.format(k, pinfo["environ"][k]))
 
     if pinfo.get('memory_maps', None):
-        template = "%-8s %s"
-        print_("mem-maps", template % ("RSS", "PATH"))
+        template = "{:<8} {}"
+        print_("mem-maps", template.format("RSS", "PATH"))
         maps = sorted(pinfo['memory_maps'], key=lambda x: x.rss, reverse=True)
         for i, region in enumerate(maps):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_("", template % (bytes2human(region.rss), region.path))
+            print_("", template.format(bytes2human(region.rss), region.path))
 
 
 def main():
