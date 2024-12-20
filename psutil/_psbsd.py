@@ -435,14 +435,8 @@ def net_if_stats():
 
 def net_connections(kind):
     """System-wide network connections."""
-    if kind not in _common.conn_tmap:
-        raise ValueError(
-            "invalid %r kind argument; choose between %s"
-            % (kind, ', '.join([repr(x) for x in conn_tmap]))
-        )
     families, types = conn_tmap[kind]
     ret = set()
-
     if OPENBSD:
         rawlist = cext.net_connections(-1, families, types)
     elif NETBSD:
@@ -820,11 +814,6 @@ class Process:
 
     @wrap_exceptions
     def net_connections(self, kind='inet'):
-        if kind not in conn_tmap:
-            raise ValueError(
-                "invalid %r kind argument; choose between %s"
-                % (kind, ', '.join([repr(x) for x in conn_tmap]))
-            )
         families, types = conn_tmap[kind]
         ret = []
 

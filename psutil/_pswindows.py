@@ -349,11 +349,6 @@ def net_connections(kind, _pid=-1):
     """Return socket connections.  If pid == -1 return system-wide
     connections (as opposed to connections opened by one process only).
     """
-    if kind not in conn_tmap:
-        raise ValueError(
-            "invalid %r kind argument; choose between %s"
-            % (kind, ', '.join([repr(x) for x in conn_tmap]))
-        )
     families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
     ret = set()

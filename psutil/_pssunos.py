@@ -260,14 +260,6 @@ def net_connections(kind, _pid=-1):
     connections (as opposed to connections opened by one process only).
     Only INET sockets are returned (UNIX are not).
     """
-    cmap = _common.conn_tmap.copy()
-    if _pid == -1:
-        cmap.pop('unix', 0)
-    if kind not in cmap:
-        raise ValueError(
-            "invalid %r kind argument; choose between %s"
-            % (kind, ', '.join([repr(x) for x in cmap]))
-        )
     families, types = _common.conn_tmap[kind]
     rawlist = cext.net_connections(_pid)
     ret = set()

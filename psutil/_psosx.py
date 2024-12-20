@@ -500,11 +500,6 @@ class Process:
 
     @wrap_exceptions
     def net_connections(self, kind='inet'):
-        if kind not in conn_tmap:
-            raise ValueError(
-                "invalid %r kind argument; choose between %s"
-                % (kind, ', '.join([repr(x) for x in conn_tmap]))
-            )
         families, types = conn_tmap[kind]
         rawlist = cext.proc_net_connections(self.pid, families, types)
         ret = []
