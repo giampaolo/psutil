@@ -47,12 +47,12 @@ def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap <pid>')
     p = psutil.Process(int(sys.argv[1]))
-    templ = "%-20s %10s  %-7s %s"
-    print(templ % ("Address", "RSS", "Mode", "Mapping"))
+    templ = "{:<20} {:>10}  {:<7} {}"
+    print(templ.format("Address", "RSS", "Mode", "Mapping"))
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        line = templ % (
+        line = templ.format(
             m.addr.split('-')[0].zfill(16),
             bytes2human(m.rss),
             m.perms,
@@ -60,7 +60,7 @@ def main():
         )
         safe_print(line)
     print("-" * 31)
-    print(templ % ("Total", bytes2human(total_rss), '', ''))
+    print(templ.format("Total", bytes2human(total_rss), '', ''))
     safe_print(f"PID = {p.pid}, name = {p.name()}")
 
 
