@@ -37,8 +37,8 @@ proto_map = {
 
 
 def main():
-    templ = "%-5s %-30s %-30s %-13s %-6s %s"
-    header = templ % (
+    templ = "{:<5} {:<30} {:<30} {:<13} {:<6} {}"
+    header = templ.format(
         "Proto",
         "Local address",
         "Remote address",
@@ -56,7 +56,7 @@ def main():
         if c.raddr:
             raddr = "{}:{}".format(*c.raddr)
         name = proc_names.get(c.pid, '?') or ''
-        line = templ % (
+        line = templ.format(
             proto_map[(c.family, c.type)],
             laddr,
             raddr or AD,
