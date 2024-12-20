@@ -18,7 +18,6 @@ sensors) in Python. Supported platforms:
 Supported Python versions are cPython 3.6+ and PyPy.
 """
 
-
 import collections
 import contextlib
 import datetime
@@ -274,6 +273,14 @@ def _pprint_secs(secs):
     secs_ago = int(now - secs)
     fmt = "%H:%M:%S" if secs_ago < 60 * 60 * 24 else "%Y-%m-%d %H:%M:%S"
     return datetime.datetime.fromtimestamp(secs).strftime(fmt)
+
+
+def _check_conn_kind(kind):
+    """Check net_connections()'s `kind` parameter."""
+    kinds = tuple(_common.conn_tmap)
+    if kind not in kinds:
+        msg = f"invalid kind argument {kind!r}; valid ones are: {kinds}"
+        raise ValueError(msg)
 
 
 # =====================================================================
@@ -1232,6 +1239,7 @@ class Process:
         | all        | the sum of all the possible families and protocols |
         +------------+----------------------------------------------------+
         """
+        _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
     @_common.deprecated_method(replacement="net_connections")
@@ -2192,6 +2200,7 @@ def net_connections(kind='inet'):
 
     On macOS this function requires root privileges.
     """
+    _check_conn_kind(kind)
     return _psplatform.net_connections(kind)
 
 
