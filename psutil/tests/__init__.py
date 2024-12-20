@@ -1367,7 +1367,7 @@ def print_sysinfo():
 
     print("=" * 70, file=sys.stderr)  # NOQA
     for k, v in info.items():
-        print("{:<17} {}".format(k + ':', v), file=sys.stderr)  # noqa: T201
+        print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
     print("=" * 70, file=sys.stderr)  # NOQA
     sys.stdout.flush()
 

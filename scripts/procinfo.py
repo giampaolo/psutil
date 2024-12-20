@@ -271,7 +271,7 @@ def run(pid, verbose=False):
 
     if pinfo['threads'] and len(pinfo['threads']) > 1:
         template = "{:<5} {:>12} {:>12}"
-        print_('threads', template.format("TID", "USER", "SYSTEM"))
+        print_("threads", template.format("TID", "USER", "SYSTEM"))
         for i, thread in enumerate(pinfo['threads']):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")

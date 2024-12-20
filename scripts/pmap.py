@@ -60,7 +60,7 @@ def main():
         )
         safe_print(line)
     print("-" * 31)
-    print(templ.format("Total", bytes2human(total_rss), '', ''))
+    print(templ.format("Total", bytes2human(total_rss), "", ""))
     safe_print(f"PID = {p.pid}, name = {p.name()}")
 
 

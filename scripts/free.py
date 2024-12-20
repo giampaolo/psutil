@@ -20,7 +20,7 @@ def main():
     swap = psutil.swap_memory()
     templ = "{:<7} {:>10} {:>10} {:>10} {:>10} {:>10} {:>10}"
     print(
-        templ.format('', 'total', 'used', 'free', 'shared', 'buffers', 'cache')
+        templ.format("", "total", "used", "free", "shared", "buffers", "cache")
     )
     sect = templ.format(
         'Mem:',
