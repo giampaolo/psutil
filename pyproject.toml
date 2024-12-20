@@ -33,8 +33,8 @@ ignore = [
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
     "B007",  # Loop control variable `x` not used within loop body
-    "B904",  # Use `raise from` to specify exception cause (PYTHON2.7 COMPAT)
-    "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
+    "B904",  # Use `raise from` to specify exception cause
+    "C4",  # flake8-comprehensions
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
@@ -43,7 +43,7 @@ ignore = [
     "ERA001",  # Found commented-out code
     "FBT",  # flake8-boolean-trap (makes zero sense)
     "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
-    "FLY",  # flynt (PYTHON2.7 COMPAT)
+    "FLY002",  # static-join-to-f-string / Consider {expression} instead of string join
     "FURB101",  # `open` and `read` should be replaced by `Path(src).read_text()`
     "FURB103",  # `open` and `write` should be replaced by `Path(src).write_text()`
     "FURB113",  # Use `ls.extend(...)` instead of repeatedly calling `ls.append()`

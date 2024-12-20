@@ -1,5 +1,19 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.0.0 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 2480_: Dropped Python 2.7 support.
+
+**Compatibility notes**
+
+- 2480_: Python 2.7 is no longer supported. Latest version supporting Python
+  2.7 is psutil 6.1.X. Install it with: ``pip2 install psutil==6.1.*``.
+
 6.1.1
 =====
 

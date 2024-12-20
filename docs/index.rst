@@ -1203,7 +1203,7 @@ Process class
 
     >>> import psutil
     >>> psutil.Process().exe()
-    '/usr/bin/python2.7'
+    '/usr/bin/python3'
 
   .. method:: cmdline()
 
@@ -2647,7 +2647,7 @@ To install it:
 
     $ python2 -m pip install psutil==6.1.1
 
-The 6.1.X branch may receive critical bugfixes but no new features.
+The 6.1.X branch may receive critical bug-fixes but no new features.
 
 Security
 ========

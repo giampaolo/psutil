@@ -22,14 +22,12 @@ import zipfile
 
 import requests
 
-from psutil import __version__
 from psutil._common import bytes2human
 from psutil.tests import safe_rmpath
 
 
 USER = "giampaolo"
 PROJECT = "psutil"
-PROJECT_VERSION = __version__
 OUTFILE = "wheels-github.zip"
 TOKEN = ""
 TIMEOUT = 30
