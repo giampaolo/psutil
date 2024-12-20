@@ -135,7 +135,7 @@ def ps_vsz(pid):
 
 def df(device):
     try:
-        out = sh("df -k %s" % device).strip()
+        out = sh(f"df -k {device}").strip()
     except RuntimeError as err:
         if "device busy" in str(err).lower():
             raise pytest.skip("df returned EBUSY")
@@ -357,8 +357,8 @@ class TestSystemAPIs(PsutilTestCase):
                     break
             else:
                 raise self.fail(
-                    "couldn't find %s nic in 'ifconfig -a' output\n%s"
-                    % (nic, output)
+                    f"couldn't find {nic} nic in 'ifconfig -a'"
+                    f" output\n{output}"
                 )
 
     # @pytest.mark.skipif(CI_TESTING and not psutil.users(),
@@ -407,9 +407,7 @@ class TestSystemAPIs(PsutilTestCase):
                         started = [x.capitalize() for x in started]
 
         if not tstamp:
-            raise pytest.skip(
-                "cannot interpret tstamp in who output\n%s" % (out)
-            )
+            raise pytest.skip(f"cannot interpret tstamp in who output\n{out}")
 
         with self.subTest(psutil=psutil.users(), who=out):
             for idx, u in enumerate(psutil.users()):

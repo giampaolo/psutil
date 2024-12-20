@@ -110,7 +110,7 @@ def get_ipv6_addresses(ifname):
                 all_fields.append(fields)
 
         if len(all_fields) == 0:
-            raise ValueError("could not find interface %r" % ifname)
+            raise ValueError(f"could not find interface {ifname!r}")
 
     for i in range(len(all_fields)):
         unformatted = all_fields[i][0]
@@ -131,7 +131,7 @@ def get_mac_address(ifname):
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname)
         )
-        return ''.join(['%02x:' % char for char in info[18:24]])[:-1]
+        return "".join([f"{char:02x}:" for char in info[18:24]])[:-1]
 
 
 def free_swap():
@@ -145,9 +145,7 @@ def free_swap():
             _, total, used, free = line.split()
             nt = collections.namedtuple('free', 'total used free')
             return nt(int(total), int(used), int(free))
-    raise ValueError(
-        "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines)
-    )
+    raise ValueError(f"can't find 'Swap' in 'free' output:\n{out}")
 
 
 def free_physmem():
@@ -167,9 +165,7 @@ def free_physmem():
                 'free', 'total used free shared output'
             )
             return nt(total, used, free, shared, out)
-    raise ValueError(
-        "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines)
-    )
+    raise ValueError(f"can't find 'Mem' in 'free' output:\n{out}")
 
 
 def vmstat(stat):
@@ -178,7 +174,7 @@ def vmstat(stat):
         line = line.strip()
         if stat in line:
             return int(line.split(' ')[0])
-    raise ValueError("can't find %r in 'vmstat' output" % stat)
+    raise ValueError(f"can't find {stat!r} in 'vmstat' output")
 
 
 def get_free_version_info():
@@ -271,7 +267,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         psutil_value = psutil.virtual_memory().shared
         assert (
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
-        ), '%s %s \n%s' % (free_value, psutil_value, free.output)
+        ), f"{free_value} {psutil_value} \n{free.output}"
 
     @retry_on_failure()
     def test_available(self):
@@ -286,7 +282,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
             psutil_value = psutil.virtual_memory().available
             assert (
                 abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
-            ), '%s %s \n%s' % (free_value, psutil_value, out)
+            ), f"{free_value} {psutil_value} \n{out}"
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
@@ -993,7 +989,7 @@ class TestSystemNetIfStats(PsutilTestCase):
     def test_against_ifconfig(self):
         for name, stats in psutil.net_if_stats().items():
             try:
-                out = sh("ifconfig %s" % name)
+                out = sh(f"ifconfig {name}")
             except RuntimeError:
                 pass
             else:
@@ -1004,7 +1000,7 @@ class TestSystemNetIfStats(PsutilTestCase):
 
     def test_mtu(self):
         for name, stats in psutil.net_if_stats().items():
-            with open("/sys/class/net/%s/mtu" % name) as f:
+            with open(f"/sys/class/net/{name}/mtu") as f:
                 assert stats.mtu == int(f.read().strip())
 
     @pytest.mark.skipif(
@@ -1016,7 +1012,7 @@ class TestSystemNetIfStats(PsutilTestCase):
         matches_found = 0
         for name, stats in psutil.net_if_stats().items():
             try:
-                out = sh("ifconfig %s" % name)
+                out = sh(f"ifconfig {name}")
             except RuntimeError:
                 pass
             else:
@@ -1049,7 +1045,7 @@ class TestSystemNetIOCounters(PsutilTestCase):
     def test_against_ifconfig(self):
         def ifconfig(nic):
             ret = {}
-            out = sh("ifconfig %s" % nic)
+            out = sh(f"ifconfig {nic}")
             ret['packets_recv'] = int(
                 re.findall(r'RX packets[: ](\d+)', out)[0]
             )
@@ -1133,7 +1129,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
         def df(path):
-            out = sh('df -P -B 1 "%s"' % path).strip()
+            out = sh(f'df -P -B 1 "{path}"').strip()
             lines = out.split('\n')
             lines.pop(0)
             line = lines.pop(0)
@@ -1337,9 +1333,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
         else:
             with pytest.raises(FileNotFoundError):
                 finder.ask_proc_partitions()
-        if os.path.exists(
-            "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
-        ):
+        if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
             finder.ask_sys_dev_block()
         else:
             with pytest.raises(FileNotFoundError):
@@ -1354,9 +1348,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
         a = b = c = None
         if os.path.exists("/proc/partitions"):
             a = finder.ask_proc_partitions()
-        if os.path.exists(
-            "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
-        ):
+        if os.path.exists(f"/sys/dev/block/{self.major}:{self.minor}/uevent"):
             b = finder.ask_sys_class_block()
         c = finder.ask_sys_dev_block()
 
@@ -1865,7 +1857,7 @@ class TestProcess(PsutilTestCase):
             Locked:                19 kB
             VmFlags: rd ex
             """).encode()
-        with mock_open_content({"/proc/%s/smaps" % os.getpid(): content}) as m:
+        with mock_open_content({f"/proc/{os.getpid()}/smaps": content}) as m:
             p = psutil._pslinux.Process(os.getpid())
             uss, pss, swap = p._parse_smaps()
             assert m.called
@@ -2036,7 +2028,7 @@ class TestProcess(PsutilTestCase):
         # condition). threads() is supposed to ignore that instead
         # of raising NSP.
         def open_mock_1(name, *args, **kwargs):
-            if name.startswith('/proc/%s/task' % os.getpid()):
+            if name.startswith(f"/proc/{os.getpid()}/task"):
                 raise FileNotFoundError
             else:
                 return orig_open(name, *args, **kwargs)
@@ -2050,7 +2042,7 @@ class TestProcess(PsutilTestCase):
         # ...but if it bumps into something != ENOENT we want an
         # exception.
         def open_mock_2(name, *args, **kwargs):
-            if name.startswith('/proc/%s/task' % os.getpid()):
+            if name.startswith(f"/proc/{os.getpid()}/task"):
                 raise PermissionError
             else:
                 return orig_open(name, *args, **kwargs)
@@ -2075,7 +2067,7 @@ class TestProcess(PsutilTestCase):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.
         with mock_open_exception(
-            '/proc/%s/smaps' % os.getpid(), FileNotFoundError
+            f"/proc/{os.getpid()}/smaps", FileNotFoundError
         ) as m:
             p = psutil.Process()
             with pytest.raises(FileNotFoundError):
@@ -2085,7 +2077,7 @@ class TestProcess(PsutilTestCase):
     def test_issue_2418(self):
         p = psutil.Process()
         with mock_open_exception(
-            '/proc/%s/statm' % os.getpid(), FileNotFoundError
+            f"/proc/{os.getpid()}/statm", FileNotFoundError
         ):
             with mock.patch("os.path.exists", return_value=False):
                 with pytest.raises(psutil.NoSuchProcess):
@@ -2157,7 +2149,7 @@ class TestProcess(PsutilTestCase):
             "7",  # delayacct_blkio_ticks
         ]
         content = " ".join(args).encode()
-        with mock_open_content({"/proc/%s/stat" % os.getpid(): content}):
+        with mock_open_content({f"/proc/{os.getpid()}/stat": content}):
             p = psutil.Process()
             assert p.name() == 'cat'
             assert p.status() == psutil.STATUS_ZOMBIE
@@ -2180,7 +2172,7 @@ class TestProcess(PsutilTestCase):
             Cpus_allowed_list:\t0-7
             voluntary_ctxt_switches:\t12
             nonvoluntary_ctxt_switches:\t13""").encode()
-        with mock_open_content({"/proc/%s/status" % os.getpid(): content}):
+        with mock_open_content({f"/proc/{os.getpid()}/status": content}):
             p = psutil.Process()
             assert p.num_ctx_switches().voluntary == 12
             assert p.num_ctx_switches().involuntary == 13
@@ -2224,7 +2216,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
 
     def read_status_file(self, linestart):
         with psutil._psplatform.open_text(
-            '/proc/%s/status' % self.proc.pid
+            f"/proc/{self.proc.pid}/status"
         ) as f:
             for line in f:
                 line = line.strip()
@@ -2234,7 +2226,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
                         return int(value)
                     except ValueError:
                         return value
-            raise ValueError("can't find %r" % linestart)
+            raise ValueError(f"can't find {linestart!r}")
 
     def test_name(self):
         value = self.read_status_file("Name:")

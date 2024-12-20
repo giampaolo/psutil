@@ -289,8 +289,8 @@ class Error(Exception):
     def __repr__(self):
         # invoked on `repr(Error)`
         info = self._infodict(("pid", "ppid", "name", "seconds", "msg"))
-        details = ", ".join(["%s=%r" % (k, v) for k, v in info.items()])
-        return "psutil.%s(%s)" % (self.__class__.__name__, details)
+        details = ", ".join([f"{k}={v!r}" for k, v in info.items()])
+        return f"psutil.{self.__class__.__name__}({details})"
 
 
 class NoSuchProcess(Error):
@@ -356,7 +356,7 @@ class TimeoutExpired(Error):
         self.seconds = seconds
         self.pid = pid
         self.name = name
-        self.msg = "timeout after %s seconds" % seconds
+        self.msg = f"timeout after {seconds} seconds"
 
     def __reduce__(self):
         return (self.__class__, (self.seconds, self.pid, self.name))
@@ -863,13 +863,12 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
     try:
         color = colors[color]
     except KeyError:
-        raise ValueError(
-            "invalid color %r; choose between %s" % (list(colors.keys()))
-        )
+        msg = f"invalid color {color!r}; choose amongst {list(colors.keys())}"
+        raise ValueError(msg)
     attr.append(color)
     if bold:
         attr.append('1')
-    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+    return f"\x1b[{';'.join(attr)}m{s}\x1b[0m"
 
 
 def print_color(
@@ -894,10 +893,11 @@ def print_color(
         try:
             color = colors[color]
         except KeyError:
-            raise ValueError(
-                "invalid color %r; choose between %r"
-                % (color, list(colors.keys()))
+            msg = (
+                f"invalid color {color!r}; choose between"
+                f" {list(colors.keys())!r}"
             )
+            raise ValueError(msg)
         if bold and color <= 7:
             color += 8
 
@@ -922,9 +922,9 @@ def debug(msg):
         if isinstance(msg, Exception):
             if isinstance(msg, OSError):
                 # ...because str(exc) may contain info about the file name
-                msg = "ignoring %s" % msg
+                msg = f"ignoring {msg}"
             else:
-                msg = "ignoring %r" % msg
+                msg = f"ignoring {msg!r}"
         print(  # noqa
-            "psutil-debug [%s:%s]> %s" % (fname, lineno, msg), file=sys.stderr
+            f"psutil-debug [{fname}:{lineno}]> {msg}", file=sys.stderr
         )

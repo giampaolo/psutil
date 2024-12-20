@@ -73,8 +73,8 @@ if hasattr(resource, "prlimit"):
 
 
 POWER_SUPPLY_PATH = "/sys/class/power_supply"
-HAS_PROC_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
-HAS_PROC_SMAPS_ROLLUP = os.path.exists('/proc/%s/smaps_rollup' % os.getpid())
+HAS_PROC_SMAPS = os.path.exists(f"/proc/{os.getpid()}/smaps")
+HAS_PROC_SMAPS_ROLLUP = os.path.exists(f"/proc/{os.getpid()}/smaps_rollup")
 HAS_PROC_IO_PRIORITY = hasattr(cext, "proc_ioprio_get")
 HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 
@@ -242,9 +242,9 @@ def is_storage_device(name):
     name = name.replace('/', '!')
     including_virtual = True
     if including_virtual:
-        path = "/sys/block/%s" % name
+        path = f"/sys/block/{name}"
     else:
-        path = "/sys/block/%s/device" % name
+        path = f"/sys/block/{name}/device"
     return os.access(path, os.F_OK)
 
 
@@ -257,7 +257,7 @@ def set_scputimes_ntuple(procfs_path):
     Used by cpu_times() function.
     """
     global scputimes
-    with open_binary('%s/stat' % procfs_path) as f:
+    with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()[1:]
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
     vlen = len(values)
@@ -277,7 +277,7 @@ try:
     set_scputimes_ntuple("/proc")
 except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
-    debug("ignoring exception on import: %r" % err)
+    debug(f"ignoring exception on import: {err!r}")
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
 
 
@@ -324,13 +324,12 @@ def calculate_avail_vmem(mems):
         slab_reclaimable = mems[b'SReclaimable:']
     except KeyError as err:
         debug(
-            "%s is missing from /proc/meminfo; using an approximation for "
-            "calculating available memory"
-            % err.args[0]
+            f"{err.args[0]} is missing from /proc/meminfo; using an"
+            " approximation for calculating available memory"
         )
         return fallback
     try:
-        f = open_binary('%s/zoneinfo' % get_procfs_path())
+        f = open_binary(f"{get_procfs_path()}/zoneinfo")
     except OSError:
         return fallback  # kernel 2.6.13
 
@@ -360,7 +359,7 @@ def virtual_memory():
     """
     missing_fields = []
     mems = {}
-    with open_binary('%s/meminfo' % get_procfs_path()) as f:
+    with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
@@ -486,7 +485,7 @@ def virtual_memory():
 def swap_memory():
     """Return swap memory metrics."""
     mems = {}
-    with open_binary('%s/meminfo' % get_procfs_path()) as f:
+    with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
@@ -506,12 +505,12 @@ def swap_memory():
     percent = usage_percent(used, total, round_=1)
     # get pgin/pgouts
     try:
-        f = open_binary("%s/vmstat" % get_procfs_path())
+        f = open_binary(f"{get_procfs_path()}/vmstat")
     except OSError as err:
         # see https://github.com/giampaolo/psutil/issues/722
         msg = (
             "'sin' and 'sout' swap memory stats couldn't "
-            + "be determined and were set to 0 (%s)" % str(err)
+            f"be determined and were set to 0 ({err})"
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
         sin = sout = 0
@@ -552,7 +551,7 @@ def cpu_times():
     """
     procfs_path = get_procfs_path()
     set_scputimes_ntuple(procfs_path)
-    with open_binary('%s/stat' % procfs_path) as f:
+    with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
     fields = values[1 : len(scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
@@ -566,7 +565,7 @@ def per_cpu_times():
     procfs_path = get_procfs_path()
     set_scputimes_ntuple(procfs_path)
     cpus = []
-    with open_binary('%s/stat' % procfs_path) as f:
+    with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
         for line in f:
@@ -586,7 +585,7 @@ def cpu_count_logical():
     except ValueError:
         # as a second fallback we try to parse /proc/cpuinfo
         num = 0
-        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+        with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
             for line in f:
                 if line.lower().startswith(b'processor'):
                     num += 1
@@ -596,7 +595,7 @@ def cpu_count_logical():
         # try to parse /proc/stat as a last resort
         if num == 0:
             search = re.compile(r'cpu\d')
-            with open_text('%s/stat' % get_procfs_path()) as f:
+            with open_text(f"{get_procfs_path()}/stat") as f:
                 for line in f:
                     line = line.split(' ')[0]
                     if search.match(line):
@@ -629,7 +628,7 @@ def cpu_count_cores():
     # Method #2
     mapping = {}
     current_info = {}
-    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+    with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
         for line in f:
             line = line.strip().lower()
             if not line:
@@ -652,7 +651,7 @@ def cpu_count_cores():
 
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
-    with open_binary('%s/stat' % get_procfs_path()) as f:
+    with open_binary(f"{get_procfs_path()}/stat") as f:
         ctx_switches = None
         interrupts = None
         soft_interrupts = None
@@ -678,7 +677,7 @@ def cpu_stats():
 def _cpu_get_cpuinfo_freq():
     """Return current CPU frequency from cpuinfo if available."""
     ret = []
-    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+    with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
         for line in f:
             if line.lower().startswith(b'cpu mhz'):
                 ret.append(float(line.split(b':', 1)[1]))
@@ -784,9 +783,9 @@ class NetConnections:
 
     def get_proc_inodes(self, pid):
         inodes = defaultdict(list)
-        for fd in os.listdir("%s/%s/fd" % (self._procfs_path, pid)):
+        for fd in os.listdir(f"{self._procfs_path}/{pid}/fd"):
             try:
-                inode = readlink("%s/%s/fd/%s" % (self._procfs_path, pid, fd))
+                inode = readlink(f"{self._procfs_path}/{pid}/fd/{fd}")
             except (FileNotFoundError, ProcessLookupError):
                 # ENOENT == file which is gone in the meantime;
                 # os.stat('/proc/%s' % self.pid) will be done later
@@ -890,10 +889,11 @@ class NetConnections:
                         line.split()[:10]
                     )
                 except ValueError:
-                    raise RuntimeError(
-                        "error while parsing %s; malformed line %s %r"
-                        % (file, lineno, line)
+                    msg = (
+                        f"error while parsing {file}; malformed line"
+                        f" {lineno} {line!r}"
                     )
+                    raise RuntimeError(msg)
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
@@ -931,10 +931,10 @@ class NetConnections:
                     if ' ' not in line:
                         # see: https://github.com/giampaolo/psutil/issues/766
                         continue
-                    raise RuntimeError(
-                        "error while parsing %s; malformed line %r"
-                        % (file, line)
+                    msg = (
+                        f"error while parsing {file}; malformed line {line!r}"
                     )
+                    raise RuntimeError(msg)
                 if inode in inodes:  # noqa
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
@@ -965,7 +965,7 @@ class NetConnections:
             inodes = self.get_all_inodes()
         ret = set()
         for proto_name, family, type_ in self.tmap[kind]:
-            path = "%s/net/%s" % (self._procfs_path, proto_name)
+            path = f"{self._procfs_path}/net/{proto_name}"
             if family in {socket.AF_INET, socket.AF_INET6}:
                 ls = self.process_inet(
                     path, family, type_, inodes, filter_pid=pid
@@ -997,7 +997,7 @@ def net_io_counters():
     """Return network I/O statistics for every network interface
     installed on the system as a dict of raw tuples.
     """
-    with open_text("%s/net/dev" % get_procfs_path()) as f:
+    with open_text(f"{get_procfs_path()}/net/dev") as f:
         lines = f.readlines()
     retdict = {}
     for line in lines[2:]:
@@ -1099,7 +1099,7 @@ def disk_io_counters(perdisk=False):
         # See:
         # https://www.kernel.org/doc/Documentation/iostats.txt
         # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
-        with open_text("%s/diskstats" % get_procfs_path()) as f:
+        with open_text(f"{get_procfs_path()}/diskstats") as f:
             lines = f.readlines()
         for line in lines:
             fields = line.split()
@@ -1122,7 +1122,8 @@ def disk_io_counters(perdisk=False):
                 reads, rbytes, writes, wbytes = map(int, fields[3:])
                 rtime = wtime = reads_merged = writes_merged = busy_time = 0
             else:
-                raise ValueError("not sure how to interpret line %r" % line)
+                msg = f"not sure how to interpret line {line!r}"
+                raise ValueError(msg)
             yield (name, reads, writes, rbytes, wbytes, rtime, wtime,
                    reads_merged, writes_merged, busy_time)
             # fmt: on
@@ -1142,16 +1143,16 @@ def disk_io_counters(perdisk=False):
                        wtime, reads_merged, writes_merged, busy_time)
                 # fmt: on
 
-    if os.path.exists('%s/diskstats' % get_procfs_path()):
+    if os.path.exists(f"{get_procfs_path()}/diskstats"):
         gen = read_procfs()
     elif os.path.exists('/sys/block'):
         gen = read_sysfs()
     else:
-        raise NotImplementedError(
-            "%s/diskstats nor /sys/block filesystem are available on this "
-            "system"
-            % get_procfs_path()
+        msg = (
+            f"{get_procfs_path()}/diskstats nor /sys/block are available on"
+            " this system"
         )
+        raise NotImplementedError(msg)
 
     retdict = {}
     for entry in gen:
@@ -1197,7 +1198,7 @@ class RootFsDeviceFinder:
         self.minor = os.minor(dev)
 
     def ask_proc_partitions(self):
-        with open_text("%s/partitions" % get_procfs_path()) as f:
+        with open_text(f"{get_procfs_path()}/partitions") as f:
             for line in f.readlines()[2:]:
                 fields = line.split()
                 if len(fields) < 4:  # just for extra safety
@@ -1207,19 +1208,19 @@ class RootFsDeviceFinder:
                 name = fields[3]
                 if major == self.major and minor == self.minor:
                     if name:  # just for extra safety
-                        return "/dev/%s" % name
+                        return f"/dev/{name}"
 
     def ask_sys_dev_block(self):
-        path = "/sys/dev/block/%s:%s/uevent" % (self.major, self.minor)
+        path = f"/sys/dev/block/{self.major}:{self.minor}/uevent"
         with open_text(path) as f:
             for line in f:
                 if line.startswith("DEVNAME="):
                     name = line.strip().rpartition("DEVNAME=")[2]
                     if name:  # just for extra safety
-                        return "/dev/%s" % name
+                        return f"/dev/{name}"
 
     def ask_sys_class_block(self):
-        needle = "%s:%s" % (self.major, self.minor)
+        needle = f"{self.major}:{self.minor}"
         files = glob.iglob("/sys/class/block/*/dev")
         for file in files:
             try:
@@ -1231,7 +1232,7 @@ class RootFsDeviceFinder:
                     data = f.read().strip()
                     if data == needle:
                         name = os.path.basename(os.path.dirname(file))
-                        return "/dev/%s" % name
+                        return f"/dev/{name}"
 
     def find(self):
         path = None
@@ -1261,7 +1262,7 @@ def disk_partitions(all=False):
     fstypes = set()
     procfs_path = get_procfs_path()
     if not all:
-        with open_text("%s/filesystems" % procfs_path) as f:
+        with open_text(f"{procfs_path}/filesystems") as f:
             for line in f:
                 line = line.strip()
                 if not line.startswith("nodev"):
@@ -1276,7 +1277,7 @@ def disk_partitions(all=False):
     if procfs_path == "/proc" and os.path.isfile('/etc/mtab'):
         mounts_path = os.path.realpath("/etc/mtab")
     else:
-        mounts_path = os.path.realpath("%s/self/mounts" % procfs_path)
+        mounts_path = os.path.realpath(f"{procfs_path}/self/mounts")
 
     retlist = []
     partitions = cext.disk_partitions(mounts_path)
@@ -1558,14 +1559,15 @@ def users():
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
     global BOOT_TIME
-    path = '%s/stat' % get_procfs_path()
+    path = f"{get_procfs_path()}/stat"
     with open_binary(path) as f:
         for line in f:
             if line.startswith(b'btime'):
                 ret = float(line.strip().split()[1])
                 BOOT_TIME = ret
                 return ret
-        raise RuntimeError("line 'btime' not found in %s" % path)
+        msg = f"line 'btime' not found in {path}"
+        raise RuntimeError(msg)
 
 
 # =====================================================================
@@ -1598,7 +1600,7 @@ def pid_exists(pid):
             # Note: already checked that this is faster than using a
             # regular expr. Also (a lot) faster than doing
             # 'return pid in pids()'
-            path = "%s/%s/status" % (get_procfs_path(), pid)
+            path = f"{get_procfs_path()}/{pid}/status"
             with open_binary(path) as f:
                 for line in f:
                     if line.startswith(b"Tgid:"):
@@ -1606,7 +1608,8 @@ def pid_exists(pid):
                         # If tgid and pid are the same then we're
                         # dealing with a process PID.
                         return tgid == pid
-                raise ValueError("'Tgid' line not found in %s" % path)
+                msg = f"'Tgid' line not found in {path}"
+                raise ValueError(msg)
         except (OSError, ValueError):
             return pid in pids()
 
@@ -1619,7 +1622,7 @@ def ppid_map():
     procfs_path = get_procfs_path()
     for pid in pids():
         try:
-            with open_binary("%s/%s/stat" % (procfs_path, pid)) as f:
+            with open_binary(f"{procfs_path}/{pid}/stat") as f:
                 data = f.read()
         except (FileNotFoundError, ProcessLookupError):
             # Note: we should be able to access /stat for all processes
@@ -1652,9 +1655,7 @@ def wrap_exceptions(fun):
             # /proc/PID directory may still exist, but the files within
             # it may not, indicating the process is gone, see:
             # https://github.com/giampaolo/psutil/issues/2418
-            if not os.path.exists(
-                "%s/%s/stat" % (self._procfs_path, self.pid)
-            ):
+            if not os.path.exists(f"{self._procfs_path}/{self.pid}/stat"):
                 raise NoSuchProcess(self.pid, self._name)
             raise
 
@@ -1680,7 +1681,7 @@ class Process:
         # it's empty. Instead of returning a "null" value we'll raise an
         # exception.
         try:
-            data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
+            data = bcat(f"{self._procfs_path}/{self.pid}/stat")
         except OSError:
             return False
         else:
@@ -1696,7 +1697,7 @@ class Process:
         """Raise NSP if the process disappeared on us."""
         # For those C function who do not raise NSP, possibly returning
         # incorrect or incomplete result.
-        os.stat('%s/%s' % (self._procfs_path, self.pid))
+        os.stat(f"{self._procfs_path}/{self.pid}")
 
     @wrap_exceptions
     @memoize_when_activated
@@ -1709,7 +1710,7 @@ class Process:
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
-        data = bcat("%s/%s/stat" % (self._procfs_path, self.pid))
+        data = bcat(f"{self._procfs_path}/{self.pid}/stat")
         # Process name is between parentheses. It can contain spaces and
         # other parentheses. This is taken into account by looking for
         # the first occurrence of "(" and the last occurrence of ")".
@@ -1744,13 +1745,13 @@ class Process:
         The return value is cached in case oneshot() ctx manager is
         in use.
         """
-        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
+        with open_binary(f"{self._procfs_path}/{self.pid}/status") as f:
             return f.read()
 
     @wrap_exceptions
     @memoize_when_activated
     def _read_smaps_file(self):
-        with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid)) as f:
+        with open_binary(f"{self._procfs_path}/{self.pid}/smaps") as f:
             return f.read().strip()
 
     def oneshot_enter(self):
@@ -1771,19 +1772,19 @@ class Process:
     @wrap_exceptions
     def exe(self):
         try:
-            return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
+            return readlink(f"{self._procfs_path}/{self.pid}/exe")
         except (FileNotFoundError, ProcessLookupError):
             self._raise_if_zombie()
             # no such file error; might be raised also if the
             # path actually exists for system processes with
             # low pids (about 0-20)
-            if os.path.lexists("%s/%s" % (self._procfs_path, self.pid)):
+            if os.path.lexists(f"{self._procfs_path}/{self.pid}"):
                 return ""
             raise
 
     @wrap_exceptions
     def cmdline(self):
-        with open_text("%s/%s/cmdline" % (self._procfs_path, self.pid)) as f:
+        with open_text(f"{self._procfs_path}/{self.pid}/cmdline") as f:
             data = f.read()
         if not data:
             # may happen in case of zombie process
@@ -1809,7 +1810,7 @@ class Process:
 
     @wrap_exceptions
     def environ(self):
-        with open_text("%s/%s/environ" % (self._procfs_path, self.pid)) as f:
+        with open_text(f"{self._procfs_path}/{self.pid}/environ") as f:
             data = f.read()
         return parse_environ_block(data)
 
@@ -1823,11 +1824,11 @@ class Process:
             return None
 
     # May not be available on old kernels.
-    if os.path.exists('/proc/%s/io' % os.getpid()):
+    if os.path.exists(f"/proc/{os.getpid()}/io"):
 
         @wrap_exceptions
         def io_counters(self):
-            fname = "%s/%s/io" % (self._procfs_path, self.pid)
+            fname = f"{self._procfs_path}/{self.pid}/io"
             fields = {}
             with open_binary(fname) as f:
                 for line in f:
@@ -1842,7 +1843,8 @@ class Process:
                         else:
                             fields[name] = int(value)
             if not fields:
-                raise RuntimeError("%s file was empty" % fname)
+                msg = f"{fname} file was empty"
+                raise RuntimeError(msg)
             try:
                 return pio(
                     fields[b'syscr'],  # read syscalls
@@ -1853,10 +1855,11 @@ class Process:
                     fields[b'wchar'],  # write chars
                 )
             except KeyError as err:
-                raise ValueError(
-                    "%r field was not found in %s; found fields are %r"
-                    % (err.args[0], fname, fields)
+                msg = (
+                    f"{err.args[0]!r} field was not found in {fname}; found"
+                    f" fields are {fields!r}"
                 )
+                raise ValueError(msg)
 
     @wrap_exceptions
     def cpu_times(self):
@@ -1901,7 +1904,7 @@ class Process:
         # | data   | data + stack                        | drs  | DATA |
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
         #  ============================================================
-        with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
+        with open_binary(f"{self._procfs_path}/{self.pid}/statm") as f:
             vms, rss, shared, text, lib, data, dirty = (
                 int(x) * PAGESIZE for x in f.readline().split()[:7]
             )
@@ -2004,10 +2007,11 @@ class Process:
                                 # see issue #369
                                 continue
                             else:
-                                raise ValueError(
-                                    "don't know how to interpret line %r"
-                                    % line
+                                msg = (
+                                    "don't know how to interpret line"
+                                    f" {line!r}"
                                 )
+                                raise ValueError(msg)
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
@@ -2055,7 +2059,7 @@ class Process:
 
     @wrap_exceptions
     def cwd(self):
-        return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
+        return readlink(f"{self._procfs_path}/{self.pid}/cwd")
 
     @wrap_exceptions
     def num_ctx_switches(
@@ -2064,11 +2068,13 @@ class Process:
         data = self._read_status_file()
         ctxsw = _ctxsw_re.findall(data)
         if not ctxsw:
-            raise NotImplementedError(
-                "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
-                "lines were not found in %s/%s/status; the kernel is "
-                "probably older than 2.6.23" % (self._procfs_path, self.pid)
+            msg = (
+                "'voluntary_ctxt_switches' and"
+                " 'nonvoluntary_ctxt_switches'lines were not found in"
+                f" {self._procfs_path}/{self.pid}/status; the kernel is"
+                " probably older than 2.6.23"
             )
+            raise NotImplementedError(msg)
         else:
             return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
@@ -2080,16 +2086,12 @@ class Process:
 
     @wrap_exceptions
     def threads(self):
-        thread_ids = os.listdir("%s/%s/task" % (self._procfs_path, self.pid))
+        thread_ids = os.listdir(f"{self._procfs_path}/{self.pid}/task")
         thread_ids.sort()
         retlist = []
         hit_enoent = False
         for thread_id in thread_ids:
-            fname = "%s/%s/task/%s/stat" % (
-                self._procfs_path,
-                self.pid,
-                thread_id,
-            )
+            fname = f"{self._procfs_path}/{self.pid}/task/{thread_id}/stat"
             try:
                 with open_binary(fname) as f:
                     st = f.read().strip()
@@ -2150,15 +2152,17 @@ class Process:
                     all_cpus = tuple(range(len(per_cpu_times())))
                     for cpu in cpus:
                         if cpu not in all_cpus:
-                            raise ValueError(
-                                "invalid CPU number %r; choose between %s"
-                                % (cpu, eligible_cpus)
+                            msg = (
+                                f"invalid CPU {cpu!r}; choose between"
+                                f" {eligible_cpus!r}"
                             )
+                            raise ValueError(msg)
                         if cpu not in eligible_cpus:
-                            raise ValueError(
-                                "CPU number %r is not eligible; choose "
-                                "between %s" % (cpu, eligible_cpus)
+                            msg = (
+                                f"CPU number {cpu} is not eligible; choose"
+                                f" between {eligible_cpus}"
                             )
+                            raise ValueError(msg)
                 raise
 
     # only starting from kernel 2.6.13
@@ -2178,7 +2182,8 @@ class Process:
                 IOPriority.IOPRIO_CLASS_IDLE,
                 IOPriority.IOPRIO_CLASS_NONE,
             }:
-                raise ValueError("%r ioclass accepts no value" % ioclass)
+                msg = f"{ioclass!r} ioclass accepts no value"
+                raise ValueError(msg)
             if value < 0 or value > 7:
                 msg = "value not in 0-7 range"
                 raise ValueError(msg)
@@ -2203,7 +2208,7 @@ class Process:
                     if len(limits) != 2:
                         msg = (
                             "second argument must be a (soft, hard) "
-                            + "tuple, got %s" % repr(limits)
+                            f"tuple, got {limits!r}"
                         )
                         raise ValueError(msg)
                     resource.prlimit(self.pid, resource_, limits)
@@ -2224,10 +2229,10 @@ class Process:
     @wrap_exceptions
     def open_files(self):
         retlist = []
-        files = os.listdir("%s/%s/fd" % (self._procfs_path, self.pid))
+        files = os.listdir(f"{self._procfs_path}/{self.pid}/fd")
         hit_enoent = False
         for fd in files:
-            file = "%s/%s/fd/%s" % (self._procfs_path, self.pid, fd)
+            file = f"{self._procfs_path}/{self.pid}/fd/{fd}"
             try:
                 path = readlink(file)
             except (FileNotFoundError, ProcessLookupError):
@@ -2250,11 +2255,7 @@ class Process:
                 # absolute path though.
                 if path.startswith('/') and isfile_strict(path):
                     # Get file position and flags.
-                    file = "%s/%s/fdinfo/%s" % (
-                        self._procfs_path,
-                        self.pid,
-                        fd,
-                    )
+                    file = f"{self._procfs_path}/{self.pid}/fdinfo/{fd}"
                     try:
                         with open_binary(file) as f:
                             pos = int(f.readline().split()[1])
@@ -2281,7 +2282,7 @@ class Process:
 
     @wrap_exceptions
     def num_fds(self):
-        return len(os.listdir("%s/%s/fd" % (self._procfs_path, self.pid)))
+        return len(os.listdir(f"{self._procfs_path}/{self.pid}/fd"))
 
     @wrap_exceptions
     def ppid(self):

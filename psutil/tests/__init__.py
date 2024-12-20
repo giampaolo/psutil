@@ -174,9 +174,9 @@ if CI_TESTING:
 # Disambiguate TESTFN for parallel testing.
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFN_PREFIX = '$psutil-%s-' % os.getpid()
+    TESTFN_PREFIX = f"$psutil-{os.getpid()}-"
 else:
-    TESTFN_PREFIX = '@psutil-%s-' % os.getpid()
+    TESTFN_PREFIX = f"@psutil-{os.getpid()}-"
 UNICODE_SUFFIX = "-ƒőő"
 # An invalid unicode string.
 INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
@@ -289,7 +289,7 @@ class ThreadTask(threading.Thread):
 
     def __repr__(self):
         name = self.__class__.__name__
-        return '<%s running=%s at %#x>' % (name, self._running, id(self))
+        return f"<{name} running={self._running} at {id(self):#x}>"
 
     def __enter__(self):
         self.start()
@@ -364,8 +364,8 @@ def spawn_testproc(cmd=None, **kwds):
             safe_rmpath(testfn)
             pyline = (
                 "import time;"
-                + "open(r'%s', 'w').close();" % testfn
-                + "[time.sleep(0.1) for x in range(100)];"  # 10 secs
+                f"open(r'{testfn}', 'w').close();"
+                "[time.sleep(0.1) for x in range(100)];"  # 10 secs
             )
             cmd = [PYTHON_EXE, "-c", pyline]
             sproc = subprocess.Popen(cmd, **kwds)
@@ -391,16 +391,16 @@ def spawn_children_pair():
     tfile = None
     testfn = get_testfn(dir=os.getcwd())
     try:
-        s = textwrap.dedent("""\
+        s = textwrap.dedent(f"""\
             import subprocess, os, sys, time
             s = "import os, time;"
-            s += "f = open('%s', 'w');"
+            s += "f = open('{os.path.basename(testfn)}', 'w');"
             s += "f.write(str(os.getpid()));"
             s += "f.close();"
             s += "[time.sleep(0.1) for x in range(100 * 6)];"
-            p = subprocess.Popen([r'%s', '-c', s])
+            p = subprocess.Popen([r'{PYTHON_EXE}', '-c', s])
             p.wait()
-            """ % (os.path.basename(testfn), PYTHON_EXE))
+            """)
         # On Windows if we create a subprocess with CREATE_NO_WINDOW flag
         # set (which is the default) a "conhost.exe" extra process will be
         # spawned as a child. We don't want that.
@@ -426,7 +426,7 @@ def spawn_zombie():
     """
     assert psutil.POSIX
     unix_file = get_testfn()
-    src = textwrap.dedent("""\
+    src = textwrap.dedent(f"""\
         import os, sys, time, socket, contextlib
         child_pid = os.fork()
         if child_pid > 0:
@@ -434,10 +434,10 @@ def spawn_zombie():
         else:
             # this is the zombie process
             with socket.socket(socket.AF_UNIX) as s:
-                s.connect('%s')
+                s.connect('{unix_file}')
                 pid = bytes(str(os.getpid()), 'ascii')
                 s.sendall(pid)
-        """ % unix_file)
+        """)
     tfile = None
     sock = bind_unix_socket(unix_file)
     try:
@@ -581,7 +581,7 @@ def terminate(proc_or_pid, sig=signal.SIGTERM, wait_timeout=GLOBAL_TIMEOUT):
         elif isinstance(p, subprocess.Popen):
             return term_subprocess_proc(p, wait_timeout)
         else:
-            raise TypeError("wrong type %r" % p)
+            raise TypeError(f"wrong type {p!r}")
     finally:
         if isinstance(p, (subprocess.Popen, psutil.Popen)):
             flush_popen(p)
@@ -617,7 +617,7 @@ def reap_children(recursive=False):
             terminate(p, wait_timeout=None)
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
-            warn("couldn't terminate process %r; attempting kill()" % p)
+            warn(f"couldn't terminate process {p!r}; attempting kill()")
             terminate(p, sig=signal.SIGKILL)
 
 
@@ -638,7 +638,7 @@ def kernel_version():
         else:
             break
     if not s:
-        raise ValueError("can't parse %r" % uname)
+        raise ValueError(f"can't parse {uname!r}")
     minor = 0
     micro = 0
     nums = s.split('.')
@@ -786,7 +786,7 @@ def safe_rmpath(path):
                 pass
             except OSError as _:
                 err = _
-                warn("ignoring %s" % (str(err)))
+                warn(f"ignoring {err}")
             time.sleep(0.01)
         raise err
 
@@ -919,11 +919,11 @@ class fake_pytest:
                 yield einfo
             except exc as err:
                 if match and not re.search(match, str(err)):
-                    msg = f'"{match}" does not match "{str(err)}"'
+                    msg = f'"{match}" does not match "{err}"'
                     raise AssertionError(msg)
                 einfo._exc = err
             else:
-                raise AssertionError("%r not raised" % exc)
+                raise AssertionError(f"{exc!r} not raised")
 
         return context(exc, match=match)
 
@@ -1031,9 +1031,9 @@ class PsutilTestCase(unittest.TestCase):
                 except psutil.NoSuchProcess as exc:
                     self._check_proc_exc(proc, exc)
                 else:
-                    msg = "Process.%s() didn't raise NSP and returned %r" % (
-                        name,
-                        ret,
+                    msg = (
+                        f"Process.{name}() didn't raise NSP and returned"
+                        f" {ret!r}"
                     )
                     raise AssertionError(msg)
         proc.wait(timeout=0)  # assert not raise TimeoutExpired
@@ -1179,15 +1179,16 @@ class TestMemoryLeak(PsutilTestCase):
         after = self._get_num_fds()
         diff = after - before
         if diff < 0:
-            raise self.fail(
-                "negative diff %r (gc probably collected a "
-                "resource from a previous test)" % diff
+            msg = (
+                f"negative diff {diff!r} (gc probably collected a"
+                " resource from a previous test)"
             )
+            raise self.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
-            msg = "%s unclosed %s after calling %r" % (diff, type_, fun)
+            msg = f"{diff} unclosed {type_} after calling {fun!r}"
             raise self.fail(msg)
 
     def _call_ntimes(self, fun, times):
@@ -1291,13 +1292,13 @@ def print_sysinfo():
     if psutil.LINUX and shutil.which("lsb_release"):
         info['OS'] = sh('lsb_release -d -s')
     elif psutil.OSX:
-        info['OS'] = 'Darwin %s' % platform.mac_ver()[0]
+        info['OS'] = f"Darwin {platform.mac_ver()[0]}"
     elif psutil.WINDOWS:
         info['OS'] = "Windows " + ' '.join(map(str, platform.win32_ver()))
         if hasattr(platform, 'win32_edition'):
             info['OS'] += ", " + platform.win32_edition()
     else:
-        info['OS'] = "%s %s" % (platform.system(), platform.version())
+        info['OS'] = f"{platform.system()} {platform.version()}"
     info['arch'] = ', '.join(
         list(platform.architecture()) + [platform.machine()]
     )
@@ -1312,7 +1313,7 @@ def print_sysinfo():
     ])
     info['pip'] = getattr(pip, '__version__', 'not installed')
     if wheel is not None:
-        info['pip'] += " (wheel=%s)" % wheel.__version__
+        info['pip'] += f" (wheel={wheel.__version__})"
 
     # UNIX
     if psutil.POSIX:
@@ -1328,7 +1329,7 @@ def print_sysinfo():
     # system
     info['fs-encoding'] = sys.getfilesystemencoding()
     lang = locale.getlocale()
-    info['lang'] = '%s, %s' % (lang[0], lang[1])
+    info['lang'] = f"{lang[0]}, {lang[1]}"
     info['boot-time'] = datetime.datetime.fromtimestamp(
         psutil.boot_time()
     ).strftime("%Y-%m-%d %H:%M:%S")
@@ -1526,9 +1527,9 @@ class process_namespace:
         for fun_name, _, _ in ls:
             meth_name = 'test_' + fun_name
             if not hasattr(test_class, meth_name):
-                msg = "%r class should define a '%s' method" % (
-                    test_class.__class__.__name__,
-                    meth_name,
+                msg = (
+                    f"{test_class.__class__.__name__!r} class should define a"
+                    f" {meth_name!r} method"
                 )
                 raise AttributeError(msg)
 
@@ -1539,7 +1540,7 @@ class process_namespace:
         klass = {x for x in dir(psutil.Process) if x[0] != '_'}
         leftout = (this | ignored) ^ klass
         if leftout:
-            raise ValueError("uncovered Process class names: %r" % leftout)
+            raise ValueError(f"uncovered Process class names: {leftout!r}")
 
 
 class system_namespace:
@@ -1618,7 +1619,7 @@ def retry_on_failure(retries=NO_RETRIES):
     """
 
     def logfun(exc):
-        print("%r, retrying" % exc, file=sys.stderr)  # NOQA
+        print(f"{exc!r}, retrying", file=sys.stderr)  # NOQA
 
     return retry(
         exception=AssertionError, timeout=None, retries=retries, logfun=logfun
@@ -1657,8 +1658,8 @@ def skip_on_not_implemented(only_if=None):
                     if not only_if:
                         raise
                 msg = (
-                    "%r was skipped because it raised NotImplementedError"
-                    % fun.__name__
+                    f"{fun.__name__!r} was skipped because it raised"
+                    " NotImplementedError"
                 )
                 raise pytest.skip(msg)
 
@@ -1802,7 +1803,7 @@ def check_net_address(addr, family):
     elif family == psutil.AF_LINK:
         assert re.match(r'([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
-        raise ValueError("unknown family %r" % family)
+        raise ValueError(f"unknown family {family!r}")
 
 
 def check_connection_ntuple(conn):
@@ -1888,7 +1889,7 @@ def filter_proc_net_connections(cons):
     for conn in cons:
         if POSIX and conn.family == socket.AF_UNIX:
             if MACOS and "/syslog" in conn.raddr:
-                debug("skipping %s" % str(conn))
+                debug(f"skipping {conn}")
                 continue
         new.append(conn)
     return new

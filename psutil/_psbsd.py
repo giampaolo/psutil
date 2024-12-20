@@ -485,7 +485,7 @@ if FREEBSD:
                 current, high = cext.sensors_cpu_temperature(cpu)
                 if high <= 0:
                     high = None
-                name = "Core %s" % cpu
+                name = f"Core {cpu}"
                 ret["coretemp"].append(
                     _common.shwtemp(name, current, high, high)
                 )
@@ -673,7 +673,7 @@ class Process:
                 # /proc/0 dir exists but /proc/0/exe doesn't
                 return ""
             with wrap_exceptions_procfs(self):
-                return os.readlink("/proc/%s/exe" % self.pid)
+                return os.readlink(f"/proc/{self.pid}/exe")
         else:
             # OpenBSD: exe cannot be determined; references:
             # https://chromium.googlesource.com/chromium/src/base/+/
@@ -708,7 +708,7 @@ class Process:
                     else:
                         # XXX: this happens with unicode tests. It means the C
                         # routine is unable to decode invalid unicode chars.
-                        debug("ignoring %r and returning an empty list" % err)
+                        debug(f"ignoring {err!r} and returning an empty list")
                         return []
                 else:
                     raise
@@ -932,12 +932,11 @@ class Process:
             # Pre-emptively check if CPUs are valid because the C
             # function has a weird behavior in case of invalid CPUs,
             # see: https://github.com/giampaolo/psutil/issues/586
-            allcpus = tuple(range(len(per_cpu_times())))
+            allcpus = set(range(len(per_cpu_times())))
             for cpu in cpus:
                 if cpu not in allcpus:
-                    raise ValueError(
-                        "invalid CPU #%i (choose between %s)" % (cpu, allcpus)
-                    )
+                    msg = f"invalid CPU {cpu!r} (choose between {allcpus})"
+                    raise ValueError(msg)
             try:
                 cext.proc_cpu_affinity_set(self.pid, cpus)
             except OSError as err:
@@ -948,10 +947,11 @@ class Process:
                 if err.errno in {errno.EINVAL, errno.EDEADLK}:
                     for cpu in cpus:
                         if cpu not in allcpus:
-                            raise ValueError(
-                                "invalid CPU #%i (choose between %s)"
-                                % (cpu, allcpus)
+                            msg = (
+                                f"invalid CPU {cpu!r} (choose between"
+                                f" {allcpus})"
                             )
+                            raise ValueError(msg)
                 raise
 
         @wrap_exceptions
@@ -964,9 +964,10 @@ class Process:
                 return cext.proc_getrlimit(self.pid, resource)
             else:
                 if len(limits) != 2:
-                    raise ValueError(
-                        "second argument must be a (soft, hard) tuple, got %s"
-                        % repr(limits)
+                    msg = (
+                        "second argument must be a (soft, hard) tuple, got"
+                        f" {limits!r}"
                     )
+                    raise ValueError(msg)
                 soft, hard = limits
                 return cext.proc_setrlimit(self.pid, resource, soft, hard)

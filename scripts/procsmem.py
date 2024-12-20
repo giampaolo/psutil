@@ -53,8 +53,8 @@ def convert_bytes(n):
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
-            return '%.1f%s' % (value, s)
-    return "%sB" % n
+            return f"{value:.1f}{s}"
+    return f"{n}B"
 
 
 def main():
@@ -97,7 +97,7 @@ def main():
         print(line)
     if ad_pids:
         print(
-            "warning: access denied for %s pids" % (len(ad_pids)),
+            f"warning: access denied for {len(ad_pids)} pids",
             file=sys.stderr,
         )
 

@@ -45,7 +45,7 @@ def hilite(s, ok=True, bold=False):
         attr.append('31')
     if bold:
         attr.append('1')
-    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+    return f"\x1b[{';'.join(attr)}m{s}\x1b[0m"
 
 
 def exit(msg):
@@ -97,7 +97,7 @@ def git_commit_files():
 
 
 def black(files):
-    print("running black (%s)" % len(files))
+    print(f"running black ({len(files)})")
     cmd = [PYTHON, "-m", "black", "--check", "--safe"] + files
     if subprocess.call(cmd) != 0:
         return exit(
@@ -107,8 +107,15 @@ def black(files):
 
 
 def ruff(files):
-    print("running ruff (%s)" % len(files))
-    cmd = [PYTHON, "-m", "ruff", "check", "--no-cache"] + files
+    print(f"running ruff ({len(files)})")
+    cmd = [
+        PYTHON,
+        "-m",
+        "ruff",
+        "check",
+        "--no-cache",
+        "--output-format=concise",
+    ] + files
     if subprocess.call(cmd) != 0:
         return exit(
             "Python code didn't pass 'ruff' style check."
@@ -117,7 +124,7 @@ def ruff(files):
 
 
 def c_linter(files):
-    print("running clinter (%s)" % len(files))
+    print(f"running clinter ({len(files)})")
     # XXX: we should escape spaces and possibly other amenities here
     cmd = [PYTHON, "scripts/internal/clinter.py"] + files
     if subprocess.call(cmd) != 0:
@@ -125,14 +132,14 @@ def c_linter(files):
 
 
 def toml_sort(files):
-    print("running toml linter (%s)" % len(files))
+    print(f"running toml linter ({len(files)})")
     cmd = ["toml-sort", "--check"] + files
     if subprocess.call(cmd) != 0:
-        return sys.exit("%s didn't pass style check" % ' '.join(files))
+        return sys.exit(f"{' '.join(files)} didn't pass style check")
 
 
 def rstcheck(files):
-    print("running rst linter (%s)" % len(files))
+    print(f"running rst linter ({len(files)})")
     cmd = ["rstcheck", "--config=pyproject.toml"] + files
     if subprocess.call(cmd) != 0:
         return sys.exit("RST code didn't pass style check")

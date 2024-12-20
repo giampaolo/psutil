@@ -212,7 +212,7 @@ def parallel_validator(urls):
         }
         for fut in concurrent.futures.as_completed(fut_to_url):
             current += 1
-            sys.stdout.write("\r%s / %s" % (current, total))
+            sys.stdout.write(f"\r{current} / {total}")
             sys.stdout.flush()
             fname, url = fut_to_url[fut]
             try:
@@ -220,7 +220,7 @@ def parallel_validator(urls):
             except Exception:  # noqa: BLE001
                 fails.append((fname, url))
                 print()
-                print("warn: error while validating %s" % url, file=sys.stderr)
+                print(f"warn: error while validating {url}", file=sys.stderr)
                 traceback.print_exc()
             else:
                 if not ok:
@@ -242,7 +242,7 @@ def main():
     for fname in args.files:
         urls = get_urls(fname)
         if urls:
-            print("%4s %s" % (len(urls), fname))
+            print(f"{len(urls):4} {fname}")
             for url in urls:
                 all_urls.append((fname, url))
 
@@ -254,7 +254,7 @@ def main():
             fname, url = fail
             print("%-30s: %s " % (fname, url))
         print('-' * 20)
-        print("total: %s fails!" % len(fails))
+        print(f"total: {len(fails)} fails!")
         sys.exit(1)
 
 

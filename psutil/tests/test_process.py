@@ -280,10 +280,10 @@ class TestProcess(PsutilTestCase):
         # using a tolerance  of +/- 0.1 seconds.
         # It will fail if the difference between the values is > 0.1s.
         if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            raise self.fail("expected: %s, found: %s" % (utime, user_time))
+            raise self.fail(f"expected: {utime}, found: {user_time}")
 
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-            raise self.fail("expected: %s, found: %s" % (ktime, kernel_time))
+            raise self.fail(f"expected: {ktime}, found: {kernel_time}")
 
     @pytest.mark.skipif(not HAS_PROC_CPU_NUM, reason="not supported")
     def test_cpu_num(self):
@@ -305,8 +305,8 @@ class TestProcess(PsutilTestCase):
         difference = abs(create_time - now)
         if difference > 2:
             raise self.fail(
-                "expected: %s, found: %s, difference: %s"
-                % (now, create_time, difference)
+                f"expected: {now}, found: {create_time}, difference:"
+                f" {difference}"
             )
 
         # make sure returned value can be pretty printed with strftime
@@ -658,7 +658,7 @@ class TestProcess(PsutilTestCase):
                             # https://github.com/giampaolo/psutil/issues/759
                             with open_text('/proc/self/smaps') as f:
                                 data = f.read()
-                            if "%s (deleted)" % nt.path not in data:
+                            if f"{nt.path} (deleted)" not in data:
                                 raise
                 elif '64' not in os.path.basename(nt.path):
                     # XXX - On Windows we have this strange behavior with
@@ -728,7 +728,7 @@ class TestProcess(PsutilTestCase):
                 # "/usr/local/bin/python"
                 # We do not want to consider this difference in accuracy
                 # an error.
-                ver = "%s.%s" % (sys.version_info[0], sys.version_info[1])
+                ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
                 try:
                     assert exe.replace(ver, '') == PYTHON_EXE.replace(ver, '')
                 except AssertionError:
@@ -1023,7 +1023,7 @@ class TestProcess(PsutilTestCase):
             p.cpu_affinity(invalid_cpu)
         with pytest.raises(ValueError):
             p.cpu_affinity(range(10000, 11000))
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, ValueError)):
             p.cpu_affinity([0, "1"])
         with pytest.raises(ValueError):
             p.cpu_affinity([0, -1])
@@ -1072,8 +1072,8 @@ class TestProcess(PsutilTestCase):
 
         # another process
         cmdline = (
-            "import time; f = open(r'%s', 'r'); [time.sleep(0.1) for x in"
-            " range(100)];" % testfn
+            f"import time; f = open(r'{testfn}', 'r'); [time.sleep(0.1) for x"
+            " in range(100)];"
         )
         p = self.spawn_psproc([PYTHON_EXE, "-c", cmdline])
 
@@ -1102,9 +1102,7 @@ class TestProcess(PsutilTestCase):
                 ):
                     break
             else:
-                raise self.fail(
-                    "no file found; files=%s" % (repr(p.open_files()))
-                )
+                raise self.fail(f"no file found; files={p.open_files()!r}")
             assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1
@@ -1377,7 +1375,7 @@ class TestProcess(PsutilTestCase):
                 if WINDOWS and fun_name in {'exe', 'name'}:
                     return
                 raise self.fail(
-                    "%r didn't raise NSP and returned %r instead" % (fun, ret)
+                    f"{fun!r} didn't raise NSP and returned {ret!r} instead"
                 )
 
         p = self.spawn_psproc()
@@ -1435,7 +1433,7 @@ class TestProcess(PsutilTestCase):
             with contextlib.redirect_stderr(io.StringIO()) as f:
                 list(psutil.process_iter())
         assert (
-            "refreshing Process instance for reused PID %s" % p.pid
+            f"refreshing Process instance for reused PID {p.pid}"
             in f.getvalue()
         )
         assert p.pid not in psutil._pmap

@@ -78,7 +78,7 @@ def main():
     for methname, ads in sorted(d.items(), key=lambda x: (x[1], x[0])):
         perc = (ads / tot_procs) * 100
         outcome = "SUCCESS" if not ads else "ACCESS DENIED"
-        s = templ % (methname, ads, "%6.1f%%" % perc, outcome)
+        s = templ % (methname, ads, f"{perc:6.1f}%", outcome)
         print_color(s, "red" if ads else None)
     tot_perc = round((tot_ads / tot_calls) * 100, 1)
     print("-" * 50)
