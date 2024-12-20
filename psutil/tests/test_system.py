@@ -32,7 +32,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
-from psutil.tests import DEVNULL
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import HAS_BATTERY
@@ -260,15 +259,6 @@ class TestMiscAPIs(PsutilTestCase):
                     assert user.pid is None
                 else:
                     psutil.Process(user.pid)
-
-    def test_test(self):
-        # test for psutil.test() function
-        stdout = sys.stdout
-        sys.stdout = DEVNULL
-        try:
-            psutil.test()
-        finally:
-            sys.stdout = stdout
 
     def test_os_constants(self):
         names = [
