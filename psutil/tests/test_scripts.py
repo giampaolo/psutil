@@ -186,14 +186,25 @@ class TestExampleScripts(PsutilTestCase):
     reason="can't find scripts/internal/ directory",
 )
 class TestInternalScripts(PsutilTestCase):
-    def test_syntax_all(self):
+    @staticmethod
+    def ls():
         for name in os.listdir(INTERNAL_SCRIPTS_DIR):
-            if not name.endswith(".py"):
-                continue
-            path = os.path.join(INTERNAL_SCRIPTS_DIR, name)
+            if name.endswith(".py"):
+                yield os.path.join(INTERNAL_SCRIPTS_DIR, name)
+
+    def test_syntax_all(self):
+        for path in self.ls():
             with open(path, encoding="utf8") as f:
                 data = f.read()
             ast.parse(data)
+
+    @pytest.mark.skipif(CI_TESTING, reason="not on CI")
+    def test_import_all(self):
+        for path in self.ls():
+            try:
+                import_module_by_path(path)
+            except SystemExit:
+                pass
 
 
 # ===================================================================
