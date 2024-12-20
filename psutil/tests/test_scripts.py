@@ -33,17 +33,18 @@ from psutil.tests import psutil
 from psutil.tests import sh
 
 
+INTERNAL_SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, "internal")
 SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
 
 
 # ===================================================================
-# --- Tests scripts in the scripts/ directory
+# --- Tests scripts in scripts/ directory
 # ===================================================================
 
 
 @pytest.mark.skipif(
     CI_TESTING and not os.path.exists(SCRIPTS_DIR),
-    reason="can't locate scripts/ directory",
+    reason="can't find scripts/ directory",
 )
 class TestExampleScripts(PsutilTestCase):
     @staticmethod
@@ -173,6 +174,26 @@ class TestExampleScripts(PsutilTestCase):
     @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
+
+
+# ===================================================================
+# --- Tests scripts in scripts/internal/ directory
+# ===================================================================
+
+
+@pytest.mark.skipif(
+    CI_TESTING and not os.path.exists(INTERNAL_SCRIPTS_DIR),
+    reason="can't find scripts/internal/ directory",
+)
+class TestInternalScripts(PsutilTestCase):
+    def test_syntax_all(self):
+        for name in os.listdir(INTERNAL_SCRIPTS_DIR):
+            if not name.endswith(".py"):
+                continue
+            path = os.path.join(INTERNAL_SCRIPTS_DIR, name)
+            with open(path, encoding="utf8") as f:
+                data = f.read()
+            ast.parse(data)
 
 
 # ===================================================================
