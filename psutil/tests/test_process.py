@@ -1102,7 +1102,7 @@ class TestProcess(PsutilTestCase):
                 ):
                     break
             else:
-                raise self.fail(f"no file found; files={repr(p.open_files())}")
+                raise self.fail(f"no file found; files={p.open_files()!r}")
             assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1

@@ -426,7 +426,8 @@ def spawn_zombie():
     """
     assert psutil.POSIX
     unix_file = get_testfn()
-    src = textwrap.dedent(f"""        import os, sys, time, socket, contextlib
+    src = textwrap.dedent(f"""\
+        import os, sys, time, socket, contextlib
         child_pid = os.fork()
         if child_pid > 0:
             time.sleep(3000)
@@ -785,7 +786,7 @@ def safe_rmpath(path):
                 pass
             except OSError as _:
                 err = _
-                warn(f"ignoring {str(err)}")
+                warn(f"ignoring {err}")
             time.sleep(0.01)
         raise err
 
@@ -1887,7 +1888,7 @@ def filter_proc_net_connections(cons):
     for conn in cons:
         if POSIX and conn.family == socket.AF_UNIX:
             if MACOS and "/syslog" in conn.raddr:
-                debug(f"skipping {str(conn)}")
+                debug(f"skipping {conn}")
                 continue
         new.append(conn)
     return new

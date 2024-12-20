@@ -2209,7 +2209,7 @@ class Process:
                     if len(limits) != 2:
                         msg = (
                             "second argument must be a (soft, hard) "
-                            f"tuple, got {repr(limits)}"
+                            f"tuple, got {limits!r}"
                         )
                         raise ValueError(msg)
                     resource.prlimit(self.pid, resource_, limits)

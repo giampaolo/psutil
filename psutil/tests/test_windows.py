@@ -225,7 +225,7 @@ class TestSystemAPIs(WindowsTestCase):
                         raise self.fail(f"psutil={usage.free}, wmi={wmi_free}")
                     break
             else:
-                raise self.fail(f"can't find partition {repr(ps_part)}")
+                raise self.fail(f"can't find partition {ps_part!r}")
 
     @retry_on_failure()
     def test_disk_usage(self):

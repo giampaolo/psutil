@@ -67,7 +67,7 @@ class TestSpecialMethods(PsutilTestCase):
         r = func(p)
         assert "psutil.Process" in r
         assert f"pid={p.pid}" in r
-        assert f"name='{str(p.name())}'" in r.replace("name=u'", "name='")
+        assert f"name='{p.name()}'" in r.replace("name=u'", "name='")
         assert "status=" in r
         assert "exitcode=" not in r
         p.terminate()

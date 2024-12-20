@@ -40,7 +40,7 @@ def main():
         )
         print("plugged in: yes")
     else:
-        print(f"left:       {secs2hours(batt.secsleft)}")
+        print(f"left:      {secs2hours(batt.secsleft)}")
         print("status:     discharging")
         print("plugged in: no")
 

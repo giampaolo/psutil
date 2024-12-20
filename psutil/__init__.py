@@ -1794,7 +1794,7 @@ def cpu_percent(interval=None, percpu=False):
     tid = threading.current_thread().ident
     blocking = interval is not None and interval > 0.0
     if interval is not None and interval < 0:
-        msg = f"interval is not positive (got {interval!r})"
+        msg = f"interval is not positive (got {interval})"
         raise ValueError(msg)
 
     def calculate(t1, t2):

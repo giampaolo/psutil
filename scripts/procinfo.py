@@ -207,7 +207,7 @@ def run(pid, verbose=False):
             else:
                 print_(
                     "ionice",
-                    f"class={str(ionice.ioclass)}, value={ionice.value}",
+                    f"class={ionice.ioclass}, value={ionice.value}",
                 )
 
     print_('num-threads', pinfo['num_threads'])
