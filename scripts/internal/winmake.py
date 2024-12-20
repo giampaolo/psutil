@@ -366,6 +366,12 @@ def test_misc():
     sh([PYTHON, "psutil\\tests\\test_misc.py"])
 
 
+def test_scripts():
+    """Run scripts tests."""
+    build()
+    sh([PYTHON, "psutil\\tests\\test_scripts.py"])
+
+
 def test_unicode():
     """Run unicode tests."""
     build()
@@ -502,6 +508,7 @@ def parse_args():
     )
     sp.add_parser('test-memleaks', help="run memory leaks tests")
     sp.add_parser('test-misc', help="run misc tests")
+    sp.add_parser('test-scripts', help="run scripts tests")
     sp.add_parser('test-platform', help="run windows only tests")
     sp.add_parser('test-process', help="run process tests")
     sp.add_parser('test-process-all', help="run process all tests")

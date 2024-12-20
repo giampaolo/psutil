@@ -116,6 +116,10 @@ test-misc:  ## Run miscellaneous tests.
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_misc.py
 
+test-scripts:  ## Run scripts tests.
+	${MAKE} build
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_scripts.py
+
 test-testutils:  ## Run test utils tests.
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_testutils.py
