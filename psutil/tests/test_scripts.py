@@ -233,7 +233,7 @@ class TestSetupScript(PsutilTestCase):
             [shutil.which("python2.7"), SETUP_PY],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            universal_newlines=True,
         )
         stdout, stderr = p.communicate()
         assert p.wait() == 1
