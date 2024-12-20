@@ -212,7 +212,7 @@ def missdeps(cmdline):
     else:
         s += ". Perhaps Python header files are not installed. "
     s += "Try running:\n"
-    s += f"  {cmdline}"
+    s += "  %s" % cmdline
     print(hilite(s, color="red", bold=True), file=sys.stderr)
 
 
@@ -247,7 +247,7 @@ if WINDOWS:
 
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
-        return f"0x0{maj * 100 + min}"
+        return '0x0%s' % ((maj * 100) + min)
 
     if sys.getwindowsversion()[0] < 6:
         msg = "this Windows version is too old (< Windows Vista); "
@@ -429,7 +429,7 @@ elif AIX:
     )
 
 else:
-    sys.exit(f"platform {sys.platform} is not supported")
+    sys.exit('platform %s is not supported' % sys.platform)
 
 
 if POSIX:
@@ -568,12 +568,13 @@ def main():
             if LINUX:
                 pyimpl = "pypy" if PYPY else "python"
                 if shutil.which("dpkg"):
-                    missdeps(f"sudo apt-get install gcc {pyimpl}3-dev")
+                    missdeps("sudo apt-get install gcc %s3-dev" % (pyimpl))
                 elif shutil.which("rpm"):
-                    missdeps(f"sudo yum install gcc {pyimpl}-devel")
+                    missdeps("sudo yum install gcc %s-devel" % (pyimpl))
                 elif shutil.which("apk"):
                     missdeps(
-                        f"sudo apk add gcc {pyimpl}-dev musl-dev linux-headers"
+                        "sudo apk add gcc %s%s-dev musl-dev linux-headers"
+                        % (pyimpl)
                     )
             elif MACOS:
                 msg = (
