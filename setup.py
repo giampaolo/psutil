@@ -9,7 +9,7 @@
 NOTE: the syntax of this script MUST be kept compatible with Python 2.7.
 """
 
-from __future__ import print_function  # noqa: UP010
+from __future__ import print_function
 
 import ast
 import contextlib
@@ -28,7 +28,7 @@ import textwrap
 import warnings
 
 
-if sys.version_info[0] == 2:  # noqa: UP036
+if sys.version_info[0] == 2:
     sys.exit(textwrap.dedent("""\
         As of version 7.0.0 psutil no longer supports Python 2.7, see:
         https://github.com/giampaolo/psutil/issues/2480
