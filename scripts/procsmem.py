@@ -80,12 +80,12 @@ def main():
                 procs.append(p)
 
     procs.sort(key=lambda p: p._uss)
-    templ = "%-7s %-7s %7s %7s %7s %7s %7s"
-    print(templ % ("PID", "User", "USS", "PSS", "Swap", "RSS", "Cmdline"))
+    templ = "{:<7} {:<7} {:>7} {:>7} {:>7} {:>7} {:>7}"
+    print(templ.format("PID", "User", "USS", "PSS", "Swap", "RSS", "Cmdline"))
     print("=" * 78)
     for p in procs[:86]:
         cmd = " ".join(p._info["cmdline"])[:50] if p._info["cmdline"] else ""
-        line = templ % (
+        line = templ.format(
             p.pid,
             p._info["username"][:7] if p._info["username"] else "",
             convert_bytes(p._uss),
