@@ -111,18 +111,18 @@ def downloads_by_distro():
 # --- print
 
 
-templ = "| %-30s | %15s |"
+templ = "| {:<30} | {:>15} |"
 
 
 def print_row(left, right):
     if isinstance(right, int):
         right = f"{right:,}"
-    print(templ % (left, right))
+    print(templ.format(left, right))
 
 
 def print_header(left, right="Downloads"):
     print_row(left, right)
-    s = templ % ("-" * 30, "-" * 15)
+    s = templ.format("-" * 30, "-" * 15)
     print("|:" + s[2:-2] + ":|")
 
 

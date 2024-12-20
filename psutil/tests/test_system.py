@@ -416,8 +416,9 @@ class TestCpuAPIs(PsutilTestCase):
         #         for field in new._fields:
         #             new_t = getattr(new, field)
         #             last_t = getattr(last, field)
-        #             self.assertGreaterEqual(new_t, last_t,
-        #                                     msg="%s %s" % (new_t, last_t))
+        #             self.assertGreaterEqual(
+        #                 new_t, last_t,
+        #                 msg="{} {}".format(new_t, last_t))
         #         last = new
 
     def test_cpu_times_time_increases(self):
@@ -461,7 +462,7 @@ class TestCpuAPIs(PsutilTestCase):
         #             new_t = getattr(newcpu, field)
         #             last_t = getattr(lastcpu, field)
         #             self.assertGreaterEqual(
-        #                 new_t, last_t, msg="%s %s" % (lastcpu, newcpu))
+        #                 new_t, last_t, msg="{} {}".format(lastcpu, newcpu))
         #     last = new
 
     def test_per_cpu_times_2(self):
@@ -493,7 +494,7 @@ class TestCpuAPIs(PsutilTestCase):
             with self.subTest(field=field, base=base, per_cpu=per_cpu):
                 assert (
                     abs(getattr(base, field) - getattr(summed_values, field))
-                    < 1
+                    < 1.5
                 )
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):

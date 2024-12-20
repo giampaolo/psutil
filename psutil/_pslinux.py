@@ -788,7 +788,7 @@ class NetConnections:
                 inode = readlink(f"{self._procfs_path}/{pid}/fd/{fd}")
             except (FileNotFoundError, ProcessLookupError):
                 # ENOENT == file which is gone in the meantime;
-                # os.stat('/proc/%s' % self.pid) will be done later
+                # os.stat(f"/proc/{self.pid}") will be done later
                 # to force NSP (if it's the case)
                 continue
             except OSError as err:
@@ -2113,7 +2113,7 @@ class Process:
 
     @wrap_exceptions
     def nice_get(self):
-        # with open_text('%s/%s/stat' % (self._procfs_path, self.pid)) as f:
+        # with open_text(f"{self._procfs_path}/{self.pid}/stat") as f:
         #   data = f.read()
         #   return int(data.split()[18])
 

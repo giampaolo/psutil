@@ -95,27 +95,27 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     for name in nic_names:
         stats_before = pnic_before[name]
         stats_after = pnic_after[name]
-        templ = "%-15s %15s %15s"
+        templ = "{:<15s} {:>15} {:>15}"
         # fmt: off
-        printl(templ % (name, "TOTAL", "PER-SEC"), highlight=True)
-        printl(templ % (
+        printl(templ.format(name, "TOTAL", "PER-SEC"), highlight=True)
+        printl(templ.format(
             "bytes-sent",
             bytes2human(stats_after.bytes_sent),
             bytes2human(
                 stats_after.bytes_sent - stats_before.bytes_sent) + '/s',
         ))
-        printl(templ % (
+        printl(templ.format(
             "bytes-recv",
             bytes2human(stats_after.bytes_recv),
             bytes2human(
                 stats_after.bytes_recv - stats_before.bytes_recv) + '/s',
         ))
-        printl(templ % (
+        printl(templ.format(
             "pkts-sent",
             stats_after.packets_sent,
             stats_after.packets_sent - stats_before.packets_sent,
         ))
-        printl(templ % (
+        printl(templ.format(
             "pkts-recv",
             stats_after.packets_recv,
             stats_after.packets_recv - stats_before.packets_recv,
