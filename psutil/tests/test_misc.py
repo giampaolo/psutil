@@ -13,8 +13,10 @@ import io
 import json
 import os
 import pickle
+import shutil
 import socket
 import stat
+import subprocess
 import sys
 from unittest import mock
 
@@ -41,6 +43,7 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import PYTHON_EXE
 from psutil.tests import PYTHON_EXE_ENV
 from psutil.tests import QEMU_USER
+from psutil.tests import ROOT_DIR
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import PsutilTestCase
 from psutil.tests import process_namespace
@@ -48,6 +51,11 @@ from psutil.tests import pytest
 from psutil.tests import reload_module
 from psutil.tests import sh
 from psutil.tests import system_namespace
+
+from . import import_module_by_path
+
+
+SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
 
 
 # ===================================================================
@@ -333,14 +341,6 @@ class TestMisc(PsutilTestCase):
         assert b.seconds == 33
         assert b.pid == 4567
         assert b.name == 'name'
-
-    # def test_setup_script(self):
-    #     setup_py = os.path.join(ROOT_DIR, 'setup.py')
-    #     if CI_TESTING and not os.path.exists(setup_py):
-    #         raise pytest.skip("can't find setup.py")
-    #     module = import_module_by_path(setup_py)
-    #     self.assertRaises(SystemExit, module.setup)
-    #     self.assertEqual(module.get_version(), psutil.__version__)
 
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case
@@ -1036,3 +1036,33 @@ class TestScripts(PsutilTestCase):
     @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors(self):
         self.assert_stdout('sensors.py')
+
+
+@pytest.mark.skipif(
+    CI_TESTING and not os.path.exists(SETUP_PY), reason="can't find setup.py"
+)
+class TestSetupPyScript(PsutilTestCase):
+    def test_invocation(self):
+        module = import_module_by_path(SETUP_PY)
+        with pytest.raises(SystemExit):
+            module.setup()
+        assert module.get_version() == psutil.__version__
+
+    @pytest.mark.skipif(
+        not shutil.which("python2.7"), reason="python2.7 not installed"
+    )
+    def test_python2(self):
+        # There's a duplicate of this test in scripts/internal
+        # directory, which is only executed by CI. We replicate it here
+        # to run it when developing locally.
+        p = subprocess.Popen(
+            [shutil.which("python2.7"), SETUP_PY],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        stdout, stderr = p.communicate()
+        assert p.wait() == 1
+        assert not stdout
+        assert "psutil no longer supports Python 2.7" in stderr
+        assert "Latest version supporting Python 2.7 is" in stderr
