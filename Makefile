@@ -219,7 +219,7 @@ sdist:  ## Create tar.gz source distribution.
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
 
 download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels_github.py --tokenfile=~/.github.token
+	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
 	${MAKE} print-dist
 
 create-wheels:  ## Create .whl files
