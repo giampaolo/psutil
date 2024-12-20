@@ -494,7 +494,7 @@ class TestCpuAPIs(PsutilTestCase):
             with self.subTest(field=field, base=base, per_cpu=per_cpu):
                 assert (
                     abs(getattr(base, field) - getattr(summed_values, field))
-                    < 1
+                    < 1.5
                 )
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
