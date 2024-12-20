@@ -111,15 +111,15 @@ def main():
 
     tot_files = 0
     tot_size = 0
-    templ = "%-120s %7s %8s %7s"
+    templ = "{:<120} {:>7} {:>8} {:>7}"
     for platf, pkgs in groups.items():
         ppn = f"{platf} ({len(pkgs)})"
-        s = templ % (ppn, "size", "arch", "pyver")
+        s = templ.format(ppn, "size", "arch", "pyver")
         print_color('\n' + s, color=None, bold=True)
         for pkg in sorted(pkgs, key=lambda x: x.name):
             tot_files += 1
             tot_size += pkg.size()
-            s = templ % (
+            s = templ.format(
                 "  " + pkg.name,
                 bytes2human(pkg.size()),
                 pkg.arch(),
