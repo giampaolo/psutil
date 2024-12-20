@@ -2155,10 +2155,11 @@ class Process:
                     all_cpus = tuple(range(len(per_cpu_times())))
                     for cpu in cpus:
                         if cpu not in all_cpus:
-                            raise ValueError(
-                                "invalid CPU number %r; choose between %s"
-                                % (cpu, eligible_cpus)
+                            msg = (
+                                f"invalid CPU {cpu!r}; choose between"
+                                f" {eligible_cpus!r}"
                             )
+                            raise ValueError(msg)
                         if cpu not in eligible_cpus:
                             raise ValueError(
                                 "CPU number %r is not eligible; choose "

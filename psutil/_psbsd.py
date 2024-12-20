@@ -943,10 +943,10 @@ class Process:
             # Pre-emptively check if CPUs are valid because the C
             # function has a weird behavior in case of invalid CPUs,
             # see: https://github.com/giampaolo/psutil/issues/586
-            allcpus = tuple(range(len(per_cpu_times())))
+            allcpus = set(range(len(per_cpu_times())))
             for cpu in cpus:
                 if cpu not in allcpus:
-                    msg = f"invalid CPU #{cpu} (choose between {allcpus})"
+                    msg = f"invalid CPU {cpu!r} (choose between {allcpus})"
                     raise ValueError(msg)
             try:
                 cext.proc_cpu_affinity_set(self.pid, cpus)
@@ -959,7 +959,7 @@ class Process:
                     for cpu in cpus:
                         if cpu not in allcpus:
                             msg = (
-                                f"invalid CPU #{cpu} (choose between"
+                                f"invalid CPU {cpu!r} (choose between"
                                 f" {allcpus})"
                             )
                             raise ValueError(msg)
