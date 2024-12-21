@@ -325,9 +325,9 @@ class Process:
                 raise ValueError(msg)
             try:
                 _psplatform.cext.check_pid_range(pid)
-            except OverflowError:
-                msg = f"process PID out of range (got {pid})"
-                raise NoSuchProcess(pid, msg=msg)
+            except OverflowError as e:
+                msg = "process PID out of range"
+                raise NoSuchProcess(pid, msg=msg) from e
 
         self._pid = pid
         self._name = None
