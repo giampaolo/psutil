@@ -698,10 +698,12 @@ class Process:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
                 if err.errno == errno.EINVAL:
+                    # fmt: off
                     if is_zombie(self.pid):
-                        raise ZombieProcess(self.pid, self._name, self._ppid)
+                        raise ZombieProcess(self.pid, self._name, self._ppid) from err  # noqa: E501
                     elif not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name, self._ppid)
+                        raise NoSuchProcess(self.pid, self._name, self._ppid) from err  # noqa: E501
+                    # fmt: on
                     else:
                         # XXX: this happens with unicode tests. It means the C
                         # routine is unable to decode invalid unicode chars.
