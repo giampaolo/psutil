@@ -48,7 +48,7 @@ except ImportError as err:
         msg = "this Windows version is too old (< Windows Vista); "
         msg += "psutil 3.4.2 is the latest version which supports Windows "
         msg += "2000, XP and 2003 server"
-        raise RuntimeError(msg)
+        raise RuntimeError(msg) from err
     else:
         raise
 
@@ -520,18 +520,18 @@ class WindowsService:  # noqa: PLW1641
         try:
             yield
         except OSError as err:
+            name = self._name
             if is_permission_err(err):
                 msg = (
-                    f"service {self._name!r} is not querable (not enough"
-                    " privileges)"
+                    f"service {name!r} is not querable (not enough privileges)"
                 )
-                raise AccessDenied(pid=None, name=self._name, msg=msg)
+                raise AccessDenied(pid=None, name=name, msg=msg) from err
             elif err.winerror in {
                 cext.ERROR_INVALID_NAME,
                 cext.ERROR_SERVICE_DOES_NOT_EXIST,
             }:
-                msg = f"service {self._name!r} does not exist"
-                raise NoSuchProcess(pid=None, name=self._name, msg=msg)
+                msg = f"service {name!r} does not exist"
+                raise NoSuchProcess(pid=None, name=name, msg=msg) from err
             else:
                 raise
 
@@ -672,7 +672,7 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            raise convert_oserror(err, pid=self.pid, name=self._name)
+            raise convert_oserror(err, pid=self.pid, name=self._name) from err
 
     return wrapper
 
@@ -757,7 +757,7 @@ class Process:
                 # (perhaps PyPy's JIT delaying garbage collection of files?).
                 if err.errno == 24:
                     debug(f"{err!r} translated into AccessDenied")
-                    raise AccessDenied(self.pid, self._name)
+                    raise AccessDenied(self.pid, self._name) from err
                 raise
         else:
             exe = cext.proc_exe(self.pid)
@@ -791,7 +791,7 @@ class Process:
         try:
             return ppid_map()[self.pid]
         except KeyError:
-            raise NoSuchProcess(self.pid, self._name)
+            raise NoSuchProcess(self.pid, self._name) from None
 
     def _get_raw_meminfo(self):
         try:
@@ -839,7 +839,7 @@ class Process:
         except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
-            raise convert_oserror(err, self.pid, self._name)
+            raise convert_oserror(err, self.pid, self._name) from err
         else:
             for addr, perm, path, rss in raw:
                 path = convert_dos_path(path)
@@ -879,9 +879,9 @@ class Process:
             # May also be None if OpenProcess() failed with
             # ERROR_INVALID_PARAMETER, meaning PID is already gone.
             exit_code = cext.proc_wait(self.pid, cext_timeout)
-        except cext.TimeoutExpired:
+        except cext.TimeoutExpired as err:
             # WaitForSingleObject() returned WAIT_TIMEOUT. Just raise.
-            raise TimeoutExpired(timeout, self.pid, self._name)
+            raise TimeoutExpired(timeout, self.pid, self._name) from err
         except cext.TimeoutAbandoned:
             # WaitForSingleObject() returned WAIT_ABANDONED, see:
             # https://github.com/giampaolo/psutil/issues/1224

@@ -33,7 +33,6 @@ ignore = [
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
     "B007",  # Loop control variable `x` not used within loop body
-    "B904",  # Use `raise from` to specify exception cause
     "C4",  # flake8-comprehensions
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
@@ -99,10 +98,11 @@ ignore = [
 # T201 == print()
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
-".github/workflows/*" = ["EM101", "EM102", "EM103", "T201", "T203"]
-"psutil/tests/*" = ["EM101", "EM102", "EM103", "TRY003"]
-"scripts/*" = ["EM101", "EM102", "EM103", "T201", "T203"]
-"scripts/internal/*" = ["EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
+# "B904",  # Use `raise from` to specify exception cause
+".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
+"psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "TRY003"]
+"scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
+"scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [
     "B904",  # Use ` raise from` to specify exception cause (PYTHON2.7 COMPAT)
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)

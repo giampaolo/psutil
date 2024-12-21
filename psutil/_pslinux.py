@@ -870,9 +870,8 @@ class NetConnections:
             except ValueError:
                 # see: https://github.com/giampaolo/psutil/issues/623
                 if not supports_ipv6():
-                    raise _Ipv6UnsupportedError
-                else:
-                    raise
+                    raise _Ipv6UnsupportedError from None
+                raise
         return _common.addr(ip, port)
 
     @staticmethod
@@ -893,7 +892,7 @@ class NetConnections:
                         f"error while parsing {file}; malformed line"
                         f" {lineno} {line!r}"
                     )
-                    raise RuntimeError(msg)
+                    raise RuntimeError(msg) from None
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
@@ -934,7 +933,7 @@ class NetConnections:
                     msg = (
                         f"error while parsing {file}; malformed line {line!r}"
                     )
-                    raise RuntimeError(msg)
+                    raise RuntimeError(msg)  # noqa: B904
                 if inode in inodes:  # noqa
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
@@ -1643,20 +1642,21 @@ def wrap_exceptions(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
+        pid, name = self.pid, self._name
         try:
             return fun(self, *args, **kwargs)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
-        except ProcessLookupError:
+        except PermissionError as err:
+            raise AccessDenied(pid, name) from err
+        except ProcessLookupError as err:
             self._raise_if_zombie()
-            raise NoSuchProcess(self.pid, self._name)
-        except FileNotFoundError:
+            raise NoSuchProcess(pid, name) from err
+        except FileNotFoundError as err:
             self._raise_if_zombie()
             # /proc/PID directory may still exist, but the files within
             # it may not, indicating the process is gone, see:
             # https://github.com/giampaolo/psutil/issues/2418
-            if not os.path.exists(f"{self._procfs_path}/{self.pid}/stat"):
-                raise NoSuchProcess(self.pid, self._name)
+            if not os.path.exists(f"{self._procfs_path}/{pid}/stat"):
+                raise NoSuchProcess(pid, name) from err
             raise
 
     return wrapper
@@ -1859,7 +1859,7 @@ class Process:
                     f"{err.args[0]!r} field was not found in {fname}; found"
                     f" fields are {fields!r}"
                 )
-                raise ValueError(msg)
+                raise ValueError(msg) from None
 
     @wrap_exceptions
     def cpu_times(self):
@@ -2011,7 +2011,7 @@ class Process:
                                     "don't know how to interpret line"
                                     f" {line!r}"
                                 )
-                                raise ValueError(msg)
+                                raise ValueError(msg) from None
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
@@ -2156,13 +2156,13 @@ class Process:
                                 f"invalid CPU {cpu!r}; choose between"
                                 f" {eligible_cpus!r}"
                             )
-                            raise ValueError(msg)
+                            raise ValueError(msg) from None
                         if cpu not in eligible_cpus:
                             msg = (
                                 f"CPU number {cpu} is not eligible; choose"
                                 f" between {eligible_cpus}"
                             )
-                            raise ValueError(msg)
+                            raise ValueError(msg) from err
                 raise
 
     # only starting from kernel 2.6.13

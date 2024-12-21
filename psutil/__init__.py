@@ -325,9 +325,9 @@ class Process:
                 raise ValueError(msg)
             try:
                 _psplatform.cext.check_pid_range(pid)
-            except OverflowError:
-                msg = f"process PID out of range (got {pid})"
-                raise NoSuchProcess(pid, msg=msg)
+            except OverflowError as err:
+                msg = "process PID out of range"
+                raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
         self._name = None
@@ -360,7 +360,7 @@ class Process:
         except NoSuchProcess:
             if not _ignore_nsp:
                 msg = "process PID not found"
-                raise NoSuchProcess(pid, msg=msg)
+                raise NoSuchProcess(pid, msg=msg) from None
             else:
                 self._gone = True
 
@@ -1250,7 +1250,9 @@ class Process:
         def _send_signal(self, sig):
             assert not self.pid < 0, self.pid
             self._raise_if_pid_reused()
-            if self.pid == 0:
+
+            pid, ppid, name = self.pid, self._ppid, self._name
+            if pid == 0:
                 # see "man 2 kill"
                 msg = (
                     "preventing sending signal to process with PID 0 as it "
@@ -1259,17 +1261,17 @@ class Process:
                 )
                 raise ValueError(msg)
             try:
-                os.kill(self.pid, sig)
-            except ProcessLookupError:
-                if OPENBSD and pid_exists(self.pid):
+                os.kill(pid, sig)
+            except ProcessLookupError as err:
+                if OPENBSD and pid_exists(pid):
                     # We do this because os.kill() lies in case of
                     # zombie processes.
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
+                    raise ZombieProcess(pid, name, ppid) from err
                 else:
                     self._gone = True
-                    raise NoSuchProcess(self.pid, self._name)
-            except PermissionError:
-                raise AccessDenied(self.pid, self._name)
+                    raise NoSuchProcess(pid, name) from err
+            except PermissionError as err:
+                raise AccessDenied(pid, name) from err
 
     def send_signal(self, sig):
         """Send a signal *sig* to process pre-emptively checking
@@ -1436,11 +1438,8 @@ class Popen(Process):
             try:
                 return object.__getattribute__(self.__subproc, name)
             except AttributeError:
-                msg = (
-                    f"{self.__class__.__name__} instance has no attribute"
-                    f" '{name}'"
-                )
-                raise AttributeError(msg)
+                msg = f"{self.__class__!r} has no attribute {name!r}"
+                raise AttributeError(msg) from None
 
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:

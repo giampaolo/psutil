@@ -1717,3 +1717,20 @@ class TestPopen(PsutilTestCase):
                     proc.send_signal(signal.CTRL_C_EVENT)
                 with pytest.raises(psutil.NoSuchProcess):
                     proc.send_signal(signal.CTRL_BREAK_EVENT)
+
+    def test__getattribute__(self):
+        cmd = [
+            PYTHON_EXE,
+            "-c",
+            "import time; [time.sleep(0.1) for x in range(100)];",
+        ]
+        with psutil.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=PYTHON_EXE_ENV,
+        ) as proc:
+            proc.terminate()
+            proc.wait()
+            with pytest.raises(AttributeError):
+                proc.foo  # noqa: B018

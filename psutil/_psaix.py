@@ -317,18 +317,19 @@ def wrap_exceptions(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
+        pid, ppid, name = self.pid, self._ppid, self._name
         try:
             return fun(self, *args, **kwargs)
-        except (FileNotFoundError, ProcessLookupError):
+        except (FileNotFoundError, ProcessLookupError) as err:
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
-            if not pid_exists(self.pid):
-                raise NoSuchProcess(self.pid, self._name)
+            if not pid_exists(pid):
+                raise NoSuchProcess(pid, name) from err
             else:
-                raise ZombieProcess(self.pid, self._name, self._ppid)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
+                raise ZombieProcess(pid, name, ppid) from err
+        except PermissionError as err:
+            raise AccessDenied(pid, name) from err
 
     return wrapper
 
@@ -556,10 +557,10 @@ class Process:
         def io_counters(self):
             try:
                 rc, wc, rb, wb = cext.proc_io_counters(self.pid)
-            except OSError:
+            except OSError as err:
                 # if process is terminated, proc_io_counters returns OSError
                 # instead of NSP
                 if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
+                    raise NoSuchProcess(self.pid, self._name) from err
                 raise
             return _common.pio(rc, wc, rb, wb)
