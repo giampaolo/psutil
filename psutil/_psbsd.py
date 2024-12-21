@@ -592,19 +592,16 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except ProcessLookupError:
+        except ProcessLookupError as e:
             if is_zombie(self.pid):
-                raise ZombieProcess(self.pid, self._name, self._ppid)
+                raise ZombieProcess(self.pid, self._name, self._ppid) from e
             else:
-                raise NoSuchProcess(self.pid, self._name)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
-        except OSError:
-            if self.pid == 0:
-                if 0 in pids():
-                    raise AccessDenied(self.pid, self._name)
-                else:
-                    raise
+                raise NoSuchProcess(self.pid, self._name) from e
+        except PermissionError as e:
+            raise AccessDenied(self.pid, self._name) from e
+        except OSError as e:
+            if self.pid == 0 and 0 in pids():
+                raise AccessDenied(self.pid, self._name) from e
             raise
 
     return wrapper
@@ -615,16 +612,16 @@ def wrap_exceptions_procfs(inst):
     """Same as above, for routines relying on reading /proc fs."""
     try:
         yield
-    except (ProcessLookupError, FileNotFoundError):
+    except (ProcessLookupError, FileNotFoundError) as e:
         # ENOENT (no such file or directory) gets raised on open().
         # ESRCH (no such process) can get raised on read() if
         # process is gone in meantime.
         if is_zombie(inst.pid):
-            raise ZombieProcess(inst.pid, inst._name, inst._ppid)
+            raise ZombieProcess(inst.pid, inst._name, inst._ppid) from e
         else:
-            raise NoSuchProcess(inst.pid, inst._name)
-    except PermissionError:
-        raise AccessDenied(inst.pid, inst._name)
+            raise NoSuchProcess(inst.pid, inst._name) from e
+    except PermissionError as e:
+        raise AccessDenied(inst.pid, inst._name) from e
 
 
 class Process:
@@ -951,7 +948,7 @@ class Process:
                                 f"invalid CPU {cpu!r} (choose between"
                                 f" {allcpus})"
                             )
-                            raise ValueError(msg)
+                            raise ValueError(msg) from err
                 raise
 
         @wrap_exceptions

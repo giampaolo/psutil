@@ -897,7 +897,7 @@ def print_color(
                 f"invalid color {color!r}; choose between"
                 f" {list(colors.keys())!r}"
             )
-            raise ValueError(msg)
+            raise ValueError(msg) from None
         if bold and color <= 7:
             color += 8
 
