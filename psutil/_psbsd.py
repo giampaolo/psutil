@@ -590,18 +590,19 @@ def wrap_exceptions(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
+        pid, ppid, name = self.pid, self._ppid, self._name
         try:
             return fun(self, *args, **kwargs)
-        except ProcessLookupError as e:
-            if is_zombie(self.pid):
-                raise ZombieProcess(self.pid, self._name, self._ppid) from e
+        except ProcessLookupError as err:
+            if is_zombie(pid):
+                raise ZombieProcess(pid, name, ppid) from err
             else:
-                raise NoSuchProcess(self.pid, self._name) from e
-        except PermissionError as e:
-            raise AccessDenied(self.pid, self._name) from e
-        except OSError as e:
-            if self.pid == 0 and 0 in pids():
-                raise AccessDenied(self.pid, self._name) from e
+                raise NoSuchProcess(pid, name) from err
+        except PermissionError as err:
+            raise AccessDenied(pid, name) from err
+        except OSError as err:
+            if pid == 0 and 0 in pids():
+                raise AccessDenied(pid, name) from err
             raise
 
     return wrapper
@@ -610,18 +611,19 @@ def wrap_exceptions(fun):
 @contextlib.contextmanager
 def wrap_exceptions_procfs(inst):
     """Same as above, for routines relying on reading /proc fs."""
+    pid, name, ppid = inst.pid, inst._name, inst._ppid
     try:
         yield
-    except (ProcessLookupError, FileNotFoundError) as e:
+    except (ProcessLookupError, FileNotFoundError) as err:
         # ENOENT (no such file or directory) gets raised on open().
         # ESRCH (no such process) can get raised on read() if
         # process is gone in meantime.
         if is_zombie(inst.pid):
-            raise ZombieProcess(inst.pid, inst._name, inst._ppid) from e
+            raise ZombieProcess(pid, name, ppid) from err
         else:
-            raise NoSuchProcess(inst.pid, inst._name) from e
-    except PermissionError as e:
-        raise AccessDenied(inst.pid, inst._name) from e
+            raise NoSuchProcess(pid, name) from err
+    except PermissionError as err:
+        raise AccessDenied(pid, name) from err
 
 
 class Process:
@@ -698,12 +700,11 @@ class Process:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
                 if err.errno == errno.EINVAL:
-                    # fmt: off
+                    pid, name, ppid = self.pid, self._name, self._ppid
                     if is_zombie(self.pid):
-                        raise ZombieProcess(self.pid, self._name, self._ppid) from err  # noqa: E501
+                        raise ZombieProcess(pid, name, ppid) from err
                     elif not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name, self._ppid) from err  # noqa: E501
-                    # fmt: on
+                        raise NoSuchProcess(pid, name, ppid) from err
                     else:
                         # XXX: this happens with unicode tests. It means the C
                         # routine is unable to decode invalid unicode chars.

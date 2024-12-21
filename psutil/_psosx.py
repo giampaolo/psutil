@@ -343,15 +343,16 @@ def wrap_exceptions(fun):
 
     @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
+        pid, ppid, name = self.pid, self._ppid, self._name
         try:
             return fun(self, *args, **kwargs)
-        except ProcessLookupError as e:
-            if is_zombie(self.pid):
-                raise ZombieProcess(self.pid, self._name, self._ppid) from e
+        except ProcessLookupError as err:
+            if is_zombie(pid):
+                raise ZombieProcess(pid, name, ppid) from err
             else:
-                raise NoSuchProcess(self.pid, self._name) from e
-        except PermissionError as e:
-            raise AccessDenied(self.pid, self._name) from e
+                raise NoSuchProcess(pid, name) from err
+        except PermissionError as err:
+            raise AccessDenied(pid, name) from err
 
     return wrapper
 

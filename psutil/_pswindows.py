@@ -519,19 +519,19 @@ class WindowsService:  # noqa: PLW1641
         """
         try:
             yield
-        except OSError as ex:
-            if is_permission_err(ex):
+        except OSError as err:
+            name = self._name
+            if is_permission_err(err):
                 msg = (
-                    f"service {self._name!r} is not querable (not enough"
-                    " privileges)"
+                    f"service {name!r} is not querable (not enough privileges)"
                 )
-                raise AccessDenied(pid=None, name=self._name, msg=msg) from ex
-            elif ex.winerror in {
+                raise AccessDenied(pid=None, name=name, msg=msg) from err
+            elif err.winerror in {
                 cext.ERROR_INVALID_NAME,
                 cext.ERROR_SERVICE_DOES_NOT_EXIST,
             }:
-                msg = f"service {self._name!r} does not exist"
-                raise NoSuchProcess(pid=None, name=self._name, msg=msg) from ex
+                msg = f"service {name!r} does not exist"
+                raise NoSuchProcess(pid=None, name=name, msg=msg) from err
             else:
                 raise
 
@@ -879,9 +879,9 @@ class Process:
             # May also be None if OpenProcess() failed with
             # ERROR_INVALID_PARAMETER, meaning PID is already gone.
             exit_code = cext.proc_wait(self.pid, cext_timeout)
-        except cext.TimeoutExpired as e:
+        except cext.TimeoutExpired as err:
             # WaitForSingleObject() returned WAIT_TIMEOUT. Just raise.
-            raise TimeoutExpired(timeout, self.pid, self._name) from e
+            raise TimeoutExpired(timeout, self.pid, self._name) from err
         except cext.TimeoutAbandoned:
             # WaitForSingleObject() returned WAIT_ABANDONED, see:
             # https://github.com/giampaolo/psutil/issues/1224

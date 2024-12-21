@@ -325,9 +325,9 @@ class Process:
                 raise ValueError(msg)
             try:
                 _psplatform.cext.check_pid_range(pid)
-            except OverflowError as e:
+            except OverflowError as err:
                 msg = "process PID out of range"
-                raise NoSuchProcess(pid, msg=msg) from e
+                raise NoSuchProcess(pid, msg=msg) from err
 
         self._pid = pid
         self._name = None
@@ -1260,18 +1260,17 @@ class Process:
                 raise ValueError(msg)
             try:
                 os.kill(self.pid, sig)
-            except ProcessLookupError as e:
+            except ProcessLookupError as err:
                 if OPENBSD and pid_exists(self.pid):
                     # We do this because os.kill() lies in case of
                     # zombie processes.
-                    raise ZombieProcess(
-                        self.pid, self._name, self._ppid
-                    ) from e
+                    ppid = self._ppid
+                    raise ZombieProcess(self.pid, self._name, ppid) from err
                 else:
                     self._gone = True
-                    raise NoSuchProcess(self.pid, self._name) from e
-            except PermissionError as e:
-                raise AccessDenied(self.pid, self._name) from e
+                    raise NoSuchProcess(self.pid, self._name) from err
+            except PermissionError as err:
+                raise AccessDenied(self.pid, self._name) from err
 
     def send_signal(self, sig):
         """Send a signal *sig* to process pre-emptively checking
