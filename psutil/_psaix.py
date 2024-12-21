@@ -556,10 +556,10 @@ class Process:
         def io_counters(self):
             try:
                 rc, wc, rb, wb = cext.proc_io_counters(self.pid)
-            except OSError:
+            except OSError as err:
                 # if process is terminated, proc_io_counters returns OSError
                 # instead of NSP
                 if not pid_exists(self.pid):
-                    raise NoSuchProcess(self.pid, self._name)
+                    raise NoSuchProcess(self.pid, self._name) from err
                 raise
             return _common.pio(rc, wc, rb, wb)

@@ -867,12 +867,12 @@ class NetConnections:
                         socket.AF_INET6,
                         struct.pack('<4I', *struct.unpack('<4I', ip)),
                     )
-            except ValueError:
+            except ValueError as err:
                 # see: https://github.com/giampaolo/psutil/issues/623
                 if not supports_ipv6():
-                    raise _Ipv6UnsupportedError
+                    raise _Ipv6UnsupportedError from None
                 else:
-                    raise
+                    raise err
         return _common.addr(ip, port)
 
     @staticmethod
@@ -934,7 +934,7 @@ class NetConnections:
                     msg = (
                         f"error while parsing {file}; malformed line {line!r}"
                     )
-                    raise RuntimeError(msg)
+                    raise RuntimeError(msg)  # noqa: B904
                 if inode in inodes:  # noqa
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
@@ -1859,7 +1859,7 @@ class Process:
                     f"{err.args[0]!r} field was not found in {fname}; found"
                     f" fields are {fields!r}"
                 )
-                raise ValueError(msg)
+                raise ValueError(msg) from None
 
     @wrap_exceptions
     def cpu_times(self):
@@ -2011,7 +2011,7 @@ class Process:
                                     "don't know how to interpret line"
                                     f" {line!r}"
                                 )
-                                raise ValueError(msg)
+                                raise ValueError(msg) from None
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
@@ -2156,13 +2156,13 @@ class Process:
                                 f"invalid CPU {cpu!r}; choose between"
                                 f" {eligible_cpus!r}"
                             )
-                            raise ValueError(msg)
+                            raise ValueError(msg) from None
                         if cpu not in eligible_cpus:
                             msg = (
                                 f"CPU number {cpu} is not eligible; choose"
                                 f" between {eligible_cpus}"
                             )
-                            raise ValueError(msg)
+                            raise ValueError(msg) from err
                 raise
 
     # only starting from kernel 2.6.13
