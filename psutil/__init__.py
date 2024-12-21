@@ -360,7 +360,7 @@ class Process:
         except NoSuchProcess:
             if not _ignore_nsp:
                 msg = "process PID not found"
-                raise NoSuchProcess(pid, msg=msg)
+                raise NoSuchProcess(pid, msg=msg) from None
             else:
                 self._gone = True
 
