@@ -867,7 +867,7 @@ class NetConnections:
                         socket.AF_INET6,
                         struct.pack('<4I', *struct.unpack('<4I', ip)),
                     )
-            except ValueError as err:
+            except ValueError:
                 # see: https://github.com/giampaolo/psutil/issues/623
                 if not supports_ipv6():
                     raise _Ipv6UnsupportedError from None
@@ -892,7 +892,7 @@ class NetConnections:
                         f"error while parsing {file}; malformed line"
                         f" {lineno} {line!r}"
                     )
-                    raise RuntimeError(msg)
+                    raise RuntimeError(msg) from None
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the

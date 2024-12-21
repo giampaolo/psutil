@@ -345,13 +345,13 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except ProcessLookupError:
+        except ProcessLookupError as e:
             if is_zombie(self.pid):
-                raise ZombieProcess(self.pid, self._name, self._ppid)
+                raise ZombieProcess(self.pid, self._name, self._ppid) from e
             else:
-                raise NoSuchProcess(self.pid, self._name)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
+                raise NoSuchProcess(self.pid, self._name) from e
+        except PermissionError as e:
+            raise AccessDenied(self.pid, self._name) from e
 
     return wrapper
 

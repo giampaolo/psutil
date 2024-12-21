@@ -1270,8 +1270,8 @@ class Process:
                 else:
                     self._gone = True
                     raise NoSuchProcess(self.pid, self._name) from e
-            except PermissionError:
-                raise AccessDenied(self.pid, self._name)
+            except PermissionError as e:
+                raise AccessDenied(self.pid, self._name) from e
 
     def send_signal(self, sig):
         """Send a signal *sig* to process pre-emptively checking
