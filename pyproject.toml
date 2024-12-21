@@ -223,10 +223,11 @@ trailing_comma_inline_array = true
 [tool.cibuildwheel]
 skip = [
     "*-musllinux*",
-    "cp313-win*",  # pywin32 is not available on cp313 yet
     "cp3{7,8,9,10,11,12}-*linux_{aarch64,ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
 ]
+enable = ["cpython-freethreading"]
+test-skip = ["cp3*t-win*"]  # pywin32 is not available for free-threaded python yet, https://github.com/mhammond/pywin32/issues/2303
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]

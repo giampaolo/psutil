@@ -7,6 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 2476_: Build Python 3.13t (free-threading) wheels
 - 2480_: Python 2.7 is no longer supported. Latest version supporting Python
   2.7 is psutil 6.1.X. Install it with: ``pip2 install psutil==6.1.*``.
 - 2490_: removed long deprecated ``Process.memory_info_ex()`` method. It was
