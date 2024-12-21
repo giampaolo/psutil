@@ -1250,7 +1250,9 @@ class Process:
         def _send_signal(self, sig):
             assert not self.pid < 0, self.pid
             self._raise_if_pid_reused()
-            if self.pid == 0:
+
+            pid, ppid, name = self.pid, self._ppid, self._name
+            if pid == 0:
                 # see "man 2 kill"
                 msg = (
                     "preventing sending signal to process with PID 0 as it "
@@ -1259,18 +1261,17 @@ class Process:
                 )
                 raise ValueError(msg)
             try:
-                os.kill(self.pid, sig)
+                os.kill(pid, sig)
             except ProcessLookupError as err:
-                if OPENBSD and pid_exists(self.pid):
+                if OPENBSD and pid_exists(pid):
                     # We do this because os.kill() lies in case of
                     # zombie processes.
-                    ppid = self._ppid
-                    raise ZombieProcess(self.pid, self._name, ppid) from err
+                    raise ZombieProcess(pid, name, ppid) from err
                 else:
                     self._gone = True
-                    raise NoSuchProcess(self.pid, self._name) from err
+                    raise NoSuchProcess(pid, name) from err
             except PermissionError as err:
-                raise AccessDenied(self.pid, self._name) from err
+                raise AccessDenied(pid, name) from err
 
     def send_signal(self, sig):
         """Send a signal *sig* to process pre-emptively checking
