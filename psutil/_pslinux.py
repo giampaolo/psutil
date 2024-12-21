@@ -871,8 +871,7 @@ class NetConnections:
                 # see: https://github.com/giampaolo/psutil/issues/623
                 if not supports_ipv6():
                     raise _Ipv6UnsupportedError from None
-                else:
-                    raise err
+                raise
         return _common.addr(ip, port)
 
     @staticmethod
