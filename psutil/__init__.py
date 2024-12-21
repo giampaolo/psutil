@@ -1260,14 +1260,16 @@ class Process:
                 raise ValueError(msg)
             try:
                 os.kill(self.pid, sig)
-            except ProcessLookupError:
+            except ProcessLookupError as e:
                 if OPENBSD and pid_exists(self.pid):
                     # We do this because os.kill() lies in case of
                     # zombie processes.
-                    raise ZombieProcess(self.pid, self._name, self._ppid)
+                    raise ZombieProcess(
+                        self.pid, self._name, self._ppid
+                    ) from e
                 else:
                     self._gone = True
-                    raise NoSuchProcess(self.pid, self._name)
+                    raise NoSuchProcess(self.pid, self._name) from e
             except PermissionError:
                 raise AccessDenied(self.pid, self._name)
 
