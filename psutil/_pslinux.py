@@ -1645,18 +1645,18 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except PermissionError:
-            raise AccessDenied(self.pid, self._name)
-        except ProcessLookupError:
+        except PermissionError as e:
+            raise AccessDenied(self.pid, self._name) from e
+        except ProcessLookupError as e:
             self._raise_if_zombie()
-            raise NoSuchProcess(self.pid, self._name)
-        except FileNotFoundError:
+            raise NoSuchProcess(self.pid, self._name) from e
+        except FileNotFoundError as e:
             self._raise_if_zombie()
             # /proc/PID directory may still exist, but the files within
             # it may not, indicating the process is gone, see:
             # https://github.com/giampaolo/psutil/issues/2418
             if not os.path.exists(f"{self._procfs_path}/{self.pid}/stat"):
-                raise NoSuchProcess(self.pid, self._name)
+                raise NoSuchProcess(self.pid, self._name) from e
             raise
 
     return wrapper
