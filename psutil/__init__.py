@@ -361,8 +361,7 @@ class Process:
             if not _ignore_nsp:
                 msg = "process PID not found"
                 raise NoSuchProcess(pid, msg=msg) from None
-            else:
-                self._gone = True
+            self._gone = True
 
     def _get_ident(self):
         """Return a (pid, uid) tuple which is supposed to identify a
@@ -1267,9 +1266,8 @@ class Process:
                     # We do this because os.kill() lies in case of
                     # zombie processes.
                     raise ZombieProcess(pid, name, ppid) from err
-                else:
-                    self._gone = True
-                    raise NoSuchProcess(pid, name) from err
+                self._gone = True
+                raise NoSuchProcess(pid, name) from err
             except PermissionError as err:
                 raise AccessDenied(pid, name) from err
 

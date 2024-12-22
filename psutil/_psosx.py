@@ -349,8 +349,7 @@ def wrap_exceptions(fun):
         except ProcessLookupError as err:
             if is_zombie(pid):
                 raise ZombieProcess(pid, name, ppid) from err
-            else:
-                raise NoSuchProcess(pid, name) from err
+            raise NoSuchProcess(pid, name) from err
         except PermissionError as err:
             raise AccessDenied(pid, name) from err
 

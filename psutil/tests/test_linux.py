@@ -214,8 +214,7 @@ def mock_open_exception(for_path, exc):
     def open_mock(name, *args, **kwargs):
         if name == for_path:
             raise exc
-        else:
-            return orig_open(name, *args, **kwargs)
+        return orig_open(name, *args, **kwargs)
 
     orig_open = open
     with mock.patch("builtins.open", create=True, side_effect=open_mock) as m:
@@ -277,12 +276,9 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         lines = out.split('\n')
         if 'available' not in lines[0]:
             raise pytest.skip("free does not support 'available' column")
-        else:
-            free_value = int(lines[1].split()[-1])
-            psutil_value = psutil.virtual_memory().available
-            assert (
-                abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
-            ), f"{free_value} {psutil_value} \n{out}"
+        free_value = int(lines[1].split()[-1])
+        psutil_value = psutil.virtual_memory().available
+        assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
@@ -889,7 +885,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/scaling_cur_freq'):
                 raise FileNotFoundError
-            elif name.endswith('/cpuinfo_cur_freq'):
+            if name.endswith('/cpuinfo_cur_freq'):
                 return io.BytesIO(b"200000")
             elif name == '/proc/cpuinfo':
                 return io.BytesIO(b"cpu MHz     : 200")
@@ -1606,7 +1602,7 @@ class TestSensorsBattery(PsutilTestCase):
         def open_mock(name, *args, **kwargs):
             if name.endswith(('AC0/online', 'AC/online')):
                 raise FileNotFoundError
-            elif name.endswith("/status"):
+            if name.endswith("/status"):
                 return io.StringIO("charging")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -1635,7 +1631,7 @@ class TestSensorsBattery(PsutilTestCase):
         def open_mock(name, *args, **kwargs):
             if name.endswith(('AC0/online', 'AC/online')):
                 raise FileNotFoundError
-            elif name.endswith("/status"):
+            if name.endswith("/status"):
                 return io.StringIO("discharging")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -1654,7 +1650,7 @@ class TestSensorsBattery(PsutilTestCase):
                 '/sys/class/power_supply/AC/online',
             )):
                 raise FileNotFoundError
-            elif name.startswith("/sys/class/power_supply/BAT0/status"):
+            if name.startswith("/sys/class/power_supply/BAT0/status"):
                 return io.BytesIO(b"???")
             else:
                 return orig_open(name, *args, **kwargs)
@@ -2030,8 +2026,7 @@ class TestProcess(PsutilTestCase):
         def open_mock_1(name, *args, **kwargs):
             if name.startswith(f"/proc/{os.getpid()}/task"):
                 raise FileNotFoundError
-            else:
-                return orig_open(name, *args, **kwargs)
+            return orig_open(name, *args, **kwargs)
 
         orig_open = open
         with mock.patch("builtins.open", side_effect=open_mock_1) as m:
@@ -2044,8 +2039,7 @@ class TestProcess(PsutilTestCase):
         def open_mock_2(name, *args, **kwargs):
             if name.startswith(f"/proc/{os.getpid()}/task"):
                 raise PermissionError
-            else:
-                return orig_open(name, *args, **kwargs)
+            return orig_open(name, *args, **kwargs)
 
         with mock.patch("builtins.open", side_effect=open_mock_2):
             with pytest.raises(psutil.AccessDenied):

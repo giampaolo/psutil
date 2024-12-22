@@ -596,8 +596,7 @@ def wrap_exceptions(fun):
         except ProcessLookupError as err:
             if is_zombie(pid):
                 raise ZombieProcess(pid, name, ppid) from err
-            else:
-                raise NoSuchProcess(pid, name) from err
+            raise NoSuchProcess(pid, name) from err
         except PermissionError as err:
             raise AccessDenied(pid, name) from err
         except OSError as err:
@@ -703,13 +702,12 @@ class Process:
                     pid, name, ppid = self.pid, self._name, self._ppid
                     if is_zombie(self.pid):
                         raise ZombieProcess(pid, name, ppid) from err
-                    elif not pid_exists(self.pid):
+                    if not pid_exists(self.pid):
                         raise NoSuchProcess(pid, name, ppid) from err
-                    else:
-                        # XXX: this happens with unicode tests. It means the C
-                        # routine is unable to decode invalid unicode chars.
-                        debug(f"ignoring {err!r} and returning an empty list")
-                        return []
+                    # XXX: this happens with unicode tests. It means the C
+                    # routine is unable to decode invalid unicode chars.
+                    debug(f"ignoring {err!r} and returning an empty list")
+                    return []
                 else:
                     raise
         else:

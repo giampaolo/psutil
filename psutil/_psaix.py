@@ -326,8 +326,7 @@ def wrap_exceptions(fun):
             # process is gone in meantime.
             if not pid_exists(pid):
                 raise NoSuchProcess(pid, name) from err
-            else:
-                raise ZombieProcess(pid, name, ppid) from err
+            raise ZombieProcess(pid, name, ppid) from err
         except PermissionError as err:
             raise AccessDenied(pid, name) from err
 

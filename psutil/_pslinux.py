@@ -1057,8 +1057,7 @@ def net_if_stats():
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
                 raise
-            else:
-                debug(err)
+            debug(err)
         else:
             output_flags = ','.join(flags)
             isup = 'running' in flags
@@ -2075,8 +2074,7 @@ class Process:
                 " probably older than 2.6.23"
             )
             raise NotImplementedError(msg)
-        else:
-            return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
+        return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):

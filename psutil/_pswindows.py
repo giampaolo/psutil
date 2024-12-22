@@ -1080,9 +1080,8 @@ class Process:
                 if not isinstance(cpu, int):
                     msg = f"invalid CPU {cpu!r}; an integer is required"
                     raise TypeError(msg)
-                else:
-                    msg = f"invalid CPU {cpu!r}"
-                    raise ValueError(msg)
+                msg = f"invalid CPU {cpu!r}"
+                raise ValueError(msg)
 
         bitmask = to_bitmask(value)
         cext.proc_cpu_affinity_set(self.pid, bitmask)

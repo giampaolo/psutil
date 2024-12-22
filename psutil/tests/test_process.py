@@ -654,12 +654,11 @@ class TestProcess(PsutilTestCase):
                     except AssertionError:
                         if not LINUX:
                             raise
-                        else:
-                            # https://github.com/giampaolo/psutil/issues/759
-                            with open_text('/proc/self/smaps') as f:
-                                data = f.read()
-                            if f"{nt.path} (deleted)" not in data:
-                                raise
+                        # https://github.com/giampaolo/psutil/issues/759
+                        with open_text('/proc/self/smaps') as f:
+                            data = f.read()
+                        if f"{nt.path} (deleted)" not in data:
+                            raise
                 elif '64' not in os.path.basename(nt.path):
                     # XXX - On Windows we have this strange behavior with
                     # 64 bit dlls: they are visible via explorer but cannot
