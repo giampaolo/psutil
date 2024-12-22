@@ -119,7 +119,7 @@ def wait_pid(
             # can't determine its exit status code.
             while _pid_exists(pid):
                 interval = sleep(interval)
-            return
+            return None
         else:
             if retpid == 0:
                 # WNOHANG flag was used and PID is still running.

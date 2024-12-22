@@ -23,7 +23,7 @@ def main():
     fans = psutil.sensors_fans()
     if not fans:
         print("no fans detected")
-        return
+        return None
     for name, entries in fans.items():
         print(name)
         for entry in entries:

@@ -23,6 +23,7 @@ select = [
     "D301",  # Use `r"""` if any backslashes in a docstring
     "D403",  # [*] First word of the first line should be capitalized
     "PERF102",  # [*] When using only the keys of a dict use the `keys()` method
+    "RET502",  # [*] Do not implicitly `return None` in function able to return non-`None` value
     "RET506",  # [*] Unnecessary `else` after `raise` statement
     "RET507",  # Unnecessary `elif` after `continue` statement
     "S113",  # Probable use of requests call without timeout

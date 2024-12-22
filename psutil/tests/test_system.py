@@ -478,7 +478,7 @@ class TestCpuAPIs(PsutilTestCase):
                 t1, t2 = psutil._cpu_busy_time(t1), psutil._cpu_busy_time(t2)
                 difference = t2 - t1
                 if difference >= 0.05:
-                    return
+                    return None
 
     @pytest.mark.skipif(
         CI_TESTING and OPENBSD, reason="unreliable on OPENBSD + CI"
