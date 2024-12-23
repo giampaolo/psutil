@@ -84,7 +84,6 @@ ignore = [
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
-    "SIM115",  # Use context handler for opening files
     "SIM117",  # Use a single `with` statement with multiple contexts instead of nested `with` statements
     "SLF",  # flake8-self
     "TD",  # all TODOs, XXXs, etc.

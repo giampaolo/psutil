@@ -263,7 +263,7 @@ def _get_py_exe():
 
 
 PYTHON_EXE, PYTHON_EXE_ENV = _get_py_exe()
-DEVNULL = open(os.devnull, 'r+')
+DEVNULL = open(os.devnull, 'r+')  # noqa: SIM115
 atexit.register(DEVNULL.close)
 
 VALID_PROC_STATUSES = [

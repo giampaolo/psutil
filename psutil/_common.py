@@ -753,7 +753,7 @@ def open_text(fname):
     # See:
     # https://github.com/giampaolo/psutil/issues/675
     # https://github.com/giampaolo/psutil/pull/733
-    fobj = open(
+    fobj = open(  # noqa: SIM115
         fname,
         buffering=FILE_READ_BUFFER_SIZE,
         encoding=ENCODING,
