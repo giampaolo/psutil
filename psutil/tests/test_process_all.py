@@ -486,7 +486,7 @@ class TestPidsRange(PsutilTestCase):
     def test_it(self):
         def is_linux_tid(pid):
             try:
-                f = open(f"/proc/{pid}/status", "rb")
+                f = open(f"/proc/{pid}/status", "rb")  # noqa: SIM115
             except FileNotFoundError:
                 return False
             else:

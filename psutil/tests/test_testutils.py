@@ -407,7 +407,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     def test_unclosed_files(self):
         def fun():
-            f = open(__file__)
+            f = open(__file__)  # noqa: SIM115
             self.addCleanup(f.close)
             box.append(f)
 
