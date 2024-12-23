@@ -38,6 +38,11 @@
     #include <net/if_media.h>
     #include <net/if.h>
 #endif
+#if defined(PSUTIL_GNU)
+    #include <netdb.h>
+    #include <netinet/in.h>
+    #include <net/if.h>
+#endif
 #if defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>

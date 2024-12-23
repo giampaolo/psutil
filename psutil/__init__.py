@@ -14,6 +14,7 @@ sensors) in Python. Supported platforms:
  - NetBSD
  - Sun Solaris
  - AIX
+ - GNU/Hurd
 
 Supported Python versions are cPython 3.6+ and PyPy.
 """
@@ -52,6 +53,7 @@ from ._common import CONN_SYN_RECV
 from ._common import CONN_SYN_SENT
 from ._common import CONN_TIME_WAIT
 from ._common import FREEBSD  # NOQA
+from ._common import GNU
 from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD  # NOQA
@@ -97,6 +99,11 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
     from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
     from ._pslinux import IOPRIO_CLASS_RT  # NOQA
+
+elif GNU:
+    PROCFS_PATH = "/proc"
+    from . import _psgnu as _psplatform
+    from ._psgnu import IOPRIO_CLASS_NONE  # NOQA
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
