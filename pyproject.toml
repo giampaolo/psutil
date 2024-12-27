@@ -58,8 +58,8 @@ ignore = [
     "N806",  # Variable X in function should be lowercase.
     "N818",  # Exception name `FooBar` should be named with an Error suffix
     "PERF",  # Perflint
-    # "PGH004",  # Use specific rule codes when using `noqa`
     "PLC0415",  # `import` should be at the top-level of a file
+    "PLC1901",  # PLC1901 `x == ""` can be simplified to `not x` as an empty string is falsey
     "PLC2701",  # Private name import `x` from external module `y`
     "PLR0904",  # Too many public methods (x > y)
     "PLR0911",  # Too many return statements (8 > 6)
