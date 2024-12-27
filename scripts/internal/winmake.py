@@ -33,7 +33,7 @@ WINDOWS = os.name == "nt"
 
 sys.path.insert(0, ROOT_DIR)  # so that we can import setup.py
 
-import setup  # noqa: F401
+import setup  # noqa: E402
 
 
 TEST_DEPS = setup.TEST_DEPS

@@ -1763,9 +1763,7 @@ class TestSensorsTemperatures(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         def glob_mock(path):
-            if path == '/sys/class/hwmon/hwmon*/temp*_*':
-                return []
-            elif path == '/sys/class/hwmon/hwmon*/device/temp*_*':
+            if path == '/sys/class/hwmon/hwmon*/temp*_*' or path == '/sys/class/hwmon/hwmon*/device/temp*_*':  # noqa: SIM116
                 return []
             elif path == '/sys/class/thermal/thermal_zone*':
                 return ['/sys/class/thermal/thermal_zone0']

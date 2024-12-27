@@ -2025,4 +2025,3 @@ def cleanup_test_procs():
 # https://gmpy.dev/blog/2016/how-to-always-execute-exit-functions-in-python
 if POSIX:
     signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(sig))
-g))
