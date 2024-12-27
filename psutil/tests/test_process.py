@@ -624,7 +624,7 @@ class TestProcess(PsutilTestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             assert value >= 0
-            if name == 'vms' and OSX or LINUX:
+            if (name == "vms" and OSX) or LINUX:
                 continue
             assert value <= total
         if LINUX or WINDOWS or MACOS:

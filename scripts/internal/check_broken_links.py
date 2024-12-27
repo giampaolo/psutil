@@ -122,7 +122,7 @@ def parse_py(fname):
                 subidx = i + 1
                 while True:
                     nextline = lines[subidx].strip()
-                    if re.match('^#     .+', nextline):
+                    if re.match(r"^#     .+", nextline):
                         url += nextline[1:].strip()
                     else:
                         break
@@ -143,7 +143,7 @@ def parse_c(fname):
                 subidx = i + 1
                 while True:
                     nextline = lines[subidx].strip()
-                    if re.match('^//     .+', nextline):
+                    if re.match(r"^//     .+", nextline):
                         url += nextline[2:].strip()
                     else:
                         break

@@ -185,7 +185,7 @@ class TestSystemAPIs(PsutilTestCase):
     def test_sensors_battery(self):
         out = sh("pmset -g batt")
         percent = re.search(r"(\d+)%", out).group(1)
-        drawing_from = re.search("Now drawing from '([^']+)'", out).group(1)
+        drawing_from = re.search(r"Now drawing from '([^']+)'", out).group(1)
         power_plugged = drawing_from == "AC Power"
         psutil_result = psutil.sensors_battery()
         assert psutil_result.power_plugged == power_plugged

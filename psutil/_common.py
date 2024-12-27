@@ -269,7 +269,7 @@ class Error(Exception):
         info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
-            if value or name == "pid" and value == 0:
+            if value or (name == "pid" and value == 0):
                 info[name] = value
         return info
 

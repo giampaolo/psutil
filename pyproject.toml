@@ -80,9 +80,9 @@ ignore = [
     "PYI",  # flake8-pyi (python types stuff)
     "Q000",  # Single quotes found but double quotes preferred
     "RET",  # flake8-return
+    "RUF005",  # Consider iterable unpacking instead of concatenation
     "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF022",  # `__all__` is not sorted
-    # "RUF",  # Ruff-specific rules
     "RUF028",  # This suppression comment is invalid
     "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "S",  # flake8-bandit

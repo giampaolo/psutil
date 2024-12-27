@@ -1327,7 +1327,7 @@ def sensors_temperatures():
     basenames2 = glob.glob(
         '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*'
     )
-    repl = re.compile('/sys/devices/platform/coretemp.*/hwmon/')
+    repl = re.compile(r"/sys/devices/platform/coretemp.*/hwmon/")
     for name in basenames2:
         altname = repl.sub('/sys/class/hwmon/', name)
         if altname not in basenames:
