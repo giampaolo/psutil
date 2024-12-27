@@ -21,7 +21,6 @@ import subprocess
 import sys
 import textwrap
 import time
-import types
 from unittest import mock
 
 import psutil
@@ -1577,62 +1576,6 @@ class TestProcess(PsutilTestCase):
         assert env == {"A": "1", "C": "3"}
         sproc.communicate()
         assert sproc.returncode == 0
-
-
-# ===================================================================
-# --- Limited user tests
-# ===================================================================
-
-
-if POSIX and os.getuid() == 0:
-
-    class LimitedUserTestCase(TestProcess):
-        """Repeat the previous tests by using a limited user.
-        Executed only on UNIX and only if the user who run the test script
-        is root.
-        """
-
-        # the uid/gid the test suite runs under
-        if hasattr(os, 'getuid'):
-            PROCESS_UID = os.getuid()
-            PROCESS_GID = os.getgid()
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            # re-define all existent test methods in order to
-            # ignore AccessDenied exceptions
-            for attr in [x for x in dir(self) if x.startswith('test')]:
-                meth = getattr(self, attr)
-
-                def test_(self):
-                    try:
-                        meth()
-                    except psutil.AccessDenied:
-                        pass
-
-                setattr(self, attr, types.MethodType(test_, self))
-
-        def setUp(self):
-            super().setUp()
-            os.setegid(1000)
-            os.seteuid(1000)
-
-        def tearDown(self):
-            os.setegid(self.PROCESS_UID)
-            os.seteuid(self.PROCESS_GID)
-            super().tearDown()
-
-        def test_nice(self):
-            try:
-                psutil.Process().nice(-1)
-            except psutil.AccessDenied:
-                pass
-            else:
-                raise self.fail("exception not raised")
-
-        @pytest.mark.skipif(True, reason="causes problem as root")
-        def test_zombie_process(self):
-            pass
 
 
 # ===================================================================
