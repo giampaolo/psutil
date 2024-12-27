@@ -1606,7 +1606,7 @@ if POSIX and os.getuid() == 0:
 
                 def test_(self):
                     try:
-                        meth()  # noqa
+                        meth()
                     except psutil.AccessDenied:
                         pass
 
@@ -1664,10 +1664,10 @@ class TestPopen(PsutilTestCase):
         ) as proc:
             proc.name()
             proc.cpu_times()
-            proc.stdin  # noqa
+            proc.stdin
             assert dir(proc)
             with pytest.raises(AttributeError):
-                proc.foo  # noqa
+                proc.foo
             proc.terminate()
         if POSIX:
             assert proc.wait(5) == -signal.SIGTERM

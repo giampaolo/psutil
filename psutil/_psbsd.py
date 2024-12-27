@@ -192,8 +192,8 @@ def virtual_memory():
         # #2233), so zabbix seems to be wrong. Htop calculates it
         # differently, and the used value seem more realistic, so let's
         # match htop.
-        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162  # noqa
-        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135  # noqa
+        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
+        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135
         used = active + wired
         avail = total - used
     else:
@@ -202,7 +202,7 @@ def virtual_memory():
         # * https://people.freebsd.org/~rse/dist/freebsd-memory
         # * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
         # matches zabbix:
-        # * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143  # noqa
+        # * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
         avail = inactive + cached + free
         used = active + wired + cached
 

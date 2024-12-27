@@ -184,7 +184,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
             conn = self.check_socket(sock)
-            assert conn.raddr == ""  # noqa
+            assert conn.raddr == ""
             assert conn.status == psutil.CONN_NONE
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
@@ -192,7 +192,7 @@ class TestUnconnectedSockets(ConnectionTestCase):
         testfn = self.get_testfn()
         with closing(bind_unix_socket(testfn, type=SOCK_STREAM)) as sock:
             conn = self.check_socket(sock)
-            assert conn.raddr == ""  # noqa
+            assert conn.raddr == ""
             assert conn.status == psutil.CONN_NONE
 
 
@@ -239,8 +239,8 @@ class TestConnectedSocket(ConnectionTestCase):
             assert len(cons) == 2
             if LINUX or FREEBSD or SUNOS or OPENBSD:
                 # remote path is never set
-                assert cons[0].raddr == ""  # noqa
-                assert cons[1].raddr == ""  # noqa
+                assert cons[0].raddr == ""
+                assert cons[1].raddr == ""
                 # one local address should though
                 assert testfn == (cons[0].laddr or cons[1].laddr)
             else:
@@ -356,14 +356,14 @@ class TestFilters(ConnectionTestCase):
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
         tcp4_proc = self.pyrun(tcp4_template)
-        tcp4_addr = eval(wait_for_file(testfile, delete=True))  # noqa
+        tcp4_addr = eval(wait_for_file(testfile, delete=True))
         udp4_proc = self.pyrun(udp4_template)
-        udp4_addr = eval(wait_for_file(testfile, delete=True))  # noqa
+        udp4_addr = eval(wait_for_file(testfile, delete=True))
         if supports_ipv6():
             tcp6_proc = self.pyrun(tcp6_template)
-            tcp6_addr = eval(wait_for_file(testfile, delete=True))  # noqa
+            tcp6_addr = eval(wait_for_file(testfile, delete=True))
             udp6_proc = self.pyrun(udp6_template)
-            udp6_addr = eval(wait_for_file(testfile, delete=True))  # noqa
+            udp6_addr = eval(wait_for_file(testfile, delete=True))
         else:
             tcp6_proc = None
             udp6_proc = None
@@ -560,7 +560,7 @@ class TestMisc(PsutilTestCase):
                 ints.append(num)
                 strs.append(str_)
         if SUNOS:
-            psutil.CONN_IDLE  # noqa
-            psutil.CONN_BOUND  # noqa
+            psutil.CONN_IDLE
+            psutil.CONN_BOUND
         if WINDOWS:
-            psutil.CONN_DELETE_TCB  # noqa
+            psutil.CONN_DELETE_TCB

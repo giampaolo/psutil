@@ -58,17 +58,17 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 # ...so we can import _common.py
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
-from _common import AIX  # NOQA
-from _common import BSD  # NOQA
-from _common import FREEBSD  # NOQA
-from _common import LINUX  # NOQA
-from _common import MACOS  # NOQA
-from _common import NETBSD  # NOQA
-from _common import OPENBSD  # NOQA
-from _common import POSIX  # NOQA
-from _common import SUNOS  # NOQA
-from _common import WINDOWS  # NOQA
-from _common import hilite  # NOQA
+from _common import AIX
+from _common import BSD
+from _common import FREEBSD
+from _common import LINUX
+from _common import MACOS
+from _common import NETBSD
+from _common import OPENBSD
+from _common import POSIX
+from _common import SUNOS
+from _common import WINDOWS
+from _common import hilite
 
 
 PYPY = '__pypy__' in sys.builtin_module_names

@@ -33,7 +33,8 @@ WINDOWS = os.name == "nt"
 
 sys.path.insert(0, ROOT_DIR)  # so that we can import setup.py
 
-import setup  # NOQA
+import setup
+
 
 TEST_DEPS = setup.TEST_DEPS
 DEV_DEPS = setup.DEV_DEPS
@@ -239,7 +240,7 @@ def uninstall():
         os.chdir('C:\\')
         while True:
             try:
-                import psutil  # NOQA
+                import psutil  # noqa: F401
             except ImportError:
                 break
             else:

@@ -51,16 +51,16 @@ from ._common import CONN_NONE
 from ._common import CONN_SYN_RECV
 from ._common import CONN_SYN_SENT
 from ._common import CONN_TIME_WAIT
-from ._common import FREEBSD  # NOQA
+from ._common import FREEBSD
 from ._common import LINUX
 from ._common import MACOS
-from ._common import NETBSD  # NOQA
+from ._common import NETBSD
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
-from ._common import OPENBSD  # NOQA
+from ._common import OPENBSD
 from ._common import OSX  # deprecated alias
-from ._common import POSIX  # NOQA
+from ._common import POSIX
 from ._common import POWER_TIME_UNKNOWN
 from ._common import POWER_TIME_UNLIMITED
 from ._common import STATUS_DEAD
@@ -93,24 +93,24 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-    from ._pslinux import IOPRIO_CLASS_BE  # NOQA
-    from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
-    from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
-    from ._pslinux import IOPRIO_CLASS_RT  # NOQA
+    from ._pslinux import IOPRIO_CLASS_BE  # noqa: F401
+    from ._pslinux import IOPRIO_CLASS_IDLE  # noqa: F401
+    from ._pslinux import IOPRIO_CLASS_NONE  # noqa: F401
+    from ._pslinux import IOPRIO_CLASS_RT  # noqa: F401
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
-    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # NOQA
-    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # NOQA
-    from ._psutil_windows import HIGH_PRIORITY_CLASS  # NOQA
-    from ._psutil_windows import IDLE_PRIORITY_CLASS  # NOQA
-    from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
-    from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
-    from ._pswindows import CONN_DELETE_TCB  # NOQA
-    from ._pswindows import IOPRIO_HIGH  # NOQA
-    from ._pswindows import IOPRIO_LOW  # NOQA
-    from ._pswindows import IOPRIO_NORMAL  # NOQA
-    from ._pswindows import IOPRIO_VERYLOW  # NOQA
+    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # noqa: F401
+    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # noqa: F401
+    from ._psutil_windows import HIGH_PRIORITY_CLASS  # noqa: F401
+    from ._psutil_windows import IDLE_PRIORITY_CLASS  # noqa: F401
+    from ._psutil_windows import NORMAL_PRIORITY_CLASS  # noqa: F401
+    from ._psutil_windows import REALTIME_PRIORITY_CLASS  # noqa: F401
+    from ._pswindows import CONN_DELETE_TCB  # noqa: F401
+    from ._pswindows import IOPRIO_HIGH  # noqa: F401
+    from ._pswindows import IOPRIO_LOW  # noqa: F401
+    from ._pswindows import IOPRIO_NORMAL  # noqa: F401
+    from ._pswindows import IOPRIO_VERYLOW  # noqa: F401
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -120,8 +120,8 @@ elif BSD:
 
 elif SUNOS:
     from . import _pssunos as _psplatform
-    from ._pssunos import CONN_BOUND  # NOQA
-    from ._pssunos import CONN_IDLE  # NOQA
+    from ._pssunos import CONN_BOUND  # noqa: F401
+    from ._pssunos import CONN_IDLE  # noqa: F401
 
     # This is public writable API which is read from _pslinux.py and
     # _pssunos.py via sys.modules.
@@ -1201,7 +1201,7 @@ class Process:
                     except KeyError:
                         d[path] = nums
                 nt = _psplatform.pmmap_grouped
-                return [nt(path, *d[path]) for path in d]  # NOQA
+                return [nt(path, *d[path]) for path in d]
             else:
                 nt = _psplatform.pmmap_ext
                 return [nt(*x) for x in it]
@@ -1442,7 +1442,7 @@ class Popen(Process):
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
             return self.__subproc.returncode
-        ret = super().wait(timeout)  # noqa
+        ret = super().wait(timeout)
         self.__subproc.returncode = ret
         return ret
 
@@ -1536,7 +1536,7 @@ def process_iter(attrs=None, ad_value=None):
         _pmap = pmap
 
 
-process_iter.cache_clear = lambda: _pmap.clear()  # noqa
+process_iter.cache_clear = lambda: _pmap.clear()
 process_iter.cache_clear.__doc__ = "Clear process_iter() internal cache."
 
 

@@ -18,7 +18,7 @@ import shlex
 import subprocess
 import sys
 
-import pypinfo  # NOQA
+import pypinfo  # noqa: F401
 
 from psutil._common import memoize
 

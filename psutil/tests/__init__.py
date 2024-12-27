@@ -707,7 +707,7 @@ class retry:
             for _ in self:
                 try:
                     return fun(*args, **kwargs)
-                except self.exception as _:  # NOQA
+                except self.exception as _:
                     exc = _
                     if self.logfun is not None:
                         self.logfun(exc)
@@ -1228,7 +1228,7 @@ class TestMemoryLeak(PsutilTestCase):
                 return
             else:
                 if idx == 1:
-                    print()  # NOQA
+                    print()
                 self._log(msg)
                 times += increase
                 prev_mem = mem
@@ -1365,17 +1365,17 @@ def print_sysinfo():
     pinfo.pop('memory_maps', None)
     info['proc'] = pprint.pformat(pinfo)
 
-    print("=" * 70, file=sys.stderr)  # NOQA
+    print("=" * 70, file=sys.stderr)
     for k, v in info.items():
         print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
-    print("=" * 70, file=sys.stderr)  # NOQA
+    print("=" * 70, file=sys.stderr)
     sys.stdout.flush()
 
     # if WINDOWS:
     #     os.system("tasklist")
     # elif shutil.which("ps"):
     #     os.system("ps aux")
-    # print("=" * 70, file=sys.stderr)  # NOQA
+    # print("=" * 70, file=sys.stderr)
 
     sys.stdout.flush()
 
@@ -1621,7 +1621,7 @@ def retry_on_failure(retries=NO_RETRIES):
     """
 
     def logfun(exc):
-        print(f"{exc!r}, retrying", file=sys.stderr)  # NOQA
+        print(f"{exc!r}, retrying", file=sys.stderr)
 
     return retry(
         exception=AssertionError, timeout=None, retries=retries, logfun=logfun

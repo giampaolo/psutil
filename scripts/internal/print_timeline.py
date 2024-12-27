@@ -14,7 +14,7 @@ entry = """\
 - {date}:
   `{ver} <https://pypi.org/project/psutil/{ver}/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#{nodotver}>`__ -
-  `diff <https://github.com/giampaolo/psutil/compare/{prevtag}...{tag}#files_bucket>`__"""  # NOQA
+  `diff <https://github.com/giampaolo/psutil/compare/{prevtag}...{tag}#files_bucket>`__"""
 
 
 def sh(cmd):
