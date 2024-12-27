@@ -1228,7 +1228,7 @@ class TestMemoryLeak(PsutilTestCase):
                 return
             else:
                 if idx == 1:
-                    print()
+                    print()  # noqa: T201
                 self._log(msg)
                 times += increase
                 prev_mem = mem
@@ -1363,12 +1363,12 @@ def print_sysinfo():
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
-    info['proc'] = pprint.pformat(pinfo)
+    info['proc'] = pprint.pformat(pinfo)  # noqa: T201
 
-    print("=" * 70, file=sys.stderr)
+    print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
         print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
-    print("=" * 70, file=sys.stderr)
+    print("=" * 70, file=sys.stderr)  # noqa: T201
     sys.stdout.flush()
 
     # if WINDOWS:
@@ -1621,7 +1621,7 @@ def retry_on_failure(retries=NO_RETRIES):
     """
 
     def logfun(exc):
-        print(f"{exc!r}, retrying", file=sys.stderr)
+        print(f"{exc!r}, retrying", file=sys.stderr)  # noqa: T201
 
     return retry(
         exception=AssertionError, timeout=None, retries=retries, logfun=logfun
@@ -2025,3 +2025,4 @@ def cleanup_test_procs():
 # https://gmpy.dev/blog/2016/how-to-always-execute-exit-functions-in-python
 if POSIX:
     signal.signal(signal.SIGTERM, lambda sig, _: sys.exit(sig))
+g))

@@ -269,9 +269,7 @@ class Error(Exception):
         info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
-            if value:
-                info[name] = value
-            elif name == "pid" and value == 0:
+            if value or name == "pid" and value == 0:
                 info[name] = value
         return info
 
@@ -925,6 +923,6 @@ def debug(msg):
                 msg = f"ignoring {msg}"
             else:
                 msg = f"ignoring {msg!r}"
-        print(
+        print(  # noqa: T201
             f"psutil-debug [{fname}:{lineno}]> {msg}", file=sys.stderr
         )
