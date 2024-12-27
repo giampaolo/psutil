@@ -77,7 +77,9 @@ ignore = [
     "PTH",  # flake8-use-pathlib
     "PYI",  # flake8-pyi (python types stuff)
     "Q000",  # Single quotes found but double quotes preferred
-    "RET",  # flake8-return
+    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
+    "RET504",  # Unnecessary assignment to `result` before `return` statement
+    "RET505",  # [*] Unnecessary `else` after `return` statement
     "RUF005",  # Consider iterable unpacking instead of concatenation
     "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
     "RUF022",  # `__all__` is not sorted
