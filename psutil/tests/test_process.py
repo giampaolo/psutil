@@ -1664,10 +1664,10 @@ class TestPopen(PsutilTestCase):
         ) as proc:
             proc.name()
             proc.cpu_times()
-            proc.stdin
+            proc.stdin  # noqa: B018
             assert dir(proc)
             with pytest.raises(AttributeError):
-                proc.foo
+                proc.foo  # noqa: B018
             proc.terminate()
         if POSIX:
             assert proc.wait(5) == -signal.SIGTERM

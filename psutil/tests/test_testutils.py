@@ -71,7 +71,7 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             while queue:
                 queue.pop()
-                1 / 0
+                1 / 0  # noqa: B018
             return 1
 
         queue = list(range(3))
@@ -85,7 +85,7 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             while queue:
                 queue.pop()
-                1 / 0
+                1 / 0  # noqa: B018
             return 1
 
         queue = list(range(6))
@@ -109,7 +109,7 @@ class TestRetryDecorator(PsutilTestCase):
 
         @retry(retries=5, interval=None, logfun=None)
         def foo():
-            1 / 0
+            1 / 0  # noqa: B018
 
         with pytest.raises(ZeroDivisionError):
             foo()
@@ -119,7 +119,7 @@ class TestRetryDecorator(PsutilTestCase):
     def test_retries_arg(self, sleep):
         @retry(retries=5, interval=1, logfun=None)
         def foo():
-            1 / 0
+            1 / 0  # noqa: B018
 
         with pytest.raises(ZeroDivisionError):
             foo()
@@ -429,7 +429,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     def test_execute_w_exc(self):
         def fun_1():
-            1 / 0
+            1 / 0  # noqa: B018
 
         self.execute_w_exc(ZeroDivisionError, fun_1)
         with pytest.raises(ZeroDivisionError):
@@ -452,7 +452,7 @@ class TestFakePytest(PsutilTestCase):
 
     def test_raises(self):
         with fake_pytest.raises(ZeroDivisionError) as cm:
-            1 / 0
+            1 / 0  # noqa: B018
         assert isinstance(cm.value, ZeroDivisionError)
 
         with fake_pytest.raises(ValueError, match="foo") as cm:

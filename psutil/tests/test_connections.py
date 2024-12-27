@@ -560,7 +560,7 @@ class TestMisc(PsutilTestCase):
                 ints.append(num)
                 strs.append(str_)
         if SUNOS:
-            psutil.CONN_IDLE
-            psutil.CONN_BOUND
+            psutil.CONN_IDLE  # noqa: B018
+            psutil.CONN_BOUND  # noqa: B018
         if WINDOWS:
-            psutil.CONN_DELETE_TCB
+            psutil.CONN_DELETE_TCB  # noqa: B018
