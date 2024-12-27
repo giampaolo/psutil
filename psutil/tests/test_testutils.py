@@ -484,7 +484,7 @@ class TestFakePytest(PsutilTestCase):
         class TestCase(unittest.TestCase):
             @fake_pytest.mark.skipif(True, reason="reason")
             def foo(self):
-                assert 1 == 1
+                assert 1 == 1  # noqa: PLR0133
 
         result = self.run_test_class(TestCase("foo"))
         assert result.wasSuccessful()
@@ -494,7 +494,7 @@ class TestFakePytest(PsutilTestCase):
         class TestCase(unittest.TestCase):
             @fake_pytest.mark.skipif(False, reason="reason")
             def foo(self):
-                assert 1 == 1
+                assert 1 == 1  # noqa: PLR0133
 
         result = self.run_test_class(TestCase("foo"))
         assert result.wasSuccessful()
@@ -504,7 +504,7 @@ class TestFakePytest(PsutilTestCase):
         class TestCase(unittest.TestCase):
             def foo(self):
                 fake_pytest.skip("reason")
-                assert 1 == 0
+                assert 1 == 0  # noqa: PLR0133
 
         result = self.run_test_class(TestCase("foo"))
         assert result.wasSuccessful()
