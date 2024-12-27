@@ -51,7 +51,7 @@ ignore = [
     "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator
-    "FURB192",  # [*] Prefer `min` over `sorted()` to compute the minimum value in a sequence
+    # "FURB192",  # [*] Prefer `min` over `sorted()` to compute the minimum value in a sequence
     "INP",  # flake8-no-pep420
     "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
     "N802",  # Function name X should be lowercase.

@@ -1209,7 +1209,7 @@ class TestProcess(PsutilTestCase):
             except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
-        pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
+        pid = max(table.items(), key=lambda x: x[1])[0]
         if LINUX and pid == 0:
             raise pytest.skip("PID 0")
         p = psutil.Process(pid)
