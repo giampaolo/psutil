@@ -1619,7 +1619,7 @@ def wait_procs(procs, timeout=None, callback=None):
                 check_gone(proc, timeout)
             else:
                 check_gone(proc, max_timeout)
-        alive = alive - gone  # noqa PLR6104
+        alive = alive - gone  # noqa: PLR6104
 
     if alive:
         # Last attempt over processes survived so far.

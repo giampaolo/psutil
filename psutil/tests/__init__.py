@@ -890,7 +890,7 @@ class fake_pytest:
     """
 
     @staticmethod
-    def main(*args, **kw):  # noqa ARG004
+    def main(*args, **kw):  # noqa: ARG004
         """Mimics pytest.main(). It has the same effect as running
         `python3 -m unittest -v` from the project root directory.
         """
