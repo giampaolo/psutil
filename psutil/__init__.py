@@ -1536,7 +1536,7 @@ def process_iter(attrs=None, ad_value=None):
         _pmap = pmap
 
 
-process_iter.cache_clear = lambda: _pmap.clear()
+process_iter.cache_clear = lambda: _pmap.clear()  # noqa: PLW0108
 process_iter.cache_clear.__doc__ = "Clear process_iter() internal cache."
 
 
