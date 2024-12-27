@@ -84,6 +84,7 @@ ignore = [
     "RUF022",  # `__all__` is not sorted
     # "RUF",  # Ruff-specific rules
     "RUF028",  # This suppression comment is invalid
+    "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
