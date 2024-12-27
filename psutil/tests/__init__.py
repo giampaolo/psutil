@@ -714,7 +714,7 @@ class retry:
                     self.sleep()
                     continue
 
-            raise exc  # noqa: PLE0704
+            raise exc
 
         # This way the user of the decorated function can change config
         # parameters.
@@ -1363,7 +1363,7 @@ def print_sysinfo():
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
-    info['proc'] = pprint.pformat(pinfo)  # noqa: T201
+    info['proc'] = pprint.pformat(pinfo)
 
     print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():

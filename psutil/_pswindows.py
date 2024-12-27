@@ -983,10 +983,10 @@ class Process:
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
         raw_file_names = cext.proc_open_files(self.pid)
-        for _file in raw_file_names:
-            _file = convert_dos_path(_file)
-            if isfile_strict(_file):
-                ntuple = _common.popenfile(_file, -1)
+        for file in rawfile_names:
+            file = convert_dos_path(file)
+            if isfile_strict(file):
+                ntuple = _common.popenfile(file, -1)
                 ret.add(ntuple)
         return list(ret)
 
