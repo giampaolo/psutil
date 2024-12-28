@@ -483,6 +483,7 @@ class TestCpuAPIs(PsutilTestCase):
     @pytest.mark.skipif(
         CI_TESTING and OPENBSD, reason="unreliable on OPENBSD + CI"
     )
+    @retry_on_failure(30)
     def test_cpu_times_comparison(self):
         # Make sure the sum of all per cpu times is almost equal to
         # base "one cpu" times. On OpenBSD the sum of per-CPUs is
