@@ -159,7 +159,7 @@ def get_repo():
 
 @functools.lru_cache()
 def _get_event_data():
-    with open(open(os.environ["GITHUB_EVENT_PATH"])) as f:
+    with open(os.environ["GITHUB_EVENT_PATH"]) as f:
         ret = json.load(f)
         pp(ret)
         return ret
