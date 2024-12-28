@@ -191,7 +191,6 @@ def main():
         'as_dict',
         'parent',
         'parents',
-        'memory_info_ex',
         'oneshot',
         'pid',
         'rlimit',

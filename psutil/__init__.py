@@ -1121,10 +1121,6 @@ class Process:
         """
         return self._proc.memory_info()
 
-    @_common.deprecated_method(replacement="memory_info")
-    def memory_info_ex(self):
-        return self.memory_info()
-
     def memory_full_info(self):
         """This method returns the same information as memory_info(),
         plus, on some platform (Linux, macOS, Windows), also provides
@@ -1358,7 +1354,7 @@ _as_dict_attrnames = {
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'memory_info_ex', 'connections', 'oneshot'}
+      'connections', 'oneshot'}
 }
 # fmt: on
 
