@@ -644,7 +644,8 @@ class TestProcess(PsutilTestCase):
             if not nt.path.startswith('['):
                 if QEMU_USER and "/bin/qemu-" in nt.path:
                     continue
-                assert os.path.isabs(nt.path), nt.path
+                if not (BSD and nt.path == "pvclock"):
+                    assert os.path.isabs(nt.path), nt.path
                 if POSIX:
                     try:
                         assert os.path.exists(nt.path) or os.path.islink(
