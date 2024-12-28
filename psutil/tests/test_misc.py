@@ -100,7 +100,7 @@ class TestSpecialMethods(PsutilTestCase):
         assert repr(psutil.Error()) == "psutil.Error()"
 
     def test_error__str__(self):
-        assert str(psutil.Error()) == ""  # noqa
+        assert str(psutil.Error()) == ""
 
     def test_no_such_process__repr__(self):
         assert (

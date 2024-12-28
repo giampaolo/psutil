@@ -934,7 +934,7 @@ class NetConnections:
                         f"error while parsing {file}; malformed line {line!r}"
                     )
                     raise RuntimeError(msg)  # noqa: B904
-                if inode in inodes:  # noqa
+                if inode in inodes:  # noqa: SIM108, SIM401
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
                     pairs = inodes[inode]
@@ -1327,7 +1327,7 @@ def sensors_temperatures():
     basenames2 = glob.glob(
         '/sys/devices/platform/coretemp.*/hwmon/hwmon*/temp*_*'
     )
-    repl = re.compile('/sys/devices/platform/coretemp.*/hwmon/')
+    repl = re.compile(r"/sys/devices/platform/coretemp.*/hwmon/")
     for name in basenames2:
         altname = repl.sub('/sys/class/hwmon/', name)
         if altname not in basenames:
@@ -1480,7 +1480,7 @@ def sensors_battery():
     # Get the first available battery. Usually this is "BAT0", except
     # some rare exceptions:
     # https://github.com/giampaolo/psutil/issues/1238
-    root = os.path.join(POWER_SUPPLY_PATH, sorted(bats)[0])
+    root = os.path.join(POWER_SUPPLY_PATH, min(bats))
 
     # Base metrics.
     energy_now = multi_bcat(root + "/energy_now", root + "/charge_now")

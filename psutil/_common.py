@@ -269,9 +269,7 @@ class Error(Exception):
         info = collections.OrderedDict()
         for name in attrs:
             value = getattr(self, name, None)
-            if value:  # noqa
-                info[name] = value
-            elif name == "pid" and value == 0:
+            if value or (name == "pid" and value == 0):
                 info[name] = value
         return info
 
@@ -876,9 +874,9 @@ def print_color(
 ):  # pragma: no cover
     """Print a colorized version of string."""
     if not term_supports_colors():
-        print(s, file=file)  # NOQA
+        print(s, file=file)
     elif POSIX:
-        print(hilite(s, color, bold), file=file)  # NOQA
+        print(hilite(s, color, bold), file=file)
     else:
         import ctypes
 
@@ -906,7 +904,7 @@ def print_color(
         handle = GetStdHandle(handle_id)
         SetConsoleTextAttribute(handle, color)
         try:
-            print(s, file=file)  # NOQA
+            print(s, file=file)
         finally:
             SetConsoleTextAttribute(handle, DEFAULT_COLOR)
 
@@ -925,6 +923,6 @@ def debug(msg):
                 msg = f"ignoring {msg}"
             else:
                 msg = f"ignoring {msg!r}"
-        print(  # noqa
+        print(  # noqa: T201
             f"psutil-debug [{fname}:{lineno}]> {msg}", file=sys.stderr
         )

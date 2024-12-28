@@ -429,7 +429,7 @@ class TestProcess(WindowsTestCase):
         assert psutil.Process().username() == name
 
     def test_cmdline(self):
-        sys_value = re.sub('[ ]+', ' ', win32api.GetCommandLine()).strip()
+        sys_value = re.sub(r"[ ]+", " ", win32api.GetCommandLine()).strip()
         psutil_value = ' '.join(psutil.Process().cmdline())
         if sys_value[0] == '"' != psutil_value[0]:
             # The PyWin32 command line may retain quotes around argv[0] if they

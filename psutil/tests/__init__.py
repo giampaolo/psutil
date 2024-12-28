@@ -707,14 +707,14 @@ class retry:
             for _ in self:
                 try:
                     return fun(*args, **kwargs)
-                except self.exception as _:  # NOQA
+                except self.exception as _:
                     exc = _
                     if self.logfun is not None:
                         self.logfun(exc)
                     self.sleep()
                     continue
 
-            raise exc  # noqa: PLE0704
+            raise exc
 
         # This way the user of the decorated function can change config
         # parameters.
@@ -890,7 +890,7 @@ class fake_pytest:
     """
 
     @staticmethod
-    def main(*args, **kw):  # noqa ARG004
+    def main(*args, **kw):  # noqa: ARG004
         """Mimics pytest.main(). It has the same effect as running
         `python3 -m unittest -v` from the project root directory.
         """
@@ -1228,7 +1228,7 @@ class TestMemoryLeak(PsutilTestCase):
                 return
             else:
                 if idx == 1:
-                    print()  # NOQA
+                    print()  # noqa: T201
                 self._log(msg)
                 times += increase
                 prev_mem = mem
@@ -1365,17 +1365,17 @@ def print_sysinfo():
     pinfo.pop('memory_maps', None)
     info['proc'] = pprint.pformat(pinfo)
 
-    print("=" * 70, file=sys.stderr)  # NOQA
+    print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
         print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
-    print("=" * 70, file=sys.stderr)  # NOQA
+    print("=" * 70, file=sys.stderr)  # noqa: T201
     sys.stdout.flush()
 
     # if WINDOWS:
     #     os.system("tasklist")
     # elif shutil.which("ps"):
     #     os.system("ps aux")
-    # print("=" * 70, file=sys.stderr)  # NOQA
+    # print("=" * 70, file=sys.stderr)
 
     sys.stdout.flush()
 
@@ -1621,7 +1621,7 @@ def retry_on_failure(retries=NO_RETRIES):
     """
 
     def logfun(exc):
-        print(f"{exc!r}, retrying", file=sys.stderr)  # NOQA
+        print(f"{exc!r}, retrying", file=sys.stderr)  # noqa: T201
 
     return retry(
         exception=AssertionError, timeout=None, retries=retries, logfun=logfun

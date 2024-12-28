@@ -21,7 +21,6 @@ import subprocess
 import sys
 import textwrap
 import time
-import types
 from unittest import mock
 
 import psutil
@@ -625,7 +624,7 @@ class TestProcess(PsutilTestCase):
         for name in mem._fields:
             value = getattr(mem, name)
             assert value >= 0
-            if name == 'vms' and OSX or LINUX:
+            if (name == "vms" and OSX) or LINUX:
                 continue
             assert value <= total
         if LINUX or WINDOWS or MACOS:
@@ -642,33 +641,38 @@ class TestProcess(PsutilTestCase):
         ext_maps = p.memory_maps(grouped=False)
 
         for nt in maps:
-            if not nt.path.startswith('['):
-                if QEMU_USER and "/bin/qemu-" in nt.path:
-                    continue
-                assert os.path.isabs(nt.path), nt.path
-                if POSIX:
-                    try:
-                        assert os.path.exists(nt.path) or os.path.islink(
-                            nt.path
-                        ), nt.path
-                    except AssertionError:
-                        if not LINUX:
-                            raise
-                        # https://github.com/giampaolo/psutil/issues/759
-                        with open_text('/proc/self/smaps') as f:
-                            data = f.read()
-                        if f"{nt.path} (deleted)" not in data:
-                            raise
-                elif '64' not in os.path.basename(nt.path):
-                    # XXX - On Windows we have this strange behavior with
-                    # 64 bit dlls: they are visible via explorer but cannot
-                    # be accessed via os.stat() (wtf?).
-                    try:
-                        st = os.stat(nt.path)
-                    except FileNotFoundError:
-                        pass
-                    else:
-                        assert stat.S_ISREG(st.st_mode), nt.path
+            if nt.path.startswith('['):
+                continue
+            if BSD and nt.path == "pvclock":
+                continue
+            if QEMU_USER and "/bin/qemu-" in nt.path:
+                continue
+            assert os.path.isabs(nt.path), nt.path
+
+            if POSIX:
+                try:
+                    assert os.path.exists(nt.path) or os.path.islink(
+                        nt.path
+                    ), nt.path
+                except AssertionError:
+                    if not LINUX:
+                        raise
+                    # https://github.com/giampaolo/psutil/issues/759
+                    with open_text('/proc/self/smaps') as f:
+                        data = f.read()
+                    if f"{nt.path} (deleted)" not in data:
+                        raise
+            elif '64' not in os.path.basename(nt.path):
+                # XXX - On Windows we have this strange behavior with
+                # 64 bit dlls: they are visible via explorer but cannot
+                # be accessed via os.stat() (wtf?).
+                try:
+                    st = os.stat(nt.path)
+                except FileNotFoundError:
+                    pass
+                else:
+                    assert stat.S_ISREG(st.st_mode), nt.path
+
         for nt in ext_maps:
             for fname in nt._fields:
                 value = getattr(nt, fname)
@@ -1210,7 +1214,7 @@ class TestProcess(PsutilTestCase):
             except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
-        pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
+        pid = max(table.items(), key=lambda x: x[1])[0]
         if LINUX and pid == 0:
             raise pytest.skip("PID 0")
         p = psutil.Process(pid)
@@ -1580,62 +1584,6 @@ class TestProcess(PsutilTestCase):
 
 
 # ===================================================================
-# --- Limited user tests
-# ===================================================================
-
-
-if POSIX and os.getuid() == 0:
-
-    class LimitedUserTestCase(TestProcess):
-        """Repeat the previous tests by using a limited user.
-        Executed only on UNIX and only if the user who run the test script
-        is root.
-        """
-
-        # the uid/gid the test suite runs under
-        if hasattr(os, 'getuid'):
-            PROCESS_UID = os.getuid()
-            PROCESS_GID = os.getgid()
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            # re-define all existent test methods in order to
-            # ignore AccessDenied exceptions
-            for attr in [x for x in dir(self) if x.startswith('test')]:
-                meth = getattr(self, attr)
-
-                def test_(self):
-                    try:
-                        meth()  # noqa
-                    except psutil.AccessDenied:
-                        pass
-
-                setattr(self, attr, types.MethodType(test_, self))
-
-        def setUp(self):
-            super().setUp()
-            os.setegid(1000)
-            os.seteuid(1000)
-
-        def tearDown(self):
-            os.setegid(self.PROCESS_UID)
-            os.seteuid(self.PROCESS_GID)
-            super().tearDown()
-
-        def test_nice(self):
-            try:
-                psutil.Process().nice(-1)
-            except psutil.AccessDenied:
-                pass
-            else:
-                raise self.fail("exception not raised")
-
-        @pytest.mark.skipif(True, reason="causes problem as root")
-        def test_zombie_process(self):
-            pass
-
-
-# ===================================================================
 # --- psutil.Popen tests
 # ===================================================================
 
@@ -1664,10 +1612,10 @@ class TestPopen(PsutilTestCase):
         ) as proc:
             proc.name()
             proc.cpu_times()
-            proc.stdin  # noqa
+            proc.stdin  # noqa: B018
             assert dir(proc)
             with pytest.raises(AttributeError):
-                proc.foo  # noqa
+                proc.foo  # noqa: B018
             proc.terminate()
         if POSIX:
             assert proc.wait(5) == -signal.SIGTERM

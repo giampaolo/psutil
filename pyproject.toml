@@ -51,14 +51,12 @@ ignore = [
     "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator
-    "FURB192",  # [*] Prefer `min` over `sorted()` to compute the minimum value in a sequence
     "INP",  # flake8-no-pep420
     "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
     "N802",  # Function name X should be lowercase.
     "N806",  # Variable X in function should be lowercase.
     "N818",  # Exception name `FooBar` should be named with an Error suffix
     "PERF",  # Perflint
-    "PGH004",  # Use specific rule codes when using `noqa`
     "PLC0415",  # `import` should be at the top-level of a file
     "PLC2701",  # Private name import `x` from external module `y`
     "PLR0904",  # Too many public methods (x > y)
@@ -79,8 +77,14 @@ ignore = [
     "PTH",  # flake8-use-pathlib
     "PYI",  # flake8-pyi (python types stuff)
     "Q000",  # Single quotes found but double quotes preferred
-    "RET",  # flake8-return
-    "RUF",  # Ruff-specific rules
+    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
+    "RET504",  # Unnecessary assignment to `result` before `return` statement
+    "RET505",  # [*] Unnecessary `else` after `return` statement
+    "RUF005",  # Consider iterable unpacking instead of concatenation
+    "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF022",  # `__all__` is not sorted
+    "RUF028",  # This suppression comment is invalid
+    "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
@@ -99,9 +103,10 @@ ignore = [
 # T201 == print()
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
-# "B904",  # Use `raise from` to specify exception cause
+# B904 ==  Use `raise from` to specify exception cause
+# PLC1901 == `x == ""` can be simplified to `not x` as an empty string is falsey
 ".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
-"psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "TRY003"]
+"psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [

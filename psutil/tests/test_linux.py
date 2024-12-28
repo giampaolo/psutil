@@ -1763,9 +1763,10 @@ class TestSensorsTemperatures(PsutilTestCase):
                 return orig_open(name, *args, **kwargs)
 
         def glob_mock(path):
-            if path == '/sys/class/hwmon/hwmon*/temp*_*':  # noqa
-                return []
-            elif path == '/sys/class/hwmon/hwmon*/device/temp*_*':
+            if path in {
+                '/sys/class/hwmon/hwmon*/temp*_*',
+                '/sys/class/hwmon/hwmon*/device/temp*_*',
+            }:
                 return []
             elif path == '/sys/class/thermal/thermal_zone*':
                 return ['/sys/class/thermal/thermal_zone0']
@@ -1780,7 +1781,7 @@ class TestSensorsTemperatures(PsutilTestCase):
         with mock.patch("builtins.open", side_effect=open_mock):
             with mock.patch('glob.glob', create=True, side_effect=glob_mock):
                 temp = psutil.sensors_temperatures()['name'][0]
-                assert temp.label == ''  # noqa
+                assert temp.label == ''
                 assert temp.current == 30.0
                 assert temp.high == 50.0
                 assert temp.critical == 50.0
@@ -2055,7 +2056,7 @@ class TestProcess(PsutilTestCase):
             ):
                 ret = psutil.Process().exe()
                 assert m.called
-                assert ret == ""  # noqa
+                assert ret == ""
 
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case

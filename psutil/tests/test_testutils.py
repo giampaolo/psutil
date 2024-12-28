@@ -71,7 +71,7 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             while queue:
                 queue.pop()
-                1 / 0  # noqa
+                1 / 0  # noqa: B018
             return 1
 
         queue = list(range(3))
@@ -85,7 +85,7 @@ class TestRetryDecorator(PsutilTestCase):
         def foo():
             while queue:
                 queue.pop()
-                1 / 0  # noqa
+                1 / 0  # noqa: B018
             return 1
 
         queue = list(range(6))
@@ -109,7 +109,7 @@ class TestRetryDecorator(PsutilTestCase):
 
         @retry(retries=5, interval=None, logfun=None)
         def foo():
-            1 / 0  # noqa
+            1 / 0  # noqa: B018
 
         with pytest.raises(ZeroDivisionError):
             foo()
@@ -119,7 +119,7 @@ class TestRetryDecorator(PsutilTestCase):
     def test_retries_arg(self, sleep):
         @retry(retries=5, interval=1, logfun=None)
         def foo():
-            1 / 0  # noqa
+            1 / 0  # noqa: B018
 
         with pytest.raises(ZeroDivisionError):
             foo()
@@ -407,7 +407,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     def test_unclosed_files(self):
         def fun():
-            f = open(__file__)
+            f = open(__file__)  # noqa: SIM115
             self.addCleanup(f.close)
             box.append(f)
 
@@ -429,7 +429,7 @@ class TestMemLeakClass(TestMemoryLeak):
 
     def test_execute_w_exc(self):
         def fun_1():
-            1 / 0  # noqa
+            1 / 0  # noqa: B018
 
         self.execute_w_exc(ZeroDivisionError, fun_1)
         with pytest.raises(ZeroDivisionError):
@@ -452,7 +452,7 @@ class TestFakePytest(PsutilTestCase):
 
     def test_raises(self):
         with fake_pytest.raises(ZeroDivisionError) as cm:
-            1 / 0  # noqa
+            1 / 0  # noqa: B018
         assert isinstance(cm.value, ZeroDivisionError)
 
         with fake_pytest.raises(ValueError, match="foo") as cm:
@@ -484,7 +484,7 @@ class TestFakePytest(PsutilTestCase):
         class TestCase(unittest.TestCase):
             @fake_pytest.mark.skipif(True, reason="reason")
             def foo(self):
-                assert 1 == 1  # noqa
+                assert 1 == 1  # noqa: PLR0133
 
         result = self.run_test_class(TestCase("foo"))
         assert result.wasSuccessful()
@@ -494,7 +494,7 @@ class TestFakePytest(PsutilTestCase):
         class TestCase(unittest.TestCase):
             @fake_pytest.mark.skipif(False, reason="reason")
             def foo(self):
-                assert 1 == 1  # noqa
+                assert 1 == 1  # noqa: PLR0133
 
         result = self.run_test_class(TestCase("foo"))
         assert result.wasSuccessful()
@@ -504,7 +504,7 @@ class TestFakePytest(PsutilTestCase):
         class TestCase(unittest.TestCase):
             def foo(self):
                 fake_pytest.skip("reason")
-                assert 1 == 0  # noqa
+                assert 1 == 0  # noqa: PLR0133
 
         result = self.run_test_class(TestCase("foo"))
         assert result.wasSuccessful()
@@ -564,12 +564,12 @@ class TestTestingUtils(PsutilTestCase):
         p = psutil.Process()
         ns = process_namespace(p)
         ns.test()
-        fun = [x for x in ns.iter(ns.getters) if x[1] == 'ppid'][0][0]
+        fun = next(x for x in ns.iter(ns.getters) if x[1] == 'ppid')[0]
         assert fun() == p.ppid()
 
     def test_system_namespace(self):
         ns = system_namespace()
-        fun = [x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs'][0][0]
+        fun = next(x for x in ns.iter(ns.getters) if x[1] == 'net_if_addrs')[0]
         assert fun() == psutil.net_if_addrs()
 
 
