@@ -410,11 +410,14 @@ class TestFetchAllProcesses(PsutilTestCase):
             for fname in nt._fields:
                 value = getattr(nt, fname)
                 if fname == 'path':
-                    if not value.startswith(("[", "anon_inode:")):
-                        assert os.path.isabs(nt.path), nt.path
-                        # commented as on Linux we might get
-                        # '/foo/bar (deleted)'
-                        # assert os.path.exists(nt.path), nt.path
+                    if value.startswith(("[", "anon_inode:")):  # linux
+                        continue
+                    if BSD and value == "pvclock":  # seen on FreeBSD
+                        continue
+                    assert os.path.isabs(nt.path), nt.path
+                    # commented as on Linux we might get
+                    # '/foo/bar (deleted)'
+                    # assert os.path.exists(nt.path), nt.path
                 elif fname == 'addr':
                     assert value, repr(value)
                 elif fname == 'perms':
