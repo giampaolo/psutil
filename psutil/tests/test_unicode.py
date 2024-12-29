@@ -229,9 +229,12 @@ class TestFSAPIs(BaseUnicodeTest):
         name = self.get_testfn(suffix=self.funky_suffix)
         sock = bind_unix_socket(name)
         with closing(sock):
-            conn = psutil.Process().net_connections('unix')[0]
-            assert isinstance(conn.laddr, str)
-            assert conn.laddr == name
+            conns = psutil.Process().net_connections('unix')
+            for conn in conns:
+                assert isinstance(conn.laddr, str)
+                if conn.laddr == name:
+                    return
+            raise ValueError("connection not found")
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     @pytest.mark.skipif(

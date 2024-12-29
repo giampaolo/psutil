@@ -798,7 +798,13 @@ class TestProcess(PsutilTestCase):
     def test_name(self):
         p = self.spawn_psproc()
         name = p.name().lower()
-        pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
+        pypath = os.path.realpath(sys.executable)
+        if pypath.startswith("/Library/Frameworks/PythonT.framework/"):
+            # macOS Framework installations of Python can have their process
+            # replaced by PythonT using execve / posix_spawn
+            assert name == "pythont"
+            pypath = psutil.Process().cmdline()[0]
+        pyexe = os.path.basename(pypath).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
     @pytest.mark.skipif(PYPY or QEMU_USER, reason="unreliable on PYPY")

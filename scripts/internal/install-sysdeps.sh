@@ -29,6 +29,9 @@ case "$UNAME_S" in
     OpenBSD)
         OPENBSD=true
         ;;
+    Darwin)
+        DARWIN=true
+        ;;
 esac
 
 # Check if running as root
@@ -54,6 +57,8 @@ main() {
         $SUDO pkgin -y install python311-* gcc12-*
     elif [ $OPENBSD ]; then
         $SUDO pkg_add gcc python3
+    elif [ $DARWIN ]; then
+        :
     else
         echo "Unsupported platform: $UNAME_S"
     fi
