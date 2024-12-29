@@ -227,6 +227,8 @@ skip = [
     "pp*",
 ]
 enable = ["cpython-freethreading"]
+test-extras = ["test"]
+test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-ci"
 test-skip = ["cp3*t-win*"]  # pywin32 is not available for free-threaded python yet, https://github.com/mhammond/pywin32/issues/2303
 
 [tool.cibuildwheel.macos]
