@@ -56,10 +56,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.22.0
       env:
         CIBW_ARCHS: "${{ matrix.arch }}"
-        CIBW_ENABLE: "cpython-prerelease"
-        CIBW_TEST_EXTRAS: test
-        CIBW_TEST_COMMAND:
-          make -C {project} PYTHON="env python" PSUTIL_SCRIPTS_DIR="{project}/scripts" install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
+        CIBW_ENABLE: "${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
 
     - name: Upload wheels
       uses: actions/upload-artifact@v4

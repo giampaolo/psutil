@@ -224,6 +224,8 @@ skip = [
     "cp3{7,8,9,10,11,12}-*linux_{aarch64,ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
 ]
+test-extras = ["test"]
+test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-ci"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
