@@ -114,9 +114,9 @@ def get_ipv6_addresses(ifname):
 
     for i in range(len(all_fields)):
         unformatted = all_fields[i][0]
-        groups = []
-        for j in range(0, len(unformatted), 4):
-            groups.append(unformatted[j : j + 4])
+        groups = [
+            unformatted[j : j + 4] for j in range(0, len(unformatted), 4)
+        ]
         formatted = ":".join(groups)
         packed = socket.inet_pton(socket.AF_INET6, formatted)
         all_fields[i] = socket.inet_ntop(socket.AF_INET6, packed)
@@ -1823,11 +1823,11 @@ class TestProcess(PsutilTestCase):
         uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
         maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         assert (
-            abs(uss - sum([x.private_dirty + x.private_clean for x in maps]))
+            abs(uss - sum(x.private_dirty + x.private_clean for x in maps))
             < 4096
         )
-        assert abs(pss - sum([x.pss for x in maps])) < 4096
-        assert abs(swap - sum([x.swap for x in maps])) < 4096
+        assert abs(pss - sum(x.pss for x in maps)) < 4096
+        assert abs(swap - sum(x.swap for x in maps)) < 4096
 
     def test_parse_smaps_mocked(self):
         # See: https://github.com/giampaolo/psutil/issues/1222

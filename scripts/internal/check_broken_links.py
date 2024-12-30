@@ -243,8 +243,7 @@ def main():
         urls = get_urls(fname)
         if urls:
             print(f"{len(urls):4} {fname}")
-            for url in urls:
-                all_urls.append((fname, url))
+            all_urls.extend((fname, url) for url in urls)
 
     fails = parallel_validator(all_urls)
     if not fails:

@@ -1346,7 +1346,7 @@ def print_sysinfo():
     # metrics
     info['cpus'] = psutil.cpu_count()
     info['loadavg'] = "{:.1f}%, {:.1f}%, {:.1f}%".format(
-        *tuple([x / psutil.cpu_count() * 100 for x in psutil.getloadavg()])
+        *tuple(x / psutil.cpu_count() * 100 for x in psutil.getloadavg())
     )
     mem = psutil.virtual_memory()
     info['memory'] = "{}%%, used={}, total={}".format(
@@ -1766,11 +1766,15 @@ def create_sockets():
     socks = []
     fname1 = fname2 = None
     try:
-        socks.append(bind_socket(socket.AF_INET, socket.SOCK_STREAM))
-        socks.append(bind_socket(socket.AF_INET, socket.SOCK_DGRAM))
+        socks.extend((
+            bind_socket(socket.AF_INET, socket.SOCK_STREAM),
+            bind_socket(socket.AF_INET, socket.SOCK_DGRAM),
+        ))
         if supports_ipv6():
-            socks.append(bind_socket(socket.AF_INET6, socket.SOCK_STREAM))
-            socks.append(bind_socket(socket.AF_INET6, socket.SOCK_DGRAM))
+            socks.extend((
+                bind_socket(socket.AF_INET6, socket.SOCK_STREAM),
+                bind_socket(socket.AF_INET6, socket.SOCK_DGRAM),
+            ))
         if POSIX and HAS_NET_CONNECTIONS_UNIX:
             fname1 = get_testfn()
             fname2 = get_testfn()

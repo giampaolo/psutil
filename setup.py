@@ -87,9 +87,7 @@ TEST_DEPS = [
 ]
 
 if WINDOWS and not PYPY:
-    TEST_DEPS.append("pywin32")
-    TEST_DEPS.append("wheel")
-    TEST_DEPS.append("wmi")
+    TEST_DEPS.extend(("pywin32", "wheel", "wmi"))
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.

@@ -121,9 +121,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         if USE_PROC_POOL:
             return self.pool.imap_unordered(proc_info, psutil.pids())
         else:
-            ls = []
-            for pid in psutil.pids():
-                ls.append(proc_info(pid))
+            ls = [proc_info(pid) for pid in psutil.pids()]
             return ls
 
     def test_all(self):

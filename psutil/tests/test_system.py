@@ -68,7 +68,7 @@ class TestProcessIter(PsutilTestCase):
         assert sproc.pid not in [x.pid for x in psutil.process_iter()]
 
     def test_no_duplicates(self):
-        ls = [x for x in psutil.process_iter()]
+        ls = list(psutil.process_iter())
         assert sorted(ls, key=lambda x: x.pid) == sorted(
             set(ls), key=lambda x: x.pid
         )

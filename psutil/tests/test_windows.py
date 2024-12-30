@@ -81,7 +81,7 @@ def wmic(path, what, converter=int):
     data = "".join(out.splitlines()[1:]).strip()  # get rid of the header
     if converter is not None:
         if "," in what:
-            return tuple([converter(x) for x in data.split()])
+            return tuple(converter(x) for x in data.split())
         else:
             return converter(data)
     else:

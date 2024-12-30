@@ -208,7 +208,7 @@ AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
 __version__ = "7.0.0"
-version_info = tuple([int(num) for num in __version__.split('.')])
+version_info = tuple(int(num) for num in __version__.split('.'))
 
 _timer = getattr(time, 'monotonic', time.time)
 _TOTAL_PHYMEM = None
@@ -227,7 +227,7 @@ if int(__version__.replace('.', '')) != getattr(
     msg = f"version conflict: {_psplatform.cext.__file__!r} C extension "
     msg += "module was built for another version of psutil"
     if hasattr(_psplatform.cext, 'version'):
-        v = ".".join([x for x in str(_psplatform.cext.version)])
+        v = ".".join(list(str(_psplatform.cext.version)))
         msg += f" ({v} instead of {__version__})"
     else:
         msg += f" (different than {__version__})"

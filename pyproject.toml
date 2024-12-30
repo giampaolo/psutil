@@ -23,9 +23,7 @@ select = [
     "D301",  # Use `r"""` if any backslashes in a docstring
     "D403",  # [*] First word of the first line should be capitalized
     "PERF102",  # [*] When using only the keys of a dict use the `keys()` method
-    "RET502",  # [*] Do not implicitly `return None` in function able to return non-`None` value
-    "RET506",  # [*] Unnecessary `else` after `raise` statement
-    "RET507",  # Unnecessary `elif` after `continue` statement
+    "PERF401",  # Use a list comprehension to create a transformed list
     "S113",  # Probable use of requests call without timeout
     "S602",  # `subprocess` call with `shell=True` identified, security issue
 ]
@@ -35,7 +33,7 @@ ignore = [
     "ARG001",  # unused-function-argument
     "ARG002",  # unused-method-argument
     "B007",  # Loop control variable `x` not used within loop body
-    "C4",  # flake8-comprehensions
+    "C408",  # Unnecessary dict() call
     "C90",  # mccabe (function `X` is too complex)
     "COM812",  # Trailing comma missing
     "D",  # pydocstyle
@@ -47,7 +45,6 @@ ignore = [
     "FLY002",  # static-join-to-f-string / Consider {expression} instead of string join
     "FURB101",  # `open` and `read` should be replaced by `Path(src).read_text()`
     "FURB103",  # `open` and `write` should be replaced by `Path(src).write_text()`
-    "FURB113",  # Use `ls.extend(...)` instead of repeatedly calling `ls.append()`
     "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
     "FURB118",  # [*] Use `operator.add` instead of defining a lambda
     "FURB140",  # [*] Use `itertools.starmap` instead of the generator

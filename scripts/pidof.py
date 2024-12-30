@@ -18,14 +18,13 @@ import psutil
 
 
 def pidof(pgname):
-    pids = []
-    for proc in psutil.process_iter(['name', 'cmdline']):
-        # search for matches in the process name and cmdline
-        if proc.info["name"] == pgname or (
-            proc.info["cmdline"] and proc.info["cmdline"][0] == pgname
-        ):
-            pids.append(str(proc.pid))
-    return pids
+    # search for matches in the process name and cmdline
+    return [
+        str(proc.pid)
+        for proc in psutil.process_iter(['name', 'cmdline'])
+        if proc.info["name"] == pgname
+        or (proc.info["cmdline"] and proc.info["cmdline"][0] == pgname)
+    ]
 
 
 def main():

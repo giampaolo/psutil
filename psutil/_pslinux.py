@@ -676,12 +676,12 @@ def cpu_stats():
 
 def _cpu_get_cpuinfo_freq():
     """Return current CPU frequency from cpuinfo if available."""
-    ret = []
     with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
-        for line in f:
-            if line.lower().startswith(b'cpu mhz'):
-                ret.append(float(line.split(b':', 1)[1]))
-    return ret
+        return [
+            float(line.split(b':', 1)[1])
+            for line in f
+            if line.lower().startswith(b'cpu mhz')
+        ]
 
 
 if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(

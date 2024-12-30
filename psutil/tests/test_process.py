@@ -575,14 +575,11 @@ class TestProcess(PsutilTestCase):
             except psutil.AccessDenied:
                 raise pytest.skip("on OpenBSD this requires root access")
         assert (
-            abs(p.cpu_times().user - sum([x.user_time for x in p.threads()]))
+            abs(p.cpu_times().user - sum(x.user_time for x in p.threads()))
             < 0.1
         )
         assert (
-            abs(
-                p.cpu_times().system
-                - sum([x.system_time for x in p.threads()])
-            )
+            abs(p.cpu_times().system - sum(x.system_time for x in p.threads()))
             < 0.1
         )
 
@@ -1043,9 +1040,11 @@ class TestProcess(PsutilTestCase):
             initial = initial[:12]  # ...otherwise it will take forever
         combos = []
         for i in range(len(initial) + 1):
-            for subset in itertools.combinations(initial, i):
-                if subset:
-                    combos.append(list(subset))
+            combos.extend(
+                list(subset)
+                for subset in itertools.combinations(initial, i)
+                if subset
+            )
 
         for combo in combos:
             p.cpu_affinity(combo)

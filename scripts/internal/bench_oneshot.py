@@ -31,8 +31,7 @@ names = [
 ]
 
 if psutil.POSIX:
-    names.append('uids')
-    names.append('username')
+    names.extend(('uids', 'username'))
 
 if psutil.LINUX:
     names += [
