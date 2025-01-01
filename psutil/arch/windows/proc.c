@@ -13,9 +13,12 @@
 
 // Fixes clash between winsock2.h and windows.h
 #define WIN32_LEAN_AND_MEAN
+// Fixes clash between ntstatus.h and windows.h
+#define UMDF_USING_NTSTATUS
 
 #include <Python.h>
 #include <windows.h>
+#include <ntstatus.h>
 #include <Psapi.h>  // memory_info(), memory_maps()
 #include <signal.h>
 #include <tlhelp32.h>  // threads(), PROCESSENTRY32
@@ -261,6 +264,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ULONG bufferSize = 0x104 * 2; // WIN_MAX_PATH * sizeof(wchar_t)
     SYSTEM_PROCESS_ID_INFORMATION processIdInfo;
     PyObject *py_exe;
+    HANDLE hProcess;
+    DWORD size;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -332,6 +337,39 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             &processIdInfo,
             sizeof(SYSTEM_PROCESS_ID_INFORMATION),
             NULL);
+    }
+    else if (status == STATUS_INVALID_INFO_CLASS) {
+        FREE(buffer);
+        hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+
+        if (NULL == hProcess)
+            return NULL;
+
+        buffer = MALLOC_ZERO(bufferSize);
+        if (! buffer) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        size = bufferSize / 2;
+
+        if (QueryFullProcessImageNameW(hProcess, 0, buffer, &size) == 0) {
+            FREE(buffer);
+            // https://github.com/giampaolo/psutil/issues/1662
+            if (GetLastError() == 0)
+                AccessDenied("QueryFullProcessImageNameW (forced EPERM)");
+            else
+                psutil_PyErr_SetFromOSErrnoWithSyscall("QueryFullProcessImageNameW");
+            CloseHandle(hProcess);
+            return NULL;
+        }
+
+        CloseHandle(hProcess);
+
+        processIdInfo.ImageName.Buffer = buffer;
+        processIdInfo.ImageName.Length = (USHORT)(size * 2);
+
+        status = STATUS_SUCCESS;
     }
 
     if (! NT_SUCCESS(status)) {
