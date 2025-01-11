@@ -2007,7 +2007,7 @@ else:
                 FreeLibrary.argtypes = [wintypes.HMODULE]
                 ret = FreeLibrary(cfile._handle)
                 if ret == 0:
-                    WinError()
+                    raise WinError()
             safe_rmpath(dst)
 
 

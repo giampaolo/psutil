@@ -2005,12 +2005,8 @@ class Process:
                             if fields[0].startswith(b'VmFlags:'):
                                 # see issue #369
                                 continue
-                            else:
-                                msg = (
-                                    "don't know how to interpret line"
-                                    f" {line!r}"
-                                )
-                                raise ValueError(msg) from None
+                            msg = f"don't know how to interpret line {line!r}"
+                            raise ValueError(msg) from None
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()

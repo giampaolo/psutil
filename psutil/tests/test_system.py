@@ -80,7 +80,7 @@ class TestProcessIter(PsutilTestCase):
                 'psutil.Process.as_dict',
                 side_effect=psutil.NoSuchProcess(os.getpid()),
             ):
-                assert list(psutil.process_iter(attrs=["cpu_times"])) == []
+                assert not list(psutil.process_iter(attrs=["cpu_times"]))
             psutil.process_iter.cache_clear()  # repeat test without cache
 
     def test_emulate_access_denied(self):
@@ -151,9 +151,9 @@ class TestProcessAPIs(PsutilTestCase):
         gone, alive = psutil.wait_procs(procs, timeout=0.01, callback=callback)
 
         assert time.time() - t < 0.5
-        assert gone == []
+        assert not gone
         assert len(alive) == 3
-        assert pids == []
+        assert not pids
         for p in alive:
             assert not hasattr(p, 'returncode')
 
@@ -243,7 +243,7 @@ class TestMiscAPIs(PsutilTestCase):
     )
     def test_users(self):
         users = psutil.users()
-        assert users != []
+        assert users
         for user in users:
             with self.subTest(user=user):
                 assert user.name

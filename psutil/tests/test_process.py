@@ -1178,8 +1178,8 @@ class TestProcess(PsutilTestCase):
 
     def test_children(self):
         parent = psutil.Process()
-        assert parent.children() == []
-        assert parent.children(recursive=True) == []
+        assert not parent.children()
+        assert not parent.children(recursive=True)
         # On Windows we set the flag to 0 in order to cancel out the
         # CREATE_NO_WINDOW flag (enabled by default) which creates
         # an extra "conhost.exe" child.
@@ -1202,7 +1202,7 @@ class TestProcess(PsutilTestCase):
         # children() to recursively find it.
         child.terminate()
         child.wait()
-        assert parent.children(recursive=True) == []
+        assert not parent.children(recursive=True)
 
     def test_children_duplicates(self):
         # find the process which has the highest number of children
