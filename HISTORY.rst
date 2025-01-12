@@ -15,8 +15,8 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 2496_, [Linux]: Avoid segfault for processes that use hundreds of GBs of
-  memory
+- 2496_, [Linux]: Avoid segfault (a cPython bug) on ``Process.memory_maps()`` 
+  for processes that use hundreds of GBs of memory.
 
 **Compatibility notes**
 
