@@ -13,6 +13,11 @@ XXXX-XX-XX
   deprecated in psutil 4.0.0, released 8 years ago. Substitute is
   ``Process.memory_full_info()``.
 
+**Bug fixes**
+
+- 2496_, [Linux]: Avoid segfault (a cPython bug) on ``Process.memory_maps()`` 
+  for processes that use hundreds of GBs of memory.
+
 **Compatibility notes**
 
 - 2480_: Python 2.7 is no longer supported.
