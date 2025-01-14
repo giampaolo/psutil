@@ -19,7 +19,7 @@
 static int
 psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
     kern_return_t ret;
-    mach_msg_type_number_t count = sizeof(*vmstat) / sizeof(integer_t);
+    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
     mach_port_t mport = mach_host_self();
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)vmstat, &count);
