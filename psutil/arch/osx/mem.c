@@ -20,7 +20,7 @@
 
 
 static int
-psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
+psutil_sys_vminfo(vm_statistics64_t *vmstat) {
     kern_return_t ret;
     unsigned int count = HOST_VM_INFO64_COUNT;
     mach_port_t mport = mach_host_self();
@@ -49,7 +49,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int      mib[2];
     uint64_t total;
     size_t   len = sizeof(total);
-    vm_statistics_data_t vm;
+    vm_statistics64_t vm;
     long pagesize = psutil_getpagesize();
     // physical mem
     mib[0] = CTL_HW;
