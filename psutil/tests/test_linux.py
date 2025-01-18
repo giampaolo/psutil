@@ -12,6 +12,7 @@ import contextlib
 import errno
 import io
 import os
+import platform
 import re
 import shutil
 import socket
@@ -735,6 +736,9 @@ class TestSystemCPUCountCores(PsutilTestCase):
                 core_ids.add(fields[1])
         assert psutil.cpu_count(logical=False) == len(core_ids)
 
+    @pytest.mark.skipif(
+        platform.machine() not in {"x86_64", "i686"}, reason="x86_64/i686 only"
+    )
     def test_method_2(self):
         meth_1 = psutil._pslinux.cpu_count_cores()
         with mock.patch('glob.glob', return_value=[]) as m:
@@ -754,6 +758,9 @@ class TestSystemCPUCountCores(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemCPUFrequency(PsutilTestCase):
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @pytest.mark.skipif(
+        AARCH64, reason="aarch64 does not always expose frequency"
+    )
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
         def path_exists_mock(path):

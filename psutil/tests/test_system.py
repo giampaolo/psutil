@@ -31,6 +31,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import broadcast_addr
+from psutil.tests import AARCH64
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
@@ -598,8 +599,10 @@ class TestCpuAPIs(PsutilTestCase):
                     assert value >= 0
 
         ls = psutil.cpu_freq(percpu=True)
-        if FREEBSD and not ls:
-            raise pytest.skip("returns empty list on FreeBSD")
+        if (FREEBSD or AARCH64) and not ls:
+            raise pytest.skip(
+                "returns empty list on FreeBSD and Linux aarch64"
+            )
 
         assert ls, ls
         check_ls([psutil.cpu_freq(percpu=False)])

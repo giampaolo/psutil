@@ -27,7 +27,7 @@ jobs:
         include:
         - {os: ubuntu-latest, arch: x86_64}
         - {os: ubuntu-latest, arch: i686}
-        - {os: ubuntu-latest, arch: aarch64}
+        - {os: ubuntu-24.04-arm, arch: aarch64}
         - {os: macos-13, arch: x86_64}
         - {os: macos-14, arch: arm64}
         - {os: windows-2019, arch: AMD64}
@@ -47,10 +47,6 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: 3.11
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      if: matrix.arch == 'aarch64'
 
     - name: Create wheels + run tests
       uses: pypa/cibuildwheel@v2.22.0
