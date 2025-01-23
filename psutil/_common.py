@@ -2,11 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Common objects shared by __init__.py and _ps*.py modules."""
+"""Common objects shared by __init__.py and _ps*.py modules.
 
-# Note: this module is imported by setup.py so it should not import
-# psutil or third-party modules.
-
+Note: this module is imported by setup.py, so it should not import
+psutil or third-party modules.
+"""
 
 import collections
 import enum
@@ -601,6 +601,28 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
         return pconn(fd, fam, type_, laddr, raddr, status)
     else:
         return sconn(fd, fam, type_, laddr, raddr, status, pid)
+
+
+def broadcast_addr(addr):
+    """Given the address ntuple returned by ``net_if_addrs()``
+    calculates the broadcast address.
+    """
+    import ipaddress
+
+    if not addr.address or not addr.netmask:
+        return None
+    if addr.family == socket.AF_INET:
+        return str(
+            ipaddress.IPv4Network(
+                f"{addr.address}/{addr.netmask}", strict=False
+            ).broadcast_address
+        )
+    if addr.family == socket.AF_INET6:
+        return str(
+            ipaddress.IPv6Network(
+                f"{addr.address}/{addr.netmask}", strict=False
+            ).broadcast_address
+        )
 
 
 def deprecated_method(replacement):

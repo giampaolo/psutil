@@ -2228,6 +2228,7 @@ def net_if_addrs():
                 # We re-set the family here so that repr(family)
                 # will show AF_LINK rather than AF_PACKET
                 fam = _psplatform.AF_LINK
+
         if fam == _psplatform.AF_LINK:
             # The underlying C function may return an incomplete MAC
             # address in which case we fill it with null bytes, see:
@@ -2235,7 +2236,22 @@ def net_if_addrs():
             separator = ":" if POSIX else "-"
             while addr.count(separator) < 5:
                 addr += f"{separator}00"
-        ret[name].append(_common.snicaddr(fam, addr, mask, broadcast, ptp))
+
+        nt = _common.snicaddr(fam, addr, mask, broadcast, ptp)
+
+        # On Windows broadcast is None, so we determine it via
+        # ipaddress module.
+        if WINDOWS and fam in {socket.AF_INET, socket.AF_INET6}:
+            try:
+                broadcast = _common.broadcast_addr(nt)
+            except Exception as err:  # noqa: BLE001
+                debug(err)
+            else:
+                if broadcast is not None:
+                    nt._replace(broadcast=broadcast)
+
+        ret[name].append(nt)
+
     return dict(ret)
 
 
