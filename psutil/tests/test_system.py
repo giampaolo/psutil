@@ -860,10 +860,11 @@ class TestNetAPIs(PsutilTestCase):
                     assert addr.broadcast is None
 
                 # check broadcast address
-                if addr.broadcast and addr.family in {
-                    socket.AF_INET,
-                    socket.AF_INET6,
-                }:
+                if (
+                    addr.broadcast
+                    and addr.netmask
+                    and addr.family in {socket.AF_INET, socket.AF_INET6}
+                ):
                     assert addr.broadcast == broadcast_addr(addr)
 
         if BSD or MACOS or SUNOS:
