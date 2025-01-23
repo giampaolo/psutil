@@ -2247,7 +2247,8 @@ def net_if_addrs():
             except Exception as err:  # noqa: BLE001
                 debug(err)
             else:
-                nt._replace(broadcast=broadcast)
+                if broadcast is not None:
+                    nt._replace(broadcast=broadcast)
 
         ret[name].append(nt)
 
