@@ -2242,8 +2242,12 @@ def net_if_addrs():
         # On Windows broadcast is None, so we determine it via
         # ipaddress module.
         if WINDOWS and fam in {socket.AF_INET, socket.AF_INET6}:
-            broadcast = _common.broadcast_addr(nt)
-            nt._replace(broadcast=broadcast)
+            try:
+                broadcast = _common.broadcast_addr(nt)
+            except Exception as err:  # noqa: BLE001
+                debug(err)
+            else:
+                nt._replace(broadcast=broadcast)
 
         ret[name].append(nt)
 
