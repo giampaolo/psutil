@@ -604,6 +604,9 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
 
 
 def broadcast_addr(addr):
+    """Given the address ntuple returned by ``net_if_addrs()``
+    calculates the broadcast address.
+    """
     import ipaddress
 
     if not addr.address or not addr.netmask:
