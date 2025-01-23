@@ -734,6 +734,9 @@ Network
   .. versionchanged:: 4.4.0 added support for *netmask* field on Windows which
     is no longer ``None``.
 
+  .. versionchanged:: 7.0.0 added support for *broadcast* field on Windows
+    which is no longer ``None``.
+
 .. function:: net_if_stats()
 
   Return information about each NIC (network interface card) installed on the

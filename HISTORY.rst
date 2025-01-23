@@ -7,6 +7,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 669_, [Windows]: `net_if_addrs()`_ also returns the ``broadcast`` address
+  instead of ``None``.
 - 2480_: Python 2.7 is no longer supported. Latest version supporting Python
   2.7 is psutil 6.1.X. Install it with: ``pip2 install psutil==6.1.*``.
 - 2490_: removed long deprecated ``Process.memory_info_ex()`` method. It was
@@ -15,7 +17,7 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-- 2496_, [Linux]: Avoid segfault (a cPython bug) on ``Process.memory_maps()`` 
+- 2496_, [Linux]: Avoid segfault (a cPython bug) on ``Process.memory_maps()``
   for processes that use hundreds of GBs of memory.
 
 **Compatibility notes**
