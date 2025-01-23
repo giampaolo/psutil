@@ -6,8 +6,6 @@
 
 # Note: this module is imported by setup.py so it should not import
 # psutil or third-party modules.
-
-
 import collections
 import enum
 import functools
@@ -601,6 +599,23 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
         return pconn(fd, fam, type_, laddr, raddr, status)
     else:
         return sconn(fd, fam, type_, laddr, raddr, status, pid)
+
+
+def broadcast_addr(addr):
+    import ipaddress
+
+    if addr.family == socket.AF_INET:
+        return str(
+            ipaddress.IPv4Network(
+                f"{addr.address}/{addr.netmask}", strict=False
+            ).broadcast_address
+        )
+    elif addr.family == socket.AF_INET6:
+        return str(
+            ipaddress.IPv6Network(
+                f"{addr.address}/{addr.netmask}", strict=False
+            ).broadcast_address
+        )
 
 
 def deprecated_method(replacement):

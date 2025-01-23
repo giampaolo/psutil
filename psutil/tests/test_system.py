@@ -30,6 +30,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import broadcast_addr
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
@@ -857,6 +858,13 @@ class TestNetAPIs(PsutilTestCase):
                     assert addr.ptp is None
                 elif addr.ptp:
                     assert addr.broadcast is None
+
+                # check broadcast address
+                if addr.broadcast and addr.family in {
+                    socket.AF_INET,
+                    socket.AF_INET6,
+                }:
+                    assert addr.broadcast == broadcast_addr(addr)
 
         if BSD or MACOS or SUNOS:
             if hasattr(socket, "AF_LINK"):
