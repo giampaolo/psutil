@@ -93,7 +93,7 @@ if WINDOWS and not PYPY:
 # `make install-pydeps-dev`.
 DEV_DEPS = TEST_DEPS + [
     "abi3audit",
-    "black",
+    "black==24.10.0",
     "check-manifest",
     "coverage",
     "packaging",
