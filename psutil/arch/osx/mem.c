@@ -25,7 +25,7 @@ psutil_sys_vminfo(vm_statistics64_t *vmstat) {
     unsigned int count = HOST_VM_INFO64_COUNT;
     mach_port_t mport = mach_host_self();
 
-    ret = host_statistics(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
+    ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
     if (ret != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError,
@@ -49,7 +49,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int      mib[2];
     uint64_t total;
     size_t   len = sizeof(total);
-    vm_statistics64_t vm;
+    vm_statistics64_data_t vm;
     long pagesize = psutil_getpagesize();
     // physical mem
     mib[0] = CTL_HW;
@@ -89,7 +89,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2];
     size_t size;
     struct xsw_usage totals;
-    vm_statistics_data_t vmstat;
+    vm_statistics64_data_t  vmstat;
     long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
