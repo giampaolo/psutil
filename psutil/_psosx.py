@@ -112,8 +112,7 @@ def virtual_memory():
     """System virtual memory as a namedtuple."""
     total, active, inactive, wired, free, speculative = cext.virtual_mem()
     # This is how Zabbix calculate avail and used mem:
-    # https://github.com/zabbix/zabbix/blob/trunk/src/libs/zbxsysinfo/
-    #     osx/memory.c
+    # https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/osx/memory.c
     # Also see: https://github.com/giampaolo/psutil/issues/1277
     avail = inactive + free
     used = active + wired

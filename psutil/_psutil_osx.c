@@ -7,6 +7,7 @@
  */
 
 #include <Python.h>
+#include <sys/time.h>  // needed for old macOS versions
 #include <sys/proc.h>
 #include <netinet/tcp_fsm.h>
 

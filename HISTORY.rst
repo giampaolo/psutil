@@ -19,6 +19,9 @@ XXXX-XX-XX
 
 - 2496_, [Linux]: Avoid segfault (a cPython bug) on ``Process.memory_maps()``
   for processes that use hundreds of GBs of memory.
+- 2502_, [macOS]: `virtual_memory()`_ now relies on ``host_statistics64``
+  instead of ``host_statistics``. This is the same approach used by ``vm_stat``
+  CLI tool, and should grant more accurate results.
 
 **Compatibility notes**
 

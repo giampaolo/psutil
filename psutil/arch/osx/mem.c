@@ -8,6 +8,9 @@
 // from psutil/_psutil_osx.c in 2023. This is the GIT blame before the move:
 // https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_osx.c
 
+// See:
+// https://github.com/apple-open-source/macos/blob/master/system_cmds/vm_stat/vm_stat.c
+
 #include <Python.h>
 #include <mach/host_info.h>
 #include <sys/sysctl.h>
@@ -17,12 +20,12 @@
 
 
 static int
-psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
+psutil_sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
-    mach_msg_type_number_t count = sizeof(*vmstat) / sizeof(integer_t);
+    unsigned int count = HOST_VM_INFO64_COUNT;
     mach_port_t mport = mach_host_self();
 
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)vmstat, &count);
+    ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
     if (ret != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError,
@@ -46,7 +49,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int      mib[2];
     uint64_t total;
     size_t   len = sizeof(total);
-    vm_statistics_data_t vm;
+    vm_statistics64_data_t vm;
     long pagesize = psutil_getpagesize();
     // physical mem
     mib[0] = CTL_HW;
@@ -86,7 +89,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2];
     size_t size;
     struct xsw_usage totals;
-    vm_statistics_data_t vmstat;
+    vm_statistics64_data_t  vmstat;
     long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
