@@ -20,7 +20,7 @@
 
 
 static int
-psutil_sys_vminfo(vm_statistics64_t *vmstat) {
+psutil_sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
     unsigned int count = HOST_VM_INFO64_COUNT;
     mach_port_t mport = mach_host_self();
