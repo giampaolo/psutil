@@ -27,7 +27,6 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import QEMU_USER
 from psutil.tests import SKIP_SYSCONS
 from psutil.tests import PsutilTestCase
 from psutil.tests import create_sockets
@@ -268,7 +267,6 @@ class TestSystemAPITypes(PsutilTestCase):
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
 
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_net_if_stats(self):
         # Duplicate of test_system.py. Keep it anyway.
         for ifname, info in psutil.net_if_stats().items():

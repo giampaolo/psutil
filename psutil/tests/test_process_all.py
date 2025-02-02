@@ -29,7 +29,6 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil.tests import CI_TESTING
 from psutil.tests import PYTEST_PARALLEL
-from psutil.tests import QEMU_USER
 from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_connection_ntuple
@@ -232,9 +231,6 @@ class TestFetchAllProcesses(PsutilTestCase):
     def status(self, ret, info):
         assert isinstance(ret, str)
         assert ret, ret
-        if QEMU_USER:
-            # status does not work under qemu user
-            return
         assert ret != '?'  # XXX
         assert ret in VALID_PROC_STATUSES
 
