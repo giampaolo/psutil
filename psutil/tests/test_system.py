@@ -31,6 +31,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import broadcast_addr
+from psutil.tests import AARCH64
 from psutil.tests import ASCII_FS
 from psutil.tests import CI_TESTING
 from psutil.tests import GITHUB_ACTIONS
@@ -45,7 +46,6 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import IS_64BIT
 from psutil.tests import MACOS_12PLUS
 from psutil.tests import PYPY
-from psutil.tests import QEMU_USER
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_net_address
@@ -598,8 +598,10 @@ class TestCpuAPIs(PsutilTestCase):
                     assert value >= 0
 
         ls = psutil.cpu_freq(percpu=True)
-        if FREEBSD and not ls:
-            raise pytest.skip("returns empty list on FreeBSD")
+        if (FREEBSD or AARCH64) and not ls:
+            raise pytest.skip(
+                "returns empty list on FreeBSD and Linux aarch64"
+            )
 
         assert ls, ls
         check_ls([psutil.cpu_freq(percpu=False)])
@@ -800,7 +802,6 @@ class TestNetAPIs(PsutilTestCase):
             assert psutil.net_io_counters(pernic=True) == {}
             assert m.called
 
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_net_if_addrs(self):
         nics = psutil.net_if_addrs()
         assert nics, nics
@@ -893,7 +894,6 @@ class TestNetAPIs(PsutilTestCase):
             else:
                 assert addr.address == '06-3d-29-00-00-00'
 
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics

@@ -12,6 +12,7 @@ import contextlib
 import errno
 import io
 import os
+import platform
 import re
 import shutil
 import socket
@@ -32,7 +33,6 @@ from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
 from psutil.tests import PYTEST_PARALLEL
-from psutil.tests import QEMU_USER
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
@@ -735,6 +735,9 @@ class TestSystemCPUCountCores(PsutilTestCase):
                 core_ids.add(fields[1])
         assert psutil.cpu_count(logical=False) == len(core_ids)
 
+    @pytest.mark.skipif(
+        platform.machine() not in {"x86_64", "i686"}, reason="x86_64/i686 only"
+    )
     def test_method_2(self):
         meth_1 = psutil._pslinux.cpu_count_cores()
         with mock.patch('glob.glob', return_value=[]) as m:
@@ -754,6 +757,9 @@ class TestSystemCPUCountCores(PsutilTestCase):
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemCPUFrequency(PsutilTestCase):
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @pytest.mark.skipif(
+        AARCH64, reason="aarch64 does not always expose frequency"
+    )
     def test_emulate_use_second_file(self):
         # https://github.com/giampaolo/psutil/issues/981
         def path_exists_mock(path):
@@ -977,7 +983,6 @@ class TestSystemNetIfAddrs(PsutilTestCase):
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
-@pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
 class TestSystemNetIfStats(PsutilTestCase):
     @pytest.mark.skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
@@ -1546,7 +1551,7 @@ class TestMisc(PsutilTestCase):
         with ThreadTask():
             p = psutil.Process()
             threads = p.threads()
-            assert len(threads) == (3 if QEMU_USER else 2)
+            assert len(threads) == 2
             tid = sorted(threads, key=lambda x: x.id)[1].id
             assert p.pid != tid
             pt = psutil.Process(tid)
@@ -2227,7 +2232,6 @@ class TestProcessAgainstStatus(PsutilTestCase):
         value = self.read_status_file("Name:")
         assert self.proc.name() == value
 
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_status(self):
         value = self.read_status_file("State:")
         value = value[value.find('(') + 1 : value.rfind(')')]

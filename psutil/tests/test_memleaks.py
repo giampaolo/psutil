@@ -39,7 +39,6 @@ from psutil.tests import HAS_RLIMIT
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import QEMU_USER
 from psutil.tests import TestMemoryLeak
 from psutil.tests import create_sockets
 from psutil.tests import get_testfn
@@ -396,7 +395,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         times = FEW_TIMES if POSIX else self.times
         self.execute(lambda: psutil.disk_usage('.'), times=times)
 
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_disk_partitions(self):
         self.execute(psutil.disk_partitions)
 
@@ -434,7 +432,6 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
 
-    @pytest.mark.skipif(QEMU_USER, reason="QEMU user not supported")
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
 
