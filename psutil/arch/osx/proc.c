@@ -763,7 +763,7 @@ error:
 /*
  * Return process open files as a Python tuple.
  * References:
- * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/m78fd
+ * - lsof source code: https://github.com/apple-opensource/lsof/blob/28/lsof/dialects/darwin/libproc/dproc.c#L342
  * - /usr/include/sys/proc_info.h
  */
 PyObject *
