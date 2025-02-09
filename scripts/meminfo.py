@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print system memory information.
+"""Print system memory information.
 
 $ python3 scripts/meminfo.py
 MEMORY
@@ -39,7 +38,7 @@ def pprint_ntuple(nt):
         value = getattr(nt, name)
         if name != 'percent':
             value = bytes2human(value)
-        print('%-10s : %7s' % (name.capitalize(), value))
+        print('{:<10} : {:>7}'.format(name.capitalize(), value))
 
 
 def main():

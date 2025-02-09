@@ -58,6 +58,7 @@
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+#define INITERROR return NULL
 
 /*
  * Read a file content and fills a C structure with it.
@@ -1030,17 +1031,11 @@ struct module_state {
     PyObject *error;
 };
 
-#if PY_MAJOR_VERSION >= 3
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#if PY_MAJOR_VERSION >= 3
 
 static int
 psutil_aix_traverse(PyObject *m, visitproc visit, void *arg) {
@@ -1066,20 +1061,15 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-#define INITERROR return NULL
 
-PyMODINIT_FUNC PyInit__psutil_aix(void)
-
-#else
-#define INITERROR return
-
-void init_psutil_aix(void)
-#endif
-{
-#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC
+PyInit__psutil_aix(void) {
     PyObject *module = PyModule_Create(&moduledef);
-#else
-    PyObject *module = Py_InitModule("_psutil_aix", PsutilMethods);
+    if (module == NULL)
+        INITERROR;
+
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
 #endif
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
@@ -1106,9 +1096,8 @@ void init_psutil_aix(void)
 
     if (module == NULL)
         INITERROR;
-#if PY_MAJOR_VERSION >= 3
+
     return module;
-#endif
 }
 
 #ifdef __cplusplus

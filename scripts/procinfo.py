@@ -4,8 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Print detailed information about a process.
+"""Print detailed information about a process.
+
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
 $ python3 scripts/procinfo.py
@@ -120,9 +120,9 @@ RLIMITS_MAP = {
 
 def print_(a, b):
     if sys.stdout.isatty() and psutil.POSIX:
-        fmt = '\x1b[1;32m%-13s\x1b[0m %s' % (a, b)
+        fmt = "\x1b[1;32m{:<13}\x1b[0m {}".format(a, b)
     else:
-        fmt = '%-11s %s' % (a, b)
+        fmt = "{:<11} {}".format(a, b)
     print(fmt)
 
 
@@ -130,10 +130,11 @@ def str_ntuple(nt, convert_bytes=False):
     if nt == ACCESS_DENIED:
         return ""
     if not convert_bytes:
-        return ", ".join(["%s=%s" % (x, getattr(nt, x)) for x in nt._fields])
+        return ", ".join([f"{x}={getattr(nt, x)}" for x in nt._fields])
     else:
-        return ", ".join(["%s=%s" % (x, bytes2human(getattr(nt, x)))
-                          for x in nt._fields])
+        return ", ".join(
+            [f"{x}={bytes2human(getattr(nt, x))}" for x in nt._fields]
+        )
 
 
 def run(pid, verbose=False):
@@ -147,10 +148,7 @@ def run(pid, verbose=False):
     with proc.oneshot():
         try:
             parent = proc.parent()
-            if parent:
-                parent = '(%s)' % parent.name()
-            else:
-                parent = ''
+            parent = f"({parent.name()})" if parent else ""
         except psutil.Error:
             parent = ''
         try:
@@ -159,24 +157,26 @@ def run(pid, verbose=False):
             pinfo['children'] = []
         if pinfo['create_time']:
             started = datetime.datetime.fromtimestamp(
-                pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
+                pinfo['create_time']
+            ).strftime('%Y-%m-%d %H:%M')
         else:
             started = ACCESS_DENIED
 
     # here we go
     print_('pid', pinfo['pid'])
     print_('name', pinfo['name'])
-    print_('parent', '%s %s' % (pinfo['ppid'], parent))
+    print_('parent', f"{pinfo['ppid']} {parent}")
     print_('exe', pinfo['exe'])
     print_('cwd', pinfo['cwd'])
     print_('cmdline', ' '.join(pinfo['cmdline']))
     print_('started', started)
 
     cpu_tot_time = datetime.timedelta(seconds=sum(pinfo['cpu_times']))
-    cpu_tot_time = "%s:%s.%s" % (
+    cpu_tot_time = "{}:{}.{}".format(
         cpu_tot_time.seconds // 60 % 60,
-        str((cpu_tot_time.seconds % 60)).zfill(2),
-        str(cpu_tot_time.microseconds)[:2])
+        str(cpu_tot_time.seconds % 60).zfill(2),
+        str(cpu_tot_time.microseconds)[:2],
+    )
     print_('cpu-tspent', cpu_tot_time)
     print_('cpu-times', str_ntuple(pinfo['cpu_times']))
     if hasattr(proc, "cpu_affinity"):
@@ -205,8 +205,10 @@ def run(pid, verbose=False):
             if psutil.WINDOWS:
                 print_("ionice", ionice)
             else:
-                print_("ionice", "class=%s, value=%s" % (
-                    str(ionice.ioclass), ionice.value))
+                print_(
+                    "ionice",
+                    f"class={ionice.ioclass}, value={ionice.value}",
+                )
 
     print_('num-threads', pinfo['num_threads'])
     if psutil.POSIX:
@@ -219,13 +221,13 @@ def run(pid, verbose=False):
     if 'num_ctx_switches' in pinfo:
         print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
     if pinfo['children']:
-        template = "%-6s %s"
-        print_("children", template % ("PID", "NAME"))
+        template = "{:<6} {}"
+        print_("children", template.format("PID", "NAME"))
         for child in pinfo['children']:
             try:
-                print_('', template % (child.pid, child.name()))
+                print_("", template.format(child.pid, child.name()))
             except psutil.AccessDenied:
-                print_('', template % (child.pid, ""))
+                print_("", template.format(child.pid, ""))
             except psutil.NoSuchProcess:
                 pass
 
@@ -239,11 +241,13 @@ def run(pid, verbose=False):
     else:
         print_('open-files', '')
 
-    if pinfo['connections']:
-        template = '%-5s %-25s %-25s %s'
-        print_('connections',
-               template % ('PROTO', 'LOCAL ADDR', 'REMOTE ADDR', 'STATUS'))
-        for conn in pinfo['connections']:
+    if pinfo['net_connections']:
+        template = "{:<5} {:<25} {:<25} {}"
+        print_(
+            'connections',
+            template.format("PROTO", "LOCAL ADDR", "REMOTE ADDR", "STATUS"),
+        )
+        for conn in pinfo['net_connections']:
             if conn.type == socket.SOCK_STREAM:
                 type = 'TCP'
             elif conn.type == socket.SOCK_DGRAM:
@@ -255,23 +259,25 @@ def run(pid, verbose=False):
                 rip, rport = '*', '*'
             else:
                 rip, rport = conn.raddr
-            print_('', template % (
+            line = template.format(
                 type,
-                "%s:%s" % (lip, lport),
-                "%s:%s" % (rip, rport),
-                conn.status))
+                f"{lip}:{lport}",
+                f"{rip}:{rport}",
+                conn.status,
+            )
+            print_('', line)
     else:
         print_('connections', '')
 
     if pinfo['threads'] and len(pinfo['threads']) > 1:
-        template = "%-5s %12s %12s"
-        print_('threads', template % ("TID", "USER", "SYSTEM"))
+        template = "{:<5} {:>12} {:>12}"
+        print_("threads", template.format("TID", "USER", "SYSTEM"))
         for i, thread in enumerate(pinfo['threads']):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_('', template % thread)
-        print_('', "total=%s" % len(pinfo['threads']))
+            print_("", template.format(*thread))
+        print_('', f"total={len(pinfo['threads'])}")
     else:
         print_('threads', '')
 
@@ -286,42 +292,48 @@ def run(pid, verbose=False):
             else:
                 resources.append((res_name, soft, hard))
         if resources:
-            template = "%-12s %15s %15s"
-            print_("res-limits", template % ("RLIMIT", "SOFT", "HARD"))
+            template = "{:<12} {:>15} {:>15}"
+            print_("res-limits", template.format("RLIMIT", "SOFT", "HARD"))
             for res_name, soft, hard in resources:
                 if soft == psutil.RLIM_INFINITY:
                     soft = "infinity"
                 if hard == psutil.RLIM_INFINITY:
                     hard = "infinity"
-                print_('', template % (
-                    RLIMITS_MAP.get(res_name, res_name), soft, hard))
+                print_(
+                    '',
+                    template.format(
+                        RLIMITS_MAP.get(res_name, res_name), soft, hard
+                    ),
+                )
 
     if hasattr(proc, "environ") and pinfo['environ']:
-        template = "%-25s %s"
-        print_("environ", template % ("NAME", "VALUE"))
+        template = "{:<25} {}"
+        print_("environ", template.format("NAME", "VALUE"))
         for i, k in enumerate(sorted(pinfo['environ'])):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_("", template % (k, pinfo['environ'][k]))
+            print_("", template.format(k, pinfo["environ"][k]))
 
     if pinfo.get('memory_maps', None):
-        template = "%-8s %s"
-        print_("mem-maps", template % ("RSS", "PATH"))
+        template = "{:<8} {}"
+        print_("mem-maps", template.format("RSS", "PATH"))
         maps = sorted(pinfo['memory_maps'], key=lambda x: x.rss, reverse=True)
         for i, region in enumerate(maps):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
-            print_("", template % (bytes2human(region.rss), region.path))
+            print_("", template.format(bytes2human(region.rss), region.path))
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="print information about a process")
+        description="print information about a process"
+    )
     parser.add_argument("pid", type=int, help="process pid", nargs='?')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                        help="print more info")
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help="print more info"
+    )
     args = parser.parse_args()
     run(args.pid, args.verbose)
 

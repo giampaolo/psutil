@@ -9,11 +9,11 @@
 // https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_osx.c
 
 #include <Python.h>
+#include <sys/socket.h>
+#include <sys/sysctl.h>
+#include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <sys/sysctl.h>
-#include <sys/socket.h>
-#include <net/if.h>
 
 #include "../../_psutil_common.h"
 

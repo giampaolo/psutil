@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Helper script iterates over all processes and .
+"""Helper script iterates over all processes and .
 It prints how many AccessDenied exceptions are raised in total and
 for what Process method.
 
@@ -45,8 +44,6 @@ open_files           238     71.3%   ACCESS DENIED
 Totals: access-denied=1744, calls=10020, processes=334
 """
 
-from __future__ import division
-from __future__ import print_function
 
 import time
 from collections import defaultdict
@@ -75,19 +72,20 @@ def main():
     elapsed = time.time() - start
 
     # print
-    templ = "%-20s %-5s %-9s %s"
-    s = templ % ("API", "AD", "Percent", "Outcome")
+    templ = "{:<20} {:<5} {:<9} {}"
+    s = templ.format("API", "AD", "Percent", "Outcome")
     print_color(s, color=None, bold=True)
     for methname, ads in sorted(d.items(), key=lambda x: (x[1], x[0])):
         perc = (ads / tot_procs) * 100
         outcome = "SUCCESS" if not ads else "ACCESS DENIED"
-        s = templ % (methname, ads, "%6.1f%%" % perc, outcome)
+        s = templ.format(methname, ads, f"{perc:6.1f}%", outcome)
         print_color(s, "red" if ads else None)
     tot_perc = round((tot_ads / tot_calls) * 100, 1)
     print("-" * 50)
-    print("Totals: access-denied=%s (%s%%), calls=%s, processes=%s, "
-          "elapsed=%ss" % (tot_ads, tot_perc, tot_calls, tot_procs,
-                           round(elapsed, 2)))
+    print(
+        "Totals: access-denied={} ({}%%), calls={}, processes={}, elapsed={}s"
+        .format(tot_ads, tot_perc, tot_calls, tot_procs, round(elapsed, 2))
+    )
 
 
 if __name__ == '__main__':

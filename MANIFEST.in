@@ -1,4 +1,3 @@
-include .flake8
 include .gitignore
 include CONTRIBUTING.md
 include CREDITS
@@ -8,6 +7,8 @@ include LICENSE
 include MANIFEST.in
 include Makefile
 include README.rst
+include SECURITY.md
+include docs/.readthedocs.yaml
 include docs/DEVGUIDE.rst
 include docs/DEVNOTES
 include docs/Makefile
@@ -19,10 +20,10 @@ include docs/_static/sidebar.js
 include docs/conf.py
 include docs/index.rst
 include docs/make.bat
+include docs/requirements.txt
 include make.bat
 include psutil/__init__.py
 include psutil/_common.py
-include psutil/_compat.py
 include psutil/_psaix.py
 include psutil/_psbsd.py
 include psutil/_pslinux.py
@@ -71,6 +72,16 @@ include psutil/arch/freebsd/sensors.c
 include psutil/arch/freebsd/sensors.h
 include psutil/arch/freebsd/sys_socks.c
 include psutil/arch/freebsd/sys_socks.h
+include psutil/arch/linux/disk.c
+include psutil/arch/linux/disk.h
+include psutil/arch/linux/mem.c
+include psutil/arch/linux/mem.h
+include psutil/arch/linux/net.c
+include psutil/arch/linux/net.h
+include psutil/arch/linux/proc.c
+include psutil/arch/linux/proc.h
+include psutil/arch/linux/users.c
+include psutil/arch/linux/users.h
 include psutil/arch/netbsd/cpu.c
 include psutil/arch/netbsd/cpu.h
 include psutil/arch/netbsd/disk.c
@@ -141,7 +152,6 @@ include psutil/arch/windows/wmi.h
 include psutil/tests/README.rst
 include psutil/tests/__init__.py
 include psutil/tests/__main__.py
-include psutil/tests/runner.py
 include psutil/tests/test_aix.py
 include psutil/tests/test_bsd.py
 include psutil/tests/test_connections.py
@@ -152,6 +162,8 @@ include psutil/tests/test_misc.py
 include psutil/tests/test_osx.py
 include psutil/tests/test_posix.py
 include psutil/tests/test_process.py
+include psutil/tests/test_process_all.py
+include psutil/tests/test_scripts.py
 include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
 include psutil/tests/test_testutils.py
@@ -165,16 +177,16 @@ include scripts/fans.py
 include scripts/free.py
 include scripts/ifconfig.py
 include scripts/internal/README
-include scripts/internal/appveyor_run_with_compiler.cmd
 include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/check_broken_links.py
 include scripts/internal/clinter.py
 include scripts/internal/convert_readme.py
-include scripts/internal/download_wheels_appveyor.py
-include scripts/internal/download_wheels_github.py
+include scripts/internal/download_wheels.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
+include scripts/internal/install-sysdeps.sh
+include scripts/internal/install_pip.py
 include scripts/internal/print_access_denied.py
 include scripts/internal/print_announce.py
 include scripts/internal/print_api_speed.py
@@ -183,6 +195,7 @@ include scripts/internal/print_downloads.py
 include scripts/internal/print_hashes.py
 include scripts/internal/print_timeline.py
 include scripts/internal/purge_installation.py
+include scripts/internal/test_python2_setup_py.py
 include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py

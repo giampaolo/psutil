@@ -1,37 +1,155 @@
-[tool.isort]
-force_single_line = true  # one import per line
-lines_after_imports = 2  # blank spaces after import section
+[tool.black]
+target-version = ["py37"]
+line-length = 79
+skip-string-normalization = true
+# https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html
+preview = true
+enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "multiline_string_handling", "string_processing", "wrap_long_dict_values_in_parens"]
+
+[tool.ruff]
+# https://beta.ruff.rs/docs/settings/
+target-version = "py37"
+line-length = 79
+
+[tool.ruff.lint]
+preview = true
+select = [
+    # To get a list of all values: `python3 -m ruff linter`.
+    "ALL",
+    "D200",  # [*] One-line docstring should fit on one line
+    "D204",  # [*] 1 blank line required after class docstring
+    "D209",  # [*] Multi-line docstring closing quotes should be on a separate line
+    "D212",  # [*] Multi-line docstring summary should start at the first line
+    "D301",  # Use `r"""` if any backslashes in a docstring
+    "D403",  # [*] First word of the first line should be capitalized
+    "PERF102",  # [*] When using only the keys of a dict use the `keys()` method
+    "PERF401",  # Use a list comprehension to create a transformed list
+    "S113",  # Probable use of requests call without timeout
+    "S602",  # `subprocess` call with `shell=True` identified, security issue
+]
+ignore = [
+    "A",  # flake8-builtins (shadowing of builtins like all, any, ...)
+    "ANN",  # flake8-annotations
+    "ARG001",  # unused-function-argument
+    "ARG002",  # unused-method-argument
+    "B007",  # Loop control variable `x` not used within loop body
+    "C408",  # Unnecessary dict() call
+    "C90",  # mccabe (function `X` is too complex)
+    "COM812",  # Trailing comma missing
+    "D",  # pydocstyle
+    "DOC",  # various docstring warnings
+    "DTZ",  # flake8-datetimez
+    "ERA001",  # Found commented-out code
+    "FBT",  # flake8-boolean-trap (makes zero sense)
+    "FIX",  # Line contains TODO / XXX / ..., consider resolving the issue
+    "FLY002",  # static-join-to-f-string / Consider {expression} instead of string join
+    "FURB101",  # `open` and `read` should be replaced by `Path(src).read_text()`
+    "FURB103",  # `open` and `write` should be replaced by `Path(src).write_text()`
+    "FURB116",  # [*] Replace `hex` call with `f"{start:x}"`
+    "FURB118",  # [*] Use `operator.add` instead of defining a lambda
+    "FURB140",  # [*] Use `itertools.starmap` instead of the generator
+    "INP",  # flake8-no-pep420
+    "N801",  # Class name `async_chat` should use CapWords convention (ASYNCORE COMPAT)
+    "N802",  # Function name X should be lowercase.
+    "N806",  # Variable X in function should be lowercase.
+    "N818",  # Exception name `FooBar` should be named with an Error suffix
+    "PERF",  # Perflint
+    "PLC0415",  # `import` should be at the top-level of a file
+    "PLC2701",  # Private name import `x` from external module `y`
+    "PLR0904",  # Too many public methods (x > y)
+    "PLR0911",  # Too many return statements (8 > 6)
+    "PLR0912",  # Too many branches (x > y)
+    "PLR0913",  # Too many arguments in function definition (x > y)
+    "PLR0914",  # Too many local variables (x/y)
+    "PLR0915",  # Too many statements (x > y)
+    "PLR0917",  # Too many positional arguments (x/y)
+    "PLR1702",  # Too many nested blocks (x > y)
+    "PLR1704",  # Redefining argument with the local name `type_`
+    "PLR2004",  # Magic value used in comparison, consider replacing X with a constant variable
+    "PLR6301",  # Method `x` could be a function, class method, or static method
+    "PLW0603",  # Using the global statement to update `lineno` is discouraged
+    "PLW1514",  # `open` in text mode without explicit `encoding` argument
+    "PLW2901",  # `for` loop variable `x` overwritten by assignment target
+    "PT",  # flake8-pytest-style
+    "PTH",  # flake8-use-pathlib
+    "PYI",  # flake8-pyi (python types stuff)
+    "Q000",  # Single quotes found but double quotes preferred
+    "RET503",  # Missing explicit `return` at the end of function able to return non-`None` value
+    "RET504",  # Unnecessary assignment to `result` before `return` statement
+    "RET505",  # [*] Unnecessary `else` after `return` statement
+    "RUF005",  # Consider iterable unpacking instead of concatenation
+    "RUF012",  # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF022",  # `__all__` is not sorted
+    "RUF028",  # This suppression comment is invalid
+    "RUF031",  # [*] Avoid parentheses for tuples in subscripts
+    "S",  # flake8-bandit
+    "SIM102",  # Use a single `if` statement instead of nested `if` statements
+    "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
+    "SIM117",  # Use a single `with` statement with multiple contexts instead of nested `with` statements
+    "SLF",  # flake8-self
+    "TD",  # all TODOs, XXXs, etc.
+    "TRY300",  # Consider moving this statement to an `else` block
+    "TRY301",  # Abstract `raise` to an inner function
+    "UP032",  # [*] Use f-string instead of `format` call
+]
+
+[tool.ruff.lint.per-file-ignores]
+# EM101 == raw-string-in-exception
+# EM102 == f-string-in-exception
+# EM103 == dot-format-in-exception
+# T201 == print()
+# T203 == pprint()
+# TRY003 == raise-vanilla-args
+# B904 ==  Use `raise from` to specify exception cause
+# PLC1901 == `x == ""` can be simplified to `not x` as an empty string is falsey
+".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
+"psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
+"scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
+"scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
+"setup.py" = [
+    "B904",  # Use ` raise from` to specify exception cause (PYTHON2.7 COMPAT)
+    "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
+    "FLY",  # flynt (PYTHON2.7 COMPAT)
+    "FURB145",  # [*] Prefer `copy` method over slicing (PYTHON2.7 COMPAT)
+    "T201",
+    "T203",
+    "UP009",  # [*] UTF-8 encoding declaration is unnecessary (PYTHON2.7 COMPAT)
+    "UP010",  # [*] Unnecessary `__future__` import `print_function` (PYTHON2.7 COMPAT)
+    "UP024",  # [*] Replace aliased errors with `OSError` (PYTHON2.7 COMPAT)
+    "UP025",  # [*] Remove unicode literals from strings (PYTHON2.7 COMPAT)
+    "UP028",  # [*] Replace `yield` over `for` loop with `yield from` (PYTHON2.7 COMPAT)
+    "UP032",  # [*] Use f-string instead of `format` call (PYTHON2.7 COMPAT)
+    "UP036",  # Version block is outdated for minimum Python version
+]
+
+[tool.ruff.lint.isort]
+# https://beta.ruff.rs/docs/settings/#isort
+force-single-line = true  # one import per line
+lines-after-imports = 2
 
 [tool.coverage.report]
-omit = [
-    "psutil/_compat.py",
-    "psutil/tests/*",
-    "setup.py",
-]
 exclude_lines = [
-    "enum.IntEnum",
     "except ImportError:",
     "globals().update",
-    "if __name__ == .__main__.:",
-    "if _WINDOWS:",
     "if BSD",
-    "if enum is None:",
-    "if enum is not None:",
     "if FREEBSD",
-    "if has_enums:",
     "if LINUX",
     "if LITTLE_ENDIAN:",
     "if MACOS",
     "if NETBSD",
     "if OPENBSD",
-    "if ppid_map is None:",
-    "if PY3:",
     "if SUNOS",
-    "if sys.platform.startswith",
     "if WINDOWS",
-    "import enum",
+    "if _WINDOWS:",
+    "if __name__ == .__main__.:",
+    "if ppid_map is None:",
+    "if sys.platform.startswith",
     "pragma: no cover",
     "raise NotImplementedError",
+]
+omit = [
+    "psutil/tests/*",
+    "setup.py",
 ]
 
 [tool.pylint.messages_control]
@@ -72,6 +190,18 @@ disable = [
     "wrong-import-position",
 ]
 
+[tool.vulture]
+exclude = [
+    "docs/conf.py",
+    "psutil/tests/",
+    "scripts/internal/winmake.py",
+]
+ignore_decorators = [
+    "@_common.deprecated_method",
+    "@atexit.register",
+    "@pytest.fixture",
+]
+
 [tool.rstcheck]
 ignore_messages = [
     "Duplicate explicit target name",
@@ -79,17 +209,27 @@ ignore_messages = [
     "Hyperlink target \".*?\" is not referenced",
 ]
 
-[build-system]
-requires = ["setuptools>=43", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.tomlsort]
+in_place = true
+no_sort_tables = true
+sort_inline_arrays = true
+spaces_before_inline_comment = 2
+spaces_indent_inline_array = 4
+trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
-skip = ["pp*", "*-musllinux*"]
-test-extras = "test"
-test-command = [
-    "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/runner.py",
-    "env PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_SCRIPTS_DIR={project}/scripts python {project}/psutil/tests/test_memleaks.py"
+skip = [
+    "*-musllinux*",
+    "cp313-win*",  # pywin32 is not available on cp313 yet
+    "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
+    "pp*",
 ]
+test-extras = ["test"]
+test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-ci"
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64", "arm64"]
+archs = ["arm64", "x86_64"]
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=43"]

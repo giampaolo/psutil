@@ -4,10 +4,10 @@
 
 """Routines common to all posix systems."""
 
+import enum
 import glob
 import os
 import signal
-import sys
 import time
 
 from ._common import MACOS
@@ -15,23 +15,10 @@ from ._common import TimeoutExpired
 from ._common import memoize
 from ._common import sdiskusage
 from ._common import usage_percent
-from ._compat import PY3
-from ._compat import ChildProcessError
-from ._compat import FileNotFoundError
-from ._compat import InterruptedError
-from ._compat import PermissionError
-from ._compat import ProcessLookupError
-from ._compat import unicode
 
 
 if MACOS:
     from . import _psutil_osx
-
-
-if PY3:
-    import enum
-else:
-    enum = None
 
 
 __all__ = ['pid_exists', 'wait_pid', 'disk_usage', 'get_terminal_map']
@@ -59,29 +46,29 @@ def pid_exists(pid):
         return True
 
 
-# Python 3.5 signals enum (contributed by me ^^):
-# https://bugs.python.org/issue21076
-if enum is not None and hasattr(signal, "Signals"):
-    Negsignal = enum.IntEnum(
-        'Negsignal', dict([(x.name, -x.value) for x in signal.Signals]))
+Negsignal = enum.IntEnum(
+    'Negsignal', {x.name: -x.value for x in signal.Signals}
+)
 
-    def negsig_to_enum(num):
-        """Convert a negative signal value to an enum."""
-        try:
-            return Negsignal(num)
-        except ValueError:
-            return num
-else:  # pragma: no cover
-    def negsig_to_enum(num):
+
+def negsig_to_enum(num):
+    """Convert a negative signal value to an enum."""
+    try:
+        return Negsignal(num)
+    except ValueError:
         return num
 
 
-def wait_pid(pid, timeout=None, proc_name=None,
-             _waitpid=os.waitpid,
-             _timer=getattr(time, 'monotonic', time.time),
-             _min=min,
-             _sleep=time.sleep,
-             _pid_exists=pid_exists):
+def wait_pid(
+    pid,
+    timeout=None,
+    proc_name=None,
+    _waitpid=os.waitpid,
+    _timer=getattr(time, 'monotonic', time.time),  # noqa: B008
+    _min=min,
+    _sleep=time.sleep,
+    _pid_exists=pid_exists,
+):
     """Wait for a process PID to terminate.
 
     If the process terminated normally by calling exit(3) or _exit(2),
@@ -100,7 +87,9 @@ def wait_pid(pid, timeout=None, proc_name=None,
     timeout=0 is also possible (either return immediately or raise).
     """
     if pid <= 0:
-        raise ValueError("can't wait for PID 0")  # see "man waitpid"
+        # see "man waitpid"
+        msg = "can't wait for PID 0"
+        raise ValueError(msg)
     interval = 0.0001
     flags = 0
     if timeout is not None:
@@ -130,13 +119,14 @@ def wait_pid(pid, timeout=None, proc_name=None,
             # can't determine its exit status code.
             while _pid_exists(pid):
                 interval = sleep(interval)
-            return
+            return None
         else:
             if retpid == 0:
                 # WNOHANG flag was used and PID is still running.
                 interval = sleep(interval)
                 continue
-            elif os.WIFEXITED(status):
+
+            if os.WIFEXITED(status):
                 # Process terminated normally by calling exit(3) or _exit(2),
                 # or by returning from main(). The return value is the
                 # positive integer passed to *exit().
@@ -161,7 +151,8 @@ def wait_pid(pid, timeout=None, proc_name=None,
             #     continue
             else:
                 # Should never happen.
-                raise ValueError("unknown process exit status %r" % status)
+                msg = f"unknown process exit status {status!r}"
+                raise ValueError(msg)
 
 
 def disk_usage(path):
@@ -171,33 +162,16 @@ def disk_usage(path):
     total and used disk space whereas "free" and "percent" represent
     the "free" and "used percent" user disk space.
     """
-    if PY3:
-        st = os.statvfs(path)
-    else:  # pragma: no cover
-        # os.statvfs() does not support unicode on Python 2:
-        # - https://github.com/giampaolo/psutil/issues/416
-        # - http://bugs.python.org/issue18695
-        try:
-            st = os.statvfs(path)
-        except UnicodeEncodeError:
-            if isinstance(path, unicode):
-                try:
-                    path = path.encode(sys.getfilesystemencoding())
-                except UnicodeEncodeError:
-                    pass
-                st = os.statvfs(path)
-            else:
-                raise
-
+    st = os.statvfs(path)
     # Total space which is only available to root (unless changed
     # at system level).
-    total = (st.f_blocks * st.f_frsize)
+    total = st.f_blocks * st.f_frsize
     # Remaining free space usable by root.
-    avail_to_root = (st.f_bfree * st.f_frsize)
+    avail_to_root = st.f_bfree * st.f_frsize
     # Remaining free space usable by user.
-    avail_to_user = (st.f_bavail * st.f_frsize)
+    avail_to_user = st.f_bavail * st.f_frsize
     # Total space being used in general.
-    used = (total - avail_to_root)
+    used = total - avail_to_root
     if MACOS:
         # see: https://github.com/giampaolo/psutil/pull/2152
         used = _psutil_osx.disk_usage_used(path, used)
@@ -213,13 +187,14 @@ def disk_usage(path):
     # reserved blocks that we are currently not considering:
     # https://github.com/giampaolo/psutil/issues/829#issuecomment-223750462
     return sdiskusage(
-        total=total, used=used, free=avail_to_user, percent=usage_percent_user)
+        total=total, used=used, free=avail_to_user, percent=usage_percent_user
+    )
 
 
 @memoize
 def get_terminal_map():
     """Get a map of device-id -> path as a dict.
-    Used by Process.terminal()
+    Used by Process.terminal().
     """
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')

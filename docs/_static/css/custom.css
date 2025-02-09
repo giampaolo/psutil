@@ -23,6 +23,11 @@
     margin-bottom: 0px !important;
 }
 
+.rst-content li {
+    list-style: outside;
+    margin-left: 15px;
+}
+
 .document td {
     padding-bottom: 0px !important;
 }
@@ -535,4 +540,11 @@ div.body div.admonition, div.body div.impl-detail {
 /* Name.Variable.Magic */
 .highlight .il {
     color: #208050
+}
+
+.rst-content pre.literal-block, .rst-content div[class^='highlight'] {
+    border: 1px solid #e1e4e5;
+    padding: 0px;
+    overflow-x: auto;
+    margin: 1px 0 0px 0;
 }

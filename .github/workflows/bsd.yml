@@ -11,57 +11,37 @@ concurrency:
   cancel-in-progress: true
 jobs:
   freebsd:
-    runs-on: macos-12
+    # if: false
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run tests
-        uses: vmactions/freebsd-vm@v0
+        uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
-          prepare: |
-            pkg install -y gcc python3
           run: |
-            set -e -x
-            make install-pip
-            python3 -m pip install --user setuptools
-            make install
-            make test
-            make test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
+
   openbsd:
-    runs-on: macos-12
+    # if: false
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run tests
-        uses: vmactions/openbsd-vm@v0
+        uses: vmactions/openbsd-vm@v1
         with:
           usesh: true
-          prepare: |
-            set -e
-            pkg_add gcc python3
           run: |
-            set -e
-            make install-pip
-            python3 -m pip install --user setuptools
-            make install
-            make test
-            make test-memleaks
+            PIP_BREAK_SYSTEM_PACKAGES=1 make install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks
+
   netbsd:
-    runs-on: macos-12
+    if: false  # XXX: disabled
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run tests
-        uses: vmactions/netbsd-vm@v0
+        uses: vmactions/netbsd-vm@v1
         with:
           usesh: true
-          prepare: |
-            set -e
-            pkg_add -v pkgin
-            pkgin update
-            pkgin -y install python311-* py311-setuptools-* gcc12-*
           run: |
-            set -e
-            make install-pip PYTHON=python3.11
-            python3.11 -m pip install --user setuptools
-            make install PYTHON=python3.11
-            make test PYTHON=python3.11
-            make test-memleaks PYTHON=python3.11
+            PIP_BREAK_SYSTEM_PACKAGES=1 make PYTHON=python3.11 install-sysdeps install-pydeps-test install print-sysinfo test test-memleaks

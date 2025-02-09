@@ -4,9 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Kill a process by name.
-"""
+"""Kill a process by name."""
 
 import os
 import sys
@@ -16,17 +14,17 @@ import psutil
 
 def main():
     if len(sys.argv) != 2:
-        sys.exit('usage: %s name' % __file__)
+        sys.exit(f"usage: {__file__} name")
     else:
-        NAME = sys.argv[1]
+        name = sys.argv[1]
 
     killed = []
     for proc in psutil.process_iter():
-        if proc.name() == NAME and proc.pid != os.getpid():
+        if proc.name() == name and proc.pid != os.getpid():
             proc.kill()
             killed.append(proc.pid)
     if not killed:
-        sys.exit('%s: no process found' % NAME)
+        sys.exit(f"{name}: no process found")
     else:
         sys.exit(0)
 

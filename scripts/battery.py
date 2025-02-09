@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Show battery information.
+"""Show battery information.
 
 $ python3 scripts/battery.py
 charge:     74%
@@ -14,7 +13,6 @@ status:     discharging
 plugged in: no
 """
 
-from __future__ import print_function
 
 import sys
 
@@ -24,7 +22,7 @@ import psutil
 def secs2hours(secs):
     mm, ss = divmod(secs, 60)
     hh, mm = divmod(mm, 60)
-    return "%d:%02d:%02d" % (hh, mm, ss)
+    return f"{int(hh)}:{int(mm):02}:{int(ss):02}"
 
 
 def main():
@@ -34,14 +32,16 @@ def main():
     if batt is None:
         return sys.exit("no battery is installed")
 
-    print("charge:     %s%%" % round(batt.percent, 2))
+    print(f"charge:     {round(batt.percent, 2)}%")
     if batt.power_plugged:
-        print("status:     %s" % (
-            "charging" if batt.percent < 100 else "fully charged"))
+        print(
+            "status:    "
+            f" {'charging' if batt.percent < 100 else 'fully charged'}"
+        )
         print("plugged in: yes")
     else:
-        print("left:       %s" % secs2hours(batt.secsleft))
-        print("status:     %s" % "discharging")
+        print(f"left:      {secs2hours(batt.secsleft)}")
+        print("status:     discharging")
         print("plugged in: no")
 
 

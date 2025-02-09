@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Similar to 'ps aux --forest' on Linux, prints the process list
+"""Similar to 'ps aux --forest' on Linux, prints the process list
 as a tree structure.
 
 $ python3 scripts/pstree.py
@@ -28,7 +27,6 @@ $ python3 scripts/pstree.py
 ...
 """
 
-from __future__ import print_function
 
 import collections
 import sys

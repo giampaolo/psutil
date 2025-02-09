@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Benchmark all API calls and print them from fastest to slowest.
+"""Benchmark all API calls and print them from fastest to slowest.
 
 $ make print_api_speed
 SYSTEM APIS                NUM CALLS      SECONDS
@@ -69,8 +68,6 @@ memory_full_info                 300      0.07066
 memory_maps                      300      0.74281
 """
 
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import inspect
@@ -84,11 +81,11 @@ from psutil._common import print_color
 
 TIMES = 300
 timings = []
-templ = "%-25s %10s   %10s"
+templ = "{:<25} {:>10}   {:>10}"
 
 
 def print_header(what):
-    s = templ % (what, "NUM CALLS", "SECONDS")
+    s = templ.format(what, "NUM CALLS", "SECONDS")
     print_color(s, color=None, bold=True)
     print("-" * len(s))
 
@@ -98,7 +95,7 @@ def print_timings():
     i = 0
     while timings[:]:
         title, times, elapsed = timings.pop(0)
-        s = templ % (title, str(times), "%.5f" % elapsed)
+        s = templ.format(title, str(times), f"{elapsed:.5f}")
         if i > len(timings) - 5:
             print_color(s, color="red")
         else:
@@ -106,7 +103,7 @@ def print_timings():
 
 
 def timecall(title, fun, *args, **kw):
-    print("%-50s" % title, end="")
+    print("{:<50}".format(title), end="")
     sys.stdout.flush()
     t = timer()
     for n in range(TIMES):
@@ -137,7 +134,8 @@ def main():
     global TIMES
 
     parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument('-t', '--times', type=int, default=TIMES)
     args = parser.parse_args()
     TIMES = args.times
@@ -153,8 +151,12 @@ def main():
     # --- system
 
     public_apis = []
-    ignore = ['wait_procs', 'process_iter', 'win_service_get',
-              'win_service_iter']
+    ignore = [
+        'wait_procs',
+        'process_iter',
+        'win_service_get',
+        'win_service_iter',
+    ]
     if psutil.MACOS:
         ignore.append('net_connections')  # raises AD
     for name in psutil.__all__:
@@ -168,20 +170,32 @@ def main():
         fun = getattr(psutil, name)
         args = ()
         if name == 'pid_exists':
-            args = (os.getpid(), )
+            args = (os.getpid(),)
         elif name == 'disk_usage':
-            args = (os.getcwd(), )
+            args = (os.getcwd(),)
         timecall(name, fun, *args)
     timecall('cpu_count (cores)', psutil.cpu_count, logical=False)
     timecall('process_iter (all)', lambda: list(psutil.process_iter()))
     print_timings()
 
     # --- process
-    print("")
+    print()
     print_header("PROCESS APIS")
-    ignore = ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-              'as_dict', 'parent', 'parents', 'memory_info_ex', 'oneshot',
-              'pid', 'rlimit', 'children']
+    ignore = [
+        'send_signal',
+        'suspend',
+        'resume',
+        'terminate',
+        'kill',
+        'wait',
+        'as_dict',
+        'parent',
+        'parents',
+        'oneshot',
+        'pid',
+        'rlimit',
+        'children',
+    ]
     if psutil.MACOS:
         ignore.append('memory_maps')  # XXX
     p = psutil.Process()
@@ -192,8 +206,9 @@ def main():
     print_timings()
 
     if not prio_set:
-        print_color("\nWARN: couldn't set highest process priority " +
-                    "(requires root)", "red")
+        msg = "\nWARN: couldn't set highest process priority "
+        msg += "(requires root)"
+        print_color(msg, "red")
 
 
 if __name__ == '__main__':

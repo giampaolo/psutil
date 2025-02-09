@@ -4,13 +4,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Bot triggered by Github Actions every time a new issue, PR or comment
+"""Bot triggered by Github Actions every time a new issue, PR or comment
 is created. Assign labels, provide replies, closes issues, etc. depending
 on the situation.
 """
 
-from __future__ import print_function
 
 import functools
 import json
@@ -22,13 +20,14 @@ from github import Github
 
 
 ROOT_DIR = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), '..', '..'))
+    os.path.join(os.path.dirname(__file__), '..', '..')
+)
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 
 # --- constants
 
-
+# fmt: off
 LABELS_MAP = {
     # platforms
     "linux": [
@@ -42,7 +41,7 @@ LABELS_MAP = {
         "windows", "win32", "WinError", "WindowsError", "win10", "win7",
         "win ", "mingw", "msys", "studio", "microsoft", "make.bat",
         "CloseHandle", "GetLastError", "NtQuery", "DLL", "MSVC", "TCHAR",
-        "WCHAR", ".bat", "OpenProcess", "TerminateProcess", "appveyor",
+        "WCHAR", ".bat", "OpenProcess", "TerminateProcess",
         "windows error", "NtWow64", "NTSTATUS", "Visual Studio",
     ],
     "macos": [
@@ -62,6 +61,11 @@ LABELS_MAP = {
         "/dev/pts", "posix",
     ],
     "pypy": ["pypy"],
+    "docker": ["docker", "docker-compose"],
+    "vm": [
+        "docker", "docker-compose", "vmware", "lxc", "hyperv", "virtualpc",
+        "virtualbox", "bhyve", "openvz", "lxc", "xen", "kvm", "qemu", "heroku",
+    ],
     # types
     "enhancement": ["enhancement"],
     "memleak": ["memory leak", "leaks memory", "memleak", "mem leak"],
@@ -84,24 +88,26 @@ LABELS_MAP = {
     ],
     # tests
     "tests": [
-        " test ", "tests", "travis", "coverage", "cirrus", "appveyor",
+        " test ", "tests", "travis", "coverage", "cirrus",
         "continuous integration", "unittest", "pytest", "unit test",
     ],
     # critical errors
-    "priority-high": [
+    "critical": [
         "WinError", "WindowsError", "RuntimeError", "ZeroDivisionError",
-        "SystemError", "MemoryError", "core dumped",
-        "segfault", "segmentation fault",
+        "SystemError", "MemoryError", "core dump", "segfault",
+        "segmentation fault",
     ],
 }
-
-LABELS_MAP['scripts'].extend(
-    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')])
 
 OS_LABELS = [
     "linux", "windows", "macos", "freebsd", "openbsd", "netbsd", "openbsd",
     "bsd", "sunos", "unix", "wsl", "aix", "cygwin",
 ]
+# fmt: on
+
+LABELS_MAP['scripts'].extend(
+    [x for x in os.listdir(SCRIPTS_DIR) if x.endswith('.py')]
+)
 
 ILLOGICAL_PAIRS = [
     ('bug', 'enhancement'),
@@ -142,14 +148,6 @@ def has_label(issue, label):
     return label in assigned
 
 
-def has_os_label(issue):
-    labels = set([x.name for x in issue.labels])
-    for label in OS_LABELS:
-        if label in labels:
-            return True
-    return False
-
-
 def get_repo():
     repo = os.environ['GITHUB_REPOSITORY']
     token = os.environ['GITHUB_TOKEN']
@@ -161,9 +159,10 @@ def get_repo():
 
 @functools.lru_cache()
 def _get_event_data():
-    ret = json.load(open(os.environ["GITHUB_EVENT_PATH"]))
-    pp(ret)
-    return ret
+    with open(os.environ["GITHUB_EVENT_PATH"]) as f:
+        ret = json.load(f)
+        pp(ret)
+        return ret
 
 
 def is_event_new_issue():
@@ -196,29 +195,29 @@ def get_issue():
 
 def log(msg):
     if '\n' in msg or "\r\n" in msg:
-        print(">>>\n%s\n<<<" % msg, flush=True)
+        print(f">>>\n{msg}\n<<<", flush=True)
     else:
-        print(">>> %s <<<" % msg, flush=True)
+        print(f">>> {msg} <<<", flush=True)
 
 
 def add_label(issue, label):
     def should_add(issue, label):
         if has_label(issue, label):
-            log("already has label %r" % (label))
+            log(f"already has label {label!r}")
             return False
 
         for left, right in ILLOGICAL_PAIRS:
             if label == left and has_label(issue, right):
-                log("already has label" % (label))
+                log(f"already has label f{label}")
                 return False
 
         return not has_label(issue, label)
 
     if not should_add(issue, label):
-        log("should not add label %r" % label)
+        log(f"should not add label {label!r}")
         return
 
-    log("add label %r" % label)
+    log(f"add label {label!r}")
     issue.add_to_labels(label)
 
 
@@ -251,10 +250,12 @@ def add_labels_from_new_body(issue, text):
     # add bug/enhancement label
     log("search for 'Bug fix: y/n' line")
     r = re.search(r"\* Bug fix:.*?\n", text)
-    if is_pr(issue) and \
-            r is not None and \
-            not has_label(issue, "bug") and \
-            not has_label(issue, "enhancement"):
+    if (
+        is_pr(issue)
+        and r is not None
+        and not has_label(issue, "bug")
+        and not has_label(issue, "enhancement")
+    ):
         log("found")
         s = r.group(0).lower()
         if 'yes' in s:
@@ -293,20 +294,25 @@ def add_labels_from_new_body(issue, text):
 
 def on_new_issue(issue):
     def has_text(text):
-        return text in issue.title.lower() or \
-            (issue.body and text in issue.body.lower())
+        return text in issue.title.lower() or (
+            issue.body and text in issue.body.lower()
+        )
 
     def body_mentions_python_h():
         if not issue.body:
             return False
         body = issue.body.replace(' ', '')
-        return "#include<Python.h>\n^~~~" in body or \
-            "#include<Python.h>\r\n^~~~" in body
+        return (
+            "#include<Python.h>\n^~~~" in body
+            or "#include<Python.h>\r\n^~~~" in body
+        )
 
     log("searching for missing Python.h")
-    if has_text("missing python.h") or \
-            has_text("python.h: no such file or directory") or \
-            body_mentions_python_h():
+    if (
+        has_text("missing python.h")
+        or has_text("python.h: no such file or directory")
+        or body_mentions_python_h()
+    ):
         log("found mention of Python.h")
         issue.create_comment(REPLY_MISSING_PYTHON_HEADERS)
         issue.edit(state='closed')
@@ -324,16 +330,16 @@ def on_new_pr(issue):
 def main():
     issue = get_issue()
     stype = "PR" if is_pr(issue) else "issue"
-    log("running issue bot for %s %r" % (stype, issue))
+    log(f"running issue bot for {stype} {issue!r}")
 
     if is_event_new_issue():
-        log("created new issue %s" % issue)
+        log(f"created new issue {issue}")
         add_labels_from_text(issue, issue.title)
         if issue.body:
             add_labels_from_new_body(issue, issue.body)
         on_new_issue(issue)
     elif is_event_new_pr():
-        log("created new PR %s" % issue)
+        log(f"created new PR {issue}")
         add_labels_from_text(issue, issue.title)
         if issue.body:
             add_labels_from_new_body(issue, issue.body)

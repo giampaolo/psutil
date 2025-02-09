@@ -12,6 +12,7 @@
 
 
 #include <Python.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
@@ -59,7 +60,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
     if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
         PyErr_SetString(PyExc_RuntimeError,
-            "No battery capacity infomration in power sources info");
+            "No battery capacity information in power sources info");
         goto error;
     }
 

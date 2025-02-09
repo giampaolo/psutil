@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-r"""
-List all Windows services installed.
+r"""List all Windows services installed.
 
 $ python3 scripts/winservices.py
 AeLookupSvc (Application Experience)
@@ -44,11 +43,16 @@ if os.name != 'nt':
 def main():
     for service in psutil.win_service_iter():
         info = service.as_dict()
-        print("%r (%r)" % (info['name'], info['display_name']))
-        print("status: %s, start: %s, username: %s, pid: %s" % (
-            info['status'], info['start_type'], info['username'], info['pid']))
-        print("binpath: %s" % info['binpath'])
-        print("")
+        print(f"{info['name']!r} ({info['display_name']!r})")
+        s = "status: {}, start: {}, username: {}, pid: {}".format(
+            info['status'],
+            info['start_type'],
+            info['username'],
+            info['pid'],
+        )
+        print(s)
+        print(f"binpath: {info['binpath']}")
+        print()
 
 
 if __name__ == '__main__':

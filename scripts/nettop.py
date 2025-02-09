@@ -6,8 +6,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Shows real-time network statistics.
+"""Shows real-time network statistics.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
@@ -81,12 +80,12 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     global lineno
 
     # totals
-    printl("total bytes:           sent: %-10s   received: %s" % (
-        bytes2human(tot_after.bytes_sent),
-        bytes2human(tot_after.bytes_recv))
+    printl(
+        "total bytes:           sent: {:<10}   received: {}".format(
+            bytes2human(tot_after.bytes_sent),
+            bytes2human(tot_after.bytes_recv),
+        )
     )
-    printl("total packets:         sent: %-10s   received: %s" % (
-        tot_after.packets_sent, tot_after.packets_recv))
 
     # per-network interface details: let's sort network interfaces so
     # that the ones which generated more traffic are shown first
@@ -96,31 +95,33 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     for name in nic_names:
         stats_before = pnic_before[name]
         stats_after = pnic_after[name]
-        templ = "%-15s %15s %15s"
-        printl(templ % (name, "TOTAL", "PER-SEC"), highlight=True)
-        printl(templ % (
+        templ = "{:<15s} {:>15} {:>15}"
+        # fmt: off
+        printl(templ.format(name, "TOTAL", "PER-SEC"), highlight=True)
+        printl(templ.format(
             "bytes-sent",
             bytes2human(stats_after.bytes_sent),
             bytes2human(
                 stats_after.bytes_sent - stats_before.bytes_sent) + '/s',
         ))
-        printl(templ % (
+        printl(templ.format(
             "bytes-recv",
             bytes2human(stats_after.bytes_recv),
             bytes2human(
                 stats_after.bytes_recv - stats_before.bytes_recv) + '/s',
         ))
-        printl(templ % (
+        printl(templ.format(
             "pkts-sent",
             stats_after.packets_sent,
             stats_after.packets_sent - stats_before.packets_sent,
         ))
-        printl(templ % (
+        printl(templ.format(
             "pkts-recv",
             stats_after.packets_recv,
             stats_after.packets_recv - stats_before.packets_recv,
         ))
         printl("")
+        # fmt: on
     win.refresh()
     lineno = 0
 
@@ -128,7 +129,7 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
 def setup():
     curses.start_color()
     curses.use_default_colors()
-    for i in range(0, curses.COLORS):
+    for i in range(curses.COLORS):
         curses.init_pair(i + 1, i, -1)
     curses.endwin()
     win.nodelay(1)

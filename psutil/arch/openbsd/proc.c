@@ -41,7 +41,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_proc)");
         return -1;
     }
     // sysctl stores 0 in the size if we can't find the process information.
@@ -69,7 +69,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
 
     /* get the size of what would be returned */
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_file) (1/2)");
         return NULL;
     }
     if ((kf = malloc(len)) == NULL) {
@@ -79,7 +79,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
     mib[5] = (int)(len / sizeof(struct kinfo_file));
     if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
         free(kf);
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_file) (2/2)");
         return NULL;
     }
 
@@ -147,7 +147,7 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
-    static char **argv;
+    char **argv = NULL;
     char **p;
     size_t argv_size = 128;
     PyObject *py_retlist = PyList_New(0);
@@ -189,9 +189,12 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
         Py_DECREF(py_arg);
     }
 
+    free(argv);
     return py_retlist;
 
 error:
+    if (argv != NULL)
+        free(argv);
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
@@ -219,8 +222,15 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
     if (! kd) {
-        convert_kvm_err("kvm_openfiles()", errbuf);
-        goto error;
+        // Usually fails due to EPERM against /dev/mem. We retry with
+        // KVM_NO_FILES which apparently has the same effect.
+        // https://stackoverflow.com/questions/22369736/
+        psutil_debug("kvm_openfiles(O_RDONLY) failed");
+        kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
+        if (! kd) {
+            convert_kvm_err("kvm_openfiles()", errbuf);
+            goto error;
+        }
     }
 
     kp = kvm_getprocs(
@@ -278,8 +288,19 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
         return NULL;
 
     freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL)
+
+    if (freep == NULL) {
+#if defined(PSUTIL_OPENBSD)
+        if ((pid == 0) && (errno == ESRCH)) {
+            psutil_debug(
+                "num_fds() returned ESRCH for PID 0; forcing `return 0`"
+            );
+            PyErr_Clear();
+            return Py_BuildValue("i", 0);
+        }
+#endif
         return NULL;
+    }
 
     free(freep);
     return Py_BuildValue("i", cnt);

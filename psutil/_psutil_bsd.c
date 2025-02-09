@@ -52,6 +52,9 @@
 #endif
 
 
+#define INITERR return NULL
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -63,7 +66,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS},
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD)
-    {"proc_connections", psutil_proc_connections, METH_VARARGS},
+    {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
 #endif
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
@@ -112,36 +115,29 @@ static PyMethodDef mod_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-#if PY_MAJOR_VERSION >= 3
-    #define INITERR return NULL
 
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_psutil_bsd",
-        NULL,
-        -1,
-        mod_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_psutil_bsd",
+    NULL,
+    -1,
+    mod_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
-    PyObject *PyInit__psutil_bsd(void)
-#else  /* PY_MAJOR_VERSION */
-    #define INITERR return
-
-    void init_psutil_bsd(void)
-#endif  /* PY_MAJOR_VERSION */
-{
+PyObject
+*PyInit__psutil_bsd(void) {
     PyObject *v;
-#if PY_MAJOR_VERSION >= 3
     PyObject *mod = PyModule_Create(&moduledef);
-#else
-    PyObject *mod = Py_InitModule("_psutil_bsd", mod_methods);
-#endif
     if (mod == NULL)
         INITERR;
+
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+#endif
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
     // process status constants
@@ -206,7 +202,5 @@ static PyMethodDef mod_methods[] = {
 
     if (mod == NULL)
         INITERR;
-#if PY_MAJOR_VERSION >= 3
     return mod;
-#endif
 }

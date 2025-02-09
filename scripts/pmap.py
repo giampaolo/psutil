@@ -4,15 +4,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat -v' on BSD.
-Report memory map of a process.
+"""A clone of 'pmap' utility on Linux, 'vmmap' on macOS and 'procstat
+-v' on BSD. Report memory map of a process.
 
 $ python3 scripts/pmap.py 32402
 Address                 RSS  Mode    Mapping
-0000000000400000      1200K  r-xp    /usr/bin/python2.7
-0000000000838000         4K  r--p    /usr/bin/python2.7
-0000000000839000       304K  rw-p    /usr/bin/python2.7
+0000000000400000      1200K  r-xp    /usr/bin/python3.7
+0000000000838000         4K  r--p    /usr/bin/python3.7
+0000000000839000       304K  rw-p    /usr/bin/python3.7
 00000000008ae000        68K  rw-p    [anon]
 000000000275e000      5396K  rw-p    [heap]
 00002b29bb1e0000       124K  r-xp    /lib/x86_64-linux-gnu/ld-2.17.so
@@ -29,15 +28,15 @@ ffffffffff600000         0K  r-xp    [vsyscall]
 ...
 """
 
+import shutil
 import sys
 
 import psutil
 from psutil._common import bytes2human
-from psutil._compat import get_terminal_size
 
 
 def safe_print(s):
-    s = s[:get_terminal_size()[0]]
+    s = s[: shutil.get_terminal_size()[0]]
     try:
         print(s)
     except UnicodeEncodeError:
@@ -48,19 +47,21 @@ def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap <pid>')
     p = psutil.Process(int(sys.argv[1]))
-    templ = "%-20s %10s  %-7s %s"
-    print(templ % ("Address", "RSS", "Mode", "Mapping"))
+    templ = "{:<20} {:>10}  {:<7} {}"
+    print(templ.format("Address", "RSS", "Mode", "Mapping"))
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        safe_print(templ % (
+        line = templ.format(
             m.addr.split('-')[0].zfill(16),
             bytes2human(m.rss),
             m.perms,
-            m.path))
+            m.path,
+        )
+        safe_print(line)
     print("-" * 31)
-    print(templ % ("Total", bytes2human(total_rss), '', ''))
-    safe_print("PID = %s, name = %s" % (p.pid, p.name()))
+    print(templ.format("Total", bytes2human(total_rss), "", ""))
+    safe_print(f"PID = {p.pid}, name = {p.name()}")
 
 
 if __name__ == '__main__':

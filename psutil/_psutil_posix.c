@@ -52,6 +52,9 @@
 #include "_psutil_common.h"
 
 
+#define INITERR return NULL
+
+
 // ====================================================================
 // --- Utils
 // ====================================================================
@@ -148,7 +151,7 @@ psutil_pid_exists(pid_t pid) {
 void
 psutil_raise_for_pid(long pid, char *syscall) {
     if (errno != 0)
-        PyErr_SetFromOSErrnoWithSyscall(syscall);
+        psutil_PyErr_SetFromOSErrnoWithSyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
         NoSuchProcess(syscall);
     else
@@ -434,11 +437,7 @@ append_flag(PyObject *py_retlist, const char * flag_name)
 {
     PyObject *py_str = NULL;
 
-#if PY_MAJOR_VERSION >= 3
     py_str = PyUnicode_FromString(flag_name);
-#else
-    py_str = PyString_FromString(flag_name);
-#endif
     if (! py_str)
         return 0;
     if (PyList_Append(py_retlist, py_str)) {
@@ -470,14 +469,14 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
         goto error;
     }
 
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1) {
-        PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
         goto error;
     }
 
@@ -883,35 +882,27 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-#if PY_MAJOR_VERSION >= 3
-    #define INITERR return NULL
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_psutil_posix",
+    NULL,
+    -1,
+    mod_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_psutil_posix",
-        NULL,
-        -1,
-        mod_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-    };
-
-    PyObject *PyInit__psutil_posix(void)
-#else  /* PY_MAJOR_VERSION */
-    #define INITERR return
-
-    void init_psutil_posix(void)
-#endif  /* PY_MAJOR_VERSION */
-{
-#if PY_MAJOR_VERSION >= 3
+PyObject *
+PyInit__psutil_posix(void) {
     PyObject *mod = PyModule_Create(&moduledef);
-#else
-    PyObject *mod = Py_InitModule("_psutil_posix", mod_methods);
-#endif
     if (mod == NULL)
         INITERR;
+
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+#endif
 
 #if defined(PSUTIL_BSD) || \
         defined(PSUTIL_OSX) || \
@@ -1018,9 +1009,7 @@ static PyMethodDef mod_methods[] = {
 
     if (mod == NULL)
         INITERR;
-#if PY_MAJOR_VERSION >= 3
     return mod;
-#endif
 }
 
 #ifdef __cplusplus

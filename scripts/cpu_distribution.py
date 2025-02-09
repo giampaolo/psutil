@@ -4,8 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Shows CPU workload split across different CPUs.
+"""Shows CPU workload split across different CPUs.
 
 $ python3 scripts/cpu_workload.py
 CPU 0     CPU 1     CPU 2     CPU 3     CPU 4     CPU 5     CPU 6     CPU 7
@@ -39,15 +38,14 @@ rcu_b                                                                 cpuhp
 kwork
 """
 
-from __future__ import print_function
 
 import collections
 import os
+import shutil
 import sys
 import time
 
 import psutil
-from psutil._compat import get_terminal_size
 
 
 if not hasattr(psutil.Process, "cpu_num"):
@@ -74,13 +72,13 @@ def main():
         clean_screen()
         cpus_percent = psutil.cpu_percent(percpu=True)
         for i in range(num_cpus):
-            print("CPU %-6i" % i, end="")
+            print("CPU {:<6}".format(i), end="")
         if cpus_hidden:
             print(" (+ hidden)", end="")
 
         print()
         for _ in range(num_cpus):
-            print("%-10s" % cpus_percent.pop(0), end="")
+            print("{:<10}".format(cpus_percent.pop(0)), end="")
         print()
 
         # processes
@@ -95,10 +93,10 @@ def main():
                     pname = procs[num].pop()
                 except IndexError:
                     pname = ""
-                print("%-10s" % pname[:10], end="")
+                print("{:<10}".format(pname[:10]), end="")
             print()
             curr_line += 1
-            if curr_line >= get_terminal_size()[1]:
+            if curr_line >= shutil.get_terminal_size()[1]:
                 break
 
         time.sleep(1)

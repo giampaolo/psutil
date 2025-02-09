@@ -18,3 +18,4 @@ syntax: glob
 build/
 dist/
 wheelhouse/
+.tests/

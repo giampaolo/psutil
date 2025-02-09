@@ -39,7 +39,7 @@ FEATURES
   Example:
   ```
   df -a  ->  psutil.disk_partitions
-  lsof  ->  psutil.Process.open_files() and psutil.Process.open_connections()
+  lsof  ->  psutil.Process.open_files() and psutil.Process.net_connections()
   killall->  (actual script)
   tty  ->  psutil.Process.terminal()
   who  ->  psutil.users()
@@ -113,13 +113,9 @@ REJECTED IDEAS
 INCONSISTENCIES
 ===============
 
-- disk_partitions(all=False) should have been "perdisk=False" instead:
-  * disk_io_counters(perdisk=False)
-  * net_io_counters(pernic=False)
-  * cpu_times_percent(percpu=False)
-  * cpu_times(percpu=False)
-  * cpu_freq(percpu=False)
-- PROCFS_PATH should have been set_procfs_path()
+- PROCFS_PATH should have been set_procfs_path().
+- `virtual_memory()` should have been `memory_virtual()`.
+- `swap_memory()` should have been `memory_swap()`.
 
 RESOURCES
 =========
