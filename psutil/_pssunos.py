@@ -537,7 +537,7 @@ class Process:
         # /proc/PID/path/cwd may not be resolved by readlink() even if
         # it exists (ls shows it). If that's the case and the process
         # is still alive return None (we can return None also on BSD).
-        # Reference: http://goo.gl/55XgO
+        # Reference: https://groups.google.com/g/comp.unix.solaris/c/tcqvhTNFCAs
         procfs_path = self._procfs_path
         try:
             return os.readlink(f"{procfs_path}/{self.pid}/path/cwd")
