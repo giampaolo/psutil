@@ -854,7 +854,7 @@ error:
  * Return process TCP and UDP connections as a list of tuples.
  * Raises NSP in case of zombie process.
  * References:
- * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/wNrC0
+ * - lsof source code: https://github.com/apple-opensource/lsof/blob/28/lsof/dialects/darwin/libproc/dproc.c#L342
  * - /usr/include/sys/proc_info.h
  */
 PyObject *
