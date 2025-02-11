@@ -815,7 +815,7 @@ def bcat(fname, fallback=_DEFAULT):
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
-    """Used by various scripts. See: http://goo.gl/zeJZl.
+    """Used by various scripts. See: https://code.activestate.com/recipes/578019-bytes-to-human-human-to-bytes-converter/?in=user-4178764.
 
     >>> bytes2human(10000)
     '9.8K'
