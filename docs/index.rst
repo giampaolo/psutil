@@ -2660,6 +2660,7 @@ If you want to develop psutil take a look at the `DEVGUIDE.rst`_.
 Platforms support history
 =========================
 
+* psutil 7.0.0 (2025-02): drop Python 2.7
 * psutil 5.9.6 (2023-10): drop Python 3.4 and 3.5
 * psutil 5.9.1 (2022-05): drop Python 2.6
 * psutil 5.9.0 (2021-12): add **MidnightBSD**
@@ -2680,6 +2681,10 @@ PyPy3.
 Timeline
 ========
 
+- 2025-02-13:
+  `7.0.0 <https://pypi.org/project/psutil/7.0.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#611>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-6.1.1...release-7.0.0#files_bucket>`__
 - 2024-12-19:
   `6.1.1 <https://pypi.org/project/psutil/6.1.1/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#611>`__ -
