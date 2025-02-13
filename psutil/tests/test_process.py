@@ -288,13 +288,13 @@ class TestProcess(PsutilTestCase):
                 for x in range(100000):
                     x **= 2
 
-        proc = multiprocessing.Process(target=waste_cpu)
-        proc.start()
-        proc.join()
+        while os.times().children_user < 0.2:
+            proc = multiprocessing.Process(target=waste_cpu)
+            proc.start()
+            proc.join()
 
         a = psutil.Process().cpu_times()
         b = os.times()
-        assert b.children_user >= 0.2
         self.assertAlmostEqual(a.children_user, b.children_user, delta=0.1)
         self.assertAlmostEqual(a.children_system, b.children_system, delta=0.1)
 
