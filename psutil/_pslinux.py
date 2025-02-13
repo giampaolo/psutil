@@ -934,7 +934,7 @@ class NetConnections:
                         f"error while parsing {file}; malformed line {line!r}"
                     )
                     raise RuntimeError(msg)  # noqa: B904
-                if inode in inodes:  # noqa: SIM108, SIM401
+                if inode in inodes:  # noqa: SIM108
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.
                     pairs = inodes[inode]

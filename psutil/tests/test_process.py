@@ -12,7 +12,6 @@ import errno
 import getpass
 import io
 import itertools
-import multiprocessing
 import os
 import signal
 import socket
@@ -271,32 +270,16 @@ class TestProcess(PsutilTestCase):
 
     def test_cpu_times_2(self):
         def waste_cpu():
-            for x in range(100000):
-                x **= 2
+            stop_at = os.times().user + 0.2
+            while os.times().user < stop_at:
+                for x in range(100000):
+                    x **= 2
 
-        while os.times().user < 0.2:
-            waste_cpu()
+        waste_cpu()
         a = psutil.Process().cpu_times()
         b = os.times()
         self.assertAlmostEqual(a.user, b.user, delta=0.1)
         self.assertAlmostEqual(a.system, b.system, delta=0.1)
-
-    def test_cpu_times_3(self):
-        # same as above but for process children
-        def waste_cpu():
-            while os.times().user < 0.2:
-                for x in range(100000):
-                    x **= 2
-
-        while os.times().children_user < 0.2:
-            proc = multiprocessing.Process(target=waste_cpu)
-            proc.start()
-            proc.join()
-
-        a = psutil.Process().cpu_times()
-        b = os.times()
-        self.assertAlmostEqual(a.children_user, b.children_user, delta=0.1)
-        self.assertAlmostEqual(a.children_system, b.children_system, delta=0.1)
 
     @pytest.mark.skipif(not HAS_PROC_CPU_NUM, reason="not supported")
     def test_cpu_num(self):

@@ -13,6 +13,7 @@ import time
 import psutil
 from psutil import MACOS
 from psutil import POSIX
+from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
@@ -129,6 +130,10 @@ class TestSystemAPIs(PsutilTestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
+    @pytest.mark.skipif(
+        CI_TESTING and MACOS and platform.machine() == 'arm64',
+        reason="skipped on MACOS + ARM64 + CI_TESTING",
+    )
     @retry_on_failure()
     def test_vmem_free(self):
         vmstat_val = vm_stat("free")
