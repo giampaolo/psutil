@@ -12,6 +12,7 @@ import errno
 import getpass
 import io
 import itertools
+import multiprocessing
 import os
 import signal
 import socket
@@ -269,17 +270,33 @@ class TestProcess(PsutilTestCase):
             time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
 
     def test_cpu_times_2(self):
-        user_time, kernel_time = psutil.Process().cpu_times()[:2]
-        utime, ktime = os.times()[:2]
+        def waste_cpu():
+            for x in range(100000):
+                x **= 2
 
-        # Use os.times()[:2] as base values to compare our results
-        # using a tolerance  of +/- 0.1 seconds.
-        # It will fail if the difference between the values is > 0.1s.
-        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            raise self.fail(f"expected: {utime}, found: {user_time}")
+        while os.times().user < 0.2:
+            waste_cpu()
+        a = psutil.Process().cpu_times()
+        b = os.times()
+        self.assertAlmostEqual(a.user, b.user, delta=0.1)
+        self.assertAlmostEqual(a.system, b.system, delta=0.1)
 
-        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-            raise self.fail(f"expected: {ktime}, found: {kernel_time}")
+    def test_cpu_times_3(self):
+        # same as above but for process children
+        def waste_cpu():
+            while os.times().user < 0.2:
+                for x in range(100000):
+                    x **= 2
+
+        proc = multiprocessing.Process(target=waste_cpu)
+        proc.start()
+        proc.join()
+
+        a = psutil.Process().cpu_times()
+        b = os.times()
+        assert b.children_user >= 0.2
+        self.assertAlmostEqual(a.children_user, b.children_user, delta=0.1)
+        self.assertAlmostEqual(a.children_system, b.children_system, delta=0.1)
 
     @pytest.mark.skipif(not HAS_PROC_CPU_NUM, reason="not supported")
     def test_cpu_num(self):
