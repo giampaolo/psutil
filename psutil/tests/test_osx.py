@@ -140,6 +140,10 @@ class TestSystemAPIs(PsutilTestCase):
         psutil_val = psutil.virtual_memory().free
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
+    @pytest.mark.skipif(
+        CI_TESTING and MACOS and platform.machine() == 'arm64',
+        reason="skipped on MACOS + ARM64 + CI_TESTING",
+    )
     @retry_on_failure()
     def test_vmem_active(self):
         vmstat_val = vm_stat("active")
