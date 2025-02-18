@@ -82,6 +82,7 @@ Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 # `make install-pydeps-test`.
 TEST_DEPS = [
     "pytest",
+    "pytest-subtests",
     "pytest-xdist",
     "setuptools",
 ]
