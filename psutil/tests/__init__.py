@@ -116,7 +116,8 @@ COVERAGE = 'COVERAGE_RUN' in os.environ
 PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2**32
-AARCH64 = platform.machine() == "aarch64"
+# apparently they're the same
+AARCH64 = platform.machine() in {"aarch64", "arm64"}
 
 
 @memoize
