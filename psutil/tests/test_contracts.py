@@ -9,7 +9,6 @@ returned types and APIs availability.
 Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
-import platform
 import signal
 
 import psutil
@@ -22,6 +21,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil.tests import AARCH64
 from psutil.tests import GITHUB_ACTIONS
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_NET_IO_COUNTERS
@@ -226,9 +226,7 @@ class TestSystemAPITypes(PsutilTestCase):
         assert isinstance(psutil.cpu_count(), int)
 
     # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(
-        MACOS and platform.machine() == 'arm64', reason="skipped due to #1892"
-    )
+    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:

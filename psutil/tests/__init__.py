@@ -1569,7 +1569,7 @@ class system_namespace:
         ('virtual_memory', (), {}),
     ]
     if HAS_CPU_FREQ:
-        if MACOS and platform.machine() == 'arm64':  # skipped due to #1892
+        if MACOS and AARCH64:  # skipped due to #1892
             pass
         else:
             getters += [('cpu_freq', (), {'percpu': True})]

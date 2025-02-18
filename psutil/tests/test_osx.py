@@ -6,13 +6,13 @@
 
 """macOS specific tests."""
 
-import platform
 import re
 import time
 
 import psutil
 from psutil import MACOS
 from psutil import POSIX
+from psutil.tests import AARCH64
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
 from psutil.tests import TOLERANCE_DISK_USAGE
@@ -115,9 +115,7 @@ class TestSystemAPIs(PsutilTestCase):
         assert num == psutil.cpu_count(logical=False)
 
     # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(
-        MACOS and platform.machine() == 'arm64', reason="skipped due to #1892"
-    )
+    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     def test_cpu_freq(self):
         freq = psutil.cpu_freq()
         assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
@@ -131,7 +129,7 @@ class TestSystemAPIs(PsutilTestCase):
         assert sysctl_hwphymem == psutil.virtual_memory().total
 
     @pytest.mark.skipif(
-        CI_TESTING and MACOS and platform.machine() == 'arm64',
+        CI_TESTING and MACOS and AARCH64,
         reason="skipped on MACOS + ARM64 + CI_TESTING",
     )
     @retry_on_failure()
@@ -141,7 +139,7 @@ class TestSystemAPIs(PsutilTestCase):
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @pytest.mark.skipif(
-        CI_TESTING and MACOS and platform.machine() == 'arm64',
+        CI_TESTING and MACOS and AARCH64,
         reason="skipped on MACOS + ARM64 + CI_TESTING",
     )
     @retry_on_failure()

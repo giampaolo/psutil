@@ -10,7 +10,6 @@ import datetime
 import enum
 import errno
 import os
-import platform
 import pprint
 import shutil
 import signal
@@ -582,9 +581,7 @@ class TestCpuAPIs(PsutilTestCase):
                 assert value > 0
 
     # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(
-        MACOS and platform.machine() == 'arm64', reason="skipped due to #1892"
-    )
+    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         def check_ls(ls):
