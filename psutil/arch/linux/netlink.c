@@ -36,8 +36,8 @@
 #define RECV_MESSAGE_SIZE (NLMSG_SPACE(RECV_MESSAGE_LEN))
 
 
-// Send an AF_NETLINK packet to the kernel in order to start receiving
-// data about any process PID which is updated (new, gone, etc.).
+// Send an AF_NETLINK packet that tells the kernel to start sending
+// data any time a process PID is updated (new, gone, etc.).
 PyObject *
 psutil_netlink_procs_send(PyObject *self, PyObject *args) {
     int sockfd;
@@ -64,5 +64,6 @@ psutil_netlink_procs_send(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_RuntimeError, "send() len mismatch");
         return NULL;
     }
-    return Py_BuildValue("i", sockfd);
+
+    Py_RETURN_NONE;
 }
