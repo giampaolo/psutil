@@ -74,7 +74,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
     __kernel_pid_t parent_pid = -1;
-    int event = -1;
+    unsigned int event = 0;
     int exit_code = -1;
     PyObject *py_dict = PyDict_New();
     PyObject *py_item = NULL;
@@ -107,11 +107,11 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             //        ev->event_data.exit.exit_code);
             break;
         default:
-            printf("default\n");
+            // printf("skip\n");
             break;
     }
 
-    if (event == -1) {
+    if (event == 0) {
         Py_DECREF(py_dict);
         return 0;
     }
@@ -146,7 +146,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
 
     // exit code
     if (exit_code != -1) {
-        py_item = Py_BuildValue("i", exit_code);
+        py_item = Py_BuildValue("I", exit_code);
         if (!py_item)
             goto error;
         if (PyDict_SetItemString(py_dict, "exit_code", py_item))

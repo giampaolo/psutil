@@ -11,6 +11,7 @@
 #endif
 #include <Python.h>
 #include <linux/ethtool.h>  // DUPLEX_*
+#include <linux/cn_proc.h> // PROC_EVENT_*
 
 #include "_psutil_common.h"
 #include "arch/linux/disk.h"
@@ -80,6 +81,17 @@ PyInit__psutil_linux(void) {
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;
+
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_COMM", PROC_EVENT_COMM)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_COREDUMP", PROC_EVENT_COREDUMP)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_EXEC", PROC_EVENT_EXEC)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_EXIT", PROC_EVENT_EXIT)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_FORK", PROC_EVENT_FORK)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_GID", PROC_EVENT_GID)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_NONZERO_EXIT", PROC_EVENT_NONZERO_EXIT)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_PTRACE", PROC_EVENT_PTRACE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_SID", PROC_EVENT_SID)) INITERR;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_UID", PROC_EVENT_UID)) INITERR;
 
     psutil_setup();
 
