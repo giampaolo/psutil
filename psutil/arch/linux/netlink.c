@@ -74,6 +74,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
     __kernel_pid_t parent_pid = -1;
+    int event = -1;
     int exit_code = -1;
     PyObject *py_dict = PyDict_New();
     PyObject *py_item = NULL;
@@ -85,6 +86,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
 
     switch (ev->what) {
         case PROC_EVENT_FORK:
+            event = ev->what;
             pid = ev->event_data.fork.child_pid;
             parent_pid = ev->event_data.fork.parent_pid;
             // printf("FORK, parent=%d, child=%d\n",
@@ -92,10 +94,12 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             //        ev->event_data.fork.child_pid);
             break;
         case PROC_EVENT_EXEC:
+            event = ev->what;
             pid = ev->event_data.exec.process_pid;
             // printf("EXEC, pid=%d\n", ev->event_data.exec.process_pid);
             break;
         case PROC_EVENT_EXIT:
+            event = ev->what;
             pid = ev->event_data.exit.process_pid;
             exit_code = (int)ev->event_data.exit.exit_code;
             // printf("EXIT, pid=%d, exit code=%d\n",
@@ -107,8 +111,13 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             break;
     }
 
+    if (event == -1) {
+        Py_DECREF(py_dict);
+        return 0;
+    }
+
     // event
-    py_item = Py_BuildValue("i", ev->what);
+    py_item = Py_BuildValue("i", event);
     if (!py_item)
         goto error;
     if (PyDict_SetItemString(py_dict, "event", py_item))
