@@ -1635,17 +1635,23 @@ def ppid_map():
 
 
 def process_watcher():
+    import selectors
+
     CN_IDX_PROC = 1
     NETLINK_CONNECTOR = 11
 
-    sock = socket.socket(
+    with socket.socket(
         socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_CONNECTOR
-    )
-    try:
+    ) as sock:
         sock.bind((os.getpid(), CN_IDX_PROC))
         cext.netlink_procs_send(sock.fileno())
-    finally:
-        sock.close()
+        # poll
+        selector = selectors.PollSelector()
+        selector.register(sock, selectors.EVENT_READ)
+        while True:
+            if not selector.select(timeout=1):  # wait for data
+                continue
+            sock.recv(1024)
 
 
 def wrap_exceptions(fun):
