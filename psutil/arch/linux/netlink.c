@@ -38,31 +38,29 @@
 
 PyObject *
 psutil_netlink_subscribe_proc(PyObject *self, PyObject *args) {
-    int sk_nl;
+    int sockfd;
+    char buf[BUFF_SIZE];
     struct nlmsghdr *nl_hdr;
-    char buff[BUFF_SIZE];
     ssize_t bytes_sent;
 
-    if (! PyArg_ParseTuple(args, "i", &sk_nl))
+    if (! PyArg_ParseTuple(args, "i", &sockfd))
         return NULL;
 
-    nl_hdr = (struct nlmsghdr *)buff;
+    nl_hdr = (struct nlmsghdr *)buf;
     nl_hdr->nlmsg_len = SEND_MESSAGE_LEN;
     nl_hdr->nlmsg_type = NLMSG_DONE;
     nl_hdr->nlmsg_flags = 0;
     nl_hdr->nlmsg_seq = 0;
     nl_hdr->nlmsg_pid = getpid();
 
-    bytes_sent = send(sk_nl, nl_hdr, nl_hdr->nlmsg_len, 0);
+    bytes_sent = send(sockfd, nl_hdr, nl_hdr->nlmsg_len, 0);
     if (bytes_sent == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-
     if (bytes_sent != nl_hdr->nlmsg_len) {
         PyErr_SetString(PyExc_RuntimeError, "send() len mismatch");
         return NULL;
     }
-
-    return Py_BuildValue("i", sk_nl);
+    return Py_BuildValue("i", sockfd);
 }
