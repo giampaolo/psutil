@@ -1643,7 +1643,7 @@ def process_watcher():
     )
     try:
         sock.bind((os.getpid(), CN_IDX_PROC))
-        cext.netlink_subscribe_proc(sock.fileno())
+        cext.netlink_procs_send(sock.fileno())
     finally:
         sock.close()
 

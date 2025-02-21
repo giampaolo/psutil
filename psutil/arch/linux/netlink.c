@@ -36,8 +36,10 @@
 #define RECV_MESSAGE_SIZE (NLMSG_SPACE(RECV_MESSAGE_LEN))
 
 
+// Send an AF_NETLINK packet to the kernel in order to start receiving
+// data about any process PID which is updated (new, gone, etc.).
 PyObject *
-psutil_netlink_subscribe_proc(PyObject *self, PyObject *args) {
+psutil_netlink_procs_send(PyObject *self, PyObject *args) {
     int sockfd;
     char buf[BUFF_SIZE];
     struct nlmsghdr *nl_hdr;
