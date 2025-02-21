@@ -58,7 +58,11 @@ psutil_netlink_subscribe_proc(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-    // printf("success\n");
+
+    if (bytes_sent != nl_hdr->nlmsg_len) {
+        PyErr_SetString(PyExc_RuntimeError, "send() len mismatch");
+        return NULL;
+    }
 
     return Py_BuildValue("i", sk_nl);
 }
