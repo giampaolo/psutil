@@ -7,3 +7,4 @@
 #include <Python.h>
 
 PyObject *psutil_netlink_procs_send(PyObject *self, PyObject *args);
+PyObject *psutil_netlink_procs_recv(PyObject *self, PyObject *args);

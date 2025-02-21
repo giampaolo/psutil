@@ -1651,7 +1651,7 @@ def process_watcher():
         while True:
             if not selector.select(timeout=1):  # wait for data
                 continue
-            sock.recv(1024)
+            cext.netlink_procs_recv(sock.fileno())
 
 
 def wrap_exceptions(fun):

@@ -67,3 +67,95 @@ psutil_netlink_procs_send(PyObject *self, PyObject *args) {
 
     Py_RETURN_NONE;
 }
+
+
+static int
+handle_message(struct cn_msg *cn_hdr) {
+    struct proc_event *ev;
+    __kernel_pid_t pid;
+    __kernel_pid_t parent_pid;
+    __u32 exit_code;
+    // PyObject *py_retdict = PyDict_New();
+    // if (py_retdict == NULL)
+    //     return NULL;
+    ev = (struct proc_event *)cn_hdr->data;
+
+    switch(ev->what){
+        case PROC_EVENT_FORK:
+            pid = ev->event_data.fork.child_pid;
+            parent_pid = ev->event_data.fork.parent_pid;
+            // printf("FORK, parent=%d, child=%d\n",
+            //        ev->event_data.fork.parent_pid,
+            //        ev->event_data.fork.child_pid);
+            break;
+        case PROC_EVENT_EXEC:
+            pid = ev->event_data.exec.process_pid;
+            // printf("EXEC, pid=%d\n", ev->event_data.exec.process_pid);
+            break;
+        case PROC_EVENT_EXIT:
+            pid = ev->event_data.exit.process_pid;
+            exit_code = ev->event_data.exit.exit_code;
+            // printf("EXIT, pid=%d, exit code=%d\n",
+            //        ev->event_data.exit.process_pid,
+            //        ev->event_data.exit.exit_code);
+            break;
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+
+PyObject *
+psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
+    int sk_nl;
+    struct sockaddr_nl from_nla;
+    struct cn_msg *cn_hdr;
+    struct nlmsghdr *nlh;
+    socklen_t from_nla_len;
+    char buff[BUFF_SIZE];
+    ssize_t recv_len;
+
+    if (! PyArg_ParseTuple(args, "i", &sk_nl))
+        return NULL;
+
+    // Receive data.
+    memset(buff, 0, sizeof(buff));
+    from_nla_len = sizeof(from_nla);
+    recv_len = recvfrom(
+        sk_nl, buff, sizeof(buff), 0, (struct sockaddr *)&from_nla, &from_nla_len);
+    if (recv_len == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    if (from_nla_len != sizeof(from_nla)) {
+        PyErr_SetString(PyExc_RuntimeError, "recv() len mismatch");
+        return NULL;
+    }
+
+
+    nlh = (struct nlmsghdr *)buff;
+    while (NLMSG_OK(nlh, recv_len)) {
+        cn_hdr = NLMSG_DATA(nlh);
+
+        if (nlh->nlmsg_type == NLMSG_NOOP) {
+            nlh = NLMSG_NEXT(nlh, recv_len);
+            continue;
+        }
+        if ((nlh->nlmsg_type == NLMSG_ERROR) ||
+            (nlh->nlmsg_type == NLMSG_OVERRUN)) {
+            break;
+        }
+        if (handle_message(cn_hdr) != 0) {
+            PyErr_SetString(PyExc_RuntimeError, "recv() len mismatch");
+            return NULL;
+        }
+        if (nlh->nlmsg_type == NLMSG_DONE) {
+            break;
+        }
+        nlh = NLMSG_NEXT(nlh, recv_len);
+    }
+
+    Py_RETURN_NONE;
+}
