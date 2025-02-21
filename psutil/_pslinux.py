@@ -1634,6 +1634,20 @@ def ppid_map():
     return ret
 
 
+def process_watcher():
+    CN_IDX_PROC = 1
+    NETLINK_CONNECTOR = 11
+
+    sock = socket.socket(
+        socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_CONNECTOR
+    )
+    try:
+        sock.bind((os.getpid(), CN_IDX_PROC))
+        cext.netlink_subscribe_proc(sock.fileno())
+    finally:
+        sock.close()
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and OSError exceptions
     into NoSuchProcess and AccessDenied.
