@@ -69,17 +69,18 @@ psutil_netlink_procs_send(PyObject *self, PyObject *args) {
 }
 
 
-PyObject *
-handle_message(struct cn_msg *cn_hdr) {
+static int
+handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
     __kernel_pid_t parent_pid = -1;
     int exit_code = -1;
-    PyObject *py_retdict = PyDict_New();
+    PyObject *py_dict = PyDict_New();
     PyObject *py_item = NULL;
 
-    if (py_retdict == NULL)
-        return NULL;
+    if (py_dict == NULL)
+        return -1;
+
     ev = (struct proc_event *)cn_hdr->data;
 
     switch (ev->what) {
@@ -106,12 +107,20 @@ handle_message(struct cn_msg *cn_hdr) {
             break;
     }
 
+    // event
+    py_item = Py_BuildValue("i", ev->what);
+    if (!py_item)
+        goto error;
+    if (PyDict_SetItemString(py_dict, "event", py_item))
+        goto error;
+    Py_CLEAR(py_item);
+
     // pid
     if (pid != -1) {
         py_item = Py_BuildValue(_Py_PARSE_PID, pid);
         if (!py_item)
             goto error;
-        if (PyDict_SetItemString(py_retdict, "pid", py_item))
+        if (PyDict_SetItemString(py_dict, "pid", py_item))
             goto error;
         Py_CLEAR(py_item);
     }
@@ -121,7 +130,7 @@ handle_message(struct cn_msg *cn_hdr) {
         py_item = Py_BuildValue(_Py_PARSE_PID, parent_pid);
         if (!py_item)
             goto error;
-        if (PyDict_SetItemString(py_retdict, "parent_pid", py_item))
+        if (PyDict_SetItemString(py_dict, "parent_pid", py_item))
             goto error;
         Py_CLEAR(py_item);
     }
@@ -131,17 +140,20 @@ handle_message(struct cn_msg *cn_hdr) {
         py_item = Py_BuildValue("i", exit_code);
         if (!py_item)
             goto error;
-        if (PyDict_SetItemString(py_retdict, "exit_code", py_item))
+        if (PyDict_SetItemString(py_dict, "exit_code", py_item))
             goto error;
         Py_CLEAR(py_item);
     }
 
-    return py_retdict;
+    if (! PyObject_CallFunctionObjArgs(py_callback, py_dict, NULL))
+        goto error;
+
+    return 0;
 
 error:
     Py_XDECREF(py_item);
-    Py_DECREF(py_retdict);
-    return NULL;
+    Py_DECREF(py_dict);
+    return -1;
 }
 
 
@@ -154,10 +166,14 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     socklen_t from_nla_len;
     char buff[BUFF_SIZE];
     ssize_t recv_len;
-    PyObject *py_retdict = PyDict_New();
+    PyObject *py_callback;
 
-    if (! PyArg_ParseTuple(args, "i", &sk_nl))
+    if (! PyArg_ParseTuple(args, "iO", &sk_nl, &py_callback))
         return NULL;
+    if (! PyCallable_Check(py_callback)) {
+        PyErr_SetString(PyExc_TypeError, "second argument must be a callable");
+        return NULL;
+    }
 
     // Receive data.
     memset(buff, 0, sizeof(buff));
@@ -187,17 +203,14 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
             break;
         }
 
-        py_retdict = handle_message(cn_hdr);
-        if (py_retdict == NULL) {
+        if (handle_message(cn_hdr, py_callback) != 0) {
             return NULL;
         }
         if (nlh->nlmsg_type == NLMSG_DONE) {
             break;
         }
-
-        printf("next\n");
         nlh = NLMSG_NEXT(nlh, recv_len);
     }
 
-    return py_retdict;
+    Py_RETURN_NONE;
 }

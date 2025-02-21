@@ -1635,6 +1635,9 @@ def ppid_map():
 
 
 def process_watcher():
+    def callback(d):
+        print(d)
+
     import selectors
 
     CN_IDX_PROC = 1
@@ -1651,8 +1654,7 @@ def process_watcher():
         while True:
             if not selector.select(timeout=1):  # wait for data
                 continue
-            d = cext.netlink_procs_recv(sock.fileno())
-            print(d)
+            cext.netlink_procs_recv(sock.fileno(), callback)
 
 
 def wrap_exceptions(fun):
