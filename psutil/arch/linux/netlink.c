@@ -69,18 +69,20 @@ psutil_netlink_procs_send(PyObject *self, PyObject *args) {
 }
 
 
-static int
+PyObject *
 handle_message(struct cn_msg *cn_hdr) {
     struct proc_event *ev;
-    __kernel_pid_t pid;
-    __kernel_pid_t parent_pid;
-    __u32 exit_code;
-    // PyObject *py_retdict = PyDict_New();
-    // if (py_retdict == NULL)
-    //     return NULL;
+    __kernel_pid_t pid = -1;
+    __kernel_pid_t parent_pid = -1;
+    int exit_code = -1;
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_item = NULL;
+
+    if (py_retdict == NULL)
+        return NULL;
     ev = (struct proc_event *)cn_hdr->data;
 
-    switch(ev->what){
+    switch (ev->what) {
         case PROC_EVENT_FORK:
             pid = ev->event_data.fork.child_pid;
             parent_pid = ev->event_data.fork.parent_pid;
@@ -94,16 +96,52 @@ handle_message(struct cn_msg *cn_hdr) {
             break;
         case PROC_EVENT_EXIT:
             pid = ev->event_data.exit.process_pid;
-            exit_code = ev->event_data.exit.exit_code;
+            exit_code = (int)ev->event_data.exit.exit_code;
             // printf("EXIT, pid=%d, exit code=%d\n",
             //        ev->event_data.exit.process_pid,
             //        ev->event_data.exit.exit_code);
             break;
         default:
+            printf("default\n");
             break;
     }
 
-    return 0;
+    // pid
+    if (pid != -1) {
+        py_item = Py_BuildValue(_Py_PARSE_PID, pid);
+        if (!py_item)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, "pid", py_item))
+            goto error;
+        Py_CLEAR(py_item);
+    }
+
+    // parent pid
+    if (parent_pid != -1) {
+        py_item = Py_BuildValue(_Py_PARSE_PID, parent_pid);
+        if (!py_item)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, "parent_pid", py_item))
+            goto error;
+        Py_CLEAR(py_item);
+    }
+
+    // exit code
+    if (exit_code != -1) {
+        py_item = Py_BuildValue("i", exit_code);
+        if (!py_item)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, "exit_code", py_item))
+            goto error;
+        Py_CLEAR(py_item);
+    }
+
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_item);
+    Py_DECREF(py_retdict);
+    return NULL;
 }
 
 
@@ -116,6 +154,7 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     socklen_t from_nla_len;
     char buff[BUFF_SIZE];
     ssize_t recv_len;
+    PyObject *py_retdict = PyDict_New();
 
     if (! PyArg_ParseTuple(args, "i", &sk_nl))
         return NULL;
@@ -147,15 +186,18 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
             (nlh->nlmsg_type == NLMSG_OVERRUN)) {
             break;
         }
-        if (handle_message(cn_hdr) != 0) {
-            PyErr_SetString(PyExc_RuntimeError, "recv() len mismatch");
+
+        py_retdict = handle_message(cn_hdr);
+        if (py_retdict == NULL) {
             return NULL;
         }
         if (nlh->nlmsg_type == NLMSG_DONE) {
             break;
         }
+
+        printf("next\n");
         nlh = NLMSG_NEXT(nlh, recv_len);
     }
 
-    Py_RETURN_NONE;
+    return py_retdict;
 }
