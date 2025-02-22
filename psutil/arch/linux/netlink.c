@@ -4,7 +4,11 @@
  * found in the LICENSE file.
  */
 
-// See: https://github.com/ColinIanKing/forkstat/blob/master/forkstat.c
+// See: https://github.com/ColinIanKing/forkstat/blob/master/forkstat.c.
+
+// If Python is run as a normal user, this will require CAP_NET_ADMIN
+// or CAP_SYS_ADMIN capabilities to run. You can check if you have them
+// with `capsh --print`.
 
 #include <Python.h>
 
