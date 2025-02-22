@@ -129,7 +129,6 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             parent_pid = ev->event_data.fork.parent_pid;
             break;
         default:
-            // printf("skip\n");
             psutil_debug("ignore event %d", ev->what);
             return 0;
     }
@@ -148,14 +147,12 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     Py_CLEAR(py_item);
 
     // pid
-    if (pid != -1) {
-        py_item = Py_BuildValue(_Py_PARSE_PID, pid);
-        if (!py_item)
-            goto error;
-        if (PyDict_SetItemString(py_dict, "pid", py_item))
-            goto error;
-        Py_CLEAR(py_item);
-    }
+    py_item = Py_BuildValue(_Py_PARSE_PID, pid);
+    if (!py_item)
+        goto error;
+    if (PyDict_SetItemString(py_dict, "pid", py_item))
+        goto error;
+    Py_CLEAR(py_item);
 
     // parent pid
     if (parent_pid != -1) {
