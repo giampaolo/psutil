@@ -89,22 +89,15 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             event = ev->what;
             pid = ev->event_data.fork.child_pid;
             parent_pid = ev->event_data.fork.parent_pid;
-            // printf("FORK, parent=%d, child=%d\n",
-            //        ev->event_data.fork.parent_pid,
-            //        ev->event_data.fork.child_pid);
             break;
         case PROC_EVENT_EXEC:
             event = ev->what;
             pid = ev->event_data.exec.process_pid;
-            // printf("EXEC, pid=%d\n", ev->event_data.exec.process_pid);
             break;
         case PROC_EVENT_EXIT:
             event = ev->what;
             pid = ev->event_data.exit.process_pid;
             exit_code = (int)ev->event_data.exit.exit_code;
-            // printf("EXIT, pid=%d, exit code=%d\n",
-            //        ev->event_data.exit.process_pid,
-            //        ev->event_data.exit.exit_code);
             break;
         default:
             // printf("skip\n");
