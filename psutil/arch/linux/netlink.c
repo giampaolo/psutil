@@ -235,7 +235,8 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
         cn_hdr = NLMSG_DATA(nlh);
 
         if ((cn_hdr->id.idx != CN_IDX_PROC) ||
-            (cn_hdr->id.val != CN_VAL_PROC)) {
+            (cn_hdr->id.val != CN_VAL_PROC))
+        {
             psutil_debug("CN_IDX_PROC | CN_VAL_PROC (skip)");
             continue;
         }

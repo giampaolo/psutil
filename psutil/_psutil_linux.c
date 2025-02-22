@@ -12,6 +12,8 @@
 #include <Python.h>
 #include <linux/ethtool.h>  // DUPLEX_*
 #include <linux/cn_proc.h> // PROC_EVENT_*
+#include <linux/connector.h> // CN_IDX_PROC
+#include <linux/netlink.h> // NETLINK_CONNECTOR
 
 #include "_psutil_common.h"
 #include "arch/linux/disk.h"
@@ -92,6 +94,9 @@ PyInit__psutil_linux(void) {
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_PTRACE", PROC_EVENT_PTRACE)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_SID", PROC_EVENT_SID)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_UID", PROC_EVENT_UID)) INITERR;
+
+    if (PyModule_AddIntConstant(mod, "NETLINK_CONNECTOR", NETLINK_CONNECTOR)) INITERR;
+    if (PyModule_AddIntConstant(mod, "CN_IDX_PROC", CN_IDX_PROC)) INITERR;
 
     psutil_setup();
 

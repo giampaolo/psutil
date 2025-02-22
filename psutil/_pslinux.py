@@ -1657,19 +1657,16 @@ def ppid_map():
 
 
 def process_watcher(callback):
+    import selectors
+
     def callback_wrapper(d):
         d["event"] = ProcessEvent(d["event"])
         callback(d)
 
-    import selectors
-
-    CN_IDX_PROC = 1
-    NETLINK_CONNECTOR = 11
-
     with socket.socket(
-        socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_CONNECTOR
+        socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
     ) as sock:
-        sock.bind((os.getpid(), CN_IDX_PROC))
+        sock.bind((os.getpid(), cext.CN_IDX_PROC))
         cext.netlink_procs_send(sock.fileno())
         # poll
         selector = selectors.PollSelector()
