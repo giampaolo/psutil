@@ -85,10 +85,10 @@ TEST_DEPS = [
     "pytest-subtests",
     "pytest-xdist",
     "setuptools",
+    "pywin32 ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
+    "wheel ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
+    "wmi ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
 ]
-
-if WINDOWS and not PYPY:
-    TEST_DEPS.extend(("pywin32", "wheel", "wmi"))
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
@@ -112,11 +112,9 @@ DEV_DEPS = TEST_DEPS + [
     "virtualenv",
     "vulture",
     "wheel",
+    "pyreadline ; os_name == 'nt'",
+    "pdbpp ; os_name == 'nt'",
 ]
-
-if WINDOWS:
-    DEV_DEPS.append("pyreadline")
-    DEV_DEPS.append("pdbpp")
 
 macros = []
 if POSIX:
