@@ -97,6 +97,16 @@ if LINUX:
     from ._pslinux import IOPRIO_CLASS_IDLE  # noqa: F401
     from ._pslinux import IOPRIO_CLASS_NONE  # noqa: F401
     from ._pslinux import IOPRIO_CLASS_RT  # noqa: F401
+    from ._pslinux import PROC_EVENT_COMM  # noqa: F401
+    from ._pslinux import PROC_EVENT_COREDUMP  # noqa: F401
+    from ._pslinux import PROC_EVENT_EXEC  # noqa: F401
+    from ._pslinux import PROC_EVENT_EXIT  # noqa: F401
+    from ._pslinux import PROC_EVENT_FORK  # noqa: F401
+    from ._pslinux import PROC_EVENT_GID  # noqa: F401
+    from ._pslinux import PROC_EVENT_NONZERO_EXIT  # noqa: F401
+    from ._pslinux import PROC_EVENT_PTRACE  # noqa: F401
+    from ._pslinux import PROC_EVENT_SID  # noqa: F401
+    from ._pslinux import PROC_EVENT_UID  # noqa: F401
 
 elif WINDOWS:
     from . import _pswindows as _psplatform

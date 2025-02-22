@@ -58,6 +58,11 @@ __extra__all__ = [
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
+    # process events
+    "PROC_EVENT_COMM", "PROC_EVENT_COREDUMP", "PROC_EVENT_EXEC",
+    "PROC_EVENT_EXIT", "PROC_EVENT_FORK", "PROC_EVENT_GID",
+    "PROC_EVENT_NONZERO_EXIT", "PROC_EVENT_PTRACE", "PROC_EVENT_SID",
+    "PROC_EVENT_UID",
 ]
 
 if hasattr(resource, "prlimit"):
@@ -125,6 +130,9 @@ class ProcessEvent(enum.IntEnum):
     PROC_EVENT_PTRACE = cext.PROC_EVENT_PTRACE
     PROC_EVENT_SID = cext.PROC_EVENT_SID
     PROC_EVENT_UID = cext.PROC_EVENT_UID
+
+
+globals().update(ProcessEvent.__members__)
 
 
 # See:
