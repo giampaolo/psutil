@@ -83,6 +83,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     __kernel_pid_t pid = -1;
     __kernel_pid_t parent_pid = -1;
     unsigned int event = 0;
+    int euid = -1;
     int exit_code = -1;
     PyObject *py_dict = PyDict_New();
     PyObject *py_item = NULL;
@@ -110,6 +111,11 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
         case PROC_EVENT_COMM:
             event = ev->what;
             pid = ev->event_data.exec.process_pid;
+            break;
+        case PROC_EVENT_UID:
+            event = ev->what;
+            pid = ev->event_data.exec.process_pid;
+            euid = (unsigned int)ev->event_data.id.e.euid;
             break;
         default:
             // printf("skip\n");
@@ -156,6 +162,16 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
         if (!py_item)
             goto error;
         if (PyDict_SetItemString(py_dict, "exit_code", py_item))
+            goto error;
+        Py_CLEAR(py_item);
+    }
+
+    // euid
+    if (euid != -1) {
+        py_item = Py_BuildValue("I", euid);
+        if (!py_item)
+            goto error;
+        if (PyDict_SetItemString(py_dict, "euid", py_item))
             goto error;
         Py_CLEAR(py_item);
     }
