@@ -113,6 +113,9 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             pid = ev->event_data.exec.process_pid;
             egid = (unsigned int)ev->event_data.id.e.egid;
             break;
+        case PROC_EVENT_SID:
+            pid = ev->event_data.exec.process_pid;
+            break;
         default:
             // printf("skip\n");
             psutil_debug("ignore event %d", ev->what);
