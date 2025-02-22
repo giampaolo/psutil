@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+// See: https://github.com/ColinIanKing/forkstat/blob/master/forkstat.c
+
 #include <Python.h>
 
 #include <stdio.h>
@@ -19,6 +21,8 @@
 #include <linux/connector.h>
 #include <linux/netlink.h>
 #include <linux/cn_proc.h>
+
+#include "../../_psutil_common.h"
 
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -101,6 +105,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             break;
         default:
             // printf("skip\n");
+            psutil_debug("ignore event %d", ev->what);
             break;
     }
 
@@ -196,15 +201,25 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     while (NLMSG_OK(nlh, recv_len)) {
         cn_hdr = NLMSG_DATA(nlh);
 
+        if ((cn_hdr->id.idx != CN_IDX_PROC) ||
+            (cn_hdr->id.val != CN_VAL_PROC)) {
+            psutil_debug("CN_IDX_PROC | CN_VAL_PROC (skip)");
+            continue;
+        }
+
         if (nlh->nlmsg_type == NLMSG_NOOP) {
+            psutil_debug("NLMSG_NOOP (skip)");
             nlh = NLMSG_NEXT(nlh, recv_len);
             continue;
         }
+
         if ((nlh->nlmsg_type == NLMSG_ERROR) ||
             (nlh->nlmsg_type == NLMSG_OVERRUN)) {
+            psutil_debug("NLMSG_ERROR || NLMSG_OVERRUN");
             break;
         }
 
+        // handle message
         if (handle_message(cn_hdr, py_callback) != 0) {
             return NULL;
         }
