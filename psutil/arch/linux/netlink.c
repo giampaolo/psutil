@@ -117,7 +117,7 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     }
 
     // event
-    py_item = Py_BuildValue("i", event);
+    py_item = Py_BuildValue("I", event);
     if (!py_item)
         goto error;
     if (PyDict_SetItemString(py_dict, "event", py_item))

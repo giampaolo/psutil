@@ -113,6 +113,20 @@ class IOPriority(enum.IntEnum):
 
 globals().update(IOPriority.__members__)
 
+
+class ProcessEvent(enum.IntEnum):
+    PROC_EVENT_COMM = cext.PROC_EVENT_COMM
+    PROC_EVENT_COREDUMP = cext.PROC_EVENT_COREDUMP
+    PROC_EVENT_EXEC = cext.PROC_EVENT_EXEC
+    PROC_EVENT_EXIT = cext.PROC_EVENT_EXIT
+    PROC_EVENT_FORK = cext.PROC_EVENT_FORK
+    PROC_EVENT_GID = cext.PROC_EVENT_GID
+    PROC_EVENT_NONZERO_EXIT = cext.PROC_EVENT_NONZERO_EXIT
+    PROC_EVENT_PTRACE = cext.PROC_EVENT_PTRACE
+    PROC_EVENT_SID = cext.PROC_EVENT_SID
+    PROC_EVENT_UID = cext.PROC_EVENT_UID
+
+
 # See:
 # https://github.com/torvalds/linux/blame/master/fs/proc/array.c
 # ...and (TASK_* constants):
@@ -1636,7 +1650,8 @@ def ppid_map():
 
 def process_watcher():
     def callback(d):
-        print(d)
+        d["event"] = ProcessEvent(d["event"])
+        print(d)  # noqa: T201
 
     import selectors
 
