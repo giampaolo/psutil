@@ -91,30 +91,42 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
     ev = (struct proc_event *)cn_hdr->data;
 
     switch (ev->what) {
-        case PROC_EVENT_FORK:
+        case PROC_EVENT_FORK:  // a new process is created (child)
             pid = ev->event_data.fork.child_pid;
             parent_pid = ev->event_data.fork.parent_pid;
             break;
-        case PROC_EVENT_EXEC:
+        case PROC_EVENT_EXEC:  // process executed new program via execv*()
             pid = ev->event_data.exec.process_pid;
             break;
-        case PROC_EVENT_EXIT:
+        case PROC_EVENT_EXIT:  // process gone
             pid = ev->event_data.exit.process_pid;
             exit_code = (int)ev->event_data.exit.exit_code;
             break;
-        case PROC_EVENT_COMM:
-            pid = ev->event_data.exec.process_pid;
-            break;
-        case PROC_EVENT_UID:
+        // NOTE: does not work as expected. We only ever get PROC_EVENT_EXIT.
+        // case PROC_EVENT_NONZERO_EXIT:  // process gone with exit code != 0
+        //     pid = ev->event_data.exit.process_pid;
+        //     exit_code = (int)ev->event_data.exit.exit_code;
+        //     break;
+        case PROC_EVENT_UID:  // process user changed
             pid = ev->event_data.exec.process_pid;
             euid = (unsigned int)ev->event_data.id.e.euid;
             break;
-        case PROC_EVENT_GID:
+        case PROC_EVENT_GID:  // process group changed
             pid = ev->event_data.exec.process_pid;
             egid = (unsigned int)ev->event_data.id.e.egid;
             break;
-        case PROC_EVENT_SID:
+        case PROC_EVENT_SID:  // process SID changed (e.g. sudo was used)
             pid = ev->event_data.exec.process_pid;
+            break;
+        case PROC_EVENT_COMM:  // process changed its command line
+            pid = ev->event_data.exec.process_pid;
+            break;
+        case PROC_EVENT_PTRACE:  // process via being traced via ptrace() (debug)
+            pid = ev->event_data.exec.process_pid;
+            break;
+        case PROC_EVENT_COREDUMP:  // process generated a coredump
+            pid = ev->event_data.fork.child_pid;
+            parent_pid = ev->event_data.fork.parent_pid;
             break;
         default:
             // printf("skip\n");
