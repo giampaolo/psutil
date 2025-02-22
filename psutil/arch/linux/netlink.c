@@ -103,6 +103,10 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             pid = ev->event_data.exit.process_pid;
             exit_code = (int)ev->event_data.exit.exit_code;
             break;
+        case PROC_EVENT_COMM:
+            event = ev->what;
+            pid = ev->event_data.exec.process_pid;
+            break;
         default:
             // printf("skip\n");
             psutil_debug("ignore event %d", ev->what);
