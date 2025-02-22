@@ -1648,10 +1648,10 @@ def ppid_map():
     return ret
 
 
-def process_watcher():
-    def callback(d):
+def process_watcher(callback):
+    def callback_wrapper(d):
         d["event"] = ProcessEvent(d["event"])
-        print(d)  # noqa: T201
+        callback(d)
 
     import selectors
 
@@ -1669,7 +1669,7 @@ def process_watcher():
         while True:
             if not selector.select(timeout=1):  # wait for data
                 continue
-            cext.netlink_procs_recv(sock.fileno(), callback)
+            cext.netlink_procs_recv(sock.fileno(), callback_wrapper)
 
 
 def wrap_exceptions(fun):

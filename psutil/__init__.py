@@ -1629,8 +1629,8 @@ def wait_procs(procs, timeout=None, callback=None):
 
 if LINUX and hasattr(_psplatform, "process_watcher"):
 
-    def process_watcher():
-        return _psplatform.process_watcher()
+    def process_watcher(callback):
+        return _psplatform.process_watcher(callback)
 
 
 # =====================================================================
