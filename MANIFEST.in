@@ -176,6 +176,7 @@ include scripts/battery.py
 include scripts/cpu_distribution.py
 include scripts/disk_usage.py
 include scripts/fans.py
+include scripts/forkstat.py
 include scripts/free.py
 include scripts/ifconfig.py
 include scripts/internal/README
