@@ -12,16 +12,7 @@
 
 #include <Python.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-
 #include <sys/socket.h>
-#include <sys/types.h>
-
 #include <linux/connector.h>
 #include <linux/netlink.h>
 #include <linux/cn_proc.h>
