@@ -284,6 +284,8 @@ if WINDOWS:
             "ws2_32",
             "PowrProf",
             "pdh",
+            "ole32",
+            "OleAut32",
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],

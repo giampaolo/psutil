@@ -223,7 +223,7 @@ def install_pip():
 def install():
     """Install in develop / edit mode."""
     build()
-    sh([PYTHON, "setup.py", "develop"])
+    sh([PYTHON, "setup.py", "develop", "--user"])
 
 
 def uninstall():

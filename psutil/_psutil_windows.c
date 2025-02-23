@@ -26,6 +26,7 @@
 #include "arch/windows/proc_handles.h"
 #include "arch/windows/proc_info.h"
 #include "arch/windows/proc_utils.h"
+#include "arch/windows/proc_watcher.h"
 #include "arch/windows/security.h"
 #include "arch/windows/sensors.h"
 #include "arch/windows/services.h"
@@ -96,6 +97,7 @@ PsutilMethods[] = {
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"users", psutil_users, METH_VARARGS},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
+    {"proc_watcher", psutil_proc_watcher, METH_VARARGS},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS},
