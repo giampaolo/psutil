@@ -372,6 +372,19 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
         psutil.getloadavg()
         self.execute(psutil.getloadavg)
 
+    # --- cpu watcher
+
+    @pytest.mark.skipif(not LINUX, reason="LINUX only")
+    def test_proc_watcher(self):
+        def fun():
+            proc = spawn_testproc()
+            proc.terminate()
+            proc.wait()
+            list(pw.read())
+
+        with psutil.ProcessWatcher() as pw:
+            self.execute(fun)
+
     # --- mem
 
     def test_virtual_memory(self):

@@ -211,14 +211,23 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "i", &sockfd))
         goto error;
 
+
+    // int buf_size = 1024 * 1024 * 10;
+    // setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size));
+
     // Receive data.
     memset(buff, 0, sizeof(buff));
     from_nla_len = sizeof(from_nla);
     recv_len = recvfrom(
         sockfd, buff, sizeof(buff), 0, (struct sockaddr *)&from_nla, &from_nla_len);
     if (recv_len == -1) {
+        if (errno == ENOBUFS) {
+            // printf("ENOBUFS ignored\n");
+            psutil_debug("ENOBUFS ignored");
+            return py_list;
+        }
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
     if (from_nla_len != sizeof(from_nla)) {
         PyErr_SetString(PyExc_RuntimeError, "recv() len mismatch");
