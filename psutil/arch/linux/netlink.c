@@ -199,7 +199,7 @@ error:
 
 PyObject *
 psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
-    int sk_nl;
+    int sockfd;
     struct sockaddr_nl from_nla;
     struct cn_msg *cn_hdr;
     struct nlmsghdr *nlh;
@@ -208,7 +208,7 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     ssize_t recv_len;
     PyObject *py_callback;
 
-    if (! PyArg_ParseTuple(args, "iO", &sk_nl, &py_callback))
+    if (! PyArg_ParseTuple(args, "iO", &sockfd, &py_callback))
         return NULL;
     if (! PyCallable_Check(py_callback)) {
         PyErr_SetString(PyExc_TypeError, "second argument must be a callable");
@@ -219,7 +219,7 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     memset(buff, 0, sizeof(buff));
     from_nla_len = sizeof(from_nla);
     recv_len = recvfrom(
-        sk_nl, buff, sizeof(buff), 0, (struct sockaddr *)&from_nla, &from_nla_len);
+        sockfd, buff, sizeof(buff), 0, (struct sockaddr *)&from_nla, &from_nla_len);
     if (recv_len == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
