@@ -1622,7 +1622,8 @@ class ProcessWatcher:
         self.close()
 
     def __iter__(self):
-        yield from self.iter()
+        while True:
+            yield from self.read()
 
     @staticmethod
     def _event_wrapper(events):
@@ -1630,14 +1631,12 @@ class ProcessWatcher:
             ev["event"] = ProcessEvent(ev["event"])
             yield ev
 
-    def iter(self, timeout=None):
-        fd = self._sock.fileno()
-        if timeout is None:
-            while True:
-                if self._selector.select():
-                    yield from self._event_wrapper(cext.netlink_procs_recv(fd))
-        elif self._selector.select(timeout=timeout):
-            yield from self._event_wrapper(cext.netlink_procs_recv(fd))
+    def read(self, timeout=None):
+        """Return either a list of events or None."""
+        if self._selector.select(timeout=timeout):
+            return self._event_wrapper(
+                cext.netlink_procs_recv(self._sock.fileno())
+            )
 
     def close(self):
         if self._selector is not None:
