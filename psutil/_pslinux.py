@@ -1592,6 +1592,63 @@ def boot_time():
 
 
 # =====================================================================
+# --- process watcher
+# =====================================================================
+
+
+class ProcessWatcher:
+    def __init__(self):
+        self._selector = self._sock = None
+        self._sock = socket.socket(
+            socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
+        )
+        try:
+            self._sock.bind((os.getpid(), cext.CN_IDX_PROC))
+            cext.netlink_procs_send(self._sock.fileno())
+            self._selector = selectors.PollSelector()
+            self._selector.register(self._sock, selectors.EVENT_READ)
+        except Exception:
+            self.close()
+            raise
+
+    @property
+    def sock(self):
+        return self._sock
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, traceback):
+        self.close()
+
+    def __iter__(self):
+        yield from self.iter()
+
+    @staticmethod
+    def _event_wrapper(events):
+        for ev in events:
+            ev["event"] = ProcessEvent(ev["event"])
+            yield ev
+
+    def iter(self, timeout=None):
+        fd = self._sock.fileno()
+        if timeout is None:
+            while True:
+                if self._selector.select():
+                    yield from self._event_wrapper(cext.netlink_procs_recv(fd))
+        elif self._selector.select(timeout=timeout):
+            yield from self._event_wrapper(cext.netlink_procs_recv(fd))
+
+    def close(self):
+        if self._selector is not None:
+            self._selector.close()
+            self._selector = None
+        if self._sock is not None:
+            self._sock.close()
+            self._sock = None
+
+
+# =====================================================================
 # --- processes
 # =====================================================================
 
@@ -1655,31 +1712,6 @@ def ppid_map():
             ppid = int(dset[1])
             ret[pid] = ppid
     return ret
-
-
-def process_watcher(callback, timeout=None):
-    def event_wrapper(events):
-        for ev in events:
-            ev["event"] = ProcessEvent(ev["event"])
-            yield ev
-
-    with socket.socket(
-        socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
-    ) as sock:
-        sock.bind((os.getpid(), cext.CN_IDX_PROC))
-        cext.netlink_procs_send(sock.fileno())
-
-        selector = selectors.PollSelector()
-        selector.register(sock, selectors.EVENT_READ)
-
-        if timeout is None:
-            while True:
-                if selector.select():
-                    yield from event_wrapper(
-                        cext.netlink_procs_recv(sock.fileno())
-                    )
-        elif selector.select(timeout=timeout):
-            yield from event_wrapper(cext.netlink_procs_recv(sock.fileno()))
 
 
 def wrap_exceptions(fun):
