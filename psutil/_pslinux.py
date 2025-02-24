@@ -14,6 +14,7 @@ import glob
 import os
 import re
 import resource
+import selectors
 import socket
 import struct
 import sys
@@ -1657,29 +1658,28 @@ def ppid_map():
 
 
 def process_watcher(callback, timeout=None):
-    import selectors
-
-    def callback_wrapper(d):
-        d["event"] = ProcessEvent(d["event"])
-        callback(d)
+    def event_wrapper(events):
+        for ev in events:
+            ev["event"] = ProcessEvent(ev["event"])
+            yield ev
 
     with socket.socket(
         socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
     ) as sock:
         sock.bind((os.getpid(), cext.CN_IDX_PROC))
         cext.netlink_procs_send(sock.fileno())
-        # poll
+
         selector = selectors.PollSelector()
         selector.register(sock, selectors.EVENT_READ)
+
         if timeout is None:
             while True:
-                if not selector.select():  # wait for data
-                    continue
-                cext.netlink_procs_recv(sock.fileno(), callback_wrapper)
-        else:
-            if not selector.select(timeout=timeout):
-                return
-            cext.netlink_procs_recv(sock.fileno(), callback_wrapper)
+                if selector.select():
+                    yield from event_wrapper(
+                        cext.netlink_procs_recv(sock.fileno())
+                    )
+        elif selector.select(timeout=timeout):
+            yield from event_wrapper(cext.netlink_procs_recv(sock.fileno()))
 
 
 def wrap_exceptions(fun):

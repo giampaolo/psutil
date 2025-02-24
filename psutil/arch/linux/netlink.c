@@ -68,8 +68,8 @@ psutil_netlink_procs_send(PyObject *self, PyObject *args) {
 }
 
 
-static int
-handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
+PyObject *
+handle_message(struct cn_msg *cn_hdr) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
     __kernel_pid_t parent_pid = -1;
@@ -121,13 +121,13 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
             break;
         default:
             psutil_debug("ignore event %d", ev->what);
-            return 0;
+            return NULL;
     }
 
 
     py_dict = PyDict_New();
     if (py_dict == NULL)
-        return -1;
+        return NULL;
 
     // event
     py_item = Py_BuildValue("I", ev->what);
@@ -185,15 +185,12 @@ handle_message(struct cn_msg *cn_hdr, PyObject *py_callback) {
         Py_CLEAR(py_item);
     }
 
-    if (! PyObject_CallFunctionObjArgs(py_callback, py_dict, NULL))
-        goto error;
-
-    return 0;
+    return py_dict;
 
 error:
     Py_XDECREF(py_item);
     Py_DECREF(py_dict);
-    return -1;
+    return NULL;
 }
 
 
@@ -206,14 +203,13 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     socklen_t from_nla_len;
     char buff[BUFF_SIZE];
     ssize_t recv_len;
-    PyObject *py_callback;
+    PyObject *py_dict = NULL;
+    PyObject *py_list = PyList_New(0);
 
-    if (! PyArg_ParseTuple(args, "iO", &sockfd, &py_callback))
+    if (py_list == NULL)
         return NULL;
-    if (! PyCallable_Check(py_callback)) {
-        PyErr_SetString(PyExc_TypeError, "second argument must be a callable");
-        return NULL;
-    }
+    if (! PyArg_ParseTuple(args, "i", &sockfd))
+        goto error;
 
     // Receive data.
     memset(buff, 0, sizeof(buff));
@@ -254,14 +250,34 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
         }
 
         // handle message
-        if (handle_message(cn_hdr, py_callback) != 0) {
-            return NULL;
+        py_dict = handle_message(cn_hdr);
+        if (py_dict != NULL) {
+            if (PyList_Append(py_list, py_dict)) {
+                Py_DECREF(py_dict);
+                goto error;
+            }
+            Py_DECREF(py_dict);
         }
+        else {
+            if (PyErr_Occurred()) {
+                goto error;
+            }
+            else {
+                // it's a non-message, skip it
+                ;;
+            }
+        }
+
         if (nlh->nlmsg_type == NLMSG_DONE) {
             break;
         }
         nlh = NLMSG_NEXT(nlh, recv_len);
     }
 
-    Py_RETURN_NONE;
+    return py_list;
+
+error:
+    Py_XDECREF(py_dict);
+    Py_XDECREF(py_list);
+    return NULL;
 }
