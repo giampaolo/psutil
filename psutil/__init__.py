@@ -1639,8 +1639,8 @@ def wait_procs(procs, timeout=None, callback=None):
 
 if hasattr(_psplatform, "process_watcher"):
 
-    def process_watcher(callback):
-        return _psplatform.process_watcher(callback)
+    def process_watcher(callback, timeout=None):
+        return _psplatform.process_watcher(callback, timeout=timeout)
 
 
 # =====================================================================

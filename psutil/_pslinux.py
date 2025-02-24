@@ -1656,7 +1656,7 @@ def ppid_map():
     return ret
 
 
-def process_watcher(callback):
+def process_watcher(callback, timeout=None):
     import selectors
 
     def callback_wrapper(d):
@@ -1671,9 +1671,14 @@ def process_watcher(callback):
         # poll
         selector = selectors.PollSelector()
         selector.register(sock, selectors.EVENT_READ)
-        while True:
-            if not selector.select(timeout=1):  # wait for data
-                continue
+        if timeout is None:
+            while True:
+                if not selector.select():  # wait for data
+                    continue
+                cext.netlink_procs_recv(sock.fileno(), callback_wrapper)
+        else:
+            if not selector.select(timeout=timeout):
+                return
             cext.netlink_procs_recv(sock.fileno(), callback_wrapper)
 
 
