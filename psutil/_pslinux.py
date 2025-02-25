@@ -1602,7 +1602,7 @@ class ProcessWatcher:
     RECV_BUFSIZE = 1024 * 1024
 
     def __init__(self):
-        self._queue = []  # fifo
+        self._queue = collections.deque()  # fifo
         self._selector = self._sock = None
         self._sock = socket.socket(
             socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
@@ -1656,7 +1656,7 @@ class ProcessWatcher:
 
         def pop_event():
             try:
-                ev = self._queue.pop(0)  # thread-safe
+                ev = self._queue.popleft()  # thread-safe
             except IndexError:
                 return None
             return self._event_wrapper(ev)
