@@ -108,6 +108,10 @@ test-process-all:  ## Run tests which iterate over all process PIDs.
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process_all.py
 
+test-process-watcher:  ## Run ProcessWatcher tests.
+	${MAKE} build
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process_watcher.py
+
 test-system:  ## Run system-related API tests.
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_system.py

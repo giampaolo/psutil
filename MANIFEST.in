@@ -139,6 +139,8 @@ include psutil/arch/windows/proc_info.c
 include psutil/arch/windows/proc_info.h
 include psutil/arch/windows/proc_utils.c
 include psutil/arch/windows/proc_utils.h
+include psutil/arch/windows/proc_watcher.c
+include psutil/arch/windows/proc_watcher.h
 include psutil/arch/windows/security.c
 include psutil/arch/windows/security.h
 include psutil/arch/windows/sensors.c
@@ -165,6 +167,7 @@ include psutil/tests/test_osx.py
 include psutil/tests/test_posix.py
 include psutil/tests/test_process.py
 include psutil/tests/test_process_all.py
+include psutil/tests/test_process_watcher.py
 include psutil/tests/test_scripts.py
 include psutil/tests/test_sunos.py
 include psutil/tests/test_system.py
