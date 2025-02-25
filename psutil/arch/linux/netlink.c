@@ -83,7 +83,7 @@ psutil_netlink_procs_send(PyObject *self, PyObject *args) {
 
 
 PyObject *
-handle_message(struct cn_msg *cn_hdr) {
+handle_message(struct cn_msg *cn_message) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
     __kernel_pid_t parent_pid = -1;
@@ -93,7 +93,7 @@ handle_message(struct cn_msg *cn_hdr) {
     PyObject *py_dict = NULL;
     PyObject *py_item = NULL;
 
-    ev = (struct proc_event *)cn_hdr->data;
+    ev = (struct proc_event *)cn_message->data;
 
     switch (ev->what) {
         case PROC_EVENT_FORK:  // a new process is created (child)
@@ -212,7 +212,7 @@ PyObject *
 psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     int sockfd;
     struct sockaddr_nl from_nla;
-    struct cn_msg *cn_hdr;
+    struct cn_msg *cn_message;
     struct nlmsghdr *nlh;
     socklen_t from_nla_len;
     char buff[BUFF_SIZE];
@@ -251,10 +251,10 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
 
     nlh = (struct nlmsghdr *)buff;
     while (NLMSG_OK(nlh, recv_len)) {
-        cn_hdr = NLMSG_DATA(nlh);
+        cn_message = NLMSG_DATA(nlh);
 
-        if ((cn_hdr->id.idx != CN_IDX_PROC) ||
-            (cn_hdr->id.val != CN_VAL_PROC))
+        if ((cn_message->id.idx != CN_IDX_PROC) ||
+            (cn_message->id.val != CN_VAL_PROC))
         {
             psutil_debug("CN_IDX_PROC | CN_VAL_PROC (skip)");
             continue;
@@ -273,7 +273,7 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
         }
 
         // handle message
-        py_dict = handle_message(cn_hdr);
+        py_dict = handle_message(cn_message);
         if (py_dict != NULL) {
             if (PyList_Append(py_list, py_dict)) {
                 Py_DECREF(py_dict);
