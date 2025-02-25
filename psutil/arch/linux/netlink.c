@@ -31,7 +31,7 @@
     NLMSG_LENGTH(sizeof(struct cn_msg) + sizeof(struct proc_event)) \
 )
 
-#define BUFF_SIZE (MAX(MAX(SEND_MESSAGE_SIZE, RECV_MESSAGE_SIZE), 1024))
+#define RECV_BUF_SIZE 4096
 #define SEND_MESSAGE_SIZE (NLMSG_SPACE(SEND_MESSAGE_LEN))
 #define RECV_MESSAGE_SIZE (NLMSG_SPACE(RECV_MESSAGE_LEN))
 
@@ -215,7 +215,7 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     struct cn_msg *cn_message;
     struct nlmsghdr *nlh;
     socklen_t from_nla_len;
-    char buff[BUFF_SIZE];
+    char buff[RECV_BUF_SIZE];
     ssize_t recv_len;
     PyObject *py_dict = NULL;
     PyObject *py_list = PyList_New(0);
