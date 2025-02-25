@@ -21,19 +21,7 @@
 #include "../../_psutil_common.h"
 
 
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
-
-#define SEND_MESSAGE_LEN ( \
-    NLMSG_LENGTH(sizeof(struct cn_msg) + sizeof(enum proc_cn_mcast_op)) \
-)
-#define RECV_MESSAGE_LEN ( \
-    NLMSG_LENGTH(sizeof(struct cn_msg) + sizeof(struct proc_event)) \
-)
-
 #define RECV_BUF_SIZE 4096
-#define SEND_MESSAGE_SIZE (NLMSG_SPACE(SEND_MESSAGE_LEN))
-#define RECV_MESSAGE_SIZE (NLMSG_SPACE(RECV_MESSAGE_LEN))
 
 
 // Send an AF_NETLINK packet that tells the kernel to start sending
