@@ -1624,10 +1624,6 @@ class ProcessWatcher:
         except OSError as err:
             debug(err)
 
-    @property
-    def sock(self):
-        return self._sock
-
     def __enter__(self):
         return self
 
@@ -1643,6 +1639,10 @@ class ProcessWatcher:
         for ev in events:
             ev["event"] = ProcessEvent(ev["event"])
             yield ev
+
+    @property
+    def sock(self):
+        return self._sock
 
     def read(self, timeout=None):
         """Return either a list of events or None."""
