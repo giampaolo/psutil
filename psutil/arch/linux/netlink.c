@@ -4,8 +4,10 @@
  * found in the LICENSE file.
  */
 
-// See: https://github.com/ColinIanKing/forkstat/blob/master/forkstat.c.
-
+// See:
+// * https://github.com/ColinIanKing/forkstat/blob/master/forkstat.c.
+// * https://www.kernel.org/doc/Documentation/connector/connector.txt
+//
 // If Python is run as a normal user, this will require CAP_NET_ADMIN
 // or CAP_SYS_ADMIN capabilities to run. You can check if you have them
 // with `capsh --print`.
@@ -24,10 +26,10 @@
 #define RECV_BUF_SIZE 4096
 
 
-// Send an AF_NETLINK packet that tells the kernel to start sending
-// data any time a process PID is updated (new, gone, etc.).
+// Accepts an AF_NETLINK socket and tells the kernel to start sending
+// data to it every time a process PID is updated (new, gone, etc.).
 PyObject *
-psutil_netlink_procs_send(PyObject *self, PyObject *args) {
+psutil_netlink_proc_register(PyObject *self, PyObject *args) {
     int sockfd;
     ssize_t bytes_sent;
     struct nlmsghdr nl_header;
@@ -196,8 +198,11 @@ error:
 }
 
 
+// Reads data from the AF_NETLINK socket (blocking). Returns a Python
+// list of events (if any). You're supposed to use select() or poll()
+// first, to check whether there is data to read.
 PyObject *
-psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
+psutil_netlink_proc_read(PyObject *self, PyObject *args) {
     int sockfd;
     struct cn_msg *cn_message;
     struct nlmsghdr *nlh;

@@ -45,8 +45,8 @@ static PyMethodDef mod_methods[] = {
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"users", psutil_users, METH_VARARGS},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
-    {"netlink_procs_send", psutil_netlink_procs_send, METH_VARARGS},
-    {"netlink_procs_recv", psutil_netlink_procs_recv, METH_VARARGS},
+    {"netlink_proc_register", psutil_netlink_proc_register, METH_VARARGS},
+    {"netlink_proc_read", psutil_netlink_proc_read, METH_VARARGS},
     // --- linux specific
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
     // --- others

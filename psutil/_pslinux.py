@@ -1607,7 +1607,7 @@ class ProcessWatcher:
         )
         try:
             self._sock.bind((os.getpid(), cext.CN_IDX_PROC))
-            cext.netlink_procs_send(self._sock.fileno())
+            cext.netlink_proc_register(self._sock.fileno())
             self._selector = selectors.PollSelector()
             self._selector.register(self._sock, selectors.EVENT_READ)
         except Exception:
@@ -1648,7 +1648,7 @@ class ProcessWatcher:
         """Return either a list of events or None."""
         if self._selector.select(timeout=timeout):
             return self._event_wrapper(
-                cext.netlink_procs_recv(self._sock.fileno())
+                cext.netlink_proc_read(self._sock.fileno())
             )
 
     def close(self):
