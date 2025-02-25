@@ -72,7 +72,7 @@ psutil_netlink_proc_register(PyObject *self, PyObject *args) {
 }
 
 
-PyObject *
+static PyObject *
 handle_message(struct cn_msg *cn_message) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
@@ -253,26 +253,20 @@ psutil_netlink_proc_read(PyObject *self, PyObject *args) {
 
         // handle message
         py_dict = handle_message(cn_message);
-        if (py_dict != NULL) {
+        if (py_dict == NULL) {
+            if (PyErr_Occurred())
+                goto error;
+        }
+        else {
             if (PyList_Append(py_list, py_dict)) {
                 Py_DECREF(py_dict);
                 goto error;
             }
             Py_DECREF(py_dict);
         }
-        else {
-            if (PyErr_Occurred()) {
-                goto error;
-            }
-            else {
-                // it's a non-message, skip it
-                ;;
-            }
-        }
 
-        if (nlh->nlmsg_type == NLMSG_DONE) {
+        if (nlh->nlmsg_type == NLMSG_DONE)
             break;
-        }
         nlh = NLMSG_NEXT(nlh, recv_len);
     }
 
