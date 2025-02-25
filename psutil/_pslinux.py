@@ -18,6 +18,7 @@ import selectors
 import socket
 import struct
 import sys
+import time
 import warnings
 from collections import defaultdict
 from collections import namedtuple
@@ -1662,15 +1663,24 @@ class ProcessWatcher:
 
         if event := pop_event():
             return event
+        if timeout is not None:
+            started = time.monotonic()
 
         while True:
             # Waits until the NETLINK socket has data to read.
             # Sometimes it's readable but it yields PROC_EVENT_NONE.
             ready = self._selector.select(timeout=timeout)
             if ready:
-                # We may receive an empty list in case of PROC_EVENT_NONE.
+                # We may receive an empty list in case of
+                # PROC_EVENT_NONE. In this case, if timeout was
+                # specified, we recalculate the timeout.
                 if ls := cext.netlink_proc_read(self._sock.fileno()):
                     self._queue.extend(ls)
+                elif timeout is not None:
+                    elapsed = time.monotonic() - started
+                    timeout -= elapsed
+                    if timeout > 0:
+                        return self.read(timeout)
 
             if event := pop_event():
                 return event
