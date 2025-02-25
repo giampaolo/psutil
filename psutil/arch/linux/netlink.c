@@ -211,11 +211,9 @@ error:
 PyObject *
 psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
     int sockfd;
-    struct sockaddr_nl from_nla;
     struct cn_msg *cn_message;
     struct nlmsghdr *nlh;
-    socklen_t from_nla_len;
-    char buff[RECV_BUF_SIZE];
+    char buf[RECV_BUF_SIZE];
     ssize_t recv_len;
     PyObject *py_dict = NULL;
     PyObject *py_list = PyList_New(0);
@@ -226,10 +224,7 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
         goto error;
 
     // Receive data.
-    memset(buff, 0, sizeof(buff));
-    from_nla_len = sizeof(from_nla);
-    recv_len = recvfrom(
-        sockfd, buff, sizeof(buff), 0, (struct sockaddr *)&from_nla, &from_nla_len);
+    recv_len = recv(sockfd, buf, sizeof(buf), 0);
     if (recv_len == -1) {
         if (errno == ENOBUFS) {
             // printf("ENOBUFS ignored\n");
@@ -239,13 +234,8 @@ psutil_netlink_procs_recv(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-    if (from_nla_len != sizeof(from_nla)) {
-        PyErr_SetString(PyExc_RuntimeError, "recv() len mismatch");
-        return NULL;
-    }
 
-
-    nlh = (struct nlmsghdr *)buff;
+    nlh = (struct nlmsghdr *)buf;
     while (NLMSG_OK(nlh, recv_len)) {
         cn_message = NLMSG_DATA(nlh);
 
