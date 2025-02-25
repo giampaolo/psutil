@@ -128,7 +128,6 @@ handle_message(struct cn_msg *cn_message) {
             return NULL;
     }
 
-
     py_dict = PyDict_New();
     if (py_dict == NULL)
         return NULL;

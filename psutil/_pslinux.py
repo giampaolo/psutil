@@ -1601,6 +1601,7 @@ class ProcessWatcher:
     RECV_BUFSIZE = 1024 * 1024
 
     def __init__(self):
+        self._queue = []  # fifo
         self._selector = self._sock = None
         self._sock = socket.socket(
             socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
@@ -1632,26 +1633,52 @@ class ProcessWatcher:
 
     def __iter__(self):
         while True:
-            yield from self.read()
+            if event := self.read():
+                yield event
 
     @staticmethod
-    def _event_wrapper(events):
-        for ev in events:
-            ev["event"] = ProcessEvent(ev["event"])
-            yield ev
+    def _event_wrapper(ev):
+        ev["event"] = ProcessEvent(ev["event"])
+        return ev
 
     @property
     def sock(self):
         return self._sock
 
     def read(self, timeout=None):
-        """Return either a list of events or None."""
-        if self._selector.select(timeout=timeout):
-            return self._event_wrapper(
-                cext.netlink_proc_read(self._sock.fileno())
-            )
+        """Read data from the NETLINK socket and return one process
+        event. If `timeout` is None it blocks until there is an actual
+        event to return. If a `timeout` is specified it waits up until
+        `timeout` seconds, then it returns either a process event or
+        None.
+        """
+
+        def pop_event():
+            try:
+                ev = self._queue.pop(0)  # thread-safe
+            except IndexError:
+                return None
+            return self._event_wrapper(ev)
+
+        if event := pop_event():
+            return event
+
+        while True:
+            # Waits until the NETLINK socket has data to read.
+            # Sometimes it's readable but it yields PROC_EVENT_NONE.
+            ready = self._selector.select(timeout=timeout)
+            if ready:
+                # We may receive an empty list in case of PROC_EVENT_NONE.
+                if ls := cext.netlink_proc_read(self._sock.fileno()):
+                    self._queue.extend(ls)
+
+            if event := pop_event():
+                return event
+            if timeout is not None:
+                return None
 
     def close(self):
+        self._queue.clear()
         if self._selector is not None:
             self._selector.close()
             self._selector = None
