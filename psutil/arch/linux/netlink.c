@@ -13,6 +13,7 @@
 #include <Python.h>
 
 #include <sys/socket.h>
+#include <sys/uio.h>
 #include <linux/connector.h>
 #include <linux/netlink.h>
 #include <linux/cn_proc.h>
@@ -40,27 +41,40 @@
 PyObject *
 psutil_netlink_procs_send(PyObject *self, PyObject *args) {
     int sockfd;
-    char buf[BUFF_SIZE];
-    struct nlmsghdr *nl_hdr;
     ssize_t bytes_sent;
+    struct nlmsghdr nl_header;
+    enum proc_cn_mcast_op op;
+    struct cn_msg cn_msg;
+    struct iovec iov[3];
 
     if (! PyArg_ParseTuple(args, "i", &sockfd))
         return NULL;
 
-    nl_hdr = (struct nlmsghdr *)buf;
-    nl_hdr->nlmsg_len = SEND_MESSAGE_LEN;
-    nl_hdr->nlmsg_type = NLMSG_DONE;
-    nl_hdr->nlmsg_flags = 0;
-    nl_hdr->nlmsg_seq = 0;
-    nl_hdr->nlmsg_pid = getpid();
+    memset(&nl_header, 0, sizeof(nl_header));
+    nl_header.nlmsg_len = NLMSG_LENGTH(sizeof(cn_msg) + sizeof(op));
+    nl_header.nlmsg_type = NLMSG_DONE;
+    nl_header.nlmsg_pid = getpid();
+    iov[0].iov_base = &nl_header;
+    iov[0].iov_len = sizeof(nl_header);
 
-    bytes_sent = send(sockfd, nl_hdr, nl_hdr->nlmsg_len, 0);
+    memset(&cn_msg, 0, sizeof(cn_msg));
+    cn_msg.id.idx = CN_IDX_PROC;
+    cn_msg.id.val = CN_VAL_PROC;
+    cn_msg.len = sizeof(enum proc_cn_mcast_op);
+    iov[1].iov_base = &cn_msg;
+    iov[1].iov_len = sizeof(cn_msg);
+
+    op = PROC_CN_MCAST_LISTEN;
+    iov[2].iov_base = &op;
+    iov[2].iov_len = sizeof(op);
+
+    bytes_sent = writev(sockfd, iov, 3);
     if (bytes_sent == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-    if (bytes_sent != nl_hdr->nlmsg_len) {
-        PyErr_SetString(PyExc_RuntimeError, "send() len mismatch");
+    if (bytes_sent != nl_header.nlmsg_len) {
+        PyErr_SetString(PyExc_RuntimeError, "writev() len mismatch");
         return NULL;
     }
 
