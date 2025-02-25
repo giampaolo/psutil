@@ -1597,6 +1597,9 @@ def boot_time():
 
 
 class ProcessWatcher:
+
+    RECV_BUFSIZE = 1024 * 1024
+
     def __init__(self):
         self._selector = self._sock = None
         self._sock = socket.socket(
@@ -1610,6 +1613,16 @@ class ProcessWatcher:
         except Exception:
             self.close()
             raise
+
+        # Without this `read()` fails with ENOBUFS after ~100 loops
+        # under stress load test. With this we fail after ~240 loops.
+        # Default SO_RCVBUF on Linux Ubuntu 24.04 is 212K.
+        try:
+            self._sock.setsockopt(
+                socket.SOL_SOCKET, socket.SO_RCVBUF, self.RECV_BUFSIZE
+            )
+        except OSError as err:
+            debug(err)
 
     @property
     def sock(self):
