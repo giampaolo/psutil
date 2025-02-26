@@ -655,6 +655,16 @@ def get_winver():
     return (wv[0], wv[1], sp)
 
 
+def linux_set_proc_name(new_name):
+    """Change current process name()."""
+    if len(new_name) > 15:
+        raise ValueError("name must be max 15 chars long")
+    libc = ctypes.cdll.LoadLibrary("libc.so.6")
+    buff = ctypes.create_string_buffer(len(new_name) + 1)
+    buff.value = new_name.encode()
+    libc.prctl(15, ctypes.byref(buff), 0, 0, 0)
+
+
 # ===================================================================
 # --- sync primitives
 # ===================================================================

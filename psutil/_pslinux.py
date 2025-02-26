@@ -52,7 +52,7 @@ from ._common import usage_percent
 
 # fmt: off
 __extra__all__ = [
-    'PROCFS_PATH',
+    "PROCFS_PATH", "ProcessWatcher",
     # io prio constants
     "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
     "IOPRIO_CLASS_IDLE",

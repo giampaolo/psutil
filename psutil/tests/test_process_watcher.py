@@ -9,8 +9,14 @@
 import os
 import time
 
+import pytest
+
 import psutil
 from psutil.tests import PsutilTestCase
+
+
+if psutil.LINUX:
+    from psutil.tests import linux_set_proc_name
 
 
 class TestProcessWatcher(PsutilTestCase):
@@ -48,3 +54,18 @@ class TestProcessWatcher(PsutilTestCase):
             "event": psutil.PROC_EVENT_EXIT,
             "exit_code": abs(proc.returncode),
         }
+
+    @pytest.mark.skipif(not psutil.LINUX, reason="LINUX only")
+    def test_change_proc_name(self):
+        name = psutil.Process().name()
+        linux_set_proc_name("hello there")
+        try:
+            event = self.read_until_pid(os.getpid())
+            assert event == {
+                "event": psutil.PROC_EVENT_COMM,
+                "pid": os.getpid(),
+            }
+            assert psutil.Process().name() == "hello there"
+        finally:
+            if psutil.Process().name() != name:
+                linux_set_proc_name(name)

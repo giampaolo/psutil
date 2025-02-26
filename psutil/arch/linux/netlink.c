@@ -113,7 +113,7 @@ handle_message(struct cn_msg *cn_message) {
         case PROC_EVENT_SID:  // process SID changed (e.g. sudo was used)
             pid = ev->event_data.exec.process_pid;
             break;
-        case PROC_EVENT_COMM:  // process changed its command line
+        case PROC_EVENT_COMM:  // process changed its name or command line
             pid = ev->event_data.exec.process_pid;
             break;
         case PROC_EVENT_PTRACE:  // process via being traced via ptrace() (debug)
