@@ -90,7 +90,8 @@ PyInit__psutil_linux(void) {
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_EXIT", PROC_EVENT_EXIT)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_FORK", PROC_EVENT_FORK)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_GID", PROC_EVENT_GID)) INITERR;
-    if (PyModule_AddIntConstant(mod, "PROC_EVENT_NONZERO_EXIT", PROC_EVENT_NONZERO_EXIT)) INITERR;
+    // Not exposed because apparently it's never triggered.
+    // if (PyModule_AddIntConstant(mod, "PROC_EVENT_NONZERO_EXIT", PROC_EVENT_NONZERO_EXIT)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_PTRACE", PROC_EVENT_PTRACE)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_SID", PROC_EVENT_SID)) INITERR;
     if (PyModule_AddIntConstant(mod, "PROC_EVENT_UID", PROC_EVENT_UID)) INITERR;

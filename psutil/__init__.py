@@ -103,7 +103,6 @@ if LINUX:
     from ._pslinux import PROC_EVENT_EXIT  # noqa: F401
     from ._pslinux import PROC_EVENT_FORK  # noqa: F401
     from ._pslinux import PROC_EVENT_GID  # noqa: F401
-    from ._pslinux import PROC_EVENT_NONZERO_EXIT  # noqa: F401
     from ._pslinux import PROC_EVENT_PTRACE  # noqa: F401
     from ._pslinux import PROC_EVENT_SID  # noqa: F401
     from ._pslinux import PROC_EVENT_UID  # noqa: F401

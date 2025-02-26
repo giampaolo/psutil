@@ -173,6 +173,9 @@ class TestExampleScripts(PsutilTestCase):
     def test_sensors(self):
         self.assert_stdout('sensors.py')
 
+    def test_forkstat(self):
+        self.assert_syntax('forkstat.py')
+
 
 # ===================================================================
 # --- Tests scripts in scripts/internal/ directory

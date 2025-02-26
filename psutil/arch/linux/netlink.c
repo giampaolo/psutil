@@ -97,7 +97,8 @@ handle_message(struct cn_msg *cn_message) {
             pid = ev->event_data.exit.process_pid;
             exit_code = (int)ev->event_data.exit.exit_code;
             break;
-        // NOTE: does not work as expected. We only ever get PROC_EVENT_EXIT.
+        // NOTE: does not work as expected. Apparently we only ever get
+        // PROC_EVENT_EXIT.
         // case PROC_EVENT_NONZERO_EXIT:  // process gone with exit code != 0
         //     pid = ev->event_data.exit.process_pid;
         //     exit_code = (int)ev->event_data.exit.exit_code;
