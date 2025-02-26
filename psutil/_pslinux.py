@@ -1627,6 +1627,7 @@ class ProcessWatcher:
             debug(err)
 
     def __enter__(self):
+        self._assert_not_closed()
         return self
 
     def __exit__(self, etype, evalue, traceback):
@@ -1641,6 +1642,11 @@ class ProcessWatcher:
     def _event_wrapper(ev):
         ev["event"] = ProcessEvent(ev["event"])
         return ev
+
+    def _assert_not_closed(self):
+        if self._selector is None and self._sock is None:
+            msg = "can't reuse an already closed ProcessWatcher"
+            raise ValueError(msg)
 
     @property
     def sock(self):
@@ -1661,6 +1667,7 @@ class ProcessWatcher:
                 return None
             return self._event_wrapper(ev)
 
+        self._assert_not_closed()
         if event := pop_event():
             return event
         if timeout is not None:

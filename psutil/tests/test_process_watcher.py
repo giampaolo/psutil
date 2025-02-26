@@ -75,3 +75,14 @@ class TestProcessWatcher(PsutilTestCase):
         with self.pw as pw:
             assert pw is self.pw
         assert self.pw.sock is None
+
+    def test_closed(self):
+        self.pw.close()
+        with pytest.raises(ValueError, match="already closed"):
+            self.pw.read()
+        with pytest.raises(ValueError, match="already closed"):
+            with self.pw:
+                pass
+        with pytest.raises(ValueError, match="already closed"):
+            for ev in self.pw:
+                pass
