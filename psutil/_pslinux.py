@@ -1633,7 +1633,8 @@ class ProcessWatcher:
 
     def __iter__(self):
         while True:
-            if event := self.read():
+            event = self.read()
+            if event:
                 yield event
 
     @staticmethod
@@ -1666,11 +1667,12 @@ class ProcessWatcher:
             return self._event_wrapper(ev)
 
         self._assert_not_closed()
-        if event := pop_event():
+        event = pop_event()
+        if event:
             return event
+
         if timeout is not None:
             started = time.monotonic()
-
         while True:
             # Waits until the NETLINK socket has data to read.
             # Sometimes it's readable but it yields PROC_EVENT_NONE.
@@ -1679,7 +1681,8 @@ class ProcessWatcher:
                 # We may receive an empty list in case of
                 # PROC_EVENT_NONE. In this case, if timeout was
                 # specified, we recalculate the timeout.
-                if ls := cext.netlink_proc_read(self._sock.fileno()):
+                ls = cext.netlink_proc_read(self._sock.fileno())
+                if ls:
                     self._queue.extend(ls)
                 elif timeout is not None:
                     elapsed = time.monotonic() - started
@@ -1687,7 +1690,8 @@ class ProcessWatcher:
                     if timeout > 0:
                         return self.read(timeout)
 
-            if event := pop_event():
+            event = pop_event()
+            if event:
                 return event
             if timeout is not None:
                 return None
