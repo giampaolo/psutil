@@ -69,3 +69,9 @@ class TestProcessWatcher(PsutilTestCase):
         finally:
             if psutil.Process().name() != name:
                 linux_set_proc_name(name)
+
+    def test_ctx_manager(self):
+        assert self.pw.sock is not None
+        with self.pw as pw:
+            assert pw is self.pw
+        assert self.pw.sock is None
