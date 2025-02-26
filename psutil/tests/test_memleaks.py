@@ -16,6 +16,7 @@ because of how its JIT handles memory, so tests are skipped.
 
 import functools
 import os
+import time
 
 import psutil
 import psutil._common
@@ -47,6 +48,10 @@ from psutil.tests import skip_on_access_denied
 from psutil.tests import spawn_testproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
+
+
+if psutil.LINUX:
+    from psutil.tests import linux_set_proc_name
 
 
 cext = psutil._psplatform.cext
@@ -376,14 +381,27 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     def test_proc_watcher(self):
-        def fun():
-            proc = spawn_testproc()
-            proc.terminate()
-            proc.wait()
-            list(pw.read())
 
-        with psutil.ProcessWatcher() as pw:
-            self.execute(fun)
+        def read_until_pid(pid, timeout=2):
+            stop_at = time.monotonic() + timeout
+            while time.monotonic() < stop_at:
+                event = pw.read(timeout=0.01)
+                if event["pid"] == pid:
+                    return event
+            raise TimeoutError("timed out")
+
+        def fun():
+            linux_set_proc_name("foo")
+            event = read_until_pid(os.getpid())
+            assert event["event"] == psutil.PROC_EVENT_COMM
+
+        name = psutil.Process().name()
+        try:
+            with psutil.ProcessWatcher() as pw:
+                self.execute(fun, times=10000)
+        finally:
+            if psutil.Process().name() != name:
+                linux_set_proc_name(name)
 
     # --- mem
 

@@ -29,7 +29,7 @@ class TestProcessWatcher(PsutilTestCase):
     def read_until_pid(self, pid, timeout=2):
         stop_at = time.monotonic() + timeout
         while time.monotonic() < stop_at:
-            event = self.pw.read()
+            event = self.pw.read(timeout=0.01)
             if event["pid"] == pid:
                 return event
         raise TimeoutError("timed out")
