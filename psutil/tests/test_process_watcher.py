@@ -14,6 +14,7 @@ import pytest
 import psutil
 from psutil.tests import HAS_PROCESS_WATCHER
 from psutil.tests import PsutilTestCase
+from psutil.tests import ThreadTask
 
 
 if psutil.LINUX:
@@ -56,6 +57,26 @@ class TestProcessWatcher(PsutilTestCase):
             "pid": proc.pid,
             "event": psutil.PROC_EVENT_EXIT,
             "exit_code": abs(proc.returncode),
+        }
+
+    def test_fork_thread(self):
+        with ThreadTask():
+            threads = psutil.Process().threads()
+            assert len(threads) == 2
+            tid = threads[1].id
+            event = self.read_until_pid(tid)
+            assert event == {
+                "event": psutil.PROC_EVENT_FORK,
+                "pid": tid,
+                "parent_pid": os.getpid(),
+                "is_thread": True,
+            }
+
+        event = self.read_until_pid(tid)
+        assert event == {
+            "event": psutil.PROC_EVENT_EXIT,
+            "pid": tid,
+            "exit_code": 0,
         }
 
     @pytest.mark.skipif(not psutil.LINUX, reason="LINUX only")

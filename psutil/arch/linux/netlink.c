@@ -89,11 +89,14 @@ handle_message(struct cn_msg *cn_message) {
     switch (ev->what) {
         case PROC_EVENT_FORK:  // a new process is created (child)
             pid = ev->event_data.fork.child_pid;
-            parent_pid = ev->event_data.fork.parent_pid;
-            if (ev->event_data.fork.child_pid != ev->event_data.fork.child_tgid)
+            if (ev->event_data.fork.child_pid != ev->event_data.fork.child_tgid) {
                 py_is_thread = Py_True;
-            else
+                parent_pid = ev->event_data.fork.child_tgid;
+            }
+            else {
                 py_is_thread = Py_False;
+                parent_pid = ev->event_data.fork.parent_pid;
+            }
             Py_INCREF(py_is_thread);
             break;
         case PROC_EVENT_EXEC:  // process executed new program via execv*()
