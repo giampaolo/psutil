@@ -33,12 +33,6 @@ WINDOWS = os.name == "nt"
 
 sys.path.insert(0, ROOT_DIR)  # so that we can import setup.py
 
-import setup  # noqa: E402
-
-
-TEST_DEPS = setup.TEST_DEPS
-DEV_DEPS = setup.DEV_DEPS
-
 _cmds = {}
 
 GREEN = 2
@@ -302,14 +296,14 @@ def install_pydeps_test():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
-    sh([PYTHON, "-m", "pip", "install", "--user", "-U"] + TEST_DEPS)
+    sh([PYTHON, "-m", "pip", "install", "--user", "-U", "-e", ".[test]"])
 
 
 def install_pydeps_dev():
     """Install useful deps."""
     install_pip()
     install_git_hooks()
-    sh([PYTHON, "-m", "pip", "install", "--user", "-U"] + DEV_DEPS)
+    sh([PYTHON, "-m", "pip", "install", "--user", "-U", "-e", ".[dev]"])
 
 
 def test(args=None):
