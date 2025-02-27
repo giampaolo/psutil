@@ -12,6 +12,7 @@ import time
 import pytest
 
 import psutil
+from psutil.tests import HAS_PROCESS_WATCHER
 from psutil.tests import PsutilTestCase
 
 
@@ -19,6 +20,7 @@ if psutil.LINUX:
     from psutil.tests import linux_set_proc_name
 
 
+@pytest.mark.skipif(not HAS_PROCESS_WATCHER, reason="API not supported")
 class TestProcessWatcher(PsutilTestCase):
     def setUp(self):
         self.pw = psutil.ProcessWatcher()

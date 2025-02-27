@@ -208,6 +208,7 @@ except Exception:  # noqa: BLE001
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
+HAS_PROCESS_WATCHER = hasattr(psutil, "ProcessWatcher")
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 # --- misc

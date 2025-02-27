@@ -60,7 +60,7 @@ psutil_netlink_proc_register(PyObject *self, PyObject *args) {
 
     bytes_sent = writev(sockfd, iov, 3);
     if (bytes_sent == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_PyErr_SetFromOSErrnoWithSyscall("writev");
         return NULL;
     }
     if (bytes_sent != nl_header.nlmsg_len) {
