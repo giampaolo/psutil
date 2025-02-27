@@ -1548,6 +1548,7 @@ class TestMisc(PsutilTestCase):
         # - Process(tid) is supposed to work
         # - pids() should not return the TID
         # See: https://github.com/giampaolo/psutil/issues/687
+
         with ThreadTask():
             p = psutil.Process()
             threads = p.threads()

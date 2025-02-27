@@ -19,11 +19,7 @@ if not psutil.LINUX:
     sys.exit("linux only")
 
 procs_data = collections.defaultdict(dict)
-templ = "{:<8} {:>8} {:>8} {:>8} {:>5}"
-
-
-def print_line():
-    print(templ.format("Event", "PID", "Info", "Duration", "Process"))
+templ = "{:<8} {:>8} {:>8} {:>8} {:>8} {:>5}"
 
 
 def callback(d):
@@ -53,11 +49,14 @@ def callback(d):
             del procs_data[pid]
 
     d["event"] = str(d["event"]._name_).split("_")[-1].lower()
+    info = "thread" if d.get("is_thread") else ""
+    parent = d.get("parent_pid", "")
     print(
         templ.format(
             d["event"],
             d["pid"],
-            "",
+            info,
+            parent,
             d.get("elapsed", ""),
             d.get("cmdline", ""),
         )
@@ -65,8 +64,12 @@ def callback(d):
 
 
 def main():
-    print(templ.format("Event", "PID", "Info", "Duration", "Process"))
-    psutil.process_watcher(callback)
+    print(
+        templ.format("Event", "PID", "Info", "Parent", "Duration", "Process")
+    )
+    with psutil.ProcessWatcher() as pw:
+        for event in pw:
+            callback(event)
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ class TestProcessWatcher(PsutilTestCase):
             "pid": proc.pid,
             "event": psutil.PROC_EVENT_FORK,
             "parent_pid": os.getpid(),
+            "is_thread": False,
         }
 
         event = self.read_until_pid(proc.pid)

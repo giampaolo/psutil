@@ -80,6 +80,7 @@ handle_message(struct cn_msg *cn_message) {
     int euid = -1;
     int egid = -1;
     int exit_code = -1;
+    PyObject *py_is_thread = NULL;
     PyObject *py_dict = NULL;
     PyObject *py_item = NULL;
 
@@ -89,6 +90,11 @@ handle_message(struct cn_msg *cn_message) {
         case PROC_EVENT_FORK:  // a new process is created (child)
             pid = ev->event_data.fork.child_pid;
             parent_pid = ev->event_data.fork.parent_pid;
+            if (ev->event_data.fork.child_pid != ev->event_data.fork.child_tgid)
+                py_is_thread = Py_True;
+            else
+                py_is_thread = Py_False;
+            Py_INCREF(py_is_thread);
             break;
         case PROC_EVENT_EXEC:  // process executed new program via execv*()
             pid = ev->event_data.exec.process_pid;
@@ -131,7 +137,7 @@ handle_message(struct cn_msg *cn_message) {
 
     py_dict = PyDict_New();
     if (py_dict == NULL)
-        return NULL;
+        goto error;
 
     // event
     py_item = Py_BuildValue("I", ev->what);
@@ -157,6 +163,13 @@ handle_message(struct cn_msg *cn_message) {
         if (PyDict_SetItemString(py_dict, "parent_pid", py_item))
             goto error;
         Py_CLEAR(py_item);
+    }
+
+    // is thread? (fork)
+    if (py_is_thread != NULL) {
+        if (PyDict_SetItemString(py_dict, "is_thread", py_is_thread))
+            goto error;
+        Py_CLEAR(py_is_thread);
     }
 
     // exit code
@@ -193,7 +206,7 @@ handle_message(struct cn_msg *cn_message) {
 
 error:
     Py_XDECREF(py_item);
-    Py_DECREF(py_dict);
+    Py_XDECREF(py_dict);
     return NULL;
 }
 
