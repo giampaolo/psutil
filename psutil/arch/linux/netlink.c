@@ -91,6 +91,9 @@ handle_message(struct cn_msg *cn_message) {
             pid = ev->event_data.fork.child_pid;
             if (ev->event_data.fork.child_pid != ev->event_data.fork.child_tgid) {
                 py_is_thread = Py_True;
+                // This distinction also exists in forkstat, and it's
+                // confirmed by unit tests.
+                // https://github.com/ColinIanKing/forkstat/blob/6d3bea2af4d7fa923b4647feb40244f154f9f5ad/forkstat.c#L700-L733
                 parent_pid = ev->event_data.fork.child_tgid;
             }
             else {
