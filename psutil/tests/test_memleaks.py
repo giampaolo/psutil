@@ -386,7 +386,7 @@ class TestModuleFunctionsLeaks(TestMemoryLeak):
             stop_at = time.monotonic() + timeout
             while time.monotonic() < stop_at:
                 event = pw.read(timeout=0.01)
-                if event["pid"] == pid:
+                if event and event["pid"] == pid:
                     return event
             raise TimeoutError("timed out")
 
