@@ -82,12 +82,13 @@ Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 # `make install-pydeps-test`.
 TEST_DEPS = [
     "pytest",
+    "pytest-subtests",
     "pytest-xdist",
     "setuptools",
+    "pywin32 ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
+    "wheel ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
+    "wmi ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
 ]
-
-if WINDOWS and not PYPY:
-    TEST_DEPS.extend(("pywin32", "wheel", "wmi"))
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
@@ -111,11 +112,9 @@ DEV_DEPS = TEST_DEPS + [
     "virtualenv",
     "vulture",
     "wheel",
+    "pyreadline ; os_name == 'nt'",
+    "pdbpp ; os_name == 'nt'",
 ]
-
-if WINDOWS:
-    DEV_DEPS.append("pyreadline")
-    DEV_DEPS.append("pdbpp")
 
 macros = []
 if POSIX:
@@ -212,6 +211,37 @@ def missdeps(cmdline):
     s += "Try running:\n"
     s += "  {}".format(cmdline)
     print(hilite(s, color="red", bold=True), file=sys.stderr)
+
+
+def print_install_instructions():
+    if LINUX:
+        pyimpl = "pypy" if PYPY else "python"
+        if shutil.which("dpkg"):
+            missdeps("sudo apt-get install gcc {}3-dev".format(pyimpl))
+        elif shutil.which("rpm"):
+            missdeps("sudo yum install gcc {}3-devel".format(pyimpl))
+        elif shutil.which("apk"):
+            missdeps(
+                "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
+                    *pyimpl
+                )
+            )
+    elif MACOS:
+        msg = "XCode (https://developer.apple.com/xcode/) is not installed"
+        print(hilite(msg, color="red"), file=sys.stderr)
+    elif FREEBSD:
+        if shutil.which("pkg"):
+            missdeps("pkg install gcc python3")
+        elif shutil.which("mport"):  # MidnightBSD
+            missdeps("mport install gcc python3")
+    elif OPENBSD:
+        missdeps("pkg_add -v gcc python3")
+    elif NETBSD:
+        missdeps("pkgin install gcc python3")
+    elif SUNOS:
+        missdeps(
+            "sudo ln -s /usr/bin/gcc /usr/local/bin/cc && pkg install gcc"
+        )
 
 
 def unix_can_compile(c_code):
@@ -563,37 +593,7 @@ def main():
                 ("build", "install", "sdist", "bdist", "develop")
             )
         ):
-            if LINUX:
-                pyimpl = "pypy" if PYPY else "python"
-                if shutil.which("dpkg"):
-                    missdeps("sudo apt-get install gcc {}3-dev".format(pyimpl))
-                elif shutil.which("rpm"):
-                    missdeps("sudo yum install gcc {}3-devel".format(pyimpl))
-                elif shutil.which("apk"):
-                    missdeps(
-                        "sudo apk add gcc {}3-dev musl-dev linux-headers"
-                        .format(*pyimpl)
-                    )
-            elif MACOS:
-                msg = (
-                    "XCode (https://developer.apple.com/xcode/)"
-                    " is not installed"
-                )
-                print(hilite(msg, color="red"), file=sys.stderr)
-            elif FREEBSD:
-                if shutil.which("pkg"):
-                    missdeps("pkg install gcc python3")
-                elif shutil.which("mport"):  # MidnightBSD
-                    missdeps("mport install gcc python3")
-            elif OPENBSD:
-                missdeps("pkg_add -v gcc python3")
-            elif NETBSD:
-                missdeps("pkgin install gcc python3")
-            elif SUNOS:
-                missdeps(
-                    "sudo ln -s /usr/bin/gcc /usr/local/bin/cc && "
-                    "pkg install gcc"
-                )
+            print_install_instructions()
 
 
 if __name__ == '__main__':
