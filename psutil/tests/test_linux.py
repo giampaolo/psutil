@@ -2201,6 +2201,16 @@ class TestProcess(PsutilTestCase):
                 assert p.net_connections() == []
                 assert m.called
 
+    def test_thread_process_ppid(self):
+        # https://github.com/giampaolo/psutil/issues/2511
+        with ThreadTask():
+            p1 = psutil.Process()
+            threads = p1.threads()
+            assert len(threads) == 2
+            tid = threads[1].id
+            p2 = psutil.Process(tid)
+            assert p2.ppid() == os.getpid()
+
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestProcessAgainstStatus(PsutilTestCase):
