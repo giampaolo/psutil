@@ -32,7 +32,6 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
-from psutil.tests import PYTEST_PARALLEL
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
@@ -1541,18 +1540,18 @@ class TestMisc(PsutilTestCase):
             psutil.PROCFS_PATH = "/proc"
 
     @retry_on_failure()
-    @pytest.mark.skipif(PYTEST_PARALLEL, reason="skip if pytest-parallel")
+    @pytest.mark.xdist_group(name="serial")
     def test_issue_687(self):
         # In case of thread ID:
         # - pid_exists() is supposed to return False
         # - Process(tid) is supposed to work
         # - pids() should not return the TID
         # See: https://github.com/giampaolo/psutil/issues/687
-
+        p = psutil.Process()
+        nthreads = len(p.threads())
         with ThreadTask():
-            p = psutil.Process()
             threads = p.threads()
-            assert len(threads) == 2
+            assert len(threads) == nthreads + 1
             tid = sorted(threads, key=lambda x: x.id)[1].id
             assert p.pid != tid
             pt = psutil.Process(tid)

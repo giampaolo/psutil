@@ -59,11 +59,14 @@ class TestProcessWatcher(PsutilTestCase):
             "exit_code": abs(proc.returncode),
         }
 
+    @pytest.mark.xdist_group(name="serial")
     def test_fork_thread(self):
+        p = psutil.Process()
+        nthreads = len(p.threads())
         with ThreadTask():
-            threads = psutil.Process().threads()
-            assert len(threads) == 2
-            tid = threads[1].id
+            threads = p.threads()
+            assert len(threads) == nthreads + 1
+            tid = threads[nthreads].id
             event = self.read_until_pid(tid)
             assert event == {
                 "event": psutil.PROC_EVENT_FORK,
