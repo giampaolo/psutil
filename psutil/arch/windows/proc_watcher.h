@@ -6,4 +6,4 @@
 
 #include <Python.h>
 
-PyObject *psutil_proc_watcher(PyObject *self, PyObject *args);
+PyType_Spec ProcessWatcher_spec;

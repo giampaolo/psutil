@@ -9,7 +9,7 @@
 #include <objbase.h>
 #include <stdio.h>
 
-
+/*
 #pragma comment(lib, "wbemuuid.lib")
 
 
@@ -124,3 +124,60 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 
 }
+*/
+
+
+typedef struct {
+    PyObject_HEAD
+    int running;
+} ProcessWatcherObject;
+
+
+static int
+ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
+    self->running = 1;  // Initialize the attribute
+    return 0;
+}
+
+
+static PyObject *
+ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
+    printf("loop\n");
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
+    self->running = 0;
+    printf("ProcessWatcher has stopped.\n");
+    Py_RETURN_NONE;
+}
+
+static PyObject *
+ProcessWatcher_iter(PyObject *self) {
+    Py_INCREF(self);
+    return self;
+}
+
+// Define class methods.
+static PyMethodDef ProcessWatcher_methods[] = {
+    {"loop", (PyCFunction)ProcessWatcher_loop, METH_NOARGS, "Run the event loop"},
+    {"close", (PyCFunction)ProcessWatcher_close, METH_NOARGS, "Stop the event loop"},
+    {"__iter__", (PyCFunction)ProcessWatcher_iter, METH_NOARGS, ""},
+    {NULL}  // Sentinel
+};
+
+static PyType_Slot ProcessWatcher_slots[] = {
+    {Py_tp_init, (void *)ProcessWatcher_init},
+    {Py_tp_methods, ProcessWatcher_methods},
+    {Py_tp_iter, (void *)ProcessWatcher_iter},
+    {0, NULL}  // Sentinel
+};
+
+PyType_Spec ProcessWatcher_spec = {
+    "ProcessWatcher",
+    sizeof(ProcessWatcherObject),
+    0,
+    Py_TPFLAGS_DEFAULT,
+    ProcessWatcher_slots
+};

@@ -645,8 +645,7 @@ pid_exists = cext.pid_exists
 ppid_map = cext.ppid_map  # used internally by Process.children()
 
 
-def process_watcher(callback):
-    return cext.proc_watcher(callback)
+ProcessWatcher = cext.ProcessWatcher
 
 
 def is_permission_err(exc):

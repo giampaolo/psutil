@@ -97,7 +97,6 @@ PsutilMethods[] = {
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"users", psutil_users, METH_VARARGS},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
-    {"proc_watcher", psutil_proc_watcher, METH_VARARGS},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS},
@@ -182,6 +181,13 @@ PyInit__psutil_windows(void) {
         "_psutil_windows.TimeoutAbandoned", NULL, NULL);
     Py_INCREF(TimeoutAbandoned);
     PyModule_AddObject(module, "TimeoutAbandoned", TimeoutAbandoned);
+
+    // ProcessWatcher class
+    PyObject *ProcessWatcher = PyType_FromSpec(&ProcessWatcher_spec);
+    if (!ProcessWatcher)
+        return NULL;
+    Py_INCREF(ProcessWatcher);
+    PyModule_AddObject(module, "ProcessWatcher", ProcessWatcher);
 
     // version constant
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
