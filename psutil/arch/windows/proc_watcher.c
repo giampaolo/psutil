@@ -132,7 +132,6 @@ static int
 ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
     self->running = 1;  // Initialize the attribute
     HRESULT hres;
-    IWbemServices *pSvc = NULL;
     IEnumWbemClassObject* pEnumerator = NULL;
 
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
@@ -164,7 +163,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
 
     // Connect to WMI namespace
     hres = self->pLoc->lpVtbl->ConnectServer(
-        self->pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &pSvc
+        self->pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &self->pSvc
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ConnectServer failed");
@@ -175,20 +174,20 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
 
     // Set security levels on WMI connection
     hres = CoSetProxyBlanket(
-        (IUnknown*)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        (IUnknown*)self->pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
         RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoSetProxyBlanket failed");
-        pSvc->lpVtbl->Release(pSvc);
+        self->pSvc->lpVtbl->Release(self->pSvc);
         self->pLoc->lpVtbl->Release(self->pLoc);
         CoUninitialize();
         return -1;
     }
 
     // Create query to listen for process creation events
-    hres = pSvc->lpVtbl->ExecNotificationQuery(
-        pSvc,
+    hres = self->pSvc->lpVtbl->ExecNotificationQuery(
+        self->pSvc,
         L"WQL",
         L"SELECT * FROM __InstanceCreationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'",
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
@@ -197,7 +196,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ExecNotificationQuery failed");
-        pSvc->lpVtbl->Release(pSvc);
+        self->pSvc->lpVtbl->Release(self->pSvc);
         self->pLoc->lpVtbl->Release(self->pLoc);
         CoUninitialize();
         return -1;
@@ -215,6 +214,8 @@ ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 static PyObject *
 ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     self->running = 0;
+    if (self->pSvc != NULL)
+        self->pSvc->lpVtbl->Release(self->pSvc);
     if (self->pLoc != NULL)
         self->pLoc->lpVtbl->Release(self->pLoc);
     Py_RETURN_NONE;
