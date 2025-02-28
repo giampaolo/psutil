@@ -132,7 +132,6 @@ static int
 ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
     self->running = 1;  // Initialize the attribute
     HRESULT hres;
-    IEnumWbemClassObject* pEnumerator = NULL;
 
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
@@ -192,7 +191,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         L"SELECT * FROM __InstanceCreationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'",
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
         NULL,
-        &pEnumerator
+        &self->pEnumerator
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ExecNotificationQuery failed");
