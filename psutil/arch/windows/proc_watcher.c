@@ -20,7 +20,6 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     // Initialize COM
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
-        printf("Failed to initialize COM. Error code: 0x%X\n", hres);
         return NULL;
     }
 
@@ -28,7 +27,6 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     hres = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
                                 RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
     if (FAILED(hres)) {
-        printf("Failed to initialize security. Error code: 0x%X\n", hres);
         CoUninitialize();
         return NULL;
     }
@@ -37,7 +35,6 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     IWbemLocator *pLoc = NULL;
     hres = CoCreateInstance(&CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (LPVOID *) &pLoc);
     if (FAILED(hres)) {
-        printf("Failed to create IWbemLocator. Error code: 0x%X\n", hres);
         CoUninitialize();
         return NULL;
     }
@@ -46,7 +43,6 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     IWbemServices *pSvc = NULL;
     hres = pLoc->lpVtbl->ConnectServer(pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &pSvc);
     if (FAILED(hres)) {
-        printf("Failed to connect to WMI. Error code: 0x%X\n", hres);
         pLoc->lpVtbl->Release(pLoc);
         CoUninitialize();
         return NULL;
@@ -56,7 +52,6 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     hres = CoSetProxyBlanket((IUnknown*)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
                              RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
     if (FAILED(hres)) {
-        printf("Failed to set security levels. Error code: 0x%X\n", hres);
         pSvc->lpVtbl->Release(pSvc);
         pLoc->lpVtbl->Release(pLoc);
         CoUninitialize();
@@ -70,14 +65,12 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
                 WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, NULL, &pEnumerator);
 
     if (FAILED(hres)) {
-        printf("Query for process creation failed. Error code: 0x%X\n", hres);
         pSvc->lpVtbl->Release(pSvc);
         pLoc->lpVtbl->Release(pLoc);
         CoUninitialize();
         return NULL;
     }
 
-    printf("Listening for process creation events...\n");
 
     // Event loop
     while (pEnumerator) {
@@ -104,7 +97,6 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
                 pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
                 pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
 
-                wprintf(L"New Process Created: %s (PID: %lu)\n", varName.bstrVal, varProcessId.uintVal);
 
                 VariantClear(&varProcessId);
                 VariantClear(&varName);
@@ -130,6 +122,9 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
 typedef struct {
     PyObject_HEAD
     int running;
+    IWbemLocator *pLoc;
+    IWbemServices *pSvc;
+    IEnumWbemClassObject *pEnumerator;
 } ProcessWatcherObject;
 
 
@@ -137,7 +132,8 @@ static int
 ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
     self->running = 1;  // Initialize the attribute
     HRESULT hres;
-    IWbemLocator *pLoc = NULL;
+    IWbemServices *pSvc = NULL;
+    IEnumWbemClassObject* pEnumerator = NULL;
 
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
@@ -158,7 +154,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     // Create WMI locator
     hres = CoCreateInstance(
         &CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, &IID_IWbemLocator,
-        (LPVOID *) &pLoc
+        (LPVOID *) &self->pLoc
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoCreateInstance failed");
@@ -167,30 +163,30 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     }
 
     // Connect to WMI namespace
-    IWbemServices *pSvc = NULL;
-    hres = pLoc->lpVtbl->ConnectServer(
-        pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &pSvc
+    hres = self->pLoc->lpVtbl->ConnectServer(
+        self->pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &pSvc
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ConnectServer failed");
-        pLoc->lpVtbl->Release(pLoc);
+        self->pLoc->lpVtbl->Release(self->pLoc);
         CoUninitialize();
         return -1;
     }
 
     // Set security levels on WMI connection
-    hres = CoSetProxyBlanket((IUnknown*)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+    hres = CoSetProxyBlanket(
+        (IUnknown*)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE
+    );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoSetProxyBlanket failed");
         pSvc->lpVtbl->Release(pSvc);
-        pLoc->lpVtbl->Release(pLoc);
+        self->pLoc->lpVtbl->Release(self->pLoc);
         CoUninitialize();
         return -1;
     }
 
     // Create query to listen for process creation events
-    IEnumWbemClassObject* pEnumerator = NULL;
     hres = pSvc->lpVtbl->ExecNotificationQuery(
         pSvc,
         L"WQL",
@@ -202,7 +198,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ExecNotificationQuery failed");
         pSvc->lpVtbl->Release(pSvc);
-        pLoc->lpVtbl->Release(pLoc);
+        self->pLoc->lpVtbl->Release(self->pLoc);
         CoUninitialize();
         return -1;
     }
@@ -213,14 +209,14 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
 
 static PyObject *
 ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
-    printf("loop\n");
     Py_RETURN_NONE;
 }
 
 static PyObject *
 ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     self->running = 0;
-    printf("ProcessWatcher has stopped.\n");
+    if (self->pLoc != NULL)
+        self->pLoc->lpVtbl->Release(self->pLoc);
     Py_RETURN_NONE;
 }
 
