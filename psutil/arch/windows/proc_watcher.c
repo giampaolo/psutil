@@ -9,10 +9,10 @@
 #include <objbase.h>
 #include <stdio.h>
 
-/*
 #pragma comment(lib, "wbemuuid.lib")
 
 
+/*
 PyObject *
 psutil_proc_watcher(PyObject *self, PyObject *args) {
     HRESULT hres;
@@ -122,11 +122,11 @@ psutil_proc_watcher(PyObject *self, PyObject *args) {
     pLoc->lpVtbl->Release(pLoc);
     CoUninitialize();
     Py_RETURN_NONE;
-
 }
 */
 
 
+// class attributes
 typedef struct {
     PyObject_HEAD
     int running;
@@ -136,6 +136,77 @@ typedef struct {
 static int
 ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
     self->running = 1;  // Initialize the attribute
+    HRESULT hres;
+    IWbemLocator *pLoc = NULL;
+
+    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) {
+        PyErr_SetString(PyExc_RuntimeError, "CoInitializeEx failed");
+        return -1;
+    }
+
+    hres = CoInitializeSecurity(
+        NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL
+    );
+    if (FAILED(hres)) {
+        PyErr_SetString(PyExc_RuntimeError, "CoInitializeSecurity failed");
+        CoUninitialize();
+        return -1;
+    }
+
+    // Create WMI locator
+    hres = CoCreateInstance(
+        &CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, &IID_IWbemLocator,
+        (LPVOID *) &pLoc
+    );
+    if (FAILED(hres)) {
+        PyErr_SetString(PyExc_RuntimeError, "CoCreateInstance failed");
+        CoUninitialize();
+        return -1;
+    }
+
+    // Connect to WMI namespace
+    IWbemServices *pSvc = NULL;
+    hres = pLoc->lpVtbl->ConnectServer(
+        pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &pSvc
+    );
+    if (FAILED(hres)) {
+        PyErr_SetString(PyExc_RuntimeError, "ConnectServer failed");
+        pLoc->lpVtbl->Release(pLoc);
+        CoUninitialize();
+        return -1;
+    }
+
+    // Set security levels on WMI connection
+    hres = CoSetProxyBlanket((IUnknown*)pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+                             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+    if (FAILED(hres)) {
+        PyErr_SetString(PyExc_RuntimeError, "CoSetProxyBlanket failed");
+        pSvc->lpVtbl->Release(pSvc);
+        pLoc->lpVtbl->Release(pLoc);
+        CoUninitialize();
+        return -1;
+    }
+
+    // Create query to listen for process creation events
+    IEnumWbemClassObject* pEnumerator = NULL;
+    hres = pSvc->lpVtbl->ExecNotificationQuery(
+        pSvc,
+        L"WQL",
+        L"SELECT * FROM __InstanceCreationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'",
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+        NULL,
+        &pEnumerator
+    );
+    if (FAILED(hres)) {
+        PyErr_SetString(PyExc_RuntimeError, "ExecNotificationQuery failed");
+        pSvc->lpVtbl->Release(pSvc);
+        pLoc->lpVtbl->Release(pLoc);
+        CoUninitialize();
+        return -1;
+    }
+
     return 0;
 }
 
