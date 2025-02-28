@@ -210,6 +210,7 @@ ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     Py_RETURN_NONE;
 }
 
+
 static PyObject *
 ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     self->running = 0;
@@ -217,14 +218,20 @@ ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
         self->pSvc->lpVtbl->Release(self->pSvc);
     if (self->pLoc != NULL)
         self->pLoc->lpVtbl->Release(self->pLoc);
+    CoUninitialize();
     Py_RETURN_NONE;
 }
+
 
 static PyObject *
 ProcessWatcher_iter(PyObject *self) {
     Py_INCREF(self);
     return self;
 }
+
+
+// ====================================================================
+
 
 // Define class methods.
 static PyMethodDef ProcessWatcher_methods[] = {
