@@ -102,20 +102,23 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
 static PyObject *
 ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     HRESULT hres;
+    ULONG ret;
     IWbemClassObject *pObj = NULL;
+    IWbemClassObject* pProcess = NULL;
     VARIANT var;
+    VARIANT varProcessId;
+    VARIANT varName;
+    IUnknown* pUnknown = V_UNKNOWN(&var);
 
     // Event loop
     while (self->pEnumerator) {
-        ULONG ret = 0;
-
-        if (PyErr_CheckSignals() != 0) {
-            return NULL;
-        }
-
+        ret = 0;
         hres = self->pEnumerator->lpVtbl->Next(
             self->pEnumerator, 1000, 1, &pObj, &ret
         );
+        if (PyErr_CheckSignals() != 0) {
+            return NULL;
+        }
         if (ret == 0)
             break;
 
@@ -123,12 +126,13 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
         hres = pObj->lpVtbl->Get(pObj, L"TargetInstance", 0, &var, 0, 0);
 
         if (SUCCEEDED(hres) && var.vt == VT_UNKNOWN) {
-            IWbemClassObject* pProcess = NULL;
-            IUnknown* pUnknown = V_UNKNOWN(&var);
-            hres = pUnknown->lpVtbl->QueryInterface(pUnknown, &IID_IWbemClassObject, (void**)&pProcess);
+            pProcess = NULL;
+            pUnknown = V_UNKNOWN(&var);
+            hres = pUnknown->lpVtbl->QueryInterface(
+                pUnknown, &IID_IWbemClassObject, (void**)&pProcess
+            );
 
             if (SUCCEEDED(hres) && pProcess) {
-                VARIANT varProcessId, varName;
                 VariantInit(&varProcessId);
                 VariantInit(&varName);
 
