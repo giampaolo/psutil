@@ -113,12 +113,15 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     // Event loop
     while (self->pEnumerator) {
         ret = 0;
+
+        Py_BEGIN_ALLOW_THREADS
         hres = self->pEnumerator->lpVtbl->Next(
             self->pEnumerator, 1000, 1, &pObj, &ret
         );
-        if (PyErr_CheckSignals() != 0) {
+        Py_END_ALLOW_THREADS
+
+        if (PyErr_CheckSignals() != 0)
             return NULL;
-        }
         if (ret == 0)
             break;
 
