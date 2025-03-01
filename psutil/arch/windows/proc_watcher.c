@@ -15,22 +15,43 @@
 // class attributes
 typedef struct {
     PyObject_HEAD
-    int running;
+    int closed;
     IWbemLocator *pLoc;
     IWbemServices *pSvc;
     IEnumWbemClassObject *pEnumerator;
 } ProcessWatcherObject;
 
 
+static void
+ProcessWatcher_cleanup(ProcessWatcherObject *self) {
+    if (self->closed == 1)
+        return;
+    self->closed = 1;
+    if (self->pEnumerator)
+        self->pEnumerator->lpVtbl->Release(self->pEnumerator);
+    if (self->pSvc)
+        self->pSvc->lpVtbl->Release(self->pSvc);
+    if (self->pLoc)
+        self->pLoc->lpVtbl->Release(self->pLoc);
+    CoUninitialize();
+}
+
+
 static int
 ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
-    self->running = 1;  // Initialize the attribute
     HRESULT hres;
+
+   if (self->closed == 1) {
+        PyErr_SetString(
+            PyExc_ValueError, "can't reuse an already closed ProcessWatcher"
+        );
+        goto error;
+    }
 
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoInitializeEx failed");
-        return -1;
+        goto error;
     }
 
     hres = CoInitializeSecurity(
@@ -39,46 +60,35 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoInitializeSecurity failed");
-        CoUninitialize();
-        return -1;
+        goto error;
     }
 
-    // Create WMI locator
     hres = CoCreateInstance(
         &CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, &IID_IWbemLocator,
         (LPVOID *) &self->pLoc
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoCreateInstance failed");
-        CoUninitialize();
-        return -1;
+        goto error;
     }
 
-    // Connect to WMI namespace
     hres = self->pLoc->lpVtbl->ConnectServer(
         self->pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &self->pSvc
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ConnectServer failed");
-        self->pLoc->lpVtbl->Release(self->pLoc);
-        CoUninitialize();
-        return -1;
+        goto error;
     }
 
-    // Set security levels on WMI connection
     hres = CoSetProxyBlanket(
         (IUnknown*)self->pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
         RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoSetProxyBlanket failed");
-        self->pSvc->lpVtbl->Release(self->pSvc);
-        self->pLoc->lpVtbl->Release(self->pLoc);
-        CoUninitialize();
-        return -1;
+        goto error;
     }
 
-    // Create query to listen for process creation events
     hres = self->pSvc->lpVtbl->ExecNotificationQuery(
         self->pSvc,
         L"WQL",
@@ -89,13 +99,14 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ExecNotificationQuery failed");
-        self->pSvc->lpVtbl->Release(self->pSvc);
-        self->pLoc->lpVtbl->Release(self->pLoc);
-        CoUninitialize();
-        return -1;
+        goto error;
     }
 
     return 0;
+
+error:
+    ProcessWatcher_cleanup(self);
+    return -1;
 }
 
 
@@ -160,12 +171,7 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 
 static PyObject *
 ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
-    self->running = 0;
-    if (self->pSvc != NULL)
-        self->pSvc->lpVtbl->Release(self->pSvc);
-    if (self->pLoc != NULL)
-        self->pLoc->lpVtbl->Release(self->pLoc);
-    CoUninitialize();
+    ProcessWatcher_cleanup(self);
     Py_RETURN_NONE;
 }
 
