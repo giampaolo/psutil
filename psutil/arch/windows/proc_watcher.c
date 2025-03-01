@@ -100,7 +100,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
 
 
 static PyObject *
-ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
+ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     HRESULT hres;
     IWbemClassObject *pObj = NULL;
     VARIANT var;
@@ -109,8 +109,12 @@ ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     while (self->pEnumerator) {
         ULONG ret = 0;
 
+        if (PyErr_CheckSignals() != 0) {
+            return NULL;
+        }
+
         hres = self->pEnumerator->lpVtbl->Next(
-            self->pEnumerator, WBEM_INFINITE, 1, &pObj, &ret
+            self->pEnumerator, 1000, 1, &pObj, &ret
         );
         if (ret == 0)
             break;
@@ -131,7 +135,7 @@ ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
                 pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
                 pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
 
-                // printf("new process\n");
+                // printf("new process %ld, %S\n", varProcessId.lVal, varName.bstrVal);
 
                 VariantClear(&varProcessId);
                 VariantClear(&varName);
@@ -142,7 +146,6 @@ ProcessWatcher_loop(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
         VariantClear(&var);  // Clear the variant to free memory
         pObj->lpVtbl->Release(pObj);
     }
-
 
     Py_RETURN_NONE;
 }
@@ -172,8 +175,8 @@ ProcessWatcher_iter(PyObject *self) {
 
 // Define class methods.
 static PyMethodDef ProcessWatcher_methods[] = {
-    {"loop", (PyCFunction)ProcessWatcher_loop, METH_NOARGS, "Run the event loop"},
-    {"close", (PyCFunction)ProcessWatcher_close, METH_NOARGS, "Stop the event loop"},
+    {"read", (PyCFunction)ProcessWatcher_read, METH_NOARGS, ""},
+    {"close", (PyCFunction)ProcessWatcher_close, METH_NOARGS, ""},
     {"__iter__", (PyCFunction)ProcessWatcher_iter, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
