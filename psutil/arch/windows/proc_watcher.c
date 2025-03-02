@@ -45,13 +45,13 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         PyErr_SetString(
             PyExc_ValueError, "can't reuse an already closed ProcessWatcher"
         );
-        goto error;
+        return -1;
     }
 
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "CoInitializeEx failed");
-        goto error;
+        return -1;
     }
 
     hres = CoInitializeSecurity(
