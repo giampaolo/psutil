@@ -92,7 +92,7 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     hres = self->pSvc->lpVtbl->ExecNotificationQuery(
         self->pSvc,
         L"WQL",
-        L"SELECT * FROM __InstanceCreationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'",
+        L"SELECT * FROM __InstanceOperationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'",
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
         NULL,
         &self->pEnumerator
@@ -119,6 +119,7 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     VARIANT var;
     VARIANT varProcessId;
     VARIANT varName;
+    VARIANT varClass;
     IUnknown* pUnknown = V_UNKNOWN(&var);
 
     // Event loop
@@ -152,11 +153,25 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 
                 pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
                 pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
+                pObj->lpVtbl->Get(pObj, L"__Class", 0, &varClass, 0, 0);
 
-                // printf("new process %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+                if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
+                    printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+                }
+                else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
+                    printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+                }
+                else {
+                    psutil_debug("unknown event (skipping)");
+                    VariantClear(&varProcessId);
+                    VariantClear(&varName);
+                    continue;
+                }
 
                 VariantClear(&varProcessId);
                 VariantClear(&varName);
+                VariantClear(&varClass);
+                VariantClear(&varClass);
                 pProcess->lpVtbl->Release(pProcess);
             }
         }

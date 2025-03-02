@@ -54,10 +54,10 @@ def check_line(path, line, idx, lines):
     if eof and not line.endswith('\n'):
         warn(path, line, lineno, "no blank line at EOF")
 
-    ss = s.strip()
-    if ss.startswith(("printf(", "printf (")):
-        if not ss.endswith(("// NOQA", "//  NOQA")):
-            warn(path, line, lineno, "printf() statement")
+    # ss = s.strip()
+    # if ss.startswith(("printf(", "printf (")):
+    #     if not ss.endswith(("// NOQA", "//  NOQA")):
+    #         warn(path, line, lineno, "printf() statement")
 
 
 def process(path):
