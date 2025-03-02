@@ -9,6 +9,8 @@
 #include <objbase.h>
 #include <stdio.h>
 
+#include "../../_psutil_common.h"
+
 #pragma comment(lib, "wbemuuid.lib")
 
 
@@ -92,7 +94,9 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     hres = self->pSvc->lpVtbl->ExecNotificationQuery(
         self->pSvc,
         L"WQL",
-        L"SELECT * FROM __InstanceOperationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'",
+        L"SELECT * FROM __InstanceOperationEvent WITHIN 1 "
+        L"WHERE TargetInstance ISA 'Win32_Process' "
+        L"AND (__Class = '__InstanceCreationEvent' OR __Class = '__InstanceDeletionEvent')",
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
         NULL,
         &self->pEnumerator
