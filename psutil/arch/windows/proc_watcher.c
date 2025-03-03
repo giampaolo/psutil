@@ -161,9 +161,7 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     }
     else {
         psutil_debug("unknown event (skipping)");
-        VariantClear(&varProcessId);
-        VariantClear(&varName);
-        return NULL;
+        goto error;
     }
 
     // event
@@ -185,14 +183,18 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     VariantClear(&varProcessId);
     VariantClear(&varName);
     VariantClear(&varClass);
-    VariantClear(&varClass);
     pProcess->lpVtbl->Release(pProcess);
 
     return py_dict;
 
 error:
+    VariantClear(&varProcessId);
+    VariantClear(&varName);
+    VariantClear(&varClass);
+    pProcess->lpVtbl->Release(pProcess);
     Py_XDECREF(py_item);
     Py_XDECREF(py_dict);
+
     return NULL;
 }
 
