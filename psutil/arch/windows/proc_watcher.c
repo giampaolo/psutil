@@ -140,6 +140,13 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     VARIANT varName;
     VARIANT varClass;
     int event;
+    long pid;
+    PyObject *py_dict = NULL;
+    PyObject *py_item = NULL;
+
+    py_dict = PyDict_New();
+    if (py_dict == NULL)
+        return NULL;
 
     // Event loop
     while (self->pEnumerator) {
@@ -175,12 +182,14 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
                 pObj->lpVtbl->Get(pObj, L"__Class", 0, &varClass, 0, 0);
 
                 if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
-                    printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
                     event = PROC_EVENT_FORK;
+                    pid = varProcessId.lVal;
+                    printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
                 }
                 else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
-                    printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
                     event = PROC_EVENT_EXIT;
+                    pid = varProcessId.lVal;
+                    printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
                 }
                 else {
                     psutil_debug("unknown event (skipping)");
@@ -188,6 +197,22 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
                     VariantClear(&varName);
                     continue;
                 }
+
+                // event
+                py_item = Py_BuildValue("i", event);
+                if (!py_item)
+                    goto error;
+                if (PyDict_SetItemString(py_dict, "event", py_item))
+                    goto error;
+                Py_CLEAR(py_item);
+
+                // pid
+                py_item = Py_BuildValue("l", pid);
+                if (!py_item)
+                    goto error;
+                if (PyDict_SetItemString(py_dict, "pid", py_item))
+                    goto error;
+                Py_CLEAR(py_item);
 
                 VariantClear(&varProcessId);
                 VariantClear(&varName);
@@ -201,7 +226,12 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
         pObj->lpVtbl->Release(pObj);
     }
 
-    Py_RETURN_NONE;
+    return py_dict;
+
+error:
+    Py_XDECREF(py_item);
+    Py_XDECREF(py_dict);
+    return NULL;
 }
 
 
