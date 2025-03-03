@@ -643,7 +643,6 @@ class WindowsService:  # noqa: PLW1641
 class ProcessWatcher(cext.ProcessWatcher):
 
     def __enter__(self):
-        self._assert_not_closed()
         return self
 
     def __exit__(self, etype, evalue, traceback):

@@ -76,7 +76,7 @@ static PyObject *
 handle_message(struct cn_msg *cn_message) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
-    __kernel_pid_t parent_pid = -1;
+    __kernel_pid_t ppid = -1;
     int euid = -1;
     int egid = -1;
     int exit_code = -1;
@@ -94,11 +94,11 @@ handle_message(struct cn_msg *cn_message) {
                 // This distinction also exists in forkstat, and it's
                 // confirmed by unit tests.
                 // https://github.com/ColinIanKing/forkstat/blob/6d3bea2af4d7fa923b4647feb40244f154f9f5ad/forkstat.c#L700-L733
-                parent_pid = ev->event_data.fork.child_tgid;
+                ppid = ev->event_data.fork.child_tgid;
             }
             else {
                 py_is_thread = Py_False;
-                parent_pid = ev->event_data.fork.parent_pid;
+                ppid = ev->event_data.fork.parent_pid;
             }
             Py_INCREF(py_is_thread);
             break;
@@ -134,7 +134,7 @@ handle_message(struct cn_msg *cn_message) {
             break;
         case PROC_EVENT_COREDUMP:  // process generated a coredump
             pid = ev->event_data.fork.child_pid;
-            parent_pid = ev->event_data.fork.parent_pid;
+            ppid = ev->event_data.fork.parent_pid;
             break;
         default:
             psutil_debug("ignore event %d", ev->what);
@@ -162,11 +162,11 @@ handle_message(struct cn_msg *cn_message) {
     Py_CLEAR(py_item);
 
     // parent pid
-    if (parent_pid != -1) {
-        py_item = Py_BuildValue(_Py_PARSE_PID, parent_pid);
+    if (ppid != -1) {
+        py_item = Py_BuildValue(_Py_PARSE_PID, ppid);
         if (!py_item)
             goto error;
-        if (PyDict_SetItemString(py_dict, "parent_pid", py_item))
+        if (PyDict_SetItemString(py_dict, "ppid", py_item))
             goto error;
         Py_CLEAR(py_item);
     }

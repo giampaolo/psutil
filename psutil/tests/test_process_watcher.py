@@ -43,7 +43,7 @@ class TestProcessWatcher(PsutilTestCase):
         assert event == {
             "pid": proc.pid,
             "event": psutil.PROC_EVENT_FORK,
-            "parent_pid": os.getpid(),
+            "ppid": os.getpid(),
             "is_thread": False,
         }
 
@@ -71,7 +71,7 @@ class TestProcessWatcher(PsutilTestCase):
             assert event == {
                 "event": psutil.PROC_EVENT_FORK,
                 "pid": tid,
-                "parent_pid": os.getpid(),
+                "ppid": os.getpid(),
                 "is_thread": True,
             }
 
