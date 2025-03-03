@@ -133,8 +133,10 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     VARIANT varProcessId;
     VARIANT varName;
     VARIANT varClass;
+    VARIANT varParentProcessId;
     int event;
     long pid;
+    long ppid;
     PyObject *py_dict = NULL;
     PyObject *py_item = NULL;
 
@@ -145,17 +147,21 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     VariantInit(&varProcessId);
     VariantInit(&varName);
 
+    // https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process
     pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
     pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
+    pProcess->lpVtbl->Get(pProcess, L"ParentProcessId", 0, &varParentProcessId, 0, 0);
     pObj->lpVtbl->Get(pObj, L"__Class", 0, &varClass, 0, 0);
 
     if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
         event = PROC_EVENT_FORK;
         pid = varProcessId.lVal;
+        ppid = varParentProcessId.lVal;
     }
     else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
         event = PROC_EVENT_EXIT;
         pid = varProcessId.lVal;
+        ppid = varParentProcessId.lVal;
     }
     else {
         psutil_debug("unknown event (skipping)");
@@ -175,6 +181,14 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     if (!py_item)
         goto error;
     if (PyDict_SetItemString(py_dict, "pid", py_item))
+        goto error;
+    Py_CLEAR(py_item);
+
+    // ppid
+    py_item = Py_BuildValue("l", ppid);
+    if (!py_item)
+        goto error;
+    if (PyDict_SetItemString(py_dict, "ppid", py_item))
         goto error;
     Py_CLEAR(py_item);
 
