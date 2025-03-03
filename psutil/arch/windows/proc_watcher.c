@@ -75,7 +75,15 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
     }
 
     hres = self->pLoc->lpVtbl->ConnectServer(
-        self->pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, NULL, 0, 0, &self->pSvc
+        self->pLoc,  // net resource
+        L"ROOT\\CIMV2",
+        NULL,  // user
+        NULL,  // password
+        NULL,  // locale
+        0,     // security flags
+        NULL,  // authority
+        NULL,  // context
+        &self->pSvc  // namespace
     );
     if (FAILED(hres)) {
         PyErr_SetString(PyExc_RuntimeError, "ConnectServer failed");
@@ -120,11 +128,11 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     ULONG ret;
     IWbemClassObject *pObj = NULL;
     IWbemClassObject* pProcess = NULL;
+    IUnknown* pUnknown;
     VARIANT var;
     VARIANT varProcessId;
     VARIANT varName;
     VARIANT varClass;
-    IUnknown* pUnknown = V_UNKNOWN(&var);
 
     // Event loop
     while (self->pEnumerator) {
