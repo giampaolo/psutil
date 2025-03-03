@@ -317,6 +317,6 @@ PyType_Spec ProcessWatcher_spec = {
     "ProcessWatcher",
     sizeof(ProcessWatcherObject),
     0,
-    Py_TPFLAGS_DEFAULT,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
     ProcessWatcher_slots
 };

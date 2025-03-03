@@ -636,6 +636,27 @@ class WindowsService:  # noqa: PLW1641
 
 
 # =====================================================================
+# --- process watcher
+# =====================================================================
+
+
+class ProcessWatcher(cext.ProcessWatcher):
+
+    def __enter__(self):
+        self._assert_not_closed()
+        return self
+
+    def __exit__(self, etype, evalue, traceback):
+        self.close()
+
+    def __iter__(self):
+        while True:
+            event = self.read()
+            if event:
+                yield event
+
+
+# =====================================================================
 # --- processes
 # =====================================================================
 
@@ -643,9 +664,6 @@ class WindowsService:  # noqa: PLW1641
 pids = cext.pids
 pid_exists = cext.pid_exists
 ppid_map = cext.ppid_map  # used internally by Process.children()
-
-
-ProcessWatcher = cext.ProcessWatcher
 
 
 def is_permission_err(exc):
