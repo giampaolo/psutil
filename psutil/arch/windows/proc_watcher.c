@@ -129,13 +129,7 @@ error:
 
 
 static PyObject *
-ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
-    HRESULT hres;
-    ULONG ret;
-    IWbemClassObject *pObj = NULL;
-    IWbemClassObject* pProcess = NULL;
-    IUnknown* pUnknown;
-    VARIANT var;
+handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     VARIANT varProcessId;
     VARIANT varName;
     VARIANT varClass;
@@ -147,6 +141,72 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     py_dict = PyDict_New();
     if (py_dict == NULL)
         return NULL;
+
+    VariantInit(&varProcessId);
+    VariantInit(&varName);
+
+    pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
+    pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
+    pObj->lpVtbl->Get(pObj, L"__Class", 0, &varClass, 0, 0);
+
+    if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
+        event = PROC_EVENT_FORK;
+        pid = varProcessId.lVal;
+        printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+    }
+    else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
+        event = PROC_EVENT_EXIT;
+        pid = varProcessId.lVal;
+        printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+    }
+    else {
+        psutil_debug("unknown event (skipping)");
+        VariantClear(&varProcessId);
+        VariantClear(&varName);
+        return NULL;
+    }
+
+    // event
+    py_item = Py_BuildValue("i", event);
+    if (!py_item)
+        goto error;
+    if (PyDict_SetItemString(py_dict, "event", py_item))
+        goto error;
+    Py_CLEAR(py_item);
+
+    // pid
+    py_item = Py_BuildValue("l", pid);
+    if (!py_item)
+        goto error;
+    if (PyDict_SetItemString(py_dict, "pid", py_item))
+        goto error;
+    Py_CLEAR(py_item);
+
+    VariantClear(&varProcessId);
+    VariantClear(&varName);
+    VariantClear(&varClass);
+    VariantClear(&varClass);
+    pProcess->lpVtbl->Release(pProcess);
+
+    return py_dict;
+
+error:
+    Py_XDECREF(py_item);
+    Py_XDECREF(py_dict);
+    return NULL;
+}
+
+
+static PyObject *
+ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
+    HRESULT hres;
+    ULONG ret;
+    IWbemClassObject *pObj = NULL;
+    IWbemClassObject *pProcess = NULL;
+    IUnknown* pUnknown;
+    VARIANT var;
+    PyObject *py_dict = NULL;
+    PyObject *py_list = PyList_New(0);
 
     // Event loop
     while (self->pEnumerator) {
@@ -174,63 +234,37 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
             );
 
             if (SUCCEEDED(hres) && pProcess) {
-                VariantInit(&varProcessId);
-                VariantInit(&varName);
+                // handle message
+                py_dict = handle_message(pProcess, pObj);
+                if (py_dict == NULL) {
+                    VariantClear(&var);
+                    pObj->lpVtbl->Release(pObj);
 
-                pProcess->lpVtbl->Get(pProcess, L"ProcessId", 0, &varProcessId, 0, 0);
-                pProcess->lpVtbl->Get(pProcess, L"Name", 0, &varName, 0, 0);
-                pObj->lpVtbl->Get(pObj, L"__Class", 0, &varClass, 0, 0);
-
-                if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
-                    event = PROC_EVENT_FORK;
-                    pid = varProcessId.lVal;
-                    printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
-                }
-                else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
-                    event = PROC_EVENT_EXIT;
-                    pid = varProcessId.lVal;
-                    printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+                    if (PyErr_Occurred())
+                        goto error;
                 }
                 else {
-                    psutil_debug("unknown event (skipping)");
-                    VariantClear(&varProcessId);
-                    VariantClear(&varName);
-                    continue;
+                    if (PyList_Append(py_list, py_dict)) {
+                        VariantClear(&var);
+                        pObj->lpVtbl->Release(pObj);
+
+                        Py_DECREF(py_dict);
+                        goto error;
+                    }
+                    Py_DECREF(py_dict);
                 }
-
-                // event
-                py_item = Py_BuildValue("i", event);
-                if (!py_item)
-                    goto error;
-                if (PyDict_SetItemString(py_dict, "event", py_item))
-                    goto error;
-                Py_CLEAR(py_item);
-
-                // pid
-                py_item = Py_BuildValue("l", pid);
-                if (!py_item)
-                    goto error;
-                if (PyDict_SetItemString(py_dict, "pid", py_item))
-                    goto error;
-                Py_CLEAR(py_item);
-
-                VariantClear(&varProcessId);
-                VariantClear(&varName);
-                VariantClear(&varClass);
-                VariantClear(&varClass);
-                pProcess->lpVtbl->Release(pProcess);
             }
         }
 
-        VariantClear(&var);  // Clear the variant to free memory
+        VariantClear(&var);
         pObj->lpVtbl->Release(pObj);
     }
 
-    return py_dict;
+    return py_list;
 
 error:
-    Py_XDECREF(py_item);
     Py_XDECREF(py_dict);
+    Py_XDECREF(py_list);
     return NULL;
 }
 
