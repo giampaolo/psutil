@@ -16,8 +16,8 @@
 
 
 // mimic Linux constants
-int PROC_EVENT_FORK = 0x00000001;
-int PROC_EVENT_EXIT = 0x80000000;
+unsigned int PROC_EVENT_FORK = 0x00000001;
+unsigned int PROC_EVENT_EXIT = 0x80000000;
 
 
 // class attributes
@@ -167,7 +167,7 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     }
 
     // event
-    py_item = Py_BuildValue("i", event);
+    py_item = Py_BuildValue("I", event);
     if (!py_item)
         goto error;
     if (PyDict_SetItemString(py_dict, "event", py_item))
