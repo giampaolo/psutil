@@ -6,4 +6,7 @@
 
 #include <Python.h>
 
+extern int PROC_EVENT_FORK;
+extern int PROC_EVENT_EXIT;
+
 PyType_Spec ProcessWatcher_spec;

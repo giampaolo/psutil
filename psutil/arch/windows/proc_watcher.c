@@ -10,8 +10,14 @@
 #include <stdio.h>
 
 #include "../../_psutil_common.h"
+#include "proc_watcher.h"
 
 #pragma comment(lib, "wbemuuid.lib")
+
+
+// mimic Linux constants
+int PROC_EVENT_FORK = 0x00000001;
+int PROC_EVENT_EXIT = 0x80000000;
 
 
 // class attributes
@@ -133,6 +139,7 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     VARIANT varProcessId;
     VARIANT varName;
     VARIANT varClass;
+    int event;
 
     // Event loop
     while (self->pEnumerator) {
@@ -169,9 +176,11 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 
                 if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
                     printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+                    event = PROC_EVENT_FORK;
                 }
                 else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
                     printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
+                    event = PROC_EVENT_EXIT;
                 }
                 else {
                     psutil_debug("unknown event (skipping)");

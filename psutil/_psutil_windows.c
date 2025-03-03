@@ -256,6 +256,10 @@ PyInit__psutil_windows(void) {
         module, "SERVICE_STOPPED", SERVICE_STOPPED);
     */
 
+    // process watcher constants
+    PyModule_AddIntConstant(module, "PROC_EVENT_FORK", PROC_EVENT_FORK);
+    PyModule_AddIntConstant(module, "PROC_EVENT_EXIT", PROC_EVENT_EXIT);
+
     // ...for internal use in _psutil_windows.py
     PyModule_AddIntConstant(
         module, "INFINITE", INFINITE);
