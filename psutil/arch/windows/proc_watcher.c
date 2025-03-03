@@ -152,12 +152,10 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
         event = PROC_EVENT_FORK;
         pid = varProcessId.lVal;
-        printf("process new %ld, %S\n", varProcessId.lVal, varName.bstrVal);
     }
     else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
         event = PROC_EVENT_EXIT;
         pid = varProcessId.lVal;
-        printf("process gone %ld, %S\n", varProcessId.lVal, varName.bstrVal);
     }
     else {
         psutil_debug("unknown event (skipping)");
@@ -239,17 +237,11 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
                 // handle message
                 py_dict = handle_message(pProcess, pObj);
                 if (py_dict == NULL) {
-                    VariantClear(&var);
-                    pObj->lpVtbl->Release(pObj);
-
                     if (PyErr_Occurred())
                         goto error;
                 }
                 else {
                     if (PyList_Append(py_list, py_dict)) {
-                        VariantClear(&var);
-                        pObj->lpVtbl->Release(pObj);
-
                         Py_DECREF(py_dict);
                         goto error;
                     }
@@ -260,11 +252,15 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 
         VariantClear(&var);
         pObj->lpVtbl->Release(pObj);
+        pObj = NULL;
     }
 
     return py_list;
 
 error:
+    VariantClear(&var);
+    if (pObj != NULL)
+        pObj->lpVtbl->Release(pObj);
     Py_XDECREF(py_dict);
     Py_XDECREF(py_list);
     return NULL;
