@@ -320,7 +320,13 @@ def test(args=None):
 def test_by_name(arg):
     """Run specific test by name."""
     build()
-    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS + [arg])
+    print(" ".join([PYTHON, "-m", "pytest"] + PYTEST_ARGS + [arg]))
+
+
+def test_by_regex(arg):
+    """Run specific test by name."""
+    build()
+    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS + ["-k", arg])
 
 
 def test_parallel():
@@ -502,6 +508,9 @@ def parse_args():
     sp.add_parser('test-parallel', help="run tests in parallel")
     test = sp.add_parser('test', help="[ARG] run tests")
     test_by_name = sp.add_parser('test-by-name', help="<ARG> run test by name")
+    test_by_regex = sp.add_parser(
+        'test-by-regex', help="<ARG> run test by regex"
+    )
     sp.add_parser('test-connections', help="run connections tests")
     sp.add_parser('test-contracts', help="run contracts tests")
     sp.add_parser(
@@ -520,7 +529,7 @@ def parse_args():
     sp.add_parser('upload-wheels', help="upload wheel files on PyPI")
     sp.add_parser('wheel', help="create wheel file")
 
-    for p in (test, test_by_name):
+    for p in (test, test_by_name, test_by_regex):
         p.add_argument('arg', type=str, nargs='?', default="", help="arg")
 
     args = parser.parse_args()
@@ -550,6 +559,8 @@ def main():
         sh([PYTHON, args.arg])  # test a script
     elif args.command == 'test-by-name':
         test_by_name(args.arg)
+    elif args.command == 'test-by-regex':
+        test_by_regex(args.arg)
     else:
         fun()
 
