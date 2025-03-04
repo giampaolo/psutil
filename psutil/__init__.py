@@ -1638,7 +1638,85 @@ def wait_procs(procs, timeout=None, callback=None):
 
 if hasattr(_psplatform, "ProcessWatcher"):
 
-    ProcessWatcher = _psplatform.ProcessWatcher
+    class ProcessWatcher(_psplatform.ProcessWatcher):
+        """Waits for process events (creation, termination, etc.).
+
+        >>> with ProcessWatcher() as pw:
+        ...     for event in pw:
+        ...         print(event)
+        """
+
+        def __init__(self):
+            super().__init__()
+            self._queue = collections.deque()  # fifo
+            self._closed = False
+
+        def __enter__(self):
+            self._assert_not_closed()
+            return self
+
+        def __exit__(self, etype, evalue, traceback):
+            self.close()
+
+        def __iter__(self):
+            while True:
+                event = self.read()
+                if event:
+                    yield event
+
+        def _assert_not_closed(self):
+            if self._closed:
+                msg = "can't reuse an already closed ProcessWatcher"
+                raise ValueError(msg)
+
+        @staticmethod
+        def _event_wrapper(ev):
+            ev["event"] = _psplatform.ProcessEvent(ev["event"])
+            return ev
+
+        def _pop_event(self):
+            try:
+                ev = self._queue.popleft()  # thread-safe
+            except IndexError:
+                return None
+            return self._event_wrapper(ev)
+
+        def read(self, timeout=None):
+            """Return one (and only one) process event. If `timeout` is
+            None it blocks until there is an actual event to return. If
+            a `timeout` is specified it waits up until `timeout`
+            seconds, then it returns either a process event or None.
+            """
+            self._assert_not_closed()
+            event = self._pop_event()
+            if event:
+                return event
+
+            started = time.monotonic()
+            while True:
+                # We may receive an empty list (e.g. on Linux in case
+                # of PROC_EVENT_NONE). In this case, if timeout was
+                # specified, we recalculate the timeout.
+                ls = super().read(timeout=timeout)
+                if ls:
+                    self._queue.extend(ls)
+                elif timeout is not None:
+                    elapsed = time.monotonic() - started
+                    timeout -= elapsed
+                    if timeout > 0:
+                        return self.read(timeout)
+
+                event = self._pop_event()
+                if event:
+                    return event
+                if timeout is not None:
+                    return None
+
+        def close(self):
+            """Cleanup resources."""
+            self._queue.clear()
+            super().close()
+            self._closed = True
 
 
 # =====================================================================

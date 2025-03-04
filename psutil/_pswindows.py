@@ -650,18 +650,7 @@ class WindowsService:  # noqa: PLW1641
 
 
 class ProcessWatcher(cext.ProcessWatcher):
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etype, evalue, traceback):
-        self.close()
-
-    def __iter__(self):
-        while True:
-            event = self.read()
-            if event:
-                yield event
+    pass
 
 
 # =====================================================================

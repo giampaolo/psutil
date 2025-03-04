@@ -18,7 +18,6 @@ import selectors
 import socket
 import struct
 import sys
-import time
 import warnings
 from collections import defaultdict
 from collections import namedtuple
@@ -1601,7 +1600,6 @@ class ProcessWatcher:
     RECV_BUFSIZE = 1024 * 1024
 
     def __init__(self):
-        self._queue = collections.deque()  # fifo
         self._selector = self._sock = None
         self._sock = socket.socket(
             socket.AF_NETLINK, socket.SOCK_DGRAM, cext.NETLINK_CONNECTOR
@@ -1625,29 +1623,6 @@ class ProcessWatcher:
         except OSError as err:
             debug(err)
 
-    def __enter__(self):
-        self._assert_not_closed()
-        return self
-
-    def __exit__(self, etype, evalue, traceback):
-        self.close()
-
-    def __iter__(self):
-        while True:
-            event = self.read()
-            if event:
-                yield event
-
-    @staticmethod
-    def _event_wrapper(ev):
-        ev["event"] = ProcessEvent(ev["event"])
-        return ev
-
-    def _assert_not_closed(self):
-        if self._selector is None and self._sock is None:
-            msg = "can't reuse an already closed ProcessWatcher"
-            raise ValueError(msg)
-
     @property
     def sock(self):
         return self._sock
@@ -1659,46 +1634,18 @@ class ProcessWatcher:
         `timeout` seconds, then it returns either a process event or
         None.
         """
-
-        def pop_event():
-            try:
-                ev = self._queue.popleft()  # thread-safe
-            except IndexError:
-                return None
-            return self._event_wrapper(ev)
-
-        self._assert_not_closed()
-        event = pop_event()
-        if event:
-            return event
-
-        if timeout is not None:
-            started = time.monotonic()
-        while True:
-            # Waits until the NETLINK socket has data to read.
-            # Sometimes it's readable but it yields PROC_EVENT_NONE.
-            ready = self._selector.select(timeout=timeout)
-            if ready:
-                # We may receive an empty list in case of
-                # PROC_EVENT_NONE. In this case, if timeout was
-                # specified, we recalculate the timeout.
-                ls = cext.netlink_proc_read(self._sock.fileno())
-                if ls:
-                    self._queue.extend(ls)
-                elif timeout is not None:
-                    elapsed = time.monotonic() - started
-                    timeout -= elapsed
-                    if timeout > 0:
-                        return self.read(timeout)
-
-            event = pop_event()
-            if event:
-                return event
-            if timeout is not None:
-                return None
+        # Waits until the NETLINK socket has data to read. Sometimes
+        # it's readable but it yields PROC_EVENT_NONE, in which case
+        # read() will return an empty list.
+        ready = self._selector.select(timeout=timeout)
+        if ready:
+            # We may receive an empty list in case of
+            # PROC_EVENT_NONE. In this case, if timeout was
+            # specified, we recalculate the timeout.
+            ls = cext.netlink_proc_read(self._sock.fileno())
+            return ls or None
 
     def close(self):
-        self._queue.clear()
         if self._selector is not None:
             self._selector.close()
             self._selector = None
