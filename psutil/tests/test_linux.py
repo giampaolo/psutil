@@ -2063,6 +2063,15 @@ class TestProcess(PsutilTestCase):
                 assert m.called
                 assert ret == ""
 
+    def test_cwd_mocked(self):
+        # https://github.com/giampaolo/psutil/issues/2514
+        with mock.patch(
+            'psutil._pslinux.readlink', side_effect=FileNotFoundError
+        ) as m:
+            ret = psutil.Process().cwd()
+            assert m.called
+            assert ret == ""
+
     def test_issue_1014(self):
         # Emulates a case where smaps file does not exist. In this case
         # wrap_exception decorator should not raise NoSuchProcess.

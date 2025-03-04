@@ -89,6 +89,7 @@ CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = cext_posix.getpagesize()
 BOOT_TIME = None  # set later
 LITTLE_ENDIAN = sys.byteorder == 'little'
+UNSET = object()
 
 # "man iostat" states that sectors are equivalent with blocks and have
 # a size of 512 bytes. Despite this value can be queried at runtime
@@ -1836,6 +1837,22 @@ class Process:
         # incorrect or incomplete result.
         os.stat(f"{self._procfs_path}/{self.pid}")
 
+    def _readlink(self, path, fallback=UNSET):
+        # * https://github.com/giampaolo/psutil/issues/503
+        #   os.readlink('/proc/pid/exe') may raise ESRCH (ProcessLookupError)
+        #   instead of ENOENT (FileNotFoundError) when it races.
+        # * ENOENT may occur also if the path actually exists if PID is
+        #   a low PID (~0-20 range).
+        # * https://github.com/giampaolo/psutil/issues/2514
+        try:
+            return readlink(path)
+        except (FileNotFoundError, ProcessLookupError):
+            if os.path.lexists(f"{self._procfs_path}/{self.pid}"):
+                self._raise_if_zombie()
+                if fallback is not UNSET:
+                    return fallback
+            raise
+
     @wrap_exceptions
     @memoize_when_activated
     def _parse_stat_file(self):
@@ -1908,16 +1925,9 @@ class Process:
 
     @wrap_exceptions
     def exe(self):
-        try:
-            return readlink(f"{self._procfs_path}/{self.pid}/exe")
-        except (FileNotFoundError, ProcessLookupError):
-            self._raise_if_zombie()
-            # no such file error; might be raised also if the
-            # path actually exists for system processes with
-            # low pids (about 0-20)
-            if os.path.lexists(f"{self._procfs_path}/{self.pid}"):
-                return ""
-            raise
+        return self._readlink(
+            f"{self._procfs_path}/{self.pid}/exe", fallback=""
+        )
 
     @wrap_exceptions
     def cmdline(self):
@@ -2192,7 +2202,9 @@ class Process:
 
     @wrap_exceptions
     def cwd(self):
-        return readlink(f"{self._procfs_path}/{self.pid}/cwd")
+        return self._readlink(
+            f"{self._procfs_path}/{self.pid}/cwd", fallback=""
+        )
 
     @wrap_exceptions
     def num_ctx_switches(

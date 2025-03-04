@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.1.0
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
+  to a race condition.
+
 7.0.0
 =====
 
