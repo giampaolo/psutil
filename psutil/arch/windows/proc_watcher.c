@@ -20,6 +20,28 @@ unsigned int PROC_EVENT_FORK = 0x00000001;
 unsigned int PROC_EVENT_EXIT = 0x80000000;
 
 
+static char *
+convert_hr_error(const char *syscall, HRESULT hres) {
+    static char buffer[512];
+    char *errorMsg = NULL;
+
+    FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, hres, 0, (LPSTR)&errorMsg, 0, NULL
+    );
+
+    snprintf(
+        buffer,
+        sizeof(buffer), "%s failed. %s.",
+        syscall, errorMsg ? errorMsg : "unknown error"
+    );
+
+    if (errorMsg)
+        LocalFree(errorMsg);
+    return buffer;
+}
+
+
 // class attributes
 typedef struct {
     PyObject_HEAD
@@ -56,9 +78,11 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         return -1;
     }
 
-    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    hres = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
-        PyErr_SetString(PyExc_RuntimeError, "CoInitializeEx failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, convert_hr_error("CoInitializeEx", hres)
+        );
         return -1;
     }
 
@@ -67,7 +91,9 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL
     );
     if (FAILED(hres)) {
-        PyErr_SetString(PyExc_RuntimeError, "CoInitializeSecurity failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, convert_hr_error("CoInitializeSecurity", hres)
+        );
         goto error;
     }
 
@@ -76,7 +102,9 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         (LPVOID *) &self->pLoc
     );
     if (FAILED(hres)) {
-        PyErr_SetString(PyExc_RuntimeError, "CoCreateInstance failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, convert_hr_error("CoCreateInstance", hres)
+        );
         goto error;
     }
 
@@ -92,7 +120,9 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         &self->pSvc  // namespace
     );
     if (FAILED(hres)) {
-        PyErr_SetString(PyExc_RuntimeError, "ConnectServer failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, convert_hr_error("ConnectServer", hres)
+        );
         goto error;
     }
 
@@ -101,7 +131,9 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE
     );
     if (FAILED(hres)) {
-        PyErr_SetString(PyExc_RuntimeError, "CoSetProxyBlanket failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, convert_hr_error("CoSetProxyBlanket", hres)
+        );
         goto error;
     }
 
@@ -116,7 +148,9 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         &self->pEnumerator
     );
     if (FAILED(hres)) {
-        PyErr_SetString(PyExc_RuntimeError, "ExecNotificationQuery failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, convert_hr_error("ExecNotificationQuery", hres)
+        );
         goto error;
     }
 
