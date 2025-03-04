@@ -1710,8 +1710,6 @@ class Process:
             return readlink(path)
         except (FileNotFoundError, ProcessLookupError):
             self._raise_if_zombie()
-            # Both exceptions may be raised also if the path actually
-            # exists for system processes with low pids (about 0-20).
             if os.path.lexists(f"{self._procfs_path}/{self.pid}"):
                 if fallback is not UNSET:
                     return fallback

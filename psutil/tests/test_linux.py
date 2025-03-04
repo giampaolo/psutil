@@ -2069,7 +2069,7 @@ class TestProcess(PsutilTestCase):
         with mock.patch(
             'psutil._pslinux.readlink', side_effect=FileNotFoundError
         ) as m:
-            ret = psutil.Process().exe()
+            ret = psutil.Process().cwd()
             assert m.called
             assert ret == ""
 
