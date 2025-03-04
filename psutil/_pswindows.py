@@ -119,6 +119,15 @@ class IOPriority(enum.IntEnum):
 
 globals().update(IOPriority.__members__)
 
+
+class ProcessEvent(enum.IntEnum):
+    PROC_EVENT_FORK = cext.PROC_EVENT_FORK
+    PROC_EVENT_EXIT = cext.PROC_EVENT_EXIT
+
+
+globals().update(ProcessEvent.__members__)
+
+
 pinfo_map = dict(
     num_handles=0,
     ctx_switches=1,
