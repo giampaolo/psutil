@@ -217,7 +217,7 @@ def install_pip():
 def install():
     """Install in develop / edit mode."""
     build()
-    sh([PYTHON, "setup.py", "develop"])
+    sh([PYTHON, "setup.py", "develop", "--user"])
 
 
 def uninstall():
@@ -315,6 +315,12 @@ def test(args=None):
         + PYTEST_ARGS
         + args
     )
+
+
+def test_by_name(arg):
+    """Run specific test by name."""
+    build()
+    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS + [arg])
 
 
 def test_parallel():
@@ -542,6 +548,8 @@ def main():
     fun = getattr(sys.modules[__name__], fname)  # err if fun not defined
     if args.command == 'test' and args.arg:
         sh([PYTHON, args.arg])  # test a script
+    elif args.command == 'test-by-name':
+        test_by_name(args.arg)
     else:
         fun()
 
