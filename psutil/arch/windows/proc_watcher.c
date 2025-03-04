@@ -169,8 +169,6 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     VARIANT varClass;
     VARIANT varParentProcessId;
     int event;
-    long pid;
-    long ppid;
     PyObject *py_dict = NULL;
     PyObject *py_item = NULL;
 
@@ -189,13 +187,9 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
 
     if (wcscmp(varClass.bstrVal, L"__InstanceCreationEvent") == 0) {
         event = PROC_EVENT_FORK;
-        pid = varProcessId.lVal;
-        ppid = varParentProcessId.lVal;
     }
     else if (wcscmp(varClass.bstrVal, L"__InstanceDeletionEvent") == 0) {
         event = PROC_EVENT_EXIT;
-        pid = varProcessId.lVal;
-        ppid = varParentProcessId.lVal;
     }
     else {
         psutil_debug("unknown event (skipping)");
@@ -211,7 +205,7 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     Py_CLEAR(py_item);
 
     // pid
-    py_item = Py_BuildValue("l", pid);
+    py_item = Py_BuildValue("l", varProcessId.lVal);
     if (!py_item)
         goto error;
     if (PyDict_SetItemString(py_dict, "pid", py_item))
@@ -219,7 +213,7 @@ handle_message(IWbemClassObject *pProcess, IWbemClassObject *pObj) {
     Py_CLEAR(py_item);
 
     // ppid
-    py_item = Py_BuildValue("l", ppid);
+    py_item = Py_BuildValue("l", varParentProcessId.lVal);
     if (!py_item)
         goto error;
     if (PyDict_SetItemString(py_dict, "ppid", py_item))
