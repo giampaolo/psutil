@@ -1700,6 +1700,12 @@ class Process:
         os.stat(f"{self._procfs_path}/{self.pid}")
 
     def _readlink(self, path, fallback=UNSET):
+        # * https://github.com/giampaolo/psutil/issues/503
+        #   os.readlink('/proc/pid/exe') may raise ESRCH (ProcessLookupError)
+        #   instead of ENOENT (FileNotFoundError) when it races.
+        # * ENOENT may occur also if the path actually exists if PID is
+        #   a low PID (~0-20 range).
+        # * https://github.com/giampaolo/psutil/issues/2514
         try:
             return readlink(path)
         except (FileNotFoundError, ProcessLookupError):
