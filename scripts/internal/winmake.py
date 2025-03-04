@@ -317,6 +317,12 @@ def test(args=None):
     )
 
 
+def test_by_name(arg):
+    """Run specific test by name."""
+    build()
+    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS + [arg])
+
+
 def test_parallel():
     test(["-n", "auto", "--dist", "loadgroup"])
 
@@ -542,6 +548,8 @@ def main():
     fun = getattr(sys.modules[__name__], fname)  # err if fun not defined
     if args.command == 'test' and args.arg:
         sh([PYTHON, args.arg])  # test a script
+    elif args.command == 'test-by-name':
+        test_by_name(args.arg)
     else:
         fun()
 
