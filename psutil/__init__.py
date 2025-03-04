@@ -1658,6 +1658,9 @@ if hasattr(_psplatform, "ProcessWatcher"):
         def __exit__(self, etype, evalue, traceback):
             self.close()
 
+        def __del__(self):
+            self.close()
+
         def __iter__(self):
             while True:
                 event = self.read()
@@ -1714,9 +1717,10 @@ if hasattr(_psplatform, "ProcessWatcher"):
 
         def close(self):
             """Cleanup resources."""
-            self._queue.clear()
-            super().close()
-            self._closed = True
+            if not self._closed:
+                self._queue.clear()
+                self._closed = True
+                super().close()
 
 
 # =====================================================================
