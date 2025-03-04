@@ -1709,8 +1709,8 @@ class Process:
         try:
             return readlink(path)
         except (FileNotFoundError, ProcessLookupError):
-            self._raise_if_zombie()
             if os.path.lexists(f"{self._procfs_path}/{self.pid}"):
+                self._raise_if_zombie()
                 if fallback is not UNSET:
                     return fallback
             raise
