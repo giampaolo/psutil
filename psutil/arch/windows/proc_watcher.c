@@ -344,7 +344,7 @@ static PyType_Slot ProcessWatcher_slots[] = {
 };
 
 PyType_Spec ProcessWatcher_spec = {
-    "ProcessWatcher",
+    "_psutil_windows.ProcessWatcher",
     sizeof(ProcessWatcherObject),
     0,
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
