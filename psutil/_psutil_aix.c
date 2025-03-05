@@ -1063,40 +1063,37 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC
 PyInit__psutil_aix(void) {
-    PyObject *module = PyModule_Create(&moduledef);
-    if (module == NULL)
+    PyObject *mod = PyModule_Create(&moduledef);
+    if (mod == NULL)
         return NULL;
 
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
 #endif
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+    PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION);
 
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(module, "SACTIVE", SACTIVE);
-    PyModule_AddIntConstant(module, "SSWAP", SSWAP);
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(mod, "SIDL", SIDL);
+    PyModule_AddIntConstant(mod, "SZOMB", SZOMB);
+    PyModule_AddIntConstant(mod, "SACTIVE", SACTIVE);
+    PyModule_AddIntConstant(mod, "SSWAP", SSWAP);
+    PyModule_AddIntConstant(mod, "SSTOP", SSTOP);
 
-    PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
-    PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
-    PyModule_AddIntConstant(module, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
-    PyModule_AddIntConstant(module, "TCPS_LISTEN", TCPS_LISTEN);
-    PyModule_AddIntConstant(module, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
-    PyModule_AddIntConstant(module, "TCPS_SYN_SENT", TCPS_SYN_SENT);
-    PyModule_AddIntConstant(module, "TCPS_SYN_RCVD", TCPS_SYN_RECEIVED);
-    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
-    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
-    PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
-    PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
-    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+    PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED);
+    PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING);
+    PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
+    PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN);
+    PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
+    PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT);
+    PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RECEIVED);
+    PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
+    PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
+    PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK);
+    PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     psutil_setup();
 
-    if (module == NULL)
-        return NULL;
-
-    return module;
+    return mod;
 }
 
 #ifdef __cplusplus
