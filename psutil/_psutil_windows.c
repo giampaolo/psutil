@@ -174,12 +174,14 @@ PyInit__psutil_windows(void) {
     TimeoutExpired = PyErr_NewException(
         "_psutil_windows.TimeoutExpired", NULL, NULL);
     Py_INCREF(TimeoutExpired);
-    PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired);
+    if (PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired))
+        return NULL;
 
     TimeoutAbandoned = PyErr_NewException(
         "_psutil_windows.TimeoutAbandoned", NULL, NULL);
     Py_INCREF(TimeoutAbandoned);
-    PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned);
+    if (PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned))
+        return NULL;
 
     // version constant
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
