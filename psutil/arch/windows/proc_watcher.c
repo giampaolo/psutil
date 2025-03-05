@@ -327,13 +327,6 @@ ProcessWatcher_close(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
 }
 
 
-static PyObject *
-ProcessWatcher_iter(PyObject *self) {
-    Py_INCREF(self);
-    return self;
-}
-
-
 // ====================================================================
 
 
@@ -341,14 +334,12 @@ ProcessWatcher_iter(PyObject *self) {
 static PyMethodDef ProcessWatcher_methods[] = {
     {"read", (PyCFunction)ProcessWatcher_read, METH_VARARGS | METH_KEYWORDS, ""},
     {"close", (PyCFunction)ProcessWatcher_close, METH_NOARGS, ""},
-    {"__iter__", (PyCFunction)ProcessWatcher_iter, METH_NOARGS, ""},
     {NULL}  // Sentinel
 };
 
 static PyType_Slot ProcessWatcher_slots[] = {
     {Py_tp_init, (void *)ProcessWatcher_init},
     {Py_tp_methods, ProcessWatcher_methods},
-    {Py_tp_iter, (void *)ProcessWatcher_iter},
     {0, NULL}  // Sentinel
 };
 
