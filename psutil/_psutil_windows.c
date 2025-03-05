@@ -34,7 +34,6 @@
 #include "arch/windows/wmi.h"
 
 
-#define INITERROR return NULL
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 
 
@@ -152,22 +151,22 @@ PyInit__psutil_windows(void) {
 
     PyObject *module = PyModule_Create(&moduledef);
     if (module == NULL)
-        INITERROR;
+        return NULL;
 
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
 
     if (psutil_setup() != 0)
-        INITERROR;
+        return NULL;
     if (psutil_set_se_debug() != 0)
-        INITERROR;
+        return NULL;
 
     st = GETSTATE(module);
     st->error = PyErr_NewException("_psutil_windows.Error", NULL, NULL);
     if (st->error == NULL) {
         Py_DECREF(module);
-        INITERROR;
+        return NULL;
     }
 
     // Exceptions.

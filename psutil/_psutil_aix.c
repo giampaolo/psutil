@@ -58,7 +58,6 @@
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-#define INITERROR return NULL
 
 /*
  * Read a file content and fills a C structure with it.
@@ -1066,7 +1065,7 @@ PyMODINIT_FUNC
 PyInit__psutil_aix(void) {
     PyObject *module = PyModule_Create(&moduledef);
     if (module == NULL)
-        INITERROR;
+        return NULL;
 
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
@@ -1095,7 +1094,7 @@ PyInit__psutil_aix(void) {
     psutil_setup();
 
     if (module == NULL)
-        INITERROR;
+        return NULL;
 
     return module;
 }

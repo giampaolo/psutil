@@ -60,7 +60,6 @@
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#define INITERROR return NULL
 
 
 /*
@@ -1703,14 +1702,14 @@ PyMODINIT_FUNC
 PyInit__psutil_sunos(void) {
     PyObject *module = PyModule_Create(&moduledef);
     if (module == NULL)
-        INITERROR;
+        return NULL;
 
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
 
     if (psutil_setup() != 0)
-        INITERROR;
+        return NULL;
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
@@ -1749,7 +1748,7 @@ PyInit__psutil_sunos(void) {
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     if (module == NULL)
-        INITERROR;
+        return NULL;
 
     return module;
 }
