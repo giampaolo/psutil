@@ -1712,40 +1712,62 @@ PyInit__psutil_sunos(void) {
     if (psutil_setup() != 0)
         return NULL;
 
-    PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION);
-    PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(mod, "SRUN", SRUN);
-    PyModule_AddIntConstant(mod, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(mod, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(mod, "SIDL", SIDL);
-    PyModule_AddIntConstant(mod, "SONPROC", SONPROC);
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SONPROC", SONPROC))
+        return NULL;
 #ifdef SWAIT
-    PyModule_AddIntConstant(mod, "SWAIT", SWAIT);
+    if (PyModule_AddIntConstant(mod, "SWAIT", SWAIT))
+        return NULL;
 #else
     /* sys/proc.h started defining SWAIT somewhere
      * after Update 3 and prior to Update 5 included.
      */
-    PyModule_AddIntConstant(mod, "SWAIT", 0);
+    if (PyModule_AddIntConstant(mod, "SWAIT", 0))
+        return NULL;
 #endif
-    PyModule_AddIntConstant(mod, "PRNODEV", PRNODEV);  // for process tty
-    PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED);
-    PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING);
-    PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
-    PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN);
-    PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
-    PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT);
-    PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD);
-    PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
-    PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
-    PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK);
-    PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    // for process tty
+    if (PyModule_AddIntConstant(mod, "PRNODEV", PRNODEV))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
+        return NULL;
     // sunos specific
-    PyModule_AddIntConstant(mod, "TCPS_IDLE", TCPS_IDLE);
+    if (PyModule_AddIntConstant(mod, "TCPS_IDLE", TCPS_IDLE))
+        return NULL;
     // sunos specific
-    PyModule_AddIntConstant(mod, "TCPS_BOUND", TCPS_BOUND);
-    PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
-
-    if (mod == NULL)
+    if (PyModule_AddIntConstant(mod, "TCPS_BOUND", TCPS_BOUND))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
         return NULL;
 
     return mod;
