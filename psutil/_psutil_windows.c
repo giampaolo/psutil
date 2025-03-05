@@ -149,6 +149,8 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC
 PyInit__psutil_windows(void) {
     PyObject *mod = PyModule_Create(&moduledef);
+    PyObject *ProcessWatcher;
+
     if (mod == NULL)
         return NULL;
 
@@ -180,11 +182,12 @@ PyInit__psutil_windows(void) {
         return NULL;
 
     // ProcessWatcher class
-    PyObject *ProcessWatcher = PyType_FromSpec(&ProcessWatcher_spec);
+    ProcessWatcher = PyType_FromSpec(&ProcessWatcher_spec);
     if (!ProcessWatcher)
         return NULL;
     Py_INCREF(ProcessWatcher);
-    PyModule_AddObject(mod, "ProcessWatcher", ProcessWatcher);
+    if (PyModule_AddObject(mod, "ProcessWatcher", ProcessWatcher))
+        return NULL;
 
     // version constant
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
