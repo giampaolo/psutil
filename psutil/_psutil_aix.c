@@ -1070,6 +1070,10 @@ PyInit__psutil_aix(void) {
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
 #endif
+
+    if (psutil_setup() != 0)
+        return NULL;
+
     PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION);
 
     PyModule_AddIntConstant(mod, "SIDL", SIDL);
@@ -1090,8 +1094,6 @@ PyInit__psutil_aix(void) {
     PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
-
-    psutil_setup();
 
     return mod;
 }

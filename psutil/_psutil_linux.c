@@ -71,6 +71,9 @@ PyInit__psutil_linux(void) {
     PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
 #endif
 
+    if (psutil_setup() != 0)
+        return NULL;
+
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
         return NULL;
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
@@ -78,9 +81,6 @@ PyInit__psutil_linux(void) {
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
         return NULL;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
-        return NULL;
-
-    if (psutil_setup() != 0)
         return NULL;
 
     return mod;

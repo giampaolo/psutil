@@ -139,6 +139,9 @@ PyObject
     PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
 #endif
 
+    if (psutil_setup() != 0)
+        return NULL;
+
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
     // process status constants
 
@@ -197,8 +200,6 @@ PyObject
         INITERR;
     // PSUTIL_CONN_NONE
     if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", 128)) INITERR;
-
-    psutil_setup();
 
     if (mod == NULL)
         INITERR;
