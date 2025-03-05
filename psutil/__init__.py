@@ -1647,9 +1647,9 @@ if hasattr(_psplatform, "ProcessWatcher"):
         """
 
         def __init__(self):
-            super().__init__()
             self._queue = collections.deque()  # fifo
             self._closed = False
+            super().__init__()
 
         def __enter__(self):
             self._assert_not_closed()

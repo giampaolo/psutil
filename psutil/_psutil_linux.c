@@ -83,11 +83,39 @@ PyInit__psutil_linux(void) {
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
         return NULL;
+
+    // net_if_stats
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
         return NULL;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
         return NULL;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
+        return NULL;
+
+    // netlink sockets
+    if (PyModule_AddIntConstant(mod, "NETLINK_CONNECTOR", NETLINK_CONNECTOR))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "CN_IDX_PROC", CN_IDX_PROC))
+        return NULL;
+
+    // process events
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_COMM", PROC_EVENT_COMM))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_COREDUMP", PROC_EVENT_COREDUMP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_EXEC", PROC_EVENT_EXEC))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_EXIT", PROC_EVENT_EXIT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_FORK", PROC_EVENT_FORK))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_GID", PROC_EVENT_GID))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_PTRACE", PROC_EVENT_PTRACE))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_SID", PROC_EVENT_SID))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PROC_EVENT_UID", PROC_EVENT_UID))
         return NULL;
 
     return mod;
