@@ -63,25 +63,25 @@ static struct PyModuleDef moduledef = {
 
 PyObject *
 PyInit__psutil_linux(void) {
-    PyObject *m = PyModule_Create(&moduledef);
-    if (m == NULL)
+    PyObject *mod = PyModule_Create(&moduledef);
+    if (mod == NULL)
         return NULL;
 
 #ifdef Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
 #endif
 
-    if (PyModule_AddIntConstant(m, "version", PSUTIL_VERSION))
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
         return NULL;
-    if (PyModule_AddIntConstant(m, "DUPLEX_HALF", DUPLEX_HALF))
+    if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
         return NULL;
-    if (PyModule_AddIntConstant(m, "DUPLEX_FULL", DUPLEX_FULL))
+    if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
         return NULL;
-    if (PyModule_AddIntConstant(m, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
+    if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
         return NULL;
 
     if (psutil_setup() != 0)
         return NULL;
 
-    return m;
+    return mod;
 }
