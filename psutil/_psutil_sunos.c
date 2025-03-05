@@ -1701,7 +1701,7 @@ static struct PyModuleDef moduledef = {
 PyMODINIT_FUNC
 PyInit__psutil_sunos(void) {
     PyObject *mod = PyModule_Create(&moduledef);
-    if (module == NULL)
+    if (mod == NULL)
         return NULL;
 
 #ifdef Py_GIL_DISABLED
