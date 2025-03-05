@@ -25,8 +25,6 @@
     #define DUPLEX_UNKNOWN 0xff
 #endif
 
-#define INITERR return NULL
-
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
 #ifdef PSUTIL_HAVE_IOPRIO
@@ -67,20 +65,24 @@ PyObject *
 PyInit__psutil_linux(void) {
     PyObject *mod = PyModule_Create(&moduledef);
     if (mod == NULL)
-        INITERR;
+        return NULL;
 
 #ifdef Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
+        return NULL;
 #endif
 
-    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
-    if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;
+    if (psutil_setup() != 0)
+        return NULL;
 
-    psutil_setup();
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
+        return NULL;
 
-    if (mod == NULL)
-        INITERR;
     return mod;
 }

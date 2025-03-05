@@ -60,7 +60,6 @@
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#define INITERROR return NULL
 
 
 /*
@@ -1701,55 +1700,75 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC
 PyInit__psutil_sunos(void) {
-    PyObject *module = PyModule_Create(&moduledef);
+    PyObject *mod = PyModule_Create(&moduledef);
     if (module == NULL)
-        INITERROR;
+        return NULL;
 
 #ifdef Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
+        return NULL;
 #endif
 
     if (psutil_setup() != 0)
-        INITERROR;
+        return NULL;
 
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
-
-    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(module, "SRUN", SRUN);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SONPROC", SONPROC);
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SONPROC", SONPROC))
+        return NULL;
 #ifdef SWAIT
-    PyModule_AddIntConstant(module, "SWAIT", SWAIT);
+    if (PyModule_AddIntConstant(mod, "SWAIT", SWAIT))
+        return NULL;
 #else
     /* sys/proc.h started defining SWAIT somewhere
      * after Update 3 and prior to Update 5 included.
      */
-    PyModule_AddIntConstant(module, "SWAIT", 0);
+    if (PyModule_AddIntConstant(mod, "SWAIT", 0))
+        return NULL;
 #endif
-
-    PyModule_AddIntConstant(module, "PRNODEV", PRNODEV);  // for process tty
-
-    PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
-    PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
-    PyModule_AddIntConstant(module, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
-    PyModule_AddIntConstant(module, "TCPS_LISTEN", TCPS_LISTEN);
-    PyModule_AddIntConstant(module, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
-    PyModule_AddIntConstant(module, "TCPS_SYN_SENT", TCPS_SYN_SENT);
-    PyModule_AddIntConstant(module, "TCPS_SYN_RCVD", TCPS_SYN_RCVD);
-    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
-    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
-    PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
-    PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    // for process tty
+    if (PyModule_AddIntConstant(mod, "PRNODEV", PRNODEV))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RCVD))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
+        return NULL;
     // sunos specific
-    PyModule_AddIntConstant(module, "TCPS_IDLE", TCPS_IDLE);
+    if (PyModule_AddIntConstant(mod, "TCPS_IDLE", TCPS_IDLE))
+        return NULL;
     // sunos specific
-    PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
-    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+    if (PyModule_AddIntConstant(mod, "TCPS_BOUND", TCPS_BOUND))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
+        return NULL;
 
-    if (module == NULL)
-        INITERROR;
-
-    return module;
+    return mod;
 }
