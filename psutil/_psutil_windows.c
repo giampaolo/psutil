@@ -161,15 +161,19 @@ PyInit__psutil_windows(void) {
     if (psutil_set_se_debug() != 0)
         return NULL;
 
-    // Exceptions.
+    // Exceptions
     TimeoutExpired = PyErr_NewException(
         "_psutil_windows.TimeoutExpired", NULL, NULL);
+    if (TimeoutExpired == NULL)
+        return NULL;
     Py_INCREF(TimeoutExpired);
     if (PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired))
         return NULL;
 
     TimeoutAbandoned = PyErr_NewException(
         "_psutil_windows.TimeoutAbandoned", NULL, NULL);
+    if (TimeoutAbandoned == NULL)
+        return NULL;
     Py_INCREF(TimeoutAbandoned);
     if (PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned))
         return NULL;
