@@ -1705,7 +1705,8 @@ PyInit__psutil_sunos(void) {
         return NULL;
 
 #ifdef Py_GIL_DISABLED
-    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
+        return NULL;
 #endif
 
     if (psutil_setup() != 0)
