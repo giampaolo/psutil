@@ -100,8 +100,8 @@ if LINUX:
     from ._pslinux import PROC_EVENT_COMM  # noqa: F401
     from ._pslinux import PROC_EVENT_COREDUMP  # noqa: F401
     from ._pslinux import PROC_EVENT_EXEC  # noqa: F401
-    from ._pslinux import PROC_EVENT_EXIT  # noqa: F401
-    from ._pslinux import PROC_EVENT_FORK  # noqa: F401
+    from ._pslinux import PROC_EVENT_EXIT
+    from ._pslinux import PROC_EVENT_FORK
     from ._pslinux import PROC_EVENT_GID  # noqa: F401
     from ._pslinux import PROC_EVENT_PTRACE  # noqa: F401
     from ._pslinux import PROC_EVENT_SID  # noqa: F401
@@ -114,6 +114,8 @@ elif WINDOWS:
     from ._psutil_windows import HIGH_PRIORITY_CLASS  # noqa: F401
     from ._psutil_windows import IDLE_PRIORITY_CLASS  # noqa: F401
     from ._psutil_windows import NORMAL_PRIORITY_CLASS  # noqa: F401
+    from ._psutil_windows import PROC_EVENT_EXIT
+    from ._psutil_windows import PROC_EVENT_FORK
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # noqa: F401
     from ._pswindows import CONN_DELETE_TCB  # noqa: F401
     from ._pswindows import IOPRIO_HIGH  # noqa: F401
@@ -1675,6 +1677,15 @@ if hasattr(_psplatform, "ProcessWatcher"):
         @staticmethod
         def _event_wrapper(ev):
             ev["event"] = _psplatform.ProcessEvent(ev["event"])
+            if WINDOWS:
+                if ev["event"] == PROC_EVENT_FORK:
+                    ev["is_thread"] = False
+                elif ev["event"] == PROC_EVENT_EXIT:
+                    cext = _psplatform.cext
+                    try:
+                        ev["exit_code"] = cext.proc_wait(ev["pid"], 0)
+                    except (cext.TimeoutExpired, cext.TimeoutAbandoned):
+                        ev["exit_code"] = None
             return ev
 
         def _pop_event(self):
