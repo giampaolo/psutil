@@ -16,8 +16,8 @@
 
 
 // mimic Linux constants
-unsigned int PROC_EVENT_FORK = 0x00000001;
-unsigned int PROC_EVENT_EXIT = 0x80000000;
+unsigned long PROC_EVENT_FORK = 0x00000001;
+unsigned long PROC_EVENT_EXIT = 0x80000000;
 
 
 static char *
@@ -240,7 +240,8 @@ error:
 
 
 static PyObject *
-ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
+ProcessWatcher_read(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) {
+    static char *keywords[] = {"timeout", NULL};
     HRESULT hres;
     ULONG ret;
     IWbemClassObject *pObj = NULL;
@@ -248,7 +249,13 @@ ProcessWatcher_read(ProcessWatcherObject *self, PyObject *Py_UNUSED(ignored)) {
     IUnknown* pUnknown;
     VARIANT var;
     PyObject *py_dict = NULL;
+    PyObject *py_timeout = NULL;
     PyObject *py_list = PyList_New(0);
+
+    if (py_list == NULL)
+        return NULL;
+    if (! PyArg_ParseTupleAndKeywords(args, kwds, "O", keywords, &py_timeout))
+        return NULL;
 
     // Event loop
     while (self->pEnumerator) {
@@ -328,7 +335,7 @@ ProcessWatcher_iter(PyObject *self) {
 
 // Define class methods.
 static PyMethodDef ProcessWatcher_methods[] = {
-    {"read", (PyCFunction)ProcessWatcher_read, METH_NOARGS, ""},
+    {"read", (PyCFunction)ProcessWatcher_read, METH_VARARGS | METH_KEYWORDS, ""},
     {"close", (PyCFunction)ProcessWatcher_close, METH_NOARGS, ""},
     {"__iter__", (PyCFunction)ProcessWatcher_iter, METH_NOARGS, ""},
     {NULL}  // Sentinel

@@ -20,6 +20,39 @@ int PSUTIL_DEBUG = 0;
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
+#if !defined(PyModule_AddObjectRef)  // Python 3.10
+int
+PyModule_AddObjectRef(PyObject *mod, const char *name, PyObject *value) {
+    if (!value) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_SystemError,
+                            "PyModule_AddObjectRef() must be called "
+                            "with an exception raised if value is NULL");
+        }
+        return -1;
+    }
+    PyObject *dict = PyModule_GetDict(mod);
+    if (dict == NULL) {
+        /* Internal error -- modules must have a dict! */
+        PyErr_Format(PyExc_SystemError, "module '%s' has no __dict__",
+                     PyModule_GetName(mod));
+        return -1;
+    }
+    return PyDict_SetItemString(dict, name, value);
+}
+#endif
+
+
+#if !defined(PyModule_Add)  // Python 3.13
+int
+PyModule_Add(PyObject *mod, const char *name, PyObject *value) {
+    int res = PyModule_AddObjectRef(mod, name, value);
+    Py_XDECREF(value);
+    return res;
+}
+#endif
+
+
 // PyPy on Windows. Missing APIs added in PyPy 7.3.14.
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
 #if !defined(PyErr_SetFromWindowsErrWithFilename)

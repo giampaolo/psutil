@@ -6,7 +6,7 @@
 
 #include <Python.h>
 
-extern unsigned int PROC_EVENT_FORK;
-extern unsigned int PROC_EVENT_EXIT;
+extern unsigned long PROC_EVENT_FORK;
+extern unsigned long PROC_EVENT_EXIT;
 
 PyType_Spec ProcessWatcher_spec;

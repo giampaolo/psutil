@@ -23,6 +23,14 @@ static const int PSUTIL_CONN_NONE = 128;
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 
+#if !defined(PyModule_AddObjectRef)  // Python 3.10
+int PyModule_AddObjectRef(PyObject *mod, const char *name, PyObject *value);
+#endif
+
+#if !defined(PyModule_Add)  // Python 3.13
+int PyModule_Add(PyObject *mod, const char *name, PyObject *value);
+#endif
+
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
     #if !defined(PyErr_SetFromWindowsErrWithFilename)
         PyObject *PyErr_SetFromWindowsErrWithFilename(int ierr,

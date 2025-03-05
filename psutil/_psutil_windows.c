@@ -257,8 +257,14 @@ PyInit__psutil_windows(void) {
     */
 
     // process watcher constants
-    PyModule_AddIntConstant(module, "PROC_EVENT_FORK", PROC_EVENT_FORK);
-    PyModule_AddIntConstant(module, "PROC_EVENT_EXIT", PROC_EVENT_EXIT);
+    if (PyModule_Add(module, "PROC_EVENT_FORK",
+                     PyLong_FromUnsignedLong(PROC_EVENT_FORK)) < 0) {
+        INITERROR;
+    }
+    if (PyModule_Add(module, "PROC_EVENT_EXIT",
+                     PyLong_FromUnsignedLong(PROC_EVENT_EXIT)) < 0) {
+        INITERROR;
+    }
 
     // ...for internal use in _psutil_windows.py
     PyModule_AddIntConstant(
