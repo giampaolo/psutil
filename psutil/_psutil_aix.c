@@ -1075,26 +1075,42 @@ PyInit__psutil_aix(void) {
     if (psutil_setup() != 0)
         return NULL;
 
-    PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION);
-
-    PyModule_AddIntConstant(mod, "SIDL", SIDL);
-    PyModule_AddIntConstant(mod, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(mod, "SACTIVE", SACTIVE);
-    PyModule_AddIntConstant(mod, "SSWAP", SSWAP);
-    PyModule_AddIntConstant(mod, "SSTOP", SSTOP);
-
-    PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED);
-    PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING);
-    PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
-    PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN);
-    PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
-    PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT);
-    PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RECEIVED);
-    PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
-    PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
-    PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK);
-    PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
-    PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SACTIVE", SACTIVE))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SSWAP", SSWAP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RECEIVED))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
+        return NULL;
+    if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
+        return NULL;
 
     return mod;
 }
