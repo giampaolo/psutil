@@ -187,7 +187,7 @@ PyInit__psutil_windows(void) {
     if (!ProcessWatcher)
         return NULL;
     Py_INCREF(ProcessWatcher);
-    PyModule_AddObject(module, "ProcessWatcher", ProcessWatcher);
+    PyModule_AddObject(mod, "ProcessWatcher", ProcessWatcher);
 
     // version constant
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
@@ -240,14 +240,10 @@ PyInit__psutil_windows(void) {
         return NULL;
 
     // process watcher constants
-    if (PyModule_Add(module, "PROC_EVENT_FORK",
-                     PyLong_FromUnsignedLong(PROC_EVENT_FORK)) < 0) {
-        INITERROR;
-    }
-    if (PyModule_Add(module, "PROC_EVENT_EXIT",
-                     PyLong_FromUnsignedLong(PROC_EVENT_EXIT)) < 0) {
-        INITERROR;
-    }
+    if (PyModule_Add(mod, "PROC_EVENT_FORK", PyLong_FromUnsignedLong(PROC_EVENT_FORK)))
+        return NULL;
+    if (PyModule_Add(mod, "PROC_EVENT_EXIT", PyLong_FromUnsignedLong(PROC_EVENT_EXIT)))
+        return NULL;
 
     // ...for internal use in _psutil_windows.py
     if (PyModule_AddIntConstant(mod, "INFINITE", INFINITE))
