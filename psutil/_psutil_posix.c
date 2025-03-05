@@ -1021,7 +1021,8 @@ PyInit__psutil_posix(void) {
         v = PyLong_FromLong((long) RLIM_INFINITY);
     }
     if (v) {
-        PyModule_AddObject(mod, "RLIM_INFINITY", v);
+        if (PyModule_AddObject(mod, "RLIM_INFINITY", v))
+            return NULL;
     }
 #endif  // defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
 

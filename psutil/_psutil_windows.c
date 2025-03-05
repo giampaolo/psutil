@@ -148,8 +148,6 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC
 PyInit__psutil_windows(void) {
-    struct module_state *st = NULL;
-
     PyObject *mod = PyModule_Create(&moduledef);
     if (mod == NULL)
         return NULL;
@@ -164,23 +162,22 @@ PyInit__psutil_windows(void) {
     if (psutil_set_se_debug() != 0)
         return NULL;
 
-    st = GETSTATE(mod);
-    st->error = PyErr_NewException("_psutil_windows.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(mod);
-        return NULL;
-    }
-
-    // Exceptions.
+    // Exceptions
     TimeoutExpired = PyErr_NewException(
         "_psutil_windows.TimeoutExpired", NULL, NULL);
+    if (TimeoutExpired == NULL)
+        return NULL;
     Py_INCREF(TimeoutExpired);
-    PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired);
+    if (PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired))
+        return NULL;
 
     TimeoutAbandoned = PyErr_NewException(
         "_psutil_windows.TimeoutAbandoned", NULL, NULL);
+    if (TimeoutAbandoned == NULL)
+        return NULL;
     Py_INCREF(TimeoutAbandoned);
-    PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned);
+    if (PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned))
+        return NULL;
 
     // ProcessWatcher class
     PyObject *ProcessWatcher = PyType_FromSpec(&ProcessWatcher_spec);
