@@ -147,8 +147,6 @@ static struct PyModuleDef moduledef = {
 
 PyMODINIT_FUNC
 PyInit__psutil_windows(void) {
-    struct module_state *st = NULL;
-
     PyObject *mod = PyModule_Create(&moduledef);
     if (mod == NULL)
         return NULL;
@@ -162,13 +160,6 @@ PyInit__psutil_windows(void) {
         return NULL;
     if (psutil_set_se_debug() != 0)
         return NULL;
-
-    st = GETSTATE(mod);
-    st->error = PyErr_NewException("_psutil_windows.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(mod);
-        return NULL;
-    }
 
     // Exceptions.
     TimeoutExpired = PyErr_NewException(
