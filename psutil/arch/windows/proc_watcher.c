@@ -78,6 +78,10 @@ ProcessWatcher_init(ProcessWatcherObject *self, PyObject *args, PyObject *kwds) 
         return -1;
     }
 
+    // Weirdly enough, this is needed when running pytest, otherwise
+    // CoInitializeEx will fail with RPC_E_CHANGED_MODE.
+    CoUninitialize();
+
     hres = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
         PyErr_SetString(

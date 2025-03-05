@@ -47,19 +47,24 @@ class TestProcessWatcher(PsutilTestCase):
             "is_thread": False,
         }
 
-        event = self.read_until_pid(proc.pid)
-        assert event == {"pid": proc.pid, "event": psutil.PROC_EVENT_EXEC}
+        if psutil.LINUX:
+            event = self.read_until_pid(proc.pid)
+            assert event == {"pid": proc.pid, "event": psutil.PROC_EVENT_EXEC}
 
         proc.terminate()
         proc.wait()
         event = self.read_until_pid(proc.pid)
-        assert event == {
+        expected = {
             "pid": proc.pid,
             "event": psutil.PROC_EVENT_EXIT,
             "exit_code": abs(proc.returncode),
         }
+        if psutil.WINDOWS:
+            expected["ppid"] = os.getpid()
+        assert event == expected
 
     @pytest.mark.xdist_group(name="serial")
+    @pytest.mark.skipif(not psutil.LINUX, reason="LINUX only")
     def test_fork_thread(self):
         p = psutil.Process()
         nthreads = len(p.threads())
@@ -98,10 +103,14 @@ class TestProcessWatcher(PsutilTestCase):
                 linux_set_proc_name(name)
 
     def test_ctx_manager(self):
-        assert self.pw.sock is not None
-        with self.pw as pw:
-            assert pw is self.pw
-        assert self.pw.sock is None
+        if psutil.LINUX:
+            assert self.pw.sock is not None
+            with self.pw as pw:
+                assert pw is self.pw
+            assert self.pw.sock is None
+        else:
+            with self.pw as pw:
+                assert pw is self.pw
 
     def test_closed(self):
         self.pw.close()
