@@ -41,23 +41,28 @@ class TestProcessWatcher(PsutilTestCase):
         proc = self.spawn_testproc()
         event = self.read_until_pid(proc.pid)
         assert event == {
-            "pid": proc.pid,
             "event": psutil.PROC_EVENT_FORK,
+            "pid": proc.pid,
             "ppid": os.getpid(),
             "is_thread": False,
         }
 
         if psutil.LINUX:
             event = self.read_until_pid(proc.pid)
-            assert event == {"pid": proc.pid, "event": psutil.PROC_EVENT_EXEC}
+            assert event == {
+                "event": psutil.PROC_EVENT_EXEC,
+                "pid": proc.pid,
+                "is_thread": False,
+            }
 
         proc.terminate()
         proc.wait()
         event = self.read_until_pid(proc.pid)
         expected = {
-            "pid": proc.pid,
             "event": psutil.PROC_EVENT_EXIT,
+            "pid": proc.pid,
             "exit_code": abs(proc.returncode),
+            "is_thread": False,
         }
         if psutil.WINDOWS:
             expected["ppid"] = os.getpid()
@@ -85,6 +90,7 @@ class TestProcessWatcher(PsutilTestCase):
             "event": psutil.PROC_EVENT_EXIT,
             "pid": tid,
             "exit_code": 0,
+            "is_thread": True,
         }
 
     @pytest.mark.skipif(not psutil.LINUX, reason="LINUX only")
@@ -96,6 +102,7 @@ class TestProcessWatcher(PsutilTestCase):
             assert event == {
                 "event": psutil.PROC_EVENT_COMM,
                 "pid": os.getpid(),
+                "is_thread": False,
             }
             assert psutil.Process().name() == "hello there"
         finally:

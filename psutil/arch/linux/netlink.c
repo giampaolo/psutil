@@ -77,6 +77,7 @@ handle_message(struct cn_msg *cn_message) {
     struct proc_event *ev;
     __kernel_pid_t pid = -1;
     __kernel_pid_t ppid = -1;
+    __kernel_pid_t tgid = -1;
     int euid = -1;
     int egid = -1;
     int exit_code = -1;
@@ -89,24 +90,22 @@ handle_message(struct cn_msg *cn_message) {
     switch (ev->what) {
         case PROC_EVENT_FORK:  // a new process is created (child)
             pid = ev->event_data.fork.child_pid;
-            if (ev->event_data.fork.child_pid != ev->event_data.fork.child_tgid) {
-                py_is_thread = Py_True;
-                // This distinction also exists in forkstat, and it's
-                // confirmed by unit tests.
-                // https://github.com/ColinIanKing/forkstat/blob/6d3bea2af4d7fa923b4647feb40244f154f9f5ad/forkstat.c#L700-L733
+            tgid = ev->event_data.fork.child_tgid;
+            // This distinction also exists in forkstat, and it's
+            // confirmed by unit tests.
+            // https://github.com/ColinIanKing/forkstat/blob/6d3bea2af4d7fa923b4647feb40244f154f9f5ad/forkstat.c#L700-L733
+            if (pid != tgid)
                 ppid = ev->event_data.fork.child_tgid;
-            }
-            else {
-                py_is_thread = Py_False;
+            else
                 ppid = ev->event_data.fork.parent_pid;
-            }
-            Py_INCREF(py_is_thread);
             break;
         case PROC_EVENT_EXEC:  // process executed new program via execv*()
             pid = ev->event_data.exec.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             break;
         case PROC_EVENT_EXIT:  // process gone
             pid = ev->event_data.exit.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             exit_code = (int)ev->event_data.exit.exit_code;
             break;
         // NOTE: does not work as expected. Apparently we only ever get
@@ -117,20 +116,25 @@ handle_message(struct cn_msg *cn_message) {
         //     break;
         case PROC_EVENT_UID:  // process user changed
             pid = ev->event_data.exec.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             euid = (unsigned int)ev->event_data.id.e.euid;
             break;
         case PROC_EVENT_GID:  // process group changed
             pid = ev->event_data.exec.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             egid = (unsigned int)ev->event_data.id.e.egid;
             break;
         case PROC_EVENT_SID:  // process SID changed (e.g. sudo was used)
             pid = ev->event_data.exec.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             break;
         case PROC_EVENT_COMM:  // process changed its name or command line
             pid = ev->event_data.exec.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             break;
         case PROC_EVENT_PTRACE:  // process via being traced via ptrace() (debug)
             pid = ev->event_data.exec.process_pid;
+            tgid = ev->event_data.exec.process_tgid;
             break;
         case PROC_EVENT_COREDUMP:  // process generated a coredump
             pid = ev->event_data.fork.child_pid;
@@ -171,13 +175,6 @@ handle_message(struct cn_msg *cn_message) {
         Py_CLEAR(py_item);
     }
 
-    // is thread? (fork)
-    if (py_is_thread != NULL) {
-        if (PyDict_SetItemString(py_dict, "is_thread", py_is_thread))
-            goto error;
-        Py_CLEAR(py_is_thread);
-    }
-
     // exit code
     if (exit_code != -1) {
         py_item = Py_BuildValue("I", exit_code);
@@ -207,6 +204,16 @@ handle_message(struct cn_msg *cn_message) {
             goto error;
         Py_CLEAR(py_item);
     }
+
+    // is thread?
+    if (pid != tgid)
+        py_is_thread = Py_True;
+    else
+        py_is_thread = Py_False;
+    Py_INCREF(py_is_thread);
+    if (PyDict_SetItemString(py_dict, "is_thread", py_is_thread))
+        goto error;
+    Py_CLEAR(py_is_thread);
 
     return py_dict;
 
