@@ -974,7 +974,7 @@ class Process:
         return os.path.normpath(path)
 
     @wrap_exceptions
-    def open_files(self):
+    def open_files(self, only_regular=True):
         if self.pid in {0, 4}:
             return []
         ret = set()
@@ -985,9 +985,11 @@ class Process:
         raw_file_names = cext.proc_open_files(self.pid)
         for file in raw_file_names:
             file = convert_dos_path(file)
-            if isfile_strict(file):
-                ntuple = _common.popenfile(file, -1)
-                ret.add(ntuple)
+            if only_regular and not isfile_strict(file):
+                continue
+
+            ntuple = _common.popenfile(file, -1)
+            ret.add(ntuple)
         return list(ret)
 
     @wrap_exceptions

@@ -595,22 +595,26 @@ class Process:
         return ret
 
     @wrap_exceptions
-    def open_files(self):
+    def open_files(self, only_regular=True):
         retlist = []
         hit_enoent = False
         procfs_path = self._procfs_path
         pathdir = f"{procfs_path}/{self.pid}/path"
         for fd in os.listdir(f"{procfs_path}/{self.pid}/fd"):
             path = os.path.join(pathdir, fd)
+            is_regular_file = False
             if os.path.islink(path):
                 try:
-                    file = os.readlink(path)
+                    path = os.readlink(path)
                 except FileNotFoundError:
                     hit_enoent = True
                     continue
                 else:
-                    if isfile_strict(file):
-                        retlist.append(_common.popenfile(file, int(fd)))
+                    if isfile_strict(path):
+                        is_regular_file = True
+
+            if only_regular and not is_regular_file:
+                retlist.append(_common.popenfile(path, int(fd)))
         if hit_enoent:
             self._assert_alive()
         return retlist

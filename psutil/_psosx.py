@@ -486,15 +486,17 @@ class Process:
         return self._get_pidtaskinfo()[pidtaskinfo_map['numthreads']]
 
     @wrap_exceptions
-    def open_files(self):
+    def open_files(self, only_regular=True):
         if self.pid == 0:
             return []
         files = []
         rawlist = cext.proc_open_files(self.pid)
         for path, fd in rawlist:
-            if isfile_strict(path):
-                ntuple = _common.popenfile(path, fd)
-                files.append(ntuple)
+            if only_regular and not isfile_strict(path):
+                continue
+
+            ntuple = _common.popenfile(path, fd)
+            files.append(ntuple)
         return files
 
     @wrap_exceptions
