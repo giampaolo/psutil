@@ -365,7 +365,7 @@ class Process:
 
     def _get_ident(self):
         """Return a (pid, uid) tuple which is supposed to identify a
-        Process instance univocally over time. The PID alone is not
+        Process instance unequivocally over time. The PID alone is not
         enough, as it can be assigned to a new process after this one
         terminates, so we add process creation time to the mix. We need
         this in order to prevent killing the wrong process later on.
@@ -386,6 +386,11 @@ class Process:
             # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
             self._create_time = self._proc.create_time(fast_only=True)
             return (self.pid, self._create_time)
+        elif LINUX:
+            # Use 'monotonic' process starttime since boot to form unique process identity,
+            # since it is stable over changes to system time
+            create_monotonic = self._proc.create_monotonic()
+            return (self.pid, create_monotonic)
         else:
             return (self.pid, self.create_time())
 
