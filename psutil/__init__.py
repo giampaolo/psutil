@@ -387,8 +387,9 @@ class Process:
             self._create_time = self._proc.create_time(fast_only=True)
             return (self.pid, self._create_time)
         elif LINUX:
-            # Use 'monotonic' process starttime since boot to form unique process identity,
-            # since it is stable over changes to system time
+            # Use 'monotonic' process starttime since boot to form unique
+            # process identity, since it is stable over changes to system
+            # time
             create_monotonic = self._proc.create_monotonic()
             return (self.pid, create_monotonic)
         else:
