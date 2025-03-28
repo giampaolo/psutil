@@ -478,6 +478,10 @@ class TestSystemAPIs(PsutilTestCase):
                 assert abs(usage.free - sys_free) < tolerance
                 assert abs(usage.percent - sys_percent) <= 1
 
+    def test_boot_time(self):
+        bt = time.time() - time.clock_gettime(time.CLOCK_BOOTTIME)
+        assert abs(psutil.boot_time() - bt) < 1  # 1 sec tolerance
+
 
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestMisc(PsutilTestCase):

@@ -238,9 +238,6 @@ class TestMiscAPIs(PsutilTestCase):
         assert bt > 0
         assert bt < time.time()
 
-        bt = time.time() - time.clock_gettime(time.CLOCK_BOOTTIME)
-        assert abs(psutil.boot_time() - bt) < 1  # 1 sec tolerance
-
     @pytest.mark.skipif(
         CI_TESTING and not psutil.users(), reason="unreliable on CI"
     )
