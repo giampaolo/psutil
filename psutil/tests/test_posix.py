@@ -478,7 +478,7 @@ class TestSystemAPIs(PsutilTestCase):
                 assert abs(usage.free - sys_free) < tolerance
                 assert abs(usage.percent - sys_percent) <= 1
 
-    @pytest.mark.skipif(
+    @pytest.mark.skipif(  # python 3.7
         hasattr(time, "CLOCK_BOOTTIME"), reason="CLOCK_BOOTTIME not supported"
     )
     def test_boot_time(self):
