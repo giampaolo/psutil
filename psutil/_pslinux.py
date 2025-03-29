@@ -1624,9 +1624,9 @@ def ppid_map():
             with open_binary(f"{procfs_path}/{pid}/stat") as f:
                 data = f.read()
         except (FileNotFoundError, ProcessLookupError):
-            # Note: we should be able to access /stat for all processes
-            # aka it's unlikely we'll bump into EPERM, which is good.
             pass
+        except PermissionError as err:
+            raise AccessDenied(pid) from err
         else:
             rpar = data.rfind(b')')
             dset = data[rpar + 2 :].split()

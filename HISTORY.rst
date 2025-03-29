@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
   to a race condition.
+- 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
+  now raise `AccessDenied`_ instead.
 
 7.0.0
 =====
