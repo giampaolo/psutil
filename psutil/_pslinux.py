@@ -2233,7 +2233,7 @@ class Process:
         return PROC_STATUSES.get(letter, '?')
 
     @wrap_exceptions
-    def open_files(self):
+    def open_files(self, only_regular=True):
         retlist = []
         files = os.listdir(f"{self._procfs_path}/{self.pid}/fd")
         hit_enoent = False
@@ -2259,23 +2259,26 @@ class Process:
                 # whether it's a regular file or not, so we skip it.
                 # A regular file is always supposed to be have an
                 # absolute path though.
-                if path.startswith('/') and isfile_strict(path):
-                    # Get file position and flags.
-                    file = f"{self._procfs_path}/{self.pid}/fdinfo/{fd}"
-                    try:
-                        with open_binary(file) as f:
-                            pos = int(f.readline().split()[1])
-                            flags = int(f.readline().split()[1], 8)
-                    except (FileNotFoundError, ProcessLookupError):
-                        # fd gone in the meantime; process may
-                        # still be alive
-                        hit_enoent = True
-                    else:
-                        mode = file_flags_to_mode(flags)
-                        ntuple = popenfile(
-                            path, int(fd), int(pos), mode, flags
-                        )
-                        retlist.append(ntuple)
+                is_regular_file = path.startswith('/') and isfile_strict(path)
+                if only_regular and not is_regular_file:
+                    continue
+
+                # Get file position and flags.
+                file = f"{self._procfs_path}/{self.pid}/fdinfo/{fd}"
+                try:
+                    with open_binary(file) as f:
+                        pos = int(f.readline().split()[1])
+                        flags = int(f.readline().split()[1], 8)
+                except (FileNotFoundError, ProcessLookupError):
+                    # fd gone in the meantime; process may
+                    # still be alive
+                    hit_enoent = True
+                else:
+                    mode = file_flags_to_mode(flags)
+                    ntuple = popenfile(
+                        path, int(fd), int(pos), mode, flags
+                    )
+                    retlist.append(ntuple)
         if hit_enoent:
             self._raise_if_not_alive()
         return retlist

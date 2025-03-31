@@ -1202,12 +1202,12 @@ class Process:
                 nt = _psplatform.pmmap_ext
                 return [nt(*x) for x in it]
 
-    def open_files(self):
+    def open_files(self, only_regular=True):
         """Return files opened by process as a list of
         (path, fd) namedtuples including the absolute file name
         and file descriptor number.
         """
-        return self._proc.open_files()
+        return self._proc.open_files(only_regular=only_regular)
 
     def net_connections(self, kind='inet'):
         """Return socket connections opened by process as a list of

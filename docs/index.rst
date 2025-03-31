@@ -1844,10 +1844,10 @@ Process class
     See also how to `kill a process tree <#kill-process-tree>`__ and
     `terminate my children <#terminate-my-children>`__.
 
-  .. method:: open_files()
+  .. method:: open_files(only_regular=True)
 
-    Return regular files opened by process as a list of named tuples including
-    the following fields:
+    Return files (optionally filtered to only regular files) opened by process
+    as a list of named tuples including the following fields:
 
     - **path**: the absolute file name.
     - **fd**: the file descriptor number; on Windows this is always ``-1``.
