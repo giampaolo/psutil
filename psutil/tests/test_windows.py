@@ -442,17 +442,14 @@ class TestProcess(WindowsTestCase):
     # XXX - occasional failures
 
     # def test_cpu_times(self):
-    #     handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
-    #                                   win32con.FALSE, os.getpid())
+    #     handle = win32api.OpenProcess(
+    #         win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
+    #     )
     #     self.addCleanup(win32api.CloseHandle, handle)
-    #     sys_value = win32process.GetProcessTimes(handle)
-    #     psutil_value = psutil.Process().cpu_times()
-    #     self.assertAlmostEqual(
-    #         psutil_value.user, sys_value['UserTime'] / 10000000.0,
-    #         delta=0.2)
-    #     self.assertAlmostEqual(
-    #         psutil_value.user, sys_value['KernelTime'] / 10000000.0,
-    #         delta=0.2)
+    #     a = psutil.Process().cpu_times()
+    #     b = win32process.GetProcessTimes(handle)
+    #     assert abs(a.user - b['UserTime'] / 10000000.0) < 0.2
+    #     assert abs(a.user - b['KernelTime'] / 10000000.0) < 0.2
 
     def test_nice(self):
         handle = win32api.OpenProcess(

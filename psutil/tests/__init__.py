@@ -1094,12 +1094,12 @@ class PsutilTestCase(unittest.TestCase):
 
         # __eq__ can't be relied upon because creation time may not be
         # querable.
-        # self.assertEqual(proc, psutil.Process(proc.pid))
+        # assert proc ==  psutil.Process(proc.pid)
 
         # XXX should we also assume ppid() to be usable? Note: this
         # would be an important use case as the only way to get
         # rid of a zombie is to kill its parent.
-        # self.assertEqual(proc.ppid(), os.getpid())
+        # assert proc == ppid(), os.getpid()
 
 
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
@@ -1263,7 +1263,12 @@ class TestMemoryLeak(PsutilTestCase):
         """
 
         def call():
-            self.assertRaises(exc, fun)
+            try:
+                fun()
+            except exc:
+                pass
+            else:
+                raise self.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
 

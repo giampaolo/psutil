@@ -48,14 +48,14 @@ def proc_info(pid):
     tcase = PsutilTestCase()
 
     def check_exception(exc, proc, name, ppid):
-        tcase.assertEqual(exc.pid, pid)
+        assert exc.pid == pid
         if exc.name is not None:
-            tcase.assertEqual(exc.name, name)
+            assert exc.name == name
         if isinstance(exc, psutil.ZombieProcess):
             tcase.assertProcessZombie(proc)
             if exc.ppid is not None:
                 tcase.assertGreaterEqual(exc.ppid, 0)
-                tcase.assertEqual(exc.ppid, ppid)
+                assert exc.ppid == ppid
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assertProcessGone(proc)
         str(exc)

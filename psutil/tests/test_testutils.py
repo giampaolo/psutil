@@ -523,7 +523,7 @@ class TestFakePytest(PsutilTestCase):
                         pass
                 """).lstrip())
         with mock.patch.object(psutil.tests, "HERE", tmpdir):
-            with self.assertWarnsRegex(
+            with unittest.TestCase().assertWarnsRegex(
                 UserWarning, "Fake pytest module was used"
             ):
                 suite = fake_pytest.main()

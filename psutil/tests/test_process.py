@@ -278,8 +278,8 @@ class TestProcess(PsutilTestCase):
         waste_cpu()
         a = psutil.Process().cpu_times()
         b = os.times()
-        self.assertAlmostEqual(a.user, b.user, delta=0.1)
-        self.assertAlmostEqual(a.system, b.system, delta=0.1)
+        assert abs(a.user - b.user) < 0.1
+        assert abs(a.system - b.system) < 0.1
 
     @pytest.mark.skipif(not HAS_PROC_CPU_NUM, reason="not supported")
     def test_cpu_num(self):

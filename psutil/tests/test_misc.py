@@ -342,7 +342,7 @@ class TestMisc(PsutilTestCase):
         with mock.patch.object(
             psutil.Process, '_get_ident', side_effect=psutil.NoSuchProcess(1)
         ) as meth:
-            with self.assertRaises(psutil.NoSuchProcess):
+            with pytest.raises(psutil.NoSuchProcess):
                 psutil.Process()
             assert meth.called
 

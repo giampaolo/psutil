@@ -914,7 +914,7 @@ class TestSystemCPUStats(PsutilTestCase):
     # def test_ctx_switches(self):
     #     vmstat_value = vmstat("context switches")
     #     psutil_value = psutil.cpu_stats().ctx_switches
-    #     self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+    #     assert abs(vmstat_value - psutil_value) < 500
 
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
@@ -977,8 +977,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
     #             found += 1
     #             name = line.split(':')[1].strip()
     #             self.assertIn(name, nics)
-    #     self.assertEqual(len(nics), found, msg="{}\n---\n{}".format(
-    #         pprint.pformat(nics), out))
+    #     assert len(nics) == found
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
@@ -1524,14 +1523,12 @@ class TestMisc(PsutilTestCase):
                 psutil.cpu_times(percpu=True)
             with pytest.raises(OSError):
                 psutil.boot_time()
-            # self.assertRaises(OSError, psutil.pids)
             with pytest.raises(OSError):
                 psutil.net_connections()
             with pytest.raises(OSError):
                 psutil.net_io_counters()
             with pytest.raises(OSError):
                 psutil.net_if_stats()
-            # self.assertRaises(OSError, psutil.disk_io_counters)
             with pytest.raises(OSError):
                 psutil.disk_partitions()
             with pytest.raises(psutil.NoSuchProcess):
@@ -1966,14 +1963,6 @@ class TestProcess(PsutilTestCase):
         ) as m:
             assert psutil._pslinux.Process(os.getpid()).terminal() is None
             assert m.called
-
-    # TODO: re-enable this test.
-    # def test_num_ctx_switches_mocked(self):
-    #     with mock.patch('psutil._common.open', create=True) as m:
-    #         self.assertRaises(
-    #             NotImplementedError,
-    #             psutil._pslinux.Process(os.getpid()).num_ctx_switches)
-    #         assert m.called
 
     def test_cmdline_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/639
