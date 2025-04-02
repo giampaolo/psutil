@@ -553,6 +553,10 @@ class TestFakePytest(PsutilTestCase):
         else:
             raise pytest.fail("exception not raised")
 
+    def test_fail(self):
+        with fake_pytest.raises(fake_pytest.fail.Exception):
+            raise fake_pytest.fail("reason")
+
 
 class TestTestingUtils(PsutilTestCase):
     def test_process_namespace(self):
