@@ -1263,7 +1263,12 @@ class TestMemoryLeak(PsutilTestCase):
         """
 
         def call():
-            self.assertRaises(exc, fun)
+            try:
+                fun()
+            except exc:
+                pass
+            else:
+                raise self.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
 

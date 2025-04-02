@@ -1523,14 +1523,12 @@ class TestMisc(PsutilTestCase):
                 psutil.cpu_times(percpu=True)
             with pytest.raises(OSError):
                 psutil.boot_time()
-            # self.assertRaises(OSError, psutil.pids)
             with pytest.raises(OSError):
                 psutil.net_connections()
             with pytest.raises(OSError):
                 psutil.net_io_counters()
             with pytest.raises(OSError):
                 psutil.net_if_stats()
-            # self.assertRaises(OSError, psutil.disk_io_counters)
             with pytest.raises(OSError):
                 psutil.disk_partitions()
             with pytest.raises(psutil.NoSuchProcess):
@@ -1965,14 +1963,6 @@ class TestProcess(PsutilTestCase):
         ) as m:
             assert psutil._pslinux.Process(os.getpid()).terminal() is None
             assert m.called
-
-    # TODO: re-enable this test.
-    # def test_num_ctx_switches_mocked(self):
-    #     with mock.patch('psutil._common.open', create=True) as m:
-    #         self.assertRaises(
-    #             NotImplementedError,
-    #             psutil._pslinux.Process(os.getpid()).num_ctx_switches)
-    #         assert m.called
 
     def test_cmdline_mocked(self):
         # see: https://github.com/giampaolo/psutil/issues/639
