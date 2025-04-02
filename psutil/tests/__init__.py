@@ -964,11 +964,6 @@ if pytest is None:
     # pytest not installed
     pytest = fake_pytest
     fake_pytest._warn_on_exit()
-elif "PYTEST_VERSION" not in os.environ:
-    # test run likely invoked via `python3 -m unittest`
-    pytest = fake_pytest
-    sys.modules["pytest"] = fake_pytest
-    fake_pytest._warn_on_exit()
 
 
 class PsutilTestCase(unittest.TestCase):
