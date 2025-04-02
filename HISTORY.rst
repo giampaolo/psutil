@@ -11,6 +11,7 @@ XXXX-XX-XX
   to a race condition.
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
+- 2473_, [macOS]: Fix build issue on macOS 11 and lower.
 
 7.0.0
 =====

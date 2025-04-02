@@ -34,6 +34,10 @@ For reference, here's the git history with original implementations:
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
+// added in macOS 12
+#ifndef kIOMainPortDefault
+    #define kIOMainPortDefault 0
+#endif
 
 PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
