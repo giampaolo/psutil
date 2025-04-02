@@ -1093,13 +1093,12 @@ class TestSystemNetConnections(PsutilTestCase):
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
     def test_emulate_ipv6_unsupported(self, supports_ipv6, inet_ntop):
         # see: https://github.com/giampaolo/psutil/issues/623
-        try:
-            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-            self.addCleanup(s.close)
-            s.bind(("::1", 0))
-        except OSError:
-            pass
-        psutil.net_connections(kind='inet6')
+        with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("::1", 0))
+            except OSError:
+                pass
+            psutil.net_connections(kind='inet6')
 
     def test_emulate_unix(self):
         content = textwrap.dedent("""\
