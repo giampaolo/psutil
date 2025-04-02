@@ -914,7 +914,7 @@ class TestSystemCPUStats(PsutilTestCase):
     # def test_ctx_switches(self):
     #     vmstat_value = vmstat("context switches")
     #     psutil_value = psutil.cpu_stats().ctx_switches
-    #     self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
+    #     assert abs(vmstat_value - psutil_value) < 500
 
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")

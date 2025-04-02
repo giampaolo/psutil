@@ -389,10 +389,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             < 200000
         )
 
-    # def test_cpu_stats_traps(self):
-    #    self.assertAlmostEqual(psutil.cpu_stats().traps,
-    #                           sysctl('vm.stats.sys.v_trap'), delta=1000)
-
     # --- swap memory
 
     def test_swapmem_free(self):
