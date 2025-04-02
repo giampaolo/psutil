@@ -218,8 +218,8 @@ class TestConnectedSocket(ConnectionTestCase):
             # commenteed.
             # client.close()
             # cons = this_proc_net_connections(kind='all')
-            # self.assertEqual(len(cons), 1)
-            # self.assertEqual(cons[0].status, psutil.CONN_CLOSE_WAIT)
+            # assert len(cons) == 1
+            # assert cons[0].status == psutil.CONN_CLOSE_WAIT
         finally:
             server.close()
             client.close()

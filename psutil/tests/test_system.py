@@ -807,8 +807,9 @@ class TestNetAPIs(PsutilTestCase):
 
         # Not reliable on all platforms (net_if_addrs() reports more
         # interfaces).
-        # self.assertEqual(sorted(nics.keys()),
-        #                  sorted(psutil.net_io_counters(pernic=True).keys()))
+        # assert sorted(nics.keys()) == sorted(
+        #     psutil.net_io_counters(pernic=True).keys()
+        # )
 
         families = {socket.AF_INET, socket.AF_INET6, psutil.AF_LINK}
         for nic, addrs in nics.items():

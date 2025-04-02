@@ -977,8 +977,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
     #             found += 1
     #             name = line.split(':')[1].strip()
     #             self.assertIn(name, nics)
-    #     self.assertEqual(len(nics), found, msg="{}\n---\n{}".format(
-    #         pprint.pformat(nics), out))
+    #     assert len(nics) == found
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
