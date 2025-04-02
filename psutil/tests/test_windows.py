@@ -141,7 +141,7 @@ class TestSystemAPIs(WindowsTestCase):
             if "pseudo-interface" in nic.replace(' ', '-').lower():
                 continue
             if nic not in out:
-                raise self.fail(
+                raise pytest.fail(
                     f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
 
@@ -222,10 +222,12 @@ class TestSystemAPIs(WindowsTestCase):
                     assert usage.free == wmi_free
                     # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
-                        raise self.fail(f"psutil={usage.free}, wmi={wmi_free}")
+                        raise pytest.fail(
+                            f"psutil={usage.free}, wmi={wmi_free}"
+                        )
                     break
             else:
-                raise self.fail(f"can't find partition {ps_part!r}")
+                raise pytest.fail(f"can't find partition {ps_part!r}")
 
     @retry_on_failure()
     def test_disk_usage(self):
@@ -621,7 +623,7 @@ class TestProcessWMI(WindowsTestCase):
         # returned instead.
         wmi_usage = int(w.PageFileUsage)
         if vms not in {wmi_usage, wmi_usage * 1024}:
-            raise self.fail(f"wmi={wmi_usage}, psutil={vms}")
+            raise pytest.fail(f"wmi={wmi_usage}, psutil={vms}")
 
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]

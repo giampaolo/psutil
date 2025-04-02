@@ -943,6 +943,11 @@ class fake_pytest:
         """Mimics `unittest.SkipTest`."""
         raise unittest.SkipTest(reason)
 
+    @staticmethod
+    def fail(reason=""):
+        """Mimics `pytest.fail`."""
+        return unittest.TestCase().fail(reason)
+
     class mark:
 
         @staticmethod
@@ -958,6 +963,10 @@ class fake_pytest:
 
             def __call__(self, cls_or_meth):
                 return cls_or_meth
+
+
+# to make pytest.fail() exception catchable
+fake_pytest.fail.Exception = AssertionError
 
 
 if pytest is None:
@@ -1194,13 +1203,13 @@ class TestMemoryLeak(PsutilTestCase):
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            raise self.fail(msg)
+            raise pytest.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
             msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            raise self.fail(msg)
+            raise pytest.fail(msg)
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
@@ -1241,7 +1250,7 @@ class TestMemoryLeak(PsutilTestCase):
                 self._log(msg)
                 times += increase
                 prev_mem = mem
-        raise self.fail(". ".join(messages))
+        raise pytest.fail(". ".join(messages))
 
     # ---
 
@@ -1281,7 +1290,7 @@ class TestMemoryLeak(PsutilTestCase):
             except exc:
                 pass
             else:
-                raise self.fail(f"{fun} did not raise {exc}")
+                raise pytest.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
 

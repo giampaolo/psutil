@@ -324,9 +324,9 @@ class TestMemoryAPIs(PsutilTestCase):
                 assert isinstance(value, int)
             if name != 'total':
                 if not value >= 0:
-                    raise self.fail(f"{name!r} < 0 ({value})")
+                    raise pytest.fail(f"{name!r} < 0 ({value})")
                 if value > mem.total:
-                    raise self.fail(
+                    raise pytest.fail(
                         f"{name!r} > total (total={mem.total}, {name}={value})"
                     )
 
@@ -429,7 +429,7 @@ class TestCpuAPIs(PsutilTestCase):
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
                 return
-        raise self.fail("time remained the same")
+        raise pytest.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
@@ -472,7 +472,7 @@ class TestCpuAPIs(PsutilTestCase):
         giveup_at = time.time() + GLOBAL_TIMEOUT
         while True:
             if time.time() >= giveup_at:
-                return self.fail("timeout")
+                return pytest.fail("timeout")
             tot2 = psutil.cpu_times(percpu=True)
             for t1, t2 in zip(tot1, tot2):
                 t1, t2 = psutil._cpu_busy_time(t1), psutil._cpu_busy_time(t2)

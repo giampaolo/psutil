@@ -232,7 +232,7 @@ class TestProcess(PsutilTestCase):
             except psutil.TimeoutExpired:
                 pass
         else:
-            raise self.fail('timeout')
+            raise pytest.fail('timeout')
         if POSIX:
             assert code == -signal.SIGKILL
         else:
@@ -300,7 +300,7 @@ class TestProcess(PsutilTestCase):
         # It will fail if the difference between the values is > 2s.
         difference = abs(create_time - now)
         if difference > 2:
-            raise self.fail(
+            raise pytest.fail(
                 f"expected: {now}, found: {create_time}, difference:"
                 f" {difference}"
             )
@@ -1091,7 +1091,7 @@ class TestProcess(PsutilTestCase):
                 ):
                     break
             else:
-                raise self.fail(f"no file found; files={p.open_files()!r}")
+                raise pytest.fail(f"no file found; files={p.open_files()!r}")
             assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1
@@ -1131,7 +1131,7 @@ class TestProcess(PsutilTestCase):
             after = sum(p.num_ctx_switches())
             if after > before:
                 return
-        raise self.fail("num ctx switches still the same after 2 iterations")
+        raise pytest.fail("num ctx switches still the same after 2 iterations")
 
     def test_ppid(self):
         p = psutil.Process()
@@ -1362,7 +1362,7 @@ class TestProcess(PsutilTestCase):
                 # NtQuerySystemInformation succeeds even if process is gone.
                 if WINDOWS and fun_name in {'exe', 'name'}:
                     return
-                raise self.fail(
+                raise pytest.fail(
                     f"{fun!r} didn't raise NSP and returned {ret!r} instead"
                 )
 

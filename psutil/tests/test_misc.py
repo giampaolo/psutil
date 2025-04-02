@@ -218,7 +218,9 @@ class TestMisc(PsutilTestCase):
                             fun.__doc__ is not None
                             and 'deprecated' not in fun.__doc__.lower()
                         ):
-                            raise self.fail(f"{name!r} not in psutil.__all__")
+                            raise pytest.fail(
+                                f"{name!r} not in psutil.__all__"
+                            )
 
         # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656

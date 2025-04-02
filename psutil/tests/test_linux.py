@@ -1032,7 +1032,7 @@ class TestSystemNetIfStats(PsutilTestCase):
                         assert ifconfig_flags == psutil_flags
 
         if not matches_found:
-            raise self.fail("no matches were found")
+            raise pytest.fail("no matches were found")
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
