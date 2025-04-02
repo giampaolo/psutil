@@ -523,7 +523,6 @@ def path_exists_strict(path):
         return True
 
 
-@memoize
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
     if not socket.has_ipv6 or AF_INET6 is None:

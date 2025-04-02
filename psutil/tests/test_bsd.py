@@ -117,9 +117,9 @@ class BSDTestCase(PsutilTestCase):
             assert usage.total == total
             # 10 MB tolerance
             if abs(usage.free - free) > 10 * 1024 * 1024:
-                raise self.fail(f"psutil={usage.free}, df={free}")
+                raise pytest.fail(f"psutil={usage.free}, df={free}")
             if abs(usage.used - used) > 10 * 1024 * 1024:
-                raise self.fail(f"psutil={usage.used}, df={used}")
+                raise pytest.fail(f"psutil={usage.used}, df={used}")
 
     @pytest.mark.skipif(
         not shutil.which("sysctl"), reason="sysctl cmd not available"

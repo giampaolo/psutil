@@ -943,6 +943,11 @@ class fake_pytest:
         """Mimics `unittest.SkipTest`."""
         raise unittest.SkipTest(reason)
 
+    @staticmethod
+    def fail(reason=""):
+        """Mimics `pytest.fail`."""
+        return unittest.TestCase().fail(reason)
+
     class mark:
 
         @staticmethod
@@ -958,6 +963,10 @@ class fake_pytest:
 
             def __call__(self, cls_or_meth):
                 return cls_or_meth
+
+
+# to make pytest.fail() exception catchable
+fake_pytest.fail.Exception = AssertionError
 
 
 if pytest is None:
@@ -1013,7 +1022,7 @@ class PsutilTestCase(unittest.TestCase):
         str(exc)
         repr(exc)
 
-    def assertPidGone(self, pid):
+    def assert_pid_gone(self, pid):
         with pytest.raises(psutil.NoSuchProcess) as cm:
             try:
                 psutil.Process(pid)
@@ -1025,8 +1034,8 @@ class PsutilTestCase(unittest.TestCase):
         assert pid not in psutil.pids()
         assert pid not in [x.pid for x in psutil.process_iter()]
 
-    def assertProcessGone(self, proc):
-        self.assertPidGone(proc.pid)
+    def assert_proc_gone(self, proc):
+        self.assert_pid_gone(proc.pid)
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
             with self.subTest(proc=proc, name=name):
@@ -1044,7 +1053,7 @@ class PsutilTestCase(unittest.TestCase):
                     raise AssertionError(msg)
         proc.wait(timeout=0)  # assert not raise TimeoutExpired
 
-    def assertProcessZombie(self, proc):
+    def assert_proc_zombie(self, proc):
         # A zombie process should always be instantiable.
         clone = psutil.Process(proc.pid)
         # Cloned zombie on Open/NetBSD has null creation time, see:
@@ -1098,7 +1107,7 @@ class PsutilTestCase(unittest.TestCase):
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(
         #                recursive=True)]
-        # self.assertIn(proc.pid, descendants)
+        # assert proc.pid in descendants
 
         # __eq__ can't be relied upon because creation time may not be
         # querable.
@@ -1189,13 +1198,13 @@ class TestMemoryLeak(PsutilTestCase):
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            raise self.fail(msg)
+            raise pytest.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
             msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            raise self.fail(msg)
+            raise pytest.fail(msg)
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
@@ -1236,7 +1245,7 @@ class TestMemoryLeak(PsutilTestCase):
                 self._log(msg)
                 times += increase
                 prev_mem = mem
-        raise self.fail(". ".join(messages))
+        raise pytest.fail(". ".join(messages))
 
     # ---
 
@@ -1276,7 +1285,7 @@ class TestMemoryLeak(PsutilTestCase):
             except exc:
                 pass
             else:
-                raise self.fail(f"{fun} did not raise {exc}")
+                raise pytest.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
 
