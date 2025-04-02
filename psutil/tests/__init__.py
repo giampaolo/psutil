@@ -886,17 +886,23 @@ class fake_pytest:
     """
 
     @staticmethod
+    def _warn_on_exit():
+        def _warn_on_exit():
+            warnings.warn(
+                "Fake pytest module was used. Test results may be inaccurate.",
+                UserWarning,
+                stacklevel=1,
+            )
+
+        atexit.register(_warn_on_exit)
+
+    @staticmethod
     def main(*args, **kw):  # noqa: ARG004
         """Mimics pytest.main(). It has the same effect as running
         `python3 -m unittest -v` from the project root directory.
         """
         suite = unittest.TestLoader().discover(HERE)
         unittest.TextTestRunner(verbosity=2).run(suite)
-        warnings.warn(
-            "Fake pytest module was used. Test results may be inaccurate.",
-            UserWarning,
-            stacklevel=1,
-        )
         return suite
 
     @staticmethod
@@ -955,7 +961,14 @@ class fake_pytest:
 
 
 if pytest is None:
+    # pytest not installed
     pytest = fake_pytest
+    fake_pytest._warn_on_exit()
+elif "PYTEST_VERSION" not in os.environ:
+    # test run likely invoked via `python3 -m unittest`
+    pytest = fake_pytest
+    sys.modules["pytest"] = fake_pytest
+    fake_pytest._warn_on_exit()
 
 
 class PsutilTestCase(unittest.TestCase):
