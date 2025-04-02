@@ -976,7 +976,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
     #         if re.search(r"^\d+:", line):
     #             found += 1
     #             name = line.split(':')[1].strip()
-    #             self.assertIn(name, nics)
+    #             assert name in nics
     #     assert len(nics) == found
 
 

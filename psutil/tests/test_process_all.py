@@ -203,7 +203,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             else:
                 raise
         # this can't be taken for granted on all platforms
-        # self.assertGreaterEqual(ret, psutil.boot_time())
+        # assert ret >= psutil.boot_time())
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))

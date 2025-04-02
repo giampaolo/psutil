@@ -1107,7 +1107,7 @@ class PsutilTestCase(unittest.TestCase):
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(
         #                recursive=True)]
-        # self.assertIn(proc.pid, descendants)
+        # assert proc.pid in descendants
 
         # __eq__ can't be relied upon because creation time may not be
         # querable.
