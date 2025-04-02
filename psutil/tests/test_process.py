@@ -78,7 +78,7 @@ class TestProcess(PsutilTestCase):
         try:
             return psutil.Process(sproc.pid)
         except psutil.NoSuchProcess:
-            self.assertPidGone(sproc.pid)
+            self.assert_pid_gone(sproc.pid)
             raise
 
     # ---
@@ -97,7 +97,7 @@ class TestProcess(PsutilTestCase):
             assert code == signal.SIGTERM
         else:
             assert code == -signal.SIGKILL
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
 
     def test_terminate(self):
         p = self.spawn_psproc()
@@ -107,7 +107,7 @@ class TestProcess(PsutilTestCase):
             assert code == signal.SIGTERM
         else:
             assert code == -signal.SIGTERM
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
 
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
@@ -118,7 +118,7 @@ class TestProcess(PsutilTestCase):
             assert code == sig
         else:
             assert code == -sig
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
 
     @pytest.mark.skipif(not POSIX, reason="not POSIX")
     def test_send_signal_mocked(self):
@@ -140,25 +140,25 @@ class TestProcess(PsutilTestCase):
         p = self.spawn_psproc(cmd)
         code = p.wait()
         assert code == 0
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
         # exit(1), implicit in case of error
         cmd = [PYTHON_EXE, "-c", "1 / 0"]
         p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
         code = p.wait()
         assert code == 1
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
         # via sys.exit()
         cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
         p = self.spawn_psproc(cmd)
         code = p.wait()
         assert code == 5
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
         # via os._exit()
         cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
         p = self.spawn_psproc(cmd)
         code = p.wait()
         assert code == 5
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
 
     @pytest.mark.skipif(NETBSD, reason="fails on NETBSD")
     def test_wait_stopped(self):
@@ -237,7 +237,7 @@ class TestProcess(PsutilTestCase):
             assert code == -signal.SIGKILL
         else:
             assert code == signal.SIGTERM
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
 
     def test_cpu_percent(self):
         p = psutil.Process()
@@ -1371,7 +1371,7 @@ class TestProcess(PsutilTestCase):
         p.wait()
         if WINDOWS:  # XXX
             call_until(lambda: p.pid not in psutil.pids())
-        self.assertProcessGone(p)
+        self.assert_proc_gone(p)
 
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.all):
@@ -1380,7 +1380,7 @@ class TestProcess(PsutilTestCase):
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process(self):
         _parent, zombie = self.spawn_zombie()
-        self.assertProcessZombie(zombie)
+        self.assert_proc_zombie(zombie)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process_is_running_w_exc(self):

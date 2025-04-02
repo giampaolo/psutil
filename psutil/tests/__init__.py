@@ -1022,7 +1022,7 @@ class PsutilTestCase(unittest.TestCase):
         str(exc)
         repr(exc)
 
-    def assertPidGone(self, pid):
+    def assert_pid_gone(self, pid):
         with pytest.raises(psutil.NoSuchProcess) as cm:
             try:
                 psutil.Process(pid)
@@ -1034,8 +1034,8 @@ class PsutilTestCase(unittest.TestCase):
         assert pid not in psutil.pids()
         assert pid not in [x.pid for x in psutil.process_iter()]
 
-    def assertProcessGone(self, proc):
-        self.assertPidGone(proc.pid)
+    def assert_proc_gone(self, proc):
+        self.assert_pid_gone(proc.pid)
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
             with self.subTest(proc=proc, name=name):
@@ -1053,7 +1053,7 @@ class PsutilTestCase(unittest.TestCase):
                     raise AssertionError(msg)
         proc.wait(timeout=0)  # assert not raise TimeoutExpired
 
-    def assertProcessZombie(self, proc):
+    def assert_proc_zombie(self, proc):
         # A zombie process should always be instantiable.
         clone = psutil.Process(proc.pid)
         # Cloned zombie on Open/NetBSD has null creation time, see:

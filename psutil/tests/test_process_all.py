@@ -52,12 +52,12 @@ def proc_info(pid):
         if exc.name is not None:
             assert exc.name == name
         if isinstance(exc, psutil.ZombieProcess):
-            tcase.assertProcessZombie(proc)
+            tcase.assert_proc_zombie(proc)
             if exc.ppid is not None:
                 tcase.assertGreaterEqual(exc.ppid, 0)
                 assert exc.ppid == ppid
         elif isinstance(exc, psutil.NoSuchProcess):
-            tcase.assertProcessGone(proc)
+            tcase.assert_proc_gone(proc)
         str(exc)
         repr(exc)
 
@@ -71,12 +71,12 @@ def proc_info(pid):
     try:
         proc = psutil.Process(pid)
     except psutil.NoSuchProcess:
-        tcase.assertPidGone(pid)
+        tcase.assert_pid_gone(pid)
         return {}
     try:
         d = proc.as_dict(['ppid', 'name'])
     except psutil.NoSuchProcess:
-        tcase.assertProcessGone(proc)
+        tcase.assert_proc_gone(proc)
     else:
         name, ppid = d['name'], d['ppid']
         info = {'pid': proc.pid}

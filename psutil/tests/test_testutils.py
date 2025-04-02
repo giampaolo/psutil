@@ -256,12 +256,12 @@ class TestProcessUtils(PsutilTestCase):
         # by subprocess.Popen
         p = self.spawn_testproc()
         terminate(p)
-        self.assertPidGone(p.pid)
+        self.assert_pid_gone(p.pid)
         terminate(p)
         # by psutil.Process
         p = psutil.Process(self.spawn_testproc().pid)
         terminate(p)
-        self.assertPidGone(p.pid)
+        self.assert_pid_gone(p.pid)
         terminate(p)
         # by psutil.Popen
         cmd = [
@@ -276,20 +276,20 @@ class TestProcessUtils(PsutilTestCase):
             env=PYTHON_EXE_ENV,
         )
         terminate(p)
-        self.assertPidGone(p.pid)
+        self.assert_pid_gone(p.pid)
         terminate(p)
         # by PID
         pid = self.spawn_testproc().pid
         terminate(pid)
-        self.assertPidGone(p.pid)
+        self.assert_pid_gone(p.pid)
         terminate(pid)
         # zombie
         if POSIX:
             parent, zombie = self.spawn_zombie()
             terminate(parent)
             terminate(zombie)
-            self.assertPidGone(parent.pid)
-            self.assertPidGone(zombie.pid)
+            self.assert_pid_gone(parent.pid)
+            self.assert_pid_gone(zombie.pid)
 
 
 class TestNetUtils(PsutilTestCase):
