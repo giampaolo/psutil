@@ -1109,14 +1109,10 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         testfn = self.get_testfn()
         start = p.num_fds()
-        file = open(testfn, 'w')  # noqa: SIM115
-        self.addCleanup(file.close)
-        assert p.num_fds() == start + 1
-        sock = socket.socket()
-        self.addCleanup(sock.close)
-        assert p.num_fds() == start + 2
-        file.close()
-        sock.close()
+        with open(testfn, 'w'):
+            assert p.num_fds() == start + 1
+            with socket.socket():
+                assert p.num_fds() == start + 2
         assert p.num_fds() == start
 
     @skip_on_not_implemented(only_if=LINUX)
