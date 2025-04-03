@@ -970,9 +970,10 @@ class Process:
                 if ppid == self.pid:
                     try:
                         child = Process(pid)
-                        ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
+                    else:
+                        ret.append(child)
         else:
             # Construct a {pid: [child pids]} dict
             reverse_ppid_map = collections.defaultdict(list)
@@ -990,13 +991,15 @@ class Process:
                     # there's a cycle in the recorded process "tree".
                     continue
                 seen.add(pid)
+
                 for child_pid in reverse_ppid_map[pid]:
                     try:
                         child = Process(child_pid)
-                        ret.append(child)
-                        stack.append(child_pid)
                     except (NoSuchProcess, ZombieProcess):
                         pass
+                    else:
+                        ret.append(child)
+                        stack.append(child_pid)
         return ret
 
     def cpu_percent(self, interval=None):
