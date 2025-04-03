@@ -593,13 +593,9 @@ class Process:
             return None
         ppid = self.ppid()
         if ppid is not None:
-            ctime = self.create_time()
             try:
-                parent = Process(ppid)
-                if parent.create_time() <= ctime:
-                    return parent
-                # ...else ppid has been reused by another process
-            except NoSuchProcess:
+                return Process(ppid)
+            except (NoSuchProcess, ZombieProcess):
                 pass
 
     def parents(self):
