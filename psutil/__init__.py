@@ -1484,7 +1484,7 @@ def process_iter(attrs=None, ad_value=None):
 
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
-    Cache can optionally be cleared via `process_iter.clear_cache()`.
+    Cache can optionally be cleared via `process_iter.cache_clear()`.
 
     The sorting order in which processes are yielded is based on
     their PIDs.
