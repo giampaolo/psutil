@@ -970,10 +970,7 @@ class Process:
                 if ppid == self.pid:
                     try:
                         child = Process(pid)
-                        # if child happens to be older than its parent
-                        # (self) it means child's PID has been reused
-                        if self.create_time() <= child.create_time():
-                            ret.append(child)
+                        ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
         else:
@@ -996,12 +993,8 @@ class Process:
                 for child_pid in reverse_ppid_map[pid]:
                     try:
                         child = Process(child_pid)
-                        # if child happens to be older than its parent
-                        # (self) it means child's PID has been reused
-                        intime = self.create_time() <= child.create_time()
-                        if intime:
-                            ret.append(child)
-                            stack.append(child_pid)
+                        ret.append(child)
+                        stack.append(child_pid)
                     except (NoSuchProcess, ZombieProcess):
                         pass
         return ret
