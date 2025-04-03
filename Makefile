@@ -11,7 +11,7 @@ SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
-PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
+PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
