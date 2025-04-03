@@ -11,7 +11,6 @@ SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
-PYTEST_ARGS = -v -s --tb=short
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1
 
 # if make is invoked with no arg, default to `make help`
@@ -92,69 +91,69 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py -n auto --dist loadgroup $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_process.py
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_process_all.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_process_all.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_system.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_misc.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_misc.py
 
 test-scripts:  ## Run scripts tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_scripts.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_scripts.py
 
 test-testutils:  ## Run test utils tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_testutils.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_testutils.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_unicode.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_contracts.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_contracts.py
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_connections.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_posix.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) $(ARGS) psutil/tests/test_memleaks.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_memleaks.py
 
 test-last-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(PYTEST_ARGS) --last-failed $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --last-failed $(ARGS)
 
 test-coverage:  ## Run test coverage.
 	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest $(PYTEST_ARGS) --ignore=psutil/tests/test_memleaks.py $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=psutil/tests/test_memleaks.py $(ARGS)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
@@ -164,8 +163,8 @@ test-ci:
 	${MAKE} install-sysdeps
 	mkdir -p .tests
 	cd .tests/ && $(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest $(PYTEST_ARGS) --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'test_memleaks.py'"     $(PYTHON) -m pytest $(PYTEST_ARGS) --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'test_memleaks.py'"     $(PYTHON) -m pytest --pyargs psutil.tests
 
 # ===================================================================
 # Linters

@@ -3,10 +3,10 @@
 # found in the LICENSE file.
 
 """Run unit tests. This is invoked by:
-$ python -m psutil.tests.
+$ python3 -m psutil.tests.
 """
 
 from psutil.tests import pytest
 
 
-pytest.main(["-v", "-s", "--tb=short"])
+pytest.main()

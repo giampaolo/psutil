@@ -25,7 +25,6 @@ import sys
 
 
 PYTHON = os.getenv('PYTHON', sys.executable)
-PYTEST_ARGS = ["-v", "-s", "--tb=short"]
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
 WINDOWS = os.name == "nt"
@@ -312,7 +311,6 @@ def test(args=None):
     args = args or []
     sh(
         [PYTHON, "-m", "pytest", "--ignore=psutil/tests/test_memleaks.py"]
-        + PYTEST_ARGS
         + args
     )
 
@@ -320,13 +318,13 @@ def test(args=None):
 def test_by_name(arg):
     """Run specific test by name."""
     build()
-    print(" ".join([PYTHON, "-m", "pytest"] + PYTEST_ARGS + [arg]))
+    print(" ".join([PYTHON, "-m", "pytest"] + [arg]))
 
 
 def test_by_regex(arg):
     """Run specific test by name."""
     build()
-    sh([PYTHON, "-m", "pytest"] + PYTEST_ARGS + ["-k", arg])
+    sh([PYTHON, "-m", "pytest"] + ["-k", arg])
 
 
 def test_parallel():
@@ -337,7 +335,7 @@ def coverage():
     """Run coverage tests."""
     # Note: coverage options are controlled by .coveragerc file
     build()
-    sh([PYTHON, "-m", "coverage", "run", "-m", "pytest"] + PYTEST_ARGS)
+    sh([PYTHON, "-m", "coverage", "run", "-m", "pytest"])
     sh([PYTHON, "-m", "coverage", "report"])
     sh([PYTHON, "-m", "coverage", "html"])
     sh([PYTHON, "-m", "webbrowser", "-t", "htmlcov/index.html"])

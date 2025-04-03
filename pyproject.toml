@@ -230,6 +230,10 @@ test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/s
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
 
+[tool.pytest.ini_options]
+addopts = "--verbose --capture=no --no-header --tb=short --instafail"
+testpaths = ["psutil/tests/"]
+
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=43"]
