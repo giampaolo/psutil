@@ -935,7 +935,7 @@ Functions
 
   Every :class:`Process` instance is only created once, and then cached for the
   next time :func:`psutil.process_iter()` is called (if PID is still alive).
-  Cache can optionally be cleared via ``process_iter.clear_cache()``.
+  Cache can optionally be cleared via ``process_iter.cache_clear()``.
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
   If *attrs* is specified :meth:`Process.as_dict()` result will be stored as a
