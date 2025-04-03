@@ -231,7 +231,7 @@ test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/s
 archs = ["arm64", "x86_64"]
 
 [tool.pytest.ini_options]
-addopts = "--verbose --capture=no --no-header --tb=short --instafail"
+addopts = "--verbose --capture=no --no-header --tb=short --strict-config --strict-markers --instafail"
 testpaths = ["psutil/tests/"]
 
 [build-system]
