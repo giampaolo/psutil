@@ -593,13 +593,9 @@ class Process:
             return None
         ppid = self.ppid()
         if ppid is not None:
-            ctime = self.create_time()
             try:
-                parent = Process(ppid)
-                if parent.create_time() <= ctime:
-                    return parent
-                # ...else ppid has been reused by another process
-            except NoSuchProcess:
+                return Process(ppid)
+            except (NoSuchProcess, ZombieProcess):
                 pass
 
     def parents(self):
@@ -970,12 +966,10 @@ class Process:
                 if ppid == self.pid:
                     try:
                         child = Process(pid)
-                        # if child happens to be older than its parent
-                        # (self) it means child's PID has been reused
-                        if self.create_time() <= child.create_time():
-                            ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
+                    else:
+                        ret.append(child)
         else:
             # Construct a {pid: [child pids]} dict
             reverse_ppid_map = collections.defaultdict(list)
@@ -993,17 +987,15 @@ class Process:
                     # there's a cycle in the recorded process "tree".
                     continue
                 seen.add(pid)
+
                 for child_pid in reverse_ppid_map[pid]:
                     try:
                         child = Process(child_pid)
-                        # if child happens to be older than its parent
-                        # (self) it means child's PID has been reused
-                        intime = self.create_time() <= child.create_time()
-                        if intime:
-                            ret.append(child)
-                            stack.append(child_pid)
                     except (NoSuchProcess, ZombieProcess):
                         pass
+                    else:
+                        ret.append(child)
+                        stack.append(child_pid)
         return ret
 
     def cpu_percent(self, interval=None):

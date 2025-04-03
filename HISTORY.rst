@@ -7,11 +7,15 @@ XXXX-XX-XX
 
 **Bug fixes**
 
+- 2473_, [macOS]: Fix build issue on macOS 11 and lower.
 - 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
   to a race condition.
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
-- 2473_, [macOS]: Fix build issue on macOS 11 and lower.
+- 2533_: `Process.children()`_ previously skipped all PIDs lower than the
+  parent PID, based on the incorrect assumption that a lower child PID
+  indicated PID reuse. However, this assumption was flawed, as PIDs can restart
+  from 0. The same problem also affected `Process.parent()`_.
 
 7.0.0
 =====
