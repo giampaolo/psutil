@@ -239,7 +239,12 @@ addopts = '''
     --strict-config
     --strict-markers
     --instafail
+    -p no:junitxml
+    -p no:doctest
+    -p no:nose
+    -p no:pastebin
     -p instafail
+    -p subtests
     '''
 testpaths = ["psutil/tests/"]
 
