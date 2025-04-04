@@ -877,6 +877,30 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 
 
+def fake_xdist_group(*_args, **_kwargs):
+    """Mimics `@pytest.mark.xdist_group` decorator. No-op: it just
+    calls the test method or return the decorated class.
+    """
+
+    def wrapper(obj):
+        @functools.wraps(obj)
+        def inner(*args, **kwargs):
+            return obj(*args, **kwargs)
+
+        return obj if isinstance(obj, type) else inner
+
+    return wrapper
+
+
+if not PYTEST_PARALLEL:
+    # Fake @pytest.mark.xdist_group decorator. This is here so that we
+    # can run pytest with PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 env var, and
+    # hence avoid loading pytest-xdist plugin (faster pytest startup).
+    # When we want to run parallel test we will explicitly enable
+    # pytest-xdist from the cmdline via `pytest -p xdist …`.
+    pytest.mark.xdist_group = fake_xdist_group
+
+
 class fake_pytest:
     """A class that mimics some basic pytest APIs. This is meant for
     when unit tests are run in production, where pytest may not be
@@ -955,14 +979,7 @@ class fake_pytest:
             """Mimics `@pytest.mark.skipif` decorator."""
             return unittest.skipIf(condition, reason)
 
-        class xdist_group:
-            """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
-
-            def __init__(self, name=None):
-                pass
-
-            def __call__(self, cls_or_meth):
-                return cls_or_meth
+        xdist_group = fake_xdist_group
 
 
 # to make pytest.fail() exception catchable

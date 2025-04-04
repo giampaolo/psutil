@@ -240,7 +240,6 @@ addopts = '''
     --strict-markers
     --instafail
     -p instafail
-    -p xdist
     '''
 testpaths = ["psutil/tests/"]
 
