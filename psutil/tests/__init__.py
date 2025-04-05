@@ -751,7 +751,7 @@ def wait_for_file(fname, delete=True, empty=False):
 
 
 @retry(
-    exception=AssertionError,
+    exception=(AssertionError, pytest.fail.Exception),
     logfun=None,
     timeout=GLOBAL_TIMEOUT,
     interval=0.001,
@@ -1044,7 +1044,7 @@ class PsutilTestCase(unittest.TestCase):
             try:
                 psutil.Process(pid)
             except psutil.ZombieProcess:
-                raise AssertionError("wasn't supposed to raise ZombieProcess")
+                raise pytest.fail("wasn't supposed to raise ZombieProcess")
         assert cm.value.pid == pid
         assert cm.value.name is None
         assert not psutil.pid_exists(pid), pid
@@ -1658,7 +1658,10 @@ def retry_on_failure(retries=NO_RETRIES):
         print(f"{exc!r}, retrying", file=sys.stderr)  # noqa: T201
 
     return retry(
-        exception=AssertionError, timeout=None, retries=retries, logfun=logfun
+        exception=(AssertionError, pytest.fail.Exception),
+        timeout=None,
+        retries=retries,
+        logfun=logfun,
     )
 
 
