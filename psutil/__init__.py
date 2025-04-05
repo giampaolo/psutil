@@ -365,7 +365,7 @@ class Process:
 
     def _get_ident(self):
         """Return a (pid, uid) tuple which is supposed to identify a
-        Process instance unequivocally over time. The PID alone is not
+        Process instance univocally over time. The PID alone is not
         enough, as it can be assigned to a new process after this one
         terminates, so we add process creation time to the mix. We need
         this in order to prevent killing the wrong process later on.
