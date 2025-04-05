@@ -33,7 +33,6 @@ def can_update_systime():
     reason="clock_(get|set)_time() not available",
 )
 class TestUpdatedSystemTime(PsutilTestCase):
-
     def setUp(self):
         self.time_before = time.clock_gettime(time.CLOCK_REALTIME)
 

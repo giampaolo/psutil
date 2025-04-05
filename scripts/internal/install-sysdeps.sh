@@ -41,9 +41,11 @@ main() {
     if [ $HAS_APT ]; then
         $SUDO apt-get install -y python3-dev gcc
         $SUDO apt-get install -y net-tools coreutils util-linux  # for tests
+        $SUDO apt-get install -y sudo  # for test-sudo
     elif [ $HAS_YUM ]; then
         $SUDO yum install -y python3-devel gcc
         $SUDO yum install -y net-tools coreutils util-linux  # for tests
+        $SUDO yum install -y sudo  # for test-sudo
     elif [ $HAS_APK ]; then
         $SUDO apk add python3-dev gcc musl-dev linux-headers coreutils procps
     elif [ $FREEBSD ]; then
