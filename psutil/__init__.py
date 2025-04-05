@@ -389,9 +389,8 @@ class Process:
         elif LINUX:
             # Use 'monotonic' process starttime since boot to form unique
             # process identity, since it is stable over changes to system
-            # time
-            create_monotonic = self._proc.create_monotonic()
-            return (self.pid, create_monotonic)
+            # time.
+            return (self.pid, self._proc.create_monotonic())
         else:
             return (self.pid, self.create_time())
 

@@ -10,6 +10,10 @@ XXXX-XX-XX
 - 2473_, [macOS]: Fix build issue on macOS 11 and lower.
 - 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
   to a race condition.
+- 2526_, [Linux]: `Process.create_time()`_, which is used to univocally
+  identify a process over time, is subject to system clock updates, and as such
+  can lead to `Process.is_running()`_ returning a wrong result. A monotonic
+  creation time is now used instead.  (patch by Jonathan Kohler)
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
 - 2533_: `Process.children()`_ previously skipped all PIDs lower than the
