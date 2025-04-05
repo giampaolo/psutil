@@ -2198,6 +2198,10 @@ class TestProcess(PsutilTestCase):
                 assert p.net_connections() == []
                 assert m.called
 
+    def test_create_time_monotonic(self):
+        p = psutil.Process()
+        assert p._proc.create_time() != p._proc.create_time(monotonic=True)
+
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestProcessAgainstStatus(PsutilTestCase):
