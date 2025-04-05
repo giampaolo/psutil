@@ -163,6 +163,7 @@ test-sudo:  ## Run tests requiring root privileges.
 
 test-ci:
 	${MAKE} install-sysdeps
+	${MAKE} install-pydeps-test
 	mkdir -p .tests
 	cd .tests/ && $(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
