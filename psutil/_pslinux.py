@@ -81,6 +81,7 @@ HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = cext_posix.getpagesize()
+BOOT_TIME = None  # set later
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 
@@ -1556,6 +1557,7 @@ def users():
 
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
     path = f"{get_procfs_path()}/stat"
     with open_binary(path) as f:
         for line in f:
@@ -1894,7 +1896,7 @@ class Process:
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch.
         # Also use cached value if available.
-        bt = boot_time()
+        bt = BOOT_TIME or boot_time()
         return (ctime / CLOCK_TICKS) + bt
 
     @wrap_exceptions
