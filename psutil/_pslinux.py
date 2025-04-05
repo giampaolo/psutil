@@ -1901,6 +1901,11 @@ class Process:
         return (ctime / CLOCK_TICKS) + bt
 
     @wrap_exceptions
+    def create_monotonic(self):
+        ctime = float(self._parse_stat_file()['create_time'])
+        return ctime / CLOCK_TICKS
+
+    @wrap_exceptions
     def memory_info(self):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
