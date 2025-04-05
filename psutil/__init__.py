@@ -390,7 +390,7 @@ class Process:
             # Use 'monotonic' process starttime since boot to form unique
             # process identity, since it is stable over changes to system
             # time.
-            return (self.pid, self._proc.create_monotonic())
+            return (self.pid, self._proc.create_time(monotonic=True))
         else:
             return (self.pid, self.create_time())
 

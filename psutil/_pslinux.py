@@ -1665,12 +1665,20 @@ def wrap_exceptions(fun):
 class Process:
     """Linux process implementation."""
 
-    __slots__ = ["_cache", "_name", "_ppid", "_procfs_path", "pid"]
+    __slots__ = [
+        "_cache",
+        "_ctime",
+        "_name",
+        "_ppid",
+        "_procfs_path",
+        "pid",
+    ]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
+        self._ctime = None
         self._procfs_path = get_procfs_path()
 
     def _is_zombie(self):
@@ -1890,20 +1898,20 @@ class Process:
         return _psposix.wait_pid(self.pid, timeout, self._name)
 
     @wrap_exceptions
-    def create_time(self):
-        ctime = float(self._parse_stat_file()['create_time'])
-        # According to documentation, starttime is in field 21 and the
-        # unit is jiffies (clock ticks).
-        # We first divide it for clock ticks and then add uptime returning
-        # seconds since the epoch.
-        # Also use cached value if available.
-        bt = BOOT_TIME or boot_time()
-        return (ctime / CLOCK_TICKS) + bt
-
-    @wrap_exceptions
-    def create_monotonic(self):
-        ctime = float(self._parse_stat_file()['create_time'])
-        return ctime / CLOCK_TICKS
+    def create_time(self, monotonic=False):
+        # According to documentation starttime unit is jiffies (clock
+        # ticks). It is not affected by system clock updates, so we can
+        # cache the value. We first divide it for clock ticks and then
+        # add uptime returning seconds since the epoch.
+        if self._ctime is None:
+            self._ctime = (
+                float(self._parse_stat_file()['create_time']) / CLOCK_TICKS
+            )
+        if monotonic:
+            return self._ctime
+        else:
+            bt = BOOT_TIME or boot_time()
+            return self._ctime + bt
 
     @wrap_exceptions
     def memory_info(self):
