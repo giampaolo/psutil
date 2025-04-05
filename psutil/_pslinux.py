@@ -1909,9 +1909,8 @@ class Process:
             )
         if monotonic:
             return self._ctime
-        else:
-            bt = BOOT_TIME or boot_time()
-            return self._ctime + bt
+        bt = BOOT_TIME or boot_time()
+        return self._ctime + bt
 
     @wrap_exceptions
     def memory_info(self):
