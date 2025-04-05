@@ -36,7 +36,7 @@ class TestUpdatedSystemTime(PsutilTestCase):
         try:
             time.clock_settime(time.CLOCK_REALTIME, self.time_before + 3600)
         except PermissionError:
-            raise pytest.skip("needs root")
+            pytest.skip("needs root")
         else:
             self.time_updated = True
 
