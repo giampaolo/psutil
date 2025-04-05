@@ -1899,16 +1899,17 @@ class Process:
 
     @wrap_exceptions
     def create_time(self, monotonic=False):
-        # Start time unit is jiffies (clock ticks). It is not affected
-        # by system clock updates, so we can cache the value. We first
-        # divide it for clock ticks and then add uptime returning
-        # seconds since the epoch.
+        # Start time unit is expressed in jiffies (clock ticks per
+        # second). It never changes and is not affected by system clock
+        # updates.
         if self._ctime is None:
             self._ctime = (
                 float(self._parse_stat_file()['create_time']) / CLOCK_TICKS
             )
         if monotonic:
             return self._ctime
+        # Add the uptime, returning seconds since the epoch (this is
+        # subject to system clock updates).
         bt = BOOT_TIME or boot_time()
         return self._ctime + bt
 
