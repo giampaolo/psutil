@@ -1563,6 +1563,7 @@ def boot_time():
         for line in f:
             if line.startswith(b'btime'):
                 ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
                 return ret
         msg = f"line 'btime' not found in {path}"
         raise RuntimeError(msg)
