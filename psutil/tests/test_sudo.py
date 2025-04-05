@@ -8,6 +8,8 @@
 
 import time
 
+import pytest
+
 from psutil.tests import PsutilTestCase
 
 
@@ -20,7 +22,16 @@ def can_update_systime():
     return True
 
 
-class TestCreationTimes(PsutilTestCase):
+@pytest.mark.skipif(not can_update_systime(), reason="needs root")
+@pytest.mark.skipif(
+    not all((
+        hasattr(time, "clock_gettime"),
+        hasattr(time, "clock_settime"),
+        hasattr(time, "CLOCK_REALTIME"),
+    )),
+    reason="clock_(get|set)_time() not available",
+)
+class TestUpdatedSystemTime(PsutilTestCase):
 
     def setUp(self):
         self.time_before = time.clock_gettime(time.CLOCK_REALTIME)
