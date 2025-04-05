@@ -10,6 +10,7 @@ import time
 
 import pytest
 
+import psutil
 from psutil.tests import PsutilTestCase
 
 
@@ -39,5 +40,13 @@ class TestUpdatedSystemTime(PsutilTestCase):
     def tearDown(self):
         time.clock_settime(time.CLOCK_REALTIME, self.time_before)
 
-    def test_process_ctime(self):
-        pass
+    def update_systime(self):
+        # set system time 1 hour later
+        time.clock_settime(time.CLOCK_REALTIME, self.time_before + 3600)
+
+    def test_boot_time(self):
+        bt1 = psutil.boot_time()
+        self.update_systime()
+        bt2 = psutil.boot_time()
+        assert bt2 > bt1
+        assert bt2 - bt1 == 3600
