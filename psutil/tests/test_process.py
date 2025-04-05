@@ -293,18 +293,8 @@ class TestProcess(PsutilTestCase):
     def test_create_time(self):
         p = self.spawn_psproc()
         now = time.time()
-        create_time = p.create_time()
-
-        # Use time.time() as base value to compare our result using a
-        # tolerance of +/- 1 second.
-        # It will fail if the difference between the values is > 2s.
-        difference = abs(create_time - now)
-        if difference > 2:
-            raise pytest.fail(
-                f"expected: {now}, found: {create_time}, difference:"
-                f" {difference}"
-            )
-
+        # Fail if the difference with current time is > 2s.
+        assert abs(p.create_time() - now) < 2
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
