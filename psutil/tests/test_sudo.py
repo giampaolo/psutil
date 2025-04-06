@@ -49,7 +49,7 @@ class TestUpdatedSystemTime(PsutilTestCase):
         self.update_systime()
         t2 = psutil.boot_time()
         assert t2 > t1
-        diff = t2 - t1
+        diff = int(t2 - t1)
         assert diff == 3600
 
     def test_proc_create_time(self):
@@ -58,7 +58,7 @@ class TestUpdatedSystemTime(PsutilTestCase):
         self.update_systime()
         t2 = psutil.Process().create_time()
         assert t2 > t1
-        diff = t2 - t1
+        diff = int(t2 - t1)
         assert diff == 3600
 
     # def test_proc_ident(self):

@@ -9,9 +9,9 @@ ARGS =
 # In not in a virtualenv, add --user options for install commands.
 SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+SUDO = $(if $(filter $(OS),Windows_NT),,sudo)
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -170,7 +170,7 @@ test-ci:
 	cd .tests/ && $(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 # 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
 # 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m unittest psutil.tests.test_sudo
+	cd .tests/ && $(PYTHON_ENV_VARS) $(SUDO) $(PYTHON) -m unittest psutil.tests.test_sudo
 
 # ===================================================================
 # Linters
