@@ -48,18 +48,18 @@ class TestUpdatedSystemTime(PsutilTestCase):
         t1 = psutil.boot_time()
         self.update_systime()
         t2 = psutil.boot_time()
-        assert t2 > t1
+        self.assertGreater(t2, t1)
         diff = int(t2 - t1)
-        assert diff == 3600
+        self.assertEqual(diff, 3600)
 
     def test_proc_create_time(self):
         # Test that Process.create_time() reflects system clock updates.
         t1 = psutil.Process().create_time()
         self.update_systime()
         t2 = psutil.Process().create_time()
-        assert t2 > t1
+        self.assertGreater(t2, t1)
         diff = int(t2 - t1)
-        assert diff == 3600
+        self.assertEqual(diff, 3600)
 
     # def test_proc_ident(self):
     #     t1 = psutil.Process()._get_ident()[1]
