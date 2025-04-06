@@ -247,6 +247,7 @@ addopts = '''
     -p no:pastebin
     -p instafail
     -p subtests
+    -p xdist
     '''
 testpaths = ["psutil/tests/"]
 
