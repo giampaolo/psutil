@@ -460,7 +460,7 @@ class TestFakePytest(PsutilTestCase):
             with fake_pytest.raises(ValueError, match="foo") as cm:
                 raise ValueError("bar")
         except AssertionError as err:
-            assert str(err) == '"foo" does not match "bar"'
+            assert str(err) == '"foo" does not match "bar"'  # noqa: PT017
         else:
             raise pytest.fail("exception not raised")
 

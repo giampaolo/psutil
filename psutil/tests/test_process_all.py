@@ -54,7 +54,7 @@ def proc_info(pid):
         if isinstance(exc, psutil.ZombieProcess):
             tcase.assert_proc_zombie(proc)
             if exc.ppid is not None:
-                tcase.assertGreaterEqual(exc.ppid, 0)
+                assert exc.ppid >= 0
                 assert exc.ppid == ppid
         elif isinstance(exc, psutil.NoSuchProcess):
             tcase.assert_proc_gone(proc)
