@@ -197,3 +197,11 @@ class TestSystemAPIs(PsutilTestCase):
         psutil_result = psutil.sensors_battery()
         assert psutil_result.power_plugged == power_plugged
         assert psutil_result.percent == int(percent)
+
+    # --- others
+
+    def test_boot_time(self):
+        out = sh('sysctl kern.boottime')
+        a = float(re.search(r"sec\s*=\s*(\d+)", out).groups(0)[0])
+        b = psutil.boot_time()
+        assert a == b

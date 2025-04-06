@@ -20,6 +20,7 @@ XXXX-XX-XX
   parent PID, based on the incorrect assumption that a lower child PID
   indicated PID reuse. However, this assumption was flawed, as PIDs can restart
   from 0. The same problem also affected `Process.parent()`_.
+- 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
 
 7.0.0
 =====
