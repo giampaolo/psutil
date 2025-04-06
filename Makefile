@@ -159,7 +159,7 @@ test-coverage:  ## Run test coverage.
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
 test-sudo:  ## Run tests requiring root privileges.
-	sudo $(PYTHON) -m pytest psutil/tests/test_sudo.py
+	$(SUDO) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
 test-ci:
 	${MAKE} install-sysdeps
