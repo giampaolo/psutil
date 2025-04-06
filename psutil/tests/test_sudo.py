@@ -15,6 +15,7 @@ import time
 import unittest
 
 import psutil
+from psutil import LINUX
 from psutil import MACOS
 from psutil.tests import PsutilTestCase
 
@@ -64,6 +65,15 @@ class TestUpdatedSystemTime(PsutilTestCase):
         t1 = psutil.Process().create_time()
         self.update_systime()
         t2 = psutil.Process().create_time()
+        self.assertGreater(t2, t1)
+        diff = int(t2 - t1)
+        self.assertAlmostEqual(diff, 3600, delta=1)
+
+    @unittest.skipIf(LINUX, "LINUX only")
+    def test_proc_linux_monotic_proc_time(self):
+        t1 = psutil.Process()._proc.create_time(monotonic=True)
+        self.update_systime()
+        t2 = psutil.Process()._proc.create_time(monotonic=True)
         self.assertGreater(t2, t1)
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
