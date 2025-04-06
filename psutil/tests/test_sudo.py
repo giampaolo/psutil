@@ -7,8 +7,8 @@
 """Tests which are meant to be run as root.
 
 NOTE: keep this module compatible with unittest: we want to run this
-file with the unittest runner, since root may not have pytest
-installed.
+file with the unittest runner, since pytest may not be installed for
+the root user.
 """
 
 import time
@@ -69,11 +69,9 @@ class TestUpdatedSystemTime(PsutilTestCase):
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
 
-    @unittest.skipIf(LINUX, "LINUX only")
+    @unittest.skipIf(not LINUX, "LINUX only")
     def test_linux_monotonic_proc_time(self):
         t1 = psutil.Process()._proc.create_time(monotonic=True)
         self.update_systime()
         t2 = psutil.Process()._proc.create_time(monotonic=True)
-        self.assertGreater(t2, t1)
-        diff = int(t2 - t1)
-        self.assertAlmostEqual(diff, 3600, delta=1)
+        self.assertEqual(t1, t2)
