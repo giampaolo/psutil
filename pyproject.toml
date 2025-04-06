@@ -102,10 +102,12 @@ ignore = [
 # TRY003 == raise-vanilla-args
 # B904 ==  Use `raise from` to specify exception cause
 # PLC1901 == `x == ""` can be simplified to `not x` as an empty string is falsey
+# PT009 == Use a regular `assert` instead of unittest-style `assertGreater`
 ".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
+"psutil/tests/test_sudo.py" = ["PT009"]
 "setup.py" = [
     "B904",  # Use ` raise from` to specify exception cause (PYTHON2.7 COMPAT)
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)
