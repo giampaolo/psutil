@@ -1910,7 +1910,7 @@ class Process:
             return self._ctime
         # Add the uptime, returning seconds since the epoch (this is
         # subject to system clock updates).
-        bt = BOOT_TIME or boot_time()
+        bt = boot_time()
         return self._ctime + bt
 
     @wrap_exceptions
