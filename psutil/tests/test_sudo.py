@@ -33,16 +33,16 @@ class TestUpdatedSystemTime(PsutilTestCase):
 
     def setUp(self):
         self.time_updated = False
-        self.time_before = time.clock_gettime(time.CLOCK_REALTIME)
+        self.orig_time = time.clock_gettime(time.CLOCK_REALTIME)
 
     def tearDown(self):
         if self.time_updated:
-            time.clock_settime(time.CLOCK_REALTIME, self.time_before)
+            time.clock_settime(time.CLOCK_REALTIME, self.orig_time)
 
     def update_systime(self):
         # set system time 1 hour later
         try:
-            time.clock_settime(time.CLOCK_REALTIME, self.time_before + 3600)
+            time.clock_settime(time.CLOCK_REALTIME, self.orig_time + 3600)
         except PermissionError:
             raise unittest.SkipTest("needs root")
         else:
