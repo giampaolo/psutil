@@ -7,6 +7,7 @@
 """Tests which are meant to be run as root."""
 
 import time
+import unittest
 
 import pytest
 
@@ -36,7 +37,10 @@ class TestUpdatedSystemTime(PsutilTestCase):
         try:
             time.clock_settime(time.CLOCK_REALTIME, self.time_before + 3600)
         except PermissionError:
-            pytest.skip("needs root")
+            # Need to use unittest since this particular file is run
+            # with the unittest runner (in order to avoid installing
+            # pytest for the sudo user).
+            raise unittest.SkipTest("needs root")
         else:
             self.time_updated = True
 
