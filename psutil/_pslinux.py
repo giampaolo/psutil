@@ -81,7 +81,6 @@ HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = cext_posix.getpagesize()
-BOOT_TIME = None  # set later
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 
@@ -1557,14 +1556,11 @@ def users():
 
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
-    global BOOT_TIME
     path = f"{get_procfs_path()}/stat"
     with open_binary(path) as f:
         for line in f:
             if line.startswith(b'btime'):
-                ret = float(line.strip().split()[1])
-                BOOT_TIME = ret
-                return ret
+                return float(line.strip().split()[1])
         msg = f"line 'btime' not found in {path}"
         raise RuntimeError(msg)
 

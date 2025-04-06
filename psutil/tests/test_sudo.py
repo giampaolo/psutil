@@ -70,7 +70,7 @@ class TestUpdatedSystemTime(PsutilTestCase):
         self.assertAlmostEqual(diff, 3600, delta=1)
 
     @unittest.skipIf(LINUX, "LINUX only")
-    def test_proc_linux_monotic_proc_time(self):
+    def test_linux_monotonic_proc_time(self):
         t1 = psutil.Process()._proc.create_time(monotonic=True)
         self.update_systime()
         t2 = psutil.Process()._proc.create_time(monotonic=True)
