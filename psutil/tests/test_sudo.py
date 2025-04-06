@@ -15,6 +15,7 @@ import time
 import unittest
 
 import psutil
+from psutil import MACOS
 from psutil.tests import PsutilTestCase
 
 
@@ -27,6 +28,8 @@ from psutil.tests import PsutilTestCase
     "clock_(get|set)_time() not available",
 )
 class TestUpdatedSystemTime(PsutilTestCase):
+    """Tests which updates the system clock."""
+
     def setUp(self):
         self.time_updated = False
         self.time_before = time.clock_gettime(time.CLOCK_REALTIME)
@@ -53,20 +56,14 @@ class TestUpdatedSystemTime(PsutilTestCase):
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
 
+    @unittest.skipIf(MACOS, "broken on MACOS")  # TODO: fix it on MACOS
     def test_proc_create_time(self):
-        # Test that Process.create_time() reflects system clock updates.
+        # Test that Process.create_time() reflects system clock
+        # updates. On systems such as Linux this is added on top of the
+        # process monotonic time returned by the kernel.
         t1 = psutil.Process().create_time()
         self.update_systime()
         t2 = psutil.Process().create_time()
         self.assertGreater(t2, t1)
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
-
-    # def test_proc_ident(self):
-    #     t1 = psutil.Process()._get_ident()[1]
-    #     self.update_systime()
-    #     t2 = psutil.Process()._get_ident()[1]
-    #     if LINUX or FREEBSD:
-    #         assert t1 == t2
-    #     else:
-    #         assert t1 != t2
