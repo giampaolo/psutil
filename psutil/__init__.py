@@ -2349,9 +2349,12 @@ if hasattr(_psplatform, "sensors_battery"):
 
 
 def boot_time():
-    """Return the system boot time expressed in seconds since the epoch."""
-    # Note: we are not caching this because it is subject to
-    # system clock updates.
+    """Return the system boot time expressed in seconds since the epoch
+    (seconds since January 1, 1970, at midnight UTC). The returned
+    value is based on the system clock, which means it may be affected
+    by changes such as manual adjustments or time synchronization (e.g.
+    NTP).
+    """
     return _psplatform.boot_time()
 
 
