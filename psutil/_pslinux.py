@@ -1895,19 +1895,20 @@ class Process:
 
     @wrap_exceptions
     def create_time(self, monotonic=False):
-        # Start time unit is expressed in jiffies (clock ticks per
-        # second). It never changes and is not affected by system clock
-        # updates.
+        # The 'starttime' field in /proc/[pid]/stat is expressed in
+        # jiffies (clock ticks per second), a relative value which
+        # represents the number of clock ticks that have passed since
+        # the system booted until the process was created. It never
+        # changes and is unaffected by system clock updates.
         if self._ctime is None:
             self._ctime = (
                 float(self._parse_stat_file()['create_time']) / CLOCK_TICKS
             )
         if monotonic:
             return self._ctime
-        # Add the uptime, returning seconds since the epoch (this is
-        # subject to system clock updates).
-        bt = boot_time()
-        return self._ctime + bt
+        # Add the boot time, returning time expressed in seconds since
+        # the epoch. This is subject to system clock updates.
+        return self._ctime + boot_time()
 
     @wrap_exceptions
     def memory_info(self):
