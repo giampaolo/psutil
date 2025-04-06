@@ -4,24 +4,26 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests which are meant to be run as root."""
+"""Tests which are meant to be run as root.
+
+NOTE: keep this module compatible with unittest: we want to run this
+file via unittest run, since root may not have pytest installed.
+"""
 
 import time
 import unittest
-
-import pytest
 
 import psutil
 from psutil.tests import PsutilTestCase
 
 
-@pytest.mark.skipif(
+@unittest.skipIf(
     not all((
         hasattr(time, "clock_gettime"),
         hasattr(time, "clock_settime"),
         hasattr(time, "CLOCK_REALTIME"),
     )),
-    reason="clock_(get|set)_time() not available",
+    "clock_(get|set)_time() not available",
 )
 class TestUpdatedSystemTime(PsutilTestCase):
     def setUp(self):
@@ -37,9 +39,6 @@ class TestUpdatedSystemTime(PsutilTestCase):
         try:
             time.clock_settime(time.CLOCK_REALTIME, self.time_before + 3600)
         except PermissionError:
-            # Need to use unittest since this particular file is run
-            # with the unittest runner (in order to avoid installing
-            # pytest for the sudo user).
             raise unittest.SkipTest("needs root")
         else:
             self.time_updated = True
