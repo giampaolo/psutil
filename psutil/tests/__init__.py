@@ -272,6 +272,110 @@ _pids_started = set()
 
 
 # ===================================================================
+# --- fake pytest
+# ===================================================================
+
+
+class fake_pytest:
+    """A class that mimics some basic pytest APIs. This is meant for
+    when unit tests are run in production, where pytest may not be
+    installed. Still, the user can test psutil installation via:
+
+        $ python3 -m psutil.tests
+    """
+
+    @staticmethod
+    def _warn_on_exit():
+        def _warn_on_exit():
+            warnings.warn(
+                "Fake pytest module was used. Test results may be inaccurate.",
+                UserWarning,
+                stacklevel=1,
+            )
+
+        atexit.register(_warn_on_exit)
+
+    @staticmethod
+    def main(*args, **kw):  # noqa: ARG004
+        """Mimics pytest.main(). It has the same effect as running
+        `python3 -m unittest -v` from the project root directory.
+        """
+        suite = unittest.TestLoader().discover(HERE)
+        unittest.TextTestRunner(verbosity=2).run(suite)
+        return suite
+
+    @staticmethod
+    def raises(exc, match=None):
+        """Mimics `pytest.raises`."""
+
+        class ExceptionInfo:
+            _exc = None
+
+            @property
+            def value(self):
+                return self._exc
+
+        @contextlib.contextmanager
+        def context(exc, match=None):
+            einfo = ExceptionInfo()
+            try:
+                yield einfo
+            except exc as err:
+                if match and not re.search(match, str(err)):
+                    msg = f'"{match}" does not match "{err}"'
+                    raise AssertionError(msg)
+                einfo._exc = err
+            else:
+                raise AssertionError(f"{exc!r} not raised")
+
+        return context(exc, match=match)
+
+    @staticmethod
+    def warns(warning, match=None):
+        """Mimics `pytest.warns`."""
+        if match:
+            return unittest.TestCase().assertWarnsRegex(warning, match)
+        return unittest.TestCase().assertWarns(warning)
+
+    @staticmethod
+    def skip(reason=""):
+        """Mimics `unittest.SkipTest`."""
+        raise unittest.SkipTest(reason)
+
+    @staticmethod
+    def fail(reason=""):
+        """Mimics `pytest.fail`."""
+        return unittest.TestCase().fail(reason)
+
+    class mark:
+
+        @staticmethod
+        def skipif(condition, reason=""):
+            """Mimics `@pytest.mark.skipif` decorator."""
+            return unittest.skipIf(condition, reason)
+
+        class xdist_group:
+            """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
+
+            def __init__(self, name=None):
+                pass
+
+            def __call__(self, cls_or_meth):
+                return cls_or_meth
+
+
+# to make pytest.fail() exception catchable
+fake_pytest.fail.Exception = AssertionError
+
+
+if pytest is None:
+    pytest = fake_pytest
+    # monkey patch future `import pytest` statements
+    sys.modules["pytest"] = fake_pytest
+    fake_pytest._warn_on_exit()
+
+
+# ===================================================================
 # --- threads
 # ===================================================================
 
@@ -875,121 +979,6 @@ def get_testfn(suffix="", dir=None):
 # ===================================================================
 # --- testing
 # ===================================================================
-
-
-def fake_xdist_group(*_args, **_kwargs):
-    """Mimics `@pytest.mark.xdist_group` decorator. No-op: it just
-    calls the test method or return the decorated class.
-    """
-
-    def wrapper(obj):
-        @functools.wraps(obj)
-        def inner(*args, **kwargs):
-            return obj(*args, **kwargs)
-
-        return obj if isinstance(obj, type) else inner
-
-    return wrapper
-
-
-if not PYTEST_PARALLEL:
-    # Fake @pytest.mark.xdist_group decorator. This is here so that we
-    # can run pytest with PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 env var, and
-    # hence avoid loading pytest-xdist plugin (faster pytest startup).
-    # When we want to run parallel test we will explicitly enable
-    # pytest-xdist from the cmdline via `pytest -p xdist …`.
-    pytest.mark.xdist_group = fake_xdist_group
-
-
-class fake_pytest:
-    """A class that mimics some basic pytest APIs. This is meant for
-    when unit tests are run in production, where pytest may not be
-    installed. Still, the user can test psutil installation via:
-
-        $ python3 -m psutil.tests
-    """
-
-    @staticmethod
-    def _warn_on_exit():
-        def _warn_on_exit():
-            warnings.warn(
-                "Fake pytest module was used. Test results may be inaccurate.",
-                UserWarning,
-                stacklevel=1,
-            )
-
-        atexit.register(_warn_on_exit)
-
-    @staticmethod
-    def main(*args, **kw):  # noqa: ARG004
-        """Mimics pytest.main(). It has the same effect as running
-        `python3 -m unittest -v` from the project root directory.
-        """
-        suite = unittest.TestLoader().discover(HERE)
-        unittest.TextTestRunner(verbosity=2).run(suite)
-        return suite
-
-    @staticmethod
-    def raises(exc, match=None):
-        """Mimics `pytest.raises`."""
-
-        class ExceptionInfo:
-            _exc = None
-
-            @property
-            def value(self):
-                return self._exc
-
-        @contextlib.contextmanager
-        def context(exc, match=None):
-            einfo = ExceptionInfo()
-            try:
-                yield einfo
-            except exc as err:
-                if match and not re.search(match, str(err)):
-                    msg = f'"{match}" does not match "{err}"'
-                    raise AssertionError(msg)
-                einfo._exc = err
-            else:
-                raise AssertionError(f"{exc!r} not raised")
-
-        return context(exc, match=match)
-
-    @staticmethod
-    def warns(warning, match=None):
-        """Mimics `pytest.warns`."""
-        if match:
-            return unittest.TestCase().assertWarnsRegex(warning, match)
-        return unittest.TestCase().assertWarns(warning)
-
-    @staticmethod
-    def skip(reason=""):
-        """Mimics `unittest.SkipTest`."""
-        raise unittest.SkipTest(reason)
-
-    @staticmethod
-    def fail(reason=""):
-        """Mimics `pytest.fail`."""
-        return unittest.TestCase().fail(reason)
-
-    class mark:
-
-        @staticmethod
-        def skipif(condition, reason=""):
-            """Mimics `@pytest.mark.skipif` decorator."""
-            return unittest.skipIf(condition, reason)
-
-        xdist_group = fake_xdist_group
-
-
-# to make pytest.fail() exception catchable
-fake_pytest.fail.Exception = AssertionError
-
-
-if pytest is None:
-    # pytest not installed
-    pytest = fake_pytest
-    fake_pytest._warn_on_exit()
 
 
 class PsutilTestCase(unittest.TestCase):
