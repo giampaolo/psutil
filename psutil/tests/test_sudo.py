@@ -29,7 +29,7 @@ from psutil.tests import PsutilTestCase
     "clock_(get|set)_time() not available",
 )
 class TestUpdatedSystemTime(PsutilTestCase):
-    """Tests which updates the system clock."""
+    """Tests which update the system clock."""
 
     def setUp(self):
         self.time_updated = False

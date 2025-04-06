@@ -987,6 +987,19 @@ class PsutilTestCase(unittest.TestCase):
     if we use pytest.
     """
 
+    # Print a full path representation of the single unit test being
+    # run, similar to pytest output. Used only when running tests with
+    # the unittest runner.
+    def __str__(self):
+        fqmod = self.__class__.__module__
+        if not fqmod.startswith('psutil.'):
+            fqmod = 'psutil.tests.' + fqmod
+        return "{}.{}.{}".format(
+            fqmod,
+            self.__class__.__name__,
+            self._testMethodName,
+        )
+
     def get_testfn(self, suffix="", dir=None):
         fname = get_testfn(suffix=suffix, dir=dir)
         self.addCleanup(safe_rmpath, fname)
