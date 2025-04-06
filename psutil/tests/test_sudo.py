@@ -7,7 +7,8 @@
 """Tests which are meant to be run as root.
 
 NOTE: keep this module compatible with unittest: we want to run this
-file via unittest run, since root may not have pytest installed.
+file with the unittest runner, since root may not have pytest
+installed.
 """
 
 import time
