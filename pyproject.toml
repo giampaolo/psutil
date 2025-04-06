@@ -70,7 +70,7 @@ ignore = [
     "PLW0603",  # Using the global statement to update `lineno` is discouraged
     "PLW1514",  # `open` in text mode without explicit `encoding` argument
     "PLW2901",  # `for` loop variable `x` overwritten by assignment target
-    "PT",  # flake8-pytest-style
+    "PT028",  # pytest-parameter-with-default-argument
     "PTH",  # flake8-use-pathlib
     "PYI",  # flake8-pyi (python types stuff)
     "Q000",  # Single quotes found but double quotes preferred
