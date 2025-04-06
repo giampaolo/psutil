@@ -26,7 +26,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
     boot_time = result.tv_sec;
-    return Py_BuildValue("f", (float)boot_time);
+    return Py_BuildValue("d", (double)boot_time);
 }
 
 
