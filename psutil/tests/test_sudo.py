@@ -41,8 +41,14 @@ class TestUpdatedSystemTime(PsutilTestCase):
             self.time_updated = True
 
     def test_boot_time(self):
-        bt1 = psutil.boot_time()
+        t1 = psutil.boot_time()
         self.update_systime()
-        bt2 = psutil.boot_time()
-        assert bt2 > bt1
-        assert bt2 - bt1 == 3600
+        t2 = psutil.boot_time()
+        assert t2 > t1
+        assert t2 - t1 == 3600
+
+    def test_proc_ident(self):
+        t1 = psutil.Process()._get_ident()[1]
+        self.update_systime()
+        t2 = psutil.Process()._get_ident()[1]
+        assert t1 == t2
