@@ -599,12 +599,12 @@ class Process:
         ppid = self.ppid()
         if ppid is not None:
             # Get a fresh (non-cached) ctime in case the system clock
-            # was updated. TODO: use a monotonic process time on
-            # platforms where it's supported.
-            this_ctime = Process(self.pid).create_time()
+            # was updated. TODO: use a monotonic ctime on platforms
+            # where it's supported.
+            proc_ctime = Process(self.pid).create_time()
             try:
                 parent = Process(ppid)
-                if parent.create_time() <= this_ctime:
+                if parent.create_time() <= proc_ctime:
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
@@ -973,9 +973,9 @@ class Process:
         self._raise_if_pid_reused()
         ppid_map = _ppid_map()
         # Get a fresh (non-cached) ctime in case the system clock was
-        # updated. TODO: use a monotonic process time on platforms
-        # where it's supported.
-        parent_ctime = Process(self.pid).create_time()
+        # updated. TODO: use a monotonic ctime on platforms where it's
+        # supported.
+        proc_ctime = Process(self.pid).create_time()
         ret = []
         if not recursive:
             for pid, ppid in ppid_map.items():
@@ -984,7 +984,7 @@ class Process:
                         child = Process(pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        if parent_ctime <= child.create_time():
+                        if proc_ctime <= child.create_time():
                             ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
@@ -1010,7 +1010,7 @@ class Process:
                         child = Process(child_pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        intime = parent_ctime <= child.create_time()
+                        intime = proc_ctime <= child.create_time()
                         if intime:
                             ret.append(child)
                             stack.append(child_pid)
