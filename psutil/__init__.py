@@ -766,8 +766,11 @@ class Process:
 
     def create_time(self):
         """The process creation time as a floating point number
-        expressed in seconds since the epoch.
-        The return value is cached after first call.
+        expressed in seconds since the epoch (seconds since January 1,
+        1970, at midnight UTC). The return value, which is cached after
+        first call, is based on the system clock, which means it may be
+        affected by changes such as manual adjustments or time
+        synchronization (e.g. NTP).
         """
         if self._create_time is None:
             self._create_time = self._proc.create_time()
