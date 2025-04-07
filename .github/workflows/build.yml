@@ -91,7 +91,7 @@ jobs:
         python-version: 3.x
     - name: 'Run linters'
       run: |
-        python3 -m pip install ruff black==24.10.0 rstcheck toml-sort sphinx
+        python3 -m pip install ruff black==24.10.0 rstcheck toml-sort
         make lint-all
 
   # Produce wheels as artifacts.

@@ -158,12 +158,13 @@ test-coverage:  ## Run test coverage.
 	$(PYTHON) -m coverage html
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
-test-ci:
+test-ci:  ## Run tests on GitHub CI.
 	${MAKE} install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	$(PYTHON) -m pip list
-	${MAKE} test-platform
+	${MAKE} test
+	${MAKE} test-memleaks
 
 # ===================================================================
 # Linters
