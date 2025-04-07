@@ -21,6 +21,8 @@ XXXX-XX-XX
   indicated PID reuse. However, this assumption was flawed, as PIDs can restart
   from 0. The same problem also affected `Process.parent()`_.
 - 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
+- 2541_, [Linux]: `Process.create_time()`_ does not reflect system clock
+  updates.
 
 7.0.0
 =====
