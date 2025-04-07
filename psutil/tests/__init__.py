@@ -75,7 +75,7 @@ __all__ = [
     "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
     "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL",
     # subprocesses
-    'pyrun', 'terminate', 'reap_children', 'spawn_testproc', 'spawn_zombie',
+    'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
     'spawn_children_pair',
     # threads
     'ThreadTask',
@@ -441,7 +441,7 @@ def _reap_children_on_err(fun):
 
 
 @_reap_children_on_err
-def spawn_testproc(cmd=None, **kwds):
+def spawn_subproc(cmd=None, **kwds):
     """Create a python subprocess which does nothing for some secs and
     return it as a subprocess.Popen instance.
     If "cmd" is specified that is used instead of python.
@@ -574,7 +574,7 @@ def pyrun(src, **kwds):
     try:
         with open(srcfile, "w") as f:
             f.write(src)
-        subp = spawn_testproc([PYTHON_EXE, f.name], **kwds)
+        subp = spawn_subproc([PYTHON_EXE, f.name], **kwds)
         wait_for_pid(subp.pid)
         return (subp, srcfile)
     except Exception:
@@ -992,10 +992,18 @@ class PsutilTestCase(unittest.TestCase):
         self.addCleanup(safe_rmpath, fname)
         return fname
 
-    def spawn_testproc(self, *args, **kwds):
-        sproc = spawn_testproc(*args, **kwds)
+    def spawn_subproc(self, *args, **kwds):
+        sproc = spawn_subproc(*args, **kwds)
         self.addCleanup(terminate, sproc)
         return sproc
+
+    def spawn_psproc(self, *args, **kwargs):
+        sproc = self.spawn_subproc(*args, **kwargs)
+        try:
+            return psutil.Process(sproc.pid)
+        except psutil.NoSuchProcess:
+            self.assert_pid_gone(sproc.pid)
+            raise
 
     def spawn_children_pair(self):
         child1, child2 = spawn_children_pair()

@@ -21,7 +21,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
-from psutil.tests import spawn_testproc
+from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
 
@@ -56,7 +56,7 @@ def vm_stat(field):
 class TestProcess(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pid = spawn_testproc().pid
+        cls.pid = spawn_subproc().pid
 
     @classmethod
     def tearDownClass(cls):

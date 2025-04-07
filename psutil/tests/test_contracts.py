@@ -312,7 +312,7 @@ class TestSystemAPITypes(PsutilTestCase):
 class TestProcessWaitType(PsutilTestCase):
     @pytest.mark.skipif(not POSIX, reason="not POSIX")
     def test_negative_signal(self):
-        p = psutil.Process(self.spawn_testproc().pid)
+        p = psutil.Process(self.spawn_subproc().pid)
         p.terminate()
         code = p.wait()
         assert code == -signal.SIGTERM

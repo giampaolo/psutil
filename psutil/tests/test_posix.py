@@ -31,7 +31,7 @@ from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
-from psutil.tests import spawn_testproc
+from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
 
@@ -151,7 +151,7 @@ class TestProcess(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = spawn_testproc(
+        cls.pid = spawn_subproc(
             [PYTHON_EXE, "-E", "-O"], stdin=subprocess.PIPE
         ).pid
 

@@ -60,7 +60,7 @@ from psutil.tests import retry_on_failure
 class TestProcessIter(PsutilTestCase):
     def test_pid_presence(self):
         assert os.getpid() in [x.pid for x in psutil.process_iter()]
-        sproc = self.spawn_testproc()
+        sproc = self.spawn_subproc()
         assert sproc.pid in [x.pid for x in psutil.process_iter()]
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -132,16 +132,16 @@ class TestProcessIter(PsutilTestCase):
 class TestProcessAPIs(PsutilTestCase):
     @pytest.mark.skipif(
         PYPY and WINDOWS,
-        reason="spawn_testproc() unreliable on PYPY + WINDOWS",
+        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
     )
     def test_wait_procs(self):
         def callback(p):
             pids.append(p.pid)
 
         pids = []
-        sproc1 = self.spawn_testproc()
-        sproc2 = self.spawn_testproc()
-        sproc3 = self.spawn_testproc()
+        sproc1 = self.spawn_subproc()
+        sproc2 = self.spawn_subproc()
+        sproc3 = self.spawn_subproc()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         with pytest.raises(ValueError):
             psutil.wait_procs(procs, timeout=-1)
@@ -195,19 +195,19 @@ class TestProcessAPIs(PsutilTestCase):
 
     @pytest.mark.skipif(
         PYPY and WINDOWS,
-        reason="spawn_testproc() unreliable on PYPY + WINDOWS",
+        reason="spawn_subproc() unreliable on PYPY + WINDOWS",
     )
     def test_wait_procs_no_timeout(self):
-        sproc1 = self.spawn_testproc()
-        sproc2 = self.spawn_testproc()
-        sproc3 = self.spawn_testproc()
+        sproc1 = self.spawn_subproc()
+        sproc2 = self.spawn_subproc()
+        sproc3 = self.spawn_subproc()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         for p in procs:
             p.terminate()
         psutil.wait_procs(procs)
 
     def test_pid_exists(self):
-        sproc = self.spawn_testproc()
+        sproc = self.spawn_subproc()
         assert psutil.pid_exists(sproc.pid)
         p = psutil.Process(sproc.pid)
         p.kill()

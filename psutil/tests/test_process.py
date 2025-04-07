@@ -73,16 +73,6 @@ from psutil.tests import wait_for_pid
 class TestProcess(PsutilTestCase):
     """Tests for psutil.Process class."""
 
-    def spawn_psproc(self, *args, **kwargs):
-        sproc = self.spawn_testproc(*args, **kwargs)
-        try:
-            return psutil.Process(sproc.pid)
-        except psutil.NoSuchProcess:
-            self.assert_pid_gone(sproc.pid)
-            raise
-
-    # ---
-
     def test_pid(self):
         p = psutil.Process()
         assert p.pid == os.getpid()
@@ -1393,7 +1383,7 @@ class TestProcess(PsutilTestCase):
 
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.
-        subp = self.spawn_testproc()
+        subp = self.spawn_subproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
 
@@ -1532,7 +1522,7 @@ class TestProcess(PsutilTestCase):
             }
             """)
         cexe = create_c_exe(self.get_testfn(), c_code=code)
-        sproc = self.spawn_testproc(
+        sproc = self.spawn_subproc(
             [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
         )
         p = psutil.Process(sproc.pid)
