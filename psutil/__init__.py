@@ -969,6 +969,10 @@ class Process:
         """
         self._raise_if_pid_reused()
         ppid_map = _ppid_map()
+        # Get a fresh (non-cached) ctime in case system clock was
+        # updated. TODO: use a monotonic process time on platforms
+        # where it's supported.
+        parent_ctime = Process(self.pid).create_time()
         ret = []
         if not recursive:
             for pid, ppid in ppid_map.items():
@@ -977,7 +981,7 @@ class Process:
                         child = Process(pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        if self.create_time() <= child.create_time():
+                        if parent_ctime <= child.create_time():
                             ret.append(child)
                     except (NoSuchProcess, ZombieProcess):
                         pass
@@ -1003,7 +1007,7 @@ class Process:
                         child = Process(child_pid)
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        intime = self.create_time() <= child.create_time()
+                        intime = parent_ctime <= child.create_time()
                         if intime:
                             ret.append(child)
                             stack.append(child_pid)
