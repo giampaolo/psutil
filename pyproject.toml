@@ -94,7 +94,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# B904 ==  Use `raise from` to specify exception cause
+# B904 == Use `raise from` to specify exception cause
 # EM101 == raw-string-in-exception
 # EM102 == f-string-in-exception
 # EM103 == dot-format-in-exception

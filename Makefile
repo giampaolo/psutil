@@ -171,7 +171,7 @@ test-ci:
 	cd .tests/ && $(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 # 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
 # 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && ${MAKE} $(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
+	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
 # ===================================================================
 # Linters
