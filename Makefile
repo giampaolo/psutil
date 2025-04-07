@@ -160,8 +160,9 @@ test-coverage:  ## Run test coverage.
 
 test-ci:
 	${MAKE} install-sysdeps
-	${MAKE} install-pydeps-test
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
+	$(PYTHON) -m pip-list
 	${MAKE} test-platform
 
 # ===================================================================
