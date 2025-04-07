@@ -598,10 +598,13 @@ class Process:
             return None
         ppid = self.ppid()
         if ppid is not None:
-            ctime = self.create_time()
+            # Get a fresh (non-cached) ctime in case the system clock
+            # was updated. TODO: use a monotonic process time on
+            # platforms where it's supported.
+            this_ctime = Process(self.pid).create_time()
             try:
                 parent = Process(ppid)
-                if parent.create_time() <= ctime:
+                if parent.create_time() <= this_ctime:
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
@@ -969,7 +972,7 @@ class Process:
         """
         self._raise_if_pid_reused()
         ppid_map = _ppid_map()
-        # Get a fresh (non-cached) ctime in case system clock was
+        # Get a fresh (non-cached) ctime in case the system clock was
         # updated. TODO: use a monotonic process time on platforms
         # where it's supported.
         parent_ctime = Process(self.pid).create_time()
