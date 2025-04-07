@@ -73,7 +73,7 @@ install-sysdeps:
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	${MAKE} install-pip
-	$(PYTHON) -m pip install -U $(PIP_INSTALL_ARGS) -e .[test]
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test]
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	${MAKE} install-git-hooks
