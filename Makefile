@@ -167,8 +167,8 @@ test-ci:  ## Run tests on GitHub CI.
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	$(PYTHON) -m pip list
-# 	${MAKE} test
-# 	${MAKE} test-memleaks
+	${MAKE} test
+	${MAKE} test-memleaks
 	${MAKE} test-sudo
 
 # ===================================================================

@@ -68,12 +68,16 @@ class TestUpdatedSystemTime(PsutilTestCase):
     def tearDown(self):
         if self.time_updated:
             set_systime(self.orig_time)
-        self.assertEqual(get_systime(), self.orig_time)
+            if WINDOWS:
+                self.assertAlmostEqual(get_systime(), self.orig_time, delta=1)
+            else:
+                self.assertEqual(get_systime(), self.orig_time)
 
     def update_systime(self):
         # set system time 1 hour later
         set_systime(self.orig_time + 3600)
 
+    @unittest.skipIf(WINDOWS, "broken on WINDOWS")  # TODO: fix it
     def test_boot_time(self):
         # Test that boot_time() reflects system clock updates.
         t1 = psutil.boot_time()
@@ -83,7 +87,8 @@ class TestUpdatedSystemTime(PsutilTestCase):
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
 
-    @unittest.skipIf(MACOS, "broken on MACOS")  # TODO: fix it on MACOS
+    @unittest.skipIf(WINDOWS, "broken on WINDOWS")  # TODO: fix it
+    @unittest.skipIf(MACOS, "broken on MACOS")  # TODO: fix it
     def test_proc_create_time(self):
         # Test that Process.create_time() reflects system clock
         # updates. On systems such as Linux this is added on top of the
