@@ -16,10 +16,6 @@ XXXX-XX-XX
   creation time is now used instead.  (patch by Jonathan Kohler)
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
-- 2533_: `Process.children()`_ previously skipped all PIDs lower than the
-  parent PID, based on the incorrect assumption that a lower child PID
-  indicated PID reuse. However, this assumption was flawed, as PIDs can restart
-  from 0. The same problem also affected `Process.parent()`_.
 - 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
 - 2541_, [Linux]: `Process.create_time()`_ does not reflect system clock
   updates.
