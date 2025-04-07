@@ -162,7 +162,7 @@ test-ci:
 	${MAKE} install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
-	$(PYTHON) -m pip-list
+	$(PYTHON) -m pip list
 	${MAKE} test-platform
 
 # ===================================================================
