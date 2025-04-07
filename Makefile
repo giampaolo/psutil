@@ -162,15 +162,14 @@ test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
 	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
-test-ci:
+test-ci:  ## Run tests on GitHub CI.
 	${MAKE} install-sysdeps
-	${MAKE} install-pydeps-test
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	$(PYTHON) -m pip list
-	mkdir -p .tests
-# 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	$(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
+# 	${MAKE} test
+# 	${MAKE} test-memleaks
+	${MAKE} test-sudo
 
 # ===================================================================
 # Linters
