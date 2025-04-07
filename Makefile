@@ -158,12 +158,13 @@ test-coverage:  ## Run test coverage.
 	$(PYTHON) -m coverage html
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
-test-ci:
+test-ci:  ## Run tests on GitHub CI.
 	${MAKE} install-sysdeps
-	mkdir -p .tests
-	cd .tests/ && $(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'test_memleaks.py'"     $(PYTHON) -m pytest --pyargs psutil.tests
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
+	${MAKE} print-sysinfo
+	$(PYTHON) -m pip list
+	${MAKE} test
+	${MAKE} test-memleaks
 
 # ===================================================================
 # Linters
