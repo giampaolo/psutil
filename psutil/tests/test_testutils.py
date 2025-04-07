@@ -218,7 +218,7 @@ class TestFSTestUtils(PsutilTestCase):
 
 class TestProcessUtils(PsutilTestCase):
     def test_reap_children(self):
-        subp = self.spawn_testproc()
+        subp = self.spawn_subproc()
         p = psutil.Process(subp.pid)
         assert p.is_running()
         reap_children()
@@ -254,12 +254,12 @@ class TestProcessUtils(PsutilTestCase):
 
     def test_terminate(self):
         # by subprocess.Popen
-        p = self.spawn_testproc()
+        p = self.spawn_subproc()
         terminate(p)
         self.assert_pid_gone(p.pid)
         terminate(p)
         # by psutil.Process
-        p = psutil.Process(self.spawn_testproc().pid)
+        p = psutil.Process(self.spawn_subproc().pid)
         terminate(p)
         self.assert_pid_gone(p.pid)
         terminate(p)
@@ -279,7 +279,7 @@ class TestProcessUtils(PsutilTestCase):
         self.assert_pid_gone(p.pid)
         terminate(p)
         # by PID
-        pid = self.spawn_testproc().pid
+        pid = self.spawn_subproc().pid
         terminate(pid)
         self.assert_pid_gone(p.pid)
         terminate(pid)

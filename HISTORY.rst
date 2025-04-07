@@ -19,6 +19,8 @@ XXXX-XX-XX
 - 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
 - 2541_, [Linux]: `Process.create_time()`_ does not reflect system clock
   updates.
+- 2542_: if system clock is updated `Process.children()`_ and
+  `Process.parent()`_ may not be able to return the right information.
 
 7.0.0
 =====

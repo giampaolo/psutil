@@ -73,16 +73,6 @@ from psutil.tests import wait_for_pid
 class TestProcess(PsutilTestCase):
     """Tests for psutil.Process class."""
 
-    def spawn_psproc(self, *args, **kwargs):
-        sproc = self.spawn_testproc(*args, **kwargs)
-        try:
-            return psutil.Process(sproc.pid)
-        except psutil.NoSuchProcess:
-            self.assert_pid_gone(sproc.pid)
-            raise
-
-    # ---
-
     def test_pid(self):
         p = psutil.Process()
         assert p.pid == os.getpid()
@@ -1133,6 +1123,18 @@ class TestProcess(PsutilTestCase):
         lowest_pid = psutil.pids()[0]
         assert psutil.Process(lowest_pid).parent() is None
 
+    def test_parent_mocked_ctime(self):
+        # Make sure we get a fresh copy of the ctime before processing
+        # parent().We make the assumption that the parent pid MUST have
+        # a creation time < than the child. If system clock is updated
+        # this assumption was broken.
+        # https://github.com/giampaolo/psutil/issues/2542
+        p = self.spawn_psproc()
+        p.create_time()  # trigger cache
+        assert p._create_time
+        p._create_time = 1
+        assert p.parent().pid == os.getpid()
+
     def test_parent_multi(self):
         parent = psutil.Process()
         child, grandchild = self.spawn_children_pair()
@@ -1150,6 +1152,30 @@ class TestProcess(PsutilTestCase):
 
     def test_children(self):
         parent = psutil.Process()
+        assert not parent.children()
+        assert not parent.children(recursive=True)
+        # On Windows we set the flag to 0 in order to cancel out the
+        # CREATE_NO_WINDOW flag (enabled by default) which creates
+        # an extra "conhost.exe" child.
+        child = self.spawn_psproc(creationflags=0)
+        children1 = parent.children()
+        children2 = parent.children(recursive=True)
+        for children in (children1, children2):
+            assert len(children) == 1
+            assert children[0].pid == child.pid
+            assert children[0].ppid() == parent.pid
+
+    def test_children_mocked_ctime(self):
+        # Make sure we get a fresh copy of the ctime before processing
+        # children(). We make the assumption that process children MUST
+        # have a creation time > than the parent. If system clock is
+        # updated this assumption was broken.
+        # https://github.com/giampaolo/psutil/issues/2542
+        parent = psutil.Process()
+        parent.create_time()  # trigger cache
+        assert parent._create_time
+        parent._create_time += 100000
+
         assert not parent.children()
         assert not parent.children(recursive=True)
         # On Windows we set the flag to 0 in order to cancel out the
@@ -1393,7 +1419,7 @@ class TestProcess(PsutilTestCase):
 
     def test_reused_pid(self):
         # Emulate a case where PID has been reused by another process.
-        subp = self.spawn_testproc()
+        subp = self.spawn_subproc()
         p = psutil.Process(subp.pid)
         p._ident = (p.pid, p.create_time() + 100)
 
@@ -1532,7 +1558,7 @@ class TestProcess(PsutilTestCase):
             }
             """)
         cexe = create_c_exe(self.get_testfn(), c_code=code)
-        sproc = self.spawn_testproc(
+        sproc = self.spawn_subproc(
             [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
         )
         p = psutil.Process(sproc.pid)

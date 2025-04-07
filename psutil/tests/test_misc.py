@@ -49,7 +49,7 @@ class TestSpecialMethods(PsutilTestCase):
             psutil.Process(2**128)
 
     def test_process__repr__(self, func=repr):
-        p = psutil.Process(self.spawn_testproc().pid)
+        p = psutil.Process(self.spawn_subproc().pid)
         r = func(p)
         assert "psutil.Process" in r
         assert f"pid={p.pid}" in r

@@ -31,7 +31,7 @@ from psutil.tests import PsutilTestCase
 from psutil.tests import pytest
 from psutil.tests import retry_on_failure
 from psutil.tests import sh
-from psutil.tests import spawn_testproc
+from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
 
@@ -366,7 +366,7 @@ class TestSensorsBattery(WindowsTestCase):
 class TestProcess(WindowsTestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pid = spawn_testproc().pid
+        cls.pid = spawn_subproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -411,7 +411,7 @@ class TestProcess(WindowsTestCase):
         assert p.num_handles() == before
 
     def test_ctrl_signals(self):
-        p = psutil.Process(self.spawn_testproc().pid)
+        p = psutil.Process(self.spawn_subproc().pid)
         p.send_signal(signal.CTRL_C_EVENT)
         p.send_signal(signal.CTRL_BREAK_EVENT)
         p.kill()
@@ -571,7 +571,7 @@ class TestProcessWMI(WindowsTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = spawn_testproc().pid
+        cls.pid = spawn_subproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -651,7 +651,7 @@ class TestDualProcessImplementation(PsutilTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.pid = spawn_testproc().pid
+        cls.pid = spawn_subproc().pid
 
     @classmethod
     def tearDownClass(cls):
@@ -771,10 +771,10 @@ class RemoteProcessTestCase(PsutilTestCase):
 
         env = os.environ.copy()
         env["THINK_OF_A_NUMBER"] = str(os.getpid())
-        self.proc32 = self.spawn_testproc(
+        self.proc32 = self.spawn_subproc(
             [self.python32] + self.test_args, env=env, stdin=subprocess.PIPE
         )
-        self.proc64 = self.spawn_testproc(
+        self.proc64 = self.spawn_subproc(
             [self.python64] + self.test_args, env=env, stdin=subprocess.PIPE
         )
 

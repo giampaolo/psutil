@@ -1821,7 +1821,7 @@ class TestSensorsFans(PsutilTestCase):
 class TestProcess(PsutilTestCase):
     @retry_on_failure()
     def test_parse_smaps_vs_memory_maps(self):
-        sproc = self.spawn_testproc()
+        sproc = self.spawn_subproc()
         uss, pss, swap = psutil._pslinux.Process(sproc.pid)._parse_smaps()
         maps = psutil.Process(sproc.pid).memory_maps(grouped=False)
         assert (

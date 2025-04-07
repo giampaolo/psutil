@@ -44,7 +44,7 @@ from psutil.tests import get_testfn
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 from psutil.tests import skip_on_access_denied
-from psutil.tests import spawn_testproc
+from psutil.tests import spawn_subproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
 
@@ -273,7 +273,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.subp = spawn_testproc()
+        cls.subp = spawn_subproc()
         cls.proc = psutil.Process(cls.subp.pid)
         cls.proc.kill()
         cls.proc.wait()
