@@ -68,6 +68,7 @@ class TestUpdatedSystemTime(PsutilTestCase):
     def tearDown(self):
         if self.time_updated:
             set_systime(self.orig_time)
+        self.assertEqual(get_systime(), self.orig_time)
 
     def update_systime(self):
         # set system time 1 hour later
