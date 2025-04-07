@@ -73,5 +73,6 @@ class TestUpdatedSystemTime(PsutilTestCase):
     def test_linux_monotonic_proc_time(self):
         t1 = psutil.Process()._proc.create_time(monotonic=True)
         self.update_systime()
+        time.sleep(0.05)
         t2 = psutil.Process()._proc.create_time(monotonic=True)
         self.assertEqual(t1, t2)
