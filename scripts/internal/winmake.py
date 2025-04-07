@@ -401,6 +401,12 @@ def test_testutils():
     sh([PYTHON, "psutil\\tests\\test_testutils.py"])
 
 
+def test_sudo():
+    """Run sudo utilities tests."""
+    build()
+    sh([PYTHON, "-m", "unittest", "-v", "psutil\\tests\\test_sudo.py"])
+
+
 def test_last_failed():
     """Re-run tests which failed on last run."""
     build()
@@ -521,6 +527,7 @@ def parse_args():
     sp.add_parser('test-process', help="run process tests")
     sp.add_parser('test-process-all', help="run process all tests")
     sp.add_parser('test-system', help="run system tests")
+    sp.add_parser('test-sudo', help="run sudo tests")
     sp.add_parser('test-unicode', help="run unicode tests")
     sp.add_parser('test-testutils', help="run test utils tests")
     sp.add_parser('uninstall', help="uninstall psutil")

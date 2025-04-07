@@ -11,30 +11,51 @@ file with the unittest runner, since pytest may not be installed for
 the root user.
 """
 
+import datetime
 import time
 import unittest
 
 import psutil
 from psutil import LINUX
 from psutil import MACOS
+from psutil import WINDOWS
 from psutil.tests import PsutilTestCase
 
 
 def get_systime():
     if hasattr(time, "clock_gettime") and hasattr(time, "CLOCK_REALTIME"):
         return time.clock_gettime(time.CLOCK_REALTIME)
-    else:
-        return time.time()
+    return time.time()
 
 
-def set_systime(secs):
-    try:
-        if hasattr(time, "clock_settime") and hasattr(time, "CLOCK_REALTIME"):
+def set_systime(secs):  # secs since the epoch
+    if hasattr(time, "clock_settime") and hasattr(time, "CLOCK_REALTIME"):
+        try:
             time.clock_settime(time.CLOCK_REALTIME, secs)
-        else:
-            raise unittest.SkipTest("setting systime not supported")
-    except PermissionError:
-        raise unittest.SkipTest("needs root")
+        except PermissionError:
+            raise unittest.SkipTest("needs root")
+    elif WINDOWS:
+        import pywintypes
+        import win32api
+
+        dt = datetime.datetime.utcfromtimestamp(secs)
+        try:
+            win32api.SetSystemTime(
+                dt.year,
+                dt.month,
+                dt.isoweekday() % 7,
+                dt.day,
+                dt.hour,
+                dt.minute,
+                dt.second,
+                int(dt.microsecond / 1000),
+            )
+        except pywintypes.error as err:
+            if err.winerror == 1314:
+                raise unittest.SkipTest("needs Administrator user")
+            raise
+    else:
+        raise unittest.SkipTest("setting systime not supported")
 
 
 class TestUpdatedSystemTime(PsutilTestCase):
