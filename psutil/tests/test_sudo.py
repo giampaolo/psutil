@@ -20,33 +20,37 @@ from psutil import MACOS
 from psutil.tests import PsutilTestCase
 
 
-@unittest.skipIf(
-    not all((
-        hasattr(time, "clock_gettime"),
-        hasattr(time, "clock_settime"),
-        hasattr(time, "CLOCK_REALTIME"),
-    )),
-    "clock_(get|set)_time() not available",
-)
+def get_systime():
+    if hasattr(time, "clock_gettime") and hasattr(time, "CLOCK_REALTIME"):
+        return time.clock_gettime(time.CLOCK_REALTIME)
+    else:
+        return time.time()
+
+
+def set_systime(secs):
+    try:
+        if hasattr(time, "clock_settime") and hasattr(time, "CLOCK_REALTIME"):
+            time.clock_settime(time.CLOCK_REALTIME, secs)
+        else:
+            raise unittest.SkipTest("setting systime not supported")
+    except PermissionError:
+        raise unittest.SkipTest("needs root")
+
+
 class TestUpdatedSystemTime(PsutilTestCase):
     """Tests which update the system clock."""
 
     def setUp(self):
         self.time_updated = False
-        self.orig_time = time.clock_gettime(time.CLOCK_REALTIME)
+        self.orig_time = get_systime()
 
     def tearDown(self):
         if self.time_updated:
-            time.clock_settime(time.CLOCK_REALTIME, self.orig_time)
+            set_systime(self.orig_time)
 
     def update_systime(self):
         # set system time 1 hour later
-        try:
-            time.clock_settime(time.CLOCK_REALTIME, self.orig_time + 3600)
-        except PermissionError:
-            raise unittest.SkipTest("needs root")
-        else:
-            self.time_updated = True
+        set_systime(self.orig_time + 3600)
 
     def test_boot_time(self):
         # Test that boot_time() reflects system clock updates.
