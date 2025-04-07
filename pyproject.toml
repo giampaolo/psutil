@@ -94,16 +94,18 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+# B904 == Use `raise from` to specify exception cause
 # EM101 == raw-string-in-exception
 # EM102 == f-string-in-exception
 # EM103 == dot-format-in-exception
+# PLC1901 == `x == ""` can be simplified to `not x` as an empty string is falsey
+# PT009 == Use a regular `assert` instead of unittest-style `self.assert*`
 # T201 == print()
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
-# B904 ==  Use `raise from` to specify exception cause
-# PLC1901 == `x == ""` can be simplified to `not x` as an empty string is falsey
 ".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
+"psutil/tests/test_sudo.py" = ["PT009"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [

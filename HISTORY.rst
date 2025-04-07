@@ -17,6 +17,8 @@ XXXX-XX-XX
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
 - 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
+- 2541_, [Linux]: `Process.create_time()`_ does not reflect system clock
+  updates because it uses a cached version of `boot_time()`_.
 - 2542_: if system clock is updated `Process.children()`_ and
   `Process.parent()`_ may not be able to return the right information.
 

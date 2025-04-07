@@ -9,9 +9,9 @@ ARGS =
 # In not in a virtualenv, add --user options for install commands.
 SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
-
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+SUDO = $(if $(filter $(OS),Windows_NT),,sudo)
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -158,6 +158,10 @@ test-coverage:  ## Run test coverage.
 	$(PYTHON) -m coverage html
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
+test-sudo:  ## Run tests requiring root privileges.
+	# Use unittest runner because pytest may not be installed as root.
+	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
+
 test-ci:  ## Run tests on GitHub CI.
 	${MAKE} install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
@@ -165,6 +169,7 @@ test-ci:  ## Run tests on GitHub CI.
 	$(PYTHON) -m pip list
 	${MAKE} test
 	${MAKE} test-memleaks
+	${MAKE} test-sudo
 
 # ===================================================================
 # Linters

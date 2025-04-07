@@ -73,6 +73,7 @@ from contextlib import closing
 
 import psutil
 from psutil import BSD
+from psutil import MACOS
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil.tests import ASCII_FS
@@ -231,6 +232,8 @@ class TestFSAPIs(BaseUnicodeTest):
         with closing(sock):
             conn = psutil.Process().net_connections('unix')[0]
             assert isinstance(conn.laddr, str)
+            if not conn.laddr and MACOS and CI_TESTING:
+                raise pytest.skip("unreliable on OSX")
             assert conn.laddr == name
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")

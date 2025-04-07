@@ -868,8 +868,10 @@ Other system info
 
 .. function:: boot_time()
 
-  Return the system boot time expressed in seconds since the epoch.
-  Example:
+  Return the system boot time expressed in seconds since the epoch (seconds
+  since January 1, 1970, at midnight UTC). The returned value is based on the
+  system clock, which means it may be affected by changes such as manual
+  adjustments or time synchronization (e.g. NTP).
 
   .. code-block:: python
 
@@ -1239,7 +1241,10 @@ Process class
   .. method:: create_time()
 
     The process creation time as a floating point number expressed in seconds
-    since the epoch. The return value is cached after first call.
+    since the epoch (seconds since January 1, 1970, at midnight UTC). The
+    return value, which is cached after first call, is based on the system
+    clock, which means it may be affected by changes such as manual adjustments
+    or time synchronization (e.g. NTP).
 
       >>> import psutil, datetime
       >>> p = psutil.Process()
