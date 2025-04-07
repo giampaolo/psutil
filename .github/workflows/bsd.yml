@@ -35,7 +35,7 @@ jobs:
             make test-ci
 
   netbsd:
-    if: false  # XXX: disabled
+    # if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
