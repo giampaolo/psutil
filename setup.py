@@ -504,7 +504,7 @@ def main():
     kwargs = dict(
         name='psutil',
         version=VERSION,
-        description=__doc__.replace('\n', ' ').strip() if __doc__ else '',
+        description="Cross-platform lib for process and system monitoring.",
         long_description=get_long_description(),
         long_description_content_type='text/x-rst',
         # fmt: off
