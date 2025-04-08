@@ -22,6 +22,7 @@ XXXX-XX-XX
 - 2542_: if system clock is updated `Process.children()`_ and
   `Process.parent()`_ may not be able to return the right information.
 - 2545_: [illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
+- 2547_: [illumos]: Add "unix" to conn_tmap on illumos/SunOS too.
 
 7.0.0
 =====
