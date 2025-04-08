@@ -18,6 +18,7 @@ from ._common import NoSuchProcess
 from ._common import ZombieProcess
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
+from ._common import debug
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
@@ -335,6 +336,44 @@ def is_zombie(pid):
         return False
 
 
+try:
+    initial_boot_time = boot_time()
+except Exception as err:  # noqa: BLE001
+    # Don't want to crash at import time.
+    debug(f"ignoring exception on import: {err!r}")
+    initial_boot_time = None
+
+
+def adjust_for_clock_changes(monotonic_time):
+    """Adjust the given monotonic time for any system clock changes.
+
+    If the system clock has been updated since the initial boot, this
+    function will adjust the provided time to ensure it reflects the
+    correct wall-clock time.
+
+    Args:
+        monotonic_time (float): The time in seconds since the system boot.
+
+    Returns:
+        float: The adjusted time accounting for any system clock changes.
+    """
+    if initial_boot_time is None:
+        return monotonic_time
+
+    current_boot_time = boot_time()
+
+    # If boot time has not changed, return the input time unchanged.
+    if current_boot_time == initial_boot_time:
+        return monotonic_time
+
+    # The system clock was updated, adjust the time accordingly.
+    time_diff = abs(initial_boot_time - current_boot_time)
+    if current_boot_time > initial_boot_time:
+        return monotonic_time + time_diff
+    else:
+        return monotonic_time - time_diff
+
+
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
@@ -471,7 +510,8 @@ class Process:
 
     @wrap_exceptions
     def create_time(self):
-        return self._get_kinfo_proc()[kinfo_proc_map['ctime']]
+        monotonic_ctime = self._get_kinfo_proc()[kinfo_proc_map['ctime']]
+        return adjust_for_clock_changes(monotonic_ctime)
 
     @wrap_exceptions
     def num_ctx_switches(self):
