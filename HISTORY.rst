@@ -21,6 +21,8 @@ XXXX-XX-XX
   updates because it uses a cached version of `boot_time()`_.
 - 2542_: if system clock is updated `Process.children()`_ and
   `Process.parent()`_ may not be able to return the right information.
+- 2545_: [illumos]: Fix handling of MIB2_UDP_ENTRY in
+  `psutil_net_connections()`_.
 
 7.0.0
 =====
