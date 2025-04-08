@@ -1326,7 +1326,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 #endif
         // UDPv4
-        else if (mibhdr.level == MIB2_UDP || mibhdr.level == MIB2_UDP_ENTRY) {
+        else if (mibhdr.level == MIB2_UDP && mibhdr.name == MIB2_UDP_ENTRY) {
             num_ent = mibhdr.len / sizeof(mib2_udpEntry_t);
             assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr.len);
             for (i = 0; i < num_ent; i++) {
