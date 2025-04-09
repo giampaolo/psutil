@@ -30,6 +30,7 @@ import tempfile
 import textwrap
 import threading
 import time
+import traceback
 import unittest
 import warnings
 from socket import AF_INET
@@ -191,7 +192,6 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 # --- support
 
 HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
-HAS_CPU_FREQ = hasattr(psutil, "cpu_freq")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
@@ -202,14 +202,23 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
-try:
-    HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
-except Exception:  # noqa: BLE001
-    HAS_BATTERY = False
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
 HAS_THREADS = hasattr(psutil.Process, "threads")
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
+
+try:
+    HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
+except Exception:  # noqa: BLE001
+    traceback.print_exc()
+    HAS_BATTERY = False
+try:
+    HAS_CPU_FREQ = hasattr(psutil, "cpu_freq") and bool(psutil.cpu_freq())
+except Exception:  # noqa: BLE001
+    # e.g. LINUX + (AARCH64 or RISCV64)
+    traceback.print_exc()
+    HAS_CPU_FREQ = False
+
 
 # --- misc
 
