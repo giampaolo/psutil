@@ -73,7 +73,7 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
-    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL",
+    "MACOS_12PLUS", "COVERAGE", 'AARCH64', 'RISCV64', "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -118,6 +118,7 @@ PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 IS_64BIT = sys.maxsize > 2**32
 # apparently they're the same
 AARCH64 = platform.machine() in {"aarch64", "arm64"}
+RISCV64 = platform.machine() == "riscv64"
 
 
 @memoize

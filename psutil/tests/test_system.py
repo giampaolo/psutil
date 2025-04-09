@@ -45,6 +45,7 @@ from psutil.tests import HAS_SENSORS_TEMPERATURES
 from psutil.tests import IS_64BIT
 from psutil.tests import MACOS_12PLUS
 from psutil.tests import PYPY
+from psutil.tests import RISCV64
 from psutil.tests import UNICODE_SUFFIX
 from psutil.tests import PsutilTestCase
 from psutil.tests import check_net_address
@@ -592,9 +593,9 @@ class TestCpuAPIs(PsutilTestCase):
                     assert value >= 0
 
         ls = psutil.cpu_freq(percpu=True)
-        if (FREEBSD or AARCH64) and not ls:
+        if (FREEBSD or AARCH64 or RISCV64) and not ls:
             raise pytest.skip(
-                "returns empty list on FreeBSD and Linux aarch64"
+                "returns empty list on FreeBSD and Linux aarch64/riscv64"
             )
 
         assert ls, ls
