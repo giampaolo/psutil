@@ -210,13 +210,12 @@ SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 try:
     HAS_BATTERY = HAS_SENSORS_BATTERY and bool(psutil.sensors_battery())
 except Exception:  # noqa: BLE001
-    traceback.print_exc()
+    atexit.register(functools.partial(print, traceback.format_exc()))
     HAS_BATTERY = False
 try:
     HAS_CPU_FREQ = hasattr(psutil, "cpu_freq") and bool(psutil.cpu_freq())
 except Exception:  # noqa: BLE001
-    # e.g. LINUX + (AARCH64 or RISCV64)
-    traceback.print_exc()
+    atexit.register(functools.partial(print, traceback.format_exc()))
     HAS_CPU_FREQ = False
 
 

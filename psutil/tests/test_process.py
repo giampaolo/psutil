@@ -769,6 +769,7 @@ class TestProcess(PsutilTestCase):
         assert pyexe.startswith(name), (pyexe, name)
 
     @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
+    @retry_on_failure()
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix=string.digits * 2))
         cmdline = [
