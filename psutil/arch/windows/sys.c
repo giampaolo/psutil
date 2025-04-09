@@ -15,22 +15,39 @@ history before the move:
 
 #include <Python.h>
 #include <windows.h>
+#include <lm.h>
 
 #include "ntextapi.h"
 #include "../../_psutil_common.h"
+
+
+#define EPOCH_DIFF_SECONDS 11644473600LL  // seconds from 1601 to 1970
 
 
 // Return a Python float representing the system uptime expressed in
 // seconds since the epoch.
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
-    ULONGLONG upTime;
-    FILETIME fileTime;
+    LPBYTE buf = NULL;
+    time_t unix_time;
+    ULONGLONG filetime;
+    NET_API_STATUS status;
 
-    GetSystemTimeAsFileTime(&fileTime);
-    // Number of milliseconds that have elapsed since the system was started.
-    upTime = GetTickCount64() / 1000ull;
-    return Py_BuildValue("d", psutil_FiletimeToUnixTime(fileTime) - upTime);
+    status = NetStatisticsGet(NULL, (LPTSTR)L"LanmanWorkstation", 0, 0, &buf);
+    if (status != NERR_Success) {
+        PyErr_SetFromWindowsErr(status);
+        return NULL;
+    }
+
+    STAT_WORKSTATION_0 *stats = (STAT_WORKSTATION_0*)buf;
+
+    // Convert FILETIME (100-ns intervals since 1601) to time_t (secs
+    // since 1970).
+    filetime = stats->StatisticsStartTime.QuadPart;
+    unix_time = (time_t)((filetime / 10000000) - EPOCH_DIFF_SECONDS);
+
+    NetApiBufferFree(buf);
+    return Py_BuildValue("d", (double)unix_time);
 }
 
 

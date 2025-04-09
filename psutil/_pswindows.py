@@ -422,21 +422,9 @@ def sensors_battery():
 # =====================================================================
 
 
-_last_btime = 0
-
-
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    # This dirty hack is to adjust the precision of the returned
-    # value which may have a 1 second fluctuation, see:
-    # https://github.com/giampaolo/psutil/issues/1007
-    global _last_btime
-    ret = float(cext.boot_time())
-    if abs(ret - _last_btime) <= 1:
-        return _last_btime
-    else:
-        _last_btime = ret
-        return ret
+    return cext.boot_time()
 
 
 def users():

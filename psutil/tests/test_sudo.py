@@ -77,7 +77,6 @@ class TestUpdatedSystemTime(PsutilTestCase):
         # set system time 1 hour later
         set_systime(self.orig_time + 3600)
 
-    @unittest.skipIf(WINDOWS, "broken on WINDOWS")  # TODO: fix it
     def test_boot_time(self):
         # Test that boot_time() reflects system clock updates.
         t1 = psutil.boot_time()
