@@ -15,7 +15,6 @@ that they should be deemed illegal!
 import argparse
 import atexit
 import ctypes
-import errno
 import fnmatch
 import os
 import shutil
@@ -124,16 +123,21 @@ def rm(pattern, directory=False):
 def safe_remove(path):
     try:
         os.remove(path)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
+        pass
+    except PermissionError as err:
+        print(err)
     else:
         safe_print(f"rm {path}")
 
 
 def safe_rmtree(path):
+    def onerror(func, path, err):
+        if not issubclass(err[0], FileNotFoundError):
+            print(err[1])
+
     existed = os.path.isdir(path)
-    shutil.rmtree(path, ignore_errors=True)
+    shutil.rmtree(path, onerror=onerror)
     if existed and not os.path.isdir(path):
         safe_print(f"rmdir -f {path}")
 
@@ -282,6 +286,7 @@ def clean():
         "*__pycache__",
         ".coverage",
         ".failed-tests.txt",
+        "pytest-cache-files*",
     )
     safe_rmtree("build")
     safe_rmtree(".coverage")

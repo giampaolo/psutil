@@ -114,7 +114,6 @@ DEV_DEPS = TEST_DEPS + [
     "vulture",
     "wheel",
     "pyreadline ; os_name == 'nt'",
-    "pdbpp ; os_name == 'nt'",
 ]
 
 macros = []
