@@ -318,7 +318,11 @@ def test(args=None):
 def test_by_name(arg):
     """Run specific test by name."""
     build()
-    print(" ".join([PYTHON, "-m", "pytest"] + [arg]))
+    sh([
+        PYTHON,
+        "-m",
+        "pytest",
+    ])
 
 
 def test_by_regex(arg):
@@ -344,61 +348,61 @@ def coverage():
 def test_process():
     """Run process tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_process.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_process.py"])
 
 
 def test_process_all():
     """Run process all tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_process_all.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_process_all.py"])
 
 
 def test_system():
     """Run system tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_system.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_system.py"])
 
 
 def test_platform():
     """Run windows only tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_windows.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_windows.py"])
 
 
 def test_misc():
     """Run misc tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_misc.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_misc.py"])
 
 
 def test_scripts():
     """Run scripts tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_scripts.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_scripts.py"])
 
 
 def test_unicode():
     """Run unicode tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_unicode.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_unicode.py"])
 
 
 def test_connections():
     """Run connections tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_connections.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_connections.py"])
 
 
 def test_contracts():
     """Run contracts tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_contracts.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_contracts.py"])
 
 
 def test_testutils():
     """Run test utilities tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_testutils.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_testutils.py"])
 
 
 def test_sudo():
@@ -416,7 +420,7 @@ def test_last_failed():
 def test_memleaks():
     """Run memory leaks tests."""
     build()
-    sh([PYTHON, "psutil\\tests\\test_memleaks.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_memleaks.py"])
 
 
 def install_git_hooks():
