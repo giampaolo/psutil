@@ -25,7 +25,8 @@ history before the move:
 
 
 // Return a Python float representing the system uptime expressed in
-// seconds since the epoch.
+// seconds since the epoch. The returned value never changes,
+// regardless of suspend, hybernate or updates to the system clock.
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
     LPBYTE buf = NULL;
