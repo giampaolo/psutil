@@ -267,14 +267,27 @@ class TestSystemAPIs(WindowsTestCase):
         ), f"no common entries in {ps_names}, {wmi_names}"
 
     def test_boot_time(self):
-        wmi_os = wmi.WMI().Win32_OperatingSystem()
-        wmi_btime_str = wmi_os[0].LastBootUpTime.split('.')[0]
-        wmi_btime_dt = datetime.datetime.strptime(
-            wmi_btime_str, "%Y%m%d%H%M%S"
-        )
-        psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
-        diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
-        assert diff <= 5
+        def sys_boot_time():
+            out = subprocess.check_output(
+                ["net", "stats", "workstation"], text=True
+            )
+            for line in out.splitlines():
+                if "Statistics since" in line:
+                    match = re.search(r"Statistics since (.+)", line)
+                    if match:
+                        tstamp = match.group(1).strip()
+                        boot_time = datetime.datetime.strptime(
+                            tstamp, "%m/%d/%Y %I:%M:%S %p"
+                        )
+                        return boot_time.timestamp()
+            raise ValueError("could not find time")
+
+        def to_human(secs):
+            return datetime.datetime.fromtimestamp(secs).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+        assert to_human(psutil.boot_time()) == to_human(sys_boot_time())
 
     def test_boot_time_fluctuation(self):
         # https://github.com/giampaolo/psutil/issues/1007

@@ -318,11 +318,7 @@ def test(args=None):
 def test_by_name(arg):
     """Run specific test by name."""
     build()
-    sh([
-        PYTHON,
-        "-m",
-        "pytest",
-    ])
+    sh([PYTHON, "-m", "pytest", arg])
 
 
 def test_by_regex(arg):
