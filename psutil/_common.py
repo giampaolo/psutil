@@ -249,7 +249,7 @@ if AF_INET6 is not None:
         "udp6": ([AF_INET6], [SOCK_DGRAM]),
     })
 
-if AF_UNIX is not None and not SUNOS:
+if AF_UNIX is not None:
     conn_tmap.update({"unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM])})
 
 
