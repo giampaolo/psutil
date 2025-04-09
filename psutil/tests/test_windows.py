@@ -271,15 +271,13 @@ class TestSystemAPIs(WindowsTestCase):
             out = subprocess.check_output(
                 ["net", "stats", "workstation"], text=True
             )
-            for line in out.splitlines():
-                if "Statistics since" in line:
-                    match = re.search(r"Statistics since (.+)", line)
-                    if match:
-                        tstamp = match.group(1).strip()
-                        boot_time = datetime.datetime.strptime(
-                            tstamp, "%m/%d/%Y %I:%M:%S %p"
-                        )
-                        return boot_time.timestamp()
+            match = re.search(r"Statistics since ([^\r\n]+)", out)
+            if match:
+                tstamp = match.group(1).strip()
+                boot_time = datetime.datetime.strptime(
+                    tstamp, "%m/%d/%Y %I:%M:%S %p"
+                )
+                return boot_time.timestamp()
             raise ValueError("could not find time")
 
         def to_human(secs):
