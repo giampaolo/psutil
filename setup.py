@@ -314,7 +314,6 @@ if WINDOWS:
             "ws2_32",
             "PowrProf",
             "pdh",
-            "mincore",
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],

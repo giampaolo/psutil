@@ -660,6 +660,12 @@ ULONGLONG (CALLBACK *_GetTickCount64) (
 
 #define GetTickCount64 _GetTickCount64
 
+VOID(CALLBACK *_QueryInterruptTime) (
+    PULONGLONG lpInterruptTime
+);
+
+#define QueryInterruptTime _QueryInterruptTime
+
 NTSTATUS (NTAPI *_NtQueryObject) (
     HANDLE Handle,
     OBJECT_INFORMATION_CLASS ObjectInformationClass,
