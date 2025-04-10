@@ -275,7 +275,7 @@ class TestSystemAPIs(WindowsTestCase):
         )
         psutil_dt = datetime.datetime.fromtimestamp(psutil.boot_time())
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
-        assert diff <= 5
+        assert diff <= 5, (psutil_dt, wmi_btime_dt)
 
     def test_uptime_1(self):
         # ...against QueryInterruptTime() (Windows 7+)
