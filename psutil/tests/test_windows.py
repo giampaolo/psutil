@@ -297,10 +297,40 @@ class TestSystemAPIs(WindowsTestCase):
         print("GetTickCount64", secs)
 
         #
-        print("time.time()", time.time())
+        print("cext.uptime", cext.uptime())
 
         #
-        print("cext.uptime", cext.uptime())
+        from ctypes import wintypes
+
+        # Load kernel32.dll
+        kernel32 = ctypes.windll.kernel32
+
+        # Define the FILETIME structure
+        class FILETIME(ctypes.Structure):
+            _fields_ = [
+                ('dwLowDateTime', wintypes.DWORD),
+                ('dwHighDateTime', wintypes.DWORD)
+            ]
+
+        #
+        print("time.time()", time.time())
+
+        # Initialize a FILETIME object to receive the system time
+        file_time = FILETIME()
+
+        # Call GetSystemTimeAsFileTime
+        kernel32.GetSystemTimeAsFileTime(ctypes.byref(file_time))
+
+        # The FILETIME structure contains the low and high parts of the time
+        low = file_time.dwLowDateTime
+        high = file_time.dwHighDateTime
+
+        # Optionally, convert the FILETIME to a timestamp (for understanding purposes)
+        # FILETIME is in 100-nanosecond intervals since January 1, 1601
+        EPOCH = 116444736000000000  # Windows FILETIME epoch (Jan 1, 1601)
+        timestamp = (high << 32) + low - EPOCH  # Convert to UNIX timestamp
+        print(f"GetSystemTimeAsFileTime: {timestamp / 10000000.0}")  # Convert to seconds
+
 
 
     def test_uptime_1(self):
