@@ -34,6 +34,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
+// The number of seconds since boot, including the time spent during
+// suspend / hybernation.
 PyObject *
 psutil_uptime(PyObject *self, PyObject *args) {
     ULONGLONG interruptTime100ns = 0;
