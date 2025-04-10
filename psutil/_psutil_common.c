@@ -224,10 +224,12 @@ psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
     FARPROC addr;
 
     if ((mod = GetModuleHandleA(libname)) == NULL) {
+        psutil_debug("%s -> %s not supported", libname, procname);
         PyErr_SetFromWindowsErrWithFilename(0, libname);
         return NULL;
     }
     if ((addr = GetProcAddress(mod, procname)) == NULL) {
+        psutil_debug("%s -> %s not supported", libname, procname);
         PyErr_SetFromWindowsErrWithFilename(0, procname);
         return NULL;
     }
@@ -245,10 +247,12 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
     mod = LoadLibraryA(libname);
     Py_END_ALLOW_THREADS
     if (mod  == NULL) {
+        psutil_debug("%s -> %s not supported", libname, procname);
         PyErr_SetFromWindowsErrWithFilename(0, libname);
         return NULL;
     }
     if ((addr = GetProcAddress(mod, procname)) == NULL) {
+        psutil_debug("%s -> %s not supported", libname, procname);
         PyErr_SetFromWindowsErrWithFilename(0, procname);
         FreeLibrary(mod);
         return NULL;
