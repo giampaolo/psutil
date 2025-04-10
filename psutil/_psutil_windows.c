@@ -72,6 +72,7 @@ PsutilMethods[] = {
 
     // --- system-related functions
     {"boot_time", psutil_boot_time, METH_VARARGS},
+    {"uptime", psutil_uptime, METH_VARARGS},
     {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS},
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS},

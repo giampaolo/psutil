@@ -35,6 +35,18 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 
 
 PyObject *
+psutil_uptime(PyObject *self, PyObject *args) {
+    ULONGLONG interruptTime100ns = 0;
+    double uptimeSeconds;
+
+    QueryInterruptTime(&interruptTime100ns);
+    // Convert from 100-nanosecond to seconds.
+    uptimeSeconds = interruptTime100ns / 10000000.0;
+    return Py_BuildValue("d", uptimeSeconds);
+}
+
+
+PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = WTS_CURRENT_SERVER_HANDLE;
     LPWSTR buffer_user = NULL;
