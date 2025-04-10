@@ -20,23 +20,9 @@ history before the move:
 #include "../../_psutil_common.h"
 
 
-// Return a Python float representing the system uptime expressed in
-// seconds since the epoch.
-PyObject *
-psutil_boot_time(PyObject *self, PyObject *args) {
-    ULONGLONG upTime;
-    FILETIME fileTime;
-
-    GetSystemTimeAsFileTime(&fileTime);
-    // Number of milliseconds that have elapsed since the system was started.
-    upTime = GetTickCount64() / 1000ull;
-    return Py_BuildValue("d", psutil_FiletimeToUnixTime(fileTime) - upTime);
-}
-
-
-// The number of seconds since boot. Monotonic and not subject to
-// system clock updates. On Windows 7+ also includes the time spent
-// during suspend / hybernate.
+// The number of seconds passed since boot. This is a monotonic timer,
+// not affected by system clock updates. On Windows 7+ it also includes
+// the time spent during suspend / hybernate.
 PyObject *
 psutil_uptime(PyObject *self, PyObject *args) {
     double uptimeSeconds;

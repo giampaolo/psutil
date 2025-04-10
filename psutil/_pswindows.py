@@ -426,7 +426,9 @@ _last_btime = 0
 
 
 def boot_time():
-    """The system boot time expressed in seconds since the epoch."""
+    """The system boot time expressed in seconds since the epoch. This
+    also includes the time spent during hybernate / suspend.
+    """
     # This dirty hack is to adjust the precision of the returned
     # value which may have a 1 second fluctuation, see:
     # https://github.com/giampaolo/psutil/issues/1007
