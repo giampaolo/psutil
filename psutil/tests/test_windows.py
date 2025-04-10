@@ -6,6 +6,7 @@
 
 """Windows specific tests."""
 
+import ctypes
 import datetime
 import glob
 import os
@@ -276,16 +277,14 @@ class TestSystemAPIs(WindowsTestCase):
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
         assert diff <= 5
 
-    def test_boot_time_fluctuation(self):
-        # https://github.com/giampaolo/psutil/issues/1007
-        with mock.patch('psutil._pswindows.cext.boot_time', return_value=5):
-            assert psutil.boot_time() == 5
-        with mock.patch('psutil._pswindows.cext.boot_time', return_value=4):
-            assert psutil.boot_time() == 5
-        with mock.patch('psutil._pswindows.cext.boot_time', return_value=6):
-            assert psutil.boot_time() == 5
-        with mock.patch('psutil._pswindows.cext.boot_time', return_value=333):
-            assert psutil.boot_time() == 333
+    def test_uptime(self):
+        # Internally we use QueryInterruptTime() which should return
+        # the same value as GetTickCount64() but takes into account
+        # time spent during suspend / hybernation.
+        assert cext.uptime() > 0
+        ms = ctypes.windll.kernel32.GetTickCount64()
+        secs = ms / 1000.0
+        assert abs(cext.uptime() - secs) < 0.5
 
 
 # ===================================================================

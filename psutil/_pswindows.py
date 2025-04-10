@@ -431,7 +431,7 @@ def boot_time():
     # value which may have a 1 second fluctuation, see:
     # https://github.com/giampaolo/psutil/issues/1007
     global _last_btime
-    ret = float(cext.boot_time())
+    ret = time.time() - cext.uptime()
     if abs(ret - _last_btime) <= 1:
         return _last_btime
     else:
