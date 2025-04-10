@@ -277,6 +277,32 @@ class TestSystemAPIs(WindowsTestCase):
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
         assert diff <= 5, (psutil_dt, wmi_btime_dt)
 
+    def test_xxx(self):
+        print()
+
+        #
+        ULONGLONG = ctypes.c_ulonglong
+        kernelbase = ctypes.WinDLL("kernelbase.dll")
+        QueryInterruptTime = kernelbase.QueryInterruptTime
+        QueryInterruptTime.argtypes = [ctypes.POINTER(ULONGLONG)]
+        QueryInterruptTime.restype = ctypes.c_bool
+        interrupt_time_100ns = ULONGLONG(0)
+        assert QueryInterruptTime(ctypes.byref(interrupt_time_100ns))
+        secs = interrupt_time_100ns.value / 10000000.0
+        print("QueryInterruptTime:", secs)
+
+        #
+        ms = ctypes.windll.kernel32.GetTickCount64()
+        secs = ms / 1000.0
+        print("GetTickCount64", secs)
+
+        #
+        print("time.time()", time.time())
+
+        #
+        print("cext.uptime", cext.uptime())
+
+
     def test_uptime_1(self):
         # ...against QueryInterruptTime() (Windows 7+)
         ULONGLONG = ctypes.c_ulonglong
