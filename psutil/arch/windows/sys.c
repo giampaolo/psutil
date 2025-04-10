@@ -38,12 +38,18 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 // suspend / hybernation.
 PyObject *
 psutil_uptime(PyObject *self, PyObject *args) {
-    ULONGLONG interruptTime100ns = 0;
     double uptimeSeconds;
 
-    QueryInterruptTime(&interruptTime100ns);
-    // Convert from 100-nanosecond to seconds.
-    uptimeSeconds = interruptTime100ns / 10000000.0;
+    if (QueryInterruptTime) {
+        ULONGLONG interruptTime100ns = 0;
+        QueryInterruptTime(&interruptTime100ns);
+        // Convert from 100-nanosecond to seconds.
+        uptimeSeconds = interruptTime100ns / 10000000.0;
+    }
+    else {
+        // Convert from milliseconds to seconds.
+        uptimeSeconds = (double)GetTickCount64() / 1000.0;
+    }
     return Py_BuildValue("d", uptimeSeconds);
 }
 
