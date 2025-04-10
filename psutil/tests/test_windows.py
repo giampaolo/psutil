@@ -277,11 +277,23 @@ class TestSystemAPIs(WindowsTestCase):
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
         assert diff <= 5
 
-    def test_uptime(self):
-        # Internally we use QueryInterruptTime() which should return
-        # the same value as GetTickCount64() but takes into account
-        # time spent during suspend / hybernation.
-        assert cext.uptime() > 0
+    def test_uptime_1(self):
+        # ...against QueryInterruptTime() (Windows 7+)
+        ULONGLONG = ctypes.c_ulonglong
+
+        kernelbase = ctypes.WinDLL("kernelbase.dll")
+        QueryInterruptTime = kernelbase.QueryInterruptTime
+        QueryInterruptTime.argtypes = [ctypes.POINTER(ULONGLONG)]
+        QueryInterruptTime.restype = ctypes.c_bool
+
+        interrupt_time_100ns = ULONGLONG(0)
+        assert QueryInterruptTime(ctypes.byref(interrupt_time_100ns))
+        secs = interrupt_time_100ns.value / 10000000.0
+        assert abs(cext.uptime() - secs) < 0.5
+
+    def test_uptime_2(self):
+        # ...against GetTickCount64() (Windows < 7, does not include
+        # time spent during suspend / hybernate).
         ms = ctypes.windll.kernel32.GetTickCount64()
         secs = ms / 1000.0
         assert abs(cext.uptime() - secs) < 0.5
