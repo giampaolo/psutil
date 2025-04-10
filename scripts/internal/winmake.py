@@ -409,7 +409,7 @@ def test_testutils():
 def test_sudo():
     """Run sudo utilities tests."""
     build()
-    sh([PYTHON, "-m", "unittest", "-v", "psutil\\tests\\test_sudo.py"])
+    sh([PYTHON, "-m", "pytest", "-k", "test_sudo.py"])
 
 
 def test_last_failed():
