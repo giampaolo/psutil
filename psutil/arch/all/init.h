@@ -21,6 +21,13 @@ extern int PSUTIL_CONN_NONE;
     dst[n - 1] = '\0'
 
 // ====================================================================
+// --- Custom exceptions
+// ====================================================================
+
+PyObject* AccessDenied(const char *msg);
+PyObject* NoSuchProcess(const char *msg);
+
+// ====================================================================
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
 

@@ -14,6 +14,39 @@ int PSUTIL_DEBUG = 0;
 int PSUTIL_CONN_NONE = 128;
 
 // ====================================================================
+// --- Custom exceptions
+// ====================================================================
+
+// Set OSError(errno=ESRCH, strerror="No such process (originated from")
+// Python exception.
+PyObject *
+NoSuchProcess(const char *syscall) {
+    PyObject *exc;
+    char msg[1024];
+
+    sprintf(msg, "assume no such process (originated from %s)", syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
+// Set OSError(errno=EACCES, strerror="Permission denied" (originated from ...)
+// Python exception.
+PyObject *
+AccessDenied(const char *syscall) {
+    PyObject *exc;
+    char msg[1024];
+
+    sprintf(msg, "assume access denied (originated from %s)", syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+// ====================================================================
 // --- Global utils
 // ====================================================================
 

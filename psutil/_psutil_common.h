@@ -12,8 +12,6 @@
 // --- Custom exceptions
 // ====================================================================
 
-PyObject* AccessDenied(const char *msg);
-PyObject* NoSuchProcess(const char *msg);
 PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
 // ====================================================================
