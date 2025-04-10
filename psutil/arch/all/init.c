@@ -49,10 +49,9 @@ AccessDenied(const char *syscall) {
     return NULL;
 }
 
-/*
- * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
- * message.
- */
+
+// Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
+// message.
 PyObject *
 psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
     char fullmsg[1024];
@@ -96,11 +95,10 @@ psutil_set_debug(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
-/*
- * Raise OverflowError if Python int value overflowed when converting to pid_t.
- * Raise ValueError if Python int value is negative.
- * Otherwise, return None.
- */
+
+// Raise OverflowError if Python int value overflowed when converting
+// to pid_t. Raise ValueError if Python int value is negative.
+// Otherwise, return None.
 PyObject *
 psutil_check_pid_range(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_WINDOWS

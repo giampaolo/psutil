@@ -65,11 +65,6 @@ PyErr_SetExcFromWindowsErrWithFilenameObject(PyObject *type,
 #endif // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 #endif  // defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
 
-
-// ====================================================================
-// --- Custom exceptions
-// ====================================================================
-
 // ============================================================================
 // Utility functions (BSD)
 // ============================================================================
