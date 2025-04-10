@@ -219,18 +219,20 @@ CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 // A wrapper around GetModuleHandle and GetProcAddress.
 PVOID
-psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
+psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
     HMODULE mod;
     FARPROC addr;
 
     if ((mod = GetModuleHandleA(libname)) == NULL) {
-        psutil_debug("%s -> %s not supported", libname, procname);
+        psutil_debug(
+            "%s module not supported (needed for %s)", libname, apiname
+        );
         PyErr_SetFromWindowsErrWithFilename(0, libname);
         return NULL;
     }
-    if ((addr = GetProcAddress(mod, procname)) == NULL) {
-        psutil_debug("%s -> %s not supported", libname, procname);
-        PyErr_SetFromWindowsErrWithFilename(0, procname);
+    if ((addr = GetProcAddress(mod, apiname)) == NULL) {
+        psutil_debug("%s -> %s API not supported", libname, apiname);
+        PyErr_SetFromWindowsErrWithFilename(0, apiname);
         return NULL;
     }
     return addr;
@@ -239,7 +241,7 @@ psutil_GetProcAddress(LPCSTR libname, LPCSTR procname) {
 
 // A wrapper around LoadLibrary and GetProcAddress.
 PVOID
-psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
+psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
     HMODULE mod;
     FARPROC addr;
 
@@ -247,13 +249,13 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname) {
     mod = LoadLibraryA(libname);
     Py_END_ALLOW_THREADS
     if (mod  == NULL) {
-        psutil_debug("%s -> %s not supported", libname, procname);
+        psutil_debug("%s lib not supported (needed for %s)", libname, apiname);
         PyErr_SetFromWindowsErrWithFilename(0, libname);
         return NULL;
     }
-    if ((addr = GetProcAddress(mod, procname)) == NULL) {
-        psutil_debug("%s -> %s not supported", libname, procname);
-        PyErr_SetFromWindowsErrWithFilename(0, procname);
+    if ((addr = GetProcAddress(mod, apiname)) == NULL) {
+        psutil_debug("%s -> %s not supported", libname, apiname);
+        PyErr_SetFromWindowsErrWithFilename(0, apiname);
         FreeLibrary(mod);
         return NULL;
     }
