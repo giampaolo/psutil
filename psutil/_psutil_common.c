@@ -346,6 +346,10 @@ psutil_loadlibs() {
         return 1;
 
     // --- Optional
+
+    // minimum requirement: Win 7
+    QueryInterruptTime = psutil_GetProcAddressFromLib(
+        "kernelbase.dll", "QueryInterruptTime");
     // minimum requirement: Win 7
     GetActiveProcessorCount = psutil_GetProcAddress(
         "kernel32", "GetActiveProcessorCount");

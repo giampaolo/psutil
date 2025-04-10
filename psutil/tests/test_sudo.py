@@ -64,20 +64,18 @@ class TestUpdatedSystemTime(PsutilTestCase):
     def setUp(self):
         self.time_updated = False
         self.orig_time = get_systime()
+        self.time_started = time.monotonic()
 
     def tearDown(self):
         if self.time_updated:
-            set_systime(self.orig_time)
-            if WINDOWS:
-                self.assertAlmostEqual(get_systime(), self.orig_time, delta=1)
-            else:
-                self.assertEqual(get_systime(), self.orig_time)
+            extra_t = time.monotonic() - self.time_started
+            set_systime(self.orig_time + extra_t)
 
     def update_systime(self):
         # set system time 1 hour later
         set_systime(self.orig_time + 3600)
+        self.time_updated = True
 
-    @unittest.skipIf(WINDOWS, "broken on WINDOWS")  # TODO: fix it
     def test_boot_time(self):
         # Test that boot_time() reflects system clock updates.
         t1 = psutil.boot_time()
