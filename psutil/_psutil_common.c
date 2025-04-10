@@ -70,28 +70,6 @@ PyErr_SetExcFromWindowsErrWithFilenameObject(PyObject *type,
 // --- Custom exceptions
 // ====================================================================
 
-/*
- * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
- * message.
- */
-PyObject *
-psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
-    char fullmsg[1024];
-
-#ifdef PSUTIL_WINDOWS
-    DWORD dwLastError = GetLastError();
-    sprintf(fullmsg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(dwLastError, fullmsg);
-#else
-    PyObject *exc;
-    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-#endif
-    return NULL;
-}
-
 // ============================================================================
 // Utility functions (BSD)
 // ============================================================================
