@@ -17,3 +17,11 @@ extern int PSUTIL_DEBUG;
 // ====================================================================
 
 PyObject* psutil_set_debug(PyObject *self, PyObject *args);
+
+// Print a debug message on stderr.
+#define psutil_debug(...) do { \
+    if (! PSUTIL_DEBUG) \
+        break; \
+    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n");} while(0)
