@@ -277,62 +277,6 @@ class TestSystemAPIs(WindowsTestCase):
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
         assert diff <= 5, (psutil_dt, wmi_btime_dt)
 
-    def test_xxx(self):
-        print()
-
-        #
-        ULONGLONG = ctypes.c_ulonglong
-        kernelbase = ctypes.WinDLL("kernelbase.dll")
-        QueryInterruptTime = kernelbase.QueryInterruptTime
-        QueryInterruptTime.argtypes = [ctypes.POINTER(ULONGLONG)]
-        QueryInterruptTime.restype = ctypes.c_bool
-        interrupt_time_100ns = ULONGLONG(0)
-        assert QueryInterruptTime(ctypes.byref(interrupt_time_100ns))
-        secs = interrupt_time_100ns.value / 10000000.0
-        print("QueryInterruptTime:", secs)
-
-        #
-        ms = ctypes.windll.kernel32.GetTickCount64()
-        secs = ms / 1000.0
-        print("GetTickCount64", secs)
-
-        #
-        print("cext.uptime", cext.uptime())
-
-        #
-        from ctypes import wintypes
-
-        # Load kernel32.dll
-        kernel32 = ctypes.windll.kernel32
-
-        # Define the FILETIME structure
-        class FILETIME(ctypes.Structure):
-            _fields_ = [
-                ('dwLowDateTime', wintypes.DWORD),
-                ('dwHighDateTime', wintypes.DWORD)
-            ]
-
-        #
-        print("time.time()", time.time())
-
-        # Initialize a FILETIME object to receive the system time
-        file_time = FILETIME()
-
-        # Call GetSystemTimeAsFileTime
-        kernel32.GetSystemTimeAsFileTime(ctypes.byref(file_time))
-
-        # The FILETIME structure contains the low and high parts of the time
-        low = file_time.dwLowDateTime
-        high = file_time.dwHighDateTime
-
-        # Optionally, convert the FILETIME to a timestamp (for understanding purposes)
-        # FILETIME is in 100-nanosecond intervals since January 1, 1601
-        EPOCH = 116444736000000000  # Windows FILETIME epoch (Jan 1, 1601)
-        timestamp = (high << 32) + low - EPOCH  # Convert to UNIX timestamp
-        print(f"GetSystemTimeAsFileTime: {timestamp / 10000000.0}")  # Convert to seconds
-
-
-
     def test_uptime_1(self):
         # ...against QueryInterruptTime() (Windows 7+)
         ULONGLONG = ctypes.c_ulonglong
