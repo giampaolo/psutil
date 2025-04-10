@@ -15,6 +15,11 @@ extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
 
+// strncpy() variant which appends a null terminator.
+#define PSUTIL_STRNCPY(dst, src, n) \
+    strncpy(dst, src, n - 1); \
+    dst[n - 1] = '\0'
+
 // ====================================================================
 // --- Global utils
 // ====================================================================
