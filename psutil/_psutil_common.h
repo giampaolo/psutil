@@ -12,9 +12,6 @@
 // --- Global vars / constants
 // ====================================================================
 
-// a signaler for connections without an actual status
-static const int PSUTIL_CONN_NONE = 128;
-
 // strncpy() variant which appends a null terminator.
 #define PSUTIL_STRNCPY(dst, src, n) \
     strncpy(dst, src, n - 1); \

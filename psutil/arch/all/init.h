@@ -7,10 +7,13 @@
 #include <Python.h>
 
 // ====================================================================
-// --- Global vars
+// --- Global constants
 // ====================================================================
 
+// print debug messages when set to 1
 extern int PSUTIL_DEBUG;
+// a signaler for connections without an actual status
+extern int PSUTIL_CONN_NONE;
 
 // ====================================================================
 // --- Global utils
