@@ -6,11 +6,12 @@
 
 #include <Python.h>
 
+#include "arch/all/init.h"
+
 // ====================================================================
 // --- Global vars / constants
 // ====================================================================
 
-extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 static const int PSUTIL_CONN_NONE = 128;
 
@@ -91,7 +92,6 @@ PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // ====================================================================
 
 PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);
-PyObject* psutil_set_debug(PyObject *self, PyObject *args);
 int psutil_setup(void);
 
 

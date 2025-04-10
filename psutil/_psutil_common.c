@@ -7,14 +7,9 @@
  */
 
 #include <Python.h>
+
+#include "arch/all/init.h"
 #include "_psutil_common.h"
-
-// ====================================================================
-// --- Global vars
-// ====================================================================
-
-int PSUTIL_DEBUG = 0;
-
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
@@ -152,28 +147,6 @@ psutil_check_pid_range(PyObject *self, PyObject *args) {
     }
     Py_RETURN_NONE;
 }
-
-// Enable or disable PSUTIL_DEBUG messages.
-PyObject *
-psutil_set_debug(PyObject *self, PyObject *args) {
-    PyObject *value;
-    int x;
-
-    if (!PyArg_ParseTuple(args, "O", &value))
-        return NULL;
-    x = PyObject_IsTrue(value);
-    if (x < 0) {
-        return NULL;
-    }
-    else if (x == 0) {
-        PSUTIL_DEBUG = 0;
-    }
-    else {
-        PSUTIL_DEBUG = 1;
-    }
-    Py_RETURN_NONE;
-}
-
 
 // ============================================================================
 // Utility functions (BSD)

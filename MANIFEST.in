@@ -48,6 +48,8 @@ include psutil/arch/aix/ifaddrs.h
 include psutil/arch/aix/net_connections.c
 include psutil/arch/aix/net_connections.h
 include psutil/arch/aix/net_kernel_structs.h
+include psutil/arch/all/init.c
+include psutil/arch/all/init.h
 include psutil/arch/bsd/cpu.c
 include psutil/arch/bsd/cpu.h
 include psutil/arch/bsd/disk.c
