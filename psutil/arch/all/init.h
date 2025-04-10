@@ -85,8 +85,6 @@ extern int PSUTIL_CONN_NONE;
 // --- Global utils
 // ====================================================================
 
-PyObject* psutil_set_debug(PyObject *self, PyObject *args);
-
 // Print a debug message on stderr.
 #define psutil_debug(...) do { \
     if (! PSUTIL_DEBUG) \
@@ -94,3 +92,6 @@ PyObject* psutil_set_debug(PyObject *self, PyObject *args);
     fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
     fprintf(stderr, __VA_ARGS__); \
     fprintf(stderr, "\n");} while(0)
+
+PyObject* psutil_set_debug(PyObject *self, PyObject *args);
+PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);

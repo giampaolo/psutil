@@ -20,7 +20,6 @@ PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 // --- Global utils
 // ====================================================================
 
-PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);
 int psutil_setup(void);
 
 // ====================================================================
