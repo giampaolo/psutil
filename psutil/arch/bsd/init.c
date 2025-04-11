@@ -7,8 +7,8 @@
 #include <Python.h>
 #include <stdio.h>
 
-#include "init.h"
 #include "../../arch/all/init.h"
+#include "init.h"
 
 
 void

@@ -31,6 +31,7 @@
 #include "net_connections.h"
 #include "common.h"
 
+
 #define NO_SOCKET       (PyObject *)(-1)
 
 static int
