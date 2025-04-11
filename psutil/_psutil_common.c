@@ -30,12 +30,3 @@ convert_kvm_err(const char *syscall, char *errbuf) {
         PyErr_Format(PyExc_RuntimeError, fullmsg);
 }
 #endif
-
-
-// Called on module import on all platforms.
-int
-psutil_setup(void) {
-    if (getenv("PSUTIL_DEBUG") != NULL)
-        PSUTIL_DEBUG = 1;
-    return 0;
-}

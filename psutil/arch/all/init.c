@@ -115,3 +115,12 @@ psutil_check_pid_range(PyObject *self, PyObject *args) {
     }
     Py_RETURN_NONE;
 }
+
+
+// Called on module import on all platforms.
+int
+psutil_setup(void) {
+    if (getenv("PSUTIL_DEBUG") != NULL)
+        PSUTIL_DEBUG = 1;
+    return 0;
+}
