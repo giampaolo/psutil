@@ -204,7 +204,7 @@ class TestConnectedSocket(ConnectionTestCase):
 
     # On SunOS, even after we close() it, the server socket stays around
     # in TIME_WAIT state.
-    @pytest.mark.skipif(SUNOS, reason="unreliable on SUONS")
+    @pytest.mark.skipif(SUNOS, reason="unreliable on SUNOS")
     def test_tcp(self):
         addr = ("127.0.0.1", 0)
         assert this_proc_net_connections(kind='tcp4') == []
