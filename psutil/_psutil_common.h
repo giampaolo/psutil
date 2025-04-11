@@ -46,31 +46,5 @@ void convert_kvm_err(const char *syscall, char *errbuf);
     extern SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
     extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
-    #define PSUTIL_WINDOWS_VISTA 60
-    #define PSUTIL_WINDOWS_7 61
-    #define PSUTIL_WINDOWS_8 62
-    #define PSUTIL_WINDOWS_8_1 63
-    #define PSUTIL_WINDOWS_10 100
-    #define PSUTIL_WINDOWS_NEW MAXLONG
-
-    #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
-    #define MALLOC_ZERO(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
-    #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
-
-    #define _NT_FACILITY_MASK 0xfff
-    #define _NT_FACILITY_SHIFT 16
-    #define _NT_FACILITY(status) \
-        ((((ULONG)(status)) >> _NT_FACILITY_SHIFT) & _NT_FACILITY_MASK)
-
-    #define NT_NTWIN32(status) (_NT_FACILITY(status) == FACILITY_WIN32)
-    #define WIN32_FROM_NTSTATUS(status) (((ULONG)(status)) & 0xffff)
-
-    #define LO_T 1e-7
-    #define HI_T 429.4967296
-
-    #ifndef AF_INET6
-        #define AF_INET6 23
-    #endif
-
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
 #endif
