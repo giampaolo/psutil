@@ -511,9 +511,11 @@ class Process:
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
-    def open_files(self):
+    def open_files(self, only_regular=True):
         # TODO rewrite without using procfiles (stat /proc/pid/fd/* and then
         # find matching name of the inode)
+        # <<< TODO >>>: does the current implementation ensure we only return
+        #               regular files? or is that missing?
         p = subprocess.Popen(
             ["/usr/bin/procfiles", "-n", str(self.pid)],
             stdout=subprocess.PIPE,
