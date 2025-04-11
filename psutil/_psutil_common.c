@@ -31,30 +31,11 @@ convert_kvm_err(const char *syscall, char *errbuf) {
 }
 #endif
 
-// ====================================================================
-// --- macOS
-// ====================================================================
-
-#ifdef PSUTIL_OSX
-#include <mach/mach_time.h>
-
-struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
-#endif
-
-// ====================================================================
-// --- Windows
-// ====================================================================
-
-
 
 // Called on module import on all platforms.
 int
 psutil_setup(void) {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
-
-#ifdef PSUTIL_OSX
-    mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
-#endif
     return 0;
 }

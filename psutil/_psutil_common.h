@@ -11,8 +11,8 @@
 
 #include "arch/all/init.h"
 
-#ifdef PSUTIL_WINDOWS  // XXX - TEMPORARY
-#include "arch/windows/init.h"
+#ifdef PSUTIL_OSX  // XXX - TEMPORARY
+#include "arch/osx/init.h"
 #endif
 
 // ====================================================================
@@ -26,13 +26,3 @@ int psutil_setup(void);
 // ====================================================================
 
 void convert_kvm_err(const char *syscall, char *errbuf);
-
-// ====================================================================
-// --- macOS
-// ====================================================================
-
-#ifdef PSUTIL_OSX
-    #include <mach/mach_time.h>
-
-    extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
-#endif
