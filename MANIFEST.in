@@ -126,6 +126,8 @@ include psutil/arch/windows/cpu.c
 include psutil/arch/windows/cpu.h
 include psutil/arch/windows/disk.c
 include psutil/arch/windows/disk.h
+include psutil/arch/windows/init.c
+include psutil/arch/windows/init.h
 include psutil/arch/windows/mem.c
 include psutil/arch/windows/mem.h
 include psutil/arch/windows/net.c
