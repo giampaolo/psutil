@@ -73,7 +73,6 @@ void convert_kvm_err(const char *syscall, char *errbuf);
         #define AF_INET6 23
     #endif
 
-    PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
     double psutil_FiletimeToUnixTime(FILETIME ft);
     double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);

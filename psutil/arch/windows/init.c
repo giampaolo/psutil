@@ -89,6 +89,32 @@ psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
 }
 
 
+// A wrapper around LoadLibrary and GetProcAddress.
+PVOID
+psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
+    HMODULE mod;
+    FARPROC addr;
+
+    Py_BEGIN_ALLOW_THREADS
+    mod = LoadLibraryA(libname);
+    Py_END_ALLOW_THREADS
+    if (mod  == NULL) {
+        psutil_debug("%s lib not supported (needed for %s)", libname, apiname);
+        PyErr_SetFromWindowsErrWithFilename(0, libname);
+        return NULL;
+    }
+    if ((addr = GetProcAddress(mod, apiname)) == NULL) {
+        psutil_debug("%s -> %s not supported", libname, apiname);
+        PyErr_SetFromWindowsErrWithFilename(0, apiname);
+        FreeLibrary(mod);
+        return NULL;
+    }
+    // Causes crash.
+    // FreeLibrary(mod);
+    return addr;
+}
+
+
 // Called on module import on all platforms.
 int
 psutil_setup_windows(void) {

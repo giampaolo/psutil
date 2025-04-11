@@ -21,4 +21,5 @@
 #endif
 
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
+PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
 int psutil_setup_windows(void);
