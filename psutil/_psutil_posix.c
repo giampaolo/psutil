@@ -49,7 +49,7 @@
     #include <sys/resource.h>
 #endif
 
-#include "_psutil_common.h"
+#include "arch/all/init.h"
 
 
 // ====================================================================

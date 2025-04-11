@@ -7,7 +7,7 @@
 #include <Python.h>
 #include <mntent.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 // Return disk mounted partitions as a list of tuples including device,

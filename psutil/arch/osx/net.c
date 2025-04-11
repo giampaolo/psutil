@@ -15,7 +15,7 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *

@@ -17,9 +17,10 @@
 #include <Python.h>
 #include <windows.h>
 
-#include "_psutil_common.h"
+#include "arch/all/init.h"
 #include "arch/windows/cpu.h"
 #include "arch/windows/disk.h"
+#include "arch/windows/init.h"
 #include "arch/windows/mem.h"
 #include "arch/windows/net.h"
 #include "arch/windows/proc.h"
@@ -157,6 +158,8 @@ PyInit__psutil_windows(void) {
 #endif
 
     if (psutil_setup() != 0)
+        return NULL;
+    if (psutil_setup_windows() != 0)
         return NULL;
     if (psutil_set_se_debug() != 0)
         return NULL;

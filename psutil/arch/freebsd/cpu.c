@@ -20,7 +20,7 @@ For reference, here's the git history with original(ish) implementations:
 #include <sys/sysctl.h>
 #include <devstat.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 

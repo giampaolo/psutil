@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <tchar.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 #ifndef _ARRAYSIZE

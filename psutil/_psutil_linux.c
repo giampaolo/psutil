@@ -12,7 +12,7 @@
 #include <Python.h>
 #include <linux/ethtool.h>  // DUPLEX_*
 
-#include "_psutil_common.h"
+#include "arch/all/init.h"
 #include "arch/linux/disk.h"
 #include "arch/linux/mem.h"
 #include "arch/linux/net.h"

@@ -12,7 +12,7 @@
 #include <wchar.h>
 #include <ws2tcpip.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 static PIP_ADAPTER_ADDRESSES

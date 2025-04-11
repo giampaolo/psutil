@@ -32,8 +32,6 @@ include psutil/_psposix.py
 include psutil/_pssunos.py
 include psutil/_psutil_aix.c
 include psutil/_psutil_bsd.c
-include psutil/_psutil_common.c
-include psutil/_psutil_common.h
 include psutil/_psutil_linux.c
 include psutil/_psutil_osx.c
 include psutil/_psutil_posix.c
@@ -48,10 +46,14 @@ include psutil/arch/aix/ifaddrs.h
 include psutil/arch/aix/net_connections.c
 include psutil/arch/aix/net_connections.h
 include psutil/arch/aix/net_kernel_structs.h
+include psutil/arch/all/init.c
+include psutil/arch/all/init.h
 include psutil/arch/bsd/cpu.c
 include psutil/arch/bsd/cpu.h
 include psutil/arch/bsd/disk.c
 include psutil/arch/bsd/disk.h
+include psutil/arch/bsd/init.c
+include psutil/arch/bsd/init.h
 include psutil/arch/bsd/net.c
 include psutil/arch/bsd/net.h
 include psutil/arch/bsd/proc.c
@@ -106,6 +108,8 @@ include psutil/arch/osx/cpu.c
 include psutil/arch/osx/cpu.h
 include psutil/arch/osx/disk.c
 include psutil/arch/osx/disk.h
+include psutil/arch/osx/init.c
+include psutil/arch/osx/init.h
 include psutil/arch/osx/mem.c
 include psutil/arch/osx/mem.h
 include psutil/arch/osx/net.c
@@ -124,6 +128,8 @@ include psutil/arch/windows/cpu.c
 include psutil/arch/windows/cpu.h
 include psutil/arch/windows/disk.c
 include psutil/arch/windows/disk.h
+include psutil/arch/windows/init.c
+include psutil/arch/windows/init.h
 include psutil/arch/windows/mem.c
 include psutil/arch/windows/mem.h
 include psutil/arch/windows/net.c

@@ -19,7 +19,7 @@
 #include <arpa/inet.h>         // for inet_ntop()
 #include <libutil.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 

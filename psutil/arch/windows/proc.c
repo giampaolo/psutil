@@ -23,7 +23,7 @@
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "proc.h"
 #include "proc_info.h"
 #include "proc_handles.h"

@@ -8,7 +8,7 @@
 #include <utmp.h>
 #include <string.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *

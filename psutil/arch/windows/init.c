@@ -2,18 +2,20 @@
  * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Routines common to all platforms.
  */
 
 #include <Python.h>
-#include "_psutil_common.h"
+#include <windows.h>
 
-// ====================================================================
-// --- Global vars
-// ====================================================================
+#include "../../arch/all/init.h"
+#include "init.h"
+#include "ntextapi.h"
 
-int PSUTIL_DEBUG = 0;
+
+// Needed to make these globally visible.
+int PSUTIL_WINVER;
+SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
+CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 
 // ====================================================================
@@ -21,7 +23,7 @@ int PSUTIL_DEBUG = 0;
 // ====================================================================
 
 // PyPy on Windows. Missing APIs added in PyPy 7.3.14.
-#if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
+#if defined(PYPY_VERSION)
 #if !defined(PyErr_SetFromWindowsErrWithFilename)
 PyObject *
 PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
@@ -60,161 +62,37 @@ error:
 
 #if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 PyObject *
-PyErr_SetExcFromWindowsErrWithFilenameObject(PyObject *type,
-                                             int ierr,
-                                             PyObject *filename) {
+PyErr_SetExcFromWindowsErrWithFilenameObject(
+    PyObject *type, int ierr, PyObject *filename)
+{
     // Original function is too complex. Just raise OSError without
     // filename.
     return PyErr_SetFromWindowsErrWithFilename(ierr, NULL);
 }
 #endif // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
-#endif  // defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
+#endif  // defined(PYPY_VERSION)
 
 
 // ====================================================================
-// --- Custom exceptions
+// --- Utils
 // ====================================================================
 
-/*
- * Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
- * message.
- */
-PyObject *
-psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
+// Convert a NTSTATUS value to a Win32 error code and set the proper
+// Python exception.
+PVOID
+psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
+    ULONG err;
     char fullmsg[1024];
 
-#ifdef PSUTIL_WINDOWS
-    DWORD dwLastError = GetLastError();
-    sprintf(fullmsg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(dwLastError, fullmsg);
-#else
-    PyObject *exc;
-    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-#endif
-    return NULL;
-}
-
-
-/*
- * Set OSError(errno=ESRCH, strerror="No such process (originated from")
- * Python exception.
- */
-PyObject *
-NoSuchProcess(const char *syscall) {
-    PyObject *exc;
-    char msg[1024];
-
-    sprintf(msg, "assume no such process (originated from %s)", syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-
-/*
- * Set OSError(errno=EACCES, strerror="Permission denied" (originated from ...)
- * Python exception.
- */
-PyObject *
-AccessDenied(const char *syscall) {
-    PyObject *exc;
-    char msg[1024];
-
-    sprintf(msg, "assume access denied (originated from %s)", syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-/*
- * Raise OverflowError if Python int value overflowed when converting to pid_t.
- * Raise ValueError if Python int value is negative.
- * Otherwise, return None.
- */
-PyObject *
-psutil_check_pid_range(PyObject *self, PyObject *args) {
-#ifdef PSUTIL_WINDOWS
-    DWORD pid;
-#else
-    pid_t pid;
-#endif
-
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    if (pid < 0) {
-        PyErr_SetString(PyExc_ValueError, "pid must be a positive integer");
-        return NULL;
-    }
-    Py_RETURN_NONE;
-}
-
-// Enable or disable PSUTIL_DEBUG messages.
-PyObject *
-psutil_set_debug(PyObject *self, PyObject *args) {
-    PyObject *value;
-    int x;
-
-    if (!PyArg_ParseTuple(args, "O", &value))
-        return NULL;
-    x = PyObject_IsTrue(value);
-    if (x < 0) {
-        return NULL;
-    }
-    else if (x == 0) {
-        PSUTIL_DEBUG = 0;
-    }
-    else {
-        PSUTIL_DEBUG = 1;
-    }
-    Py_RETURN_NONE;
-}
-
-
-// ============================================================================
-// Utility functions (BSD)
-// ============================================================================
-
-#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-void
-convert_kvm_err(const char *syscall, char *errbuf) {
-    char fullmsg[8192];
-
-    sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
-    if (strstr(errbuf, "Permission denied") != NULL)
-        AccessDenied(fullmsg);
-    else if (strstr(errbuf, "Operation not permitted") != NULL)
-        AccessDenied(fullmsg);
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
     else
-        PyErr_Format(PyExc_RuntimeError, fullmsg);
+        err = RtlNtStatusToDosErrorNoTeb(status);
+    // if (GetLastError() != 0)
+    //     err = GetLastError();
+    sprintf(fullmsg, "(originated from %s)", syscall);
+    return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
 }
-#endif
-
-// ====================================================================
-// --- macOS
-// ====================================================================
-
-#ifdef PSUTIL_OSX
-#include <mach/mach_time.h>
-
-struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
-#endif
-
-// ====================================================================
-// --- Windows
-// ====================================================================
-
-#ifdef PSUTIL_WINDOWS
-#include <windows.h>
-
-// Needed to make these globally visible.
-int PSUTIL_WINVER;
-SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
-CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 
 // A wrapper around GetModuleHandle and GetProcAddress.
@@ -265,24 +143,45 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
 }
 
 
-/*
- * Convert a NTSTATUS value to a Win32 error code and set the proper
- * Python exception.
- */
-PVOID
-psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall) {
-    ULONG err;
-    char fullmsg[1024];
+// Convert the hi and lo parts of a FILETIME structure or a
+// LARGE_INTEGER to a UNIX time. A FILETIME contains a 64-bit value
+// representing the number of 100-nanosecond intervals since January 1,
+// 1601 (UTC). A UNIX time is the number of seconds that have elapsed
+// since the UNIX epoch, that is the time 00:00:00 UTC on 1 January
+// 1970.
+static double
+_to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
+    ULONGLONG ret;
 
-    if (NT_NTWIN32(Status))
-        err = WIN32_FROM_NTSTATUS(Status);
-    else
-        err = RtlNtStatusToDosErrorNoTeb(Status);
-    // if (GetLastError() != 0)
-    //     err = GetLastError();
-    sprintf(fullmsg, "(originated from %s)", syscall);
-    return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
+    // 100 nanosecond intervals since January 1, 1601.
+    ret = hiPart << 32;
+    ret += loPart;
+    // Change starting time to the Epoch (00:00:00 UTC, January 1, 1970).
+    ret -= 116444736000000000ull;
+    // Convert nano secs to secs.
+    return (double) ret / 10000000ull;
 }
+
+
+double
+psutil_FiletimeToUnixTime(FILETIME ft) {
+    return _to_unix_time(
+        (ULONGLONG)ft.dwHighDateTime, (ULONGLONG)ft.dwLowDateTime
+    );
+}
+
+
+double
+psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
+    return _to_unix_time(
+        (ULONGLONG)li.HighPart, (ULONGLONG)li.LowPart
+    );
+}
+
+
+// ====================================================================
+// --- Init / load libs
+// ====================================================================
 
 
 static int
@@ -396,59 +295,14 @@ psutil_set_winver() {
 }
 
 
-/*
- * Convert the hi and lo parts of a FILETIME structure or a LARGE_INTEGER
- * to a UNIX time.
- * A FILETIME contains a 64-bit value representing the number of
- * 100-nanosecond intervals since January 1, 1601 (UTC).
- * A UNIX time is the number of seconds that have elapsed since the
- * UNIX epoch, that is the time 00:00:00 UTC on 1 January 1970.
- */
-static double
-_to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
-    ULONGLONG ret;
-
-    // 100 nanosecond intervals since January 1, 1601.
-    ret = hiPart << 32;
-    ret += loPart;
-    // Change starting time to the Epoch (00:00:00 UTC, January 1, 1970).
-    ret -= 116444736000000000ull;
-    // Convert nano secs to secs.
-    return (double) ret / 10000000ull;
-}
-
-
-double
-psutil_FiletimeToUnixTime(FILETIME ft) {
-    return _to_unix_time((ULONGLONG)ft.dwHighDateTime,
-                         (ULONGLONG)ft.dwLowDateTime);
-}
-
-
-double
-psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
-    return _to_unix_time((ULONGLONG)li.HighPart,
-                         (ULONGLONG)li.LowPart);
-}
-#endif  // PSUTIL_WINDOWS
-
-
-// Called on module import on all platforms.
+// Called on module import.
 int
-psutil_setup(void) {
-    if (getenv("PSUTIL_DEBUG") != NULL)
-        PSUTIL_DEBUG = 1;
-
-#ifdef PSUTIL_WINDOWS
+psutil_setup_windows(void) {
     if (psutil_loadlibs() != 0)
         return 1;
     if (psutil_set_winver() != 0)
         return 1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
-#endif
-#ifdef PSUTIL_OSX
-    mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
-#endif
     return 0;
 }

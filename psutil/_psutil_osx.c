@@ -11,7 +11,7 @@
 #include <sys/proc.h>
 #include <netinet/tcp_fsm.h>
 
-#include "_psutil_common.h"
+#include "arch/all/init.h"
 #include "arch/osx/cpu.h"
 #include "arch/osx/disk.h"
 #include "arch/osx/mem.h"
@@ -87,6 +87,8 @@ PyInit__psutil_osx(void) {
 #endif
 
     if (psutil_setup() != 0)
+        return NULL;
+    if (psutil_setup_osx() != 0)
         return NULL;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))

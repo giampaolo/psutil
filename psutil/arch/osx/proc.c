@@ -29,7 +29,7 @@
 #include <mach/shared_region.h>
 #include <mach-o/loader.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 

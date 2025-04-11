@@ -16,7 +16,7 @@
 #include <IOKit/ps/IOPowerSources.h>
 #include <IOKit/ps/IOPSKeys.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *

@@ -21,7 +21,7 @@
 #include <sys/un.h>
 #include <sys/file.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 

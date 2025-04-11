@@ -7,7 +7,7 @@
 #include <Python.h>
 #include <sys/sysinfo.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *

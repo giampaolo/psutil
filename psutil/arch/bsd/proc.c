@@ -16,7 +16,7 @@
     #include <libutil.h>  // kinfo_getfile()
 #endif
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 #ifdef PSUTIL_FREEBSD
     #include "../../arch/freebsd/proc.h"

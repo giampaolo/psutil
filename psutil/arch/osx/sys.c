@@ -12,7 +12,7 @@
 #include <sys/sysctl.h>
 #include <utmpx.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *

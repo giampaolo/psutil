@@ -13,7 +13,7 @@
 #include <sys/proc.h>
 #include <kvm.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)

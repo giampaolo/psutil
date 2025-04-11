@@ -9,8 +9,8 @@
 #include <sched.h>
 #include <unistd.h>
 
+#include "../../arch/all/init.h"
 #include "proc.h"
-#include "../../_psutil_common.h"
 
 
 #ifdef PSUTIL_HAVE_IOPRIO

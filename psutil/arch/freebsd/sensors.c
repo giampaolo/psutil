@@ -16,7 +16,7 @@ For reference, here's the git history with original(ish) implementations:
 #include <Python.h>
 #include <sys/sysctl.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 
@@ -79,4 +79,3 @@ error:
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
-
