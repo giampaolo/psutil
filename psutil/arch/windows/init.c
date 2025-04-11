@@ -9,7 +9,10 @@
 
 #include "../../arch/all/init.h"
 
+// Needed to make these globally visible.
 int PSUTIL_WINVER;
+SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
+CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
@@ -156,5 +159,7 @@ psutil_LargeIntegerToUnixTime(LARGE_INTEGER li) {
 // Called on module import on all platforms.
 int
 psutil_setup_windows(void) {
+    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
+    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
     return 0;
 }

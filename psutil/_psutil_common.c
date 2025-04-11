@@ -48,14 +48,6 @@ struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 #ifdef PSUTIL_WINDOWS
 #include <windows.h>
 
-// Needed to make these globally visible.
-SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
-CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
-
-
-
-
-
 
 /*
  * Convert a NTSTATUS value to a Win32 error code and set the proper
@@ -200,8 +192,6 @@ psutil_setup(void) {
         return 1;
     if (psutil_set_winver() != 0)
         return 1;
-    GetSystemInfo(&PSUTIL_SYSTEM_INFO);
-    InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
 #endif
 #ifdef PSUTIL_OSX
     mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);

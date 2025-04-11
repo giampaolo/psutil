@@ -43,8 +43,5 @@ void convert_kvm_err(const char *syscall, char *errbuf);
     // make it available to any file which includes this module
     #include "arch/windows/ntextapi.h"
 
-    extern SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
-    extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
-
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
 #endif
