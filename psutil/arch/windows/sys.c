@@ -17,7 +17,7 @@ history before the move:
 #include <windows.h>
 
 #include "ntextapi.h"
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 // The number of seconds passed since boot. This is a monotonic timer,

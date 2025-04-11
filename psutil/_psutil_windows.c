@@ -17,7 +17,7 @@
 #include <Python.h>
 #include <windows.h>
 
-#include "_psutil_common.h"
+#include "arch/all/init.h"
 #include "arch/windows/cpu.h"
 #include "arch/windows/disk.h"
 #include "arch/windows/init.h"

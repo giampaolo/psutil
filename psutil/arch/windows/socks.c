@@ -11,7 +11,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "proc_utils.h"
 
 

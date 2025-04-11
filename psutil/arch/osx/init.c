@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <mach/mach_time.h>
 
+#include "../../arch/all/init.h"
+#include "init.h"
 
 struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 

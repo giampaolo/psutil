@@ -26,7 +26,7 @@
 #include <netinet/in_pcb.h>
 #include <arpa/inet.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "net_kernel_structs.h"
 #include "net_connections.h"
 #include "common.h"

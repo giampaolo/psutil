@@ -25,7 +25,7 @@
 #define _LINUX_SYSINFO_H
 #include <linux/ethtool.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 // * defined in linux/ethtool.h but not always available (e.g. Android)

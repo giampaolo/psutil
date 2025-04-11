@@ -26,7 +26,7 @@
 #include <netinet/tcp_var.h>   // for struct xtcpcb
 #include <arpa/inet.h>         // for inet_ntop()
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 static struct xfile *psutil_xfiles;

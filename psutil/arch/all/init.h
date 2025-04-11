@@ -4,7 +4,19 @@
  * found in the LICENSE file.
  */
 
+// Global names shared by all platforms.
+
 #include <Python.h>
+
+// We do this so that all .c files have to include only one header
+// (ourselves, init.h).
+#if defined(PSUTIL_WINDOWS)
+    #include "../../arch/windows/init.h"
+#elif defined(PSUTIL_OSX)
+    #include "../../arch/osx/init.h"
+#elif defined(PSUTIL_BSD)
+    #include "../../arch/bsd/init.h"
+#endif
 
 // ====================================================================
 // --- Global constants

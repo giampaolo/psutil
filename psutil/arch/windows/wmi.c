@@ -10,7 +10,7 @@
 #include <windows.h>
 #include <pdh.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 // We use an exponentially weighted moving average, just like Unix systems do

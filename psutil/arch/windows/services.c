@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <Winsvc.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "services.h"
 
 

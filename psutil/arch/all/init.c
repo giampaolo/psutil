@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+// Global names shared by all platforms.
+
 #include <Python.h>
 #ifdef PSUTIL_WINDOWS
 #include <windows.h>

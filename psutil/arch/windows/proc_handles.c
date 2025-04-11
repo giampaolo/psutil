@@ -22,7 +22,7 @@
 #include <windows.h>
 #include <Python.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "proc_utils.h"
 
 

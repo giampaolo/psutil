@@ -18,7 +18,7 @@
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 /*

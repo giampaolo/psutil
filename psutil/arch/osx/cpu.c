@@ -31,7 +31,7 @@ For reference, here's the git history with original implementations:
 #include <IOKit/IOKitLib.h>
 #endif
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 // added in macOS 12

@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "proc.h"
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 
 
 #ifdef PSUTIL_HAVE_IOPRIO

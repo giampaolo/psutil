@@ -11,7 +11,7 @@
 #include <sys/proc.h>
 #include <netinet/tcp_fsm.h>
 
-#include "_psutil_common.h"
+#include "arch/all/init.h"
 #include "arch/osx/cpu.h"
 #include "arch/osx/disk.h"
 #include "arch/osx/mem.h"

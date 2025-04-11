@@ -10,7 +10,7 @@
 #include <windows.h>
 #include <Psapi.h>  // EnumProcesses
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "proc_utils.h"
 
 

@@ -131,7 +131,7 @@ else:
     macros.append(('PSUTIL_SIZEOF_PID_T', '8'))  # long
 
 
-sources = ['psutil/_psutil_common.c', 'psutil/arch/all/init.c']
+sources = ['psutil/arch/all/init.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
 

@@ -21,7 +21,7 @@
 #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
 #include <sys/cpuset.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 

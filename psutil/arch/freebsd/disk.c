@@ -8,7 +8,7 @@
 #include <sys/sysctl.h>
 #include <devstat.h>
 
-#include "../../_psutil_common.h"
+#include "../../arch/all/init.h"
 #include "../../_psutil_posix.h"
 
 
@@ -83,4 +83,3 @@ error:
         free(stats.dinfo);
     return NULL;
 }
-
