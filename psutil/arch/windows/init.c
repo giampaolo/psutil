@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <windows.h>
 
+#include "../../arch/all/init.h"
+
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================
@@ -60,6 +62,31 @@ PyErr_SetExcFromWindowsErrWithFilenameObject(
 }
 #endif // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 #endif  // defined(PYPY_VERSION)
+
+// ====================================================================
+// --- Backward compatibility with missing Python.h APIs
+// ====================================================================
+
+// A wrapper around GetModuleHandle and GetProcAddress.
+PVOID
+psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
+    HMODULE mod;
+    FARPROC addr;
+
+    if ((mod = GetModuleHandleA(libname)) == NULL) {
+        psutil_debug(
+            "%s module not supported (needed for %s)", libname, apiname
+        );
+        PyErr_SetFromWindowsErrWithFilename(0, libname);
+        return NULL;
+    }
+    if ((addr = GetProcAddress(mod, apiname)) == NULL) {
+        psutil_debug("%s -> %s API not supported", libname, apiname);
+        PyErr_SetFromWindowsErrWithFilename(0, apiname);
+        return NULL;
+    }
+    return addr;
+}
 
 
 // Called on module import on all platforms.

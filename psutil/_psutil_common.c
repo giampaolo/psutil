@@ -54,26 +54,6 @@ SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 
-// A wrapper around GetModuleHandle and GetProcAddress.
-PVOID
-psutil_GetProcAddress(LPCSTR libname, LPCSTR apiname) {
-    HMODULE mod;
-    FARPROC addr;
-
-    if ((mod = GetModuleHandleA(libname)) == NULL) {
-        psutil_debug(
-            "%s module not supported (needed for %s)", libname, apiname
-        );
-        PyErr_SetFromWindowsErrWithFilename(0, libname);
-        return NULL;
-    }
-    if ((addr = GetProcAddress(mod, apiname)) == NULL) {
-        psutil_debug("%s -> %s API not supported", libname, apiname);
-        PyErr_SetFromWindowsErrWithFilename(0, apiname);
-        return NULL;
-    }
-    return addr;
-}
 
 
 // A wrapper around LoadLibrary and GetProcAddress.

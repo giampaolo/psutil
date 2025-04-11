@@ -8,6 +8,10 @@
 
 #include "arch/all/init.h"
 
+#ifdef PSUTIL_WINDOWS  // XXX - TEMPORARY
+#include "arch/windows/init.h"
+#endif
+
 // ====================================================================
 // --- Global utils
 // ====================================================================
@@ -69,7 +73,6 @@ void convert_kvm_err(const char *syscall, char *errbuf);
         #define AF_INET6 23
     #endif
 
-    PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
     PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
     double psutil_FiletimeToUnixTime(FILETIME ft);
