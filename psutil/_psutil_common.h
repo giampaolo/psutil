@@ -74,6 +74,4 @@ void convert_kvm_err(const char *syscall, char *errbuf);
     #endif
 
     PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
-    double psutil_FiletimeToUnixTime(FILETIME ft);
-    double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 #endif

@@ -22,4 +22,6 @@
 
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
 PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
+double psutil_FiletimeToUnixTime(FILETIME ft);
+double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
