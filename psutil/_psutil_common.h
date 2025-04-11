@@ -36,14 +36,3 @@ void convert_kvm_err(const char *syscall, char *errbuf);
 
     extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 #endif
-
-// ====================================================================
-// --- Windows
-// ====================================================================
-
-#ifdef PSUTIL_WINDOWS
-    // make it available to any file which includes this module
-    #include "arch/windows/ntextapi.h"
-
-    PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
-#endif

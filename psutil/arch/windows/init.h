@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <windows.h>
 
+#include "ntextapi.h"
+
 extern int PSUTIL_WINVER;
 extern SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
@@ -55,3 +57,4 @@ PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);
+PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
