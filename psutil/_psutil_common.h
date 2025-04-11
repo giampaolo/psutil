@@ -5,6 +5,9 @@
  */
 
 #include <Python.h>
+#ifdef PSUTIL_WINDOWS  // XXX - TEMPORARY
+#include <windows.h>
+#endif
 
 #include "arch/all/init.h"
 
@@ -39,7 +42,6 @@ void convert_kvm_err(const char *syscall, char *errbuf);
 // ====================================================================
 
 #ifdef PSUTIL_WINDOWS
-    #include <windows.h>
     // make it available to any file which includes this module
     #include "arch/windows/ntextapi.h"
 
