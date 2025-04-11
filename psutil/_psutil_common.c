@@ -49,7 +49,6 @@ struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 #include <windows.h>
 
 // Needed to make these globally visible.
-int PSUTIL_WINVER;
 SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 

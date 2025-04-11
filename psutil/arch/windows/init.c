@@ -9,6 +9,8 @@
 
 #include "../../arch/all/init.h"
 
+int PSUTIL_WINVER;
+
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
 // ====================================================================

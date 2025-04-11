@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <windows.h>
 
+extern int PSUTIL_WINVER;
+
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
     #if !defined(PyErr_SetFromWindowsErrWithFilename)
         PyObject *PyErr_SetFromWindowsErrWithFilename(
