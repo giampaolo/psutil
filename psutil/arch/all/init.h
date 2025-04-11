@@ -18,14 +18,21 @@
     #include "../../arch/bsd/init.h"
 #endif
 
-// ====================================================================
-// --- Global constants
-// ====================================================================
 
 // print debug messages when set to 1
 extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
+
+
+// Print a debug message on stderr.
+#define psutil_debug(...) do { \
+    if (! PSUTIL_DEBUG) \
+        break; \
+    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n");} while(0)
+
 
 // strncpy() variant which appends a null terminator.
 #define PSUTIL_STRNCPY(dst, src, n) \
@@ -87,18 +94,6 @@ PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
                "sizeof(long) or sizeof(long long)"
     #endif
 #endif
-
-// ====================================================================
-// --- Global utils
-// ====================================================================
-
-// Print a debug message on stderr.
-#define psutil_debug(...) do { \
-    if (! PSUTIL_DEBUG) \
-        break; \
-    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n");} while(0)
 
 PyObject* psutil_set_debug(PyObject *self, PyObject *args);
 PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);

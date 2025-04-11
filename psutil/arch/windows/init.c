@@ -11,10 +11,12 @@
 #include "init.h"
 #include "ntextapi.h"
 
+
 // Needed to make these globally visible.
 int PSUTIL_WINVER;
 SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
+
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
@@ -70,6 +72,7 @@ PyErr_SetExcFromWindowsErrWithFilenameObject(
 #endif // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 #endif  // defined(PYPY_VERSION)
 
+
 // ====================================================================
 // --- Utils
 // ====================================================================
@@ -77,14 +80,14 @@ PyErr_SetExcFromWindowsErrWithFilenameObject(
 // Convert a NTSTATUS value to a Win32 error code and set the proper
 // Python exception.
 PVOID
-psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall) {
+psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
     ULONG err;
     char fullmsg[1024];
 
-    if (NT_NTWIN32(Status))
-        err = WIN32_FROM_NTSTATUS(Status);
+    if (NT_NTWIN32(status))
+        err = WIN32_FROM_NTSTATUS(status);
     else
-        err = RtlNtStatusToDosErrorNoTeb(Status);
+        err = RtlNtStatusToDosErrorNoTeb(status);
     // if (GetLastError() != 0)
     //     err = GetLastError();
     sprintf(fullmsg, "(originated from %s)", syscall);
@@ -140,12 +143,12 @@ psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR apiname) {
 }
 
 
-// Convert the hi and lo parts of a FILETIME structure or a LARGE_INTEGER
-// to a UNIX time.
-// A FILETIME contains a 64-bit value representing the number of
-// 100-nanosecond intervals since January 1, 1601 (UTC).
-// A UNIX time is the number of seconds that have elapsed since the
-// UNIX epoch, that is the time 00:00:00 UTC on 1 January 1970.
+// Convert the hi and lo parts of a FILETIME structure or a
+// LARGE_INTEGER to a UNIX time. A FILETIME contains a 64-bit value
+// representing the number of 100-nanosecond intervals since January 1,
+// 1601 (UTC). A UNIX time is the number of seconds that have elapsed
+// since the UNIX epoch, that is the time 00:00:00 UTC on 1 January
+// 1970.
 static double
 _to_unix_time(ULONGLONG hiPart, ULONGLONG loPart) {
     ULONGLONG ret;

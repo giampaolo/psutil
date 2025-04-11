@@ -9,6 +9,7 @@
 
 #include "ntextapi.h"
 
+
 extern int PSUTIL_WINVER;
 extern SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
 extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
@@ -54,7 +55,7 @@ extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 
 PVOID psutil_GetProcAddress(LPCSTR libname, LPCSTR procname);
 PVOID psutil_GetProcAddressFromLib(LPCSTR libname, LPCSTR procname);
-PVOID psutil_SetFromNTStatusErr(NTSTATUS Status, const char *syscall);
+PVOID psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall);
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
 int psutil_setup_windows(void);

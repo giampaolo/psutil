@@ -10,8 +10,8 @@
 #include "../../arch/all/init.h"
 #include "init.h"
 
-struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 
+struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 
 // Called on module import.
 int

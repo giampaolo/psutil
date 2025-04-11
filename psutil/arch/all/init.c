@@ -11,16 +11,10 @@
 #include <windows.h>
 #endif
 
-// ====================================================================
-// --- Global vars
-// ====================================================================
 
 int PSUTIL_DEBUG = 0;
 int PSUTIL_CONN_NONE = 128;
 
-// ====================================================================
-// --- Custom exceptions
-// ====================================================================
 
 // Set OSError(errno=ESRCH, strerror="No such process (originated from")
 // Python exception.
@@ -72,9 +66,6 @@ psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
     return NULL;
 }
 
-// ====================================================================
-// --- Global utils
-// ====================================================================
 
 // Enable or disable PSUTIL_DEBUG messages.
 PyObject *
