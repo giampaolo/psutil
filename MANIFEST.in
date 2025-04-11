@@ -54,6 +54,8 @@ include psutil/arch/bsd/cpu.c
 include psutil/arch/bsd/cpu.h
 include psutil/arch/bsd/disk.c
 include psutil/arch/bsd/disk.h
+include psutil/arch/bsd/init.c
+include psutil/arch/bsd/init.h
 include psutil/arch/bsd/net.c
 include psutil/arch/bsd/net.h
 include psutil/arch/bsd/proc.c

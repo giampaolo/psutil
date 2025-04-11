@@ -4,10 +4,4 @@
  * found in the LICENSE file.
  */
 
-#include <Python.h>
-
-#include "arch/all/init.h"
-#include "_psutil_common.h"
-
-#include "arch/all/init.h"
-#include "arch/bsd/init.h"
+void convert_kvm_err(const char *syscall, char *errbuf);
