@@ -119,6 +119,7 @@ PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 IS_64BIT = sys.maxsize > 2**32
 # apparently they're the same
 AARCH64 = platform.machine() in {"aarch64", "arm64"}
+RISCV64 = platform.machine() == "riscv64"
 
 
 @memoize

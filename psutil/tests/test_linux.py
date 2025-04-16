@@ -32,6 +32,7 @@ from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
 from psutil.tests import PYPY
+from psutil.tests import RISCV64
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
 from psutil.tests import PsutilTestCase
@@ -775,7 +776,8 @@ class TestSystemCPUFrequency(PsutilTestCase):
 
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     @pytest.mark.skipif(
-        AARCH64, reason="aarch64 does not report mhz in /proc/cpuinfo"
+        AARCH64 or RISCV64,
+        reason=f"{platform.machine()} does not report mhz in /proc/cpuinfo",
     )
     def test_emulate_use_cpuinfo(self):
         # Emulate a case where /sys/devices/system/cpu/cpufreq* does not
