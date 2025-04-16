@@ -894,8 +894,10 @@ class Process:
     if HAS_PROC_OPEN_FILES:
 
         @wrap_exceptions
-        def open_files(self):
+        def open_files(self, only_regular=True):
             """Return files opened by process as a list of namedtuples."""
+            # <<< TODO >>>: the regular file filtering is done in the
+            # underlying c code: `psutil/arch/bsd/proc.c`
             rawlist = cext.proc_open_files(self.pid)
             return [_common.popenfile(path, fd) for path, fd in rawlist]
 
