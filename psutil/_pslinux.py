@@ -698,12 +698,27 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
             "/sys/devices/system/cpu/cpufreq/policy[0-9]*"
         ) or glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq")
         paths.sort(key=lambda x: int(re.search(r"[0-9]+", x).group()))
+
+        cpu_to_policy = {}
+        for path in paths:
+            try:
+                with open(os.path.join(path, "affected_cpus")) as f:
+                    cpus = [int(x) for x in f.read().strip().split()]
+                for cpu in cpus:
+                    cpu_to_policy[cpu] = path
+            except (OSError, ValueError):
+                continue
+
         ret = []
         pjoin = os.path.join
-        for i, path in enumerate(paths):
-            if len(paths) == len(cpuinfo_freqs):
-                # take cached value from cpuinfo if available, see:
-                # https://github.com/giampaolo/psutil/issues/1851
+        num_cpus = cpu_count_logical()
+        for i in range(num_cpus):
+            path = cpu_to_policy.get(i)
+            if not path:
+                ret.append(_common.scpufreq(0.0, 0.0, 0.0))
+                continue
+
+            if cpuinfo_freqs and i < len(cpuinfo_freqs):
                 curr = cpuinfo_freqs[i] * 1000
             else:
                 curr = bcat(pjoin(path, "scaling_cur_freq"), fallback=None)
