@@ -2062,7 +2062,7 @@ Process class
     positive integer >= 0 indicating the exit code.
     If the process was terminated by a signal return the negated value of the
     signal which caused the termination (e.g. ``-SIGTERM``).
-    If PID is not a children of `os.getpid`_ (current process) just wait until
+    If PID is not a child of `os.getpid`_ (current process) just wait until
     the process disappears and return ``None``.
     If PID does not exist return ``None`` immediately.
 
