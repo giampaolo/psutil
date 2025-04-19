@@ -256,6 +256,60 @@ class TestSystemAPIs(WindowsTestCase):
         ]
         assert sys_value == psutil_value
 
+    def test_convert_dos_path_drive(self):
+        partitions = [
+            x.mountpoint
+            for x in psutil.disk_partitions(all=True)
+            if 'fixed' in x.opts
+        ]
+
+        assert len(partitions) > 0
+
+        for winpath in partitions:
+            # Resolve subst'd drive path
+            winpath = os.path.realpath(winpath)
+
+            # Convert to Win32-style NT path
+            ntpath1 = '\\??\\' + winpath
+            ntpath2 = cext.RtlDosPathNameToNtPathName(winpath)
+            assert ntpath2 == ntpath1
+            assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
+
+            # Convert to normalized NT path
+            ntpath3 = cext.GetFinalPathName(ntpath1, from_nt=True, to_nt=True)
+            ntpath4 = cext.GetFinalPathName(winpath, to_nt=True)
+            assert ntpath3 == ntpath4
+            assert psutil._pswindows.convert_dos_path(ntpath3) == winpath
+
+            # Convert to win32 file namespace path
+            winpath2 = cext.GetFinalPathName(ntpath1, from_nt=True)
+            assert winpath2 == '\\\\?\\' + winpath
+            winpath3 = cext.GetFinalPathName(ntpath3, from_nt=True)
+            assert winpath3 == '\\\\?\\' + winpath
+
+    def test_convert_dos_path_unc(self):
+        winpath = '\\\\localhost\\C$'
+
+        assert psutil._pswindows.convert_dos_path(winpath) == winpath
+
+        # Convert to Win32-style NT path
+        ntpath1 = '\\??\\UNC\\' + winpath[2:]
+        ntpath2 = cext.RtlDosPathNameToNtPathName(winpath)
+        assert ntpath2 == ntpath1
+        assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
+
+        # Convert to normalized NT path
+        ntpath3 = cext.GetFinalPathName(ntpath1, from_nt=True, to_nt=True)
+        ntpath4 = cext.GetFinalPathName(winpath, to_nt=True)
+        assert ntpath3 == ntpath4
+        assert psutil._pswindows.convert_dos_path(ntpath3) == winpath
+
+        # Convert to win32 file namespace path
+        winpath2 = cext.GetFinalPathName(ntpath1, from_nt=True)
+        assert winpath2 == '\\\\?\\UNC\\' + winpath[2:]
+        winpath3 = cext.GetFinalPathName(ntpath3, from_nt=True)
+        assert winpath3 == '\\\\?\\UNC\\' + winpath[2:]
+
     def test_net_if_stats(self):
         ps_names = set(cext.net_if_stats())
         wmi_adapters = wmi.WMI().Win32_NetworkAdapter()

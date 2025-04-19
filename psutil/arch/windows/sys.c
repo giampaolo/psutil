@@ -189,3 +189,143 @@ error:
         WTSFreeMemory(buffer_info);
     return NULL;
 }
+
+
+/*
+ * Converts a DOS path name to an NT path name
+ */
+PyObject *
+psutil_RtlDosPathNameToNtPathName(PyObject *self, PyObject *args) {
+    PyObject *py_dospath;
+    wchar_t *dospath;
+    UNICODE_STRING ntpath;
+    NTSTATUS status;
+
+    if (RtlDosPathNameToNtPathName_U_WithStatus == NULL) {
+        psutil_debug("RtlDosPathNameToNtPathName_U_WithStatus not found");
+        Py_RETURN_NONE;
+    }
+
+    if (!PyArg_ParseTuple(args, "U", &py_dospath))
+        return NULL;
+
+    dospath = PyUnicode_AsWideCharString(py_dospath, NULL);
+
+    if (dospath == NULL)
+        return NULL;
+
+    memset(&ntpath, 0, sizeof(ntpath));
+
+    status = RtlDosPathNameToNtPathName_U_WithStatus(
+        dospath, &ntpath, NULL, NULL);
+
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "RtlDosPathNameToNtPathName_U_WithStatus");
+
+        PyMem_Free(dospath);
+        return NULL;
+    }
+
+    PyMem_Free(dospath);
+
+    return PyUnicode_FromWideChar(ntpath.Buffer, ntpath.Length / 2);
+}
+
+
+/*
+ * Opens a DOS or NT path and returns the resolved name
+ */
+PyObject *
+psutil_GetFinalPathName(PyObject *self, PyObject *args, PyObject *kwargs) {
+    PyObject *py_path;
+    wchar_t *path;
+    wchar_t *retpath = NULL;
+    int retpathlen;
+    int to_nt_path = 0;
+    int from_nt_path = 0;
+    DWORD flags;
+    HANDLE hFile;
+    NTSTATUS status;
+    UNICODE_STRING nt_path;
+    OBJECT_ATTRIBUTES objattr;
+    IO_STATUS_BLOCK iosb;
+    PyObject *py_retpath = NULL;
+    ULONG err;
+
+    char *keywords[4] = {"path", "from_nt", "to_nt", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "U|pp", keywords,
+                                     &py_path, &from_nt_path, &to_nt_path))
+        return NULL;
+
+    flags = to_nt_path ? VOLUME_NAME_NT : VOLUME_NAME_DOS;
+
+    path = PyUnicode_AsWideCharString(py_path, NULL);
+
+    if (path == NULL)
+        return NULL;
+
+    if (from_nt_path) {
+        if (NtOpenFile == NULL) {
+            psutil_debug("NtOpenFile not found");
+            py_retpath = Py_None;
+            goto error;
+        }
+
+        nt_path.Buffer = path;
+        nt_path.Length = (USHORT)(wcslen(path) * sizeof(wchar_t));
+        nt_path.MaximumLength = nt_path.Length;
+        InitializeObjectAttributes(&objattr, &nt_path, 0, NULL, NULL);
+
+        status = NtOpenFile(
+            &hFile, FILE_READ_ATTRIBUTES, &objattr, &iosb,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
+
+        if (!NT_SUCCESS(status)) {
+            if (NT_NTWIN32(status)) {
+                err = WIN32_FROM_NTSTATUS(status);
+            } else {
+                err = RtlNtStatusToDosErrorNoTeb(status);
+            }
+
+            PyErr_SetExcFromWindowsErrWithFilenameObject(PyExc_OSError, err, py_path);
+            goto error;
+        }
+    } else {
+        hFile = CreateFileW(
+            path, FILE_READ_ATTRIBUTES,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+        if (hFile == INVALID_HANDLE_VALUE) {
+            PyErr_SetExcFromWindowsErrWithFilenameObject(PyExc_OSError, 0, py_path);
+            goto error;
+        }
+    }
+
+    retpathlen = GetFinalPathNameByHandleW(hFile, NULL, 0, flags);
+
+    retpath = MALLOC_ZERO(retpathlen * sizeof(wchar_t) * 2);
+
+    if (!retpath) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    retpathlen = GetFinalPathNameByHandleW(hFile, retpath, retpathlen * 2, flags);
+
+    CloseHandle(hFile);
+    PyMem_Free(path);
+
+    py_retpath = PyUnicode_FromWideChar(retpath, retpathlen);
+
+    FREE(retpath);
+
+    return py_retpath;
+
+error:
+    PyMem_Free(path);
+    return py_retpath;
+}
