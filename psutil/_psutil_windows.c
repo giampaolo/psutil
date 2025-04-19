@@ -107,6 +107,9 @@ PsutilMethods[] = {
 
     // --- windows API bindings
     {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
+    {"RtlDosPathNameToNtPathName", psutil_RtlDosPathNameToNtPathName, METH_VARARGS},
+    {"GetFinalPathName", (PyCFunction)(void(*)(void))psutil_GetFinalPathName,
+        METH_VARARGS | METH_KEYWORDS},
 
     // --- others
     {"check_pid_range", psutil_check_pid_range, METH_VARARGS},

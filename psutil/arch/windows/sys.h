@@ -8,3 +8,5 @@
 
 PyObject *psutil_uptime(PyObject *self, PyObject *args);
 PyObject *psutil_users(PyObject *self, PyObject *args);
+PyObject *psutil_RtlDosPathNameToNtPathName(PyObject *self, PyObject *args);
+PyObject *psutil_GetFinalPathName(PyObject *self, PyObject *args, PyObject *kwargs);

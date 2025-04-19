@@ -262,6 +262,10 @@ psutil_loadlibs() {
         "wtsapi32.dll", "WTSQuerySessionInformationW");
     WTSFreeMemory = psutil_GetProcAddressFromLib(
         "wtsapi32.dll", "WTSFreeMemory");
+    RtlDosPathNameToNtPathName_U_WithStatus = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "RtlDosPathNameToNtPathName_U_WithStatus");
+    NtOpenFile = psutil_GetProcAddressFromLib(
+        "ntdll.dll", "NtOpenFile");
 
     PyErr_Clear();
     return 0;

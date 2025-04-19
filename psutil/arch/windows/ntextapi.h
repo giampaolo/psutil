@@ -710,4 +710,24 @@ ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
 
 #define RtlNtStatusToDosErrorNoTeb _RtlNtStatusToDosErrorNoTeb
 
+NTSTATUS (NTAPI *_RtlDosPathNameToNtPathName_U_WithStatus) (
+    PCWSTR DosFileName,
+    PUNICODE_STRING NtFileName,
+    PWSTR *FilePart,
+    PVOID Reserved
+);
+
+#define RtlDosPathNameToNtPathName_U_WithStatus _RtlDosPathNameToNtPathName_U_WithStatus
+
+NTSTATUS (NTAPI *_NtOpenFile) (
+    PHANDLE FileHandle,
+    ACCESS_MASK DesiredAccess,
+    POBJECT_ATTRIBUTES ObjectAttributes,
+    PIO_STATUS_BLOCK IoStatusBlock,
+    ULONG ShareAccess,
+    ULONG OpenOptions
+);
+
+#define NtOpenFile _NtOpenFile
+
 #endif // __NTEXTAPI_H__
