@@ -41,6 +41,11 @@ if os.name != 'nt':
 
 def main():
     for service in psutil.win_service_iter():
+        if service.name() == "WaaSMedicSvc":
+            # known issue in Windows 11 reading the description
+            # https://learn.microsoft.com/en-us/answers/questions/1320388/in-windows-11-version-22h2-there-it-shows-(failed
+            # https://github.com/giampaolo/psutil/issues/2383
+            continue
         info = service.as_dict()
         print(f"{info['name']!r} ({info['display_name']!r})")
         s = "status: {}, start: {}, username: {}, pid: {}".format(
