@@ -120,6 +120,8 @@ include psutil/arch/osx/sensors.c
 include psutil/arch/osx/sensors.h
 include psutil/arch/osx/sys.c
 include psutil/arch/osx/sys.h
+include psutil/arch/sunos/cpu.c
+include psutil/arch/sunos/cpu.h
 include psutil/arch/sunos/disk.c
 include psutil/arch/sunos/disk.h
 include psutil/arch/sunos/environ.c
