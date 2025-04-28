@@ -530,7 +530,6 @@ def main():
             'Intended Audience :: Developers',
             'Intended Audience :: Information Technology',
             'Intended Audience :: System Administrators',
-            'License :: OSI Approved :: BSD License',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows :: Windows 10',
             'Operating System :: Microsoft :: Windows :: Windows 7',
