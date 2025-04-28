@@ -14,5 +14,7 @@ PyObject *psutil_proc_cpu_num(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cred(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
+PyObject *psutil_proc_memory_maps(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name_and_args(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_ctx_switches(PyObject *self, PyObject *args);
+PyObject *psutil_proc_query_thread(PyObject *self, PyObject *args);
