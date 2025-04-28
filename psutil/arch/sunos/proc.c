@@ -10,6 +10,7 @@
 #include <libproc.h>
 
 #include "proc.h"
+#include "environ.h"
 
 
 // Read a file content and fills a C structure with it.
@@ -71,4 +72,128 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         (int)info.pr_gid,          // real group id
         (int)info.pr_egid          // effective group id
         );
+}
+
+
+/*
+ * Join array of C strings to C string with delimiter dm.
+ * Omit empty records.
+ */
+static int
+cstrings_array_to_string(char **joined, char ** array, size_t count, char dm) {
+    size_t i;
+    size_t total_length = 0;
+    size_t item_length = 0;
+    char *result = NULL;
+    char *last = NULL;
+
+    if (!array || !joined)
+        return 0;
+
+    for (i=0; i<count; i++) {
+        if (!array[i])
+            continue;
+
+        item_length = strlen(array[i]) + 1;
+        total_length += item_length;
+    }
+
+    if (!total_length) {
+        return 0;
+    }
+
+    result = malloc(total_length);
+    if (!result) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    result[0] = '\0';
+    last = result;
+
+    for (i=0; i<count; i++) {
+        if (!array[i])
+            continue;
+
+        item_length = strlen(array[i]);
+        memcpy(last, array[i], item_length);
+        last[item_length] = dm;
+
+        last += item_length + 1;
+    }
+
+    result[total_length-1] = '\0';
+    *joined = result;
+
+    return total_length;
+}
+
+/*
+ * Return process name and args as a Python tuple.
+ */
+PyObject *
+psutil_proc_name_and_args(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    psinfo_t info;
+    size_t argc;
+    int joined;
+    char **argv;
+    char *argv_plain;
+    const char *procfs_path;
+    PyObject *py_name = NULL;
+    PyObject *py_args = NULL;
+    PyObject *py_retlist = NULL;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+
+    py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
+    if (!py_name)
+        goto error;
+
+    /* SunOS truncates arguments to length PRARGSZ, very likely args are truncated.
+     * The only way to retrieve full command line is to parse process memory */
+    if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
+        argv = psutil_read_raw_args(info, procfs_path, &argc);
+        if (argv) {
+            joined = cstrings_array_to_string(&argv_plain, argv, argc, ' ');
+            if (joined > 0) {
+                py_args = PyUnicode_DecodeFSDefault(argv_plain);
+                free(argv_plain);
+            } else if (joined < 0) {
+                goto error;
+            }
+
+            psutil_free_cstrings_array(argv, argc);
+        }
+    }
+
+    /* If we can't read process memory or can't decode the result
+     * then return args from /proc. */
+    if (!py_args) {
+        PyErr_Clear();
+        py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+    }
+
+    /* Both methods has been failed. */
+    if (!py_args)
+        goto error;
+
+    py_retlist = Py_BuildValue("OO", py_name, py_args);
+    if (!py_retlist)
+        goto error;
+
+    Py_DECREF(py_name);
+    Py_DECREF(py_args);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_name);
+    Py_XDECREF(py_args);
+    Py_XDECREF(py_retlist);
+    return NULL;
 }
