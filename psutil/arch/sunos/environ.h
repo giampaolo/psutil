@@ -4,6 +4,8 @@
  * license that can be found in the LICENSE file.
  */
 
+#include <sys/procfs.h>
+
 #ifndef PROCESS_AS_UTILS_H
 #define PROCESS_AS_UTILS_H
 
