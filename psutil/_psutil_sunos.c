@@ -26,32 +26,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
-#include <sys/swap.h>
 #include <sys/procfs.h>
-#include <sys/sockio.h>
-#include <sys/socket.h>
 #include <fcntl.h>
 #include <kstat.h>
 #include <sys/ioctl.h>
-#include <stropts.h>
 #include <inet/tcp.h>
-#ifndef NEW_MIB_COMPLIANT
-/*
- * Solaris introduced NEW_MIB_COMPLIANT macro with Update 4.
- * See https://github.com/giampaolo/psutil/issues/421
- * Prior to Update 4, one has to include mib2 by hand.
- */
-#include <inet/mib2.h>
-#endif
 
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <math.h> // fabs()
-#include <unistd.h>
-
-#include "arch/all/init.h"
 #include "_psutil_posix.h"
-
+#include "arch/all/init.h"
 #include "arch/sunos/cpu.h"
 #include "arch/sunos/disk.h"
 #include "arch/sunos/environ.h"
