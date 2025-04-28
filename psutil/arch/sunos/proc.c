@@ -7,6 +7,9 @@
 #include <Python.h>
 
 #include <fcntl.h>
+#include <libproc.h>
+
+#include "proc.h"
 
 
 // Read a file content and fills a C structure with it.
@@ -33,4 +36,39 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     }
     close(fd);
     return nbytes;
+}
+
+
+/*
+ * Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
+ * as a Python tuple.
+ */
+PyObject *
+psutil_proc_basic_info(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    psinfo_t info;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+    return Py_BuildValue(
+        "ikkdiiikiiii",
+        info.pr_ppid,              // parent pid
+        info.pr_rssize,            // rss
+        info.pr_size,              // vms
+        PSUTIL_TV2DOUBLE(info.pr_start),  // create time
+        info.pr_lwp.pr_nice,       // nice
+        info.pr_nlwp,              // no. of threads
+        info.pr_lwp.pr_state,      // status code
+        info.pr_ttydev,            // tty nr
+        (int)info.pr_uid,          // real user id
+        (int)info.pr_euid,         // effective user id
+        (int)info.pr_gid,          // real group id
+        (int)info.pr_egid          // effective group id
+        );
 }
