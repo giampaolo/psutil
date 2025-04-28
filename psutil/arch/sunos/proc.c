@@ -273,3 +273,142 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     Py_XDECREF(py_retdict);
     return NULL;
 }
+
+
+/*
+ * Return process user and system CPU times as a Python tuple.
+ */
+PyObject *
+psutil_proc_cpu_times(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    pstatus_t info;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+    sprintf(path, "%s/%i/status", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+    // results are more precise than os.times()
+    return Py_BuildValue(
+        "(dddd)",
+         PSUTIL_TV2DOUBLE(info.pr_utime),
+         PSUTIL_TV2DOUBLE(info.pr_stime),
+         PSUTIL_TV2DOUBLE(info.pr_cutime),
+         PSUTIL_TV2DOUBLE(info.pr_cstime)
+    );
+}
+
+
+/*
+ * Return what CPU the process is running on.
+ */
+PyObject *
+psutil_proc_cpu_num(PyObject *self, PyObject *args) {
+    int fd = -1;
+    int pid;
+    char path[1000];
+    struct prheader header;
+    struct lwpsinfo *lwp = NULL;
+    int nent;
+    int size;
+    int proc_num;
+    ssize_t nbytes;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+
+    sprintf(path, "%s/%i/lpsinfo", procfs_path, pid);
+    fd = open(path, O_RDONLY);
+    if (fd == -1) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
+        return NULL;
+    }
+
+    // read header
+    nbytes = pread(fd, &header, sizeof(header), 0);
+    if (nbytes == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (nbytes != sizeof(header)) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
+        goto error;
+    }
+
+    // malloc
+    nent = header.pr_nent;
+    size = header.pr_entsize * nent;
+    lwp = malloc(size);
+    if (lwp == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    // read the rest
+    nbytes = pread(fd, lwp, size, sizeof(header));
+    if (nbytes == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (nbytes != size) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
+        goto error;
+    }
+
+    // done
+    proc_num = lwp->pr_onpro;
+    close(fd);
+    free(lwp);
+    return Py_BuildValue("i", proc_num);
+
+error:
+    if (fd != -1)
+        close(fd);
+    free(lwp);
+    return NULL;
+}
+
+
+/*
+ * Return process uids/gids as a Python tuple.
+ */
+PyObject *
+psutil_proc_cred(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    prcred_t info;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+    sprintf(path, "%s/%i/cred", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+    return Py_BuildValue("iiiiii",
+                         info.pr_ruid, info.pr_euid, info.pr_suid,
+                         info.pr_rgid, info.pr_egid, info.pr_sgid);
+}
+
+
+/*
+ * Return process voluntary and involuntary context switches as a Python tuple.
+ */
+PyObject *
+psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    prusage_t info;
+    const char *procfs_path;
+
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+    sprintf(path, "%s/%i/usage", procfs_path, pid);
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+    return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
+}
