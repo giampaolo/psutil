@@ -7,4 +7,5 @@
 #include <Python.h>
 
 PyObject *psutil_net_connections(PyObject *self, PyObject *args);
+PyObject *psutil_net_if_stats(PyObject *self, PyObject *args);
 PyObject *psutil_net_io_counters(PyObject *self, PyObject *args);
