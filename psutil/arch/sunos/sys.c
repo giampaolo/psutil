@@ -9,6 +9,29 @@
 #include <utmpx.h>
 
 
+
+PyObject *
+psutil_boot_time(PyObject *self, PyObject *args) {
+    float boot_time = 0.0;
+    struct utmpx *ut;
+
+    setutxent();
+    while (NULL != (ut = getutxent())) {
+        if (ut->ut_type == BOOT_TIME) {
+            boot_time = (float)ut->ut_tv.tv_sec;
+            break;
+        }
+    }
+    endutxent();
+    if (fabs(boot_time) < 0.000001) {
+        /* could not find BOOT_TIME in getutxent loop */
+        PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
+        return NULL;
+    }
+    return Py_BuildValue("f", boot_time);
+}
+
+
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
@@ -24,7 +47,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
     setutxent();
     while (NULL != (ut = getutxent())) {
-        if (ut->ut_type == USER_PROCESS)
+    if (ut->ut_type == USER_PROCESS)
             py_user_proc = Py_True;
         else
             py_user_proc = Py_False;
