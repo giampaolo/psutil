@@ -126,6 +126,8 @@ include psutil/arch/sunos/environ.c
 include psutil/arch/sunos/environ.h
 include psutil/arch/sunos/mem.c
 include psutil/arch/sunos/mem.h
+include psutil/arch/sunos/sys.c
+include psutil/arch/sunos/sys.h
 include psutil/arch/sunos/v10/ifaddrs.c
 include psutil/arch/sunos/v10/ifaddrs.h
 include psutil/arch/windows/cpu.c
