@@ -9,7 +9,6 @@
 #include <utmpx.h>
 
 
-
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
