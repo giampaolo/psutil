@@ -56,7 +56,7 @@
 #include "arch/all/init.h"
 #include "_psutil_posix.h"
 
-#include "arch/solaris/environ.h"
+#include "arch/sunos/environ.h"
 
 #define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
