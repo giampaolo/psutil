@@ -8,6 +8,8 @@
 
 #include <utmpx.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {

@@ -32,7 +32,6 @@
 #include <sys/ioctl.h>
 #include <inet/tcp.h>
 
-#include "_psutil_posix.h"
 #include "arch/all/init.h"
 #include "arch/sunos/cpu.h"
 #include "arch/sunos/disk.h"

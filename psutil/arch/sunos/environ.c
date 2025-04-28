@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "../../arch/all/init.h"
 #include "environ.h"
 
 

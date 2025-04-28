@@ -10,6 +10,8 @@
 #include <sys/mnttab.h>
 #include <kstat.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
