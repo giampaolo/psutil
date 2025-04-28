@@ -666,8 +666,7 @@ error:
 /*
  * define the psutil C module methods and initialize the module.
  */
-static PyMethodDef
-PsutilMethods[] = {
+static PyMethodDef mod_methods[] = {
     // --- process-related functions
     {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS},
     {"proc_cpu_num", psutil_proc_cpu_num, METH_VARARGS},
@@ -705,32 +704,20 @@ struct module_state {
 };
 
 
-static int
-psutil_sunos_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
-
-static int
-psutil_sunos_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
-
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
     "psutil_sunos",
     NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
+    -1,
+    mod_methods,
     NULL,
-    psutil_sunos_traverse,
-    psutil_sunos_clear,
+    NULL,
+    NULL,
     NULL
 };
 
 
-PyMODINIT_FUNC
+PyObject *
 PyInit__psutil_sunos(void) {
     PyObject *mod = PyModule_Create(&moduledef);
     if (mod == NULL)
