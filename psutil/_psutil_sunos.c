@@ -23,13 +23,6 @@
 #  undef _LARGEFILE64_SOURCE
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/proc.h>
-#include <sys/procfs.h>
-#include <fcntl.h>
-#include <kstat.h>
-#include <sys/ioctl.h>
 #include <inet/tcp.h>
 
 #include "arch/all/init.h"
