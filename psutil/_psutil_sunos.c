@@ -39,38 +39,8 @@
 #include "arch/sunos/environ.h"
 #include "arch/sunos/mem.h"
 #include "arch/sunos/net.h"
+#include "arch/sunos/proc.h"
 #include "arch/sunos/sys.h"
-
-#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-
-
-/*
- * Read a file content and fills a C structure with it.
- */
-static int
-psutil_file_to_struct(char *path, void *fstruct, size_t size) {
-    int fd;
-    ssize_t nbytes;
-    fd = open(path, O_RDONLY);
-    if (fd == -1) {
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
-        return 0;
-    }
-    nbytes = read(fd, fstruct, size);
-    if (nbytes == -1) {
-        close(fd);
-        PyErr_SetFromErrno(PyExc_OSError);
-        return 0;
-    }
-    if (nbytes != (ssize_t) size) {
-        close(fd);
-        PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch");
-        return 0;
-    }
-    close(fd);
-    return nbytes;
-}
 
 
 /*
