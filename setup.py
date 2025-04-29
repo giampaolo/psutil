@@ -186,20 +186,10 @@ def get_long_description():
 
 
 @contextlib.contextmanager
-def silenced_output(stream_name):
-    class DummyFile(io.BytesIO):
-        # see: https://github.com/giampaolo/psutil/issues/678
-        errors = "ignore"
-
-        def write(self, s):
-            pass
-
-    orig = getattr(sys, stream_name)
-    try:
-        setattr(sys, stream_name, DummyFile())
-        yield
-    finally:
-        setattr(sys, stream_name, orig)
+def silenced_output():
+    with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stderr(io.StringIO()):
+            yield
 
 
 def missdeps(cmdline):
@@ -259,9 +249,9 @@ def unix_can_compile(c_code):
         # https://github.com/giampaolo/psutil/pull/1568
         if os.getenv('CC'):
             compiler.set_executable('compiler_so', os.getenv('CC'))
-        with silenced_output('stderr'):
-            with silenced_output('stdout'):
-                compiler.compile([f.name], output_dir=tempdir)
+        with silenced_output():
+            compiler.compile([f.name], output_dir=tempdir)
+        compiler.compile([f.name], output_dir=tempdir)
     except CompileError:
         return False
     else:
