@@ -8,6 +8,11 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 2473_, [macOS]: Fix build issue on macOS 11 and lower.
+- 2494_, [Windows]: All APIs dealing with paths, such as
+  `Process.memory_maps()`_, `Process.exe()`_ and `Process.open_files()`_ does
+  not properly handle UNC paths. Paths such as ``\\??\\C:\\Windows\\Temp`` and
+  ``'\\Device\\HarddiskVolume1\\Windows\\Temp'`` are now converted to
+  ``C:\\Windows\\Temp``.  (patch by Ben Peddell)
 - 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
   to a race condition.
 - 2526_, [Linux]: `Process.create_time()`_, which is used to univocally
@@ -24,7 +29,7 @@ XXXX-XX-XX
 - 2545_: [illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
 - 2552_, [Windows]: `boot_time()`_ didn't take into account the time spent
   during suspend / hybernation.
-- 2560_, [Linux]: ``Process.memory_maps()`` may crash with `IndexError` on
+- 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
   RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
   Stephan)
 
