@@ -24,6 +24,9 @@ XXXX-XX-XX
 - 2545_: [illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
 - 2552_, [Windows]: `boot_time()`_ didn't take into account the time spent
   during suspend / hybernation.
+- 2560_, [Linux]: ``Process.memory_maps()`` may crash with `IndexError` on
+  RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
+  Stephan)
 
 7.0.0
 =====
