@@ -193,8 +193,8 @@ def convert_dos_path(s):
         return s
     rawdrive = '\\'.join(s.split('\\')[:3])
     if rawdrive in {"\\??\\UNC", "\\Device\\Mup"}:
-        rawdrive = '\\'.join(s.split('\\')[:4])
-        driveletter = "\\\\" + s.split('\\')[3]
+        rawdrive = '\\'.join(s.split('\\')[:5])
+        driveletter = '\\\\' + '\\'.join(s.split('\\')[3:5])
     elif rawdrive.startswith('\\??\\'):
         driveletter = s.split('\\')[2]
     else:
