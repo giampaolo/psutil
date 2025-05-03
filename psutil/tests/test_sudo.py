@@ -38,7 +38,7 @@ def set_systime(secs):  # secs since the epoch
         import pywintypes
         import win32api
 
-        dt = datetime.datetime.utcfromtimestamp(secs)
+        dt = datetime.datetime.fromtimestamp(secs, datetime.timezone.utc)
         try:
             win32api.SetSystemTime(
                 dt.year,
