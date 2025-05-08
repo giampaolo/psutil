@@ -31,11 +31,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct vmtotal vm;
     int            mib[] = {CTL_VM, VM_METER};
     long           pagesize = psutil_getpagesize();
-#if __FreeBSD_version > 702101
     long buffers;
-#else
-    int buffers;
-#endif
     size_t buffers_size = sizeof(buffers);
 
     if (sysctlbyname("hw.physmem", &total, &size, NULL, 0)) {
