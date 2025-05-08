@@ -42,7 +42,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-#if (defined(__FreeBSD_version) && (__FreeBSD_version < 900000)) || PSUTIL_OPENBSD
+#if defined(PSUTIL_OPENBSD)
     struct utmp ut;
     FILE *fp;
 
@@ -72,7 +72,7 @@ psutil_users(PyObject *self, PyObject *args) {
             py_tty,             // tty
             py_hostname,        // hostname
             (double)ut.ut_time,  // start time
-#if defined(PSUTIL_OPENBSD) || (defined(__FreeBSD_version) && __FreeBSD_version < 900000)
+#if defined(PSUTIL_OPENBSD)
             -1                  // process id (set to None later)
 #else
             ut.ut_pid           // TODO: use PyLong_FromPid
@@ -108,7 +108,7 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
         if (! py_hostname)
             goto error;
-#ifdef PSUTIL_OPENBSD
+#if defined(PSUTIL_OPENBSD)
         py_pid = Py_BuildValue("i", -1);  // set to None later
 #else
         py_pid = PyLong_FromPid(utx->ut_pid);
