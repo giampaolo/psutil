@@ -63,10 +63,10 @@ static PyMethodDef mod_methods[] = {
     {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS},
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
+    {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD)
     {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
 #endif
-    {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS},
 #endif
