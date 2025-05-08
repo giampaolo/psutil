@@ -760,7 +760,7 @@ class Process:
     @wrap_exceptions
     def num_threads(self):
         if HAS_PROC_NUM_THREADS:
-            # FreeBSD
+            # FreeBSD / NetBSD
             return cext.proc_num_threads(self.pid)
         else:
             return len(self.threads())
