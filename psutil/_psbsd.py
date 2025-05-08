@@ -870,14 +870,7 @@ class Process:
         # it into None
         if OPENBSD and self.pid == 0:
             return ""  # ...else it would raise EINVAL
-        elif NETBSD or HAS_PROC_OPEN_FILES:
-            # FreeBSD < 8 does not support functions based on
-            # kinfo_getfile() and kinfo_getvmmap()
-            return cext.proc_cwd(self.pid)
-        else:
-            raise NotImplementedError(
-                "supported only starting from FreeBSD 8" if FREEBSD else ""
-            )
+        return cext.proc_cwd(self.pid)
 
     nt_mmap_grouped = namedtuple(
         'mmap', 'path rss, private, ref_count, shadow_count'
@@ -889,18 +882,11 @@ class Process:
     def _not_implemented(self):
         raise NotImplementedError
 
-    # FreeBSD < 8 does not support functions based on kinfo_getfile()
-    # and kinfo_getvmmap()
-    if HAS_PROC_OPEN_FILES:
-
-        @wrap_exceptions
-        def open_files(self):
-            """Return files opened by process as a list of namedtuples."""
-            rawlist = cext.proc_open_files(self.pid)
-            return [_common.popenfile(path, fd) for path, fd in rawlist]
-
-    else:
-        open_files = _not_implemented
+    @wrap_exceptions
+    def open_files(self):
+        """Return files opened by process as a list of namedtuples."""
+        rawlist = cext.proc_open_files(self.pid)
+        return [_common.popenfile(path, fd) for path, fd in rawlist]
 
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
