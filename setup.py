@@ -192,46 +192,53 @@ def silenced_output():
             yield
 
 
-def missdeps(cmdline):
-    s = "psutil could not be installed from sources"
-    if not SUNOS and not shutil.which("gcc"):
-        s += " because gcc is not installed. "
-    else:
-        s += ". Perhaps Python header files are not installed. "
-    s += "Try running:\n"
-    s += "  {}".format(cmdline)
-    print(hilite(s, color="red", bold=True), file=sys.stderr)
+def has_python_h():
+    include_dir = sysconfig.get_path("include")
+    return os.path.exists(os.path.join(include_dir, "Python.h"))
 
 
-def print_install_instructions():
+def get_sysdeps():
     if LINUX:
         pyimpl = "pypy" if PYPY else "python"
         if shutil.which("dpkg"):
-            missdeps("sudo apt-get install gcc {}3-dev".format(pyimpl))
+            return "sudo apt-get install gcc {}3-dev".format(pyimpl)
         elif shutil.which("rpm"):
-            missdeps("sudo yum install gcc {}3-devel".format(pyimpl))
+            return "sudo yum install gcc {}3-devel".format(pyimpl)
+        elif shutil.which("pacman"):
+            return "sudo pacman -S gcc python"
         elif shutil.which("apk"):
-            missdeps(
-                "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
-                    *pyimpl
-                )
+            return "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
+                *pyimpl
             )
     elif MACOS:
-        msg = "XCode (https://developer.apple.com/xcode/) is not installed"
-        print(hilite(msg, color="red"), file=sys.stderr)
+        return "xcode-select --install"
     elif FREEBSD:
         if shutil.which("pkg"):
-            missdeps("pkg install gcc python3")
+            return "pkg install gcc python3"
         elif shutil.which("mport"):  # MidnightBSD
-            missdeps("mport install gcc python3")
+            return "mport install gcc python3"
     elif OPENBSD:
-        missdeps("pkg_add -v gcc python3")
+        return "pkg_add -v gcc python3"
     elif NETBSD:
-        missdeps("pkgin install gcc python3")
+        return "pkgin install gcc python3"
     elif SUNOS:
-        missdeps(
-            "sudo ln -s /usr/bin/gcc /usr/local/bin/cc && pkg install gcc"
-        )
+        return "pkg install gcc"
+
+
+def print_install_instructions():
+    reasons = []
+    if not shutil.which("gcc"):
+        reasons.append("gcc is not installed.")
+    if not has_python_h():
+        reasons.append("Python header files are not installed.")
+    if reasons:
+        sysdeps = get_sysdeps()
+        if sysdeps:
+            s = "psutil could not be compiled from sources. "
+            s += " ".join(reasons)
+            s += " Try running:\n"
+            s += "  {}".format(sysdeps)
+            print(hilite(s, color="red", bold=True), file=sys.stderr)
 
 
 def unix_can_compile(c_code):

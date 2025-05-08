@@ -47,6 +47,11 @@ RedHat / CentOS::
     sudo yum install gcc python3-devel
     pip install --no-binary :all: psutil
 
+Arch::
+
+    sudo pacman -S cmake gcc python3
+    pip install --no-binary :all: psutil
+
 Alpine::
 
     sudo apk add gcc python3-dev musl-dev linux-headers
@@ -62,11 +67,14 @@ MinGW is not supported. Once Visual Studio is installed do::
 
     pip install --no-binary :all: psutil
 
-macOS (build)
--------------
+macOS
+-----
 
-Install `Xcode <https://developer.apple.com/downloads/?name=Xcode>`__ then run::
+Install Xcode first:
 
+::
+
+    xcode-select --install
     pip install --no-binary :all: psutil
 
 FreeBSD
