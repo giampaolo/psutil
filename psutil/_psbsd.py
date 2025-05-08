@@ -98,7 +98,6 @@ TCP_STATUSES = {
 PAGESIZE = cext_posix.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 
-HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
 
 kinfo_proc_map = dict(
@@ -238,36 +237,14 @@ def cpu_times():
     return scputimes(user, nice, system, idle, irq)
 
 
-if HAS_PER_CPU_TIMES:
-
-    def per_cpu_times():
-        """Return system CPU times as a namedtuple."""
-        ret = []
-        for cpu_t in cext.per_cpu_times():
-            user, nice, system, idle, irq = cpu_t
-            item = scputimes(user, nice, system, idle, irq)
-            ret.append(item)
-        return ret
-
-else:
-    # XXX
-    # Ok, this is very dirty.
-    # On FreeBSD < 8 we cannot gather per-cpu information, see:
-    # https://github.com/giampaolo/psutil/issues/226
-    # If num cpus > 1, on first call we return single cpu times to avoid a
-    # crash at psutil import time.
-    # Next calls will fail with NotImplementedError
-    def per_cpu_times():
-        """Return system CPU times as a namedtuple."""
-        if cpu_count_logical() == 1:
-            return [cpu_times()]
-        if per_cpu_times.__called__:
-            msg = "supported only starting from FreeBSD 8"
-            raise NotImplementedError(msg)
-        per_cpu_times.__called__ = True
-        return [cpu_times()]
-
-    per_cpu_times.__called__ = False
+def per_cpu_times():
+    """Return system CPU times as a namedtuple."""
+    ret = []
+    for cpu_t in cext.per_cpu_times():
+        user, nice, system, idle, irq = cpu_t
+        item = scputimes(user, nice, system, idle, irq)
+        ret.append(item)
+    return ret
 
 
 def cpu_count_logical():
