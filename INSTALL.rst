@@ -49,7 +49,7 @@ RedHat / CentOS::
 
 Arch::
 
-    sudo pacman -S cmake gcc python3
+    sudo pacman -S cmake gcc python
     pip install --no-binary :all: psutil
 
 Alpine::
