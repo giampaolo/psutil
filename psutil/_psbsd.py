@@ -100,7 +100,6 @@ AF_LINK = cext_posix.AF_LINK
 
 HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
-HAS_PROC_OPEN_FILES = hasattr(cext, 'proc_open_files')
 
 kinfo_proc_map = dict(
     ppid=0,
