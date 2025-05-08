@@ -94,9 +94,15 @@ class TestUpdatedSystemTime(PsutilTestCase):
         t1 = psutil.Process().create_time()
         self.update_systime()
         t2 = psutil.Process().create_time()
-        self.assertGreater(t2, t1)
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
+
+    def test_proc_ident(self):
+        p1 = psutil.Process()
+        self.update_systime()
+        p2 = psutil.Process()
+        self.assertEqual(p1._get_ident(), p2._get_ident())
+        self.assertEqual(p1, p2)
 
     @unittest.skipIf(not LINUX, "LINUX only")
     def test_linux_monotonic_proc_time(self):
