@@ -5,6 +5,11 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2571_, [FreeBSD]: Dropped support for FreeBSD 8 and earlier. FreeBSD 8 was
+  maintained from 2009 to 2013.
+
 **Bug fixes**
 
 - 2473_, [macOS]: Fix build issue on macOS 11 and lower.
@@ -32,6 +37,10 @@ XXXX-XX-XX
 - 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
   RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
   Stephan)
+
+**Compatibility notes**
+
+- 2571_: Dropped support for FreeBSD 8 and earlier.
 
 7.0.0
 =====

@@ -98,10 +98,7 @@ TCP_STATUSES = {
 PAGESIZE = cext_posix.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 
-HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
-HAS_PROC_OPEN_FILES = hasattr(cext, 'proc_open_files')
-HAS_PROC_NUM_FDS = hasattr(cext, 'proc_num_fds')
 
 kinfo_proc_map = dict(
     ppid=0,
@@ -240,36 +237,14 @@ def cpu_times():
     return scputimes(user, nice, system, idle, irq)
 
 
-if HAS_PER_CPU_TIMES:
-
-    def per_cpu_times():
-        """Return system CPU times as a namedtuple."""
-        ret = []
-        for cpu_t in cext.per_cpu_times():
-            user, nice, system, idle, irq = cpu_t
-            item = scputimes(user, nice, system, idle, irq)
-            ret.append(item)
-        return ret
-
-else:
-    # XXX
-    # Ok, this is very dirty.
-    # On FreeBSD < 8 we cannot gather per-cpu information, see:
-    # https://github.com/giampaolo/psutil/issues/226
-    # If num cpus > 1, on first call we return single cpu times to avoid a
-    # crash at psutil import time.
-    # Next calls will fail with NotImplementedError
-    def per_cpu_times():
-        """Return system CPU times as a namedtuple."""
-        if cpu_count_logical() == 1:
-            return [cpu_times()]
-        if per_cpu_times.__called__:
-            msg = "supported only starting from FreeBSD 8"
-            raise NotImplementedError(msg)
-        per_cpu_times.__called__ = True
-        return [cpu_times()]
-
-    per_cpu_times.__called__ = False
+def per_cpu_times():
+    """Return system CPU times as a namedtuple."""
+    ret = []
+    for cpu_t in cext.per_cpu_times():
+        user, nice, system, idle, irq = cpu_t
+        item = scputimes(user, nice, system, idle, irq)
+        ret.append(item)
+    return ret
 
 
 def cpu_count_logical():
@@ -785,7 +760,7 @@ class Process:
     @wrap_exceptions
     def num_threads(self):
         if HAS_PROC_NUM_THREADS:
-            # FreeBSD
+            # FreeBSD / NetBSD
             return cext.proc_num_threads(self.pid)
         else:
             return len(self.threads())
@@ -870,14 +845,7 @@ class Process:
         # it into None
         if OPENBSD and self.pid == 0:
             return ""  # ...else it would raise EINVAL
-        elif NETBSD or HAS_PROC_OPEN_FILES:
-            # FreeBSD < 8 does not support functions based on
-            # kinfo_getfile() and kinfo_getvmmap()
-            return cext.proc_cwd(self.pid)
-        else:
-            raise NotImplementedError(
-                "supported only starting from FreeBSD 8" if FREEBSD else ""
-            )
+        return cext.proc_cwd(self.pid)
 
     nt_mmap_grouped = namedtuple(
         'mmap', 'path rss, private, ref_count, shadow_count'
@@ -886,36 +854,19 @@ class Process:
         'mmap', 'addr, perms path rss, private, ref_count, shadow_count'
     )
 
-    def _not_implemented(self):
-        raise NotImplementedError
+    @wrap_exceptions
+    def open_files(self):
+        """Return files opened by process as a list of namedtuples."""
+        rawlist = cext.proc_open_files(self.pid)
+        return [_common.popenfile(path, fd) for path, fd in rawlist]
 
-    # FreeBSD < 8 does not support functions based on kinfo_getfile()
-    # and kinfo_getvmmap()
-    if HAS_PROC_OPEN_FILES:
-
-        @wrap_exceptions
-        def open_files(self):
-            """Return files opened by process as a list of namedtuples."""
-            rawlist = cext.proc_open_files(self.pid)
-            return [_common.popenfile(path, fd) for path, fd in rawlist]
-
-    else:
-        open_files = _not_implemented
-
-    # FreeBSD < 8 does not support functions based on kinfo_getfile()
-    # and kinfo_getvmmap()
-    if HAS_PROC_NUM_FDS:
-
-        @wrap_exceptions
-        def num_fds(self):
-            """Return the number of file descriptors opened by this process."""
-            ret = cext.proc_num_fds(self.pid)
-            if NETBSD:
-                self._assert_alive()
-            return ret
-
-    else:
-        num_fds = _not_implemented
+    @wrap_exceptions
+    def num_fds(self):
+        """Return the number of file descriptors opened by this process."""
+        ret = cext.proc_num_fds(self.pid)
+        if NETBSD:
+            self._assert_alive()
+        return ret
 
     # --- FreeBSD only APIs
 

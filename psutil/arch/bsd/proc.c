@@ -334,11 +334,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // On NetBSD, we cannot call kvm_getenvv2() for a zombie process.
     // To make unittest suite happy, return an empty environment.
 #if defined(PSUTIL_FREEBSD)
-#if (defined(__FreeBSD_version) && __FreeBSD_version >= 700000)
     if (!((p)->ki_flag & P_INMEM) || ((p)->ki_flag & P_SYSTEM)) {
-#else
-    if ((p)->ki_flag & P_SYSTEM) {
-#endif
 #elif defined(PSUTIL_NETBSD)
     if ((p)->p_stat == SZOMB) {
 #elif defined(PSUTIL_OPENBSD)
@@ -417,7 +413,6 @@ error:
  * utility has the same problem see:
  * https://github.com/giampaolo/psutil/issues/595
  */
-#if (defined(__FreeBSD_version) && __FreeBSD_version >= 800000) || PSUTIL_OPENBSD || defined(PSUTIL_NETBSD)
 PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -500,4 +495,3 @@ error:
         free(freep);
     return NULL;
 }
-#endif
