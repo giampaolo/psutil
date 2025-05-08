@@ -61,8 +61,7 @@ main() {
     elif [ $OPENBSD ]; then
         $SUDO pkg_add gcc python3
     else
-        echo "Unsupported platform: $UNAME_S"
-        return 1
+        echo "Unsupported platform '$UNAME_S'. Ignoring."
     fi
 }
 
