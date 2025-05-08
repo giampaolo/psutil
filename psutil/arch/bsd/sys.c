@@ -8,15 +8,9 @@
 #include <sys/sysctl.h>
 #include <stdio.h>
 #include <sys/param.h>  // OS version
-#ifdef PSUTIL_FREEBSD
-    #if __FreeBSD_version < 900000
-        #include <utmp.h>
-    #else
-        #include <utmpx.h>
-    #endif
-#elif PSUTIL_NETBSD
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
     #include <utmpx.h>
-#elif PSUTIL_OPENBSD
+#elif defined(PSUTIL_OPENBSD)
     #include <utmp.h>
 #endif
 
