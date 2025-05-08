@@ -398,7 +398,6 @@ error:
 }
 
 
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -422,7 +421,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", cnt);
 }
-#endif
 
 
 PyObject *

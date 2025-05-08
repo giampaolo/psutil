@@ -101,7 +101,6 @@ AF_LINK = cext_posix.AF_LINK
 HAS_PER_CPU_TIMES = hasattr(cext, "per_cpu_times")
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
 HAS_PROC_OPEN_FILES = hasattr(cext, 'proc_open_files')
-HAS_PROC_NUM_FDS = hasattr(cext, 'proc_num_fds')
 
 kinfo_proc_map = dict(
     ppid=0,
@@ -879,29 +878,19 @@ class Process:
         'mmap', 'addr, perms path rss, private, ref_count, shadow_count'
     )
 
-    def _not_implemented(self):
-        raise NotImplementedError
-
     @wrap_exceptions
     def open_files(self):
         """Return files opened by process as a list of namedtuples."""
         rawlist = cext.proc_open_files(self.pid)
         return [_common.popenfile(path, fd) for path, fd in rawlist]
 
-    # FreeBSD < 8 does not support functions based on kinfo_getfile()
-    # and kinfo_getvmmap()
-    if HAS_PROC_NUM_FDS:
-
-        @wrap_exceptions
-        def num_fds(self):
-            """Return the number of file descriptors opened by this process."""
-            ret = cext.proc_num_fds(self.pid)
-            if NETBSD:
-                self._assert_alive()
-            return ret
-
-    else:
-        num_fds = _not_implemented
+    @wrap_exceptions
+    def num_fds(self):
+        """Return the number of file descriptors opened by this process."""
+        ret = cext.proc_num_fds(self.pid)
+        if NETBSD:
+            self._assert_alive()
+        return ret
 
     # --- FreeBSD only APIs
 
