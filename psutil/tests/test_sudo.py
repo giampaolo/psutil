@@ -21,6 +21,7 @@ from psutil import MACOS
 from psutil import WINDOWS
 from psutil.tests import CI_TESTING
 from psutil.tests import PsutilTestCase
+from psutil.tests import print_sysinfo
 
 
 def get_systime():
@@ -61,6 +62,10 @@ def set_systime(secs):  # secs since the epoch
 
 class TestUpdatedSystemTime(PsutilTestCase):
     """Tests which update the system clock."""
+
+    @classmethod
+    def setUpClass(cls):
+        print_sysinfo()
 
     def setUp(self):
         self.time_updated = False
