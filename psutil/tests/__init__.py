@@ -1414,6 +1414,12 @@ def print_sysinfo():
         bytes2human(swap.total),
     )
 
+    # constants
+    constants = sorted(
+        [k for k, v in globals().items() if k.isupper() and v is True]
+    )
+    info['constants'] = "\n                  ".join(constants)
+
     # processes
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
