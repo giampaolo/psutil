@@ -4,7 +4,6 @@
 
 """Test utilities."""
 
-
 import atexit
 import contextlib
 import ctypes
@@ -1414,23 +1413,25 @@ def print_sysinfo():
         bytes2human(swap.used),
         bytes2human(swap.total),
     )
+
+    # constants
+    constants = sorted(
+        [k for k, v in globals().items() if k.isupper() and v is True]
+    )
+    info['constants'] = "\n                  ".join(constants)
+
+    # processes
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
+    pinfo["environ"] = {k: os.environ[k] for k in sorted(os.environ)}
     info['proc'] = pprint.pformat(pinfo)
 
+    # print
     print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
         print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
     print("=" * 70, file=sys.stderr)  # noqa: T201
-    sys.stdout.flush()
-
-    # if WINDOWS:
-    #     os.system("tasklist")
-    # elif shutil.which("ps"):
-    #     os.system("ps aux")
-    # print("=" * 70, file=sys.stderr)
-
     sys.stdout.flush()
 
 
