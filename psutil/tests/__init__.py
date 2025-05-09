@@ -1414,11 +1414,14 @@ def print_sysinfo():
         bytes2human(swap.used),
         bytes2human(swap.total),
     )
+
+    # processes
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
     info['proc'] = pprint.pformat(pinfo)
 
+    # print
     print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
         print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
