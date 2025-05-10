@@ -221,7 +221,6 @@ trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
 skip = [
-    "*-musllinux*",
     "cp313-win*",  # pywin32 is not available on cp313 yet
     "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
@@ -250,6 +249,10 @@ addopts = '''
     -p xdist
     '''
 testpaths = ["psutil/tests/"]
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = "apk --no-cache add coreutils procps"
 
 [build-system]
 build-backend = "setuptools.build_meta"
