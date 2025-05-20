@@ -1,0 +1,28 @@
+{
+    "markdown": {
+        "lineWidth": 79,
+        "textWrap": "always",
+    },
+    "json": {
+        "indentWidth": 4,
+        "trailingCommas": "maintain", // Keep the trailing comma if it exists.
+        "associations": [
+            "**/*.json",
+            "**/*.jsonc",
+        ],
+    },
+    "yaml": {
+        "associations": [
+            "**/*.yml",
+            "**/*.yaml",
+        ],
+    },
+    "excludes": [
+        "**/*-lock.json",
+    ],
+    "plugins": [
+        "https://plugins.dprint.dev/markdown-0.18.0.wasm",
+        "https://plugins.dprint.dev/json-0.20.0.wasm",
+        "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.1.wasm",
+    ],
+}
