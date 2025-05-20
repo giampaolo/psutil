@@ -20,6 +20,7 @@
         "**/*-lock.json",
         ".github/ISSUE_TEMPLATE/bug.md",
         ".github/ISSUE_TEMPLATE/enhancement.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
     ],
     "plugins": [
         "https://plugins.dprint.dev/markdown-0.18.0.wasm",
