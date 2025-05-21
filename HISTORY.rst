@@ -9,6 +9,7 @@ XXXX-XX-XX
 
 - 2571_, [FreeBSD]: Dropped support for FreeBSD 8 and earlier. FreeBSD 8 was
   maintained from 2009 to 2013.
+- 2575_: introduced `dprint` CLI tool to format .yml and .md files.
 
 **Bug fixes**
 
