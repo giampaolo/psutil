@@ -183,7 +183,7 @@ black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 dprint:
-	dprint check
+	dprint check --list-different
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py

@@ -145,6 +145,13 @@ def rstcheck(files):
         return sys.exit("RST code didn't pass style check")
 
 
+def dprint():
+    print("running dprint")
+    cmd = ["dprint", "check", "--list-different"]
+    if subprocess.call(cmd) != 0:
+        return sys.exit("code didn't pass dprint check")
+
+
 def main():
     py_files, c_files, rst_files, toml_files, new_rm_mv = git_commit_files()
     if py_files:
@@ -156,6 +163,9 @@ def main():
         rstcheck(rst_files)
     if toml_files:
         toml_sort(toml_files)
+
+    dprint()
+
     if new_rm_mv:
         out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
         with open("MANIFEST.in", encoding="utf8") as f:
