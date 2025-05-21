@@ -12,6 +12,7 @@ SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
+DPRINT = ~/.dprint/bin/dprint
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -72,8 +73,8 @@ install-pip:  ## Install pip (no-op if already installed).
 install-sysdeps:
 	./scripts/internal/install-sysdeps.sh
 	curl -fsSL https://dprint.dev/install.sh | sh
-	~/.dprint/bin/dprint upgrade  # update dprint
-	~/.dprint/bin/dprint config update -y  # update plugins
+	$(DPRINT) upgrade  # update dprint
+	$(DPRINT) config update -y  # update plugins
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	${MAKE} install-pip
@@ -191,7 +192,7 @@ black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 dprint:
-	@~/.dprint/bin/dprint check --list-different
+	@$(DPRINT) check --list-different
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -232,7 +233,7 @@ fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
 fix-dprint:
-	@~/.dprint/bin/dprint fmt
+	@$(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
