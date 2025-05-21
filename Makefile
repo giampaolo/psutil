@@ -172,6 +172,11 @@ test-ci:  ## Run tests on GitHub CI.
 	${MAKE} test-memleaks
 	${MAKE} test-sudo
 
+lint-ci:  ## Run all linters on GitHub CI.
+	python3 -m pip install -U black==24.10.0 ruff rstcheck toml-sort sphinx
+	curl -fsSL https://dprint.dev/install.sh | sh
+	${MAKE} lint-all
+
 # ===================================================================
 # Linters
 # ===================================================================
@@ -183,7 +188,7 @@ black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 dprint:
-	dprint check --list-different
+	@~/.dprint/bin/dprint check --list-different
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -224,7 +229,7 @@ fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
 fix-dprint:
-	@dprint fmt
+	@~/.dprint/bin/dprint fmt
 
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
