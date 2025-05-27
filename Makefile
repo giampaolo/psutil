@@ -174,7 +174,7 @@ test-ci:  ## Run tests on GitHub CI.
 	${MAKE} test-sudo
 
 lint-ci:  ## Run all linters on GitHub CI.
-	python3 -m pip install -U black==24.10.0 ruff rstcheck toml-sort sphinx
+	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
 	${MAKE} lint-all
 
