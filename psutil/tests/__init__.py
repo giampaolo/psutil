@@ -36,7 +36,6 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
-
 try:
     import pytest
 except ImportError:
@@ -56,7 +55,6 @@ from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-
 
 if POSIX:
     from psutil._psposix import wait_pid

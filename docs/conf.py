@@ -28,7 +28,6 @@ import ast
 import datetime
 import os
 
-
 PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)

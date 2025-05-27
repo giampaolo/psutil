@@ -16,7 +16,6 @@ import shlex
 import subprocess
 import sys
 
-
 PYTHON = sys.executable
 
 

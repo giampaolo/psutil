@@ -42,7 +42,6 @@ from psutil.tests import tcp_socketpair
 from psutil.tests import unix_socketpair
 from psutil.tests import wait_for_file
 
-
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
 

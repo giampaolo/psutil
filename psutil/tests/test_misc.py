@@ -35,7 +35,6 @@ from psutil.tests import pytest
 from psutil.tests import reload_module
 from psutil.tests import system_namespace
 
-
 # ===================================================================
 # --- Test classes' repr(), str(), ...
 # ===================================================================

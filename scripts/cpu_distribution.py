@@ -47,7 +47,6 @@ import time
 
 import psutil
 
-
 if not hasattr(psutil.Process, "cpu_num"):
     sys.exit("platform not supported")
 

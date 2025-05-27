@@ -29,7 +29,6 @@ from psutil.tests import sh
 from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
-
 if BSD:
     from psutil._psutil_posix import getpagesize
 

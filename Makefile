@@ -72,9 +72,6 @@ install-pip:  ## Install pip (no-op if already installed).
 
 install-sysdeps:
 	./scripts/internal/install-sysdeps.sh
-	curl -fsSL https://dprint.dev/install.sh | sh
-	$(DPRINT) upgrade  # update dprint
-	$(DPRINT) config update -y  # update plugins
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	${MAKE} install-pip
@@ -177,7 +174,7 @@ test-ci:  ## Run tests on GitHub CI.
 	${MAKE} test-sudo
 
 lint-ci:  ## Run all linters on GitHub CI.
-	python3 -m pip install -U black==24.10.0 ruff rstcheck toml-sort sphinx
+	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
 	${MAKE} lint-all
 

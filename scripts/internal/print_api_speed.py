@@ -78,7 +78,6 @@ from timeit import default_timer as timer
 import psutil
 from psutil._common import print_color
 
-
 TIMES = 300
 timings = []
 templ = "{:<25} {:>10}   {:>10}"
