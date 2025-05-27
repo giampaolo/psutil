@@ -22,7 +22,6 @@ import site
 import subprocess
 import sys
 
-
 PYTHON = os.getenv('PYTHON', sys.executable)
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))

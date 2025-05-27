@@ -6,7 +6,6 @@
 
 import sys
 
-
 try:
     import pip  # noqa: F401
 except ImportError:
@@ -19,7 +18,6 @@ import os
 import ssl
 import tempfile
 from urllib.request import urlopen
-
 
 URL = "https://bootstrap.pypa.io/get-pip.py"
 

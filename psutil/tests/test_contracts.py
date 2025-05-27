@@ -35,7 +35,6 @@ from psutil.tests import is_namedtuple
 from psutil.tests import kernel_version
 from psutil.tests import pytest
 
-
 # ===================================================================
 # --- APIs availability
 # ===================================================================

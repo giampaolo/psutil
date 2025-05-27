@@ -11,7 +11,6 @@ dist upload.
 import argparse
 import re
 
-
 summary = """\
 Quick links
 ===========

@@ -27,7 +27,6 @@ import tempfile
 import textwrap
 import warnings
 
-
 if sys.version_info[0] == 2:
     sys.exit(textwrap.dedent("""\
         As of version 7.0.0 psutil no longer supports Python 2.7, see:
@@ -70,7 +69,6 @@ from _common import SUNOS  # noqa: E402
 from _common import WINDOWS  # noqa: E402
 from _common import hilite  # noqa: E402
 
-
 PYPY = '__pypy__' in sys.builtin_module_names
 PY36_PLUS = sys.version_info[:2] >= (3, 6)
 PY37_PLUS = sys.version_info[:2] >= (3, 7)
@@ -95,7 +93,7 @@ TEST_DEPS = [
 # `make install-pydeps-dev`.
 DEV_DEPS = TEST_DEPS + [
     "abi3audit",
-    "black==24.10.0",
+    "black",
     "check-manifest",
     "coverage",
     "packaging",

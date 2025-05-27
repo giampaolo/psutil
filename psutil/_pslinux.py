@@ -47,7 +47,6 @@ from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
 
-
 # fmt: off
 __extra__all__ = [
     'PROCFS_PATH',

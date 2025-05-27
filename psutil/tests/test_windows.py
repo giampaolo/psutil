@@ -35,7 +35,6 @@ from psutil.tests import sh
 from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
-
 if WINDOWS and not PYPY:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

@@ -22,7 +22,6 @@ from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
 
-
 try:
     from socket import AF_INET6
 except ImportError:

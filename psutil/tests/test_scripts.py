@@ -31,7 +31,6 @@ from psutil.tests import import_module_by_path
 from psutil.tests import psutil
 from psutil.tests import sh
 
-
 INTERNAL_SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, "internal")
 SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
 

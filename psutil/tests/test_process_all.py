@@ -38,7 +38,6 @@ from psutil.tests import is_win_secure_system_proc
 from psutil.tests import process_namespace
 from psutil.tests import pytest
 
-
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
 USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL

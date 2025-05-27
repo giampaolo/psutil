@@ -29,7 +29,6 @@ from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
 
-
 __extra__all__ = ["PROCFS_PATH"]
 
 

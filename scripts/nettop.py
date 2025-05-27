@@ -33,7 +33,6 @@ pkts-recv               1214470               0
 import sys
 import time
 
-
 try:
     import curses
 except ImportError:
@@ -41,7 +40,6 @@ except ImportError:
 
 import psutil
 from psutil._common import bytes2human
-
 
 lineno = 0
 win = curses.initscr()

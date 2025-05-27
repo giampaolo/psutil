@@ -24,7 +24,6 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 
-
 __extra__all__ = []
 
 

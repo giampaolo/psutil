@@ -127,7 +127,6 @@ ignore = [
 [tool.ruff.lint.isort]
 # https://beta.ruff.rs/docs/settings/#isort
 force-single-line = true  # one import per line
-lines-after-imports = 2
 
 [tool.coverage.report]
 exclude_lines = [

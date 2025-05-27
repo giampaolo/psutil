@@ -30,7 +30,6 @@ import sys
 import threading
 import time
 
-
 try:
     import pwd
 except ImportError:
@@ -85,7 +84,6 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
-
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py

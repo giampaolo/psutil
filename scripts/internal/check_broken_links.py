@@ -49,7 +49,6 @@ import traceback
 
 import requests
 
-
 HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = re.compile(
     r'(?:http|ftp|https)?://'

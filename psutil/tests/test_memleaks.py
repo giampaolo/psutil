@@ -48,7 +48,6 @@ from psutil.tests import spawn_subproc
 from psutil.tests import system_namespace
 from psutil.tests import terminate
 
-
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 FEW_TIMES = 5
