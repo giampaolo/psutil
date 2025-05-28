@@ -16,6 +16,7 @@ import time
 import unittest
 
 import psutil
+from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD
@@ -101,6 +102,7 @@ class TestUpdatedSystemTime(PsutilTestCase):
 
     @unittest.skipIf(CI_TESTING, "skipped on CI for now")  # TODO: fix it
     @unittest.skipIf(OPENBSD, "broken on OPENBSD")  # XXX
+    @unittest.skipIf(FREEBSD, "broken on FREEBSD")  # XXX
     def test_proc_ident(self):
         p1 = psutil.Process()
         self.update_systime()

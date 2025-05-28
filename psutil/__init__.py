@@ -375,9 +375,11 @@ class Process:
         won't reuse the same PID after such a short period of time
         (0.01 secs). Technically this is inherently racy, but
         practically it should be good enough.
+
+        NOTE: unreliable on FreeBSD and OpenBSD as ctime is subject to
+        # system clock updates.
         """
-        # XXX: broken on OpenBSD as ctime is subject to system clock
-        # updates.
+
         if WINDOWS:
             # Use create_time() fast method in order to speedup
             # `process_iter()`. This means we'll get AccessDenied for
