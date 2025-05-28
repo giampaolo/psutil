@@ -377,7 +377,7 @@ class Process:
         practically it should be good enough.
 
         NOTE: unreliable on FreeBSD and OpenBSD as ctime is subject to
-        # system clock updates.
+        system clock updates.
         """
 
         if WINDOWS:

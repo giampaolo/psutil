@@ -101,8 +101,8 @@ class TestUpdatedSystemTime(PsutilTestCase):
         self.assertAlmostEqual(diff, 3600, delta=1)
 
     @unittest.skipIf(CI_TESTING, "skipped on CI for now")  # TODO: fix it
-    @unittest.skipIf(OPENBSD, "broken on OPENBSD")  # XXX
-    @unittest.skipIf(FREEBSD, "broken on FREEBSD")  # XXX
+    @unittest.skipIf(OPENBSD, "broken on OPENBSD")  # TODO: fix it
+    @unittest.skipIf(FREEBSD, "broken on FREEBSD")  # TODO: fix it
     def test_proc_ident(self):
         p1 = psutil.Process()
         self.update_systime()
