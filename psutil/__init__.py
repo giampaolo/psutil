@@ -384,7 +384,7 @@ class Process:
             # https://github.com/giampaolo/psutil/issues/2366#issuecomment-2381646555
             self._create_time = self._proc.create_time(fast_only=True)
             return (self.pid, self._create_time)
-        elif LINUX:
+        elif LINUX or NETBSD:
             # Use 'monotonic' process starttime since boot to form unique
             # process identity, since it is stable over changes to system
             # time.
