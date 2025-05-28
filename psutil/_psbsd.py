@@ -479,6 +479,30 @@ def boot_time():
     return cext.boot_time()
 
 
+if NETBSD:
+
+    try:
+        INIT_BOOT_TIME = boot_time()
+    except Exception as err:  # noqa: BLE001
+        # Don't want to crash at import time.
+        debug(f"ignoring exception on import: {err!r}")
+        INIT_BOOT_TIME = 0
+
+    def adjust_proc_create_time(ctime):
+        """Account for system clock updates."""
+        if INIT_BOOT_TIME == 0:
+            return ctime
+
+        diff = INIT_BOOT_TIME - boot_time()
+        if diff == 0 or abs(diff) < 1:
+            return ctime
+
+        debug("system clock was updated; adjusting process create_time()")
+        if diff < 0:
+            return ctime - diff
+        return ctime + diff
+
+
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
@@ -753,8 +777,12 @@ class Process:
     memory_full_info = memory_info
 
     @wrap_exceptions
-    def create_time(self):
-        return self.oneshot()[kinfo_proc_map['create_time']]
+    def create_time(self, monotonic=False):
+        ctime = self.oneshot()[kinfo_proc_map['create_time']]
+        if NETBSD and not monotonic:
+            # NetBSD: ctime subject to system clock updates.
+            ctime = adjust_proc_create_time(ctime)
+        return ctime
 
     @wrap_exceptions
     def num_threads(self):

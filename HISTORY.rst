@@ -32,12 +32,14 @@ XXXX-XX-XX
   updates because it uses a cached version of `boot_time()`_.
 - 2542_: if system clock is updated `Process.children()`_ and
   `Process.parent()`_ may not be able to return the right information.
-- 2545_: [illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
+- 2545_: [Illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
 - 2552_, [Windows]: `boot_time()`_ didn't take into account the time spent
-  during suspend / hybernation.
+  during suspend / hibernation.
 - 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
   RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
   Stephan)
+- 2578_, [NetBSD]: `Process.create_time()`_ did not reflect system clock
+  updates. We now include the diff based on initial `boot_time()`_.
 
 **Compatibility notes**
 
