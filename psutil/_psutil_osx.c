@@ -61,75 +61,77 @@ static PyMethodDef mod_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_psutil_osx",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-
-PyObject *
-PyInit__psutil_osx(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
-
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
-        return NULL;
-#endif
-
+static int
+_psutil_osx_exec(PyObject *mod) {
     if (psutil_setup() != 0)
-        return NULL;
+        return -1;
     if (psutil_setup_osx() != 0)
-        return NULL;
+        return -1;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
+        return -1;
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
     if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SSLEEP", SSLEEP))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
-        return NULL;
+        return -1;
     // connection status constants
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        return NULL;
+        return -1;
 
-    return mod;
+    return 0;
+}
+
+static struct PyModuleDef_Slot _psutil_osx_slots[] = {
+    {Py_mod_exec, _psutil_osx_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef module_def = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_psutil_osx",
+    .m_size = 0,
+    .m_methods = mod_methods,
+    .m_slots = _psutil_osx_slots,
+};
+
+PyMODINIT_FUNC
+PyInit__psutil_osx(void) {
+    return PyModuleDef_Init(&moduledef);
 }

@@ -48,41 +48,44 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_psutil_linux",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-
-PyObject *
-PyInit__psutil_linux(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
-
-#ifdef Py_GIL_DISABLED
-    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
-        return NULL;
-#endif
-
+static int
+_psutil_linux_exec(PyObject *mod) {
     if (psutil_setup() != 0)
-        return NULL;
+        return -1;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
-        return NULL;
+        return -1;
 
-    return mod;
+    return 0;
+}
+
+static struct PyModuleDef_Slot _psutil_linux_slots[] = {
+    {Py_mod_exec, _psutil_linux_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef module_def = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_psutil_linux",
+    .m_size = 0,
+    .m_methods = mod_methods,
+    .m_slots = _psutil_linux_slots,
+};
+
+PyMODINIT_FUNC
+PyInit__psutil_linux(void) {
+    return PyModuleDef_Init(&moduledef);
 }
