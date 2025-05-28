@@ -1117,7 +1117,7 @@ static struct PyModuleDef module_def = {
 
 PyMODINIT_FUNC
 PyInit__psutil_aix(void) {
-    return PyModuleDef_Init(&moduledef);
+    return PyModuleDef_Init(&module_def);
 }
 
 #ifdef __cplusplus

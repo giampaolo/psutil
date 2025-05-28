@@ -133,5 +133,5 @@ static struct PyModuleDef module_def = {
 
 PyMODINIT_FUNC
 PyInit__psutil_osx(void) {
-    return PyModuleDef_Init(&moduledef);
+    return PyModuleDef_Init(&module_def);
 }
