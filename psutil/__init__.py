@@ -376,6 +376,8 @@ class Process:
         (0.01 secs). Technically this is inherently racy, but
         practically it should be good enough.
         """
+        # XXX: broken on OpenBSD as ctime is subject to system clock
+        # updates.
         if WINDOWS:
             # Use create_time() fast method in order to speedup
             # `process_iter()`. This means we'll get AccessDenied for

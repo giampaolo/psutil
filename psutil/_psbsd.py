@@ -779,6 +779,7 @@ class Process:
     def create_time(self, monotonic=False):
         ctime = self.oneshot()[kinfo_proc_map['create_time']]
         if NETBSD and not monotonic:
+            # NetBSD: ctime subject to system clock updates.
             ctime = adjust_proc_create_time(ctime)
         return ctime
 
