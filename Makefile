@@ -173,6 +173,15 @@ test-ci:  ## Run tests on GitHub CI.
 	${MAKE} test-memleaks
 	${MAKE} test-sudo
 
+test-cibuildwheel:    ## Run tests from cibuildwheel.
+	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
+	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
+	${MAKE} install-sysdeps
+	mkdir -p .tests
+	cd .tests/ && python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
+
 lint-ci:  ## Run all linters on GitHub CI.
 	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
