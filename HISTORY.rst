@@ -29,8 +29,8 @@ XXXX-XX-XX
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
 - 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
-- 2541_, [Linux]: `Process.create_time()`_ does not reflect system clock
-  updates because it uses a cached version of `boot_time()`_.
+- 2541_, 2570_, 2578_ [Linux], [macOS], [NetBSD]: `Process.create_time()`_ does
+  not reflect system clock updates.
 - 2542_: if system clock is updated `Process.children()`_ and
   `Process.parent()`_ may not be able to return the right information.
 - 2545_: [Illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
@@ -39,8 +39,6 @@ XXXX-XX-XX
 - 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
   RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
   Stephan)
-- 2578_, [NetBSD]: `Process.create_time()`_ did not reflect system clock
-  updates. We now include the diff based on initial `boot_time()`_.
 
 **Compatibility notes**
 
