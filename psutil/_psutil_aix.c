@@ -1095,10 +1095,10 @@ _psutil_aix_exec(PyObject *mod) {
 
 static struct PyModuleDef_Slot _psutil_aix_slots[] = {
     {Py_mod_exec, _psutil_aix_exec},
-#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+#ifdef Py_mod_multiple_interpreters  // Python 3.12+
     {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
 #endif
-#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+#ifdef Py_mod_gil  // Python 3.13+
     // signal that this module supports running without an active GIL
     {Py_mod_gil, Py_MOD_GIL_NOT_USED},
 #endif
