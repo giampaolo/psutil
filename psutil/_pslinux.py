@@ -20,6 +20,7 @@ import sys
 import warnings
 from collections import defaultdict
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 from . import _common
 from . import _psposix
@@ -46,6 +47,12 @@ from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
+
+if TYPE_CHECKING:
+    IOPRIO_CLASS_NONE = 0
+    IOPRIO_CLASS_RT = 1
+    IOPRIO_CLASS_BE = 2
+    IOPRIO_CLASS_IDLE = 3
 
 # fmt: off
 __extra__all__ = [
