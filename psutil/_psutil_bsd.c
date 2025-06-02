@@ -109,9 +109,24 @@ static PyMethodDef mod_methods[] = {
 };
 
 
+static int module_loaded = 0;
+
 static int
 _psutil_bsd_exec(PyObject *mod) {
     PyObject *v;
+
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
+
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
+        return NULL;
+#endif
 
     if (psutil_setup() != 0)
         return -1;
@@ -203,13 +218,6 @@ _psutil_bsd_exec(PyObject *mod) {
 
 static struct PyModuleDef_Slot _psutil_bsd_slots[] = {
     {Py_mod_exec, _psutil_bsd_exec},
-#ifdef Py_mod_multiple_interpreters  // Python 3.12+
-    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
-#endif
-#ifdef Py_mod_gil  // Python 3.13+
-    // signal that this module supports running without an active GIL
-    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
-#endif
     {0, NULL},
 };
 
