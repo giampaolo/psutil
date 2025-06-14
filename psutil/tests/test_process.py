@@ -1512,7 +1512,15 @@ class TestProcess(PsutilTestCase):
     @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
     def test_environ(self):
         def clean_dict(d):
-            exclude = ["PLAT", "HOME", "PYTEST_CURRENT_TEST", "PYTEST_VERSION"]
+            exclude = [
+                "PLAT",
+                "HOME",
+                "PYTEST_CURRENT_TEST",
+                "PYTEST_VERSION",
+                "PYTEST_XDIST_TESTRUNUID",
+                "PYTEST_XDIST_WORKER",
+                "PYTEST_XDIST_WORKER_COUNT",
+            ]
             if MACOS:
                 exclude.extend([
                     "__CF_USER_TEXT_ENCODING",
