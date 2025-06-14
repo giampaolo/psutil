@@ -18,7 +18,6 @@ import unittest
 import psutil
 from psutil import FREEBSD
 from psutil import LINUX
-from psutil import MACOS
 from psutil import OPENBSD
 from psutil import WINDOWS
 from psutil.tests import CI_TESTING
@@ -89,7 +88,6 @@ class TestUpdatedSystemTime(PsutilTestCase):
         self.assertAlmostEqual(diff, 3600, delta=1)
 
     @unittest.skipIf(WINDOWS, "broken on WINDOWS")  # TODO: fix it
-    @unittest.skipIf(MACOS, "broken on MACOS")  # TODO: fix it
     def test_proc_create_time(self):
         # Test that Process.create_time() reflects system clock
         # updates. On systems such as Linux this is added on top of the
