@@ -24,7 +24,6 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 
-
 __extra__all__ = []
 
 
@@ -289,6 +288,29 @@ def boot_time():
     return cext.boot_time()
 
 
+try:
+    INIT_BOOT_TIME = boot_time()
+except Exception as err:  # noqa: BLE001
+    # Don't want to crash at import time.
+    debug(f"ignoring exception on import: {err!r}")
+    INIT_BOOT_TIME = 0
+
+
+def adjust_proc_create_time(ctime):
+    """Account for system clock updates."""
+    if INIT_BOOT_TIME == 0:
+        return ctime
+
+    diff = INIT_BOOT_TIME - boot_time()
+    if diff == 0 or abs(diff) < 1:
+        return ctime
+
+    debug("system clock was updated; adjusting process create_time()")
+    if diff < 0:
+        return ctime - diff
+    return ctime + diff
+
+
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
@@ -334,44 +356,6 @@ def is_zombie(pid):
         return st == cext.SZOMB
     except OSError:
         return False
-
-
-try:
-    initial_boot_time = boot_time()
-except Exception as err:  # noqa: BLE001
-    # Don't want to crash at import time.
-    debug(f"ignoring exception on import: {err!r}")
-    initial_boot_time = None
-
-
-def adjust_for_clock_changes(monotonic_time):
-    """Adjust the given monotonic time for any system clock changes.
-
-    If the system clock has been updated since the initial boot, this
-    function will adjust the provided time to ensure it reflects the
-    correct wall-clock time.
-
-    Args:
-        monotonic_time (float): The time in seconds since the system boot.
-
-    Returns:
-        float: The adjusted time accounting for any system clock changes.
-    """
-    if initial_boot_time is None:
-        return monotonic_time
-
-    current_boot_time = boot_time()
-
-    # If boot time has not changed, return the input time unchanged.
-    if current_boot_time == initial_boot_time:
-        return monotonic_time
-
-    # The system clock was updated, adjust the time accordingly.
-    time_diff = abs(initial_boot_time - current_boot_time)
-    if current_boot_time > initial_boot_time:
-        return monotonic_time + time_diff
-    else:
-        return monotonic_time - time_diff
 
 
 def wrap_exceptions(fun):
@@ -509,9 +493,11 @@ class Process:
         )
 
     @wrap_exceptions
-    def create_time(self):
-        monotonic_ctime = self._get_kinfo_proc()[kinfo_proc_map['ctime']]
-        return adjust_for_clock_changes(monotonic_ctime)
+    def create_time(self, monotonic=False):
+        ctime = self._get_kinfo_proc()[kinfo_proc_map['ctime']]
+        if not monotonic:
+            ctime = adjust_proc_create_time(ctime)
+        return ctime
 
     @wrap_exceptions
     def num_ctx_switches(self):

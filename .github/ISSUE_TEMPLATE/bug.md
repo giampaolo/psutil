@@ -3,15 +3,15 @@ name: Bug
 about: Report a bug
 title: "[OS] title"
 labels: 'bug'
-
 ---
+
 ## Summary
 
-* OS: { type-or-version }
-* Architecture: { 64bit, 32bit, ARM, PowerPC, s390 }
-* Psutil version: { pip3 show psutil }
-* Python version: { python3 -V }
-* Type: { core, doc, performance, scripts, tests, wheels, new-api, installation }
+- OS: { type-or-version }
+- Architecture: { 64bit, 32bit, ARM, PowerPC, s390 }
+- Psutil version: { pip3 show psutil }
+- Python version: { python3 -V }
+- Type: { core, doc, performance, scripts, tests, wheels, new-api, installation }
 
 ## Description
 

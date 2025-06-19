@@ -45,7 +45,6 @@ from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 
-
 if LINUX:
     from psutil._pslinux import CLOCK_TICKS
     from psutil._pslinux import RootFsDeviceFinder

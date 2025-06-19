@@ -11,7 +11,8 @@ SETUP_INSTALL_ARGS = `$(PYTHON) -c \
 	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
-SUDO = $(if $(filter $(OS),Windows_NT),,sudo)
+SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
+DPRINT = ~/.dprint/bin/dprint
 
 # if make is invoked with no arg, default to `make help`
 .DEFAULT_GOAL := help
@@ -172,6 +173,20 @@ test-ci:  ## Run tests on GitHub CI.
 	${MAKE} test-memleaks
 	${MAKE} test-sudo
 
+test-cibuildwheel:    ## Run tests from cibuildwheel.
+	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
+	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
+	${MAKE} install-sysdeps
+	mkdir -p .tests
+	cd .tests/ && python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
+
+lint-ci:  ## Run all linters on GitHub CI.
+	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
+	curl -fsSL https://dprint.dev/install.sh | sh
+	${MAKE} lint-all
+
 # ===================================================================
 # Linters
 # ===================================================================
@@ -181,6 +196,9 @@ ruff:  ## Run ruff linter.
 
 black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
+
+dprint:
+	@$(DPRINT) check --list-different
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -194,6 +212,7 @@ lint-toml:  ## Run linter for pyproject.toml.
 lint-all:  ## Run all linters
 	${MAKE} black
 	${MAKE} ruff
+	${MAKE} dprint
 	${MAKE} lint-c
 	${MAKE} lint-rst
 	${MAKE} lint-toml
@@ -219,10 +238,14 @@ fix-ruff:
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
+fix-dprint:
+	@$(DPRINT) fmt
+
 fix-all:  ## Run all code fixers.
 	${MAKE} fix-ruff
 	${MAKE} fix-black
 	${MAKE} fix-toml
+	${MAKE} fix-dprint
 
 # ===================================================================
 # Distribution

@@ -4,7 +4,6 @@
 
 """Test utilities."""
 
-
 import atexit
 import contextlib
 import ctypes
@@ -37,7 +36,6 @@ from socket import AF_INET
 from socket import AF_INET6
 from socket import SOCK_STREAM
 
-
 try:
     import pytest
 except ImportError:
@@ -57,7 +55,6 @@ from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import print_color
 from psutil._common import supports_ipv6
-
 
 if POSIX:
     from psutil._psposix import wait_pid
@@ -118,7 +115,7 @@ PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`
 # are we a 64 bit process?
 IS_64BIT = sys.maxsize > 2**32
 # apparently they're the same
-AARCH64 = platform.machine() in {"aarch64", "arm64"}
+AARCH64 = platform.machine().lower() in {"aarch64", "arm64"}
 RISCV64 = platform.machine() == "riscv64"
 
 
@@ -1414,23 +1411,25 @@ def print_sysinfo():
         bytes2human(swap.used),
         bytes2human(swap.total),
     )
+
+    # constants
+    constants = sorted(
+        [k for k, v in globals().items() if k.isupper() and v is True]
+    )
+    info['constants'] = "\n                  ".join(constants)
+
+    # processes
     info['pids'] = len(psutil.pids())
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
+    pinfo["environ"] = {k: os.environ[k] for k in sorted(os.environ)}
     info['proc'] = pprint.pformat(pinfo)
 
+    # print
     print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
         print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
     print("=" * 70, file=sys.stderr)  # noqa: T201
-    sys.stdout.flush()
-
-    # if WINDOWS:
-    #     os.system("tasklist")
-    # elif shutil.which("ps"):
-    #     os.system("ps aux")
-    # print("=" * 70, file=sys.stderr)
-
     sys.stdout.flush()
 
 

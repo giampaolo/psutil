@@ -9,7 +9,6 @@
 import shlex
 import subprocess
 
-
 entry = """\
 - {date}:
   `{ver} <https://pypi.org/project/psutil/{ver}/#files>`__ -

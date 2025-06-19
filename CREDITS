@@ -783,7 +783,7 @@ I: 1956
 
 N: Matthieu Darbois
 W: https://github.com/mayeut
-I: 2039, 2142, 2147, 2153, 2040, 2102, 2216, 2246, 2252
+I: 2039, 2142, 2147, 2153, 2040, 2102, 2216, 2246, 2252, 2581
 
 N: Hugo van Kemenade
 W: https://github.com/hugovk
@@ -856,3 +856,11 @@ I: 2526, 2527
 N: Marcel Telka
 W: https://github.com/mtelka
 I: 2545
+
+N: Julien Stephan
+W: https://github.com/justeph
+I: 2560
+
+N: Ben Peddell
+W: https://github.com/klightspeed
+I: 2494

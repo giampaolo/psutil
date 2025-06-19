@@ -28,7 +28,6 @@ import ast
 import datetime
 import os
 
-
 PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)
@@ -369,10 +368,10 @@ texinfo_documents = [(
 # texinfo_no_detailmenu = False
 
 
-html_context = {
-    'css_files': [
-        'https://media.readthedocs.org/css/sphinx_rtd_theme.css',
-        'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
-        '_static/css/custom.css',
-    ]
-}
+html_static_path = ['_static']
+
+html_css_files = [
+    'https://media.readthedocs.org/css/sphinx_rtd_theme.css',
+    'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
+    'css/custom.css',
+]

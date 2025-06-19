@@ -33,7 +33,6 @@ from ._psutil_windows import IDLE_PRIORITY_CLASS
 from ._psutil_windows import NORMAL_PRIORITY_CLASS
 from ._psutil_windows import REALTIME_PRIORITY_CLASS
 
-
 try:
     from . import _psutil_windows as cext
 except ImportError as err:
@@ -184,12 +183,21 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 @functools.lru_cache(maxsize=512)
 def convert_dos_path(s):
     r"""Convert paths using native DOS format like:
-        "\Device\HarddiskVolume1\Windows\systemew\file.txt"
+        "\Device\HarddiskVolume1\Windows\systemew\file.txt" or
+        "\??\C:\Windows\systemew\file.txt"
     into:
         "C:\Windows\systemew\file.txt".
     """
+    if s.startswith('\\\\'):
+        return s
     rawdrive = '\\'.join(s.split('\\')[:3])
-    driveletter = cext.QueryDosDevice(rawdrive)
+    if rawdrive in {"\\??\\UNC", "\\Device\\Mup"}:
+        rawdrive = '\\'.join(s.split('\\')[:5])
+        driveletter = '\\\\' + '\\'.join(s.split('\\')[3:5])
+    elif rawdrive.startswith('\\??\\'):
+        driveletter = s.split('\\')[2]
+    else:
+        driveletter = cext.QueryDosDevice(rawdrive)
     remainder = s[len(rawdrive) :]
     return os.path.join(driveletter, remainder)
 

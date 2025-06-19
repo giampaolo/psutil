@@ -35,7 +35,6 @@ from psutil.tests import sh
 from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
-
 if WINDOWS and not PYPY:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -255,6 +254,38 @@ class TestSystemAPIs(WindowsTestCase):
             if not x.mountpoint.startswith('A:')
         ]
         assert sys_value == psutil_value
+
+    def test_convert_dos_path_drive(self):
+        winpath = 'C:\\Windows\\Temp'
+        driveletter = 'C:'
+        # Mocked NT device path for C:
+        devicepath = '\\Device\\HarddiskVolume1'
+
+        # Path returned by RtlDosPathNameToNtPathName
+        ntpath1 = '\\??\\C:\\Windows\\Temp'
+        # Mocked normalized NT path
+        ntpath2 = '\\Device\\HarddiskVolume1\\Windows\\Temp'
+
+        devices = {devicepath: driveletter}
+
+        with mock.patch(
+            'psutil._pswindows.cext.QueryDosDevice', side_effect=devices.get
+        ) as m:
+            assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
+            assert psutil._pswindows.convert_dos_path(ntpath2) == winpath
+            assert m.called
+
+    def test_convert_dos_path_unc(self):
+        # UNC path
+        winpath = '\\\\localhost\\C$\\Windows\\Temp'
+        # Path returned by RtlDosPathNameToNtPathName
+        ntpath1 = '\\??\\UNC\\localhost\\C$\\Windows\\Temp'
+        # Normalized NT path
+        ntpath2 = '\\Device\\Mup\\localhost\\C$\\Windows\\Temp'
+
+        assert psutil._pswindows.convert_dos_path(winpath) == winpath
+        assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
+        assert psutil._pswindows.convert_dos_path(ntpath2) == winpath
 
     def test_net_if_stats(self):
         ps_names = set(cext.net_if_stats())
@@ -854,6 +885,11 @@ class TestServices(PsutilTestCase):
             "stopped",
         }
         for serv in psutil.win_service_iter():
+            if serv.name() == "WaaSMedicSvc":
+                # known issue in Windows 11 reading the description
+                # https://learn.microsoft.com/en-us/answers/questions/1320388/in-windows-11-version-22h2-there-it-shows-(failed
+                # https://github.com/giampaolo/psutil/issues/2383
+                continue
             data = serv.as_dict()
             assert isinstance(data['name'], str)
             assert data['name'].strip()

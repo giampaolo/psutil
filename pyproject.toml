@@ -127,7 +127,6 @@ ignore = [
 [tool.ruff.lint.isort]
 # https://beta.ruff.rs/docs/settings/#isort
 force-single-line = true  # one import per line
-lines-after-imports = 2
 
 [tool.coverage.report]
 exclude_lines = [
@@ -222,12 +221,12 @@ trailing_comma_inline_array = true
 [tool.cibuildwheel]
 skip = [
     "*-musllinux*",
-    "cp313-win*",  # pywin32 is not available on cp313 yet
     "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
 ]
 test-extras = ["test"]
-test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-ci"
+test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-cibuildwheel"
+test-skip = "cp39-win_arm64"  # pywin32 is not available on cp39 ARM64
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]

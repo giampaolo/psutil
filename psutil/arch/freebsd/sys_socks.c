@@ -17,9 +17,6 @@
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/sysctl.h>
-#if defined(__FreeBSD_version) && __FreeBSD_version < 800000
-#include <netinet/in_systm.h>
-#endif
 #include <netinet/in.h>   // for xinpcb struct
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>

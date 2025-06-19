@@ -27,7 +27,6 @@ import tempfile
 import textwrap
 import warnings
 
-
 if sys.version_info[0] == 2:
     sys.exit(textwrap.dedent("""\
         As of version 7.0.0 psutil no longer supports Python 2.7, see:
@@ -70,7 +69,6 @@ from _common import SUNOS  # noqa: E402
 from _common import WINDOWS  # noqa: E402
 from _common import hilite  # noqa: E402
 
-
 PYPY = '__pypy__' in sys.builtin_module_names
 PY36_PLUS = sys.version_info[:2] >= (3, 6)
 PY37_PLUS = sys.version_info[:2] >= (3, 7)
@@ -95,7 +93,7 @@ TEST_DEPS = [
 # `make install-pydeps-dev`.
 DEV_DEPS = TEST_DEPS + [
     "abi3audit",
-    "black==24.10.0",
+    "black",
     "check-manifest",
     "coverage",
     "packaging",
@@ -186,62 +184,59 @@ def get_long_description():
 
 
 @contextlib.contextmanager
-def silenced_output(stream_name):
-    class DummyFile(io.BytesIO):
-        # see: https://github.com/giampaolo/psutil/issues/678
-        errors = "ignore"
-
-        def write(self, s):
-            pass
-
-    orig = getattr(sys, stream_name)
-    try:
-        setattr(sys, stream_name, DummyFile())
-        yield
-    finally:
-        setattr(sys, stream_name, orig)
+def silenced_output():
+    with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stderr(io.StringIO()):
+            yield
 
 
-def missdeps(cmdline):
-    s = "psutil could not be installed from sources"
-    if not SUNOS and not shutil.which("gcc"):
-        s += " because gcc is not installed. "
-    else:
-        s += ". Perhaps Python header files are not installed. "
-    s += "Try running:\n"
-    s += "  {}".format(cmdline)
-    print(hilite(s, color="red", bold=True), file=sys.stderr)
+def has_python_h():
+    include_dir = sysconfig.get_path("include")
+    return os.path.exists(os.path.join(include_dir, "Python.h"))
 
 
-def print_install_instructions():
+def get_sysdeps():
     if LINUX:
         pyimpl = "pypy" if PYPY else "python"
         if shutil.which("dpkg"):
-            missdeps("sudo apt-get install gcc {}3-dev".format(pyimpl))
+            return "sudo apt-get install gcc {}3-dev".format(pyimpl)
         elif shutil.which("rpm"):
-            missdeps("sudo yum install gcc {}3-devel".format(pyimpl))
+            return "sudo yum install gcc {}3-devel".format(pyimpl)
+        elif shutil.which("pacman"):
+            return "sudo pacman -S gcc python"
         elif shutil.which("apk"):
-            missdeps(
-                "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
-                    *pyimpl
-                )
+            return "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
+                *pyimpl
             )
     elif MACOS:
-        msg = "XCode (https://developer.apple.com/xcode/) is not installed"
-        print(hilite(msg, color="red"), file=sys.stderr)
+        return "xcode-select --install"
     elif FREEBSD:
         if shutil.which("pkg"):
-            missdeps("pkg install gcc python3")
+            return "pkg install gcc python3"
         elif shutil.which("mport"):  # MidnightBSD
-            missdeps("mport install gcc python3")
+            return "mport install gcc python3"
     elif OPENBSD:
-        missdeps("pkg_add -v gcc python3")
+        return "pkg_add -v gcc python3"
     elif NETBSD:
-        missdeps("pkgin install gcc python3")
+        return "pkgin install gcc python3"
     elif SUNOS:
-        missdeps(
-            "sudo ln -s /usr/bin/gcc /usr/local/bin/cc && pkg install gcc"
-        )
+        return "pkg install gcc"
+
+
+def print_install_instructions():
+    reasons = []
+    if not shutil.which("gcc"):
+        reasons.append("gcc is not installed.")
+    if not has_python_h():
+        reasons.append("Python header files are not installed.")
+    if reasons:
+        sysdeps = get_sysdeps()
+        if sysdeps:
+            s = "psutil could not be compiled from sources. "
+            s += " ".join(reasons)
+            s += " Try running:\n"
+            s += "  {}".format(sysdeps)
+            print(hilite(s, color="red", bold=True), file=sys.stderr)
 
 
 def unix_can_compile(c_code):
@@ -259,9 +254,9 @@ def unix_can_compile(c_code):
         # https://github.com/giampaolo/psutil/pull/1568
         if os.getenv('CC'):
             compiler.set_executable('compiler_so', os.getenv('CC'))
-        with silenced_output('stderr'):
-            with silenced_output('stdout'):
-                compiler.compile([f.name], output_dir=tempdir)
+        with silenced_output():
+            compiler.compile([f.name], output_dir=tempdir)
+        compiler.compile([f.name], output_dir=tempdir)
     except CompileError:
         return False
     else:
@@ -423,12 +418,12 @@ elif SUNOS:
     macros.append(("PSUTIL_SUNOS", 1))
     ext = Extension(
         'psutil._psutil_sunos',
-        sources=sources
-        + [
-            'psutil/_psutil_sunos.c',
-            'psutil/arch/solaris/v10/ifaddrs.c',
-            'psutil/arch/solaris/environ.c',
-        ],
+        sources=(
+            sources
+            + ["psutil/_psutil_sunos.c"]
+            + glob.glob("psutil/arch/sunos/*.c")
+            + glob.glob("psutil/arch/sunos/v10/*.c")
+        ),
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'],
         # fmt: off
@@ -526,19 +521,19 @@ def main():
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',
-            'Environment :: Win32 (MS Windows)',
             'Intended Audience :: Developers',
             'Intended Audience :: Information Technology',
             'Intended Audience :: System Administrators',
-            'License :: OSI Approved :: BSD License',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows :: Windows 10',
+            'Operating System :: Microsoft :: Windows :: Windows 11',
             'Operating System :: Microsoft :: Windows :: Windows 7',
             'Operating System :: Microsoft :: Windows :: Windows 8',
             'Operating System :: Microsoft :: Windows :: Windows 8.1',
             'Operating System :: Microsoft :: Windows :: Windows Server 2003',
             'Operating System :: Microsoft :: Windows :: Windows Server 2008',
             'Operating System :: Microsoft :: Windows :: Windows Vista',
+            'Operating System :: Microsoft :: Windows',
             'Operating System :: Microsoft',
             'Operating System :: OS Independent',
             'Operating System :: POSIX :: AIX',
@@ -557,7 +552,6 @@ def main():
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Software Development :: Libraries',
             'Topic :: System :: Benchmark',
-            'Topic :: System :: Hardware :: Hardware Drivers',
             'Topic :: System :: Hardware',
             'Topic :: System :: Monitoring',
             'Topic :: System :: Networking :: Monitoring :: Hardware Watchdog',

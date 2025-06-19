@@ -16,9 +16,11 @@ import time
 import unittest
 
 import psutil
+from psutil import FREEBSD
 from psutil import LINUX
-from psutil import MACOS
+from psutil import OPENBSD
 from psutil import WINDOWS
+from psutil.tests import CI_TESTING
 from psutil.tests import PsutilTestCase
 
 
@@ -38,7 +40,7 @@ def set_systime(secs):  # secs since the epoch
         import pywintypes
         import win32api
 
-        dt = datetime.datetime.utcfromtimestamp(secs)
+        dt = datetime.datetime.fromtimestamp(secs, datetime.timezone.utc)
         try:
             win32api.SetSystemTime(
                 dt.year,
@@ -86,7 +88,6 @@ class TestUpdatedSystemTime(PsutilTestCase):
         self.assertAlmostEqual(diff, 3600, delta=1)
 
     @unittest.skipIf(WINDOWS, "broken on WINDOWS")  # TODO: fix it
-    @unittest.skipIf(MACOS, "broken on MACOS")  # TODO: fix it
     def test_proc_create_time(self):
         # Test that Process.create_time() reflects system clock
         # updates. On systems such as Linux this is added on top of the
@@ -94,9 +95,18 @@ class TestUpdatedSystemTime(PsutilTestCase):
         t1 = psutil.Process().create_time()
         self.update_systime()
         t2 = psutil.Process().create_time()
-        self.assertGreater(t2, t1)
         diff = int(t2 - t1)
         self.assertAlmostEqual(diff, 3600, delta=1)
+
+    @unittest.skipIf(CI_TESTING, "skipped on CI for now")  # TODO: fix it
+    @unittest.skipIf(OPENBSD, "broken on OPENBSD")  # TODO: fix it
+    @unittest.skipIf(FREEBSD, "broken on FREEBSD")  # TODO: fix it
+    def test_proc_ident(self):
+        p1 = psutil.Process()
+        self.update_systime()
+        p2 = psutil.Process()
+        self.assertEqual(p1._get_ident(), p2._get_ident())
+        self.assertEqual(p1, p2)
 
     @unittest.skipIf(not LINUX, "LINUX only")
     def test_linux_monotonic_proc_time(self):

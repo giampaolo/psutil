@@ -5,9 +5,21 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2581_, [Windows]: publish ARM64 wheels.  (patch by Matthieu Darbois)
+- 2571_, [FreeBSD]: Dropped support for FreeBSD 8 and earlier. FreeBSD 8 was
+  maintained from 2009 to 2013.
+- 2575_: introduced `dprint` CLI tool to format .yml and .md files.
+
 **Bug fixes**
 
 - 2473_, [macOS]: Fix build issue on macOS 11 and lower.
+- 2494_, [Windows]: All APIs dealing with paths, such as
+  `Process.memory_maps()`_, `Process.exe()`_ and `Process.open_files()`_ does
+  not properly handle UNC paths. Paths such as ``\\??\\C:\\Windows\\Temp`` and
+  ``'\\Device\\HarddiskVolume1\\Windows\\Temp'`` are now converted to
+  ``C:\\Windows\\Temp``.  (patch by Ben Peddell)
 - 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
   to a race condition.
 - 2526_, [Linux]: `Process.create_time()`_, which is used to univocally
@@ -17,13 +29,20 @@ XXXX-XX-XX
 - 2528_, [Linux]: `Process.children()`_ may raise ``PermissionError``. It will
   now raise `AccessDenied`_ instead.
 - 2540_, [macOS]: `boot_time()`_ is off by 45 seconds (C precision issue).
-- 2541_, [Linux]: `Process.create_time()`_ does not reflect system clock
-  updates because it uses a cached version of `boot_time()`_.
+- 2541_, 2570_, 2578_ [Linux], [macOS], [NetBSD]: `Process.create_time()`_ does
+  not reflect system clock updates.
 - 2542_: if system clock is updated `Process.children()`_ and
   `Process.parent()`_ may not be able to return the right information.
-- 2545_: [illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
+- 2545_: [Illumos]: Fix handling of MIB2_UDP_ENTRY in `net_connections()`_.
 - 2552_, [Windows]: `boot_time()`_ didn't take into account the time spent
-  during suspend / hybernation.
+  during suspend / hibernation.
+- 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
+  RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
+  Stephan)
+
+**Compatibility notes**
+
+- 2571_: Dropped support for FreeBSD 8 and earlier.
 
 7.0.0
 =====

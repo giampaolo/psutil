@@ -1,0 +1,30 @@
+{
+    "markdown": {
+        "lineWidth": 79,
+        "textWrap": "always",
+    },
+    "json": {
+        "indentWidth": 4,
+        "associations": [
+            "**/*.json",
+            "**/*.jsonc",
+        ],
+    },
+    "yaml": {
+        "associations": [
+            "**/*.yml",
+            "**/*.yaml",
+        ],
+    },
+    "excludes": [
+        "**/*-lock.json",
+        ".github/ISSUE_TEMPLATE/bug.md",
+        ".github/ISSUE_TEMPLATE/enhancement.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+    ],
+    "plugins": [
+        "https://plugins.dprint.dev/markdown-0.18.0.wasm",
+        "https://plugins.dprint.dev/json-0.20.0.wasm",
+        "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.5.1.wasm",
+    ],
+}
