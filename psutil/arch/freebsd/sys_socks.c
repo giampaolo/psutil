@@ -30,34 +30,27 @@
 #include "../../_psutil_posix.h"
 
 
-static struct xfile *psutil_xfiles;
-static int psutil_nxfiles;
-
-
 static int
-psutil_populate_xfiles(void) {
-    size_t len;
-
-    if ((psutil_xfiles = malloc(len = sizeof *psutil_xfiles)) == NULL) {
-        PyErr_NoMemory();
-        return 0;
-    }
-    while (sysctlbyname("kern.file", psutil_xfiles, &len, 0, 0) == -1) {
+psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
+    size_t len = sizeof(struct xfile);
+    while (sysctlbyname("kern.file", *psutil_xfiles, &len, 0, 0) == -1) {
         if (errno != ENOMEM) {
             PyErr_SetFromErrno(0);
             return 0;
         }
         len *= 2;
-        if ((psutil_xfiles = realloc(psutil_xfiles, len)) == NULL) {
+        struct xfile *new_psutil_xfiles = realloc(*psutil_xfiles, len);
+        if (new_psutil_xfiles == NULL) {
             PyErr_NoMemory();
             return 0;
         }
+        *psutil_xfiles = new_psutil_xfiles;
     }
-    if (len > 0 && psutil_xfiles->xf_size != sizeof *psutil_xfiles) {
+    if (len > 0 && (*psutil_xfiles)->xf_size != sizeof(struct xfile)) {
         PyErr_Format(PyExc_RuntimeError, "struct xfile size mismatch");
         return 0;
     }
-    psutil_nxfiles = len / sizeof *psutil_xfiles;
+    *psutil_nxfiles = len / sizeof(struct xfile);
     return 1;
 }
 
@@ -392,15 +385,22 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
         goto error;
 
-    if (psutil_populate_xfiles() != 1)
+    struct xfile *psutil_xfiles = malloc(sizeof(struct xfile));
+    if (psutil_xfiles == NULL) {
+        PyErr_NoMemory();
         goto error;
+    }
+
+    int psutil_nxfiles;
+    if (psutil_populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 1)
+        goto error_free_psutil_xfiles;
 
     // TCP
     if (include_tcp == 1) {
         if (psutil_gather_inet(
                 IPPROTO_TCP, include_v4, include_v6, py_retlist) == 0)
         {
-            goto error;
+            goto error_free_psutil_xfiles;
         }
     }
     // UDP
@@ -408,22 +408,23 @@ psutil_net_connections(PyObject* self, PyObject* args) {
         if (psutil_gather_inet(
                 IPPROTO_UDP, include_v4, include_v6, py_retlist) == 0)
         {
-            goto error;
+            goto error_free_psutil_xfiles;
         }
     }
     // UNIX
     if (include_unix == 1) {
         if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
-           goto error;
+           goto error_free_psutil_xfiles;
         if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
-            goto error;
+            goto error_free_psutil_xfiles;
     }
 
     free(psutil_xfiles);
     return py_retlist;
 
+error_free_psutil_xfiles:
+    free(psutil_xfiles);
 error:
     Py_DECREF(py_retlist);
-    free(psutil_xfiles);
     return NULL;
 }
