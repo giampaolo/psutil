@@ -29,14 +29,16 @@
 
 static int
 psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
+    struct xfile *new_psutil_xfiles;
     size_t len = sizeof(struct xfile);
+
     while (sysctlbyname("kern.file", *psutil_xfiles, &len, 0, 0) == -1) {
         if (errno != ENOMEM) {
             PyErr_SetFromErrno(0);
             return 0;
         }
         len *= 2;
-        struct xfile *new_psutil_xfiles = realloc(*psutil_xfiles, len);
+        new_psutil_xfiles = realloc(*psutil_xfiles, len);
         if (new_psutil_xfiles == NULL) {
             PyErr_NoMemory();
             return 0;
@@ -356,7 +358,8 @@ psutil_int_in_seq(int value, PyObject *py_seq) {
 
 PyObject*
 psutil_net_connections(PyObject* self, PyObject* args) {
-    int include_v4, include_v6, include_unix, include_tcp, include_udp;
+    int include_v4, include_v6, include_unix, include_tcp, include_udp, psutil_nxfiles;
+    struct xfile *psutil_xfiles;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -382,13 +385,12 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     if ((include_udp = psutil_int_in_seq(SOCK_DGRAM, py_type_filter)) == -1)
         goto error;
 
-    struct xfile *psutil_xfiles = malloc(sizeof(struct xfile));
+    psutil_xfiles = malloc(sizeof(struct xfile));
     if (psutil_xfiles == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
-    int psutil_nxfiles;
     if (psutil_populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 1)
         goto error_free_psutil_xfiles;
 
