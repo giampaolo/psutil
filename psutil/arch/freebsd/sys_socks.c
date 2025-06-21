@@ -55,7 +55,7 @@ psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
 
 
 static struct xfile *
-psutil_get_file_from_sock(kvaddr_t sock) {
+psutil_get_file_from_sock(kvaddr_t sock, struct xfile *psutil_xfiles, int psutil_nxfiles) {
     struct xfile *xf;
     int n;
 
@@ -71,7 +71,8 @@ psutil_get_file_from_sock(kvaddr_t sock) {
 // https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
 static int
 psutil_gather_inet(
-        int proto, int include_v4, int include_v6, PyObject *py_retlist)
+        int proto, int include_v4, int include_v6, PyObject *py_retlist,
+        struct xfile *psutil_xfiles, int psutil_nxfiles)
 {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
@@ -181,7 +182,7 @@ psutil_gather_inet(
 
         char lip[200], rip[200];
 
-        xf = psutil_get_file_from_sock(so->xso_so);
+        xf = psutil_get_file_from_sock(so->xso_so, psutil_xfiles, psutil_nxfiles);
         if (xf == NULL)
             continue;
         lport = ntohs(inp->inp_lport);
@@ -238,7 +239,8 @@ error:
 
 
 static int
-psutil_gather_unix(int proto, PyObject *py_retlist) {
+psutil_gather_unix(int proto, PyObject *py_retlist,
+                   struct xfile *psutil_xfiles, int psutil_nxfiles) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
@@ -303,7 +305,7 @@ psutil_gather_unix(int proto, PyObject *py_retlist) {
         if (xup->xu_len != sizeof *xup)
             goto error;
 
-        xf = psutil_get_file_from_sock(xup->xu_socket.xso_so);
+        xf = psutil_get_file_from_sock(xup->xu_socket.xso_so, psutil_xfiles, psutil_nxfiles);
         if (xf == NULL)
             continue;
 
@@ -412,9 +414,9 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     }
     // UNIX
     if (include_unix == 1) {
-        if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
+        if (psutil_gather_unix(SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles) == 0)
            goto error_free_psutil_xfiles;
-        if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
+        if (psutil_gather_unix(SOCK_DGRAM, py_retlist, psutil_xfiles, psutil_nxfiles) == 0)
             goto error_free_psutil_xfiles;
     }
 
