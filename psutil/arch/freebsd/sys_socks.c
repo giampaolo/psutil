@@ -399,7 +399,8 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     // TCP
     if (include_tcp == 1) {
         if (psutil_gather_inet(
-                IPPROTO_TCP, include_v4, include_v6, py_retlist) == 0)
+                IPPROTO_TCP, include_v4, include_v6, py_retlist,
+                psutil_xfiles, psutil_nxfiles) == 0)
         {
             goto error_free_psutil_xfiles;
         }
@@ -407,7 +408,8 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     // UDP
     if (include_udp == 1) {
         if (psutil_gather_inet(
-                IPPROTO_UDP, include_v4, include_v6, py_retlist) == 0)
+                IPPROTO_UDP, include_v4, include_v6, py_retlist
+                psutil_xfiles, psutil_nxfiles) == 0)
         {
             goto error_free_psutil_xfiles;
         }
