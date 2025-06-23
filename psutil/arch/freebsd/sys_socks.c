@@ -408,7 +408,7 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     // UDP
     if (include_udp == 1) {
         if (psutil_gather_inet(
-                IPPROTO_UDP, include_v4, include_v6, py_retlist
+                IPPROTO_UDP, include_v4, include_v6, py_retlist,
                 psutil_xfiles, psutil_nxfiles) == 0)
         {
             goto error_free_psutil_xfiles;
