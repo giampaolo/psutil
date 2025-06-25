@@ -1071,7 +1071,7 @@ class PsutilTestCase(unittest.TestCase):
         self.assert_pid_gone(proc.pid)
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
-            with self.subTest(proc=proc, name=name):
+            with self.subTest(proc=str(proc), name=name):
                 try:
                     ret = fun()
                 except psutil.ZombieProcess:
@@ -1109,7 +1109,7 @@ class PsutilTestCase(unittest.TestCase):
         # Call all methods.
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
-            with self.subTest(proc=proc, name=name):
+            with self.subTest(proc=str(proc), name=name):
                 try:
                     fun()
                 except (psutil.ZombieProcess, psutil.AccessDenied) as exc:
