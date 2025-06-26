@@ -224,6 +224,9 @@ class TestConnectedSocket(ConnectionTestCase):
             client.close()
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @pytest.mark.skipif(
+        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
+    )
     def test_unix(self):
         testfn = self.get_testfn()
         server, client = unix_socketpair(testfn)
