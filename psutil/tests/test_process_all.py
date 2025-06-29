@@ -530,5 +530,4 @@ class TestPidsRange(PsutilTestCase):
                 # Process class and is querable like a PID (process
                 # ID). Skip it.
                 continue
-            with self.subTest(pid=pid):
-                check(pid)
+            check(pid)

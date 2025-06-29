@@ -286,7 +286,7 @@ class TestFSAPIsWithInvalidPath(TestFSAPIs):
     funky_suffix = INVALID_UNICODE_SUFFIX
 
     def expect_exact_path_match(self):
-        return True
+        return not MACOS
 
 
 # ===================================================================

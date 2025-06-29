@@ -356,23 +356,36 @@ class TestSystemAPIs(PsutilTestCase):
                     f" output\n{output}"
                 )
 
-    # @pytest.mark.skipif(CI_TESTING and not psutil.users(),
-    #                     reason="unreliable on CI")
     @retry_on_failure()
     def test_users(self):
         out = sh("who -u")
         if not out.strip():
             raise pytest.skip("no users on this system")
-        lines = out.split('\n')
-        users = [x.split()[0] for x in lines]
-        terminals = [x.split()[1] for x in lines]
-        assert len(users) == len(psutil.users())
-        with self.subTest(psutil=psutil.users(), who=out):
-            for idx, u in enumerate(psutil.users()):
-                assert u.name == users[idx]
-                assert u.terminal == terminals[idx]
-                if u.pid is not None:  # None on OpenBSD
-                    psutil.Process(u.pid)
+
+        susers = []
+        for line in out.splitlines():
+            user = line.split()[0]
+            terminal = line.split()[1]
+            if LINUX or MACOS:
+                try:
+                    pid = int(line.split()[-2])
+                except ValueError:
+                    pid = int(line.split()[-1])
+                susers.append((user, terminal, pid))
+            else:
+                susers.append((user, terminal))
+
+        if LINUX or MACOS:
+            pusers = [(u.name, u.terminal, u.pid) for u in psutil.users()]
+        else:
+            pusers = [(u.name, u.terminal) for u in psutil.users()]
+
+        assert len(susers) == len(pusers)
+        assert sorted(susers) == sorted(pusers)
+
+        for user in psutil.users():
+            if user.pid is not None:
+                assert user.pid > 0
 
     @retry_on_failure()
     def test_users_started(self):
