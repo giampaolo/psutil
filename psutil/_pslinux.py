@@ -1657,6 +1657,22 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+def _parse_fdinfo(f):
+    # f:  a file opened in binary
+    pos, flags = None, None
+    for _ in [0, 1]:
+        line_vals = f.readline().split()
+        if line_vals is None or len(line_vals) < 2:
+            continue
+        key = decode(line_vals[0])
+        if key == "pos:":
+            pos = int(line_vals[1])
+        elif key == "flags:":
+            flags = int(line_vals[1], 8)
+
+    return pos, flags
+
+
 class Process:
     """Linux process implementation."""
 
@@ -2273,8 +2289,7 @@ class Process:
                     file = f"{self._procfs_path}/{self.pid}/fdinfo/{fd}"
                     try:
                         with open_binary(file) as f:
-                            pos = int(f.readline().split()[1])
-                            flags = int(f.readline().split()[1], 8)
+                            pos, flags = _parse_fdinfo(f)
                     except (FileNotFoundError, ProcessLookupError):
                         # fd gone in the meantime; process may
                         # still be alive
