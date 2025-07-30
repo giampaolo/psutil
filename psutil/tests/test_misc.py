@@ -255,7 +255,7 @@ class TestMisc(PsutilTestCase):
 
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.getters, clear_cache=True):
-            with self.subTest(proc=proc, name=name):
+            with self.subTest(proc=str(proc), name=name):
                 try:
                     ret = fun()
                 except psutil.Error:

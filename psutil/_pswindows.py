@@ -10,6 +10,7 @@ import functools
 import os
 import signal
 import sys
+import threading
 import time
 from collections import namedtuple
 
@@ -330,22 +331,31 @@ def cpu_freq():
     return [_common.scpufreq(float(curr), min_, float(max_))]
 
 
-_loadavg_inititialized = False
+_loadavg_initialized = False
+_lock = threading.Lock()
+
+
+def _getloadavg_impl():
+    # Drop to 2 decimal points which is what Linux does
+    raw_loads = cext.getloadavg()
+    return tuple(round(load, 2) for load in raw_loads)
 
 
 def getloadavg():
     """Return the number of processes in the system run queue averaged
     over the last 1, 5, and 15 minutes respectively as a tuple.
     """
-    global _loadavg_inititialized
+    global _loadavg_initialized
 
-    if not _loadavg_inititialized:
-        cext.init_loadavg_counter()
-        _loadavg_inititialized = True
+    if _loadavg_initialized:
+        return _getloadavg_impl()
 
-    # Drop to 2 decimal points which is what Linux does
-    raw_loads = cext.getloadavg()
-    return tuple(round(load, 2) for load in raw_loads)
+    with _lock:
+        if not _loadavg_initialized:
+            cext.init_loadavg_counter()
+            _loadavg_initialized = True
+
+    return _getloadavg_impl()
 
 
 # =====================================================================
