@@ -92,7 +92,7 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) lldb -- $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+	$(PYTHON_ENV_VARS) ASAN_OPTIONS=detect_leaks=1 lldb -- ASAN_OPTIONS=detect_leaks=1 $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
