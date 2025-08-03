@@ -56,7 +56,7 @@ build:  ## Compile (in parallel) without installing.
 	@# "build_ext -i" copies compiled *.so files in ./psutil directory in order
 	@# to allow "import psutil" when using the interactive interpreter from
 	@# within  this directory.
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py build_ext -i --parallel 4
+	$(PYTHON_ENV_VARS) CFLAGS="-g -O0" $(PYTHON) setup.py build_ext -i --parallel 4 --inplace
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
@@ -92,7 +92,7 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+	$(PYTHON_ENV_VARS) lldb -- $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
