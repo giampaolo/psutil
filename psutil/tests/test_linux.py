@@ -31,7 +31,6 @@ from psutil.tests import HAS_BATTERY
 from psutil.tests import HAS_CPU_FREQ
 from psutil.tests import HAS_GETLOADAVG
 from psutil.tests import HAS_RLIMIT
-from psutil.tests import PYPY
 from psutil.tests import RISCV64
 from psutil.tests import TOLERANCE_DISK_USAGE
 from psutil.tests import TOLERANCE_SYS_MEM
@@ -1865,8 +1864,6 @@ class TestProcess(PsutilTestCase):
             assert pss == 3 * 1024
             assert swap == 15 * 1024
 
-    # On PYPY file descriptors are not closed fast enough.
-    @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()

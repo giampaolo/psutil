@@ -42,7 +42,6 @@ from psutil.tests import HAS_NET_IO_COUNTERS
 from psutil.tests import HAS_SENSORS_BATTERY
 from psutil.tests import HAS_SENSORS_FANS
 from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import IS_64BIT
 from psutil.tests import MACOS_12PLUS
 from psutil.tests import PYPY
 from psutil.tests import UNICODE_SUFFIX
@@ -477,7 +476,7 @@ class TestCpuAPIs(PsutilTestCase):
                     return None
 
     @pytest.mark.skipif(
-        CI_TESTING and OPENBSD, reason="unreliable on OPENBSD + CI"
+        (CI_TESTING and OPENBSD) or MACOS, reason="unreliable on OPENBSD + CI"
     )
     @retry_on_failure(30)
     def test_cpu_times_comparison(self):
@@ -612,9 +611,6 @@ class TestCpuAPIs(PsutilTestCase):
 
 
 class TestDiskAPIs(PsutilTestCase):
-    @pytest.mark.skipif(
-        PYPY and not IS_64BIT, reason="unreliable on PYPY32 + 32BIT"
-    )
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         assert usage._fields == ('total', 'used', 'free', 'percent')

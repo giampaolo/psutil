@@ -263,7 +263,6 @@ class TestFSAPIs(BaseUnicodeTest):
         psutil.disk_usage(dname)
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
-    @pytest.mark.skipif(PYPY, reason="unstable on PYPY")
     def test_memory_maps(self):
         with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
 

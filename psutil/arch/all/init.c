@@ -11,6 +11,7 @@
 #include <windows.h>
 #endif
 
+#include "init.h"
 
 int PSUTIL_DEBUG = 0;
 int PSUTIL_CONN_NONE = 128;

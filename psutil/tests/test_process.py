@@ -739,7 +739,6 @@ class TestProcess(PsutilTestCase):
                     return
             assert ' '.join(p.cmdline()) == ' '.join(cmdline)
 
-    @pytest.mark.skipif(PYPY, reason="broken on PYPY")
     def test_long_cmdline(self):
         cmdline = [PYTHON_EXE]
         cmdline.extend(["-v"] * 50)
@@ -772,7 +771,6 @@ class TestProcess(PsutilTestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
     @retry_on_failure()
     def test_long_name(self):
         pyexe = create_py_exe(self.get_testfn(suffix=string.digits * 2))
@@ -799,25 +797,6 @@ class TestProcess(PsutilTestCase):
                     raise
         else:
             assert p.name() == os.path.basename(pyexe)
-
-    # XXX: fails too often
-    # @pytest.mark.skipif(SUNOS, reason="broken on SUNOS")
-    # @pytest.mark.skipif(AIX, reason="broken on AIX")
-    # @pytest.mark.skipif(PYPY, reason="broken on PYPY")
-    # def test_prog_w_funky_name(self):
-    #     # Test that name(), exe() and cmdline() correctly handle programs
-    #     # with funky chars such as spaces and ")", see:
-    #     # https://github.com/giampaolo/psutil/issues/628
-    #     pyexe = create_py_exe(self.get_testfn(suffix='foo bar )'))
-    #     cmdline = [
-    #         pyexe,
-    #         "-c",
-    #         "import time; [time.sleep(0.1) for x in range(100)]",
-    #     ]
-    #     p = self.spawn_psproc(cmdline)
-    #     assert p.cmdline() == cmdline
-    #     assert p.name() == os.path.basename(pyexe)
-    #     assert os.path.normcase(p.exe()) == os.path.normcase(pyexe)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_uids(self):

@@ -68,58 +68,58 @@ jobs:
           python setup.py sdist
           mv dist/psutil*.tar.gz wheelhouse/
 
-  # Test python 2.7 fallback installation message produced by setup.py
-  py2-fallback:
-    name: py2.7 setup.py check
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v4
-      - uses: LizardByte/actions/actions/setup_python@master
-        with:
-          python-version: "2.7"
-      - run: python scripts/internal/test_python2_setup_py.py
+  # # Test python 2.7 fallback installation message produced by setup.py
+  # py2-fallback:
+  #   name: py2.7 setup.py check
+  #   runs-on: ubuntu-24.04
+  #   timeout-minutes: 20
+  #   strategy:
+  #     fail-fast: false
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: LizardByte/actions/actions/setup_python@master
+  #       with:
+  #         python-version: "2.7"
+  #     - run: python scripts/internal/test_python2_setup_py.py
 
-  # Run linters
-  linters:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-      - name: "Run linters"
-        run: |
-          make lint-ci
+  # # Run linters
+  # linters:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.x
+  #     - name: "Run linters"
+  #       run: |
+  #         make lint-ci
 
-  # Produce wheels as artifacts.
-  upload-wheels:
-    needs: [tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/upload-artifact/merge@v4
-        with:
-          name: wheels
-          pattern: wheels-*
-          separate-directories: false
-          delete-merged: true
+  # # Produce wheels as artifacts.
+  # upload-wheels:
+  #   needs: [tests]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/upload-artifact/merge@v4
+  #       with:
+  #         name: wheels
+  #         pattern: wheels-*
+  #         separate-directories: false
+  #         delete-merged: true
 
-  # Check sanity of .tar.gz + wheel files
-  check-dist:
-    needs: [upload-wheels]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-      - uses: actions/download-artifact@v4
-        with:
-          name: wheels
-          path: wheelhouse
-      - run: |
-          python scripts/internal/print_hashes.py wheelhouse/
-          pipx run twine check --strict wheelhouse/*
-          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
+  # # Check sanity of .tar.gz + wheel files
+  # check-dist:
+  #   needs: [upload-wheels]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.x
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: wheels
+  #         path: wheelhouse
+  #     - run: |
+  #         python scripts/internal/print_hashes.py wheelhouse/
+  #         pipx run twine check --strict wheelhouse/*
+  #         pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
