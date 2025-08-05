@@ -16,6 +16,12 @@ struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 // Called on module import.
 int
 psutil_setup_osx(void) {
-    mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
+    kern_return_t ret;
+
+    ret = mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
+    if (ret != KERN_SUCCESS) {
+        psutil_PyErr_SetFromOSErrnoWithSyscall("mach_timebase_info");
+        return 1;
+    }
     return 0;
 }
