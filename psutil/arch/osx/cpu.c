@@ -44,7 +44,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int num;
     size_t size = sizeof(int);
 
-    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 2))
+    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 0))
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", num);
