@@ -41,6 +41,8 @@ XXXX-XX-XX
   Stephan)
 - 2605_, [Linux]: `psutil.sensors_battery()` reports a negative amount for
   seconds left.
+- 2607_, [Windows]: ``WindowsService.description()`` method may fail with
+  ``ERROR_NOT_FOUND``. Now it returns an empty string instead.
 
 **Compatibility notes**
 
