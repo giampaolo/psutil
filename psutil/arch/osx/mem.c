@@ -19,46 +19,30 @@
 #include "../../_psutil_posix.h"
 
 
-// Retrieve vm statistics using host_statistics64.
 static int
-psutil_sys_vminfo(vm_statistics64_data_t *vmstat) {
+psutil_sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    mach_port_t mport = mach_host_self();
+    mach_port_t mport;
 
+    mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "mach_host_self() returned MACH_PORT_NULL");
-        return 0;
+        return 1;
     }
 
-    // Use correct cast: host_info64_t is integer_t*
-    ret = host_statistics64(
-        mport,
-        HOST_VM_INFO64,
-        (host_info64_t)(void *)vmstat,
-        &count
-    );
-
+    ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
     mach_port_deallocate(mach_task_self(), mport);
-
     if (ret != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics64(HOST_VM_INFO64) syscall failed: %s",
             mach_error_string(ret)
         );
-        return 0;
+        return 1;
     }
-
-    // Defensive check: ensure we got the expected count
-    if (count < HOST_VM_INFO64_COUNT) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "host_statistics64 returned incomplete data");
-        return 0;
-    }
-
-    return 1;
+    return 0;
 }
 
 
@@ -70,12 +54,11 @@ psutil_sys_vminfo(vm_statistics64_data_t *vmstat) {
  */
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    int mib[2];
+    int      mib[2];
     uint64_t total;
-    size_t len = sizeof(total);
+    size_t   len = sizeof(total);
     vm_statistics64_data_t vm;
     long pagesize = psutil_getpagesize();
-
     // physical mem
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
@@ -87,7 +70,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     }
 
     // vm
-    if (!psutil_sys_vminfo(&vm))
+    if (psutil_sys_vminfo(&vm) != 0)
         return NULL;
 
     return Py_BuildValue(
@@ -110,13 +93,12 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2];
     size_t size;
     struct xsw_usage totals;
-    vm_statistics64_data_t vmstat;
+    vm_statistics64_data_t  vmstat;
     long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
     size = sizeof(totals);
-
     if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
         if (errno != 0)
             PyErr_SetFromErrno(PyExc_OSError);
@@ -125,8 +107,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                 PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) syscall failed");
         return NULL;
     }
-
-    if (!psutil_sys_vminfo(&vmstat))
+    if (psutil_sys_vminfo(&vmstat) != 0)
         return NULL;
 
     return Py_BuildValue(
@@ -135,6 +116,5 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         (unsigned long long) totals.xsu_used,
         (unsigned long long) totals.xsu_avail,
         (unsigned long long) vmstat.pageins * pagesize,
-        (unsigned long long) vmstat.pageouts * pagesize
-    );
+        (unsigned long long) vmstat.pageouts * pagesize);
 }
