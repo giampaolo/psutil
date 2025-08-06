@@ -339,7 +339,8 @@ print-hashes:  ## Prints hashes of files in dist/ directory
 	$(PYTHON) scripts/internal/print_hashes.py dist/
 
 print-sysinfo:  ## Prints system info
-	$(PYTHON_ENV_VARS) $(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+	echo "from psutil.tests import print_sysinfo; print_sysinfo()" > /tmp/tmp.py
+	$(PYTHON_ENV_VARS) python3 -m trace --trace /tmp/tmp.py
 
 # ===================================================================
 # Misc
