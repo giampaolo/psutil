@@ -131,7 +131,7 @@ def macos_version():
                 sys.executable,
                 "-sS",
                 "-c",
-                "import platform; print(pl  # noqaatform.mac_ver()[0])",
+                "import platform; print(platform.mac_ver()[0])",
             ],
             env={"SYSTEM_VERSION_COMPAT": "0"},
             universal_newlines=True,
