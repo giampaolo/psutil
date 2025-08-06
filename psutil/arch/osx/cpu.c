@@ -68,18 +68,25 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
     kern_return_t error;
     host_cpu_load_info_data_t r_load;
+    mach_port_t mport;
 
-    mach_port_t host_port = mach_host_self();
-    error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
+    mport = mach_host_self();
+    if (mport == MACH_PORT_NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "mach_host_self() returned MACH_PORT_NULL");
+        return NULL;
+    }
+
+    error = host_statistics(mport, HOST_CPU_LOAD_INFO,
                             (host_info_t)&r_load, &count);
     if (error != KERN_SUCCESS) {
-        mach_port_deallocate(mach_task_self(), host_port);
+        mach_port_deallocate(mach_task_self(), mport);
         return PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
             mach_error_string(error));
     }
-    mach_port_deallocate(mach_task_self(), host_port);
+    mach_port_deallocate(mach_task_self(), mport);
 
     return Py_BuildValue(
         "(dddd)",
@@ -95,8 +102,15 @@ PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     kern_return_t ret;
     mach_msg_type_number_t count;
-    mach_port_t mport = mach_host_self();
+    mach_port_t mport;
     struct vmmeter vm32;
+
+    mport = mach_host_self();
+    if (mport == MACH_PORT_NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "mach_host_self() returned MACH_PORT_NULL");
+        return NULL;
+    }
 
     count = HOST_VM_INFO_COUNT;
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm32, &count);
@@ -276,24 +290,31 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     kern_return_t error;
     processor_cpu_load_info_data_t *cpu_load_info = NULL;
     int ret;
+    mach_port_t mport;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
 
-    mach_port_t host_port = mach_host_self();
-    error = host_processor_info(host_port, PROCESSOR_CPU_LOAD_INFO,
+    mport = mach_host_self();
+    if (mport == MACH_PORT_NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "mach_host_self() returned MACH_PORT_NULL");
+        goto error;
+    }
+
+    error = host_processor_info(mport, PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
-        mach_port_deallocate(mach_task_self(), host_port);
+        mach_port_deallocate(mach_task_self(), mport);
         PyErr_Format(
             PyExc_RuntimeError,
             "host_processor_info(PROCESSOR_CPU_LOAD_INFO) syscall failed: %s",
              mach_error_string(error));
         goto error;
     }
-    mach_port_deallocate(mach_task_self(), host_port);
+    mach_port_deallocate(mach_task_self(), mport);
 
     cpu_load_info = (processor_cpu_load_info_data_t *) info_array;
 

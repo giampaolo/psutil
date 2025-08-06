@@ -23,7 +23,14 @@ static int
 psutil_sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    mach_port_t mport = mach_host_self();
+    mach_port_t mport;
+
+    mport = mach_host_self();
+    if (mport == MACH_PORT_NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "mach_host_self() returned MACH_PORT_NULL");
+        return 1;
+    }
 
     ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
     mach_port_deallocate(mach_task_self(), mport);
@@ -33,9 +40,9 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
             "host_statistics64(HOST_VM_INFO64) syscall failed: %s",
             mach_error_string(ret)
         );
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 
@@ -63,7 +70,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     }
 
     // vm
-    if (!psutil_sys_vminfo(&vm))
+    if (psutil_sys_vminfo(&vm) != 0)
         return NULL;
 
     return Py_BuildValue(
@@ -100,7 +107,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                 PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) syscall failed");
         return NULL;
     }
-    if (!psutil_sys_vminfo(&vmstat))
+    if (psutil_sys_vminfo(&vmstat) != 0)
         return NULL;
 
     return Py_BuildValue(
