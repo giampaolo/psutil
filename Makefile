@@ -178,7 +178,8 @@ test-cibuildwheel:    ## Run tests from cibuildwheel.
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
 	${MAKE} install-sysdeps
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+	cd .tests/ && sudo dtruss python3 -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+# 	cd .tests/ && $(PYTHON_ENV_VARS) python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
 
