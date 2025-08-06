@@ -143,7 +143,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     CFTypeRef pCoreRef = NULL;
     CFTypeRef eCoreRef = NULL;
     CFDictionaryRef matching;
-    size_t pCoreLength
+    size_t pCoreLength;
     io_name_t name;
 
     uint32_t pMin = 0;
