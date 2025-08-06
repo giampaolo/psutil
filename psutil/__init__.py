@@ -708,7 +708,7 @@ class Process:
         May also be an empty string.
         The return value is cached after first call.
         """
-
+        print("EXE")
         def guess_it(fallback):
             # try to guess exe from cmdline[0] in absence of a native
             # exe representation
