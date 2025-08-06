@@ -137,29 +137,32 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 #if defined(__arm64__) || defined(__aarch64__)
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
-    uint32_t min;
-    uint32_t curr;
-    uint32_t pMin;
-    uint32_t eMin;
-    uint32_t max;
     kern_return_t status;
-    CFDictionaryRef matching = NULL;
-    CFTypeRef pCoreRef = NULL;
-    CFTypeRef eCoreRef = NULL;
     io_iterator_t iter = 0;
     io_registry_entry_t entry = 0;
+    CFTypeRef pCoreRef = NULL;
+    CFTypeRef eCoreRef = NULL;
+    CFDictionaryRef matching;
+    size_t pCoreLength;
     io_name_t name;
 
+    uint32_t pMin = 0;
+    uint32_t eMin = 0;
+    uint32_t min = 0;
+    uint32_t max = 0;
+    uint32_t curr = 0;
+
+    // Get matching service for Apple ARM I/O device.
     matching = IOServiceMatching("AppleARMIODevice");
-    if (matching == 0) {
+    if (matching == NULL) {
         return PyErr_Format(
             PyExc_RuntimeError,
-            "IOServiceMatching call failed, 'AppleARMIODevice' not found"
+            "IOServiceMatching failed: 'AppleARMIODevice' not found"
         );
     }
 
+    // IOServiceGetMatchingServices consumes matching; do NOT CFRelease it.
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
-    CFRelease(matching);
     if (status != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError, "IOServiceGetMatchingServices call failed"
@@ -167,16 +170,14 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // Find the 'pmgr' entry.
     while ((entry = IOIteratorNext(iter)) != 0) {
         status = IORegistryEntryGetName(entry, name);
-        if (status != KERN_SUCCESS) {
-            IOObjectRelease(entry);
-            continue;
-        }
-        if (strcmp(name, "pmgr") == 0) {
+        if (status == KERN_SUCCESS && strcmp(name, "pmgr") == 0) {
             break;
         }
         IOObjectRelease(entry);
+        entry = 0;
     }
 
     if (entry == 0) {
@@ -187,50 +188,52 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // Get performance and efficiency core data.
     pCoreRef = IORegistryEntryCreateCFProperty(
-        entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0);
-    if (pCoreRef == NULL) {
-        PyErr_Format(
-            PyExc_RuntimeError, "'voltage-states5-sram' property not found");
+        entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0
+    );
+    if (pCoreRef == NULL ||
+            CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
+            CFDataGetLength(pCoreRef) < 8)
+    {
+        PyErr_SetString(
+            PyExc_RuntimeError,
+            "'voltage-states5-sram' is missing or invalid"
+        );
         goto error;
     }
 
     eCoreRef = IORegistryEntryCreateCFProperty(
-        entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0);
-    if (eCoreRef == NULL) {
-        PyErr_Format(
-            PyExc_RuntimeError, "'voltage-states1-sram' property not found");
-        goto error;
-    }
-
-    size_t pCoreLength = CFDataGetLength(pCoreRef);
-    size_t eCoreLength = CFDataGetLength(eCoreRef);
-    if (pCoreLength < 8) {
-        PyErr_Format(
+        entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0
+    );
+    if (eCoreRef == NULL ||
+            CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
+            CFDataGetLength(eCoreRef) < 4)
+    {
+        PyErr_SetString(
             PyExc_RuntimeError,
-            "expected 'voltage-states5-sram' buffer to have at least size 8"
-        );
-        goto error;
-    }
-    if (eCoreLength < 4) {
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "expected 'voltage-states1-sram' buffer to have at least size 4"
+            "'voltage-states1-sram' is missing or invalid"
         );
         goto error;
     }
 
-    CFDataGetBytes(pCoreRef, CFRangeMake(0, 4), (UInt8 *) &pMin);
-    CFDataGetBytes(eCoreRef, CFRangeMake(0, 4), (UInt8 *) &eMin);
-    CFDataGetBytes(pCoreRef, CFRangeMake(pCoreLength - 8, 4), (UInt8 *) &max);
+    // Extract values safely.
+    pCoreLength = CFDataGetLength(pCoreRef);
+    CFDataGetBytes(pCoreRef, CFRangeMake(0, 4), (UInt8 *)&pMin);
+    CFDataGetBytes(eCoreRef, CFRangeMake(0, 4), (UInt8 *)&eMin);
+    CFDataGetBytes(pCoreRef, CFRangeMake(pCoreLength - 8, 4), (UInt8 *)&max);
 
-    min = pMin < eMin ? pMin : eMin;
+    min = (pMin < eMin) ? pMin : eMin;
     curr = max;
 
-    CFRelease(pCoreRef);
-    CFRelease(eCoreRef);
-    IOObjectRelease(iter);
-    IOObjectRelease(entry);
+    if (pCoreRef)
+        CFRelease(pCoreRef);
+    if (eCoreRef)
+        CFRelease(eCoreRef);
+    if (entry)
+        IOObjectRelease(entry);
+    if (iter)
+        IOObjectRelease(iter);
 
     return Py_BuildValue(
         "KKK",

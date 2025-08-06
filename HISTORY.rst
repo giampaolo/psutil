@@ -43,6 +43,7 @@ XXXX-XX-XX
   seconds left.
 - 2607_, [Windows]: ``WindowsService.description()`` method may fail with
   ``ERROR_NOT_FOUND``. Now it returns an empty string instead.
+- 2610:, [macOS], [CRITICAL]: fix `cpu_freq()`_ segfault on ARM architectures.
 
 **Compatibility notes**
 
