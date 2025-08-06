@@ -54,7 +54,6 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          CIBW_SKIP: "cp313t-win32"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
