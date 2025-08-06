@@ -41,7 +41,10 @@ try:
 except ImportError:
     pytest = None
 
+print("AAA")
 import psutil
+
+print("BBB")
 from psutil import AIX
 from psutil import LINUX
 from psutil import MACOS
