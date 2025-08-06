@@ -6,6 +6,7 @@
 
 
 #include <signal.h>
+#include <sys/resource.h>
 
 #include "../../arch/all/init.h"
 
@@ -74,4 +75,46 @@ psutil_raise_for_pid(pid_t pid, char *syscall) {
         NoSuchProcess(syscall);
     else
         PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall);
+}
+
+
+// Get PID priority.
+PyObject *
+psutil_posix_getpriority(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int priority;
+    errno = 0;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+
+#ifdef PSUTIL_OSX
+    priority = getpriority(PRIO_PROCESS, (id_t)pid);
+#else
+    priority = getpriority(PRIO_PROCESS, pid);
+#endif
+    if (errno != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    return Py_BuildValue("i", priority);
+}
+
+
+// Set PID priority.
+PyObject *
+psutil_posix_setpriority(PyObject *self, PyObject *args) {
+    pid_t pid;
+    int priority;
+    int retval;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
+        return NULL;
+
+#ifdef PSUTIL_OSX
+    retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);
+#else
+    retval = setpriority(PRIO_PROCESS, pid, priority);
+#endif
+    if (retval == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    Py_RETURN_NONE;
 }

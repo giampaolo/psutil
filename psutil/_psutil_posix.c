@@ -9,7 +9,6 @@
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -93,52 +92,6 @@ psutil_getpagesize(void) {
 static PyObject *
 psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
     return Py_BuildValue("l", psutil_getpagesize());
-}
-
-
-/*
- * Given a PID return process priority as a Python integer.
- */
-static PyObject *
-psutil_posix_getpriority(PyObject *self, PyObject *args) {
-    pid_t pid;
-    int priority;
-    errno = 0;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-
-#ifdef PSUTIL_OSX
-    priority = getpriority(PRIO_PROCESS, (id_t)pid);
-#else
-    priority = getpriority(PRIO_PROCESS, pid);
-#endif
-    if (errno != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    return Py_BuildValue("i", priority);
-}
-
-
-/*
- * Given a PID and a value change process priority.
- */
-static PyObject *
-psutil_posix_setpriority(PyObject *self, PyObject *args) {
-    pid_t pid;
-    int priority;
-    int retval;
-
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
-        return NULL;
-
-#ifdef PSUTIL_OSX
-    retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);
-#else
-    retval = setpriority(PRIO_PROCESS, pid, priority);
-#endif
-    if (retval == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    Py_RETURN_NONE;
 }
 
 
