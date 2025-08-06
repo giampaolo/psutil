@@ -215,10 +215,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     IOObjectRelease(entry);
 
     return Py_BuildValue(
-        "IKK",
-        curr / 1000 / 1000,
-        min / 1000 / 1000,
-        max / 1000 / 1000
+        "KKK",
+        (unsigned long long)(curr / 1000 / 1000),
+        (unsigned long long)(min / 1000 / 1000),
+        (unsigned long long)(max / 1000 / 1000)
     );
 
 error:
@@ -256,10 +256,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
 
     return Py_BuildValue(
-        "IKK",
-        curr / 1000 / 1000,
-        min / 1000 / 1000,
-        max / 1000 / 1000);
+        "KKK",
+        (unsigned long long)(curr / 1000 / 1000),
+        (unsigned long long)(min / 1000 / 1000),
+        (unsigned long long)(max / 1000 / 1000));
 }
 #endif
 
