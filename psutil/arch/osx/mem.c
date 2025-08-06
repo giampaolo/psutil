@@ -26,14 +26,15 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
     mach_port_t mport = mach_host_self();
 
     ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
+    mach_port_deallocate(mach_task_self(), mport);
     if (ret != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError,
-            "host_statistics(HOST_VM_INFO) syscall failed: %s",
-            mach_error_string(ret));
+            "host_statistics64(HOST_VM_INFO64) syscall failed: %s",
+            mach_error_string(ret)
+        );
         return 0;
     }
-    mach_port_deallocate(mach_task_self(), mport);
     return 1;
 }
 
@@ -56,12 +57,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     mib[1] = HW_MEMSIZE;
 
     // This is also available as sysctlbyname("hw.memsize").
-    if (sysctl(mib, 2, &total, &len, NULL, 0)) {
-        if (errno != 0)
-            PyErr_SetFromErrno(PyExc_OSError);
-        else
-            PyErr_Format(
-                PyExc_RuntimeError, "sysctl(HW_MEMSIZE) syscall failed");
+    if (sysctl(mib, 2, &total, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 

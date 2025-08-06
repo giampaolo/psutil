@@ -131,7 +131,7 @@ def macos_version():
                 sys.executable,
                 "-sS",
                 "-c",
-                "import platform; print(platform.mac_ver()[0])",
+                "import platform; print(pl  # noqaatform.mac_ver()[0])",
             ],
             env={"SYSTEM_VERSION_COMPAT": "0"},
             universal_newlines=True,
@@ -1274,7 +1274,7 @@ class TestMemoryLeak(PsutilTestCase):
                 return
             else:
                 if idx == 1:
-                    print()  # noqa: T201
+                    print()  # noqa # noqa: T201
                 self._log(msg)
                 times += increase
                 prev_mem = mem
@@ -1383,6 +1383,7 @@ def print_sysinfo():
     info['fs-encoding'] = sys.getfilesystemencoding()
     lang = locale.getlocale()
     info['lang'] = f"{lang[0]}, {lang[1]}"
+    print(1)  # noqa
     info['boot-time'] = datetime.datetime.fromtimestamp(
         psutil.boot_time()
     ).strftime("%Y-%m-%d %H:%M:%S")
@@ -1395,16 +1396,20 @@ def print_sysinfo():
     info['PID'] = os.getpid()
 
     # metrics
+    print(2)  # noqa
     info['cpus'] = psutil.cpu_count()
+    print(3)  # noqa
     info['loadavg'] = "{:.1f}%, {:.1f}%, {:.1f}%".format(
         *tuple(x / psutil.cpu_count() * 100 for x in psutil.getloadavg())
     )
+    print(4)  # noqa
     mem = psutil.virtual_memory()
     info['memory'] = "{}%%, used={}, total={}".format(
         int(mem.percent),
         bytes2human(mem.used),
         bytes2human(mem.total),
     )
+    print(5)  # noqa
     swap = psutil.swap_memory()
     info['swap'] = "{}%%, used={}, total={}".format(
         int(swap.percent),
@@ -1419,17 +1424,19 @@ def print_sysinfo():
     info['constants'] = "\n                  ".join(constants)
 
     # processes
+    print(6)  # noqa
     info['pids'] = len(psutil.pids())
+    print(7)  # noqa
     pinfo = psutil.Process().as_dict()
     pinfo.pop('memory_maps', None)
     pinfo["environ"] = {k: os.environ[k] for k in sorted(os.environ)}
     info['proc'] = pprint.pformat(pinfo)
 
     # print
-    print("=" * 70, file=sys.stderr)  # noqa: T201
+    print("=  # noqa" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
-        print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
-    print("=" * 70, file=sys.stderr)  # noqa: T201
+        print("{  # noqa:<17} {}".format(k + ":", v), file=sys.stderr)
+    print("=  # noqa" * 70, file=sys.stderr)  # noqa: T201
     sys.stdout.flush()
 
 
@@ -1673,7 +1680,7 @@ def retry_on_failure(retries=NO_RETRIES):
     """
 
     def logfun(exc):
-        print(f"{exc!r}, retrying", file=sys.stderr)  # noqa: T201
+        print(f"  # noqa{exc!r}, retrying", file=sys.stderr)  # noqa: T201
 
     return retry(
         exception=(AssertionError, pytest.fail.Exception),
