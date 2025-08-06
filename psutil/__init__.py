@@ -572,6 +572,7 @@ class Process:
         ls = attrs or valid_names
         with self.oneshot():
             for name in ls:
+                print("name:", name)  # noqa
                 try:
                     if name == 'pid':
                         ret = self.pid

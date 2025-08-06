@@ -1274,7 +1274,7 @@ class TestMemoryLeak(PsutilTestCase):
                 return
             else:
                 if idx == 1:
-                    print()  # noqa # noqa: T201
+                    print()  # noqa: T201
                 self._log(msg)
                 times += increase
                 prev_mem = mem
@@ -1433,10 +1433,10 @@ def print_sysinfo():
     info['proc'] = pprint.pformat(pinfo)
 
     # print
-    print("=  # noqa" * 70, file=sys.stderr)  # noqa: T201
+    print("=" * 70, file=sys.stderr)  # noqa: T201
     for k, v in info.items():
-        print("{  # noqa:<17} {}".format(k + ":", v), file=sys.stderr)
-    print("=  # noqa" * 70, file=sys.stderr)  # noqa: T201
+        print("{:<17} {}".format(k + ":", v), file=sys.stderr)  # noqa: T201
+    print("=" * 70, file=sys.stderr)  # noqa: T201
     sys.stdout.flush()
 
 
@@ -1680,7 +1680,7 @@ def retry_on_failure(retries=NO_RETRIES):
     """
 
     def logfun(exc):
-        print(f"  # noqa{exc!r}, retrying", file=sys.stderr)  # noqa: T201
+        print(f"{exc!r}, retrying", file=sys.stderr)  # noqa: T201
 
     return retry(
         exception=(AssertionError, pytest.fail.Exception),
