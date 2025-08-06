@@ -73,6 +73,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
                             (host_info_t)&r_load, &count);
     if (error != KERN_SUCCESS) {
+        mach_port_deallocate(mach_task_self(), host_port);
         return PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
@@ -99,6 +100,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
     if (ret != KERN_SUCCESS) {
+        mach_port_deallocate(mach_task_self(), mport);
         PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_VM_INFO) failed: %s",
@@ -282,6 +284,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     error = host_processor_info(host_port, PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
+        mach_port_deallocate(mach_task_self(), host_port);
         PyErr_Format(
             PyExc_RuntimeError,
             "host_processor_info(PROCESSOR_CPU_LOAD_INFO) syscall failed: %s",
@@ -302,8 +305,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         );
         if (!py_cputime)
             goto error;
-        if (PyList_Append(py_retlist, py_cputime))
+        if (PyList_Append(py_retlist, py_cputime)) {
+            Py_DECREF(py_cputime);
             goto error;
+        }
         Py_CLEAR(py_cputime);
     }
 
