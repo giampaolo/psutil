@@ -20,13 +20,18 @@
 
 
 static int
-psutil_sys_vminfo(vm_statistics64_t vmstat) {
+psutil_sys_vminfo(vm_statistics64_data_t *vmstat) {
     kern_return_t ret;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
     mach_port_t mport = mach_host_self();
 
-    ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
+    memset(vmstat, 0, sizeof(*vmstat));
+
+    ret = host_statistics64(
+        mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count
+    );
     mach_port_deallocate(mach_task_self(), mport);
+
     if (ret != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError,
