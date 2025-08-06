@@ -145,6 +145,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     }
 
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
+    CFRelease(matching);
     if (status != KERN_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError, "IOServiceGetMatchingServices call failed"
