@@ -22,7 +22,7 @@
 static int
 psutil_sys_vminfo(vm_statistics64_t vmstat) {
     kern_return_t ret;
-    unsigned int count = HOST_VM_INFO64_COUNT;
+    mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
     mach_port_t mport = mach_host_self();
 
     ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
@@ -71,7 +71,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 
     return Py_BuildValue(
         "KKKKKK",
-        total,
+        (unsigned long long) total,
         (unsigned long long) vm.active_count * pagesize,  // active
         (unsigned long long) vm.inactive_count * pagesize,  // inactive
         (unsigned long long) vm.wire_count * pagesize,  // wired
@@ -107,10 +107,10 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         return NULL;
 
     return Py_BuildValue(
-        "LLLKK",
-        totals.xsu_total,
-        totals.xsu_used,
-        totals.xsu_avail,
-        (unsigned long long)vmstat.pageins * pagesize,
-        (unsigned long long)vmstat.pageouts * pagesize);
+        "KKKKK",
+        (unsigned long long) totals.xsu_total,
+        (unsigned long long) totals.xsu_used,
+        (unsigned long long) totals.xsu_avail,
+        (unsigned long long) vmstat.pageins * pagesize,
+        (unsigned long long) vmstat.pageouts * pagesize);
 }
