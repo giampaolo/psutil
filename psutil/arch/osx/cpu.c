@@ -93,12 +93,13 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    struct vmmeter vmstat;
     kern_return_t ret;
-    mach_msg_type_number_t count = sizeof(vmstat) / sizeof(integer_t);
+    mach_msg_type_number_t count;
     mach_port_t mport = mach_host_self();
+    struct vmmeter vm32;
 
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
+    count = HOST_VM_INFO_COUNT;
+    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm32, &count);
     if (ret != KERN_SUCCESS) {
         mach_port_deallocate(mach_task_self(), mport);
         PyErr_Format(
@@ -107,15 +108,15 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
             mach_error_string(ret));
         return NULL;
     }
-    mach_port_deallocate(mach_task_self(), mport);
 
+    mach_port_deallocate(mach_task_self(), mport);
     return Py_BuildValue(
         "IIIII",
-        vmstat.v_swtch,  // ctx switches
-        vmstat.v_intr,  // interrupts
-        vmstat.v_soft,  // software interrupts
-        vmstat.v_syscall,  // syscalls
-        vmstat.v_trap  // traps
+        vm32.v_swtch,  // ctx switches
+        vm32.v_intr,  // interrupts
+        vm32.v_soft,  // software interrupts
+        vm32.v_syscall,  // syscalls
+        vm32.v_trap  // traps
     );
 }
 
