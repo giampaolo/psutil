@@ -30,6 +30,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
+/*
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
@@ -153,3 +154,4 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
+*/

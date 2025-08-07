@@ -9,7 +9,7 @@
 
 #if defined(PSUTIL_LINUX)
     #include <utmp.h>
-#elif defined(PSUTIL_OSX)
+#else
     #include <utmpx.h>
 #endif
 
