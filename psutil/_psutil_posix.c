@@ -53,10 +53,6 @@ psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
 }
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static PyMethodDef mod_methods[] = {
     {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
     {"getpriority", psutil_posix_getpriority, METH_VARARGS},
@@ -221,7 +217,3 @@ PyInit__psutil_posix(void) {
 
     return mod;
 }
-
-#ifdef __cplusplus
-}
-#endif
