@@ -69,23 +69,22 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
             py_ifc_info = Py_BuildValue(
                 "(KKKKKKKi)",
-                if2m->ifm_data.ifi_obytes,
-                if2m->ifm_data.ifi_ibytes,
-                if2m->ifm_data.ifi_opackets,
-                if2m->ifm_data.ifi_ipackets,
-                if2m->ifm_data.ifi_ierrors,
-                if2m->ifm_data.ifi_oerrors,
-                if2m->ifm_data.ifi_iqdrops,
+                (unsigned long long)if2m->ifm_data.ifi_obytes,
+                (unsigned long long)if2m->ifm_data.ifi_ibytes,
+                (unsigned long long)if2m->ifm_data.ifi_opackets,
+                (unsigned long long)if2m->ifm_data.ifi_ipackets,
+                (unsigned long long)if2m->ifm_data.ifi_ierrors,
+                (unsigned long long)if2m->ifm_data.ifi_oerrors,
+                (unsigned long long)if2m->ifm_data.ifi_iqdrops,
                 0);  // dropout not supported
 
             if (!py_ifc_info)
                 goto error;
-            if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
+            if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info)) {
+                Py_CLEAR(py_ifc_info);
                 goto error;
+            }
             Py_CLEAR(py_ifc_info);
-        }
-        else {
-            continue;
         }
     }
 

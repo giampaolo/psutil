@@ -132,6 +132,7 @@ else:
 sources = ['psutil/arch/all/init.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
+    sources.extend(glob.glob("psutil/arch/posix/*.c"))
 
 
 def get_version():
