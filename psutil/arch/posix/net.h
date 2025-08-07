@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+#include <Python.h>
+
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 PyObject *psutil_net_if_duplex_speed(PyObject *self, PyObject *args);
 #endif
