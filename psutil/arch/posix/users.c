@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
 #include <Python.h>
 #include <string.h>
 
@@ -98,3 +100,4 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
+#endif  // defined OS

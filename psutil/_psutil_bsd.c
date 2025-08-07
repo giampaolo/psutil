@@ -43,6 +43,7 @@
     #include "arch/openbsd/mem.h"
     #include "arch/openbsd/proc.h"
     #include "arch/openbsd/socks.h"
+    #include "arch/openbsd/users.h"
 #elif PSUTIL_NETBSD
     #include "arch/netbsd/cpu.h"
     #include "arch/netbsd/disk.h"
