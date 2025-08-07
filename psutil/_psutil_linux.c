@@ -17,7 +17,6 @@
 #include "arch/linux/mem.h"
 #include "arch/linux/net.h"
 #include "arch/linux/proc.h"
-#include "arch/linux/users.h"
 
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607
