@@ -18,26 +18,38 @@
 
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
+#if defined(PSUTIL_LINUX)
     struct utmp *ut;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
+#else
+    struct utmpx *ut;
+#endif
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
+
+#if defined(PSUTIL_LINUX)
     setutent();
-    while (NULL != (ut = getutent())) {
+    while ((ut = getutent()) != NULL) {
         if (ut->ut_type != USER_PROCESS)
             continue;
+#else
+    while ((ut = getutxent()) != NULL) {
+#endif
         py_tuple = NULL;
+
         py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
         if (! py_username)
             goto error;
+
         py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
         if (! py_tty)
             goto error;
+
         if (strcmp(ut->ut_host, ":0") == 0 || strcmp(ut->ut_host, ":0.0") == 0)
             py_hostname = PyUnicode_DecodeFSDefault("localhost");
         else
@@ -53,16 +65,29 @@ psutil_users(PyObject *self, PyObject *args) {
             (double)ut->ut_tv.tv_sec,  // tstamp
             ut->ut_pid                // process id
         );
-        if (! py_tuple)
+        if (! py_tuple) {
+#if defined(PSUTIL_OSX)
+            endutxent();
+#endif
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
+        }
+        if (PyList_Append(py_retlist, py_tuple)) {
+#if defined(PSUTIL_OSX)
+            endutxent();
+#endif
             goto error;
+        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
     }
+
+#if defined(PSUTIL_LINUX)
     endutent();
+#else
+    endutxent();
+#endif
     return py_retlist;
 
 error:
@@ -71,6 +96,5 @@ error:
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    endutent();
     return NULL;
 }
