@@ -4,4 +4,4 @@
  * found in the LICENSE file.
  */
 
-long psutil_getpagesize(void);
+#include "proc.h"
