@@ -5,8 +5,13 @@
  */
 
 #include <Python.h>
-#include <utmp.h>
 #include <string.h>
+
+#if defined(PSUTIL_LINUX)
+    #include <utmp.h>
+#elif defined(PSUTIL_OSX)
+    #include <utmpx.h>
+#endif
 
 #include "../../arch/all/init.h"
 
