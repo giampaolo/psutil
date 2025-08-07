@@ -35,11 +35,11 @@ psutil_users(PyObject *self, PyObject *args) {
 #if defined(PSUTIL_LINUX)
     setutent();
     while ((ut = getutent()) != NULL) {
-        if (ut->ut_type != USER_PROCESS)
-            continue;
 #else
     while ((ut = getutxent()) != NULL) {
 #endif
+        if (ut->ut_type != USER_PROCESS)
+            continue;
         py_tuple = NULL;
 
         py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
