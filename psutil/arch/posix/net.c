@@ -41,9 +41,6 @@
 #if defined(PSUTIL_AIX)
     #include <netdb.h>
 #endif
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
-    #include <sys/resource.h>
-#endif
 
 #include "../../arch/all/init.h"
 
