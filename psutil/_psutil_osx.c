@@ -12,6 +12,8 @@
 #include <netinet/tcp_fsm.h>
 
 #include "arch/all/init.h"
+#include "arch/posix/init.h"
+#include "arch/posix/users.h"
 #include "arch/osx/cpu.h"
 #include "arch/osx/disk.h"
 #include "arch/osx/mem.h"

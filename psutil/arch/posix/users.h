@@ -6,6 +6,9 @@
 
 #include <Python.h>
 
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
+#if defined(PSUTIL_LINUX) || \
+    defined(PSUTIL_FREEBSD) || \
+    defined(PSUTIL_NETBSD) || \
+    defined(PSUTIL_OSX)
 PyObject *psutil_users(PyObject* self, PyObject* args);
 #endif

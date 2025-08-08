@@ -5,7 +5,4 @@
  */
 
 #include "proc.h"
-
-#if !defined(PSUTIL_AIX)
-    #include "users.h"
-#endif
+#include "users.h"

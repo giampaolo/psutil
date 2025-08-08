@@ -5,9 +5,13 @@
  */
 
 
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
 #include <Python.h>
 #include <string.h>
+
+#if defined(PSUTIL_LINUX) || \
+    defined(PSUTIL_FREEBSD) || \
+    defined(PSUTIL_NETBSD) || \
+    defined(PSUTIL_OSX)
 
 #if defined(PSUTIL_LINUX)
     #include <utmp.h>
@@ -100,4 +104,4 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
-#endif  // defined OS
+#endif  // defined(PLATFORM, …)
