@@ -8,7 +8,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
     PyObject *py_tuple = NULL;
-    PyObject *py_pid = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -42,7 +41,7 @@ psutil_users(PyObject *self, PyObject *args) {
             py_tty,             // tty
             py_hostname,        // hostname
             (double)ut.ut_time,  // start time
-            -1                  // process id (set to None later)
+            Py_None              // pid
         );
         if (!py_tuple) {
             fclose(fp);
@@ -66,7 +65,6 @@ error:
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
-    Py_XDECREF(py_pid);
     Py_DECREF(py_retlist);
     return NULL;
 }
