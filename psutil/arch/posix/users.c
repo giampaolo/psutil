@@ -42,6 +42,7 @@ psutil_users(PyObject *self, PyObject *args) {
     setutent();
     while ((ut = getutent()) != NULL) {
 #else
+    setutxent();
     while ((ut = getutxent()) != NULL) {
 #endif
         if (ut->ut_type != USER_PROCESS)
