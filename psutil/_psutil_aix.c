@@ -59,6 +59,16 @@
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
+#ifdef Py_GIL_DISABLED
+    static PyMutex users_mutex;
+    static PyMutex time_mutex;
+    #define MUTEX_LOCK(m) PyMutex_Lock(m)
+    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
+#else
+    #define MUTEX_LOCK(m)
+    #define MUTEX_UNLOCK(m)
+#endif
+
 /*
  * Read a file content and fills a C structure with it.
  */
@@ -481,6 +491,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    MUTEX_LOCK(&users_mutex);
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
@@ -515,17 +526,19 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
     endutxent();
+    MUTEX_UNLOCK(&users_mutex);
 
     return py_retlist;
 
 error:
+    if (ut != NULL)
+        endutxent();
+    MUTEX_UNLOCK(&users_mutex);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (ut != NULL)
-        endutxent();
     return NULL;
 }
 
@@ -718,6 +731,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;
 
+    MUTEX_LOCK(&time_mutex);
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
@@ -726,6 +740,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         }
     }
     endutxent();
+    MUTEX_UNLOCK(&time_mutex);
     if (boot_time == 0.0) {
         /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");

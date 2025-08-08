@@ -14,6 +14,15 @@
     #include <utmp.h>
 #endif
 
+#ifdef Py_GIL_DISABLED
+    static PyMutex mutex;
+    #define MUTEX_LOCK(m) PyMutex_Lock(m)
+    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
+#else
+    #define MUTEX_LOCK(m)
+    #define MUTEX_UNLOCK(m)
+#endif
+
 
 // Return a Python float indicating the system boot time expressed in
 // seconds since the epoch.
@@ -95,26 +104,39 @@ psutil_users(PyObject *self, PyObject *args) {
     fclose(fp);
 #else
     struct utmpx *utx;
+    MUTEX_LOCK(&mutex);
     setutxent();
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
         py_username = PyUnicode_DecodeFSDefault(utx->ut_user);
-        if (! py_username)
+        if (! py_username) {
+            endutxent();
+            MUTEX_UNLOCK(&mutex);
             goto error;
+        }
         py_tty = PyUnicode_DecodeFSDefault(utx->ut_line);
-        if (! py_tty)
+        if (! py_tty) {
+            endutxent();
+            MUTEX_UNLOCK(&mutex);
             goto error;
+        }
         py_hostname = PyUnicode_DecodeFSDefault(utx->ut_host);
-        if (! py_hostname)
+        if (! py_hostname) {
+            endutxent();
+            MUTEX_UNLOCK(&mutex);
             goto error;
+        }
 #if defined(PSUTIL_OPENBSD)
         py_pid = Py_BuildValue("i", -1);  // set to None later
 #else
         py_pid = PyLong_FromPid(utx->ut_pid);
 #endif
-        if (! py_pid)
+        if (! py_pid) {
+            endutxent();
+            MUTEX_UNLOCK(&mutex);
             goto error;
+        }
 
         py_tuple = Py_BuildValue(
             "(OOOdO)",
@@ -127,10 +149,12 @@ psutil_users(PyObject *self, PyObject *args) {
 
         if (!py_tuple) {
             endutxent();
+            MUTEX_UNLOCK(&mutex);
             goto error;
         }
         if (PyList_Append(py_retlist, py_tuple)) {
             endutxent();
+            MUTEX_UNLOCK(&mutex);
             goto error;
         }
         Py_CLEAR(py_username);
@@ -141,6 +165,7 @@ psutil_users(PyObject *self, PyObject *args) {
     }
 
     endutxent();
+    MUTEX_UNLOCK(&mutex);
 #endif
     return py_retlist;
 
