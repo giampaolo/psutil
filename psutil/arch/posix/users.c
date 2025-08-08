@@ -8,11 +8,6 @@
 #include <Python.h>
 #include <string.h>
 
-#if defined(PSUTIL_LINUX) || \
-    defined(PSUTIL_FREEBSD) || \
-    defined(PSUTIL_NETBSD) || \
-    defined(PSUTIL_OSX) || \
-    defined(PSUTIL_SUNOS)
 #if defined(PSUTIL_LINUX)
     #include <utmp.h>
 #else
@@ -105,4 +100,3 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
-#endif  // defined(PLATFORM, …)
