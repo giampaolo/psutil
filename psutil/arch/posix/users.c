@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-
 #include <Python.h>
 #include <string.h>
 
@@ -15,6 +14,26 @@
 #endif
 
 #include "../../arch/all/init.h"
+
+
+static void
+setup() {
+    #if defined(PSUTIL_LINUX)
+        setutent();
+    #else
+        setutxent();
+    #endif
+}
+
+
+static void
+teardown() {
+    #if defined(PSUTIL_LINUX)
+        endutent();
+    #else
+        endutxent();
+    #endif
+}
 
 
 PyObject *
@@ -33,11 +52,11 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    setup();
+
 #if defined(PSUTIL_LINUX)
-    setutent();
     while ((ut = getutent()) != NULL) {
 #else
-    setutxent();
     while ((ut = getutxent()) != NULL) {
 #endif
         if (ut->ut_type != USER_PROCESS)
@@ -67,32 +86,21 @@ psutil_users(PyObject *self, PyObject *args) {
             (double)ut->ut_tv.tv_sec,  // tstamp
             ut->ut_pid                // process id
         );
-        if (! py_tuple) {
-#if defined(PSUTIL_OSX)
-            endutxent();
-#endif
+        if (! py_tuple)
             goto error;
-        }
-        if (PyList_Append(py_retlist, py_tuple)) {
-#if defined(PSUTIL_OSX)
-            endutxent();
-#endif
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
     }
 
-#if defined(PSUTIL_LINUX)
-    endutent();
-#else
-    endutxent();
-#endif
+    teardown();
     return py_retlist;
 
 error:
+    teardown();
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
