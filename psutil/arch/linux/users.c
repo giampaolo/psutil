@@ -10,6 +10,15 @@
 
 #include "../../arch/all/init.h"
 
+#ifdef Py_GIL_DISABLED
+    static PyMutex mutex;
+    #define MUTEX_LOCK(m) PyMutex_Lock(m)
+    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
+#else
+    #define MUTEX_LOCK(m)
+    #define MUTEX_UNLOCK(m)
+#endif
+
 
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
@@ -22,6 +31,8 @@ psutil_users(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
+
+    MUTEX_LOCK(&mutex);
     setutent();
     while (NULL != (ut = getutent())) {
         if (ut->ut_type != USER_PROCESS)
@@ -58,14 +69,16 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
     endutent();
+    MUTEX_UNLOCK(&mutex);
     return py_retlist;
 
 error:
+    endutent();
+    MUTEX_UNLOCK(&mutex);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    endutent();
     return NULL;
 }
