@@ -3,7 +3,7 @@
 # You can set the variables below from the command line.
 
 # Configurable
-PYTHON = sudo dtruss python3
+PYTHON = python3
 ARGS =
 
 # In not in a virtualenv, add --user options for install commands.
@@ -92,7 +92,9 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) ASAN_OPTIONS=detect_leaks=1 lldb -- ASAN_OPTIONS=detect_leaks=1 $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+# 	$(PYTHON_ENV_VARS) ASAN_OPTIONS=detect_leaks=1 lldb -- ASAN_OPTIONS=detect_leaks=1 $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+	$(PYTHON_ENV_VARS) sudo dtruss python3 -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
@@ -178,7 +180,6 @@ test-cibuildwheel:    ## Run tests from cibuildwheel.
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
 	${MAKE} install-sysdeps
 	mkdir -p .tests
-	cd .tests/ && sudo dtruss python3 -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 # 	cd .tests/ && $(PYTHON_ENV_VARS) python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
