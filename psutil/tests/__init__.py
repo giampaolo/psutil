@@ -215,7 +215,7 @@ except Exception:  # noqa: BLE001
     HAS_BATTERY = False
 try:
     # HAS_CPU_FREQ = hasattr(psutil, "cpu_freq") and bool(psutil.cpu_freq())
-    HAS_CPU_FREQ = True
+    HAS_CPU_FREQ = False
 except Exception:  # noqa: BLE001
     atexit.register(functools.partial(print, traceback.format_exc()))
     HAS_CPU_FREQ = False
