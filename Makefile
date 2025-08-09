@@ -3,7 +3,7 @@
 # You can set the variables below from the command line.
 
 # Configurable
-PYTHON = python3
+PYTHON = sudo dtruss python3
 ARGS =
 
 # In not in a virtualenv, add --user options for install commands.
