@@ -4,13 +4,12 @@
  * found in the LICENSE file.
  */
 
+#include "../../arch/all/init.h"
+
 #include <Python.h>
 #include <sys/syscall.h>
 #include <sched.h>
 #include <unistd.h>
-
-#include "../../arch/all/init.h"
-#include "proc.h"
 
 
 #ifdef PSUTIL_HAVE_IOPRIO

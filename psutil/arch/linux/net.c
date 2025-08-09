@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+#include "../../arch/all/init.h"
+
 #include <Python.h>
 #include <linux/sockios.h>
 #include <sys/socket.h>
@@ -24,8 +26,6 @@
 // Avoid redefinition of struct sysinfo with musl libc.
 #define _LINUX_SYSINFO_H
 #include <linux/ethtool.h>
-
-#include "../../arch/all/init.h"
 
 
 // * defined in linux/ethtool.h but not always available (e.g. Android)
