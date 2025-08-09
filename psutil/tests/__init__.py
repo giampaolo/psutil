@@ -1089,10 +1089,12 @@ class PsutilTestCase(unittest.TestCase):
     def assert_proc_zombie(self, proc):
         # A zombie process should always be instantiable.
         clone = psutil.Process(proc.pid)
-        # Cloned zombie on Open/NetBSD has null creation time, see:
+        # Cloned zombie on Open/NetBSD/illumos/Solaris has null creation
+        # time, see:
         # https://github.com/giampaolo/psutil/issues/2287
+        # https://github.com/giampaolo/psutil/issues/2593
         assert proc == clone
-        if not (OPENBSD or NETBSD):
+        if not (OPENBSD or NETBSD or SUNOS):
             assert hash(proc) == hash(clone)
         # Its status always be querable.
         assert proc.status() == psutil.STATUS_ZOMBIE
