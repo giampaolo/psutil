@@ -226,7 +226,7 @@ skip = [
 ]
 test-extras = ["test"]
 test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-cibuildwheel"
-test-skip = "cp39-win_arm64"  # pywin32 is not available on cp39 ARM64
+test-skip = "cp39-win_arm64 cp313t-win*"  # pywin32 is not available on cp39 ARM64 & cp313t
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
