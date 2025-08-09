@@ -4,9 +4,16 @@
  * found in the LICENSE file.
  */
 
+#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
+
 #include <Python.h>
-#include <utmp.h>
 #include <string.h>
+
+#if defined(PSUTIL_LINUX)
+    #include <utmp.h>
+#else
+    #include <utmpx.h>
+#endif
 
 #include "../../arch/all/init.h"
 
@@ -20,30 +27,62 @@
 #endif
 
 
+static void
+setup() {
+    #if defined(PSUTIL_LINUX)
+        setutent();
+    #else
+        setutxent();
+    #endif
+}
+
+
+static void
+teardown() {
+    #if defined(PSUTIL_LINUX)
+        endutent();
+    #else
+        endutxent();
+    #endif
+}
+
+
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
+#if defined(PSUTIL_LINUX)
     struct utmp *ut;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
+#else
+    struct utmpx *ut;
+#endif
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
 
     MUTEX_LOCK(&mutex);
-    setutent();
-    while (NULL != (ut = getutent())) {
+    setup();
+
+#if defined(PSUTIL_LINUX)
+    while ((ut = getutent()) != NULL) {
+#else
+    while ((ut = getutxent()) != NULL) {
+#endif
         if (ut->ut_type != USER_PROCESS)
             continue;
         py_tuple = NULL;
+
         py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
         if (! py_username)
             goto error;
+
         py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
         if (! py_tty)
             goto error;
+
         if (strcmp(ut->ut_host, ":0") == 0 || strcmp(ut->ut_host, ":0.0") == 0)
             py_hostname = PyUnicode_DecodeFSDefault("localhost");
         else
@@ -68,12 +107,13 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
     }
-    endutent();
+
+    teardown();
     MUTEX_UNLOCK(&mutex);
     return py_retlist;
 
 error:
-    endutent();
+    teardown();
     MUTEX_UNLOCK(&mutex);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
@@ -82,3 +122,4 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
+#endif  // !defined(PLATFORMS…)

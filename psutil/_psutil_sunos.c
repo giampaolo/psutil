@@ -58,7 +58,6 @@ static PyMethodDef mod_methods[] = {
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS},
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"swap_mem", psutil_swap_mem, METH_VARARGS},
-    {"users", psutil_users, METH_VARARGS},
 
     // --- others
     {"check_pid_range", psutil_check_pid_range, METH_VARARGS},
