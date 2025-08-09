@@ -226,6 +226,9 @@ class TestFSAPIs(BaseUnicodeTest):
             assert os.path.normcase(path) == os.path.normcase(self.funky_name)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @pytest.mark.skipif(
+        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
+    )
     def test_proc_net_connections(self):
         name = self.get_testfn(suffix=self.funky_suffix)
         sock = bind_unix_socket(name)
