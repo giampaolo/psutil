@@ -506,7 +506,7 @@ if NETBSD:
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = cext.users() if OPENBSD else cext_posix.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         if tty == '~':

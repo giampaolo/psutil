@@ -92,7 +92,9 @@ static PyMethodDef mod_methods[] = {
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS},
     {"pids", psutil_pids, METH_VARARGS},
     {"swap_mem", psutil_swap_mem, METH_VARARGS},
+#if defined(PSUTIL_OPENBSD)
     {"users", psutil_users, METH_VARARGS},
+#endif
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
      {"cpu_freq", psutil_cpu_freq, METH_VARARGS},

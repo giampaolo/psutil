@@ -5,3 +5,4 @@
  */
 
 long psutil_getpagesize(void);
+PyObject *psutil_users(PyObject *self, PyObject *args);

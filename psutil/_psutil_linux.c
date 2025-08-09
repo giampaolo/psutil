@@ -36,7 +36,6 @@ static PyMethodDef mod_methods[] = {
 #endif
     // --- system related functions
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
-    {"users", psutil_users, METH_VARARGS},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
     // --- linux specific
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},

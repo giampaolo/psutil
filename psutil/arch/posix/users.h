@@ -6,4 +6,6 @@
 
 #include <Python.h>
 
+#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
 PyObject *psutil_users(PyObject* self, PyObject* args);
+#endif
