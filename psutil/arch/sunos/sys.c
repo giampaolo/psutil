@@ -12,7 +12,6 @@
 
 #ifdef Py_GIL_DISABLED
     static PyMutex time_mutex;
-    static PyMutex users_mutex;
     #define MUTEX_LOCK(m) PyMutex_Lock(m)
     #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
 #else

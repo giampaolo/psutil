@@ -60,7 +60,6 @@
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 #ifdef Py_GIL_DISABLED
-    static PyMutex users_mutex;
     static PyMutex time_mutex;
     #define MUTEX_LOCK(m) PyMutex_Lock(m)
     #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)

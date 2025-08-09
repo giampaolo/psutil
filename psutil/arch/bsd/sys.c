@@ -14,15 +14,6 @@
     #include <utmp.h>
 #endif
 
-#ifdef Py_GIL_DISABLED
-    static PyMutex mutex;
-    #define MUTEX_LOCK(m) PyMutex_Lock(m)
-    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
-#else
-    #define MUTEX_LOCK(m)
-    #define MUTEX_UNLOCK(m)
-#endif
-
 
 // Return a Python float indicating the system boot time expressed in
 // seconds since the epoch.
