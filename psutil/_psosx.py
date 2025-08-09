@@ -314,7 +314,7 @@ def adjust_proc_create_time(ctime):
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = cext_posix.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         if tty == '~':

@@ -64,6 +64,9 @@ static PyMethodDef mod_methods[] = {
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
 #endif
+#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
+    {"users", psutil_users, METH_VARARGS},
+#endif
     {NULL, NULL, 0, NULL}
 };
 
