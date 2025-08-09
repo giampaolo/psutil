@@ -22,11 +22,7 @@
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 
 #include "arch/all/init.h"
-#include "arch/bsd/cpu.h"
-#include "arch/bsd/disk.h"
-#include "arch/bsd/net.h"
-#include "arch/bsd/proc.h"
-#include "arch/bsd/sys.h"
+#include "arch/bsd/init.h"
 
 #ifdef PSUTIL_FREEBSD
     #include "arch/freebsd/cpu.h"

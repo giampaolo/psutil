@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-#include "proc.h"
 #include "disk.h"
 #include "mem.h"
 #include "net.h"
+#include "proc.h"

@@ -49,17 +49,12 @@ include psutil/arch/aix/net_kernel_structs.h
 include psutil/arch/all/init.c
 include psutil/arch/all/init.h
 include psutil/arch/bsd/cpu.c
-include psutil/arch/bsd/cpu.h
 include psutil/arch/bsd/disk.c
-include psutil/arch/bsd/disk.h
 include psutil/arch/bsd/init.c
 include psutil/arch/bsd/init.h
 include psutil/arch/bsd/net.c
-include psutil/arch/bsd/net.h
 include psutil/arch/bsd/proc.c
-include psutil/arch/bsd/proc.h
 include psutil/arch/bsd/sys.c
-include psutil/arch/bsd/sys.h
 include psutil/arch/freebsd/cpu.c
 include psutil/arch/freebsd/cpu.h
 include psutil/arch/freebsd/disk.c
