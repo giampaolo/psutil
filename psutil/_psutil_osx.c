@@ -51,7 +51,6 @@ static PyMethodDef mod_methods[] = {
     {"pids", psutil_pids, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"swap_mem", psutil_swap_mem, METH_VARARGS},
-    {"users", psutil_users, METH_VARARGS},
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- others

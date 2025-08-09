@@ -142,6 +142,8 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     io_registry_entry_t entry = 0;
     CFTypeRef pCoreRef = NULL;
     CFTypeRef eCoreRef = NULL;
+    CFDictionaryRef matching;
+    size_t pCoreLength;
     io_name_t name;
 
     uint32_t pMin = 0;
@@ -151,7 +153,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     uint32_t curr = 0;
 
     // Get matching service for Apple ARM I/O device.
-    CFDictionaryRef matching = IOServiceMatching("AppleARMIODevice");
+    matching = IOServiceMatching("AppleARMIODevice");
     if (matching == NULL) {
         return PyErr_Format(
             PyExc_RuntimeError,
@@ -191,8 +193,9 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0
     );
     if (pCoreRef == NULL ||
-        CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
-        CFDataGetLength(pCoreRef) < 8) {
+            CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
+            CFDataGetLength(pCoreRef) < 8)
+    {
         PyErr_SetString(
             PyExc_RuntimeError,
             "'voltage-states5-sram' is missing or invalid"
@@ -204,8 +207,9 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0
     );
     if (eCoreRef == NULL ||
-        CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
-        CFDataGetLength(eCoreRef) < 4) {
+            CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
+            CFDataGetLength(eCoreRef) < 4)
+    {
         PyErr_SetString(
             PyExc_RuntimeError,
             "'voltage-states1-sram' is missing or invalid"
@@ -214,7 +218,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     }
 
     // Extract values safely.
-    size_t pCoreLength = CFDataGetLength(pCoreRef);
+    pCoreLength = CFDataGetLength(pCoreRef);
     CFDataGetBytes(pCoreRef, CFRangeMake(0, 4), (UInt8 *)&pMin);
     CFDataGetBytes(eCoreRef, CFRangeMake(0, 4), (UInt8 *)&eMin);
     CFDataGetBytes(pCoreRef, CFRangeMake(pCoreLength - 8, 4), (UInt8 *)&max);
@@ -239,22 +243,14 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     );
 
 error:
-    if (pCoreRef) {
+    if (pCoreRef != NULL)
         CFRelease(pCoreRef);
-        pCoreRef = NULL;
-    }
-    if (eCoreRef) {
+    if (eCoreRef != NULL)
         CFRelease(eCoreRef);
-        eCoreRef = NULL;
-    }
-    if (entry) {
-        IOObjectRelease(entry);
-        entry = 0;
-    }
-    if (iter) {
+    if (iter != 0)
         IOObjectRelease(iter);
-        iter = 0;
-    }
+    if (entry != 0)
+        IOObjectRelease(entry);
     return NULL;
 }
 #else

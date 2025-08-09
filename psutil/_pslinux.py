@@ -1545,7 +1545,7 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = cext_posix.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = _common.suser(user, tty or None, hostname, tstamp, pid)

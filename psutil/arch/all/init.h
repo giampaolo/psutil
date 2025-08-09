@@ -18,6 +18,9 @@
     #include "../../arch/bsd/init.h"
 #endif
 
+#if defined(PSUTIL_POSIX)
+    #include "../../arch/posix/init.h"
+#endif
 
 // print debug messages when set to 1
 extern int PSUTIL_DEBUG;

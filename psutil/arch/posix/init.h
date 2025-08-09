@@ -4,5 +4,7 @@
  * found in the LICENSE file.
  */
 
-long psutil_getpagesize(void);
-PyObject *psutil_users(PyObject *self, PyObject *args);
+#include "proc.h"
+#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
+    #include "users.h"
+#endif

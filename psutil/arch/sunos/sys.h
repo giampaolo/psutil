@@ -7,4 +7,3 @@
 #include <Python.h>
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
-PyObject *psutil_users(PyObject *self, PyObject *args);
