@@ -43,14 +43,10 @@ psutil_users(PyObject *self, PyObject *args) {
             (double)ut.ut_time,  // start time
             Py_None              // pid
         );
-        if (!py_tuple) {
-            fclose(fp);
+        if (!py_tuple)
             goto error;
-        }
-        if (PyList_Append(py_retlist, py_tuple)) {
-            fclose(fp);
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
@@ -61,6 +57,7 @@ psutil_users(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
+    fclose(fp);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
