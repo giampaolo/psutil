@@ -5,4 +5,6 @@
  */
 
 #include "proc.h"
-#include "users.h"
+#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
+    #include "users.h"
+#endif

@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
+
 #include <Python.h>
 #include <string.h>
 
@@ -108,3 +110,4 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
+#endif  // !defined(PLATFORMS…)
