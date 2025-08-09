@@ -33,12 +33,7 @@
     #include "arch/freebsd/sensors.h"
     #include "arch/freebsd/sys_socks.h"
 #elif PSUTIL_OPENBSD
-    #include "arch/openbsd/cpu.h"
-    #include "arch/openbsd/disk.h"
-    #include "arch/openbsd/mem.h"
-    #include "arch/openbsd/proc.h"
-    #include "arch/openbsd/socks.h"
-    #include "arch/openbsd/users.h"
+    #include "arch/openbsd/init.h"
 #elif PSUTIL_NETBSD
     #include "arch/netbsd/cpu.h"
     #include "arch/netbsd/disk.h"
