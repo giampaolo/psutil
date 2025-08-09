@@ -11,9 +11,6 @@
 #include <sys/socket.h>
 
 #include "arch/all/init.h"
-#include "arch/posix/init.h"
-#include "arch/posix/proc.h"
-#include "arch/posix/net.h"
 
 
 static PyMethodDef mod_methods[] = {
