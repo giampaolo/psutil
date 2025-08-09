@@ -93,7 +93,6 @@ include psutil/arch/openbsd/disk.c
 include psutil/arch/openbsd/init.h
 include psutil/arch/openbsd/mem.c
 include psutil/arch/openbsd/proc.c
-include psutil/arch/openbsd/proc.h
 include psutil/arch/openbsd/socks.c
 include psutil/arch/openbsd/users.c
 include psutil/arch/osx/cpu.c

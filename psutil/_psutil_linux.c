@@ -6,13 +6,13 @@
  * Linux-specific functions.
  */
 
-#include "arch/all/init.h"
-
 #ifndef _GNU_SOURCE
     #define _GNU_SOURCE 1
 #endif
 #include <Python.h>
 #include <linux/ethtool.h>  // DUPLEX_*
+
+#include "arch/all/init.h"
 
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607

@@ -20,7 +20,7 @@
 #ifdef PSUTIL_FREEBSD
     #include "../../arch/freebsd/proc.h"
 #elif PSUTIL_OPENBSD
-    #include "../../arch/openbsd/proc.h"
+    #include "../../arch/openbsd/init.h"  // TODO: refactor this
 #elif PSUTIL_NETBSD
     #include "../../arch/netbsd/proc.h"
 #endif
