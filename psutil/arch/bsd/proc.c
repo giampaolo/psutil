@@ -17,7 +17,6 @@
 #endif
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 #ifdef PSUTIL_FREEBSD
     #include "../../arch/freebsd/proc.h"
 #elif PSUTIL_OPENBSD

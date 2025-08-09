@@ -20,7 +20,6 @@ original(ish) implementations:
 #include <uvm/uvm_extern.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 // Virtual memory stats, taken from:

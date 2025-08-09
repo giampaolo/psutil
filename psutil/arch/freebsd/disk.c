@@ -9,7 +9,6 @@
 #include <devstat.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 // convert a bintime struct to milliseconds

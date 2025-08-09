@@ -22,7 +22,6 @@
 #include <sys/file.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 // kinfo_file results

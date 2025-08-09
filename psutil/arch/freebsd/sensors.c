@@ -17,7 +17,6 @@ For reference, here's the git history with original(ish) implementations:
 #include <sys/sysctl.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 #define DECIKELVIN_2_CELSIUS(t) (t - 2731) / 10

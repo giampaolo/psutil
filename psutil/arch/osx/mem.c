@@ -16,7 +16,7 @@
 #include <sys/sysctl.h>
 #include <mach/mach.h>
 
-#include "../../_psutil_posix.h"
+#include "../../arch/all/init.h"
 
 
 static int

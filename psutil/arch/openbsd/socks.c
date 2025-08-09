@@ -15,7 +15,6 @@
 #undef _KERNEL
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 PyObject *

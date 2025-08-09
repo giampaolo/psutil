@@ -36,7 +36,6 @@ include psutil/_psutil_bsd.c
 include psutil/_psutil_linux.c
 include psutil/_psutil_osx.c
 include psutil/_psutil_posix.c
-include psutil/_psutil_posix.h
 include psutil/_psutil_sunos.c
 include psutil/_psutil_windows.c
 include psutil/_pswindows.py
@@ -77,6 +76,7 @@ include psutil/arch/freebsd/sys_socks.c
 include psutil/arch/freebsd/sys_socks.h
 include psutil/arch/linux/disk.c
 include psutil/arch/linux/disk.h
+include psutil/arch/linux/init.h
 include psutil/arch/linux/mem.c
 include psutil/arch/linux/mem.h
 include psutil/arch/linux/net.c
@@ -97,6 +97,7 @@ include psutil/arch/openbsd/cpu.c
 include psutil/arch/openbsd/cpu.h
 include psutil/arch/openbsd/disk.c
 include psutil/arch/openbsd/disk.h
+include psutil/arch/openbsd/init.h
 include psutil/arch/openbsd/mem.c
 include psutil/arch/openbsd/mem.h
 include psutil/arch/openbsd/proc.c
@@ -121,6 +122,7 @@ include psutil/arch/osx/sensors.c
 include psutil/arch/osx/sensors.h
 include psutil/arch/osx/sys.c
 include psutil/arch/osx/sys.h
+include psutil/arch/posix/init.c
 include psutil/arch/posix/init.h
 include psutil/arch/posix/net.c
 include psutil/arch/posix/net.h

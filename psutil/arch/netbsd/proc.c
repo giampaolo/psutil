@@ -12,7 +12,6 @@
 #include <kvm.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 #include "proc.h"
 
 

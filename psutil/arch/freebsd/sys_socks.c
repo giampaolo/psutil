@@ -24,7 +24,6 @@
 #include <arpa/inet.h>         // for inet_ntop()
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 static int

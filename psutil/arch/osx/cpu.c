@@ -32,7 +32,6 @@ For reference, here's the git history with original implementations:
 #endif
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 // added in macOS 12
 #ifndef kIOMainPortDefault

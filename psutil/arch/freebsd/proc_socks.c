@@ -20,7 +20,6 @@
 #include <libutil.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 // The tcplist fetching and walking is borrowed from netstat/inet.c.

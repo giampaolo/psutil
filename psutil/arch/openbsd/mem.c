@@ -12,7 +12,7 @@
 #include <sys/swap.h>
 #include <sys/param.h>
 
-#include "../../_psutil_posix.h"
+#include "../../arch/all/init.h"
 
 
 PyObject *

@@ -22,7 +22,6 @@
 #include <sys/cpuset.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)

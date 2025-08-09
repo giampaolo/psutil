@@ -22,7 +22,6 @@
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 
 #include "arch/all/init.h"
-#include "_psutil_posix.h"
 #include "arch/bsd/cpu.h"
 #include "arch/bsd/disk.h"
 #include "arch/bsd/net.h"

@@ -9,6 +9,8 @@
 #include <sys/sysctl.h>
 #include <sys/sched.h>  // for CPUSTATES & CP_*
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
