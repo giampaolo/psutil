@@ -9,42 +9,26 @@
 #include <Python.h>
 #include <string.h>
 
-#if defined(PSUTIL_LINUX)
-    #include <utmp.h>
-#else
-    #include <utmpx.h>
-#endif
+#include <utmpx.h>
 
 #include "../../arch/all/init.h"
 
 
 static void
 setup() {
-    #if defined(PSUTIL_LINUX)
-        setutent();
-    #else
-        setutxent();
-    #endif
+    setutxent();
 }
 
 
 static void
 teardown() {
-    #if defined(PSUTIL_LINUX)
-        endutent();
-    #else
-        endutxent();
-    #endif
+    endutxent();
 }
 
 
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
-#if defined(PSUTIL_LINUX)
-    struct utmp *ut;
-#else
     struct utmpx *ut;
-#endif
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
@@ -56,11 +40,7 @@ psutil_users(PyObject *self, PyObject *args) {
 
     setup();
 
-#if defined(PSUTIL_LINUX)
-    while ((ut = getutent()) != NULL) {
-#else
     while ((ut = getutxent()) != NULL) {
-#endif
         if (ut->ut_type != USER_PROCESS)
             continue;
         py_tuple = NULL;
