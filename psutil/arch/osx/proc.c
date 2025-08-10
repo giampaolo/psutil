@@ -735,8 +735,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
-    ret = vm_deallocate(task, (vm_address_t)thread_list,
-                        thread_count * sizeof(int));
+    ret = vm_deallocate(
+        task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
+    );
+
     if (ret != KERN_SUCCESS)
         PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
 
@@ -750,8 +752,10 @@ error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (thread_list != NULL) {
-        ret = vm_deallocate(task, (vm_address_t)thread_list,
-                            thread_count * sizeof(int));
+        ret = vm_deallocate(
+            task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
+        );
+
         if (ret != KERN_SUCCESS)
             PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
