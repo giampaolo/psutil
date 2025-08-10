@@ -70,15 +70,11 @@ include psutil/arch/linux/net.c
 include psutil/arch/linux/proc.c
 include psutil/arch/linux/proc.h
 include psutil/arch/netbsd/cpu.c
-include psutil/arch/netbsd/cpu.h
 include psutil/arch/netbsd/disk.c
-include psutil/arch/netbsd/disk.h
+include psutil/arch/netbsd/init.h
 include psutil/arch/netbsd/mem.c
-include psutil/arch/netbsd/mem.h
 include psutil/arch/netbsd/proc.c
-include psutil/arch/netbsd/proc.h
 include psutil/arch/netbsd/socks.c
-include psutil/arch/netbsd/socks.h
 include psutil/arch/openbsd/cpu.c
 include psutil/arch/openbsd/disk.c
 include psutil/arch/openbsd/init.h

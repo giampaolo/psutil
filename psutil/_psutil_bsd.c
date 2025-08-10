@@ -29,11 +29,7 @@
 #elif PSUTIL_OPENBSD
     #include "arch/openbsd/init.h"
 #elif PSUTIL_NETBSD
-    #include "arch/netbsd/cpu.h"
-    #include "arch/netbsd/disk.h"
-    #include "arch/netbsd/mem.h"
-    #include "arch/netbsd/proc.h"
-    #include "arch/netbsd/socks.h"
+    #include "arch/netbsd/init.h"
 #endif
 
 

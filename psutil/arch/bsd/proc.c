@@ -22,7 +22,7 @@
 #elif PSUTIL_OPENBSD
     #include "../../arch/openbsd/init.h"  // TODO: refactor this
 #elif PSUTIL_NETBSD
-    #include "../../arch/netbsd/proc.h"
+    #include "../../arch/netbsd/init.h"  // TODO: refactor this
 #endif
 
 
