@@ -55,24 +55,33 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 
     power_sources_information = IOPSGetPowerSourceDescription(
         power_info, CFArrayGetValueAtIndex(power_sources_list, 0));
+    if (!power_sources_information) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "Failed to get power source description"
+        );
+        goto error;
+    }
 
-    capacity_ref = (CFNumberRef)  CFDictionaryGetValue(
+    capacity_ref = (CFNumberRef)CFDictionaryGetValue(
         power_sources_information, CFSTR(kIOPSCurrentCapacityKey));
-    if (!CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
+    if (!capacity_ref || !CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity)) {
         PyErr_SetString(PyExc_RuntimeError,
             "No battery capacity information in power sources info");
         goto error;
     }
 
-    ps_state_ref = (CFStringRef) CFDictionaryGetValue(
+    ps_state_ref = (CFStringRef)CFDictionaryGetValue(
         power_sources_information, CFSTR(kIOPSPowerSourceStateKey));
+    if (!ps_state_ref) {
+        PyErr_SetString(PyExc_RuntimeError, "power source state info missing");
+        goto error;
+    }
     is_power_plugged = CFStringCompare(
-        ps_state_ref, CFSTR(kIOPSACPowerValue), 0)
-        == kCFCompareEqualTo;
+        ps_state_ref, CFSTR(kIOPSACPowerValue), 0) == kCFCompareEqualTo;
 
-    time_to_empty_ref = (CFNumberRef) CFDictionaryGetValue(
+    time_to_empty_ref = (CFNumberRef)CFDictionaryGetValue(
         power_sources_information, CFSTR(kIOPSTimeToEmptyKey));
-    if (!CFNumberGetValue(time_to_empty_ref,
+    if (!time_to_empty_ref || !CFNumberGetValue(time_to_empty_ref,
                           kCFNumberIntType, &time_to_empty)) {
         /* This value is recommended for non-Apple power sources, so it's not
          * an error if it doesn't exist. We'll return -1 for "unknown" */
