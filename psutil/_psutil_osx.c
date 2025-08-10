@@ -12,13 +12,7 @@
 #include <netinet/tcp_fsm.h>
 
 #include "arch/all/init.h"
-#include "arch/osx/cpu.h"
-#include "arch/osx/disk.h"
-#include "arch/osx/mem.h"
-#include "arch/osx/net.h"
-#include "arch/osx/proc.h"
-#include "arch/osx/sensors.h"
-#include "arch/osx/sys.h"
+#include "arch/osx/init.h"
 
 
 static PyMethodDef mod_methods[] = {
