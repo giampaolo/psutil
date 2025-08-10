@@ -25,13 +25,7 @@
 #include "arch/bsd/init.h"
 
 #ifdef PSUTIL_FREEBSD
-    #include "arch/freebsd/cpu.h"
-    #include "arch/freebsd/disk.h"
-    #include "arch/freebsd/mem.h"
-    #include "arch/freebsd/proc.h"
-    #include "arch/freebsd/proc_socks.h"
-    #include "arch/freebsd/sensors.h"
-    #include "arch/freebsd/sys_socks.h"
+    #include "arch/freebsd/init.h"
 #elif PSUTIL_OPENBSD
     #include "arch/openbsd/init.h"
 #elif PSUTIL_NETBSD
