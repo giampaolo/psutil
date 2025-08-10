@@ -11,7 +11,6 @@
 typedef struct kinfo_proc2 kinfo_proc;
 
 // TODO: refactor this. Does not belong here.
-struct kinfo_file *kinfo_getfile(pid_t pid, int* cnt);
 int psutil_kinfo_proc(pid_t pid, kinfo_proc *proc);
 int psutil_get_proc_list(kinfo_proc **procList, size_t *procCount);
 char *psutil_get_cmd_args(pid_t pid, size_t *argsize);

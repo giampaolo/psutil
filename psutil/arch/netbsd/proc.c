@@ -51,38 +51,7 @@ psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
 }
 
 
-struct kinfo_file *
-kinfo_getfile(pid_t pid, int* cnt) {
-    // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
-    // int as arg and returns an array with cnt struct kinfo_file.
-    int mib[6];
-    size_t len;
-    struct kinfo_file* kf;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_FILE2;
-    mib[2] = KERN_FILE_BYPID;
-    mib[3] = (int) pid;
-    mib[4] = sizeof(struct kinfo_file);
-    mib[5] = 0;
 
-    // get the size of what would be returned
-    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    if ((kf = malloc(len)) == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    mib[5] = (int)(len / sizeof(struct kinfo_file));
-    if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    *cnt = (int)(len / sizeof(struct kinfo_file));
-    return kf;
-}
 
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {

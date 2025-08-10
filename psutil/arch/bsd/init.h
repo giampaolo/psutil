@@ -8,6 +8,10 @@
 
 void convert_kvm_err(const char *syscall, char *errbuf);
 
+#if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
+struct kinfo_file *kinfo_getfile(pid_t pid, int* cnt);
+#endif
+
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_times(PyObject *self, PyObject *args);
