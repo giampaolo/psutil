@@ -4,10 +4,10 @@
  * found in the LICENSE file.
  */
 
-#include "../../arch/all/init.h"
-
 #include <Python.h>
 #include <sys/sysinfo.h>
+
+#include "../../arch/all/init.h"
 
 
 PyObject *

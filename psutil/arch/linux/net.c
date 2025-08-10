@@ -4,8 +4,6 @@
  * found in the LICENSE file.
  */
 
-#include "../../arch/all/init.h"
-
 #include <Python.h>
 #include <linux/sockios.h>
 #include <sys/socket.h>
@@ -13,6 +11,8 @@
 #include <linux/if.h>
 #include <linux/version.h>
 #include <unistd.h>
+
+#include "../../arch/all/init.h"
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
