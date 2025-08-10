@@ -102,7 +102,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     kern_return_t ret;
     mach_msg_type_number_t count;
     mach_port_t mport;
-    struct vmmeter vm32;
+    struct vmmeter vmstat;
 
     mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
@@ -112,7 +112,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     }
 
     count = HOST_VM_INFO_COUNT;
-    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm32, &count);
+    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
     if (ret != KERN_SUCCESS) {
         mach_port_deallocate(mach_task_self(), mport);
         PyErr_Format(
@@ -125,11 +125,16 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     mach_port_deallocate(mach_task_self(), mport);
     return Py_BuildValue(
         "IIIII",
-        vm32.v_swtch,  // ctx switches
-        vm32.v_intr,  // interrupts
-        vm32.v_soft,  // software interrupts
-        vm32.v_syscall,  // syscalls
-        vm32.v_trap  // traps
+        vmstat.v_swtch,  // context switches
+        vmstat.v_intr,   // interrupts
+        vmstat.v_soft,   // software interrupts
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
+    && __MAC_OS_X_VERSION_MIN_REQUIRED__ >= 120000
+        0,
+#else
+        vmstat.v_syscall,  // system calls (if available)
+#endif
+        vmstat.v_trap     // traps
     );
 }
 
@@ -269,9 +274,11 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     if (sysctl(mib, 2, &curr, &len, NULL, 0) < 0)
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
 
+    size = sizeof(min);
     if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
         psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
 
+    size = sizeof(max);
     if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
         psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
 
@@ -287,7 +294,7 @@ PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     natural_t cpu_count;
     natural_t i;
-    processor_info_array_t info_array;
+    processor_info_array_t info_array = NULL;
     mach_msg_type_number_t info_count;
     kern_return_t error;
     processor_cpu_load_info_data_t *cpu_load_info = NULL;
@@ -338,7 +345,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
-                        info_count * sizeof(int));
+                        info_count * sizeof(integer_t));
     if (ret != KERN_SUCCESS)
         PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     return py_retlist;
@@ -346,9 +353,9 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
-    if (cpu_load_info != NULL) {
+    if (info_array != NULL) {
         ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
-                            info_count * sizeof(int));
+                            info_count * sizeof(integer_t));
         if (ret != KERN_SUCCESS)
             PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
