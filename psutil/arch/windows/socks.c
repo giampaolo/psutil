@@ -12,7 +12,6 @@
 #include <ws2tcpip.h>
 
 #include "../../arch/all/init.h"
-#include "proc_utils.h"
 
 
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
