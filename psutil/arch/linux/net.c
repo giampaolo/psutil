@@ -12,6 +12,8 @@
 #include <linux/version.h>
 #include <unistd.h>
 
+#include "../../arch/all/init.h"
+
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
     #include <linux/types.h>
@@ -24,8 +26,6 @@
 // Avoid redefinition of struct sysinfo with musl libc.
 #define _LINUX_SYSINFO_H
 #include <linux/ethtool.h>
-
-#include "../../arch/all/init.h"
 
 
 // * defined in linux/ethtool.h but not always available (e.g. Android)

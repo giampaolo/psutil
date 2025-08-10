@@ -10,6 +10,8 @@
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
 
+#include "../../arch/all/init.h"
+
 
 /*
 CPU related functions. Original code was refactored and moved from

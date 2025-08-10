@@ -15,8 +15,6 @@
 #include <fcntl.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
-
 
 #ifndef _PATH_DEVNULL
     #define _PATH_DEVNULL "/dev/null"

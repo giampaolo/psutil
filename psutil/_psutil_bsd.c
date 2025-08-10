@@ -22,34 +22,14 @@
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 
 #include "arch/all/init.h"
-#include "_psutil_posix.h"
-#include "arch/bsd/cpu.h"
-#include "arch/bsd/disk.h"
-#include "arch/bsd/net.h"
-#include "arch/bsd/proc.h"
-#include "arch/bsd/sys.h"
+#include "arch/bsd/init.h"
 
 #ifdef PSUTIL_FREEBSD
-    #include "arch/freebsd/cpu.h"
-    #include "arch/freebsd/disk.h"
-    #include "arch/freebsd/mem.h"
-    #include "arch/freebsd/proc.h"
-    #include "arch/freebsd/proc_socks.h"
-    #include "arch/freebsd/sensors.h"
-    #include "arch/freebsd/sys_socks.h"
+    #include "arch/freebsd/init.h"
 #elif PSUTIL_OPENBSD
-    #include "arch/openbsd/cpu.h"
-    #include "arch/openbsd/disk.h"
-    #include "arch/openbsd/mem.h"
-    #include "arch/openbsd/proc.h"
-    #include "arch/openbsd/socks.h"
-    #include "arch/openbsd/users.h"
+    #include "arch/openbsd/init.h"
 #elif PSUTIL_NETBSD
-    #include "arch/netbsd/cpu.h"
-    #include "arch/netbsd/disk.h"
-    #include "arch/netbsd/mem.h"
-    #include "arch/netbsd/proc.h"
-    #include "arch/netbsd/socks.h"
+    #include "arch/netbsd/init.h"
 #endif
 
 

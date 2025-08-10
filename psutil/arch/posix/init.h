@@ -4,7 +4,12 @@
  * found in the LICENSE file.
  */
 
+#include "net.h"
 #include "proc.h"
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     #include "users.h"
 #endif
+
+long psutil_getpagesize(void);
+PyObject *psutil_getpagesize_pywrapper(PyObject *self, PyObject *args);
+PyObject *psutil_users(PyObject *self, PyObject *args);

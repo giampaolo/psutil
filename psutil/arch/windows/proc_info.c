@@ -11,8 +11,6 @@
 #include <windows.h>
 
 #include "../../arch/all/init.h"
-#include "proc_info.h"
-#include "proc_utils.h"
 
 
 #ifndef _WIN64

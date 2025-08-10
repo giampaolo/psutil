@@ -21,7 +21,6 @@ For reference, here's the git history with original(ish) implementations:
 #include <devstat.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 PyObject *

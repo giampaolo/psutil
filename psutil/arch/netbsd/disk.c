@@ -17,6 +17,8 @@ original(ish) implementations:
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {

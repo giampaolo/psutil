@@ -18,21 +18,7 @@
 #include <windows.h>
 
 #include "arch/all/init.h"
-#include "arch/windows/cpu.h"
-#include "arch/windows/disk.h"
 #include "arch/windows/init.h"
-#include "arch/windows/mem.h"
-#include "arch/windows/net.h"
-#include "arch/windows/proc.h"
-#include "arch/windows/proc_handles.h"
-#include "arch/windows/proc_info.h"
-#include "arch/windows/proc_utils.h"
-#include "arch/windows/security.h"
-#include "arch/windows/sensors.h"
-#include "arch/windows/services.h"
-#include "arch/windows/socks.h"
-#include "arch/windows/sys.h"
-#include "arch/windows/wmi.h"
 
 
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
