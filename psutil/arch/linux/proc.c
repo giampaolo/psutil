@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include "../../arch/all/init.h"
-#include "init.h"
 
 
 #ifdef PSUTIL_HAVE_IOPRIO
