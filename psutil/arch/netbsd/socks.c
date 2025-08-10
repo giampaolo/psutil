@@ -32,7 +32,9 @@ struct kif {
     int has_buf;
 };
 
-SLIST_HEAD(kifhead, kif);
+// kinfo_file results list
+SLIST_HEAD(kifhead, kif) kihead = SLIST_HEAD_INITIALIZER(kihead);
+
 
 // kinfo_pcb results
 struct kpcb {
@@ -42,38 +44,53 @@ struct kpcb {
     int has_buf;
 };
 
-SLIST_HEAD(kpcbhead, kpcb);
+// kinfo_pcb results list
+SLIST_HEAD(kpcbhead, kpcb) kpcbhead = SLIST_HEAD_INITIALIZER(kpcbhead);
+
+
+// Initialize kinfo_file results list.
+static void
+psutil_kiflist_init(void) {
+    SLIST_INIT(&kihead);
+}
 
 
 // Clear kinfo_file results list.
 static void
-psutil_kiflist_clear(struct kifhead *kifhead) {
-    while (!SLIST_EMPTY(kifhead)) {
-        struct kif *kif = SLIST_FIRST(kifhead);
+psutil_kiflist_clear(void) {
+    while (!SLIST_EMPTY(&kihead)) {
+        struct kif *kif = SLIST_FIRST(&kihead);
         if (kif->has_buf == 1)
             free(kif->buf);
         free(kif);
-        SLIST_REMOVE_HEAD(kifhead, kifs);
+        SLIST_REMOVE_HEAD(&kihead, kifs);
     }
+}
+
+
+// Initialize kinof_pcb result list.
+static void
+psutil_kpcblist_init(void) {
+    SLIST_INIT(&kpcbhead);
 }
 
 
 // Clear kinof_pcb result list.
 static void
-psutil_kpcblist_clear(struct kpcbhead *kpcbhead) {
-    while (!SLIST_EMPTY(kpcbhead)) {
-        struct kpcb *kpcb = SLIST_FIRST(kpcbhead);
+psutil_kpcblist_clear(void) {
+    while (!SLIST_EMPTY(&kpcbhead)) {
+        struct kpcb *kpcb = SLIST_FIRST(&kpcbhead);
         if (kpcb->has_buf == 1)
             free(kpcb->buf);
         free(kpcb);
-        SLIST_REMOVE_HEAD(kpcbhead, kpcbs);
+        SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
     }
 }
 
 
 // Get all open files including socket.
 static int
-psutil_get_files(struct kifhead *kifhead) {
+psutil_get_files(void) {
     size_t len;
     size_t j;
     int mib[6];
@@ -124,7 +141,7 @@ psutil_get_files(struct kifhead *kifhead) {
                 kif->has_buf = 0;
                 kif->buf = NULL;
             }
-            SLIST_INSERT_HEAD(kifhead, kif, kifs);
+            SLIST_INSERT_HEAD(&kihead, kif, kifs);
         }
     }
     else {
@@ -142,7 +159,7 @@ error:
 
 // Get open sockets.
 static int
-psutil_get_sockets(const char *name, struct kpcbhead *kpcbhead) {
+psutil_get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
     struct kinfo_pcb *pcb = NULL;
@@ -194,7 +211,7 @@ psutil_get_sockets(const char *name, struct kpcbhead *kpcbhead) {
                 kpcb->has_buf = 0;
                 kpcb->buf = NULL;
             }
-            SLIST_INSERT_HEAD(kpcbhead, kpcb, kpcbs);
+            SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
         }
     }
     else {
@@ -319,17 +336,12 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // kinfo_file results list
-    struct kifhead kifhead;
-    SLIST_INIT(&kifhead);
+    psutil_kiflist_init();
+    psutil_kpcblist_init();
 
-    // kinfo_pcb results list
-    struct kpcbhead kpcbhead;
-    SLIST_INIT(&kpcbhead);
-
-    if (psutil_get_files(&kifhead) != 0)
+    if (psutil_get_files() != 0)
         goto error;
-    if (psutil_get_info(kind, &kpcbhead) != 0)
+    if (psutil_get_info(kind) != 0)
         goto error;
 
     struct kif *k;
@@ -433,13 +445,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
     }
 
-    psutil_kiflist_clear(&kifhead);
-    psutil_kpcblist_clear(&kpcbhead);
+    psutil_kiflist_clear();
+    psutil_kpcblist_clear();
     return py_retlist;
 
 error:
-    psutil_kiflist_clear(&kifhead);
-    psutil_kpcblist_clear(&kpcbhead);
+    psutil_kiflist_clear();
+    psutil_kpcblist_clear();
     Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
