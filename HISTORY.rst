@@ -39,6 +39,8 @@ XXXX-XX-XX
 - 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
   RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
   Stephan)
+- 2586_, [macOS], [CRITICAL]: fixed different places in C code which can
+  trigger a segfault.
 - 2605_, [Linux]: `psutil.sensors_battery()` reports a negative amount for
   seconds left.
 - 2607_, [Windows]: ``WindowsService.description()`` method may fail with
