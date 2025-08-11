@@ -102,26 +102,14 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kvm_close(kd);
 
-    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapin)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1){
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapout)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodein)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodeout)'"
-        );
-    }
+    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_swapin", &swapin, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_swapout", &swapout, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_vnodein", &nodein, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_vnodeout", &nodeout, size) != 0)
+        return NULL;
 
     return Py_BuildValue(
         "(KKKII)",
