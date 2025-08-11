@@ -56,3 +56,18 @@ psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
 
     return 0;
 }
+
+
+// Get the maximum process arguments size.
+int
+psutil_sysctl_argmax() {
+    int argmax;
+    int mib[2] = {CTL_KERN, KERN_ARGMAX};
+
+    if (psutil_sysctl_fixed(mib, 2, &argmax, sizeof(argmax)) != 0) {
+        PyErr_Clear();
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
+        return 0;
+    }
+    return argmax;
+}

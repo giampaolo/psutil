@@ -119,18 +119,6 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 }
 
 
-// Read the maximum argument size for processes
-static int
-psutil_sysctl_argmax() {
-    int argmax;
-    int mib[2] = {CTL_KERN, KERN_ARGMAX};
-
-    if (psutil_sysctl_fixed(mib, 2, &argmax, sizeof(argmax)) != 0)
-        return 0;
-    return argmax;
-}
-
-
 // Read process argument space.
 static int
 psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
