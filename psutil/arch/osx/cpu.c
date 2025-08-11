@@ -41,9 +41,8 @@ For reference, here's the git history with original implementations:
 PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int num;
-    size_t size = sizeof(int);
 
-    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 0))
+    if (psutil_sysctlbyname_fixed("hw.logicalcpu", &num, sizeof(num)) != 0)
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", num);
@@ -53,9 +52,8 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 PyObject *
 psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     int num;
-    size_t size = sizeof(int);
 
-    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0))
+    if (psutil_sysctlbyname_fixed("hw.physicalcpu", &num, sizeof(num)) != 0)
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", num);
@@ -261,10 +259,9 @@ error:
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     unsigned int curr;
-    int64_t min = 0;
-    int64_t max = 0;
+    int64_t min;
+    int64_t max;
     int mib[2];
-    size_t size = sizeof(min);
 
     // also available as "hw.cpufrequency" but it's deprecated
     mib[0] = CTL_HW;
@@ -273,13 +270,19 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     if (psutil_sysctl_fixed(mib, 2, &curr, sizeof(curr)) < 0)
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
 
-    size = sizeof(min);
-    if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
+    if (psutil_sysctlbyname_fixed(
+            "hw.cpufrequency_min", &min, sizeof(min)) != 0)
+    {
+        min = 0;
         psutil_debug("sysctlbyname('hw.cpufrequency_min') failed (set to 0)");
+    }
 
-    size = sizeof(max);
-    if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
-        psutil_debug("sysctlbyname('hw.cpufrequency_min') failed (set to 0)");
+    if (psutil_sysctlbyname_fixed(
+            "hw.cpufrequency_max", &max, sizeof(max)) != 0)
+    {
+        max = 0;
+        psutil_debug("sysctlbyname('hw.cpufrequency_max') failed (set to 0)");
+    }
 
     return Py_BuildValue(
         "KKK",

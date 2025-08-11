@@ -43,7 +43,7 @@ psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
 
     if (len != buflen) {
         snprintf(
-            errbuf, sizeof(errbuf), "sysctlbyname('%s')  size mismatch", name
+            errbuf, sizeof(errbuf), "sysctlbyname('%s') size mismatch", name
         );
         PyErr_SetString(PyExc_RuntimeError, errbuf);
         return -1;
