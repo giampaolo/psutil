@@ -264,23 +264,22 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     int64_t min = 0;
     int64_t max = 0;
     int mib[2];
-    size_t len = sizeof(curr);
     size_t size = sizeof(min);
 
     // also available as "hw.cpufrequency" but it's deprecated
     mib[0] = CTL_HW;
     mib[1] = HW_CPU_FREQ;
 
-    if (sysctl(mib, 2, &curr, &len, NULL, 0) < 0)
+    if (psutil_sysctl_fixed(mib, 2, &curr, sizeof(curr)) < 0)
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
 
     size = sizeof(min);
     if (sysctlbyname("hw.cpufrequency_min", &min, &size, NULL, 0))
-        psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
+        psutil_debug("sysctlbyname('hw.cpufrequency_min') failed (set to 0)");
 
     size = sizeof(max);
     if (sysctlbyname("hw.cpufrequency_max", &max, &size, NULL, 0))
-        psutil_debug("sysctl('hw.cpufrequency_min') failed (set to 0)");
+        psutil_debug("sysctlbyname('hw.cpufrequency_min') failed (set to 0)");
 
     return Py_BuildValue(
         "KKK",
