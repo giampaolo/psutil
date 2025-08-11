@@ -19,9 +19,35 @@ psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
         return -1;
     }
+
     if (len != buflen) {
         PyErr_SetString(PyExc_RuntimeError, "sysctl() size mismatch");
         return -1;
     }
+
+    return 0;
+}
+
+
+// A thin wrapper on top of sysctlbyname().
+int
+psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
+    size_t len = buflen;
+    char errbuf[256];
+
+    if (sysctlbyname(name, buf, &len, NULL, 0) == -1) {
+        snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s')", name);
+        psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+        return -1;
+    }
+
+    if (len != buflen) {
+        snprintf(
+            errbuf, sizeof(errbuf), "sysctlbyname('%s')  size mismatch", name
+        );
+        PyErr_SetString(PyExc_RuntimeError, errbuf);
+        return -1;
+    }
+
     return 0;
 }

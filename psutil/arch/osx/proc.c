@@ -579,7 +579,6 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     pid_t pid;
-    size_t len;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
     mach_vm_size_t size = 0;
@@ -597,11 +596,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
 
-    len = sizeof(cpu_type);
-    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('sysctl.proc_cputype')"
-        );
+    if (psutil_sysctlbyname_fixed(
+            "sysctl.proc_cputype", &cpu_type, sizeof(cpu_type)) != 0)
+    {
+        return NULL;
     }
 
     // Roughly based on libtop_update_vm_regions in
