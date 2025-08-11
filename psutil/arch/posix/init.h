@@ -9,6 +9,7 @@
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     #include "users.h"
 #endif
+
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
     int psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen);
     int psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen);

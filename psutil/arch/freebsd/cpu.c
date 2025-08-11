@@ -124,26 +124,16 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int v_swtch;
     size_t size = sizeof(v_soft);
 
-    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_soft')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_intr')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_syscall')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_trap')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_swtch')");
-    }
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_soft", &v_soft, size))
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_intr", &v_intr, size))
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_syscall", &v_syscall, size))
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_trap", &v_trap, size))
+        return NULL;
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_swtch", &v_swtch, size))
+        return NULL;
 
     return Py_BuildValue(
         "IIIII",
