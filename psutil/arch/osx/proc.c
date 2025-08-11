@@ -123,16 +123,11 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 static int
 psutil_sysctl_argmax() {
     int argmax;
-    int mib[2];
-    size_t size = sizeof(argmax);
+    int mib[2] = {CTL_KERN, KERN_ARGMAX};
 
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
-        return argmax;
-    psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
-    return 0;
+    if (psutil_sysctl_fixed(mib, 2, &argmax, sizeof(argmax)) != 0)
+        return 0;
+    return argmax;
 }
 
 
