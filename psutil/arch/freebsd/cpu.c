@@ -124,15 +124,15 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int v_swtch;
     size_t size = sizeof(v_soft);
 
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_soft", &v_soft, size))
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_soft", &v_soft, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_intr", &v_intr, size))
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_intr", &v_intr, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_syscall", &v_syscall, size))
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_syscall", &v_syscall, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_trap", &v_trap, size))
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_trap", &v_trap, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_swtch", &v_swtch, size))
+    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_swtch", &v_swtch, size) != 0)
         return NULL;
 
     return Py_BuildValue(
