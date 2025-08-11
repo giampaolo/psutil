@@ -96,6 +96,7 @@ include psutil/arch/posix/net.c
 include psutil/arch/posix/net.h
 include psutil/arch/posix/proc.c
 include psutil/arch/posix/proc.h
+include psutil/arch/posix/sysctl.c
 include psutil/arch/posix/users.c
 include psutil/arch/posix/users.h
 include psutil/arch/sunos/cpu.c
