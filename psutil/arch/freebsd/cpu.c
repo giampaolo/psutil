@@ -161,9 +161,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "i", &core))
         return NULL;
+
     // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
     sprintf(sensor, "dev.cpu.%d.freq", core);
-    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+    if (psutil_sysctlbyname_fixed(sensor, &current, size) != 0)
         goto error;
 
     size = sizeof(available_freq_levels);
