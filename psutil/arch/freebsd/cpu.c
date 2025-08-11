@@ -28,43 +28,35 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int maxcpus;
     int mib[2];
     int ncpu;
-    size_t len;
     size_t size;
-    int i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
 
-    // retrieve maxcpus value
-    size = sizeof(maxcpus);
-    if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
-        Py_DECREF(py_retlist);
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('kern.smp.maxcpus')");
-    }
-    long cpu_time[maxcpus][CPUSTATES];
-
-    // retrieve the number of cpus
+    // retrieve the number of CPUs currently online
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_NCPU)");
+    if (psutil_sysctl_fixed(mib, 2, &ncpu, sizeof(ncpu)) != 0) {
         goto error;
     }
 
-    // per-cpu info
-    size = sizeof(cpu_time);
-    if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('kern.smp.maxcpus')"
-        );
+    // allocate buffer dynamically based on actual CPU count
+    long (*cpu_time)[CPUSTATES] = malloc(ncpu * sizeof(*cpu_time));
+    if (!cpu_time) {
+        PyErr_NoMemory();
         goto error;
     }
 
-    for (i = 0; i < ncpu; i++) {
+    // get per-cpu times using ncpu count
+    size = ncpu * sizeof(*cpu_time);
+    if (psutil_sysctlbyname_fixed("kern.cp_times", cpu_time, size) == -1) {
+        free(cpu_time);
+        goto error;
+    }
+
+    for (int i = 0; i < ncpu; i++) {
         py_cputime = Py_BuildValue(
             "(ddddd)",
             (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
@@ -72,13 +64,19 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
             (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
             (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC);
-        if (!py_cputime)
+        if (!py_cputime) {
+            free(cpu_time);
             goto error;
-        if (PyList_Append(py_retlist, py_cputime))
+        }
+        if (PyList_Append(py_retlist, py_cputime)) {
+            Py_DECREF(py_cputime);
+            free(cpu_time);
             goto error;
+        }
         Py_DECREF(py_cputime);
     }
 
+    free(cpu_time);
     return py_retlist;
 
 error:
