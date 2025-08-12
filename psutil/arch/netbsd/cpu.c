@@ -25,16 +25,11 @@ original(ish) implementations:
 
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    size_t size;
     struct uvmexp_sysctl uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
 
-    size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
-    }
-
     return Py_BuildValue(
         "IIIIIII",
         uv.swtch,  // ctx switches
