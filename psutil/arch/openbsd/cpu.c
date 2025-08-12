@@ -17,7 +17,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int mib[3];
     int ncpu;
     size_t len;
-    size_t size;
     int i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
@@ -66,15 +65,11 @@ error:
 
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    size_t size;
     struct uvmexp uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
 
-    size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(uvmexp_mib, 2, &uv, sizeof(uv)) !=0)
         return NULL;
-    }
 
     return Py_BuildValue(
         "IIIIIII",
@@ -92,16 +87,12 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     int freq;
-    size_t size;
     int mib[2] = {CTL_HW, HW_CPUSPEED};
 
     // On VirtualBox I get "sysctl hw.cpuspeed=2593" (never changing),
     // which appears to be expressed in Mhz.
-    size = sizeof(freq);
-    if (sysctl(mib, 2, &freq, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(mib, 2, &freq, sizeof(freq)) != 0)
         return NULL;
-    }
 
     return Py_BuildValue("i", freq);
 }
