@@ -28,22 +28,18 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // retrieve the number of cpus
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(mib, 2, &ncpu, sizeof(ncpu)) != 0)
         goto error;
-    }
+
     uint64_t cpu_time[CPUSTATES];
 
     for (i = 0; i < ncpu; i++) {
         mib[0] = CTL_KERN;
         mib[1] = KERN_CPTIME2;
         mib[2] = i;
-        size = sizeof(cpu_time);
-        if (sysctl(mib, 3, &cpu_time, &size, NULL, 0) == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
+
+        if (psutil_sysctl_fixed(mib, 3, &cpu_time, sizeof(cpu_time)) != 0)
+            goto error;
 
         py_cputime = Py_BuildValue(
             "(ddddd)",
