@@ -14,6 +14,8 @@
     #include <utmp.h>
 #endif
 
+#include "../../arch/all/init.h"
+
 
 // Return a Python float indicating the system boot time expressed in
 // seconds since the epoch.

@@ -11,6 +11,8 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {

@@ -9,6 +9,8 @@
 #include <sys/resource.h>
 #include <sys/sched.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
