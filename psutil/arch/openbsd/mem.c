@@ -29,28 +29,20 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     long pagesize = psutil_getpagesize();
 
     size = sizeof(total_physmem);
-    if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(physmem_mib, 2, &total_physmem, size) != 0)
         return NULL;
-    }
 
     size = sizeof(uvmexp);
-    if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(uvmexp_mib, 2, &uvmexp, size) != 0)
         return NULL;
-    }
 
     size = sizeof(bcstats);
-    if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(bcstats_mib, 3, &bcstats, size) != 0)
         return NULL;
-    }
 
     size = sizeof(vmdata);
-    if (sysctl(vmmeter_mib, 2, &vmdata, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(vmmeter_mib, 2, &vmdata, size) != 0)
         return NULL;
-    }
 
     return Py_BuildValue("KKKKKKKK",
         // Note: many programs calculate total memory as
