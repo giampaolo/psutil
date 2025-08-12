@@ -29,6 +29,7 @@ psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
 }
 
 
+#if !defined(PSUTIL_OPENBSD)
 // A thin wrapper on top of sysctlbyname().
 int
 psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
@@ -56,6 +57,7 @@ psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
 
     return 0;
 }
+#endif  // !PSUTIL_OPENBSD
 
 
 // Get the maximum process arguments size.
