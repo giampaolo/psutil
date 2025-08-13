@@ -8,6 +8,7 @@
 #include <sys/sysctl.h>
 #include <sys/resource.h>
 #include <sys/sched.h>
+#include <sys/types.h>
 
 #include "../../arch/all/init.h"
 
