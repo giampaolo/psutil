@@ -4,7 +4,9 @@
  * found in the LICENSE file.
  */
 
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 #include <Python.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 
 #include "../../arch/all/init.h"
@@ -73,3 +75,4 @@ psutil_sysctl_argmax() {
     }
     return argmax;
 }
+#endif  // defined(PLATFORMS…)
