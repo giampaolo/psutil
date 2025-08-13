@@ -40,82 +40,33 @@ typedef struct kinfo_proc kinfo_proc;
 // --- utils
 // ====================================================================
 
-/*
- * Returns a list of all BSD processes on the system.  This routine
- * allocates the list and puts it in *procList and a count of the
- * number of entries in *procCount.  You are responsible for freeing
- * this list (use "free" from System framework).
- * On success, the function returns 0.
- * On error, the function returns a BSD errno value.
- */
+
 static int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     int mib[3];
-    size_t size, size2;
-    void *ptr;
-    int err;
-    int lim = 8;  // some limit
+    size_t len;
+    void *buf;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ALL;
+    *procList = NULL;
     *procCount = 0;
 
-    /*
-     * We start by calling sysctl with ptr == NULL and size == 0.
-     * That will succeed, and set size to the appropriate length.
-     * We then allocate a buffer of at least that size and call
-     * sysctl with that buffer.  If that succeeds, we're done.
-     * If that call fails with ENOMEM, we throw the buffer away
-     * and try again.
-     * Note that the loop calls sysctl with NULL again.  This is
-     * is necessary because the ENOMEM failure case sets size to
-     * the amount of data returned, not the amount of data that
-     * could have been returned.
-     */
-    while (lim-- > 0) {
-        size = 0;
-        if (sysctl((int *)mib, 3, NULL, &size, NULL, 0) == -1) {
-            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
-            return 1;
-        }
-        size2 = size + (size >> 3);  // add some
-        if (size2 > size) {
-            ptr = malloc(size2);
-            if (ptr == NULL)
-                ptr = malloc(size);
-            else
-                size = size2;
-        }
-        else {
-            ptr = malloc(size);
-        }
-        if (ptr == NULL) {
-            PyErr_NoMemory();
-            return 1;
-        }
+    buf = psutil_sysctl_malloc(mib, 3, &len);
+    if (buf == NULL)
+        return 1;
 
-        if (sysctl((int *)mib, 3, ptr, &size, NULL, 0) == -1) {
-            err = errno;
-            free(ptr);
-            if (err != ENOMEM) {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
-                return 1;
-            }
-        }
-        else {
-            *procList = (kinfo_proc *)ptr;
-            *procCount = size / sizeof(kinfo_proc);
-            if (procCount <= 0) {
-                PyErr_Format(PyExc_RuntimeError, "no PIDs found");
-                return 1;
-            }
-            return 0;  // success
-        }
+    *procList = (kinfo_proc *)buf;
+    *procCount = len / sizeof(kinfo_proc);
+
+    if (*procCount == 0) {
+        free(buf);
+        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        return 1;
     }
 
-    PyErr_Format(PyExc_RuntimeError, "couldn't collect PIDs list");
-    return 1;
+    return 0;
 }
 
 
