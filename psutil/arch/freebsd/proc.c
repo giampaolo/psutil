@@ -575,9 +575,7 @@ error:
 PyObject *
 psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     pid_t pid;
-    int ret;
     int resource;
-    size_t len;
     int name[5];
     struct rlimit rlp;
 
@@ -589,11 +587,9 @@ psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     name[2] = KERN_PROC_RLIMIT;
     name[3] = pid;
     name[4] = resource;
-    len = sizeof(rlp);
 
-    ret = sysctl(name, 5, &rlp, &len, NULL, 0);
-    if (ret == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(name, 5, &rlp, sizeof(rlp)) != 0)
+        return NULL;
 
 #if defined(HAVE_LONG_LONG)
     return Py_BuildValue("LL",
