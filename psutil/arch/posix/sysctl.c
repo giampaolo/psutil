@@ -38,15 +38,14 @@ psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
 int
 psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     size_t needed = 0;
-    size_t len;
     char *buffer = NULL;
     int ret;
     int max_retries = MAX_RETRIES;
 
-    // First query to determine required size.
+    // First query to determine required size
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
     if (ret == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 1/2");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 1/3");
         return -1;
     }
 
@@ -57,42 +56,32 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
             return -1;
         }
 
-        len = needed;
+        size_t len = needed;
         ret = sysctl(mib, miblen, buffer, &len, NULL, 0);
-        if (ret == 0) {
-            if (len == needed) {
-                // Success with exact size.
-                *buf = buffer;
-                *buflen = needed;
-                return 0;
-            }
 
-            // Size mismatch. Retry with the new size.
-            psutil_debug("sysctl() malloc size mismatch");
-            free(buffer);
-            needed = len;
-            continue;
+        if (ret == 0) {
+            *buf = buffer;
+            *buflen = len;
+            return 0;
         }
 
-        // sysctl() failed — check if it's ENOMEM (buffer too small).
+        // Handle buffer too small
         if (errno == ENOMEM) {
             free(buffer);
-            needed = len;  // Some sysctls set len, use it if provided.
-            if (needed == 0) {
-                // Fallback: re-query size explicitly.
-                if (sysctl(mib, miblen, NULL, &needed, NULL, 0) == -1) {
-                    psutil_PyErr_SetFromOSErrnoWithSyscall(
-                        "sysctl() malloc size refresh"
-                    );
-                    return -1;
-                }
+            buffer = NULL;
+
+            // Re-query needed size for next attempt
+            if (sysctl(mib, miblen, NULL, &needed, NULL, 0) == -1) {
+                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 2/3");
+                return -1;
             }
+
             continue;
         }
 
         // Other error: give up.
         free(buffer);
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 2/2");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 3/3");
         return -1;
     }
 
@@ -101,7 +90,6 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     );
     return -1;
 }
-
 
 #if !defined(PSUTIL_OPENBSD)
 // A thin wrapper on top of sysctlbyname().

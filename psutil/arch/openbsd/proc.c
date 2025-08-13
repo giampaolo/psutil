@@ -111,9 +111,10 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
+    char *argv_buf = NULL;
+    size_t argv_len = 0;
     char **argv = NULL;
     char **p;
-    size_t argv_size = 128;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_arg = NULL;
 
@@ -127,22 +128,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
 
-    // Loop and reallocate until we have enough space to fit argv.
-    for (;; argv_size *= 2) {
-        if (argv_size >= 8192) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "can't allocate enough space for KERN_PROC_ARGV");
-            goto error;
-        }
-        if ((argv = realloc(argv, argv_size)) == NULL)
-            continue;
-        if (sysctl(mib, 4, argv, &argv_size, NULL, 0) == 0)
-            break;
-        if (errno == ENOMEM)
-            continue;
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_malloc(mib, 4, &argv_buf, &argv_len) == -1)
         goto error;
-    }
+
+    argv = (char **)argv_buf;
 
     for (p = argv; *p != NULL; p++) {
         py_arg = PyUnicode_DecodeFSDefault(*p);
@@ -153,12 +142,12 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
         Py_DECREF(py_arg);
     }
 
-    free(argv);
+    free(argv_buf);
     return py_retlist;
 
 error:
-    if (argv != NULL)
-        free(argv);
+    if (argv_buf != NULL)
+        free(argv_buf);
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
