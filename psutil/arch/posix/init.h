@@ -10,6 +10,14 @@
     #include "users.h"
 #endif
 
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+    #include <sys/types.h>
+
+    int psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen);
+    int psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen);
+    int psutil_sysctl_argmax();
+#endif
+
 long psutil_getpagesize(void);
 PyObject *psutil_getpagesize_pywrapper(PyObject *self, PyObject *args);
 PyObject *psutil_users(PyObject *self, PyObject *args);

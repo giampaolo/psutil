@@ -56,7 +56,6 @@ PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int      mib[2];
     uint64_t total;
-    size_t   len = sizeof(total);
     vm_statistics64_data_t vm;
     long pagesize = psutil_getpagesize();
     // physical mem
@@ -64,10 +63,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     mib[1] = HW_MEMSIZE;
 
     // This is also available as sysctlbyname("hw.memsize").
-    if (sysctl(mib, 2, &total, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(mib, 2, &total, sizeof(total)) != 0)
         return NULL;
-    }
 
     // vm
     if (psutil_sys_vminfo(&vm) != 0)
@@ -91,22 +88,16 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2];
-    size_t size;
     struct xsw_usage totals;
     vm_statistics64_data_t  vmstat;
     long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
-    size = sizeof(totals);
-    if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
-        if (errno != 0)
-            PyErr_SetFromErrno(PyExc_OSError);
-        else
-            PyErr_Format(
-                PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) syscall failed");
-        return NULL;
-    }
+
+    if (psutil_sysctl_fixed(mib, 2, &totals, sizeof(totals)) != 0)
+        return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
+
     if (psutil_sys_vminfo(&vmstat) != 0)
         return NULL;
 

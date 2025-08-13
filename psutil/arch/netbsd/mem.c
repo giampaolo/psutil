@@ -32,11 +32,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int mib[] = {CTL_VM, VM_UVMEXP2};
     long long cached;
 
-    size = sizeof(uv);
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
-    }
 
     // Note: zabbix does not include anonpages, but that doesn't match the
     // "Cached" value in /proc/meminfo.
@@ -93,18 +90,17 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     size_t size = sizeof(total);
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
-    size = sizeof(uv);
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_fixed(mib, 2, &uv, sizeof(uv)) != 0)
         goto error;
-    }
 
-    return Py_BuildValue("(LLLll)",
-                         swap_total,
-                         (swap_total - swap_free),
-                         swap_free,
-                         (long) uv.pgswapin * pagesize,  // swap in
-                         (long) uv.pgswapout * pagesize);  // swap out
+    return Py_BuildValue(
+        "(LLLll)",
+        swap_total,
+        (swap_total - swap_free),
+        swap_free,
+        (long) uv.pgswapin * pagesize,  // swap in
+        (long) uv.pgswapout * pagesize  // swap out
+    );
 
 error:
     free(swdev);

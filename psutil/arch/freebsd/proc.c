@@ -153,12 +153,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    // Get the maximum process arguments size.
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    size = sizeof(argmax);
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
+    argmax = psutil_sysctl_argmax();
+    if (! argmax)
         goto error;
 
     // Allocate space for the arguments.
