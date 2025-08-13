@@ -306,6 +306,8 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(user.terminal, (str, type(None)))
             assert isinstance(user.host, (str, type(None)))
             assert isinstance(user.pid, (int, type(None)))
+            if isinstance(user.pid, int):
+                assert user.pid > 0
 
 
 class TestProcessWaitType(PsutilTestCase):
