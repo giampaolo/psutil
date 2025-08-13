@@ -57,7 +57,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
             return -1;
         }
 
-        len = needed;
+        size_t len = needed;
         ret = sysctl(mib, miblen, buffer, &len, NULL, 0);
 
         if (ret == 0) {
