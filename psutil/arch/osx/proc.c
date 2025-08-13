@@ -42,10 +42,10 @@ typedef struct kinfo_proc kinfo_proc;
 
 
 static int
-psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
+psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int mib[3];
-    size_t len;
-    void *buf;
+    size_t len = 0;
+    char *buf = NULL;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -53,12 +53,11 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     *procList = NULL;
     *procCount = 0;
 
-    buf = psutil_sysctl_malloc(mib, 3, &len);
-    if (buf == NULL)
+    if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
         return 1;
 
-    *procList = (kinfo_proc *)buf;
-    *procCount = len / sizeof(kinfo_proc);
+    *procList = (struct kinfo_proc *)buf;
+    *procCount = len / sizeof(struct kinfo_proc);
 
     if (*procCount == 0) {
         free(buf);
@@ -68,7 +67,6 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 
     return 0;
 }
-
 
 // Read process argument space.
 static int

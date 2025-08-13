@@ -74,7 +74,7 @@ static void psutil_remove_spaces(char *str) {
 
 
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
-    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
     size_t length = 0;
     char *buf = NULL;
 
@@ -82,7 +82,7 @@ int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     assert(*procList == NULL);
     assert(procCount != NULL);
 
-    if (psutil_sysctl_malloc(name, 3, &buf, &length) != 0) {
+    if (psutil_sysctl_malloc(mib, 4, &buf, &length) != 0) {
         return 1;
     }
 
@@ -90,7 +90,6 @@ int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     *procCount = length / sizeof(struct kinfo_proc);
     return 0;
 }
-
 
 /*
  * Borrowed from psi Python System Information project
