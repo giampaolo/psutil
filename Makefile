@@ -92,7 +92,8 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+	export CFLAGS="-O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer"
+	$(PYTHON_ENV_VARS) CFLAGS="-O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer" $(PYTHON) -m pytest -k osx
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
