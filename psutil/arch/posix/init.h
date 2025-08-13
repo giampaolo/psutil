@@ -14,6 +14,7 @@
     #include <sys/types.h>
 
     int psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen);
+    int psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen);
     int psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen);
     int psutil_sysctl_argmax();
 #endif

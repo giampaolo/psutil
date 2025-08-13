@@ -23,41 +23,28 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
-    mib[0] = CTL_NET;          // networking subsystem
-    mib[1] = PF_ROUTE;         // type of information
-    mib[2] = 0;                // protocol (IPPROTO_xxx)
-    mib[3] = 0;                // address family
-    mib[4] = NET_RT_IFLIST2;   // operation
-    mib[5] = 0;
-    size_t len;
+    size_t len = 0;
     PyObject *py_ifc_info = NULL;
     PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
 
-    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
+    mib[0] = CTL_NET;          // networking subsystem
+    mib[1] = PF_ROUTE;         // type of information
+    mib[2] = 0;                // protocol (IPPROTO_xxx)
+    mib[3] = 0;                // address family
+    mib[4] = NET_RT_IFLIST2;   // operation
+    mib[5] = 0;
 
-    buf = malloc(len);
-    if (buf == NULL) {
-        PyErr_NoMemory();
+    if (psutil_sysctl_malloc(mib, 6, &buf, &len) != 0)
         goto error;
-    }
-
-    if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
 
     lim = buf + len;
 
     for (next = buf; next < lim; ) {
-        // Check we have enough space for if_msghdr
+        // Check we have enough space for if_msghdr.
         if ((size_t)(lim - next) < sizeof(struct if_msghdr)) {
-            // buffer too small for header
             psutil_debug("struct xfile size mismatch");
         }
 
