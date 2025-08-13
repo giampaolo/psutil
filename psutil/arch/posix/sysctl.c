@@ -30,6 +30,51 @@ psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
     return 0;
 }
 
+// Allocate buffer for sysctl with retry on ENOMEM. The caller is
+// supposed to free() memory after use.
+int
+psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
+    size_t needed = 0;
+    char *buffer = NULL;
+    int ret;
+    int max_retries = 8;
+
+    ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
+    if (ret == -1) {
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 1/2");
+        return -1;
+    }
+
+    while (max_retries-- > 0) {
+        buffer = malloc(needed);
+        if (!buffer) {
+            PyErr_NoMemory();
+            return -1;
+        }
+
+        ret = sysctl(mib, miblen, buffer, &needed, NULL, 0);
+        if (ret == 0) {
+            *buf = buffer;
+            *buflen = needed;
+            return 0;
+        }
+
+        if (errno != ENOMEM) {
+            free(buffer);
+            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 2/2");
+            return -1;
+        }
+
+        free(buffer);
+        buffer = NULL;
+    }
+
+    PyErr_SetString(
+        PyExc_RuntimeError, "sysctl() buffer allocation retry limit exceeded"
+    );
+    return -1;
+}
+
 
 #if !defined(PSUTIL_OPENBSD)
 // A thin wrapper on top of sysctlbyname().
