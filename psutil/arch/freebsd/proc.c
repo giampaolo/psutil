@@ -100,40 +100,24 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
-    int argmax;
-    size_t size = sizeof(argmax);
     char *procargs = NULL;
+    size_t size = 0;
     size_t pos = 0;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    argmax = psutil_sysctl_argmax();
-    if (! argmax)
-        goto error;
-
-    // Allocate space for the arguments.
-    procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    // Make a sysctl() call to get the raw argument space of the process.
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ARGS;
     mib[3] = pid;
 
-    size = argmax;
-    if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGS)");
+    if (psutil_sysctl_malloc(mib, 4, &procargs, &size) != 0)
         goto error;
-    }
 
     // args are returned as a flattened string with \0 separators between
     // arguments add each string to the list then step forward to the next
@@ -146,7 +130,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
             Py_DECREF(py_arg);
-            pos = pos + strlen(&procargs[pos]) + 1;
+            py_arg = NULL;
+            pos += strlen(&procargs[pos]) + 1;
         }
     }
 
@@ -155,12 +140,11 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_arg);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);
     return NULL;
 }
-
 
 /*
  * Return process pathname executable.
