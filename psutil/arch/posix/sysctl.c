@@ -33,8 +33,8 @@ psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
     return 0;
 }
 
-// Allocate buffer for sysctl with retry on ENOMEM or buf size
-// mismatch. The caller is supposed to free() memory after use.
+// Allocate buffer for sysctl with retry on ENOMEM or buffer size mismatch.
+// The caller is responsible for freeing the memory.
 int
 psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     size_t needed = 0;
@@ -50,7 +50,8 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     }
 
     while (max_retries-- > 0) {
-        buffer = malloc(needed);
+        // zero-initialize buffer to prevent uninitialized bytes
+        buffer = calloc(1, needed);
         if (buffer == NULL) {
             PyErr_NoMemory();
             return -1;
@@ -60,6 +61,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
         ret = sysctl(mib, miblen, buffer, &len, NULL, 0);
 
         if (ret == 0) {
+            // Success: return buffer and length
             *buf = buffer;
             *buflen = len;
             return 0;
@@ -80,7 +82,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
             continue;
         }
 
-        // Other error: give up.
+        // Other errors: clean up and give up
         free(buffer);
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 3/3");
         return -1;
@@ -134,6 +136,7 @@ psutil_sysctl_argmax() {
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
         return 0;
     }
+
     return argmax;
 }
 #endif  // defined(PLATFORMS…)
