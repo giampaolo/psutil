@@ -12,6 +12,9 @@
 #include "../../arch/all/init.h"
 
 
+#define MAX_RETRIES 10
+
+
 // A thin wrapper on top of sysctl().
 int
 psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
@@ -38,7 +41,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     size_t len;
     char *buffer = NULL;
     int ret;
-    int max_retries = 8;
+    int max_retries = MAX_RETRIES;
 
     // First query to determine required size.
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
