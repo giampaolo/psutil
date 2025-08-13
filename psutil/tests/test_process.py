@@ -1069,6 +1069,7 @@ class TestProcess(PsutilTestCase):
             assert fileobj.name not in p.open_files()
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    @pytest.mark.xdist_group(name="serial")
     def test_num_fds(self):
         p = psutil.Process()
         testfn = self.get_testfn()
