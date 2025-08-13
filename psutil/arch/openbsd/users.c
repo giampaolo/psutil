@@ -46,7 +46,7 @@ psutil_users(PyObject *self, PyObject *args) {
         if (! py_hostname)
             goto error;
         py_tuple = Py_BuildValue(
-            "(OOOdi)",
+            "(OOOdO)",
             py_username,        // username
             py_tty,             // tty
             py_hostname,        // hostname
