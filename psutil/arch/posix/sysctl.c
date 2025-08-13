@@ -76,6 +76,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
                 return -1;
             }
 
+            psutil_debug("psutil_sysctl_malloc() retry");
             continue;
         }
 

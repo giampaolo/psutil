@@ -72,62 +72,21 @@ static void psutil_remove_spaces(char *str) {
 // APIS
 // ============================================================================
 
-int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
-    // Returns a list of all BSD processes on the system.  This routine
-    // allocates the list and puts it in *procList and a count of the
-    // number of entries in *procCount.  You are responsible for freeing
-    // this list. On success returns 0, else 1 with exception set.
-    int err;
-    struct kinfo_proc *buf = NULL;
+
+int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
     size_t length = 0;
-    size_t max_length = 12 * 1024 * 1024;  // 12MB
+    char *buf = NULL;
 
     assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
-    // Call sysctl with a NULL buffer in order to get buffer length.
-    err = sysctl(name, 3, NULL, &length, NULL, 0);
-    if (err == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl (null buffer)");
+    if (psutil_sysctl_malloc(name, 3, &buf, &length) != 0) {
         return 1;
     }
 
-    while (1) {
-        // Allocate an appropriately sized buffer based on the results
-        // from the previous call.
-        buf = malloc(length);
-        if (buf == NULL) {
-            PyErr_NoMemory();
-            return 1;
-        }
-
-        // Call sysctl again with the new buffer.
-        err = sysctl(name, 3, buf, &length, NULL, 0);
-        if (err == -1) {
-            free(buf);
-            if (errno == ENOMEM) {
-                // Sometimes the first sysctl() suggested size is not enough,
-                // so we dynamically increase it until it's big enough :
-                // https://github.com/giampaolo/psutil/issues/2093
-                psutil_debug("errno=ENOMEM, length=%zu; retrying", length);
-                length *= 2;
-                if (length < max_length) {
-                    continue;
-                }
-            }
-
-            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
-            return 1;
-        }
-        else {
-            break;
-        }
-    }
-
-    *procList = buf;
+    *procList = (struct kinfo_proc *)buf;
     *procCount = length / sizeof(struct kinfo_proc);
     return 0;
 }
