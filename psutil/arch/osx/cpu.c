@@ -138,10 +138,15 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
 
 #if defined(__arm64__) || defined(__aarch64__)
+
+// Helper to locate the 'pmgr' entry in AppleARMIODevice. Returns 0 on
+// failure, nonzero on success, and stores the found entry in
+// *out_entry. Caller is responsible for IOObjectRelease(*out_entry).
 // Needed because on GitHub CI sometimes (but not all the times)
 // "AppleARMIODevice" is not available.
-PyObject *
-psutil_has_cpu_freq(PyObject *self, PyObject *args) {
+static int
+psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
+
     kern_return_t status;
     io_iterator_t iter = 0;
     io_registry_entry_t entry = 0;
@@ -149,19 +154,20 @@ psutil_has_cpu_freq(PyObject *self, PyObject *args) {
     io_name_t name;
     int found = 0;
 
+    *out_entry = 0;
+
     matching = IOServiceMatching("AppleARMIODevice");
     if (matching == NULL)
-        Py_RETURN_FALSE;
+        return 0;
 
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
     if (status != KERN_SUCCESS)
-        Py_RETURN_FALSE;
+        return 0;
 
     while ((entry = IOIteratorNext(iter)) != 0) {
         status = IORegistryEntryGetName(entry, name);
         if (status == KERN_SUCCESS && strcmp(name, "pmgr") == 0) {
             found = 1;
-            IOObjectRelease(entry);
             break;
         }
         IOObjectRelease(entry);
@@ -169,74 +175,48 @@ psutil_has_cpu_freq(PyObject *self, PyObject *args) {
 
     IOObjectRelease(iter);
 
-    if (found)
+    if (found) {
+        *out_entry = entry;  // caller must release
+        return 1;
+    }
+
+    return 0;
+}
+
+// Python wrapper: return True/False.
+PyObject *
+psutil_has_cpu_freq(PyObject *self, PyObject *args) {
+    io_registry_entry_t entry = 0;
+    int ok = psutil_find_pmgr_entry(&entry);
+    if (entry != 0)
+        IOObjectRelease(entry);
+    if (ok)
         Py_RETURN_TRUE;
-    else
-        Py_RETURN_FALSE;
+    Py_RETURN_FALSE;
 }
 
 
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
-    kern_return_t status;
-    io_iterator_t iter = 0;
     io_registry_entry_t entry = 0;
     CFTypeRef pCoreRef = NULL;
     CFTypeRef eCoreRef = NULL;
-    CFDictionaryRef matching;
     size_t pCoreLength;
-    io_name_t name;
+    uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
 
-    uint32_t pMin = 0;
-    uint32_t eMin = 0;
-    uint32_t min = 0;
-    uint32_t max = 0;
-    uint32_t curr = 0;
-
-    // Get matching service for Apple ARM I/O device.
-    matching = IOServiceMatching("AppleARMIODevice");
-    if (matching == NULL) {
+    if (!psutil_find_pmgr_entry(&entry)) {
         return PyErr_Format(
-            PyExc_RuntimeError,
-            "IOServiceMatching failed: 'AppleARMIODevice' not found"
-        );
-    }
-
-    // IOServiceGetMatchingServices consumes matching; do NOT CFRelease it.
-    status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
-    if (status != KERN_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError, "IOServiceGetMatchingServices call failed"
-        );
-        goto error;
-    }
-
-    // Find the 'pmgr' entry.
-    while ((entry = IOIteratorNext(iter)) != 0) {
-        status = IORegistryEntryGetName(entry, name);
-        if (status == KERN_SUCCESS && strcmp(name, "pmgr") == 0) {
-            break;
-        }
-        IOObjectRelease(entry);
-        entry = 0;
-    }
-
-    if (entry == 0) {
-        PyErr_Format(
             PyExc_RuntimeError,
             "'pmgr' entry was not found in AppleARMIODevice service"
         );
-        goto error;
     }
 
-    // Get performance and efficiency core data.
     pCoreRef = IORegistryEntryCreateCFProperty(
         entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0
     );
     if (pCoreRef == NULL ||
             CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
-            CFDataGetLength(pCoreRef) < 8)
-    {
+            CFDataGetLength(pCoreRef) < 8) {
         PyErr_SetString(
             PyExc_RuntimeError,
             "'voltage-states5-sram' is missing or invalid"
@@ -249,8 +229,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     );
     if (eCoreRef == NULL ||
             CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
-            CFDataGetLength(eCoreRef) < 4)
-    {
+            CFDataGetLength(eCoreRef) < 4) {
         PyErr_SetString(
             PyExc_RuntimeError,
             "'voltage-states1-sram' is missing or invalid"
@@ -258,7 +237,6 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // Extract values safely.
     pCoreLength = CFDataGetLength(pCoreRef);
     CFDataGetBytes(pCoreRef, CFRangeMake(0, 4), (UInt8 *)&pMin);
     CFDataGetBytes(eCoreRef, CFRangeMake(0, 4), (UInt8 *)&eMin);
@@ -273,8 +251,6 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         CFRelease(eCoreRef);
     if (entry)
         IOObjectRelease(entry);
-    if (iter)
-        IOObjectRelease(iter);
 
     return Py_BuildValue(
         "KKK",
@@ -284,13 +260,11 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     );
 
 error:
-    if (pCoreRef != NULL)
+    if (pCoreRef)
         CFRelease(pCoreRef);
-    if (eCoreRef != NULL)
+    if (eCoreRef)
         CFRelease(eCoreRef);
-    if (iter != 0)
-        IOObjectRelease(iter);
-    if (entry != 0)
+    if (entry)
         IOObjectRelease(entry);
     return NULL;
 }
