@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-7.0.1
+7.1.0
 =====
 
 XXXX-XX-XX
@@ -41,6 +41,8 @@ XXXX-XX-XX
   Stephan)
 - 2586_, [macOS], [CRITICAL]: fixed different places in C code which can
   trigger a segfault.
+- 2604_, [Linux]: `virtual_memory()`_ "used" memory does not match recent
+  versions of ``free`` CLI utility.  (patch by Isaac K. Ko)
 - 2605_, [Linux]: `psutil.sensors_battery()` reports a negative amount for
   seconds left.
 - 2607_, [Windows]: ``WindowsService.description()`` method may fail with
