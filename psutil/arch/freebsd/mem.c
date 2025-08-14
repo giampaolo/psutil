@@ -37,31 +37,31 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 
     PyObject *ret = NULL;
 
-    if (psutil_sysctlbyname_fixed("hw.physmem", &total, size_ul) != 0)
+    if (psutil_sysctlbyname("hw.physmem", &total, size_ul) != 0)
         return NULL;
 
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_active_count", &active, size_ui) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_active_count", &active, size_ui) != 0)
         return NULL;
 
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_inactive_count", &inactive, size_ui) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, size_ui) != 0)
         return NULL;
 
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_wire_count", &wired, size_ui) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_wire_count", &wired, size_ui) != 0)
         return NULL;
 
     // Optional; ignore error if not available
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_cache_count", &cached, size_ui) != 0) {
+    if (psutil_sysctlbyname("vm.stats.vm.v_cache_count", &cached, size_ui) != 0) {
         PyErr_Clear();
         cached = 0;
     }
 
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_free_count", &free, size_ui) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_free_count", &free, size_ui) != 0)
         return NULL;
 
-    if (psutil_sysctlbyname_fixed("vfs.bufspace", &buffers, size_long) != 0)
+    if (psutil_sysctlbyname("vfs.bufspace", &buffers, size_long) != 0)
         return NULL;
 
-    if (psutil_sysctl_fixed(mib, 2, &vm, size_vm) != 0) {
+    if (psutil_sysctl(mib, 2, &vm, size_vm) != 0) {
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(CTL_VM | VM_METER)");
     }
 
@@ -102,13 +102,13 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kvm_close(kd);
 
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_swapin", &swapin, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_swapin", &swapin, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_swapout", &swapout, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_swapout", &swapout, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_vnodein", &nodein, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_vnodein", &nodein, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.vm.v_vnodeout", &nodeout, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, size) != 0)
         return NULL;
 
     return Py_BuildValue(

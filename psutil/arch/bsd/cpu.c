@@ -41,18 +41,19 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     int ret;
 
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
-    ret = sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0);
+    ret = psutil_sysctlbyname("kern.cp_time", &cpu_time, size);
 #elif PSUTIL_OPENBSD
     int mib[] = {CTL_KERN, KERN_CPTIME};
-    ret = sysctl(mib, 2, &cpu_time, &size, NULL, 0);
+    ret = psutil_sysctl(mib, 2, &cpu_time, size);
 #endif
-    if (ret == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    return Py_BuildValue("(ddddd)",
-                         (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
-                         (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
-                        );
+    if (ret != 0)
+        return NULL;
+    return Py_BuildValue(
+        "(ddddd)",
+        (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
+        (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
+    );
 }

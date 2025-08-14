@@ -28,7 +28,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
 
-    if (psutil_sysctl_fixed(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
+    if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
     return Py_BuildValue(
         "IIIIIII",
@@ -59,7 +59,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // retrieve the number of cpus
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    if (psutil_sysctl_fixed(mib, 2, &ncpu, sizeof(ncpu)) != 0)
+    if (psutil_sysctl(mib, 2, &ncpu, sizeof(ncpu)) != 0)
         goto error;
 
     uint64_t cpu_time[CPUSTATES];
@@ -69,7 +69,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         mib[0] = CTL_KERN;
         mib[1] = KERN_CP_TIME;
         mib[2] = i;
-        if (psutil_sysctl_fixed(mib, 3, &cpu_time, sizeof(cpu_time)) != 0)
+        if (psutil_sysctl(mib, 3, &cpu_time, sizeof(cpu_time)) != 0)
             goto error;
         py_cputime = Py_BuildValue(
             "(ddddd)",

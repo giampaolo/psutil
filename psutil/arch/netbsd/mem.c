@@ -32,7 +32,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int mib[] = {CTL_VM, VM_UVMEXP2};
     long long cached;
 
-    if (psutil_sysctl_fixed(mib, 2, &uv, sizeof(uv)) != 0)
+    if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
 
     // Note: zabbix does not include anonpages, but that doesn't match the
@@ -90,7 +90,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     size_t size = sizeof(total);
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
-    if (psutil_sysctl_fixed(mib, 2, &uv, sizeof(uv)) != 0)
+    if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
         goto error;
 
     return Py_BuildValue(

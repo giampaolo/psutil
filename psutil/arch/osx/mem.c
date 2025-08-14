@@ -63,7 +63,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     mib[1] = HW_MEMSIZE;
 
     // This is also available as sysctlbyname("hw.memsize").
-    if (psutil_sysctl_fixed(mib, 2, &total, sizeof(total)) != 0)
+    if (psutil_sysctl(mib, 2, &total, sizeof(total)) != 0)
         return NULL;
 
     // vm
@@ -95,7 +95,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
 
-    if (psutil_sysctl_fixed(mib, 2, &totals, sizeof(totals)) != 0)
+    if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
 
     if (psutil_sys_vminfo(&vmstat) != 0)

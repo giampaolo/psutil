@@ -533,7 +533,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
 
-    if (psutil_sysctlbyname_fixed(
+    if (psutil_sysctlbyname(
             "sysctl.proc_cputype", &cpu_type, sizeof(cpu_type)) != 0)
     {
         return NULL;

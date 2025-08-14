@@ -21,7 +21,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     struct timeval result;
     time_t boot_time = 0;
 
-    if (psutil_sysctl_fixed(mib, 2, &result, sizeof(result)) == -1)
+    if (psutil_sysctl(mib, 2, &result, sizeof(result)) == -1)
         return NULL;
     boot_time = result.tv_sec;
     return Py_BuildValue("d", (double)boot_time);

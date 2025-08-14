@@ -587,7 +587,7 @@ psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     name[3] = pid;
     name[4] = resource;
 
-    if (psutil_sysctl_fixed(name, 5, &rlp, sizeof(rlp)) != 0)
+    if (psutil_sysctl(name, 5, &rlp, sizeof(rlp)) != 0)
         return NULL;
 
 #if defined(HAVE_LONG_LONG)

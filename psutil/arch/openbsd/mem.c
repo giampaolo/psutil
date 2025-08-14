@@ -29,19 +29,19 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     long pagesize = psutil_getpagesize();
 
     size = sizeof(total_physmem);
-    if (psutil_sysctl_fixed(physmem_mib, 2, &total_physmem, size) != 0)
+    if (psutil_sysctl(physmem_mib, 2, &total_physmem, size) != 0)
         return NULL;
 
     size = sizeof(uvmexp);
-    if (psutil_sysctl_fixed(uvmexp_mib, 2, &uvmexp, size) != 0)
+    if (psutil_sysctl(uvmexp_mib, 2, &uvmexp, size) != 0)
         return NULL;
 
     size = sizeof(bcstats);
-    if (psutil_sysctl_fixed(bcstats_mib, 3, &bcstats, size) != 0)
+    if (psutil_sysctl(bcstats_mib, 3, &bcstats, size) != 0)
         return NULL;
 
     size = sizeof(vmdata);
-    if (psutil_sysctl_fixed(vmmeter_mib, 2, &vmdata, size) != 0)
+    if (psutil_sysctl(vmmeter_mib, 2, &vmdata, size) != 0)
         return NULL;
 
     return Py_BuildValue("KKKKKKKK",

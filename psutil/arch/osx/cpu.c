@@ -42,7 +42,7 @@ PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int num;
 
-    if (psutil_sysctlbyname_fixed("hw.logicalcpu", &num, sizeof(num)) != 0)
+    if (psutil_sysctlbyname("hw.logicalcpu", &num, sizeof(num)) != 0)
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", num);
@@ -53,7 +53,7 @@ PyObject *
 psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     int num;
 
-    if (psutil_sysctlbyname_fixed("hw.physicalcpu", &num, sizeof(num)) != 0)
+    if (psutil_sysctlbyname("hw.physicalcpu", &num, sizeof(num)) != 0)
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", num);
@@ -267,19 +267,15 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     mib[0] = CTL_HW;
     mib[1] = HW_CPU_FREQ;
 
-    if (psutil_sysctl_fixed(mib, 2, &curr, sizeof(curr)) < 0)
+    if (psutil_sysctl(mib, 2, &curr, sizeof(curr)) < 0)
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
 
-    if (psutil_sysctlbyname_fixed(
-            "hw.cpufrequency_min", &min, sizeof(min)) != 0)
-    {
+    if (psutil_sysctlbyname("hw.cpufrequency_min", &min, sizeof(min)) != 0) {
         min = 0;
         psutil_debug("sysctlbyname('hw.cpufrequency_min') failed (set to 0)");
     }
 
-    if (psutil_sysctlbyname_fixed(
-            "hw.cpufrequency_max", &max, sizeof(max)) != 0)
-    {
+    if (psutil_sysctlbyname("hw.cpufrequency_max", &max, sizeof(max)) != 0) {
         max = 0;
         psutil_debug("sysctlbyname('hw.cpufrequency_max') failed (set to 0)");
     }

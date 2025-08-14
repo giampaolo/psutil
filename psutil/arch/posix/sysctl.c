@@ -12,12 +12,12 @@
 #include "../../arch/all/init.h"
 
 
-#define MAX_RETRIES 10
+static const int MAX_RETRIES = 10;
 
 
 // A thin wrapper on top of sysctl().
 int
-psutil_sysctl_fixed(int *mib, u_int miblen, void *buf, size_t buflen) {
+psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen) {
     size_t len = buflen;
 
     if (sysctl(mib, miblen, buf, &len, NULL, 0) == -1) {
@@ -94,10 +94,11 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     return -1;
 }
 
+
 #if !defined(PSUTIL_OPENBSD)
 // A thin wrapper on top of sysctlbyname().
 int
-psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
+psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
     size_t len = buflen;
     char errbuf[256];
 
@@ -122,6 +123,82 @@ psutil_sysctlbyname_fixed(const char *name, void *buf, size_t buflen) {
 
     return 0;
 }
+
+
+// Allocate buffer for sysctlbyname with retry on ENOMEM or size mismatch.
+// The caller is responsible for freeing the memory.
+int
+psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
+    int ret;
+    int max_retries = MAX_RETRIES;
+    size_t needed = 0;
+    size_t len = 0;
+    char *buffer = NULL;
+    char errbuf[256];
+
+    // First query to determine required size.
+    ret = sysctlbyname(name, NULL, &needed, NULL, 0);
+    if (ret == -1) {
+        snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name);
+        psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+        return -1;
+    }
+
+    while (max_retries-- > 0) {
+        // Zero-initialize buffer to prevent uninitialized bytes.
+        buffer = calloc(1, needed);
+        if (buffer == NULL) {
+            PyErr_NoMemory();
+            return -1;
+        }
+
+        len = needed;
+        ret = sysctlbyname(name, buffer, &len, NULL, 0);
+        if (ret == 0) {
+            // Success: return buffer and actual length.
+            *buf = buffer;
+            *buflen = len;
+            return 0;
+        }
+
+        // Handle buffer too small. Re-query and retry.
+        if (errno == ENOMEM) {
+            free(buffer);
+            buffer = NULL;
+
+            if (sysctlbyname(name, NULL, &needed, NULL, 0) == -1) {
+                snprintf(
+                    errbuf,
+                    sizeof(errbuf),
+                    "sysctlbyname('%s') malloc 2/3",
+                    name
+                );
+                psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+                return -1;
+            }
+
+            psutil_debug("psutil_sysctlbyname_malloc() retry");
+            continue;
+        }
+
+        // Other errors: clean up and give up.
+        free(buffer);
+        snprintf(
+            errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 3/3", name
+        );
+        psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+        return -1;
+    }
+
+    snprintf(
+        errbuf,
+        sizeof(errbuf),
+        "sysctlbyname('%s') buffer allocation retry limit exceeded",
+        name
+    );
+    PyErr_SetString(PyExc_RuntimeError, errbuf);
+    return -1;
+}
 #endif  // !PSUTIL_OPENBSD
 
 
@@ -131,7 +208,7 @@ psutil_sysctl_argmax() {
     int argmax;
     int mib[2] = {CTL_KERN, KERN_ARGMAX};
 
-    if (psutil_sysctl_fixed(mib, 2, &argmax, sizeof(argmax)) != 0) {
+    if (psutil_sysctl(mib, 2, &argmax, sizeof(argmax)) != 0) {
         PyErr_Clear();
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
         return 0;

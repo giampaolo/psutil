@@ -38,7 +38,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // retrieve the number of CPUs currently online
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    if (psutil_sysctl_fixed(mib, 2, &ncpu, sizeof(ncpu)) != 0) {
+    if (psutil_sysctl(mib, 2, &ncpu, sizeof(ncpu)) != 0) {
         goto error;
     }
 
@@ -51,7 +51,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     // get per-cpu times using ncpu count
     size = ncpu * sizeof(*cpu_time);
-    if (psutil_sysctlbyname_fixed("kern.cp_times", cpu_time, size) == -1) {
+    if (psutil_sysctlbyname("kern.cp_times", cpu_time, size) == -1) {
         free(cpu_time);
         goto error;
     }
@@ -88,30 +88,20 @@ error:
 
 PyObject *
 psutil_cpu_topology(PyObject *self, PyObject *args) {
-    void *topology = NULL;
+    char *topology = NULL;
     size_t size = 0;
     PyObject *py_str;
 
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
+    if (psutil_sysctlbyname_malloc(
+            "kern.sched.topology_spec", &topology, &size) != 0)
+    {
+        psutil_debug("ignore sysctlbyname('kern.sched.topology_spec') error");
+        Py_RETURN_NONE;
     }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
 
     py_str = Py_BuildValue("s", topology);
     free(topology);
     return py_str;
-
-error:
-    if (topology != NULL)
-        free(topology);
-    Py_RETURN_NONE;
 }
 
 
@@ -124,15 +114,15 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int v_swtch;
     size_t size = sizeof(v_soft);
 
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_soft", &v_soft, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.sys.v_soft", &v_soft, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_intr", &v_intr, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.sys.v_intr", &v_intr, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_syscall", &v_syscall, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_trap", &v_trap, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.sys.v_trap", &v_trap, size) != 0)
         return NULL;
-    if (psutil_sysctlbyname_fixed("vm.stats.sys.v_swtch", &v_swtch, size) != 0)
+    if (psutil_sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, size) != 0)
         return NULL;
 
     return Py_BuildValue(
@@ -157,21 +147,22 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     int core;
     char sensor[26];
     char available_freq_levels[1000];
-    size_t size = sizeof(current);
+    size_t size;
 
     if (! PyArg_ParseTuple(args, "i", &core))
         return NULL;
 
     // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    size = sizeof(current);
     sprintf(sensor, "dev.cpu.%d.freq", core);
-    if (psutil_sysctlbyname_fixed(sensor, &current, size) != 0)
+    if (psutil_sysctlbyname(sensor, &current, size) != 0)
         goto error;
 
-    size = sizeof(available_freq_levels);
-    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
     // In case of failure, an empty string is returned.
+    size = sizeof(available_freq_levels);
     sprintf(sensor, "dev.cpu.%d.freq_levels", core);
-    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
+    if (psutil_sysctlbyname(sensor, &available_freq_levels, size) != 0)
+        psutil_debug("cpu freq levels failed (ignored)");
 
     return Py_BuildValue("is", current, available_freq_levels);
 
