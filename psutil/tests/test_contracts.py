@@ -109,6 +109,7 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_get(self):
         assert hasattr(psutil, "win_service_get") == WINDOWS
 
+    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     def test_cpu_freq(self):
         assert hasattr(psutil, "cpu_freq") == (
             LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD
