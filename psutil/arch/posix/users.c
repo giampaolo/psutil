@@ -4,14 +4,14 @@
  * found in the LICENSE file.
  */
 
-#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
+#include "../../arch/all/init.h"
 
+#ifdef PSUTIL_HAS_POSIX_USERS
 #include <Python.h>
 #include <string.h>
 
 #include <utmpx.h>
 
-#include "../../arch/all/init.h"
 
 
 static void
@@ -90,4 +90,4 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
-#endif  // !defined(PLATFORMS…)
+#endif  // PSUTIL_HAS_POSIX_USERS

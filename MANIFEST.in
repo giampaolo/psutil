@@ -93,12 +93,9 @@ include psutil/arch/osx/sys.c
 include psutil/arch/posix/init.c
 include psutil/arch/posix/init.h
 include psutil/arch/posix/net.c
-include psutil/arch/posix/net.h
 include psutil/arch/posix/proc.c
-include psutil/arch/posix/proc.h
 include psutil/arch/posix/sysctl.c
 include psutil/arch/posix/users.c
-include psutil/arch/posix/users.h
 include psutil/arch/sunos/cpu.c
 include psutil/arch/sunos/cpu.h
 include psutil/arch/sunos/disk.c

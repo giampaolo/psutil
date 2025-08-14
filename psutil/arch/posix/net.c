@@ -499,10 +499,8 @@ error:
 
 
 
-/*
- * net_if_stats() macOS/BSD implementation.
- */
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+// net_if_stats() macOS/BSD implementation.
+#ifdef PSUTIL_HAS_NET_IF_DUPLEX_SPEED
 
 int psutil_get_nic_speed(int ifm_active) {
     // Determine NIC speed. Taken from:
@@ -685,4 +683,4 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     close(sock);
     return Py_BuildValue("[ii]", duplex, speed);
 }
-#endif  // net_if_stats() macOS/BSD implementation
+#endif  // PSUTIL_HAS_NET_IF_DUPLEX_SPEED

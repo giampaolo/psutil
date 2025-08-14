@@ -36,7 +36,7 @@
 
 // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
 // int as arg and returns an array with cnt struct kinfo_file.
-#if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
+#ifdef PSUTIL_HAS_KINFO_GETFILE
 struct kinfo_file *
 kinfo_getfile(pid_t pid, int* cnt) {
     int mib[6];
@@ -68,7 +68,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
 }
-#endif  // defined(PLATFORMS…)
+#endif  // PSUTIL_HAS_KINFO_GETFILE
 
 
 /*

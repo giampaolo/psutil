@@ -9,7 +9,9 @@
 void convert_kvm_err(const char *syscall, char *errbuf);
 
 #if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
-struct kinfo_file *kinfo_getfile(pid_t pid, int* cnt);
+    #define PSUTIL_HAS_KINFO_GETFILE
+
+    struct kinfo_file *kinfo_getfile(pid_t pid, int* cnt);
 #endif
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);

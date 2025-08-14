@@ -621,7 +621,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - 1684_, [Linux]: `disk_io_counters()`_ may raise ``ValueError`` on systems not
   having ``/proc/diskstats``.
 - 1695_, [Linux]: could not compile on kernels <= 2.6.13 due to
-  ``PSUTIL_HAVE_IOPRIO`` not being defined.  (patch by Anselm Kruis)
+  ``PSUTIL_HAS_IOPRIO`` not being defined.  (patch by Anselm Kruis)
 
 5.6.7
 =====

@@ -4,12 +4,12 @@
  * found in the LICENSE file.
  */
 
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+#include "../../arch/all/init.h"
+
+#ifdef PSUTIL_HAS_SYSCTL
 #include <Python.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-
-#include "../../arch/all/init.h"
 
 
 static const int MAX_RETRIES = 10;
@@ -95,7 +95,23 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
 }
 
 
-#if !defined(PSUTIL_OPENBSD)
+// Get the maximum process arguments size.
+int
+psutil_sysctl_argmax() {
+    int argmax;
+    int mib[2] = {CTL_KERN, KERN_ARGMAX};
+
+    if (psutil_sysctl(mib, 2, &argmax, sizeof(argmax)) != 0) {
+        PyErr_Clear();
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
+        return 0;
+    }
+
+    return argmax;
+}
+
+
+#ifdef PSUTIL_HAS_SYSCTLBYNAME
 // A thin wrapper on top of sysctlbyname().
 int
 psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
@@ -199,21 +215,5 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
     PyErr_SetString(PyExc_RuntimeError, errbuf);
     return -1;
 }
-#endif  // !PSUTIL_OPENBSD
-
-
-// Get the maximum process arguments size.
-int
-psutil_sysctl_argmax() {
-    int argmax;
-    int mib[2] = {CTL_KERN, KERN_ARGMAX};
-
-    if (psutil_sysctl(mib, 2, &argmax, sizeof(argmax)) != 0) {
-        PyErr_Clear();
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
-        return 0;
-    }
-
-    return argmax;
-}
-#endif  // defined(PLATFORMS…)
+#endif  // PSUTIL_HAS_SYSCTLBYNAME
+#endif  // PSUTIL_HAS_SYSCTL
