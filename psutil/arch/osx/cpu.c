@@ -136,7 +136,46 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     );
 }
 
+
 #if defined(__arm64__) || defined(__aarch64__)
+// Needed because on GitHub CI sometimes (but not all the times)
+// "AppleARMIODevice" is not available.
+PyObject *
+psutil_has_cpu_freq(PyObject *self, PyObject *args) {
+    kern_return_t status;
+    io_iterator_t iter = 0;
+    io_registry_entry_t entry = 0;
+    CFDictionaryRef matching;
+    io_name_t name;
+    int found = 0;
+
+    matching = IOServiceMatching("AppleARMIODevice");
+    if (matching == NULL)
+        Py_RETURN_FALSE;
+
+    status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
+    if (status != KERN_SUCCESS)
+        Py_RETURN_FALSE;
+
+    while ((entry = IOIteratorNext(iter)) != 0) {
+        status = IORegistryEntryGetName(entry, name);
+        if (status == KERN_SUCCESS && strcmp(name, "pmgr") == 0) {
+            found = 1;
+            IOObjectRelease(entry);
+            break;
+        }
+        IOObjectRelease(entry);
+    }
+
+    IOObjectRelease(iter);
+
+    if (found)
+        Py_RETURN_TRUE;
+    else
+        Py_RETURN_FALSE;
+}
+
+
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     kern_return_t status;
@@ -255,7 +294,12 @@ error:
         IOObjectRelease(entry);
     return NULL;
 }
-#else
+#else  // not ARM64 / ARCH64
+PyObject *
+psutil_has_cpu_freq(PyObject *self, PyObject *args) {
+    Py_RETURN_TRUE;
+}
+
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     unsigned int curr;

@@ -20,6 +20,7 @@ PyObject *psutil_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
 PyObject *psutil_disk_usage_used(PyObject *self, PyObject *args);
+PyObject *psutil_has_cpu_freq(PyObject *self, PyObject *args);
 PyObject *psutil_net_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_pids(PyObject *self, PyObject *args);
