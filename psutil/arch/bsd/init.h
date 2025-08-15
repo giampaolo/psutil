@@ -9,7 +9,7 @@
 void convert_kvm_err(const char *syscall, char *errbuf);
 
 #if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
-    #define PSUTIL_HAS_KINFO_GETFILE
+    #define PSUTIL_HASNT_KINFO_GETFILE
 
     struct kinfo_file *kinfo_getfile(pid_t pid, int* cnt);
 #endif
