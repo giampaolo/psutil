@@ -13,6 +13,15 @@
 #include <utmpx.h>
 
 
+#ifdef Py_GIL_DISABLED
+    static PyMutex mutex;
+    #define MUTEX_LOCK(m) PyMutex_Lock(m)
+    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
+#else
+    #define MUTEX_LOCK(m)
+    #define MUTEX_UNLOCK(m)
+#endif
+
 
 static void
 setup() {
@@ -38,6 +47,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    MUTEX_LOCK(&mutex);
     setup();
 
     while ((ut = getutxent()) != NULL) {
@@ -79,10 +89,12 @@ psutil_users(PyObject *self, PyObject *args) {
     }
 
     teardown();
+    MUTEX_UNLOCK(&mutex);
     return py_retlist;
 
 error:
     teardown();
+    MUTEX_UNLOCK(&mutex);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
