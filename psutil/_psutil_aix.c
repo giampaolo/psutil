@@ -59,6 +59,15 @@
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
+#ifdef Py_GIL_DISABLED
+    static PyMutex time_mutex;
+    #define MUTEX_LOCK(m) PyMutex_Lock(m)
+    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
+#else
+    #define MUTEX_LOCK(m)
+    #define MUTEX_UNLOCK(m)
+#endif
+
 /*
  * Read a file content and fills a C structure with it.
  */
@@ -653,6 +662,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;
 
+    MUTEX_LOCK(&time_mutex);
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
@@ -661,6 +671,7 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         }
     }
     endutxent();
+    MUTEX_UNLOCK(&time_mutex);
     if (boot_time == 0.0) {
         /* could not find BOOT_TIME in getutxent loop */
         PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
