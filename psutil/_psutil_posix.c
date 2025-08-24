@@ -31,23 +31,17 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_psutil_posix",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static int module_loaded = 0;
 
-PyObject *
-PyInit__psutil_posix(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
+static int
+_psutil_posix_exec(PyObject *mod) {
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
 
 #ifdef Py_GIL_DISABLED
     if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
@@ -59,7 +53,7 @@ PyInit__psutil_posix(void) {
         defined(PSUTIL_SUNOS) || \
         defined(PSUTIL_AIX)
     if (PyModule_AddIntConstant(mod, "AF_LINK", AF_LINK))
-        return NULL;
+        return -1;
 #endif
 
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
@@ -67,101 +61,101 @@ PyInit__psutil_posix(void) {
 
 #ifdef RLIMIT_AS
     if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_CORE
     if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_CPU
     if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_DATA
     if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_FSIZE
     if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_MEMLOCK
     if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_NOFILE
     if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_NPROC
     if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_RSS
     if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_STACK
     if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK))
-        return NULL;
+        return -1;
 #endif
 
 // Linux specific
 
 #ifdef RLIMIT_LOCKS
     if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_MSGQUEUE
     if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_NICE
     if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_RTPRIO
     if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_RTTIME
     if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_SIGPENDING
     if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
-        return NULL;
+        return -1;
 #endif
 
 // Free specific
 
 #ifdef RLIMIT_SWAP
     if (PyModule_AddIntConstant(mod, "RLIMIT_SWAP", RLIMIT_SWAP))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_SBSIZE
     if (PyModule_AddIntConstant(mod, "RLIMIT_SBSIZE", RLIMIT_SBSIZE))
-        return NULL;
+        return -1;
 #endif
 
 #ifdef RLIMIT_NPTS
     if (PyModule_AddIntConstant(mod, "RLIMIT_NPTS", RLIMIT_NPTS))
-        return NULL;
+        return -1;
 #endif
 
 #if defined(HAVE_LONG_LONG)
@@ -174,9 +168,27 @@ PyInit__psutil_posix(void) {
     }
     if (v) {
         if (PyModule_AddObject(mod, "RLIM_INFINITY", v))
-            return NULL;
+            return -1;
     }
 #endif  // defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
 
-    return mod;
+    return 0;
+}
+
+static struct PyModuleDef_Slot _psutil_posix_slots[] = {
+    {Py_mod_exec, _psutil_posix_exec},
+    {0, NULL},
+};
+
+static struct PyModuleDef module_def = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_psutil_posix",
+    .m_size = 0,
+    .m_methods = mod_methods,
+    .m_slots = _psutil_posix_slots,
+};
+
+PyMODINIT_FUNC
+PyInit__psutil_posix(void) {
+    return PyModuleDef_Init(&module_def);
 }
