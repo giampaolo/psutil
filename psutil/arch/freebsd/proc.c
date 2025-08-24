@@ -218,9 +218,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     int mib[4];
     struct kinfo_proc *kip = NULL;
     struct kinfo_proc *kipp = NULL;
-    int error;
     unsigned int i;
-    size_t size;
+    size_t size = 0;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
@@ -235,34 +234,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
     mib[3] = pid;
 
-    size = 0;
-    error = sysctl(mib, 4, NULL, &size, NULL, 0);
-    if (error == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
+    if (psutil_sysctl_malloc(mib, 4, (char **)&kip, &size) != 0)
         goto error;
-    }
+
+    // subtle check: size == 0 means no such process
     if (size == 0) {
         NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
-    kip = malloc(size);
-    if (kip == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    error = sysctl(mib, 4, kip, &size, NULL, 0);
-    if (error == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
-        goto error;
-    }
-    if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
-        goto error;
-    }
-
-    for (i = 0; i < size / sizeof(*kipp); i++) {
+    for (i = 0; i < size / sizeof(*kip); i++) {
         kipp = &kip[i];
         py_tuple = Py_BuildValue("Idd",
                                  kipp->ki_tid,
@@ -274,17 +255,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         Py_DECREF(py_tuple);
     }
+
     free(kip);
     return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (kip != NULL)
-        free(kip);
+    free(kip);
     return NULL;
 }
-
 
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {

@@ -24,9 +24,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
     struct timeval boottime;
-    size_t len = sizeof(boottime);
 
-    if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(request, 2, &boottime, sizeof(boottime)) != 0)
+        return NULL;
     return Py_BuildValue("d", (double)boottime.tv_sec);
 }

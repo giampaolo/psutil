@@ -187,6 +187,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     mib[3] = sizeof(struct kinfo_lwp);
     mib[4] = 0;
 
+    // first query size
     st = sysctl(mib, 5, NULL, &size, NULL, 0);
     if (st == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -197,16 +198,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // set slot count for NetBSD KERN_LWP
     mib[4] = size / sizeof(size_t);
-    kl = malloc(size);
-    if (kl == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
 
-    st = sysctl(mib, 5, kl, &size, NULL, 0);
-    if (st == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_malloc(
+            mib, __arraycount(mib), (char **)&kl, &size) != 0) {
         goto error;
     }
     if (size == 0) {
@@ -216,20 +212,22 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     nlwps = (int)(size / sizeof(struct kinfo_lwp));
     for (i = 0; i < nlwps; i++) {
-        if ((&kl[i])->l_stat == LSIDL || (&kl[i])->l_stat == LSZOMB)
+        if (kl[i].l_stat == LSIDL || kl[i].l_stat == LSZOMB)
             continue;
-        // XXX: we return 2 "user" times because the struct does not provide
-        // any "system" time.
-        py_tuple = Py_BuildValue("idd",
-                                 (&kl[i])->l_lid,
-                                 PSUTIL_KPT2DOUBLE((&kl[i])->l_rtime),
-                                 PSUTIL_KPT2DOUBLE((&kl[i])->l_rtime));
+        // XXX: return 2 "user" times, no "system" time available
+        py_tuple = Py_BuildValue(
+            "idd",
+            kl[i].l_lid,
+            PSUTIL_KPT2DOUBLE(kl[i].l_rtime),
+            PSUTIL_KPT2DOUBLE(kl[i].l_rtime)
+        );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_DECREF(py_tuple);
     }
+
     free(kl);
     return py_retlist;
 
@@ -299,7 +297,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
     int st;
-    int attempt;
+    int attempt = 0;
     int max_attempts = 50;
     size_t len = 0;
     size_t pos = 0;
@@ -317,23 +315,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
 
-    st = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
-    if (st == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctl(KERN_PROC_ARGV) get size"
-        );
-        goto error;
-    }
-
-    procargs = (char *)malloc(len);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
     while (1) {
-        st = sysctl(mib, __arraycount(mib), procargs, &len, NULL, 0);
-        if (st == -1) {
+        if (psutil_sysctl_malloc(
+                mib, __arraycount(mib), (char **)&procargs, &len) != 0) {
             if (errno == EBUSY) {
                 // Usually happens with TestProcess.test_long_cmdline. See:
                 // https://github.com/giampaolo/psutil/issues/2250
@@ -346,14 +330,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
                     psutil_debug(
                         "proc %zu cmdline(): return [] due to EBUSY", pid
                     );
-                    free(procargs);
                     return py_retlist;
                 }
             }
-            else {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV)");
-                goto error;
-            }
+            goto error;
         }
         break;
     }
