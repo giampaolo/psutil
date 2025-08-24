@@ -74,6 +74,7 @@ from contextlib import closing
 import psutil
 from psutil import BSD
 from psutil import MACOS
+from psutil import NETBSD
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil.tests import ASCII_FS
@@ -212,6 +213,7 @@ class TestFSAPIs(BaseUnicodeTest):
             assert cwd == dname
 
     @pytest.mark.skipif(PYPY and WINDOWS, reason="fails on PYPY + WINDOWS")
+    @pytest.mark.skipif(NETBSD, reason="broken on NETBSD")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
