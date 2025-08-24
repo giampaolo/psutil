@@ -41,7 +41,7 @@ struct kinfo_file *
 kinfo_getfile(pid_t pid, int *cnt) {
     int mib[6];
     size_t len;
-    struct kinfo_file *kf;
+    struct kinfo_file *kf = NULL;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE;
@@ -50,9 +50,9 @@ kinfo_getfile(pid_t pid, int *cnt) {
     mib[4] = sizeof(struct kinfo_file);
     mib[5] = 0;
 
-    kf = (struct kinfo_file *)psutil_sysctl_malloc(mib, 6, &len);
-    if (kf == NULL)
+    if (psutil_sysctl_malloc(mib, 6, (char **)&kf, &len) != 0) {
         return NULL;
+    }
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
