@@ -299,7 +299,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
     int st;
-    int attempt;
+    int attempt = 0;
     int max_attempts = 50;
     size_t len = 0;
     size_t pos = 0;
@@ -317,23 +317,9 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
 
-    st = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
-    if (st == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctl(KERN_PROC_ARGV) get size"
-        );
-        goto error;
-    }
-
-    procargs = (char *)malloc(len);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
     while (1) {
-        st = sysctl(mib, __arraycount(mib), procargs, &len, NULL, 0);
-        if (st == -1) {
+        if (psutil_sysctl_malloc(
+                mib, __arraycount(mib), (char **)&procargs, &len) != 0) {
             if (errno == EBUSY) {
                 // Usually happens with TestProcess.test_long_cmdline. See:
                 // https://github.com/giampaolo/psutil/issues/2250
@@ -346,14 +332,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
                     psutil_debug(
                         "proc %zu cmdline(): return [] due to EBUSY", pid
                     );
-                    free(procargs);
                     return py_retlist;
                 }
             }
-            else {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGV)");
-                goto error;
-            }
+            goto error;
         }
         break;
     }
