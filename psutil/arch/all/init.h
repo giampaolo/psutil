@@ -27,6 +27,14 @@ extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
 
+#ifdef Py_GIL_DISABLED
+    extern PyMutex utxent_lock;
+    #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
+    #define UTXENT_MUTEX_UNLOCK() PyMutex_Unlock(&utxent_lock)
+#else
+    #define UTXENT_MUTEX_LOCK()
+    #define UTXENT_MUTEX_UNLOCK()
+#endif
 
 // Print a debug message on stderr.
 #define psutil_debug(...) do { \

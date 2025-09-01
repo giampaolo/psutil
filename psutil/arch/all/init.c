@@ -16,6 +16,10 @@
 int PSUTIL_DEBUG = 0;
 int PSUTIL_CONN_NONE = 128;
 
+#ifdef Py_GIL_DISABLED
+PyMutex utxent_lock = {0};
+#endif
+
 
 // Set OSError(errno=ESRCH, strerror="No such process (originated from")
 // Python exception.
