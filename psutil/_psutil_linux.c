@@ -42,24 +42,17 @@ static PyMethodDef mod_methods[] = {
 };
 
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_psutil_linux",
-    NULL,
-    -1,
-    mod_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static int module_loaded = 0;
 
-
-PyObject *
-PyInit__psutil_linux(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
+static int
+_psutil_linux_exec(PyObject *mod) {
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
 
 #ifdef Py_GIL_DISABLED
     if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
@@ -67,16 +60,34 @@ PyInit__psutil_linux(void) {
 #endif
 
     if (psutil_setup() != 0)
-        return NULL;
+        return -1;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN))
-        return NULL;
+        return -1;
 
-    return mod;
+    return 0;
+}
+
+static struct PyModuleDef_Slot _psutil_linux_slots[] = {
+    {Py_mod_exec, _psutil_linux_exec},
+    {0, NULL},
+};
+
+static struct PyModuleDef module_def = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_psutil_linux",
+    .m_size = 0,
+    .m_methods = mod_methods,
+    .m_slots = _psutil_linux_slots,
+};
+
+PyMODINIT_FUNC
+PyInit__psutil_linux(void) {
+    return PyModuleDef_Init(&module_def);
 }
