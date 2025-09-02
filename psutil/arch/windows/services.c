@@ -347,31 +347,33 @@ error:
 }
 
 
-/*
- * Get service description.
- */
 PyObject *
 psutil_winservice_query_descr(PyObject *self, PyObject *args) {
-    ENUM_SERVICE_STATUS_PROCESSW *lpService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
     SC_HANDLE hService = NULL;
     SERVICE_DESCRIPTIONW *scd = NULL;
-    char *service_name;
+    PyObject *py_service_name;
+    wchar_t *service_name = NULL;
+    Py_ssize_t wlen;
     PyObject *py_retstr = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &service_name))
+    if (!PyArg_ParseTuple(args, "U", &py_service_name))
         return NULL;
+
+    service_name = PyUnicode_AsWideCharString(py_service_name, &wlen);
+    if (service_name == NULL)
+        return NULL;
+
     hService = psutil_get_service_handler(
-        service_name, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG);
+        service_name,
+        SC_MANAGER_ENUMERATE_SERVICE,
+        SERVICE_QUERY_CONFIG
+    );
     if (hService == NULL)
         goto error;
 
-    // This first call to QueryServiceConfig2W() is necessary in order
-    // to get the right size.
-    bytesNeeded = 0;
-    QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
-                         &bytesNeeded);
+    QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &bytesNeeded);
 
     if ((GetLastError() == ERROR_NOT_FOUND) ||
         (GetLastError() == ERROR_MUI_FILE_NOT_FOUND))
@@ -380,6 +382,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         // empty string.
         psutil_debug("set empty string for NOT_FOUND service description");
         CloseServiceHandle(hService);
+        PyMem_Free(service_name);
         return Py_BuildValue("s", "");
     }
 
@@ -389,9 +392,14 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     }
 
     scd = (SERVICE_DESCRIPTIONW *)malloc(bytesNeeded);
+    if (scd == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     ok = QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION,
                               (LPBYTE)scd, bytesNeeded, &bytesNeeded);
-    if (ok == 0) {
+    if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfig2W");
         goto error;
     }
@@ -403,21 +411,24 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         py_retstr = PyUnicode_FromWideChar(
             scd->lpDescription,  wcslen(scd->lpDescription));
     }
+
     if (!py_retstr)
         goto error;
 
     free(scd);
     CloseServiceHandle(hService);
+    PyMem_Free(service_name);
     return py_retstr;
 
 error:
-    if (hService != NULL)
+    if (hService)
         CloseServiceHandle(hService);
-    if (lpService != NULL)
-        free(lpService);
+    if (scd)
+        free(scd);
+    if (service_name)
+        PyMem_Free(service_name);
     return NULL;
 }
-
 
 /*
  * Start service.
