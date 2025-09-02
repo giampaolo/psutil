@@ -408,7 +408,7 @@ def memoize(fun):
         except KeyError:
             try:
                 ret = cache[key] = fun(*args, **kwargs)
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 raise err from None
             return ret
 
@@ -457,14 +457,14 @@ def memoize_when_activated(fun):
             # case 2: we never entered oneshot() ctx
             try:
                 return fun(self)
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 raise err from None
         except KeyError:
             # case 3: we entered oneshot() ctx but there's no cache
             # for this entry yet
             try:
                 ret = fun(self)
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:
                 raise err from None
             try:
                 self._cache[fun] = ret
