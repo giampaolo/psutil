@@ -38,6 +38,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+    UTXENT_MUTEX_LOCK();
     setup();
 
     while ((ut = getutxent()) != NULL) {
@@ -79,10 +80,12 @@ psutil_users(PyObject *self, PyObject *args) {
     }
 
     teardown();
+    UTXENT_MUTEX_UNLOCK();
     return py_retlist;
 
 error:
     teardown();
+    UTXENT_MUTEX_UNLOCK();
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
