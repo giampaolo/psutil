@@ -227,7 +227,6 @@ error:
  */
 PyObject *
 psutil_winservice_query_config(PyObject *self, PyObject *args) {
-    char *service_name;
     SC_HANDLE hService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
@@ -236,13 +235,16 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     PyObject *py_unicode_display_name = NULL;
     PyObject *py_unicode_binpath = NULL;
     PyObject *py_unicode_username = NULL;
+    wchar_t *service_name = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &service_name))
-        return NULL;
-    hService = psutil_get_service_handler(
-        service_name, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG);
+    hService = psutil_get_service_from_args(
+        args,
+        SC_MANAGER_ENUMERATE_SERVICE,
+        SERVICE_QUERY_CONFIG,
+        &service_name
+    );
     if (hService == NULL)
-        goto error;
+        return NULL;
 
     // First call to QueryServiceConfigW() is necessary to get the
     // right size.
@@ -252,9 +254,15 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfigW");
         goto error;
     }
+
     qsc = (QUERY_SERVICE_CONFIGW *)malloc(bytesNeeded);
+    if (qsc == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
     ok = QueryServiceConfigW(hService, qsc, bytesNeeded, &bytesNeeded);
-    if (ok == 0) {
+    if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfigW");
         goto error;
     }
@@ -294,6 +302,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     Py_DECREF(py_unicode_username);
     free(qsc);
     CloseServiceHandle(hService);
+    PyMem_Free(service_name);
     return py_tuple;
 
 error:
@@ -301,10 +310,12 @@ error:
     Py_XDECREF(py_unicode_binpath);
     Py_XDECREF(py_unicode_username);
     Py_XDECREF(py_tuple);
-    if (hService != NULL)
+    if (hService)
         CloseServiceHandle(hService);
-    if (qsc != NULL)
+    if (qsc)
         free(qsc);
+    if (service_name)
+        PyMem_Free(service_name);
     return NULL;
 }
 
