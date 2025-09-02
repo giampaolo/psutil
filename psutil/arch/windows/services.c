@@ -478,29 +478,34 @@ error:
  */
 PyObject *
 psutil_winservice_start(PyObject *self, PyObject *args) {
-    char *service_name;
     BOOL ok;
     SC_HANDLE hService = NULL;
+    wchar_t *service_name = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &service_name))
+    hService = psutil_get_service_from_args(
+        args,
+        SC_MANAGER_ALL_ACCESS,
+        SERVICE_START,
+        &service_name
+    );
+    if (hService == NULL)
         return NULL;
-    hService = psutil_get_service_handler(
-        service_name, SC_MANAGER_ALL_ACCESS, SERVICE_START);
-    if (hService == NULL) {
-        goto error;
-    }
+
     ok = StartService(hService, 0, NULL);
-    if (ok == 0) {
+    if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("StartService");
         goto error;
     }
 
     CloseServiceHandle(hService);
+    PyMem_Free(service_name);
     Py_RETURN_NONE;
 
 error:
-    if (hService != NULL)
+    if (hService)
         CloseServiceHandle(hService);
+    if (service_name)
+        PyMem_Free(service_name);
     return NULL;
 }
 
