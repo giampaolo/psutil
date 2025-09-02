@@ -42,6 +42,40 @@ psutil_get_service_handler(
 }
 
 
+// helper: parse args, convert to wchar, and open service
+// returns NULL on error. On success, fills *service_name_out.
+static SC_HANDLE
+psutil_get_service_from_args(PyObject *args,
+                             DWORD scm_access,
+                             DWORD access,
+                             wchar_t **service_name_out)
+{
+    PyObject *py_service_name = NULL;
+    wchar_t *service_name = NULL;
+    Py_ssize_t wlen;
+    SC_HANDLE hService = NULL;
+
+    if (!PyArg_ParseTuple(args, "U", &py_service_name)) {
+        return NULL;
+    }
+
+    service_name = PyUnicode_AsWideCharString(py_service_name, &wlen);
+    if (service_name == NULL) {
+        return NULL;
+    }
+
+    hService = psutil_get_service_handler(service_name, scm_access, access);
+    if (hService == NULL) {
+        PyMem_Free(service_name);
+        return NULL;
+    }
+
+    *service_name_out = service_name;
+    return hService;
+}
+
+
+
 // XXX - expose these as constants?
 static const char *
 get_startup_string(DWORD startup) {
@@ -353,25 +387,17 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     DWORD bytesNeeded = 0;
     SC_HANDLE hService = NULL;
     SERVICE_DESCRIPTIONW *scd = NULL;
-    PyObject *py_service_name;
     wchar_t *service_name = NULL;
-    Py_ssize_t wlen;
     PyObject *py_retstr = NULL;
 
-    if (!PyArg_ParseTuple(args, "U", &py_service_name))
-        return NULL;
-
-    service_name = PyUnicode_AsWideCharString(py_service_name, &wlen);
-    if (service_name == NULL)
-        return NULL;
-
-    hService = psutil_get_service_handler(
-        service_name,
+    hService = psutil_get_service_from_args(
+        args,
         SC_MANAGER_ENUMERATE_SERVICE,
-        SERVICE_QUERY_CONFIG
+        SERVICE_QUERY_CONFIG,
+        &service_name
     );
     if (hService == NULL)
-        goto error;
+        return NULL;
 
     QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &bytesNeeded);
 
@@ -409,7 +435,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     }
     else {
         py_retstr = PyUnicode_FromWideChar(
-            scd->lpDescription,  wcslen(scd->lpDescription));
+            scd->lpDescription, wcslen(scd->lpDescription));
     }
 
     if (!py_retstr)
