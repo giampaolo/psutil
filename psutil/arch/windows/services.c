@@ -15,6 +15,7 @@
 // utils
 // ==================================================================
 
+
 SC_HANDLE
 psutil_get_service_handler(
     const wchar_t *service_name,
@@ -45,10 +46,11 @@ psutil_get_service_handler(
 // helper: parse args, convert to wchar, and open service
 // returns NULL on error. On success, fills *service_name_out.
 static SC_HANDLE
-psutil_get_service_from_args(PyObject *args,
-                             DWORD scm_access,
-                             DWORD access,
-                             wchar_t **service_name_out)
+psutil_get_service_from_args(
+    PyObject *args,
+    DWORD scm_access,
+    DWORD access,
+    wchar_t **service_name_out)
 {
     PyObject *py_service_name = NULL;
     wchar_t *service_name = NULL;
@@ -227,6 +229,7 @@ error:
  */
 PyObject *
 psutil_winservice_query_config(PyObject *self, PyObject *args) {
+    wchar_t *service_name = NULL;
     SC_HANDLE hService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
@@ -235,7 +238,6 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     PyObject *py_unicode_display_name = NULL;
     PyObject *py_unicode_binpath = NULL;
     PyObject *py_unicode_username = NULL;
-    wchar_t *service_name = NULL;
 
     hService = psutil_get_service_from_args(
         args,
@@ -327,12 +329,12 @@ error:
  */
 PyObject *
 psutil_winservice_query_status(PyObject *self, PyObject *args) {
+    wchar_t *service_name = NULL;
     SC_HANDLE hService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
     SERVICE_STATUS_PROCESS *ssp = NULL;
     PyObject *py_tuple = NULL;
-    wchar_t *service_name = NULL;
 
     hService = psutil_get_service_from_args(
         args,
@@ -472,6 +474,7 @@ error:
     return NULL;
 }
 
+
 /*
  * Start service.
  * XXX - note: this is exposed but not used.
@@ -516,10 +519,10 @@ error:
  */
 PyObject *
 psutil_winservice_stop(PyObject *self, PyObject *args) {
+    wchar_t *service_name = NULL;
     BOOL ok;
     SC_HANDLE hService = NULL;
     SERVICE_STATUS ssp;
-    wchar_t *service_name = NULL;
 
     hService = psutil_get_service_from_args(
         args,
