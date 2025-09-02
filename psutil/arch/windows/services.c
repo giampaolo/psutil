@@ -516,32 +516,37 @@ error:
  */
 PyObject *
 psutil_winservice_stop(PyObject *self, PyObject *args) {
-    char *service_name;
     BOOL ok;
     SC_HANDLE hService = NULL;
     SERVICE_STATUS ssp;
+    wchar_t *service_name = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &service_name))
-        return NULL;
-    hService = psutil_get_service_handler(
-        service_name, SC_MANAGER_ALL_ACCESS, SERVICE_STOP);
+    hService = psutil_get_service_from_args(
+        args,
+        SC_MANAGER_ALL_ACCESS,
+        SERVICE_STOP,
+        &service_name
+    );
     if (hService == NULL)
-        goto error;
+        return NULL;
 
     // Note: this can hang for 30 secs.
     Py_BEGIN_ALLOW_THREADS
     ok = ControlService(hService, SERVICE_CONTROL_STOP, &ssp);
     Py_END_ALLOW_THREADS
-    if (ok == 0) {
+    if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("ControlService");
         goto error;
     }
 
     CloseServiceHandle(hService);
+    PyMem_Free(service_name);
     Py_RETURN_NONE;
 
 error:
-    if (hService != NULL)
+    if (hService)
         CloseServiceHandle(hService);
+    if (service_name)
+        PyMem_Free(service_name);
     return NULL;
 }
