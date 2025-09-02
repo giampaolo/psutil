@@ -17,6 +17,9 @@
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
 
+ULONG g_TcpTableSize = 0;
+ULONG g_UdpTableSize = 0;
+
 
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
 // being active on the machine, it's possible that the size of the table
@@ -34,9 +37,13 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
     ULONG size;
     TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
-    GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
-    // reserve 25% more space to be sure
-    size = size + (size / 2 / 2);
+    size = g_TcpTableSize;
+    if (size == 0) {
+        GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
+        // reserve 25% more space
+        size = size + (size / 2 / 2);
+        g_TcpTableSize = size;
+    }
 
     table = malloc(size);
     if (table == NULL) {
@@ -51,6 +58,7 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
     free(table);
     if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
         psutil_debug("GetExtendedTcpTable: retry with different bufsize");
+        g_TcpTableSize = 0;
         return __GetExtendedTcpTable(family);
     }
 
@@ -65,9 +73,13 @@ static PVOID __GetExtendedUdpTable(ULONG family) {
     ULONG size;
     UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
-    GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
-    // reserve 25% more space to be sure
-    size = size + (size / 2 / 2);
+    size = g_UdpTableSize;
+    if (size == 0) {
+        GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
+        // reserve 25% more space
+        size = size + (size / 2 / 2);
+        g_UdpTableSize = size;
+    }
 
     table = malloc(size);
     if (table == NULL) {
@@ -82,6 +94,7 @@ static PVOID __GetExtendedUdpTable(ULONG family) {
     free(table);
     if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
         psutil_debug("GetExtendedUdpTable: retry with different bufsize");
+        g_UdpTableSize = 0;
         return __GetExtendedUdpTable(family);
     }
 
