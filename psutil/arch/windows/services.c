@@ -16,22 +16,27 @@
 // ==================================================================
 
 SC_HANDLE
-psutil_get_service_handler(char *service_name, DWORD scm_access, DWORD access)
+psutil_get_service_handler(
+    const wchar_t *service_name,
+    DWORD scm_access,
+    DWORD access)
 {
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
 
-    sc = OpenSCManager(NULL, NULL, scm_access);
+    sc = OpenSCManagerW(NULL, NULL, scm_access);
     if (sc == NULL) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenSCManager");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenSCManagerW");
         return NULL;
     }
-    hService = OpenService(sc, service_name, access);
+
+    hService = OpenServiceW(sc, service_name, access);
     if (hService == NULL) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenService");
+        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenServiceW");
         CloseServiceHandle(sc);
         return NULL;
     }
+
     CloseServiceHandle(sc);
     return hService;
 }
