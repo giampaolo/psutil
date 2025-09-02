@@ -17,13 +17,12 @@
 #endif
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 #ifdef PSUTIL_FREEBSD
-    #include "../../arch/freebsd/proc.h"
+    #include "../../arch/freebsd/init.h"  // TODO: refactor this
 #elif PSUTIL_OPENBSD
-    #include "../../arch/openbsd/proc.h"
+    #include "../../arch/openbsd/init.h"  // TODO: refactor this
 #elif PSUTIL_NETBSD
-    #include "../../arch/netbsd/proc.h"
+    #include "../../arch/netbsd/init.h"  // TODO: refactor this
 #endif
 
 
@@ -33,6 +32,32 @@
 #if defined(PSUTIL_OPENBSD) || defined (PSUTIL_NETBSD)
     #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #endif
+
+
+// Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
+// int as arg and returns an array with cnt struct kinfo_file.
+#ifdef PSUTIL_HASNT_KINFO_GETFILE
+struct kinfo_file *
+kinfo_getfile(pid_t pid, int *cnt) {
+    int mib[6];
+    size_t len;
+    struct kinfo_file *kf = NULL;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_FILE;
+    mib[2] = KERN_FILE_BYPID;
+    mib[3] = pid;
+    mib[4] = sizeof(struct kinfo_file);
+    mib[5] = 0;
+
+    if (psutil_sysctl_malloc(mib, 6, (char **)&kf, &len) != 0) {
+        return NULL;
+    }
+
+    *cnt = (int)(len / sizeof(struct kinfo_file));
+    return kf;
+}
+#endif  // PSUTIL_HASNT_KINFO_GETFILE
 
 
 /*

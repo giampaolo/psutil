@@ -1,54 +1,59 @@
 /*
- * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Copyright (c) 2009, Giampaolo Rodola'.
+ * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 #include <Python.h>
 #include <utmp.h>
-#include <string.h>
 
 #include "../../arch/all/init.h"
 
 
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
-    struct utmp *ut;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
+    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    setutent();
-    while (NULL != (ut = getutent())) {
-        if (ut->ut_type != USER_PROCESS)
+
+    struct utmp ut;
+    FILE *fp;
+
+    Py_BEGIN_ALLOW_THREADS
+    fp = fopen(_PATH_UTMP, "r");
+    Py_END_ALLOW_THREADS
+    if (fp == NULL) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMP);
+        goto error;
+    }
+
+    while (fread(&ut, sizeof(ut), 1, fp) == 1) {
+        if (*ut.ut_name == '\0')
             continue;
-        py_tuple = NULL;
-        py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
+        py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
         if (! py_username)
             goto error;
-        py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
+        py_tty = PyUnicode_DecodeFSDefault(ut.ut_line);
         if (! py_tty)
             goto error;
-        if (strcmp(ut->ut_host, ":0") == 0 || strcmp(ut->ut_host, ":0.0") == 0)
-            py_hostname = PyUnicode_DecodeFSDefault("localhost");
-        else
-            py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
+        py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
         if (! py_hostname)
             goto error;
-
         py_tuple = Py_BuildValue(
-            "OOOd" _Py_PARSE_PID,
-            py_username,              // username
-            py_tty,                   // tty
-            py_hostname,              // hostname
-            (double)ut->ut_tv.tv_sec,  // tstamp
-            ut->ut_pid                // process id
+            "(OOOdO)",
+            py_username,        // username
+            py_tty,             // tty
+            py_hostname,        // hostname
+            (double)ut.ut_time,  // start time
+            Py_None              // pid
         );
-        if (! py_tuple)
+        if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
@@ -57,15 +62,16 @@ psutil_users(PyObject *self, PyObject *args) {
         Py_CLEAR(py_hostname);
         Py_CLEAR(py_tuple);
     }
-    endutent();
+
+    fclose(fp);
     return py_retlist;
 
 error:
+    fclose(fp);
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    endutent();
     return NULL;
 }

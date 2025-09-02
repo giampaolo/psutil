@@ -420,12 +420,6 @@ def virtual_memory():
     except KeyError:
         slab = 0
 
-    used = total - free - cached - buffers
-    if used < 0:
-        # May be symptomatic of running within a LCX container where such
-        # values will be dramatically distorted over those of the host.
-        used = total - free
-
     # - starting from 4.4.0 we match free's "available" column.
     #   Before 4.4.0 we calculated it as (free + buffers + cached)
     #   which matched htop.
@@ -455,6 +449,8 @@ def virtual_memory():
         # https://gitlab.com/procps-ng/procps/blob/
         #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
         avail = free
+
+    used = total - avail
 
     percent = usage_percent((total - avail), total, round_=1)
 
@@ -1545,7 +1541,7 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users()
+    rawlist = cext_posix.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = _common.suser(user, tty or None, hostname, tstamp, pid)

@@ -205,7 +205,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "7.0.1"
+__version__ = "7.1.0"
 version_info = tuple(int(num) for num in __version__.split('.'))
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -433,12 +433,12 @@ class Process:
         # on PID and creation time.
         if not isinstance(other, Process):
             return NotImplemented
-        if OPENBSD or NETBSD:  # pragma: no cover
-            # Zombie processes on Open/NetBSD have a creation time of
-            # 0.0. This covers the case when a process started normally
-            # (so it has a ctime), then it turned into a zombie. It's
-            # important to do this because is_running() depends on
-            # __eq__.
+        if OPENBSD or NETBSD or SUNOS:  # pragma: no cover
+            # Zombie processes on Open/NetBSD/illumos/Solaris have a
+            # creation time of 0.0.  This covers the case when a process
+            # started normally (so it has a ctime), then it turned into a
+            # zombie. It's important to do this because is_running()
+            # depends on __eq__.
             pid1, ident1 = self._ident
             pid2, ident2 = other._ident
             if pid1 == pid2:

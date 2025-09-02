@@ -15,8 +15,6 @@
 #include <fcntl.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
-
 
 #ifndef _PATH_DEVNULL
     #define _PATH_DEVNULL "/dev/null"
@@ -25,54 +23,46 @@
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned long  total;
-    unsigned int   active, inactive, wired, cached, free;
-    size_t         size = sizeof(total);
-    struct vmtotal vm;
-    int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = psutil_getpagesize();
+    unsigned long total;
+    unsigned int active, inactive, wired, cached, free;
     long buffers;
-    size_t buffers_size = sizeof(buffers);
+    struct vmtotal vm;
+    int mib[] = {CTL_VM, VM_METER};
+    long pagesize = psutil_getpagesize();
 
-    if (sysctlbyname("hw.physmem", &total, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('hw.physmem')"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_active_count')");
-    }
-    if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, &size, NULL, 0))
-    {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_inactive_count')");
-    }
-    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_wire_count')"
-        );
-    }
-    // https://github.com/giampaolo/psutil/issues/997
-    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0)) {
+    size_t size_ul = sizeof(total);
+    size_t size_ui = sizeof(active);
+    size_t size_long = sizeof(buffers);
+    size_t size_vm = sizeof(vm);
+
+    PyObject *ret = NULL;
+
+    if (psutil_sysctlbyname("hw.physmem", &total, size_ul) != 0)
+        return NULL;
+
+    if (psutil_sysctlbyname("vm.stats.vm.v_active_count", &active, size_ui) != 0)
+        return NULL;
+
+    if (psutil_sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, size_ui) != 0)
+        return NULL;
+
+    if (psutil_sysctlbyname("vm.stats.vm.v_wire_count", &wired, size_ui) != 0)
+        return NULL;
+
+    // Optional; ignore error if not available
+    if (psutil_sysctlbyname("vm.stats.vm.v_cache_count", &cached, size_ui) != 0) {
+        PyErr_Clear();
         cached = 0;
     }
-    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_free_count')"
-        );
-    }
-    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vfs.bufspace')"
-        );
-    }
 
-    size = sizeof(vm);
-    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctl(CTL_VM | VM_METER)"
-        );
+    if (psutil_sysctlbyname("vm.stats.vm.v_free_count", &free, size_ui) != 0)
+        return NULL;
+
+    if (psutil_sysctlbyname("vfs.bufspace", &buffers, size_long) != 0)
+        return NULL;
+
+    if (psutil_sysctl(mib, 2, &vm, size_vm) != 0) {
+        return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(CTL_VM | VM_METER)");
     }
 
     return Py_BuildValue("KKKKKKKK",
@@ -112,26 +102,14 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kvm_close(kd);
 
-    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapin)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1){
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_swapout)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodein)'"
-        );
-    }
-    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.vm.v_vnodeout)'"
-        );
-    }
+    if (psutil_sysctlbyname("vm.stats.vm.v_swapin", &swapin, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.vm.v_swapout", &swapout, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.vm.v_vnodein", &nodein, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, size) != 0)
+        return NULL;
 
     return Py_BuildValue(
         "(KKKII)",

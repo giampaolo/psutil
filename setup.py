@@ -132,6 +132,7 @@ else:
 sources = ['psutil/arch/all/init.c']
 if POSIX:
     sources.append('psutil/_psutil_posix.c')
+    sources.extend(glob.glob("psutil/arch/posix/*.c"))
 
 
 def get_version():
@@ -206,7 +207,7 @@ def get_sysdeps():
             return "sudo pacman -S gcc python"
         elif shutil.which("apk"):
             return "sudo apk add gcc {}3-dev musl-dev linux-headers".format(
-                *pyimpl
+                pyimpl
             )
     elif MACOS:
         return "xcode-select --install"

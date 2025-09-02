@@ -1,6 +1,6 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-7.0.1
+7.1.0
 =====
 
 XXXX-XX-XX
@@ -39,10 +39,15 @@ XXXX-XX-XX
 - 2560_, [Linux]: `Process.memory_maps()`_ may crash with `IndexError` on
   RISCV64 due to a malformed `/proc/{PID}/smaps` file.  (patch by Julien
   Stephan)
+- 2586_, [macOS], [CRITICAL]: fixed different places in C code which can
+  trigger a segfault.
+- 2604_, [Linux]: `virtual_memory()`_ "used" memory does not match recent
+  versions of ``free`` CLI utility.  (patch by Isaac K. Ko)
 - 2605_, [Linux]: `psutil.sensors_battery()` reports a negative amount for
   seconds left.
 - 2607_, [Windows]: ``WindowsService.description()`` method may fail with
   ``ERROR_NOT_FOUND``. Now it returns an empty string instead.
+- 2610:, [macOS], [CRITICAL]: fix `cpu_freq()`_ segfault on ARM architectures.
 
 **Compatibility notes**
 
@@ -618,7 +623,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - 1684_, [Linux]: `disk_io_counters()`_ may raise ``ValueError`` on systems not
   having ``/proc/diskstats``.
 - 1695_, [Linux]: could not compile on kernels <= 2.6.13 due to
-  ``PSUTIL_HAVE_IOPRIO`` not being defined.  (patch by Anselm Kruis)
+  ``PSUTIL_HAS_IOPRIO`` not being defined.  (patch by Anselm Kruis)
 
 5.6.7
 =====

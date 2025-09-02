@@ -24,10 +24,6 @@
 #pragma comment(lib, "IPHLPAPI.lib")
 
 #include "../../arch/all/init.h"
-#include "proc.h"
-#include "proc_info.h"
-#include "proc_handles.h"
-#include "proc_utils.h"
 
 
 // Raised by Process.wait().

@@ -10,20 +10,41 @@
 
 // We do this so that all .c files have to include only one header
 // (ourselves, init.h).
-#if defined(PSUTIL_WINDOWS)
-    #include "../../arch/windows/init.h"
-#elif defined(PSUTIL_OSX)
-    #include "../../arch/osx/init.h"
-#elif defined(PSUTIL_BSD)
+
+#if defined(PSUTIL_POSIX)
+    #include "../../arch/posix/init.h"
+#endif
+#if defined(PSUTIL_BSD)
     #include "../../arch/bsd/init.h"
 #endif
 
+#if defined(PSUTIL_LINUX)
+    #include "../../arch/linux/init.h"
+#elif defined(PSUTIL_WINDOWS)
+    #include "../../arch/windows/init.h"
+#elif defined(PSUTIL_OSX)
+    #include "../../arch/osx/init.h"
+#elif defined(PSUTIL_FREEBSD)
+    #include "../../arch/freebsd/init.h"
+#elif defined(PSUTIL_OPENSBD)
+    #include "../../arch/openbsd/init.h"
+#elif defined(PSUTIL_NETBSD)
+    #include "../../arch/netbsd/init.h"
+#endif
 
 // print debug messages when set to 1
 extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
 
+#ifdef Py_GIL_DISABLED
+    extern PyMutex utxent_lock;
+    #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
+    #define UTXENT_MUTEX_UNLOCK() PyMutex_Unlock(&utxent_lock)
+#else
+    #define UTXENT_MUTEX_LOCK()
+    #define UTXENT_MUTEX_UNLOCK()
+#endif
 
 // Print a debug message on stderr.
 #define psutil_debug(...) do { \

@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <windows.h>
 
+#include "../../arch/all/init.h"
+
 
 // Added in https://github.com/giampaolo/psutil/commit/109f873 in 2017.
 // Moved in here in 2023.

@@ -14,7 +14,6 @@
 #include <kvm.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 // #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -50,41 +49,6 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
         return -1;
     }
     return 0;
-}
-
-
-struct kinfo_file *
-kinfo_getfile(pid_t pid, int* cnt) {
-    // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
-    // int as arg and returns an array with cnt struct kinfo_file.
-    int mib[6];
-    size_t len;
-    struct kinfo_file* kf;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_FILE;
-    mib[2] = KERN_FILE_BYPID;
-    mib[3] = pid;
-    mib[4] = sizeof(struct kinfo_file);
-    mib[5] = 0;
-
-    /* get the size of what would be returned */
-    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_file) (1/2)");
-        return NULL;
-    }
-    if ((kf = malloc(len)) == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    mib[5] = (int)(len / sizeof(struct kinfo_file));
-    if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
-        free(kf);
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_file) (2/2)");
-        return NULL;
-    }
-
-    *cnt = (int)(len / sizeof(struct kinfo_file));
-    return kf;
 }
 
 
@@ -147,9 +111,10 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
+    char *argv_buf = NULL;
+    size_t argv_len = 0;
     char **argv = NULL;
     char **p;
-    size_t argv_size = 128;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_arg = NULL;
 
@@ -163,22 +128,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
 
-    // Loop and reallocate until we have enough space to fit argv.
-    for (;; argv_size *= 2) {
-        if (argv_size >= 8192) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "can't allocate enough space for KERN_PROC_ARGV");
-            goto error;
-        }
-        if ((argv = realloc(argv, argv_size)) == NULL)
-            continue;
-        if (sysctl(mib, 4, argv, &argv_size, NULL, 0) == 0)
-            break;
-        if (errno == ENOMEM)
-            continue;
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl_malloc(mib, 4, &argv_buf, &argv_len) == -1)
         goto error;
-    }
+
+    argv = (char **)argv_buf;
 
     for (p = argv; *p != NULL; p++) {
         py_arg = PyUnicode_DecodeFSDefault(*p);
@@ -189,12 +142,12 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
         Py_DECREF(py_arg);
     }
 
-    free(argv);
+    free(argv_buf);
     return py_retlist;
 
 error:
-    if (argv != NULL)
-        free(argv);
+    if (argv_buf != NULL)
+        free(argv_buf);
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;

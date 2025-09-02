@@ -4,16 +4,14 @@
  * found in the LICENSE file.
  */
 
+#include "../../arch/all/init.h"
+
 #include <Python.h>
 #include <sys/syscall.h>
 #include <sched.h>
 #include <unistd.h>
 
-#include "../../arch/all/init.h"
-#include "proc.h"
-
-
-#ifdef PSUTIL_HAVE_IOPRIO
+#ifdef PSUTIL_HAS_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };
@@ -72,10 +70,10 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
         return PyErr_SetFromErrno(PyExc_OSError);
     Py_RETURN_NONE;
 }
-#endif  // PSUTIL_HAVE_IOPRIO
+#endif  // PSUTIL_HAS_IOPRIO
 
 
-#ifdef PSUTIL_HAVE_CPU_AFFINITY
+#ifdef PSUTIL_HAS_CPU_AFFINITY
 
 // Return process CPU affinity as a Python list.
 PyObject *
@@ -186,4 +184,4 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
     Py_RETURN_NONE;
 }
-#endif  // PSUTIL_HAVE_CPU_AFFINITY
+#endif  // PSUTIL_HAS_CPU_AFFINITY

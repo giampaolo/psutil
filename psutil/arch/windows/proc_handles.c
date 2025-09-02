@@ -23,7 +23,6 @@
 #include <Python.h>
 
 #include "../../arch/all/init.h"
-#include "proc_utils.h"
 
 
 #define THREAD_TIMEOUT 100  // ms

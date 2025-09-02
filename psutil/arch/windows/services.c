@@ -9,7 +9,6 @@
 #include <Winsvc.h>
 
 #include "../../arch/all/init.h"
-#include "services.h"
 
 
 // ==================================================================

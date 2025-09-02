@@ -17,36 +17,30 @@ original(ish) implementations:
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    int i, dk_ndrive, mib[3];
-    size_t len;
+    int i, dk_ndrive;
+    int mib[3];
     struct io_sysctl *stats = NULL;
+    size_t stats_len;
     PyObject *py_disk_info = NULL;
     PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
+
     mib[0] = CTL_HW;
     mib[1] = HW_IOSTATS;
     mib[2] = sizeof(struct io_sysctl);
-    len = 0;
-    if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    dk_ndrive = (int)(len / sizeof(struct io_sysctl));
 
-    stats = malloc(len);
-    if (stats == NULL) {
-        PyErr_NoMemory();
+    // Use helper to allocate and fill buffer
+    if (psutil_sysctl_malloc(mib, 3, (char **)&stats, &stats_len) == -1)
         goto error;
-    }
-    if (sysctl(mib, 3, stats, &len, NULL, 0) < 0 ) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
+
+    dk_ndrive = (int)(stats_len / sizeof(struct io_sysctl));
 
     for (i = 0; i < dk_ndrive; i++) {
         py_disk_info = Py_BuildValue(

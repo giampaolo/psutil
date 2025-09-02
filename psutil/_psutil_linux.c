@@ -13,11 +13,6 @@
 #include <linux/ethtool.h>  // DUPLEX_*
 
 #include "arch/all/init.h"
-#include "arch/linux/disk.h"
-#include "arch/linux/mem.h"
-#include "arch/linux/net.h"
-#include "arch/linux/proc.h"
-#include "arch/linux/users.h"
 
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607
@@ -27,17 +22,16 @@
 
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
-#ifdef PSUTIL_HAVE_IOPRIO
+#ifdef PSUTIL_HAS_IOPRIO
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},
 #endif
-#ifdef PSUTIL_HAVE_CPU_AFFINITY
+#ifdef PSUTIL_HAS_CPU_AFFINITY
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},
 #endif
     // --- system related functions
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
-    {"users", psutil_users, METH_VARARGS},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
     // --- linux specific
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},

@@ -4,10 +4,10 @@
  * found in the LICENSE file.
  */
 
+#include "../../arch/all/init.h"
+
 #include <Python.h>
 #include <mntent.h>
-
-#include "../../arch/all/init.h"
 
 
 // Return disk mounted partitions as a list of tuples including device,

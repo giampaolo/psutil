@@ -21,7 +21,6 @@ For reference, here's the git history with original(ish) implementations:
 #include <devstat.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 PyObject *
@@ -29,43 +28,35 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int maxcpus;
     int mib[2];
     int ncpu;
-    size_t len;
     size_t size;
-    int i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
 
-    // retrieve maxcpus value
-    size = sizeof(maxcpus);
-    if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
-        Py_DECREF(py_retlist);
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('kern.smp.maxcpus')");
-    }
-    long cpu_time[maxcpus][CPUSTATES];
-
-    // retrieve the number of cpus
+    // retrieve the number of CPUs currently online
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_NCPU)");
+    if (psutil_sysctl(mib, 2, &ncpu, sizeof(ncpu)) != 0) {
         goto error;
     }
 
-    // per-cpu info
-    size = sizeof(cpu_time);
-    if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('kern.smp.maxcpus')"
-        );
+    // allocate buffer dynamically based on actual CPU count
+    long (*cpu_time)[CPUSTATES] = malloc(ncpu * sizeof(*cpu_time));
+    if (!cpu_time) {
+        PyErr_NoMemory();
         goto error;
     }
 
-    for (i = 0; i < ncpu; i++) {
+    // get per-cpu times using ncpu count
+    size = ncpu * sizeof(*cpu_time);
+    if (psutil_sysctlbyname("kern.cp_times", cpu_time, size) == -1) {
+        free(cpu_time);
+        goto error;
+    }
+
+    for (int i = 0; i < ncpu; i++) {
         py_cputime = Py_BuildValue(
             "(ddddd)",
             (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
@@ -73,13 +64,19 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
             (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
             (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC);
-        if (!py_cputime)
+        if (!py_cputime) {
+            free(cpu_time);
             goto error;
-        if (PyList_Append(py_retlist, py_cputime))
+        }
+        if (PyList_Append(py_retlist, py_cputime)) {
+            Py_DECREF(py_cputime);
+            free(cpu_time);
             goto error;
+        }
         Py_DECREF(py_cputime);
     }
 
+    free(cpu_time);
     return py_retlist;
 
 error:
@@ -91,30 +88,20 @@ error:
 
 PyObject *
 psutil_cpu_topology(PyObject *self, PyObject *args) {
-    void *topology = NULL;
+    char *topology = NULL;
     size_t size = 0;
     PyObject *py_str;
 
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
+    if (psutil_sysctlbyname_malloc(
+            "kern.sched.topology_spec", &topology, &size) != 0)
+    {
+        psutil_debug("ignore sysctlbyname('kern.sched.topology_spec') error");
+        Py_RETURN_NONE;
     }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
 
     py_str = Py_BuildValue("s", topology);
     free(topology);
     return py_str;
-
-error:
-    if (topology != NULL)
-        free(topology);
-    Py_RETURN_NONE;
 }
 
 
@@ -127,26 +114,16 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int v_swtch;
     size_t size = sizeof(v_soft);
 
-    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_soft')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_intr')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_syscall')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_trap')");
-    }
-    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0)) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('vm.stats.sys.v_swtch')");
-    }
+    if (psutil_sysctlbyname("vm.stats.sys.v_soft", &v_soft, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.sys.v_intr", &v_intr, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.sys.v_trap", &v_trap, size) != 0)
+        return NULL;
+    if (psutil_sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, size) != 0)
+        return NULL;
 
     return Py_BuildValue(
         "IIIII",
@@ -170,20 +147,22 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     int core;
     char sensor[26];
     char available_freq_levels[1000];
-    size_t size = sizeof(current);
+    size_t size;
 
     if (! PyArg_ParseTuple(args, "i", &core))
         return NULL;
+
     // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    size = sizeof(current);
     sprintf(sensor, "dev.cpu.%d.freq", core);
-    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+    if (psutil_sysctlbyname(sensor, &current, size) != 0)
         goto error;
 
-    size = sizeof(available_freq_levels);
-    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
     // In case of failure, an empty string is returned.
+    size = sizeof(available_freq_levels);
     sprintf(sensor, "dev.cpu.%d.freq_levels", core);
-    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
+    if (psutil_sysctlbyname(sensor, &available_freq_levels, size) != 0)
+        psutil_debug("cpu freq levels failed (ignored)");
 
     return Py_BuildValue("is", current, available_freq_levels);
 

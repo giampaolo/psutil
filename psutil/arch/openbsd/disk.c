@@ -9,6 +9,8 @@
 #include <sys/sysctl.h>
 #include <sys/disk.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
@@ -23,22 +25,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     mib[0] = CTL_HW;
     mib[1] = HW_DISKSTATS;
-    len = 0;
-    if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    dk_ndrive = (int)(len / sizeof(struct diskstats));
 
-    stats = malloc(len);
-    if (stats == NULL) {
-        PyErr_NoMemory();
+    if (psutil_sysctl_malloc(mib, 2, (char **)&stats, &len) != 0)
         goto error;
-    }
-    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
+
+    dk_ndrive = (int)(len / sizeof(struct diskstats));
 
     for (i = 0; i < dk_ndrive; i++) {
         py_disk_info = Py_BuildValue(

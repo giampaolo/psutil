@@ -10,6 +10,8 @@
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
 
+#include "../../arch/all/init.h"
+
 
 /*
 CPU related functions. Original code was refactored and moved from
@@ -23,16 +25,11 @@ original(ish) implementations:
 
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
-    size_t size;
     struct uvmexp_sysctl uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
 
-    size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
-    }
-
     return Py_BuildValue(
         "IIIIIII",
         uv.swtch,  // ctx switches
@@ -58,14 +55,13 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
+
     // retrieve the number of cpus
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
-    len = sizeof(ncpu);
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(mib, 2, &ncpu, sizeof(ncpu)) != 0)
         goto error;
-    }
+
     uint64_t cpu_time[CPUSTATES];
 
     for (i = 0; i < ncpu; i++) {
@@ -73,12 +69,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         mib[0] = CTL_KERN;
         mib[1] = KERN_CP_TIME;
         mib[2] = i;
-        size = sizeof(cpu_time);
-        if (sysctl(mib, 3, &cpu_time, &size, NULL, 0) == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
-        }
-
+        if (psutil_sysctl(mib, 3, &cpu_time, sizeof(cpu_time)) != 0)
+            goto error;
         py_cputime = Py_BuildValue(
             "(ddddd)",
             (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,

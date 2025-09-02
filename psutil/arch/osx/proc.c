@@ -30,7 +30,6 @@
 #include <mach-o/loader.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -41,101 +40,33 @@ typedef struct kinfo_proc kinfo_proc;
 // --- utils
 // ====================================================================
 
-/*
- * Returns a list of all BSD processes on the system.  This routine
- * allocates the list and puts it in *procList and a count of the
- * number of entries in *procCount.  You are responsible for freeing
- * this list (use "free" from System framework).
- * On success, the function returns 0.
- * On error, the function returns a BSD errno value.
- */
+
 static int
-psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
+psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int mib[3];
-    size_t size, size2;
-    void *ptr;
-    int err;
-    int lim = 8;  // some limit
+    size_t len = 0;
+    char *buf = NULL;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ALL;
+    *procList = NULL;
     *procCount = 0;
 
-    /*
-     * We start by calling sysctl with ptr == NULL and size == 0.
-     * That will succeed, and set size to the appropriate length.
-     * We then allocate a buffer of at least that size and call
-     * sysctl with that buffer.  If that succeeds, we're done.
-     * If that call fails with ENOMEM, we throw the buffer away
-     * and try again.
-     * Note that the loop calls sysctl with NULL again.  This is
-     * is necessary because the ENOMEM failure case sets size to
-     * the amount of data returned, not the amount of data that
-     * could have been returned.
-     */
-    while (lim-- > 0) {
-        size = 0;
-        if (sysctl((int *)mib, 3, NULL, &size, NULL, 0) == -1) {
-            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
-            return 1;
-        }
-        size2 = size + (size >> 3);  // add some
-        if (size2 > size) {
-            ptr = malloc(size2);
-            if (ptr == NULL)
-                ptr = malloc(size);
-            else
-                size = size2;
-        }
-        else {
-            ptr = malloc(size);
-        }
-        if (ptr == NULL) {
-            PyErr_NoMemory();
-            return 1;
-        }
+    if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
+        return 1;
 
-        if (sysctl((int *)mib, 3, ptr, &size, NULL, 0) == -1) {
-            err = errno;
-            free(ptr);
-            if (err != ENOMEM) {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
-                return 1;
-            }
-        }
-        else {
-            *procList = (kinfo_proc *)ptr;
-            *procCount = size / sizeof(kinfo_proc);
-            if (procCount <= 0) {
-                PyErr_Format(PyExc_RuntimeError, "no PIDs found");
-                return 1;
-            }
-            return 0;  // success
-        }
+    *procList = (struct kinfo_proc *)buf;
+    *procCount = len / sizeof(struct kinfo_proc);
+
+    if (*procCount == 0) {
+        free(buf);
+        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        return 1;
     }
 
-    PyErr_Format(PyExc_RuntimeError, "couldn't collect PIDs list");
-    return 1;
-}
-
-
-// Read the maximum argument size for processes
-static int
-psutil_sysctl_argmax() {
-    int argmax;
-    int mib[2];
-    size_t size = sizeof(argmax);
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
-        return argmax;
-    psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
     return 0;
 }
-
 
 // Read process argument space.
 static int
@@ -585,7 +516,6 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     pid_t pid;
-    size_t len;
     cpu_type_t cpu_type;
     size_t private_pages = 0;
     mach_vm_size_t size = 0;
@@ -603,11 +533,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
 
-    len = sizeof(cpu_type);
-    if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctlbyname('sysctl.proc_cputype')"
-        );
+    if (psutil_sysctlbyname(
+            "sysctl.proc_cputype", &cpu_type, sizeof(cpu_type)) != 0)
+    {
+        return NULL;
     }
 
     // Roughly based on libtop_update_vm_regions in
@@ -736,8 +665,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
-    ret = vm_deallocate(task, (vm_address_t)thread_list,
-                        thread_count * sizeof(int));
+    ret = vm_deallocate(
+        task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
+    );
+
     if (ret != KERN_SUCCESS)
         PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
 
@@ -751,8 +682,10 @@ error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (thread_list != NULL) {
-        ret = vm_deallocate(task, (vm_address_t)thread_list,
-                            thread_count * sizeof(int));
+        ret = vm_deallocate(
+            task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
+        );
+
         if (ret != KERN_SUCCESS)
             PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }

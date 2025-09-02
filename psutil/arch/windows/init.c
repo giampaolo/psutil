@@ -8,7 +8,6 @@
 #include <windows.h>
 
 #include "../../arch/all/init.h"
-#include "init.h"
 #include "ntextapi.h"
 
 

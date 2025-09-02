@@ -22,7 +22,6 @@
 #include <sys/cpuset.h>
 
 #include "../../arch/all/init.h"
-#include "../../_psutil_posix.h"
 
 
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -73,66 +72,24 @@ static void psutil_remove_spaces(char *str) {
 // APIS
 // ============================================================================
 
-int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
-    // Returns a list of all BSD processes on the system.  This routine
-    // allocates the list and puts it in *procList and a count of the
-    // number of entries in *procCount.  You are responsible for freeing
-    // this list. On success returns 0, else 1 with exception set.
-    int err;
-    struct kinfo_proc *buf = NULL;
-    int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
+
+int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
     size_t length = 0;
-    size_t max_length = 12 * 1024 * 1024;  // 12MB
+    char *buf = NULL;
 
     assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
-    // Call sysctl with a NULL buffer in order to get buffer length.
-    err = sysctl(name, 3, NULL, &length, NULL, 0);
-    if (err == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl (null buffer)");
+    if (psutil_sysctl_malloc(mib, 4, &buf, &length) != 0) {
         return 1;
     }
 
-    while (1) {
-        // Allocate an appropriately sized buffer based on the results
-        // from the previous call.
-        buf = malloc(length);
-        if (buf == NULL) {
-            PyErr_NoMemory();
-            return 1;
-        }
-
-        // Call sysctl again with the new buffer.
-        err = sysctl(name, 3, buf, &length, NULL, 0);
-        if (err == -1) {
-            free(buf);
-            if (errno == ENOMEM) {
-                // Sometimes the first sysctl() suggested size is not enough,
-                // so we dynamically increase it until it's big enough :
-                // https://github.com/giampaolo/psutil/issues/2093
-                psutil_debug("errno=ENOMEM, length=%zu; retrying", length);
-                length *= 2;
-                if (length < max_length) {
-                    continue;
-                }
-            }
-
-            psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
-            return 1;
-        }
-        else {
-            break;
-        }
-    }
-
-    *procList = buf;
+    *procList = (struct kinfo_proc *)buf;
     *procCount = length / sizeof(struct kinfo_proc);
     return 0;
 }
-
 
 /*
  * Borrowed from psi Python System Information project
@@ -142,44 +99,24 @@ PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     pid_t pid;
     int mib[4];
-    int argmax;
-    size_t size = sizeof(argmax);
     char *procargs = NULL;
+    size_t size = 0;
     size_t pos = 0;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
-    // Get the maximum process arguments size.
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    size = sizeof(argmax);
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
-        goto error;
-
-    // Allocate space for the arguments.
-    procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    // Make a sysctl() call to get the raw argument space of the process.
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ARGS;
     mib[3] = pid;
 
-    size = argmax;
-    if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGS)");
+    if (psutil_sysctl_malloc(mib, 4, &procargs, &size) != 0)
         goto error;
-    }
 
     // args are returned as a flattened string with \0 separators between
     // arguments add each string to the list then step forward to the next
@@ -192,7 +129,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
             if (PyList_Append(py_retlist, py_arg))
                 goto error;
             Py_DECREF(py_arg);
-            pos = pos + strlen(&procargs[pos]) + 1;
+            py_arg = NULL;
+            pos += strlen(&procargs[pos]) + 1;
         }
     }
 
@@ -201,12 +139,11 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_arg);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);
     return NULL;
 }
-
 
 /*
  * Return process pathname executable.
@@ -281,9 +218,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     int mib[4];
     struct kinfo_proc *kip = NULL;
     struct kinfo_proc *kipp = NULL;
-    int error;
     unsigned int i;
-    size_t size;
+    size_t size = 0;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
@@ -298,34 +234,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
     mib[3] = pid;
 
-    size = 0;
-    error = sysctl(mib, 4, NULL, &size, NULL, 0);
-    if (error == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
+    if (psutil_sysctl_malloc(mib, 4, (char **)&kip, &size) != 0)
         goto error;
-    }
+
+    // subtle check: size == 0 means no such process
     if (size == 0) {
         NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
-    kip = malloc(size);
-    if (kip == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    error = sysctl(mib, 4, kip, &size, NULL, 0);
-    if (error == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
-        goto error;
-    }
-    if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
-        goto error;
-    }
-
-    for (i = 0; i < size / sizeof(*kipp); i++) {
+    for (i = 0; i < size / sizeof(*kip); i++) {
         kipp = &kip[i];
         py_tuple = Py_BuildValue("Idd",
                                  kipp->ki_tid,
@@ -337,17 +255,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             goto error;
         Py_DECREF(py_tuple);
     }
+
     free(kip);
     return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (kip != NULL)
-        free(kip);
+    free(kip);
     return NULL;
 }
-
 
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
@@ -637,9 +554,7 @@ error:
 PyObject *
 psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     pid_t pid;
-    int ret;
     int resource;
-    size_t len;
     int name[5];
     struct rlimit rlp;
 
@@ -651,11 +566,9 @@ psutil_proc_getrlimit(PyObject *self, PyObject *args) {
     name[2] = KERN_PROC_RLIMIT;
     name[3] = pid;
     name[4] = resource;
-    len = sizeof(rlp);
 
-    ret = sysctl(name, 5, &rlp, &len, NULL, 0);
-    if (ret == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (psutil_sysctl(name, 5, &rlp, sizeof(rlp)) != 0)
+        return NULL;
 
 #if defined(HAVE_LONG_LONG)
     return Py_BuildValue("LL",
