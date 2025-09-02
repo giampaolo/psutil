@@ -327,19 +327,21 @@ error:
  */
 PyObject *
 psutil_winservice_query_status(PyObject *self, PyObject *args) {
-    char *service_name;
     SC_HANDLE hService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
-    SERVICE_STATUS_PROCESS  *ssp = NULL;
+    SERVICE_STATUS_PROCESS *ssp = NULL;
     PyObject *py_tuple = NULL;
+    wchar_t *service_name = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &service_name))
-        return NULL;
-    hService = psutil_get_service_handler(
-        service_name, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_STATUS);
+    hService = psutil_get_service_from_args(
+        args,
+        SC_MANAGER_ENUMERATE_SERVICE,
+        SERVICE_QUERY_STATUS,
+        &service_name
+    );
     if (hService == NULL)
-        goto error;
+        return NULL;
 
     // First call to QueryServiceStatusEx() is necessary to get the
     // right size.
@@ -349,14 +351,15 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         // Also services.msc fails in the same manner, so we return an
         // empty string.
         CloseServiceHandle(hService);
+        PyMem_Free(service_name);
         return Py_BuildValue("s", "");
     }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceStatusEx");
         goto error;
     }
-    ssp = (SERVICE_STATUS_PROCESS *)HeapAlloc(
-        GetProcessHeap(), 0, bytesNeeded);
+
+    ssp = (SERVICE_STATUS_PROCESS *)HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
     if (ssp == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -365,7 +368,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
     // Actual call.
     ok = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)ssp,
                               bytesNeeded, &bytesNeeded);
-    if (ok == 0) {
+    if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceStatusEx");
         goto error;
     }
@@ -380,17 +383,19 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
 
     CloseServiceHandle(hService);
     HeapFree(GetProcessHeap(), 0, ssp);
+    PyMem_Free(service_name);
     return py_tuple;
 
 error:
     Py_XDECREF(py_tuple);
-    if (hService != NULL)
+    if (hService)
         CloseServiceHandle(hService);
-    if (ssp != NULL)
+    if (ssp)
         HeapFree(GetProcessHeap(), 0, ssp);
+    if (service_name)
+        PyMem_Free(service_name);
     return NULL;
 }
-
 
 PyObject *
 psutil_winservice_query_descr(PyObject *self, PyObject *args) {
