@@ -177,7 +177,7 @@ test-cibuildwheel:    ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	mkdir -p .tests
 	cd .tests/ && python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil/tests/test_process.py::TestPopen::test_misc
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests.test_process
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
 
 lint-ci:  ## Run all linters on GitHub CI.
