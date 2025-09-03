@@ -1454,7 +1454,9 @@ class Popen(Process):
 
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
+            print("wait 1")
             return self.__subproc.returncode
+        print("wait 2")
         ret = super().wait(timeout)
         self.__subproc.returncode = ret
         return ret

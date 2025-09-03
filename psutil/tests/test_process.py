@@ -1592,14 +1592,21 @@ class TestPopen(PsutilTestCase):
             stderr=subprocess.PIPE,
             env=PYTHON_EXE_ENV,
         ) as proc:
+            print(1)
             proc.name()
+            print(2)
             proc.cpu_times()
+            print(3)
             proc.stdin  # noqa: B018
+            print(4)
             assert dir(proc)
+            print(5)
             with pytest.raises(AttributeError):
                 proc.foo  # noqa: B018
+            print(6)
             proc.terminate()
         if POSIX:
+            print(7)
             assert proc.wait(5) == -signal.SIGTERM
         else:
             assert proc.wait(5) == signal.SIGTERM
