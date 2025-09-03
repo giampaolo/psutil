@@ -1291,12 +1291,16 @@ class Process:
         for kill().
         """
         if POSIX:
+            print("send sig 1")
             self._send_signal(sig)
+            print("send sig 2")
         else:  # pragma: no cover
+            print("send sig 3")
             self._raise_if_pid_reused()
             if sig != signal.SIGTERM and not self.is_running():
                 msg = "process no longer exists"
                 raise NoSuchProcess(self.pid, self._name, msg=msg)
+            print("send sig 4")
             self._proc.send_signal(sig)
 
     def suspend(self):
