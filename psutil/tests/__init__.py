@@ -712,21 +712,29 @@ def reap_children(recursive=False):
     # Terminate subprocess.Popen.
     while _subprocesses_started:
         subp = _subprocesses_started.pop()
+        print("terminate a")
         terminate(subp)
+        print("terminate b")
 
     # Collect started pids.
     while _pids_started:
         pid = _pids_started.pop()
+        print("terminate 1")
         terminate(pid)
+        print("terminate 2")
 
     # Terminate children.
     if children:
         for p in children:
+            print("terminate 3")
             terminate(p, wait_timeout=None)
+            print("terminate 4")
         _, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")
+            print("terminate 5")
             terminate(p, sig=signal.SIGKILL)
+            print("terminate 6")
 
 
 # ===================================================================

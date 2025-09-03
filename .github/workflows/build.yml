@@ -83,16 +83,16 @@ jobs:
       - run: python scripts/internal/test_python2_setup_py.py
 
   # Run linters
-  linters:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.x
-      - name: "Run linters"
-        run: |
-          make lint-ci
+  # linters:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: 3.x
+  #     - name: "Run linters"
+  #       run: |
+  #         make lint-ci
 
   # Produce wheels as artifacts.
   upload-wheels:

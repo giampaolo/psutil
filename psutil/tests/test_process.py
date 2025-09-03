@@ -1608,8 +1608,10 @@ class TestPopen(PsutilTestCase):
         if POSIX:
             print(7)
             assert proc.wait(5) == -signal.SIGTERM
+            print(8)
         else:
             assert proc.wait(5) == signal.SIGTERM
+        print(9)
 
     def test_ctx_manager(self):
         with psutil.Popen(
