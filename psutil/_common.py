@@ -21,6 +21,7 @@ from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+from typing import TYPE_CHECKING
 
 try:
     from socket import AF_INET6
@@ -31,6 +32,13 @@ try:
 except ImportError:
     AF_UNIX = None
 
+if TYPE_CHECKING:
+    NIC_DUPLEX_FULL = 2
+    NIC_DUPLEX_HALF = 1
+    NIC_DUPLEX_UNKNOWN = 0
+
+    POWER_TIME_UNKNOWN = -1
+    POWER_TIME_UNLIMITED = -2
 
 PSUTIL_DEBUG = bool(os.getenv('PSUTIL_DEBUG'))
 _DEFAULT = object()
@@ -45,7 +53,7 @@ __all__ = [
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
     'CONN_NONE', 'CONN_SYN_RECV', 'CONN_SYN_SENT', 'CONN_TIME_WAIT',
     # net constants
-    'NIC_DUPLEX_FULL', 'NIC_DUPLEX_HALF', 'NIC_DUPLEX_UNKNOWN',  # noqa: F822
+    'NIC_DUPLEX_FULL', 'NIC_DUPLEX_HALF', 'NIC_DUPLEX_UNKNOWN',
     # process status constants
     'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
     'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
