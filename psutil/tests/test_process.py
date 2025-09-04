@@ -1577,6 +1577,7 @@ class TestPopen(PsutilTestCase):
     def tearDownClass(cls):
         reap_children()
 
+    @pytest.mark.skipif(MACOS and GITHUB_ACTIONS, reason="hangs on OSX + CI")
     def test_misc(self):
         # XXX this test causes a ResourceWarning because
         # psutil.__subproc instance doesn't get properly freed.
