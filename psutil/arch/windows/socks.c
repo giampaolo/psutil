@@ -17,33 +17,23 @@
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
 
-ULONG g_TcpTableSize = 0;
-ULONG g_UdpTableSize = 0;
-
-
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
 // being active on the machine, it's possible that the size of the table
 // increases between the moment we query the size and the moment we query
 // the data. Therefore we retry if that happens. See:
 // https://github.com/giampaolo/psutil/pull/1335
 // https://github.com/giampaolo/psutil/issues/1294
-// A global and ever increasing size is used in order to avoid calling
-// GetExtended[Tcp|Udp]Table twice per call (faster).
 
 
 static PVOID __GetExtendedTcpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size;
+    ULONG size = 0;
     TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
-    size = g_TcpTableSize;
-    if (size == 0) {
-        GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
-        // reserve 25% more space
-        size = size + (size / 2 / 2);
-        g_TcpTableSize = size;
-    }
+    GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
+    // reserve 25% more space to be sure
+    size = size + (size / 2 / 2);
 
     table = malloc(size);
     if (table == NULL) {
@@ -58,7 +48,6 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
     free(table);
     if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
         psutil_debug("GetExtendedTcpTable: retry with different bufsize");
-        g_TcpTableSize = 0;
         return __GetExtendedTcpTable(family);
     }
 
@@ -70,16 +59,12 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
 static PVOID __GetExtendedUdpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size;
+    ULONG size = 0;
     UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
-    size = g_UdpTableSize;
-    if (size == 0) {
-        GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
-        // reserve 25% more space
-        size = size + (size / 2 / 2);
-        g_UdpTableSize = size;
-    }
+    GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
+    // reserve 25% more space
+    size = size + (size / 2 / 2);
 
     table = malloc(size);
     if (table == NULL) {
@@ -94,7 +79,6 @@ static PVOID __GetExtendedUdpTable(ULONG family) {
     free(table);
     if (err == ERROR_INSUFFICIENT_BUFFER || err == STATUS_UNSUCCESSFUL) {
         psutil_debug("GetExtendedUdpTable: retry with different bufsize");
-        g_UdpTableSize = 0;
         return __GetExtendedUdpTable(family);
     }
 
