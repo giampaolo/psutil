@@ -16,7 +16,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     float boot_time = 0.0;
     struct utmpx *ut;
 
-    UTXENT_MUTEX_LOCK();
     setutxent();
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == BOOT_TIME) {
