@@ -16,7 +16,7 @@
 
 static void
 setup() {
-    UTXENT_MUTEX_LOCK();
+    // UTXENT_MUTEX_LOCK();
     setutxent();
 }
 
@@ -24,7 +24,7 @@ setup() {
 static void
 teardown() {
     endutxent();
-    UTXENT_MUTEX_UNLOCK();
+    // UTXENT_MUTEX_UNLOCK();
 }
 
 
