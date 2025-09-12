@@ -17,21 +17,18 @@
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
 
-
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
 // being active on the machine, it's possible that the size of the table
 // increases between the moment we query the size and the moment we query
 // the data. Therefore we retry if that happens. See:
 // https://github.com/giampaolo/psutil/pull/1335
 // https://github.com/giampaolo/psutil/issues/1294
-// A global and ever increasing size is used in order to avoid calling
-// GetExtended[Tcp|Udp]Table twice per call (faster).
 
 
 static PVOID __GetExtendedTcpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size;
+    ULONG size = 0;
     TCP_TABLE_CLASS class = TCP_TABLE_OWNER_PID_ALL;
 
     GetExtendedTcpTable(NULL, &size, FALSE, family, class, 0);
@@ -62,11 +59,11 @@ static PVOID __GetExtendedTcpTable(ULONG family) {
 static PVOID __GetExtendedUdpTable(ULONG family) {
     DWORD err;
     PVOID table;
-    ULONG size;
+    ULONG size = 0;
     UDP_TABLE_CLASS class = UDP_TABLE_OWNER_PID;
 
     GetExtendedUdpTable(NULL, &size, FALSE, family, class, 0);
-    // reserve 25% more space to be sure
+    // reserve 25% more space
     size = size + (size / 2 / 2);
 
     table = malloc(size);

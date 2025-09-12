@@ -20,6 +20,8 @@ XXXX-XX-XX
   not properly handle UNC paths. Paths such as ``\\??\\C:\\Windows\\Temp`` and
   ``'\\Device\\HarddiskVolume1\\Windows\\Temp'`` are now converted to
   ``C:\\Windows\\Temp``.  (patch by Ben Peddell)
+- 2506_, [Windows]: Windows service APIs had issues with unicode services using
+  special characters in their name.
 - 2514_, [Linux]: `Process.cwd()`_ sometimes fail with `FileNotFoundError` due
   to a race condition.
 - 2526_, [Linux]: `Process.create_time()`_, which is used to univocally
