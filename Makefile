@@ -169,7 +169,7 @@ test-ci:  ## Run tests on GitHub CI.
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	$(PYTHON) -m pip list
-	${MAKE} test
+	${MAKE} test-parallel
 	${MAKE} test-memleaks
 	${MAKE} test-sudo
 
@@ -179,8 +179,8 @@ test-cibuildwheel:    ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	mkdir -p .tests
 	cd .tests/ && python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py' -p xdist -n auto --dist loadgroup" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py -p xdist -n auto --dist loadgroup " $(PYTHON) -m pytest --pyargs psutil.tests
 
 lint-ci:  ## Run all linters on GitHub CI.
 	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
