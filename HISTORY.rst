@@ -11,6 +11,8 @@ XXXX-XX-XX
 - 2571_, [FreeBSD]: Dropped support for FreeBSD 8 and earlier. FreeBSD 8 was
   maintained from 2009 to 2013.
 - 2575_: introduced `dprint` CLI tool to format .yml and .md files.
+- 2629_: stop publishing wheels for Python 3.6 and 3.7. Just provide
+  installation from sources.
 
 **Bug fixes**
 
@@ -53,7 +55,9 @@ XXXX-XX-XX
 
 **Compatibility notes**
 
-- 2571_: Dropped support for FreeBSD 8 and earlier.
+- 2571_: dropped support for FreeBSD 8 and earlier.
+- 2629_: stop publishing wheels for Python 3.6 and 3.7. Just provide
+  installation from sources.
 
 7.0.0
 =====
