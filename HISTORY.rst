@@ -3,7 +3,7 @@
 7.1.0
 =====
 
-XXXX-XX-XX
+2025-09-17
 
 **Enhancements**
 
