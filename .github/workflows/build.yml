@@ -34,14 +34,12 @@ jobs:
           - { os: windows-2025, arch: x86 }
           - { os: windows-11-arm, arch: ARM64 }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      # see https://cibuildwheel.pypa.io/en/stable/faq/#macos-building-cpython-38-wheels-on-arm64
-      - name: "Install python 3.8 universal2 on macOS arm64"
+      # Only install Python 3.8 on macOS ARM64 for universal2 support
+      - name: "Install Python 3.8 on macOS ARM64"
         if: runner.os == 'macOS' && runner.arch == 'ARM64'
         uses: actions/setup-python@v5
-        env:
-          PIP_DISABLE_PIP_VERSION_CHECK: 1
         with:
           python-version: 3.8
 
@@ -49,7 +47,7 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Create wheels + run tests
+      - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v2.23.3
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
@@ -61,7 +59,7 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse
 
-      - name: Generate .tar.gz
+      - name: Generate source distribution (.tar.gz)
         if: matrix.os == 'ubuntu-latest'
         run: |
           make generate-manifest
@@ -76,17 +74,16 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: LizardByte/actions/actions/setup_python@master
         with:
-          python-version: "2.7"
+          python-version: 2.7
       - run: python scripts/internal/test_python2_setup_py.py
 
-  # Run linters
   linters:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
@@ -111,7 +108,7 @@ jobs:
     needs: [upload-wheels]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
