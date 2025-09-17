@@ -226,13 +226,9 @@ skip = [
     "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
     "pp*",
 ]
-# Skip test run for intermediate python versions. Only test minor (3.8) and major (3.13).
 test-skip = [
-    "cp310-*",
-    "cp311-*",
-    "cp312-*",
-    "cp313-macosx_arm64*",  # hangs on macOS ARM for some reason
-    "cp39-*",
+    "cp313-macosx*",  # Hangs on macOS for some reason
+    "cp3{6,7,8,9,10,11,12}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
 ]
 test-extras = ["test"]
 test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-cibuildwheel"
