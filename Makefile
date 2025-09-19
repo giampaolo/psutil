@@ -177,8 +177,8 @@ test-cibuildwheel:    ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
 	${MAKE} install-sysdeps
+	${MAKE} print-sysinfo
 	mkdir -p .tests
-	cd .tests/ && python -c "from psutil.tests import print_sysinfo; print_sysinfo()"
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
 
@@ -339,7 +339,7 @@ print-hashes:  ## Prints hashes of files in dist/ directory
 	$(PYTHON) scripts/internal/print_hashes.py dist/
 
 print-sysinfo:  ## Prints system info
-	$(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+	$(PYTHON) scripts/internal/print_sysinfo.py
 
 # ===================================================================
 # Misc
