@@ -3,7 +3,7 @@
 7.1.0
 =====
 
-XXXX-XX-XX
+2025-09-17
 
 **Enhancements**
 
@@ -53,7 +53,7 @@ XXXX-XX-XX
 
 **Compatibility notes**
 
-- 2571_: Dropped support for FreeBSD 8 and earlier.
+- 2571_: dropped support for FreeBSD 8 and earlier.
 
 7.0.0
 =====
