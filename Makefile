@@ -339,7 +339,7 @@ print-hashes:  ## Prints hashes of files in dist/ directory
 	$(PYTHON) scripts/internal/print_hashes.py dist/
 
 print-sysinfo:  ## Prints system info
-	$(PYTHON) -c "from psutil.tests import print_sysinfo; print_sysinfo()"
+	$(PYTHON) scripts/internal/print_sysinfo.py
 
 # ===================================================================
 # Misc

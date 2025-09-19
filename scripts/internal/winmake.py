@@ -461,10 +461,7 @@ def print_api_speed():
 
 def print_sysinfo():
     """Print system info."""
-    build()
-    from psutil.tests import print_sysinfo
-
-    print_sysinfo()
+    sh([PYTHON, "scripts\\internal\\print_sysinfo.py"])
 
 
 def generate_manifest():
