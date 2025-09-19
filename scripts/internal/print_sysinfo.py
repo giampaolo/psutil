@@ -7,7 +7,7 @@
 import collections
 import datetime
 import getpass
-import importlib
+import importlib.util
 import locale
 import os
 import platform
