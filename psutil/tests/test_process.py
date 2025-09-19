@@ -1493,6 +1493,7 @@ class TestProcess(PsutilTestCase):
     def test_environ(self):
         def clean_dict(d):
             exclude = ["PLAT", "HOME", "PYTEST_CURRENT_TEST", "PYTEST_VERSION"]
+            exclude.extend([x for x in d if x.startswith("PYTEST")])
             if MACOS:
                 exclude.extend([
                     "__CF_USER_TEXT_ENCODING",
