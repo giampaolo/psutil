@@ -664,6 +664,11 @@ Network
      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT', pid=None)
      ...]
 
+  .. warning::
+    On Linux, retrieving some connections requires root privileges. If psutil is
+    not run as root, those connections are silently skipped instead of raising
+    ``PermissionError``. That means the returned list may be incomplete.
+
   .. note::
     (macOS and AIX) :class:`psutil.AccessDenied` is always raised unless running
     as root. This is a limitation of the OS and ``lsof`` does the same.
@@ -1962,6 +1967,12 @@ Process class
        pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING'),
        pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED'),
        pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT')]
+
+    .. warning::
+      On Linux, retrieving connections for certain processes requires root
+      privileges. If psutil is not run as root, those connections are silently
+      skipped instead of raising :class:`psutil.AccessDenied`. That means
+      the returned list may be incomplete.
 
     .. note::
       (Solaris) UNIX sockets are not supported.
