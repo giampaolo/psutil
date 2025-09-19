@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 from collections import namedtuple
+from typing import TYPE_CHECKING
 
 from . import _common
 from ._common import ENCODING
@@ -33,6 +34,13 @@ from ._psutil_windows import HIGH_PRIORITY_CLASS
 from ._psutil_windows import IDLE_PRIORITY_CLASS
 from ._psutil_windows import NORMAL_PRIORITY_CLASS
 from ._psutil_windows import REALTIME_PRIORITY_CLASS
+
+if TYPE_CHECKING:
+    IOPRIO_VERYLOW = 0
+    IOPRIO_LOW = 1
+    IOPRIO_NORMAL = 2
+    IOPRIO_HIGH = 3
+
 
 try:
     from . import _psutil_windows as cext
