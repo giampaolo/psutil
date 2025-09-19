@@ -324,6 +324,9 @@ class TestNetUtils(PsutilTestCase):
     @pytest.mark.skipif(
         NETBSD or FREEBSD, reason="/var/run/log UNIX socket opened by default"
     )
+    @pytest.mark.skipif(
+        not HAS_NET_CONNECTIONS_UNIX, reason="can't list UNIX sockets"
+    )
     def test_unix_socketpair(self):
         p = psutil.Process()
         num_fds = p.num_fds()
