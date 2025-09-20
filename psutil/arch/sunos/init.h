@@ -6,11 +6,6 @@
 
 #include <Python.h>
 
-#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-
-
-int psutil_file_to_struct(char *path, void *fstruct, size_t size);
-
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
