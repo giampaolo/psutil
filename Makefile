@@ -25,7 +25,7 @@ _ := $(shell mkdir -p .git/hooks/ && ln -sf ../../scripts/internal/git_pre_commi
 # ===================================================================
 
 clean:  ## Remove all build files.
-	@rm -rf `find . \
+	@rm -rfv `find . \
 		-type d -name __pycache__ \
 		-o -type f -name \*.bak \
 		-o -type f -name \*.orig \
@@ -36,7 +36,7 @@ clean:  ## Remove all build files.
 		-o -type f -name \*.so \
 		-o -type f -name \*.~ \
 		-o -type f -name \*\$testfn`
-	@rm -rf \
+	@rm -rfv \
 		*.core \
 		*.egg-info \
 		*\@psutil-* \
