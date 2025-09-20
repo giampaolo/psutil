@@ -27,7 +27,6 @@
 
 #include "arch/all/init.h"
 #include "arch/sunos/environ.h"
-#include "arch/sunos/net.h"
 #include "arch/sunos/proc.h"
 #include "arch/sunos/sys.h"
 
