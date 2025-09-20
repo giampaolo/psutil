@@ -24,25 +24,26 @@ from unittest import mock
 
 import psutil
 from psutil import LINUX
-from psutil.tests import AARCH64
-from psutil.tests import GITHUB_ACTIONS
-from psutil.tests import GLOBAL_TIMEOUT
-from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_GETLOADAVG
-from psutil.tests import HAS_RLIMIT
-from psutil.tests import RISCV64
-from psutil.tests import TOLERANCE_DISK_USAGE
-from psutil.tests import TOLERANCE_SYS_MEM
-from psutil.tests import PsutilTestCase
-from psutil.tests import ThreadTask
-from psutil.tests import call_until
-from psutil.tests import pytest
-from psutil.tests import reload_module
-from psutil.tests import retry_on_failure
-from psutil.tests import safe_rmpath
-from psutil.tests import sh
-from psutil.tests import skip_on_not_implemented
+
+from . import AARCH64
+from . import GITHUB_ACTIONS
+from . import GLOBAL_TIMEOUT
+from . import HAS_BATTERY
+from . import HAS_CPU_FREQ
+from . import HAS_GETLOADAVG
+from . import HAS_RLIMIT
+from . import RISCV64
+from . import TOLERANCE_DISK_USAGE
+from . import TOLERANCE_SYS_MEM
+from . import PsutilTestCase
+from . import ThreadTask
+from . import call_until
+from . import pytest
+from . import reload_module
+from . import retry_on_failure
+from . import safe_rmpath
+from . import sh
+from . import skip_on_not_implemented
 
 if LINUX:
     from psutil._pslinux import CLOCK_TICKS

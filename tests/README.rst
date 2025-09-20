@@ -14,7 +14,7 @@ environments) by using unittest's test runner:
 
 .. code-block:: bash
 
-    python -m psutil.tests
+    python -m tests
 
 To run tests in parallel (faster):
 
@@ -26,7 +26,7 @@ Run a specific test:
 
 .. code-block:: bash
 
-    make test ARGS=psutil.tests.test_system.TestDiskAPIs
+    make test ARGS=tests.test_system.TestDiskAPIs
 
 Test C extension memory leaks:
 

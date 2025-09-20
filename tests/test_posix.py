@@ -23,16 +23,17 @@ from psutil import MACOS
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
-from psutil.tests import AARCH64
-from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import PYTHON_EXE
-from psutil.tests import PsutilTestCase
-from psutil.tests import pytest
-from psutil.tests import retry_on_failure
-from psutil.tests import sh
-from psutil.tests import skip_on_access_denied
-from psutil.tests import spawn_subproc
-from psutil.tests import terminate
+
+from . import AARCH64
+from . import HAS_NET_IO_COUNTERS
+from . import PYTHON_EXE
+from . import PsutilTestCase
+from . import pytest
+from . import retry_on_failure
+from . import sh
+from . import skip_on_access_denied
+from . import spawn_subproc
+from . import terminate
 
 if POSIX:
     import mmap

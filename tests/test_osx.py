@@ -12,17 +12,18 @@ import time
 import psutil
 from psutil import MACOS
 from psutil import POSIX
-from psutil.tests import AARCH64
-from psutil.tests import CI_TESTING
-from psutil.tests import HAS_BATTERY
-from psutil.tests import TOLERANCE_DISK_USAGE
-from psutil.tests import TOLERANCE_SYS_MEM
-from psutil.tests import PsutilTestCase
-from psutil.tests import pytest
-from psutil.tests import retry_on_failure
-from psutil.tests import sh
-from psutil.tests import spawn_subproc
-from psutil.tests import terminate
+
+from . import AARCH64
+from . import CI_TESTING
+from . import HAS_BATTERY
+from . import TOLERANCE_DISK_USAGE
+from . import TOLERANCE_SYS_MEM
+from . import PsutilTestCase
+from . import pytest
+from . import retry_on_failure
+from . import sh
+from . import spawn_subproc
+from . import terminate
 
 if POSIX:
     from psutil._psutil_posix import getpagesize

@@ -3,9 +3,9 @@
 # found in the LICENSE file.
 
 """Run unit tests. This is invoked by:
-$ python3 -m psutil.tests.
+$ python3 -m tests.
 """
 
-from psutil.tests import pytest
+from . import pytest
 
 pytest.main()

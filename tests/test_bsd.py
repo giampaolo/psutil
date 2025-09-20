@@ -20,14 +20,15 @@ from psutil import BSD
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil.tests import HAS_BATTERY
-from psutil.tests import TOLERANCE_SYS_MEM
-from psutil.tests import PsutilTestCase
-from psutil.tests import pytest
-from psutil.tests import retry_on_failure
-from psutil.tests import sh
-from psutil.tests import spawn_subproc
-from psutil.tests import terminate
+
+from . import HAS_BATTERY
+from . import TOLERANCE_SYS_MEM
+from . import PsutilTestCase
+from . import pytest
+from . import retry_on_failure
+from . import sh
+from . import spawn_subproc
+from . import terminate
 
 if BSD:
     from psutil._psutil_posix import getpagesize
