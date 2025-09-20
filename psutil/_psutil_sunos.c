@@ -26,7 +26,6 @@
 #include <inet/tcp.h>
 
 #include "arch/all/init.h"
-#include "arch/sunos/environ.h"
 
 
 static PyMethodDef mod_methods[] = {
