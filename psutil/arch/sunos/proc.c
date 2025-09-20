@@ -10,12 +10,12 @@
 #include <libproc.h>
 
 #include "../../arch/all/init.h"
-#include "proc.h"
-#include "environ.h"
+
+#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
 // Read a file content and fills a C structure with it.
-int
+static int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     ssize_t nbytes;

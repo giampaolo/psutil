@@ -17,7 +17,6 @@
 #include <unistd.h>
 
 #include "../../arch/all/init.h"
-#include "environ.h"
 
 
 #define STRING_SEARCH_BUF_SIZE 512

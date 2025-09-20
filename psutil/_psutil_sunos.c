@@ -26,13 +26,6 @@
 #include <inet/tcp.h>
 
 #include "arch/all/init.h"
-#include "arch/sunos/cpu.h"
-#include "arch/sunos/disk.h"
-#include "arch/sunos/environ.h"
-#include "arch/sunos/mem.h"
-#include "arch/sunos/net.h"
-#include "arch/sunos/proc.h"
-#include "arch/sunos/sys.h"
 
 
 static PyMethodDef mod_methods[] = {

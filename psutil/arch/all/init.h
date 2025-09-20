@@ -30,6 +30,8 @@
     #include "../../arch/openbsd/init.h"
 #elif defined(PSUTIL_NETBSD)
     #include "../../arch/netbsd/init.h"
+#elif defined(PSUTIL_SUNOS)
+    #include "../../arch/sunos/init.h"
 #endif
 
 // print debug messages when set to 1
