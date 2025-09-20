@@ -26,7 +26,6 @@
 #include <inet/tcp.h>
 
 #include "arch/all/init.h"
-#include "arch/sunos/cpu.h"
 #include "arch/sunos/disk.h"
 #include "arch/sunos/environ.h"
 #include "arch/sunos/mem.h"
