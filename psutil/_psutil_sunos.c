@@ -27,7 +27,6 @@
 
 #include "arch/all/init.h"
 #include "arch/sunos/environ.h"
-#include "arch/sunos/proc.h"
 
 
 static PyMethodDef mod_methods[] = {

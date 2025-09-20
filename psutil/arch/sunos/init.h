@@ -6,6 +6,11 @@
 
 #include <Python.h>
 
+#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+
+
+int psutil_file_to_struct(char *path, void *fstruct, size_t size);
+
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
@@ -15,4 +20,13 @@ PyObject *psutil_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_stats(PyObject *self, PyObject *args);
 PyObject *psutil_net_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);
+PyObject *psutil_proc_basic_info(PyObject *self, PyObject *args);
+PyObject *psutil_proc_cpu_num(PyObject *self, PyObject *args);
+PyObject *psutil_proc_cpu_times(PyObject *self, PyObject *args);
+PyObject *psutil_proc_cred(PyObject *self, PyObject *args);
+PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
+PyObject *psutil_proc_memory_maps(PyObject *self, PyObject *args);
+PyObject *psutil_proc_name_and_args(PyObject *self, PyObject *args);
+PyObject *psutil_proc_num_ctx_switches(PyObject *self, PyObject *args);
+PyObject *psutil_proc_query_thread(PyObject *self, PyObject *args);
 PyObject *psutil_swap_mem(PyObject *self, PyObject *args);

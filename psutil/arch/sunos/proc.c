@@ -10,7 +10,6 @@
 #include <libproc.h>
 
 #include "../../arch/all/init.h"
-#include "proc.h"
 #include "environ.h"
 
 
