@@ -228,7 +228,7 @@ skip = [
 ]
 test-skip = [
     "cp313-macosx*",  # Hangs on macOS for some reason
-    "cp313t-*",       # Let's not run tests on free-threading for now
+    "cp313t-*",  # Let's not run tests on free-threading for now
     "cp3{6,7,8,9,10,11,12}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
 ]
 test-extras = ["test"]
