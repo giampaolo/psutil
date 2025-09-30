@@ -844,9 +844,11 @@ class TestWrapNumbers(PsutilTestCase):
         wrap_numbers.cache_clear('?!?')
 
     @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
+    @pytest.mark.skipif(
+        not psutil.disk_io_counters() or not psutil.net_io_counters(),
+        reason="no disks or NICs available",
+    )
     def test_cache_clear_public_apis(self):
-        if not psutil.disk_io_counters() or not psutil.net_io_counters():
-            pytest.skip("no disks or NICs available")
         psutil.disk_io_counters()
         psutil.net_io_counters()
         caches = wrap_numbers.cache_info()

@@ -224,9 +224,10 @@ class TestSystemAPITypes(PsutilTestCase):
     # TODO: remove this once 1892 is fixed
     @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    @pytest.mark.skipif(
+        psutil.cpu_freq() is None, reason="cpu_freq() returns None"
+    )
     def test_cpu_freq(self):
-        if psutil.cpu_freq() is None:
-            pytest.skip("cpu_freq() returns None")
         self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
 
     def test_disk_io_counters(self):
