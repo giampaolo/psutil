@@ -224,20 +224,6 @@ def mock_open_exception(for_path, exc):
 # =====================================================================
 
 
-def skip_outdated_free():
-    # Older versions of procps used slab memory to calculate used memory.
-    # This got changed in:
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    # Newer versions of procps (>=4.0.1) are using yet another way to compute
-    # used memory.
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-    return pytest.mark.skipif(
-        get_free_version_info() < (4, 0, 1), reason="free version too old"
-    )
-
-
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
     def test_total(self):
@@ -246,8 +232,17 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         assert cli_value == psutil_value
 
     @retry_on_failure()
-    @skip_outdated_free()
     def test_used(self):
+        # Older versions of procps used slab memory to calculate used memory.
+        # This got changed in:
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # Newer versions of procps are using yet another way to compute used
+        # memory.
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
+        if get_free_version_info() < (4, 0, 0):
+            pytest.skip("free version too old")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -290,8 +285,17 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
-    @skip_outdated_free()
     def test_used(self):
+        # Older versions of procps used slab memory to calculate used memory.
+        # This got changed in:
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # Newer versions of procps are using yet another way to compute used
+        # memory.
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
+        if get_free_version_info() < (4, 0, 0):
+            pytest.skip("free version too old")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -528,15 +532,15 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
 # =====================================================================
 
 
-def meminfo_has_swap_info():
-    """Return True if /proc/meminfo provides swap metrics."""
-    with open("/proc/meminfo") as f:
-        data = f.read()
-    return 'SwapTotal:' in data and 'SwapFree:' in data
-
-
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemSwapMemory(PsutilTestCase):
+    @staticmethod
+    def meminfo_has_swap_info():
+        """Return True if /proc/meminfo provides swap metrics."""
+        with open("/proc/meminfo") as f:
+            data = f.read()
+        return 'SwapTotal:' in data and 'SwapFree:' in data
+
     def test_total(self):
         free_value = free_swap().total
         psutil_value = psutil.swap_memory().total
@@ -586,13 +590,12 @@ class TestSystemSwapMemory(PsutilTestCase):
                 assert ret.sin == 0
                 assert ret.sout == 0
 
-    # Make sure the content of /proc/meminfo about swap memory
-    # matches sysinfo() syscall, see:
-    # https://github.com/giampaolo/psutil/issues/1015
-    @pytest.mark.skipif(
-        not meminfo_has_swap_info(), reason="/proc/meminfo has no swap metrics"
-    )
     def test_meminfo_against_sysinfo(self):
+        # Make sure the content of /proc/meminfo about swap memory
+        # matches sysinfo() syscall, see:
+        # https://github.com/giampaolo/psutil/issues/1015
+        if not self.meminfo_has_swap_info():
+            pytest.skip("/proc/meminfo has no swap metrics")
         with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called

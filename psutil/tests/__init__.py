@@ -942,10 +942,11 @@ def create_py_exe(path):
     return path
 
 
-@pytest.mark.skipif(not shutil.which("gcc"), reason="gcc is not installed")
 def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
+    if not shutil.which("gcc"):
+        pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
             #include <unistd.h>

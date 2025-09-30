@@ -122,11 +122,9 @@ class TestExampleScripts(PsutilTestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 
-    @pytest.mark.skipif(
-        'uss' not in psutil.Process().memory_full_info()._fields,
-        reason="not supported",
-    )
     def test_procsmem(self):
+        if 'uss' not in psutil.Process().memory_full_info()._fields:
+            pytest.skip("not supported")
         self.assert_stdout('procsmem.py')
 
     def test_killall(self):
@@ -153,15 +151,15 @@ class TestExampleScripts(PsutilTestCase):
         self.assert_syntax('cpu_distribution.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
-    @pytest.mark.skipif(
-        not psutil.sensors_temperatures(), reason="no temperatures"
-    )
     def test_temperatures(self):
+        if not psutil.sensors_temperatures():
+            pytest.skip("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
-    @pytest.mark.skipif(not psutil.sensors_fans(), reason="no fans")
     def test_fans(self):
+        if not psutil.sensors_fans():
+            pytest.skip("no fans")
         self.assert_stdout('fans.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
