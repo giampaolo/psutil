@@ -224,6 +224,20 @@ def mock_open_exception(for_path, exc):
 # =====================================================================
 
 
+def skip_outdated_free():
+    # Older versions of procps used slab memory to calculate used memory.
+    # This got changed in:
+    # https://gitlab.com/procps-ng/procps/commit/
+    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+    # Newer versions of procps (>=4.0.1) are using yet another way to compute
+    # used memory.
+    # https://gitlab.com/procps-ng/procps/commit/
+    #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
+    return pytest.mark.skipif(
+        get_free_version_info() < (4, 0, 1), reason="free version too old"
+    )
+
+
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
     def test_total(self):
@@ -231,18 +245,8 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         psutil_value = psutil.virtual_memory().total
         assert cli_value == psutil_value
 
-    # Older versions of procps used slab memory to calculate used memory.
-    # This got changed in:
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    # Newer versions of procps are using yet another way to compute used
-    # memory.
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-    @pytest.mark.skipif(
-        get_free_version_info() < (4, 0, 0), reason="free version too old"
-    )
     @retry_on_failure()
+    @skip_outdated_free()
     def test_used(self):
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
@@ -285,18 +289,8 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         psutil_value = psutil.virtual_memory().total
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
-    # Older versions of procps used slab memory to calculate used memory.
-    # This got changed in:
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    # Newer versions of procps are using yet another way to compute used
-    # memory.
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-    @pytest.mark.skipif(
-        get_free_version_info() < (4, 0, 0), reason="free version too old"
-    )
     @retry_on_failure()
+    @skip_outdated_free()
     def test_used(self):
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
