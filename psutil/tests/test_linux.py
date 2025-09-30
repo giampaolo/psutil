@@ -237,11 +237,11 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-        # Newer versions of procps are using yet another way to compute used
-        # memory.
+        # Newer versions of procps (>=4.0.1) are using yet another way to
+        # compute used memory.
         # https://gitlab.com/procps-ng/procps/commit/
         #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-        if get_free_version_info() < (4, 0, 0):
+        if get_free_version_info() < (4, 0, 1):
             pytest.skip("free version too old")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
@@ -290,11 +290,11 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-        # Newer versions of procps are using yet another way to compute used
-        # memory.
+        # Newer versions of procps (>=4.0.1) are using yet another way to
+        # compute used memory.
         # https://gitlab.com/procps-ng/procps/commit/
         #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-        if get_free_version_info() < (4, 0, 0):
+        if get_free_version_info() < (4, 0, 1):
             pytest.skip("free version too old")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
