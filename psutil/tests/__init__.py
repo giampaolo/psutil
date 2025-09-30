@@ -946,7 +946,7 @@ def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
     if not shutil.which("gcc"):
-        raise pytest.skip("gcc is not installed")
+        pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
             #include <unistd.h>
@@ -1060,7 +1060,7 @@ class PsutilTestCase(unittest.TestCase):
             try:
                 psutil.Process(pid)
             except psutil.ZombieProcess:
-                raise pytest.fail("wasn't supposed to raise ZombieProcess")
+                pytest.fail("wasn't supposed to raise ZombieProcess")
         assert cm.value.pid == pid
         assert cm.value.name is None
         assert not psutil.pid_exists(pid), pid
@@ -1233,13 +1233,13 @@ class TestMemoryLeak(PsutilTestCase):
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            raise pytest.fail(msg)
+            pytest.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
             msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            raise pytest.fail(msg)
+            pytest.fail(msg)
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
@@ -1280,7 +1280,7 @@ class TestMemoryLeak(PsutilTestCase):
                 self._log(msg)
                 times += increase
                 prev_mem = mem
-        raise pytest.fail(". ".join(messages))
+        pytest.fail(". ".join(messages))
 
     # ---
 
@@ -1320,7 +1320,7 @@ class TestMemoryLeak(PsutilTestCase):
             except exc:
                 pass
             else:
-                raise pytest.fail(f"{fun} did not raise {exc}")
+                pytest.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
 
@@ -1587,7 +1587,7 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                raise pytest.skip("raises AccessDenied")
+                pytest.skip("raises AccessDenied")
 
         return wrapper
 
@@ -1610,7 +1610,7 @@ def skip_on_not_implemented(only_if=None):
                     f"{fun.__name__!r} was skipped because it raised"
                     " NotImplementedError"
                 )
-                raise pytest.skip(msg)
+                pytest.skip(msg)
 
         return wrapper
 

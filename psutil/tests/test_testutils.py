@@ -464,7 +464,7 @@ class TestFakePytest(PsutilTestCase):
         except AssertionError as err:
             assert str(err) == '"foo" does not match "bar"'  # noqa: PT017
         else:
-            raise pytest.fail("exception not raised")
+            pytest.fail("exception not raised")
 
     def test_mark(self):
         @fake_pytest.mark.xdist_group(name="serial")
@@ -540,7 +540,7 @@ class TestFakePytest(PsutilTestCase):
         except AssertionError:
             pass
         else:
-            raise pytest.fail("exception not raised")
+            pytest.fail("exception not raised")
 
         # match success
         with fake_pytest.warns(UserWarning, match="foo"):
@@ -553,7 +553,7 @@ class TestFakePytest(PsutilTestCase):
         except AssertionError:
             pass
         else:
-            raise pytest.fail("exception not raised")
+            pytest.fail("exception not raised")
 
     def test_fail(self):
         with fake_pytest.raises(fake_pytest.fail.Exception):

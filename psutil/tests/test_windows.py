@@ -63,7 +63,7 @@ def powershell(cmd):
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
     """
     if not shutil.which("powershell.exe"):
-        raise pytest.skip("powershell.exe not available")
+        pytest.skip("powershell.exe not available")
     cmdline = (
         "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive "
         f"-NoProfile -WindowStyle Hidden -Command \"{cmd}\""  # noqa: Q003
@@ -141,7 +141,7 @@ class TestSystemAPIs(WindowsTestCase):
             if "pseudo-interface" in nic.replace(' ', '-').lower():
                 continue
             if nic not in out:
-                raise pytest.fail(
+                pytest.fail(
                     f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
 
@@ -222,12 +222,10 @@ class TestSystemAPIs(WindowsTestCase):
                     assert usage.free == wmi_free
                     # 10 MB tolerance
                     if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
-                        raise pytest.fail(
-                            f"psutil={usage.free}, wmi={wmi_free}"
-                        )
+                        pytest.fail(f"psutil={usage.free}, wmi={wmi_free}")
                     break
             else:
-                raise pytest.fail(f"can't find partition {ps_part!r}")
+                pytest.fail(f"can't find partition {ps_part!r}")
 
     @retry_on_failure()
     def test_disk_usage(self):
@@ -455,7 +453,7 @@ class TestProcess(WindowsTestCase):
             # When running as a service account (most likely to be
             # NetworkService), these user name calculations don't produce the
             # same result, causing the test to fail.
-            raise pytest.skip('running as service account')
+            pytest.skip('running as service account')
         assert psutil.Process().username() == name
 
     def test_cmdline(self):
@@ -651,7 +649,7 @@ class TestProcessWMI(WindowsTestCase):
         # returned instead.
         wmi_usage = int(w.PageFileUsage)
         if vms not in {wmi_usage, wmi_usage * 1024}:
-            raise pytest.fail(f"wmi={wmi_usage}, psutil={vms}")
+            pytest.fail(f"wmi={wmi_usage}, psutil={vms}")
 
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -787,9 +785,7 @@ class RemoteProcessTestCase(PsutilTestCase):
 
         other_python = self.find_other_interpreter()
         if other_python is None:
-            raise pytest.skip(
-                "could not find interpreter with opposite bitness"
-            )
+            pytest.skip("could not find interpreter with opposite bitness")
         if IS_64BIT:
             self.python64 = sys.executable
             self.python32 = other_python
