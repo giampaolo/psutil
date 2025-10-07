@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+
+7.1.1
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 2641_, [SunOS]: cannot compile psutil from sources due to missing C include.
+
 7.1.0
 =====
 

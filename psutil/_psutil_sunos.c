@@ -24,6 +24,7 @@
 #endif
 
 #include <inet/tcp.h>
+#include <sys/proc.h>
 
 #include "arch/all/init.h"
 
