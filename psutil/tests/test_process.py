@@ -221,7 +221,7 @@ class TestProcess(PsutilTestCase):
             except psutil.TimeoutExpired:
                 pass
         else:
-            pytest.fail('timeout')
+            return pytest.fail('timeout')
         if POSIX:
             assert code == -signal.SIGKILL
         else:
@@ -295,7 +295,7 @@ class TestProcess(PsutilTestCase):
                 tty = os.path.realpath(sh('tty'))
             except RuntimeError:
                 # Note: happens if pytest is run without the `-s` opt.
-                pytest.skip("can't rely on `tty` CLI")
+                return pytest.skip("can't rely on `tty` CLI")
             else:
                 assert terminal == tty
 
@@ -507,7 +507,7 @@ class TestProcess(PsutilTestCase):
             try:
                 step1 = p.num_threads()
             except psutil.AccessDenied:
-                pytest.skip("on OpenBSD this requires root access")
+                return pytest.skip("on OpenBSD this requires root access")
         else:
             step1 = p.num_threads()
 
@@ -528,7 +528,7 @@ class TestProcess(PsutilTestCase):
             try:
                 step1 = p.threads()
             except psutil.AccessDenied:
-                pytest.skip("on OpenBSD this requires root access")
+                return pytest.skip("on OpenBSD this requires root access")
         else:
             step1 = p.threads()
 
@@ -550,7 +550,7 @@ class TestProcess(PsutilTestCase):
             try:
                 p.threads()
             except psutil.AccessDenied:
-                pytest.skip("on OpenBSD this requires root access")
+                return pytest.skip("on OpenBSD this requires root access")
         assert (
             abs(p.cpu_times().user - sum(x.user_time for x in p.threads()))
             < 0.1
@@ -722,7 +722,7 @@ class TestProcess(PsutilTestCase):
 
         if NETBSD and p.cmdline() == []:
             # https://github.com/giampaolo/psutil/issues/2250
-            pytest.skip("OPENBSD: returned EBUSY")
+            return pytest.skip("OPENBSD: returned EBUSY")
 
         # XXX - most of the times the underlying sysctl() call on Net
         # and Open BSD returns a truncated string.
@@ -757,12 +757,12 @@ class TestProcess(PsutilTestCase):
             try:
                 assert p.cmdline()[1:] == cmdline
             except psutil.ZombieProcess:
-                pytest.skip("OPENBSD: process turned into zombie")
+                return pytest.skip("OPENBSD: process turned into zombie")
         else:
             ret = p.cmdline()[1:]
             if NETBSD and ret == []:
                 # https://github.com/giampaolo/psutil/issues/2250
-                pytest.skip("OPENBSD: returned EBUSY")
+                return pytest.skip("OPENBSD: returned EBUSY")
             assert ret == cmdline
 
     def test_name(self):
@@ -904,7 +904,7 @@ class TestProcess(PsutilTestCase):
                 # When running as a service account (most likely to be
                 # NetworkService), these user name calculations don't produce
                 # the same result, causing the test to fail.
-                pytest.skip('running as service account')
+                return pytest.skip('running as service account')
             assert username == getpass_user
             if 'USERDOMAIN' in os.environ:
                 assert domain == os.environ['USERDOMAIN']
@@ -1055,7 +1055,7 @@ class TestProcess(PsutilTestCase):
                 ):
                     break
             else:
-                pytest.fail(f"no file found; files={p.open_files()!r}")
+                return pytest.fail(f"no file found; files={p.open_files()!r}")
             assert normcase(file.path) == normcase(fileobj.name)
             if WINDOWS:
                 assert file.fd == -1
@@ -1092,7 +1092,9 @@ class TestProcess(PsutilTestCase):
             after = sum(p.num_ctx_switches())
             if after > before:
                 return
-        pytest.fail("num ctx switches still the same after 2 iterations")
+        return pytest.fail(
+            "num ctx switches still the same after 2 iterations"
+        )
 
     def test_ppid(self):
         p = psutil.Process()
@@ -1198,7 +1200,7 @@ class TestProcess(PsutilTestCase):
         # this is the one, now let's make sure there are no duplicates
         pid = max(table.items(), key=lambda x: x[1])[0]
         if LINUX and pid == 0:
-            pytest.skip("PID 0")
+            return pytest.skip("PID 0")
         p = psutil.Process(pid)
         try:
             c = p.children(recursive=True)
@@ -1359,7 +1361,7 @@ class TestProcess(PsutilTestCase):
                 # NtQuerySystemInformation succeeds even if process is gone.
                 if WINDOWS and fun_name in {'exe', 'name'}:
                     return
-                pytest.fail(
+                return pytest.fail(
                     f"{fun!r} didn't raise NSP and returned {ret!r} instead"
                 )
 

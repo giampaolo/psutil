@@ -178,7 +178,7 @@ def vmstat(stat):
 def get_free_version_info():
     out = sh(["free", "-V"]).strip()
     if 'UNKNOWN' in out:
-        pytest.skip("can't determine free version")
+        return pytest.skip("can't determine free version")
     return tuple(map(int, re.findall(r'\d+', out.split()[-1])))
 
 
@@ -242,7 +242,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         # https://gitlab.com/procps-ng/procps/commit/
         #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
         if get_free_version_info() < (4, 0, 1):
-            pytest.skip("free version too old")
+            return pytest.skip("free version too old")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -258,7 +258,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         free = free_physmem()
         free_value = free.shared
         if free_value == 0:
-            pytest.skip("free does not support 'shared' column")
+            return pytest.skip("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         assert (
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -271,7 +271,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         out = sh(["free", "-b"])
         lines = out.split('\n')
         if 'available' not in lines[0]:
-            pytest.skip("free does not support 'available' column")
+            return pytest.skip("free does not support 'available' column")
         free_value = int(lines[1].split()[-1])
         psutil_value = psutil.virtual_memory().available
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -295,7 +295,7 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         # https://gitlab.com/procps-ng/procps/commit/
         #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
         if get_free_version_info() < (4, 0, 1):
-            pytest.skip("free version too old")
+            return pytest.skip("free version too old")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -595,7 +595,7 @@ class TestSystemSwapMemory(PsutilTestCase):
         # matches sysinfo() syscall, see:
         # https://github.com/giampaolo/psutil/issues/1015
         if not self.meminfo_has_swap_info():
-            pytest.skip("/proc/meminfo has no swap metrics")
+            return pytest.skip("/proc/meminfo has no swap metrics")
         with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called
@@ -1028,7 +1028,7 @@ class TestSystemNetIfStats(PsutilTestCase):
                         assert ifconfig_flags == psutil_flags
 
         if not matches_found:
-            pytest.fail("no matches were found")
+            return pytest.fail("no matches were found")
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
