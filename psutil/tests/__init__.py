@@ -1273,7 +1273,7 @@ class TestMemoryLeak(PsutilTestCase):
             if success:
                 if idx > 1:
                     self._log(msg)
-                return
+                return None
             else:
                 if idx == 1:
                     print()  # noqa: T201

@@ -736,7 +736,7 @@ class TestProcess(PsutilTestCase):
                 pyexe = p.cmdline()[0]
                 if pyexe != PYTHON_EXE:
                     assert ' '.join(p.cmdline()[1:]) == ' '.join(cmdline[1:])
-                    return
+                    return None
             assert ' '.join(p.cmdline()) == ' '.join(cmdline)
 
     def test_long_cmdline(self):
@@ -1091,7 +1091,7 @@ class TestProcess(PsutilTestCase):
             time.sleep(0.05)  # this shall ensure a context switch happens
             after = sum(p.num_ctx_switches())
             if after > before:
-                return
+                return None
         return pytest.fail(
             "num ctx switches still the same after 2 iterations"
         )
@@ -1355,12 +1355,12 @@ class TestProcess(PsutilTestCase):
                 pass
             except psutil.AccessDenied:
                 if OPENBSD and fun_name in {'threads', 'num_threads'}:
-                    return
+                    return None
                 raise
             else:
                 # NtQuerySystemInformation succeeds even if process is gone.
                 if WINDOWS and fun_name in {'exe', 'name'}:
-                    return
+                    return None
                 return pytest.fail(
                     f"{fun!r} didn't raise NSP and returned {ret!r} instead"
                 )

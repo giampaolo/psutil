@@ -424,7 +424,7 @@ class TestCpuAPIs(PsutilTestCase):
         while time.time() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
-                return
+                return None
         return pytest.fail("time remained the same")
 
     def test_per_cpu_times(self):
