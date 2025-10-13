@@ -438,7 +438,7 @@ class Process:
 
     @wrap_exceptions
     def cmdline(self):
-        return self._proc_name_and_args()[1].split(' ')
+        return self._proc_name_and_args()[1]
 
     @wrap_exceptions
     def environ(self):

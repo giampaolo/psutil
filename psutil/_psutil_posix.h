@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-#include <Python.h>
-
-PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
-PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
+long psutil_getpagesize(void);
+int psutil_pid_exists(pid_t pid);
+void psutil_raise_for_pid(pid_t pid, char *msg);

@@ -10,12 +10,12 @@
 #include <libproc.h>
 
 #include "../../arch/all/init.h"
-#include "proc.h"
-#include "environ.h"
+
+#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
 
 // Read a file content and fills a C structure with it.
-int
+static int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     ssize_t nbytes;
@@ -77,59 +77,6 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 
 
 /*
- * Join array of C strings to C string with delimiter dm.
- * Omit empty records.
- */
-static int
-cstrings_array_to_string(char **joined, char ** array, size_t count, char dm) {
-    size_t i;
-    size_t total_length = 0;
-    size_t item_length = 0;
-    char *result = NULL;
-    char *last = NULL;
-
-    if (!array || !joined)
-        return 0;
-
-    for (i=0; i<count; i++) {
-        if (!array[i])
-            continue;
-
-        item_length = strlen(array[i]) + 1;
-        total_length += item_length;
-    }
-
-    if (!total_length) {
-        return 0;
-    }
-
-    result = malloc(total_length);
-    if (!result) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
-    result[0] = '\0';
-    last = result;
-
-    for (i=0; i<count; i++) {
-        if (!array[i])
-            continue;
-
-        item_length = strlen(array[i]);
-        memcpy(last, array[i], item_length);
-        last[item_length] = dm;
-
-        last += item_length + 1;
-    }
-
-    result[total_length-1] = '\0';
-    *joined = result;
-
-    return total_length;
-}
-
-/*
  * Return process name and args as a Python tuple.
  */
 PyObject *
@@ -137,14 +84,16 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     psinfo_t info;
-    size_t argc;
-    int joined;
-    char **argv;
-    char *argv_plain;
     const char *procfs_path;
+    size_t i;
+    size_t argc;
+    char **argv = NULL;
     PyObject *py_name = NULL;
-    PyObject *py_args = NULL;
-    PyObject *py_retlist = NULL;
+    PyObject *py_sep = NULL;
+    PyObject *py_arg = NULL;
+    PyObject *py_args_str = NULL;
+    PyObject *py_args_list = NULL;
+    PyObject *py_rettuple = NULL;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
@@ -156,46 +105,69 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (!py_name)
         goto error;
 
-    /* SunOS truncates arguments to length PRARGSZ, very likely args are truncated.
-     * The only way to retrieve full command line is to parse process memory */
-    if (info.pr_argc && strlen(info.pr_psargs) == PRARGSZ-1) {
-        argv = psutil_read_raw_args(info, procfs_path, &argc);
-        if (argv) {
-            joined = cstrings_array_to_string(&argv_plain, argv, argc, ' ');
-            if (joined > 0) {
-                py_args = PyUnicode_DecodeFSDefault(argv_plain);
-                free(argv_plain);
-            } else if (joined < 0) {
-                goto error;
+    /* SunOS truncates arguments to length PRARGSZ and has them space-separated.
+     * The only way to retrieve full properly-split command line is to parse process memory */
+    argv = psutil_read_raw_args(info, procfs_path, &argc);
+    if (argv) {
+        py_args_list = PyList_New(argc);
+        if (!py_args_list)
+            goto error;
+
+        // iterate through arguments
+        for (i = 0; i < argc; i++) {
+            py_arg = PyUnicode_DecodeFSDefault(argv[i]);
+            if (!py_arg) {
+                Py_DECREF(py_args_list);
+                py_args_list = NULL;
+                break;
             }
 
-            psutil_free_cstrings_array(argv, argc);
+            if (PyList_SetItem(py_args_list, i, py_arg))
+                goto error;
+
+            py_arg = NULL;
         }
+
+        psutil_free_cstrings_array(argv, argc);
     }
 
     /* If we can't read process memory or can't decode the result
      * then return args from /proc. */
-    if (!py_args) {
+    if (!py_args_list) {
         PyErr_Clear();
-        py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+        py_args_str = PyUnicode_DecodeFSDefault(info.pr_psargs);
+        if (!py_args_str)
+            goto error;
+
+        py_sep = PyUnicode_FromString(" ");
+        if (!py_sep)
+            goto error;
+
+        py_args_list = PyUnicode_Split(py_args_str, py_sep, -1);
+        if (!py_args_list)
+            goto error;
+
+        Py_XDECREF(py_sep);
+        Py_XDECREF(py_args_str);
     }
 
-    /* Both methods has been failed. */
-    if (!py_args)
-        goto error;
-
-    py_retlist = Py_BuildValue("OO", py_name, py_args);
-    if (!py_retlist)
+    py_rettuple = Py_BuildValue("OO", py_name, py_args_list);
+    if (!py_rettuple)
         goto error;
 
     Py_DECREF(py_name);
-    Py_DECREF(py_args);
-    return py_retlist;
+    Py_DECREF(py_args_list);
+
+    return py_rettuple;
 
 error:
+    psutil_free_cstrings_array(argv, argc);
     Py_XDECREF(py_name);
-    Py_XDECREF(py_args);
-    Py_XDECREF(py_retlist);
+    Py_XDECREF(py_args_list);
+    Py_XDECREF(py_sep);
+    Py_XDECREF(py_arg);
+    Py_XDECREF(py_args_str);
+    Py_XDECREF(py_rettuple);
     return NULL;
 }
 
