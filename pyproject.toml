@@ -223,19 +223,29 @@ skip = [
     "*-musllinux*",
     "cp36-*",
     "cp37-*",
-    "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
+    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp313 on qemu tested architectures
     "pp*",
 ]
 test-skip = [
     "cp313-macosx*",  # Hangs on macOS for some reason
-    "cp313t-*",  # Let's not run tests on free-threading for now
-    "cp3{6,7,8,9,10,11,12}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
+    "cp3{9,10,11,12,13t}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
 ]
 test-extras = ["test"]
 test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-cibuildwheel"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
+
+# Test that the wheel is installed and psutil can be imported
+# for the targets where the test suite is not run in its entirety
+[[tool.cibuildwheel.overrides]]
+select = "cp3{9,10,11,12,13t}-*"
+test-command = "python -c 'import psutil'"
+
+[[tool.cibuildwheel.overrides]]
+select = "cp313-macosx*"
+test-command = "python -c 'import psutil'"
+
 
 [tool.pytest.ini_options]
 addopts = '''
