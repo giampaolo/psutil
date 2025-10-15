@@ -117,8 +117,8 @@ jobs:
           name: wheels
           path: wheelhouse
       - run: |
+          pytnon3 -m pip install -U setuptools twine check-manifest validate-pyproject abi3audit
           make sdist
           mv wheelhouse/* dist/
           make print-hashes
-          pytnon3 -m pip install -U setuptools twine check-manifest validate-pyproject abi3audit
           make check-distribution
