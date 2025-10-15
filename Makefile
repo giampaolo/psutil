@@ -341,7 +341,7 @@ print-downloads:  ## Print PYPI download statistics
 	$(PYTHON) scripts/internal/print_downloads.py
 
 print-hashes:  ## Prints hashes of files in dist/ directory
-	$(PYTHON) scripts/internal/print_hashes.py dist/
+	$(PYTHON) scripts/internal/print_hashes.py
 
 print-sysinfo:  ## Prints system info
 	$(PYTHON) scripts/internal/print_sysinfo.py

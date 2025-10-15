@@ -57,14 +57,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
-          path: wheelhouse
+          path: dist
 
       - name: Generate source distribution (.tar.gz)
         if: matrix.os == 'ubuntu-latest'
         run: |
           make generate-manifest
           python setup.py sdist
-          mv dist/psutil*.tar.gz wheelhouse/
 
   # Test python 2.7 fallback installation message produced by setup.py
   py2-fallback:
@@ -116,8 +115,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: wheels
-          path: wheelhouse
+          path: dist
       - run: |
-          python scripts/internal/print_hashes.py wheelhouse/
+          python scripts/internal/print_hashes.py
           pipx run twine check --strict wheelhouse/*
           pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
