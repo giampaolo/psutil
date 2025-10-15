@@ -62,8 +62,7 @@ jobs:
       - name: Generate source distribution (.tar.gz)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          make generate-manifest
-          python setup.py sdist
+          make sdist
 
   # Test python 2.7 fallback installation message produced by setup.py
   py2-fallback:
@@ -117,7 +116,7 @@ jobs:
           name: wheels
           path: wheelhouse
       - run: |
-          python3 -m pip install -U setuptools twine check-manifest validate-pyproject[all] abi3audit
+          python3 -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
           make sdist
           mv wheelhouse/* dist/
           make print-hashes
