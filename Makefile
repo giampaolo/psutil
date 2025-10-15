@@ -251,22 +251,26 @@ fix-all:  ## Run all code fixers.
 # Distribution
 # ===================================================================
 
+check-manifest:  ## Check sanity of MANIFEST.in file.
+	$(PYTHON) -m check_manifest -v
+
+check-pyproject:  ## Check sanity of pyproject.toml file.
+	$(PYTHON) -m validate_pyproject -v pyproject.toml
+
 check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON_ENV_VARS) $(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	$(PYTHON_ENV_VARS) build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
 	$(PYTHON_ENV_VARS) build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 	$(PYTHON) -m twine check --strict dist/*.tar.gz
 
-check-manifest:  ## Check sanity of MANIFEST.in file.
-	$(PYTHON) -m check_manifest -v $(ARGS)
-
 check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
 	$(PYTHON) -m twine check --strict dist/*.whl
 
-check-distribution:
-	${MAKE} check-sdist
+check-distribution:  ## Run all sanity checks re. to the package distribution.
 	${MAKE} check-manifest
+	${MAKE} check-pyproject
+	${MAKE} check-sdist
 	${MAKE} check-wheels
 
 generate-manifest:  ## Generates MANIFEST.in file.
@@ -337,7 +341,7 @@ print-downloads:  ## Print PYPI download statistics
 	$(PYTHON) scripts/internal/print_downloads.py
 
 print-hashes:  ## Prints hashes of files in dist/ directory
-	$(PYTHON) scripts/internal/print_hashes.py dist/
+	$(PYTHON) scripts/internal/print_hashes.py
 
 print-sysinfo:  ## Prints system info
 	$(PYTHON) scripts/internal/print_sysinfo.py

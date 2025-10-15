@@ -62,9 +62,7 @@ jobs:
       - name: Generate source distribution (.tar.gz)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          make generate-manifest
-          python setup.py sdist
-          mv dist/psutil*.tar.gz wheelhouse/
+          make sdist
 
   # Test python 2.7 fallback installation message produced by setup.py
   py2-fallback:
@@ -104,7 +102,7 @@ jobs:
           separate-directories: false
           delete-merged: true
 
-  # Check sanity of .tar.gz + wheel files
+  # Check sanity of the package distribution (.tar.gz and *.whl files)
   check-dist:
     needs: [upload-wheels]
     runs-on: ubuntu-latest
@@ -118,6 +116,8 @@ jobs:
           name: wheels
           path: wheelhouse
       - run: |
-          python scripts/internal/print_hashes.py wheelhouse/
-          pipx run twine check --strict wheelhouse/*
-          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
+          python3 -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
+          make sdist
+          mv wheelhouse/* dist/
+          make print-hashes
+          make check-distribution

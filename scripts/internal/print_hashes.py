@@ -23,7 +23,11 @@ def csum(file, kind):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        'dir', type=str, help='directory containing tar.gz or wheel files'
+        "dir",
+        type=str,
+        nargs="?",
+        help="directory containing tar.gz or wheel files",
+        default="dist/",
     )
     args = parser.parse_args()
     for name in sorted(os.listdir(args.dir)):
