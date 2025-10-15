@@ -17,7 +17,6 @@ import sys
 from unittest import mock
 
 import psutil
-import psutil.tests
 from psutil import WINDOWS
 from psutil._common import bcat
 from psutil._common import cat
