@@ -100,6 +100,7 @@ DEV_DEPS = TEST_DEPS + [
     "pylint",
     "pyperf",
     "pypinfo",
+    "pyreadline ; os_name == 'nt'",
     "pytest-cov",
     "requests",
     "rstcheck",
@@ -108,10 +109,10 @@ DEV_DEPS = TEST_DEPS + [
     "sphinx_rtd_theme",
     "toml-sort",
     "twine",
+    "validate-pyproject[all]",
     "virtualenv",
     "vulture",
     "wheel",
-    "pyreadline ; os_name == 'nt'",
 ]
 
 macros = []
