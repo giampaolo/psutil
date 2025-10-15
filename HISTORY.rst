@@ -9,6 +9,7 @@ XXXX-XX-XX
 **Bug fixes**
 
 - 2641_, [SunOS]: cannot compile psutil from sources due to missing C include.
+- 2357_, [SunOS]: `Process.cmdline()`_ does not handle spaces properly. (patch by Ben Raz)
 
 7.1.0
 =====
