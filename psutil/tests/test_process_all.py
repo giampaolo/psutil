@@ -147,7 +147,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                     if value not in (0, 0.0, [], None, '', {}):
                         assert value, value
         if failures:
-            raise pytest.fail(''.join(failures))
+            return pytest.fail(''.join(failures))
 
     def cmdline(self, ret, info):
         assert isinstance(ret, list)

@@ -322,9 +322,9 @@ class TestMemoryAPIs(PsutilTestCase):
                 assert isinstance(value, int)
             if name != 'total':
                 if not value >= 0:
-                    raise pytest.fail(f"{name!r} < 0 ({value})")
+                    return pytest.fail(f"{name!r} < 0 ({value})")
                 if value > mem.total:
-                    raise pytest.fail(
+                    return pytest.fail(
                         f"{name!r} > total (total={mem.total}, {name}={value})"
                     )
 
@@ -362,13 +362,13 @@ class TestCpuAPIs(PsutilTestCase):
             with open("/proc/cpuinfo") as fd:
                 cpuinfo_data = fd.read()
             if "physical id" not in cpuinfo_data:
-                raise pytest.skip("cpuinfo doesn't include physical id")
+                return pytest.skip("cpuinfo doesn't include physical id")
 
     def test_cpu_count_cores(self):
         logical = psutil.cpu_count()
         cores = psutil.cpu_count(logical=False)
         if cores is None:
-            raise pytest.skip("cpu_count_cores() is None")
+            return pytest.skip("cpu_count_cores() is None")
         if WINDOWS and sys.getwindowsversion()[:2] <= (6, 1):  # <= Vista
             assert cores is None
         else:
@@ -424,8 +424,8 @@ class TestCpuAPIs(PsutilTestCase):
         while time.time() < stop_at:
             t2 = sum(psutil.cpu_times())
             if t2 > t1:
-                return
-        raise pytest.fail("time remained the same")
+                return None
+        return pytest.fail("time remained the same")
 
     def test_per_cpu_times(self):
         # Check type, value >= 0, str().
@@ -591,7 +591,7 @@ class TestCpuAPIs(PsutilTestCase):
 
         ls = psutil.cpu_freq(percpu=True)
         if (FREEBSD or AARCH64) and not ls:
-            raise pytest.skip(
+            return pytest.skip(
                 "returns empty list on FreeBSD and Linux aarch64"
             )
 

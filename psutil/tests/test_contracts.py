@@ -226,7 +226,7 @@ class TestSystemAPITypes(PsutilTestCase):
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
-            raise pytest.skip("cpu_freq() returns None")
+            return pytest.skip("cpu_freq() returns None")
         self.assert_ntuple_of_nums(psutil.cpu_freq(), type_=(float, int))
 
     def test_disk_io_counters(self):

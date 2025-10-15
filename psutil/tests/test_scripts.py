@@ -76,7 +76,7 @@ class TestExampleScripts(PsutilTestCase):
             if name.endswith('.py'):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
                     # self.assert_stdout(name)
-                    raise pytest.fail(
+                    return pytest.fail(
                         "no test defined for"
                         f" {os.path.join(SCRIPTS_DIR, name)!r} script"
                     )
@@ -88,7 +88,7 @@ class TestExampleScripts(PsutilTestCase):
                 if file.endswith('.py'):
                     path = os.path.join(root, file)
                     if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
-                        raise pytest.fail(f"{path!r} is not executable")
+                        return pytest.fail(f"{path!r} is not executable")
 
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')
@@ -124,7 +124,7 @@ class TestExampleScripts(PsutilTestCase):
 
     def test_procsmem(self):
         if 'uss' not in psutil.Process().memory_full_info()._fields:
-            raise pytest.skip("not supported")
+            return pytest.skip("not supported")
         self.assert_stdout('procsmem.py')
 
     def test_killall(self):
@@ -153,13 +153,13 @@ class TestExampleScripts(PsutilTestCase):
     @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
     def test_temperatures(self):
         if not psutil.sensors_temperatures():
-            raise pytest.skip("no temperatures")
+            return pytest.skip("no temperatures")
         self.assert_stdout('temperatures.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_fans(self):
         if not psutil.sensors_fans():
-            raise pytest.skip("no fans")
+            return pytest.skip("no fans")
         self.assert_stdout('fans.py')
 
     @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
