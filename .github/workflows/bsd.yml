@@ -20,7 +20,7 @@ jobs:
         with:
           usesh: true
           run: |
-            make test-ci
+            make ci-test
 
   openbsd:
     # if: false
@@ -32,7 +32,7 @@ jobs:
         with:
           usesh: true
           run: |
-            make test-ci
+            make ci-test
 
   netbsd:
     if: false # XXX: disabled
@@ -44,4 +44,4 @@ jobs:
         with:
           usesh: true
           run: |
-            make test-ci
+            make ci-test

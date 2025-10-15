@@ -88,7 +88,7 @@ jobs:
           python-version: 3.x
       - name: "Run linters"
         run: |
-          make lint-ci
+          make ci-lint
 
   # Produce wheels as artifacts.
   upload-wheels:
@@ -116,8 +116,4 @@ jobs:
           name: wheels
           path: wheelhouse
       - run: |
-          python3 -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
-          make sdist
-          mv wheelhouse/* dist/
-          make print-hashes
-          make check-distribution
+          make ci-check-dist

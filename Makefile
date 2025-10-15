@@ -164,29 +164,6 @@ test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
 	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
-test-ci:  ## Run tests on GitHub CI.
-	${MAKE} install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
-	${MAKE} print-sysinfo
-	$(PYTHON) -m pip list
-	${MAKE} test
-	${MAKE} test-memleaks
-	${MAKE} test-sudo
-
-test-cibuildwheel:    ## Run tests from cibuildwheel.
-	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
-	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
-	${MAKE} install-sysdeps
-	${MAKE} print-sysinfo
-	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
-
-lint-ci:  ## Run all linters on GitHub CI.
-	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
-	curl -fsSL https://dprint.dev/install.sh | sh
-	${MAKE} lint-all
-
 # ===================================================================
 # Linters
 # ===================================================================
@@ -248,6 +225,40 @@ fix-all:  ## Run all code fixers.
 	${MAKE} fix-dprint
 
 # ===================================================================
+# CI jobs
+# ===================================================================
+
+ci-lint:  ## Run all linters on GitHub CI.
+	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
+	curl -fsSL https://dprint.dev/install.sh | sh
+	${MAKE} lint-all
+
+ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
+	${MAKE} install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
+	${MAKE} print-sysinfo
+	$(PYTHON) -m pip list
+	${MAKE} test
+	${MAKE} test-memleaks
+	${MAKE} test-sudo
+
+ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
+	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
+	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
+	${MAKE} install-sysdeps
+	${MAKE} print-sysinfo
+	mkdir -p .tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
+
+ci-check-dist:  ## Run all sanity checks re. to the package distribution.
+	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
+	make sdist
+	mv wheelhouse/* dist/
+	make print-hashes
+	make check-dist
+
+# ===================================================================
 # Distribution
 # ===================================================================
 
@@ -267,7 +278,7 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
 	$(PYTHON) -m twine check --strict dist/*.whl
 
-check-distribution:  ## Run all sanity checks re. to the package distribution.
+check-dist:  ## Run all sanity checks re. to the package distribution.
 	${MAKE} check-manifest
 	${MAKE} check-pyproject
 	${MAKE} check-sdist
@@ -302,7 +313,7 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in history, '%r not found in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
 	${MAKE} download-wheels
-	${MAKE} check-distribution
+	${MAKE} check-dist
 	${MAKE} print-hashes
 	${MAKE} print-dist
 

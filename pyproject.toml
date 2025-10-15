@@ -231,7 +231,7 @@ test-skip = [
     "cp3{6,7,8,9,10,11,12}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
 ]
 test-extras = ["test"]
-test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" test-cibuildwheel"
+test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" ci-test-cibuildwheel"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
