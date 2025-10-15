@@ -103,7 +103,7 @@ jobs:
           separate-directories: false
           delete-merged: true
 
-  # Check sanity of the package distribution (.tar.gz & *.whl files)
+  # Check sanity of the package distribution (.tar.gz and *.whl files)
   check-dist:
     needs: [upload-wheels]
     runs-on: ubuntu-latest
@@ -120,4 +120,5 @@ jobs:
           make sdist
           mv wheelhouse/* dist/
           make print-hashes
+          pytnon3 -m pip install -U setuptools twine check-manifest validate-pyproject abi3audit
           make check-distribution
