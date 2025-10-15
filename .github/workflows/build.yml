@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
-          path: dist
+          path: wheelhouse
 
       - name: Generate source distribution (.tar.gz)
         if: matrix.os == 'ubuntu-latest'
@@ -115,8 +115,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: wheels
-          path: dist
+          path: wheelhouse
       - run: |
           make sdist
+          mv wheelhouse/* dist/
           python scripts/internal/print_hashes.py
           make check-distribution
