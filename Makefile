@@ -267,7 +267,7 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
 	$(PYTHON) -m twine check --strict dist/*.whl
 
-check-distribution:
+check-distribution:  ## Run all sanity checks re. to the package distribution.
 	${MAKE} check-manifest
 	${MAKE} check-pyproject
 	${MAKE} check-sdist

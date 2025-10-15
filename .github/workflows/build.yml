@@ -103,7 +103,7 @@ jobs:
           separate-directories: false
           delete-merged: true
 
-  # Check sanity of .tar.gz + wheel files
+  # Check sanity of the package distribution (.tar.gz & *.whl files)
   check-dist:
     needs: [upload-wheels]
     runs-on: ubuntu-latest
@@ -117,6 +117,6 @@ jobs:
           name: wheels
           path: dist
       - run: |
+          make sdist
           python scripts/internal/print_hashes.py
-          pipx run twine check --strict wheelhouse/*
-          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
+          make check-distribution
