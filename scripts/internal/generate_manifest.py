@@ -35,6 +35,8 @@ def main():
     for file in sorted(files):
         print("include " + file)
 
+    print("recursive-exclude docs/_static *")
+
 
 if __name__ == '__main__':
     main()

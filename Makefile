@@ -251,32 +251,37 @@ fix-all:  ## Run all code fixers.
 # Distribution
 # ===================================================================
 
-sdist:  ## Create tar.gz source distribution.
-	${MAKE} generate-manifest
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
-
-download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
-	${MAKE} print-dist
-
-create-wheels:  ## Create .whl files
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
-	${MAKE} check-wheels
-
 check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON_ENV_VARS) $(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
 	$(PYTHON_ENV_VARS) build/venv/bin/python -m pip install -v --isolated --quiet dist/*.tar.gz
 	$(PYTHON_ENV_VARS) build/venv/bin/python -c "import os; os.chdir('build/venv'); import psutil"
 	$(PYTHON) -m twine check --strict dist/*.tar.gz
 
+check-manifest:  ## Check sanity of MANIFEST.in file.
+	$(PYTHON) -m check_manifest -v $(ARGS)
+
 check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
 	$(PYTHON) -m twine check --strict dist/*.whl
 
+check-distribution:
+	${MAKE} check-sdist
+	${MAKE} check-manifest
+	${MAKE} check-wheels
+
+generate-manifest:  ## Generates MANIFEST.in file.
+	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+
+sdist:  ## Create tar.gz source distribution.
+	${MAKE} generate-manifest
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
+
+create-wheels:  ## Create .whl files
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
+
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} clean
 	${MAKE} sdist
-	${MAKE} check-sdist
 	${MAKE} install
 	@$(PYTHON) -c \
 		"import requests, sys; \
@@ -293,22 +298,18 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in history, '%r not found in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
 	${MAKE} download-wheels
-	${MAKE} check-wheels
+	${MAKE} check-distribution
 	${MAKE} print-hashes
 	${MAKE} print-dist
 
 release:  ## Upload a new release.
-	${MAKE} check-sdist
-	${MAKE} check-wheels
 	$(PYTHON) -m twine upload dist/*.tar.gz
 	$(PYTHON) -m twine upload dist/*.whl
 	${MAKE} git-tag-release
 
-generate-manifest:  ## Generates MANIFEST.in file.
-	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
-
-print-dist:  ## Print downloaded wheels / tar.gs
-	$(PYTHON) scripts/internal/print_dist.py
+download-wheels:  ## Download latest wheels hosted on github.
+	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	${MAKE} print-dist
 
 git-tag-release:  ## Git-tag a new release.
 	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
@@ -341,6 +342,9 @@ print-hashes:  ## Prints hashes of files in dist/ directory
 print-sysinfo:  ## Prints system info
 	$(PYTHON) scripts/internal/print_sysinfo.py
 
+print-dist:  ## Print downloaded wheels / tar.gz
+	$(PYTHON) scripts/internal/print_dist.py
+
 # ===================================================================
 # Misc
 # ===================================================================
@@ -356,11 +360,8 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
-check-broken-links:  ## Look for broken links in source files.
-	git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
-
-check-manifest:  ## Inspect MANIFEST.in file.
-	$(PYTHON) -m check_manifest -v $(ARGS)
+find-broken-links:  ## Look for broken links in source files.
+	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
 
 help: ## Display callable targets.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
