@@ -984,24 +984,17 @@ psutil_aix_clear(PyObject *m) {
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_aix",
-    NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
-    NULL,
-    psutil_aix_traverse,
-    psutil_aix_clear,
-    NULL
-};
+static int module_loaded = 0;
 
-
-PyMODINIT_FUNC
-PyInit__psutil_aix(void) {
-    PyObject *mod = PyModule_Create(&moduledef);
-    if (mod == NULL)
-        return NULL;
+static int
+_psutil_aix_exec(PyObject *mod) {
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
 
 #ifdef Py_GIL_DISABLED
     if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
@@ -1009,46 +1002,66 @@ PyInit__psutil_aix(void) {
 #endif
 
     if (psutil_setup() != 0)
-        return NULL;
+        return -1;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SACTIVE", SACTIVE))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SSWAP", SSWAP))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_SYN_RCVD", TCPS_SYN_RECEIVED))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
-        return NULL;
+        return -1;
     if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE))
-        return NULL;
+        return -1;
 
-    return mod;
+    return 0;
+}
+
+static struct PyModuleDef_Slot _psutil_aix_slots[] = {
+    {Py_mod_exec, _psutil_aix_exec},
+    {0, NULL},
+};
+
+static struct PyModuleDef module_def = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_psutil_aix",
+    .m_size = sizeof(struct module_state),
+    .m_methods = PsutilMethods,
+    .m_slots = _psutil_aix_slots,
+    .m_traverse = psutil_aix_traverse,
+    .m_clear = psutil_aix_clear,
+};
+
+PyMODINIT_FUNC
+PyInit__psutil_aix(void) {
+    return PyModuleDef_Init(&module_def);
 }
 
 #ifdef __cplusplus
