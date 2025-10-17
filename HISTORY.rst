@@ -6,6 +6,10 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2126_, [Linux]: build and test ``musllinux`` wheels.  (patch by Ben Raz)
+
 **Bug fixes**
 
 - 2641_, [SunOS]: cannot compile psutil from sources due to missing C include.
