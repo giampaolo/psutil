@@ -14,7 +14,7 @@
 
 
 DWORD *
-psutil_get_pids(DWORD *numberOfReturnedPIDs) {
+_psutil_pids(DWORD *numberOfReturnedPIDs) {
     // Win32 SDK says the only way to know if our process array
     // wasn't large enough is to check the returned size and make
     // sure that it doesn't match the size of the array.
@@ -59,9 +59,9 @@ psutil_pid_in_pids(DWORD pid) {
     DWORD numberOfReturnedPIDs;
     DWORD i;
 
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+    proclist = _psutil_pids(&numberOfReturnedPIDs);
     if (proclist == NULL) {
-        psutil_debug("psutil_get_pids() failed");
+        psutil_debug("_psutil_pids() failed");
         return -1;
     }
     for (i = 0; i < numberOfReturnedPIDs; i++) {

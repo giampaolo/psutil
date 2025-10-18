@@ -24,11 +24,11 @@
 
 
 int
-psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
+psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc) {
     // Fills a kinfo_proc struct based on process pid.
     int ret;
     int mib[6];
-    size_t size = sizeof(kinfo_proc);
+    size_t size = sizeof(struct kinfo_proc2);
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC2;
@@ -154,9 +154,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
-    // Return number of threads used by process as a Python integer.
     long pid;
-    kinfo_proc kp;
+    struct kinfo_proc2 kp;
+
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
@@ -241,53 +241,42 @@ error:
 
 
 int
-psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
-    // Returns a list of all BSD processes on the system.  This routine
-    // allocates the list and puts it in *procList and a count of the
-    // number of entries in *procCount.  You are responsible for freeing
-    // this list (use "free" from System framework).
-    // On success, the function returns 0.
-    // On error, the function returns a BSD errno value.
-    kinfo_proc *result;
+_psutil_pids(struct kinfo_proc2 **proc_list, size_t *proc_count) {
+    struct kinfo_proc2 *result;
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
     char errbuf[_POSIX2_LINE_MAX];
     int cnt;
     kvm_t *kd;
-
-    assert( procList != NULL);
-    assert(*procList == NULL);
-    assert(procCount != NULL);
+    size_t mlen;
 
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
-
     if (kd == NULL) {
         PyErr_Format(
-            PyExc_RuntimeError, "kvm_openfiles() syscall failed: %s", errbuf);
+            PyExc_RuntimeError, "kvm_openfiles() syscall failed: %s", errbuf
+        );
         return 1;
     }
 
-    result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(kinfo_proc), &cnt);
+    result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &cnt);
     if (result == NULL) {
         PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() syscall failed");
         kvm_close(kd);
         return 1;
     }
 
-    *procCount = (size_t)cnt;
+    *proc_count = (size_t)cnt;
 
-    size_t mlen = cnt * sizeof(kinfo_proc);
-
-    if ((*procList = malloc(mlen)) == NULL) {
+    mlen = cnt * sizeof(struct kinfo_proc2);
+    if ((*proc_list = malloc(mlen)) == NULL) {
         PyErr_NoMemory();
         kvm_close(kd);
         return 1;
     }
 
-    memcpy(*procList, result, mlen);
-    assert(*procList != NULL);
+    memcpy(*proc_list, result, mlen);
+    assert(*proc_list != NULL);
     kvm_close(kd);
-
     return 0;
 }
 

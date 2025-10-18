@@ -33,7 +33,6 @@
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-typedef struct kinfo_proc kinfo_proc;
 
 
 // ====================================================================
@@ -42,7 +41,7 @@ typedef struct kinfo_proc kinfo_proc;
 
 
 static int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
+_psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count) {
     int mib[3];
     size_t len = 0;
     char *buf = NULL;
@@ -50,16 +49,16 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_ALL;
-    *procList = NULL;
-    *procCount = 0;
+    *proc_list = NULL;
+    *proc_count = 0;
 
     if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
         return 1;
 
-    *procList = (struct kinfo_proc *)buf;
-    *procCount = len / sizeof(struct kinfo_proc);
+    *proc_list = (struct kinfo_proc *)buf;
+    *proc_count = len / sizeof(struct kinfo_proc);
 
-    if (*procCount == 0) {
+    if (*proc_count == 0) {
         free(buf);
         PyErr_Format(PyExc_RuntimeError, "no PIDs found");
         return 1;
@@ -176,8 +175,9 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
 
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
+        if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("task_for_pid");
+        }
         // Now done in Python.
         // else if (psutil_is_zombie(pid) == 1)
         //     PyErr_SetString(ZombieProcessError,
@@ -271,8 +271,8 @@ error:
  */
 PyObject *
 psutil_pids(PyObject *self, PyObject *args) {
-    kinfo_proc *proclist = NULL;
-    kinfo_proc *orig_address = NULL;
+    struct kinfo_proc *proclist = NULL;
+    struct kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
     PyObject *py_pid = NULL;
@@ -281,7 +281,7 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (psutil_get_proc_list(&proclist, &num_processes) != 0)
+    if (_psutil_pids(&proclist, &num_processes) != 0)
         goto error;
 
     // save the address of proclist so we can free it later

@@ -57,7 +57,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 // ============================================================================
 
 int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
+_psutil_pids(struct kinfo_proc **procList, size_t *procCount) {
     // Returns a list of all BSD processes on the system.  This routine
     // allocates the list and puts it in *procList and a count of the
     // number of entries in *procCount.  You are responsible for freeing

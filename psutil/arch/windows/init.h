@@ -72,7 +72,7 @@ PyObject *TimeoutExpired;
 PyObject *TimeoutAbandoned;
 
 
-DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
+DWORD* _psutil_pids(DWORD *numberOfReturnedPIDs);
 HANDLE psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code);
 HANDLE psutil_handle_from_pid(DWORD pid, DWORD dwDesiredAccess);
 int psutil_assert_pid_exists(DWORD pid, char *err);

@@ -7,12 +7,11 @@
  */
 
 #include <Python.h>
-
-typedef struct kinfo_proc2 kinfo_proc;
+#include <sys/sysctl.h>
 
 // TODO: refactor this. Does not belong here.
-int psutil_kinfo_proc(pid_t pid, kinfo_proc *proc);
-int psutil_get_proc_list(kinfo_proc **procList, size_t *procCount);
+int psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc);
+int _psutil_pids(struct kinfo_proc2 **proc_list, size_t *proc_count);
 char *psutil_get_cmd_args(pid_t pid, size_t *argsize);
 
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);

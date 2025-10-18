@@ -62,7 +62,8 @@ psutil_pids(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+
+    proclist = _psutil_pids(&numberOfReturnedPIDs);
     if (proclist == NULL)
         goto error;
 
