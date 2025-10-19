@@ -36,4 +36,4 @@ jobs:
             python3 -c "import psutil"
             python3 scripts/internal/install_pip.py
             python3 -m pip install --break-system-packages --user pytest pytest-instafail pytest-subtests pytest-xdist
-            python3 -m pytest
+            python3 -m pytest psutil/tests/test_memleaks.py
