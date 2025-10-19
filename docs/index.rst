@@ -2676,6 +2676,7 @@ If you want to develop psutil take a look at the `DEVGUIDE.rst`_.
 Platforms support history
 =========================
 
+* psutil 7.1.1 (2025-10): drop **SunOS 10**
 * psutil 7.1.0 (2025-09): drop **FreeBSD 8**
 * psutil 7.0.0 (2025-02): drop Python 2.7
 * psutil 5.9.6 (2023-10): drop Python 3.4 and 3.5

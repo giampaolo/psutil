@@ -15,6 +15,7 @@
 */
 
 #define _STRUCTURED_PROC 1
+#define NEW_MIB_COMPLIANT 1
 
 #include <Python.h>
 
