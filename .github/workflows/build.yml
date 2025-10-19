@@ -16,13 +16,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
 
-  # Reuse the checkout workflow
-  source:
-    uses: ./.github/workflows/source.yml
-
   # Run tests on Linux, macOS, Windows
   tests:
-    needs: source
     name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -39,10 +34,7 @@ jobs:
           - { os: windows-2025, arch: x86 }
           - { os: windows-11-arm, arch: ARM64 }
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: source
-          path: .
+      - uses: actions/checkout@v5
 
       # Only install Python 3.8 on macOS ARM64 for universal2 support
       - name: "Install Python 3.8 on macOS ARM64"
@@ -74,17 +66,13 @@ jobs:
 
   # Test python 2.7 fallback installation message produced by setup.py
   py2-fallback:
-    needs: source
     name: py2.7 setup.py check
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: source
-          path: .
+      - uses: actions/checkout@v5
       - uses: LizardByte/actions/actions/setup_python@master
         with:
           python-version: 2.7
@@ -92,13 +80,9 @@ jobs:
 
   # Run linters.
   linters:
-    needs: source
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: source
-          path: .
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
@@ -120,13 +104,10 @@ jobs:
 
   # Check sanity of the package distribution (.tar.gz and *.whl files)
   check-dist:
-    needs: [upload-wheels, source]
+    needs: [upload-wheels]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: source
-          path: .
+      - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
