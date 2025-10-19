@@ -1,7 +1,7 @@
 # Execute tests on SunOS
 # https://github.com/vmactions/solaris-vm
 
-name: sunos-tests
+name: sunos
 on:
   push:
     # only run this job if the following files are modified
