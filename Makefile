@@ -248,9 +248,10 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	${MAKE} print-sysinfo
 	rm -rf build/
-	python3 -c "import psutil; print(psutil)"
-	python3 -m pytest -k 'not test_memleaks.py'
-	python3 -m pytest -k 'test_memleaks.py'
+	mv psutil _psutil
+	$(PYTHON) -c "import psutil; print(psutil)"
+	$(PYTHON) -m pytest -k 'not test_memleaks.py'
+	$(PYTHON) -m pytest -k 'test_memleaks.py'
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
