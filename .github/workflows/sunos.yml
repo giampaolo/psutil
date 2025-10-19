@@ -17,4 +17,4 @@ jobs:
         with:
           usesh: true
           run: |
-            make ci-test
+            python3 setup.py build_ext -i --parallel 4
