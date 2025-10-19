@@ -16,8 +16,6 @@ import contextlib
 import glob
 import io
 import os
-import platform
-import re
 import shutil
 import struct
 import subprocess
@@ -424,7 +422,6 @@ elif SUNOS:
             sources
             + ["psutil/_psutil_sunos.c"]
             + glob.glob("psutil/arch/sunos/*.c")
-            + glob.glob("psutil/arch/sunos/v10/*.c")
         ),
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'],
@@ -468,26 +465,8 @@ if POSIX:
         # fmt: on
     )
     if SUNOS:
-
-        def get_sunos_update():
-            # See https://serverfault.com/q/524883
-            # for an explanation of Solaris /etc/release
-            with open('/etc/release') as f:
-                update = re.search(r'(?<=s10s_u)[0-9]{1,2}', f.readline())
-                return int(update.group(0)) if update else 0
-
         posix_extension.libraries.append('socket')
-        if platform.release() == '5.10':
-            # Detect Solaris 5.10, update >= 4, see:
-            # https://github.com/giampaolo/psutil/pull/1638
-            if get_sunos_update() >= 4:
-                # MIB compliance starts with SunOS 5.10 Update 4:
-                posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
-            posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
-            posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
-        else:
-            # Other releases are by default considered to be new mib compliant.
-            posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
+        posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
     elif AIX:
         posix_extension.sources.append('psutil/arch/aix/ifaddrs.c')
 
