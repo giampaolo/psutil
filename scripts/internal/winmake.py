@@ -313,10 +313,7 @@ def test(args=None):
     """Run tests."""
     build()
     args = args or []
-    sh(
-        [PYTHON, "-m", "pytest", "--ignore=psutil/tests/test_memleaks.py"]
-        + args
-    )
+    sh([PYTHON, "-m", "pytest", "--ignore=tests/test_memleaks.py"] + args)
 
 
 def test_by_name(arg):
