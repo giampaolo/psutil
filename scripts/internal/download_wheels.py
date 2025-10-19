@@ -17,6 +17,8 @@ https://developer.github.com/v3/actions/artifacts/.
 import argparse
 import json
 import os
+import shutil
+import stat
 import sys
 import zipfile
 
@@ -24,13 +26,29 @@ import requests
 
 from psutil._common import bytes2human
 
-from . import safe_rmpath
-
 USER = "giampaolo"
 PROJECT = "psutil"
 OUTFILE = "wheels-github.zip"
 TOKEN = ""
 TIMEOUT = 30
+
+
+def safe_rmpath(path):
+    """Removes a path either if it's a file, a directory or a link.
+    If path does not exist just do nothing.
+    """
+    try:
+        st = os.stat(path)
+        if stat.S_ISLNK(st.st_mode):
+            os.unlink(path)
+        elif stat.S_ISDIR(st.st_mode):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+    except FileNotFoundError:
+        return False
+    else:
+        return True
 
 
 def get_artifacts():
