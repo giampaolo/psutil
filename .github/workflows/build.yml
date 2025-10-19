@@ -59,11 +59,6 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse
 
-      - name: Generate source distribution (.tar.gz)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          make sdist
-
   # Test python 2.7 fallback installation message produced by setup.py
   py2-fallback:
     name: py2.7 setup.py check
