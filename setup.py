@@ -113,7 +113,13 @@ DEV_DEPS = TEST_DEPS + [
     "wheel",
 ]
 
+# External libraries to link against.
+libraries = []
+
+# The pre-processor macros that are passed to the C compiler when
+# building the extension.
 macros = []
+
 if POSIX:
     macros.append(("PSUTIL_POSIX", 1))
 if BSD:
@@ -278,6 +284,17 @@ if WINDOWS:
         msg += "2000, XP and 2003 server"
         raise RuntimeError(msg)
 
+    libraries.extend([
+        "advapi32",
+        "kernel32",
+        "netapi32",
+        "pdh",
+        "PowrProf",
+        "psapi",
+        "shell32",
+        "ws2_32",
+    ])
+
     macros.append(("PSUTIL_WINDOWS", 1))
     macros.extend([
         # be nice to mingw, see:
@@ -300,16 +317,7 @@ if WINDOWS:
             + glob.glob("psutil/arch/windows/*.c")
         ),
         define_macros=macros,
-        libraries=[
-            "psapi",
-            "kernel32",
-            "advapi32",
-            "shell32",
-            "netapi32",
-            "ws2_32",
-            "PowrProf",
-            "pdh",
-        ],
+        libraries=libraries,
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
         # fmt: off
@@ -341,7 +349,9 @@ elif MACOS:
     )
 
 elif FREEBSD:
+    libraries.extend(["devstat"])
     macros.append(("PSUTIL_FREEBSD", 1))
+
     ext = Extension(
         'psutil._psutil_bsd',
         sources=(
@@ -351,7 +361,7 @@ elif FREEBSD:
             + glob.glob("psutil/arch/freebsd/*.c")
         ),
         define_macros=macros,
-        libraries=["devstat"],
+        libraries=libraries,
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -359,7 +369,9 @@ elif FREEBSD:
     )
 
 elif OPENBSD:
+    libraries.extend(["kvm"])
     macros.append(("PSUTIL_OPENBSD", 1))
+
     ext = Extension(
         'psutil._psutil_bsd',
         sources=(
@@ -369,7 +381,7 @@ elif OPENBSD:
             + glob.glob("psutil/arch/openbsd/*.c")
         ),
         define_macros=macros,
-        libraries=["kvm"],
+        libraries=libraries,
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -377,7 +389,9 @@ elif OPENBSD:
     )
 
 elif NETBSD:
+    libraries.extend(["kvm"])
     macros.append(("PSUTIL_NETBSD", 1))
+
     ext = Extension(
         'psutil._psutil_bsd',
         sources=(
@@ -387,7 +401,7 @@ elif NETBSD:
             + glob.glob("psutil/arch/netbsd/*.c")
         ),
         define_macros=macros,
-        libraries=["kvm"],
+        libraries=libraries,
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -415,7 +429,9 @@ elif LINUX:
     )
 
 elif SUNOS:
+    libraries.extend(["kstat", "nsl", "socket"])
     macros.append(("PSUTIL_SUNOS", 1))
+
     ext = Extension(
         'psutil._psutil_sunos',
         sources=(
@@ -424,7 +440,7 @@ elif SUNOS:
             + glob.glob("psutil/arch/sunos/*.c")
         ),
         define_macros=macros,
-        libraries=['kstat', 'nsl', 'socket'],
+        libraries=libraries,
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -432,17 +448,17 @@ elif SUNOS:
     )
 
 elif AIX:
+    libraries.extend(["perfstat"])
     macros.append(("PSUTIL_AIX", 1))
+
     ext = Extension(
         'psutil._psutil_aix',
-        sources=sources
-        + [
-            'psutil/_psutil_aix.c',
-            'psutil/arch/aix/net_connections.c',
-            'psutil/arch/aix/common.c',
-            'psutil/arch/aix/ifaddrs.c',
-        ],
-        libraries=['perfstat'],
+        sources=(
+            sources
+            + ["psutil/_psutil_aix.c"]
+            + glob.glob("psutil/arch/aix/*.c")
+        ),
+        libraries=libraries,
         define_macros=macros,
         # fmt: off
         # python 2.7 compatibility requires no comma
@@ -457,6 +473,7 @@ else:
 if POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',
+        libraries=libraries,
         define_macros=macros,
         sources=sources,
         # fmt: off
@@ -464,11 +481,6 @@ if POSIX:
         **py_limited_api
         # fmt: on
     )
-    if SUNOS:
-        posix_extension.libraries.append('socket')
-    elif AIX:
-        posix_extension.sources.append('psutil/arch/aix/ifaddrs.c')
-
     extensions = [ext, posix_extension]
 else:
     extensions = [ext]
