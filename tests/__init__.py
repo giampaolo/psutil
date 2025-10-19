@@ -117,6 +117,7 @@ IS_64BIT = sys.maxsize > 2**32
 # apparently they're the same
 AARCH64 = platform.machine().lower() in {"aarch64", "arm64"}
 RISCV64 = platform.machine() == "riscv64"
+CWD = os.getcwd()
 
 
 @memoize
@@ -354,7 +355,7 @@ def spawn_subproc(cmd=None, **kwds):
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
-    kwds.setdefault("cwd", os.getcwd())
+    kwds.setdefault("cwd", CWD)
     kwds.setdefault("env", PYTHON_EXE_ENV)
     if WINDOWS:
         # Prevents the subprocess to open error dialogs. This will also
@@ -471,6 +472,7 @@ def pyrun(src, **kwds):
     code was written.
     """
     kwds.setdefault("env", PYTHON_EXE_ENV)
+    kwds.setdefault("cwd", CWD)
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
     srcfile = get_testfn()
@@ -493,6 +495,7 @@ def sh(cmd, **kwds):
     # Prevents subprocess to open error dialogs in case of error.
     flags = 0x8000000 if WINDOWS else 0
     kwds.setdefault("env", PYTHON_EXE_ENV)
+    kwds.setdefault("cwd", CWD)
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
     kwds.setdefault("universal_newlines", True)
