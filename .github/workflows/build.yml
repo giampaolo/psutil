@@ -18,7 +18,7 @@ jobs:
 
   # Run tests on Linux, macOS, Windows
   tests:
-    name: "tests, ${{ matrix.os }}, ${{ matrix.arch }}"
+    name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
