@@ -238,7 +238,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	$(PYTHON) -m pip list
-	${MAKE} test
+	${MAKE} test-parallel
 	${MAKE} test-memleaks
 	${MAKE} test-sudo
 
