@@ -230,6 +230,8 @@ def _get_py_exe():
             return exe
 
     env = os.environ.copy()
+    # ...so that "import psutil" work from a subprocess
+    env["PYTHONPATH"] = os.getcwd()
 
     # On Windows, starting with python 3.7, virtual environments use a
     # venv launcher startup process. This does not play well when
@@ -468,6 +470,7 @@ def pyrun(src, **kwds):
     Returns a subprocess.Popen instance and the test file where the source
     code was written.
     """
+    kwds.setdefault("env", PYTHON_EXE_ENV)
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
     srcfile = get_testfn()
@@ -489,6 +492,7 @@ def sh(cmd, **kwds):
     """
     # Prevents subprocess to open error dialogs in case of error.
     flags = 0x8000000 if WINDOWS else 0
+    kwds.setdefault("env", PYTHON_EXE_ENV)
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
     kwds.setdefault("universal_newlines", True)
