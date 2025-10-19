@@ -115,7 +115,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def iter_proc_info(self):
         # Fixes "can't pickle <function proc_info>: it's not the
         # same object as test_process_all.proc_info".
-        from psutil.tests.test_process_all import proc_info
+        from .test_process_all import proc_info
 
         if USE_PROC_POOL:
             return self.pool.imap_unordered(proc_info, psutil.pids())
