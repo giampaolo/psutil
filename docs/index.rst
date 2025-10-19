@@ -2619,13 +2619,6 @@ FAQs
 * Q: is MinGW supported on Windows?
 * A: no, you should Visual Studio (see `development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_).
 
-Running tests
-=============
-
-::
-
-    $ python3 -m psutil.tests
-
 Debug mode
 ==========
 

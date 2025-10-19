@@ -997,7 +997,7 @@ class PsutilTestCase(unittest.TestCase):
     def __str__(self):
         fqmod = self.__class__.__module__
         if not fqmod.startswith('psutil.'):
-            fqmod = 'psutil.tests.' + fqmod
+            fqmod = 'tests.' + fqmod
         return "{}.{}.{}".format(
             fqmod,
             self.__class__.__name__,
@@ -1178,7 +1178,7 @@ class TestMemoryLeak(PsutilTestCase):
 
     Usage:
 
-        class TestLeaks(psutil.tests.TestMemoryLeak):
+        class TestLeaks(TestMemoryLeak):
 
             def test_fun(self):
                 self.execute(some_function)

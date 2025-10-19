@@ -18,7 +18,7 @@ Run a specific test:
 
 .. code-block:: bash
 
-    make test ARGS=psutil.tests.test_system.TestDiskAPIs
+    make test ARGS=tests.test_system.TestDiskAPIs
 
 Test C extension memory leaks:
 

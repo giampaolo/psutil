@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for testing utils (psutil.tests namespace)."""
+"""Tests for testing utils (tests namespace)."""
 
 import collections
 import errno
@@ -18,7 +18,7 @@ import warnings
 from unittest import mock
 
 import psutil
-import psutil.tests
+import tests
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
@@ -135,7 +135,7 @@ class TestSyncTestUtils(PsutilTestCase):
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
         nopid = max(psutil.pids()) + 99999
-        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+        with mock.patch("tests.retry.__iter__", return_value=iter([0])):
             with pytest.raises(psutil.NoSuchProcess):
                 wait_for_pid(nopid)
 
@@ -155,7 +155,7 @@ class TestSyncTestUtils(PsutilTestCase):
 
     def test_wait_for_file_no_file(self):
         testfn = self.get_testfn()
-        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+        with mock.patch("tests.retry.__iter__", return_value=iter([0])):
             with pytest.raises(OSError):
                 wait_for_file(testfn)
 
@@ -201,7 +201,7 @@ class TestFSTestUtils(PsutilTestCase):
         assert not os.path.exists(testfn)
         # test other exceptions are raised
         with mock.patch(
-            'psutil.tests.os.stat', side_effect=OSError(errno.EINVAL, "")
+            "tests.os.stat", side_effect=OSError(errno.EINVAL, "")
         ) as m:
             with pytest.raises(OSError):
                 safe_rmpath(testfn)
@@ -223,8 +223,8 @@ class TestProcessUtils(PsutilTestCase):
         assert p.is_running()
         reap_children()
         assert not p.is_running()
-        assert not psutil.tests._pids_started
-        assert not psutil.tests._subprocesses_started
+        assert not tests._pids_started
+        assert not tests._subprocesses_started
 
     def test_spawn_children_pair(self):
         child, grandchild = self.spawn_children_pair()
@@ -525,7 +525,7 @@ class TestFakePytest(PsutilTestCase):
                     def test_passed(self):
                         pass
                 """).lstrip())
-        with mock.patch.object(psutil.tests, "HERE", tmpdir):
+        with mock.patch.object(tests, "HERE", tmpdir):
             suite = fake_pytest.main()
             assert suite.countTestCases() == 1
 

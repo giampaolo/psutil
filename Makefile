@@ -90,7 +90,7 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Tests
 # ===================================================================
 
-test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
+test:  ## Run all tests. To run a specific test do "make test ARGS=tests.test_system.TestDiskAPIs"
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=tests/test_memleaks.py --ignore=tests/test_sudo.py $(ARGS)
 
@@ -162,7 +162,7 @@ test-coverage:  ## Run test coverage.
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
-	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
+	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v tests.test_sudo
 
 # ===================================================================
 # Linters
@@ -248,8 +248,8 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	${MAKE} print-sysinfo
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs tests
+	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs tests
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
