@@ -71,7 +71,7 @@ __all__ = [
     "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
     "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
     "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
-    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL",
+    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL", "CIBUILDWHEEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -107,8 +107,8 @@ __all__ = [
 # --- platforms
 
 PYPY = '__pypy__' in sys.builtin_module_names
-# whether we're running this test suite on a Continuous Integration service
-GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ or 'CIBUILDWHEEL' in os.environ
+CIBUILDWHEEL = "CIBUILDWHEEL" in os.environ
+GITHUB_ACTIONS = 'GITHUB_ACTIONS' in os.environ
 CI_TESTING = GITHUB_ACTIONS
 COVERAGE = 'COVERAGE_RUN' in os.environ
 PYTEST_PARALLEL = "PYTEST_XDIST_WORKER" in os.environ  # `make test-parallel`

@@ -18,6 +18,8 @@ from psutil import POSIX
 from psutil import WINDOWS
 
 from . import CI_TESTING
+from . import CIBUILDWHEEL
+from . import GITHUB_ACTIONS
 from . import HAS_BATTERY
 from . import HAS_MEMORY_MAPS
 from . import HAS_SENSORS_BATTERY
@@ -211,7 +213,7 @@ class TestInternalScripts(PsutilTestCase):
 
 
 @pytest.mark.skipif(
-    CI_TESTING and not os.path.exists(SETUP_PY), reason="can't find setup.py"
+    GITHUB_ACTIONS and CIBUILDWHEEL, reason="GITHUB_ACTIONS + CIBUILDWHEEL"
 )
 class TestSetupScript(PsutilTestCase):
     def test_invocation(self):
