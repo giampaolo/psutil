@@ -15,8 +15,8 @@ jobs:
         id: test
         uses: vmactions/solaris-vm@v1
         with:
+          release: "11.4-gcc"
           usesh: true
           run: |
-            pkg install gcc
             python3 setup.py build_ext -i --parallel 4
             python3 -c "import psutil"
