@@ -14,9 +14,8 @@ jobs:
       - name: Run tests
         id: test
         uses: vmactions/solaris-vm@v1
-        prepare: |
-          pkg install gcc gmake
         with:
           usesh: true
           run: |
+            pkg install gcc gmake
             python3 setup.py build_ext -i --parallel 4
