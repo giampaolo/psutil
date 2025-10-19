@@ -24,28 +24,29 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil.tests import AARCH64
-from psutil.tests import HAS_CPU_AFFINITY
-from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_ENVIRON
-from psutil.tests import HAS_IONICE
-from psutil.tests import HAS_MEMORY_MAPS
-from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import HAS_PROC_CPU_NUM
-from psutil.tests import HAS_PROC_IO_COUNTERS
-from psutil.tests import HAS_RLIMIT
-from psutil.tests import HAS_SENSORS_BATTERY
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import TestMemoryLeak
-from psutil.tests import create_sockets
-from psutil.tests import get_testfn
-from psutil.tests import process_namespace
-from psutil.tests import pytest
-from psutil.tests import skip_on_access_denied
-from psutil.tests import spawn_subproc
-from psutil.tests import system_namespace
-from psutil.tests import terminate
+
+from . import AARCH64
+from . import HAS_CPU_AFFINITY
+from . import HAS_CPU_FREQ
+from . import HAS_ENVIRON
+from . import HAS_IONICE
+from . import HAS_MEMORY_MAPS
+from . import HAS_NET_IO_COUNTERS
+from . import HAS_PROC_CPU_NUM
+from . import HAS_PROC_IO_COUNTERS
+from . import HAS_RLIMIT
+from . import HAS_SENSORS_BATTERY
+from . import HAS_SENSORS_FANS
+from . import HAS_SENSORS_TEMPERATURES
+from . import TestMemoryLeak
+from . import create_sockets
+from . import get_testfn
+from . import process_namespace
+from . import pytest
+from . import skip_on_access_denied
+from . import spawn_subproc
+from . import system_namespace
+from . import terminate
 
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()

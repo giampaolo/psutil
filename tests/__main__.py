@@ -6,6 +6,6 @@
 $ python3 -m psutil.tests.
 """
 
-from psutil.tests import pytest
+from . import pytest
 
 pytest.main()

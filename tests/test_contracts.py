@@ -21,19 +21,20 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil.tests import AARCH64
-from psutil.tests import GITHUB_ACTIONS
-from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import SKIP_SYSCONS
-from psutil.tests import PsutilTestCase
-from psutil.tests import create_sockets
-from psutil.tests import enum
-from psutil.tests import is_namedtuple
-from psutil.tests import kernel_version
-from psutil.tests import pytest
+
+from . import AARCH64
+from . import GITHUB_ACTIONS
+from . import HAS_CPU_FREQ
+from . import HAS_NET_IO_COUNTERS
+from . import HAS_SENSORS_FANS
+from . import HAS_SENSORS_TEMPERATURES
+from . import SKIP_SYSCONS
+from . import PsutilTestCase
+from . import create_sockets
+from . import enum
+from . import is_namedtuple
+from . import kernel_version
+from . import pytest
 
 # ===================================================================
 # --- APIs availability

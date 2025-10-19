@@ -30,25 +30,26 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import broadcast_addr
-from psutil.tests import AARCH64
-from psutil.tests import ASCII_FS
-from psutil.tests import CI_TESTING
-from psutil.tests import GITHUB_ACTIONS
-from psutil.tests import GLOBAL_TIMEOUT
-from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_CPU_FREQ
-from psutil.tests import HAS_GETLOADAVG
-from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import HAS_SENSORS_BATTERY
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import MACOS_12PLUS
-from psutil.tests import PYPY
-from psutil.tests import UNICODE_SUFFIX
-from psutil.tests import PsutilTestCase
-from psutil.tests import check_net_address
-from psutil.tests import pytest
-from psutil.tests import retry_on_failure
+
+from . import AARCH64
+from . import ASCII_FS
+from . import CI_TESTING
+from . import GITHUB_ACTIONS
+from . import GLOBAL_TIMEOUT
+from . import HAS_BATTERY
+from . import HAS_CPU_FREQ
+from . import HAS_GETLOADAVG
+from . import HAS_NET_IO_COUNTERS
+from . import HAS_SENSORS_BATTERY
+from . import HAS_SENSORS_FANS
+from . import HAS_SENSORS_TEMPERATURES
+from . import MACOS_12PLUS
+from . import PYPY
+from . import UNICODE_SUFFIX
+from . import PsutilTestCase
+from . import check_net_address
+from . import pytest
+from . import retry_on_failure
 
 # ===================================================================
 # --- System-related API tests

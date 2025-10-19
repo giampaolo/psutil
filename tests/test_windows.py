@@ -22,18 +22,19 @@ from unittest import mock
 
 import psutil
 from psutil import WINDOWS
-from psutil.tests import GITHUB_ACTIONS
-from psutil.tests import HAS_BATTERY
-from psutil.tests import IS_64BIT
-from psutil.tests import PYPY
-from psutil.tests import TOLERANCE_DISK_USAGE
-from psutil.tests import TOLERANCE_SYS_MEM
-from psutil.tests import PsutilTestCase
-from psutil.tests import pytest
-from psutil.tests import retry_on_failure
-from psutil.tests import sh
-from psutil.tests import spawn_subproc
-from psutil.tests import terminate
+
+from . import GITHUB_ACTIONS
+from . import HAS_BATTERY
+from . import IS_64BIT
+from . import PYPY
+from . import TOLERANCE_DISK_USAGE
+from . import TOLERANCE_SYS_MEM
+from . import PsutilTestCase
+from . import pytest
+from . import retry_on_failure
+from . import sh
+from . import spawn_subproc
+from . import terminate
 
 if WINDOWS and not PYPY:
     with warnings.catch_warnings():

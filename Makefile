@@ -92,59 +92,59 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=tests/test_memleaks.py --ignore=tests/test_sudo.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_process.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_process.py
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_process_all.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_process_all.py
 
 test-system:  ## Run system-related API tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_system.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_system.py
 
 test-misc:  ## Run miscellaneous tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_misc.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_misc.py
 
 test-scripts:  ## Run scripts tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_scripts.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_scripts.py
 
 test-testutils:  ## Run test utils tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_testutils.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_testutils.py
 
 test-unicode:  ## Test APIs dealing with strings.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_unicode.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_unicode.py
 
 test-contracts:  ## APIs sanity tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_contracts.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_contracts.py
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_connections.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_connections.py
 
 test-posix:  ## POSIX specific tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_posix.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_posix.py
 
 test-platform:  ## Run specific platform tests only.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
 
 test-memleaks:  ## Memory leak tests.
 	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_memleaks.py
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) tests/test_memleaks.py
 
 test-last-failed:  ## Re-run tests which failed on last run
 	${MAKE} build
@@ -154,7 +154,7 @@ test-coverage:  ## Run test coverage.
 	${MAKE} build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=psutil/tests/test_memleaks.py $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=tests/test_memleaks.py $(ARGS)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html

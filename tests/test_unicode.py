@@ -78,27 +78,28 @@ from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil.tests import ASCII_FS
-from psutil.tests import CI_TESTING
-from psutil.tests import HAS_ENVIRON
-from psutil.tests import HAS_MEMORY_MAPS
-from psutil.tests import HAS_NET_CONNECTIONS_UNIX
-from psutil.tests import INVALID_UNICODE_SUFFIX
-from psutil.tests import PYPY
-from psutil.tests import TESTFN_PREFIX
-from psutil.tests import UNICODE_SUFFIX
-from psutil.tests import PsutilTestCase
-from psutil.tests import bind_unix_socket
-from psutil.tests import chdir
-from psutil.tests import copyload_shared_lib
-from psutil.tests import create_py_exe
-from psutil.tests import get_testfn
-from psutil.tests import pytest
-from psutil.tests import safe_mkdir
-from psutil.tests import safe_rmpath
-from psutil.tests import skip_on_access_denied
-from psutil.tests import spawn_subproc
-from psutil.tests import terminate
+
+from . import ASCII_FS
+from . import CI_TESTING
+from . import HAS_ENVIRON
+from . import HAS_MEMORY_MAPS
+from . import HAS_NET_CONNECTIONS_UNIX
+from . import INVALID_UNICODE_SUFFIX
+from . import PYPY
+from . import TESTFN_PREFIX
+from . import UNICODE_SUFFIX
+from . import PsutilTestCase
+from . import bind_unix_socket
+from . import chdir
+from . import copyload_shared_lib
+from . import create_py_exe
+from . import get_testfn
+from . import pytest
+from . import safe_mkdir
+from . import safe_rmpath
+from . import skip_on_access_denied
+from . import spawn_subproc
+from . import terminate
 
 
 def try_unicode(suffix):
