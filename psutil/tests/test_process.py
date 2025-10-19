@@ -1494,16 +1494,17 @@ class TestProcess(PsutilTestCase):
     @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
     def test_environ(self):
         def clean_dict(d):
-            exclude = ["PLAT", "HOME", "PYTEST_CURRENT_TEST", "PYTEST_VERSION"]
+            exclude = {"PLAT", "HOME"}
             if MACOS:
                 exclude.extend([
                     "__CF_USER_TEXT_ENCODING",
                     "VERSIONER_PYTHON_PREFER_32_BIT",
                     "VERSIONER_PYTHON_VERSION",
-                    "VERSIONER_PYTHON_VERSION",
                 ])
-            for name in exclude:
-                d.pop(name, None)
+            for name in list(d.keys()):
+                if name in exclude or name.startswith("PYTEST_"):
+                    d.pop(name)
+            # Clean up values
             return {
                 k.replace("\r", "").replace("\n", ""): (
                     v.replace("\r", "").replace("\n", "")
