@@ -466,7 +466,6 @@ if POSIX:
     )
     if SUNOS:
         posix_extension.libraries.append('socket')
-        posix_extension.define_macros.append(('NEW_MIB_COMPLIANT', 1))
     elif AIX:
         posix_extension.sources.append('psutil/arch/aix/ifaddrs.c')
 
