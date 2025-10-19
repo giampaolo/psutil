@@ -32,4 +32,6 @@ jobs:
           run: |
             python3 setup.py build_ext -i --parallel 4
             python3 -c "import psutil"
+            python3 scripts/internal/install_pip.py
+            python3 -m pip install pytest
             python3 -m pytest psutil/tests/test_memleaks.py
