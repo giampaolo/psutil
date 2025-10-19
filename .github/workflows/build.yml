@@ -64,7 +64,21 @@ jobs:
         run: |
           make sdist
 
-  # Run linters + Python 2.7 fallback check
+  # Test python 2.7 fallback installation message produced by setup.py
+  py2-fallback:
+    name: py2.7 setup.py check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v5
+      - uses: LizardByte/actions/actions/setup_python@master
+        with:
+          python-version: 2.7
+      - run: python scripts/internal/test_python2_setup_py.py
+
+  # Run linters.
   linters:
     runs-on: ubuntu-latest
     steps:
@@ -72,14 +86,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
-      - name: Run linters
-        run: make ci-lint
-      # Install Python 2.7
-      - uses: LizardByte/actions/actions/setup_python@master
-        with:
-          python-version: 2.7
-      - name: Python 2.7 fallback setup.py check
-        run: python scripts/internal/test_python2_setup_py.py
+      - name: "Run linters"
+        run: |
+          make ci-lint
 
   # Produce wheels as artifacts.
   upload-wheels:
