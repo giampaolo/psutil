@@ -6,6 +6,10 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+* 2646_, [SunOS]: add CI test runner for SunOS.
+
 **Bug fixes**
 
 - 2641_, [SunOS]: cannot compile psutil from sources due to missing C include.
