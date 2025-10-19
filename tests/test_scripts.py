@@ -26,7 +26,6 @@ from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import PYTHON_EXE
-from . import PYTHON_EXE_ENV
 from . import ROOT_DIR
 from . import SCRIPTS_DIR
 from . import PsutilTestCase
@@ -49,14 +48,13 @@ SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
 )
 class TestExampleScripts(PsutilTestCase):
     @staticmethod
-    def assert_stdout(exe, *args, **kwargs):
-        kwargs.setdefault("env", PYTHON_EXE_ENV)
+    def assert_stdout(exe, *args):
         exe = os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe]
         for arg in args:
             cmd.append(arg)
         try:
-            out = sh(cmd, **kwargs).strip()
+            out = sh(cmd).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
