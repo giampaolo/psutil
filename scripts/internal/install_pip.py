@@ -39,7 +39,10 @@ def main():
         f.flush()
         print("download finished, installing pip")
 
-        code = os.system(f"{sys.executable} {f.name} --user --upgrade")
+        code = os.system(
+            f"{sys.executable} {f.name} --user --upgrade"
+            " --break-system-packages"
+        )
 
     sys.exit(code)
 
