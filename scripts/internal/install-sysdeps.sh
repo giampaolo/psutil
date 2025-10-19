@@ -30,6 +30,10 @@ case "$UNAME_S" in
     OpenBSD)
         OPENBSD=true
         ;;
+    SunOS)
+        SUNOS=true
+        ;;
+
 esac
 
 # Check if running as root
@@ -60,6 +64,8 @@ main() {
         $SUDO pkgin -y install python311-* gcc12-*
     elif [ $OPENBSD ]; then
         $SUDO pkg_add gcc python3
+    elif [ $SUNOS ]; then
+        $SUDO pkg install developer/gcc
     else
         echo "Unsupported platform '$UNAME_S'. Ignoring."
     fi
