@@ -28,6 +28,7 @@ from psutil._common import supports_ipv6
 
 from . import AF_UNIX
 from . import HAS_NET_CONNECTIONS_UNIX
+from . import ROOT_DIR
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
 from . import bind_socket
@@ -526,8 +527,9 @@ class TestSystemWideConnections(ConnectionTestCase):
             fname = self.get_testfn()
             fnames.append(fname)
             src = textwrap.dedent(f"""\
-                import time, os
-                from . import create_sockets
+                import time, os, sys
+                sys.path.insert(0, '{ROOT_DIR}')
+                from tests import create_sockets
                 with create_sockets():
                     with open(r'{fname}', 'w') as f:
                         f.write("hello")
