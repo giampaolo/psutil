@@ -14,6 +14,8 @@ jobs:
       - name: Run tests
         id: test
         uses: vmactions/solaris-vm@v1
+        prepare: |
+          pkg install gcc gmake
         with:
           usesh: true
           run: |
