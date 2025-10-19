@@ -1,4 +1,4 @@
-# Execute tests on SunOS.
+# Execute tests on SunOS
 # https://github.com/vmactions/solaris-vm
 
 name: sunos-tests
