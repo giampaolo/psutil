@@ -248,7 +248,7 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	${MAKE} print-sysinfo
 	mkdir -p .tests
-	echo "Running tests for $CIBW_BUILD / $CIBW_ARCHS"
+	echo "Running tests for \$CIBW_BUILD / \$CIBW_ARCHS"
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
 	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
 
