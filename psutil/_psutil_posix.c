@@ -54,6 +54,14 @@ PyInit__psutil_posix(void) {
         return NULL;
 #endif
 
+    // custom exception
+    ZombieProcessError = PyErr_NewException(
+        "_psutil_posix.ZombieProcessError", NULL, NULL);
+    if (ZombieProcessError == NULL)
+        return NULL;
+    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError))
+        return NULL;
+
 #if defined(PSUTIL_BSD) || \
         defined(PSUTIL_OSX) || \
         defined(PSUTIL_SUNOS) || \

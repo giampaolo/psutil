@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+extern PyObject *ZombieProcessError;
+
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     #define PSUTIL_HAS_POSIX_USERS
 

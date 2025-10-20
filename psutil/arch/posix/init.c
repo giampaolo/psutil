@@ -8,6 +8,8 @@
 #include <sys/resource.h>
 #include <sys/socket.h>
 
+PyObject *ZombieProcessError = NULL;;
+
 /*
  * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
  *
