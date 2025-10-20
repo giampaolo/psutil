@@ -1060,10 +1060,8 @@ class PsutilTestCase(unittest.TestCase):
             try:
                 psutil.Process(pid)
             except psutil.ZombieProcess:
-                return pytest.fail(
-                    "wasn't supposed to raise ZombieProcess\n"
-                    f"{traceback.format_exc()}"
-                )
+                raise AssertionError("wasn't supposed to raise ZombieProcess")
+
         assert cm.value.pid == pid
         assert cm.value.name is None
         assert not psutil.pid_exists(pid), pid
