@@ -1155,6 +1155,7 @@ class PsutilTestCase(unittest.TestCase):
 
 
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
+@pytest.mark.xdist_group(name="serial")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory
