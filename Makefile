@@ -245,8 +245,6 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
-	echo "The following wheels will be built:"
-	CIBW_VERBOSE=3 $(PYTHON) -m cibuildwheel --print-build-identifiers
 	${MAKE} install-sysdeps
 	${MAKE} print-sysinfo
 	mkdir -p .tests
