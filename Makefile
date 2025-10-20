@@ -245,14 +245,13 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# cibuildwheel tests must use the installed wheel, not in-tree sources.
 	# Other test targets rebuild extensions in-place, so we can't reuse them
-	# here. To ensure pytest imports the installed package, we cd in another
-	# dir first.
-	${MAKE} install-sysdeps
-	${MAKE} print-sysinfo
-	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest ../tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest ../tests
-
+	# here. To ensure pytest imports the installed package, we rename psutil
+	# dir to _psutil.
+	rm -rf build/
+	mv psutil _psutil
+	$(PYTHON) -c "import psutil; print(psutil)"
+	$(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest ../tests
+	$(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest ../tests
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
