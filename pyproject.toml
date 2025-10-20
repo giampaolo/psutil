@@ -226,9 +226,10 @@ skip = [
 ]
 test-skip = [
     "cp313-macosx*",  # Hangs for some reason
-    "cp3{8,9,10,11,12}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
+    "cp3{8,9,10,11,12}-*",  # Skip other versions globally except where overridden
+    "cp3{9,10,11,12,13,14}-macosx*",  # Only run tests on macOS for Python 3.8
 ]
-test-extras = ["test"]
+test-extras = ["test"]  # same as doing `pip install .[test]`
 test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" ci-test-cibuildwheel"
 
 [tool.cibuildwheel.macos]
