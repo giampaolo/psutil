@@ -48,7 +48,7 @@ jobs:
           python-version: 3.11
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
