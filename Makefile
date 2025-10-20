@@ -249,9 +249,8 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# directory.
 	rm -rf build/
 	if [ -d psutil ]; then mv psutil psutil.bak; fi
-	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest ../tests/
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest ../tests/
+	$(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest tests/
+	$(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest tests/
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
