@@ -1057,14 +1057,14 @@ class PsutilTestCase(unittest.TestCase):
 
     def assert_pid_gone(self, pid):
         try:
-            psutil.Process(pid)
+            proc = psutil.Process(pid)
         except psutil.ZombieProcess:
             raise AssertionError("wasn't supposed to raise ZombieProcess")
         except psutil.NoSuchProcess as exc:
             assert exc.pid == pid  # noqa: PT017
             assert exc.name is None  # noqa: PT017
         else:
-            raise AssertionError("did not raise NoSuchProcess")
+            raise AssertionError(f"did not raise NoSuchProcess ({proc})")
 
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids()

@@ -238,7 +238,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	$(PYTHON) -m pip list
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest -p xdist -n auto --dist loadgroup psutil/tests/
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest psutil/tests/
 
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
@@ -246,7 +246,7 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	${MAKE} print-sysinfo
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -p xdist -n auto --dist loadgroup --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs psutil.tests
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
