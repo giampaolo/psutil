@@ -233,7 +233,7 @@ archs = ["arm64", "x86_64"]
 # Lightweight import test for all non-target Python versions.
 # Also skip full test suite for macOS 3.13 (only test it on Linux/Windows).
 [[tool.cibuildwheel.overrides]]
-select = "cp3{9,10,11,12,13t,14t}-* cp313-macosx*"
+select = "cp3{9,10,11,12,13t,14}-* cp313-macosx*"
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 

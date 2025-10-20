@@ -1496,7 +1496,7 @@ class TestProcess(PsutilTestCase):
         def clean_dict(d):
             exclude = {"PLAT", "HOME"}
             if MACOS:
-                exclude.extend([
+                exclude.update([
                     "__CF_USER_TEXT_ENCODING",
                     "VERSIONER_PYTHON_PREFER_32_BIT",
                     "VERSIONER_PYTHON_VERSION",
