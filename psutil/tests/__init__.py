@@ -1056,13 +1056,16 @@ class PsutilTestCase(unittest.TestCase):
         repr(exc)
 
     def assert_pid_gone(self, pid):
-        with pytest.raises(psutil.NoSuchProcess) as cm:
-            try:
-                psutil.Process(pid)
-            except psutil.ZombieProcess:
-                return pytest.fail("wasn't supposed to raise ZombieProcess")
-        assert cm.value.pid == pid
-        assert cm.value.name is None
+        try:
+            proc = psutil.Process(pid)
+        except psutil.ZombieProcess:
+            raise AssertionError("wasn't supposed to raise ZombieProcess")
+        except psutil.NoSuchProcess as exc:
+            assert exc.pid == pid  # noqa: PT017
+            assert exc.name is None  # noqa: PT017
+        else:
+            raise AssertionError(f"did not raise NoSuchProcess ({proc})")
+
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids()
         assert pid not in [x.pid for x in psutil.process_iter()]
@@ -1155,6 +1158,7 @@ class PsutilTestCase(unittest.TestCase):
 
 
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
+@pytest.mark.xdist_group(name="serial")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory

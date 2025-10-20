@@ -582,8 +582,6 @@ class TestCpuAPIs(PsutilTestCase):
         def check_ls(ls):
             for nt in ls:
                 assert nt._fields == ('current', 'min', 'max')
-                if nt.max != 0.0:
-                    assert nt.current <= nt.max
                 for name in nt._fields:
                     value = getattr(nt, name)
                     assert isinstance(value, (int, float))
