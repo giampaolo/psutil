@@ -50,7 +50,7 @@ main() {
         $SUDO apt-get install -y sudo  # for test-sudo
     elif [ $HAS_YUM ]; then
         $SUDO yum install -y python3-devel gcc
-        $SUDO yum install -y net-tools coreutils util-linux  # for tests
+        $SUDO yum install -y net-tools coreutils-single util-linux  # for tests
         $SUDO yum install -y sudo  # for test-sudo
     elif [ $HAS_PACMAN ]; then
         $SUDO pacman -S --noconfirm python gcc sudo net-tools coreutils util-linux
