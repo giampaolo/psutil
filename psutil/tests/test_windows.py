@@ -461,12 +461,12 @@ class TestProcess(WindowsTestCase):
     def test_cmdline(self):
         sys_value = re.sub(r"[ ]+", " ", win32api.GetCommandLine()).strip()
         psutil_value = ' '.join(psutil.Process().cmdline())
-        if sys_value[0] == '"' != psutil_value[0]:
-            # The PyWin32 command line may retain quotes around argv[0] if they
-            # were used unnecessarily, while psutil will omit them. So remove
-            # the first 2 quotes from sys_value if not in psutil_value.
-            # A path to an executable will not contain quotes, so this is safe.
-            sys_value = sys_value.replace('"', '', 2)
+        # The PyWin32 command line may retain quotes around argv[0] if they
+        # were used unnecessarily, while psutil will omit them. So remove
+        # the first 2 quotes from sys_value if not in psutil_value.
+        # A path to an executable will not contain quotes, so this is safe.
+        sys_value = sys_value.replace('"', "")
+        psutil_value = psutil_value.replace('"', "")
         assert sys_value == psutil_value
 
     # XXX - occasional failures
