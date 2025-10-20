@@ -221,11 +221,10 @@ trailing_comma_inline_array = true
 [tool.cibuildwheel]
 skip = [
     "*-musllinux*",
-    "cp3{7,8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
+    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
 ]
 test-skip = [
     "cp313-macosx*",  # Hangs for some reason
-    "cp314*-macosx*",  # Hangs for some reason
     "cp3{8,9,10,11,12}-*",  # Only run tests for minor (3.8) and major (3.13) Python versions
 ]
 test-extras = ["test"]
@@ -235,7 +234,7 @@ test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/s
 archs = ["arm64", "x86_64"]
 
 [[tool.cibuildwheel.overrides]]
-select = "cp314t-win*"  # pywin32 still not available for free-thread python on Windows
+select = "cp314*"  # still too new, so let's just import psutil as a test
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
