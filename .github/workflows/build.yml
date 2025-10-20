@@ -20,7 +20,7 @@ jobs:
   tests:
     name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +63,7 @@ jobs:
   py2-fallback:
     name: py2.7 setup.py check
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     strategy:
       fail-fast: false
     steps:
