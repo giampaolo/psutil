@@ -256,7 +256,7 @@ ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
 	make sdist
 	mv wheelhouse/* dist/
-	make print-hashes
+	make print-dist
 	make check-dist
 
 # ===================================================================

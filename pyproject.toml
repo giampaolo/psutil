@@ -221,6 +221,7 @@ trailing_comma_inline_array = true
 [tool.cibuildwheel]
 skip = [
     "*-musllinux*",
+    "cp314t*",
     "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
 ]
 test-skip = [
@@ -233,7 +234,7 @@ test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/s
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
 
-[[tool.cibuildwheel.overrides]]
+[tool.cibuildwheel.overrides]
 select = "cp314*"  # still too new, so let's just import psutil as a test
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
