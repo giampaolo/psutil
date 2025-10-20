@@ -248,6 +248,7 @@ addopts = '''
     --strict-config
     --strict-markers
     --instafail
+    --no-subtests-reports
     -p no:junitxml
     -p no:doctest
     -p no:nose
