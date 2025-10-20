@@ -230,12 +230,18 @@ test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/s
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
 
-# Test that the wheel is installed and psutil can be imported
-# for the targets where the test suite is not run in its entirety
+# Lightweight import test for all non-target Python versions.
+# Also skip full test suite for macOS 3.13 (only test it on Linux/Windows).
 [[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10,11,12,13t,14t}-* cp313-macosx*"
+select = "cp3{9,10,11,12,13t,14t}-* cp313-macosx*"
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
+
+# Run full tests only on macOS 3.8 (special case).
+[[tool.cibuildwheel.overrides]]
+select = "cp38-macosx*"
+test-extras = ["test"]
+test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" ci-test-cibuildwheel"
 
 [tool.pytest.ini_options]
 addopts = '''
