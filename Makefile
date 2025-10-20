@@ -246,7 +246,7 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# cibuildwheel tests must use the installed wheel, not in-tree sources.
 	# Other test targets rebuild extensions in-place, so we can't reuse them
 	# here. To ensure pytest imports the installed package, we rename psutil
-	# directory.
+	# directory
 	rm -rf build/
 	if [ -d psutil ]; then mv psutil psutil.bak; fi
 	$(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest tests/
