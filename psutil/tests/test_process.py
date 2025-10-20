@@ -1504,7 +1504,6 @@ class TestProcess(PsutilTestCase):
             for name in list(d.keys()):
                 if name in exclude or name.startswith("PYTEST_"):
                     d.pop(name)
-            # Clean up values
             return {
                 k.replace("\r", "").replace("\n", ""): (
                     v.replace("\r", "").replace("\n", "")

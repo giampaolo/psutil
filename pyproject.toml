@@ -236,6 +236,11 @@ test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/s
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
 
+[[tool.cibuildwheel.overrides]]
+select = "cp314t-win*"  # pywin32 still not available for free-thread python on Windows
+test-extras = []
+test-command = "python -c \"import psutil; print(psutil.__version__)\""
+
 [tool.pytest.ini_options]
 addopts = '''
     --verbose
