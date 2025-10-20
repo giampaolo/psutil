@@ -132,7 +132,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
         // to NSP and _psosx.py will translate it to ZP.
         if (errno == EINVAL) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
-            NoSuchProcess("sysctl(KERN_PROCARGS2) -> EINVAL");
+            AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
             return 1;
         }
 
@@ -147,7 +147,6 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     }
     return 0;
 }
-
 
 
 /*
