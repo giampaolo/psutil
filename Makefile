@@ -246,7 +246,7 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	${MAKE} install-sysdeps
 	${MAKE} print-sysinfo
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -p xdist -n auto --dist loadgroup  --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -p xdist -n auto --dist loadgroup --pyargs psutil.tests
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
