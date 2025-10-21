@@ -53,7 +53,7 @@ _psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count) {
     *proc_count = 0;
 
     if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
-        return 1;
+        return -1;
 
     *proc_list = (struct kinfo_proc *)buf;
     *proc_count = len / sizeof(struct kinfo_proc);
@@ -61,7 +61,7 @@ _psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count) {
     if (*proc_count == 0) {
         free(buf);
         PyErr_Format(PyExc_RuntimeError, "no PIDs found");
-        return 1;
+        return -1;
     }
 
     return 0;
@@ -122,7 +122,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("psutil_pid_exists -> 0");
-            return 1;
+            return -1;
         }
 
         if (is_zombie(pid) == 1)
@@ -133,17 +133,17 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
         if (errno == EINVAL) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
-            return 1;
+            return -1;
         }
 
         // There's nothing we can do other than raising AD.
         if (errno == EIO) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
-            return 1;
+            return -1;
         }
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
-        return 1;
+        return -1;
     }
     return 0;
 }
@@ -188,8 +188,7 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
  * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
  */
 static int
-psutil_task_for_pid(pid_t pid, mach_port_t *task)
-{
+psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     // See: https://github.com/giampaolo/psutil/issues/1181
     kern_return_t err = KERN_SUCCESS;
 
@@ -209,7 +208,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
                 (long)pid, err, errno, mach_error_string(err));
             AccessDenied("task_for_pid");
         }
-        return 1;
+        return -1;
     }
     return 0;
 }
