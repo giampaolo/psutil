@@ -375,6 +375,8 @@ def wrap_exceptions(fun):
             raise NoSuchProcess(pid, name) from err
         except PermissionError as err:
             raise AccessDenied(pid, name) from err
+        except cext.ZombieProcessError as err:
+            raise ZombieProcess(pid, name, ppid) from err
 
     return wrapper
 

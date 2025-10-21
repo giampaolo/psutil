@@ -77,6 +77,16 @@ psutil_posix_add_methods(PyObject *mod) {
             return -1;
         }
     }
+
+    // custom exception
+    ZombieProcessError = PyErr_NewException(
+        "_psutil_posix.ZombieProcessError", NULL, NULL);
+    if (ZombieProcessError == NULL)
+        return -1;
+    Py_INCREF(ZombieProcessError);
+    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError))
+        return -1;
+
     return 0;
 }
 

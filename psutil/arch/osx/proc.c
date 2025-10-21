@@ -125,8 +125,10 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             return -1;
         }
 
-        if (is_zombie(pid) == 1)
-            printf("ARGHHHHHHHH\n");  // NOQA
+        if (is_zombie(pid) == 1) {
+            PyErr_SetString(ZombieProcessError, "");
+            return -1;
+        }
 
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
