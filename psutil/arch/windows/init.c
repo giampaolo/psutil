@@ -189,59 +189,59 @@ psutil_loadlibs() {
     NtQuerySystemInformation = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQuerySystemInformation");
     if (! NtQuerySystemInformation)
-        return 1;
+        return -1;
     NtQueryInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtQueryInformationProcess");
     if (! NtQueryInformationProcess)
-        return 1;
+        return -1;
     NtSetInformationProcess = psutil_GetProcAddress(
         "ntdll.dll", "NtSetInformationProcess");
     if (! NtSetInformationProcess)
-        return 1;
+        return -1;
     NtQueryObject = psutil_GetProcAddressFromLib(
         "ntdll.dll", "NtQueryObject");
     if (! NtQueryObject)
-        return 1;
+        return -1;
     RtlIpv4AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv4AddressToStringA");
     if (! RtlIpv4AddressToStringA)
-        return 1;
+        return -1;
     GetExtendedTcpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedTcpTable");
     if (! GetExtendedTcpTable)
-        return 1;
+        return -1;
     GetExtendedUdpTable = psutil_GetProcAddressFromLib(
         "iphlpapi.dll", "GetExtendedUdpTable");
     if (! GetExtendedUdpTable)
-        return 1;
+        return -1;
     RtlGetVersion = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlGetVersion");
     if (! RtlGetVersion)
-        return 1;
+        return -1;
     NtSuspendProcess = psutil_GetProcAddressFromLib(
         "ntdll", "NtSuspendProcess");
     if (! NtSuspendProcess)
-        return 1;
+        return -1;
     NtResumeProcess = psutil_GetProcAddressFromLib(
         "ntdll", "NtResumeProcess");
     if (! NtResumeProcess)
-        return 1;
+        return -1;
     NtQueryVirtualMemory = psutil_GetProcAddressFromLib(
         "ntdll", "NtQueryVirtualMemory");
     if (! NtQueryVirtualMemory)
-        return 1;
+        return -1;
     RtlNtStatusToDosErrorNoTeb = psutil_GetProcAddressFromLib(
         "ntdll", "RtlNtStatusToDosErrorNoTeb");
     if (! RtlNtStatusToDosErrorNoTeb)
-        return 1;
+        return -1;
     GetTickCount64 = psutil_GetProcAddress(
         "kernel32", "GetTickCount64");
     if (! GetTickCount64)
-        return 1;
+        return -1;
     RtlIpv6AddressToStringA = psutil_GetProcAddressFromLib(
         "ntdll.dll", "RtlIpv6AddressToStringA");
     if (! RtlIpv6AddressToStringA)
-        return 1;
+        return -1;
 
     // --- Optional
 
@@ -298,9 +298,9 @@ psutil_set_winver() {
 int
 psutil_setup_windows(void) {
     if (psutil_loadlibs() != 0)
-        return 1;
+        return -1;
     if (psutil_set_winver() != 0)
-        return 1;
+        return -1;
     GetSystemInfo(&PSUTIL_SYSTEM_INFO);
     InitializeCriticalSection(&PSUTIL_CRITICAL_SECTION);
     return 0;

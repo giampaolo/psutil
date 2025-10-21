@@ -29,7 +29,7 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
     if (mport == MACH_PORT_NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "mach_host_self() returned MACH_PORT_NULL");
-        return 1;
+        return -1;
     }
 
     ret = host_statistics64(mport, HOST_VM_INFO64, (host_info64_t)vmstat, &count);
@@ -40,7 +40,7 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
             "host_statistics64(HOST_VM_INFO64) syscall failed: %s",
             mach_error_string(ret)
         );
-        return 1;
+        return -1;
     }
     return 0;
 }

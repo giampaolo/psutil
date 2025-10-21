@@ -22,7 +22,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
 
     if (! LookupPrivilegeValue(NULL, Privilege, &luid)) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("LookupPrivilegeValue");
-        return 1;
+        return -1;
     }
 
     // first pass.  get current privilege setting
@@ -39,7 +39,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
             &cbPrevious))
     {
         psutil_PyErr_SetFromOSErrnoWithSyscall("AdjustTokenPrivileges");
-        return 1;
+        return -1;
     }
 
     // Second pass. Set privilege based on previous setting.
@@ -61,7 +61,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
             NULL))
     {
         psutil_PyErr_SetFromOSErrnoWithSyscall("AdjustTokenPrivileges");
-        return 1;
+        return -1;
     }
 
     return 0;
@@ -122,13 +122,13 @@ psutil_set_se_debug() {
     HANDLE hToken;
 
     if ((hToken = psutil_get_thisproc_token()) == NULL) {
-        // "return 1;" to get an exception
+        // "return -1;" to get an exception
         psutil_print_err();
         return 0;
     }
 
     if (psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE) != 0) {
-        // "return 1;" to get an exception
+        // "return -1;" to get an exception
         psutil_print_err();
     }
 

@@ -78,14 +78,14 @@ _psutil_pids(struct kinfo_proc **procList, size_t *procCount) {
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
     if (! kd) {
         convert_kvm_err("kvm_openfiles", errbuf);
-        return 1;
+        return -1;
     }
 
     result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
     if (result == NULL) {
         PyErr_Format(PyExc_RuntimeError, "kvm_getprocs syscall failed");
         kvm_close(kd);
-        return 1;
+        return -1;
     }
 
     *procCount = (size_t)cnt;
@@ -95,7 +95,7 @@ _psutil_pids(struct kinfo_proc **procList, size_t *procCount) {
     if ((*procList = malloc(mlen)) == NULL) {
         PyErr_NoMemory();
         kvm_close(kd);
-        return 1;
+        return -1;
     }
 
     memcpy(*procList, result, mlen);
