@@ -64,7 +64,7 @@ static PyMethodDef posix_methods[] = {
 };
 
 
-// Add methods to a module.
+// Add POSIX methods to main OS module.
 int
 psutil_posix_add_methods(PyObject *mod) {
     for (int i = 0; posix_methods[i].ml_name != NULL; i++) {
@@ -80,10 +80,10 @@ psutil_posix_add_methods(PyObject *mod) {
 
     // custom exception
     ZombieProcessError = PyErr_NewException(
-        "_psutil_posix.ZombieProcessError", NULL, NULL);
+        "_psutil_posix.ZombieProcessError", NULL, NULL
+    );
     if (ZombieProcessError == NULL)
         return -1;
-    Py_INCREF(ZombieProcessError);
     if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError))
         return -1;
 
@@ -91,7 +91,7 @@ psutil_posix_add_methods(PyObject *mod) {
 }
 
 
-// Add constants to a module.
+// Add POSIX constants to main OS module.
 int
 psutil_posix_add_constants(PyObject *mod) {
     if (!mod)
