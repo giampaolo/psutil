@@ -41,7 +41,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
     buffer = MALLOC_ZERO(bufferSize);
     if (buffer == NULL) {
         PyErr_NoMemory();
-        return 1;
+        return -1;
     }
 
     while ((status = NtQuerySystemInformation(
@@ -59,20 +59,20 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
             PyErr_SetString(
                 PyExc_RuntimeError,
                 "SystemExtendedHandleInformation buffer too big");
-            return 1;
+            return -1;
         }
 
         buffer = MALLOC_ZERO(bufferSize);
         if (buffer == NULL) {
             PyErr_NoMemory();
-            return 1;
+            return -1;
         }
     }
 
     if (! NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         FREE(buffer);
-        return 1;
+        return -1;
     }
 
     *handles = (PSYSTEM_HANDLE_INFORMATION_EX)buffer;
@@ -156,7 +156,7 @@ psutil_threaded_get_filename(HANDLE hFile) {
         NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL);
     if (hThread == NULL) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("CreateThread");
-        return 1;
+        return -1;
     }
 
     // Wait for the worker thread to finish.
@@ -169,7 +169,7 @@ psutil_threaded_get_filename(HANDLE hFile) {
         if (TerminateThread(hThread, 0) == 0) {
             psutil_PyErr_SetFromOSErrnoWithSyscall("TerminateThread");
             CloseHandle(hThread);
-            return 1;
+            return -1;
         }
         CloseHandle(hThread);
         return 0;
@@ -182,11 +182,11 @@ psutil_threaded_get_filename(HANDLE hFile) {
                 "WaitForSingleObject -> WAIT_FAILED -> TerminateThread"
             );
             CloseHandle(hThread);
-            return 1;
+            return -1;
         }
         psutil_PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
         CloseHandle(hThread);
-        return 1;
+        return -1;
     }
 
     if (GetExitCodeThread(hThread, &threadRetValue) == 0) {
@@ -195,12 +195,12 @@ psutil_threaded_get_filename(HANDLE hFile) {
                 "GetExitCodeThread (failed) -> TerminateThread"
             );
             CloseHandle(hThread);
-            return 1;
+            return -1;
         }
 
         CloseHandle(hThread);
         psutil_PyErr_SetFromOSErrnoWithSyscall("GetExitCodeThread");
-        return 1;
+        return -1;
     }
     CloseHandle(hThread);
     return threadRetValue;

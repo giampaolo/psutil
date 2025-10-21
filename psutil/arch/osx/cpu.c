@@ -177,7 +177,7 @@ psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
 
     if (found) {
         *out_entry = entry;  // caller must release
-        return 1;
+        return -1;
     }
 
     return 0;
