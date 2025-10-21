@@ -729,7 +729,7 @@ else:
 # =====================================================================
 
 
-net_if_addrs = cext_posix.net_if_addrs
+net_if_addrs = cext.net_if_addrs
 
 
 class _Ipv6UnsupportedError(Exception):
@@ -1040,8 +1040,8 @@ def net_if_stats():
     ret = {}
     for name in names:
         try:
-            mtu = cext_posix.net_if_mtu(name)
-            flags = cext_posix.net_if_flags(name)
+            mtu = cext.net_if_mtu(name)
+            flags = cext.net_if_flags(name)
             duplex, speed = cext.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279

@@ -14,13 +14,6 @@
 
 
 static PyMethodDef mod_methods[] = {
-    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
-    {"net_if_flags", psutil_net_if_flags, METH_VARARGS},
-    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS},
-    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS},
-#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
-    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
-#endif
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     {"users", psutil_users, METH_VARARGS},
 #endif

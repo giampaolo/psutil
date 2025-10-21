@@ -46,8 +46,15 @@ psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
 // POSIX-only methods.
 static PyMethodDef posix_methods[] = {
     {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
+    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
+    {"net_if_flags", psutil_net_if_flags, METH_VARARGS},
+    {"net_if_is_running", psutil_net_if_is_running, METH_VARARGS},
+    {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS},
     {"proc_priority_get", psutil_proc_priority_get, METH_VARARGS},
     {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS},
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
+#endif
     {NULL, NULL, 0, NULL}
 };
 

@@ -194,7 +194,7 @@ def disk_partitions(all=False):
 # =====================================================================
 
 
-net_if_addrs = cext_posix.net_if_addrs
+net_if_addrs = cext.net_if_addrs
 
 if HAS_NET_IO_COUNTERS:
     net_io_counters = cext.net_io_counters
@@ -233,8 +233,8 @@ def net_if_stats():
     names = {x[0] for x in net_if_addrs()}
     ret = {}
     for name in names:
-        mtu = cext_posix.net_if_mtu(name)
-        flags = cext_posix.net_if_flags(name)
+        mtu = cext.net_if_mtu(name)
+        flags = cext.net_if_flags(name)
 
         # try to get speed and duplex
         # TODO: rewrite this in C (entstat forks, so use truss -f to follow.

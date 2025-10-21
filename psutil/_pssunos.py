@@ -252,7 +252,7 @@ def disk_partitions(all=False):
 
 
 net_io_counters = cext.net_io_counters
-net_if_addrs = cext_posix.net_if_addrs
+net_if_addrs = cext.net_if_addrs
 
 
 def net_connections(kind, _pid=-1):
