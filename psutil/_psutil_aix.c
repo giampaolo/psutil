@@ -51,7 +51,6 @@
 #include <unistd.h>
 
 #include "arch/all/init.h"
-#include "_psutil_posix.h"
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
 #include "arch/aix/common.h"

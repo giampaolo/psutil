@@ -136,7 +136,6 @@ else:
 
 sources = ['psutil/arch/all/init.c']
 if POSIX:
-    sources.append('psutil/_psutil_posix.c')
     sources.extend(glob.glob("psutil/arch/posix/*.c"))
 
 
@@ -470,22 +469,6 @@ else:
     sys.exit("platform {} is not supported".format(sys.platform))
 
 
-if POSIX:
-    posix_extension = Extension(
-        'psutil._psutil_posix',
-        libraries=libraries,
-        define_macros=macros,
-        sources=sources,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
-    )
-    extensions = [ext, posix_extension]
-else:
-    extensions = [ext]
-
-
 def main():
     kwargs = dict(
         name='psutil',
@@ -508,7 +491,7 @@ def main():
         platforms='Platform Independent',
         license='BSD-3-Clause',
         packages=['psutil', 'psutil.tests'],
-        ext_modules=extensions,
+        ext_modules=[ext],
         options=options,
         classifiers=[
             'Development Status :: 5 - Production/Stable',

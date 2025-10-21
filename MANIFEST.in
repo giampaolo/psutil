@@ -35,8 +35,6 @@ include psutil/_psutil_aix.c
 include psutil/_psutil_bsd.c
 include psutil/_psutil_linux.c
 include psutil/_psutil_osx.c
-include psutil/_psutil_posix.c
-include psutil/_psutil_posix.h
 include psutil/_psutil_sunos.c
 include psutil/_psutil_windows.c
 include psutil/_pswindows.py
