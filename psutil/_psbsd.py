@@ -15,7 +15,6 @@ from xml.etree import ElementTree  # noqa: ICN001
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
-from . import _psutil_posix as cext_posix
 from ._common import FREEBSD
 from ._common import NETBSD
 from ._common import OPENBSD
@@ -95,7 +94,7 @@ TCP_STATUSES = {
 }
 
 PAGESIZE = cext.getpagesize()
-AF_LINK = cext_posix.AF_LINK
+AF_LINK = cext.AF_LINK
 
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
 
@@ -506,7 +505,7 @@ if NETBSD:
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.users() if OPENBSD else cext_posix.users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         if tty == '~':

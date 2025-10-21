@@ -14,9 +14,6 @@
 
 
 static PyMethodDef mod_methods[] = {
-#if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
-    {"users", psutil_users, METH_VARARGS},
-#endif
     {NULL, NULL, 0, NULL}
 };
 

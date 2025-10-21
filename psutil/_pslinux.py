@@ -24,7 +24,6 @@ from collections import namedtuple
 from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
-from . import _psutil_posix as cext_posix
 from ._common import ENCODING
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
@@ -1536,7 +1535,7 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext_posix.users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = _common.suser(user, tty or None, hostname, tstamp, pid)

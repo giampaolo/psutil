@@ -17,7 +17,6 @@ from collections import namedtuple
 from . import _common
 from . import _psposix
 from . import _psutil_aix as cext
-from . import _psutil_posix as cext_posix
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
@@ -278,7 +277,7 @@ def boot_time():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext_posix.users()
+    rawlist = cext.users()
     localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process, pid = item

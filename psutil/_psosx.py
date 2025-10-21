@@ -12,7 +12,6 @@ from collections import namedtuple
 from . import _common
 from . import _psposix
 from . import _psutil_osx as cext
-from . import _psutil_posix as cext_posix
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -316,7 +315,7 @@ def adjust_proc_create_time(ctime):
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext_posix.users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         if tty == '~':
