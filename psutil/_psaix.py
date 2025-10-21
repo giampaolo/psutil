@@ -42,7 +42,7 @@ HAS_NET_IO_COUNTERS = hasattr(cext, "net_io_counters")
 HAS_PROC_IO_COUNTERS = hasattr(cext, "proc_io_counters")
 
 PAGE_SIZE = cext_posix.getpagesize()
-AF_LINK = cext_posix.AF_LINK
+AF_LINK = cext.AF_LINK
 
 PROC_STATUSES = {
     cext.SIDL: _common.STATUS_IDLE,

@@ -84,6 +84,8 @@ PyInit__psutil_osx(void) {
         return NULL;
     if (psutil_setup_osx() != 0)
         return NULL;
+    if (psutil_posix_add_constants(mod) != 0)
+        return NULL;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
         return NULL;

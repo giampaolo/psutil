@@ -33,7 +33,7 @@ __extra__all__ = []
 
 
 PAGESIZE = cext_posix.getpagesize()
-AF_LINK = cext_posix.AF_LINK
+AF_LINK = cext.AF_LINK
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,

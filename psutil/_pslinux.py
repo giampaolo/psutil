@@ -58,11 +58,6 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
 ]
-
-if hasattr(resource, "prlimit"):
-    __extra__all__.extend(
-        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()]
-    )
 # fmt: on
 
 
