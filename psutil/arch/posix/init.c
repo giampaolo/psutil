@@ -10,6 +10,8 @@
 
 #include "init.h"
 
+PyObject *ZombieProcessError = NULL;;
+
 /*
  * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
  *
@@ -62,7 +64,7 @@ static PyMethodDef posix_methods[] = {
 };
 
 
-// Add methods to a module.
+// Add POSIX methods to main OS module.
 int
 psutil_posix_add_methods(PyObject *mod) {
     for (int i = 0; posix_methods[i].ml_name != NULL; i++) {
@@ -75,11 +77,21 @@ psutil_posix_add_methods(PyObject *mod) {
             return -1;
         }
     }
+
+    // custom exception
+    ZombieProcessError = PyErr_NewException(
+        "_psutil_posix.ZombieProcessError", NULL, NULL
+    );
+    if (ZombieProcessError == NULL)
+        return -1;
+    if (PyModule_AddObject(mod, "ZombieProcessError", ZombieProcessError))
+        return -1;
+
     return 0;
 }
 
 
-// Add constants to a module.
+// Add POSIX constants to main OS module.
 int
 psutil_posix_add_constants(PyObject *mod) {
     if (!mod)

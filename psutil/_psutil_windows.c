@@ -155,7 +155,6 @@ PyInit__psutil_windows(void) {
         "_psutil_windows.TimeoutExpired", NULL, NULL);
     if (TimeoutExpired == NULL)
         return NULL;
-    Py_INCREF(TimeoutExpired);
     if (PyModule_AddObject(mod, "TimeoutExpired", TimeoutExpired))
         return NULL;
 
@@ -163,7 +162,6 @@ PyInit__psutil_windows(void) {
         "_psutil_windows.TimeoutAbandoned", NULL, NULL);
     if (TimeoutAbandoned == NULL)
         return NULL;
-    Py_INCREF(TimeoutAbandoned);
     if (PyModule_AddObject(mod, "TimeoutAbandoned", TimeoutAbandoned))
         return NULL;
 

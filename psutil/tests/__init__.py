@@ -1090,6 +1090,15 @@ class PsutilTestCase(unittest.TestCase):
         proc.wait(timeout=0)  # assert not raise TimeoutExpired
 
     def assert_proc_zombie(self, proc):
+        def assert_in_pids(proc):
+            if MACOS:
+                # Even ps does not show zombie PIDs for some reason. Weird...
+                return
+            assert proc.pid in psutil.pids()
+            assert proc.pid in [x.pid for x in psutil.process_iter()]
+            psutil._pmap = {}
+            assert proc.pid in [x.pid for x in psutil.process_iter()]
+
         # A zombie process should always be instantiable.
         clone = psutil.Process(proc.pid)
         # Cloned zombie on Open/NetBSD/illumos/Solaris has null creation
@@ -1107,10 +1116,7 @@ class PsutilTestCase(unittest.TestCase):
         # as_dict() shouldn't crash.
         proc.as_dict()
         # It should show up in pids() and process_iter().
-        assert proc.pid in psutil.pids()
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
-        psutil._pmap = {}
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
+        assert_in_pids(proc)
         # Call all methods.
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
@@ -1137,10 +1143,7 @@ class PsutilTestCase(unittest.TestCase):
         proc.kill()
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
-        assert proc.pid in psutil.pids()
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
-        psutil._pmap = {}
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
+        assert_in_pids(proc)
 
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(
