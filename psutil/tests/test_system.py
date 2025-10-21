@@ -906,7 +906,7 @@ class TestNetAPIs(PsutilTestCase):
     def test_net_if_stats_enodev(self):
         # See: https://github.com/giampaolo/psutil/issues/1279
         with mock.patch(
-            'psutil._psutil_posix.net_if_mtu',
+            'psutil._psplatform.cext.net_if_mtu',
             side_effect=OSError(errno.ENODEV, ""),
         ) as m:
             ret = psutil.net_if_stats()

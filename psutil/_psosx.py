@@ -12,7 +12,6 @@ from collections import namedtuple
 from . import _common
 from . import _psposix
 from . import _psutil_osx as cext
-from . import _psutil_posix as cext_posix
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -32,8 +31,8 @@ __extra__all__ = []
 # =====================================================================
 
 
-PAGESIZE = cext_posix.getpagesize()
-AF_LINK = cext_posix.AF_LINK
+PAGESIZE = cext.getpagesize()
+AF_LINK = cext.AF_LINK
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
@@ -235,7 +234,7 @@ def sensors_battery():
 
 
 net_io_counters = cext.net_io_counters
-net_if_addrs = cext_posix.net_if_addrs
+net_if_addrs = cext.net_if_addrs
 
 
 def net_connections(kind='inet'):
@@ -262,9 +261,9 @@ def net_if_stats():
     ret = {}
     for name in names:
         try:
-            mtu = cext_posix.net_if_mtu(name)
-            flags = cext_posix.net_if_flags(name)
-            duplex, speed = cext_posix.net_if_duplex_speed(name)
+            mtu = cext.net_if_mtu(name)
+            flags = cext.net_if_flags(name)
+            duplex, speed = cext.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
             if err.errno != errno.ENODEV:
@@ -316,7 +315,7 @@ def adjust_proc_create_time(ctime):
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext_posix.users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         if tty == '~':
@@ -550,11 +549,11 @@ class Process:
 
     @wrap_exceptions
     def nice_get(self):
-        return cext_posix.getpriority(self.pid)
+        return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext_posix.setpriority(self.pid, value)
+        return cext.proc_priority_set(self.pid, value)
 
     @wrap_exceptions
     def status(self):

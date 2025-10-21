@@ -56,7 +56,7 @@ LABELS_MAP = {
     "sunos": ["sunos", "solaris"],
     "wsl": ["wsl"],
     "unix": [
-        "psposix", "_psutil_posix", "waitpid", "statvfs", "/dev/tty",
+        "psposix", "waitpid", "statvfs", "/dev/tty",
         "/dev/pts", "posix",
     ],
     "pypy": ["pypy"],

@@ -8,7 +8,6 @@ on:
     paths: &sunos_paths
       - ".github/workflows/sunos.yml"
       - "psutil/_pssunos.py"
-      - "psutil/_psutil_posix.c"
       - "psutil/_psutil_sunos.c"
       - "psutil/arch/all/**"
       - "psutil/arch/posix/**"

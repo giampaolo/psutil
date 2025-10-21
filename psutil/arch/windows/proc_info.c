@@ -699,7 +699,7 @@ out:
  * We use this as a fallback when faster functions fail with access
  * denied. This is slower because it iterates over all processes
  * but it doesn't require any privilege (also work for PID 0).
- * On success return 1, else 0 with Python exception already set.
+ * On success return 0, else -1 with Python exception already set.
  */
 int
 psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
@@ -752,7 +752,7 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
         if ((ULONG_PTR)process->UniqueProcessId == pid) {
             *retProcess = process;
             *retBuffer = buffer;
-            return 1;
+            return 0;
         }
     } while ((process = PSUTIL_NEXT_PROCESS(process)));
 
@@ -762,7 +762,7 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
 error:
     if (buffer != NULL)
         free(buffer);
-    return 0;
+    return -1;
 }
 
 
@@ -794,7 +794,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (! psutil_get_proc_info(pid, &process, &buffer))
+    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
         return NULL;
 
     for (i = 0; i < process->NumberOfThreads; i++)

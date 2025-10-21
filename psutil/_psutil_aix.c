@@ -51,7 +51,6 @@
 #include <unistd.h>
 
 #include "arch/all/init.h"
-#include "_psutil_posix.h"
 #include "arch/aix/ifaddrs.h"
 #include "arch/aix/net_connections.h"
 #include "arch/aix/common.h"
@@ -1009,6 +1008,10 @@ PyInit__psutil_aix(void) {
 #endif
 
     if (psutil_setup() != 0)
+        return NULL;
+    if (psutil_posix_add_constants(mod) != 0)
+        return NULL;
+    if (psutil_posix_add_methods(mod) != 0)
         return NULL;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))

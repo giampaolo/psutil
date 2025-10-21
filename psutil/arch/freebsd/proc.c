@@ -79,7 +79,7 @@ int _psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count) {
     char *buf = NULL;
 
     if (psutil_sysctl_malloc(mib, 4, &buf, &length) != 0)
-        return 1;
+        return -1;
 
     *proc_list = (struct kinfo_proc *)buf;
     *proc_count = length / sizeof(struct kinfo_proc);
