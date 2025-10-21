@@ -8,6 +8,8 @@
 #include <sys/resource.h>
 #include <sys/socket.h>
 
+#include "init.h"
+
 /*
  * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
  *
@@ -38,6 +40,29 @@ psutil_getpagesize(void) {
 PyObject *
 psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
     return Py_BuildValue("l", psutil_getpagesize());
+}
+
+
+// POSIX-only methods.
+static PyMethodDef posix_methods[] = {
+    {NULL, NULL, 0, NULL}
+};
+
+
+// Add methods to a module.
+int
+psutil_posix_add_methods(PyObject *mod) {
+    for (int i = 0; posix_methods[i].ml_name != NULL; i++) {
+        PyObject *f = PyCFunction_NewEx(&posix_methods[i], NULL, mod);
+        if (!f) {
+            return -1;
+        }
+        if (PyModule_AddObject(mod, posix_methods[i].ml_name, f)) {
+            Py_DECREF(f);
+            return -1;
+        }
+    }
+    return 0;
 }
 
 
