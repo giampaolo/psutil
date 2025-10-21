@@ -6,6 +6,11 @@
 
 XXXX-XX-XX
 
+**Bug fixes**
+
+* 2650_, [macOS]: `Process.cmdline()`_ and `Process.environ()`_ may incorrectly
+  raise `NoSuchProcess`_ instead of `ZombieProcess`_.
+
 7.1.1
 =====
 
