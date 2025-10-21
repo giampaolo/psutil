@@ -351,14 +351,6 @@ def pids():
 pid_exists = _psposix.pid_exists
 
 
-def is_zombie(pid):
-    try:
-        st = cext.proc_kinfo_oneshot(pid)[kinfo_proc_map['status']]
-        return st == cext.SZOMB
-    except OSError:
-        return False
-
-
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
@@ -370,7 +362,7 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except ProcessLookupError as err:
-            if is_zombie(pid):
+            if cext.proc_is_zombie(pid):
                 raise ZombieProcess(pid, name, ppid) from err
             raise NoSuchProcess(pid, name) from err
         except PermissionError as err:

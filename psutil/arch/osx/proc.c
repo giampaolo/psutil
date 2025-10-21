@@ -326,6 +326,20 @@ error:
 }
 
 
+// Return True if PID is a zombie else False, including if PID does not
+// exist or the underlying function fails.
+PyObject *
+psutil_proc_is_zombie(PyObject *self, PyObject *args) {
+    pid_t pid;
+
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if (is_zombie(pid) == 1)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
+
 /*
  * Return multiple process info as a Python tuple in one shot by
  * using sysctl() and filling up a kinfo_proc struct.
