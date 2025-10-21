@@ -2124,7 +2124,7 @@ class Process:
         #   return int(data.split()[18])
 
         # Use C implementation
-        return cext_posix.getpriority(self.pid)
+        return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):

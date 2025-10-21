@@ -448,7 +448,7 @@ class Process:
 
     @wrap_exceptions
     def nice_get(self):
-        return cext_posix.getpriority(self.pid)
+        return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):

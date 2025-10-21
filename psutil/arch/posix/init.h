@@ -45,5 +45,5 @@ PyObject *psutil_net_if_addrs(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_flags(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_is_running(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_mtu(PyObject *self, PyObject *args);
-PyObject *psutil_posix_getpriority(PyObject *self, PyObject *args);
+PyObject *psutil_proc_priority_get(PyObject *self, PyObject *args);
 PyObject *psutil_posix_setpriority(PyObject *self, PyObject *args);
