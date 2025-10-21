@@ -130,15 +130,12 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             return -1;
         }
 
-        // In case of zombie process we'll get EINVAL. We translate it
-        // to NSP and _psosx.py will translate it to ZP.
         if (errno == EINVAL) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
             return -1;
         }
 
-        // There's nothing we can do other than raising AD.
         if (errno == EIO) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
