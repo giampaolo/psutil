@@ -101,7 +101,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
 
 // Set PID priority.
 PyObject *
-psutil_posix_setpriority(PyObject *self, PyObject *args) {
+psutil_proc_priority_set(PyObject *self, PyObject *args) {
     pid_t pid;
     int priority;
     int retval;

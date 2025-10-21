@@ -467,7 +467,7 @@ class Process:
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return cext_posix.setpriority(self.pid, value)
+        return cext.proc_priority_set(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
