@@ -45,6 +45,7 @@ psutil_getpagesize_pywrapper(PyObject *self, PyObject *args) {
 
 // POSIX-only methods.
 static PyMethodDef posix_methods[] = {
+    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
     {NULL, NULL, 0, NULL}
 };
 

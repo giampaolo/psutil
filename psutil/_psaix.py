@@ -41,7 +41,7 @@ HAS_THREADS = hasattr(cext, "proc_threads")
 HAS_NET_IO_COUNTERS = hasattr(cext, "net_io_counters")
 HAS_PROC_IO_COUNTERS = hasattr(cext, "proc_io_counters")
 
-PAGE_SIZE = cext_posix.getpagesize()
+PAGE_SIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 
 PROC_STATUSES = {

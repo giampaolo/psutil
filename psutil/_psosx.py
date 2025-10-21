@@ -32,7 +32,7 @@ __extra__all__ = []
 # =====================================================================
 
 
-PAGESIZE = cext_posix.getpagesize()
+PAGESIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 
 TCP_STATUSES = {

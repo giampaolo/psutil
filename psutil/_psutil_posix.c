@@ -14,7 +14,6 @@
 
 
 static PyMethodDef mod_methods[] = {
-    {"getpagesize", psutil_getpagesize_pywrapper, METH_VARARGS},
     {"getpriority", psutil_posix_getpriority, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
     {"net_if_flags", psutil_net_if_flags, METH_VARARGS},

@@ -74,7 +74,7 @@ HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = cext_posix.getpagesize()
+PAGESIZE = cext.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 

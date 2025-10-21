@@ -38,8 +38,6 @@ if POSIX:
     import mmap
     import resource
 
-    from psutil._psutil_posix import getpagesize
-
 
 def ps(fmt, pid=None):
     """Wrapper for calling the ps command with a little bit of cross-platform
@@ -494,7 +492,7 @@ class TestSystemAPIs(PsutilTestCase):
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestMisc(PsutilTestCase):
     def test_getpagesize(self):
-        pagesize = getpagesize()
+        pagesize = psutil._psplatform.cext.getpagesize()
         assert pagesize > 0
         assert pagesize == resource.getpagesize()
         assert pagesize == mmap.PAGESIZE

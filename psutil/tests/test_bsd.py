@@ -30,9 +30,7 @@ from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
 if BSD:
-    from psutil._psutil_posix import getpagesize
-
-    PAGESIZE = getpagesize()
+    PAGESIZE = psutil._psplatform.cext.getpagesize()
     # muse requires root privileges
     MUSE_AVAILABLE = os.getuid() == 0 and shutil.which("muse")
 else:

@@ -94,7 +94,7 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
-PAGESIZE = cext_posix.getpagesize()
+PAGESIZE = cext.getpagesize()
 AF_LINK = cext_posix.AF_LINK
 
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
