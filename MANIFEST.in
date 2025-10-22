@@ -73,6 +73,7 @@ include psutil/arch/netbsd/cpu.c
 include psutil/arch/netbsd/disk.c
 include psutil/arch/netbsd/init.h
 include psutil/arch/netbsd/mem.c
+include psutil/arch/netbsd/pids.c
 include psutil/arch/netbsd/proc.c
 include psutil/arch/netbsd/socks.c
 include psutil/arch/openbsd/cpu.c
