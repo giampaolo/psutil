@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-
+#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
 #include <Python.h>
 
 #include "init.h"
@@ -51,3 +51,4 @@ error:
     free(pids_array);
     return NULL;
 }
+#endif

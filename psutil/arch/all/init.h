@@ -118,7 +118,10 @@ PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
     #endif
 #endif
 
+#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
+PyObject* psutil_pids(PyObject *self, PyObject *args);
+#endif
+
 PyObject* psutil_set_debug(PyObject *self, PyObject *args);
 PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);
-PyObject* psutil_pids(PyObject *self, PyObject *args);
 int psutil_setup(void);
