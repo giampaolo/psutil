@@ -22,7 +22,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
-      fail-fast: false
       matrix:
         include:
           - { os: ubuntu-latest, arch: x86_64 }
@@ -59,8 +58,6 @@ jobs:
     name: py2.7 setup.py check
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
     steps:
       - uses: actions/checkout@v5
       - uses: LizardByte/actions/actions/setup_python@master
