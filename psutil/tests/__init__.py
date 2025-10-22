@@ -456,7 +456,7 @@ def spawn_subproc(cmd=None, **kwds):
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
-    kwds.setdefault("cwd", os.getcwd())
+    kwds.setdefault("cwd", ROOT_DIR)
     kwds.setdefault("env", PYTHON_EXE_ENV)
     if WINDOWS:
         # Prevents the subprocess to open error dialogs. This will also
@@ -574,6 +574,7 @@ def pyrun(src, **kwds):
     """
     kwds.setdefault("stdout", None)
     kwds.setdefault("stderr", None)
+    kwds.setdefault("cwd", ROOT_DIR)
     srcfile = get_testfn()
     try:
         with open(srcfile, "w") as f:
@@ -595,6 +596,7 @@ def sh(cmd, **kwds):
     flags = 0x8000000 if WINDOWS else 0
     kwds.setdefault("stdout", subprocess.PIPE)
     kwds.setdefault("stderr", subprocess.PIPE)
+    kwds.setdefault("cwd", ROOT_DIR)
     kwds.setdefault("universal_newlines", True)
     kwds.setdefault("creationflags", flags)
     if isinstance(cmd, str):
