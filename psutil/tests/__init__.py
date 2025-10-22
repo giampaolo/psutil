@@ -465,7 +465,7 @@ def spawn_subproc(cmd=None, **kwds):
         CREATE_NO_WINDOW = 0x8000000
         kwds.setdefault("creationflags", CREATE_NO_WINDOW)
     if cmd is None:
-        testfn = get_testfn(dir=os.getcwd())
+        testfn = get_testfn(dir=ROOT_DIR)
         try:
             safe_rmpath(testfn)
             pyline = (
@@ -495,7 +495,7 @@ def spawn_children_pair():
     and are registered for cleanup on reap_children().
     """
     tfile = None
-    testfn = get_testfn(dir=os.getcwd())
+    testfn = get_testfn(dir=ROOT_DIR)
     try:
         s = textwrap.dedent(f"""\
             import subprocess, os, sys, time
