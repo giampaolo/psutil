@@ -250,10 +250,11 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
-	make sdist
+	${MAKE} sdist
 	mv wheelhouse/* dist/
-	make print-dist
-	make check-dist
+	${MAKE} check-dist
+	${MAKE} install
+	${MAKE} print-dist
 
 # ===================================================================
 # Distribution
