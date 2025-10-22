@@ -912,7 +912,7 @@ class TestProcess(PsutilTestCase):
             assert username == getpass.getuser()
 
     def test_cwd(self):
-        p = self.spawn_psproc(cwd=os.getcwd())
+        p = self.spawn_psproc()
         assert p.cwd() == os.getcwd()
 
     def test_cwd_2(self):

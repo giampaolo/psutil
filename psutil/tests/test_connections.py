@@ -341,7 +341,7 @@ class TestFilters(ConnectionTestCase):
             """)
 
         # must be relative on Windows
-        testfile = os.path.basename(self.get_testfn())
+        testfile = os.path.basename(self.get_testfn(dir=os.getcwd()))
         tcp4_template = tcp_template.format(
             family=int(AF_INET), addr="127.0.0.1", testfn=testfile
         )
