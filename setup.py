@@ -131,7 +131,7 @@ else:
     macros.append(('PSUTIL_SIZEOF_PID_T', '8'))  # long
 
 
-sources = ['psutil/arch/all/init.c']
+sources = glob.glob("psutil/arch/all/*.c")
 if POSIX:
     sources.extend(glob.glob("psutil/arch/posix/*.c"))
 
