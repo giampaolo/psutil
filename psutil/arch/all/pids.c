@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_MACOS)
+#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 #include <Python.h>
 
 #include "init.h"

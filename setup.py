@@ -321,7 +321,7 @@ if WINDOWS:
     )
 
 elif MACOS:
-    macros.append(("PSUTIL_OSX", 1))
+    macros.extend([("PSUTIL_OSX", 1), ("PSUTIL_MACOS", 1)])
     ext = Extension(
         'psutil._psutil_osx',
         sources=(
