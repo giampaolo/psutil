@@ -24,6 +24,11 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (_psutil_pids(&pids_array, &pids_count) != 0)
         goto error;
 
+    if (pids_count == 0) {
+        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        goto error;
+    }
+
     for (i = 0; i < pids_count; i++) {
         py_pid = PyLong_FromPid(pids_array[i]);
         if (!py_pid)
