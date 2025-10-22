@@ -42,7 +42,7 @@ jobs:
           python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v3
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
