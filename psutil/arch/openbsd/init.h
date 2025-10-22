@@ -7,10 +7,10 @@
 
 #include <Python.h>
 
+int _psutil_pids(pid_t **pids_array, int *pids_count);
 // TODO: move / refactor this stuff. It does not belong in here.
 typedef struct kinfo_proc kinfo_proc;
 int psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc);
-int _psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count);
 
 PyObject *psutil_cpu_freq(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);

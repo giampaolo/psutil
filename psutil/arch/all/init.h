@@ -26,7 +26,7 @@
     #include "../../arch/osx/init.h"
 #elif defined(PSUTIL_FREEBSD)
     #include "../../arch/freebsd/init.h"
-#elif defined(PSUTIL_OPENSBD)
+#elif defined(PSUTIL_OPENBSD)
     #include "../../arch/openbsd/init.h"
 #elif defined(PSUTIL_NETBSD)
     #include "../../arch/netbsd/init.h"
