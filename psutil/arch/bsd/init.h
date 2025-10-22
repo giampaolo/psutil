@@ -19,7 +19,6 @@ PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_disk_partitions(PyObject *self, PyObject *args);
 PyObject *psutil_net_io_counters(PyObject *self, PyObject *args);
-PyObject *psutil_pids(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_oneshot_info(PyObject *self, PyObject *args);

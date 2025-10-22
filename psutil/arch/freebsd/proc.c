@@ -73,17 +73,46 @@ static void psutil_remove_spaces(char *str) {
 // ============================================================================
 
 
-int _psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count) {
-    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
-    size_t length = 0;
+int
+_psutil_pids(pid_t **pids_array, int *pids_count) {
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0};
+    size_t len = 0;
     char *buf = NULL;
+    struct kinfo_proc *proc_list = NULL;
+    size_t num_procs = 0;
 
-    if (psutil_sysctl_malloc(mib, 4, &buf, &length) != 0)
+    *pids_array = NULL;
+    *pids_count = 0;
+
+    if (psutil_sysctl_malloc(mib, 4, &buf, &len) != 0)
         return -1;
 
-    *proc_list = (struct kinfo_proc *)buf;
-    *proc_count = length / sizeof(struct kinfo_proc);
+    if (len == 0) {
+        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        goto error;
+    }
+
+    proc_list = (struct kinfo_proc *)buf;
+    num_procs = len / sizeof(struct kinfo_proc);
+
+    *pids_array = malloc(num_procs * sizeof(pid_t));
+    if (!*pids_array) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    for (size_t i = 0; i < num_procs; i++) {
+        (*pids_array)[i] = proc_list[i].ki_pid;  // FreeBSD PID field
+    }
+
+    *pids_count = (int)num_procs;
+    free(buf);
     return 0;
+
+error:
+    if (buf != NULL)
+        free(buf);
+    return -1;
 }
 
 /*

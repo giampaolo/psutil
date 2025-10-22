@@ -61,58 +61,6 @@ kinfo_getfile(pid_t pid, int *cnt) {
 
 
 /*
- * Return a Python list of all the PIDs running on the system.
- */
-PyObject *
-psutil_pids(PyObject *self, PyObject *args) {
-#ifdef PSUTIL_NETBSD
-    struct kinfo_proc2 *proclist = NULL;
-    struct kinfo_proc2 *orig_address = NULL;
-#else
-    struct kinfo_proc *proclist = NULL;
-    struct kinfo_proc *orig_address = NULL;
-#endif
-    size_t num_processes;
-    size_t idx;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_pid = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    if (_psutil_pids(&proclist, &num_processes) != 0)
-        goto error;
-
-    if (num_processes > 0) {
-        orig_address = proclist; // save so we can free it after we're done
-        for (idx = 0; idx < num_processes; idx++) {
-#ifdef PSUTIL_FREEBSD
-            py_pid = PyLong_FromPid(proclist->ki_pid);
-#else
-            py_pid = PyLong_FromPid(proclist->p_pid);
-#endif
-            if (!py_pid)
-                goto error;
-            if (PyList_Append(py_retlist, py_pid))
-                goto error;
-            Py_CLEAR(py_pid);
-            proclist++;
-        }
-        free(orig_address);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_pid);
-    Py_DECREF(py_retlist);
-    if (orig_address != NULL)
-        free(orig_address);
-    return NULL;
-}
-
-
-/*
  * Collect different info about a process in one shot and return
  * them as a big Python tuple.
  */
