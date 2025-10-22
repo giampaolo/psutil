@@ -88,6 +88,7 @@ include psutil/arch/osx/init.c
 include psutil/arch/osx/init.h
 include psutil/arch/osx/mem.c
 include psutil/arch/osx/net.c
+include psutil/arch/osx/pids.c
 include psutil/arch/osx/proc.c
 include psutil/arch/osx/sensors.c
 include psutil/arch/osx/sys.c

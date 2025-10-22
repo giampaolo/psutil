@@ -15,7 +15,7 @@
 
 int
 _psutil_pids(pid_t **pids_array, int *pids_count) {
-    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0};
+    int mib[3] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL};
     size_t len = 0;
     char *buf = NULL;
     struct kinfo_proc *proc_list = NULL;
@@ -24,7 +24,7 @@ _psutil_pids(pid_t **pids_array, int *pids_count) {
     *pids_array = NULL;
     *pids_count = 0;
 
-    if (psutil_sysctl_malloc(mib, 4, &buf, &len) != 0)
+    if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
         return -1;
 
     if (len == 0) {
@@ -42,7 +42,7 @@ _psutil_pids(pid_t **pids_array, int *pids_count) {
     }
 
     for (size_t i = 0; i < num_procs; i++) {
-        (*pids_array)[i] = proc_list[i].ki_pid;  // FreeBSD PID field
+        (*pids_array)[i] = proc_list[i].kp_proc.p_pid;
     }
 
     *pids_count = (int)num_procs;
