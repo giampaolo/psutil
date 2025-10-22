@@ -19,6 +19,7 @@ import stat
 import string
 import subprocess
 import sys
+import tempfile
 import textwrap
 import time
 from unittest import mock
@@ -912,8 +913,9 @@ class TestProcess(PsutilTestCase):
             assert username == getpass.getuser()
 
     def test_cwd(self):
-        p = self.spawn_psproc()
-        assert p.cwd() == os.getcwd()
+        dir = tempfile.mkdtemp()
+        p = self.spawn_psproc(cwd=dir)
+        assert p.cwd() == dir
 
     def test_cwd_2(self):
         cmd = [

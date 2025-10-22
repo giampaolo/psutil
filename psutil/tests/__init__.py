@@ -166,12 +166,8 @@ if CI_TESTING:
 
 # --- file names
 
-# Disambiguate TESTFN for parallel testing.
-if os.name == 'java':
-    # Jython disallows @ in module names
-    TESTFN_PREFIX = f"$psutil-{os.getpid()}-"
-else:
-    TESTFN_PREFIX = f"@psutil-{os.getpid()}-"
+# Disambiguate TESTFN with PID for parallel testing.
+TESTFN_PREFIX = f"@psutil-{os.getpid()}-"
 UNICODE_SUFFIX = "-ƒőő"
 # An invalid unicode string.
 INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
