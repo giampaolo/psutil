@@ -41,7 +41,7 @@
 
 
 int
-_psutil_pids(pid_t **pids_array, size_t *pids_count) {
+_psutil_pids(pid_t **pids_array, int *pids_count) {
     int mib[3] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL};
     size_t len = 0;
     char *buf = NULL;
