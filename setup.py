@@ -113,9 +113,6 @@ DEV_DEPS = TEST_DEPS + [
     "wheel",
 ]
 
-# External libraries to link against.
-libraries = []
-
 # The pre-processor macros that are passed to the C compiler when
 # building the extension.
 macros = []
@@ -136,7 +133,6 @@ else:
 
 sources = ['psutil/arch/all/init.c']
 if POSIX:
-    sources.append('psutil/_psutil_posix.c')
     sources.extend(glob.glob("psutil/arch/posix/*.c"))
 
 
@@ -284,17 +280,6 @@ if WINDOWS:
         msg += "2000, XP and 2003 server"
         raise RuntimeError(msg)
 
-    libraries.extend([
-        "advapi32",
-        "kernel32",
-        "netapi32",
-        "pdh",
-        "PowrProf",
-        "psapi",
-        "shell32",
-        "ws2_32",
-    ])
-
     macros.append(("PSUTIL_WINDOWS", 1))
     macros.extend([
         # be nice to mingw, see:
@@ -317,7 +302,16 @@ if WINDOWS:
             + glob.glob("psutil/arch/windows/*.c")
         ),
         define_macros=macros,
-        libraries=libraries,
+        libraries=[
+            "advapi32",
+            "kernel32",
+            "netapi32",
+            "pdh",
+            "PowrProf",
+            "psapi",
+            "shell32",
+            "ws2_32",
+        ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
         # fmt: off
@@ -349,7 +343,6 @@ elif MACOS:
     )
 
 elif FREEBSD:
-    libraries.extend(["devstat"])
     macros.append(("PSUTIL_FREEBSD", 1))
 
     ext = Extension(
@@ -361,7 +354,7 @@ elif FREEBSD:
             + glob.glob("psutil/arch/freebsd/*.c")
         ),
         define_macros=macros,
-        libraries=libraries,
+        libraries=["devstat"],
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -369,7 +362,6 @@ elif FREEBSD:
     )
 
 elif OPENBSD:
-    libraries.extend(["kvm"])
     macros.append(("PSUTIL_OPENBSD", 1))
 
     ext = Extension(
@@ -381,7 +373,7 @@ elif OPENBSD:
             + glob.glob("psutil/arch/openbsd/*.c")
         ),
         define_macros=macros,
-        libraries=libraries,
+        libraries=["kvm"],
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -389,7 +381,6 @@ elif OPENBSD:
     )
 
 elif NETBSD:
-    libraries.extend(["kvm"])
     macros.append(("PSUTIL_NETBSD", 1))
 
     ext = Extension(
@@ -401,7 +392,7 @@ elif NETBSD:
             + glob.glob("psutil/arch/netbsd/*.c")
         ),
         define_macros=macros,
-        libraries=libraries,
+        libraries=["kvm"],
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -429,7 +420,6 @@ elif LINUX:
     )
 
 elif SUNOS:
-    libraries.extend(["kstat", "nsl", "socket"])
     macros.append(("PSUTIL_SUNOS", 1))
 
     ext = Extension(
@@ -440,7 +430,7 @@ elif SUNOS:
             + glob.glob("psutil/arch/sunos/*.c")
         ),
         define_macros=macros,
-        libraries=libraries,
+        libraries=["kstat", "nsl", "socket"],
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api
@@ -448,7 +438,6 @@ elif SUNOS:
     )
 
 elif AIX:
-    libraries.extend(["perfstat"])
     macros.append(("PSUTIL_AIX", 1))
 
     ext = Extension(
@@ -458,7 +447,7 @@ elif AIX:
             + ["psutil/_psutil_aix.c"]
             + glob.glob("psutil/arch/aix/*.c")
         ),
-        libraries=libraries,
+        libraries=["perfstat"],
         define_macros=macros,
         # fmt: off
         # python 2.7 compatibility requires no comma
@@ -468,22 +457,6 @@ elif AIX:
 
 else:
     sys.exit("platform {} is not supported".format(sys.platform))
-
-
-if POSIX:
-    posix_extension = Extension(
-        'psutil._psutil_posix',
-        libraries=libraries,
-        define_macros=macros,
-        sources=sources,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
-    )
-    extensions = [ext, posix_extension]
-else:
-    extensions = [ext]
 
 
 def main():
@@ -508,7 +481,7 @@ def main():
         platforms='Platform Independent',
         license='BSD-3-Clause',
         packages=['psutil', 'psutil.tests'],
-        ext_modules=extensions,
+        ext_modules=[ext],
         options=options,
         classifiers=[
             'Development Status :: 5 - Production/Stable',

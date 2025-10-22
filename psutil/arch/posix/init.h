@@ -4,6 +4,8 @@
  * found in the LICENSE file.
  */
 
+extern PyObject *ZombieProcessError;
+
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     #define PSUTIL_HAS_POSIX_USERS
 
@@ -37,11 +39,13 @@
 int psutil_pid_exists(pid_t pid);
 long psutil_getpagesize(void);
 void psutil_raise_for_pid(pid_t pid, char *msg);
+int psutil_posix_add_constants(PyObject *mod);
+int psutil_posix_add_methods(PyObject *mod);
 
 PyObject *psutil_getpagesize_pywrapper(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_addrs(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_flags(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_is_running(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_mtu(PyObject *self, PyObject *args);
-PyObject *psutil_posix_getpriority(PyObject *self, PyObject *args);
-PyObject *psutil_posix_setpriority(PyObject *self, PyObject *args);
+PyObject *psutil_proc_priority_get(PyObject *self, PyObject *args);
+PyObject *psutil_proc_priority_set(PyObject *self, PyObject *args);

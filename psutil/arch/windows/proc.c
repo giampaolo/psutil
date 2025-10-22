@@ -425,7 +425,7 @@ psutil_GetProcWsetInformation(
     buffer = MALLOC_ZERO(bufferSize);
     if (! buffer) {
         PyErr_NoMemory();
-        return 1;
+        return -1;
     }
 
     while ((status = NtQueryVirtualMemory(
@@ -442,12 +442,12 @@ psutil_GetProcWsetInformation(
         if (bufferSize > 256 * 1024 * 1024) {
             PyErr_SetString(PyExc_RuntimeError,
                             "NtQueryVirtualMemory bufsize is too large");
-            return 1;
+            return -1;
         }
         buffer = MALLOC_ZERO(bufferSize);
         if (! buffer) {
             PyErr_NoMemory();
-            return 1;
+            return -1;
         }
     }
 
@@ -464,7 +464,7 @@ psutil_GetProcWsetInformation(
                 status, "NtQueryVirtualMemory(MemoryWorkingSetInformation)");
         }
         HeapFree(GetProcessHeap(), 0, buffer);
-        return 1;
+        return -1;
     }
 
     *wSetInfo = (PMEMORY_WORKING_SET_INFORMATION)buffer;
@@ -1056,7 +1056,7 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (! psutil_get_proc_info(pid, &process, &buffer))
+    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
         return NULL;
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting ||

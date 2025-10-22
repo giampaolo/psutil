@@ -18,13 +18,14 @@
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS},
-    {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS},
     {"proc_environ", psutil_proc_environ, METH_VARARGS},
     {"proc_exe", psutil_proc_exe, METH_VARARGS},
+    {"proc_is_zombie", psutil_proc_is_zombie, METH_VARARGS},
     {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
     {"proc_name", psutil_proc_name, METH_VARARGS},
+    {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
     {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS},
@@ -83,6 +84,10 @@ PyInit__psutil_osx(void) {
     if (psutil_setup() != 0)
         return NULL;
     if (psutil_setup_osx() != 0)
+        return NULL;
+    if (psutil_posix_add_constants(mod) != 0)
+        return NULL;
+    if (psutil_posix_add_methods(mod) != 0)
         return NULL;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))

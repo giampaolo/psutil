@@ -15,7 +15,6 @@ from socket import AF_INET
 
 from . import _common
 from . import _psposix
-from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
 from ._common import AF_INET6
 from ._common import ENCODING
@@ -38,8 +37,8 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 # =====================================================================
 
 
-PAGE_SIZE = cext_posix.getpagesize()
-AF_LINK = cext_posix.AF_LINK
+PAGE_SIZE = cext.getpagesize()
+AF_LINK = cext.AF_LINK
 IS_64_BIT = sys.maxsize > 2**32
 
 CONN_IDLE = "IDLE"
@@ -252,7 +251,7 @@ def disk_partitions(all=False):
 
 
 net_io_counters = cext.net_io_counters
-net_if_addrs = cext_posix.net_if_addrs
+net_if_addrs = cext.net_if_addrs
 
 
 def net_connections(kind, _pid=-1):
@@ -310,7 +309,7 @@ def boot_time():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext_posix.users()
+    rawlist = cext.users()
     localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process, pid = item
@@ -467,7 +466,7 @@ class Process:
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return cext_posix.setpriority(self.pid, value)
+        return cext.proc_priority_set(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
