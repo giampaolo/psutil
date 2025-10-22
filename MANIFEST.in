@@ -115,6 +115,7 @@ include psutil/arch/windows/init.h
 include psutil/arch/windows/mem.c
 include psutil/arch/windows/net.c
 include psutil/arch/windows/ntextapi.h
+include psutil/arch/windows/pids.c
 include psutil/arch/windows/proc.c
 include psutil/arch/windows/proc_handles.c
 include psutil/arch/windows/proc_info.c

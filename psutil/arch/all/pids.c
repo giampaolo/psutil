@@ -12,9 +12,13 @@
 
 PyObject *
 psutil_pids(PyObject *self, PyObject *args) {
-    int i;
-    int pids_count = 0;
+#ifdef PSUTIL_WINDOWS
+    DWORD *pids_array = NULL;
+#else
     pid_t *pids_array = NULL;
+#endif
+    int pids_count = 0;
+    int i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_pid = NULL;
 
