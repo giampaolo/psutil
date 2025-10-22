@@ -12,8 +12,9 @@
 
 PyObject *
 psutil_pids(PyObject *self, PyObject *args) {
+    int i;
+    int pids_count = 0;
     pid_t *pids_array = NULL;
-    size_t pids_count = 0;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_pid = NULL;
 
@@ -23,7 +24,7 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (_psutil_pids(&pids_array, &pids_count) != 0)
         goto error;
 
-    for (size_t i = 0; i < pids_count; i++) {
+    for (i = 0; i < pids_count; i++) {
         py_pid = PyLong_FromPid(pids_array[i]);
         if (!py_pid)
             goto error;

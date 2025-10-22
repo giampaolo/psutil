@@ -72,7 +72,7 @@ _psutil_pids(pid_t **pids_array, size_t *pids_count) {
         (*pids_array)[i] = proc_list[i].kp_proc.p_pid;
     }
 
-    *pids_count = num_procs;
+    *pids_count = (int)num_procs;
     free(buf);
     return 0;
 
