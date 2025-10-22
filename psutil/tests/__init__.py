@@ -179,12 +179,10 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
-ROOT_DIR = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), '..', '..')
+ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
 )
-SCRIPTS_DIR = os.environ.get(
-    "PSUTIL_SCRIPTS_DIR", os.path.join(ROOT_DIR, 'scripts')
-)
+SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support

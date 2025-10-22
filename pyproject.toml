@@ -225,7 +225,7 @@ skip = [
     "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
 ]
 test-extras = ["test"]  # same as doing `pip install .[test]`
-test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" ci-test-cibuildwheel"
+test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
@@ -241,7 +241,7 @@ test-command = "python -c \"import psutil; print(psutil.__version__)\""
 [[tool.cibuildwheel.overrides]]
 select = "cp38-macosx*"
 test-extras = ["test"]
-test-command = "make -C {project} PYTHON=python PSUTIL_SCRIPTS_DIR=\"{project}/scripts\" ci-test-cibuildwheel"
+test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
 [tool.pytest.ini_options]
 addopts = '''
