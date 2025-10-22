@@ -36,16 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Only install Python 3.8 on macOS ARM64 for universal2 support
-      - name: "Install Python 3.8 on macOS ARM64"
-        if: runner.os == 'macOS' && runner.arch == 'ARM64'
+      # Install Python 3.8 on macOS ARM64 for universal2 support, else 3.11
+      - name: Install Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.8
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 3.11
+          python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
 
       - name: Build wheels + run tests
         uses: pypa/cibuildwheel@v3.2.1
