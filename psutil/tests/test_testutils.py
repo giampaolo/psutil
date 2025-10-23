@@ -8,6 +8,7 @@
 
 import collections
 import errno
+import io
 import os
 import socket
 import stat
@@ -446,7 +447,8 @@ class TestFakePytest(PsutilTestCase):
     def run_test_class(self, klass):
         suite = unittest.TestSuite()
         suite.addTest(klass)
-        runner = unittest.TextTestRunner()
+        # silence output
+        runner = unittest.TextTestRunner(stream=io.StringIO())
         result = runner.run(suite)
         return result
 
