@@ -75,12 +75,12 @@ install-sysdeps:
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	${MAKE} install-pip
-	$(PYTHON) -m pip install -U $(PIP_INSTALL_ARGS) -e .[test]
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test]
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	${MAKE} install-git-hooks
 	${MAKE} install-pip
-	$(PYTHON) -m pip install -U $(PIP_INSTALL_ARGS) -e .[test,dev]
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test,dev]
 
 install-git-hooks:  ## Install GIT pre-commit hook.
 	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
@@ -237,13 +237,13 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	${MAKE} install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
-	$(PYTHON) -m pip list
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest psutil/tests/
 
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
 	${MAKE} install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	mkdir -p .tests
 	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs psutil.tests
