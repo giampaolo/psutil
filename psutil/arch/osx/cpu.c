@@ -181,9 +181,9 @@ psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
 // Python wrapper: return True/False.
 PyObject *
 psutil_has_cpu_freq(PyObject *self, PyObject *args) {
-    io_registry_entry_t entry = 0;
+    io_registry_entry_t entry = IO_OBJECT_NULL;
     int ok = psutil_find_pmgr_entry(&entry);
-    if (entry != 0)
+    if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
     if (ok)
         Py_RETURN_TRUE;
