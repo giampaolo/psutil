@@ -1126,7 +1126,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    while (*arg_ptr != '\0' && arg_ptr < arg_end) {
+    while (arg_ptr < arg_end && *arg_ptr != '\0') {
         char *s = memchr(arg_ptr + 1, '\0', arg_end - arg_ptr);
         if (s == NULL)
             break;

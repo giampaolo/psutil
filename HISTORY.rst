@@ -14,8 +14,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-* 2650_, [macOS]: `Process.cmdline()`_ and `Process.environ()`_ may incorrectly
+- 2650_, [macOS]: `Process.cmdline()`_ and `Process.environ()`_ may incorrectly
   raise `NoSuchProcess`_ instead of `ZombieProcess`_.
+- 2658_, [macOS]: double ``free()`` in `Process.environ()`_ when it fails
+  internally. This posed a risk of segfault.
 
 **Compatibility notes**
 
