@@ -768,6 +768,8 @@ class TestProcess(PsutilTestCase):
     def test_name(self):
         p = self.spawn_psproc()
         name = p.name().lower()
+        if name.endswith("t"):  # in the free-threaded build
+            name = name[:-1]
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
