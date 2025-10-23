@@ -24,7 +24,6 @@ from collections import namedtuple
 from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
-from . import _psutil_posix as cext_posix
 from ._common import ENCODING
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
@@ -58,11 +57,6 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
 ]
-
-if hasattr(resource, "prlimit"):
-    __extra__all__.extend(
-        [x for x in dir(cext) if x.startswith('RLIM') and x.isupper()]
-    )
 # fmt: on
 
 
@@ -79,7 +73,7 @@ HAS_CPU_AFFINITY = hasattr(cext, "proc_cpu_affinity_get")
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = cext_posix.getpagesize()
+PAGESIZE = cext.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 
@@ -734,7 +728,7 @@ else:
 # =====================================================================
 
 
-net_if_addrs = cext_posix.net_if_addrs
+net_if_addrs = cext.net_if_addrs
 
 
 class _Ipv6UnsupportedError(Exception):
@@ -1045,8 +1039,8 @@ def net_if_stats():
     ret = {}
     for name in names:
         try:
-            mtu = cext_posix.net_if_mtu(name)
-            flags = cext_posix.net_if_flags(name)
+            mtu = cext.net_if_mtu(name)
+            flags = cext.net_if_flags(name)
             duplex, speed = cext.net_if_duplex_speed(name)
         except OSError as err:
             # https://github.com/giampaolo/psutil/issues/1279
@@ -1541,7 +1535,7 @@ def sensors_battery():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext_posix.users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
         nt = _common.suser(user, tty or None, hostname, tstamp, pid)
@@ -2129,11 +2123,11 @@ class Process:
         #   return int(data.split()[18])
 
         # Use C implementation
-        return cext_posix.getpriority(self.pid)
+        return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return cext_posix.setpriority(self.pid, value)
+        return cext.proc_priority_set(self.pid, value)
 
     # starting from CentOS 6.
     if HAS_CPU_AFFINITY:

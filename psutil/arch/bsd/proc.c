@@ -61,53 +61,6 @@ kinfo_getfile(pid_t pid, int *cnt) {
 
 
 /*
- * Return a Python list of all the PIDs running on the system.
- */
-PyObject *
-psutil_pids(PyObject *self, PyObject *args) {
-    kinfo_proc *proclist = NULL;
-    kinfo_proc *orig_address = NULL;
-    size_t num_processes;
-    size_t idx;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_pid = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    if (psutil_get_proc_list(&proclist, &num_processes) != 0)
-        goto error;
-
-    if (num_processes > 0) {
-        orig_address = proclist; // save so we can free it after we're done
-        for (idx = 0; idx < num_processes; idx++) {
-#ifdef PSUTIL_FREEBSD
-            py_pid = PyLong_FromPid(proclist->ki_pid);
-#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-            py_pid = PyLong_FromPid(proclist->p_pid);
-#endif
-            if (!py_pid)
-                goto error;
-            if (PyList_Append(py_retlist, py_pid))
-                goto error;
-            Py_CLEAR(py_pid);
-            proclist++;
-        }
-        free(orig_address);
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_pid);
-    Py_DECREF(py_retlist);
-    if (orig_address != NULL)
-        free(orig_address);
-    return NULL;
-}
-
-
-/*
  * Collect different info about a process in one shot and return
  * them as a big Python tuple.
  */
@@ -120,7 +73,11 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memdata;
     long memstack;
     int oncpu;
-    kinfo_proc kp;
+#ifdef PSUTIL_NETBSD
+    struct kinfo_proc2 kp;
+#else
+    struct kinfo_proc kp;
+#endif
     long pagesize = psutil_getpagesize();
     char str[1000];
     PyObject *py_name;
@@ -287,7 +244,11 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
     pid_t pid;
-    kinfo_proc kp;
+#ifdef PSUTIL_NETBSD
+    struct kinfo_proc2 kp;
+#else
+    struct kinfo_proc kp;
+#endif
     char str[1000];
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
@@ -448,7 +409,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     char *path;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
-    kinfo_proc kipp;
+#ifdef PSUTIL_NETBSD
+    struct kinfo_proc2 kipp;
+#else
+    struct kinfo_proc kipp;
+#endif
     PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);

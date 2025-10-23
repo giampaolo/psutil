@@ -6,6 +6,8 @@
 $ python3 -m psutil.tests.
 """
 
+import sys
+
 from psutil.tests import pytest
 
-pytest.main()
+sys.exit(pytest.main())

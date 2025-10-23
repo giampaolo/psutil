@@ -13,64 +13,25 @@
 #include "../../arch/all/init.h"
 
 
-DWORD *
-psutil_get_pids(DWORD *numberOfReturnedPIDs) {
-    // Win32 SDK says the only way to know if our process array
-    // wasn't large enough is to check the returned size and make
-    // sure that it doesn't match the size of the array.
-    // If it does we allocate a larger array and try again
-
-    // Stores the actual array
-    DWORD *procArray = NULL;
-    DWORD procArrayByteSz;
-    int procArraySz = 0;
-
-    // Stores the byte size of the returned array from enumprocesses
-    DWORD enumReturnSz = 0;
-
-    do {
-        procArraySz += 1024;
-        if (procArray != NULL)
-            free(procArray);
-        procArrayByteSz = procArraySz * sizeof(DWORD);
-        procArray = malloc(procArrayByteSz);
-        if (procArray == NULL) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-        if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
-            free(procArray);
-            PyErr_SetFromWindowsErr(0);
-            return NULL;
-        }
-    } while (enumReturnSz == procArraySz * sizeof(DWORD));
-
-    // The number of elements is the returned size / size of each element
-    *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
-
-    return procArray;
-}
-
 
 // Return 1 if PID exists, 0 if not, -1 on error.
 int
 psutil_pid_in_pids(DWORD pid) {
-    DWORD *proclist = NULL;
-    DWORD numberOfReturnedPIDs;
-    DWORD i;
+    DWORD *pids_array = NULL;
+    int pids_count = 0;
+    int i;
 
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL) {
-        psutil_debug("psutil_get_pids() failed");
+    if (_psutil_pids(&pids_array, &pids_count) != 0)
         return -1;
-    }
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        if (proclist[i] == pid) {
-            free(proclist);
+
+    for (i = 0; i < pids_count; i++) {
+        if (pids_array[i] == pid) {
+            free(pids_array);
             return 1;
         }
     }
-    free(proclist);
+
+    free(pids_array);
     return 0;
 }
 

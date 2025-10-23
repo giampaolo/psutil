@@ -13,7 +13,6 @@ import importlib.util
 import locale
 import os
 import platform
-import pprint
 import shlex
 import shutil
 import subprocess
@@ -59,6 +58,13 @@ tests_init_mod = import_module_by_path(tests_init)
 def main():
     info = collections.OrderedDict()
 
+    # python
+    info['python'] = ', '.join([
+        platform.python_implementation(),
+        platform.python_version(),
+        platform.python_compiler(),
+    ])
+
     # OS
     if psutil.LINUX and shutil.which("lsb_release"):
         info['OS'] = sh('lsb_release -d -s')
@@ -76,12 +82,7 @@ def main():
     if psutil.POSIX:
         info['kernel'] = platform.uname()[2]
 
-    # python
-    info['python'] = ', '.join([
-        platform.python_implementation(),
-        platform.python_version(),
-        platform.python_compiler(),
-    ])
+    # pip
     info['pip'] = getattr(pip, '__version__', 'not installed')
     if wheel is not None:
         info['pip'] += f" (wheel={wheel.__version__})"
@@ -139,11 +140,11 @@ def main():
     info['constants'] = "\n                  ".join(constants)
 
     # processes
-    info['pids'] = len(psutil.pids())
-    pinfo = psutil.Process().as_dict()
-    pinfo.pop('memory_maps', None)
-    pinfo["environ"] = {k: os.environ[k] for k in sorted(os.environ)}
-    info['proc'] = pprint.pformat(pinfo)
+    # info['pids'] = len(psutil.pids())
+    # pinfo = psutil.Process().as_dict()
+    # pinfo.pop('memory_maps', None)
+    # pinfo["environ"] = {k: os.environ[k] for k in sorted(os.environ)}
+    # info['proc'] = pprint.pformat(pinfo)
 
     # print
     print("=" * 70, file=sys.stderr)

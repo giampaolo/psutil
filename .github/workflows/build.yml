@@ -18,11 +18,10 @@ jobs:
 
   # Run tests on Linux, macOS, Windows
   tests:
-    name: "tests, ${{ matrix.os }}, ${{ matrix.arch }}"
+    name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 15
     strategy:
-      fail-fast: false
       matrix:
         include:
           - { os: ubuntu-latest, arch: x86_64 }
@@ -36,19 +35,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Only install Python 3.8 on macOS ARM64 for universal2 support
-      - name: "Install Python 3.8 on macOS ARM64"
-        if: runner.os == 'macOS' && runner.arch == 'ARM64'
-        uses: actions/setup-python@v5
+      # Install Python 3.8 on macOS ARM64 for universal2 support, else 3.11
+      - name: Install Python
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.8
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
+          python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
 
       - name: Build wheels + run tests
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
@@ -59,20 +53,11 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse
 
-      - name: Generate source distribution (.tar.gz)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          make generate-manifest
-          python setup.py sdist
-          mv dist/psutil*.tar.gz wheelhouse/
-
   # Test python 2.7 fallback installation message produced by setup.py
   py2-fallback:
     name: py2.7 setup.py check
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: LizardByte/actions/actions/setup_python@master
@@ -80,16 +65,17 @@ jobs:
           python-version: 2.7
       - run: python scripts/internal/test_python2_setup_py.py
 
+  # Run linters.
   linters:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - name: "Run linters"
         run: |
-          make lint-ci
+          make ci-lint
 
   # Produce wheels as artifacts.
   upload-wheels:
@@ -103,13 +89,13 @@ jobs:
           separate-directories: false
           delete-merged: true
 
-  # Check sanity of .tar.gz + wheel files
+  # Check sanity of the package distribution (.tar.gz and *.whl files)
   check-dist:
     needs: [upload-wheels]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: 3.x
       - uses: actions/download-artifact@v4
@@ -117,6 +103,4 @@ jobs:
           name: wheels
           path: wheelhouse
       - run: |
-          python scripts/internal/print_hashes.py wheelhouse/
-          pipx run twine check --strict wheelhouse/*
-          pipx run abi3audit --verbose --strict wheelhouse/*-abi3-*.whl
+          make ci-check-dist

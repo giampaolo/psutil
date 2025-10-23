@@ -192,20 +192,18 @@ __all__.extend(_psplatform.__extra__all__)
 # Linux, FreeBSD
 if hasattr(_psplatform.Process, "rlimit"):
     # Populate global namespace with RLIM* constants.
-    from . import _psutil_posix
-
     _globals = globals()
     _name = None
-    for _name in dir(_psutil_posix):
+    for _name in dir(_psplatform.cext):
         if _name.startswith('RLIM') and _name.isupper():
-            _globals[_name] = getattr(_psutil_posix, _name)
+            _globals[_name] = getattr(_psplatform.cext, _name)
             __all__.append(_name)
     del _globals, _name
 
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "7.1.0"
+__version__ = "7.1.2"
 version_info = tuple(int(num) for num in __version__.split('.'))
 
 _timer = getattr(time, 'monotonic', time.time)

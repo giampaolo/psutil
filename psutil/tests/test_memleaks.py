@@ -18,7 +18,6 @@ import functools
 import os
 
 import psutil
-import psutil._common
 from psutil import LINUX
 from psutil import MACOS
 from psutil import OPENBSD

@@ -30,9 +30,7 @@ from psutil.tests import spawn_subproc
 from psutil.tests import terminate
 
 if BSD:
-    from psutil._psutil_posix import getpagesize
-
-    PAGESIZE = getpagesize()
+    PAGESIZE = psutil._psplatform.cext.getpagesize()
     # muse requires root privileges
     MUSE_AVAILABLE = os.getuid() == 0 and shutil.which("muse")
 else:
@@ -116,9 +114,9 @@ class BSDTestCase(PsutilTestCase):
             assert usage.total == total
             # 10 MB tolerance
             if abs(usage.free - free) > 10 * 1024 * 1024:
-                raise pytest.fail(f"psutil={usage.free}, df={free}")
+                return pytest.fail(f"psutil={usage.free}, df={free}")
             if abs(usage.used - used) > 10 * 1024 * 1024:
-                raise pytest.fail(f"psutil={usage.used}, df={used}")
+                return pytest.fail(f"psutil={usage.used}, df={used}")
 
     @pytest.mark.skipif(
         not shutil.which("sysctl"), reason="sysctl cmd not available"
@@ -268,7 +266,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         try:
             sysctl_result = int(sysctl(sensor))
         except RuntimeError:
-            raise pytest.skip("frequencies not supported by kernel")
+            return pytest.skip("frequencies not supported by kernel")
         assert psutil.cpu_freq().current == sysctl_result
 
         sensor = "dev.cpu.0.freq_levels"
@@ -466,7 +464,7 @@ class FreeBSDSystemTestCase(PsutilTestCase):
             try:
                 sysctl_result = int(float(sysctl(sensor)[:-1]))
             except RuntimeError:
-                raise pytest.skip("temperatures not supported by kernel")
+                return pytest.skip("temperatures not supported by kernel")
             assert (
                 abs(
                     psutil.sensors_temperatures()["coretemp"][cpu].current

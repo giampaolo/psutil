@@ -56,56 +56,6 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 // APIS
 // ============================================================================
 
-int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
-    // Returns a list of all BSD processes on the system.  This routine
-    // allocates the list and puts it in *procList and a count of the
-    // number of entries in *procCount.  You are responsible for freeing
-    // this list (use "free" from System framework).
-    // On success, the function returns 0.
-    // On error, the function returns a BSD errno value.
-    struct kinfo_proc *result;
-    // Declaring name as const requires us to cast it when passing it to
-    // sysctl because the prototype doesn't include the const modifier.
-    char errbuf[_POSIX2_LINE_MAX];
-    int cnt;
-    kvm_t *kd;
-
-    assert(procList != NULL);
-    assert(*procList == NULL);
-    assert(procCount != NULL);
-
-    kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
-    if (! kd) {
-        convert_kvm_err("kvm_openfiles", errbuf);
-        return 1;
-    }
-
-    result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
-    if (result == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_getprocs syscall failed");
-        kvm_close(kd);
-        return 1;
-    }
-
-    *procCount = (size_t)cnt;
-
-    size_t mlen = cnt * sizeof(struct kinfo_proc);
-
-    if ((*procList = malloc(mlen)) == NULL) {
-        PyErr_NoMemory();
-        kvm_close(kd);
-        return 1;
-    }
-
-    memcpy(*procList, result, mlen);
-    assert(*procList != NULL);
-    kvm_close(kd);
-
-    return 0;
-}
-
-
 // TODO: refactor this (it's clunky)
 PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {

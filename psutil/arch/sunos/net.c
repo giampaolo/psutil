@@ -317,11 +317,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     mibhdr.level = MIB2_IP;
     mibhdr.name  = 0;
 
-#ifdef NEW_MIB_COMPLIANT
     mibhdr.len   = 1;
-#else
-    mibhdr.len   = 0;
-#endif
     memcpy(buf, &tor, sizeof tor);
     memcpy(buf + tor.OPT_offset, &mibhdr, sizeof mibhdr);
 
@@ -387,11 +383,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             num_ent = mibhdr.len / sizeof(mib2_tcpConnEntry_t);
             for (i = 0; i < num_ent; i++) {
                 memcpy(&tp, databuf.buf + i * sizeof tp, sizeof tp);
-#ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp.tcpConnCreationProcess;
-#else
-                processed_pid = 0;
-#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
@@ -432,11 +424,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
             for (i = 0; i < num_ent; i++) {
                 memcpy(&tp6, databuf.buf + i * sizeof tp6, sizeof tp6);
-#ifdef NEW_MIB_COMPLIANT
                 processed_pid = tp6.tcp6ConnCreationProcess;
-#else
-                        processed_pid = 0;
-#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
@@ -474,11 +462,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             assert(num_ent * sizeof(mib2_udpEntry_t) == mibhdr.len);
             for (i = 0; i < num_ent; i++) {
                 memcpy(&ude, databuf.buf + i * sizeof ude, sizeof ude);
-#ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude.udpCreationProcess;
-#else
-                processed_pid = 0;
-#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // XXX Very ugly hack! It seems we get here only the first
@@ -514,11 +498,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             num_ent = mibhdr.len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++) {
                 memcpy(&ude6, databuf.buf + i * sizeof ude6, sizeof ude6);
-#ifdef NEW_MIB_COMPLIANT
                 processed_pid = ude6.udp6CreationProcess;
-#else
-                processed_pid = 0;
-#endif
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 inet_ntop(AF_INET6, &ude6.udp6LocalAddress, lip, sizeof(lip));

@@ -11,7 +11,6 @@ import time
 
 import psutil
 from psutil import MACOS
-from psutil import POSIX
 from psutil.tests import AARCH64
 from psutil.tests import CI_TESTING
 from psutil.tests import HAS_BATTERY
@@ -23,9 +22,6 @@ from psutil.tests import retry_on_failure
 from psutil.tests import sh
 from psutil.tests import spawn_subproc
 from psutil.tests import terminate
-
-if POSIX:
-    from psutil._psutil_posix import getpagesize
 
 
 def sysctl(cmdline):
@@ -48,7 +44,10 @@ def vm_stat(field):
             break
     else:
         raise ValueError("line not found")
-    return int(re.search(r'\d+', line).group(0)) * getpagesize()
+    return (
+        int(re.search(r'\d+', line).group(0))
+        * psutil._psplatform.cext.getpagesize()
+    )
 
 
 @pytest.mark.skipif(not MACOS, reason="MACOS only")

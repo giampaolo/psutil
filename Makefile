@@ -164,29 +164,6 @@ test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
 	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
-test-ci:  ## Run tests on GitHub CI.
-	${MAKE} install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
-	${MAKE} print-sysinfo
-	$(PYTHON) -m pip list
-	${MAKE} test
-	${MAKE} test-memleaks
-	${MAKE} test-sudo
-
-test-cibuildwheel:    ## Run tests from cibuildwheel.
-	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
-	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
-	${MAKE} install-sysdeps
-	${MAKE} print-sysinfo
-	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k 'not test_memleaks.py'" $(PYTHON) -m pytest --pyargs psutil.tests
-	cd .tests/ && $(PYTHON_ENV_VARS) PYTEST_ADDOPTS="-k test_memleaks.py" $(PYTHON) -m pytest --pyargs psutil.tests
-
-lint-ci:  ## Run all linters on GitHub CI.
-	python3 -m pip install -U black ruff rstcheck toml-sort sphinx
-	curl -fsSL https://dprint.dev/install.sh | sh
-	${MAKE} lint-all
-
 # ===================================================================
 # Linters
 # ===================================================================
@@ -198,7 +175,7 @@ black:  ## Run black formatter.
 	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
 
 dprint:
-	@$(DPRINT) check --list-different
+	@$(DPRINT) check
 
 lint-c:  ## Run C linter.
 	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
@@ -248,20 +225,46 @@ fix-all:  ## Run all code fixers.
 	${MAKE} fix-dprint
 
 # ===================================================================
+# CI jobs
+# ===================================================================
+
+ci-lint:  ## Run all linters on GitHub CI.
+	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
+	curl -fsSL https://dprint.dev/install.sh | sh
+	${MAKE} lint-all
+
+ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
+	${MAKE} install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
+	${MAKE} print-sysinfo
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest psutil/tests/
+
+ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
+	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
+	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
+	${MAKE} install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
+	${MAKE} print-sysinfo
+	mkdir -p .tests
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs psutil.tests
+
+ci-check-dist:  ## Run all sanity checks re. to the package distribution.
+	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
+	${MAKE} sdist
+	mv wheelhouse/* dist/
+	${MAKE} check-dist
+	${MAKE} install
+	${MAKE} print-dist
+
+# ===================================================================
 # Distribution
 # ===================================================================
 
-sdist:  ## Create tar.gz source distribution.
-	${MAKE} generate-manifest
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
+check-manifest:  ## Check sanity of MANIFEST.in file.
+	$(PYTHON) -m check_manifest -v
 
-download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
-	${MAKE} print-dist
-
-create-wheels:  ## Create .whl files
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
-	${MAKE} check-wheels
+check-pyproject:  ## Check sanity of pyproject.toml file.
+	$(PYTHON) -m validate_pyproject -v pyproject.toml
 
 check-sdist:  ## Check sanity of source distribution.
 	$(PYTHON_ENV_VARS) $(PYTHON) -m virtualenv --clear --no-wheel --quiet build/venv
@@ -273,10 +276,25 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m abi3audit --verbose --strict dist/*-abi3-*.whl
 	$(PYTHON) -m twine check --strict dist/*.whl
 
+check-dist:  ## Run all sanity checks re. to the package distribution.
+	${MAKE} check-manifest
+	${MAKE} check-pyproject
+	${MAKE} check-sdist
+	${MAKE} check-wheels
+
+generate-manifest:  ## Generates MANIFEST.in file.
+	$(PYTHON) scripts/internal/generate_manifest.py
+
+sdist:  ## Create tar.gz source distribution.
+	${MAKE} generate-manifest
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
+
+create-wheels:  ## Create .whl files
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
+
 pre-release:  ## Check if we're ready to produce a new release.
 	${MAKE} clean
 	${MAKE} sdist
-	${MAKE} check-sdist
 	${MAKE} install
 	@$(PYTHON) -c \
 		"import requests, sys; \
@@ -293,22 +311,18 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in history, '%r not found in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
 	${MAKE} download-wheels
-	${MAKE} check-wheels
+	${MAKE} check-dist
 	${MAKE} print-hashes
 	${MAKE} print-dist
 
 release:  ## Upload a new release.
-	${MAKE} check-sdist
-	${MAKE} check-wheels
 	$(PYTHON) -m twine upload dist/*.tar.gz
 	$(PYTHON) -m twine upload dist/*.whl
 	${MAKE} git-tag-release
 
-generate-manifest:  ## Generates MANIFEST.in file.
-	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
-
-print-dist:  ## Print downloaded wheels / tar.gs
-	$(PYTHON) scripts/internal/print_dist.py
+download-wheels:  ## Download latest wheels hosted on github.
+	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	${MAKE} print-dist
 
 git-tag-release:  ## Git-tag a new release.
 	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
@@ -336,10 +350,13 @@ print-downloads:  ## Print PYPI download statistics
 	$(PYTHON) scripts/internal/print_downloads.py
 
 print-hashes:  ## Prints hashes of files in dist/ directory
-	$(PYTHON) scripts/internal/print_hashes.py dist/
+	$(PYTHON) scripts/internal/print_hashes.py
 
 print-sysinfo:  ## Prints system info
 	$(PYTHON) scripts/internal/print_sysinfo.py
+
+print-dist:  ## Print downloaded wheels / tar.gz
+	$(PYTHON) scripts/internal/print_dist.py
 
 # ===================================================================
 # Misc
@@ -356,11 +373,8 @@ bench-oneshot-2:  ## Same as above but using perf module (supposed to be more pr
 	${MAKE} build
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
-check-broken-links:  ## Look for broken links in source files.
-	git ls-files | xargs $(PYTHON) -Wa scripts/internal/check_broken_links.py
-
-check-manifest:  ## Inspect MANIFEST.in file.
-	$(PYTHON) -m check_manifest -v $(ARGS)
+find-broken-links:  ## Look for broken links in source files.
+	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
 
 help: ## Display callable targets.
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

@@ -10,6 +10,7 @@
 extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 
 int psutil_setup_osx(void);
+int _psutil_pids(pid_t **pids_array, int *pids_count);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
@@ -23,11 +24,11 @@ PyObject *psutil_disk_usage_used(PyObject *self, PyObject *args);
 PyObject *psutil_has_cpu_freq(PyObject *self, PyObject *args);
 PyObject *psutil_net_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);
-PyObject *psutil_pids(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
+PyObject *psutil_proc_is_zombie(PyObject *self, PyObject *args);
 PyObject *psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);

@@ -38,8 +38,6 @@ if POSIX:
     import mmap
     import resource
 
-    from psutil._psutil_posix import getpagesize
-
 
 def ps(fmt, pid=None):
     """Wrapper for calling the ps command with a little bit of cross-platform
@@ -133,7 +131,7 @@ def df(device):
         out = sh(f"df -k {device}").strip()
     except RuntimeError as err:
         if "device busy" in str(err).lower():
-            raise pytest.skip("df returned EBUSY")
+            return pytest.skip("df returned EBUSY")
         raise
     line = out.split('\n')[1]
     fields = line.split()
@@ -337,7 +335,7 @@ class TestSystemAPIs(PsutilTestCase):
             difference = [x for x in pids_psutil if x not in pids_ps] + [
                 x for x in pids_ps if x not in pids_psutil
             ]
-            raise pytest.fail("difference: " + str(difference))
+            return pytest.fail("difference: " + str(difference))
 
     # for some reason ifconfig -a does not report all interfaces
     # returned by psutil
@@ -351,7 +349,7 @@ class TestSystemAPIs(PsutilTestCase):
                 if line.startswith(nic):
                     break
             else:
-                raise pytest.fail(
+                return pytest.fail(
                     f"couldn't find {nic} nic in 'ifconfig -a'"
                     f" output\n{output}"
                 )
@@ -360,7 +358,7 @@ class TestSystemAPIs(PsutilTestCase):
     def test_users(self):
         out = sh("who -u")
         if not out.strip():
-            raise pytest.skip("no users on this system")
+            return pytest.skip("no users on this system")
 
         susers = []
         for line in out.splitlines():
@@ -391,7 +389,7 @@ class TestSystemAPIs(PsutilTestCase):
     def test_users_started(self):
         out = sh("who -u")
         if not out.strip():
-            raise pytest.skip("no users on this system")
+            return pytest.skip("no users on this system")
         tstamp = None
         # '2023-04-11 09:31' (Linux)
         started = re.findall(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d", out)
@@ -415,7 +413,7 @@ class TestSystemAPIs(PsutilTestCase):
                         started = [x.capitalize() for x in started]
 
         if not tstamp:
-            raise pytest.skip(f"cannot interpret tstamp in who output\n{out}")
+            return pytest.skip(f"cannot interpret tstamp in who output\n{out}")
 
         with self.subTest(psutil=psutil.users(), who=out):
             for idx, u in enumerate(psutil.users()):
@@ -494,7 +492,7 @@ class TestSystemAPIs(PsutilTestCase):
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestMisc(PsutilTestCase):
     def test_getpagesize(self):
-        pagesize = getpagesize()
+        pagesize = psutil._psplatform.cext.getpagesize()
         assert pagesize > 0
         assert pagesize == resource.getpagesize()
         assert pagesize == mmap.PAGESIZE

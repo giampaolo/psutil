@@ -7,7 +7,9 @@
 """Tests for testing utils (psutil.tests namespace)."""
 
 import collections
+import contextlib
 import errno
+import io
 import os
 import socket
 import stat
@@ -401,7 +403,10 @@ class TestMemLeakClass(TestMemoryLeak):
         try:
             # will consume around 60M in total
             with pytest.raises(pytest.fail.Exception, match="extra-mem"):
-                self.execute(fun, times=100)
+                with contextlib.redirect_stdout(
+                    io.StringIO()
+                ), contextlib.redirect_stderr(io.StringIO()):
+                    self.execute(fun, times=100)
         finally:
             del ls
 
@@ -446,7 +451,8 @@ class TestFakePytest(PsutilTestCase):
     def run_test_class(self, klass):
         suite = unittest.TestSuite()
         suite.addTest(klass)
-        runner = unittest.TextTestRunner()
+        # silence output
+        runner = unittest.TextTestRunner(stream=io.StringIO())
         result = runner.run(suite)
         return result
 
@@ -464,7 +470,7 @@ class TestFakePytest(PsutilTestCase):
         except AssertionError as err:
             assert str(err) == '"foo" does not match "bar"'  # noqa: PT017
         else:
-            raise pytest.fail("exception not raised")
+            return pytest.fail("exception not raised")
 
     def test_mark(self):
         @fake_pytest.mark.xdist_group(name="serial")
@@ -525,7 +531,8 @@ class TestFakePytest(PsutilTestCase):
                         pass
                 """).lstrip())
         with mock.patch.object(psutil.tests, "HERE", tmpdir):
-            suite = fake_pytest.main()
+            with contextlib.redirect_stderr(io.StringIO()):
+                suite = fake_pytest.main()
             assert suite.countTestCases() == 1
 
     def test_warns(self):
@@ -540,7 +547,7 @@ class TestFakePytest(PsutilTestCase):
         except AssertionError:
             pass
         else:
-            raise pytest.fail("exception not raised")
+            return pytest.fail("exception not raised")
 
         # match success
         with fake_pytest.warns(UserWarning, match="foo"):
@@ -553,7 +560,7 @@ class TestFakePytest(PsutilTestCase):
         except AssertionError:
             pass
         else:
-            raise pytest.fail("exception not raised")
+            return pytest.fail("exception not raised")
 
     def test_fail(self):
         with fake_pytest.raises(fake_pytest.fail.Exception):

@@ -166,12 +166,8 @@ if CI_TESTING:
 
 # --- file names
 
-# Disambiguate TESTFN for parallel testing.
-if os.name == 'java':
-    # Jython disallows @ in module names
-    TESTFN_PREFIX = f"$psutil-{os.getpid()}-"
-else:
-    TESTFN_PREFIX = f"@psutil-{os.getpid()}-"
+# Disambiguate TESTFN with PID for parallel testing.
+TESTFN_PREFIX = f"@psutil-{os.getpid()}-"
 UNICODE_SUFFIX = "-ƒőő"
 # An invalid unicode string.
 INVALID_UNICODE_SUFFIX = b"f\xc0\x80".decode('utf8', 'surrogateescape')
@@ -179,12 +175,10 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
-ROOT_DIR = os.path.realpath(
-    os.path.join(os.path.dirname(__file__), '..', '..')
+ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
 )
-SCRIPTS_DIR = os.environ.get(
-    "PSUTIL_SCRIPTS_DIR", os.path.join(ROOT_DIR, 'scripts')
-)
+SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
@@ -946,7 +940,7 @@ def create_c_exe(path, c_code=None):
     """Create a compiled C executable in the given location."""
     assert not os.path.exists(path), path
     if not shutil.which("gcc"):
-        raise pytest.skip("gcc is not installed")
+        return pytest.skip("gcc is not installed")
     if c_code is None:
         c_code = textwrap.dedent("""
             #include <unistd.h>
@@ -1056,13 +1050,16 @@ class PsutilTestCase(unittest.TestCase):
         repr(exc)
 
     def assert_pid_gone(self, pid):
-        with pytest.raises(psutil.NoSuchProcess) as cm:
-            try:
-                psutil.Process(pid)
-            except psutil.ZombieProcess:
-                raise pytest.fail("wasn't supposed to raise ZombieProcess")
-        assert cm.value.pid == pid
-        assert cm.value.name is None
+        try:
+            proc = psutil.Process(pid)
+        except psutil.ZombieProcess:
+            raise AssertionError("wasn't supposed to raise ZombieProcess")
+        except psutil.NoSuchProcess as exc:
+            assert exc.pid == pid  # noqa: PT017
+            assert exc.name is None  # noqa: PT017
+        else:
+            raise AssertionError(f"did not raise NoSuchProcess ({proc})")
+
         assert not psutil.pid_exists(pid), pid
         assert pid not in psutil.pids()
         assert pid not in [x.pid for x in psutil.process_iter()]
@@ -1087,6 +1084,15 @@ class PsutilTestCase(unittest.TestCase):
         proc.wait(timeout=0)  # assert not raise TimeoutExpired
 
     def assert_proc_zombie(self, proc):
+        def assert_in_pids(proc):
+            if MACOS:
+                # Even ps does not show zombie PIDs for some reason. Weird...
+                return
+            assert proc.pid in psutil.pids()
+            assert proc.pid in [x.pid for x in psutil.process_iter()]
+            psutil._pmap = {}
+            assert proc.pid in [x.pid for x in psutil.process_iter()]
+
         # A zombie process should always be instantiable.
         clone = psutil.Process(proc.pid)
         # Cloned zombie on Open/NetBSD/illumos/Solaris has null creation
@@ -1104,10 +1110,7 @@ class PsutilTestCase(unittest.TestCase):
         # as_dict() shouldn't crash.
         proc.as_dict()
         # It should show up in pids() and process_iter().
-        assert proc.pid in psutil.pids()
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
-        psutil._pmap = {}
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
+        assert_in_pids(proc)
         # Call all methods.
         ns = process_namespace(proc)
         for fun, name in ns.iter(ns.all, clear_cache=True):
@@ -1134,10 +1137,7 @@ class PsutilTestCase(unittest.TestCase):
         proc.kill()
         assert proc.is_running()
         assert psutil.pid_exists(proc.pid)
-        assert proc.pid in psutil.pids()
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
-        psutil._pmap = {}
-        assert proc.pid in [x.pid for x in psutil.process_iter()]
+        assert_in_pids(proc)
 
         # Its parent should 'see' it (edit: not true on BSD and MACOS).
         # descendants = [x.pid for x in psutil.Process().children(
@@ -1155,6 +1155,7 @@ class PsutilTestCase(unittest.TestCase):
 
 
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
+@pytest.mark.xdist_group(name="serial")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory
@@ -1233,13 +1234,13 @@ class TestMemoryLeak(PsutilTestCase):
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            raise pytest.fail(msg)
+            return pytest.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
             msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            raise pytest.fail(msg)
+            return pytest.fail(msg)
 
     def _call_ntimes(self, fun, times):
         """Get 2 distinct memory samples, before and after having
@@ -1273,14 +1274,14 @@ class TestMemoryLeak(PsutilTestCase):
             if success:
                 if idx > 1:
                     self._log(msg)
-                return
+                return None
             else:
                 if idx == 1:
                     print()  # noqa: T201
                 self._log(msg)
                 times += increase
                 prev_mem = mem
-        raise pytest.fail(". ".join(messages))
+        return pytest.fail(". ".join(messages))
 
     # ---
 
@@ -1320,7 +1321,7 @@ class TestMemoryLeak(PsutilTestCase):
             except exc:
                 pass
             else:
-                raise pytest.fail(f"{fun} did not raise {exc}")
+                return pytest.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
 
@@ -1587,7 +1588,7 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                raise pytest.skip("raises AccessDenied")
+                return pytest.skip("raises AccessDenied")
 
         return wrapper
 
@@ -1610,7 +1611,7 @@ def skip_on_not_implemented(only_if=None):
                     f"{fun.__name__!r} was skipped because it raised"
                     " NotImplementedError"
                 )
-                raise pytest.skip(msg)
+                return pytest.skip(msg)
 
         return wrapper
 

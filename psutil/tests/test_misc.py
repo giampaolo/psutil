@@ -17,7 +17,6 @@ import sys
 from unittest import mock
 
 import psutil
-import psutil.tests
 from psutil import WINDOWS
 from psutil._common import bcat
 from psutil._common import cat
@@ -217,7 +216,7 @@ class TestMisc(PsutilTestCase):
                             fun.__doc__ is not None
                             and 'deprecated' not in fun.__doc__.lower()
                         ):
-                            raise pytest.fail(
+                            return pytest.fail(
                                 f"{name!r} not in psutil.__all__"
                             )
 
@@ -848,7 +847,7 @@ class TestWrapNumbers(PsutilTestCase):
     @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_cache_clear_public_apis(self):
         if not psutil.disk_io_counters() or not psutil.net_io_counters():
-            raise pytest.skip("no disks or NICs available")
+            return pytest.skip("no disks or NICs available")
         psutil.disk_io_counters()
         psutil.net_io_counters()
         caches = wrap_numbers.cache_info()

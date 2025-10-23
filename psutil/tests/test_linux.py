@@ -178,7 +178,7 @@ def vmstat(stat):
 def get_free_version_info():
     out = sh(["free", "-V"]).strip()
     if 'UNKNOWN' in out:
-        raise pytest.skip("can't determine free version")
+        return pytest.skip("can't determine free version")
     return tuple(map(int, re.findall(r'\d+', out.split()[-1])))
 
 
@@ -237,12 +237,12 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-        # Newer versions of procps are using yet another way to compute used
-        # memory.
+        # Newer versions of procps (>=4.0.1) are using yet another way to
+        # compute used memory.
         # https://gitlab.com/procps-ng/procps/commit/
         #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-        if get_free_version_info() < (4, 0, 0):
-            raise pytest.skip("free version too old")
+        if get_free_version_info() < (4, 0, 1):
+            return pytest.skip("free version too old")
         cli_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         assert abs(cli_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -258,7 +258,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         free = free_physmem()
         free_value = free.shared
         if free_value == 0:
-            raise pytest.skip("free does not support 'shared' column")
+            return pytest.skip("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         assert (
             abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -271,7 +271,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         out = sh(["free", "-b"])
         lines = out.split('\n')
         if 'available' not in lines[0]:
-            raise pytest.skip("free does not support 'available' column")
+            return pytest.skip("free does not support 'available' column")
         free_value = int(lines[1].split()[-1])
         psutil_value = psutil.virtual_memory().available
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -290,12 +290,12 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         # This got changed in:
         # https://gitlab.com/procps-ng/procps/commit/
         #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-        # Newer versions of procps are using yet another way to compute used
-        # memory.
+        # Newer versions of procps (>=4.0.1) are using yet another way to
+        # compute used memory.
         # https://gitlab.com/procps-ng/procps/commit/
         #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
-        if get_free_version_info() < (4, 0, 0):
-            raise pytest.skip("free version too old")
+        if get_free_version_info() < (4, 0, 1):
+            return pytest.skip("free version too old")
         vmstat_value = vmstat('used memory') * 1024
         psutil_value = psutil.virtual_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
@@ -595,7 +595,7 @@ class TestSystemSwapMemory(PsutilTestCase):
         # matches sysinfo() syscall, see:
         # https://github.com/giampaolo/psutil/issues/1015
         if not self.meminfo_has_swap_info():
-            raise pytest.skip("/proc/meminfo has no swap metrics")
+            return pytest.skip("/proc/meminfo has no swap metrics")
         with mock.patch('psutil._pslinux.cext.linux_sysinfo') as m:
             swap = psutil.swap_memory()
         assert not m.called
@@ -1028,7 +1028,7 @@ class TestSystemNetIfStats(PsutilTestCase):
                         assert ifconfig_flags == psutil_flags
 
         if not matches_found:
-            raise pytest.fail("no matches were found")
+            return pytest.fail("no matches were found")
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")

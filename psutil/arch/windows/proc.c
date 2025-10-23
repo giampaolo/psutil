@@ -50,45 +50,6 @@ psutil_pid_exists(PyObject *self, PyObject *args) {
 
 
 /*
- * Return a Python list of all the PIDs running on the system.
- */
-PyObject *
-psutil_pids(PyObject *self, PyObject *args) {
-    DWORD *proclist = NULL;
-    DWORD numberOfReturnedPIDs;
-    DWORD i;
-    PyObject *py_pid = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (proclist == NULL)
-        goto error;
-
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        py_pid = PyLong_FromPid(proclist[i]);
-        if (!py_pid)
-            goto error;
-        if (PyList_Append(py_retlist, py_pid))
-            goto error;
-        Py_CLEAR(py_pid);
-    }
-
-    // free C array allocated for PIDs
-    free(proclist);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_pid);
-    Py_DECREF(py_retlist);
-    if (proclist != NULL)
-        free(proclist);
-    return NULL;
-}
-
-
-/*
  * Kill a process given its PID.
  */
 PyObject *
@@ -424,7 +385,7 @@ psutil_GetProcWsetInformation(
     buffer = MALLOC_ZERO(bufferSize);
     if (! buffer) {
         PyErr_NoMemory();
-        return 1;
+        return -1;
     }
 
     while ((status = NtQueryVirtualMemory(
@@ -441,12 +402,12 @@ psutil_GetProcWsetInformation(
         if (bufferSize > 256 * 1024 * 1024) {
             PyErr_SetString(PyExc_RuntimeError,
                             "NtQueryVirtualMemory bufsize is too large");
-            return 1;
+            return -1;
         }
         buffer = MALLOC_ZERO(bufferSize);
         if (! buffer) {
             PyErr_NoMemory();
-            return 1;
+            return -1;
         }
     }
 
@@ -463,7 +424,7 @@ psutil_GetProcWsetInformation(
                 status, "NtQueryVirtualMemory(MemoryWorkingSetInformation)");
         }
         HeapFree(GetProcessHeap(), 0, buffer);
-        return 1;
+        return -1;
     }
 
     *wSetInfo = (PMEMORY_WORKING_SET_INFORMATION)buffer;
@@ -1055,7 +1016,7 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (! psutil_get_proc_info(pid, &process, &buffer))
+    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
         return NULL;
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting ||

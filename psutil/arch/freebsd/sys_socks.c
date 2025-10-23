@@ -34,22 +34,22 @@ psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
     while (sysctlbyname("kern.file", *psutil_xfiles, &len, 0, 0) == -1) {
         if (errno != ENOMEM) {
             PyErr_SetFromErrno(0);
-            return 0;
+            return -1;
         }
         len *= 2;
         new_psutil_xfiles = realloc(*psutil_xfiles, len);
         if (new_psutil_xfiles == NULL) {
             PyErr_NoMemory();
-            return 0;
+            return -1;
         }
         *psutil_xfiles = new_psutil_xfiles;
     }
     if (len > 0 && (*psutil_xfiles)->xf_size != sizeof(struct xfile)) {
         PyErr_Format(PyExc_RuntimeError, "struct xfile size mismatch");
-        return 0;
+        return -1;
     }
     *psutil_nxfiles = len / sizeof(struct xfile);
-    return 1;
+    return 0;
 }
 
 
@@ -226,14 +226,14 @@ psutil_gather_inet(
     }
 
     free(buf);
-    return 1;
+    return 0;
 
 error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     free(buf);
-    return 0;
+    return -1;
 }
 
 
@@ -333,13 +333,13 @@ psutil_gather_unix(int proto, PyObject *py_retlist,
     }
 
     free(buf);
-    return 1;
+    return 0;
 
 error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_lpath);
     free(buf);
-    return 0;
+    return -1;
 }
 
 
@@ -392,14 +392,14 @@ psutil_net_connections(PyObject* self, PyObject* args) {
         goto error;
     }
 
-    if (psutil_populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 1)
+    if (psutil_populate_xfiles(&psutil_xfiles, &psutil_nxfiles) != 0)
         goto error_free_psutil_xfiles;
 
     // TCP
     if (include_tcp == 1) {
         if (psutil_gather_inet(
                 IPPROTO_TCP, include_v4, include_v6, py_retlist,
-                psutil_xfiles, psutil_nxfiles) == 0)
+                psutil_xfiles, psutil_nxfiles) != 0)
         {
             goto error_free_psutil_xfiles;
         }
@@ -408,16 +408,16 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     if (include_udp == 1) {
         if (psutil_gather_inet(
                 IPPROTO_UDP, include_v4, include_v6, py_retlist,
-                psutil_xfiles, psutil_nxfiles) == 0)
+                psutil_xfiles, psutil_nxfiles) != 0)
         {
             goto error_free_psutil_xfiles;
         }
     }
     // UNIX
     if (include_unix == 1) {
-        if (psutil_gather_unix(SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles) == 0)
+        if (psutil_gather_unix(SOCK_STREAM, py_retlist, psutil_xfiles, psutil_nxfiles) != 0)
            goto error_free_psutil_xfiles;
-        if (psutil_gather_unix(SOCK_DGRAM, py_retlist, psutil_xfiles, psutil_nxfiles) == 0)
+        if (psutil_gather_unix(SOCK_DGRAM, py_retlist, psutil_xfiles, psutil_nxfiles) != 0)
             goto error_free_psutil_xfiles;
     }
 

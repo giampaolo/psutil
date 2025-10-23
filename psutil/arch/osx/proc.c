@@ -33,73 +33,11 @@
 
 
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-typedef struct kinfo_proc kinfo_proc;
 
 
 // ====================================================================
 // --- utils
 // ====================================================================
-
-
-static int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
-    int mib[3];
-    size_t len = 0;
-    char *buf = NULL;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_ALL;
-    *procList = NULL;
-    *procCount = 0;
-
-    if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
-        return 1;
-
-    *procList = (struct kinfo_proc *)buf;
-    *procCount = len / sizeof(struct kinfo_proc);
-
-    if (*procCount == 0) {
-        free(buf);
-        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
-        return 1;
-    }
-
-    return 0;
-}
-
-// Read process argument space.
-static int
-psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
-    int mib[3];
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
-
-    if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
-        if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("psutil_pid_exists -> 0");
-            return 1;
-        }
-        // In case of zombie process we'll get EINVAL. We translate it
-        // to NSP and _psosx.py will translate it to ZP.
-        if (errno == EINVAL) {
-            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
-            NoSuchProcess("sysctl(KERN_PROCARGS2) -> EINVAL");
-            return 1;
-        }
-        // There's nothing we can do other than raising AD.
-        if (errno == EIO) {
-            psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
-            AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
-            return 1;
-        }
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
-        return 1;
-    }
-    return 0;
-}
 
 
 static int
@@ -124,6 +62,58 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
         NoSuchProcess("sysctl(kinfo_proc), len == 0");
+        return -1;
+    }
+    return 0;
+}
+
+
+static int
+is_zombie(size_t pid) {
+    struct kinfo_proc kp;
+
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
+        PyErr_Clear();
+        return 0;
+    }
+    if (kp.kp_proc.p_stat == SZOMB)
+        return 1;
+    return 0;
+}
+
+
+// Read process argument space.
+static int
+psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
+    int mib[3];
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = pid;
+
+    if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
+        if (psutil_pid_exists(pid) == 0) {
+            NoSuchProcess("psutil_pid_exists -> 0");
+            return -1;
+        }
+
+        if (is_zombie(pid) == 1) {
+            PyErr_SetString(ZombieProcessError, "");
+            return -1;
+        }
+
+        if (errno == EINVAL) {
+            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
+            AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
+            return -1;
+        }
+
+        if (errno == EIO) {
+            psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
+            AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
+            return -1;
+        }
+        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
         return -1;
     }
     return 0;
@@ -169,15 +159,15 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
  * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
  */
 static int
-psutil_task_for_pid(pid_t pid, mach_port_t *task)
-{
+psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     // See: https://github.com/giampaolo/psutil/issues/1181
     kern_return_t err = KERN_SUCCESS;
 
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
-        if (psutil_pid_exists(pid) == 0)
+        if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("task_for_pid");
+        }
         // Now done in Python.
         // else if (psutil_is_zombie(pid) == 1)
         //     PyErr_SetString(ZombieProcessError,
@@ -189,7 +179,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task)
                 (long)pid, err, errno, mach_error_string(err));
             AccessDenied("task_for_pid");
         }
-        return 1;
+        return -1;
     }
     return 0;
 }
@@ -266,45 +256,17 @@ error:
 // ====================================================================
 
 
-/*
- * Return a Python list of all the PIDs running on the system.
- */
+// Return True if PID is a zombie else False, including if PID does not
+// exist or the underlying function fails.
 PyObject *
-psutil_pids(PyObject *self, PyObject *args) {
-    kinfo_proc *proclist = NULL;
-    kinfo_proc *orig_address = NULL;
-    size_t num_processes;
-    size_t idx;
-    PyObject *py_pid = NULL;
-    PyObject *py_retlist = PyList_New(0);
+psutil_proc_is_zombie(PyObject *self, PyObject *args) {
+    pid_t pid;
 
-    if (py_retlist == NULL)
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-
-    if (psutil_get_proc_list(&proclist, &num_processes) != 0)
-        goto error;
-
-    // save the address of proclist so we can free it later
-    orig_address = proclist;
-    for (idx = 0; idx < num_processes; idx++) {
-        py_pid = PyLong_FromPid(proclist->kp_proc.p_pid);
-        if (! py_pid)
-            goto error;
-        if (PyList_Append(py_retlist, py_pid))
-            goto error;
-        Py_CLEAR(py_pid);
-        proclist++;
-    }
-    free(orig_address);
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_pid);
-    Py_DECREF(py_retlist);
-    if (orig_address != NULL)
-        free(orig_address);
-    return NULL;
+    if (is_zombie(pid) == 1)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
 }
 
 

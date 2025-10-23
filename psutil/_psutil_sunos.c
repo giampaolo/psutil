@@ -15,6 +15,7 @@
 */
 
 #define _STRUCTURED_PROC 1
+#define NEW_MIB_COMPLIANT 1
 
 #include <Python.h>
 
@@ -91,6 +92,10 @@ PyInit__psutil_sunos(void) {
 #endif
 
     if (psutil_setup() != 0)
+        return NULL;
+    if (psutil_posix_add_constants(mod) != 0)
+        return NULL;
+    if (psutil_posix_add_methods(mod) != 0)
         return NULL;
 
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))

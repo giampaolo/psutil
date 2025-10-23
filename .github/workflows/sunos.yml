@@ -1,0 +1,38 @@
+# Execute tests on SunOS
+# https://github.com/vmactions/solaris-vm
+
+name: sunos
+on:
+  push:
+    # only run this job if the following files are modified
+    paths: &sunos_paths
+      - ".github/workflows/sunos.yml"
+      - "psutil/_pssunos.py"
+      - "psutil/_psutil_sunos.c"
+      - "psutil/arch/all/**"
+      - "psutil/arch/posix/**"
+      - "psutil/arch/sunos/**"
+      - "setup.py"
+  pull_request:
+    paths: *sunos_paths
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Run tests
+        id: test
+        uses: vmactions/solaris-vm@v1
+        with:
+          release: "11.4-gcc"
+          usesh: true
+          run: |
+            set -x
+            python3 setup.py build_ext -i --parallel 4
+            python3 -c "import psutil"
+            python3 scripts/internal/install_pip.py
+            python3 -m pip install --break-system-packages --user pytest pytest-instafail pytest-subtests pytest-xdist
+            python3 -m pytest psutil/tests/test_memleaks.py

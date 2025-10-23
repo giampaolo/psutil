@@ -1,15 +1,35 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
 
-7.1.1
-=====
+7.1.2 (IN DEVELOPMENT)
+======================
 
 XXXX-XX-XX
 
 **Bug fixes**
 
+* 2650_, [macOS]: `Process.cmdline()`_ and `Process.environ()`_ may incorrectly
+  raise `NoSuchProcess`_ instead of `ZombieProcess`_.
+
+7.1.1
+=====
+
+2025-10-19
+
+**Enhancements**
+
+* 2645_, [SunOS]: dropped support for SunOS 10.
+* 2646_, [SunOS]: add CI test runner for SunOS.
+
+**Bug fixes**
+
 - 2641_, [SunOS]: cannot compile psutil from sources due to missing C include.
-- 2357_, [SunOS]: `Process.cmdline()`_ does not handle spaces properly. (patch by Ben Raz)
+- 2357_, [SunOS]: `Process.cmdline()`_ does not handle spaces properly. (patch
+  by Ben Raz)
+
+**Compatibility notes**
+
+* 2645_: SunOS 10 is no longer supported.
 
 7.1.0
 =====
