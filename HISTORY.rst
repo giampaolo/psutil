@@ -8,7 +8,9 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 2657_, [Linux], [Windows]: no longer publish wheels for Python 32 bit.
+- 2657_, [Linux], [Windows]: stop publishing wheels for Python 32 bit.
+  2565_: produce wheels for free-thread cPython 3.13 (patch by Lysandros
+  Nikolaou)
 
 **Bug fixes**
 

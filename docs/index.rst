@@ -2676,6 +2676,8 @@ If you want to develop psutil take a look at the `DEVGUIDE.rst`_.
 Platforms support history
 =========================
 
+* psutil 7.1.2 (XXXX-XX): publish wheels for free-threaded Python
+* psutil 7.1.2 (XXXX-XX): unpublish wheels for cPython 32-bit
 * psutil 7.1.1 (2025-10): drop **SunOS 10**
 * psutil 7.1.0 (2025-09): drop **FreeBSD 8**
 * psutil 7.0.0 (2025-02): drop Python 2.7
