@@ -146,27 +146,23 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 // "AppleARMIODevice" is not available.
 static int
 psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
-
     kern_return_t status;
-    io_iterator_t iter = 0;
-    io_registry_entry_t entry = 0;
-    CFDictionaryRef matching;
-    io_name_t name;
+    io_iterator_t iter = IO_OBJECT_NULL;
+    io_registry_entry_t entry = IO_OBJECT_NULL;
+    CFDictionaryRef matching = IOServiceMatching("AppleARMIODevice");
     int found = 0;
 
-    *out_entry = 0;
-
-    matching = IOServiceMatching("AppleARMIODevice");
-    if (matching == NULL)
+    if (!out_entry || !matching)
         return 0;
 
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
-    if (status != KERN_SUCCESS)
+    if (status != KERN_SUCCESS || iter == IO_OBJECT_NULL)
         return 0;
 
-    while ((entry = IOIteratorNext(iter)) != 0) {
-        status = IORegistryEntryGetName(entry, name);
-        if (status == KERN_SUCCESS && strcmp(name, "pmgr") == 0) {
+    while ((entry = IOIteratorNext(iter)) != IO_OBJECT_NULL) {
+        io_name_t name;
+        if (IORegistryEntryGetName(entry, name) == KERN_SUCCESS &&
+            strcmp(name, "pmgr") == 0) {
             found = 1;
             break;
         }
@@ -177,9 +173,8 @@ psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
 
     if (found) {
         *out_entry = entry;  // caller must release
-        return -1;
+        return 1;
     }
-
     return 0;
 }
 
