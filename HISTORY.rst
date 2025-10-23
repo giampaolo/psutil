@@ -6,10 +6,19 @@
 
 XXXX-XX-XX
 
+**Enhancements**
+
+- 2657_, [Linux], [Windows]: no longer publish wheels for Python 32 bit.
+
 **Bug fixes**
 
 * 2650_, [macOS]: `Process.cmdline()`_ and `Process.environ()`_ may incorrectly
   raise `NoSuchProcess`_ instead of `ZombieProcess`_.
+
+**Compatibility notes**
+
+- 2657_: Linux and Windows wheels for Python 32 bit are no longer uploaded,
+  meaning pip will install psutil from sources.
 
 7.1.1
 =====
@@ -18,8 +27,8 @@ XXXX-XX-XX
 
 **Enhancements**
 
-* 2645_, [SunOS]: dropped support for SunOS 10.
-* 2646_, [SunOS]: add CI test runner for SunOS.
+- 2645_, [SunOS]: dropped support for SunOS 10.
+- 2646_, [SunOS]: add CI test runner for SunOS.
 
 **Bug fixes**
 
