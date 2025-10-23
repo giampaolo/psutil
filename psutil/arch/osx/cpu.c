@@ -193,43 +193,32 @@ psutil_has_cpu_freq(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
-    io_registry_entry_t entry = 0;
+    io_registry_entry_t entry = IO_OBJECT_NULL;
     CFTypeRef pCoreRef = NULL;
     CFTypeRef eCoreRef = NULL;
-    size_t pCoreLength;
+    size_t pCoreLength = 0;
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
 
     if (!psutil_find_pmgr_entry(&entry)) {
         return PyErr_Format(
             PyExc_RuntimeError,
-            "'pmgr' entry was not found in AppleARMIODevice service"
+            "'pmgr' entry not found in AppleARMIODevice"
         );
     }
 
     pCoreRef = IORegistryEntryCreateCFProperty(
         entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0
     );
-    if (pCoreRef == NULL ||
-            CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
-            CFDataGetLength(pCoreRef) < 8) {
-        PyErr_SetString(
-            PyExc_RuntimeError,
-            "'voltage-states5-sram' is missing or invalid"
-        );
-        goto error;
-    }
-
     eCoreRef = IORegistryEntryCreateCFProperty(
         entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0
     );
-    if (eCoreRef == NULL ||
-            CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
-            CFDataGetLength(eCoreRef) < 4) {
-        PyErr_SetString(
-            PyExc_RuntimeError,
-            "'voltage-states1-sram' is missing or invalid"
-        );
-        goto error;
+
+    if (!pCoreRef || CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
+        CFDataGetLength(pCoreRef) < 8 ||
+        !eCoreRef || CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
+        CFDataGetLength(eCoreRef) < 4) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid CPU frequency data");
+        goto cleanup;
     }
 
     pCoreLength = CFDataGetLength(pCoreRef);
@@ -240,12 +229,16 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = (pMin < eMin) ? pMin : eMin;
     curr = max;
 
+cleanup:
     if (pCoreRef)
         CFRelease(pCoreRef);
     if (eCoreRef)
         CFRelease(eCoreRef);
-    if (entry)
+    if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
+
+    if (PyErr_Occurred())
+        return NULL;
 
     return Py_BuildValue(
         "KKK",
@@ -253,15 +246,6 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         (unsigned long long)(min / 1000 / 1000),
         (unsigned long long)(max / 1000 / 1000)
     );
-
-error:
-    if (pCoreRef)
-        CFRelease(pCoreRef);
-    if (eCoreRef)
-        CFRelease(eCoreRef);
-    if (entry)
-        IOObjectRelease(entry);
-    return NULL;
 }
 #else  // not ARM64 / ARCH64
 PyObject *
