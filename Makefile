@@ -283,7 +283,7 @@ check-dist:  ## Run all sanity checks re. to the package distribution.
 	${MAKE} check-wheels
 
 generate-manifest:  ## Generates MANIFEST.in file.
-	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+	$(PYTHON) scripts/internal/generate_manifest.py
 
 sdist:  ## Create tar.gz source distribution.
 	${MAKE} generate-manifest
