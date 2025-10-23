@@ -131,7 +131,7 @@ else:
     macros.append(('PSUTIL_SIZEOF_PID_T', '8'))  # long
 
 
-sources = ['psutil/arch/all/init.c']
+sources = glob.glob("psutil/arch/all/*.c")
 if POSIX:
     sources.extend(glob.glob("psutil/arch/posix/*.c"))
 
@@ -321,7 +321,7 @@ if WINDOWS:
     )
 
 elif MACOS:
-    macros.append(("PSUTIL_OSX", 1))
+    macros.extend([("PSUTIL_OSX", 1), ("PSUTIL_MACOS", 1)])
     ext = Extension(
         'psutil._psutil_osx',
         sources=(

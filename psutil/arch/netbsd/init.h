@@ -9,9 +9,9 @@
 #include <Python.h>
 #include <sys/sysctl.h>
 
+int _psutil_pids(pid_t **pids_array, int *pids_count);
 // TODO: refactor this. Does not belong here.
 int psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc);
-int _psutil_pids(struct kinfo_proc2 **proc_list, size_t *proc_count);
 char *psutil_get_cmd_args(pid_t pid, size_t *argsize);
 
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);

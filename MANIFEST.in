@@ -47,6 +47,7 @@ include psutil/arch/aix/net_connections.h
 include psutil/arch/aix/net_kernel_structs.h
 include psutil/arch/all/init.c
 include psutil/arch/all/init.h
+include psutil/arch/all/pids.c
 include psutil/arch/bsd/cpu.c
 include psutil/arch/bsd/disk.c
 include psutil/arch/bsd/init.c
@@ -58,6 +59,7 @@ include psutil/arch/freebsd/cpu.c
 include psutil/arch/freebsd/disk.c
 include psutil/arch/freebsd/init.h
 include psutil/arch/freebsd/mem.c
+include psutil/arch/freebsd/pids.c
 include psutil/arch/freebsd/proc.c
 include psutil/arch/freebsd/proc_socks.c
 include psutil/arch/freebsd/sensors.c
@@ -71,12 +73,14 @@ include psutil/arch/netbsd/cpu.c
 include psutil/arch/netbsd/disk.c
 include psutil/arch/netbsd/init.h
 include psutil/arch/netbsd/mem.c
+include psutil/arch/netbsd/pids.c
 include psutil/arch/netbsd/proc.c
 include psutil/arch/netbsd/socks.c
 include psutil/arch/openbsd/cpu.c
 include psutil/arch/openbsd/disk.c
 include psutil/arch/openbsd/init.h
 include psutil/arch/openbsd/mem.c
+include psutil/arch/openbsd/pids.c
 include psutil/arch/openbsd/proc.c
 include psutil/arch/openbsd/socks.c
 include psutil/arch/openbsd/users.c
@@ -86,6 +90,7 @@ include psutil/arch/osx/init.c
 include psutil/arch/osx/init.h
 include psutil/arch/osx/mem.c
 include psutil/arch/osx/net.c
+include psutil/arch/osx/pids.c
 include psutil/arch/osx/proc.c
 include psutil/arch/osx/sensors.c
 include psutil/arch/osx/sys.c
@@ -110,6 +115,7 @@ include psutil/arch/windows/init.h
 include psutil/arch/windows/mem.c
 include psutil/arch/windows/net.c
 include psutil/arch/windows/ntextapi.h
+include psutil/arch/windows/pids.c
 include psutil/arch/windows/proc.c
 include psutil/arch/windows/proc_handles.c
 include psutil/arch/windows/proc_info.c

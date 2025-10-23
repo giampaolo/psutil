@@ -26,7 +26,7 @@
     #include "../../arch/osx/init.h"
 #elif defined(PSUTIL_FREEBSD)
     #include "../../arch/freebsd/init.h"
-#elif defined(PSUTIL_OPENSBD)
+#elif defined(PSUTIL_OPENBSD)
     #include "../../arch/openbsd/init.h"
 #elif defined(PSUTIL_NETBSD)
     #include "../../arch/netbsd/init.h"
@@ -66,9 +66,9 @@ extern int PSUTIL_CONN_NONE;
 // --- Custom exceptions
 // ====================================================================
 
-PyObject* AccessDenied(const char *msg);
-PyObject* NoSuchProcess(const char *msg);
-PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
+PyObject *AccessDenied(const char *msg);
+PyObject *NoSuchProcess(const char *msg);
+PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
@@ -118,6 +118,10 @@ PyObject* psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
     #endif
 #endif
 
-PyObject* psutil_set_debug(PyObject *self, PyObject *args);
-PyObject* psutil_check_pid_range(PyObject *self, PyObject *args);
+#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
+PyObject *psutil_pids(PyObject *self, PyObject *args);
+#endif
+
+PyObject *psutil_set_debug(PyObject *self, PyObject *args);
+PyObject *psutil_check_pid_range(PyObject *self, PyObject *args);
 int psutil_setup(void);

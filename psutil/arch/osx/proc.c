@@ -41,34 +41,6 @@
 
 
 static int
-_psutil_pids(struct kinfo_proc **proc_list, size_t *proc_count) {
-    int mib[3];
-    size_t len = 0;
-    char *buf = NULL;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_ALL;
-    *proc_list = NULL;
-    *proc_count = 0;
-
-    if (psutil_sysctl_malloc(mib, 3, &buf, &len) != 0)
-        return -1;
-
-    *proc_list = (struct kinfo_proc *)buf;
-    *proc_count = len / sizeof(struct kinfo_proc);
-
-    if (*proc_count == 0) {
-        free(buf);
-        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
-        return -1;
-    }
-
-    return 0;
-}
-
-
-static int
 psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
@@ -282,48 +254,6 @@ error:
 // ====================================================================
 // --- Python APIs
 // ====================================================================
-
-
-/*
- * Return a Python list of all the PIDs running on the system.
- */
-PyObject *
-psutil_pids(PyObject *self, PyObject *args) {
-    struct kinfo_proc *proclist = NULL;
-    struct kinfo_proc *orig_address = NULL;
-    size_t num_processes;
-    size_t idx;
-    PyObject *py_pid = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
-
-    if (_psutil_pids(&proclist, &num_processes) != 0)
-        goto error;
-
-    // save the address of proclist so we can free it later
-    orig_address = proclist;
-    for (idx = 0; idx < num_processes; idx++) {
-        py_pid = PyLong_FromPid(proclist->kp_proc.p_pid);
-        if (! py_pid)
-            goto error;
-        if (PyList_Append(py_retlist, py_pid))
-            goto error;
-        Py_CLEAR(py_pid);
-        proclist++;
-    }
-    free(orig_address);
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_pid);
-    Py_DECREF(py_retlist);
-    if (orig_address != NULL)
-        free(orig_address);
-    return NULL;
-}
 
 
 // Return True if PID is a zombie else False, including if PID does not
