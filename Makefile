@@ -237,13 +237,13 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	${MAKE} install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
-	$(PYTHON) -m pip list
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest psutil/tests/
 
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
 	${MAKE} install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
 	${MAKE} print-sysinfo
 	mkdir -p .tests
 	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs psutil.tests
