@@ -313,9 +313,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-    py_name = PyUnicode_DecodeFSDefaultAndSize(
-        kp.kp_proc.p_comm, sizeof(kp.kp_proc.p_comm)
-    );
+    py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
@@ -404,9 +402,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-    return PyUnicode_DecodeFSDefaultAndSize(
-        kp.kp_proc.p_comm, sizeof(kp.kp_proc.p_comm)
-    );
+    return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
 }
 
 /*
@@ -427,9 +423,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    return PyUnicode_DecodeFSDefaultAndSize(
-        pathinfo.pvi_cdir.vip_path, sizeof(pathinfo.pvi_cdir.vip_path)
-    );
+    return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
 }
 
 
@@ -463,7 +457,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             return NULL;
         }
     }
-    return PyUnicode_DecodeFSDefaultAndSize(buf, ret);
+    return PyUnicode_DecodeFSDefaultAndSize(buf);
 }
 
 

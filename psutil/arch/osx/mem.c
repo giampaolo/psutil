@@ -89,14 +89,14 @@ PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2];
     struct xsw_usage totals;
-    vm_statistics64_data_t  vmstat;
+    vm_statistics64_data_t vmstat;
     long pagesize = psutil_getpagesize();
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
 
     if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
-        return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
+        return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(VM_SWAPUSAGE)");
 
     if (psutil_sys_vminfo(&vmstat) != 0)
         return NULL;
@@ -107,5 +107,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         (unsigned long long) totals.xsu_used,
         (unsigned long long) totals.xsu_avail,
         (unsigned long long) vmstat.pageins * pagesize,
-        (unsigned long long) vmstat.pageouts * pagesize);
+        (unsigned long long) vmstat.pageouts * pagesize
+    );
 }
