@@ -313,17 +313,19 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-    py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
+    py_name = PyUnicode_DecodeFSDefaultAndSize(
+        kp.kp_proc.p_comm, sizeof(kp.kp_proc.p_comm)
+    );
     if (! py_name) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
         PyErr_Clear();
-        Py_INCREF(Py_None);  // safely hold a reference
+        Py_INCREF(Py_None);
         py_name = Py_None;
     }
 
     py_retlist = Py_BuildValue(
-        _Py_PARSE_PID "llllllidiO",
+        _Py_PARSE_PID "llllllldiO",
         kp.kp_eproc.e_ppid,                        // (pid_t) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
         (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
@@ -331,14 +333,13 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         (long)kp.kp_eproc.e_pcred.p_rgid,          // (long) real gid
         (long)kp.kp_eproc.e_ucred.cr_groups[0],    // (long) effective gid
         (long)kp.kp_eproc.e_pcred.p_svgid,         // (long) saved gid
-        kp.kp_eproc.e_tdev,                        // (int) tty nr
+        (long long)kp.kp_eproc.e_tdev,             // (long long) tty nr
         PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
         (int)kp.kp_proc.p_stat,                    // (int) status
         py_name                                    // (pystr) name
     );
 
-    Py_DECREF(py_name);  // safe now, even if py_name was None
-
+    Py_DECREF(py_name);
     return py_retlist;
 }
 
