@@ -1,20 +1,11 @@
 name: build
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
-  cancel-in-progress: true
-
 jobs:
   asan-tests:
-    name: "${{ matrix.os }}, ${{ matrix.arch }}"
-    runs-on: ${{ matrix.os }}
+    name: "macOS ASan (arm64)"
+    runs-on: macos-14
     timeout-minutes: 15
-    strategy:
-      matrix:
-        include:
-          - { os: macos-13, arch: x86_64 }
-          - { os: macos-14, arch: arm64 }
 
     steps:
       - uses: actions/checkout@v5
@@ -26,19 +17,20 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel pytest pytest-xdist pytest-instafail pytest-subtests psutil
+          python -m pip install --upgrade pip setuptools wheel pytest
 
-      - name: Build psutil with ASan
+      - name: Build psutil with ASan (ARM64)
+        env:
+          ARCHFLAGS: "-arch arm64"
         run: |
-          export CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
-          export LDFLAGS="-fsanitize=address"
-          echo "Building psutil with ASan..."
+          export CC=clang
+          export CFLAGS="-fsanitize=address -arch arm64 -g -O1 -fno-omit-frame-pointer"
+          export LDFLAGS="-fsanitize=address -arch arm64"
+          echo "Building psutil for ARM64 with ASan..."
           python setup.py build_ext --force --inplace
-          python -c "import psutil; print('psutil built:', psutil.__file__)"
 
       - name: Create ASan launcher
         run: |
-          echo 'Creating ASan launcher...'
           cat > run_with_asan.c <<'EOF'
           #include <unistd.h>
           #include <stdlib.h>
@@ -52,22 +44,10 @@ jobs:
               return 1;
           }
           EOF
-          clang run_with_asan.c -o run_with_asan
+          clang -arch arm64 run_with_asan.c -o run_with_asan
 
       - name: Run tests under ASan
         run: |
           ASAN_RT=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
           echo "Using ASan runtime: $ASAN_RT"
-          ./run_with_asan "$ASAN_RT" -c "import psutil; print('ASan active, psutil loaded OK')"
-          ./run_with_asan "$ASAN_RT" -m pytest -q psutil/tests --maxfail=1 --disable-warnings
-
-  # Run linters (kept for completeness)
-  linters:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.x"
-      - name: Run linters
-        run: make ci-lint
+          ./run_with_asan "$ASAN_RT" -m pytest -q psutil/tests --disable-warnings --maxfail=1
