@@ -17,7 +17,8 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel pytest pytest-instafail pytest-subtests pytest-xdist
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install pytest pytest-instafail pytest-subtests pytest-xdist
 
       - name: Build psutil with ASan (ARM64)
         env:
@@ -43,7 +44,7 @@ jobs:
                   return 1;
               }
               setenv("DYLD_INSERT_LIBRARIES", argv[1], 1);
-              // Build argv for execvp: python3 + rest of args after asan_path
+              // Build argv for execvp: python3 + rest of args after asan_path.
               char** new_argv = argv + 2;
               execvp("python3", new_argv);
               perror("execvp");
@@ -54,7 +55,17 @@ jobs:
 
       - name: Run tests under ASan
         run: |
+          set -e
           ASAN_RT=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
           echo "Using ASan runtime: $ASAN_RT"
-          export DYLD_INSERT_LIBRARIES="$ASAN_RT"
-          python3 -m pytest -q psutil/tests --disable-warnings --maxfail=1
+
+          # Resolve the real interpreter (skip the framework stub).
+          PYBIN=$(python3 -c "import sys; print(sys.executable)")
+          if [[ "$PYBIN" == *"Python.app/Contents/MacOS/Python"* ]]; then
+              PYBIN="${PYBIN%/Python.app/Contents/MacOS/Python}/bin/python3"
+          fi
+          echo "Running real binary: $PYBIN"
+
+          # Verify ASan preload and then run tests.
+          ./run_with_asan "$ASAN_RT" "$PYBIN" -c "import psutil; print('ASan preload OK')"
+          ./run_with_asan "$ASAN_RT" "$PYBIN" -m pytest -q psutil/tests --disable-warnings --maxfail=1
