@@ -287,8 +287,8 @@ PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct kinfo_proc kp;
-    PyObject *py_name;
-    PyObject *py_retlist;
+    PyObject *py_name = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -300,6 +300,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
         PyErr_Clear();
+        Py_INCREF(Py_None);  // safely hold a reference
         py_name = Py_None;
     }
 
@@ -318,10 +319,8 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         py_name                                    // (pystr) name
     );
 
-    if (py_retlist != NULL) {
-        // XXX shall we decref() also in case of Py_BuildValue() error?
-        Py_DECREF(py_name);
-    }
+    Py_DECREF(py_name);  // safe now, even if py_name was None
+
     return py_retlist;
 }
 
