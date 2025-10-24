@@ -561,9 +561,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     pid_t pid;
-    int err, ret;
     kern_return_t kr;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task = MACH_PORT_NULL;
     struct task_basic_info tasks_info;
     thread_act_port_array_t thread_list = NULL;
@@ -583,12 +581,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
 
-    info_count = TASK_BASIC_INFO_COUNT;
-    err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
-                    &info_count);
-    if (err != KERN_SUCCESS) {
-        // errcode 4 is "invalid argument" (access denied)
-        if (err == 4) {
+    // Get basic task info (optional, ignored if access denied)
+    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+    kr = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+    if (kr != KERN_SUCCESS) {
+        if (kr == KERN_INVALID_ARGUMENT) {
             AccessDenied("task_info(TASK_BASIC_INFO)");
         }
         else {
@@ -599,8 +596,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    err = task_threads(task, &thread_list, &thread_count);
-    if (err != KERN_SUCCESS) {
+    kr = task_threads(task, &thread_list, &thread_count);
+    if (kr != KERN_SUCCESS) {
         PyErr_Format(PyExc_RuntimeError, "task_threads() syscall failed");
         goto error;
     }
@@ -631,30 +628,28 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
-    ret = vm_deallocate(
-        task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
-    );
-
-    if (ret != KERN_SUCCESS)
-        PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
-
-    mach_port_deallocate(mach_task_self(), task);
+    if (thread_list != NULL) {
+        vm_deallocate(mach_task_self(), (vm_address_t)thread_list,
+                      thread_count * sizeof(thread_act_t));
+    }
+    if (task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), task);
+    }
 
     return py_retlist;
 
 error:
-    if (task != MACH_PORT_NULL)
-        mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    if (thread_list != NULL) {
-        ret = vm_deallocate(
-            task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
-        );
+    Py_XDECREF(py_retlist);
 
-        if (ret != KERN_SUCCESS)
-            PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
+    if (thread_list != NULL) {
+        vm_deallocate(mach_task_self(), (vm_address_t)thread_list,
+                      thread_count * sizeof(thread_act_t));
     }
+    if (task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), task);
+    }
+
     return NULL;
 }
 
