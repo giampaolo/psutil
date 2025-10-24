@@ -329,6 +329,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         }
         if (PyList_Append(py_retlist, py_cputime)) {
             Py_DECREF(py_cputime);
+            goto error;
         }
         Py_DECREF(py_cputime);
     }
