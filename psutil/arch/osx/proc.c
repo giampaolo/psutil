@@ -89,6 +89,11 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
 
+    if (!procargs || !argmax || *argmax == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("psutil_pid_exists -> 0");
