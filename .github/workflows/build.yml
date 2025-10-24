@@ -56,4 +56,5 @@ jobs:
         run: |
           ASAN_RT=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
           echo "Using ASan runtime: $ASAN_RT"
-          ./run_with_asan "$ASAN_RT" python3 -m pytest -q psutil/tests --disable-warnings --maxfail=1
+          export DYLD_INSERT_LIBRARIES="$ASAN_RT"
+          python3 -m pytest -q psutil/tests --disable-warnings --maxfail=1
