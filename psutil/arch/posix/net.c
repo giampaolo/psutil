@@ -246,7 +246,7 @@ error:
 }
 
 static int
-append_flag(PyObject *py_retlist, const char * flag_name)
+append_flag(PyObject *py_retlist, const char *flag_name)
 {
     PyObject *py_str = NULL;
 
