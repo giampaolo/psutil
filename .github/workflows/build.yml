@@ -28,17 +28,12 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          # Enable ASan instrumentation
+          # ASan instrumentation
           CIBW_ENVIRONMENT: >
+            MACOSX_DEPLOYMENT_TARGET=10.10
             CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
             LDFLAGS="-fsanitize=address"
           # Run tests with ASan preloaded
           CIBW_TEST_COMMAND: >
             DYLD_INSERT_LIBRARIES=$(xcrun --show-sdk-path)/usr/lib/clang/$(clang --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)/lib/darwin/libclang_rt.asan_osx_dynamic.dylib
             python -c "import psutil; print('ASan preloaded OK'); import psutil.tests; psutil.tests.test_main()"
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
-          path: wheelhouse
