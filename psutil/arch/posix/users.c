@@ -31,6 +31,7 @@ teardown() {
 PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
+    size_t host_len;
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
@@ -55,11 +56,22 @@ psutil_users(PyObject *self, PyObject *args) {
         if (! py_tty)
             goto error;
 
-        if (strcmp(ut->ut_host, ":0") == 0 || strcmp(ut->ut_host, ":0.0") == 0)
+        host_len = strnlen(ut->ut_host, sizeof(ut->ut_host));
+        if (host_len == 0 ||
+            (strcmp(ut->ut_host, ":0") == 0) ||
+            (strcmp(ut->ut_host, ":0.0") == 0))
+        {
             py_hostname = PyUnicode_DecodeFSDefault("localhost");
-        else
-            py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
-        if (! py_hostname)
+        }
+        else {
+            // ut_host might not be null-terminated if the hostname is
+            // very long, so we do it.
+            char hostbuf[sizeof(ut->ut_host)];
+            memcpy(hostbuf, ut->ut_host, host_len);
+            hostbuf[host_len] = '\0';
+            py_hostname = PyUnicode_DecodeFSDefault(hostbuf);
+        }
+        if (!py_hostname)
             goto error;
 
         py_tuple = Py_BuildValue(
