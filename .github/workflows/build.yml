@@ -1,36 +1,27 @@
-name: build
-on: [push, pull_request]
+name: macos-asan-arm64
+on:
+  push:
+  pull_request:
 
 jobs:
-  asan-tests:
-    name: "macOS ASan (arm64)"
-    runs-on: macos-14
-    timeout-minutes: 15
-
+  build:
+    runs-on: macos-14 # Apple Silicon runner
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Install build dependencies
+      - name: Install deps
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install pytest pytest-instafail pytest-subtests pytest-xdist
+          brew install python@3.11
+          python3 -m pip install --upgrade pip setuptools wheel pytest
 
-      - name: Build psutil with ASan (ARM64)
+      - name: Build psutil with ASan
         env:
-          ARCHFLAGS: "-arch arm64"
+          CFLAGS: "-fsanitize=address -g -O1 -fno-omit-frame-pointer"
+          LDFLAGS: "-fsanitize=address"
         run: |
-          export CC=clang
-          export CFLAGS="-fsanitize=address -arch arm64 -g -O1 -fno-omit-frame-pointer"
-          export LDFLAGS="-fsanitize=address -arch arm64"
-          echo "Building psutil for ARM64 with ASan..."
-          python setup.py build_ext --force --inplace
+          python3 setup.py build_ext --inplace
 
-      - name: Create ASan launcher
+      - name: Build ASan wrapper
         run: |
           cat > run_with_asan.c <<'EOF'
           #include <unistd.h>
@@ -39,33 +30,26 @@ jobs:
 
           int main(int argc, char** argv) {
               if (argc < 3) {
-                  fprintf(stderr,
-                      "Usage: run_with_asan <asan_path> <python args...>\n");
+                  fprintf(stderr, "Usage: run_with_asan <asan_path> <python args...>\n");
                   return 1;
               }
               setenv("DYLD_INSERT_LIBRARIES", argv[1], 1);
-              // Build argv for execvp: python3 + rest of args after asan_path.
-              char** new_argv = argv + 2;
-              execvp("python3", new_argv);
+              execvp(argv[2], &argv[2]);
               perror("execvp");
               return 1;
           }
           EOF
           clang -arch arm64 run_with_asan.c -o run_with_asan
 
-      - name: Run tests under ASan
+      - name: Run tests with ASan
         run: |
-          set -e
           ASAN_RT=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
+          PYBIN=$(which python3)
           echo "Using ASan runtime: $ASAN_RT"
+          echo "Python binary: $PYBIN"
 
-          # Resolve the real interpreter (skip the framework stub).
-          PYBIN=$(python3 -c "import sys; print(sys.executable)")
-          if [[ "$PYBIN" == *"Python.app/Contents/MacOS/Python"* ]]; then
-              PYBIN="${PYBIN%/Python.app/Contents/MacOS/Python}/bin/python3"
-          fi
-          echo "Running real binary: $PYBIN"
+          # Make sure Python is the Homebrew one (unsigned)
+          codesign -dv --verbose=4 "$PYBIN" || true
 
-          # Verify ASan preload and then run tests.
-          ./run_with_asan "$ASAN_RT" "$PYBIN" -c "import psutil; print('ASan preload OK')"
+          ./run_with_asan "$ASAN_RT" "$PYBIN" -c "import psutil; print('ASan OK')"
           ./run_with_asan "$ASAN_RT" "$PYBIN" -m pytest -q psutil/tests --disable-warnings --maxfail=1
