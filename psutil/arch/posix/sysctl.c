@@ -136,6 +136,13 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
     size_t len = buflen;
     char errbuf[256];
 
+    if (!name || !buf || buflen == 0) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_sysctlbyname() invalid args"
+        );
+        return -1;
+    }
+
     if (sysctlbyname(name, buf, &len, NULL, 0) == -1) {
         snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s')", name);
         psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
