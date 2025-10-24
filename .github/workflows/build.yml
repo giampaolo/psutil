@@ -1,37 +1,55 @@
-on: [push, pull_request]
-name: build
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
-  cancel-in-progress: true
+name: macOS ASan build
+
+on:
+  push:
+  pull_request:
 
 jobs:
-  tests:
-    name: "${{ matrix.os }}, ${{ matrix.arch }}"
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    strategy:
-      matrix:
-        include:
-          # - { os: macos-13, arch: x86_64 }
-          - { os: macos-14, arch: arm64 }
+  asan-test:
+    runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install Python
-        uses: actions/setup-python@v6
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
+          python-version: "3.11"
 
-      - name: Build wheels (ASan enabled)
-        uses: pypa/cibuildwheel@v3.2.1
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel pytest
+
+      - name: Build psutil with ASan
+        run: |
+          export CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
+          export LDFLAGS="-fsanitize=address"
+          export MACOSX_DEPLOYMENT_TARGET=10.10
+
+          echo "Building psutil with ASan..."
+          python setup.py build_ext --inplace
+
+          echo "Listing built shared objects:"
+          find psutil -name "*.so" -ls
+
+      - name: Locate ASan runtime
+        id: asan
+        run: |
+          ASAN_PATH=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
+          echo "ASAN_PATH=$ASAN_PATH" >> $GITHUB_ENV
+          echo "Found ASan runtime: $ASAN_PATH"
+
+      - name: Run psutil tests under ASan
         env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
-          CIBW_ENVIRONMENT: >
-            MACOSX_DEPLOYMENT_TARGET=10.10
-            CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
-            LDFLAGS="-fsanitize=address"
-          CIBW_TEST_COMMAND: >
-            DYLD_INSERT_LIBRARIES=$(python -c "import psutil, os; print(os.path.join(os.path.dirname(psutil.__file__), '.dylibs', 'libclang_rt.asan_osx_dynamic.dylib'))")
-            python -c "import psutil; print('ASan preloaded OK'); import psutil.tests; psutil.tests.test_main()"
+          DYLD_INSERT_LIBRARIES: ${{ env.ASAN_PATH }}
+        run: |
+          echo "Preloading ASan runtime: $DYLD_INSERT_LIBRARIES"
+          python -c "import psutil; print('ASan preloaded OK')"
+          python -m pytest -q psutil/tests --maxfail=1 --disable-warnings
+
+      - name: Show ASan log if crash occurred
+        if: failure()
+        run: |
+          echo "Dumping recent crash logs..."
+          ls -lt /Library/Logs/DiagnosticReports | head -n 10 || true
