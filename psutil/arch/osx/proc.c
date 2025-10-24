@@ -73,6 +73,9 @@ static int
 is_zombie(size_t pid) {
     struct kinfo_proc kp;
 
+    if (pid < 0)
+        return psutil_badargs("is_zombie");
+
     if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         PyErr_Clear();
         return 0;
