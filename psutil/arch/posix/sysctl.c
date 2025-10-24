@@ -48,6 +48,13 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     int ret;
     int max_retries = MAX_RETRIES;
 
+    if (!mib || miblen == 0 || !buf || !buflen) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_sysctl_malloc() invalid args"
+        );
+        return -1;
+    }
+
     // First query to determine required size
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
     if (ret == -1) {
