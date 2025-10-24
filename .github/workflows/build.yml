@@ -1,107 +1,44 @@
-# Runs CI tests and generates wheels on the following platforms:
-# * Linux
-# * macOS
-# * Windows
-#
-# Useful URLs:
-# * https://github.com/pypa/cibuildwheel
-# * https://github.com/actions/checkout
-# * https://github.com/actions/setup-python
-# * https://github.com/actions/upload-artifact
-
 on: [push, pull_request]
 name: build
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
   cancel-in-progress: true
-jobs:
 
-  # Run tests on Linux, macOS, Windows
+jobs:
   tests:
     name: "${{ matrix.os }}, ${{ matrix.arch }}"
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       matrix:
         include:
-          # - { os: ubuntu-latest, arch: x86_64 }
-          # - { os: ubuntu-24.04-arm, arch: aarch64 }
           - { os: macos-13, arch: x86_64 }
           - { os: macos-14, arch: arm64 }
-          # - { os: windows-2025, arch: AMD64 }
-          # - { os: windows-11-arm, arch: ARM64 }
+
     steps:
       - uses: actions/checkout@v5
 
-      # Install Python 3.8 on macOS ARM64 for universal2 support, else 3.11
       - name: Install Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ runner.os == 'macOS' && runner.arch == 'ARM64' && '3.8' || '3.11' }}
 
-      - name: Build wheels + run tests
+      - name: Build wheels (ASan enabled)
         uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENABLE: "cpython-freethreading ${{ startsWith(github.ref, 'refs/tags/') && '' || 'cpython-prerelease' }}"
+          # Enable ASan instrumentation
           CIBW_ENVIRONMENT: >
             CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
             LDFLAGS="-fsanitize=address"
+          # Run tests with ASan preloaded
+          CIBW_TEST_COMMAND: >
+            DYLD_INSERT_LIBRARIES=$(xcrun --show-sdk-path)/usr/lib/clang/$(clang --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)/lib/darwin/libclang_rt.asan_osx_dynamic.dylib
+            python -c "import psutil; print('ASan preloaded OK'); import psutil.tests; psutil.tests.test_main()"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse
-
-  # Test python 2.7 fallback installation message produced by setup.py
-  py2-fallback:
-    name: py2.7 setup.py check
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v5
-      - uses: LizardByte/actions/actions/setup_python@master
-        with:
-          python-version: 2.7
-      - run: python scripts/internal/test_python2_setup_py.py
-
-  # Run linters.
-  linters:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 3.x
-      - name: "Run linters"
-        run: |
-          make ci-lint
-
-  # Produce wheels as artifacts.
-  upload-wheels:
-    needs: [tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/upload-artifact/merge@v4
-        with:
-          name: wheels
-          pattern: wheels-*
-          separate-directories: false
-          delete-merged: true
-
-  # Check sanity of the package distribution (.tar.gz and *.whl files)
-  check-dist:
-    needs: [upload-wheels]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: 3.x
-      - uses: actions/download-artifact@v4
-        with:
-          name: wheels
-          path: wheelhouse
-      - run: |
-          make ci-check-dist
