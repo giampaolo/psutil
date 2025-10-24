@@ -188,6 +188,8 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
 
     attrs.bitmapcount = ATTR_BIT_MAP_COUNT;
     attrs.volattr = ATTR_VOL_INFO | ATTR_VOL_SPACEUSED;
+    attrbuf.size = sizeof(attrbuf);
+
     Py_BEGIN_ALLOW_THREADS
     ret = getattrlist(mount_point, &attrs, &attrbuf, sizeof(attrbuf), 0);
     Py_END_ALLOW_THREADS
