@@ -96,7 +96,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
 
 
 // Get the maximum process arguments size.
-int
+size_t
 psutil_sysctl_argmax() {
     int argmax;
     int mib[2] = {CTL_KERN, KERN_ARGMAX};
@@ -107,7 +107,7 @@ psutil_sysctl_argmax() {
         return 0;
     }
 
-    return argmax;
+    return (size_t)argmax;
 }
 
 
