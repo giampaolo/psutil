@@ -183,7 +183,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
 
     if (!name || !buf || !buflen) {
         PyErr_SetString(
-            PyExc_ValueError, "psutil_sysctlbyname_malloc() invalid args"
+            PyExc_RuntimeError, "psutil_sysctlbyname_malloc() invalid args"
         );
         return -1;
     }

@@ -49,6 +49,13 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
+    if (pid < 0 || !kp) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_get_kinfo_proc() invalid args"
+        );
+        return -1;
+    }
+
     len = sizeof(struct kinfo_proc);
 
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
@@ -89,8 +96,10 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
 
-    if (!procargs || !argmax || *argmax == 0) {
-        errno = EINVAL;
+    if (pid < 0 || !procargs || !argmax || *argmax == 0) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_sysctl_procargs() invalid args"
+        );
         return -1;
     }
 
@@ -132,8 +141,10 @@ static int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     int ret;
 
-    if (!pti || size <= 0) {
-        errno = EINVAL;
+    if (pid < 0  || !pti || size <= 0) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_proc_pidinfo() invalid args"
+        );
         return 0;
     }
 
@@ -175,8 +186,10 @@ static int
 psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     kern_return_t err;
 
-    if (!task) {
-        errno = EINVAL;
+    if (pid < 0 || !task) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_task_for_pid() invalid args"
+        );
         return -1;
     }
 
@@ -214,8 +227,10 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
     int max_size = 24 * 1024 * 1024;  // 24M
     struct proc_fdinfo *fds_pointer = NULL;
 
-    if (num_fds == NULL) {
-        errno = EINVAL;
+    if (pid < 0 || num_fds == NULL) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "psutil_proc_list_fds() invalid args"
+        );
         return NULL;
     }
 
