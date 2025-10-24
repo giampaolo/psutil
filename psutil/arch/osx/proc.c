@@ -165,26 +165,30 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
  * - for PIDs != getpid() or PIDs which are not members of the procmod
  *   it requires root
  * As such we can only guess what the heck went wrong and fail either
- * with NoSuchProcess or giveup with AccessDenied.
- * Here's some history:
+ * with NoSuchProcess or give up with AccessDenied.
+ * References:
  * https://github.com/giampaolo/psutil/issues/1181
  * https://github.com/giampaolo/psutil/issues/1209
  * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
  */
 static int
 psutil_task_for_pid(pid_t pid, mach_port_t *task) {
-    // See: https://github.com/giampaolo/psutil/issues/1181
-    kern_return_t err = KERN_SUCCESS;
+    kern_return_t err;
+
+    if (!task) {
+        errno = EINVAL;
+        return -1;
+    }
 
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("task_for_pid");
         }
-        // Now done in Python.
-        // else if (psutil_is_zombie(pid) == 1)
-        //     PyErr_SetString(ZombieProcessError,
-        //                     "task_for_pid -> psutil_is_zombie -> 1");
+        else if (is_zombie(pid) == 1) {
+            PyErr_SetString(ZombieProcessError,
+                            "task_for_pid -> psutil_is_zombie -> 1");
+        }
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
@@ -194,6 +198,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
         }
         return -1;
     }
+
     return 0;
 }
 
