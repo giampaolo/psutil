@@ -73,8 +73,9 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 
     error = host_statistics(mport, HOST_CPU_LOAD_INFO,
                             (host_info_t)&r_load, &count);
+    mach_port_deallocate(mach_task_self(), mport);
+
     if (error != KERN_SUCCESS) {
-        mach_port_deallocate(mach_task_self(), mport);
         return PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
@@ -82,7 +83,6 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
         );
     }
 
-    mach_port_deallocate(mach_task_self(), mport);
     return Py_BuildValue(
         "(dddd)",
         (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
@@ -107,8 +107,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     }
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
+    mach_port_deallocate(mach_task_self(), mport);
+
     if (ret != KERN_SUCCESS) {
-        mach_port_deallocate(mach_task_self(), mport);
         PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_VM_INFO) failed: %s",
@@ -117,7 +118,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    mach_port_deallocate(mach_task_self(), mport);
     return Py_BuildValue(
         "IIIII",
         vmstat.v_swtch,
@@ -197,10 +197,11 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
 
     if (!psutil_find_pmgr_entry(&entry)) {
-        return PyErr_Format(
+        PyErr_SetString(
             PyExc_RuntimeError,
             "'pmgr' entry not found in AppleARMIODevice"
         );
+        return NULL;
     }
 
     pCoreRef = IORegistryEntryCreateCFProperty(
@@ -236,9 +237,6 @@ cleanup:
         CFRelease(eCoreRef);
     if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
-
-    if (PyErr_Occurred())
-        return NULL;
 
     return Py_BuildValue(
         "KKK",
@@ -302,11 +300,17 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    error = host_processor_info(mport, PROCESSOR_CPU_LOAD_INFO, &cpu_count, &info_array, &info_count);
+    error = host_processor_info(
+        mport, PROCESSOR_CPU_LOAD_INFO, &cpu_count, &info_array, &info_count
+    );
     mach_port_deallocate(mach_task_self(), mport);
 
     if (error != KERN_SUCCESS || !info_array) {
-        PyErr_Format(PyExc_RuntimeError, "host_processor_info failed: %s", mach_error_string(error));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_processor_info failed: %s",
+            mach_error_string(error)
+        );
         goto error;
     }
 
@@ -338,10 +342,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_retlist);
-    vm_deallocate(
-        mach_task_self(),
-        (vm_address_t)info_array,
-        info_count * sizeof(integer_t)
-    );
+    if (info_array)
+        vm_deallocate(
+            mach_task_self(),
+            (vm_address_t)info_array,
+            info_count * sizeof(integer_t)
+        );
     return NULL;
 }
