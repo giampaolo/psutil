@@ -49,12 +49,8 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    if (pid < 0 || !kp) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_get_kinfo_proc() invalid args"
-        );
-        return -1;
-    }
+    if (pid < 0 || !kp)
+        return psutil_badargs("psutil_get_kinfo_proc");
 
     len = sizeof(struct kinfo_proc);
 
@@ -96,12 +92,8 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
 
-    if (pid < 0 || !procargs || !argmax || *argmax == 0) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_sysctl_procargs() invalid args"
-        );
-        return -1;
-    }
+    if (pid < 0 || !procargs || !argmax || *argmax == 0)
+        return psutil_badargs("psutil_sysctl_procargs");
 
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
@@ -141,18 +133,14 @@ static int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     int ret;
 
-    if (pid < 0  || !pti || size <= 0) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_proc_pidinfo() invalid args"
-        );
-        return 0;
-    }
+    if (pid < 0 || !pti || size <= 0)
+        return psutil_badargs("psutil_proc_pidinfo");
 
     errno = 0;
     ret = proc_pidinfo(pid, flavor, arg, pti, size);
     if (ret <= 0) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
-        return 0;
+        return -1;
     }
 
     // check for truncated return size
@@ -161,10 +149,10 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
             pid,
             "proc_pidinfo() returned less data than requested buffer size"
         );
-        return 0;
+        return -1;
     }
 
-    return ret;
+    return 0;
 }
 
 
@@ -186,12 +174,8 @@ static int
 psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     kern_return_t err;
 
-    if (pid < 0 || !task) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_task_for_pid() invalid args"
-        );
-        return -1;
-    }
+    if (pid < 0 || !task)
+        return psutil_badargs("psutil_task_for_pid");
 
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
@@ -228,9 +212,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
     struct proc_fdinfo *fds_pointer = NULL;
 
     if (pid < 0 || num_fds == NULL) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_proc_list_fds() invalid args"
-        );
+        psutil_badargs("psutil_proc_list_fds");
         return NULL;
     }
 
@@ -374,7 +356,7 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         return NULL;
 
     total_user = pti.pti_total_user * PSUTIL_MACH_TIMEBASE_INFO.numer;
@@ -433,7 +415,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
 
     if (psutil_proc_pidinfo(
-            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) <= 0)
+            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) != 0)
     {
         return NULL;
     }

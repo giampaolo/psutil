@@ -115,6 +115,16 @@ psutil_check_pid_range(PyObject *self, PyObject *args) {
 }
 
 
+// Use it when invalid args are passed to a C function.
+int
+psutil_badargs(const char *funcname) {
+    PyErr_Format(
+        PyExc_RuntimeError, "%s() invalid args passed to function", funcname
+    );
+    return -1;
+}
+
+
 // Called on module import on all platforms.
 int
 psutil_setup(void) {

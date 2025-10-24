@@ -20,10 +20,8 @@ int
 psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen) {
     size_t len = buflen;
 
-    if (!mib || miblen == 0 || !buf || buflen == 0) {
-        PyErr_SetString(PyExc_RuntimeError, "psutil_sysctl() invalid args");
-        return -1;
-    }
+    if (!mib || miblen == 0 || !buf || buflen == 0)
+        return psutil_badargs("psutil_sysctl");
 
     if (sysctl(mib, miblen, buf, &len, NULL, 0) == -1) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
@@ -48,12 +46,8 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     int ret;
     int max_retries = MAX_RETRIES;
 
-    if (!mib || miblen == 0 || !buf || !buflen) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_sysctl_malloc() invalid args"
-        );
-        return -1;
-    }
+    if (!mib || miblen == 0 || !buf || !buflen)
+        return psutil_badargs("psutil_sysctl_malloc");
 
     // First query to determine required size
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
@@ -140,12 +134,8 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
     size_t len = buflen;
     char errbuf[256];
 
-    if (!name || !buf || buflen == 0) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_sysctlbyname() invalid args"
-        );
-        return -1;
-    }
+    if (!name || !buf || buflen == 0)
+        return psutil_badargs("psutil_sysctlbyname");
 
     if (sysctlbyname(name, buf, &len, NULL, 0) == -1) {
         snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s')", name);
@@ -181,12 +171,8 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
     char *buffer = NULL;
     char errbuf[256];
 
-    if (!name || !buf || !buflen) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "psutil_sysctlbyname_malloc() invalid args"
-        );
-        return -1;
-    }
+    if (!name || !buf || !buflen)
+        return psutil_badargs("psutil_sysctlbyname_malloc");
 
     // First query to determine required size.
     ret = sysctlbyname(name, NULL, &needed, NULL, 0);
