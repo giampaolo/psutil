@@ -62,6 +62,10 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
         return -1;
     }
 
+    if (needed == 0) {
+        psutil_debug("psutil_sysctl_malloc() size = 0");
+    }
+
     while (max_retries-- > 0) {
         // zero-initialize buffer to prevent uninitialized bytes
         buffer = calloc(1, needed);
@@ -177,12 +181,23 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
     char *buffer = NULL;
     char errbuf[256];
 
+    if (!name || !buf || !buflen) {
+        PyErr_SetString(
+            PyExc_ValueError, "psutil_sysctlbyname_malloc() invalid args"
+        );
+        return -1;
+    }
+
     // First query to determine required size.
     ret = sysctlbyname(name, NULL, &needed, NULL, 0);
     if (ret == -1) {
         snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name);
         psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
         return -1;
+    }
+
+    if (needed == 0) {
+        psutil_debug("psutil_sysctlbyname_malloc() size = 0");
     }
 
     while (max_retries-- > 0) {
