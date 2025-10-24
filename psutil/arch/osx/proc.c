@@ -508,13 +508,14 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     cpu_type_t cpu_type;
     size_t private_pages = 0;
     mach_vm_size_t size = 0;
-    mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
+    mach_msg_type_number_t info_count;
     kern_return_t kr;
     long pagesize = psutil_getpagesize();
-    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
+    mach_vm_address_t addr;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
     mach_port_t object_name;
+    mach_vm_address_t prev_addr;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -530,7 +531,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    for (addr = 0; ; addr += size) {
+    for (addr = MACH_VM_MIN_ADDRESS; ; addr += size) {
+        prev_addr = addr;
+        info_count = VM_REGION_TOP_INFO_COUNT;  // reset before each call
+
         kr = mach_vm_region(
             task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info,
             &info_count, &object_name);
@@ -541,8 +545,15 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         else if (kr != KERN_SUCCESS) {
             PyErr_Format(
                 PyExc_RuntimeError,
-                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed");
+                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed"
+            );
+            mach_port_deallocate(mach_task_self(), task);
             return NULL;
+        }
+
+        if (size == 0 || addr < prev_addr) {
+            psutil_debug("prevent infinite loop");
+            break;
         }
 
         if (psutil_in_shared_region(addr, cpu_type) &&
