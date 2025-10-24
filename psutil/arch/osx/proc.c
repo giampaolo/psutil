@@ -760,6 +760,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
+    const char* ntopret;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -848,32 +849,48 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {
-                    inet_ntop(AF_INET,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
-                                  insi_laddr.ina_46.i46a_addr4,
-                              lip,
-                              sizeof(lip));
-                    inet_ntop(AF_INET,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr. \
-                                  ina_46.i46a_addr4,
-                              rip,
-                              sizeof(rip));
+                    ntopret = inet_ntop(
+                        AF_INET,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4,
+                        lip,
+                        sizeof(lip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
+                    ntopret = inet_ntop(
+                        AF_INET,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
+                        rip,
+                        sizeof(rip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
                 }
                 else {
-                    inet_ntop(AF_INET6,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
-                                  insi_laddr.ina_6,
-                              lip, sizeof(lip));
-                    inet_ntop(AF_INET6,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
-                                  insi_faddr.ina_6,
-                              rip, sizeof(rip));
-                }
-
-                // check for inet_ntop failures
-                if (errno != 0) {
-                    psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
-                    goto error;
+                    ntopret = inet_ntop(
+                        AF_INET6,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
+                        lip,
+                        sizeof(lip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
+                    ntopret = inet_ntop(
+                        AF_INET6,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
+                        rip,
+                        sizeof(rip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
                 }
 
                 lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
