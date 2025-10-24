@@ -1,27 +1,34 @@
-name: macos-asan-arm64
+name: macOS ASan Tests
+
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
-  build:
-    runs-on: macos-14 # Apple Silicon runner
+  asan:
+    runs-on: macos-14
+    env:
+      PYTHON_VERSION: "3.11.14"
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install deps
+      # Install dependencies
+      - name: Install build dependencies
         run: |
-          brew install python@3.11
-          python3 -m pip install --upgrade --break-system-packages pip setuptools wheel pytest
+          brew update
+          brew install llvm@15 pkg-config
 
-      - name: Build psutil with ASan
-        env:
-          CFLAGS: "-fsanitize=address -g -O1 -fno-omit-frame-pointer"
-          LDFLAGS: "-fsanitize=address"
+      # Build Homebrew Python from source (unsigned)
+      - name: Install Python from source
         run: |
-          python3 setup.py build_ext --inplace
+          brew install python@$PYTHON_VERSION --build-from-source
+          PYBIN=$(brew --prefix python@$PYTHON_VERSION)/bin/python3
+          echo "PYBIN=$PYBIN" >> $GITHUB_ENV
 
-      - name: Build ASan wrapper
+      # Create ASan runner
+      - name: Create ASan wrapper
         run: |
           cat > run_with_asan.c <<'EOF'
           #include <unistd.h>
@@ -41,15 +48,27 @@ jobs:
           EOF
           clang -arch arm64 run_with_asan.c -o run_with_asan
 
-      - name: Run tests with ASan
+      # Get ASan runtime path
+      - name: Get ASan runtime
         run: |
           ASAN_RT=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
-          PYBIN=$(which python3)
-          echo "Using ASan runtime: $ASAN_RT"
-          echo "Python binary: $PYBIN"
+          echo "ASAN_RT=$ASAN_RT" >> $GITHUB_ENV
 
-          # Make sure Python is the Homebrew one (unsigned)
-          codesign -dv --verbose=4 "$PYBIN" || true
+      # Build psutil with ASan flags
+      - name: Build psutil with ASan
+        run: |
+          export CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
+          export LDFLAGS="-fsanitize=address"
+          ${{ env.PYBIN }} -m pip install --upgrade pip setuptools wheel
+          ${{ env.PYBIN }} setup.py build_ext --inplace
 
-          ./run_with_asan "$ASAN_RT" "$PYBIN" -c "import psutil; print('ASan OK')"
-          ./run_with_asan "$ASAN_RT" "$PYBIN" -m pytest -q psutil/tests --disable-warnings --maxfail=1
+      # Run simple ASan check
+      - name: Check ASan works
+        run: |
+          ./run_with_asan "$ASAN_RT" "${{ env.PYBIN }}" -c "import psutil; print('ASan OK')"
+
+      # Run pytest under ASan
+      - name: Run tests with ASan
+        run: |
+          ./run_with_asan "$ASAN_RT" "${{ env.PYBIN }}" -m pytest -q psutil/tests \
+            --disable-warnings --maxfail=1
