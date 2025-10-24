@@ -427,7 +427,9 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
+    return PyUnicode_DecodeFSDefaultAndSize(
+        pathinfo.pvi_cdir.vip_path, sizeof(pathinfo.pvi_cdir.vip_path)
+    );
 }
 
 
