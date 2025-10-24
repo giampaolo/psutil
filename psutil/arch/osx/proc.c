@@ -1037,7 +1037,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_sysctl_argmax();
-    if (! argmax)
+    if (argmax == 0)
         goto error;
 
     procargs = (char *)malloc(argmax);

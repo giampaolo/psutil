@@ -108,15 +108,20 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
 }
 
 
-// Get the maximum process arguments size.
+// Get the maximum process arguments size. Return 0 on error.
 size_t
 psutil_sysctl_argmax() {
     int argmax;
     int mib[2] = {CTL_KERN, KERN_ARGMAX};
 
     if (psutil_sysctl(mib, 2, &argmax, sizeof(argmax)) != 0) {
-        PyErr_Clear();
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
+        return 0;
+    }
+
+    if (argmax <= 0) {
+        PyErr_SetString(
+            PyExc_RuntimeError, "sysctl(KERN_ARGMAX) return <= 0"
+        );
         return 0;
     }
 
