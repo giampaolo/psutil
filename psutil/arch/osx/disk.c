@@ -208,12 +208,12 @@ psutil_disk_usage_used(PyObject *self, PyObject *args) {
  */
 PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    CFDictionaryRef parent_dict;
-    CFDictionaryRef props_dict;
-    CFDictionaryRef stats_dict;
-    io_registry_entry_t parent;
-    io_registry_entry_t disk;
-    io_iterator_t disk_list = 0;
+    CFDictionaryRef parent_dict = NULL;
+    CFDictionaryRef props_dict = NULL;
+    CFDictionaryRef stats_dict = NULL;
+    io_registry_entry_t parent = IO_OBJECT_NULL;
+    io_registry_entry_t disk = IO_OBJECT_NULL;
+    io_iterator_t disk_list = IO_OBJECT_NULL;
     PyObject *py_disk_info = NULL;
     PyObject *py_retdict = PyDict_New();
 
@@ -234,11 +234,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         parent_dict = NULL;
         props_dict = NULL;
         stats_dict = NULL;
-        parent = 0;
+        parent = IO_OBJECT_NULL;
 
         if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent) != kIOReturnSuccess) {
             PyErr_SetString(PyExc_RuntimeError, "unable to get the disk's parent");
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -255,8 +254,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             PyErr_SetString(
                 PyExc_RuntimeError, "unable to get the parent's properties"
             );
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -267,9 +264,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             PyErr_SetString(
                 PyExc_RuntimeError, "unable to get the disk properties"
             );
-            if (parent_dict) CFRelease(parent_dict);
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -278,12 +272,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         );
         if (disk_name_ref == NULL) {
             PyErr_SetString(PyExc_RuntimeError, "unable to get disk name");
-            if (parent_dict)
-                CFRelease(parent_dict);
-            if (props_dict)
-                CFRelease(props_dict);
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -294,12 +282,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             PyErr_SetString(
                 PyExc_RuntimeError, "unable to convert disk name to C string"
             );
-            if (parent_dict)
-                CFRelease(parent_dict);
-            if (props_dict)
-                CFRelease(props_dict);
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -308,12 +290,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         );
         if (stats_dict == NULL) {
             PyErr_SetString(PyExc_RuntimeError, "unable to get disk stats");
-            if (parent_dict)
-                CFRelease(parent_dict);
-            if (props_dict)
-                CFRelease(props_dict);
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -355,24 +331,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             (unsigned long long)(write_time / 1000 / 1000)
         );
 
-        if (!py_disk_info) {
-            if (parent_dict)
-                CFRelease(parent_dict);
-            if (props_dict)
-                CFRelease(props_dict);
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
+        if (!py_disk_info)
             goto error;
-        }
 
         if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info)) {
             Py_CLEAR(py_disk_info);
-            if (parent_dict)
-                CFRelease(parent_dict);
-            if (props_dict)
-                CFRelease(props_dict);
-            IOObjectRelease(parent);
-            IOObjectRelease(disk);
             goto error;
         }
 
@@ -380,9 +343,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
         if (parent_dict)
             CFRelease(parent_dict);
-        IOObjectRelease(parent);
         if (props_dict)
             CFRelease(props_dict);
+        IOObjectRelease(parent);
         IOObjectRelease(disk);
     }
 
@@ -392,7 +355,15 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_disk_info);
     Py_DECREF(py_retdict);
-    if (disk_list != 0)
+    if (parent_dict)
+        CFRelease(parent_dict);
+    if (props_dict)
+        CFRelease(props_dict);
+    if (parent != IO_OBJECT_NULL)
+        IOObjectRelease(parent);
+    if (disk != IO_OBJECT_NULL)
+        IOObjectRelease(disk);
+    if (disk_list != IO_OBJECT_NULL)
         IOObjectRelease(disk_list);
     return NULL;
 }

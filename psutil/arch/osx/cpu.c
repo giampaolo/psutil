@@ -43,9 +43,8 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int num;
 
     if (psutil_sysctlbyname("hw.logicalcpu", &num, sizeof(num)) != 0)
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", num);
+        Py_RETURN_NONE;
+    return Py_BuildValue("i", num);
 }
 
 
@@ -54,9 +53,8 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     int num;
 
     if (psutil_sysctlbyname("hw.physicalcpu", &num, sizeof(num)) != 0)
-        Py_RETURN_NONE;  // mimic os.cpu_count()
-    else
-        return Py_BuildValue("i", num);
+        Py_RETURN_NONE;
+    return Py_BuildValue("i", num);
 }
 
 
@@ -65,9 +63,8 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
     kern_return_t error;
     host_cpu_load_info_data_t r_load;
-    mach_port_t mport;
+    mach_port_t mport = mach_host_self();
 
-    mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "mach_host_self() returned MACH_PORT_NULL");
@@ -81,10 +78,11 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
         return PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
-            mach_error_string(error));
+            mach_error_string(error)
+        );
     }
-    mach_port_deallocate(mach_task_self(), mport);
 
+    mach_port_deallocate(mach_task_self(), mport);
     return Py_BuildValue(
         "(dddd)",
         (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
@@ -98,41 +96,40 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     kern_return_t ret;
-    mach_msg_type_number_t count;
-    mach_port_t mport;
+    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+    mach_port_t mport = mach_host_self();
     struct vmmeter vmstat;
 
-    mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                         "mach_host_self() returned MACH_PORT_NULL");
         return NULL;
     }
 
-    count = HOST_VM_INFO_COUNT;
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
     if (ret != KERN_SUCCESS) {
         mach_port_deallocate(mach_task_self(), mport);
         PyErr_Format(
             PyExc_RuntimeError,
             "host_statistics(HOST_VM_INFO) failed: %s",
-            mach_error_string(ret));
+            mach_error_string(ret)
+        );
         return NULL;
     }
 
     mach_port_deallocate(mach_task_self(), mport);
     return Py_BuildValue(
         "IIIII",
-        vmstat.v_swtch,  // context switches
-        vmstat.v_intr,   // interrupts
-        vmstat.v_soft,   // software interrupts
+        vmstat.v_swtch,
+        vmstat.v_intr,
+        vmstat.v_soft,
 #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
     && __MAC_OS_X_VERSION_MIN_REQUIRED__ >= 120000
         0,
 #else
-        vmstat.v_syscall,  // system calls (if available)
+        vmstat.v_syscall,
 #endif
-        vmstat.v_trap     // traps
+        vmstat.v_trap
     );
 }
 
@@ -146,27 +143,23 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 // "AppleARMIODevice" is not available.
 static int
 psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
-
     kern_return_t status;
-    io_iterator_t iter = 0;
-    io_registry_entry_t entry = 0;
-    CFDictionaryRef matching;
-    io_name_t name;
+    io_iterator_t iter = IO_OBJECT_NULL;
+    io_registry_entry_t entry = IO_OBJECT_NULL;
+    CFDictionaryRef matching = IOServiceMatching("AppleARMIODevice");
     int found = 0;
 
-    *out_entry = 0;
-
-    matching = IOServiceMatching("AppleARMIODevice");
-    if (matching == NULL)
+    if (!out_entry || !matching)
         return 0;
 
     status = IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iter);
-    if (status != KERN_SUCCESS)
+    if (status != KERN_SUCCESS || iter == IO_OBJECT_NULL)
         return 0;
 
-    while ((entry = IOIteratorNext(iter)) != 0) {
-        status = IORegistryEntryGetName(entry, name);
-        if (status == KERN_SUCCESS && strcmp(name, "pmgr") == 0) {
+    while ((entry = IOIteratorNext(iter)) != IO_OBJECT_NULL) {
+        io_name_t name;
+        if (IORegistryEntryGetName(entry, name) == KERN_SUCCESS &&
+            strcmp(name, "pmgr") == 0) {
             found = 1;
             break;
         }
@@ -176,19 +169,18 @@ psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
     IOObjectRelease(iter);
 
     if (found) {
-        *out_entry = entry;  // caller must release
-        return -1;
+        *out_entry = entry;
+        return 1;
     }
-
     return 0;
 }
 
 // Python wrapper: return True/False.
 PyObject *
 psutil_has_cpu_freq(PyObject *self, PyObject *args) {
-    io_registry_entry_t entry = 0;
+    io_registry_entry_t entry = IO_OBJECT_NULL;
     int ok = psutil_find_pmgr_entry(&entry);
-    if (entry != 0)
+    if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
     if (ok)
         Py_RETURN_TRUE;
@@ -198,43 +190,35 @@ psutil_has_cpu_freq(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
-    io_registry_entry_t entry = 0;
+    io_registry_entry_t entry = IO_OBJECT_NULL;
     CFTypeRef pCoreRef = NULL;
     CFTypeRef eCoreRef = NULL;
-    size_t pCoreLength;
+    size_t pCoreLength = 0;
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
 
     if (!psutil_find_pmgr_entry(&entry)) {
         return PyErr_Format(
             PyExc_RuntimeError,
-            "'pmgr' entry was not found in AppleARMIODevice service"
+            "'pmgr' entry not found in AppleARMIODevice"
         );
     }
 
     pCoreRef = IORegistryEntryCreateCFProperty(
         entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0
     );
-    if (pCoreRef == NULL ||
-            CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
-            CFDataGetLength(pCoreRef) < 8) {
-        PyErr_SetString(
-            PyExc_RuntimeError,
-            "'voltage-states5-sram' is missing or invalid"
-        );
-        goto error;
-    }
-
     eCoreRef = IORegistryEntryCreateCFProperty(
         entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0
     );
-    if (eCoreRef == NULL ||
-            CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
-            CFDataGetLength(eCoreRef) < 4) {
-        PyErr_SetString(
-            PyExc_RuntimeError,
-            "'voltage-states1-sram' is missing or invalid"
-        );
-        goto error;
+
+    if (!pCoreRef ||
+        !eCoreRef ||
+        CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
+        CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
+        CFDataGetLength(pCoreRef) < 8 ||
+        CFDataGetLength(eCoreRef) < 4)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "invalid CPU frequency data");
+        goto cleanup;
     }
 
     pCoreLength = CFDataGetLength(pCoreRef);
@@ -245,12 +229,16 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = (pMin < eMin) ? pMin : eMin;
     curr = max;
 
+cleanup:
     if (pCoreRef)
         CFRelease(pCoreRef);
     if (eCoreRef)
         CFRelease(eCoreRef);
-    if (entry)
+    if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
+
+    if (PyErr_Occurred())
+        return NULL;
 
     return Py_BuildValue(
         "KKK",
@@ -258,17 +246,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         (unsigned long long)(min / 1000 / 1000),
         (unsigned long long)(max / 1000 / 1000)
     );
-
-error:
-    if (pCoreRef)
-        CFRelease(pCoreRef);
-    if (eCoreRef)
-        CFRelease(eCoreRef);
-    if (entry)
-        IOObjectRelease(entry);
-    return NULL;
 }
+
 #else  // not ARM64 / ARCH64
+
 PyObject *
 psutil_has_cpu_freq(PyObject *self, PyObject *args) {
     Py_RETURN_TRUE;
@@ -277,13 +258,8 @@ psutil_has_cpu_freq(PyObject *self, PyObject *args) {
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     unsigned int curr;
-    int64_t min;
-    int64_t max;
-    int mib[2];
-
-    // also available as "hw.cpufrequency" but it's deprecated
-    mib[0] = CTL_HW;
-    mib[1] = HW_CPU_FREQ;
+    int64_t min = 0, max = 0;
+    int mib[2] = {CTL_HW, HW_CPU_FREQ};
 
     if (psutil_sysctl(mib, 2, &curr, sizeof(curr)) < 0)
         return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_CPU_FREQ)");
@@ -302,78 +278,70 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         "KKK",
         (unsigned long long)(curr / 1000 / 1000),
         (unsigned long long)(min / 1000 / 1000),
-        (unsigned long long)(max / 1000 / 1000));
+        (unsigned long long)(max / 1000 / 1000)
+    );
 }
-#endif
+
+#endif  // ARM64
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    natural_t cpu_count;
-    natural_t i;
-    processor_info_array_t info_array = NULL;
-    mach_msg_type_number_t info_count;
-    kern_return_t error;
+    natural_t cpu_count = 0;
+    mach_msg_type_number_t info_count = 0;
     processor_cpu_load_info_data_t *cpu_load_info = NULL;
-    int ret;
-    mach_port_t mport;
+    processor_info_array_t info_array = NULL;
+    kern_return_t error;
+    mach_port_t mport = mach_host_self();
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
 
-    if (py_retlist == NULL)
+    if (!py_retlist)
         return NULL;
 
-    mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "mach_host_self() returned MACH_PORT_NULL");
+        PyErr_SetString(PyExc_RuntimeError, "mach_host_self() returned NULL");
         goto error;
     }
 
-    error = host_processor_info(mport, PROCESSOR_CPU_LOAD_INFO,
-                                &cpu_count, &info_array, &info_count);
-    if (error != KERN_SUCCESS) {
-        mach_port_deallocate(mach_task_self(), mport);
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "host_processor_info(PROCESSOR_CPU_LOAD_INFO) syscall failed: %s",
-             mach_error_string(error));
-        goto error;
-    }
+    error = host_processor_info(mport, PROCESSOR_CPU_LOAD_INFO, &cpu_count, &info_array, &info_count);
     mach_port_deallocate(mach_task_self(), mport);
 
-    cpu_load_info = (processor_cpu_load_info_data_t *) info_array;
+    if (error != KERN_SUCCESS || !info_array) {
+        PyErr_Format(PyExc_RuntimeError, "host_processor_info failed: %s", mach_error_string(error));
+        goto error;
+    }
 
-    for (i = 0; i < cpu_count; i++) {
-        py_cputime = Py_BuildValue(
+    cpu_load_info = (processor_cpu_load_info_data_t *)info_array;
+
+    for (natural_t i = 0; i < cpu_count; i++) {
+        PyObject *py_cputime = Py_BuildValue(
             "(dddd)",
             (double)cpu_load_info[i].cpu_ticks[CPU_STATE_USER] / CLK_TCK,
             (double)cpu_load_info[i].cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
             (double)cpu_load_info[i].cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
             (double)cpu_load_info[i].cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
         );
-        if (!py_cputime)
-            goto error;
-        if (PyList_Append(py_retlist, py_cputime)) {
-            Py_DECREF(py_cputime);
+        if (!py_cputime) {
             goto error;
         }
-        Py_CLEAR(py_cputime);
+        if (PyList_Append(py_retlist, py_cputime)) {
+            Py_DECREF(py_cputime);
+        }
+        Py_DECREF(py_cputime);
     }
 
-    ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
-                        info_count * sizeof(integer_t));
-    if (ret != KERN_SUCCESS)
-        PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
+    vm_deallocate(
+        mach_task_self(),
+        (vm_address_t)info_array,
+        info_count * sizeof(integer_t)
+    );
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
-    Py_DECREF(py_retlist);
-    if (info_array != NULL) {
-        ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
-                            info_count * sizeof(integer_t));
-        if (ret != KERN_SUCCESS)
-            PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
-    }
+    Py_XDECREF(py_retlist);
+    vm_deallocate(
+        mach_task_self(),
+        (vm_address_t)info_array,
+        info_count * sizeof(integer_t)
+    );
     return NULL;
 }

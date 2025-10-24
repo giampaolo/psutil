@@ -1068,22 +1068,23 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     char *arg_end;
     char *env_start;
     size_t argmax;
+    size_t env_len;
     PyObject *py_ret = NULL;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    // special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    // PID 0 (kernel_task) has no cmdline.
     if (pid == 0)
         goto empty;
 
-    // read argmax and allocate memory for argument space.
+    // Allocate buffer for process args.
     argmax = psutil_sysctl_argmax();
-    if (! argmax)
+    if (argmax == 0)
         goto error;
 
     procargs = (char *)malloc(argmax);
-    if (NULL == procargs) {
+    if (procargs == NULL) {
         PyErr_NoMemory();
         goto error;
     }
@@ -1091,56 +1092,66 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
         goto error;
 
-    arg_end = &procargs[argmax];
-    // copy the number of arguments to nargs
+    arg_end = procargs + argmax;
+
+    // Copy nargs.
     memcpy(&nargs, procargs, sizeof(nargs));
 
     // skip executable path
     arg_ptr = procargs + sizeof(nargs);
     arg_ptr = memchr(arg_ptr, '\0', arg_end - arg_ptr);
-
-    if (arg_ptr == NULL || arg_ptr == arg_end) {
-        psutil_debug(
-            "(arg_ptr == NULL || arg_ptr == arg_end); set environ to empty");
+    if (arg_ptr == NULL || arg_ptr >= arg_end)
         goto empty;
-    }
 
-    // skip ahead to the first argument
-    for (; arg_ptr < arg_end; arg_ptr++) {
-        if (*arg_ptr != '\0')
-            break;
-    }
+    // Skip null bytes until first argument.
+    while (arg_ptr < arg_end && *arg_ptr == '\0')
+        arg_ptr++;
 
-    // iterate through arguments
+    // Skip arguments.
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0')
             nargs--;
     }
 
-    // build an environment variable block
+    if (arg_ptr >= arg_end)
+        goto empty;
+
     env_start = arg_ptr;
 
-    procenv = calloc(1, arg_end - arg_ptr);
+    // Compute maximum possible environment length.
+    env_len = (size_t)(arg_end - env_start);
+    if (env_len == 0)
+        goto empty;
+
+    procenv = (char *)calloc(1, env_len);
     if (procenv == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
     while (arg_ptr < arg_end && *arg_ptr != '\0') {
-        char *s = memchr(arg_ptr + 1, '\0', arg_end - arg_ptr);
+        // Find the next NUL terminator.
+        size_t rem = (size_t)(arg_end - arg_ptr);
+        char *s = memchr(arg_ptr, '\0', rem);
         if (s == NULL)
             break;
-        memcpy(procenv + (arg_ptr - env_start), arg_ptr, s - arg_ptr);
+
+        size_t copy_len = (size_t)(s - arg_ptr);
+        size_t offset = (size_t)(arg_ptr - env_start);
+        if (offset + copy_len >= env_len)
+            break;  // prevent overflow.
+
+        memcpy(procenv + offset, arg_ptr, copy_len);
         arg_ptr = s + 1;
     }
 
-    py_ret = PyUnicode_DecodeFSDefaultAndSize(
-        procenv, arg_ptr - env_start + 1);
-    if (!py_ret) {
-        // XXX: don't want to free() this as per:
-        // https://github.com/giampaolo/psutil/issues/926
-        // It sucks but not sure what else to do.
-        procargs = NULL;
+    size_t used = (size_t)(arg_ptr - env_start);
+    if (used >= env_len)
+        used = env_len - 1;
+
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(procenv, (Py_ssize_t)used);
+    if (py_ret == NULL) {
+        procargs = NULL;  // don't double free; see psutil issue #926.
         goto error;
     }
 
@@ -1149,6 +1160,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     return py_ret;
 
 empty:
+    psutil_debug("set environ to empty");
     if (procargs != NULL)
         free(procargs);
     return Py_BuildValue("s", "");

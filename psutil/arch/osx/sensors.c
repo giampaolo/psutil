@@ -33,7 +33,6 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     int is_power_plugged;
 
     power_info = IOPSCopyPowerSourcesInfo();
-
     if (!power_info) {
         PyErr_SetString(PyExc_RuntimeError,
             "IOPSCopyPowerSourcesInfo() syscall failed");
@@ -47,8 +46,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    /* Should only get one source. But in practice, check for > 0 sources */
-    if (!CFArrayGetCount(power_sources_list)) {
+    if (CFArrayGetCount(power_sources_list) == 0) {
         PyErr_SetString(PyExc_NotImplementedError, "no battery");
         goto error;
     }
@@ -90,16 +88,13 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         time_to_empty = -1;
     }
 
-    py_tuple = Py_BuildValue("Iii",
-        capacity, time_to_empty, is_power_plugged);
-    if (!py_tuple) {
+    py_tuple = Py_BuildValue("Iii", capacity, time_to_empty, is_power_plugged);
+    if (!py_tuple)
         goto error;
-    }
 
     CFRelease(power_info);
     CFRelease(power_sources_list);
     /* Caller should NOT release power_sources_information */
-
     return py_tuple;
 
 error:
