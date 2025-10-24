@@ -796,12 +796,11 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
-            errno = 0;
             nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
-            if ((nb <= 0) || (nb < sizeof(si)) || (errno != 0)) {
+            if ((nb <= 0) || (nb < sizeof(si))) {
                 if (errno == EBADF) {
                     // let's assume socket has been closed
                     psutil_debug("proc_pidfdinfo(PROC_PIDFDSOCKETINFO) -> "
@@ -914,7 +913,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_raddr)
                     goto error;
 
-                // construct the python list
                 py_tuple = Py_BuildValue(
                     "(iiiNNi)", fd, family, type, py_laddr, py_raddr, state);
                 if (!py_tuple)
@@ -932,7 +930,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
                 if (!py_raddr)
                     goto error;
-                // construct the python list
+
                 py_tuple = Py_BuildValue(
                     "(iiiOOi)",
                     fd, family, type,
