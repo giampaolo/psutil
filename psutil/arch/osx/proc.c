@@ -135,11 +135,16 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
     }
-    if ((unsigned long)ret < sizeof(pti)) {
+
+    // use the actual buffer size
+    if (ret < size) {
         psutil_raise_for_pid(
-            pid, "proc_pidinfo() return size < sizeof(struct_pointer)");
+            pid,
+            "proc_pidinfo() returned size smaller than expected buffer size"
+        );
         return 0;
     }
+
     return ret;
 }
 
