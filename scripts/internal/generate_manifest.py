@@ -13,12 +13,6 @@ import subprocess
 SKIP_EXTS = ('.png', '.jpg', '.jpeg', '.svg')
 SKIP_FILES = ()
 SKIP_PREFIXES = ('.ci/', '.github/')
-FILE = "MANIFEST.in"
-
-
-def cat(path):
-    with open(path) as f:
-        return f.read()
 
 
 def sh(cmd):
@@ -29,7 +23,6 @@ def sh(cmd):
 
 def main():
     files = set()
-    text = []
     for file in sh("git ls-files").split('\n'):
         if (
             file.startswith(SKIP_PREFIXES)
@@ -40,16 +33,7 @@ def main():
         files.add(file)
 
     for file in sorted(files):
-        text.append(f"include {file}")  # noqa: PERF401
-
-    text.append("recursive-exclude docs/_static *")  # noqa: FURB113
-    text.append("")
-    text = "\n".join(text)
-
-    if cat(FILE) != text:
-        with open(FILE, "w") as f:
-            f.write(text)
-        print(f"{FILE} was updated")
+        print("include " + file)
 
 
 if __name__ == '__main__':

@@ -34,13 +34,19 @@ jobs:
           cat > run_with_asan.c <<'EOF'
           #include <unistd.h>
           #include <stdlib.h>
+          #include <stdio.h>
+
           int main(int argc, char** argv) {
               if (argc < 3) {
-                  write(2, "Usage: run_with_asan <asan_path> <python-args...>\n", 50);
+                  fprintf(stderr,
+                      "Usage: run_with_asan <asan_path> <python args...>\n");
                   return 1;
               }
               setenv("DYLD_INSERT_LIBRARIES", argv[1], 1);
-              execvp("python3", argv + 2);
+              // Build argv for execvp: python3 + rest of args after asan_path
+              char** new_argv = argv + 2;
+              execvp("python3", new_argv);
+              perror("execvp");
               return 1;
           }
           EOF
@@ -50,4 +56,4 @@ jobs:
         run: |
           ASAN_RT=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
           echo "Using ASan runtime: $ASAN_RT"
-          ./run_with_asan "$ASAN_RT" -m pytest -q psutil/tests --disable-warnings --maxfail=1
+          ./run_with_asan "$ASAN_RT" python3 -m pytest -q psutil/tests --disable-warnings --maxfail=1
