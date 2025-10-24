@@ -457,7 +457,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             return NULL;
         }
     }
-    return PyUnicode_DecodeFSDefaultAndSize(buf);
+    return PyUnicode_DecodeFSDefault(buf);
 }
 
 

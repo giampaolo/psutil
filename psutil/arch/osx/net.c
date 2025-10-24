@@ -43,9 +43,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     lim = buf + len;
 
     for (next = buf; next < lim; ) {
-        // Check we have enough space for if_msghdr.
         if ((size_t)(lim - next) < sizeof(struct if_msghdr)) {
-            psutil_debug("struct xfile size mismatch (skip entry)");
+            psutil_debug("struct if_msghdr size mismatch (skip entry)");
             break;
         }
 
@@ -74,13 +73,12 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 continue;
             }
 
-            char ifc_name[32];
+            char ifc_name[IFNAMSIZ];
             size_t namelen = sdl->sdl_nlen;
+            if (namelen >= IFNAMSIZ)
+                namelen = IFNAMSIZ - 1;
 
-            if (namelen >= sizeof(ifc_name))
-                namelen = sizeof(ifc_name) - 1;
-
-            strncpy(ifc_name, sdl->sdl_data, namelen);
+            memcpy(ifc_name, sdl->sdl_data, namelen);
             ifc_name[namelen] = '\0';
 
             py_ifc_info = Py_BuildValue(
@@ -101,6 +99,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 Py_CLEAR(py_ifc_info);
                 goto error;
             }
+
             Py_CLEAR(py_ifc_info);
         }
     }
