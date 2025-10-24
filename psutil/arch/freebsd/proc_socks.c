@@ -227,7 +227,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 
     for (i = 0; i < cnt; i++) {
         int lport, rport, state;
-        char lip[200], rip[200];
+        char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
         char path[PATH_MAX];
         int inseq;
         py_tuple = NULL;
