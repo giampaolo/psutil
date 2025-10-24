@@ -106,7 +106,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
         }
 
         if (errno == EINVAL) {
-            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
+            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to AD");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
             return -1;
         }
@@ -130,20 +130,25 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
  */
 static int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
-    errno = 0;
     int ret;
 
+    if (!pti || size <= 0) {
+        errno = EINVAL;
+        return 0;
+    }
+
+    errno = 0;
     ret = proc_pidinfo(pid, flavor, arg, pti, size);
     if (ret <= 0) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;
     }
 
-    // use the actual buffer size
+    // check for truncated return size
     if (ret < size) {
         psutil_raise_for_pid(
             pid,
-            "proc_pidinfo() returned size smaller than expected buffer size"
+            "proc_pidinfo() returned less data than requested buffer size"
         );
         return 0;
     }
