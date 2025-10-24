@@ -33,5 +33,5 @@ jobs:
             CFLAGS="-fsanitize=address -g -O1 -fno-omit-frame-pointer"
             LDFLAGS="-fsanitize=address"
           CIBW_TEST_COMMAND: >
-            DYLD_INSERT_LIBRARIES=$(dirname $(xcrun --find clang))/../lib/clang/$(clang --version | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -1)/lib/darwin/libclang_rt.asan_osx_dynamic.dylib
+            DYLD_INSERT_LIBRARIES=$(python -c "import psutil, os; print(os.path.join(os.path.dirname(psutil.__file__), '.dylibs', 'libclang_rt.asan_osx_dynamic.dylib'))")
             python -c "import psutil; print('ASan preloaded OK'); import psutil.tests; psutil.tests.test_main()"
