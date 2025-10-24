@@ -17,7 +17,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel pytest
+          python3 -m pip install --upgrade pip setuptools wheel pytest pytest-instafail pytest-subtests pytest-xdist
 
       - name: Build psutil with ASan (ARM64)
         env:
