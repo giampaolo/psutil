@@ -49,10 +49,8 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    // fetch the info with sysctl()
     len = sizeof(struct kinfo_proc);
 
-    // now read the data from sysctl
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl");
