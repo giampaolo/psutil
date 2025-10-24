@@ -1161,7 +1161,8 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
 empty:
     psutil_debug("set environ to empty");
-    free(procargs);
+    if (procargs != NULL)
+        free(procargs);
     return Py_BuildValue("s", "");
 
 error:

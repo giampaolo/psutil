@@ -211,9 +211,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     );
 
     if (!pCoreRef ||
+        !eCoreRef ||
         CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
-        CFDataGetLength(pCoreRef) < 8 || !eCoreRef ||
         CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
+        CFDataGetLength(pCoreRef) < 8 ||
         CFDataGetLength(eCoreRef) < 4)
     {
         PyErr_SetString(PyExc_RuntimeError, "invalid CPU frequency data");
