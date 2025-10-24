@@ -214,6 +214,11 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
     int max_size = 24 * 1024 * 1024;  // 24M
     struct proc_fdinfo *fds_pointer = NULL;
 
+    if (num_fds == NULL) {
+        errno = EINVAL;
+        return NULL;
+    }
+
     errno = 0;
     ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (ret <= 0) {
