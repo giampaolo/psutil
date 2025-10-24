@@ -20,6 +20,11 @@ int
 psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen) {
     size_t len = buflen;
 
+    if (!mib || miblen == 0 || !buf || buflen == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "psutil_sysctl() invalid args");
+        return -1;
+    }
+
     if (sysctl(mib, miblen, buf, &len, NULL, 0) == -1) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
         return -1;
@@ -32,6 +37,7 @@ psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen) {
 
     return 0;
 }
+
 
 // Allocate buffer for sysctl with retry on ENOMEM or buffer size mismatch.
 // The caller is responsible for freeing the memory.
