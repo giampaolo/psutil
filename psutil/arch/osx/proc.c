@@ -839,11 +839,16 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
             py_family = PyLong_FromLong((long)family);
             inseq = PySequence_Contains(py_af_filter, py_family);
             Py_DECREF(py_family);
+            if (inseq == -1)
+                goto error;
             if (inseq == 0)
                 continue;
+
             py_type = PyLong_FromLong((long)type);
             inseq = PySequence_Contains(py_type_filter, py_type);
             Py_DECREF(py_type);
+            if (inseq == -1)
+                goto error;
             if (inseq == 0)
                 continue;
 
