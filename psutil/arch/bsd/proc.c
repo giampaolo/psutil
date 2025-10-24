@@ -36,9 +36,15 @@
 
 // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
 // int as arg and returns an array with cnt struct kinfo_file.
+// Caller is responsible for freeing the returned pointer with free().
 #ifdef PSUTIL_HASNT_KINFO_GETFILE
 struct kinfo_file *
 kinfo_getfile(pid_t pid, int *cnt) {
+    if (pid < 0 || !cnt) {
+        psutil_badargs("kinfo_getfile");
+        return NULL;
+    }
+
     int mib[6];
     size_t len;
     struct kinfo_file *kf = NULL;
@@ -51,6 +57,14 @@ kinfo_getfile(pid_t pid, int *cnt) {
     mib[5] = 0;
 
     if (psutil_sysctl_malloc(mib, 6, (char **)&kf, &len) != 0) {
+        return NULL;
+    }
+
+    // Calculate number of entries and check for overflow
+    if (len / sizeof(struct kinfo_file) > INT_MAX) {
+        psutil_debug("exceeded INT_MAX")
+        free(kf);
+        errno = EOVERFLOW;
         return NULL;
     }
 
