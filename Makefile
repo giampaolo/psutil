@@ -212,6 +212,9 @@ fix-black:
 fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
+fix-c:
+	@git ls-files '*.c' '*.h' | xargs clang-format -i
+
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
