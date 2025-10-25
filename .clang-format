@@ -98,7 +98,7 @@ IndentCaseLabels: false
 IndentWidth: 4
 MaxEmptyLinesToKeep: 2
 PointerAlignment: Right
-SortIncludes: CaseSensitive
+SortIncludes: false
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
 WhitespaceSensitiveMacros:
