@@ -178,7 +178,7 @@ dprint:
 	@$(DPRINT) check
 
 lint-c:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
+	@git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
 lint-rst:  ## Run linter for .rst files.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
