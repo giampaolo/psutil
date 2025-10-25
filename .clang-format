@@ -50,11 +50,12 @@ BreakStringLiterals: true
 ColumnLimit: 79
 DerivePointerAlignment: false
 IndentCaseBlocks: true
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentWidth: 4
 MaxEmptyLinesToKeep: 2
 PointerAlignment: Right
 SortIncludes: false
+# SpaceAfterCStyleCast: true
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
 
