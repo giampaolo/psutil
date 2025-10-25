@@ -19,7 +19,7 @@ extern PyObject *ZombieProcessError;
 
     int psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen);
     int psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen);
-    int psutil_sysctl_argmax();
+    size_t psutil_sysctl_argmax();
 
     #if !defined(PSUTIL_OPENBSD)
 

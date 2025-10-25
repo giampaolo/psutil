@@ -179,7 +179,7 @@ psutil_gather_inet(
         if ((inp->inp_vflag & INP_IPV6) && (include_v6 == 0))
             continue;
 
-        char lip[200], rip[200];
+        char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
 
         xf = psutil_get_file_from_sock(so->xso_so, psutil_xfiles, psutil_nxfiles);
         if (xf == NULL)

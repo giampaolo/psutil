@@ -43,15 +43,16 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     lim = buf + len;
 
     for (next = buf; next < lim; ) {
-        // Check we have enough space for if_msghdr.
         if ((size_t)(lim - next) < sizeof(struct if_msghdr)) {
-            psutil_debug("struct xfile size mismatch");
+            psutil_debug("struct if_msghdr size mismatch (skip entry)");
+            break;
         }
 
         ifm = (struct if_msghdr *)next;
 
         if (ifm->ifm_msglen == 0 || next + ifm->ifm_msglen > lim) {
-            psutil_debug("ifm_msglen size mismatch");
+            psutil_debug("ifm_msglen size mismatch (skip entry)");
+            break;
         }
 
         next += ifm->ifm_msglen;
@@ -61,22 +62,23 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             struct if_msghdr2 *if2m = (struct if_msghdr2 *)ifm;
 
             if ((char *)if2m + sizeof(struct if_msghdr2) > lim) {
-                psutil_debug("if_msghdr2 + sockaddr_dl mismatch");
+                psutil_debug("if_msghdr2 + sockaddr_dl mismatch (skip entry)");
+                continue;
             }
 
             struct sockaddr_dl *sdl = (struct sockaddr_dl *)(if2m + 1);
 
             if ((char *)sdl + sizeof(struct sockaddr_dl) > lim) {
-                psutil_debug("not enough buffer for sockaddr_dl");
+                psutil_debug("not enough buffer for sockaddr_dl (skip entry)");
+                continue;
             }
 
-            char ifc_name[32];
+            char ifc_name[IFNAMSIZ];
             size_t namelen = sdl->sdl_nlen;
+            if (namelen >= IFNAMSIZ)
+                namelen = IFNAMSIZ - 1;
 
-            if (namelen >= sizeof(ifc_name))
-                namelen = sizeof(ifc_name) - 1;
-
-            strncpy(ifc_name, sdl->sdl_data, namelen);
+            memcpy(ifc_name, sdl->sdl_data, namelen);
             ifc_name[namelen] = '\0';
 
             py_ifc_info = Py_BuildValue(
@@ -97,6 +99,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                 Py_CLEAR(py_ifc_info);
                 goto error;
             }
+
             Py_CLEAR(py_ifc_info);
         }
     }

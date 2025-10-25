@@ -4,7 +4,22 @@
 # https://github.com/vmactions/openbsd-vm
 # https://github.com/vmactions/netbsd-vm
 
-on: [push, pull_request]
+on:
+  push:
+    # only run this job if the following files are modified
+    paths: &bsd_paths
+      - ".github/workflows/bsd.yml"
+      - "psutil/_psbsd.py"
+      - "psutil/_psutil_bsd.c"
+      - "psutil/arch/bsd/**"
+      - "psutil/arch/freebsd/**"
+      - "psutil/arch/netbsd/**"
+      - "psutil/arch/openbsd/**"
+      - "psutil/arch/posix/**"
+      - "psutil/tests/test_bsd.py"
+      - "setup.py"
+  pull_request:
+    paths: *bsd_paths
 name: bsd
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}

@@ -49,10 +49,11 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    // fetch the info with sysctl()
+    if (pid < 0 || !kp)
+        return psutil_badargs("psutil_get_kinfo_proc");
+
     len = sizeof(struct kinfo_proc);
 
-    // now read the data from sysctl
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
         psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl");
@@ -71,6 +72,9 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 static int
 is_zombie(size_t pid) {
     struct kinfo_proc kp;
+
+    if (pid < 0)
+        return psutil_badargs("is_zombie");
 
     if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         PyErr_Clear();
@@ -91,6 +95,9 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
 
+    if (pid < 0 || !procargs || !argmax || *argmax == 0)
+        return psutil_badargs("psutil_sysctl_procargs");
+
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("psutil_pid_exists -> 0");
@@ -103,7 +110,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
         }
 
         if (errno == EINVAL) {
-            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to NSP");
+            psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to AD");
             AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
             return -1;
         }
@@ -127,20 +134,28 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
  */
 static int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
-    errno = 0;
     int ret;
 
+    if (pid < 0 || !pti || size <= 0)
+        return psutil_badargs("psutil_proc_pidinfo");
+
+    errno = 0;
     ret = proc_pidinfo(pid, flavor, arg, pti, size);
     if (ret <= 0) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
-        return 0;
+        return -1;
     }
-    if ((unsigned long)ret < sizeof(pti)) {
+
+    // check for truncated return size
+    if (ret < size) {
         psutil_raise_for_pid(
-            pid, "proc_pidinfo() return size < sizeof(struct_pointer)");
-        return 0;
+            pid,
+            "proc_pidinfo() returned less data than requested buffer size"
+        );
+        return -1;
     }
-    return ret;
+
+    return 0;
 }
 
 
@@ -152,26 +167,28 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
  * - for PIDs != getpid() or PIDs which are not members of the procmod
  *   it requires root
  * As such we can only guess what the heck went wrong and fail either
- * with NoSuchProcess or giveup with AccessDenied.
- * Here's some history:
+ * with NoSuchProcess or give up with AccessDenied.
+ * References:
  * https://github.com/giampaolo/psutil/issues/1181
  * https://github.com/giampaolo/psutil/issues/1209
  * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
  */
 static int
 psutil_task_for_pid(pid_t pid, mach_port_t *task) {
-    // See: https://github.com/giampaolo/psutil/issues/1181
-    kern_return_t err = KERN_SUCCESS;
+    kern_return_t err;
+
+    if (pid < 0 || !task)
+        return psutil_badargs("psutil_task_for_pid");
 
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0) {
             NoSuchProcess("task_for_pid");
         }
-        // Now done in Python.
-        // else if (psutil_is_zombie(pid) == 1)
-        //     PyErr_SetString(ZombieProcessError,
-        //                     "task_for_pid -> psutil_is_zombie -> 1");
+        else if (is_zombie(pid) == 1) {
+            PyErr_SetString(ZombieProcessError,
+                            "task_for_pid -> psutil_is_zombie -> 1");
+        }
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
@@ -181,6 +198,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
         }
         return -1;
     }
+
     return 0;
 }
 
@@ -195,6 +213,11 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
     int fds_size = 0;
     int max_size = 24 * 1024 * 1024;  // 24M
     struct proc_fdinfo *fds_pointer = NULL;
+
+    if (pid < 0 || num_fds == NULL) {
+        psutil_badargs("psutil_proc_list_fds");
+        return NULL;
+    }
 
     errno = 0;
     ret = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
@@ -282,8 +305,8 @@ PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct kinfo_proc kp;
-    PyObject *py_name;
-    PyObject *py_retlist;
+    PyObject *py_name = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -295,11 +318,12 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         // Likely a decoding error. We don't want to fail the whole
         // operation. The python module may retry with proc_name().
         PyErr_Clear();
+        Py_INCREF(Py_None);
         py_name = Py_None;
     }
 
     py_retlist = Py_BuildValue(
-        _Py_PARSE_PID "llllllidiO",
+        _Py_PARSE_PID "llllllldiO",
         kp.kp_eproc.e_ppid,                        // (pid_t) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
         (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
@@ -307,16 +331,13 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         (long)kp.kp_eproc.e_pcred.p_rgid,          // (long) real gid
         (long)kp.kp_eproc.e_ucred.cr_groups[0],    // (long) effective gid
         (long)kp.kp_eproc.e_pcred.p_svgid,         // (long) saved gid
-        kp.kp_eproc.e_tdev,                        // (int) tty nr
+        (long long)kp.kp_eproc.e_tdev,             // (long long) tty nr
         PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
         (int)kp.kp_proc.p_stat,                    // (int) status
         py_name                                    // (pystr) name
     );
 
-    if (py_retlist != NULL) {
-        // XXX shall we decref() also in case of Py_BuildValue() error?
-        Py_DECREF(py_name);
-    }
+    Py_DECREF(py_name);
     return py_retlist;
 }
 
@@ -338,7 +359,7 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         return NULL;
 
     total_user = pti.pti_total_user * PSUTIL_MACH_TIMEBASE_INFO.numer;
@@ -380,9 +401,9 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
+
     return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
 }
-
 
 /*
  * Return process current working directory.
@@ -397,7 +418,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
 
     if (psutil_proc_pidinfo(
-            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) <= 0)
+            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) != 0)
     {
         return NULL;
     }
@@ -481,13 +502,14 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     cpu_type_t cpu_type;
     size_t private_pages = 0;
     mach_vm_size_t size = 0;
-    mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
+    mach_msg_type_number_t info_count;
     kern_return_t kr;
     long pagesize = psutil_getpagesize();
-    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
+    mach_vm_address_t addr;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
     mach_port_t object_name;
+    mach_vm_address_t prev_addr;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -503,7 +525,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    for (addr = 0; ; addr += size) {
+    for (addr = MACH_VM_MIN_ADDRESS; ; addr += size) {
+        prev_addr = addr;
+        info_count = VM_REGION_TOP_INFO_COUNT;  // reset before each call
+
         kr = mach_vm_region(
             task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info,
             &info_count, &object_name);
@@ -514,8 +539,15 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         else if (kr != KERN_SUCCESS) {
             PyErr_Format(
                 PyExc_RuntimeError,
-                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed");
+                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed"
+            );
+            mach_port_deallocate(mach_task_self(), task);
             return NULL;
+        }
+
+        if (size == 0 || addr < prev_addr) {
+            psutil_debug("prevent infinite loop");
+            break;
         }
 
         if (psutil_in_shared_region(addr, cpu_type) &&
@@ -557,9 +589,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     pid_t pid;
-    int err, ret;
     kern_return_t kr;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task = MACH_PORT_NULL;
     struct task_basic_info tasks_info;
     thread_act_port_array_t thread_list = NULL;
@@ -579,12 +609,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
 
-    info_count = TASK_BASIC_INFO_COUNT;
-    err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
-                    &info_count);
-    if (err != KERN_SUCCESS) {
-        // errcode 4 is "invalid argument" (access denied)
-        if (err == 4) {
+    // Get basic task info (optional, ignored if access denied)
+    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+    kr = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+    if (kr != KERN_SUCCESS) {
+        if (kr == KERN_INVALID_ARGUMENT) {
             AccessDenied("task_info(TASK_BASIC_INFO)");
         }
         else {
@@ -595,8 +624,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    err = task_threads(task, &thread_list, &thread_count);
-    if (err != KERN_SUCCESS) {
+    kr = task_threads(task, &thread_list, &thread_count);
+    if (kr != KERN_SUCCESS) {
         PyErr_Format(PyExc_RuntimeError, "task_threads() syscall failed");
         goto error;
     }
@@ -627,30 +656,28 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
-    ret = vm_deallocate(
-        task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
-    );
-
-    if (ret != KERN_SUCCESS)
-        PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
-
-    mach_port_deallocate(mach_task_self(), task);
+    if (thread_list != NULL) {
+        vm_deallocate(mach_task_self(), (vm_address_t)thread_list,
+                      thread_count * sizeof(thread_act_t));
+    }
+    if (task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), task);
+    }
 
     return py_retlist;
 
 error:
-    if (task != MACH_PORT_NULL)
-        mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    if (thread_list != NULL) {
-        ret = vm_deallocate(
-            task, (vm_address_t)thread_list, thread_count * sizeof(thread_act_t)
-        );
+    Py_XDECREF(py_retlist);
 
-        if (ret != KERN_SUCCESS)
-            PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
+    if (thread_list != NULL) {
+        vm_deallocate(mach_task_self(), (vm_address_t)thread_list,
+                      thread_count * sizeof(thread_act_t));
     }
+    if (task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), task);
+    }
+
     return NULL;
 }
 
@@ -761,6 +788,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
+    const char* ntopret;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -796,12 +824,11 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
-            errno = 0;
             nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
-            if ((nb <= 0) || (nb < sizeof(si)) || (errno != 0)) {
+            if ((nb <= 0) || (nb < sizeof(si))) {
                 if (errno == EBADF) {
                     // let's assume socket has been closed
                     psutil_debug("proc_pidfdinfo(PROC_PIDFDSOCKETINFO) -> "
@@ -825,8 +852,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 
             //
             int fd, family, type, lport, rport, state;
-            // TODO: use INET6_ADDRSTRLEN instead of 200
-            char lip[200], rip[200];
+            char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
             int inseq;
             PyObject *py_family;
             PyObject *py_type;
@@ -839,42 +865,63 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
             py_family = PyLong_FromLong((long)family);
             inseq = PySequence_Contains(py_af_filter, py_family);
             Py_DECREF(py_family);
+            if (inseq == -1)
+                goto error;
             if (inseq == 0)
                 continue;
+
             py_type = PyLong_FromLong((long)type);
             inseq = PySequence_Contains(py_type_filter, py_type);
             Py_DECREF(py_type);
+            if (inseq == -1)
+                goto error;
             if (inseq == 0)
                 continue;
 
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {
-                    inet_ntop(AF_INET,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
-                                  insi_laddr.ina_46.i46a_addr4,
-                              lip,
-                              sizeof(lip));
-                    inet_ntop(AF_INET,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr. \
-                                  ina_46.i46a_addr4,
-                              rip,
-                              sizeof(rip));
+                    ntopret = inet_ntop(
+                        AF_INET,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4,
+                        lip,
+                        sizeof(lip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
+                    ntopret = inet_ntop(
+                        AF_INET,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
+                        rip,
+                        sizeof(rip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
                 }
                 else {
-                    inet_ntop(AF_INET6,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
-                                  insi_laddr.ina_6,
-                              lip, sizeof(lip));
-                    inet_ntop(AF_INET6,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
-                                  insi_faddr.ina_6,
-                              rip, sizeof(rip));
-                }
-
-                // check for inet_ntop failures
-                if (errno != 0) {
-                    psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
-                    goto error;
+                    ntopret = inet_ntop(
+                        AF_INET6,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
+                        lip,
+                        sizeof(lip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
+                    ntopret = inet_ntop(
+                        AF_INET6,
+                        &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
+                        rip,
+                        sizeof(rip)
+                    );
+                    if (!ntopret) {
+                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        goto error;
+                    }
                 }
 
                 lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
@@ -894,7 +941,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_raddr)
                     goto error;
 
-                // construct the python list
                 py_tuple = Py_BuildValue(
                     "(iiiNNi)", fd, family, type, py_laddr, py_raddr, state);
                 if (!py_tuple)
@@ -912,7 +958,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path);
                 if (!py_raddr)
                     goto error;
-                // construct the python list
+
                 py_tuple = Py_BuildValue(
                     "(iiiOOi)",
                     fd, family, type,
@@ -991,7 +1037,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_sysctl_argmax();
-    if (! argmax)
+    if (argmax == 0)
         goto error;
 
     procargs = (char *)malloc(argmax);
@@ -1068,22 +1114,23 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     char *arg_end;
     char *env_start;
     size_t argmax;
+    size_t env_len;
     PyObject *py_ret = NULL;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-    // special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    // PID 0 (kernel_task) has no cmdline.
     if (pid == 0)
         goto empty;
 
-    // read argmax and allocate memory for argument space.
+    // Allocate buffer for process args.
     argmax = psutil_sysctl_argmax();
-    if (! argmax)
+    if (argmax == 0)
         goto error;
 
     procargs = (char *)malloc(argmax);
-    if (NULL == procargs) {
+    if (procargs == NULL) {
         PyErr_NoMemory();
         goto error;
     }
@@ -1091,56 +1138,66 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (psutil_sysctl_procargs(pid, procargs, &argmax) != 0)
         goto error;
 
-    arg_end = &procargs[argmax];
-    // copy the number of arguments to nargs
+    arg_end = procargs + argmax;
+
+    // Copy nargs.
     memcpy(&nargs, procargs, sizeof(nargs));
 
     // skip executable path
     arg_ptr = procargs + sizeof(nargs);
     arg_ptr = memchr(arg_ptr, '\0', arg_end - arg_ptr);
-
-    if (arg_ptr == NULL || arg_ptr == arg_end) {
-        psutil_debug(
-            "(arg_ptr == NULL || arg_ptr == arg_end); set environ to empty");
+    if (arg_ptr == NULL || arg_ptr >= arg_end)
         goto empty;
-    }
 
-    // skip ahead to the first argument
-    for (; arg_ptr < arg_end; arg_ptr++) {
-        if (*arg_ptr != '\0')
-            break;
-    }
+    // Skip null bytes until first argument.
+    while (arg_ptr < arg_end && *arg_ptr == '\0')
+        arg_ptr++;
 
-    // iterate through arguments
+    // Skip arguments.
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0')
             nargs--;
     }
 
-    // build an environment variable block
+    if (arg_ptr >= arg_end)
+        goto empty;
+
     env_start = arg_ptr;
 
-    procenv = calloc(1, arg_end - arg_ptr);
+    // Compute maximum possible environment length.
+    env_len = (size_t)(arg_end - env_start);
+    if (env_len == 0)
+        goto empty;
+
+    procenv = (char *)calloc(1, env_len);
     if (procenv == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
     while (arg_ptr < arg_end && *arg_ptr != '\0') {
-        char *s = memchr(arg_ptr + 1, '\0', arg_end - arg_ptr);
+        // Find the next NUL terminator.
+        size_t rem = (size_t)(arg_end - arg_ptr);
+        char *s = memchr(arg_ptr, '\0', rem);
         if (s == NULL)
             break;
-        memcpy(procenv + (arg_ptr - env_start), arg_ptr, s - arg_ptr);
+
+        size_t copy_len = (size_t)(s - arg_ptr);
+        size_t offset = (size_t)(arg_ptr - env_start);
+        if (offset + copy_len >= env_len)
+            break;  // prevent overflow.
+
+        memcpy(procenv + offset, arg_ptr, copy_len);
         arg_ptr = s + 1;
     }
 
-    py_ret = PyUnicode_DecodeFSDefaultAndSize(
-        procenv, arg_ptr - env_start + 1);
-    if (!py_ret) {
-        // XXX: don't want to free() this as per:
-        // https://github.com/giampaolo/psutil/issues/926
-        // It sucks but not sure what else to do.
-        procargs = NULL;
+    size_t used = (size_t)(arg_ptr - env_start);
+    if (used >= env_len)
+        used = env_len - 1;
+
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(procenv, (Py_ssize_t)used);
+    if (py_ret == NULL) {
+        procargs = NULL;  // don't double free; see psutil issue #926.
         goto error;
     }
 
@@ -1149,6 +1206,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     return py_ret;
 
 empty:
+    psutil_debug("set environ to empty");
     if (procargs != NULL)
         free(procargs);
     return Py_BuildValue("s", "");

@@ -226,9 +226,6 @@ skip = [
 test-extras = ["test"]  # same as doing `pip install .[test]`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
-[tool.cibuildwheel.macos]
-archs = ["arm64", "x86_64"]
-
 # Run tests on Python 3.13. On all other Python versions do a lightweight
 # import test.
 [[tool.cibuildwheel.overrides]]
@@ -236,9 +233,8 @@ select = "cp3{8,9,10,11,12,13t,14,14t}-* cp313-macosx*"
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
-# In macOS use Python 3.8: higher Python version hang for some reason.
 [[tool.cibuildwheel.overrides]]
-select = "cp38-macosx*"
+select = "cp38-macosx*"  # In macOS use Python 3.8: higher Python version hang for some reason.
 test-extras = ["test"]
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
