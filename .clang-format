@@ -1,0 +1,106 @@
+# SPDX-License-Identifier: MIT
+#
+# Copyright (c) 2023 Intercreate, Inc.
+# Author: J.P. Hutchins <jp@intercreate.io>
+#
+# Python(black)-inspired .clang-format for C repositories
+#
+# Includes Zephyr and Arm macro compatibility
+
+---
+BasedOnStyle: Google
+
+AlignAfterOpenBracket: BlockIndent
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AttributeMacros:
+  - __aligned
+  - __deprecated
+  - __packed
+  - __printf_like
+  - __syscall
+  - __syscall_always_inline
+  - __subsystem
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: MultiLine
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+BitFieldColonSpacing: After
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakStringLiterals: true
+ColumnLimit: 88
+DerivePointerAlignment: false
+ForEachMacros:
+  - 'FOR_EACH'
+  - 'FOR_EACH_FIXED_ARG'
+  - 'FOR_EACH_IDX'
+  - 'FOR_EACH_IDX_FIXED_ARG'
+  - 'FOR_EACH_NONEMPTY_TERM'
+  - 'RB_FOR_EACH'
+  - 'RB_FOR_EACH_CONTAINER'
+  - 'SYS_DLIST_FOR_EACH_CONTAINER'
+  - 'SYS_DLIST_FOR_EACH_CONTAINER_SAFE'
+  - 'SYS_DLIST_FOR_EACH_NODE'
+  - 'SYS_DLIST_FOR_EACH_NODE_SAFE'
+  - 'SYS_SFLIST_FOR_EACH_CONTAINER'
+  - 'SYS_SFLIST_FOR_EACH_CONTAINER_SAFE'
+  - 'SYS_SFLIST_FOR_EACH_NODE'
+  - 'SYS_SFLIST_FOR_EACH_NODE_SAFE'
+  - 'SYS_SLIST_FOR_EACH_CONTAINER'
+  - 'SYS_SLIST_FOR_EACH_CONTAINER_SAFE'
+  - 'SYS_SLIST_FOR_EACH_NODE'
+  - 'SYS_SLIST_FOR_EACH_NODE_SAFE'
+  - '_WAIT_Q_FOR_EACH'
+  - 'Z_FOR_EACH'
+  - 'Z_FOR_EACH_ENGINE'
+  - 'Z_FOR_EACH_EXEC'
+  - 'Z_FOR_EACH_FIXED_ARG'
+  - 'Z_FOR_EACH_FIXED_ARG_EXEC'
+  - 'Z_FOR_EACH_IDX'
+  - 'Z_FOR_EACH_IDX_EXEC'
+  - 'Z_FOR_EACH_IDX_FIXED_ARG'
+  - 'Z_FOR_EACH_IDX_FIXED_ARG_EXEC'
+  - 'Z_GENLIST_FOR_EACH_CONTAINER'
+  - 'Z_GENLIST_FOR_EACH_CONTAINER_SAFE'
+  - 'Z_GENLIST_FOR_EACH_NODE'
+  - 'Z_GENLIST_FOR_EACH_NODE_SAFE'
+  - 'STRUCT_SECTION_FOREACH'
+  - 'TYPE_SECTION_FOREACH'
+IfMacros:
+  - 'CHECKIF'
+IndentCaseBlocks: true
+IndentCaseLabels: false
+IndentWidth: 4
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Middle
+SortIncludes: CaseSensitive
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+UseTab: Never
+WhitespaceSensitiveMacros:
+  - STRINGIFY
+  - Z_STRINGIFY
