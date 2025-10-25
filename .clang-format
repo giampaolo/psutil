@@ -53,7 +53,7 @@ BitFieldColonSpacing: After
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
 BreakStringLiterals: true
-ColumnLimit: 88
+ColumnLimit: 79
 DerivePointerAlignment: false
 ForEachMacros:
   - 'FOR_EACH'
