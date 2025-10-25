@@ -57,9 +57,6 @@ PointerAlignment: Right
 SortIncludes: false
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
-WhitespaceSensitiveMacros:
-  - STRINGIFY
-  - Z_STRINGIFY
 
 # Allows this:
 #if !defined(SIZEOF_INT)
@@ -79,3 +76,7 @@ AlwaysBreakAfterReturnType: TopLevelDefinitions
 #    Bar(...)
 PenaltyBreakAssignment: 400
 PenaltyBreakBeforeFirstCallParameter: 0
+
+StatementMacros:
+  - Py_BEGIN_ALLOW_THREADS
+  - Py_END_ALLOW_THREADS
