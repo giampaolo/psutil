@@ -7,6 +7,8 @@
 #
 # Includes Zephyr and Arm macro compatibility
 
+# Doc: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
 ---
 BasedOnStyle: Google
 
@@ -111,3 +113,4 @@ WhitespaceSensitiveMacros:
 #endif
 IncludeBlocks: Preserve
 IndentPPDirectives: BeforeHash
+AlignEscapedNewlines: DontAlign
