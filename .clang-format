@@ -73,3 +73,9 @@ AlignEscapedNewlines: DontAlign
 # static int
 # foo() {
 AlwaysBreakAfterReturnType: TopLevelDefinitions
+
+# Prevents:
+# foo =
+#    Bar(...)
+PenaltyBreakAssignment: 400
+PenaltyBreakBeforeFirstCallParameter: 0
