@@ -93,10 +93,10 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     struct kinfo_proc kp;
 #endif
     long pagesize = psutil_getpagesize();
-    char str[1000];
-    PyObject *py_name;
-    PyObject *py_ppid;
-    PyObject *py_retlist;
+    char name_buf[256];  // buffer for process name
+    PyObject *py_name = NULL;
+    PyObject *py_ppid = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -105,18 +105,17 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 
     // Process
 #ifdef PSUTIL_FREEBSD
-    sprintf(str, "%s", kp.ki_comm);
+    snprintf(name_buf, sizeof(name_buf), "%s", kp.ki_comm);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    sprintf(str, "%s", kp.p_comm);
+    snprintf(name_buf, sizeof(name_buf), "%s", kp.p_comm);
 #endif
-    py_name = PyUnicode_DecodeFSDefault(str);
-    if (! py_name) {
-        // Likely a decoding error. We don't want to fail the whole
-        // operation. The python module may retry with proc_name().
+    py_name = PyUnicode_DecodeFSDefault(name_buf);
+    if (!py_name) {
+        // If decoding fails, fall back to None safely
         PyErr_Clear();
         py_name = Py_None;
+        Py_INCREF(py_name);
     }
-    // Py_INCREF(py_name);
 
     // Calculate memory.
 #ifdef PSUTIL_FREEBSD
@@ -165,7 +164,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     py_ppid = PyLong_FromPid(kp.p_ppid);
 #else
-    py_ppid = Py_BuildfValue(-1);
+    py_ppid = Py_BuildValue("i", -1);
 #endif
     if (! py_ppid)
         return NULL;
