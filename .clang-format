@@ -104,3 +104,10 @@ UseTab: Never
 WhitespaceSensitiveMacros:
   - STRINGIFY
   - Z_STRINGIFY
+
+# Allows this:
+#if !defined(SIZEOF_INT)
+    #define SIZEOF_INT 4
+#endif
+IncludeBlocks: Preserve
+IndentPPDirectives: BeforeHash
