@@ -8,9 +8,7 @@
 
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
     #define PSUTIL_HASNT_KINFO_GETFILE
-// clang-format off
-    struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);
-// clang-format on
+struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);
 #endif
 
 void convert_kvm_err(const char *syscall, char *errbuf);
