@@ -5,6 +5,7 @@
  * Define Windows structs and constants which are considered private.
  */
 
+// clang-format off
 #if !defined(__NTEXTAPI_H__)
 #define __NTEXTAPI_H__
 #include <winternl.h>
@@ -711,3 +712,4 @@ ULONG (WINAPI *_RtlNtStatusToDosErrorNoTeb) (
 #define RtlNtStatusToDosErrorNoTeb _RtlNtStatusToDosErrorNoTeb
 
 #endif // __NTEXTAPI_H__
+// clang-format on
