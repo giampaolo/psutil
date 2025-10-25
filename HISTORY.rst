@@ -8,9 +8,10 @@ XXXX-XX-XX
 
 **Enhancements**
 
-- 2657_, [Linux], [Windows]: stop publishing wheels for Python 32 bit.
-  2565_: produce wheels for free-thread cPython 3.13 (patch by Lysandros
-  Nikolaou)
+- 2657_: stop publishing prebuilt Linux and Windows wheels for 32-bit Python.
+  32-bit CPython is still supported, but psutil must now be built from source.
+  2565_: produce wheels for free-thread cPython 3.13 and 3.14 (patch by
+  Lysandros Nikolaou)
 
 **Bug fixes**
 
@@ -21,8 +22,7 @@ XXXX-XX-XX
 
 **Compatibility notes**
 
-- 2657_: Linux and Windows wheels for Python 32 bit are no longer uploaded,
-  meaning pip will install psutil from sources.
+- 2657_: stop publishing prebuilt Linux and Windows wheels for 32-bit Python.
 
 7.1.1
 =====
