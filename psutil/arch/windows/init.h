@@ -12,8 +12,8 @@
 
 
 extern int PSUTIL_WINVER;
-extern SYSTEM_INFO          PSUTIL_SYSTEM_INFO;
-extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
+extern SYSTEM_INFO PSUTIL_SYSTEM_INFO;
+extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
 #define PSUTIL_WINDOWS_VISTA 60
 #define PSUTIL_WINDOWS_7 61
@@ -34,12 +34,16 @@ extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
 #define NT_NTWIN32(status) (_NT_FACILITY(status) == FACILITY_WIN32)
 #define WIN32_FROM_NTSTATUS(status) (((ULONG)(status)) & 0xffff)
 
-#define PSUTIL_FIRST_PROCESS(Processes) ( \
-    (PSYSTEM_PROCESS_INFORMATION)(Processes))
-#define PSUTIL_NEXT_PROCESS(Process) ( \
-   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : NULL)
+#define PSUTIL_FIRST_PROCESS(Processes) \
+    ((PSYSTEM_PROCESS_INFORMATION)(Processes))
+
+#define PSUTIL_NEXT_PROCESS(Process) \
+    (((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset \
+         ? (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) \
+                                         + ((PSYSTEM_PROCESS_INFORMATION)(Process \
+                                            )) \
+                                               ->NextEntryOffset) \
+         : NULL)
 
 #define LO_T 1e-7
 #define HI_T 429.4967296
@@ -48,6 +52,7 @@ extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
     #define AF_INET6 23
 #endif
 
+// clang-format off
 #if defined(PSUTIL_WINDOWS) && defined(PYPY_VERSION)
     #if !defined(PyErr_SetFromWindowsErrWithFilename)
         PyObject *PyErr_SetFromWindowsErrWithFilename(
@@ -60,6 +65,7 @@ extern CRITICAL_SECTION     PSUTIL_CRITICAL_SECTION;
         );
     #endif
 #endif
+// clang-format on
 
 double psutil_FiletimeToUnixTime(FILETIME ft);
 double psutil_LargeIntegerToUnixTime(LARGE_INTEGER li);
@@ -79,9 +85,14 @@ int psutil_assert_pid_exists(DWORD pid, char *err);
 int psutil_assert_pid_not_exists(DWORD pid, char *err);
 int psutil_pid_is_running(DWORD pid);
 int psutil_set_se_debug();
-SC_HANDLE psutil_get_service_handle(char service_name, DWORD scm_access, DWORD access);
+SC_HANDLE psutil_get_service_handle(
+    char service_name, DWORD scm_access, DWORD access
+);
 
-int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer);
+int psutil_get_proc_info(
+    DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
+);
+
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_freq(PyObject *self, PyObject *args);
@@ -102,7 +113,7 @@ PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_pid_exists(PyObject *self, PyObject *args);
 PyObject *psutil_pids(PyObject *self, PyObject *args);
 PyObject *psutil_ppid_map(PyObject *self, PyObject *args);
-PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict);
+PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kw);
 PyObject *psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
