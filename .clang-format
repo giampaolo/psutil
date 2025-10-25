@@ -114,3 +114,8 @@ WhitespaceSensitiveMacros:
 IncludeBlocks: Preserve
 IndentPPDirectives: BeforeHash
 AlignEscapedNewlines: DontAlign
+
+# Allows fun return type and fun definition to stay on 2 different lines:
+# static int
+# foo() {
+AlwaysBreakAfterReturnType: TopLevelDefinitions
