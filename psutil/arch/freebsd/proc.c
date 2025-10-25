@@ -43,7 +43,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     mib[3] = pid;
 
     if (pid < 0 || !proc)
-        psutil_badargs("psutil_kinfo_proc")
+        psutil_badargs("psutil_kinfo_proc");
 
     size = sizeof(struct kinfo_proc);
     if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
