@@ -1,10 +1,10 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
 
-7.1.2 (IN DEVELOPMENT)
-======================
+7.1.2
+=====
 
-XXXX-XX-XX
+2025-10-25
 
 **Enhancements**
 
@@ -19,6 +19,8 @@ XXXX-XX-XX
   raise `NoSuchProcess`_ instead of `ZombieProcess`_.
 - 2658_, [macOS]: double ``free()`` in `Process.environ()`_ when it fails
   internally. This posed a risk of segfault.
+- 2662_, [macOS]: massive C code cleanup to guard against possible segfaults
+  which were (not so) sporadically spotted on CI.
 
 **Compatibility notes**
 
