@@ -97,7 +97,7 @@ IndentCaseBlocks: true
 IndentCaseLabels: false
 IndentWidth: 4
 MaxEmptyLinesToKeep: 2
-PointerAlignment: Middle
+PointerAlignment: Right
 SortIncludes: CaseSensitive
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
