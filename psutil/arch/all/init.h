@@ -40,7 +40,9 @@ extern int PSUTIL_DEBUG;
 extern int PSUTIL_CONN_NONE;
 
 #ifdef Py_GIL_DISABLED
+// clang-format off
     extern PyMutex utxent_lock;
+// clang-format on
     #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
     #define UTXENT_MUTEX_UNLOCK() PyMutex_Unlock(&utxent_lock)
 #else
@@ -49,12 +51,14 @@ extern int PSUTIL_CONN_NONE;
 #endif
 
 // Print a debug message on stderr.
-#define psutil_debug(...) do { \
-    if (! PSUTIL_DEBUG) \
-        break; \
-    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n");} while(0)
+#define psutil_debug(...) \
+    do { \
+        if (!PSUTIL_DEBUG) \
+            break; \
+        fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\n"); \
+    } while (0)
 
 
 // strncpy() variant which appends a null terminator.
@@ -102,7 +106,7 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
         #define _Py_PARSE_PID "L"
     #else
         #error "_Py_PARSE_PID: sizeof(pid_t) is neither sizeof(int), "
-               "sizeof(long) or sizeof(long long)"
+"sizeof(long) or sizeof(long long)"
     #endif
 #endif
 
@@ -114,7 +118,7 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
         #define PyLong_FromPid PyLong_FromLongLong
     #else
         #error "PyLong_FromPid: sizeof(pid_t) is neither sizeof(int), "
-               "sizeof(long) or sizeof(long long)"
+"sizeof(long) or sizeof(long long)"
     #endif
 #endif
 
