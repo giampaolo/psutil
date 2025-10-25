@@ -46,7 +46,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
             (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
             (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC);
+            (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
+        );
         if (!py_cputime)
             goto error;
         if (PyList_Append(py_retlist, py_cputime))
@@ -68,7 +69,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     struct uvmexp uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
 
-    if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) !=0)
+    if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
 
     return Py_BuildValue(

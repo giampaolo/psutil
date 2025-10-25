@@ -19,7 +19,7 @@
 #include <Python.h>
 #include <sys/proc.h>
 #include <sys/param.h>  // BSD version
-#include <netinet/tcp_fsm.h>   // for TCP connection states
+#include <netinet/tcp_fsm.h>  // for TCP connection states
 
 #include "arch/all/init.h"
 #include "arch/bsd/init.h"
@@ -77,7 +77,7 @@ static PyMethodDef mod_methods[] = {
 #endif
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_OPENBSD)
-     {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
+    {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
 #endif
 #if defined(PSUTIL_FREEBSD)
     {"cpu_topology", psutil_cpu_topology, METH_VARARGS},
@@ -104,12 +104,12 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-PyObject
-*PyInit__psutil_bsd(void) {
+PyObject *
+PyInit__psutil_bsd(void) {
     PyObject *v;
     PyObject *mod = PyModule_Create(&moduledef);
     if (mod == NULL)
-       return NULL;
+        return NULL;
 
 #ifdef Py_GIL_DISABLED
     if (PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED))
@@ -126,7 +126,7 @@ PyObject
     if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION))
         return NULL;
 
-    // process status constants
+        // process status constants
 #ifdef PSUTIL_FREEBSD
     if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
         return NULL;
@@ -142,7 +142,7 @@ PyObject
         return NULL;
     if (PyModule_AddIntConstant(mod, "SLOCK", SLOCK))
         return NULL;
-#elif  PSUTIL_OPENBSD
+#elif PSUTIL_OPENBSD
     if (PyModule_AddIntConstant(mod, "SIDL", SIDL))
         return NULL;
     if (PyModule_AddIntConstant(mod, "SRUN", SRUN))
@@ -152,7 +152,7 @@ PyObject
     if (PyModule_AddIntConstant(mod, "SSTOP", SSTOP))
         return NULL;
     if (PyModule_AddIntConstant(mod, "SZOMB", SZOMB))
-    return NULL; // unused
+        return NULL;  // unused
     if (PyModule_AddIntConstant(mod, "SDEAD", SDEAD))
         return NULL;
     if (PyModule_AddIntConstant(mod, "SONPROC", SONPROC))
@@ -168,10 +168,10 @@ PyObject
         return NULL;
     if (PyModule_AddIntConstant(mod, "SZOMB", LSZOMB))
         return NULL;
-#if __NetBSD_Version__ < 500000000
+    #if __NetBSD_Version__ < 500000000
     if (PyModule_AddIntConstant(mod, "SDEAD", LSDEAD))
         return NULL;
-#endif
+    #endif
     if (PyModule_AddIntConstant(mod, "SONPROC", LSONPROC))
         return NULL;
     // unique to NetBSD
@@ -181,27 +181,27 @@ PyObject
 
     // connection status constants
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSED", TCPS_CLOSED))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSING", TCPS_CLOSING))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_LISTEN", TCPS_LISTEN))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_ESTABLISHED", TCPS_ESTABLISHED))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_SYN_SENT", TCPS_SYN_SENT))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_LAST_ACK", TCPS_LAST_ACK))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "TCPS_TIME_WAIT", TCPS_TIME_WAIT))
-       return NULL;
+        return NULL;
     if (PyModule_AddIntConstant(mod, "PSUTIL_CONN_NONE", 128))
         return NULL;
 

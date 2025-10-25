@@ -13,7 +13,6 @@
 #include "../../arch/all/init.h"
 
 
-
 // Return 1 if PID exists, 0 if not, -1 on error.
 int
 psutil_pid_in_pids(DWORD pid) {

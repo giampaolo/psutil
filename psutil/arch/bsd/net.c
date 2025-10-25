@@ -26,11 +26,11 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    mib[0] = CTL_NET;          // networking subsystem
-    mib[1] = PF_ROUTE;         // type of information
-    mib[2] = 0;                // protocol (IPPROTO_xxx)
-    mib[3] = 0;                // address family
-    mib[4] = NET_RT_IFLIST;   // operation
+    mib[0] = CTL_NET;  // networking subsystem
+    mib[1] = PF_ROUTE;  // type of information
+    mib[2] = 0;  // protocol (IPPROTO_xxx)
+    mib[3] = 0;  // address family
+    mib[4] = NET_RT_IFLIST;  // operation
     mib[5] = 0;
 
     if (psutil_sysctl_malloc(mib, 6, &buf, &len) != 0)
@@ -72,7 +72,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 #else
                 0
 #endif
-                                        );
+            );
             if (!py_ifc_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info) != 0)

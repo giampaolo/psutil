@@ -21,8 +21,8 @@
 //
 // This formula comes from linux's include/linux/sched/loadavg.h
 // https://github.com/torvalds/linux/blob/345671ea0f9258f410eb057b9ced9cefbbe5dc78/include/linux/sched/loadavg.h#L20-L23
-#define LOADAVG_FACTOR_1F  0.9200444146293232478931553241
-#define LOADAVG_FACTOR_5F  0.9834714538216174894737477501
+#define LOADAVG_FACTOR_1F 0.9200444146293232478931553241
+#define LOADAVG_FACTOR_5F 0.9834714538216174894737477501
 #define LOADAVG_FACTOR_15F 0.9944598480048967508795473394
 // The time interval in seconds between taking load counts, same as Linux
 #define SAMPLING_INTERVAL 5
@@ -32,7 +32,7 @@ double load_avg_5m = 0;
 double load_avg_15m = 0;
 
 #ifdef Py_GIL_DISABLED
-    static PyMutex mutex;
+static PyMutex mutex;
     #define MUTEX_LOCK(m) PyMutex_Lock(m)
     #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
 #else
@@ -41,13 +41,15 @@ double load_avg_15m = 0;
 #endif
 
 
-VOID CALLBACK LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
+VOID CALLBACK
+LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
     PDH_FMT_COUNTERVALUE displayValue;
     double currentLoad;
     PDH_STATUS err;
 
     err = PdhGetFormattedCounterValue(
-        (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &displayValue);
+        (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &displayValue
+    );
     // Skip updating the load if we can't get the value successfully
     if (err != ERROR_SUCCESS) {
         return;
@@ -55,12 +57,12 @@ VOID CALLBACK LoadAvgCallback(PVOID hCounter, BOOLEAN timedOut) {
     currentLoad = displayValue.doubleValue;
 
     MUTEX_LOCK(&mutex);
-    load_avg_1m = load_avg_1m * LOADAVG_FACTOR_1F + currentLoad * \
-        (1.0 - LOADAVG_FACTOR_1F);
-    load_avg_5m = load_avg_5m * LOADAVG_FACTOR_5F + currentLoad * \
-        (1.0 - LOADAVG_FACTOR_5F);
-    load_avg_15m = load_avg_15m * LOADAVG_FACTOR_15F + currentLoad * \
-        (1.0 - LOADAVG_FACTOR_15F);
+    load_avg_1m = load_avg_1m * LOADAVG_FACTOR_1F
+                  + currentLoad * (1.0 - LOADAVG_FACTOR_1F);
+    load_avg_5m = load_avg_5m * LOADAVG_FACTOR_5F
+                  + currentLoad * (1.0 - LOADAVG_FACTOR_5F);
+    load_avg_15m = load_avg_15m * LOADAVG_FACTOR_15F
+                   + currentLoad * (1.0 - LOADAVG_FACTOR_15F);
     MUTEX_UNLOCK(&mutex);
 }
 
@@ -84,7 +86,8 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     if (s != ERROR_SUCCESS) {
         PyErr_Format(
             PyExc_RuntimeError,
-            "PdhAddEnglishCounterW failed. Performance counters may be disabled."
+            "PdhAddEnglishCounterW failed. Performance counters may be "
+            "disabled."
         );
         return NULL;
     }
@@ -105,10 +108,10 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
         &waitHandle,
         event,
         (WAITORTIMERCALLBACK)LoadAvgCallback,
-        (PVOID)
-        hCounter,
+        (PVOID)hCounter,
         INFINITE,
-        WT_EXECUTEDEFAULT);
+        WT_EXECUTEDEFAULT
+    );
 
     if (ret == 0) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("RegisterWaitForSingleObject");
@@ -132,5 +135,7 @@ psutil_get_loadavg(PyObject *self, PyObject *args) {
     double load_avg_5m_l = load_avg_5m;
     double load_avg_15m_l = load_avg_15m;
     MUTEX_UNLOCK(&mutex);
-    return Py_BuildValue("(ddd)", load_avg_1m_l, load_avg_5m_l, load_avg_15m_l);
+    return Py_BuildValue(
+        "(ddd)", load_avg_1m_l, load_avg_5m_l, load_avg_15m_l
+    );
 }

@@ -12,7 +12,7 @@
 /* fix compilation issue on SunOS 5.10, see:
  * https://github.com/giampaolo/psutil/issues/421
  * https://github.com/giampaolo/psutil/issues/1077
-*/
+ */
 
 #define _STRUCTURED_PROC 1
 #define NEW_MIB_COMPLIANT 1
@@ -20,8 +20,8 @@
 #include <Python.h>
 
 #if !defined(_LP64) && _FILE_OFFSET_BITS == 64
-#  undef _FILE_OFFSET_BITS
-#  undef _LARGEFILE64_SOURCE
+    #undef _FILE_OFFSET_BITS
+    #undef _LARGEFILE64_SOURCE
 #endif
 
 #include <inet/tcp.h>

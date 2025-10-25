@@ -22,7 +22,7 @@
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
     // fetch sysctl "kern.boottime"
-    static int request[2] = { CTL_KERN, KERN_BOOTTIME };
+    static int request[2] = {CTL_KERN, KERN_BOOTTIME};
     struct timeval boottime;
 
     if (psutil_sysctl(request, 2, &boottime, sizeof(boottime)) != 0)

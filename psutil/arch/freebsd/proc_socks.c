@@ -10,13 +10,13 @@
 #include <Python.h>
 #include <sys/param.h>
 #include <sys/user.h>
-#include <sys/socketvar.h>    // for struct xsocket
+#include <sys/socketvar.h>  // for struct xsocket
 #include <sys/un.h>
 #include <sys/sysctl.h>
-#include <netinet/in.h>   // for xinpcb struct
+#include <netinet/in.h>  // for xinpcb struct
 #include <netinet/in_pcb.h>
-#include <netinet/tcp_var.h>   // for struct xtcpcb
-#include <arpa/inet.h>         // for inet_ntop()
+#include <netinet/tcp_var.h>  // for struct xtcpcb
+#include <arpa/inet.h>  // for inet_ntop()
 #include <libutil.h>
 
 #include "../../arch/all/init.h"
@@ -90,12 +90,19 @@ psutil_sockaddr_addrlen(int family) {
 
 
 static int
-psutil_sockaddr_matches(int family, int port, void *pcb_addr,
-                        struct sockaddr_storage *ss) {
+psutil_sockaddr_matches(
+    int family, int port, void *pcb_addr, struct sockaddr_storage *ss
+) {
     if (psutil_sockaddr_port(family, ss) != port)
         return (0);
-    return (memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
-                   psutil_sockaddr_addrlen(family)) == 0);
+    return (
+        memcmp(
+            psutil_sockaddr_addr(family, ss),
+            pcb_addr,
+            psutil_sockaddr_addrlen(family)
+        )
+        == 0
+    );
 }
 
 
@@ -115,9 +122,9 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
 
     oxig = xig = (struct xinpgen *)buf;
     for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
-            xig->xig_len > sizeof(struct xinpgen);
-            xig = (struct xinpgen *)((char *)xig + xig->xig_len)) {
-
+         xig->xig_len > sizeof(struct xinpgen);
+         xig = (struct xinpgen *)((char *)xig + xig->xig_len))
+    {
 #if __FreeBSD_version >= 1200026
         tp = (struct xtcpcb *)xig;
         inp = &tp->xt_inp;
@@ -128,43 +135,60 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
         so = &((struct xtcpcb *)xig)->xt_socket;
 #endif
 
-        if (so->so_type != kif->kf_sock_type ||
-                so->xso_family != kif->kf_sock_domain ||
-                so->xso_protocol != kif->kf_sock_protocol)
+        if (so->so_type != kif->kf_sock_type
+            || so->xso_family != kif->kf_sock_domain
+            || so->xso_protocol != kif->kf_sock_protocol)
             continue;
 
         if (kif->kf_sock_domain == AF_INET) {
             if (!psutil_sockaddr_matches(
-                    AF_INET, inp->inp_lport, &inp->inp_laddr,
+                    AF_INET,
+                    inp->inp_lport,
+                    &inp->inp_laddr,
 #if __FreeBSD_version < 1200031
-                    &kif->kf_sa_local))
+                    &kif->kf_sa_local
+                ))
 #else
-                    &kif->kf_un.kf_sock.kf_sa_local))
+                    &kif->kf_un.kf_sock.kf_sa_local
+                ))
 #endif
                 continue;
             if (!psutil_sockaddr_matches(
-                    AF_INET, inp->inp_fport, &inp->inp_faddr,
+                    AF_INET,
+                    inp->inp_fport,
+                    &inp->inp_faddr,
 #if __FreeBSD_version < 1200031
-                    &kif->kf_sa_peer))
+                    &kif->kf_sa_peer
+                ))
 #else
-                    &kif->kf_un.kf_sock.kf_sa_peer))
+                    &kif->kf_un.kf_sock.kf_sa_peer
+                ))
 #endif
                 continue;
-        } else {
+        }
+        else {
             if (!psutil_sockaddr_matches(
-                    AF_INET6, inp->inp_lport, &inp->in6p_laddr,
+                    AF_INET6,
+                    inp->inp_lport,
+                    &inp->in6p_laddr,
 #if __FreeBSD_version < 1200031
-                    &kif->kf_sa_local))
+                    &kif->kf_sa_local
+                ))
 #else
-                    &kif->kf_un.kf_sock.kf_sa_local))
+                    &kif->kf_un.kf_sock.kf_sa_local
+                ))
 #endif
                 continue;
             if (!psutil_sockaddr_matches(
-                    AF_INET6, inp->inp_fport, &inp->in6p_faddr,
+                    AF_INET6,
+                    inp->inp_fport,
+                    &inp->in6p_faddr,
 #if __FreeBSD_version < 1200031
-                    &kif->kf_sa_peer))
+                    &kif->kf_sa_peer
+                ))
 #else
-                    &kif->kf_un.kf_sock.kf_sa_peer))
+                    &kif->kf_un.kf_sock.kf_sa_peer
+                ))
 #endif
                 continue;
         }
@@ -173,7 +197,6 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
     }
     return NULL;
 }
-
 
 
 PyObject *
@@ -202,8 +225,9 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid,
-                           &py_af_filter, &py_type_filter))
+    if (!PyArg_ParseTuple(
+            args, _Py_PARSE_PID "OO", &pid, &py_af_filter, &py_type_filter
+        ))
     {
         goto error;
     }
@@ -248,8 +272,9 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
             if (inseq == 0)
                 continue;
             // IPv4 / IPv6 socket
-            if ((kif->kf_sock_domain == AF_INET) ||
-                    (kif->kf_sock_domain == AF_INET6)) {
+            if ((kif->kf_sock_domain == AF_INET)
+                || (kif->kf_sock_domain == AF_INET6))
+            {
                 // fill status
                 state = PSUTIL_CONN_NONE;
                 if (kif->kf_sock_type == SOCK_STREAM) {
@@ -261,35 +286,49 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 // build addr and port
                 inet_ntop(
                     kif->kf_sock_domain,
-                    psutil_sockaddr_addr(kif->kf_sock_domain,
+                    psutil_sockaddr_addr(
+                        kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
-                                         &kif->kf_sa_local),
+                        &kif->kf_sa_local
+                    ),
 #else
-                                         &kif->kf_un.kf_sock.kf_sa_local),
+                        &kif->kf_un.kf_sock.kf_sa_local
+                    ),
 #endif
                     lip,
-                    sizeof(lip));
+                    sizeof(lip)
+                );
                 inet_ntop(
                     kif->kf_sock_domain,
-                    psutil_sockaddr_addr(kif->kf_sock_domain,
+                    psutil_sockaddr_addr(
+                        kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
-                                         &kif->kf_sa_peer),
+                        &kif->kf_sa_peer
+                    ),
 #else
-                                         &kif->kf_un.kf_sock.kf_sa_peer),
+                        &kif->kf_un.kf_sock.kf_sa_peer
+                    ),
 #endif
                     rip,
-                    sizeof(rip));
-                lport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
+                    sizeof(rip)
+                );
+                lport = htons(psutil_sockaddr_port(
+                    kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
-                                                   &kif->kf_sa_local));
+                    &kif->kf_sa_local
+                ));
 #else
-                                                   &kif->kf_un.kf_sock.kf_sa_local));
+                    &kif->kf_un.kf_sock.kf_sa_local
+                ));
 #endif
-                rport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
+                rport = htons(psutil_sockaddr_port(
+                    kif->kf_sock_domain,
 #if __FreeBSD_version < 1200031
-                                                   &kif->kf_sa_peer));
+                    &kif->kf_sa_peer
+                ));
 #else
-                                                   &kif->kf_un.kf_sock.kf_sa_peer));
+                    &kif->kf_un.kf_sock.kf_sa_peer
+                ));
 #endif
 
                 // construct python tuple/list
@@ -328,12 +367,16 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 sun = (struct sockaddr_un *)&kif->kf_un.kf_sock.kf_sa_local;
 #endif
                 snprintf(
-                    path, sizeof(path), "%.*s",
-                    (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
-                    sun->sun_path);
+                    path,
+                    sizeof(path),
+                    "%.*s",
+                    (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))
+                    ),
+                    sun->sun_path
+                );
 
                 py_laddr = PyUnicode_DecodeFSDefault(path);
-                if (! py_laddr)
+                if (!py_laddr)
                     goto error;
 
                 py_tuple = Py_BuildValue(

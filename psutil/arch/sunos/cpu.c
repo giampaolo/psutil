@@ -34,11 +34,13 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                 PyErr_SetFromErrno(PyExc_OSError);
                 goto error;
             }
-            py_cputime = Py_BuildValue("ffff",
-                                       (float)cs.cpu_sysinfo.cpu[CPU_USER],
-                                       (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
-                                       (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
-                                       (float)cs.cpu_sysinfo.cpu[CPU_WAIT]);
+            py_cputime = Py_BuildValue(
+                "ffff",
+                (float)cs.cpu_sysinfo.cpu[CPU_USER],
+                (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
+                (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
+                (float)cs.cpu_sysinfo.cpu[CPU_WAIT]
+            );
             if (py_cputime == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_cputime))
@@ -127,8 +129,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     }
 
     kstat_close(kc);
-    return Py_BuildValue(
-        "IIII", ctx_switches, interrupts, syscalls, traps);
+    return Py_BuildValue("IIII", ctx_switches, interrupts, syscalls, traps);
 
 error:
     if (kc != NULL)

@@ -66,13 +66,15 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_port_t mport = mach_host_self();
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "mach_host_self() returned MACH_PORT_NULL");
+        PyErr_SetString(
+            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
+        );
         return NULL;
     }
 
-    error = host_statistics(mport, HOST_CPU_LOAD_INFO,
-                            (host_info_t)&r_load, &count);
+    error = host_statistics(
+        mport, HOST_CPU_LOAD_INFO, (host_info_t)&r_load, &count
+    );
     mach_port_deallocate(mach_task_self(), mport);
 
     if (error != KERN_SUCCESS) {
@@ -101,8 +103,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     struct vmmeter vmstat;
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "mach_host_self() returned MACH_PORT_NULL");
+        PyErr_SetString(
+            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
+        );
         return NULL;
     }
 
@@ -158,8 +161,9 @@ psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
 
     while ((entry = IOIteratorNext(iter)) != IO_OBJECT_NULL) {
         io_name_t name;
-        if (IORegistryEntryGetName(entry, name) == KERN_SUCCESS &&
-            strcmp(name, "pmgr") == 0) {
+        if (IORegistryEntryGetName(entry, name) == KERN_SUCCESS
+            && strcmp(name, "pmgr") == 0)
+        {
             found = 1;
             break;
         }
@@ -198,8 +202,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     if (!psutil_find_pmgr_entry(&entry)) {
         PyErr_SetString(
-            PyExc_RuntimeError,
-            "'pmgr' entry not found in AppleARMIODevice"
+            PyExc_RuntimeError, "'pmgr' entry not found in AppleARMIODevice"
         );
         return NULL;
     }
@@ -211,12 +214,9 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0
     );
 
-    if (!pCoreRef ||
-        !eCoreRef ||
-        CFGetTypeID(pCoreRef) != CFDataGetTypeID() ||
-        CFGetTypeID(eCoreRef) != CFDataGetTypeID() ||
-        CFDataGetLength(pCoreRef) < 8 ||
-        CFDataGetLength(eCoreRef) < 4)
+    if (!pCoreRef || !eCoreRef || CFGetTypeID(pCoreRef) != CFDataGetTypeID()
+        || CFGetTypeID(eCoreRef) != CFDataGetTypeID()
+        || CFDataGetLength(pCoreRef) < 8 || CFDataGetLength(eCoreRef) < 4)
     {
         PyErr_SetString(PyExc_RuntimeError, "invalid CPU frequency data");
         goto cleanup;

@@ -21,7 +21,7 @@
 #endif
 
 static PyMethodDef mod_methods[] = {
-    // --- per-process functions
+// --- per-process functions
 #ifdef PSUTIL_HAS_IOPRIO
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},

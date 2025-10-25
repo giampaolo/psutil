@@ -12,10 +12,11 @@
 
 
 #ifndef _ARRAYSIZE
-#define _ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
+    #define _ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 #endif
 
-static char *psutil_get_drive_type(int type) {
+static char *
+psutil_get_drive_type(int type) {
     switch (type) {
         case DRIVE_FIXED:
             return "fixed";
@@ -63,7 +64,9 @@ psutil_disk_usage(PyObject *self, PyObject *args) {
     PyMem_Free(path);
 
     if (retval == 0)
-        return PyErr_SetExcFromWindowsErrWithFilenameObject(PyExc_OSError, 0, py_path);
+        return PyErr_SetExcFromWindowsErrWithFilenameObject(
+            PyExc_OSError, 0, py_path
+        );
 
     return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
 }
@@ -96,8 +99,15 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     for (devNum = 0; devNum <= 32; ++devNum) {
         py_tuple = NULL;
         sprintf_s(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
-        hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                             NULL, OPEN_EXISTING, 0, NULL);
+        hDevice = CreateFile(
+            szDevice,
+            0,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            0,
+            NULL
+        );
         if (hDevice == INVALID_HANDLE_VALUE)
             continue;
 
@@ -107,8 +117,15 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         while (1) {
             i += 1;
             ret = DeviceIoControl(
-                hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0, &diskPerformance,
-                ioctrlSize, &dwSize, NULL);
+                hDevice,
+                IOCTL_DISK_PERFORMANCE,
+                NULL,
+                0,
+                &diskPerformance,
+                ioctrlSize,
+                &dwSize,
+                NULL
+            );
             if (ret != 0)
                 break;  // OK!
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
@@ -124,14 +141,20 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 //      1364/job/ascpdi271b06jle3
                 // Assume it means we're dealing with some exotic disk
                 // and go on.
-                psutil_debug("DeviceIoControl -> ERROR_INVALID_FUNCTION; "
-                             "ignore PhysicalDrive%i", devNum);
+                psutil_debug(
+                    "DeviceIoControl -> ERROR_INVALID_FUNCTION; "
+                    "ignore PhysicalDrive%i",
+                    devNum
+                );
                 goto next;
             }
             else if (GetLastError() == ERROR_NOT_SUPPORTED) {
                 // Again, let's assume we're dealing with some exotic disk.
-                psutil_debug("DeviceIoControl -> ERROR_NOT_SUPPORTED; "
-                             "ignore PhysicalDrive%i", devNum);
+                psutil_debug(
+                    "DeviceIoControl -> ERROR_NOT_SUPPORTED; "
+                    "ignore PhysicalDrive%i",
+                    devNum
+                );
                 goto next;
             }
             // XXX: it seems we should also catch ERROR_INVALID_PARAMETER:
@@ -155,17 +178,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             diskPerformance.BytesWritten,
             // convert to ms:
             // https://github.com/giampaolo/psutil/issues/1012
-            (unsigned long long)
-                (diskPerformance.ReadTime.QuadPart) / 10000000,
-            (unsigned long long)
-                (diskPerformance.WriteTime.QuadPart) / 10000000);
+            (unsigned long long)(diskPerformance.ReadTime.QuadPart) / 10000000,
+            (unsigned long long)(diskPerformance.WriteTime.QuadPart) / 10000000
+        );
         if (!py_tuple)
             goto error;
         if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_tuple))
             goto error;
         Py_CLEAR(py_tuple);
 
-next:
+    next:
         CloseHandle(hDevice);
     }
 
@@ -197,8 +219,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     unsigned int old_mode = 0;
     char opts[50];
     HANDLE mp_h;
-    BOOL mp_flag= TRUE;
-    LPTSTR fs_type[MAX_PATH + 1] = { 0 };
+    BOOL mp_flag = TRUE;
+    LPTSTR fs_type[MAX_PATH + 1] = {0};
     DWORD pflags = 0;
     DWORD lpMaximumComponentLength = 0;  // max file name
     PyObject *py_all;
@@ -213,7 +235,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     // see https://github.com/giampaolo/psutil/issues/264
     old_mode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    if (! PyArg_ParseTuple(args, "O", &py_all))
+    if (!PyArg_ParseTuple(args, "O", &py_all))
         goto error;
     all = PyObject_IsTrue(py_all);
 
@@ -237,16 +259,16 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
         // by default we only show hard drives and cd-roms
         if (all == 0) {
-            if ((type == DRIVE_UNKNOWN) ||
-                    (type == DRIVE_NO_ROOT_DIR) ||
-                    (type == DRIVE_REMOTE) ||
-                    (type == DRIVE_RAMDISK)) {
+            if ((type == DRIVE_UNKNOWN) || (type == DRIVE_NO_ROOT_DIR)
+                || (type == DRIVE_REMOTE) || (type == DRIVE_RAMDISK))
+            {
                 goto next;
             }
             // floppy disk: skip it by default as it introduces a
             // considerable slowdown.
-            if ((type == DRIVE_REMOVABLE) &&
-                    (strcmp(drive_letter, "A:\\")  == 0)) {
+            if ((type == DRIVE_REMOVABLE)
+                && (strcmp(drive_letter, "A:\\") == 0))
+            {
                 goto next;
             }
         }
@@ -259,7 +281,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             &lpMaximumComponentLength,
             &pflags,
             (LPTSTR)fs_type,
-            _ARRAYSIZE(fs_type));
+            _ARRAYSIZE(fs_type)
+        );
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
@@ -282,7 +305,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             // (checks first to know if we can even have mount points)
             if (pflags & FILE_SUPPORTS_REPARSE_POINTS) {
                 mp_h = FindFirstVolumeMountPoint(
-                    drive_letter, mp_buf, MAX_PATH);
+                    drive_letter, mp_buf, MAX_PATH
+                );
                 if (mp_h != INVALID_HANDLE_VALUE) {
                     mp_flag = TRUE;
                     while (mp_flag) {
@@ -294,12 +318,13 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                             "(ssss)",
                             drive_letter,
                             mp_path,
-                            fs_type,                   // typically "NTFS"
+                            fs_type,  // typically "NTFS"
                             opts
                         );
 
-                        if (!py_tuple ||
-                                PyList_Append(py_retlist, py_tuple) == -1) {
+                        if (!py_tuple
+                            || PyList_Append(py_retlist, py_tuple) == -1)
+                        {
                             FindVolumeMountPointClose(mp_h);
                             goto error;
                         }
@@ -308,11 +333,11 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
                         // Continue looking for more mount points
                         mp_flag = FindNextVolumeMountPoint(
-                            mp_h, mp_buf, MAX_PATH);
+                            mp_h, mp_buf, MAX_PATH
+                        );
                     }
                     FindVolumeMountPointClose(mp_h);
                 }
-
             }
         }
 
@@ -334,7 +359,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
         goto next;
 
-next:
+    next:
         drive_letter = strchr(drive_letter, 0) + 1;
     }
 

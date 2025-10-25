@@ -25,7 +25,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
     PERFORMANCE_INFORMATION perfInfo;
 
-    if (! GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
+    if (!GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
@@ -35,12 +35,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     availPhys = perfInfo.PhysicalAvailable * pageSize;
     totalSys = perfInfo.CommitLimit * pageSize;
     availSys = totalSys - perfInfo.CommitTotal * pageSize;
-    return Py_BuildValue(
-        "(LLLL)",
-        totalPhys,
-        availPhys,
-        totalSys,
-        availSys);
+    return Py_BuildValue("(LLLL)", totalPhys, availPhys, totalSys, availSys);
 }
 
 
@@ -65,7 +60,8 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
         PdhCloseQuery(hQuery);
         PyErr_Format(
             PyExc_RuntimeError,
-            "PdhAddEnglishCounterW failed. Performance counters may be disabled."
+            "PdhAddEnglishCounterW failed. Performance counters may be "
+            "disabled."
         );
         return NULL;
     }
@@ -78,11 +74,13 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
     }
     else {
         s = PdhGetFormattedCounterValue(
-            (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue);
+            (PDH_HCOUNTER)hCounter, PDH_FMT_DOUBLE, 0, &counterValue
+        );
         if (s != ERROR_SUCCESS) {
             PdhCloseQuery(hQuery);
             PyErr_Format(
-                PyExc_RuntimeError, "PdhGetFormattedCounterValue failed");
+                PyExc_RuntimeError, "PdhGetFormattedCounterValue failed"
+            );
             return NULL;
         }
         percentUsage = counterValue.doubleValue;

@@ -43,17 +43,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         }
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
-        if (! py_dev)
+        if (!py_dev)
             goto error;
         py_mountp = PyUnicode_DecodeFSDefault(entry->mnt_dir);
-        if (! py_mountp)
+        if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue("(OOss)",
-                                 py_dev,             // device
-                                 py_mountp,          // mount point
-                                 entry->mnt_type,    // fs type
-                                 entry->mnt_opts);   // options
-        if (! py_tuple)
+        py_tuple = Py_BuildValue(
+            "(OOss)",
+            py_dev,  // device
+            py_mountp,  // mount point
+            entry->mnt_type,  // fs type
+            entry->mnt_opts
+        );  // options
+        if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;

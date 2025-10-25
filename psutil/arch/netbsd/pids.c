@@ -29,7 +29,9 @@ _psutil_pids(pid_t **pids_array, int *pids_count) {
         return -1;
     }
 
-    result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &cnt);
+    result = kvm_getproc2(
+        kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &cnt
+    );
     if (result == NULL) {
         PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() failed");
         kvm_close(kd);

@@ -30,10 +30,11 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
         PyErr_SetFromErrno(PyExc_OSError);
         return 0;
     }
-    if (nbytes != (ssize_t) size) {
+    if (nbytes != (ssize_t)size) {
         close(fd);
         PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch");
+            PyExc_RuntimeError, "read() file structure size mismatch"
+        );
         return 0;
     }
     close(fd);
@@ -52,27 +53,27 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     psinfo_t info;
     const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
         "ikkdiiikiiii",
-        info.pr_ppid,              // parent pid
-        info.pr_rssize,            // rss
-        info.pr_size,              // vms
+        info.pr_ppid,  // parent pid
+        info.pr_rssize,  // rss
+        info.pr_size,  // vms
         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
-        info.pr_lwp.pr_nice,       // nice
-        info.pr_nlwp,              // no. of threads
-        info.pr_lwp.pr_state,      // status code
-        info.pr_ttydev,            // tty nr
-        (int)info.pr_uid,          // real user id
-        (int)info.pr_euid,         // effective user id
-        (int)info.pr_gid,          // real group id
-        (int)info.pr_egid          // effective group id
-        );
+        info.pr_lwp.pr_nice,  // nice
+        info.pr_nlwp,  // no. of threads
+        info.pr_lwp.pr_state,  // status code
+        info.pr_ttydev,  // tty nr
+        (int)info.pr_uid,  // real user id
+        (int)info.pr_euid,  // effective user id
+        (int)info.pr_gid,  // real group id
+        (int)info.pr_egid  // effective group id
+    );
 }
 
 
@@ -95,18 +96,19 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     PyObject *py_args_list = NULL;
     PyObject *py_rettuple = NULL;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
     py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
     if (!py_name)
         goto error;
 
-    /* SunOS truncates arguments to length PRARGSZ and has them space-separated.
-     * The only way to retrieve full properly-split command line is to parse process memory */
+    /* SunOS truncates arguments to length PRARGSZ and has them
+     * space-separated. The only way to retrieve full properly-split command
+     * line is to parse process memory */
     argv = psutil_read_raw_args(info, procfs_path, &argc);
     if (argv) {
         py_args_list = PyList_New(argc);
@@ -189,41 +191,41 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     PyObject *py_envval = NULL;
     PyObject *py_retdict = PyDict_New();
 
-    if (! py_retdict)
+    if (!py_retdict)
         return PyErr_NoMemory();
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         goto error;
 
-    if (! info.pr_envp) {
+    if (!info.pr_envp) {
         AccessDenied("/proc/pid/psinfo struct not set");
         goto error;
     }
 
     env = psutil_read_raw_env(info, procfs_path, &env_count);
-    if (! env && env_count != 0)
+    if (!env && env_count != 0)
         goto error;
 
-    for (i=0; i<env_count; i++) {
-        if (! env[i])
+    for (i = 0; i < env_count; i++) {
+        if (!env[i])
             break;
 
         dm = strchr(env[i], '=');
-        if (! dm)
+        if (!dm)
             continue;
 
         *dm = '\0';
 
         py_envname = PyUnicode_DecodeFSDefault(env[i]);
-        if (! py_envname)
+        if (!py_envname)
             goto error;
 
-        py_envval = PyUnicode_DecodeFSDefault(dm+1);
-        if (! py_envname)
+        py_envval = PyUnicode_DecodeFSDefault(dm + 1);
+        if (!py_envname)
             goto error;
 
         if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
@@ -236,7 +238,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     psutil_free_cstrings_array(env, env_count);
     return py_retdict;
 
- error:
+error:
     if (env && env_count >= 0)
         psutil_free_cstrings_array(env, env_count);
 
@@ -257,18 +259,18 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     pstatus_t info;
     const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/status", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
     return Py_BuildValue(
         "(dddd)",
-         PSUTIL_TV2DOUBLE(info.pr_utime),
-         PSUTIL_TV2DOUBLE(info.pr_stime),
-         PSUTIL_TV2DOUBLE(info.pr_cutime),
-         PSUTIL_TV2DOUBLE(info.pr_cstime)
+        PSUTIL_TV2DOUBLE(info.pr_utime),
+        PSUTIL_TV2DOUBLE(info.pr_stime),
+        PSUTIL_TV2DOUBLE(info.pr_cutime),
+        PSUTIL_TV2DOUBLE(info.pr_cstime)
     );
 }
 
@@ -289,7 +291,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     ssize_t nbytes;
     const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
     sprintf(path, "%s/%i/lpsinfo", procfs_path, pid);
@@ -307,7 +309,8 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     }
     if (nbytes != sizeof(header)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch");
+            PyExc_RuntimeError, "read() file structure size mismatch"
+        );
         goto error;
     }
 
@@ -328,7 +331,8 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     }
     if (nbytes != size) {
         PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch");
+            PyExc_RuntimeError, "read() file structure size mismatch"
+        );
         goto error;
     }
 
@@ -356,14 +360,20 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     prcred_t info;
     const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/cred", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
-    return Py_BuildValue("iiiiii",
-                         info.pr_ruid, info.pr_euid, info.pr_suid,
-                         info.pr_rgid, info.pr_egid, info.pr_sgid);
+    return Py_BuildValue(
+        "iiiiii",
+        info.pr_ruid,
+        info.pr_euid,
+        info.pr_suid,
+        info.pr_rgid,
+        info.pr_egid,
+        info.pr_sgid
+    );
 }
 
 
@@ -377,10 +387,10 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     prusage_t info;
     const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/usage", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
 }
@@ -434,14 +444,14 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
     lwpstatus_t info;
     const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "iis", &pid, &tid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "iis", &pid, &tid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/lwp/%i/lwpstatus", procfs_path, pid, tid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
-    return Py_BuildValue("dd",
-                         PSUTIL_TV2DOUBLE(info.pr_utime),
-                         PSUTIL_TV2DOUBLE(info.pr_stime));
+    return Py_BuildValue(
+        "dd", PSUTIL_TV2DOUBLE(info.pr_utime), PSUTIL_TV2DOUBLE(info.pr_stime)
+    );
 }
 
 
@@ -472,11 +482,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         goto error;
 
     sprintf(path, "%s/%i/status", procfs_path, pid);
-    if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
+    if (!psutil_file_to_struct(path, (void *)&status, sizeof(status)))
         goto error;
 
     sprintf(path, "%s/%i/xmap", procfs_path, pid);
@@ -514,10 +524,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         pr_addr_sz = p->pr_vaddr + p->pr_size;
 
         // perms
-        sprintf(perms, "%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
-                p->pr_mflags & MA_WRITE ? 'w' : '-',
-                p->pr_mflags & MA_EXEC ? 'x' : '-',
-                p->pr_mflags & MA_SHARED ? 's' : '-');
+        sprintf(
+            perms,
+            "%c%c%c%c",
+            p->pr_mflags & MA_READ ? 'r' : '-',
+            p->pr_mflags & MA_WRITE ? 'w' : '-',
+            p->pr_mflags & MA_EXEC ? 'x' : '-',
+            p->pr_mflags & MA_SHARED ? 's' : '-'
+        );
 
         // name
         if (strlen(p->pr_mapname) > 0) {
@@ -531,13 +545,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 stk_base_sz = status.pr_stkbase + status.pr_stksize;
                 brk_base_sz = status.pr_brkbase + status.pr_brksize;
 
-                if ((pr_addr_sz > status.pr_stkbase) &&
-                        (p->pr_vaddr < stk_base_sz)) {
+                if ((pr_addr_sz > status.pr_stkbase)
+                    && (p->pr_vaddr < stk_base_sz))
+                {
                     name = "[stack]";
                 }
-                else if ((p->pr_mflags & MA_ANON) && \
-                         (pr_addr_sz > status.pr_brkbase) && \
-                         (p->pr_vaddr < brk_base_sz)) {
+                else if ((p->pr_mflags & MA_ANON)
+                         && (pr_addr_sz > status.pr_brkbase)
+                         && (p->pr_vaddr < brk_base_sz))
+                {
                     name = "[heap]";
                 }
                 else {
@@ -547,7 +563,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         }
 
         py_path = PyUnicode_DecodeFSDefault(name);
-        if (! py_path)
+        if (!py_path)
             goto error;
         py_tuple = Py_BuildValue(
             "kksOkkk",
@@ -557,7 +573,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             py_path,
             (unsigned long)p->pr_rss * p->pr_pagesize,
             (unsigned long)p->pr_anon * p->pr_pagesize,
-            (unsigned long)p->pr_locked * p->pr_pagesize);
+            (unsigned long)p->pr_locked * p->pr_pagesize
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

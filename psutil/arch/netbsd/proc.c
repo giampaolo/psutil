@@ -14,7 +14,7 @@
 #include "../../arch/all/init.h"
 
 
-#define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
+#define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
@@ -37,7 +37,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc) {
     mib[4] = size;
     mib[5] = 1;
 
-    ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
+    ret = sysctl((int *)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
@@ -51,8 +51,6 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc) {
 }
 
 
-
-
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
@@ -60,11 +58,11 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     char path[MAXPATHLEN];
     size_t pathlen = sizeof path;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
 #ifdef KERN_PROC_CWD
-    int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
+    int name[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
     if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT)
             NoSuchProcess("sysctl -> ENOENT");
@@ -157,7 +155,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc2 kp;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -178,7 +176,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     mib[0] = CTL_KERN;
@@ -201,8 +199,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // set slot count for NetBSD KERN_LWP
     mib[4] = size / sizeof(size_t);
 
-    if (psutil_sysctl_malloc(
-            mib, __arraycount(mib), (char **)&kl, &size) != 0) {
+    if (psutil_sysctl_malloc(mib, __arraycount(mib), (char **)&kl, &size) != 0)
+    {
         goto error;
     }
     if (size == 0) {
@@ -255,7 +253,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     mib[0] = CTL_KERN;
@@ -265,7 +263,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
     while (1) {
         if (psutil_sysctl_malloc(
-                mib, __arraycount(mib), (char **)&procargs, &len) != 0) {
+                mib, __arraycount(mib), (char **)&procargs, &len
+            )
+            != 0)
+        {
             if (errno == EBUSY) {
                 // Usually happens with TestProcess.test_long_cmdline. See:
                 // https://github.com/giampaolo/psutil/issues/2250
@@ -317,7 +318,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     struct kinfo_file *freep;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     errno = 0;

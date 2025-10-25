@@ -37,21 +37,21 @@ psutil_users(PyObject *self, PyObject *args) {
         if (*ut.ut_name == '\0')
             continue;
         py_username = PyUnicode_DecodeFSDefault(ut.ut_name);
-        if (! py_username)
+        if (!py_username)
             goto error;
         py_tty = PyUnicode_DecodeFSDefault(ut.ut_line);
-        if (! py_tty)
+        if (!py_tty)
             goto error;
         py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
-        if (! py_hostname)
+        if (!py_hostname)
             goto error;
         py_tuple = Py_BuildValue(
             "(OOOdO)",
-            py_username,        // username
-            py_tty,             // tty
-            py_hostname,        // hostname
+            py_username,  // username
+            py_tty,  // tty
+            py_hostname,  // hostname
             (double)ut.ut_time,  // start time
-            Py_None              // pid
+            Py_None  // pid
         );
         if (!py_tuple)
             goto error;

@@ -43,7 +43,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     // allocate buffer dynamically based on actual CPU count
-    long (*cpu_time)[CPUSTATES] = malloc(ncpu * sizeof(*cpu_time));
+    long(*cpu_time)[CPUSTATES] = malloc(ncpu * sizeof(*cpu_time));
     if (!cpu_time) {
         PyErr_NoMemory();
         goto error;
@@ -63,7 +63,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
             (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
             (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC);
+            (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC
+        );
         if (!py_cputime) {
             free(cpu_time);
             goto error;
@@ -93,7 +94,9 @@ psutil_cpu_topology(PyObject *self, PyObject *args) {
     PyObject *py_str;
 
     if (psutil_sysctlbyname_malloc(
-            "kern.sched.topology_spec", &topology, &size) != 0)
+            "kern.sched.topology_spec", &topology, &size
+        )
+        != 0)
     {
         psutil_debug("ignore sysctlbyname('kern.sched.topology_spec') error");
         Py_RETURN_NONE;
@@ -149,7 +152,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     char available_freq_levels[1000];
     size_t size;
 
-    if (! PyArg_ParseTuple(args, "i", &core))
+    if (!PyArg_ParseTuple(args, "i", &core))
         return NULL;
 
     // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
