@@ -11,27 +11,28 @@
 // We do this so that all .c files have to include only one header
 // (ourselves, init.h).
 
+// clang-format off
 #if defined(PSUTIL_POSIX)
-#include "../../arch/posix/init.h"
+    #include "../../arch/posix/init.h"
 #endif
-#if defined(PSUTIL_BSD)
-#include "../../arch/bsd/init.h"
+    #if defined(PSUTIL_BSD)
+    #include "../../arch/bsd/init.h"
 #endif
 
 #if defined(PSUTIL_LINUX)
-#include "../../arch/linux/init.h"
+    #include "../../arch/linux/init.h"
 #elif defined(PSUTIL_WINDOWS)
-#include "../../arch/windows/init.h"
+    #include "../../arch/windows/init.h"
 #elif defined(PSUTIL_OSX)
-#include "../../arch/osx/init.h"
+    #include "../../arch/osx/init.h"
 #elif defined(PSUTIL_FREEBSD)
-#include "../../arch/freebsd/init.h"
+    #include "../../arch/freebsd/init.h"
 #elif defined(PSUTIL_OPENBSD)
-#include "../../arch/openbsd/init.h"
+    #include "../../arch/openbsd/init.h"
 #elif defined(PSUTIL_NETBSD)
-#include "../../arch/netbsd/init.h"
+    #include "../../arch/netbsd/init.h"
 #elif defined(PSUTIL_SUNOS)
-#include "../../arch/sunos/init.h"
+    #include "../../arch/sunos/init.h"
 #endif
 
 // print debug messages when set to 1
@@ -39,7 +40,6 @@ extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
 
-// clang-format off
 #ifdef Py_GIL_DISABLED
     extern PyMutex utxent_lock;
     #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
