@@ -179,7 +179,7 @@ dprint:
 
 lint-c:  ## Run C linter.
 # 	@git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror  # serial exec
-	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format -i {} --dry-run --Werror  # parallel exec
+	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
 lint-rst:  ## Run linter for .rst files.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
@@ -214,7 +214,8 @@ fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
 fix-c:
-	@git ls-files '*.c' '*.h' | xargs clang-format -i
+# 	@git ls-files '*.c' '*.h' | xargs clang-format -i  # serial exec
+	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format -i {}  # parallel exec
 
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
