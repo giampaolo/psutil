@@ -93,7 +93,7 @@ getifaddrs(struct ifaddrs **ifap) {
             cifa->ifa_next = NULL;
 
             if (pifa == NULL)
-                *ifap = cifa; /* first one */
+                *ifap = cifa;  // first one
             else
                 pifa->ifa_next = cifa;
 

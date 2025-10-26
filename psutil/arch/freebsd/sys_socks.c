@@ -343,8 +343,8 @@ psutil_gather_unix(
             py_lpath,  // lpath
             "",  // rath
             PSUTIL_CONN_NONE,  // status
-            xf->xf_pid
-        );  // pid
+            xf->xf_pid  // pid
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

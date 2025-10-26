@@ -53,8 +53,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             py_dev,  // device
             py_mountp,  // mount point
             entry->mnt_type,  // fs type
-            entry->mnt_opts
-        );  // options
+            entry->mnt_opts  // options
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

@@ -106,9 +106,9 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     if (!py_name)
         goto error;
 
-    /* SunOS truncates arguments to length PRARGSZ and has them
-     * space-separated. The only way to retrieve full properly-split command
-     * line is to parse process memory */
+    // SunOS truncates arguments to length PRARGSZ and has them
+    // space-separated. The only way to retrieve full properly-split
+    // command line is to parse process memory.
     argv = psutil_read_raw_args(info, procfs_path, &argc);
     if (argv) {
         py_args_list = PyList_New(argc);

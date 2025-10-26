@@ -16,8 +16,8 @@ psutil_kread(
     int Kd,  // kernel memory file descriptor
     KA_T addr,  // kernel memory address
     char *buf,  // buffer to receive data
-    size_t len
-) {  // length to read
+    size_t len  // length to read
+) {
     int br;
 
     if (lseek64(Kd, (off64_t)addr, L_SET) == (off64_t)-1) {

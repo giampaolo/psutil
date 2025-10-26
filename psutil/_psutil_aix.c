@@ -513,8 +513,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             py_dev,  // device
             py_mountp,  // mount point
             mt->mnt_type,  // fs type
-            mt->mnt_opts
-        );  // options
+            mt->mnt_opts  // options
+        );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

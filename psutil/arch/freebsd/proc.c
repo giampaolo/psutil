@@ -439,8 +439,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             kve->kve_resident,  // rss
             kve->kve_private_resident,  // private
             kve->kve_ref_count,  // ref count
-            kve->kve_shadow_count
-        );  // shadow count
+            kve->kve_shadow_count  // shadow count
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

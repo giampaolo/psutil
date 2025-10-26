@@ -9,10 +9,10 @@ System related functions. Original code moved in here from
 psutil/_psutil_windows.c in 2023. For reference, here's the GIT blame
 history before the move:
 
-* boot_time():
-https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L51-L60
-* users():
-https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L1103-L1244
+- boot_time():
+  https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L51-L60
+- users():
+  https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L1103-L1244
 */
 
 #include <Python.h>

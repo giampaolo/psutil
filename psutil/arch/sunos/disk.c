@@ -24,7 +24,6 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     kc = kstat_open();
     if (kc == NULL) {
         PyErr_SetFromErrno(PyExc_OSError);
-        ;
         goto error;
     }
     ksp = kc->kc_chain;
@@ -99,8 +98,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             py_dev,  // device
             py_mountp,  // mount point
             mt.mnt_fstype,  // fs type
-            mt.mnt_mntopts
-        );  // options
+            mt.mnt_mntopts  // options
+        );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
