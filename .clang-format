@@ -8,7 +8,6 @@
 ---
 
 BasedOnStyle: Google
-
 AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: true
@@ -77,7 +76,8 @@ AlwaysBreakAfterReturnType: TopLevelDefinitions
 PenaltyBreakAssignment: 400
 PenaltyBreakBeforeFirstCallParameter: 0
 
-# ...otherwise they stay on the same line as other statements
+# Handle macros with no `;` at EOL, so that they don't include the next line
+# into them.
 StatementMacros:
   - Py_BEGIN_ALLOW_THREADS
   - Py_END_ALLOW_THREADS
