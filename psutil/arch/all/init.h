@@ -15,7 +15,7 @@
 #if defined(PSUTIL_POSIX)
     #include "../../arch/posix/init.h"
 #endif
-    #if defined(PSUTIL_BSD)
+#if defined(PSUTIL_BSD)
     #include "../../arch/bsd/init.h"
 #endif
 
