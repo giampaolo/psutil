@@ -103,6 +103,13 @@ class TestFetchAllProcesses(PsutilTestCase):
         # Using a pool in a CI env may result in deadlock, see:
         # https://github.com/giampaolo/psutil/issues/2104
         if USE_PROC_POOL:
+            # The 'fork' method is the only one that does not
+            # create a "resource_tracker" process. The problem
+            # when creating this process is that it ignores
+            # SIGTERM and SIGINT, and this makes "reap_children"
+            # hang... The following code should run on python-3.4
+            # and later.
+            multiprocessing.set_start_method('fork')
             self.pool = multiprocessing.Pool()
 
     def tearDown(self):
