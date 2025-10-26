@@ -124,6 +124,8 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 #endif
 // clang-format on
 
+int psutil_badargs(const char *funcname);
+int psutil_setup(void);
 
 #if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 PyObject *psutil_pids(PyObject *self, PyObject *args);
