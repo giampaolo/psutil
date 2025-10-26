@@ -15,7 +15,7 @@
  * Return the number of logical, active CPUs. Return 0 if undetermined.
  * See discussion at: https://bugs.python.org/issue33166#msg314631
  */
-static unsigned int
+unsigned int
 psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
 

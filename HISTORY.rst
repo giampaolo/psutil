@@ -21,8 +21,12 @@ XXXX-XX-XX
 
 - 2657_: stop publishing prebuilt Linux and Windows wheels for 32-bit Python.
   32-bit CPython is still supported, but psutil must now be built from source.
-  2565_: produce wheels for free-thread cPython 3.13 and 3.14 (patch by
+- 2565_: produce wheels for free-thread cPython 3.13 and 3.14 (patch by
   Lysandros Nikolaou)
+- 2664_: [Windows]: `getloadavg()`_ now accounts for current-running processes
+  using the CPU time, matching Unix behavior. It also now initializes at
+  current load value instead of 0. The wait period is changed to 4.615 seconds
+  to reduce Moire artifacts with processes that fire on integer-second intervals.
 
 **Bug fixes**
 

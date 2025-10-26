@@ -1,4 +1,5 @@
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Copyright (c) 2025, Mingye Wang. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -335,27 +336,69 @@ _loadavg_initialized = False
 _lock = threading.Lock()
 
 
-def _getloadavg_impl():
-    # Drop to 2 decimal points which is what Linux does
-    raw_loads = cext.getloadavg()
-    return tuple(round(load, 2) for load in raw_loads)
+def _getloadavg_impl(selector: str, instant: bool):
+    elems = 4 if instant else 3
+    accum = [0.0] * elems
+    fq = fu = fd = False
+
+    for c in selector:
+        if c == "q":
+            fq = True
+        elif c == "u":
+            fu = True
+        elif c == "d":
+            fd = True
+        else:
+            raise ValueError(f"Bad selector character '{c}' in {selector}")
+
+    qs, us, ds = cext.getloadavg()
+
+    for i, q, u, d in zip(range(elems), qs, us, ds):
+        accum[i] += q if fq else 0.0
+        accum[i] += u if fu else 0.0
+        accum[i] += d if fd else 0.0
+
+    return tuple(accum)
 
 
-def getloadavg():
-    """Return the number of processes in the system run queue averaged
+def getloadavg(selector="qu", instant=False):
+    """Return the number of threads in the system run queues averaged
     over the last 1, 5, and 15 minutes respectively as a tuple.
+
+    Calling this function for the first time will initialize the load
+    average calculation with current system values; this means that
+    real averages will not be available until at least 1 minute has
+    passed.
+
+    The first update happens at 500 ms.
+    After the first update, the counters are updated every 4615 ms
+    (Klaus Ripke's interval).
+
+    :param selector: controls the set of values to be summed:
+        - 'q': number of threads waiting to run
+          (``\\System\\Processor Queue Length``)
+        - 'u': Est. number of threads currently running (from CPU util)
+        - 'd': ``\\PhysicalDisk(_Total)\\Avg. Disk Queue Length``.
+          For initialization uses ``Current Disk Queue Length``.
+
+        ``qu`` is the default and mimicks Unix behavior. ``qud``
+        mimicks Linux behavior. The legacy psutil behavior is ``q``.
+    :type selector: str, optional
+
+    :param instant: if True, return the last-instant load value as the
+        fourth element of the returned tuple.
     """
     global _loadavg_initialized
 
     if _loadavg_initialized:
-        return _getloadavg_impl()
+        return _getloadavg_impl(selector, instant)
 
     with _lock:
         if not _loadavg_initialized:
             cext.init_loadavg_counter()
             _loadavg_initialized = True
 
-    return _getloadavg_impl()
+    return _getloadavg_impl(selector, instant)
 
 
 # =====================================================================
