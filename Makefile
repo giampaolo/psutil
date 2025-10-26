@@ -178,7 +178,8 @@ dprint:
 	@$(DPRINT) check
 
 lint-c:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror
+# 	@git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror  # serial exec
+	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format -i {} --dry-run --Werror  # parallel exec
 
 lint-rst:  ## Run linter for .rst files.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
