@@ -236,7 +236,7 @@ fix-all:  ## Run all code fixers.
 ci-lint:  ## Run all linters on GitHub CI.
 	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
-	dprint --version
+	$(DPRINT) --version
 	clang-format --version
 	${MAKE} lint-all
 
