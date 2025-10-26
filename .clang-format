@@ -1,13 +1,9 @@
-# SPDX-License-Identifier: MIT
+# Re-adapted from: https://gist.github.com/JPHutchins/6ef33a52cc92fc4a71996b32b11724b4
+#   Copyright (c) 2023 Intercreate, Inc.
+#   SPDX-License-Identifier: MIT
+#   Author: J.P. Hutchins <jp@intercreate.io>
 #
-# Copyright (c) 2023 Intercreate, Inc.
-# Author: J.P. Hutchins <jp@intercreate.io>
-#
-# Python(black)-inspired .clang-format for C repositories
-#
-# Includes Zephyr and Arm macro compatibility
-
-# Doc: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# clang-format doc: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
 ---
 
