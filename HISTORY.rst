@@ -1,7 +1,5 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-*Bug tracker at https://github.com/giampaolo/psutil/issues*
-
 7.1.3 (IN DEVELOPMENT)
 ======================
 

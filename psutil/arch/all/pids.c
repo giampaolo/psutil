@@ -4,12 +4,33 @@
  * found in the LICENSE file.
  */
 
-#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 #include <Python.h>
 
 #include "init.h"
 
 
+// Raise OverflowError if Python int value overflowed when converting
+// to pid_t. Raise ValueError if Python int value is negative.
+// Otherwise, return None.
+PyObject *
+psutil_check_pid_range(PyObject *self, PyObject *args) {
+#ifdef PSUTIL_WINDOWS
+    DWORD pid;
+#else
+    pid_t pid;
+#endif
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if (pid < 0) {
+        PyErr_SetString(PyExc_ValueError, "pid must be a positive integer");
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
+
+#if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 PyObject *
 psutil_pids(PyObject *self, PyObject *args) {
 #ifdef PSUTIL_WINDOWS
