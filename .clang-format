@@ -10,18 +10,19 @@
 # Doc: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
 
 ---
+
 BasedOnStyle: Google
 
 AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: Never
+AllowShortBlocksOnASingleLine: Never  # Disallow things like `while (true) { continue; }`
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: Never
-AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never  # Disallow `if (a) return;`
+AllowShortLoopsOnASingleLine: false  # Disallow `while (true) continue;`
 BinPackArguments: false
 BinPackParameters: false
 BraceWrapping:
@@ -59,25 +60,28 @@ SortIncludes: false
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
 
-# Allows this:
-#if !defined(SIZEOF_INT)
-    #define SIZEOF_INT 4
-#endif
+# Force indented #define:
+#    #if !defined(SIZEOF_INT)
+#        #define SIZEOF_INT 4
+#    #endif
 IncludeBlocks: Preserve
 IndentPPDirectives: BeforeHash
 AlignEscapedNewlines: DontAlign
 
-# Allows fun return type and fun definition to stay on 2 different lines:
-# static int
-# foo() {
+# Force fun return type and fun definition to stay on 2 different lines:
+#    static int
+#    foo() {
+#       printf();
+#    }
 AlwaysBreakAfterReturnType: TopLevelDefinitions
 
 # Prevents:
-# foo =
-#    Bar(...)
+#    foo =
+#        Bar(...)
 PenaltyBreakAssignment: 400
 PenaltyBreakBeforeFirstCallParameter: 0
 
+# ...otherwise they stay on the same line as other statements
 StatementMacros:
   - Py_BEGIN_ALLOW_THREADS
   - Py_END_ALLOW_THREADS
