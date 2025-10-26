@@ -10,13 +10,14 @@ against the files which were modified in the commit. Install this with
 "make install-git-hooks".
 """
 
-
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 
 PYTHON = sys.executable
+LINUX = sys.platform.startswith("linux")
 
 
 def term_supports_colors():
@@ -122,12 +123,14 @@ def ruff(files):
         )
 
 
-def c_linter(files):
-    print(f"running clinter ({len(files)})")
-    # XXX: we should escape spaces and possibly other amenities here
-    cmd = [PYTHON, "scripts/internal/clinter.py"] + files
+def clang_format(files):
+    if not LINUX and not shutil.which("clang-format"):
+        print("clang-format not installed; skip lint check")
+        return
+    print("running clang-format")
+    cmd = ["clang-format", "--dry-run", "--Werror"] + files
     if subprocess.call(cmd) != 0:
-        return sys.exit("C code didn't pass style check")
+        return sys.exit("code didn't pass clang-format check")
 
 
 def toml_sort(files):
@@ -157,7 +160,7 @@ def main():
         black(py_files)
         ruff(py_files)
     if c_files:
-        c_linter(c_files)
+        clang_format(c_files)
     if rst_files:
         rstcheck(rst_files)
     if toml_files:
