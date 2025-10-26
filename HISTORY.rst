@@ -1,5 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+*Bug tracker at https://github.com/giampaolo/psutil/issues*
+
+7.1.3 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 2667_: enforce `clang-format` on all C and header files. It is now the
+  mandatory formatting style for all C sources.
 
 7.1.2
 =====
