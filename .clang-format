@@ -12,12 +12,12 @@ AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: Never  # Disallow things like `while (true) { continue; }`
+AllowShortBlocksOnASingleLine: Never # Disallow things like `while (true) { continue; }`
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: Never  # Disallow `if (a) return;`
-AllowShortLoopsOnASingleLine: false  # Disallow `while (true) continue;`
+AllowShortIfStatementsOnASingleLine: Never # Disallow `if (a) return;`
+AllowShortLoopsOnASingleLine: false # Disallow `while (true) continue;`
 BinPackArguments: false
 BinPackParameters: false
 BraceWrapping:
