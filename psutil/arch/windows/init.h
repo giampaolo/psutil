@@ -34,17 +34,6 @@ extern CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 #define NT_NTWIN32(status) (_NT_FACILITY(status) == FACILITY_WIN32)
 #define WIN32_FROM_NTSTATUS(status) (((ULONG)(status)) & 0xffff)
 
-#define PSUTIL_FIRST_PROCESS(Processes) \
-    ((PSYSTEM_PROCESS_INFORMATION)(Processes))
-
-#define PSUTIL_NEXT_PROCESS(Process) \
-    (((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset \
-         ? (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) \
-                                         + ((PSYSTEM_PROCESS_INFORMATION)(Process \
-                                            )) \
-                                               ->NextEntryOffset) \
-         : NULL)
-
 #define LO_T 1e-7
 #define HI_T 429.4967296
 
