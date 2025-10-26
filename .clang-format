@@ -1,23 +1,17 @@
 # Re-adapted from: https://gist.github.com/JPHutchins/6ef33a52cc92fc4a71996b32b11724b4
-#   Copyright (c) 2023 Intercreate, Inc.
-#   SPDX-License-Identifier: MIT
-#   Author: J.P. Hutchins <jp@intercreate.io>
-#
 # clang-format doc: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-
----
 
 BasedOnStyle: Google
 AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortBlocksOnASingleLine: Never # Disallow things like `while (true) { continue; }`
+AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: Never # Disallow `if (a) return;`
-AllowShortLoopsOnASingleLine: false # Disallow `while (true) continue;`
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
 BinPackArguments: false
 BinPackParameters: false
 BraceWrapping:
@@ -25,20 +19,20 @@ BraceWrapping:
   AfterClass: false
   AfterControlStatement: MultiLine
   AfterEnum: false
+  AfterExternBlock: false
   AfterFunction: false
   AfterNamespace: false
   AfterObjCDeclaration: false
   AfterStruct: false
   AfterUnion: false
-  AfterExternBlock: false
   BeforeCatch: false
   BeforeElse: true
-  IndentBraces: false
-  SplitEmptyFunction: false
-  SplitEmptyRecord: false
-  SplitEmptyNamespace: false
   BeforeLambdaBody: false
   BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
 BitFieldColonSpacing: After
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
@@ -51,7 +45,6 @@ IndentWidth: 4
 MaxEmptyLinesToKeep: 2
 PointerAlignment: Right
 SortIncludes: false
-# SpaceAfterCStyleCast: true
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
 
@@ -59,9 +52,9 @@ UseTab: Never
 #    #if !defined(SIZEOF_INT)
 #        #define SIZEOF_INT 4
 #    #endif
+AlignEscapedNewlines: DontAlign
 IncludeBlocks: Preserve
 IndentPPDirectives: BeforeHash
-AlignEscapedNewlines: DontAlign
 
 # Force fun return type and fun definition to stay on 2 different lines:
 #    static int
