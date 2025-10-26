@@ -31,14 +31,16 @@ double load_avg_1m = 0;
 double load_avg_5m = 0;
 double load_avg_15m = 0;
 
+// clang-format off
 #ifdef Py_GIL_DISABLED
-static PyMutex mutex;
+    static PyMutex mutex;
     #define MUTEX_LOCK(m) PyMutex_Lock(m)
     #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
 #else
     #define MUTEX_LOCK(m)
     #define MUTEX_UNLOCK(m)
 #endif
+// clang-format on
 
 
 VOID CALLBACK

@@ -5,18 +5,18 @@
  */
 
 #if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
-    #include <Python.h>
+#include <Python.h>
 
-    #include "init.h"
+#include "init.h"
 
 
 PyObject *
 psutil_pids(PyObject *self, PyObject *args) {
-    #ifdef PSUTIL_WINDOWS
+#ifdef PSUTIL_WINDOWS
     DWORD *pids_array = NULL;
-    #else
+#else
     pid_t *pids_array = NULL;
-    #endif
+#endif
     int pids_count = 0;
     int i;
     PyObject *py_retlist = PyList_New(0);

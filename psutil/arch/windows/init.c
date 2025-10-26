@@ -23,7 +23,7 @@ CRITICAL_SECTION PSUTIL_CRITICAL_SECTION;
 
 // PyPy on Windows. Missing APIs added in PyPy 7.3.14.
 #if defined(PYPY_VERSION)
-    #if !defined(PyErr_SetFromWindowsErrWithFilename)
+#if !defined(PyErr_SetFromWindowsErrWithFilename)
 PyObject *
 PyErr_SetFromWindowsErrWithFilename(int winerr, const char *filename) {
     PyObject *py_exc = NULL;
@@ -58,10 +58,10 @@ error:
     Py_XDECREF(py_winerr);
     return NULL;
 }
-    #endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
+#endif  // !defined(PyErr_SetFromWindowsErrWithFilename)
 
 
-    #if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
+#if !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 PyObject *
 PyErr_SetExcFromWindowsErrWithFilenameObject(
     PyObject *type, int ierr, PyObject *filename
@@ -70,7 +70,7 @@ PyErr_SetExcFromWindowsErrWithFilenameObject(
     // filename.
     return PyErr_SetFromWindowsErrWithFilename(ierr, NULL);
 }
-    #endif  // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
+#endif  // !defined(PyErr_SetExcFromWindowsErrWithFilenameObject)
 #endif  // defined(PYPY_VERSION)
 
 

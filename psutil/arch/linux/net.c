@@ -16,7 +16,7 @@
 
 // see: https://github.com/giampaolo/psutil/issues/659
 #ifdef PSUTIL_ETHTOOL_MISSING_TYPES
-    #include <linux/types.h>
+#include <linux/types.h>
 typedef __u64 u64;
 typedef __u32 u32;
 typedef __u16 u16;
@@ -26,7 +26,6 @@ typedef __u8 u8;
 // Avoid redefinition of struct sysinfo with musl libc.
 #define _LINUX_SYSINFO_H
 #include <linux/ethtool.h>
-
 
 // * defined in linux/ethtool.h but not always available (e.g. Android)
 // * #ifdef check needed for old kernels, see:
@@ -43,13 +42,13 @@ psutil_ethtool_cmd_speed(const struct ethtool_cmd *ecmd) {
 // May happen on old RedHat versions, see:
 // https://github.com/giampaolo/psutil/issues/607
 #ifndef DUPLEX_UNKNOWN
-    #define DUPLEX_UNKNOWN 0xff
-#endif
-// https://github.com/giampaolo/psutil/pull/2156
-#ifndef SPEED_UNKNOWN
-    #define SPEED_UNKNOWN -1
+#define DUPLEX_UNKNOWN 0xff
 #endif
 
+// https://github.com/giampaolo/psutil/pull/2156
+#ifndef SPEED_UNKNOWN
+#define SPEED_UNKNOWN -1
+#endif
 
 // References:
 // * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py

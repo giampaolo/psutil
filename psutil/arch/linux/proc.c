@@ -26,14 +26,12 @@ ioprio_set(int which, int who, int ioprio) {
     return syscall(__NR_ioprio_set, which, who, ioprio);
 }
 
-    #define IOPRIO_CLASS_SHIFT 13
-    #define IOPRIO_PRIO_MASK ((1UL << IOPRIO_CLASS_SHIFT) - 1)
+#define IOPRIO_CLASS_SHIFT 13
+#define IOPRIO_PRIO_MASK ((1UL << IOPRIO_CLASS_SHIFT) - 1)
 
-    #define IOPRIO_PRIO_CLASS(mask) ((mask) >> IOPRIO_CLASS_SHIFT)
-    #define IOPRIO_PRIO_DATA(mask) ((mask) & IOPRIO_PRIO_MASK)
-    #define IOPRIO_PRIO_VALUE(class, data) \
-        (((class) << IOPRIO_CLASS_SHIFT) | data)
-
+#define IOPRIO_PRIO_CLASS(mask) ((mask) >> IOPRIO_CLASS_SHIFT)
+#define IOPRIO_PRIO_DATA(mask) ((mask) & IOPRIO_PRIO_MASK)
+#define IOPRIO_PRIO_VALUE(class, data) (((class) << IOPRIO_CLASS_SHIFT) | data)
 
 // Return a (ioclass, iodata) Python tuple representing process I/O
 // priority.

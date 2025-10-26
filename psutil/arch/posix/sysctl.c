@@ -7,9 +7,9 @@
 #include "../../arch/all/init.h"
 
 #ifdef PSUTIL_HAS_SYSCTL
-    #include <Python.h>
-    #include <sys/types.h>
-    #include <sys/sysctl.h>
+#include <Python.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 
 static const int MAX_RETRIES = 10;
@@ -125,7 +125,7 @@ psutil_sysctl_argmax() {
 }
 
 
-    #ifdef PSUTIL_HAS_SYSCTLBYNAME
+#ifdef PSUTIL_HAS_SYSCTLBYNAME
 // A thin wrapper on top of sysctlbyname().
 int
 psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
@@ -241,5 +241,5 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
     PyErr_SetString(PyExc_RuntimeError, errbuf);
     return -1;
 }
-    #endif  // PSUTIL_HAS_SYSCTLBYNAME
+#endif  // PSUTIL_HAS_SYSCTLBYNAME
 #endif  // PSUTIL_HAS_SYSCTL

@@ -27,15 +27,15 @@ For reference, here's the git history with original implementations:
 #include <sys/vmmeter.h>
 #include <mach/mach.h>
 #if defined(__arm64__) || defined(__aarch64__)
-    #include <CoreFoundation/CoreFoundation.h>
-    #include <IOKit/IOKitLib.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
 #endif
 
 #include "../../arch/all/init.h"
 
 // added in macOS 12
 #ifndef kIOMainPortDefault
-    #define kIOMainPortDefault 0
+#define kIOMainPortDefault 0
 #endif
 
 PyObject *

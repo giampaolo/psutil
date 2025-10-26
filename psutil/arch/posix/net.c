@@ -14,30 +14,30 @@
 #include <unistd.h>
 
 #ifdef PSUTIL_AIX
-    #include "arch/aix/ifaddrs.h"
+#include "arch/aix/ifaddrs.h"
 #else
-    #include <ifaddrs.h>
+#include <ifaddrs.h>
 #endif
 
 #if defined(PSUTIL_LINUX)
-    #include <netdb.h>
-    #include <linux/types.h>
-    #include <linux/if_packet.h>
+#include <netdb.h>
+#include <linux/types.h>
+#include <linux/if_packet.h>
 #endif
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
-    #include <netdb.h>
-    #include <netinet/in.h>
-    #include <net/if_dl.h>
-    #include <sys/sockio.h>
-    #include <net/if_media.h>
-    #include <net/if.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <net/if_dl.h>
+#include <sys/sockio.h>
+#include <net/if_media.h>
+#include <net/if.h>
 #endif
 #if defined(PSUTIL_SUNOS)
-    #include <netdb.h>
-    #include <sys/sockio.h>
+#include <netdb.h>
+#include <sys/sockio.h>
 #endif
 #if defined(PSUTIL_AIX)
-    #include <netdb.h>
+#include <netdb.h>
 #endif
 
 #include "../../arch/all/init.h"
@@ -498,12 +498,12 @@ psutil_get_nic_speed(int ifm_active) {
     switch (IFM_TYPE(ifm_active)) {
         case IFM_ETHER:
             switch (IFM_SUBTYPE(ifm_active)) {
-    #if defined(IFM_HPNA_1) \
-        && ((!defined(IFM_10G_LR)) || (IFM_10G_LR != IFM_HPNA_1))
+#if defined(IFM_HPNA_1) \
+    && ((!defined(IFM_10G_LR)) || (IFM_10G_LR != IFM_HPNA_1))
                 // HomePNA 1.0 (1Mb/s)
                 case (IFM_HPNA_1):
                     return 1;
-    #endif
+#endif
                 // 10 Mbit
                 case (IFM_10_T):  // 10BaseT - RJ45
                 case (IFM_10_2):  // 10Base2 - Thinnet
@@ -522,55 +522,54 @@ psutil_get_nic_speed(int ifm_active) {
                 case (IFM_1000_SX):  // 1000BaseSX - multi-mode fiber
                 case (IFM_1000_LX):  // 1000baseLX - single-mode fiber
                 case (IFM_1000_CX):  // 1000baseCX - 150ohm STP
-    #if defined(IFM_1000_TX) && !defined(PSUTIL_OPENBSD)
-        #define HAS_CASE_IFM_1000_TX 1
+#if defined(IFM_1000_TX) && !defined(PSUTIL_OPENBSD)
+#define HAS_CASE_IFM_1000_TX 1
                 // FreeBSD 4 and others (but NOT OpenBSD) -> #define IFM_1000_T
                 // in net/if_media.h
                 case (IFM_1000_TX):
-    #endif
-    #ifdef IFM_1000_FX
+#endif
+#ifdef IFM_1000_FX
                 case (IFM_1000_FX):
-    #endif
-    #if defined(IFM_1000_T) \
-        && (!HAS_CASE_IFM_1000_TX || IFM_1000_T != IFM_1000_TX)
+#endif
+#if defined(IFM_1000_T) && (!HAS_CASE_IFM_1000_TX || IFM_1000_T != IFM_1000_TX)
                 case (IFM_1000_T):
-    #endif
+#endif
                     return 1000;
-    #if defined(IFM_10G_SR) || defined(IFM_10G_LR) || defined(IFM_10G_CX4) \
-        || defined(IFM_10G_T)
-        #ifdef IFM_10G_SR
+#if defined(IFM_10G_SR) || defined(IFM_10G_LR) || defined(IFM_10G_CX4) \
+    || defined(IFM_10G_T)
+#ifdef IFM_10G_SR
                 case (IFM_10G_SR):
-        #endif
-        #ifdef IFM_10G_LR
+#endif
+#ifdef IFM_10G_LR
                 case (IFM_10G_LR):
-        #endif
-        #ifdef IFM_10G_CX4
+#endif
+#ifdef IFM_10G_CX4
                 case (IFM_10G_CX4):
-        #endif
-        #ifdef IFM_10G_TWINAX
+#endif
+#ifdef IFM_10G_TWINAX
                 case (IFM_10G_TWINAX):
-        #endif
-        #ifdef IFM_10G_TWINAX_LONG
+#endif
+#ifdef IFM_10G_TWINAX_LONG
                 case (IFM_10G_TWINAX_LONG):
-        #endif
-        #ifdef IFM_10G_T
+#endif
+#ifdef IFM_10G_T
                 case (IFM_10G_T):
-        #endif
+#endif
                     return 10000;
-    #endif
-    #if defined(IFM_2500_SX)
-        #ifdef IFM_2500_SX
+#endif
+#if defined(IFM_2500_SX)
+#ifdef IFM_2500_SX
                 case (IFM_2500_SX):
-        #endif
+#endif
                     return 2500;
-    #endif  // any 2.5GBit stuff...
-            // We don't know what it is
+#endif  // any 2.5GBit stuff...
+        // We don't know what it is
                 default:
                     return 0;
             }
             break;
 
-    #ifdef IFM_TOKEN
+#ifdef IFM_TOKEN
         case IFM_TOKEN:
             switch (IFM_SUBTYPE(ifm_active)) {
                 case IFM_TOK_STP4:  // Shielded twisted pair 4m - DB9
@@ -579,23 +578,23 @@ psutil_get_nic_speed(int ifm_active) {
                 case IFM_TOK_STP16:  // Shielded twisted pair 16m - DB9
                 case IFM_TOK_UTP16:  // Unshielded twisted pair 16m - RJ45
                     return 16;
-        #if defined(IFM_TOK_STP100) || defined(IFM_TOK_UTP100)
-            #ifdef IFM_TOK_STP100
+#if defined(IFM_TOK_STP100) || defined(IFM_TOK_UTP100)
+#ifdef IFM_TOK_STP100
                 case IFM_TOK_STP100:  // Shielded twisted pair 100m - DB9
-            #endif
-            #ifdef IFM_TOK_UTP100
+#endif
+#ifdef IFM_TOK_UTP100
                 case IFM_TOK_UTP100:  // Unshielded twisted pair 100m - RJ45
-            #endif
+#endif
                     return 100;
-        #endif
+#endif
                 // We don't know what it is
                 default:
                     return 0;
             }
             break;
-    #endif
+#endif
 
-    #ifdef IFM_FDDI
+#ifdef IFM_FDDI
         case IFM_FDDI:
             switch (IFM_SUBTYPE(ifm_active)) {
                 // We don't know what it is
@@ -603,7 +602,7 @@ psutil_get_nic_speed(int ifm_active) {
                     return 0;
             }
             break;
-    #endif
+#endif
         case IFM_IEEE80211:
             switch (IFM_SUBTYPE(ifm_active)) {
                 case IFM_IEEE80211_FH1:  // Frequency Hopping 1Mbps

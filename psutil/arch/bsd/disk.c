@@ -7,14 +7,14 @@
 #include <Python.h>
 #include <sys/mount.h>
 #if PSUTIL_NETBSD
-    // getvfsstat()
-    #include <sys/types.h>
-    #include <sys/statvfs.h>
+// getvfsstat()
+#include <sys/types.h>
+#include <sys/statvfs.h>
 #else
-    // getfsstat()
-    #include <sys/param.h>
-    #include <sys/ucred.h>
-    #include <sys/mount.h>
+// getfsstat()
+#include <sys/param.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
 #endif
 
 #include "../../arch/all/init.h"
@@ -106,10 +106,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",softdep", sizeof(opts));
         if (flags & MNT_NOSYMFOLLOW)
             strlcat(opts, ",nosymfollow", sizeof(opts));
-    #ifdef MNT_GJOURNAL
+#ifdef MNT_GJOURNAL
         if (flags & MNT_GJOURNAL)
             strlcat(opts, ",gjournal", sizeof(opts));
-    #endif
+#endif
         if (flags & MNT_MULTILABEL)
             strlcat(opts, ",multilabel", sizeof(opts));
         if (flags & MNT_ACLS)
@@ -118,10 +118,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",noclusterr", sizeof(opts));
         if (flags & MNT_NOCLUSTERW)
             strlcat(opts, ",noclusterw", sizeof(opts));
-    #ifdef MNT_NFS4ACLS
+#ifdef MNT_NFS4ACLS
         if (flags & MNT_NFS4ACLS)
             strlcat(opts, ",nfs4acls", sizeof(opts));
-    #endif
+#endif
 #elif PSUTIL_NETBSD
         if (flags & MNT_NODEV)
             strlcat(opts, ",nodev", sizeof(opts));
@@ -129,20 +129,20 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",union", sizeof(opts));
         if (flags & MNT_NOCOREDUMP)
             strlcat(opts, ",nocoredump", sizeof(opts));
-    #ifdef MNT_RELATIME
+#ifdef MNT_RELATIME
         if (flags & MNT_RELATIME)
             strlcat(opts, ",relatime", sizeof(opts));
-    #endif
+#endif
         if (flags & MNT_IGNORE)
             strlcat(opts, ",ignore", sizeof(opts));
-    #ifdef MNT_DISCARD
+#ifdef MNT_DISCARD
         if (flags & MNT_DISCARD)
             strlcat(opts, ",discard", sizeof(opts));
-    #endif
-    #ifdef MNT_EXTATTR
+#endif
+#ifdef MNT_EXTATTR
         if (flags & MNT_EXTATTR)
             strlcat(opts, ",extattr", sizeof(opts));
-    #endif
+#endif
         if (flags & MNT_LOG)
             strlcat(opts, ",log", sizeof(opts));
         if (flags & MNT_SYMPERM)

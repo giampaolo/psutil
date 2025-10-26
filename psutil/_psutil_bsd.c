@@ -25,11 +25,11 @@
 #include "arch/bsd/init.h"
 
 #ifdef PSUTIL_FREEBSD
-    #include "arch/freebsd/init.h"
+#include "arch/freebsd/init.h"
 #elif PSUTIL_OPENBSD
-    #include "arch/openbsd/init.h"
+#include "arch/openbsd/init.h"
 #elif PSUTIL_NETBSD
-    #include "arch/netbsd/init.h"
+#include "arch/netbsd/init.h"
 #endif
 
 
@@ -168,10 +168,10 @@ PyInit__psutil_bsd(void) {
         return NULL;
     if (PyModule_AddIntConstant(mod, "SZOMB", LSZOMB))
         return NULL;
-    #if __NetBSD_Version__ < 500000000
+#if __NetBSD_Version__ < 500000000
     if (PyModule_AddIntConstant(mod, "SDEAD", LSDEAD))
         return NULL;
-    #endif
+#endif
     if (PyModule_AddIntConstant(mod, "SONPROC", LSONPROC))
         return NULL;
     // unique to NetBSD

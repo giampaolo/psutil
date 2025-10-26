@@ -12,17 +12,17 @@
 #include <sys/file.h>
 #include <sys/vnode.h>  // VREG
 #ifdef PSUTIL_FREEBSD
-    #include <sys/user.h>  // kinfo_proc, kinfo_file, KF_*
-    #include <libutil.h>  // kinfo_getfile()
+#include <sys/user.h>  // kinfo_proc, kinfo_file, KF_*
+#include <libutil.h>  // kinfo_getfile()
 #endif
 
 #include "../../arch/all/init.h"
 #ifdef PSUTIL_FREEBSD
-    #include "../../arch/freebsd/init.h"  // TODO: refactor this
+#include "../../arch/freebsd/init.h"  // TODO: refactor this
 #elif PSUTIL_OPENBSD
-    #include "../../arch/openbsd/init.h"  // TODO: refactor this
+#include "../../arch/openbsd/init.h"  // TODO: refactor this
 #elif PSUTIL_NETBSD
-    #include "../../arch/netbsd/init.h"  // TODO: refactor this
+#include "../../arch/netbsd/init.h"  // TODO: refactor this
 #endif
 
 
@@ -30,7 +30,7 @@
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    #define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
+#define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
 #endif
 
 
@@ -126,17 +126,17 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     memstack = (long)kp.ki_ssize * pagesize;
 #else
     rss = (long)kp.p_vm_rssize * pagesize;
-    #ifdef PSUTIL_OPENBSD
+#ifdef PSUTIL_OPENBSD
     // VMS, this is how ps determines it on OpenBSD:
     // https://github.com/openbsd/src/blob/
     //     588f7f8c69786211f2d16865c552afb91b1c7cba/bin/ps/print.c#L505
     vms = (long)(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * pagesize;
-    #elif PSUTIL_NETBSD
+#elif PSUTIL_NETBSD
     // VMS, this is how top determines it on NetBSD:
     // https://github.com/IIJ-NetBSD/netbsd-src/blob/master/external/
     //     bsd/top/dist/machine/m_netbsd.c
     vms = (long)kp.p_vm_msize * pagesize;
-    #endif
+#endif
     memtext = (long)kp.p_vm_tsize * pagesize;
     memdata = (long)kp.p_vm_dsize * pagesize;
     memstack = (long)kp.p_vm_ssize * pagesize;

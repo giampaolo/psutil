@@ -106,111 +106,111 @@ psutil_posix_add_constants(PyObject *mod) {
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
     PyObject *v;
 
-    #ifdef RLIMIT_AS
+#ifdef RLIMIT_AS
     if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_CORE
+#ifdef RLIMIT_CORE
     if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_CPU
+#ifdef RLIMIT_CPU
     if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_DATA
+#ifdef RLIMIT_DATA
     if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_FSIZE
+#ifdef RLIMIT_FSIZE
     if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_MEMLOCK
+#ifdef RLIMIT_MEMLOCK
     if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_NOFILE
+#ifdef RLIMIT_NOFILE
     if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_NPROC
+#ifdef RLIMIT_NPROC
     if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_RSS
+#ifdef RLIMIT_RSS
     if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_STACK
+#ifdef RLIMIT_STACK
     if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK))
         return -1;
-    #endif
+#endif
 
         // Linux specific
 
-    #ifdef RLIMIT_LOCKS
+#ifdef RLIMIT_LOCKS
     if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_MSGQUEUE
+#ifdef RLIMIT_MSGQUEUE
     if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_NICE
+#ifdef RLIMIT_NICE
     if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_RTPRIO
+#ifdef RLIMIT_RTPRIO
     if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_RTTIME
+#ifdef RLIMIT_RTTIME
     if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_SIGPENDING
+#ifdef RLIMIT_SIGPENDING
     if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
         return -1;
-    #endif
+#endif
 
         // Free specific
 
-    #ifdef RLIMIT_SWAP
+#ifdef RLIMIT_SWAP
     if (PyModule_AddIntConstant(mod, "RLIMIT_SWAP", RLIMIT_SWAP))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_SBSIZE
+#ifdef RLIMIT_SBSIZE
     if (PyModule_AddIntConstant(mod, "RLIMIT_SBSIZE", RLIMIT_SBSIZE))
         return -1;
-    #endif
+#endif
 
-    #ifdef RLIMIT_NPTS
+#ifdef RLIMIT_NPTS
     if (PyModule_AddIntConstant(mod, "RLIMIT_NPTS", RLIMIT_NPTS))
         return -1;
-    #endif
+#endif
 
-    #if defined(HAVE_LONG_LONG)
+#if defined(HAVE_LONG_LONG)
     if (sizeof(RLIM_INFINITY) > sizeof(long)) {
         v = PyLong_FromLongLong((PY_LONG_LONG)RLIM_INFINITY);
     }
     else
-    #endif
+#endif
     {
         v = PyLong_FromLong((long)RLIM_INFINITY);
     }

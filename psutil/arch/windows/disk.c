@@ -12,7 +12,7 @@
 
 
 #ifndef _ARRAYSIZE
-    #define _ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
+#define _ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 #endif
 
 static char *

@@ -8,7 +8,7 @@
 #include <libproc.h>
 
 #ifndef PROCESS_AS_UTILS_H
-    #define PROCESS_AS_UTILS_H
+#define PROCESS_AS_UTILS_H
 
 char **psutil_read_raw_args(
     psinfo_t info, const char *procfs_path, size_t *count

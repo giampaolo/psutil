@@ -49,13 +49,6 @@ SortIncludes: false
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
 
-# Force indented #define:
-#    #if !defined(SIZEOF_INT)
-#        #define SIZEOF_INT 4
-#    #endif
-IncludeBlocks: Preserve
-IndentPPDirectives: BeforeHash
-
 # Force fun return type and fun definition to stay on 2 different lines:
 #    static int
 #    foo() {

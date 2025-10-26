@@ -13,24 +13,24 @@
  * and unused data truncated. */
 
 #ifdef __64BIT__
-    // In case we're in a 64 bit process after all
-    #include <sys/socketvar.h>
-    #include <sys/protosw.h>
-    #include <sys/unpcb.h>
-    #include <sys/mbuf_base.h>
-    #include <sys/mbuf_macro.h>
-    #include <netinet/ip_var.h>
-    #include <netinet/tcp.h>
-    #include <netinet/tcpip.h>
-    #include <netinet/tcp_timer.h>
-    #include <netinet/tcp_var.h>
-    #define file64 file
-    #define socket64 socket
-    #define protosw64 protosw
-    #define inpcb64 inpcb
-    #define tcpcb64 tcpcb
-    #define unpcb64 unpcb
-    #define mbuf64 mbuf
+// In case we're in a 64 bit process after all
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/unpcb.h>
+#include <sys/mbuf_base.h>
+#include <sys/mbuf_macro.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcpip.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#define file64 file
+#define socket64 socket
+#define protosw64 protosw
+#define inpcb64 inpcb
+#define tcpcb64 tcpcb
+#define unpcb64 unpcb
+#define mbuf64 mbuf
 #else  // __64BIT__
 struct file64 {
     int f_flag;
@@ -104,6 +104,6 @@ struct mbuf64 {
     struct m_hdr64 m_hdr;
 };
 
-    #define m_len m_hdr.mh_len
+#define m_len m_hdr.mh_len
 
 #endif  // __64BIT__

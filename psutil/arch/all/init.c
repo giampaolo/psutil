@@ -8,7 +8,7 @@
 
 #include <Python.h>
 #ifdef PSUTIL_WINDOWS
-    #include <windows.h>
+#include <windows.h>
 #endif
 
 #include "init.h"

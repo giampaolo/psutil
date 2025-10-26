@@ -12,26 +12,26 @@
 // (ourselves, init.h).
 
 #if defined(PSUTIL_POSIX)
-    #include "../../arch/posix/init.h"
+#include "../../arch/posix/init.h"
 #endif
 #if defined(PSUTIL_BSD)
-    #include "../../arch/bsd/init.h"
+#include "../../arch/bsd/init.h"
 #endif
 
 #if defined(PSUTIL_LINUX)
-    #include "../../arch/linux/init.h"
+#include "../../arch/linux/init.h"
 #elif defined(PSUTIL_WINDOWS)
-    #include "../../arch/windows/init.h"
+#include "../../arch/windows/init.h"
 #elif defined(PSUTIL_OSX)
-    #include "../../arch/osx/init.h"
+#include "../../arch/osx/init.h"
 #elif defined(PSUTIL_FREEBSD)
-    #include "../../arch/freebsd/init.h"
+#include "../../arch/freebsd/init.h"
 #elif defined(PSUTIL_OPENBSD)
-    #include "../../arch/openbsd/init.h"
+#include "../../arch/openbsd/init.h"
 #elif defined(PSUTIL_NETBSD)
-    #include "../../arch/netbsd/init.h"
+#include "../../arch/netbsd/init.h"
 #elif defined(PSUTIL_SUNOS)
-    #include "../../arch/sunos/init.h"
+#include "../../arch/sunos/init.h"
 #endif
 
 // print debug messages when set to 1
@@ -39,16 +39,16 @@ extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
 
-#ifdef Py_GIL_DISABLED
 // clang-format off
+#ifdef Py_GIL_DISABLED
     extern PyMutex utxent_lock;
-// clang-format on
     #define UTXENT_MUTEX_LOCK() PyMutex_Lock(&utxent_lock)
     #define UTXENT_MUTEX_UNLOCK() PyMutex_Unlock(&utxent_lock)
 #else
     #define UTXENT_MUTEX_LOCK()
     #define UTXENT_MUTEX_UNLOCK()
 #endif
+// clang-format on
 
 // Print a debug message on stderr.
 #define psutil_debug(...) \
@@ -80,6 +80,7 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
 // --- _Py_PARSE_PID
 
+// clang-format off
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
 // In this case we guess it from setup.py. It's not 100% bullet proof,
 // If wrong we'll probably get compiler warnings.
@@ -106,7 +107,7 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
         #define _Py_PARSE_PID "L"
     #else
         #error "_Py_PARSE_PID: sizeof(pid_t) is neither sizeof(int), "
-"sizeof(long) or sizeof(long long)"
+               "sizeof(long) or sizeof(long long)"
     #endif
 #endif
 
@@ -118,12 +119,11 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
         #define PyLong_FromPid PyLong_FromLongLong
     #else
         #error "PyLong_FromPid: sizeof(pid_t) is neither sizeof(int), "
-"sizeof(long) or sizeof(long long)"
+               "sizeof(long) or sizeof(long long)"
     #endif
 #endif
+// clang-format on
 
-int psutil_badargs(const char *funcname);
-int psutil_setup(void);
 
 #if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 PyObject *psutil_pids(PyObject *self, PyObject *args);

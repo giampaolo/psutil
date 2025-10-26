@@ -17,7 +17,7 @@
 #include "../../arch/all/init.h"
 
 #ifndef _PATH_DEVNULL
-    #define _PATH_DEVNULL "/dev/null"
+#define _PATH_DEVNULL "/dev/null"
 #endif
 
 
