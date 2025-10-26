@@ -12,8 +12,9 @@
 
 
 // convert a bintime struct to milliseconds
-#define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
-        (bt.frac >> 32) ) >> 32 ) / 1000000)
+#define PSUTIL_BT2MSEC(bt) \
+    (bt.sec * 1000 \
+     + (((uint64_t)1000000000 * (uint32_t)(bt.frac >> 32)) >> 32) / 1000000)
 
 
 PyObject *
@@ -27,8 +28,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
     if (devstat_checkversion(NULL) < 0) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "devstat_checkversion() syscall failed");
+        PyErr_Format(
+            PyExc_RuntimeError, "devstat_checkversion() syscall failed"
+        );
         goto error;
     }
 
@@ -49,20 +51,26 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         struct devstat current;
         char disk_name[128];
         current = stats.dinfo->devices[i];
-        snprintf(disk_name, sizeof(disk_name), "%s%d",
-                 current.device_name,
-                 current.unit_number);
+        snprintf(
+            disk_name,
+            sizeof(disk_name),
+            "%s%d",
+            current.device_name,
+            current.unit_number
+        );
 
         py_disk_info = Py_BuildValue(
             "(KKKKLLL)",
-            current.operations[DEVSTAT_READ],   // no reads
+            current.operations[DEVSTAT_READ],  // no reads
             current.operations[DEVSTAT_WRITE],  // no writes
-            current.bytes[DEVSTAT_READ],        // bytes read
-            current.bytes[DEVSTAT_WRITE],       // bytes written
-            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_READ]),  // r time
-            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE]),  // w time
-            (long long) PSUTIL_BT2MSEC(current.busy_time)  // busy time
-        );      // finished transactions
+            current.bytes[DEVSTAT_READ],  // bytes read
+            current.bytes[DEVSTAT_WRITE],  // bytes written
+            (long long)PSUTIL_BT2MSEC(current.duration[DEVSTAT_READ]
+            ),  // r time
+            (long long)PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE]
+            ),  // w time
+            (long long)PSUTIL_BT2MSEC(current.busy_time)  // busy time
+        );  // finished transactions
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))

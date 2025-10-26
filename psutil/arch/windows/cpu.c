@@ -27,13 +27,16 @@ psutil_get_num_cpus(int fail_on_err) {
         }
     }
     else {
-        psutil_debug("GetActiveProcessorCount() not available; "
-                     "using GetSystemInfo()");
+        psutil_debug(
+            "GetActiveProcessorCount() not available; "
+            "using GetSystemInfo()"
+        );
         ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
         if ((ncpus <= 0) && (fail_on_err == 1)) {
             PyErr_SetString(
                 PyExc_RuntimeError,
-                "GetSystemInfo() failed to retrieve CPU count");
+                "GetSystemInfo() failed to retrieve CPU count"
+            );
         }
     }
     return ncpus;
@@ -55,12 +58,12 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    idle = (double)((HI_T * idle_time.dwHighDateTime) + \
-                   (LO_T * idle_time.dwLowDateTime));
-    user = (double)((HI_T * user_time.dwHighDateTime) + \
-                   (LO_T * user_time.dwLowDateTime));
-    kernel = (double)((HI_T * kernel_time.dwHighDateTime) + \
-                     (LO_T * kernel_time.dwLowDateTime));
+    idle = (double)((HI_T * idle_time.dwHighDateTime)
+                    + (LO_T * idle_time.dwLowDateTime));
+    user = (double)((HI_T * user_time.dwHighDateTime)
+                    + (LO_T * user_time.dwLowDateTime));
+    kernel = (double)((HI_T * kernel_time.dwHighDateTime)
+                      + (LO_T * kernel_time.dwLowDateTime));
 
     // Kernel time includes idle time.
     // We return only busy kernel time subtracting idle time from
@@ -93,8 +96,9 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
-    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-        malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
+    );
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -105,8 +109,9 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-        NULL);
-    if (! NT_SUCCESS(status)) {
+        NULL
+    );
+    if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
             status,
             "NtQuerySystemInformation(SystemProcessorPerformanceInformation)"
@@ -119,28 +124,23 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     idle = user = kernel = interrupt = dpc = 0;
     for (i = 0; i < ncpus; i++) {
         py_tuple = NULL;
-        user = (double)((HI_T * sppi[i].UserTime.HighPart) +
-                       (LO_T * sppi[i].UserTime.LowPart));
-        idle = (double)((HI_T * sppi[i].IdleTime.HighPart) +
-                       (LO_T * sppi[i].IdleTime.LowPart));
-        kernel = (double)((HI_T * sppi[i].KernelTime.HighPart) +
-                         (LO_T * sppi[i].KernelTime.LowPart));
-        interrupt = (double)((HI_T * sppi[i].InterruptTime.HighPart) +
-                            (LO_T * sppi[i].InterruptTime.LowPart));
-        dpc = (double)((HI_T * sppi[i].DpcTime.HighPart) +
-                      (LO_T * sppi[i].DpcTime.LowPart));
+        user = (double)((HI_T * sppi[i].UserTime.HighPart)
+                        + (LO_T * sppi[i].UserTime.LowPart));
+        idle = (double)((HI_T * sppi[i].IdleTime.HighPart)
+                        + (LO_T * sppi[i].IdleTime.LowPart));
+        kernel = (double)((HI_T * sppi[i].KernelTime.HighPart)
+                          + (LO_T * sppi[i].KernelTime.LowPart));
+        interrupt = (double)((HI_T * sppi[i].InterruptTime.HighPart)
+                             + (LO_T * sppi[i].InterruptTime.LowPart));
+        dpc = (double)((HI_T * sppi[i].DpcTime.HighPart)
+                       + (LO_T * sppi[i].DpcTime.LowPart));
 
         // kernel time includes idle time on windows
         // we return only busy kernel time subtracting
         // idle time from kernel time
         systemt = kernel - idle;
         py_tuple = Py_BuildValue(
-            "(ddddd)",
-            user,
-            systemt,
-            idle,
-            interrupt,
-            dpc
+            "(ddddd)", user, systemt, idle, interrupt, dpc
         );
         if (!py_tuple)
             goto error;
@@ -200,23 +200,24 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     }
 
     while (1) {
-        rc = GetLogicalProcessorInformationEx(
-            RelationAll, buffer, &length);
+        rc = GetLogicalProcessorInformationEx(RelationAll, buffer, &length);
         if (rc == FALSE) {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 if (buffer) {
                     free(buffer);
                 }
-                buffer = \
-                    (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX)malloc(length);
+                buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
+                )malloc(length);
                 if (NULL == buffer) {
                     PyErr_NoMemory();
                     return NULL;
                 }
             }
             else {
-                psutil_debug("GetLogicalProcessorInformationEx() returned %u",
-                             GetLastError());
+                psutil_debug(
+                    "GetLogicalProcessorInformationEx() returned %u",
+                    GetLastError()
+                );
                 goto return_none;
             }
         }
@@ -229,8 +230,8 @@ psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     while (offset < length) {
         // Advance ptr by the size of the previous
         // SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX struct.
-        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*) \
-            (((char*)ptr) + prev_processor_info_size);
+        ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
+                   *)(((char *)ptr) + prev_processor_info_size);
 
         if (ptr->Relationship == RelationProcessorCore) {
             ncpus += 1;
@@ -278,8 +279,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         goto error;
 
     // get syscalls / ctx switches
-    spi = (_SYSTEM_PERFORMANCE_INFORMATION *) \
-           malloc(ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION));
+    spi = (_SYSTEM_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION)
+    );
     if (spi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -288,16 +290,19 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         SystemPerformanceInformation,
         spi,
         ncpus * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
-        NULL);
-    if (! NT_SUCCESS(status)) {
+        NULL
+    );
+    if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
-            status, "NtQuerySystemInformation(SystemPerformanceInformation)");
+            status, "NtQuerySystemInformation(SystemPerformanceInformation)"
+        );
         goto error;
     }
 
     // get DPCs
-    InterruptInformation = \
-        malloc(sizeof(_SYSTEM_INTERRUPT_INFORMATION) * ncpus);
+    InterruptInformation = malloc(
+        sizeof(_SYSTEM_INTERRUPT_INFORMATION) * ncpus
+    );
     if (InterruptInformation == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -307,10 +312,12 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         SystemInterruptInformation,
         InterruptInformation,
         ncpus * sizeof(SYSTEM_INTERRUPT_INFORMATION),
-        NULL);
-    if (! NT_SUCCESS(status)) {
+        NULL
+    );
+    if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
-            status, "NtQuerySystemInformation(SystemInterruptInformation)");
+            status, "NtQuerySystemInformation(SystemInterruptInformation)"
+        );
         goto error;
     }
     for (i = 0; i < ncpus; i++) {
@@ -318,8 +325,9 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     }
 
     // get interrupts
-    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-        malloc(ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)malloc(
+        ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
+    );
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -329,11 +337,13 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         SystemProcessorPerformanceInformation,
         sppi,
         ncpus * sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-        NULL);
-    if (! NT_SUCCESS(status)) {
+        NULL
+    );
+    if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(
             status,
-            "NtQuerySystemInformation(SystemProcessorPerformanceInformation)");
+            "NtQuerySystemInformation(SystemProcessorPerformanceInformation)"
+        );
         goto error;
     }
 
@@ -384,18 +394,18 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     // Allocate size.
     size = ncpus * sizeof(PROCESSOR_POWER_INFORMATION);
-    pBuffer = (BYTE*)LocalAlloc(LPTR, size);
-    if (! pBuffer) {
+    pBuffer = (BYTE *)LocalAlloc(LPTR, size);
+    if (!pBuffer) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
 
     // Syscall.
-    ret = CallNtPowerInformation(
-        ProcessorInformation, NULL, 0, pBuffer, size);
+    ret = CallNtPowerInformation(ProcessorInformation, NULL, 0, pBuffer, size);
     if (ret != 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "CallNtPowerInformation syscall failed");
+        PyErr_SetString(
+            PyExc_RuntimeError, "CallNtPowerInformation syscall failed"
+        );
         goto error;
     }
 

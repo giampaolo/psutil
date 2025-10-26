@@ -10,6 +10,6 @@
 
 #include <Python.h>
 
-PyObject* psutil_net_connections(PyObject *self, PyObject *args);
+PyObject *psutil_net_connections(PyObject *self, PyObject *args);
 
-#endif  /* __NET_CONNECTIONS_H__ */
+#endif  // __NET_CONNECTIONS_H__

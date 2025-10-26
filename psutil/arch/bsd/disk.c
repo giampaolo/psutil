@@ -7,14 +7,14 @@
 #include <Python.h>
 #include <sys/mount.h>
 #if PSUTIL_NETBSD
-    // getvfsstat()
-    #include <sys/types.h>
-    #include <sys/statvfs.h>
+// getvfsstat()
+#include <sys/types.h>
+#include <sys/statvfs.h>
 #else
-    // getfsstat()
-    #include <sys/param.h>
-    #include <sys/ucred.h>
-    #include <sys/mount.h>
+// getfsstat()
+#include <sys/param.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
 #endif
 
 #include "../../arch/all/init.h"
@@ -151,16 +151,18 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",nodevmtime", sizeof(opts));
 #endif
         py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
-        if (! py_dev)
+        if (!py_dev)
             goto error;
         py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
-        if (! py_mountp)
+        if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue("(OOss)",
-                                 py_dev,               // device
-                                 py_mountp,            // mount point
-                                 fs[i].f_fstypename,   // fs type
-                                 opts);                // options
+        py_tuple = Py_BuildValue(
+            "(OOss)",
+            py_dev,  // device
+            py_mountp,  // mount point
+            fs[i].f_fstypename,  // fs type
+            opts  // options
+        );
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))

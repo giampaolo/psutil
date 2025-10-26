@@ -21,9 +21,9 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args) {
         "(kkkkkkI)",
         info.totalram,  // total
         info.freeram,  // free
-        info.bufferram, // buffer
-        info.sharedram, // shared
-        info.totalswap, // swap tot
+        info.bufferram,  // buffer
+        info.sharedram,  // shared
+        info.totalswap,  // swap tot
         info.freeswap,  // swap free
         info.mem_unit  // multiplier
     );

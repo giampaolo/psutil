@@ -9,8 +9,10 @@ System related functions. Original code moved in here from
 psutil/_psutil_windows.c in 2023. For reference, here's the GIT blame
 history before the move:
 
-* boot_time(): https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L51-L60
-* users(): https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L1103-L1244
+- boot_time():
+  https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L51-L60
+- users():
+  https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_windows.c#L1103-L1244
 */
 
 #include <Python.h>
@@ -63,18 +65,19 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (WTSEnumerateSessionsW == NULL ||
-        WTSQuerySessionInformationW == NULL ||
-        WTSFreeMemory == NULL) {
-            // If we don't run in an environment that is a Remote Desktop Services environment
-            // the Wtsapi32 proc might not be present.
-            // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
-            return py_retlist;
+    if (WTSEnumerateSessionsW == NULL || WTSQuerySessionInformationW == NULL
+        || WTSFreeMemory == NULL)
+    {
+        // If we don't run in an environment that is a Remote Desktop Services
+        // environment the Wtsapi32 proc might not be present.
+        // https://docs.microsoft.com/en-us/windows/win32/termserv/run-time-linking-to-wtsapi32-dll
+        return py_retlist;
     }
 
     if (WTSEnumerateSessionsW(hServer, 0, 1, &sessions, &count) == 0) {
         if (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) {
-            // On Windows Nano server, the Wtsapi32 API can be present, but return WinError 120.
+            // On Windows Nano server, the Wtsapi32 API can be present, but
+            // return WinError 120.
             return py_retlist;
         }
         psutil_PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessionsW");
@@ -98,8 +101,11 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // username
         bytes = 0;
-        if (WTSQuerySessionInformationW(hServer, sessionId, WTSUserName,
-                                        &buffer_user, &bytes) == 0) {
+        if (WTSQuerySessionInformationW(
+                hServer, sessionId, WTSUserName, &buffer_user, &bytes
+            )
+            == 0)
+        {
             psutil_PyErr_SetFromOSErrnoWithSyscall(
                 "WTSQuerySessionInformationW"
             );
@@ -110,8 +116,11 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // address
         bytes = 0;
-        if (WTSQuerySessionInformationW(hServer, sessionId, WTSClientAddress,
-                                        &buffer_addr, &bytes) == 0) {
+        if (WTSQuerySessionInformationW(
+                hServer, sessionId, WTSClientAddress, &buffer_addr, &bytes
+            )
+            == 0)
+        {
             psutil_PyErr_SetFromOSErrnoWithSyscall(
                 "WTSQuerySessionInformationW"
             );
@@ -120,14 +129,17 @@ psutil_users(PyObject *self, PyObject *args) {
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
         if (address->AddressFamily == 2) {  // AF_INET == 2
-            sprintf_s(address_str,
-                      _countof(address_str),
-                      "%u.%u.%u.%u",
-                      // The IP address is offset by two bytes from the start of the Address member of the WTS_CLIENT_ADDRESS structure.
-                      address->Address[2],
-                      address->Address[3],
-                      address->Address[4],
-                      address->Address[5]);
+            sprintf_s(
+                address_str,
+                _countof(address_str),
+                "%u.%u.%u.%u",
+                // The IP address is offset by two bytes from the start of the
+                // Address member of the WTS_CLIENT_ADDRESS structure.
+                address->Address[2],
+                address->Address[3],
+                address->Address[4],
+                address->Address[5]
+            );
             py_address = Py_BuildValue("s", address_str);
             if (!py_address)
                 goto error;
@@ -139,8 +151,11 @@ psutil_users(PyObject *self, PyObject *args) {
 
         // login time
         bytes = 0;
-        if (WTSQuerySessionInformationW(hServer, sessionId, WTSSessionInfo,
-                                        &buffer_info, &bytes) == 0) {
+        if (WTSQuerySessionInformationW(
+                hServer, sessionId, WTSSessionInfo, &buffer_info, &bytes
+            )
+            == 0)
+        {
             psutil_PyErr_SetFromOSErrnoWithSyscall(
                 "WTSQuerySessionInformationW"
             );

@@ -35,7 +35,7 @@ psutil_pid_exists(pid_t pid) {
 #endif
     }
 
-    ret = kill(pid , 0);
+    ret = kill(pid, 0);
     if (ret == 0)
         return 1;
     else {
@@ -85,7 +85,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
     int priority;
     errno = 0;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
 #ifdef PSUTIL_OSX
@@ -106,7 +106,7 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
     int priority;
     int retval;
 
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "i", &pid, &priority))
         return NULL;
 
 #ifdef PSUTIL_OSX

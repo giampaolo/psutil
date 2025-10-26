@@ -18,10 +18,8 @@
 
 SC_HANDLE
 psutil_get_service_handler(
-    const wchar_t *service_name,
-    DWORD scm_access,
-    DWORD access)
-{
+    const wchar_t *service_name, DWORD scm_access, DWORD access
+) {
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
 
@@ -47,11 +45,8 @@ psutil_get_service_handler(
 // returns NULL on error. On success, fills *service_name_out.
 static SC_HANDLE
 psutil_get_service_from_args(
-    PyObject *args,
-    DWORD scm_access,
-    DWORD access,
-    wchar_t **service_name_out)
-{
+    PyObject *args, DWORD scm_access, DWORD access, wchar_t **service_name_out
+) {
     PyObject *py_service_name = NULL;
     wchar_t *service_name = NULL;
     Py_ssize_t wlen;
@@ -77,7 +72,6 @@ psutil_get_service_from_args(
 }
 
 
-
 // XXX - expose these as constants?
 static const char *
 get_startup_string(DWORD startup) {
@@ -88,14 +82,12 @@ get_startup_string(DWORD startup) {
             return "manual";
         case SERVICE_DISABLED:
             return "disabled";
-/*
         // drivers only (since we use EnumServicesStatusEx() with
         // SERVICE_WIN32)
-        case SERVICE_BOOT_START:
-            return "boot-start";
-        case SERVICE_SYSTEM_START:
-            return "system-start";
-*/
+        // case SERVICE_BOOT_START:
+        //     return "boot-start";
+        // case SERVICE_SYSTEM_START:
+        //     return "system-start";
         default:
             return "unknown";
     }
@@ -168,26 +160,29 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             &bytesNeeded,
             &srvCount,
             &resumeHandle,
-            NULL);
+            NULL
+        );
         if (ok || (GetLastError() != ERROR_MORE_DATA))
             break;
         if (lpService)
             free(lpService);
         dwBytes = bytesNeeded;
-        lpService = (ENUM_SERVICE_STATUS_PROCESSW*)malloc(dwBytes);
+        lpService = (ENUM_SERVICE_STATUS_PROCESSW *)malloc(dwBytes);
     }
 
     for (i = 0; i < srvCount; i++) {
         // Get unicode name / display name.
         py_name = NULL;
         py_name = PyUnicode_FromWideChar(
-            lpService[i].lpServiceName, wcslen(lpService[i].lpServiceName));
+            lpService[i].lpServiceName, wcslen(lpService[i].lpServiceName)
+        );
         if (py_name == NULL)
             goto error;
 
         py_display_name = NULL;
         py_display_name = PyUnicode_FromWideChar(
-            lpService[i].lpDisplayName, wcslen(lpService[i].lpDisplayName));
+            lpService[i].lpDisplayName, wcslen(lpService[i].lpDisplayName)
+        );
         if (py_display_name == NULL)
             goto error;
 
@@ -240,10 +235,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     PyObject *py_unicode_username = NULL;
 
     hService = psutil_get_service_from_args(
-        args,
-        SC_MANAGER_ENUMERATE_SERVICE,
-        SERVICE_QUERY_CONFIG,
-        &service_name
+        args, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG, &service_name
     );
     if (hService == NULL)
         return NULL;
@@ -271,19 +263,22 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
 
     // Get unicode display name.
     py_unicode_display_name = PyUnicode_FromWideChar(
-        qsc->lpDisplayName, wcslen(qsc->lpDisplayName));
+        qsc->lpDisplayName, wcslen(qsc->lpDisplayName)
+    );
     if (py_unicode_display_name == NULL)
         goto error;
 
     // Get unicode bin path.
     py_unicode_binpath = PyUnicode_FromWideChar(
-        qsc->lpBinaryPathName, wcslen(qsc->lpBinaryPathName));
+        qsc->lpBinaryPathName, wcslen(qsc->lpBinaryPathName)
+    );
     if (py_unicode_binpath == NULL)
         goto error;
 
     // Get unicode username.
     py_unicode_username = PyUnicode_FromWideChar(
-        qsc->lpServiceStartName, wcslen(qsc->lpServiceStartName));
+        qsc->lpServiceStartName, wcslen(qsc->lpServiceStartName)
+    );
     if (py_unicode_username == NULL)
         goto error;
 
@@ -337,18 +332,16 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
 
     hService = psutil_get_service_from_args(
-        args,
-        SC_MANAGER_ENUMERATE_SERVICE,
-        SERVICE_QUERY_STATUS,
-        &service_name
+        args, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_STATUS, &service_name
     );
     if (hService == NULL)
         return NULL;
 
     // First call to QueryServiceStatusEx() is necessary to get the
     // right size.
-    QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, NULL, 0,
-                         &bytesNeeded);
+    QueryServiceStatusEx(
+        hService, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded
+    );
     if (GetLastError() == ERROR_MUI_FILE_NOT_FOUND) {
         // Also services.msc fails in the same manner, so we return an
         // empty string.
@@ -361,24 +354,29 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    ssp = (SERVICE_STATUS_PROCESS *)HeapAlloc(GetProcessHeap(), 0, bytesNeeded);
+    ssp = (SERVICE_STATUS_PROCESS *)HeapAlloc(
+        GetProcessHeap(), 0, bytesNeeded
+    );
     if (ssp == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
     // Actual call.
-    ok = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)ssp,
-                              bytesNeeded, &bytesNeeded);
+    ok = QueryServiceStatusEx(
+        hService,
+        SC_STATUS_PROCESS_INFO,
+        (LPBYTE)ssp,
+        bytesNeeded,
+        &bytesNeeded
+    );
     if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceStatusEx");
         goto error;
     }
 
     py_tuple = Py_BuildValue(
-        "(sk)",
-        get_state_string(ssp->dwCurrentState),
-        ssp->dwProcessId
+        "(sk)", get_state_string(ssp->dwCurrentState), ssp->dwProcessId
     );
     if (py_tuple == NULL)
         goto error;
@@ -409,18 +407,17 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     PyObject *py_retstr = NULL;
 
     hService = psutil_get_service_from_args(
-        args,
-        SC_MANAGER_ENUMERATE_SERVICE,
-        SERVICE_QUERY_CONFIG,
-        &service_name
+        args, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG, &service_name
     );
     if (hService == NULL)
         return NULL;
 
-    QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &bytesNeeded);
+    QueryServiceConfig2W(
+        hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0, &bytesNeeded
+    );
 
-    if ((GetLastError() == ERROR_NOT_FOUND) ||
-        (GetLastError() == ERROR_MUI_FILE_NOT_FOUND))
+    if ((GetLastError() == ERROR_NOT_FOUND)
+        || (GetLastError() == ERROR_MUI_FILE_NOT_FOUND))
     {
         // E.g. services.msc fails in this manner, so we return an
         // empty string.
@@ -441,8 +438,13 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    ok = QueryServiceConfig2W(hService, SERVICE_CONFIG_DESCRIPTION,
-                              (LPBYTE)scd, bytesNeeded, &bytesNeeded);
+    ok = QueryServiceConfig2W(
+        hService,
+        SERVICE_CONFIG_DESCRIPTION,
+        (LPBYTE)scd,
+        bytesNeeded,
+        &bytesNeeded
+    );
     if (!ok) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfig2W");
         goto error;
@@ -453,7 +455,8 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     }
     else {
         py_retstr = PyUnicode_FromWideChar(
-            scd->lpDescription, wcslen(scd->lpDescription));
+            scd->lpDescription, wcslen(scd->lpDescription)
+        );
     }
 
     if (!py_retstr)
@@ -486,10 +489,7 @@ psutil_winservice_start(PyObject *self, PyObject *args) {
     wchar_t *service_name = NULL;
 
     hService = psutil_get_service_from_args(
-        args,
-        SC_MANAGER_ALL_ACCESS,
-        SERVICE_START,
-        &service_name
+        args, SC_MANAGER_ALL_ACCESS, SERVICE_START, &service_name
     );
     if (hService == NULL)
         return NULL;
@@ -525,10 +525,7 @@ psutil_winservice_stop(PyObject *self, PyObject *args) {
     SERVICE_STATUS ssp;
 
     hService = psutil_get_service_from_args(
-        args,
-        SC_MANAGER_ALL_ACCESS,
-        SERVICE_STOP,
-        &service_name
+        args, SC_MANAGER_ALL_ACCESS, SERVICE_STOP, &service_name
     );
     if (hService == NULL)
         return NULL;

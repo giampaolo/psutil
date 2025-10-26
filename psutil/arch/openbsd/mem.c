@@ -44,19 +44,20 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, size) != 0)
         return NULL;
 
-    return Py_BuildValue("KKKKKKKK",
+    return Py_BuildValue(
+        "KKKKKKKK",
         // Note: many programs calculate total memory as
         // "uvmexp.npages * pagesize" but this is incorrect and does not
         // match "sysctl | grep hw.physmem".
-        (unsigned long long) total_physmem,
-        (unsigned long long) uvmexp.free * pagesize,
-        (unsigned long long) uvmexp.active * pagesize,
-        (unsigned long long) uvmexp.inactive * pagesize,
-        (unsigned long long) uvmexp.wired * pagesize,
+        (unsigned long long)total_physmem,
+        (unsigned long long)uvmexp.free * pagesize,
+        (unsigned long long)uvmexp.active * pagesize,
+        (unsigned long long)uvmexp.inactive * pagesize,
+        (unsigned long long)uvmexp.wired * pagesize,
         // this is how "top" determines it
-        (unsigned long long) bcstats.numbufpages * pagesize,  // cached
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) vmdata.t_vmshr + vmdata.t_rmshr  // shared
+        (unsigned long long)bcstats.numbufpages * pagesize,  // cached
+        (unsigned long long)0,  // buffers
+        (unsigned long long)vmdata.t_vmshr + vmdata.t_rmshr  // shared
     );
 }
 

@@ -11,6 +11,7 @@
 // We do this so that all .c files have to include only one header
 // (ourselves, init.h).
 
+// clang-format off
 #if defined(PSUTIL_POSIX)
     #include "../../arch/posix/init.h"
 #endif
@@ -47,14 +48,17 @@ extern int PSUTIL_CONN_NONE;
     #define UTXENT_MUTEX_LOCK()
     #define UTXENT_MUTEX_UNLOCK()
 #endif
+// clang-format on
 
 // Print a debug message on stderr.
-#define psutil_debug(...) do { \
-    if (! PSUTIL_DEBUG) \
-        break; \
-    fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
-    fprintf(stderr, __VA_ARGS__); \
-    fprintf(stderr, "\n");} while(0)
+#define psutil_debug(...) \
+    do { \
+        if (!PSUTIL_DEBUG) \
+            break; \
+        fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\n"); \
+    } while (0)
 
 
 // strncpy() variant which appends a null terminator.
@@ -76,6 +80,7 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
 
 // --- _Py_PARSE_PID
 
+// clang-format off
 // SIZEOF_INT|LONG is missing on Linux + PyPy (only?).
 // In this case we guess it from setup.py. It's not 100% bullet proof,
 // If wrong we'll probably get compiler warnings.
@@ -117,6 +122,7 @@ PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
                "sizeof(long) or sizeof(long long)"
     #endif
 #endif
+// clang-format on
 
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);

@@ -10,22 +10,23 @@
 
 #include <sys/core.h>
 
-#define PROCINFO_INCR   (256)
-#define PROCSIZE        (sizeof(struct procentry64))
-#define FDSINFOSIZE     (sizeof(struct fdsinfo64))
-#define KMEM            "/dev/kmem"
+#define PROCINFO_INCR (256)
+#define PROCSIZE (sizeof(struct procentry64))
+#define FDSINFOSIZE (sizeof(struct fdsinfo64))
+#define KMEM "/dev/kmem"
 
-typedef u_longlong_t    KA_T;
+typedef u_longlong_t KA_T;
 
-/* psutil_kread() - read from kernel memory */
-int psutil_kread(int Kd,     /* kernel memory file descriptor */
-    KA_T addr,               /* kernel memory address */
-    char *buf,               /* buffer to receive data */
-    size_t len);             /* length to read */
-
-struct procentry64 *
-psutil_read_process_table(
-    int * num               /* out - number of processes read */
+// psutil_kread() - read from kernel memory
+int psutil_kread(
+    int Kd,  // kernel memory file descriptor
+    KA_T addr,  // kernel memory address
+    char *buf,  // buffer to receive data
+    size_t len  // length to read
 );
 
-#endif  /* __PSUTIL_AIX_COMMON_H__ */
+struct procentry64 *psutil_read_process_table(
+    int *num  // out - number of processes read
+);
+
+#endif  // __PSUTIL_AIX_COMMON_H__

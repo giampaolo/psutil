@@ -10,13 +10,14 @@ against the files which were modified in the commit. Install this with
 "make install-git-hooks".
 """
 
-
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 
 PYTHON = sys.executable
+LINUX = sys.platform.startswith("linux")
 
 
 def term_supports_colors():
@@ -95,6 +96,9 @@ def git_commit_files():
     return (py_files, c_files, rst_files, toml_files, new_rm_mv)
 
 
+# --- linters
+
+
 def black(files):
     print(f"running black ({len(files)})")
     cmd = [PYTHON, "-m", "black", "--check", "--safe"] + files
@@ -122,12 +126,14 @@ def ruff(files):
         )
 
 
-def c_linter(files):
-    print(f"running clinter ({len(files)})")
-    # XXX: we should escape spaces and possibly other amenities here
-    cmd = [PYTHON, "scripts/internal/clinter.py"] + files
+def clang_format(files):
+    if not LINUX and not shutil.which("clang-format"):
+        print("clang-format not installed; skip lint check")
+        return
+    print("running clang-format")
+    cmd = ["clang-format", "--dry-run", "--Werror"] + files
     if subprocess.call(cmd) != 0:
-        return sys.exit("C code didn't pass style check")
+        return sys.exit("code didn't pass clang-format check")
 
 
 def toml_sort(files):
@@ -151,13 +157,24 @@ def dprint():
         return sys.exit("code didn't pass dprint check")
 
 
+def lint_manifest():
+    print("running MANIFEST.in check")
+    out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
+    with open("MANIFEST.in", encoding="utf8") as f:
+        if out.strip() != f.read().strip():
+            sys.exit(
+                "some files were added, deleted or renamed; "
+                "run 'make generate-manifest' and commit again"
+            )
+
+
 def main():
     py_files, c_files, rst_files, toml_files, new_rm_mv = git_commit_files()
     if py_files:
         black(py_files)
         ruff(py_files)
     if c_files:
-        c_linter(c_files)
+        clang_format(c_files)
     if rst_files:
         rstcheck(rst_files)
     if toml_files:
@@ -166,13 +183,7 @@ def main():
     dprint()
 
     if new_rm_mv:
-        out = sh([PYTHON, "scripts/internal/generate_manifest.py"])
-        with open("MANIFEST.in", encoding="utf8") as f:
-            if out.strip() != f.read().strip():
-                sys.exit(
-                    "some files were added, deleted or renamed; "
-                    "run 'make generate-manifest' and commit again"
-                )
+        lint_manifest()
 
 
 if __name__ == "__main__":

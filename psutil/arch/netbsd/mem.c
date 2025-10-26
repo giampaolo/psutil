@@ -41,11 +41,11 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     cached = (uv.filepages + uv.execpages + uv.anonpages) << uv.pageshift;
     return Py_BuildValue(
         "LLLLLL",
-        (long long) uv.npages << uv.pageshift,  // total
-        (long long) uv.free << uv.pageshift,  // free
-        (long long) uv.active << uv.pageshift,  // active
-        (long long) uv.inactive << uv.pageshift,  // inactive
-        (long long) uv.wired << uv.pageshift,  // wired
+        (long long)uv.npages << uv.pageshift,  // total
+        (long long)uv.free << uv.pageshift,  // free
+        (long long)uv.active << uv.pageshift,  // active
+        (long long)uv.inactive << uv.pageshift,  // inactive
+        (long long)uv.wired << uv.pageshift,  // wired
         cached  // cached
     );
 }
@@ -80,7 +80,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
             swap_total += (uint64_t)swdev[i].se_nblks * DEV_BSIZE;
-            swap_free += (uint64_t)(swdev[i].se_nblks - swdev[i].se_inuse) * DEV_BSIZE;
+            swap_free += (uint64_t)(swdev[i].se_nblks - swdev[i].se_inuse)
+                         * DEV_BSIZE;
         }
     }
     free(swdev);
@@ -98,8 +99,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         swap_total,
         (swap_total - swap_free),
         swap_free,
-        (long) uv.pgswapin * pagesize,  // swap in
-        (long) uv.pgswapout * pagesize  // swap out
+        (long)uv.pgswapin * pagesize,  // swap in
+        (long)uv.pgswapout * pagesize  // swap out
     );
 
 error:

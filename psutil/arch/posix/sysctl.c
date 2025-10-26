@@ -117,9 +117,7 @@ psutil_sysctl_argmax() {
     }
 
     if (argmax <= 0) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "sysctl(KERN_ARGMAX) return <= 0"
-        );
+        PyErr_SetString(PyExc_RuntimeError, "sysctl(KERN_ARGMAX) return <= 0");
         return 0;
     }
 
@@ -177,7 +175,9 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
     // First query to determine required size.
     ret = sysctlbyname(name, NULL, &needed, NULL, 0);
     if (ret == -1) {
-        snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name);
+        snprintf(
+            errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name
+        );
         psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
         return -1;
     }

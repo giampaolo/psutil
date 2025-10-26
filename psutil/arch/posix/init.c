@@ -10,7 +10,7 @@
 
 #include "init.h"
 
-PyObject *ZombieProcessError = NULL;;
+PyObject *ZombieProcessError = NULL;
 
 /*
  * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
@@ -33,7 +33,7 @@ psutil_getpagesize(void) {
     return sysconf(_SC_PAGE_SIZE);
 #else
     // legacy
-    return (long) getpagesize();
+    return (long)getpagesize();
 #endif
 }
 
@@ -97,10 +97,8 @@ psutil_posix_add_constants(PyObject *mod) {
     if (!mod)
         return -1;
 
-#if defined(PSUTIL_BSD) || \
-        defined(PSUTIL_OSX) || \
-        defined(PSUTIL_SUNOS) || \
-        defined(PSUTIL_AIX)
+#if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS) \
+    || defined(PSUTIL_AIX)
     if (PyModule_AddIntConstant(mod, "AF_LINK", AF_LINK))
         return -1;
 #endif
@@ -158,7 +156,7 @@ psutil_posix_add_constants(PyObject *mod) {
         return -1;
 #endif
 
-// Linux specific
+        // Linux specific
 
 #ifdef RLIMIT_LOCKS
     if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS))
@@ -190,7 +188,7 @@ psutil_posix_add_constants(PyObject *mod) {
         return -1;
 #endif
 
-// Free specific
+        // Free specific
 
 #ifdef RLIMIT_SWAP
     if (PyModule_AddIntConstant(mod, "RLIMIT_SWAP", RLIMIT_SWAP))
@@ -209,11 +207,12 @@ psutil_posix_add_constants(PyObject *mod) {
 
 #if defined(HAVE_LONG_LONG)
     if (sizeof(RLIM_INFINITY) > sizeof(long)) {
-        v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);
-    } else
+        v = PyLong_FromLongLong((PY_LONG_LONG)RLIM_INFINITY);
+    }
+    else
 #endif
     {
-        v = PyLong_FromLong((long) RLIM_INFINITY);
+        v = PyLong_FromLong((long)RLIM_INFINITY);
     }
     if (v) {
         if (PyModule_AddObject(mod, "RLIM_INFINITY", v))

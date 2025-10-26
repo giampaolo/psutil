@@ -45,11 +45,9 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
     }
 
     while ((status = NtQuerySystemInformation(
-        SystemExtendedHandleInformation,
-        buffer,
-        bufferSize,
-        NULL
-        )) == STATUS_INFO_LENGTH_MISMATCH)
+                SystemExtendedHandleInformation, buffer, bufferSize, NULL
+            ))
+           == STATUS_INFO_LENGTH_MISMATCH)
     {
         FREE(buffer);
         bufferSize *= 2;
@@ -58,7 +56,8 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
         if (bufferSize > 256 * 1024 * 1024) {
             PyErr_SetString(
                 PyExc_RuntimeError,
-                "SystemExtendedHandleInformation buffer too big");
+                "SystemExtendedHandleInformation buffer too big"
+            );
             return -1;
         }
 
@@ -69,7 +68,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
         }
     }
 
-    if (! NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         FREE(buffer);
         return -1;
@@ -82,7 +81,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
 
 static int
 psutil_get_filename(LPVOID lpvParam) {
-    HANDLE hFile = *((HANDLE*)lpvParam);
+    HANDLE hFile = *((HANDLE *)lpvParam);
     NTSTATUS status;
     ULONG bufferSize;
     ULONG attempts = 8;
@@ -111,10 +110,10 @@ psutil_get_filename(LPVOID lpvParam) {
             globalFileName,
             bufferSize,
             &bufferSize
-            );
-        if (status == STATUS_BUFFER_OVERFLOW ||
-                status == STATUS_INFO_LENGTH_MISMATCH ||
-                status == STATUS_BUFFER_TOO_SMALL)
+        );
+        if (status == STATUS_BUFFER_OVERFLOW
+            || status == STATUS_INFO_LENGTH_MISMATCH
+            || status == STATUS_BUFFER_TOO_SMALL)
         {
             FREE(globalFileName);
             globalFileName = MALLOC_ZERO(bufferSize);
@@ -128,7 +127,7 @@ psutil_get_filename(LPVOID lpvParam) {
         }
     } while (--attempts);
 
-    if (! NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status)) {
         psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         FREE(globalFileName);
         globalFileName = NULL;
@@ -153,7 +152,8 @@ psutil_threaded_get_filename(HANDLE hFile) {
     DWORD threadRetValue;
 
     hThread = CreateThread(
-        NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL);
+        NULL, 0, (LPTHREAD_START_ROUTINE)psutil_get_filename, &hFile, 0, NULL
+    );
     if (hThread == NULL) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("CreateThread");
         return -1;
@@ -165,7 +165,8 @@ psutil_threaded_get_filename(HANDLE hFile) {
     // If the thread hangs, kill it and cleanup.
     if (dwWait == WAIT_TIMEOUT) {
         psutil_debug(
-            "get handle name thread timed out after %i ms", THREAD_TIMEOUT);
+            "get handle name thread timed out after %i ms", THREAD_TIMEOUT
+        );
         if (TerminateThread(hThread, 0) == 0) {
             psutil_PyErr_SetFromOSErrnoWithSyscall("TerminateThread");
             CloseHandle(hThread);
@@ -209,13 +210,14 @@ psutil_threaded_get_filename(HANDLE hFile) {
 
 PyObject *
 psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
-    PSYSTEM_HANDLE_INFORMATION_EX       handlesList = NULL;
-    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
-    HANDLE                              hFile = NULL;
-    ULONG                               i = 0;
-    BOOLEAN                             errorOccurred = FALSE;
-    PyObject*                           py_path = NULL;
-    PyObject*                           py_retlist = PyList_New(0);;
+    PSYSTEM_HANDLE_INFORMATION_EX handlesList = NULL;
+    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX hHandle = NULL;
+    HANDLE hFile = NULL;
+    ULONG i = 0;
+    BOOLEAN errorOccurred = FALSE;
+    PyObject *py_path = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    ;
 
     if (!py_retlist)
         return NULL;
@@ -231,14 +233,15 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
         hHandle = &handlesList->Handles[i];
         if ((ULONG_PTR)hHandle->UniqueProcessId != dwPid)
             continue;
-        if (! DuplicateHandle(
+        if (!DuplicateHandle(
                 hProcess,
                 hHandle->HandleValue,
                 GetCurrentProcess(),
                 &hFile,
                 0,
                 TRUE,
-                DUPLICATE_SAME_ACCESS))
+                DUPLICATE_SAME_ACCESS
+            ))
         {
             // Will fail if not a regular file; just skip it.
             continue;
@@ -249,9 +252,10 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             goto error;
 
         if ((globalFileName != NULL) && (globalFileName->Length > 0)) {
-            py_path = PyUnicode_FromWideChar(globalFileName->Buffer,
-                                             wcslen(globalFileName->Buffer));
-            if (! py_path)
+            py_path = PyUnicode_FromWideChar(
+                globalFileName->Buffer, wcslen(globalFileName->Buffer)
+            );
+            if (!py_path)
                 goto error;
             if (PyList_Append(py_retlist, py_path))
                 goto error;

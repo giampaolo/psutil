@@ -33,14 +33,13 @@ ioprio_set(int which, int who, int ioprio) {
 #define IOPRIO_PRIO_DATA(mask) ((mask) & IOPRIO_PRIO_MASK)
 #define IOPRIO_PRIO_VALUE(class, data) (((class) << IOPRIO_CLASS_SHIFT) | data)
 
-
 // Return a (ioclass, iodata) Python tuple representing process I/O
 // priority.
 PyObject *
 psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
     pid_t pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
@@ -60,8 +59,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     int ioprio, ioclass, iodata;
     int retval;
 
-    if (! PyArg_ParseTuple(
-            args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
         return NULL;
     }
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
@@ -102,8 +100,11 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         if (errno != EINVAL)
             return PyErr_SetFromErrno(PyExc_OSError);
         if (ncpus > INT_MAX / 2) {
-            PyErr_SetString(PyExc_OverflowError, "could not allocate "
-                            "a large enough CPU set");
+            PyErr_SetString(
+                PyExc_OverflowError,
+                "could not allocate "
+                "a large enough CPU set"
+            );
             return NULL;
         }
         ncpus = ncpus * 2;
@@ -153,7 +154,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     if (!PySequence_Check(py_cpu_set)) {
         return PyErr_Format(
             PyExc_TypeError,
-            "sequence argument expected, got %R", Py_TYPE(py_cpu_set)
+            "sequence argument expected, got %R",
+            Py_TYPE(py_cpu_set)
         );
     }
 

@@ -49,8 +49,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "OO", &pid, &py_af_filter,
-                           &py_type_filter)) {
+    if (!PyArg_ParseTuple(
+            args, _Py_PARSE_PID "OO", &pid, &py_af_filter, &py_type_filter
+        ))
+    {
         goto error;
     }
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
@@ -59,13 +61,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
-    if (! kd) {
+    if (!kd) {
         convert_kvm_err("kvm_openfiles", errbuf);
         goto error;
     }
 
     ikf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*ikf), &cnt);
-    if (! ikf) {
+    if (!ikf) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("kvm_getfiles");
         goto error;
     }
@@ -108,7 +110,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             // local addr
             inet_ntop(kif->so_family, &kif->inp_laddru, lip, sizeof(lip));
             py_laddr = Py_BuildValue("(si)", lip, lport);
-            if (! py_laddr)
+            if (!py_laddr)
                 goto error;
 
             // remote addr
@@ -119,7 +121,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             else {
                 py_raddr = Py_BuildValue("()");
             }
-            if (! py_raddr)
+            if (!py_raddr)
                 goto error;
 
             // populate tuple and list
@@ -133,7 +135,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state,
                 kif->p_pid
             );
-            if (! py_tuple)
+            if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
@@ -142,7 +144,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         // UNIX socket
         else if (kif->so_family == AF_UNIX) {
             py_lpath = PyUnicode_DecodeFSDefault(kif->unp_path);
-            if (! py_lpath)
+            if (!py_lpath)
                 goto error;
 
             py_tuple = Py_BuildValue(
@@ -155,7 +157,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 PSUTIL_CONN_NONE,
                 kif->p_pid
             );
-            if (! py_tuple)
+            if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;

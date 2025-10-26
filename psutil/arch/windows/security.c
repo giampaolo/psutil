@@ -20,7 +20,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
     TOKEN_PRIVILEGES tpPrevious;
     DWORD cbPrevious = sizeof(TOKEN_PRIVILEGES);
 
-    if (! LookupPrivilegeValue(NULL, Privilege, &luid)) {
+    if (!LookupPrivilegeValue(NULL, Privilege, &luid)) {
         psutil_PyErr_SetFromOSErrnoWithSyscall("LookupPrivilegeValue");
         return -1;
     }
@@ -30,13 +30,14 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
     tp.Privileges[0].Luid = luid;
     tp.Privileges[0].Attributes = 0;
 
-    if (! AdjustTokenPrivileges(
+    if (!AdjustTokenPrivileges(
             hToken,
             FALSE,
             &tp,
             sizeof(TOKEN_PRIVILEGES),
             &tpPrevious,
-            &cbPrevious))
+            &cbPrevious
+        ))
     {
         psutil_PyErr_SetFromOSErrnoWithSyscall("AdjustTokenPrivileges");
         return -1;
@@ -52,13 +53,9 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
         tpPrevious.Privileges[0].Attributes ^=
             (SE_PRIVILEGE_ENABLED & tpPrevious.Privileges[0].Attributes);
 
-    if (! AdjustTokenPrivileges(
-            hToken,
-            FALSE,
-            &tpPrevious,
-            cbPrevious,
-            NULL,
-            NULL))
+    if (!AdjustTokenPrivileges(
+            hToken, FALSE, &tpPrevious, cbPrevious, NULL, NULL
+        ))
     {
         psutil_PyErr_SetFromOSErrnoWithSyscall("AdjustTokenPrivileges");
         return -1;
@@ -73,17 +70,16 @@ psutil_get_thisproc_token() {
     HANDLE hToken = NULL;
     HANDLE me = GetCurrentProcess();
 
-    if (! OpenProcessToken(
-            me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+    if (!OpenProcessToken(me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
     {
-        if (GetLastError() == ERROR_NO_TOKEN)
-        {
-            if (! ImpersonateSelf(SecurityImpersonation)) {
+        if (GetLastError() == ERROR_NO_TOKEN) {
+            if (!ImpersonateSelf(SecurityImpersonation)) {
                 psutil_PyErr_SetFromOSErrnoWithSyscall("ImpersonateSelf");
                 return NULL;
             }
-            if (! OpenProcessToken(
-                    me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+            if (!OpenProcessToken(
+                    me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken
+                ))
             {
                 psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
                 return NULL;
@@ -101,7 +97,8 @@ psutil_get_thisproc_token() {
 
 static void
 psutil_print_err() {
-    char *msg = "psutil module couldn't set SE DEBUG mode for this process; " \
+    char *msg =
+        "psutil module couldn't set SE DEBUG mode for this process; "
         "please file an issue against psutil bug tracker";
     psutil_debug(msg);
     if (GetLastError() != ERROR_ACCESS_DENIED)

@@ -27,7 +27,7 @@
 
 PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
-    kstat_ctl_t    *kc = NULL;
+    kstat_ctl_t *kc = NULL;
     kstat_t *ksp;
     kstat_named_t *rbytes, *wbytes, *rpkts, *wpkts, *ierrs, *oerrs;
     int ret;
@@ -78,38 +78,38 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         ierrs = (kstat_named_t *)kstat_data_lookup(ksp, "ierrors");
         oerrs = (kstat_named_t *)kstat_data_lookup(ksp, "oerrors");
 
-        if ((rbytes == NULL) || (wbytes == NULL) || (rpkts == NULL) ||
-                (wpkts == NULL) || (ierrs == NULL) || (oerrs == NULL))
+        if ((rbytes == NULL) || (wbytes == NULL) || (rpkts == NULL)
+            || (wpkts == NULL) || (ierrs == NULL) || (oerrs == NULL))
         {
             PyErr_SetString(PyExc_RuntimeError, "kstat_data_lookup() failed");
             goto error;
         }
 
-        if (rbytes->data_type == KSTAT_DATA_UINT64)
-        {
-            py_ifc_info = Py_BuildValue("(KKKKIIii)",
-                                        wbytes->value.ui64,
-                                        rbytes->value.ui64,
-                                        wpkts->value.ui64,
-                                        rpkts->value.ui64,
-                                        ierrs->value.ui32,
-                                        oerrs->value.ui32,
-                                        0,  // dropin not supported
-                                        0   // dropout not supported
-                                       );
+        if (rbytes->data_type == KSTAT_DATA_UINT64) {
+            py_ifc_info = Py_BuildValue(
+                "(KKKKIIii)",
+                wbytes->value.ui64,
+                rbytes->value.ui64,
+                wpkts->value.ui64,
+                rpkts->value.ui64,
+                ierrs->value.ui32,
+                oerrs->value.ui32,
+                0,  // dropin not supported
+                0  // dropout not supported
+            );
         }
-        else
-        {
-            py_ifc_info = Py_BuildValue("(IIIIIIii)",
-                                        wbytes->value.ui32,
-                                        rbytes->value.ui32,
-                                        wpkts->value.ui32,
-                                        rpkts->value.ui32,
-                                        ierrs->value.ui32,
-                                        oerrs->value.ui32,
-                                        0,  // dropin not supported
-                                        0   // dropout not supported
-                                       );
+        else {
+            py_ifc_info = Py_BuildValue(
+                "(IIIIIIii)",
+                wbytes->value.ui32,
+                rbytes->value.ui32,
+                wpkts->value.ui32,
+                rpkts->value.ui32,
+                ierrs->value.ui32,
+                oerrs->value.ui32,
+                0,  // dropin not supported
+                0  // dropout not supported
+            );
         }
         if (!py_ifc_info)
             goto error;
@@ -118,7 +118,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         Py_CLEAR(py_ifc_info);
         goto next;
 
-next:
+    next:
         ksp = ksp->ks_next;
     }
 
@@ -141,8 +141,8 @@ error:
 // Return stats about a particular network interface. Refs:
 // * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py
 // * http://www.i-scream.org/libstatgrab/
-PyObject*
-psutil_net_if_stats(PyObject* self, PyObject* args) {
+PyObject *
+psutil_net_if_stats(PyObject *self, PyObject *args) {
     kstat_ctl_t *kc = NULL;
     kstat_t *ksp;
     kstat_named_t *knp;
@@ -219,8 +219,9 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
             if (ret == -1)
                 goto error;
 
-            py_ifc_info = Py_BuildValue("(Oiii)", py_is_up, duplex, speed,
-                                        ifr.lifr_mtu);
+            py_ifc_info = Py_BuildValue(
+                "(Oiii)", py_is_up, duplex, speed, ifr.lifr_mtu
+            );
             if (!py_ifc_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
@@ -262,10 +263,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     long pid;
     int sd = 0;
     mib2_tcpConnEntry_t tp;
-    mib2_udpEntry_t     ude;
+    mib2_udpEntry_t ude;
 #if defined(AF_INET6)
     mib2_tcp6ConnEntry_t tp6;
-    mib2_udp6Entry_t     ude6;
+    mib2_udp6Entry_t ude6;
 #endif
     char buf[512];
     int i, flags, getcode, num_ent, state, ret;
@@ -276,8 +277,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct strbuf ctlbuf, databuf;
     struct T_optmgmt_req tor = {0};
     struct T_optmgmt_ack toa = {0};
-    struct T_error_ack   tea = {0};
-    struct opthdr        mibhdr = {0};
+    struct T_error_ack tea = {0};
+    struct opthdr mibhdr = {0};
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
@@ -286,7 +287,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
     sd = open("/dev/arp", O_RDWR);
@@ -311,13 +312,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     // function.  Also see:
     // http://stackoverflow.com/questions/8723598/
     tor.PRIM_type = T_SVR4_OPTMGMT_REQ;
-    tor.OPT_offset = sizeof (struct T_optmgmt_req);
-    tor.OPT_length = sizeof (struct opthdr);
+    tor.OPT_offset = sizeof(struct T_optmgmt_req);
+    tor.OPT_length = sizeof(struct opthdr);
     tor.MGMT_flags = T_CURRENT;
     mibhdr.level = MIB2_IP;
-    mibhdr.name  = 0;
+    mibhdr.name = 0;
 
-    mibhdr.len   = 1;
+    mibhdr.len = 1;
     memcpy(buf, &tor, sizeof tor);
     memcpy(buf + tor.OPT_offset, &mibhdr, sizeof mibhdr);
 
@@ -330,30 +331,27 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    ctlbuf.maxlen = sizeof (buf);
+    ctlbuf.maxlen = sizeof(buf);
     for (;;) {
         flags = 0;
         getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
         memcpy(&toa, buf, sizeof toa);
         memcpy(&tea, buf, sizeof tea);
 
-        if (getcode != MOREDATA ||
-                ctlbuf.len < (int)sizeof (struct T_optmgmt_ack) ||
-                toa.PRIM_type != T_OPTMGMT_ACK ||
-                toa.MGMT_flags != T_SUCCESS)
+        if (getcode != MOREDATA
+            || ctlbuf.len < (int)sizeof(struct T_optmgmt_ack)
+            || toa.PRIM_type != T_OPTMGMT_ACK || toa.MGMT_flags != T_SUCCESS)
         {
             break;
         }
-        if (ctlbuf.len >= (int)sizeof (struct T_error_ack) &&
-                tea.PRIM_type == T_ERROR_ACK)
+        if (ctlbuf.len >= (int)sizeof(struct T_error_ack)
+            && tea.PRIM_type == T_ERROR_ACK)
         {
             PyErr_SetString(PyExc_RuntimeError, "ERROR_ACK");
             goto error;
         }
-        if (getcode == 0 &&
-                ctlbuf.len >= (int)sizeof (struct T_optmgmt_ack) &&
-                toa.PRIM_type == T_OPTMGMT_ACK &&
-                toa.MGMT_flags == T_SUCCESS)
+        if (getcode == 0 && ctlbuf.len >= (int)sizeof(struct T_optmgmt_ack)
+            && toa.PRIM_type == T_OPTMGMT_ACK && toa.MGMT_flags == T_SUCCESS)
         {
             PyErr_SetString(PyExc_RuntimeError, "ERROR_T_OPTMGMT_ACK");
             goto error;
@@ -406,9 +404,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp.tcpConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_STREAM,
-                                         py_laddr, py_raddr, state,
-                                         processed_pid);
+                py_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET,
+                    SOCK_STREAM,
+                    py_laddr,
+                    py_raddr,
+                    state,
+                    processed_pid
+                );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -418,8 +423,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 #if defined(AF_INET6)
         // TCPv6
-        else if (mibhdr.level == MIB2_TCP6 && mibhdr.name == MIB2_TCP6_CONN)
-        {
+        else if (mibhdr.level == MIB2_TCP6 && mibhdr.name == MIB2_TCP6_CONN) {
             num_ent = mibhdr.len / sizeof(mib2_tcp6ConnEntry_t);
 
             for (i = 0; i < num_ent; i++) {
@@ -428,7 +432,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
-                inet_ntop(AF_INET6, &tp6.tcp6ConnLocalAddress, lip, sizeof(lip));
+                inet_ntop(
+                    AF_INET6, &tp6.tcp6ConnLocalAddress, lip, sizeof(lip)
+                );
                 inet_ntop(AF_INET6, &tp6.tcp6ConnRemAddress, rip, sizeof(rip));
                 lport = tp6.tcp6ConnLocalPort;
                 rport = tp6.tcp6ConnRemPort;
@@ -446,8 +452,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp6.tcp6ConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_STREAM,
-                                         py_laddr, py_raddr, state, processed_pid);
+                py_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET6,
+                    SOCK_STREAM,
+                    py_laddr,
+                    py_raddr,
+                    state,
+                    processed_pid
+                );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -480,9 +494,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_DGRAM,
-                                         py_laddr, py_raddr, PSUTIL_CONN_NONE,
-                                         processed_pid);
+                py_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET,
+                    SOCK_DGRAM,
+                    py_laddr,
+                    py_raddr,
+                    PSUTIL_CONN_NONE,
+                    processed_pid
+                );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -492,9 +513,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         }
 #if defined(AF_INET6)
         // UDPv6
-        else if (mibhdr.level == MIB2_UDP6 ||
-                    mibhdr.level == MIB2_UDP6_ENTRY)
-            {
+        else if (mibhdr.level == MIB2_UDP6 || mibhdr.level == MIB2_UDP6_ENTRY)
+        {
             num_ent = mibhdr.len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++) {
                 memcpy(&ude6, databuf.buf + i * sizeof ude6, sizeof ude6);
@@ -509,9 +529,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_DGRAM,
-                                         py_laddr, py_raddr, PSUTIL_CONN_NONE,
-                                         processed_pid);
+                py_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET6,
+                    SOCK_DGRAM,
+                    py_laddr,
+                    py_raddr,
+                    PSUTIL_CONN_NONE,
+                    processed_pid
+                );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))

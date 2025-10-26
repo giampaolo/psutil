@@ -20,16 +20,15 @@
 
 #include "ifaddrs.h"
 
-#define MAX(x,y) ((x)>(y)?(x):(y))
-#define SIZE(p) MAX((p).sa_len,sizeof(p))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define SIZE(p) MAX((p).sa_len, sizeof(p))
 
 
 static struct sockaddr *
-sa_dup(struct sockaddr *sa1)
-{
+sa_dup(struct sockaddr *sa1) {
     struct sockaddr *sa2;
     size_t sz = sa1->sa_len;
-    sa2 = (struct sockaddr *) calloc(1, sz);
+    sa2 = (struct sockaddr *)calloc(1, sz);
     if (sa2 == NULL)
         return NULL;
     memcpy(sa2, sa1, sz);
@@ -37,9 +36,10 @@ sa_dup(struct sockaddr *sa1)
 }
 
 
-void freeifaddrs(struct ifaddrs *ifp)
-{
-    if (NULL == ifp) return;
+void
+freeifaddrs(struct ifaddrs *ifp) {
+    if (NULL == ifp)
+        return;
     free(ifp->ifa_name);
     free(ifp->ifa_addr);
     free(ifp->ifa_netmask);
@@ -49,8 +49,8 @@ void freeifaddrs(struct ifaddrs *ifp)
 }
 
 
-int getifaddrs(struct ifaddrs **ifap)
-{
+int
+getifaddrs(struct ifaddrs **ifap) {
     int sd, ifsize;
     char *ccp, *ecp;
     struct ifconf ifc;
@@ -70,7 +70,7 @@ int getifaddrs(struct ifaddrs **ifap)
     if (ioctl(sd, SIOCGSIZIFCONF, (caddr_t)&ifsize) < 0)
         goto error;
 
-    ifc.ifc_req = (struct ifreq *) calloc(1, ifsize);
+    ifc.ifc_req = (struct ifreq *)calloc(1, ifsize);
     if (ifc.ifc_req == NULL)
         goto error;
     ifc.ifc_len = ifsize;
@@ -82,19 +82,20 @@ int getifaddrs(struct ifaddrs **ifap)
     ecp = ccp + ifsize;
 
     while (ccp < ecp) {
-
-        ifr = (struct ifreq *) ccp;
+        ifr = (struct ifreq *)ccp;
         ifsize = sizeof(ifr->ifr_name) + SIZE(ifr->ifr_addr);
         fam = ifr->ifr_addr.sa_family;
 
         if (fam == AF_INET || fam == AF_INET6) {
-            cifa = (struct ifaddrs *) calloc(1, sizeof(struct ifaddrs));
+            cifa = (struct ifaddrs *)calloc(1, sizeof(struct ifaddrs));
             if (cifa == NULL)
                 goto error;
             cifa->ifa_next = NULL;
 
-            if (pifa == NULL) *ifap = cifa; /* first one */
-            else pifa->ifa_next = cifa;
+            if (pifa == NULL)
+                *ifap = cifa;  // first one
+            else
+                pifa->ifa_next = cifa;
 
             cifa->ifa_name = strdup(ifr->ifr_name);
             if (cifa->ifa_name == NULL)

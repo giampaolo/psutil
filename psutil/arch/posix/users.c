@@ -13,7 +13,6 @@
 #include <utmpx.h>
 
 
-
 static void
 setup() {
     UTXENT_MUTEX_LOCK();
@@ -49,17 +48,16 @@ psutil_users(PyObject *self, PyObject *args) {
         py_tuple = NULL;
 
         py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
-        if (! py_username)
+        if (!py_username)
             goto error;
 
         py_tty = PyUnicode_DecodeFSDefault(ut->ut_line);
-        if (! py_tty)
+        if (!py_tty)
             goto error;
 
         host_len = strnlen(ut->ut_host, sizeof(ut->ut_host));
-        if (host_len == 0 ||
-            (strcmp(ut->ut_host, ":0") == 0) ||
-            (strcmp(ut->ut_host, ":0.0") == 0))
+        if (host_len == 0 || (strcmp(ut->ut_host, ":0") == 0)
+            || (strcmp(ut->ut_host, ":0.0") == 0))
         {
             py_hostname = PyUnicode_DecodeFSDefault("localhost");
         }
@@ -76,13 +74,13 @@ psutil_users(PyObject *self, PyObject *args) {
 
         py_tuple = Py_BuildValue(
             "OOOd" _Py_PARSE_PID,
-            py_username,              // username
-            py_tty,                   // tty
-            py_hostname,              // hostname
+            py_username,  // username
+            py_tty,  // tty
+            py_hostname,  // hostname
             (double)ut->ut_tv.tv_sec,  // tstamp
-            ut->ut_pid                // process id
+            ut->ut_pid  // process id
         );
-        if (! py_tuple)
+        if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;

@@ -56,7 +56,7 @@ psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
     char sensor[26];
     size_t size = sizeof(current);
 
-    if (! PyArg_ParseTuple(args, "i", &core))
+    if (!PyArg_ParseTuple(args, "i", &core))
         return NULL;
     sprintf(sensor, "dev.cpu.%d.temperature", core);
     if (psutil_sysctlbyname(sensor, &current, size) != 0)

@@ -54,7 +54,7 @@ open_address_space(pid_t pid, const char *procfs_path) {
 static size_t
 read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     size_t to_read = buf_size;
-    size_t stored  = 0;
+    size_t stored = 0;
     int r;
 
     while (to_read) {
@@ -70,7 +70,7 @@ read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
 
     return stored;
 
- error:
+error:
     PyErr_SetFromErrno(PyExc_OSError);
     return -1;
 }
@@ -82,7 +82,7 @@ read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
  * @param fd a file descriptor of opened address space.
  * @param offset an offset in specified file descriptor.
  * @return allocated null-terminated string or NULL in case of error.
-*/
+ */
 static char *
 read_cstring_offt(int fd, off_t offset) {
     int r;
@@ -108,8 +108,8 @@ read_cstring_offt(int fd, off_t offset) {
             break;
         }
         else {
-            for (i=0; i<r; i++)
-                if (! buf[i])
+            for (i = 0; i < r; i++)
+                if (!buf[i])
                     goto found;
         }
 
@@ -119,8 +119,8 @@ read_cstring_offt(int fd, off_t offset) {
 found:
     len = end + i - offset;
 
-    result = malloc(len+1);
-    if (! result) {
+    result = malloc(len + 1);
+    if (!result) {
         PyErr_NoMemory();
         goto error;
     }
@@ -134,7 +134,7 @@ found:
     result[len] = '\0';
     return result;
 
- error:
+error:
     if (result)
         free(result);
     return NULL;
@@ -167,7 +167,7 @@ read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
     pblock_size = ptr_size * count;
 
     pblock = malloc(pblock_size);
-    if (! pblock) {
+    if (!pblock) {
         PyErr_NoMemory();
         goto error;
     }
@@ -175,17 +175,17 @@ read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
     if (read_offt(fd, offset, pblock, pblock_size) != pblock_size)
         goto error;
 
-    result = (char **) calloc(count, sizeof(char *));
-    if (! result) {
+    result = (char **)calloc(count, sizeof(char *));
+    if (!result) {
         PyErr_NoMemory();
         goto error;
     }
 
-    for (i=0; i<count; i++) {
+    for (i = 0; i < count; i++) {
         result[i] = read_cstring_offt(
-            fd, (ptr_size == 4?
-                ((uint32_t *) pblock)[i]:
-                ((uint64_t *) pblock)[i]));
+            fd,
+            (ptr_size == 4 ? ((uint32_t *)pblock)[i] : ((uint64_t *)pblock)[i])
+        );
 
         if (!result[i])
             goto error;
@@ -194,7 +194,7 @@ read_cstrings_block(int fd, off_t offset, size_t ptr_size, size_t count) {
     free(pblock);
     return result;
 
- error:
+error:
     if (result)
         psutil_free_cstrings_array(result, i);
     if (pblock)
@@ -229,7 +229,7 @@ is_ptr_dereference_possible(psinfo_t info) {
  */
 static inline int
 ptr_size_by_psinfo(psinfo_t info) {
-    return info.pr_dmodel == PR_MODEL_ILP32? 4 : 8;
+    return info.pr_dmodel == PR_MODEL_ILP32 ? 4 : 8;
 }
 
 
@@ -245,14 +245,14 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
     int count = 0;
     size_t r;
     char buf[8];
-    static const char zeros[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    static const char zeros[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
     assert(ptr_size == 4 || ptr_size == 8);
 
     if (lseek(fd, offt, SEEK_SET) == (off_t)-1)
         goto error;
 
-    for (;; count ++) {
+    for (;; count++) {
         r = read(fd, buf, ptr_size);
 
         if (r < 0)
@@ -262,18 +262,17 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
             break;
 
         if (r != ptr_size) {
-            PyErr_SetString(
-                PyExc_RuntimeError, "pointer block is truncated");
+            PyErr_SetString(PyExc_RuntimeError, "pointer block is truncated");
             return -1;
         }
 
-        if (! memcmp(buf, zeros, ptr_size))
+        if (!memcmp(buf, zeros, ptr_size))
             break;
     }
 
     return count;
 
- error:
+error:
     PyErr_SetFromErrno(PyExc_OSError);
     return -1;
 }
@@ -295,16 +294,18 @@ psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
     int as;
     char **result;
 
-    if (! is_ptr_dereference_possible(info)) {
+    if (!is_ptr_dereference_possible(info)) {
         PyErr_SetString(
             PyExc_NotImplementedError,
-            "can't get env of a 64 bit process from a 32 bit process");
+            "can't get env of a 64 bit process from a 32 bit process"
+        );
         return NULL;
     }
 
-    if (! (info.pr_argv && info.pr_argc)) {
+    if (!(info.pr_argv && info.pr_argc)) {
         PyErr_SetString(
-            PyExc_RuntimeError, "process doesn't have arguments block");
+            PyExc_RuntimeError, "process doesn't have arguments block"
+        );
 
         return NULL;
     }
@@ -351,10 +352,11 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
     int ptr_size;
     char **result = NULL;
 
-    if (! is_ptr_dereference_possible(info)) {
+    if (!is_ptr_dereference_possible(info)) {
         PyErr_SetString(
             PyExc_NotImplementedError,
-            "can't get env of a 64 bit process from a 32 bit process");
+            "can't get env of a 64 bit process from a 32 bit process"
+        );
         return NULL;
     }
 
@@ -364,15 +366,13 @@ psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count) {
 
     ptr_size = ptr_size_by_psinfo(info);
 
-    env_count = search_pointers_vector_size_offt(
-        as, info.pr_envp, ptr_size);
+    env_count = search_pointers_vector_size_offt(as, info.pr_envp, ptr_size);
 
     if (env_count >= 0 && count)
         *count = env_count;
 
     if (env_count > 0)
-        result = read_cstrings_block(
-            as, info.pr_envp, ptr_size, env_count);
+        result = read_cstrings_block(as, info.pr_envp, ptr_size, env_count);
 
     close(as);
     return result;
@@ -391,7 +391,7 @@ psutil_free_cstrings_array(char **array, size_t count) {
 
     if (!array)
         return;
-    for (i=0; i<count; i++) {
+    for (i = 0; i < count; i++) {
         if (array[i]) {
             free(array[i]);
         }

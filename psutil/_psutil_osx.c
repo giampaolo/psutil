@@ -28,7 +28,8 @@ static PyMethodDef mod_methods[] = {
     {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
-    {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS},
+    {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS
+    },
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
 
     // --- system-related functions

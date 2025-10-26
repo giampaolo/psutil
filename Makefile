@@ -178,7 +178,8 @@ dprint:
 	@$(DPRINT) check
 
 lint-c:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs $(PYTHON) scripts/internal/clinter.py
+# 	@git ls-files '*.c' '*.h' | xargs clang-format --dry-run --Werror  # serial exec
+	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
 lint-rst:  ## Run linter for .rst files.
 	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
@@ -189,8 +190,8 @@ lint-toml:  ## Run linter for pyproject.toml.
 lint-all:  ## Run all linters
 	${MAKE} black
 	${MAKE} ruff
-	${MAKE} dprint
 	${MAKE} lint-c
+	${MAKE} dprint
 	${MAKE} lint-rst
 	${MAKE} lint-toml
 
@@ -212,6 +213,10 @@ fix-black:
 fix-ruff:
 	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --fix --output-format=concise $(ARGS)
 
+fix-c:
+# 	@git ls-files '*.c' '*.h' | xargs clang-format -i  # serial exec
+	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format -i {}  # parallel exec
+
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
 
@@ -231,6 +236,8 @@ fix-all:  ## Run all code fixers.
 ci-lint:  ## Run all linters on GitHub CI.
 	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
+	$(DPRINT) --version
+	clang-format --version
 	${MAKE} lint-all
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.

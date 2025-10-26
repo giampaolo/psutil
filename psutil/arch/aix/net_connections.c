@@ -11,7 +11,7 @@
  * - lib/prfp.c:process_file
  * - dialects/aix/dsock.c:process_socket
  * - dialects/aix/dproc.c:get_kernel_access
-*/
+ */
 
 #include <Python.h>
 #include <stdlib.h>
@@ -32,15 +32,10 @@
 #include "common.h"
 
 
-#define NO_SOCKET       (PyObject *)(-1)
+#define NO_SOCKET (PyObject *)(-1)
 
 static int
-read_unp_addr(
-    int Kd,
-    KA_T unp_addr,
-    char *buf,
-    size_t buflen
-) {
+read_unp_addr(int Kd, KA_T unp_addr, char *buf, size_t buflen) {
     struct sockaddr_un *ua = (struct sockaddr_un *)NULL;
     struct sockaddr_un un;
     struct mbuf64 mb;
@@ -54,8 +49,8 @@ read_unp_addr(
     if ((uo + sizeof(struct sockaddr)) <= sizeof(mb))
         ua = (struct sockaddr_un *)((char *)&mb + uo);
     else {
-        if (psutil_kread(Kd, (KA_T)mb.m_hdr.mh_data,
-                         (char *)&un, sizeof(un))) {
+        if (psutil_kread(Kd, (KA_T)mb.m_hdr.mh_data, (char *)&un, sizeof(un)))
+        {
             return 1;
         }
         ua = &un;
@@ -85,8 +80,8 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
     char laddr_str[INET6_ADDRSTRLEN];
     char raddr_str[INET6_ADDRSTRLEN];
     struct unpcb64 unp;
-    char unix_laddr_str[PATH_MAX] = { 0 };
-    char unix_raddr_str[PATH_MAX] = { 0 };
+    char unix_laddr_str[PATH_MAX] = {0};
+    char unix_raddr_str[PATH_MAX] = {0};
 
     /* Read file structure */
     if (psutil_kread(Kd, fp, (char *)&f, sizeof(f))) {
@@ -96,7 +91,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
         return NO_SOCKET;
     }
 
-    if (psutil_kread(Kd, (KA_T) f.f_data, (char *) &s, sizeof(s))) {
+    if (psutil_kread(Kd, (KA_T)f.f_data, (char *)&s, sizeof(s))) {
         return NULL;
     }
 
@@ -127,15 +122,16 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
             PyErr_SetString(PyExc_RuntimeError, "invalid socket PCB");
             return NULL;
         }
-        if (psutil_kread(Kd, (KA_T) s.so_pcb, (char *) &inp, sizeof(inp))) {
+        if (psutil_kread(Kd, (KA_T)s.so_pcb, (char *)&inp, sizeof(inp))) {
             return NULL;
         }
 
         if (p.pr_protocol == IPPROTO_TCP) {
             /* If this is a TCP socket, read its control block */
             if (inp.inp_ppcb
-                &&  !psutil_kread(Kd, (KA_T)inp.inp_ppcb,
-                                  (char *)&t, sizeof(t)))
+                && !psutil_kread(
+                    Kd, (KA_T)inp.inp_ppcb, (char *)&t, sizeof(t)
+                ))
                 state = t.t_state;
         }
 
@@ -149,7 +145,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
         if (fam == AF_INET) {
             laddr = (unsigned char *)&inp.inp_laddr;
             if (inp.inp_faddr.s_addr != INADDR_ANY || inp.inp_fport != 0) {
-                raddr =  (unsigned char *)&inp.inp_faddr;
+                raddr = (unsigned char *)&inp.inp_faddr;
                 rport = (int)ntohs(inp.inp_fport);
             }
         }
@@ -159,48 +155,77 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
 
         if (raddr != NULL) {
             inet_ntop(fam, raddr, raddr_str, sizeof(raddr_str));
-            return Py_BuildValue("(iii(si)(si)ii)", fd, fam,
-                                 s.so_type, laddr_str, lport, raddr_str,
-                                 rport, state, pid);
+            return Py_BuildValue(
+                "(iii(si)(si)ii)",
+                fd,
+                fam,
+                s.so_type,
+                laddr_str,
+                lport,
+                raddr_str,
+                rport,
+                state,
+                pid
+            );
         }
         else {
-            return Py_BuildValue("(iii(si)()ii)", fd, fam,
-                                 s.so_type, laddr_str, lport, state,
-                                 pid);
+            return Py_BuildValue(
+                "(iii(si)()ii)",
+                fd,
+                fam,
+                s.so_type,
+                laddr_str,
+                lport,
+                state,
+                pid
+            );
         }
     }
 
 
     if (fam == AF_UNIX) {
-        if (psutil_kread(Kd, (KA_T) s.so_pcb, (char *)&unp, sizeof(unp))) {
+        if (psutil_kread(Kd, (KA_T)s.so_pcb, (char *)&unp, sizeof(unp))) {
             return NULL;
         }
-        if ((KA_T) f.f_data != (KA_T) unp.unp_socket) {
+        if ((KA_T)f.f_data != (KA_T)unp.unp_socket) {
             PyErr_SetString(PyExc_RuntimeError, "unp_socket mismatch");
             return NULL;
         }
 
         if (unp.unp_addr) {
-            if (read_unp_addr(Kd, unp.unp_addr, unix_laddr_str,
-                              sizeof(unix_laddr_str))) {
+            if (read_unp_addr(
+                    Kd, unp.unp_addr, unix_laddr_str, sizeof(unix_laddr_str)
+                ))
+            {
                 return NULL;
             }
         }
 
         if (unp.unp_conn) {
-            if (psutil_kread(Kd, (KA_T) unp.unp_conn, (char *)&unp,
-                sizeof(unp))) {
+            if (psutil_kread(
+                    Kd, (KA_T)unp.unp_conn, (char *)&unp, sizeof(unp)
+                ))
+            {
                 return NULL;
             }
-            if (read_unp_addr(Kd, unp.unp_addr, unix_raddr_str,
-                              sizeof(unix_raddr_str))) {
+            if (read_unp_addr(
+                    Kd, unp.unp_addr, unix_raddr_str, sizeof(unix_raddr_str)
+                ))
+            {
                 return NULL;
             }
         }
 
-        return Py_BuildValue("(iiissii)", fd, d.dom_family,
-                 s.so_type, unix_laddr_str, unix_raddr_str, PSUTIL_CONN_NONE,
-                 pid);
+        return Py_BuildValue(
+            "(iiissii)",
+            fd,
+            d.dom_family,
+            s.so_type,
+            unix_laddr_str,
+            unix_raddr_str,
+            PSUTIL_CONN_NONE,
+            pid
+        );
     }
     return NO_SOCKET;
 }
@@ -217,11 +242,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     pid32_t requested_pid;
     pid32_t pid;
     struct procentry64 *processes = (struct procentry64 *)NULL;
-                    /* the process table */
+    // the process table
 
     if (py_retlist == NULL)
         goto error;
-    if (! PyArg_ParseTuple(args, "i", &requested_pid))
+    if (!PyArg_ParseTuple(args, "i", &requested_pid))
         goto error;
 
     Kd = open(KMEM, O_RDONLY, 0);
@@ -249,9 +274,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
             }
         }
-        if (getprocs64((struct procentry64 *)NULL, PROCSIZE, fds, FDSINFOSIZE,
-              &pid, 1)
-        != 1)
+        if (getprocs64(
+                (struct procentry64 *)NULL, PROCSIZE, fds, FDSINFOSIZE, &pid, 1
+            )
+            != 1)
             continue;
 
         /* loop over file descriptors */

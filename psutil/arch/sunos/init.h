@@ -10,15 +10,16 @@
 #ifndef PROCESS_AS_UTILS_H
 #define PROCESS_AS_UTILS_H
 
-char **
-psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count);
+char **psutil_read_raw_args(
+    psinfo_t info, const char *procfs_path, size_t *count
+);
 
-char **
-psutil_read_raw_env(psinfo_t info, const char *procfs_path, ssize_t *count);
+char **psutil_read_raw_env(
+    psinfo_t info, const char *procfs_path, ssize_t *count
+);
 
-void
-psutil_free_cstrings_array(char **array, size_t count);
-#endif // PROCESS_AS_UTILS_H
+void psutil_free_cstrings_array(char **array, size_t count);
+#endif  // PROCESS_AS_UTILS_H
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
