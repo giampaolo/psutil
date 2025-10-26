@@ -190,8 +190,8 @@ lint-toml:  ## Run linter for pyproject.toml.
 lint-all:  ## Run all linters
 	${MAKE} black
 	${MAKE} ruff
-	${MAKE} dprint
 	${MAKE} lint-c
+	${MAKE} dprint
 	${MAKE} lint-rst
 	${MAKE} lint-toml
 
@@ -236,6 +236,8 @@ fix-all:  ## Run all code fixers.
 ci-lint:  ## Run all linters on GitHub CI.
 	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
+	dprint --version
+	clang-format --version
 	${MAKE} lint-all
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
