@@ -24,6 +24,7 @@
 #include <linux/types.h>
 #include <linux/if_packet.h>
 #endif
+
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 #include <netdb.h>
 #include <netinet/in.h>
@@ -32,10 +33,12 @@
 #include <net/if_media.h>
 #include <net/if.h>
 #endif
+
 #if defined(PSUTIL_SUNOS)
 #include <netdb.h>
 #include <sys/sockio.h>
 #endif
+
 #if defined(PSUTIL_AIX)
 #include <netdb.h>
 #endif
