@@ -9,6 +9,8 @@
 #include <sys/sysinfo.h>
 #include <kstat.h>
 
+#include "../../arch/all/init.h"
+
 
 // System-wide CPU times.
 PyObject *

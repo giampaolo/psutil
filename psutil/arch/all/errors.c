@@ -47,6 +47,7 @@ psutil_oserror_wsyscall(const char *syscall) {
     return NULL;
 }
 
+
 // Set OSError(errno=ESRCH) ("No such process").
 PyObject *
 psutil_oserror_nsp(const char *syscall) {
@@ -59,6 +60,7 @@ psutil_oserror_nsp(const char *syscall) {
     Py_XDECREF(exc);
     return NULL;
 }
+
 
 // Set OSError(errno=EACCES) ("Permission denied").
 PyObject *
