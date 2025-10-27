@@ -66,14 +66,6 @@ extern int PSUTIL_CONN_NONE;
     strncpy(dst, src, n - 1); \
     dst[n - 1] = '\0'
 
-// ====================================================================
-// --- Custom exceptions
-// ====================================================================
-
-PyObject *psutil_oserror_ad(const char *msg);
-PyObject *psutil_oserror_nsp(const char *msg);
-PyObject *psutil_oserror(void);
-PyObject *psutil_oserror_wsyscall(const char *syscall);
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
@@ -124,6 +116,11 @@ PyObject *psutil_oserror_wsyscall(const char *syscall);
     #endif
 #endif
 // clang-format on
+
+PyObject *psutil_oserror(void);
+PyObject *psutil_oserror_ad(const char *msg);
+PyObject *psutil_oserror_nsp(const char *msg);
+PyObject *psutil_oserror_wsyscall(const char *syscall);
 
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);

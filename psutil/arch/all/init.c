@@ -7,9 +7,6 @@
 // Global names shared by all platforms.
 
 #include <Python.h>
-#ifdef PSUTIL_WINDOWS
-#include <windows.h>
-#endif
 
 #include "init.h"
 
@@ -19,69 +16,6 @@ int PSUTIL_CONN_NONE = 128;
 #ifdef Py_GIL_DISABLED
 PyMutex utxent_lock = {0};
 #endif
-
-
-// Set OSError(errno=ESRCH, strerror="No such process (originated from")
-// Python exception.
-PyObject *
-psutil_oserror_nsp(const char *syscall) {
-    PyObject *exc;
-    char msg[1024];
-
-    sprintf(msg, "assume no such process (originated from %s)", syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-
-// Set OSError(errno=EACCES, strerror="Permission denied" (originated from ...)
-// Python exception.
-PyObject *
-psutil_oserror_ad(const char *syscall) {
-    PyObject *exc;
-    char msg[1024];
-
-    sprintf(msg, "assume access denied (originated from %s)", syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-
-// Same as PyErr_SetFromErrno(0).
-PyObject *
-psutil_oserror(void) {
-#ifdef PSUTIL_WINDOWS
-    PyErr_SetFromWindowsErr(0);
-#else
-    PyErr_SetFromErrno(PyExc_OSError);
-#endif
-    return NULL;
-}
-
-
-// Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
-// message.
-PyObject *
-psutil_oserror_wsyscall(const char *syscall) {
-    char fullmsg[1024];
-
-#ifdef PSUTIL_WINDOWS
-    DWORD dwLastError = GetLastError();
-    sprintf(fullmsg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(dwLastError, fullmsg);
-#else
-    PyObject *exc;
-    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-#endif
-    return NULL;
-}
 
 
 // Enable or disable PSUTIL_DEBUG messages.
@@ -103,16 +37,6 @@ psutil_set_debug(PyObject *self, PyObject *args) {
         PSUTIL_DEBUG = 1;
     }
     Py_RETURN_NONE;
-}
-
-
-// Use it when invalid args are passed to a C function.
-int
-psutil_badargs(const char *funcname) {
-    PyErr_Format(
-        PyExc_RuntimeError, "%s() invalid args passed to function", funcname
-    );
-    return -1;
 }
 
 
