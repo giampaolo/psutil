@@ -545,8 +545,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             break;
         }
         else if (kr != KERN_SUCCESS) {
-            PyErr_Format(
-                PyExc_RuntimeError,
+            psutil_runtime_error(
                 "mach_vm_region(VM_REGION_TOP_INFO) syscall failed"
             );
             mach_port_deallocate(mach_task_self(), task);
@@ -629,9 +628,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         }
         else {
             // otherwise throw a runtime error with appropriate error code
-            PyErr_Format(
-                PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) syscall failed"
-            );
+            psutil_runtime_error("task_info(TASK_BASIC_INFO) syscall failed");
         }
         goto error;
     }
@@ -651,8 +648,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             &thread_info_count
         );
         if (kr != KERN_SUCCESS) {
-            PyErr_Format(
-                PyExc_RuntimeError,
+            psutil_runtime_error(
                 "thread_info(THREAD_BASIC_INFO) syscall failed"
             );
             goto error;

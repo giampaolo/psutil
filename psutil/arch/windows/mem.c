@@ -77,9 +77,7 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
         );
         if (s != ERROR_SUCCESS) {
             PdhCloseQuery(hQuery);
-            PyErr_Format(
-                PyExc_RuntimeError, "PdhGetFormattedCounterValue failed"
-            );
+            psutil_runtime_error("PdhGetFormattedCounterValue failed");
             return NULL;
         }
         percentUsage = counterValue.doubleValue;
