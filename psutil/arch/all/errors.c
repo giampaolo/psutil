@@ -11,7 +11,7 @@
 #include <windows.h>
 #endif
 
-static const int MSG_SIZE = 512;
+#define MSG_SIZE 512
 
 
 // Set OSError() based on errno (UNIX) or GetLastError() (Windows).

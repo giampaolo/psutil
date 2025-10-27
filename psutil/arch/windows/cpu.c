@@ -33,9 +33,7 @@ psutil_get_num_cpus(int fail_on_err) {
         );
         ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
         if ((ncpus <= 0) && (fail_on_err == 1)) {
-            psutil_runtime_error(
-                , "GetSystemInfo() failed to retrieve CPU count"
-            );
+            psutil_runtime_error("GetSystemInfo failed to retrieve CPU count");
         }
     }
     return ncpus;

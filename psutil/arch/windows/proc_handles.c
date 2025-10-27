@@ -55,7 +55,7 @@ psutil_enum_handles(PSYSTEM_HANDLE_INFORMATION_EX *handles) {
         // Fail if we're resizing the buffer to something very large.
         if (bufferSize > 256 * 1024 * 1024) {
             psutil_runtime_error(
-                , "SystemExtendedHandleInformation buffer too big"
+                "SystemExtendedHandleInformation buffer too big"
             );
             return -1;
         }

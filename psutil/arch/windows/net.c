@@ -81,7 +81,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         dwRetVal = GetIfEntry2(pIfRow);
         if (dwRetVal != NO_ERROR) {
             psutil_runtime_error(
-                , "GetIfEntry() or GetIfEntry2() syscalls failed."
+                "GetIfEntry() or GetIfEntry2() syscalls failed."
             );
             goto error;
         }
