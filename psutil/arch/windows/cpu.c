@@ -33,10 +33,7 @@ psutil_get_num_cpus(int fail_on_err) {
         );
         ncpus = (unsigned int)PSUTIL_SYSTEM_INFO.dwNumberOfProcessors;
         if ((ncpus <= 0) && (fail_on_err == 1)) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "GetSystemInfo() failed to retrieve CPU count"
-            );
+            psutil_runtime_error("GetSystemInfo failed to retrieve CPU count");
         }
     }
     return ncpus;
@@ -403,9 +400,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     // Syscall.
     ret = CallNtPowerInformation(ProcessorInformation, NULL, 0, pBuffer, size);
     if (ret != 0) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "CallNtPowerInformation syscall failed"
-        );
+        psutil_runtime_error("CallNtPowerInformation syscall failed");
         goto error;
     }
 

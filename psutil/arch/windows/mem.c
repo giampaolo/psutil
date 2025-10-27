@@ -51,15 +51,14 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
     double percentUsage;
 
     if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhOpenQueryW failed");
+        psutil_runtime_error("PdhOpenQueryW failed");
         return NULL;
     }
 
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
     if (s != ERROR_SUCCESS) {
         PdhCloseQuery(hQuery);
-        PyErr_Format(
-            PyExc_RuntimeError,
+        psutil_runtime_error(
             "PdhAddEnglishCounterW failed. Performance counters may be "
             "disabled."
         );
@@ -78,9 +77,7 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
         );
         if (s != ERROR_SUCCESS) {
             PdhCloseQuery(hQuery);
-            PyErr_Format(
-                PyExc_RuntimeError, "PdhGetFormattedCounterValue failed"
-            );
+            psutil_runtime_error("PdhGetFormattedCounterValue failed");
             return NULL;
         }
         percentUsage = counterValue.doubleValue;

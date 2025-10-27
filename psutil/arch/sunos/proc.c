@@ -32,9 +32,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     }
     if (nbytes != (ssize_t)size) {
         close(fd);
-        PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch"
-        );
+        psutil_runtime_error("read() file structure size mismatch");
         return 0;
     }
     close(fd);
@@ -202,7 +200,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
 
     if (!info.pr_envp) {
-        AccessDenied("/proc/pid/psinfo struct not set");
+        psutil_oserror_ad("/proc/pid/psinfo struct not set");
         goto error;
     }
 
@@ -308,9 +306,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
         goto error;
     }
     if (nbytes != sizeof(header)) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch"
-        );
+        psutil_runtime_error("read() file structure size mismatch");
         goto error;
     }
 
@@ -330,9 +326,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
         goto error;
     }
     if (nbytes != size) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "read() file structure size mismatch"
-        );
+        psutil_runtime_error("read() file structure size mismatch");
         goto error;
     }
 

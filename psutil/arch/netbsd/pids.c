@@ -27,7 +27,7 @@ _psutil_pids(pid_t **pids_array, int *pids_count) {
 
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
     if (kd == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed: %s", errbuf);
+        psutil_runtime_error("kvm_openfiles() failed: %s", errbuf);
         return -1;
     }
 
@@ -35,13 +35,13 @@ _psutil_pids(pid_t **pids_array, int *pids_count) {
         kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc2), &cnt
     );
     if (result == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() failed");
+        psutil_runtime_error("kvm_getproc2() failed");
         kvm_close(kd);
         return -1;
     }
 
     if (cnt == 0) {
-        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        psutil_runtime_error("no PIDs found");
         kvm_close(kd);
         return -1;
     }

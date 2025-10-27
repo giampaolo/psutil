@@ -61,7 +61,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0)
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
 
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL) {
@@ -97,7 +97,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "l", &pid, &timeout))
         return NULL;
     if (pid == 0)
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
 
     hProcess = OpenProcess(
         SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid
@@ -176,7 +176,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            NoSuchProcess("GetProcessTimes -> ERROR_ACCESS_DENIED");
+            psutil_oserror_nsp("GetProcessTimes -> ERROR_ACCESS_DENIED");
         }
         else {
             psutil_oserror();
@@ -225,12 +225,12 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
 
     if (pid == 0)
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
 
     // ...because NtQuerySystemInformation can succeed for terminated
     // processes.
     if (psutil_pid_is_running(pid) == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
 
     buffer = MALLOC_ZERO(bufferSize);
     if (!buffer) {
@@ -299,7 +299,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (!NT_SUCCESS(status)) {
         FREE(buffer);
         if (psutil_pid_is_running(pid) == 0)
-            NoSuchProcess("psutil_pid_is_running -> 0");
+            psutil_oserror_nsp("psutil_pid_is_running -> 0");
         else
             psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         return NULL;
@@ -410,9 +410,7 @@ psutil_GetProcWsetInformation(
         bufferSize *= 2;
         // Fail if we're resizing the buffer to something very large.
         if (bufferSize > 256 * 1024 * 1024) {
-            PyErr_SetString(
-                PyExc_RuntimeError, "NtQueryVirtualMemory bufsize is too large"
-            );
+            psutil_runtime_error("NtQueryVirtualMemory bufsize is too large");
             return -1;
         }
         buffer = MALLOC_ZERO(bufferSize);
@@ -424,10 +422,10 @@ psutil_GetProcWsetInformation(
 
     if (!NT_SUCCESS(status)) {
         if (status == STATUS_ACCESS_DENIED) {
-            AccessDenied("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
+            psutil_oserror_ad("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
         else if (psutil_pid_is_running(pid) == 0) {
-            NoSuchProcess("psutil_pid_is_running -> 0");
+            psutil_oserror_nsp("psutil_pid_is_running -> 0");
         }
         else {
             PyErr_Clear();
@@ -550,13 +548,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied("forced for PID 0");
+        psutil_oserror_ad("forced for PID 0");
         goto error;
     }
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess("psutil_pid_is_running -> 0");
+        psutil_oserror_nsp("psutil_pid_is_running -> 0");
         goto error;
     }
     if (pid_return == -1)
@@ -770,7 +768,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 // name. It also occurs for SIDs that have no corresponding
                 // account name, such as a logon SID that identifies a logon
                 // session.
-                AccessDenied("LookupAccountSidW -> ERROR_NONE_MAPPED");
+                psutil_oserror_ad("LookupAccountSidW -> ERROR_NONE_MAPPED");
                 goto error;
             }
             else {

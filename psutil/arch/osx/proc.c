@@ -62,7 +62,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess("sysctl(kinfo_proc), len == 0");
+        psutil_oserror_nsp("sysctl(kinfo_proc), len == 0");
         return -1;
     }
     return 0;
@@ -97,7 +97,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
 
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("psutil_pid_exists -> 0");
+            psutil_oserror_nsp("psutil_pid_exists -> 0");
             return -1;
         }
 
@@ -108,13 +108,13 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
 
         if (errno == EINVAL) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to AD");
-            AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
+            psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> EINVAL");
             return -1;
         }
 
         if (errno == EIO) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
-            AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
+            psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> EIO");
             return -1;
         }
         psutil_oserror_wsyscall("sysctl(KERN_PROCARGS2)");
@@ -179,7 +179,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("task_for_pid");
+            psutil_oserror_nsp("task_for_pid");
         }
         else if (is_zombie(pid) == 1) {
             PyErr_SetString(
@@ -189,13 +189,13 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
-                "setting AccessDenied()",
+                "setting EACCES",
                 (long)pid,
                 err,
                 errno,
                 mach_error_string(err)
             );
-            AccessDenied("task_for_pid");
+            psutil_oserror_ad("task_for_pid");
         }
         return -1;
     }
@@ -232,10 +232,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
             while (ret > fds_size) {
                 fds_size += PROC_PIDLISTFD_SIZE * 32;
                 if (fds_size > max_size) {
-                    PyErr_Format(
-                        PyExc_RuntimeError,
-                        "prevent malloc() to allocate > 24M"
-                    );
+                    psutil_runtime_error("prevent malloc() to allocate > 24M");
                     goto error;
                 }
             }
@@ -447,7 +444,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0) {
-            AccessDenied("automatically set for PID 0");
+            psutil_oserror_ad("automatically set for PID 0");
             return NULL;
         }
         else if (errno == ENOENT) {
@@ -548,8 +545,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             break;
         }
         else if (kr != KERN_SUCCESS) {
-            PyErr_Format(
-                PyExc_RuntimeError,
+            psutil_runtime_error(
                 "mach_vm_region(VM_REGION_TOP_INFO) syscall failed"
             );
             mach_port_deallocate(mach_task_self(), task);
@@ -628,20 +624,18 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     );
     if (kr != KERN_SUCCESS) {
         if (kr == KERN_INVALID_ARGUMENT) {
-            AccessDenied("task_info(TASK_BASIC_INFO)");
+            psutil_oserror_ad("task_info(TASK_BASIC_INFO)");
         }
         else {
             // otherwise throw a runtime error with appropriate error code
-            PyErr_Format(
-                PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) syscall failed"
-            );
+            psutil_runtime_error("task_info(TASK_BASIC_INFO) syscall failed");
         }
         goto error;
     }
 
     kr = task_threads(task, &thread_list, &thread_count);
     if (kr != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "task_threads() syscall failed");
+        psutil_runtime_error("task_threads() syscall failed");
         goto error;
     }
 
@@ -654,8 +648,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             &thread_info_count
         );
         if (kr != KERN_SUCCESS) {
-            PyErr_Format(
-                PyExc_RuntimeError,
+            psutil_runtime_error(
                 "thread_info(THREAD_BASIC_INFO) syscall failed"
             );
             goto error;

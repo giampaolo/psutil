@@ -80,14 +80,13 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     HANDLE waitHandle;
 
     if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhOpenQueryW failed");
+        psutil_runtime_error("PdhOpenQueryW failed");
         return NULL;
     }
 
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
     if (s != ERROR_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError,
+        psutil_runtime_error(
             "PdhAddEnglishCounterW failed. Performance counters may be "
             "disabled."
         );
@@ -102,7 +101,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
 
     s = PdhCollectQueryDataEx(hQuery, SAMPLING_INTERVAL, event);
     if (s != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhCollectQueryDataEx failed");
+        psutil_runtime_error("PdhCollectQueryDataEx failed");
         return NULL;
     }
 

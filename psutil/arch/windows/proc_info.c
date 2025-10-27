@@ -67,7 +67,7 @@ psutil_convert_winerr(ULONG err, char *syscall) {
     if (err == ERROR_NOACCESS) {
         sprintf(fullmsg, "%s -> ERROR_NOACCESS", syscall);
         psutil_debug(fullmsg);
-        AccessDenied(fullmsg);
+        psutil_oserror_ad(fullmsg);
     }
     else {
         psutil_oserror_wsyscall(syscall);
@@ -98,7 +98,7 @@ psutil_giveup_with_ad(NTSTATUS status, char *syscall) {
         err = RtlNtStatusToDosErrorNoTeb(status);
     sprintf(fullmsg, "%s -> %lu (%s)", syscall, err, strerror(err));
     psutil_debug(fullmsg);
-    AccessDenied(fullmsg);
+    psutil_oserror_ad(fullmsg);
 }
 
 
@@ -247,7 +247,9 @@ psutil_get_process_data(
             );
             if (NtWow64QueryInformationProcess64 == NULL) {
                 PyErr_Clear();
-                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+                psutil_oserror_ad(
+                    "can't query 64-bit process in 32-bit-WoW mode"
+                );
                 goto error;
             }
         }
@@ -257,7 +259,9 @@ psutil_get_process_data(
             );
             if (NtWow64ReadVirtualMemory64 == NULL) {
                 PyErr_Clear();
-                AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+                psutil_oserror_ad(
+                    "can't query 64-bit process in 32-bit-WoW mode"
+                );
                 goto error;
             }
         }
@@ -390,7 +394,7 @@ psutil_get_process_data(
     if (kind == KIND_ENVIRON) {
 #ifndef _WIN64
         if (weAreWow64 && !theyAreWow64) {
-            AccessDenied("can't query 64-bit process in 32-bit-WoW mode");
+            psutil_oserror_ad("can't query 64-bit process in 32-bit-WoW mode");
             goto error;
         }
         else
@@ -460,7 +464,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     int ProcessCommandLineInformation = 60;
 
     if (PSUTIL_WINVER < PSUTIL_WINDOWS_8_1) {
-        PyErr_SetString(PyExc_RuntimeError, "requires Windows 8.1+");
+        psutil_runtime_error("requires Windows 8.1+");
         goto error;
     }
 
@@ -475,7 +479,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
 
     // https://github.com/giampaolo/psutil/issues/1501
     if (status == STATUS_NOT_FOUND) {
-        AccessDenied(
+        psutil_oserror_ad(
             "NtQueryInformationProcess(ProcessBasicInformation) -> "
             "STATUS_NOT_FOUND"
         );
@@ -566,7 +570,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -638,7 +642,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -675,7 +679,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -756,7 +760,7 @@ psutil_get_proc_info(
         }
     } while ((process = PSUTIL_NEXT_PROCESS(process)));
 
-    NoSuchProcess("NtQuerySystemInformation (no PID found)");
+    psutil_oserror_nsp("NtQuerySystemInformation (no PID found)");
     goto error;
 
 error:

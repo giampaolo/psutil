@@ -46,7 +46,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // Yeah, this is the actual error code in case of
             // "no such process".
-            NoSuchProcess("OpenProcess -> ERROR_INVALID_PARAMETER");
+            psutil_oserror_nsp("OpenProcess -> ERROR_INVALID_PARAMETER");
             return NULL;
         }
         if (GetLastError() == ERROR_SUCCESS) {
@@ -54,11 +54,11 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
             // https://github.com/giampaolo/psutil/issues/1877
             if (psutil_pid_in_pids(pid) == 1) {
                 psutil_debug("OpenProcess -> ERROR_SUCCESS turned into AD");
-                AccessDenied("OpenProcess -> ERROR_SUCCESS");
+                psutil_oserror_ad("OpenProcess -> ERROR_SUCCESS");
             }
             else {
                 psutil_debug("OpenProcess -> ERROR_SUCCESS turned into NSP");
-                NoSuchProcess("OpenProcess -> ERROR_SUCCESS");
+                psutil_oserror_nsp("OpenProcess -> ERROR_SUCCESS");
             }
             return NULL;
         }
@@ -79,7 +79,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
             return hProcess;
         }
         CloseHandle(hProcess);
-        NoSuchProcess("GetExitCodeProcess != STILL_ACTIVE");
+        psutil_oserror_nsp("GetExitCodeProcess != STILL_ACTIVE");
         return NULL;
     }
 
@@ -104,7 +104,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
     }
 
     hProcess = OpenProcess(access, FALSE, pid);

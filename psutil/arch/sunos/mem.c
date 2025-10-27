@@ -10,6 +10,8 @@
 #include <string.h>
 #include <sys/sysinfo.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
@@ -35,15 +37,15 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
             return NULL;
         }
         if (num == 0) {
-            PyErr_SetString(PyExc_RuntimeError, "no swap devices configured");
+            psutil_runtime_error("no swap devices configured");
             return NULL;
         }
         if ((st = malloc(num * sizeof(swapent_t) + sizeof (int))) == NULL) {
-            PyErr_SetString(PyExc_RuntimeError, "malloc failed");
+            psutil_runtime_error("malloc failed");
             return NULL;
         }
         if ((path = malloc(num * MAXPATHLEN)) == NULL) {
-            PyErr_SetString(PyExc_RuntimeError, "malloc failed");
+            psutil_runtime_error("malloc failed");
             return NULL;
         }
         swapent = st->swt_ent;
@@ -97,7 +99,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
     kstat_close(kc);
     if (!flag) {
-        PyErr_SetString(PyExc_RuntimeError, "no swap device was found");
+        psutil_runtime_error("no swap device was found");
         return NULL;
     }
     return Py_BuildValue("(II)", sin, sout);

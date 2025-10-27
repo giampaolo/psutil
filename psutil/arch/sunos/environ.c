@@ -262,7 +262,7 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
             break;
 
         if (r != ptr_size) {
-            PyErr_SetString(PyExc_RuntimeError, "pointer block is truncated");
+            psutil_runtime_error("pointer block is truncated");
             return -1;
         }
 
@@ -303,9 +303,7 @@ psutil_read_raw_args(psinfo_t info, const char *procfs_path, size_t *count) {
     }
 
     if (!(info.pr_argv && info.pr_argc)) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "process doesn't have arguments block"
-        );
+        psutil_runtime_error("process doesn't have arguments block");
 
         return NULL;
     }

@@ -78,7 +78,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     }
     if (nbytes != size) {
         close(fd);
-        PyErr_SetString(PyExc_RuntimeError, "structure size mismatch");
+        psutil_runtime_error("psutil_file_to_struct() size mismatch");
         return 0;
     }
     close(fd);
@@ -475,7 +475,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
     /* finished iteration without finding requested pid */
     free(processes);
-    return NoSuchProcess("psutil_read_process_table (no PID found)");
+    return psutil_oserror_nsp("psutil_read_process_table (no PID found)");
 }
 
 
@@ -683,8 +683,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     endutxent();
     UTXENT_MUTEX_UNLOCK();
     if (boot_time == 0.0) {
-        /* could not find BOOT_TIME in getutxent loop */
-        PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
+        // could not find BOOT_TIME in getutxent loop
+        psutil_runtime_error("can't determine boot time");
         return NULL;
     }
     return Py_BuildValue("f", boot_time);

@@ -66,9 +66,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_port_t mport = mach_host_self();
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
-        );
+        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
         return NULL;
     }
 
@@ -78,8 +76,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_port_deallocate(mach_task_self(), mport);
 
     if (error != KERN_SUCCESS) {
-        return PyErr_Format(
-            PyExc_RuntimeError,
+        return psutil_runtime_error(
             "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
             mach_error_string(error)
         );
@@ -103,9 +100,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     struct vmmeter vmstat;
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
-        );
+        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
         return NULL;
     }
 
@@ -113,10 +108,8 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     mach_port_deallocate(mach_task_self(), mport);
 
     if (ret != KERN_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "host_statistics(HOST_VM_INFO) failed: %s",
-            mach_error_string(ret)
+        psutil_runtime_error(
+            "host_statistics(HOST_VM_INFO) failed: %s", mach_error_string(ret)
         );
         return NULL;
     }
@@ -201,9 +194,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
 
     if (!psutil_find_pmgr_entry(&entry)) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "'pmgr' entry not found in AppleARMIODevice"
-        );
+        psutil_runtime_error("'pmgr' entry not found in AppleARMIODevice");
         return NULL;
     }
 
@@ -218,7 +209,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         || CFGetTypeID(eCoreRef) != CFDataGetTypeID()
         || CFDataGetLength(pCoreRef) < 8 || CFDataGetLength(eCoreRef) < 4)
     {
-        PyErr_SetString(PyExc_RuntimeError, "invalid CPU frequency data");
+        psutil_runtime_error("invalid CPU frequency data");
         goto cleanup;
     }
 
@@ -296,7 +287,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         return NULL;
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "mach_host_self() returned NULL");
+        psutil_runtime_error("mach_host_self() returned NULL");
         goto error;
     }
 
@@ -306,10 +297,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     mach_port_deallocate(mach_task_self(), mport);
 
     if (error != KERN_SUCCESS || !info_array) {
-        PyErr_Format(
-            PyExc_RuntimeError,
-            "host_processor_info failed: %s",
-            mach_error_string(error)
+        psutil_runtime_error(
+            "host_processor_info failed: %s", mach_error_string(error)
         );
         goto error;
     }

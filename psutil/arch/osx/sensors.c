@@ -34,17 +34,13 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
 
     power_info = IOPSCopyPowerSourcesInfo();
     if (!power_info) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "IOPSCopyPowerSourcesInfo() syscall failed"
-        );
+        psutil_runtime_error("IOPSCopyPowerSourcesInfo() syscall failed");
         goto error;
     }
 
     power_sources_list = IOPSCopyPowerSourcesList(power_info);
     if (!power_sources_list) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "IOPSCopyPowerSourcesList() syscall failed"
-        );
+        psutil_runtime_error("IOPSCopyPowerSourcesList() syscall failed");
         goto error;
     }
 
@@ -57,9 +53,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         power_info, CFArrayGetValueAtIndex(power_sources_list, 0)
     );
     if (!power_sources_information) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "Failed to get power source description"
-        );
+        psutil_runtime_error("Failed to get power source description");
         goto error;
     }
 
@@ -69,8 +63,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     if (!capacity_ref
         || !CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity))
     {
-        PyErr_SetString(
-            PyExc_RuntimeError,
+        psutil_runtime_error(
             "No battery capacity information in power sources info"
         );
         goto error;
@@ -80,7 +73,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         power_sources_information, CFSTR(kIOPSPowerSourceStateKey)
     );
     if (!ps_state_ref) {
-        PyErr_SetString(PyExc_RuntimeError, "power source state info missing");
+        psutil_runtime_error("power source state info missing");
         goto error;
     }
     is_power_plugged = CFStringCompare(
