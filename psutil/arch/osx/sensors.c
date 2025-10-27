@@ -63,8 +63,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     if (!capacity_ref
         || !CFNumberGetValue(capacity_ref, kCFNumberSInt32Type, &capacity))
     {
-        PyErr_SetString(
-            PyExc_RuntimeError,
+        psutil_runtime_error(
             "No battery capacity information in power sources info"
         );
         goto error;
