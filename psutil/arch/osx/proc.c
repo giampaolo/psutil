@@ -232,10 +232,7 @@ psutil_proc_list_fds(pid_t pid, int *num_fds) {
             while (ret > fds_size) {
                 fds_size += PROC_PIDLISTFD_SIZE * 32;
                 if (fds_size > max_size) {
-                    PyErr_Format(
-                        PyExc_RuntimeError,
-                        "prevent malloc() to allocate > 24M"
-                    );
+                    psutil_runtime_error("prevent malloc() to allocate > 24M");
                     goto error;
                 }
             }

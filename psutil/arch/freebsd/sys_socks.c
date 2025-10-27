@@ -146,9 +146,7 @@ psutil_gather_inet(
             case IPPROTO_TCP:
                 xtp = (struct xtcpcb *)xig;
                 if (xtp->xt_len != sizeof *xtp) {
-                    PyErr_Format(
-                        PyExc_RuntimeError, "struct xtcpcb size mismatch"
-                    );
+                    psutil_runtime_error("struct xtcpcb size mismatch");
                     goto error;
                 }
                 inp = &xtp->xt_inp;
@@ -163,9 +161,7 @@ psutil_gather_inet(
             case IPPROTO_UDP:
                 xip = (struct xinpcb *)xig;
                 if (xip->xi_len != sizeof *xip) {
-                    PyErr_Format(
-                        PyExc_RuntimeError, "struct xinpcb size mismatch"
-                    );
+                    psutil_runtime_error("struct xinpcb size mismatch");
                     goto error;
                 }
 #if __FreeBSD_version >= 1200026
