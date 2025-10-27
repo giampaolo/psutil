@@ -50,6 +50,7 @@ AccessDenied(const char *syscall) {
     return NULL;
 }
 
+
 // Same as PyErr_SetFromErrno(0).
 PyObject *
 psutil_oserror(void) {

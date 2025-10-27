@@ -179,7 +179,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
             NoSuchProcess("GetProcessTimes -> ERROR_ACCESS_DENIED");
         }
         else {
-            PyErr_SetFromWindowsErr(0);
+            psutil_oserror();
         }
         CloseHandle(hProcess);
         return NULL;
@@ -339,7 +339,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
             hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt, sizeof(cnt)
         ))
     {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -830,7 +830,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
 
     priority = GetPriorityClass(hProcess);
     if (priority == 0) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -858,7 +858,7 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
 
     retval = SetPriorityClass(hProcess, priority);
     if (retval == 0) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -941,7 +941,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
         return NULL;
 
     if (!GetProcessIoCounters(hProcess, &IoCounters)) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -976,7 +976,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (GetProcessAffinityMask(hProcess, &proc_mask, &system_mask) == 0) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -1013,7 +1013,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         return NULL;
 
     if (SetProcessAffinityMask(hProcess, mask) == 0) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -1065,7 +1065,7 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
     if (NULL == hProcess)
         return NULL;
     if (!GetProcessHandleCount(hProcess, &handleCount)) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         CloseHandle(hProcess);
         return NULL;
     }
@@ -1196,7 +1196,7 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
         return NULL;
     handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (handle == INVALID_HANDLE_VALUE) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         Py_DECREF(py_retdict);
         return NULL;
     }

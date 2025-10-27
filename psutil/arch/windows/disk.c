@@ -165,7 +165,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             // XXX: we can also bump into ERROR_MORE_DATA in which case
             // (quoting doc) we're supposed to retry with a bigger buffer
             // and specify  a new "starting point", whatever it means.
-            PyErr_SetFromWindowsErr(0);
+            psutil_oserror();
             goto error;
         }
 
@@ -244,7 +244,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     Py_END_ALLOW_THREADS
 
     if (num_bytes == 0) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         goto error;
     }
 
