@@ -165,8 +165,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     }
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
-        if (ret == -1)
+        if (ret == -1) {
+            psutil_oserror();
             return NULL;
+        }
         else if (ret == 0)
             return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
