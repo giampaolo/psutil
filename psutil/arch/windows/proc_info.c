@@ -464,7 +464,7 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
     int ProcessCommandLineInformation = 60;
 
     if (PSUTIL_WINVER < PSUTIL_WINDOWS_8_1) {
-        PyErr_SetString(PyExc_RuntimeError, "requires Windows 8.1+");
+        psutil_runtime_error("requires Windows 8.1+");
         goto error;
     }
 

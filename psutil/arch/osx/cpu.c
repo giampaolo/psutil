@@ -218,7 +218,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         || CFGetTypeID(eCoreRef) != CFDataGetTypeID()
         || CFDataGetLength(pCoreRef) < 8 || CFDataGetLength(eCoreRef) < 4)
     {
-        PyErr_SetString(PyExc_RuntimeError, "invalid CPU frequency data");
+        psutil_runtime_error("invalid CPU frequency data");
         goto cleanup;
     }
 
@@ -296,7 +296,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         return NULL;
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "mach_host_self() returned NULL");
+        psutil_runtime_error("mach_host_self() returned NULL");
         goto error;
     }
 

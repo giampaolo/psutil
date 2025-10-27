@@ -262,7 +262,7 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
             break;
 
         if (r != ptr_size) {
-            PyErr_SetString(PyExc_RuntimeError, "pointer block is truncated");
+            psutil_runtime_error("pointer block is truncated");
             return -1;
         }
 

@@ -81,7 +81,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         if ((rbytes == NULL) || (wbytes == NULL) || (rpkts == NULL)
             || (wpkts == NULL) || (ierrs == NULL) || (oerrs == NULL))
         {
-            PyErr_SetString(PyExc_RuntimeError, "kstat_data_lookup() failed");
+            psutil_runtime_error("kstat_data_lookup() failed");
             goto error;
         }
 
@@ -347,13 +347,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         if (ctlbuf.len >= (int)sizeof(struct T_error_ack)
             && tea.PRIM_type == T_ERROR_ACK)
         {
-            PyErr_SetString(PyExc_RuntimeError, "ERROR_ACK");
+            psutil_runtime_error("ERROR_ACK");
             goto error;
         }
         if (getcode == 0 && ctlbuf.len >= (int)sizeof(struct T_optmgmt_ack)
             && toa.PRIM_type == T_OPTMGMT_ACK && toa.MGMT_flags == T_SUCCESS)
         {
-            PyErr_SetString(PyExc_RuntimeError, "ERROR_T_OPTMGMT_ACK");
+            psutil_runtime_error("ERROR_T_OPTMGMT_ACK");
             goto error;
         }
 

@@ -380,7 +380,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     // Make a second call to GetIfTable to get the actual
     // data we want.
     if ((dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE)) != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() syscall failed");
+        psutil_runtime_error("GetIfTable() syscall failed");
         goto error;
     }
 

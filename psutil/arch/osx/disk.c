@@ -237,7 +237,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         )
         != kIOReturnSuccess)
     {
-        PyErr_SetString(PyExc_RuntimeError, "unable to get the list of disks");
+        psutil_runtime_error("unable to get the list of disks");
         goto error;
     }
 
@@ -294,7 +294,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         CFStringRef disk_name_ref = (CFStringRef
         )CFDictionaryGetValue(parent_dict, CFSTR(kIOBSDNameKey));
         if (disk_name_ref == NULL) {
-            PyErr_SetString(PyExc_RuntimeError, "unable to get disk name");
+            psutil_runtime_error("unable to get disk name");
             goto error;
         }
 
@@ -317,7 +317,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             props_dict, CFSTR(kIOBlockStorageDriverStatisticsKey)
         );
         if (stats_dict == NULL) {
-            PyErr_SetString(PyExc_RuntimeError, "unable to get disk stats");
+            psutil_runtime_error("unable to get disk stats");
             goto error;
         }
 

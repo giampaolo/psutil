@@ -52,7 +52,7 @@ __GetExtendedTcpTable(ULONG family) {
         return __GetExtendedTcpTable(family);
     }
 
-    PyErr_SetString(PyExc_RuntimeError, "GetExtendedTcpTable failed");
+    psutil_runtime_error("GetExtendedTcpTable failed");
     return NULL;
 }
 
@@ -84,7 +84,7 @@ __GetExtendedUdpTable(ULONG family) {
         return __GetExtendedUdpTable(family);
     }
 
-    PyErr_SetString(PyExc_RuntimeError, "GetExtendedUdpTable failed");
+    psutil_runtime_error("GetExtendedUdpTable failed");
     return NULL;
 }
 

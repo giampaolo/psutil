@@ -80,7 +80,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         power_sources_information, CFSTR(kIOPSPowerSourceStateKey)
     );
     if (!ps_state_ref) {
-        PyErr_SetString(PyExc_RuntimeError, "power source state info missing");
+        psutil_runtime_error("power source state info missing");
         goto error;
     }
     is_power_plugged = CFStringCompare(

@@ -100,7 +100,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
     }
 
     if (!s.so_proto) {
-        PyErr_SetString(PyExc_RuntimeError, "invalid socket protocol handle");
+        psutil_runtime_error("invalid socket protocol handle");
         return NULL;
     }
     if (psutil_kread(Kd, (KA_T)s.so_proto, (char *)&p, sizeof(p))) {
@@ -108,7 +108,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
     }
 
     if (!p.pr_domain) {
-        PyErr_SetString(PyExc_RuntimeError, "invalid socket protocol domain");
+        psutil_runtime_error("invalid socket protocol domain");
         return NULL;
     }
     if (psutil_kread(Kd, (KA_T)p.pr_domain, (char *)&d, sizeof(d))) {
@@ -119,7 +119,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
     if (fam == AF_INET || fam == AF_INET6) {
         /* Read protocol control block */
         if (!s.so_pcb) {
-            PyErr_SetString(PyExc_RuntimeError, "invalid socket PCB");
+            psutil_runtime_error("invalid socket PCB");
             return NULL;
         }
         if (psutil_kread(Kd, (KA_T)s.so_pcb, (char *)&inp, sizeof(inp))) {
@@ -188,7 +188,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
             return NULL;
         }
         if ((KA_T)f.f_data != (KA_T)unp.unp_socket) {
-            PyErr_SetString(PyExc_RuntimeError, "unp_socket mismatch");
+            psutil_runtime_error("unp_socket mismatch");
             return NULL;
         }
 

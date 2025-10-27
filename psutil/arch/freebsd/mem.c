@@ -94,7 +94,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_open() syscall failed");
+        psutil_runtime_error("kvm_open() syscall failed");
         return NULL;
     }
 
