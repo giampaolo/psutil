@@ -251,9 +251,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent)
             != kIOReturnSuccess)
         {
-            PyErr_SetString(
-                PyExc_RuntimeError, "unable to get the disk's parent"
-            );
+            psutil_runtime_error("unable to get the disk's parent");
             goto error;
         }
 
@@ -271,9 +269,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             )
             != kIOReturnSuccess)
         {
-            PyErr_SetString(
-                PyExc_RuntimeError, "unable to get the parent's properties"
-            );
+            psutil_runtime_error("unable to get the parent's properties");
             goto error;
         }
 
@@ -285,9 +281,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             )
             != kIOReturnSuccess)
         {
-            PyErr_SetString(
-                PyExc_RuntimeError, "unable to get the disk properties"
-            );
+            psutil_runtime_error("unable to get the disk properties");
             goto error;
         }
 
@@ -307,9 +301,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 CFStringGetSystemEncoding()
             ))
         {
-            PyErr_SetString(
-                PyExc_RuntimeError, "unable to convert disk name to C string"
-            );
+            psutil_runtime_error("unable to convert disk name to C string");
             goto error;
         }
 

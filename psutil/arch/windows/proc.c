@@ -410,9 +410,7 @@ psutil_GetProcWsetInformation(
         bufferSize *= 2;
         // Fail if we're resizing the buffer to something very large.
         if (bufferSize > 256 * 1024 * 1024) {
-            PyErr_SetString(
-                PyExc_RuntimeError, "NtQueryVirtualMemory bufsize is too large"
-            );
+            psutil_runtime_error("NtQueryVirtualMemory bufsize is too large");
             return -1;
         }
         buffer = MALLOC_ZERO(bufferSize);
