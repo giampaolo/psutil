@@ -50,22 +50,6 @@ extern int PSUTIL_CONN_NONE;
 #endif
 // clang-format on
 
-// Print a debug message on stderr.
-#define psutil_debug(...) \
-    do { \
-        if (!PSUTIL_DEBUG) \
-            break; \
-        fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
-        fprintf(stderr, __VA_ARGS__); \
-        fprintf(stderr, "\n"); \
-    } while (0)
-
-
-// strncpy() variant which appends a null terminator.
-#define PSUTIL_STRNCPY(dst, src, n) \
-    strncpy(dst, src, n - 1); \
-    dst[n - 1] = '\0'
-
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs
@@ -117,13 +101,38 @@ extern int PSUTIL_CONN_NONE;
 #endif
 // clang-format on
 
+// ====================================================================
+// --- Internal utils
+// ====================================================================
+
+// Print a debug message to stderr, including where it originated from
+// within the C code (file path + lineno).
+#define psutil_debug(...) \
+    do { \
+        if (!PSUTIL_DEBUG) \
+            break; \
+        fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
+        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "\n"); \
+    } while (0)
+
+
+// strncpy() variant which appends a null terminator.
+#define PSUTIL_STRNCPY(dst, src, n) \
+    strncpy(dst, src, n - 1); \
+    dst[n - 1] = '\0'
+
+
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_ad(const char *msg);
 PyObject *psutil_oserror_nsp(const char *msg);
 PyObject *psutil_oserror_wsyscall(const char *syscall);
-
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
+
+// ====================================================================
+// --- Exposed to Python
+// ====================================================================
 
 #if defined(PSUTIL_WINDOWS) || defined(PSUTIL_BSD) || defined(PSUTIL_OSX)
 PyObject *psutil_pids(PyObject *self, PyObject *args);
