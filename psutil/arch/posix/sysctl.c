@@ -148,7 +148,7 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
             len,
             buflen
         );
-        psutil_runtime_error(PyExc_RuntimeError, errbuf);
+        psutil_runtime_error(errbuf);
         return -1;
     }
 
@@ -236,7 +236,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
         "sysctlbyname('%s') buffer allocation retry limit exceeded",
         name
     );
-    psutil_runtime_error(PyExc_RuntimeError, errbuf);
+    psutil_runtime_error(errbuf);
     return -1;
 }
 #endif  // PSUTIL_HAS_SYSCTLBYNAME

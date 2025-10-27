@@ -80,9 +80,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry2(pIfRow);
         if (dwRetVal != NO_ERROR) {
-            PyErr_SetString(
-                PyExc_RuntimeError,
-                "GetIfEntry() or GetIfEntry2() syscalls failed."
+            psutil_runtime_error(
+                , "GetIfEntry() or GetIfEntry2() syscalls failed."
             );
             goto error;
         }
