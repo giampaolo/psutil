@@ -10,6 +10,8 @@
 #include <string.h>
 #include <sys/sysinfo.h>
 
+#include "../../arch/all/init.h"
+
 
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {

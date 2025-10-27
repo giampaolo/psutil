@@ -8,7 +8,10 @@
 #include <Python.h>
 #include <sys/core.h>
 #include <stdlib.h>
+
+#include "../../arch/all/init.h"
 #include "common.h"
+
 
 /* psutil_kread() - read from kernel memory */
 int

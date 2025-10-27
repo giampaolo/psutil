@@ -19,6 +19,7 @@
 #include <sys/socket.h>
 
 #include "ifaddrs.h"
+#include "../../arch/all/init.h"
 
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define SIZE(p) MAX((p).sa_len, sizeof(p))

@@ -7,6 +7,8 @@
 #include <Python.h>
 #include <libproc.h>
 
+#include "../../arch/all/init.h"
+
 #ifndef PROCESS_AS_UTILS_H
 #define PROCESS_AS_UTILS_H
 
