@@ -93,6 +93,7 @@ DEV_DEPS = TEST_DEPS + [
     "abi3audit",
     "black",
     "check-manifest",
+    "colorama ; os_name == 'nt'",
     "coverage",
     "packaging",
     "pylint",
