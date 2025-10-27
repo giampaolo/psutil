@@ -107,19 +107,19 @@ extern int PSUTIL_CONN_NONE;
 
 // Print a debug message to stderr, including where it originated from
 // within the C code (file path + lineno).
-#define psutil_debug(...) \
-    do { \
-        if (!PSUTIL_DEBUG) \
-            break; \
+#define psutil_debug(...)                                              \
+    do {                                                               \
+        if (!PSUTIL_DEBUG)                                             \
+            break;                                                     \
         fprintf(stderr, "psutil-debug [%s:%d]> ", __FILE__, __LINE__); \
-        fprintf(stderr, __VA_ARGS__); \
-        fprintf(stderr, "\n"); \
+        fprintf(stderr, __VA_ARGS__);                                  \
+        fprintf(stderr, "\n");                                         \
     } while (0)
 
 
 // strncpy() variant which appends a null terminator.
 #define PSUTIL_STRNCPY(dst, src, n) \
-    strncpy(dst, src, n - 1); \
+    strncpy(dst, src, n - 1);       \
     dst[n - 1] = '\0'
 
 

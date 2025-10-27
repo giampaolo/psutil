@@ -3,7 +3,6 @@
 
 BasedOnStyle: Google
 AlignAfterOpenBracket: BlockIndent
-AlignEscapedNewlines: DontAlign
 AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true

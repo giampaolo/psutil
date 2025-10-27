@@ -13,7 +13,7 @@
 
 // convert a bintime struct to milliseconds
 #define PSUTIL_BT2MSEC(bt) \
-    (bt.sec * 1000 \
+    (bt.sec * 1000         \
      + (((uint64_t)1000000000 * (uint32_t)(bt.frac >> 32)) >> 32) / 1000000)
 
 
