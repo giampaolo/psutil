@@ -316,11 +316,11 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     p = kvm_getproc2(kd, KERN_PROC_PID, pid, sizeof(*p), &cnt);
 #endif
     if (!p) {
-        NoSuchProcess("kvm_getprocs");
+        psutil_oserror_nsp("kvm_getprocs");
         goto error;
     }
     if (cnt <= 0) {
-        NoSuchProcess(cnt < 0 ? kvm_geterr(kd) : "kvm_getprocs: cnt==0");
+        psutil_oserror_nsp(cnt < 0 ? kvm_geterr(kd) : "kvm_getprocs: cnt==0");
         goto error;
     }
 
@@ -359,7 +359,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 psutil_oserror_ad("kvm_getenvv -> EPERM");
                 break;
             case ESRCH:
-                NoSuchProcess("kvm_getenvv -> ESRCH");
+                psutil_oserror_nsp("kvm_getenvv -> ESRCH");
                 break;
 #if defined(PSUTIL_FREEBSD)
             case ENOMEM:

@@ -45,7 +45,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl (size = 0)");
         return -1;
     }
     return 0;

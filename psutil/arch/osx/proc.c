@@ -62,7 +62,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess("sysctl(kinfo_proc), len == 0");
+        psutil_oserror_nsp("sysctl(kinfo_proc), len == 0");
         return -1;
     }
     return 0;
@@ -97,7 +97,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
 
     if (sysctl(mib, 3, procargs, argmax, NULL, 0) < 0) {
         if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("psutil_pid_exists -> 0");
+            psutil_oserror_nsp("psutil_pid_exists -> 0");
             return -1;
         }
 
@@ -179,7 +179,7 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     err = task_for_pid(mach_task_self(), pid, task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0) {
-            NoSuchProcess("task_for_pid");
+            psutil_oserror_nsp("task_for_pid");
         }
         else if (is_zombie(pid) == 1) {
             PyErr_SetString(

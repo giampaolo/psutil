@@ -44,7 +44,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl (size = 0)");
         return -1;
     }
     return 0;
@@ -65,7 +65,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     int name[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
     if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT)
-            NoSuchProcess("sysctl -> ENOENT");
+            psutil_oserror_nsp("sysctl -> ENOENT");
         else
             psutil_oserror();
         return NULL;
@@ -81,7 +81,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     free(buf);
     if (len == -1) {
         if (errno == ENOENT)
-            NoSuchProcess("readlink -> ENOENT");
+            psutil_oserror_nsp("readlink -> ENOENT");
         else
             psutil_oserror();
         return NULL;
@@ -137,7 +137,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists -> 0");
+            return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }
@@ -192,7 +192,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl (size = 0)");
         goto error;
     }
 
@@ -204,7 +204,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl (size = 0)");
         goto error;
     }
 

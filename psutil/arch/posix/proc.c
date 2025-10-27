@@ -72,7 +72,7 @@ psutil_raise_for_pid(pid_t pid, char *syscall) {
     if (errno != 0)
         psutil_oserror_wsyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess(syscall);
+        psutil_oserror_nsp(syscall);
     else
         PyErr_Format(PyExc_RuntimeError, "%s syscall failed", syscall);
 }

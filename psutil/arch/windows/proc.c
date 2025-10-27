@@ -176,7 +176,7 @@ psutil_proc_times(PyObject *self, PyObject *args) {
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            NoSuchProcess("GetProcessTimes -> ERROR_ACCESS_DENIED");
+            psutil_oserror_nsp("GetProcessTimes -> ERROR_ACCESS_DENIED");
         }
         else {
             psutil_oserror();
@@ -230,7 +230,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     // ...because NtQuerySystemInformation can succeed for terminated
     // processes.
     if (psutil_pid_is_running(pid) == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
 
     buffer = MALLOC_ZERO(bufferSize);
     if (!buffer) {
@@ -299,7 +299,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (!NT_SUCCESS(status)) {
         FREE(buffer);
         if (psutil_pid_is_running(pid) == 0)
-            NoSuchProcess("psutil_pid_is_running -> 0");
+            psutil_oserror_nsp("psutil_pid_is_running -> 0");
         else
             psutil_SetFromNTStatusErr(status, "NtQuerySystemInformation");
         return NULL;
@@ -427,7 +427,7 @@ psutil_GetProcWsetInformation(
             psutil_oserror_ad("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
         else if (psutil_pid_is_running(pid) == 0) {
-            NoSuchProcess("psutil_pid_is_running -> 0");
+            psutil_oserror_nsp("psutil_pid_is_running -> 0");
         }
         else {
             PyErr_Clear();
@@ -556,7 +556,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
-        NoSuchProcess("psutil_pid_is_running -> 0");
+        psutil_oserror_nsp("psutil_pid_is_running -> 0");
         goto error;
     }
     if (pid_return == -1)

@@ -71,7 +71,7 @@ extern int PSUTIL_CONN_NONE;
 // ====================================================================
 
 PyObject *psutil_oserror_ad(const char *msg);
-PyObject *NoSuchProcess(const char *msg);
+PyObject *psutil_oserror_nsp(const char *msg);
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_wsyscall(const char *syscall);
 

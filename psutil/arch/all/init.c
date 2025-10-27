@@ -24,7 +24,7 @@ PyMutex utxent_lock = {0};
 // Set OSError(errno=ESRCH, strerror="No such process (originated from")
 // Python exception.
 PyObject *
-NoSuchProcess(const char *syscall) {
+psutil_oserror_nsp(const char *syscall) {
     PyObject *exc;
     char msg[1024];
 

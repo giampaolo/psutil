@@ -46,7 +46,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // Yeah, this is the actual error code in case of
             // "no such process".
-            NoSuchProcess("OpenProcess -> ERROR_INVALID_PARAMETER");
+            psutil_oserror_nsp("OpenProcess -> ERROR_INVALID_PARAMETER");
             return NULL;
         }
         if (GetLastError() == ERROR_SUCCESS) {
@@ -58,7 +58,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
             }
             else {
                 psutil_debug("OpenProcess -> ERROR_SUCCESS turned into NSP");
-                NoSuchProcess("OpenProcess -> ERROR_SUCCESS");
+                psutil_oserror_nsp("OpenProcess -> ERROR_SUCCESS");
             }
             return NULL;
         }
@@ -79,7 +79,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
             return hProcess;
         }
         CloseHandle(hProcess);
-        NoSuchProcess("GetExitCodeProcess != STILL_ACTIVE");
+        psutil_oserror_nsp("GetExitCodeProcess != STILL_ACTIVE");
         return NULL;
     }
 

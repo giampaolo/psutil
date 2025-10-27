@@ -570,7 +570,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -642,7 +642,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -679,7 +679,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)
-        return NoSuchProcess("psutil_pid_is_running -> 0");
+        return psutil_oserror_nsp("psutil_pid_is_running -> 0");
     if (pid_return == -1)
         return NULL;
 
@@ -760,7 +760,7 @@ psutil_get_proc_info(
         }
     } while ((process = PSUTIL_NEXT_PROCESS(process)));
 
-    NoSuchProcess("NtQuerySystemInformation (no PID found)");
+    psutil_oserror_nsp("NtQuerySystemInformation (no PID found)");
     goto error;
 
 error:

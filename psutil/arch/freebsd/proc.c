@@ -53,7 +53,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl (size = 0)");
         return -1;
     }
     return 0;
@@ -168,7 +168,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("psutil_pid_exists -> 0");
+            return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
             strcpy(pathname, "");
     }
@@ -222,7 +222,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     // subtle check: size == 0 means no such process
     if (size == 0) {
-        NoSuchProcess("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl (size = 0)");
         goto error;
     }
 
