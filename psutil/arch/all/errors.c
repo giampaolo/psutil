@@ -10,6 +10,9 @@
 #endif
 
 
+static const int MSG_SIZE = 512;
+
+
 // Set OSError() exception based on errno (UNIX) or GetLastError (Windows).
 PyObject *
 psutil_oserror(void) {
@@ -27,7 +30,7 @@ psutil_oserror(void) {
 // OSError object.
 PyObject *
 psutil_oserror_wsyscall(const char *syscall) {
-    char msg[1024];
+    char msg[MSG_SIZE];
 
 #ifdef PSUTIL_WINDOWS
     DWORD dwLastError = GetLastError();
@@ -49,7 +52,7 @@ psutil_oserror_wsyscall(const char *syscall) {
 PyObject *
 psutil_oserror_nsp(const char *syscall) {
     PyObject *exc;
-    char msg[1024];
+    char msg[MSG_SIZE];
 
     sprintf(msg, "assume no such process (originated from %s)", syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
@@ -64,7 +67,7 @@ psutil_oserror_nsp(const char *syscall) {
 PyObject *
 psutil_oserror_ad(const char *syscall) {
     PyObject *exc;
-    char msg[1024];
+    char msg[MSG_SIZE];
 
     sprintf(msg, "assume access denied (originated from %s)", syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
