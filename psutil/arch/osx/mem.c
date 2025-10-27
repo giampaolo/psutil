@@ -27,9 +27,7 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
 
     mport = mach_host_self();
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
-        );
+        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
         return -1;
     }
 

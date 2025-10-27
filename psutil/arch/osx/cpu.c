@@ -66,9 +66,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_port_t mport = mach_host_self();
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
-        );
+        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
         return NULL;
     }
 
@@ -103,9 +101,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     struct vmmeter vmstat;
 
     if (mport == MACH_PORT_NULL) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "mach_host_self() returned MACH_PORT_NULL"
-        );
+        psutil_runtime_error("mach_host_self() returned MACH_PORT_NULL");
         return NULL;
     }
 
@@ -201,9 +197,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
 
     if (!psutil_find_pmgr_entry(&entry)) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "'pmgr' entry not found in AppleARMIODevice"
-        );
+        psutil_runtime_error("'pmgr' entry not found in AppleARMIODevice");
         return NULL;
     }
 

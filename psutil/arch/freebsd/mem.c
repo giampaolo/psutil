@@ -100,9 +100,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
         kvm_close(kd);
-        PyErr_SetString(
-            PyExc_RuntimeError, "kvm_getswapinfo() syscall failed"
-        );
+        psutil_runtime_error("kvm_getswapinfo() syscall failed");
         return NULL;
     }
 

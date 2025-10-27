@@ -403,9 +403,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     // Syscall.
     ret = CallNtPowerInformation(ProcessorInformation, NULL, 0, pBuffer, size);
     if (ret != 0) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "CallNtPowerInformation syscall failed"
-        );
+        psutil_runtime_error("CallNtPowerInformation syscall failed");
         goto error;
     }
 

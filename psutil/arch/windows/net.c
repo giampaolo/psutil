@@ -23,9 +23,7 @@ psutil_get_nic_addresses(void) {
     if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength)
         != ERROR_BUFFER_OVERFLOW)
     {
-        PyErr_SetString(
-            PyExc_RuntimeError, "GetAdaptersAddresses() syscall failed."
-        );
+        psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
 
@@ -40,9 +38,7 @@ psutil_get_nic_addresses(void) {
         != ERROR_SUCCESS)
     {
         free(buffer);
-        PyErr_SetString(
-            PyExc_RuntimeError, "GetAdaptersAddresses() syscall failed."
-        );
+        psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
 
