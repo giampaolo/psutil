@@ -356,7 +356,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 kvm_close(kd);
                 return py_retdict;
             case EPERM:
-                AccessDenied("kvm_getenvv -> EPERM");
+                psutil_oserror_ad("kvm_getenvv -> EPERM");
                 break;
             case ESRCH:
                 NoSuchProcess("kvm_getenvv -> ESRCH");
@@ -373,7 +373,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                     pid,
                     p->ki_uid
                 );
-                AccessDenied(errbuf);
+                psutil_oserror_ad(errbuf);
                 break;
 #endif
             default:

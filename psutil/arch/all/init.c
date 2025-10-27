@@ -39,7 +39,7 @@ NoSuchProcess(const char *syscall) {
 // Set OSError(errno=EACCES, strerror="Permission denied" (originated from ...)
 // Python exception.
 PyObject *
-AccessDenied(const char *syscall) {
+psutil_oserror_ad(const char *syscall) {
     PyObject *exc;
     char msg[1024];
 

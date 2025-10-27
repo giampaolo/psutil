@@ -108,13 +108,13 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
 
         if (errno == EINVAL) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EINVAL translated to AD");
-            AccessDenied("sysctl(KERN_PROCARGS2) -> EINVAL");
+            psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> EINVAL");
             return -1;
         }
 
         if (errno == EIO) {
             psutil_debug("sysctl(KERN_PROCARGS2) -> EIO translated to AD");
-            AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
+            psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> EIO");
             return -1;
         }
         psutil_oserror_wsyscall("sysctl(KERN_PROCARGS2)");
@@ -189,13 +189,13 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
         else {
             psutil_debug(
                 "task_for_pid() failed (pid=%ld, err=%i, errno=%i, msg='%s'); "
-                "setting AccessDenied()",
+                "setting EACCES",
                 (long)pid,
                 err,
                 errno,
                 mach_error_string(err)
             );
-            AccessDenied("task_for_pid");
+            psutil_oserror_ad("task_for_pid");
         }
         return -1;
     }
@@ -447,7 +447,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
         if (pid == 0) {
-            AccessDenied("automatically set for PID 0");
+            psutil_oserror_ad("automatically set for PID 0");
             return NULL;
         }
         else if (errno == ENOENT) {
@@ -628,7 +628,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     );
     if (kr != KERN_SUCCESS) {
         if (kr == KERN_INVALID_ARGUMENT) {
-            AccessDenied("task_info(TASK_BASIC_INFO)");
+            psutil_oserror_ad("task_info(TASK_BASIC_INFO)");
         }
         else {
             // otherwise throw a runtime error with appropriate error code

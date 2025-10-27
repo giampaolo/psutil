@@ -17,9 +17,9 @@ convert_kvm_err(const char *syscall, char *errbuf) {
 
     sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
     if (strstr(errbuf, "Permission denied") != NULL)
-        AccessDenied(fullmsg);
+        psutil_oserror_ad(fullmsg);
     else if (strstr(errbuf, "Operation not permitted") != NULL)
-        AccessDenied(fullmsg);
+        psutil_oserror_ad(fullmsg);
     else
         PyErr_Format(PyExc_RuntimeError, fullmsg);
 }

@@ -61,7 +61,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (pid == 0)
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
 
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL) {
@@ -97,7 +97,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "l", &pid, &timeout))
         return NULL;
     if (pid == 0)
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
 
     hProcess = OpenProcess(
         SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid
@@ -225,7 +225,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
 
     if (pid == 0)
-        return AccessDenied("automatically set for PID 0");
+        return psutil_oserror_ad("automatically set for PID 0");
 
     // ...because NtQuerySystemInformation can succeed for terminated
     // processes.
@@ -424,7 +424,7 @@ psutil_GetProcWsetInformation(
 
     if (!NT_SUCCESS(status)) {
         if (status == STATUS_ACCESS_DENIED) {
-            AccessDenied("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
+            psutil_oserror_ad("NtQueryVirtualMemory -> STATUS_ACCESS_DENIED");
         }
         else if (psutil_pid_is_running(pid) == 0) {
             NoSuchProcess("psutil_pid_is_running -> 0");
@@ -550,7 +550,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        AccessDenied("forced for PID 0");
+        psutil_oserror_ad("forced for PID 0");
         goto error;
     }
 
@@ -770,7 +770,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 // name. It also occurs for SIDs that have no corresponding
                 // account name, such as a logon SID that identifies a logon
                 // session.
-                AccessDenied("LookupAccountSidW -> ERROR_NONE_MAPPED");
+                psutil_oserror_ad("LookupAccountSidW -> ERROR_NONE_MAPPED");
                 goto error;
             }
             else {

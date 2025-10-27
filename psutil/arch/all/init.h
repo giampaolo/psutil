@@ -70,7 +70,7 @@ extern int PSUTIL_CONN_NONE;
 // --- Custom exceptions
 // ====================================================================
 
-PyObject *AccessDenied(const char *msg);
+PyObject *psutil_oserror_ad(const char *msg);
 PyObject *NoSuchProcess(const char *msg);
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_wsyscall(const char *syscall);

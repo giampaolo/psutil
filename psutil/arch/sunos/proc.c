@@ -202,7 +202,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
         goto error;
 
     if (!info.pr_envp) {
-        AccessDenied("/proc/pid/psinfo struct not set");
+        psutil_oserror_ad("/proc/pid/psinfo struct not set");
         goto error;
     }
 
