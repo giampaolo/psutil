@@ -74,6 +74,18 @@ psutil_oserror_ad(const char *syscall) {
 }
 
 
+// Set RuntimeError exception with a formatted `msg`. Optionally, it
+// also accepts a variable number of args to populate `msg`.
+PyObject *
+psutil_runtime_error(const char *msg, ...) {
+    va_list args;
+
+    va_start(args, msg);
+    PyErr_FormatV(PyExc_RuntimeError, msg, args);
+    va_end(args);
+    return NULL;
+}
+
 // Use it when invalid args are passed to a C function.
 int
 psutil_badargs(const char *funcname) {

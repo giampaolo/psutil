@@ -127,6 +127,8 @@ PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_ad(const char *msg);
 PyObject *psutil_oserror_nsp(const char *msg);
 PyObject *psutil_oserror_wsyscall(const char *syscall);
+PyObject *psutil_runtime_error(const char *msg, ...);
+
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
 
