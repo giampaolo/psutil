@@ -5,22 +5,20 @@
  */
 
 #include <Python.h>
-#if defined(PSUTIL_WINDOWS)
-#include <windows.h>
-#else
 #include <errno.h>
 #include <string.h>
+#if defined(PSUTIL_WINDOWS)
+#include <windows.h>
 #endif
-
 
 static const int MSG_SIZE = 512;
 
 
-// Set OSError() exception based on errno (UNIX) or GetLastError (Windows).
+// Set OSError() based on errno (UNIX) or GetLastError() (Windows).
 PyObject *
 psutil_oserror(void) {
 #ifdef PSUTIL_WINDOWS
-    PyErr_SetFromWindowsErr(0);
+    PyErr_SetFromWindowsErr(GetLastError());
 #else
     PyErr_SetFromErrno(PyExc_OSError);
 #endif
@@ -36,9 +34,9 @@ psutil_oserror_wsyscall(const char *syscall) {
     char msg[MSG_SIZE];
 
 #ifdef PSUTIL_WINDOWS
-    DWORD dwLastError = GetLastError();
+    DWORD err = GetLastError();
     sprintf(msg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(dwLastError, msg);
+    PyErr_SetFromWindowsErrWithFilename(err, msg);
 #else
     PyObject *exc;
     sprintf(msg, "%s (originated from %s)", strerror(errno), syscall);
@@ -49,30 +47,26 @@ psutil_oserror_wsyscall(const char *syscall) {
     return NULL;
 }
 
-
-// Set OSError(errno=ESRCH, strerror="No such process (originated from")
-// exception.
+// Set OSError(errno=ESRCH) ("No such process").
 PyObject *
 psutil_oserror_nsp(const char *syscall) {
     PyObject *exc;
     char msg[MSG_SIZE];
 
-    sprintf(msg, "assume no such process (originated from %s)", syscall);
+    sprintf(msg, "force no such process (originated from %s)", syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
     return NULL;
 }
 
-
-// Set OSError(errno=EACCES, strerror="Permission denied" (originated from ...)
-// exception.
+// Set OSError(errno=EACCES) ("Permission denied").
 PyObject *
 psutil_oserror_ad(const char *syscall) {
     PyObject *exc;
     char msg[MSG_SIZE];
 
-    sprintf(msg, "assume access denied (originated from %s)", syscall);
+    sprintf(msg, "force permission denied (originated from %s)", syscall);
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
@@ -80,8 +74,7 @@ psutil_oserror_ad(const char *syscall) {
 }
 
 
-// Set RuntimeError exception with a formatted `msg`. Optionally, it
-// also accepts a variable number of args to populate `msg`.
+// Set RuntimeError with formatted `msg` and optional arguments.
 PyObject *
 psutil_runtime_error(const char *msg, ...) {
     va_list args;
