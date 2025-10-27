@@ -4,13 +4,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Shortcuts for various tasks, emulating UNIX "make" command on
+Windows. This script is supposed to be invoked via "make.bat" and not
+used directly. Like on POSIX, you can run multiple targets serially:
 
-"""Shortcuts for various tasks, emulating UNIX "make" on Windows.
-This is supposed to be invoked by "make.bat" and not used directly.
-This was originally written as a bat file but they suck so much
-that they should be deemed illegal!
+    make.bat clean build test
 
 To run a specific test:
+
     set ARGS=psutil/tests/test_system.py && make.bat test
 """
 
@@ -30,10 +31,8 @@ ARGS = shlex.split(os.getenv("ARGS", ""))
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.realpath(os.path.join(HERE, "..", ".."))
-WINDOWS = os.name == "nt"
 
 colorama.init(autoreset=True)
-sys.path.insert(0, ROOT_DIR)  # so we can import setup.py
 
 # ===================================================================
 # utils
