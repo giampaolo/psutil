@@ -27,16 +27,16 @@ psutil_oserror(void) {
 // OSError object.
 PyObject *
 psutil_oserror_wsyscall(const char *syscall) {
-    char fullmsg[1024];
+    char msg[1024];
 
 #ifdef PSUTIL_WINDOWS
     DWORD dwLastError = GetLastError();
-    sprintf(fullmsg, "(originated from %s)", syscall);
-    PyErr_SetFromWindowsErrWithFilename(dwLastError, fullmsg);
+    sprintf(msg, "(originated from %s)", syscall);
+    PyErr_SetFromWindowsErrWithFilename(dwLastError, msg);
 #else
     PyObject *exc;
-    sprintf(fullmsg, "%s (originated from %s)", strerror(errno), syscall);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, fullmsg);
+    sprintf(msg, "%s (originated from %s)", strerror(errno), syscall);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
 #endif
