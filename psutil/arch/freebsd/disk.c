@@ -42,7 +42,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     bzero(stats.dinfo, sizeof(struct devinfo));
 
     if (devstat_getdevs(NULL, &stats) == -1) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() syscall failed");
+        psutil_runtime_error("devstat_getdevs() syscall failed");
         goto error;
     }
 

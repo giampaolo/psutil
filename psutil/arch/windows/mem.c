@@ -51,7 +51,7 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
     double percentUsage;
 
     if ((PdhOpenQueryW(NULL, 0, &hQuery)) != ERROR_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "PdhOpenQueryW failed");
+        psutil_runtime_error("PdhOpenQueryW failed");
         return NULL;
     }
 

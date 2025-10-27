@@ -641,7 +641,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     kr = task_threads(task, &thread_list, &thread_count);
     if (kr != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "task_threads() syscall failed");
+        psutil_runtime_error("task_threads() syscall failed");
         goto error;
     }
 

@@ -28,7 +28,7 @@ _psutil_pids(pid_t **pids_array, int *pids_count) {
         return -1;
 
     if (len == 0) {
-        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        psutil_runtime_error("no PIDs found");
         goto error;
     }
 

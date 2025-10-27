@@ -147,7 +147,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (strstr(errbuf, "Permission denied") != NULL)
             psutil_oserror_ad("kvm_getprocs");
         else
-            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() syscall failed");
+            psutil_runtime_error("kvm_getprocs() syscall failed");
         goto error;
     }
 

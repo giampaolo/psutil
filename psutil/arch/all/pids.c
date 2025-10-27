@@ -50,7 +50,7 @@ psutil_pids(PyObject *self, PyObject *args) {
         goto error;
 
     if (pids_count == 0) {
-        PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+        psutil_runtime_error("no PIDs found");
         goto error;
     }
 

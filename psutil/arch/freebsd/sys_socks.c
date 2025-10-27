@@ -45,7 +45,7 @@ psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
         *psutil_xfiles = new_psutil_xfiles;
     }
     if (len > 0 && (*psutil_xfiles)->xf_size != sizeof(struct xfile)) {
-        PyErr_Format(PyExc_RuntimeError, "struct xfile size mismatch");
+        psutil_runtime_error("struct xfile size mismatch");
         return -1;
     }
     *psutil_nxfiles = len / sizeof(struct xfile);
@@ -129,7 +129,7 @@ psutil_gather_inet(
         xig = (struct xinpgen *)buf;
         exig = (struct xinpgen *)(void *)((char *)buf + len - sizeof *exig);
         if (xig->xig_len != sizeof *xig || exig->xig_len != sizeof *exig) {
-            PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
+            psutil_runtime_error("struct xinpgen size mismatch");
             goto error;
         }
     } while (xig->xig_gen != exig->xig_gen && retry--);
@@ -177,7 +177,7 @@ psutil_gather_inet(
                 status = PSUTIL_CONN_NONE;
                 break;
             default:
-                PyErr_Format(PyExc_RuntimeError, "invalid proto");
+                psutil_runtime_error("invalid proto");
                 goto error;
         }
 
@@ -302,7 +302,7 @@ psutil_gather_unix(
         xug = (struct xunpgen *)buf;
         exug = (struct xunpgen *)(void *)((char *)buf + len - sizeof *exug);
         if (xug->xug_len != sizeof *xug || exug->xug_len != sizeof *exug) {
-            PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
+            psutil_runtime_error("struct xinpgen size mismatch");
             goto error;
         }
     } while (xug->xug_gen != exug->xug_gen && retry--);

@@ -39,7 +39,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
-            PyErr_Format(PyExc_RuntimeError, "getmntent() syscall failed");
+            psutil_runtime_error("getmntent() syscall failed");
             goto error;
         }
         py_dev = PyUnicode_DecodeFSDefault(entry->mnt_fsname);
