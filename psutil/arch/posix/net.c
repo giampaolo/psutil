@@ -142,7 +142,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
     if (getifaddrs(&ifaddr) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -246,7 +246,7 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
 error:
     if (sock != -1)
         close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
+    return psutil_oserror();
 }
 
 static int
@@ -285,14 +285,14 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
+        psutil_oserror_wsyscall("socket(SOCK_DGRAM)");
         goto error;
     }
 
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
+        psutil_oserror_wsyscall("ioctl(SIOCGIFFLAGS)");
         goto error;
     }
 
@@ -486,7 +486,7 @@ psutil_net_if_is_running(PyObject *self, PyObject *args) {
 error:
     if (sock != -1)
         close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
+    return psutil_oserror();
 }
 
 
@@ -652,7 +652,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // speed / duplex

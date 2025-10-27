@@ -66,12 +66,12 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     swdev = calloc(nswap, sizeof(*swdev));
     if (swdev == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

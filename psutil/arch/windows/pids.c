@@ -8,6 +8,9 @@
 #include <windows.h>
 #include <psapi.h>
 
+#include "../../arch/all/init.h"
+
+
 int
 _psutil_pids(DWORD **pids_array, int *pids_count) {
     DWORD *proc_array = NULL;
@@ -32,7 +35,7 @@ _psutil_pids(DWORD **pids_array, int *pids_count) {
 
         if (!EnumProcesses(proc_array, proc_array_bytes, &enum_return_bytes)) {
             free(proc_array);
-            PyErr_SetFromWindowsErr(0);
+            psutil_oserror();
             return -1;
         }
 

@@ -21,12 +21,12 @@ psutil_kread(
     int br;
 
     if (lseek64(Kd, (off64_t)addr, L_SET) == (off64_t)-1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return 1;
     }
     br = read(Kd, buf, len);
     if (br == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return 1;
     }
     if (br != len) {

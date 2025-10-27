@@ -23,7 +23,7 @@ psutil_get_num_cpus(int fail_on_err) {
     if (GetActiveProcessorCount != NULL) {
         ncpus = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
         if ((ncpus == 0) && (fail_on_err == 1)) {
-            PyErr_SetFromWindowsErr(0);
+            psutil_oserror();
         }
     }
     else {
@@ -54,7 +54,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     FILETIME idle_time, kernel_time, user_time;
 
     if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         return NULL;
     }
 
@@ -396,7 +396,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     size = ncpus * sizeof(PROCESSOR_POWER_INFORMATION);
     pBuffer = (BYTE *)LocalAlloc(LPTR, size);
     if (!pBuffer) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         return NULL;
     }
 

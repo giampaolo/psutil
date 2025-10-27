@@ -69,7 +69,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int nswap, i;
 
     if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
 
@@ -79,7 +79,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

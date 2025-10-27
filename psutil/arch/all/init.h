@@ -72,7 +72,8 @@ extern int PSUTIL_CONN_NONE;
 
 PyObject *AccessDenied(const char *msg);
 PyObject *NoSuchProcess(const char *msg);
-PyObject *psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall);
+PyObject *psutil_oserror(void);
+PyObject *psutil_oserror_wsyscall(const char *syscall);
 
 // ====================================================================
 // --- Backward compatibility with missing Python.h APIs

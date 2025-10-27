@@ -17,7 +17,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
     SYSTEM_POWER_STATUS sps;
 
     if (GetSystemPowerStatus(&sps) == 0) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         return NULL;
     }
     return Py_BuildValue(

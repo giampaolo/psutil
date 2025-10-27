@@ -26,7 +26,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     PERFORMANCE_INFORMATION perfInfo;
 
     if (!GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
-        PyErr_SetFromWindowsErr(0);
+        psutil_oserror();
         return NULL;
     }
     // values are size_t, widen (if needed) to long long

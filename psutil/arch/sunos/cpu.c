@@ -24,14 +24,14 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     kc = kstat_open();
     if (kc == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
     for (ksp = kc->kc_chain; ksp != NULL; ksp = ksp->ks_next) {
         if (strcmp(ksp->ks_module, "cpu_stat") == 0) {
             if (kstat_read(kc, ksp, &cs) == -1) {
-                PyErr_SetFromErrno(PyExc_OSError);
+                psutil_oserror();
                 goto error;
             }
             py_cputime = Py_BuildValue(
@@ -110,14 +110,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     kc = kstat_open();
     if (kc == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
     for (ksp = kc->kc_chain; ksp != NULL; ksp = ksp->ks_next) {
         if (strcmp(ksp->ks_module, "cpu_stat") == 0) {
             if (kstat_read(kc, ksp, &cs) == -1) {
-                PyErr_SetFromErrno(PyExc_OSError);
+                psutil_oserror();
                 goto error;
             }
             // voluntary + involuntary

@@ -48,7 +48,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 #endif
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -67,7 +67,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 #endif
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

@@ -99,7 +99,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     mib[1] = VM_SWAPUSAGE;
 
     if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
-        return psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(VM_SWAPUSAGE)");
+        return psutil_oserror_wsyscall("sysctl(VM_SWAPUSAGE)");
 
     if (psutil_sys_vminfo(&vmstat) != 0)
         return NULL;

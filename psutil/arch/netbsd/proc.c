@@ -39,7 +39,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc) {
 
     ret = sysctl((int *)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return -1;
     }
     // sysctl stores 0 in the size if we can't find the process information.
@@ -67,7 +67,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         if (errno == ENOENT)
             NoSuchProcess("sysctl -> ENOENT");
         else
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
         return NULL;
     }
 #else
@@ -83,7 +83,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         if (errno == ENOENT)
             NoSuchProcess("readlink -> ENOENT");
         else
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
         return NULL;
     }
     path[len] = '\0';
@@ -123,13 +123,13 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     size = sizeof(pathname);
     error = sysctl(mib, 4, NULL, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
 
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
     if (size == 0 || strlen(pathname) == 0) {
@@ -188,7 +188,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // first query size
     st = sysctl(mib, 5, NULL, &size, NULL, 0);
     if (st == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     if (size == 0) {

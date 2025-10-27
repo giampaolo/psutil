@@ -21,7 +21,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
     DWORD cbPrevious = sizeof(TOKEN_PRIVILEGES);
 
     if (!LookupPrivilegeValue(NULL, Privilege, &luid)) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("LookupPrivilegeValue");
+        psutil_oserror_wsyscall("LookupPrivilegeValue");
         return -1;
     }
 
@@ -39,7 +39,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
             &cbPrevious
         ))
     {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("AdjustTokenPrivileges");
+        psutil_oserror_wsyscall("AdjustTokenPrivileges");
         return -1;
     }
 
@@ -57,7 +57,7 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege) {
             hToken, FALSE, &tpPrevious, cbPrevious, NULL, NULL
         ))
     {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("AdjustTokenPrivileges");
+        psutil_oserror_wsyscall("AdjustTokenPrivileges");
         return -1;
     }
 
@@ -74,19 +74,19 @@ psutil_get_thisproc_token() {
     {
         if (GetLastError() == ERROR_NO_TOKEN) {
             if (!ImpersonateSelf(SecurityImpersonation)) {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("ImpersonateSelf");
+                psutil_oserror_wsyscall("ImpersonateSelf");
                 return NULL;
             }
             if (!OpenProcessToken(
                     me, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken
                 ))
             {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
+                psutil_oserror_wsyscall("OpenProcessToken");
                 return NULL;
             }
         }
         else {
-            psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
+            psutil_oserror_wsyscall("OpenProcessToken");
             return NULL;
         }
     }

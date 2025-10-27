@@ -36,7 +36,7 @@ open_address_space(pid_t pid, const char *procfs_path) {
     snprintf(proc_path, PATH_MAX, "%s/%i/as", procfs_path, pid);
     fd = open(proc_path, O_RDONLY);
     if (fd < 0)
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
 
     return fd;
 }
@@ -71,7 +71,7 @@ read_offt(int fd, off_t offset, char *buf, size_t buf_size) {
     return stored;
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
+    psutil_oserror();
     return -1;
 }
 
@@ -93,7 +93,7 @@ read_cstring_offt(int fd, off_t offset) {
     char *result = NULL;
 
     if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -101,7 +101,7 @@ read_cstring_offt(int fd, off_t offset) {
     for (;;) {
         r = read(fd, buf, sizeof(buf));
         if (r == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             goto error;
         }
         else if (r == 0) {
@@ -273,7 +273,7 @@ search_pointers_vector_size_offt(int fd, off_t offt, size_t ptr_size) {
     return count;
 
 error:
-    PyErr_SetFromErrno(PyExc_OSError);
+    psutil_oserror();
     return -1;
 }
 

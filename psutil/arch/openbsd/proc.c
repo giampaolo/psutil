@@ -40,7 +40,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     ret = sysctl((int *)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(kinfo_proc)");
+        psutil_oserror_wsyscall("sysctl(kinfo_proc)");
         return -1;
     }
     // sysctl stores 0 in the size if we can't find the process information.
@@ -237,7 +237,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
             return Py_BuildValue("s", "");
         }
         else {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return NULL;
         }
     }

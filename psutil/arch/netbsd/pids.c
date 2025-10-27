@@ -10,6 +10,8 @@
 #include <kvm.h>
 #include <sys/sysctl.h>
 
+#include "../../arch/all/init.h"
+
 
 int
 _psutil_pids(pid_t **pids_array, int *pids_count) {

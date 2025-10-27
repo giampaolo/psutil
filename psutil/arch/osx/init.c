@@ -20,7 +20,7 @@ psutil_setup_osx(void) {
 
     ret = mach_timebase_info(&PSUTIL_MACH_TIMEBASE_INFO);
     if (ret != KERN_SUCCESS) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("mach_timebase_info");
+        psutil_oserror_wsyscall("mach_timebase_info");
         return -1;
     }
     return 0;

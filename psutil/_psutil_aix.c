@@ -73,7 +73,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     nbytes = read(fd, fstruct, size);
     if (nbytes <= 0) {
         close(fd);
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return 0;
     }
     if (nbytes != size) {
@@ -183,7 +183,7 @@ psutil_proc_args(PyObject *self, PyObject *args) {
     procbuf.pi_pid = pid;
     ret = getargs(&procbuf, sizeof(procbuf), argbuf, ARG_MAX);
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -244,7 +244,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     procbuf.pi_pid = pid;
     ret = getevars(&procbuf, sizeof(procbuf), envbuf, ARG_MAX);
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -308,7 +308,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     /* Get the count of threads */
     thread_count = perfstat_thread(NULL, NULL, sizeof(perfstat_thread_t), 0);
     if (thread_count <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -326,7 +326,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         &id, threadt, sizeof(perfstat_thread_t), thread_count
     );
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -371,7 +371,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
     snprintf(id.name, sizeof(id.name), "%ld", pid);
     rc = perfstat_process(&id, &procinfo, sizeof(perfstat_process_t), 1);
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
 
@@ -497,7 +497,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     file = setmntent(MNTTAB, "rb");
     if (file == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     mt = getmntent(file);
@@ -564,7 +564,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         return py_retdict;
     }
     if (tot < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     statp = (perfstat_netinterface_t *)malloc(
@@ -579,7 +579,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         &first, statp, sizeof(perfstat_netinterface_t), tot
     );
     if (tot < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -662,7 +662,7 @@ error:
     Py_XDECREF(py_is_up);
     if (sock != 0)
         close(sock);
-    PyErr_SetFromErrno(PyExc_OSError);
+    psutil_oserror();
     return NULL;
 }
 
@@ -709,14 +709,14 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     /* get the number of ticks per second */
     ticks = sysconf(_SC_CLK_TCK);
     if (ticks < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
     /* get the number of cpus in ncpu */
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
     if (ncpu <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -731,7 +731,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     rc = perfstat_cpu(&id, cpu, sizeof(perfstat_cpu_t), ncpu);
 
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -778,7 +778,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     /* Get the count of disks */
     disk_count = perfstat_disk(NULL, NULL, sizeof(perfstat_disk_t), 0);
     if (disk_count <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -792,7 +792,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     strcpy(id.name, FIRST_DISK);
     rc = perfstat_disk(&id, diskt, sizeof(perfstat_disk_t), disk_count);
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -837,7 +837,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         NULL, &memory, sizeof(perfstat_memory_total_t), 1
     );
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
 
@@ -865,7 +865,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         NULL, &memory, sizeof(perfstat_memory_total_t), 1
     );
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return NULL;
     }
 
@@ -897,7 +897,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     /* get the number of cpus in ncpu */
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
     if (ncpu <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -912,7 +912,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     rc = perfstat_cpu(&id, cpu, sizeof(perfstat_cpu_t), ncpu);
 
     if (rc <= 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

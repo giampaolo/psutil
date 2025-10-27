@@ -56,7 +56,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl");
+        psutil_oserror_wsyscall("sysctl");
         return -1;
     }
 
@@ -117,7 +117,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             AccessDenied("sysctl(KERN_PROCARGS2) -> EIO");
             return -1;
         }
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROCARGS2)");
+        psutil_oserror_wsyscall("sysctl(KERN_PROCARGS2)");
         return -1;
     }
     return 0;
@@ -929,7 +929,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                         sizeof(lip)
                     );
                     if (!ntopret) {
-                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        psutil_oserror_wsyscall("inet_ntop()");
                         goto error;
                     }
                     ntopret = inet_ntop(
@@ -940,7 +940,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                         sizeof(rip)
                     );
                     if (!ntopret) {
-                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        psutil_oserror_wsyscall("inet_ntop()");
                         goto error;
                     }
                 }
@@ -952,7 +952,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                         sizeof(lip)
                     );
                     if (!ntopret) {
-                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        psutil_oserror_wsyscall("inet_ntop()");
                         goto error;
                     }
                     ntopret = inet_ntop(
@@ -962,7 +962,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                         sizeof(rip)
                     );
                     if (!ntopret) {
-                        psutil_PyErr_SetFromOSErrnoWithSyscall("inet_ntop()");
+                        psutil_oserror_wsyscall("inet_ntop()");
                         goto error;
                     }
                 }

@@ -47,7 +47,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     size = sizeof(struct kinfo_proc);
     if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PID)");
+        psutil_oserror_wsyscall("sysctl(KERN_PROC_PID)");
         return -1;
     }
 
@@ -160,9 +160,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             return PyUnicode_DecodeFSDefault("");
         }
         else {
-            return psutil_PyErr_SetFromOSErrnoWithSyscall(
-                "sysctl(KERN_PROC_PATHNAME)"
-            );
+            return psutil_oserror_wsyscall("sysctl(KERN_PROC_PATHNAME)");
         }
     }
     if (size == 0 || strlen(pathname) == 0) {
@@ -479,7 +477,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(mask), &mask
     );
     if (ret != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL)
@@ -540,7 +538,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(cpu_set), &cpu_set
     );
     if (ret != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -629,6 +627,6 @@ psutil_proc_setrlimit(PyObject *self, PyObject *args) {
     newp = &new;
     ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
     if (ret == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     Py_RETURN_NONE;
 }
