@@ -11,6 +11,16 @@
 #include "../../arch/all/init.h"
 
 
+static int
+has_pid_zero(void) {
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+    return 0;
+#else
+    return 1;
+#endif
+}
+
+
 // Check if PID exists. Return values:
 // 1: exists
 // 0: does not exist
@@ -28,13 +38,8 @@ psutil_pid_exists(pid_t pid) {
     // every process in the process group of the calling process. Not
     // what we want. Some platforms have PID 0, some do not. We decide
     // that at runtime.
-    if (pid == 0) {
-#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
-        return 0;
-#else
-        return 1;
-#endif
-    }
+    if (pid == 0)
+        return has_pid_zero();
 
     ret = kill(pid, 0);
     if (ret == 0)
