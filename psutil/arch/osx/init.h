@@ -11,6 +11,7 @@ extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 
 int psutil_setup_osx(void);
 int _psutil_pids(pid_t **pids_array, int *pids_count);
+int is_zombie(size_t pid);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);

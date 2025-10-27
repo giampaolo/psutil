@@ -24,8 +24,14 @@ psutil_raise_for_pid(pid_t pid, char *syscall) {
         psutil_oserror_wsyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
         psutil_oserror_nsp(syscall);
-    else
+#ifdef PSUTIL_OSX
+    else if (is_zombie(pid)) {
+        printf("is zombie\n");
+    }
+#endif
+    else {
         psutil_runtime_error("%s syscall failed", syscall);
+    }
 }
 
 

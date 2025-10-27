@@ -69,7 +69,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 }
 
 
-static int
+int
 is_zombie(size_t pid) {
     struct kinfo_proc kp;
 
