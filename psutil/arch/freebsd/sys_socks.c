@@ -33,7 +33,7 @@ psutil_populate_xfiles(struct xfile **psutil_xfiles, int *psutil_nxfiles) {
 
     while (sysctlbyname("kern.file", *psutil_xfiles, &len, 0, 0) == -1) {
         if (errno != ENOMEM) {
-            PyErr_SetFromErrno(0);
+            psutil_oserror();
             return -1;
         }
         len *= 2;
@@ -121,7 +121,7 @@ psutil_gather_inet(
             if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
                 break;
             if (errno != ENOMEM) {
-                PyErr_SetFromErrno(0);
+                psutil_oserror();
                 goto error;
             }
             bufsize *= 2;
@@ -294,7 +294,7 @@ psutil_gather_unix(
             if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
                 break;
             if (errno != ENOMEM) {
-                PyErr_SetFromErrno(0);
+                psutil_oserror();
                 goto error;
             }
             bufsize *= 2;
