@@ -36,8 +36,7 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
     );
     mach_port_deallocate(mach_task_self(), mport);
     if (ret != KERN_SUCCESS) {
-        PyErr_Format(
-            PyExc_RuntimeError,
+        psutil_runtime_error(
             "host_statistics64(HOST_VM_INFO64) syscall failed: %s",
             mach_error_string(ret)
         );

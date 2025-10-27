@@ -58,8 +58,7 @@ psutil_swap_percent(PyObject *self, PyObject *args) {
     s = PdhAddEnglishCounterW(hQuery, szCounterPath, 0, &hCounter);
     if (s != ERROR_SUCCESS) {
         PdhCloseQuery(hQuery);
-        PyErr_Format(
-            PyExc_RuntimeError,
+        psutil_runtime_error(
             "PdhAddEnglishCounterW failed. Performance counters may be "
             "disabled."
         );

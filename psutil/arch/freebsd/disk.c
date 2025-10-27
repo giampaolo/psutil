@@ -28,9 +28,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
     if (devstat_checkversion(NULL) < 0) {
-        PyErr_Format(
-            PyExc_RuntimeError, "devstat_checkversion() syscall failed"
-        );
+        psutil_runtime_error("devstat_checkversion() syscall failed");
         goto error;
     }
 
