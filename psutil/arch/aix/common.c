@@ -30,9 +30,7 @@ psutil_kread(
         return 1;
     }
     if (br != len) {
-        PyErr_SetString(
-            PyExc_RuntimeError, "size mismatch when reading kernel memory fd"
-        );
+        psutil_runtime_error("size mismatch when reading kernel memory fd");
         return 1;
     }
     return 0;

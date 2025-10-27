@@ -21,5 +21,5 @@ convert_kvm_err(const char *syscall, char *errbuf) {
     else if (strstr(errbuf, "Operation not permitted") != NULL)
         psutil_oserror_ad(fullmsg);
     else
-        PyErr_Format(PyExc_RuntimeError, fullmsg);
+        psutil_runtime_error(fullmsg);
 }
