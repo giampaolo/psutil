@@ -47,7 +47,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
     size = sizeof(struct kinfo_proc);
     if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PID)");
+        psutil_oserror_wsyscall("sysctl(KERN_PROC_PID)");
         return -1;
     }
 
@@ -160,9 +160,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             return PyUnicode_DecodeFSDefault("");
         }
         else {
-            return psutil_PyErr_SetFromOSErrnoWithSyscall(
-                "sysctl(KERN_PROC_PATHNAME)"
-            );
+            return psutil_oserror_wsyscall("sysctl(KERN_PROC_PATHNAME)");
         }
     }
     if (size == 0 || strlen(pathname) == 0) {

@@ -44,7 +44,7 @@ psutil_get_process_region_size(HANDLE hProcess, LPCVOID src, SIZE_T *psize) {
     MEMORY_BASIC_INFORMATION info;
 
     if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("VirtualQueryEx");
+        psutil_oserror_wsyscall("VirtualQueryEx");
         return -1;
     }
 
@@ -70,7 +70,7 @@ psutil_convert_winerr(ULONG err, char *syscall) {
         AccessDenied(fullmsg);
     }
     else {
-        psutil_PyErr_SetFromOSErrnoWithSyscall(syscall);
+        psutil_oserror_wsyscall(syscall);
     }
 }
 
@@ -231,7 +231,7 @@ psutil_get_process_data(
     if (!IsWow64Process(GetCurrentProcess(), &weAreWow64)
         || !IsWow64Process(hProcess, &theyAreWow64))
     {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("IsWow64Process");
+        psutil_oserror_wsyscall("IsWow64Process");
         goto error;
     }
 
@@ -591,7 +591,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args, PyObject *kwdict) {
     // attempt to parse the command line using Win32 API
     szArglist = CommandLineToArgvW(data, &nArgs);
     if (szArglist == NULL) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("CommandLineToArgvW");
+        psutil_oserror_wsyscall("CommandLineToArgvW");
         goto error;
     }
 

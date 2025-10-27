@@ -285,14 +285,14 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("socket(SOCK_DGRAM)");
+        psutil_oserror_wsyscall("socket(SOCK_DGRAM)");
         goto error;
     }
 
     PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCGIFFLAGS)");
+        psutil_oserror_wsyscall("ioctl(SIOCGIFFLAGS)");
         goto error;
     }
 

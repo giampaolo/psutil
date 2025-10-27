@@ -66,9 +66,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
 
     if (psutil_sysctl(mib, 2, &vm, size_vm) != 0) {
-        return psutil_PyErr_SetFromOSErrnoWithSyscall(
-            "sysctl(CTL_VM | VM_METER)"
-        );
+        return psutil_oserror_wsyscall("sysctl(CTL_VM | VM_METER)");
     }
 
     return Py_BuildValue(

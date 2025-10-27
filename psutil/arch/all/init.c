@@ -54,7 +54,7 @@ AccessDenied(const char *syscall) {
 // Same as PyErr_SetFromErrno(0) but adds the syscall to the exception
 // message.
 PyObject *
-psutil_PyErr_SetFromOSErrnoWithSyscall(const char *syscall) {
+psutil_oserror_wsyscall(const char *syscall) {
     char fullmsg[1024];
 
 #ifdef PSUTIL_WINDOWS

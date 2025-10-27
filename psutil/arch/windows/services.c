@@ -25,13 +25,13 @@ psutil_get_service_handler(
 
     sc = OpenSCManagerW(NULL, NULL, scm_access);
     if (sc == NULL) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenSCManagerW");
+        psutil_oserror_wsyscall("OpenSCManagerW");
         return NULL;
     }
 
     hService = OpenServiceW(sc, service_name, access);
     if (hService == NULL) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenServiceW");
+        psutil_oserror_wsyscall("OpenServiceW");
         CloseServiceHandle(sc);
         return NULL;
     }
@@ -145,7 +145,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 
     sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
     if (sc == NULL) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenSCManager");
+        psutil_oserror_wsyscall("OpenSCManager");
         return NULL;
     }
 
@@ -245,7 +245,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     bytesNeeded = 0;
     QueryServiceConfigW(hService, NULL, 0, &bytesNeeded);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfigW");
+        psutil_oserror_wsyscall("QueryServiceConfigW");
         goto error;
     }
 
@@ -257,7 +257,7 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
 
     ok = QueryServiceConfigW(hService, qsc, bytesNeeded, &bytesNeeded);
     if (!ok) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfigW");
+        psutil_oserror_wsyscall("QueryServiceConfigW");
         goto error;
     }
 
@@ -350,7 +350,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         return Py_BuildValue("s", "");
     }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceStatusEx");
+        psutil_oserror_wsyscall("QueryServiceStatusEx");
         goto error;
     }
 
@@ -371,7 +371,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         &bytesNeeded
     );
     if (!ok) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceStatusEx");
+        psutil_oserror_wsyscall("QueryServiceStatusEx");
         goto error;
     }
 
@@ -428,7 +428,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     }
 
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfig2W");
+        psutil_oserror_wsyscall("QueryServiceConfig2W");
         goto error;
     }
 
@@ -446,7 +446,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         &bytesNeeded
     );
     if (!ok) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("QueryServiceConfig2W");
+        psutil_oserror_wsyscall("QueryServiceConfig2W");
         goto error;
     }
 
@@ -496,7 +496,7 @@ psutil_winservice_start(PyObject *self, PyObject *args) {
 
     ok = StartService(hService, 0, NULL);
     if (!ok) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("StartService");
+        psutil_oserror_wsyscall("StartService");
         goto error;
     }
 
@@ -535,7 +535,7 @@ psutil_winservice_stop(PyObject *self, PyObject *args) {
     ok = ControlService(hService, SERVICE_CONTROL_STOP, &ssp);
     Py_END_ALLOW_THREADS
     if (!ok) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("ControlService");
+        psutil_oserror_wsyscall("ControlService");
         goto error;
     }
 

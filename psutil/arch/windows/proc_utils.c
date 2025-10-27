@@ -62,7 +62,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
             }
             return NULL;
         }
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
+        psutil_oserror_wsyscall("OpenProcess");
         return NULL;
     }
 
@@ -88,7 +88,7 @@ psutil_check_phandle(HANDLE hProcess, DWORD pid, int check_exit_code) {
         SetLastError(0);
         return hProcess;
     }
-    psutil_PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
+    psutil_oserror_wsyscall("GetExitCodeProcess");
     CloseHandle(hProcess);
     return NULL;
 }
@@ -110,7 +110,7 @@ psutil_handle_from_pid(DWORD pid, DWORD access) {
     hProcess = OpenProcess(access, FALSE, pid);
 
     if ((hProcess == NULL) && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
+        psutil_oserror_wsyscall("OpenProcess");
         return NULL;
     }
 

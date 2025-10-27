@@ -80,7 +80,7 @@ psutil_users(PyObject *self, PyObject *args) {
             // return WinError 120.
             return py_retlist;
         }
-        psutil_PyErr_SetFromOSErrnoWithSyscall("WTSEnumerateSessionsW");
+        psutil_oserror_wsyscall("WTSEnumerateSessionsW");
         goto error;
     }
 
@@ -106,9 +106,7 @@ psutil_users(PyObject *self, PyObject *args) {
             )
             == 0)
         {
-            psutil_PyErr_SetFromOSErrnoWithSyscall(
-                "WTSQuerySessionInformationW"
-            );
+            psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
         if (bytes <= 2)
@@ -121,9 +119,7 @@ psutil_users(PyObject *self, PyObject *args) {
             )
             == 0)
         {
-            psutil_PyErr_SetFromOSErrnoWithSyscall(
-                "WTSQuerySessionInformationW"
-            );
+            psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
 
@@ -156,9 +152,7 @@ psutil_users(PyObject *self, PyObject *args) {
             )
             == 0)
         {
-            psutil_PyErr_SetFromOSErrnoWithSyscall(
-                "WTSQuerySessionInformationW"
-            );
+            psutil_oserror_wsyscall("WTSQuerySessionInformationW");
             goto error;
         }
         wts_info = (PWTSINFOW)buffer_info;

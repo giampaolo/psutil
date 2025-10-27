@@ -73,7 +73,7 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
         // https://github.com/giampaolo/psutil/issues/1099
         // http://bugs.python.org/issue14252
         if (GetLastError() != ERROR_ACCESS_DENIED) {
-            psutil_PyErr_SetFromOSErrnoWithSyscall("TerminateProcess");
+            psutil_oserror_wsyscall("TerminateProcess");
             return NULL;
         }
     }
@@ -109,7 +109,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
             Py_RETURN_NONE;
         }
         else {
-            psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcess");
+            psutil_oserror_wsyscall("OpenProcess");
             return NULL;
         }
     }
@@ -121,7 +121,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 
     // handle return code
     if (retVal == WAIT_FAILED) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("WaitForSingleObject");
+        psutil_oserror_wsyscall("WaitForSingleObject");
         CloseHandle(hProcess);
         return NULL;
     }
@@ -145,7 +145,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
     // process is gone so we can get its process exit code. The PID
     // may still stick around though but we'll handle that from Python.
     if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("GetExitCodeProcess");
+        psutil_oserror_wsyscall("GetExitCodeProcess");
         CloseHandle(hProcess);
         return NULL;
     }
@@ -564,7 +564,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("CreateToolhelp32Snapshot");
+        psutil_oserror_wsyscall("CreateToolhelp32Snapshot");
         goto error;
     }
 
@@ -572,7 +572,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     te32.dwSize = sizeof(THREADENTRY32);
 
     if (!Thread32First(hThreadSnap, &te32)) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("Thread32First");
+        psutil_oserror_wsyscall("Thread32First");
         goto error;
     }
 
@@ -594,7 +594,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                 hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser
             );
             if (rc == 0) {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("GetThreadTimes");
+                psutil_oserror_wsyscall("GetThreadTimes");
                 goto error;
             }
 
@@ -671,7 +671,7 @@ _psutil_user_token_from_pid(DWORD pid) {
         return NULL;
 
     if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("OpenProcessToken");
+        psutil_oserror_wsyscall("OpenProcessToken");
         goto error;
     }
 
@@ -691,7 +691,7 @@ _psutil_user_token_from_pid(DWORD pid) {
                 continue;
             }
             else {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("GetTokenInformation");
+                psutil_oserror_wsyscall("GetTokenInformation");
                 goto error;
             }
         }
@@ -774,7 +774,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
                 goto error;
             }
             else {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("LookupAccountSidW");
+                psutil_oserror_wsyscall("LookupAccountSidW");
                 goto error;
             }
         }

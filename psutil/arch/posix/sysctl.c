@@ -24,7 +24,7 @@ psutil_sysctl(int *mib, u_int miblen, void *buf, size_t buflen) {
         return psutil_badargs("psutil_sysctl");
 
     if (sysctl(mib, miblen, buf, &len, NULL, 0) == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl()");
+        psutil_oserror_wsyscall("sysctl()");
         return -1;
     }
 
@@ -52,7 +52,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
     // First query to determine required size
     ret = sysctl(mib, miblen, NULL, &needed, NULL, 0);
     if (ret == -1) {
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 1/3");
+        psutil_oserror_wsyscall("sysctl() malloc 1/3");
         return -1;
     }
 
@@ -85,7 +85,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
 
             // Re-query needed size for next attempt
             if (sysctl(mib, miblen, NULL, &needed, NULL, 0) == -1) {
-                psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 2/3");
+                psutil_oserror_wsyscall("sysctl() malloc 2/3");
                 return -1;
             }
 
@@ -95,7 +95,7 @@ psutil_sysctl_malloc(int *mib, u_int miblen, char **buf, size_t *buflen) {
 
         // Other errors: clean up and give up
         free(buffer);
-        psutil_PyErr_SetFromOSErrnoWithSyscall("sysctl() malloc 3/3");
+        psutil_oserror_wsyscall("sysctl() malloc 3/3");
         return -1;
     }
 
@@ -137,7 +137,7 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
 
     if (sysctlbyname(name, buf, &len, NULL, 0) == -1) {
         snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s')", name);
-        psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+        psutil_oserror_wsyscall(errbuf);
         return -1;
     }
 
@@ -178,7 +178,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
         snprintf(
             errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name
         );
-        psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+        psutil_oserror_wsyscall(errbuf);
         return -1;
     }
 
@@ -215,7 +215,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
                     "sysctlbyname('%s') malloc 2/3",
                     name
                 );
-                psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+                psutil_oserror_wsyscall(errbuf);
                 return -1;
             }
 
@@ -228,7 +228,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
         snprintf(
             errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 3/3", name
         );
-        psutil_PyErr_SetFromOSErrnoWithSyscall(errbuf);
+        psutil_oserror_wsyscall(errbuf);
         return -1;
     }
 
