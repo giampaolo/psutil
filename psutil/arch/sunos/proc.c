@@ -27,7 +27,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     nbytes = read(fd, fstruct, size);
     if (nbytes == -1) {
         close(fd);
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         return 0;
     }
     if (nbytes != (ssize_t)size) {
@@ -304,7 +304,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     // read header
     nbytes = pread(fd, &header, sizeof(header), 0);
     if (nbytes == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     if (nbytes != sizeof(header)) {
@@ -326,7 +326,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     // read the rest
     nbytes = pread(fd, lwp, size, sizeof(header));
     if (nbytes == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     if (nbytes != size) {
@@ -491,7 +491,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     sprintf(path, "%s/%i/xmap", procfs_path, pid);
     if (stat(path, &st) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -499,7 +499,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     fd = open(path, O_RDONLY);
     if (fd == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

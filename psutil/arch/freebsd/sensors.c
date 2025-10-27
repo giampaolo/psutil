@@ -42,7 +42,7 @@ error:
     if (errno == ENOENT)
         PyErr_SetString(PyExc_NotImplementedError, "no battery");
     else
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
     return NULL;
 }
 
@@ -75,6 +75,6 @@ error:
     if (errno == ENOENT)
         PyErr_SetString(PyExc_NotImplementedError, "no temperature sensors");
     else
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
     return NULL;
 }

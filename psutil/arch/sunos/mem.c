@@ -31,7 +31,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         int    num;
 
         if ((num = swapctl(SC_GETNSWP, NULL)) == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return NULL;
         }
         if (num == 0) {
@@ -53,7 +53,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         }
         st->swt_n = num;
         if ((num = swapctl(SC_LIST, st)) == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return NULL;
         }
 
@@ -79,7 +79,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kc = kstat_open();
     if (kc == NULL)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     ;
 
     k = kc->kc_chain;

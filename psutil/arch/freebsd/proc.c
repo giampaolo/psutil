@@ -477,7 +477,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(mask), &mask
     );
     if (ret != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL)
@@ -538,7 +538,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         CPU_LEVEL_WHICH, CPU_WHICH_PID, pid, sizeof(cpu_set), &cpu_set
     );
     if (ret != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -627,6 +627,6 @@ psutil_proc_setrlimit(PyObject *self, PyObject *args) {
     newp = &new;
     ret = sysctl(name, 5, NULL, 0, newp, sizeof(*newp));
     if (ret == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     Py_RETURN_NONE;
 }

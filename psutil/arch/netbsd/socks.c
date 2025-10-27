@@ -105,7 +105,7 @@ psutil_get_files(void) {
     mib[5] = 0;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -118,7 +118,7 @@ psutil_get_files(void) {
     }
 
     if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -169,12 +169,12 @@ psutil_get_sockets(const char *name) {
     memset(mib, 0, sizeof(mib));
 
     if (sysctlnametomib(name, mib, &namelen) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
     if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -188,7 +188,7 @@ psutil_get_sockets(const char *name) {
     mib[7] = len / sizeof(*pcb);
 
     if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

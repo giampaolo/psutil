@@ -23,7 +23,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         return NULL;
     kc = kstat_open();
     if (kc == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     ksp = kc->kc_chain;
@@ -32,7 +32,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             if (strcmp(ksp->ks_class, "disk") == 0) {
                 if (kstat_read(kc, ksp, &kio) == -1) {
                     kstat_close(kc);
-                    return PyErr_SetFromErrno(PyExc_OSError);
+                    return psutil_oserror();
                     ;
                 }
                 py_disk_info = Py_BuildValue(
@@ -82,7 +82,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     file = fopen(MNTTAB, "rb");
     if (file == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

@@ -237,7 +237,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
             return Py_BuildValue("s", "");
         }
         else {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return NULL;
         }
     }

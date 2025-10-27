@@ -30,7 +30,7 @@ psutil_fetch_tcplist(void) {
 
     for (;;) {
         if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return NULL;
         }
         buf = malloc(len);
@@ -40,7 +40,7 @@ psutil_fetch_tcplist(void) {
         }
         if (sysctlbyname("net.inet.tcp.pcblist", buf, &len, NULL, 0) < 0) {
             free(buf);
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return NULL;
         }
         return buf;
@@ -245,7 +245,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 
     tcplist = psutil_fetch_tcplist();
     if (tcplist == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 

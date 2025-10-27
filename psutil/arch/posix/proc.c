@@ -53,7 +53,7 @@ psutil_pid_exists(pid_t pid) {
             // (EINVAL, EPERM, ESRCH) therefore we should never get
             // here. If we do let's be explicit in considering this
             // an error.
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             return -1;
         }
     }
@@ -94,7 +94,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
     priority = getpriority(PRIO_PROCESS, pid);
 #endif
     if (errno != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     return Py_BuildValue("i", priority);
 }
 
@@ -115,6 +115,6 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
     retval = setpriority(PRIO_PROCESS, pid, priority);
 #endif
     if (retval == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     Py_RETURN_NONE;
 }

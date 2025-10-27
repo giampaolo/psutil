@@ -173,6 +173,6 @@ error:
     if (errno == ENOENT)
         PyErr_SetString(PyExc_NotImplementedError, "unable to read frequency");
     else
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
     return NULL;
 }

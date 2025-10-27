@@ -43,7 +43,7 @@ psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
         return NULL;
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     ioclass = IOPRIO_PRIO_CLASS(ioprio);
     iodata = IOPRIO_PRIO_DATA(ioprio);
     return Py_BuildValue("ii", ioclass, iodata);
@@ -65,7 +65,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
     if (retval == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     Py_RETURN_NONE;
 }
 #endif  // PSUTIL_HAS_IOPRIO
@@ -98,7 +98,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
             break;
         CPU_FREE(mask);
         if (errno != EINVAL)
-            return PyErr_SetFromErrno(PyExc_OSError);
+            return psutil_oserror();
         if (ncpus > INT_MAX / 2) {
             PyErr_SetString(
                 PyExc_OverflowError,
@@ -181,7 +181,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return psutil_oserror();
     }
 
     Py_RETURN_NONE;

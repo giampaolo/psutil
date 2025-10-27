@@ -56,7 +56,7 @@ psutil_oserror(void) {
 #ifdef PSUTIL_WINDOWS
     PyErr_SetFromWindowsErr(0);
 #else
-    PyErr_SetFromErrno(0);
+    PyErr_SetFromErrno(PyExc_OSError);
 #endif
     return NULL;
 }

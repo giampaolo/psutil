@@ -45,7 +45,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -162,7 +162,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         goto error;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -242,7 +242,7 @@ error:
         close(sock);
     if (kc != NULL)
         kstat_close(kc);
-    PyErr_SetFromErrno(PyExc_OSError);
+    psutil_oserror();
     return NULL;
 }
 
@@ -298,12 +298,12 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     ret = ioctl(sd, I_PUSH, "tcp");
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     ret = ioctl(sd, I_PUSH, "udp");
     if (ret == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
     //
@@ -327,7 +327,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     flags = 0;  // request to be sent in non-priority
 
     if (putmsg(sd, &ctlbuf, (struct strbuf *)0, flags) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        psutil_oserror();
         goto error;
     }
 
@@ -372,7 +372,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         flags = 0;
         getcode = getmsg(sd, (struct strbuf *)0, &databuf, &flags);
         if (getcode < 0) {
-            PyErr_SetFromErrno(PyExc_OSError);
+            psutil_oserror();
             goto error;
         }
 
