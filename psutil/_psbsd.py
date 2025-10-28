@@ -569,14 +569,6 @@ else:  # FreeBSD
     pid_exists = _psposix.pid_exists
 
 
-def is_zombie(pid):
-    try:
-        st = cext.proc_oneshot_info(pid)[kinfo_proc_map['status']]
-        return PROC_STATUSES.get(st) == _common.STATUS_ZOMBIE
-    except OSError:
-        return False
-
-
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
@@ -588,15 +580,17 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except ProcessLookupError as err:
-            if is_zombie(pid):
+            if cext.proc_is_zombie(pid):
                 raise ZombieProcess(pid, name, ppid) from err
             raise NoSuchProcess(pid, name) from err
         except PermissionError as err:
             raise AccessDenied(pid, name) from err
+        except cext.ZombieProcessError as err:
+            raise ZombieProcess(pid, name, ppid) from err
         except OSError as err:
             if pid == 0 and 0 in pids():
                 raise AccessDenied(pid, name) from err
-            raise
+            raise err from None
 
     return wrapper
 
@@ -611,7 +605,7 @@ def wrap_exceptions_procfs(inst):
         # ENOENT (no such file or directory) gets raised on open().
         # ESRCH (no such process) can get raised on read() if
         # process is gone in meantime.
-        if is_zombie(inst.pid):
+        if cext.proc_is_zombie(inst.pid):
             raise ZombieProcess(pid, name, ppid) from err
         else:
             raise NoSuchProcess(pid, name) from err
@@ -694,7 +688,7 @@ class Process:
             except OSError as err:
                 if err.errno == errno.EINVAL:
                     pid, name, ppid = self.pid, self._name, self._ppid
-                    if is_zombie(self.pid):
+                    if cext.proc_is_zombie(self.pid):
                         raise ZombieProcess(pid, name, ppid) from err
                     if not pid_exists(self.pid):
                         raise NoSuchProcess(pid, name, ppid) from err

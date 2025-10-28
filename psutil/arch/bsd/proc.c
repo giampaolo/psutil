@@ -111,6 +111,27 @@ kinfo_getfile(pid_t pid, int *cnt) {
 #endif  // PSUTIL_HASNT_KINFO_GETFILE
 
 
+int
+is_zombie(size_t pid) {
+#ifdef PSUTIL_NETBSD
+    struct kinfo_proc2 kp;
+#else
+    struct kinfo_proc kp;
+#endif
+    if (psutil_kinfo_proc(pid, &kp) == -1) {
+        errno = 0;
+        PyErr_Clear();
+        return 0;
+    }
+
+#ifdef PSUTIL_FREEBSD
+    return kp.ki_stat == SZOMB;
+#else
+    return kp.p_stat == SZOMB;
+#endif
+}
+
+
 /*
  * Collect different info about a process in one shot and return
  * them as a big Python tuple.

@@ -12,6 +12,22 @@
 #include "../../arch/all/init.h"
 
 
+#if defined(PSUTIL_OSX) || defined(PSUTIL_BSD)
+// Return True if PID is a zombie else False, including if PID does not
+// exist or the underlying function fails.
+PyObject *
+psutil_proc_is_zombie(PyObject *self, PyObject *args) {
+    pid_t pid;
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if (is_zombie(pid) == 1)
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+#endif
+
+
 // Utility used for those syscalls which do not return a meaningful
 // error that we can translate into an exception which makes sense. As
 // such, we'll have to guess. On UNIX, if errno is set, we return that
@@ -25,7 +41,7 @@ psutil_raise_for_pid(pid_t pid, char *syscall) {
         psutil_oserror_wsyscall(syscall);
     else if (psutil_pid_exists(pid) == 0)
         psutil_oserror_nsp(syscall);
-#ifdef PSUTIL_OSX
+#if defined(PSUTIL_OSX) || defined(PSUTIL_BSD)
     else if (is_zombie(pid))
         PyErr_SetString(ZombieProcessError, "");
 #endif

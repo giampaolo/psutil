@@ -29,7 +29,6 @@ PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
-PyObject *psutil_proc_is_zombie(PyObject *self, PyObject *args);
 PyObject *psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);
