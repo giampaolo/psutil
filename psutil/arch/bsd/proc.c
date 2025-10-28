@@ -38,18 +38,20 @@
 int
 psutil_kinfo_proc(pid_t pid, void *proc) {
     int ret;
+    int len;
+    int mib[6];
+    size_t size;
+
 #if defined(PSUTIL_FREEBSD)
-    size_t size = sizeof(struct kinfo_proc);
-    int len = 4;
-    int mib[len];
+    size = sizeof(struct kinfo_proc);
+    len = 4;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 #elif defined(PSUTIL_NETBSD)
-    size_t size = sizeof(struct kinfo_proc2);
-    int len = 6;
-    int mib[len];
+    size = sizeof(struct kinfo_proc2);
+    len = 6;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC2;
     mib[2] = KERN_PROC_PID;
@@ -57,9 +59,8 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
     mib[4] = size;
     mib[5] = 1;
 #elif defined(PSUTIL_OPENBSD)
-    size_t size = sizeof(struct kinfo_proc);
-    int len = 6;
-    int mib[len];
+    size = sizeof(struct kinfo_proc);
+    len = 6;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -67,7 +68,7 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
     mib[4] = size;
     mib[5] = 1;
 #else
-#error "Unsupported BSD variant"
+#error "unsupported BSD variant"
 #endif
 
     if (pid < 0 || proc == NULL)
