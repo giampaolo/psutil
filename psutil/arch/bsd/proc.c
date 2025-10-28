@@ -37,7 +37,6 @@
 // Fills a kinfo_proc or kinfo_proc2 struct based on process PID.
 int
 psutil_kinfo_proc(pid_t pid, void *proc) {
-    int ret;
     int len;
     int mib[6];
     size_t size;
@@ -74,8 +73,7 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
     if (pid < 0 || proc == NULL)
         psutil_badargs("psutil_kinfo_proc");
 
-    ret = sysctl(mib, len, proc, &size, NULL, 0);
-    if (ret == -1) {
+    if (sysctl(mib, len, proc, &size, NULL, 0) == -1) {
         psutil_oserror_wsyscall("sysctl(kinfo_proc)");
         return -1;
     }
