@@ -7,6 +7,9 @@
 #include <Python.h>
 #include <sys/types.h>
 
+
+#define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
+
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
 #define PSUTIL_HASNT_KINFO_GETFILE
 struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);

@@ -11,8 +11,6 @@
 
 #include "../../arch/all/init.h"
 
-#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-
 
 // Read a file content and fills a C structure with it.
 static int

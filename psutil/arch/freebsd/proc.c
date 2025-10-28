@@ -5,26 +5,11 @@
  */
 
 #include <Python.h>
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/sysctl.h>
-#include <sys/param.h>
 #include <sys/user.h>
-#include <sys/proc.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <devstat.h>
-#include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
-#include <sys/cpuset.h>
+#include <libutil.h>
 
 #include "../../arch/all/init.h"
-
-
-#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
 // ============================================================================

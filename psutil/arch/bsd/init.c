@@ -6,14 +6,14 @@
 
 #include <Python.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../../arch/all/init.h"
-#include "init.h"
 
 
 void
 convert_kvm_err(const char *syscall, char *errbuf) {
-    char fullmsg[8192];
+    char fullmsg[512];
 
     sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
     if (strstr(errbuf, "Permission denied") != NULL)

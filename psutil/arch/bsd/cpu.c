@@ -7,8 +7,8 @@
 #include <Python.h>
 #include <sys/sysctl.h>
 #include <sys/resource.h>
-#include <sys/sched.h>
 #include <sys/types.h>
+#include <sys/sched.h>  // CP_* on OpenBSD
 
 #include "../../arch/all/init.h"
 

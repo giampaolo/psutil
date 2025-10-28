@@ -6,11 +6,10 @@
 
 
 #include <Python.h>
-#include <sys/param.h>
+#include <kvm.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <vm/vm_param.h>
-#include <devstat.h>
 #include <paths.h>
 #include <fcntl.h>
 

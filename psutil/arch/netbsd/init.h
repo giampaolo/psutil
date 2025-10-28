@@ -7,7 +7,7 @@
  */
 
 #include <Python.h>
-#include <sys/sysctl.h>
+#include <sys/types.h>
 
 int _psutil_pids(pid_t **pids_array, int *pids_count);
 

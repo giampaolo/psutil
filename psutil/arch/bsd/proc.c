@@ -17,21 +17,6 @@
 #endif
 
 #include "../../arch/all/init.h"
-#ifdef PSUTIL_FREEBSD
-#include "../../arch/freebsd/init.h"  // TODO: refactor this
-#elif PSUTIL_OPENBSD
-#include "../../arch/openbsd/init.h"  // TODO: refactor this
-#elif PSUTIL_NETBSD
-#include "../../arch/netbsd/init.h"  // TODO: refactor this
-#endif
-
-
-// convert a timeval struct to a double
-#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-
-#if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-#define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
-#endif
 
 
 // Fills a kinfo_proc or kinfo_proc2 struct based on process PID.

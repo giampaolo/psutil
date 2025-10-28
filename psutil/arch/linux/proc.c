@@ -11,6 +11,12 @@
 #include <sched.h>
 #include <unistd.h>
 
+
+// ====================================================================
+// --- process priority (niceness)
+// ====================================================================
+
+
 #ifdef PSUTIL_HAS_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
@@ -71,9 +77,13 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
 #endif  // PSUTIL_HAS_IOPRIO
 
 
-#ifdef PSUTIL_HAS_CPU_AFFINITY
+// ====================================================================
+// --- process CPU affinity
+// ====================================================================
 
-// Return process CPU affinity as a Python list.
+
+#ifdef PSUTIL_HAS_CPU_AFFINITY
+// Return process CPU affinity as a list of integers.
 PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int cpu, ncpus, count, cpucount_s;
