@@ -6,6 +6,9 @@
 
 extern PyObject *ZombieProcessError;
 
+// convert a timeval struct to a double
+#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
+
 // clang-format off
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     #define PSUTIL_HAS_POSIX_USERS

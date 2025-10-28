@@ -26,9 +26,6 @@
 #endif
 
 
-// convert a timeval struct to a double
-#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
-
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
 #define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
 #endif
