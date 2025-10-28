@@ -35,29 +35,54 @@
 
 
 int
-psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
-    // Fills a kinfo_proc struct based on process pid.
-    int mib[4];
+psutil_kinfo_proc(pid_t pid, void *proc) {
+    // Fills a kinfo_proc or kinfo_proc2 struct based on process pid.
+    int ret;
     size_t size;
+#if defined(PSUTIL_FREEBSD)
+    int mib[4];
+#elif defined(PSUTIL_OPENBSD)
+    int mib[6];
+#endif
+
+    if (pid < 0 || proc == NULL)
+        psutil_badargs("psutil_kinfo_proc");
+
+#if defined(PSUTIL_FREEBSD)
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-
-    if (pid < 0 || !proc)
-        psutil_badargs("psutil_kinfo_proc");
-
     size = sizeof(struct kinfo_proc);
-    if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
+
+    ret = sysctl(mib, 4, proc, &size, NULL, 0);
+#elif defined(PSUTIL_OPENBSD)
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC2;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+    size = sizeof(struct kinfo_proc2);
+    mib[4] = size;
+    mib[5] = 1;
+
+    ret = sysctl(mib, 6, proc, &size, NULL, 0);
+#endif
+
+    if (ret == -1) {
+#if defined(PSUTIL_FREEBSD)
         psutil_oserror_wsyscall("sysctl(KERN_PROC_PID)");
+#else
+        psutil_oserror();
+#endif
         return -1;
     }
 
-    // sysctl stores 0 in the size if we can't find the process information.
+    // sysctl stores 0 in the size if we can't find the process info.
     if (size == 0) {
         psutil_oserror_nsp("sysctl (size = 0)");
         return -1;
     }
+
     return 0;
 }
 

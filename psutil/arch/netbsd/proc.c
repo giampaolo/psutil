@@ -18,39 +18,6 @@
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
-// ============================================================================
-// Utility functions
-// ============================================================================
-
-
-int
-psutil_kinfo_proc(pid_t pid, struct kinfo_proc2 *proc) {
-    // Fills a kinfo_proc struct based on process pid.
-    int ret;
-    int mib[6];
-    size_t size = sizeof(struct kinfo_proc2);
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC2;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    mib[4] = size;
-    mib[5] = 1;
-
-    ret = sysctl((int *)mib, 6, proc, &size, NULL, 0);
-    if (ret == -1) {
-        psutil_oserror();
-        return -1;
-    }
-    // sysctl stores 0 in the size if we can't find the process information.
-    if (size == 0) {
-        psutil_oserror_nsp("sysctl (size = 0)");
-        return -1;
-    }
-    return 0;
-}
-
-
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;

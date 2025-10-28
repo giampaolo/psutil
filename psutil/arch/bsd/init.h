@@ -5,12 +5,14 @@
  */
 
 #include <Python.h>
+#include <sys/types.h>
 
 #if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
 #define PSUTIL_HASNT_KINFO_GETFILE
 struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);
 #endif
 
+int psutil_kinfo_proc(pid_t pid, void *proc);
 void convert_kvm_err(const char *syscall, char *errbuf);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
