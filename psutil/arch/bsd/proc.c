@@ -40,31 +40,29 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
     int ret;
     size_t size;
 
-    if (pid < 0 || proc == NULL)
-        psutil_badargs("psutil_kinfo_proc");
-
 #if defined(PSUTIL_FREEBSD)
     size = sizeof(struct kinfo_proc);
-    int mib[4];
+    int len = 4;
+    int mib[len];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-
-    ret = sysctl(mib, 4, proc, &size, NULL, 0);
 #elif defined(PSUTIL_OPENBSD)
     size = sizeof(struct kinfo_proc2);
-    int mib[6];
+    int len = 6;
+    int mib[len];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC2;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
     mib[4] = size;
     mib[5] = 1;
-
-    ret = sysctl(mib, 6, proc, &size, NULL, 0);
 #endif
+    if (pid < 0 || proc == NULL)
+        psutil_badargs("psutil_kinfo_proc");
 
+    ret = sysctl(mib, len, proc, &size, NULL, 0);
     if (ret == -1) {
         psutil_oserror_wsyscall("sysctl(kinfo_proc)");
         return -1;
