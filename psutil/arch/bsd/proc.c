@@ -34,6 +34,34 @@
 #endif
 
 
+int
+psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
+    // Fills a kinfo_proc struct based on process pid.
+    int mib[4];
+    size_t size;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+
+    if (pid < 0 || !proc)
+        psutil_badargs("psutil_kinfo_proc");
+
+    size = sizeof(struct kinfo_proc);
+    if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
+        psutil_oserror_wsyscall("sysctl(KERN_PROC_PID)");
+        return -1;
+    }
+
+    // sysctl stores 0 in the size if we can't find the process information.
+    if (size == 0) {
+        psutil_oserror_nsp("sysctl (size = 0)");
+        return -1;
+    }
+    return 0;
+}
+
+
 // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
 // int as arg and returns an array with cnt struct kinfo_file.
 // Caller is responsible for freeing the returned pointer with free().
