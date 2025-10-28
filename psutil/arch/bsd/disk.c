@@ -5,13 +5,10 @@
  */
 
 #include <Python.h>
-#include <sys/mount.h>
-#if PSUTIL_NETBSD
-// getvfsstat()
+#if PSUTIL_NETBSD  // getvfsstat()
 #include <sys/types.h>
 #include <sys/statvfs.h>
-#else
-// getfsstat()
+#else  // getfsstat()
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
