@@ -34,22 +34,20 @@
 #endif
 
 
+// Fills a kinfo_proc or kinfo_proc2 struct based on process pid.
 int
 psutil_kinfo_proc(pid_t pid, void *proc) {
-    // Fills a kinfo_proc or kinfo_proc2 struct based on process pid.
     int ret;
-    size_t size;
-
 #if defined(PSUTIL_FREEBSD)
-    size = sizeof(struct kinfo_proc);
+    size_t size = sizeof(struct kinfo_proc);
     int len = 4;
     int mib[len];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-#elif defined(PSUTIL_OPENBSD)
-    size = sizeof(struct kinfo_proc2);
+#elif defined(PSUTIL_NETBSD)
+    size_t size = sizeof(struct kinfo_proc2);
     int len = 6;
     int mib[len];
     mib[0] = CTL_KERN;
@@ -59,6 +57,7 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
     mib[4] = size;
     mib[5] = 1;
 #endif
+
     if (pid < 0 || proc == NULL)
         psutil_badargs("psutil_kinfo_proc");
 
