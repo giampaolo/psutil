@@ -32,11 +32,15 @@ extern PyObject *ZombieProcessError;
 #endif
 // clang-format on
 
+// --- internal utils
+
 int psutil_pid_exists(pid_t pid);
 long psutil_getpagesize(void);
-void psutil_raise_for_pid(pid_t pid, char *msg);
 int psutil_posix_add_constants(PyObject *mod);
 int psutil_posix_add_methods(PyObject *mod);
+PyObject *psutil_raise_for_pid(pid_t pid, char *msg);
+
+// --- Python wrappers
 
 PyObject *psutil_getpagesize_pywrapper(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_addrs(PyObject *self, PyObject *args);

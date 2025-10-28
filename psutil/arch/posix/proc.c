@@ -33,9 +33,9 @@ psutil_proc_is_zombie(PyObject *self, PyObject *args) {
 // such, we'll have to guess. On UNIX, if errno is set, we return that
 // one (OSError). Else, if PID does not exist we assume the syscall
 // failed because of that so we raise NoSuchProcess. If none of this is
-// true we giveup and raise RuntimeError(msg). This will always set a
+// true we give up and raise RuntimeError(msg). This will always set a
 // Python exception and return NULL.
-void
+PyObject *
 psutil_raise_for_pid(pid_t pid, char *syscall) {
     if (errno != 0)
         psutil_oserror_wsyscall(syscall);
@@ -47,6 +47,7 @@ psutil_raise_for_pid(pid_t pid, char *syscall) {
 #endif
     else
         psutil_runtime_error("%s syscall failed", syscall);
+    return NULL;
 }
 
 
