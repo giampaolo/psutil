@@ -7,19 +7,11 @@
  */
 
 #include <Python.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <sys/cdefs.h>
 #include <arpa/inet.h>
 #include <sys/queue.h>
 #include <sys/un.h>
-#include <sys/file.h>
 
 #include "../../arch/all/init.h"
 
