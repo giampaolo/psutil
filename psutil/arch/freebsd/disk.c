@@ -5,7 +5,6 @@
  */
 
 #include <Python.h>
-#include <sys/sysctl.h>
 #include <devstat.h>
 
 #include "../../arch/all/init.h"
