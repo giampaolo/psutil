@@ -7,7 +7,11 @@
 extern PyObject *ZombieProcessError;
 
 // convert a timeval struct to a double
+#ifdef PSUTIL_SUNOS
+#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+#else
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
+#endif
 
 // clang-format off
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
