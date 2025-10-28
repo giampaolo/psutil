@@ -29,12 +29,9 @@ psutil_proc_is_zombie(PyObject *self, PyObject *args) {
 
 
 // Utility used for those syscalls which do not return a meaningful
-// error that we can translate into an exception which makes sense. As
-// such, we'll have to guess. On UNIX, if errno is set, we return that
-// one (OSError). Else, if PID does not exist we assume the syscall
-// failed because of that so we raise NoSuchProcess. If none of this is
-// true we give up and raise RuntimeError(msg). This will always set a
-// Python exception and return NULL.
+// error that we can directly translate into an exception which makes
+// sense. As such we'll have to guess, e.g. if errno is set or if PID
+// does not exist. If reason can't be determined raise RuntimeError.
 PyObject *
 psutil_raise_for_pid(pid_t pid, char *syscall) {
     if (errno != 0)
