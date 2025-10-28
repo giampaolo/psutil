@@ -39,16 +39,12 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
     // Fills a kinfo_proc or kinfo_proc2 struct based on process pid.
     int ret;
     size_t size;
-#if defined(PSUTIL_FREEBSD)
-    int mib[4];
-#elif defined(PSUTIL_OPENBSD)
-    int mib[6];
-#endif
 
     if (pid < 0 || proc == NULL)
         psutil_badargs("psutil_kinfo_proc");
 
 #if defined(PSUTIL_FREEBSD)
+    int mib[4];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -57,6 +53,7 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
 
     ret = sysctl(mib, 4, proc, &size, NULL, 0);
 #elif defined(PSUTIL_OPENBSD)
+    int mib[6];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC2;
     mib[2] = KERN_PROC_PID;
