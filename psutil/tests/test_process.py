@@ -1369,6 +1369,9 @@ class TestProcess(PsutilTestCase):
     def test_zombie_process(self):
         _parent, zombie = self.spawn_zombie()
         self.assert_proc_zombie(zombie)
+        if hasattr(psutil._psplatform.cext, "proc_is_zombie"):
+            assert not psutil._psplatform.cext.proc_is_zombie(os.getpid())
+            assert psutil._psplatform.cext.proc_is_zombie(zombie.pid)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process_is_running_w_exc(self):

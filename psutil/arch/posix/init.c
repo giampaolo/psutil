@@ -60,6 +60,9 @@ static PyMethodDef posix_methods[] = {
 #if !defined(PSUTIL_OPENBSD) && !defined(PSUTIL_AIX)
     {"users", psutil_users, METH_VARARGS},
 #endif
+#if defined(PSUTIL_OSX) || defined(PSUTIL_BSD)
+    {"proc_is_zombie", psutil_proc_is_zombie, METH_VARARGS},
+#endif
     {NULL, NULL, 0, NULL}
 };
 

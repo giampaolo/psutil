@@ -14,6 +14,7 @@ struct kinfo_file *kinfo_getfile(pid_t pid, int *cnt);
 
 int psutil_kinfo_proc(pid_t pid, void *proc);
 void convert_kvm_err(const char *syscall, char *errbuf);
+int is_zombie(size_t pid);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);

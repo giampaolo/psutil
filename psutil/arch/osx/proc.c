@@ -69,17 +69,17 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 }
 
 
-static int
+// Return 1 if PID a zombie, else 0 (including on error).
+int
 is_zombie(size_t pid) {
     struct kinfo_proc kp;
 
     if (psutil_get_kinfo_proc(pid, &kp) == -1) {
+        errno = 0;
         PyErr_Clear();
         return 0;
     }
-    if (kp.kp_proc.p_stat == SZOMB)
-        return 1;
-    return 0;
+    return kp.kp_proc.p_stat == SZOMB;
 }
 
 
@@ -277,20 +277,6 @@ error:
 // ====================================================================
 // --- Python APIs
 // ====================================================================
-
-
-// Return True if PID is a zombie else False, including if PID does not
-// exist or the underlying function fails.
-PyObject *
-psutil_proc_is_zombie(PyObject *self, PyObject *args) {
-    pid_t pid;
-
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
-    if (is_zombie(pid) == 1)
-        Py_RETURN_TRUE;
-    Py_RETURN_FALSE;
-}
 
 
 /*

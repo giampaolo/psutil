@@ -111,6 +111,32 @@ kinfo_getfile(pid_t pid, int *cnt) {
 #endif  // PSUTIL_HASNT_KINFO_GETFILE
 
 
+int
+is_zombie(size_t pid) {
+#ifdef PSUTIL_NETBSD
+    struct kinfo_proc2 kp;
+#else
+    struct kinfo_proc kp;
+#endif
+    if (psutil_kinfo_proc(pid, &kp) == -1) {
+        errno = 0;
+        PyErr_Clear();
+        return 0;
+    }
+
+#if defined(PSUTIL_FREEBSD)
+    return kp.ki_stat == SZOMB;
+#elif defined(PSUTIL_OPENBSD)
+    // According to /usr/include/sys/proc.h SZOMB is unused.
+    // test_zombie_process() shows that SDEAD is the right
+    // equivalent.
+    return ((kp.p_stat == SZOMB) || (kp.p_stat == SDEAD));
+#else
+    return kp.p_stat == SZOMB;
+#endif
+}
+
+
 /*
  * Collect different info about a process in one shot and return
  * them as a big Python tuple.
