@@ -9,6 +9,8 @@ XXXX-XX-XX
 
 - 2667_: enforce `clang-format` on all C and header files. It is now the
   mandatory formatting style for all C sources.
+- 2672_, [macOS], [BSD]: increase the chances to recognize zombie processes and
+  raise the appropriate exception (`ZombieProcess`_).
 
 7.1.2
 =====

@@ -14,7 +14,7 @@
 
 #if defined(PSUTIL_OSX) || defined(PSUTIL_BSD)
 // Return True if PID is a zombie else False, including if PID does not
-// exist or the underlying function fails.
+// exist or the underlying function fails (never raise exception).
 PyObject *
 psutil_proc_is_zombie(PyObject *self, PyObject *args) {
     pid_t pid;
@@ -23,7 +23,8 @@ psutil_proc_is_zombie(PyObject *self, PyObject *args) {
         return NULL;
     if (is_zombie(pid) == 1)
         Py_RETURN_TRUE;
-    Py_RETURN_FALSE;
+    else
+        Py_RETURN_FALSE;
 }
 #endif
 
