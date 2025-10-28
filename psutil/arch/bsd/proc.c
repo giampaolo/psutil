@@ -44,21 +44,21 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
         psutil_badargs("psutil_kinfo_proc");
 
 #if defined(PSUTIL_FREEBSD)
+    size = sizeof(struct kinfo_proc);
     int mib[4];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-    size = sizeof(struct kinfo_proc);
 
     ret = sysctl(mib, 4, proc, &size, NULL, 0);
 #elif defined(PSUTIL_OPENBSD)
+    size = sizeof(struct kinfo_proc2);
     int mib[6];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC2;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-    size = sizeof(struct kinfo_proc2);
     mib[4] = size;
     mib[5] = 1;
 
