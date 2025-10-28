@@ -17,13 +17,6 @@
 #endif
 
 #include "../../arch/all/init.h"
-#ifdef PSUTIL_FREEBSD
-#include "../../arch/freebsd/init.h"  // TODO: refactor this
-#elif PSUTIL_OPENBSD
-#include "../../arch/openbsd/init.h"  // TODO: refactor this
-#elif PSUTIL_NETBSD
-#include "../../arch/netbsd/init.h"  // TODO: refactor this
-#endif
 
 
 // Fills a kinfo_proc or kinfo_proc2 struct based on process PID.
