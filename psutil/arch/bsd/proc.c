@@ -69,17 +69,13 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
 #endif
 
     if (ret == -1) {
-#if defined(PSUTIL_FREEBSD)
-        psutil_oserror_wsyscall("sysctl(KERN_PROC_PID)");
-#else
-        psutil_oserror();
-#endif
+        psutil_oserror_wsyscall("sysctl(kinfo_proc)");
         return -1;
     }
 
     // sysctl stores 0 in the size if we can't find the process info.
     if (size == 0) {
-        psutil_oserror_nsp("sysctl (size = 0)");
+        psutil_oserror_nsp("sysctl(kinfo_proc), size = 0");
         return -1;
     }
 
