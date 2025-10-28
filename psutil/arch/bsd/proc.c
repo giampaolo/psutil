@@ -26,11 +26,6 @@
 #endif
 
 
-#if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-#define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
-#endif
-
-
 // Fills a kinfo_proc or kinfo_proc2 struct based on process PID.
 int
 psutil_kinfo_proc(pid_t pid, void *proc) {

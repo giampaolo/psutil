@@ -15,8 +15,6 @@
 
 #include "../../arch/all/init.h"
 
-#define PSUTIL_KPT2DOUBLE(t) (t##_sec + t##_usec / 1000000.0)
-
 
 // TODO: refactor this (it's clunky)
 PyObject *
