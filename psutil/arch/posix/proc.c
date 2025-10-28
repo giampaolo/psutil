@@ -4,8 +4,9 @@
  * found in the LICENSE file.
  */
 
-
+#include <Python.h>
 #include <signal.h>
+#include <errno.h>
 #include <sys/resource.h>
 
 #include "../../arch/all/init.h"
