@@ -10,8 +10,6 @@
 #include <sys/sysctl.h>
 
 int _psutil_pids(pid_t **pids_array, int *pids_count);
-// TODO: refactor this. Does not belong here.
-char *psutil_get_cmd_args(pid_t pid, size_t *argsize);
 
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
 PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
