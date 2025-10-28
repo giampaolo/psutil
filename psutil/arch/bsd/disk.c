@@ -19,6 +19,7 @@
 
 #include "../../arch/all/init.h"
 
+
 PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
