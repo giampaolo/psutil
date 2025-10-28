@@ -6,9 +6,9 @@
 
 #include <Python.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../../arch/all/init.h"
-#include "init.h"
 
 
 void
