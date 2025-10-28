@@ -9,8 +9,6 @@
 #include <sys/user.h>
 
 int _psutil_pids(pid_t **pids_array, int *pids_count);
-// TODO: move this stuff. Does not belong here
-int psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc);
 
 PyObject *psutil_cpu_freq(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);

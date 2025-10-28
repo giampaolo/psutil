@@ -34,6 +34,43 @@
 #endif
 
 
+// Fills a kinfo_proc or kinfo_proc2 struct based on process PID.
+int
+psutil_kinfo_proc(pid_t pid, void *proc) {
+#if defined(PSUTIL_FREEBSD)
+    size_t size = sizeof(struct kinfo_proc);
+    int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+    int len = 4;
+#elif defined(PSUTIL_OPENBSD)
+    size_t size = sizeof(struct kinfo_proc);
+    int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid, (int)size, 1};
+    int len = 6;
+#elif defined(PSUTIL_NETBSD)
+    size_t size = sizeof(struct kinfo_proc2);
+    int mib[] = {CTL_KERN, KERN_PROC2, KERN_PROC_PID, pid, (int)size, 1};
+    int len = 6;
+#else
+#error "unsupported BSD variant"
+#endif
+
+    if (pid < 0 || proc == NULL)
+        psutil_badargs("psutil_kinfo_proc");
+
+    if (sysctl(mib, len, proc, &size, NULL, 0) == -1) {
+        psutil_oserror_wsyscall("sysctl(kinfo_proc)");
+        return -1;
+    }
+
+    // sysctl stores 0 in size if the process doesn't exist.
+    if (size == 0) {
+        psutil_oserror_nsp("sysctl(kinfo_proc), size = 0");
+        return -1;
+    }
+
+    return 0;
+}
+
+
 // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
 // int as arg and returns an array with cnt struct kinfo_file.
 // Caller is responsible for freeing the returned pointer with free().
