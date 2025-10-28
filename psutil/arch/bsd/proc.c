@@ -37,35 +37,18 @@
 // Fills a kinfo_proc or kinfo_proc2 struct based on process PID.
 int
 psutil_kinfo_proc(pid_t pid, void *proc) {
-    int len;
-    int mib[6];
-    size_t size;
-
 #if defined(PSUTIL_FREEBSD)
-    size = sizeof(struct kinfo_proc);
-    len = 4;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-#elif defined(PSUTIL_NETBSD)
-    size = sizeof(struct kinfo_proc2);
-    len = 6;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC2;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    mib[4] = size;
-    mib[5] = 1;
+    size_t size = sizeof(struct kinfo_proc);
+    int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+    int len = 4;
 #elif defined(PSUTIL_OPENBSD)
-    size = sizeof(struct kinfo_proc);
-    len = 6;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    mib[4] = size;
-    mib[5] = 1;
+    size_t size = sizeof(struct kinfo_proc);
+    int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid, (int)size, 1};
+    int len = 6;
+#elif defined(PSUTIL_NETBSD)
+    size_t size = sizeof(struct kinfo_proc2);
+    int mib[] = {CTL_KERN, KERN_PROC2, KERN_PROC_PID, pid, (int)size, 1};
+    int len = 6;
 #else
 #error "unsupported BSD variant"
 #endif
@@ -78,7 +61,7 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
         return -1;
     }
 
-    // sysctl stores 0 in the size if we can't find the process info.
+    // sysctl stores 0 in size if the process doesn't exist.
     if (size == 0) {
         psutil_oserror_nsp("sysctl(kinfo_proc), size = 0");
         return -1;
