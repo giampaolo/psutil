@@ -6,9 +6,6 @@
 PYTHON = python3
 ARGS =
 
-# In not in a virtualenv, add --user options for install commands.
-SETUP_INSTALL_ARGS = `$(PYTHON) -c \
-	"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
@@ -61,7 +58,9 @@ build:  ## Compile (in parallel) without installing.
 
 install:  ## Install this package as current user in "edit" mode.
 	$(MAKE) build
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS)
+	# If not in a virtualenv, add --user to the install command.
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS) `$(PYTHON) -c \
+		"import sys; print('' if hasattr(sys, 'real_prefix') or hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix else '--user')"`
 
 uninstall:  ## Uninstall this package via pip.
 	cd ..; $(PYTHON_ENV_VARS) $(PYTHON) -m pip uninstall -y -v psutil || true
