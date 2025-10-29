@@ -38,7 +38,7 @@ psutil_get_drive_type(int type) {
 }
 
 
-// Return path's disk total, used, and free as a Python tuple.
+// Return path's disk total, used, and free space.
 PyObject *
 psutil_disk_usage(PyObject *self, PyObject *args) {
     PyObject *py_path;
