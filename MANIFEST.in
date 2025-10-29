@@ -15,6 +15,7 @@ include docs/DEVGUIDE.rst
 include docs/DEVNOTES
 include docs/Makefile
 include docs/README
+include docs/STATS.md
 include docs/_static/copybutton.js
 include docs/_static/css/custom.css
 include docs/_static/favicon.ico
