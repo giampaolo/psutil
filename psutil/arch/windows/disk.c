@@ -38,15 +38,14 @@ psutil_get_drive_type(int type) {
 }
 
 
-/*
- * Return path's disk total and free as a Python tuple.
- */
+// Return path's disk total, used, and free space.
 PyObject *
 psutil_disk_usage(PyObject *self, PyObject *args) {
-    BOOL retval;
-    ULARGE_INTEGER _, total, free;
     PyObject *py_path;
-    wchar_t *path;
+    wchar_t *path = NULL;
+    ULARGE_INTEGER total, free, avail;
+    BOOL retval;
+    ULONGLONG used;
 
     if (!PyArg_ParseTuple(args, "U", &py_path)) {
         return NULL;
@@ -58,17 +57,19 @@ psutil_disk_usage(PyObject *self, PyObject *args) {
     }
 
     Py_BEGIN_ALLOW_THREADS
-    retval = GetDiskFreeSpaceExW(path, &_, &total, &free);
+    retval = GetDiskFreeSpaceExW(path, &avail, &total, &free);
     Py_END_ALLOW_THREADS
 
     PyMem_Free(path);
 
-    if (retval == 0)
+    if (retval == 0) {
         return PyErr_SetExcFromWindowsErrWithFilenameObject(
             PyExc_OSError, 0, py_path
         );
+    }
 
-    return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
+    used = total.QuadPart - free.QuadPart;
+    return Py_BuildValue("(KKK)", total.QuadPart, used, free.QuadPart);
 }
 
 

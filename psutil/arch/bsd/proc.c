@@ -11,8 +11,10 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
+#ifdef PSUTIL_FREEBSD
 #include <sys/user.h>
 #include <libutil.h>
+#endif
 
 #include "../../arch/all/init.h"
 

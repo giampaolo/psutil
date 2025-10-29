@@ -97,7 +97,7 @@ def safe_remove(path):
     except FileNotFoundError:
         pass
     except PermissionError as err:
-        print(err)
+        print(red(err))
     else:
         safe_print(f"rm {path}")
 

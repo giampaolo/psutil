@@ -265,8 +265,7 @@ def disk_usage(path):
         # XXX: do we want to use "strict"? Probably yes, in order
         # to fail immediately. After all we are accepting input here...
         path = path.decode(ENCODING, errors="strict")
-    total, free = cext.disk_usage(path)
-    used = total - free
+    total, used, free = cext.disk_usage(path)
     percent = usage_percent(used, total, round_=1)
     return _common.sdiskusage(total, used, free, percent)
 
