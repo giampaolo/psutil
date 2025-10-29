@@ -5,6 +5,9 @@
  */
 
 #include <Python.h>
+#include <sys/user.h>
+#include <sys/types.h>
+#include <libproc.h>
 #include <mach/mach_time.h>
 
 extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
@@ -12,6 +15,14 @@ extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
 int psutil_setup_osx(void);
 int _psutil_pids(pid_t **pids_array, int *pids_count);
 int is_zombie(size_t pid);
+
+int psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp);
+int psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax);
+int psutil_proc_pidinfo(
+    pid_t pid, int flavor, uint64_t arg, void *pti, int size
+);
+int psutil_task_for_pid(pid_t pid, mach_port_t *task);
+struct proc_fdinfo *psutil_proc_list_fds(pid_t pid, int *num_fds);
 
 PyObject *psutil_boot_time(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);

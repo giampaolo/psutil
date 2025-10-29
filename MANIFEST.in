@@ -15,6 +15,7 @@ include docs/DEVGUIDE.rst
 include docs/DEVNOTES
 include docs/Makefile
 include docs/README
+include docs/STATS.md
 include docs/_static/copybutton.js
 include docs/_static/css/custom.css
 include docs/_static/favicon.ico
@@ -56,6 +57,7 @@ include psutil/arch/bsd/init.c
 include psutil/arch/bsd/init.h
 include psutil/arch/bsd/net.c
 include psutil/arch/bsd/proc.c
+include psutil/arch/bsd/proc_utils.c
 include psutil/arch/bsd/sys.c
 include psutil/arch/freebsd/cpu.c
 include psutil/arch/freebsd/disk.c
@@ -94,6 +96,7 @@ include psutil/arch/osx/mem.c
 include psutil/arch/osx/net.c
 include psutil/arch/osx/pids.c
 include psutil/arch/osx/proc.c
+include psutil/arch/osx/proc_utils.c
 include psutil/arch/osx/sensors.c
 include psutil/arch/osx/sys.c
 include psutil/arch/posix/init.c

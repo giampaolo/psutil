@@ -89,59 +89,57 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Tests
 # ===================================================================
 
-define run_test
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(1) $(ARGS)
-endef
+RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest
 
 test:  ## Run all tests.
-	# To run a specific test do `make test ARGS=psutil.tests.test_system.TestDiskAPIs`
-	$(call run_test, --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py)
+	# To run a specific test do `make test ARGS=psutil/tests/test_process.py::TestProcess::test_cmdline`
+	$(RUN_TEST) --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
-	$(call run_test, --ignore=psutil/tests/test_memleaks.py -p xdist -n auto --dist loadgroup)
+	$(RUN_TEST) --ignore=psutil/tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
-	$(call run_test, psutil/tests/test_process.py)
+	$(RUN_TEST) psutil/tests/test_process.py $(ARGS)
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
-	$(call run_test, psutil/tests/test_process_all.py)
+	$(RUN_TEST) psutil/tests/test_process_all.py $(ARGS)
 
 test-system:  ## Run system-related API tests.
-	$(call run_test, psutil/tests/test_system.py)
+	$(RUN_TEST) psutil/tests/test_system.py $(ARGS)
 
 test-misc:  ## Run miscellaneous tests.
-	$(call run_test, psutil/tests/test_misc.py)
+	$(RUN_TEST) psutil/tests/test_misc.py $(ARGS)
 
 test-scripts:  ## Run scripts tests.
-	$(call run_test, psutil/tests/test_scripts.py)
+	$(RUN_TEST) psutil/tests/test_scripts.py $(ARGS)
 
 test-testutils:  ## Run test utils tests.
-	$(call run_test, psutil/tests/test_testutils.py)
+	$(RUN_TEST) psutil/tests/test_testutils.py $(ARGS)
 
 test-unicode:  ## Test APIs dealing with strings.
-	$(call run_test, psutil/tests/test_unicode.py)
+	$(RUN_TEST) psutil/tests/test_unicode.py $(ARGS)
 
 test-contracts:  ## APIs sanity tests.
-	$(call run_test, psutil/tests/test_contracts.py)
+	$(RUN_TEST) psutil/tests/test_contracts.py $(ARGS)
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
-	$(call run_test, psutil/tests/test_connections.py)
+	$(RUN_TEST) psutil/tests/test_connections.py $(ARGS)
 
 test-posix:  ## POSIX specific tests.
-	$(call run_test, psutil/tests/test_posix.py)
+	$(RUN_TEST) psutil/tests/test_posix.py $(ARGS)
 
 test-platform:  ## Run specific platform tests only.
-	$(call run_test, psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py)
+	$(RUN_TEST) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
 
 test-memleaks:  ## Memory leak tests.
-	$(call run_test, psutil/tests/test_memleaks.py)
+	$(RUN_TEST) psutil/tests/test_memleaks.py $(ARGS)
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
 	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
 test-last-failed:  ## Re-run tests which failed on last run
-	$(call run_test, --last-failed)
+	$(RUN_TEST) --last-failed $(ARGS)
 
 test-coverage:  ## Run test coverage.
 	# Note: coverage options are controlled by .coveragerc file
@@ -314,7 +312,7 @@ release:  ## Upload a new release.
 	$(MAKE) git-tag-release
 
 download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
 	$(MAKE) print-dist
 
 git-tag-release:  ## Git-tag a new release.
@@ -332,10 +330,10 @@ print-timeline:  ## Print releases' timeline.
 	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
-	@$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/print_access_denied.py
+	$(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	@$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
+	$(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 print-downloads:  ## Print PYPI download statistics
 	$(PYTHON) scripts/internal/print_downloads.py
@@ -357,10 +355,10 @@ grep-todos:  ## Look for TODOs in the source files.
 	git grep -EIn "TODO|FIXME|XXX"
 
 bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot.py
+	$(PYTHON) scripts/internal/bench_oneshot.py
 
 bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
-	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot_2.py
+	$(PYTHON) scripts/internal/bench_oneshot_2.py
 
 find-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
