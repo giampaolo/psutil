@@ -41,12 +41,19 @@ ColumnLimit: 79
 DerivePointerAlignment: false
 IndentCaseBlocks: true
 IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
 IndentWidth: 4
 MaxEmptyLinesToKeep: 2
 PointerAlignment: Right
 SortIncludes: false
 SpaceBeforeParens: ControlStatementsExceptControlMacros
 UseTab: Never
+
+ForEachMacros:
+  - foreach
+  - Q_FOREACH
+  - BOOST_FOREACH
+  - WITH_MUTEX
 
 # Force fun return type and fun definition to stay on 2 different lines:
 #    static int
@@ -60,6 +67,7 @@ AlwaysBreakAfterReturnType: TopLevelDefinitions
 #        Bar(...)
 PenaltyBreakAssignment: 400
 PenaltyBreakBeforeFirstCallParameter: 0
+
 
 # Handle macros with no `;` at EOL, so that they don't include the next line
 # into them.

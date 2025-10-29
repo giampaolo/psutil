@@ -78,16 +78,14 @@ typedef struct {
 } LoadAvgShared;
 static LoadAvgShared g = {0};
 
-// Mutex protects g (shared state).
 #ifdef Py_GIL_DISABLED
 static PyMutex mutex;
-#define MUTEX_LOCK(m) PyMutex_Lock(m)
-#define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
+    #define MUTEX_LOCK(m) PyMutex_Lock(m)
+    #define MUTEX_UNLOCK(m) PyMutex_Unlock(m)
 #else
-#define MUTEX_LOCK(m) (void)0
-#define MUTEX_UNLOCK(m) (void)0
+    #define MUTEX_LOCK(m) (void)0
+    #define MUTEX_UNLOCK(m) (void)0
 #endif
-// clang-format on
 
 #define WITH_MUTEX(m) \
     for (int _once = (MUTEX_LOCK(m), 1); _once; _once = (MUTEX_UNLOCK(m), 0))
@@ -224,9 +222,9 @@ LoadAvgCallback(PVOID dummy, BOOLEAN timedOut) {
         if (g.state < 1) {
             // Prime the EWMA so it doesn't snail-start from zero.
             set4(g.pque_avg, currentPque);
-            // First CPU util sample is somehow not too far off from reality,
-            // even though MS doesn't document the exact starting point.
-            // Might as well use it to seed.
+            // First CPU util sample is somehow not too far off from reality,//
+            // even though MS doesn't document the exact starting point. Might
+            // as well use it to seed.
             set4(g.util_avg, currentUtil);
             // First dque set in initializer, nothing to do here.
             g.state = 1;
@@ -255,7 +253,7 @@ psutil_init_loadavg_counter(PyObject *self, PyObject *args) {
     // delta-based...
     WCHAR *szDquePath = L"\\PhysicalDisk(_Total)\\Avg. Disk Queue Length";
     WCHAR
-        *szDqueNowPath = L"\\PhysicalDisk(_Total)\\Current Disk Queue Length";
+    *szDqueNowPath = L"\\PhysicalDisk(_Total)\\Current Disk Queue Length";
     HCOUNTER hDqueNowCounter;
     PDH_STATUS s;
     PDH_FMT_COUNTERVALUE displayValue;
@@ -406,20 +404,13 @@ psutil_get_loadavg(PyObject *self, PyObject *args) {
         );
     }
 
-    // Formatting feels a bit suboptimal...
+    // Binpack is suboptimal
+    // clang-format off
     return Py_BuildValue(
         "(dddd)(dddd)(dddd)",
-        l.pque_avg[0],
-        l.pque_avg[1],
-        l.pque_avg[2],
-        l.pque_avg[3],
-        l.util_avg[0],
-        l.util_avg[1],
-        l.util_avg[2],
-        l.util_avg[3],
-        l.dque_avg[0],
-        l.dque_avg[1],
-        l.dque_avg[2],
-        l.dque_avg[3]
+        l.pque_avg[0], l.pque_avg[1], l.pque_avg[2], l.pque_avg[3],
+        l.util_avg[0], l.util_avg[1], l.util_avg[2], l.util_avg[3],
+        l.dque_avg[0], l.dque_avg[1], l.dque_avg[2], l.dque_avg[3]
     );
+    // clang-format on
 }
