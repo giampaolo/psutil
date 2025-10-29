@@ -90,65 +90,60 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Tests
 # ===================================================================
 
-test:  ## Run all tests. To run a specific test do "make test ARGS=psutil.tests.test_system.TestDiskAPIs"
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+define run_test
+	$(MAKE) build
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(1) $(ARGS)
+endef
+
+test:  ## Run all tests.
+	# To run a specific test do `make test ARGS=psutil.tests.test_system.TestDiskAPIs`
+	$(call run_test, --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py)
 
 test-parallel:  ## Run all tests in parallel.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --ignore=psutil/tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
+	$(call run_test, --ignore=psutil/tests/test_memleaks.py -p xdist -n auto --dist loadgroup)
 
 test-process:  ## Run process-related API tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_process.py
+	$(call run_test, psutil/tests/test_process.py)
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_process_all.py
+	$(call run_test, psutil/tests/test_process_all.py)
 
 test-system:  ## Run system-related API tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_system.py
+	$(call run_test, psutil/tests/test_system.py)
 
 test-misc:  ## Run miscellaneous tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_misc.py
+	$(call run_test, psutil/tests/test_misc.py)
 
 test-scripts:  ## Run scripts tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_scripts.py
+	$(call run_test, psutil/tests/test_scripts.py)
 
 test-testutils:  ## Run test utils tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_testutils.py
+	$(call run_test, psutil/tests/test_testutils.py)
 
 test-unicode:  ## Test APIs dealing with strings.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_unicode.py
+	$(call run_test, psutil/tests/test_unicode.py)
 
 test-contracts:  ## APIs sanity tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_contracts.py
+	$(call run_test, psutil/tests/test_contracts.py)
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_connections.py
+	$(call run_test, psutil/tests/test_connections.py)
 
 test-posix:  ## POSIX specific tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_posix.py
+	$(call run_test, psutil/tests/test_posix.py)
 
 test-platform:  ## Run specific platform tests only.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py
+	$(call run_test, psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py)
 
 test-memleaks:  ## Memory leak tests.
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(ARGS) psutil/tests/test_memleaks.py
+	$(call run_test, psutil/tests/test_memleaks.py)
+
+test-sudo:  ## Run tests requiring root privileges.
+	# Use unittest runner because pytest may not be installed as root.
+	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
 test-last-failed:  ## Re-run tests which failed on last run
-	${MAKE} build
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest --last-failed $(ARGS)
+	$(call run_test, --last-failed)
 
 test-coverage:  ## Run test coverage.
 	${MAKE} build
@@ -159,10 +154,6 @@ test-coverage:  ## Run test coverage.
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
-
-test-sudo:  ## Run tests requiring root privileges.
-	# Use unittest runner because pytest may not be installed as root.
-	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
 
 # ===================================================================
 # Linters
