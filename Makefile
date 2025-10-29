@@ -373,4 +373,4 @@ find-broken-links:  ## Look for broken links in source files.
 	git ls-files | xargs $(PYTHON) -Wa scripts/internal/find_broken_links.py
 
 help: ## Display callable targets.
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@awk -F':.*?## ' '/^[a-zA-Z0-9_.-]+:.*?## / {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
