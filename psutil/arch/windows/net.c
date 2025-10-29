@@ -52,7 +52,7 @@ psutil_get_nic_addresses(void) {
 PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
-    MIB_IF_ROW2 *pIfRow = NULL;
+    MIB_IF_ROW2 ifRow;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PyObject *py_retdict = PyDict_New();
@@ -64,54 +64,52 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     pAddresses = psutil_get_nic_addresses();
     if (pAddresses == NULL)
         goto error;
+
     pCurrAddresses = pAddresses;
 
     while (pCurrAddresses) {
-        py_nic_name = NULL;
         py_nic_info = NULL;
+        py_nic_name = NULL;
 
-        pIfRow = (MIB_IF_ROW2 *)malloc(sizeof(MIB_IF_ROW2));
-        if (pIfRow == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
+        SecureZeroMemory(&ifRow, sizeof(ifRow));
+        ifRow.InterfaceIndex = pCurrAddresses->IfIndex;
 
-        SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
-        pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
-        dwRetVal = GetIfEntry2(pIfRow);
+        dwRetVal = GetIfEntry2(&ifRow);
         if (dwRetVal != NO_ERROR) {
             psutil_runtime_error(
-                "GetIfEntry() or GetIfEntry2() syscalls failed."
+                "GetIfEntry2() syscall failed for interface %lu",
+                (unsigned long)ifRow.InterfaceIndex
             );
             goto error;
         }
 
         py_nic_info = Py_BuildValue(
             "(KKKKKKKK)",
-            pIfRow->OutOctets,
-            pIfRow->InOctets,
-            (pIfRow->OutUcastPkts + pIfRow->OutNUcastPkts),
-            (pIfRow->InUcastPkts + pIfRow->InNUcastPkts),
-            pIfRow->InErrors,
-            pIfRow->OutErrors,
-            pIfRow->InDiscards,
-            pIfRow->OutDiscards
+            ifRow.OutOctets,
+            ifRow.InOctets,
+            ifRow.OutUcastPkts + ifRow.OutNUcastPkts,
+            ifRow.InUcastPkts + ifRow.InNUcastPkts,
+            ifRow.InErrors,
+            ifRow.OutErrors,
+            ifRow.InDiscards,
+            ifRow.OutDiscards
         );
         if (!py_nic_info)
             goto error;
 
         py_nic_name = PyUnicode_FromWideChar(
-            pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName)
+            pCurrAddresses->FriendlyName,
+            wcsnlen(pCurrAddresses->FriendlyName, IF_MAX_STRING_SIZE)
         );
-
-        if (py_nic_name == NULL)
+        if (!py_nic_name)
             goto error;
+
         if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
             goto error;
-        Py_CLEAR(py_nic_name);
-        Py_CLEAR(py_nic_info);
 
-        free(pIfRow);
+        Py_CLEAR(py_nic_info);
+        Py_CLEAR(py_nic_name);
+
         pCurrAddresses = pCurrAddresses->Next;
     }
 
@@ -119,13 +117,11 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     return py_retdict;
 
 error:
-    Py_XDECREF(py_nic_name);
     Py_XDECREF(py_nic_info);
+    Py_XDECREF(py_nic_name);
     Py_DECREF(py_retdict);
-    if (pAddresses != NULL)
+    if (pAddresses)
         free(pAddresses);
-    if (pIfRow != NULL)
-        free(pIfRow);
     return NULL;
 }
 
