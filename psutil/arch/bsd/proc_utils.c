@@ -16,6 +16,8 @@
 #include <limits.h>
 #include <unistd.h>
 
+#include "../../arch/all/init.h"
+
 
 // Fills a kinfo_proc or kinfo_proc2 struct based on process PID.
 int

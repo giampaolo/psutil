@@ -10,11 +10,9 @@
 #include <sys/sysctl.h>
 #include <sys/types.h>
 #include <sys/file.h>
-#include <sys/vnode.h>  // VREG
-#ifdef PSUTIL_FREEBSD
-#include <sys/user.h>  // kinfo_proc, kinfo_file, KF_*
-#include <libutil.h>  // kinfo_getfile()
-#endif
+#include <sys/vnode.h>
+#include <sys/user.h>
+#include <libutil.h>
 
 #include "../../arch/all/init.h"
 
