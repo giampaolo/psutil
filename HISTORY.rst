@@ -12,6 +12,12 @@ XXXX-XX-XX
 - 2672_, [macOS], [BSD]: increase the chances to recognize zombie processes and
   raise the appropriate exception (`ZombieProcess`_).
 
+**Bug fixes**
+
+- 2674_, [Windows]: `disk_usage()`_ could truncate values on 32-bit platforms,
+  potentially reporting incorrect total/free/used space for drives larger than
+  4GB.
+
 7.1.2
 =====
 
