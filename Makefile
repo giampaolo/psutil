@@ -60,7 +60,7 @@ build:  ## Compile (in parallel) without installing.
 	$(PYTHON_ENV_VARS) $(PYTHON) -c "import psutil"  # make sure it actually worked
 
 install:  ## Install this package as current user in "edit" mode.
-	${MAKE} build
+	$(MAKE) build
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py develop $(SETUP_INSTALL_ARGS)
 
 uninstall:  ## Uninstall this package via pip.
@@ -74,12 +74,12 @@ install-sysdeps:
 	./scripts/internal/install-sysdeps.sh
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
-	${MAKE} install-pip
+	$(MAKE) install-pip
 	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test]
 
 install-pydeps-dev:  ## Install python deps meant for local development.
-	${MAKE} install-git-hooks
-	${MAKE} install-pip
+	$(MAKE) install-git-hooks
+	$(MAKE) install-pip
 	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test,dev]
 
 install-git-hooks:  ## Install GIT pre-commit hook.
@@ -146,7 +146,7 @@ test-last-failed:  ## Re-run tests which failed on last run
 	$(call run_test, --last-failed)
 
 test-coverage:  ## Run test coverage.
-	${MAKE} build
+	$(MAKE) build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
 	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=psutil/tests/test_memleaks.py $(ARGS)
@@ -178,12 +178,12 @@ lint-toml:  ## Run linter for pyproject.toml.
 	@git ls-files '*.toml' | xargs toml-sort --check
 
 lint-all:  ## Run all linters
-	${MAKE} black
-	${MAKE} ruff
-	${MAKE} lint-c
-	${MAKE} dprint
-	${MAKE} lint-rst
-	${MAKE} lint-toml
+	$(MAKE) black
+	$(MAKE) ruff
+	$(MAKE) lint-c
+	$(MAKE) dprint
+	$(MAKE) lint-rst
+	$(MAKE) lint-toml
 
 # --- not mandatory linters (just run from time to time)
 
@@ -213,10 +213,10 @@ fix-dprint:
 	@$(DPRINT) fmt
 
 fix-all:  ## Run all code fixers.
-	${MAKE} fix-ruff
-	${MAKE} fix-black
-	${MAKE} fix-toml
-	${MAKE} fix-dprint
+	$(MAKE) fix-ruff
+	$(MAKE) fix-black
+	$(MAKE) fix-toml
+	$(MAKE) fix-dprint
 
 # ===================================================================
 # CI jobs
@@ -227,30 +227,30 @@ ci-lint:  ## Run all linters on GitHub CI.
 	curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
-	${MAKE} lint-all
+	$(MAKE) lint-all
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
-	${MAKE} install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
-	${MAKE} print-sysinfo
+	$(MAKE) install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) print-sysinfo
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest psutil/tests/
 
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
 	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
-	${MAKE} install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 ${MAKE} install-pydeps-test
-	${MAKE} print-sysinfo
+	$(MAKE) install-sysdeps
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) print-sysinfo
 	mkdir -p .tests
 	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs psutil.tests
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
-	${MAKE} sdist
+	$(MAKE) sdist
 	mv wheelhouse/* dist/
-	${MAKE} check-dist
-	${MAKE} install
-	${MAKE} print-dist
+	$(MAKE) check-dist
+	$(MAKE) install
+	$(MAKE) print-dist
 
 # ===================================================================
 # Distribution
@@ -273,25 +273,25 @@ check-wheels:  ## Check sanity of wheels.
 	$(PYTHON) -m twine check --strict dist/*.whl
 
 check-dist:  ## Run all sanity checks re. to the package distribution.
-	${MAKE} check-manifest
-	${MAKE} check-pyproject
-	${MAKE} check-sdist
-	${MAKE} check-wheels
+	$(MAKE) check-manifest
+	$(MAKE) check-pyproject
+	$(MAKE) check-sdist
+	$(MAKE) check-wheels
 
 generate-manifest:  ## Generates MANIFEST.in file.
 	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
 
 sdist:  ## Create tar.gz source distribution.
-	${MAKE} generate-manifest
+	$(MAKE) generate-manifest
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
 
 create-wheels:  ## Create .whl files
 	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
 
 pre-release:  ## Check if we're ready to produce a new release.
-	${MAKE} clean
-	${MAKE} sdist
-	${MAKE} install
+	$(MAKE) clean
+	$(MAKE) sdist
+	$(MAKE) install
 	@$(PYTHON) -c \
 		"import requests, sys; \
 		from packaging.version import parse; \
@@ -306,19 +306,19 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not found in docs/index.rst' % ver; \
 		assert ver in history, '%r not found in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
-	${MAKE} download-wheels
-	${MAKE} check-dist
-	${MAKE} print-hashes
-	${MAKE} print-dist
+	$(MAKE) download-wheels
+	$(MAKE) check-dist
+	$(MAKE) print-hashes
+	$(MAKE) print-dist
 
 release:  ## Upload a new release.
 	$(PYTHON) -m twine upload dist/*.tar.gz
 	$(PYTHON) -m twine upload dist/*.whl
-	${MAKE} git-tag-release
+	$(MAKE) git-tag-release
 
 download-wheels:  ## Download latest wheels hosted on github.
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
-	${MAKE} print-dist
+	$(MAKE) print-dist
 
 git-tag-release:  ## Git-tag a new release.
 	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
@@ -335,11 +335,11 @@ print-timeline:  ## Print releases' timeline.
 	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
-	${MAKE} build
+	$(MAKE) build
 	@$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	${MAKE} build
+	$(MAKE) build
 	@$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 print-downloads:  ## Print PYPI download statistics
@@ -362,11 +362,11 @@ grep-todos:  ## Look for TODOs in the source files.
 	git grep -EIn "TODO|FIXME|XXX"
 
 bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
-	${MAKE} build
+	$(MAKE) build
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot.py
 
 bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
-	${MAKE} build
+	$(MAKE) build
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
 find-broken-links:  ## Look for broken links in source files.
