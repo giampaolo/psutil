@@ -90,7 +90,6 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # ===================================================================
 
 define run_test
-	$(MAKE) build
 	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(1) $(ARGS)
 endef
 
@@ -145,7 +144,6 @@ test-last-failed:  ## Re-run tests which failed on last run
 	$(call run_test, --last-failed)
 
 test-coverage:  ## Run test coverage.
-	$(MAKE) build
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
 	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=psutil/tests/test_memleaks.py $(ARGS)
@@ -334,11 +332,9 @@ print-timeline:  ## Print releases' timeline.
 	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
-	$(MAKE) build
 	@$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/print_access_denied.py
 
 print-api-speed:  ## Benchmark all API calls
-	$(MAKE) build
 	@$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/print_api_speed.py $(ARGS)
 
 print-downloads:  ## Print PYPI download statistics
@@ -361,11 +357,9 @@ grep-todos:  ## Look for TODOs in the source files.
 	git grep -EIn "TODO|FIXME|XXX"
 
 bench-oneshot:  ## Benchmarks for oneshot() ctx manager (see #799).
-	$(MAKE) build
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot.py
 
 bench-oneshot-2:  ## Same as above but using perf module (supposed to be more precise)
-	$(MAKE) build
 	$(PYTHON_ENV_VARS) $(PYTHON) scripts/internal/bench_oneshot_2.py
 
 find-broken-links:  ## Look for broken links in source files.

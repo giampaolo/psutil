@@ -303,7 +303,6 @@ def test_parallel():
 
 @clicmd
 def coverage():
-    build()
     sh([PYTHON, "-m", "coverage", "run", "-m", "pytest"])
     sh([PYTHON, "-m", "coverage", "report"])
     sh([PYTHON, "-m", "coverage", "html"])
@@ -312,31 +311,26 @@ def coverage():
 
 @clicmd
 def test_process():
-    build()
     sh([PYTHON, "-m", "pytest", "-k", "test_process.py"])
 
 
 @clicmd
 def test_system():
-    build()
     sh([PYTHON, "-m", "pytest", "-k", "test_system.py"])
 
 
 @clicmd
 def test_platform():
-    build()
     sh([PYTHON, "-m", "pytest", "-k", "test_windows.py"])
 
 
 @clicmd
 def test_last_failed():
-    build()
     test(args=["--last-failed"])
 
 
 @clicmd
 def test_memleaks():
-    build()
     sh([PYTHON, "-m", "pytest", "-k", "test_memleaks.py"])
 
 
