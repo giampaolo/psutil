@@ -24,7 +24,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
-#ifdef KERN_PROC_CWD
+#ifdef KERN_PROC_CWD  // available since NetBSD 99.43
     int name[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
     if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT)
@@ -34,14 +34,11 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
         return NULL;
     }
 #else
-    char *buf;
-    if (asprintf(&buf, "/proc/%d/cwd", (int)pid) < 0) {
-        PyErr_NoMemory();
-        return NULL;
-    }
+    char buf[32];
+    ssize_t len;
 
-    ssize_t len = readlink(buf, path, sizeof(path) - 1);
-    free(buf);
+    str_format(buf, sizeof(buf), "/proc/%d/cwd", (int)pid);
+    len = readlink(buf, path, sizeof(path) - 1);
     if (len == -1) {
         if (errno == ENOENT)
             psutil_oserror_nsp("readlink -> ENOENT");

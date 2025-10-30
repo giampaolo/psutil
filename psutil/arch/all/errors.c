@@ -11,6 +11,8 @@
 #include <windows.h>
 #endif
 
+#include "init.h"
+
 #define MSG_SIZE 512
 
 
@@ -35,11 +37,13 @@ psutil_oserror_wsyscall(const char *syscall) {
 
 #ifdef PSUTIL_WINDOWS
     DWORD err = GetLastError();
-    sprintf(msg, "(originated from %s)", syscall);
+    str_format(msg, sizeof(msg), "(originated from %s)", syscall);
     PyErr_SetFromWindowsErrWithFilename(err, msg);
 #else
     PyObject *exc;
-    sprintf(msg, "%s (originated from %s)", strerror(errno), syscall);
+    str_format(
+        msg, sizeof(msg), "%s (originated from %s)", strerror(errno), syscall
+    );
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", errno, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
@@ -54,7 +58,9 @@ psutil_oserror_nsp(const char *syscall) {
     PyObject *exc;
     char msg[MSG_SIZE];
 
-    sprintf(msg, "force no such process (originated from %s)", syscall);
+    str_format(
+        msg, sizeof(msg), "force no such process (originated from %s)", syscall
+    );
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);
@@ -68,7 +74,12 @@ psutil_oserror_ad(const char *syscall) {
     PyObject *exc;
     char msg[MSG_SIZE];
 
-    sprintf(msg, "force permission denied (originated from %s)", syscall);
+    str_format(
+        msg,
+        sizeof(msg),
+        "force permission denied (originated from %s)",
+        syscall
+    );
     exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
     PyErr_SetObject(PyExc_OSError, exc);
     Py_XDECREF(exc);

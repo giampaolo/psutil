@@ -50,9 +50,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 
         // Process
 #ifdef PSUTIL_FREEBSD
-    snprintf(name_buf, sizeof(name_buf), "%s", kp.ki_comm);
+    str_format(name_buf, sizeof(name_buf), "%s", kp.ki_comm);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    snprintf(name_buf, sizeof(name_buf), "%s", kp.p_comm);
+    str_format(name_buf, sizeof(name_buf), "%s", kp.p_comm);
 #endif
     py_name = PyUnicode_DecodeFSDefault(name_buf);
     if (!py_name) {
@@ -215,9 +215,9 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
 
 #ifdef PSUTIL_FREEBSD
-    sprintf(str, "%s", kp.ki_comm);
+    str_format(str, sizeof(str), "%s", kp.ki_comm);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    sprintf(str, "%s", kp.p_comm);
+    str_format(str, sizeof(str), "%s", kp.p_comm);
 #endif
     return PyUnicode_DecodeFSDefault(str);
 }
@@ -312,8 +312,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 // failure for certain processes ( e.g. try
                 // "sudo procstat -e <pid of your XOrg server>".)
                 // Map the error condition to 'AccessDenied'.
-                sprintf(
+                str_format(
                     errbuf,
+                    sizeof(errbuf),
                     "kvm_getenvv(pid=%ld, ki_uid=%d) -> ENOMEM",
                     pid,
                     p->ki_uid
@@ -322,7 +323,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 break;
 #endif
             default:
-                sprintf(errbuf, "kvm_getenvv(pid=%ld)", pid);
+                str_format(
+                    errbuf, sizeof(errbuf), "kvm_getenvv(pid=%ld)", pid
+                );
                 psutil_oserror_wsyscall(errbuf);
                 break;
         }

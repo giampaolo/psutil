@@ -52,7 +52,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
@@ -94,7 +94,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
@@ -193,7 +193,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         goto error;
 
@@ -257,7 +257,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/status", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
@@ -290,7 +290,7 @@ psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
-    sprintf(path, "%s/%i/lpsinfo", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/lpsinfo", procfs_path, pid);
     fd = open(path, O_RDONLY);
     if (fd == -1) {
         PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
@@ -354,7 +354,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/cred", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/cred", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
@@ -381,7 +381,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/usage", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
@@ -408,7 +408,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/usage", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
@@ -438,7 +438,9 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "iis", &pid, &tid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/lwp/%i/lwpstatus", procfs_path, pid, tid);
+    str_format(
+        path, sizeof(path), "%s/%i/lwp/%i/lwpstatus", procfs_path, pid, tid
+    );
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(
@@ -477,11 +479,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         goto error;
 
-    sprintf(path, "%s/%i/status", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&status, sizeof(status)))
         goto error;
 
-    sprintf(path, "%s/%i/xmap", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/xmap", procfs_path, pid);
     if (stat(path, &st) == -1) {
         psutil_oserror();
         goto error;
@@ -516,8 +518,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         pr_addr_sz = p->pr_vaddr + p->pr_size;
 
         // perms
-        sprintf(
+        str_format(
             perms,
+            sizeof(perms),
             "%c%c%c%c",
             p->pr_mflags & MA_READ ? 'r' : '-',
             p->pr_mflags & MA_WRITE ? 'w' : '-',

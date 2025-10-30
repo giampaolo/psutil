@@ -65,7 +65,7 @@ psutil_convert_winerr(ULONG err, char *syscall) {
     char fullmsg[8192];
 
     if (err == ERROR_NOACCESS) {
-        sprintf(fullmsg, "%s -> ERROR_NOACCESS", syscall);
+        str_format(fullmsg, sizeof(fullmsg), "%s -> ERROR_NOACCESS", syscall);
         psutil_debug(fullmsg);
         psutil_oserror_ad(fullmsg);
     }
@@ -90,13 +90,15 @@ psutil_convert_ntstatus_err(NTSTATUS status, char *syscall) {
 static void
 psutil_giveup_with_ad(NTSTATUS status, char *syscall) {
     ULONG err;
-    char fullmsg[8192];
+    char fullmsg[2048];
 
     if (NT_NTWIN32(status))
         err = WIN32_FROM_NTSTATUS(status);
     else
         err = RtlNtStatusToDosErrorNoTeb(status);
-    sprintf(fullmsg, "%s -> %lu (%s)", syscall, err, strerror(err));
+    str_format(
+        fullmsg, sizeof(fullmsg), "%s -> %lu (%s)", syscall, err, strerror(err)
+    );
     psutil_debug(fullmsg);
     psutil_oserror_ad(fullmsg);
 }

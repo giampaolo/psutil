@@ -58,13 +58,13 @@ psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "i", &core))
         return NULL;
-    sprintf(sensor, "dev.cpu.%d.temperature", core);
+    str_format(sensor, sizeof(sensor), "dev.cpu.%d.temperature", core);
     if (psutil_sysctlbyname(sensor, &current, size) != 0)
         goto error;
     current = DECIKELVIN_2_CELSIUS(current);
 
     // Return -273 in case of failure.
-    sprintf(sensor, "dev.cpu.%d.coretemp.tjmax", core);
+    str_format(sensor, sizeof(sensor), "dev.cpu.%d.coretemp.tjmax", core);
     if (psutil_sysctlbyname(sensor, &tjmax, size) != 0)
         tjmax = 0;
     tjmax = DECIKELVIN_2_CELSIUS(tjmax);

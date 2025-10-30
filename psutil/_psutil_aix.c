@@ -101,7 +101,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
 
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
@@ -116,7 +116,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
         status.pr_stat = SACTIVE;
     }
     else {
-        sprintf(path, "%s/%i/status", procfs_path, pid);
+        str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
         if (!psutil_file_to_struct(path, (void *)&status, sizeof(status)))
             return NULL;
     }
@@ -147,7 +147,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
@@ -399,7 +399,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/status", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/status", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
@@ -425,7 +425,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "%s/%i/cred", procfs_path, pid);
+    str_format(path, sizeof(path), "%s/%i/cred", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue(

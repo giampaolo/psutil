@@ -110,7 +110,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     if (len > 0) {
         ptr = buf;
         for (n = 0; n < len; ++n) {
-            sprintf(ptr, "%02x:", data[n] & 0xff);
+            str_format(ptr, sizeof(ptr), "%02x:", data[n] & 0xff);
             ptr += 3;
         }
         *--ptr = '\0';
