@@ -131,6 +131,8 @@ PyObject *psutil_runtime_error(const char *msg, ...);
 
 int str_copy(char *dst, size_t dst_size, const char *src);
 int str_format(char *buf, size_t size, const char *fmt, ...);
+int str_append(char *dest, size_t dest_size, const char *src);
+
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
 

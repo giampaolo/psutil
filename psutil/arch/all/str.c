@@ -62,3 +62,38 @@ str_copy(char *dst, size_t dst_size, const char *src) {
 #endif
     return 0;
 }
+
+
+// safely append src to dst, always null-terminating.
+// returns 0 on success, -1 on invalid args or truncation.
+int
+str_append(char *dst, size_t dst_size, const char *src) {
+    size_t dst_len;
+
+    if (!dst || !src || dst_size == 0) {
+        psutil_debug("str_append: invalid arg");
+        return -1;
+    }
+
+#if defined(PSUTIL_WINDOWS)
+    dst_len = strnlen_s(dst, dst_size);
+    if (dst_len >= dst_size - 1) {
+        psutil_debug("str_append: destination full or truncated");
+        return -1;
+    }
+    if (strcat_s(dst, dst_size, src) != 0) {
+        psutil_debug("str_append: strcat_s failed");
+        return -1;
+    }
+#else
+    dst_len = strnlen(dst, dst_size);
+    if (dst_len >= dst_size - 1) {
+        psutil_debug("str_append: destination full or truncated");
+        return -1;
+    }
+    strncat(dst, src, dst_size - dst_len - 1);
+    dst[dst_size - 1] = '\0';
+#endif
+
+    return 0;
+}

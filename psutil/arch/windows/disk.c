@@ -312,8 +312,12 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                     mp_flag = TRUE;
                     while (mp_flag) {
                         // Append full mount path with drive letter
-                        strcpy_s(mp_path, _countof(mp_path), drive_letter);
-                        strcat_s(mp_path, _countof(mp_path), mp_buf);
+                        str_copy(
+                            mp_path, sizeof(mp_path), drive_letter
+                        );  // initialize
+                        str_append(
+                            mp_path, sizeof(mp_path), mp_buf
+                        );  // append mount point
 
                         py_tuple = Py_BuildValue(
                             "(ssss)",
