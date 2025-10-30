@@ -215,9 +215,9 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
 
 #ifdef PSUTIL_FREEBSD
-    sprintf(str, "%s", kp.ki_comm);
+    str_format(str, sizeof(str), "%s", kp.ki_comm);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    sprintf(str, "%s", kp.p_comm);
+    str_format(str, sizeof(str), "%s", kp.p_comm);
 #endif
     return PyUnicode_DecodeFSDefault(str);
 }

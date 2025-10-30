@@ -15,7 +15,9 @@ void
 convert_kvm_err(const char *syscall, char *errbuf) {
     char fullmsg[512];
 
-    sprintf(fullmsg, "(originated from %s: %s)", syscall, errbuf);
+    str_format(
+        fullmsg, sizeof(fullmsg), "(originated from %s: %s)", syscall, errbuf
+    );
     if (strstr(errbuf, "Permission denied") != NULL)
         psutil_oserror_ad(fullmsg);
     else if (strstr(errbuf, "Operation not permitted") != NULL)
