@@ -657,7 +657,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
 
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));
-    strlcpy(ifmed.ifm_name, nic_name, sizeof(ifmed.ifm_name));
+    str_copy(ifmed.ifm_name, sizeof(ifmed.ifm_name), nic_name);
     ret = ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmed);
     if (ret == -1) {
         speed = 0;

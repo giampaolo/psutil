@@ -7,7 +7,6 @@
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
