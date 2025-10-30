@@ -10,6 +10,8 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#include "init.h"
+
 
 // Safely formats a string into a buffer. Writes a printf-style
 // formatted string into `buf` of size `size`, always null-terminating
@@ -21,8 +23,10 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     va_list args;
     int ret;
 
-    if (size == 0)
+    if (size == 0) {
+        psutil_debug("str_format: invalid arg");
         return -1;
+    }
 
     va_start(args, fmt);
 #if defined(PSUTIL_WINDOWS)
@@ -33,6 +37,7 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     va_end(args);
 
     if (ret < 0 || (size_t)ret >= size) {
+        psutil_debug("str_format: error");
         buf[size - 1] = '\0';
         return -1;
     }
