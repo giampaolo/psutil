@@ -312,8 +312,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 // failure for certain processes ( e.g. try
                 // "sudo procstat -e <pid of your XOrg server>".)
                 // Map the error condition to 'AccessDenied'.
-                sprintf(
+                str_format(
                     errbuf,
+                    sizeof(errbuf),
                     "kvm_getenvv(pid=%ld, ki_uid=%d) -> ENOMEM",
                     pid,
                     p->ki_uid
@@ -322,7 +323,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
                 break;
 #endif
             default:
-                sprintf(errbuf, "kvm_getenvv(pid=%ld)", pid);
+                str_format(
+                    errbuf, sizeof(errbuf), "kvm_getenvv(pid=%ld)", pid
+                );
                 psutil_oserror_wsyscall(errbuf);
                 break;
         }
