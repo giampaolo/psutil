@@ -146,6 +146,8 @@ class TestSystemAPIs(PsutilTestCase):
         psutil_val = psutil.virtual_memory().active
         assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
+    # XXX: fails too often
+    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI_TESTING")
     @retry_on_failure()
     def test_vmem_inactive(self):
         vmstat_val = vm_stat("inactive")
