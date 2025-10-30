@@ -13,6 +13,14 @@
 #include "init.h"
 
 
+static int
+_error(const char *msg) {
+    // print debug msg because we never check str_*() return value.
+    psutil_debug("%s", msg);
+    return -1;
+}
+
+
 // Safely formats a string into a buffer. Writes a printf-style
 // formatted string into `buf` of size `size`, always null-terminating
 // if size > 0. Returns the number of characters written (excluding the
@@ -23,10 +31,8 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     va_list args;
     int ret;
 
-    if (size == 0) {
-        psutil_debug("str_format: invalid arg 'size' = 0");
-        return -1;
-    }
+    if (size == 0)
+        return _error("str_format: invalid arg 'size' = 0");
 
     va_start(args, fmt);
 #if defined(PSUTIL_WINDOWS)
@@ -49,10 +55,8 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
 // strcpy/strncpy.
 int
 str_copy(char *dst, size_t dst_size, const char *src) {
-    if (dst_size == 0) {
-        psutil_debug("str_copy: invalid arg 'dst_size' = 0");
-        return -1;
-    }
+    if (dst_size == 0)
+        return _error("str_copy: invalid arg 'dst_size' = 0");
 
 #if defined(PSUTIL_WINDOWS)
     strcpy_s(dst, dst_size, src);
@@ -70,33 +74,23 @@ int
 str_append(char *dst, size_t dst_size, const char *src) {
     size_t dst_len;
 
-    if (!dst || !src || dst_size == 0) {
-        psutil_debug("str_append: invalid arg");
-        return -1;
-    }
+    if (!dst || !src || dst_size == 0)
+        return _error("str_append: invalid arg");
 
 #if defined(PSUTIL_WINDOWS)
     dst_len = strnlen_s(dst, dst_size);
-    if (dst_len >= dst_size - 1) {
-        psutil_debug("str_append: destination full or truncated");
-        return -1;
-    }
-    if (strcat_s(dst, dst_size, src) != 0) {
-        psutil_debug("str_append: strcat_s failed");
-        return -1;
-    }
+    if (dst_len >= dst_size - 1)
+        return _error("str_append: destination full or truncated");
+    if (strcat_s(dst, dst_size, src) != 0)
+        return _error("str_append: strcat_s failed");
 #elif defined(PSUTIL_MACOS) || defined(PSUTIL_BSD)
     dst_len = strlcat(dst, src, dst_size);
-    if (dst_len >= dst_size) {
-        psutil_debug("str_append: truncated");
-        return -1;
-    }
+    if (dst_len >= dst_size)
+        return _error("str_append: truncated");
 #else
     dst_len = strnlen(dst, dst_size);
-    if (dst_len >= dst_size - 1) {
-        psutil_debug("str_append: destination full or truncated");
-        return -1;
-    }
+    if (dst_len >= dst_size - 1)
+        return _error("str_append: destination full or truncated");
     strncat(dst, src, dst_size - dst_len - 1);
     dst[dst_size - 1] = '\0';
 #endif
