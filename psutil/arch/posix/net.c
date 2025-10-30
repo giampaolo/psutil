@@ -235,7 +235,7 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
     if (sock == -1)
         goto error;
 
-    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
     if (ret == -1)
         goto error;
@@ -289,7 +289,7 @@ psutil_net_if_flags(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1) {
         psutil_oserror_wsyscall("ioctl(SIOCGIFFLAGS)");
@@ -472,7 +472,7 @@ psutil_net_if_is_running(PyObject *self, PyObject *args) {
     if (sock == -1)
         goto error;
 
-    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
     if (ret == -1)
         goto error;
@@ -653,7 +653,7 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
         return psutil_oserror();
-    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
 
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));

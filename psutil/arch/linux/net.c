@@ -71,7 +71,8 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
         return psutil_oserror_wsyscall("socket()");
-    PSUTIL_STRNCPY(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    str_copy(ifr.ifr_name, sizeof(ifr.ifr_name), nic_name);
+
 
     // duplex and speed
     memset(&ethcmd, 0, sizeof ethcmd);
