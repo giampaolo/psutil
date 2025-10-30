@@ -71,61 +71,61 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
         // see sys/mount.h
         if (flags & MNT_RDONLY)
-            strlcat(opts, "ro", sizeof(opts));
+            str_append(opts, sizeof(opts), "ro");
         else
-            strlcat(opts, "rw", sizeof(opts));
+            str_append(opts, sizeof(opts), "rw");
         if (flags & MNT_SYNCHRONOUS)
-            strlcat(opts, ",sync", sizeof(opts));
+            str_append(opts, sizeof(opts), ",sync");
         if (flags & MNT_NOEXEC)
-            strlcat(opts, ",noexec", sizeof(opts));
+            str_append(opts, sizeof(opts), ",noexec");
         if (flags & MNT_NOSUID)
-            strlcat(opts, ",nosuid", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nosuid");
         if (flags & MNT_UNION)
-            strlcat(opts, ",union", sizeof(opts));
+            str_append(opts, sizeof(opts), ",union");
         if (flags & MNT_ASYNC)
-            strlcat(opts, ",async", sizeof(opts));
+            str_append(opts, sizeof(opts), ",async");
         if (flags & MNT_EXPORTED)
-            strlcat(opts, ",exported", sizeof(opts));
+            str_append(opts, sizeof(opts), ",exported");
         if (flags & MNT_LOCAL)
-            strlcat(opts, ",local", sizeof(opts));
+            str_append(opts, sizeof(opts), ",local");
         if (flags & MNT_QUOTA)
-            strlcat(opts, ",quota", sizeof(opts));
+            str_append(opts, sizeof(opts), ",quota");
         if (flags & MNT_ROOTFS)
-            strlcat(opts, ",rootfs", sizeof(opts));
+            str_append(opts, sizeof(opts), ",rootfs");
         if (flags & MNT_DOVOLFS)
-            strlcat(opts, ",dovolfs", sizeof(opts));
+            str_append(opts, sizeof(opts), ",dovolfs");
         if (flags & MNT_DONTBROWSE)
-            strlcat(opts, ",dontbrowse", sizeof(opts));
+            str_append(opts, sizeof(opts), ",dontbrowse");
         if (flags & MNT_IGNORE_OWNERSHIP)
-            strlcat(opts, ",ignore-ownership", sizeof(opts));
+            str_append(opts, sizeof(opts), ",ignore-ownership");
         if (flags & MNT_AUTOMOUNTED)
-            strlcat(opts, ",automounted", sizeof(opts));
+            str_append(opts, sizeof(opts), ",automounted");
         if (flags & MNT_JOURNALED)
-            strlcat(opts, ",journaled", sizeof(opts));
+            str_append(opts, sizeof(opts), ",journaled");
         if (flags & MNT_NOUSERXATTR)
-            strlcat(opts, ",nouserxattr", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nouserxattr");
         if (flags & MNT_DEFWRITE)
-            strlcat(opts, ",defwrite", sizeof(opts));
+            str_append(opts, sizeof(opts), ",defwrite");
         if (flags & MNT_UPDATE)
-            strlcat(opts, ",update", sizeof(opts));
+            str_append(opts, sizeof(opts), ",update");
         if (flags & MNT_RELOAD)
-            strlcat(opts, ",reload", sizeof(opts));
+            str_append(opts, sizeof(opts), ",reload");
         if (flags & MNT_FORCE)
-            strlcat(opts, ",force", sizeof(opts));
+            str_append(opts, sizeof(opts), ",force");
         if (flags & MNT_CMDFLAGS)
-            strlcat(opts, ",cmdflags", sizeof(opts));
+            str_append(opts, sizeof(opts), ",cmdflags");
             // requires macOS >= 10.5
 #ifdef MNT_QUARANTINE
         if (flags & MNT_QUARANTINE)
-            strlcat(opts, ",quarantine", sizeof(opts));
+            str_append(opts, sizeof(opts), ",quarantine");
 #endif
 #ifdef MNT_MULTILABEL
         if (flags & MNT_MULTILABEL)
-            strlcat(opts, ",multilabel", sizeof(opts));
+            str_append(opts, sizeof(opts), ",multilabel");
 #endif
 #ifdef MNT_NOATIME
         if (flags & MNT_NOATIME)
-            strlcat(opts, ",noatime", sizeof(opts));
+            str_append(opts, sizeof(opts), ",noatime");
 #endif
         py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
         if (!py_dev)
