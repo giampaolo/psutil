@@ -129,7 +129,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         else if (ret == 0)
             return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
-            strcpy(pathname, "");
+            str_copy(pathname, sizeof(pathname), "");
     }
 
     return PyUnicode_DecodeFSDefault(pathname);
