@@ -11,6 +11,11 @@
 #include <stddef.h>
 
 
+// Safely formats a string into a buffer. Writes a printf-style
+// formatted string into `buf` of size `size`, always null-terminating
+// if size > 0. Returns the number of characters written (excluding the
+// null terminator) on success, or -1 if the buffer is too small or an
+// error occurs.
 int
 str_format(char *buf, size_t size, const char *fmt, ...) {
     va_list args;
