@@ -30,7 +30,7 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
 
     va_start(args, fmt);
 #if defined(PSUTIL_WINDOWS)
-    ret = _vsnprintf(buf, size, fmt, args);
+    ret = _vsnprintf_s(buf, size, _TRUNCATE, fmt, args);
 #else
     ret = vsnprintf(buf, size, fmt, args);
 #endif
