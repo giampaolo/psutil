@@ -407,8 +407,8 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                                                   ->ki_src;
                 struct sockaddr_un *sun_dst = (struct sockaddr_un *)&kp->kpcb
                                                   ->ki_dst;
-                strcpy(laddr, sun_src->sun_path);
-                strcpy(raddr, sun_dst->sun_path);
+                str_copy(laddr, sizeof(sun_src->sun_path), sun_src->sun_path);
+                str_copy(raddr, sizeof(sun_dst->sun_path), sun_dst->sun_path);
                 status = PSUTIL_CONN_NONE;
                 py_laddr = PyUnicode_DecodeFSDefault(laddr);
                 if (!py_laddr)

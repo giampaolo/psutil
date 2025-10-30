@@ -80,73 +80,71 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
         // see sys/mount.h
         if (flags & MNT_RDONLY)
-            strlcat(opts, "ro", sizeof(opts));
+            str_append(opts, sizeof(opts), "ro");
         else
-            strlcat(opts, "rw", sizeof(opts));
+            str_append(opts, sizeof(opts), "rw");
         if (flags & MNT_SYNCHRONOUS)
-            strlcat(opts, ",sync", sizeof(opts));
+            str_append(opts, sizeof(opts), ",sync");
         if (flags & MNT_NOEXEC)
-            strlcat(opts, ",noexec", sizeof(opts));
+            str_append(opts, sizeof(opts), ",noexec");
         if (flags & MNT_NOSUID)
-            strlcat(opts, ",nosuid", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nosuid");
         if (flags & MNT_ASYNC)
-            strlcat(opts, ",async", sizeof(opts));
+            str_append(opts, sizeof(opts), ",async");
         if (flags & MNT_NOATIME)
-            strlcat(opts, ",noatime", sizeof(opts));
+            str_append(opts, sizeof(opts), ",noatime");
         if (flags & MNT_SOFTDEP)
-            strlcat(opts, ",softdep", sizeof(opts));
+            str_append(opts, sizeof(opts), ",softdep");
 #ifdef PSUTIL_FREEBSD
         if (flags & MNT_UNION)
-            strlcat(opts, ",union", sizeof(opts));
+            str_append(opts, sizeof(opts), ",union");
         if (flags & MNT_SUIDDIR)
-            strlcat(opts, ",suiddir", sizeof(opts));
-        if (flags & MNT_SOFTDEP)
-            strlcat(opts, ",softdep", sizeof(opts));
+            str_append(opts, sizeof(opts), ",suiddir");
         if (flags & MNT_NOSYMFOLLOW)
-            strlcat(opts, ",nosymfollow", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nosymfollow");
 #ifdef MNT_GJOURNAL
         if (flags & MNT_GJOURNAL)
-            strlcat(opts, ",gjournal", sizeof(opts));
+            str_append(opts, sizeof(opts), ",gjournal");
 #endif
         if (flags & MNT_MULTILABEL)
-            strlcat(opts, ",multilabel", sizeof(opts));
+            str_append(opts, sizeof(opts), ",multilabel");
         if (flags & MNT_ACLS)
-            strlcat(opts, ",acls", sizeof(opts));
+            str_append(opts, sizeof(opts), ",acls");
         if (flags & MNT_NOCLUSTERR)
-            strlcat(opts, ",noclusterr", sizeof(opts));
+            str_append(opts, sizeof(opts), ",noclusterr");
         if (flags & MNT_NOCLUSTERW)
-            strlcat(opts, ",noclusterw", sizeof(opts));
+            str_append(opts, sizeof(opts), ",noclusterw");
 #ifdef MNT_NFS4ACLS
         if (flags & MNT_NFS4ACLS)
-            strlcat(opts, ",nfs4acls", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nfs4acls");
 #endif
 #elif PSUTIL_NETBSD
         if (flags & MNT_NODEV)
-            strlcat(opts, ",nodev", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nodev");
         if (flags & MNT_UNION)
-            strlcat(opts, ",union", sizeof(opts));
+            str_append(opts, sizeof(opts), ",union");
         if (flags & MNT_NOCOREDUMP)
-            strlcat(opts, ",nocoredump", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nocoredump");
 #ifdef MNT_RELATIME
         if (flags & MNT_RELATIME)
-            strlcat(opts, ",relatime", sizeof(opts));
+            str_append(opts, sizeof(opts), ",relatime");
 #endif
         if (flags & MNT_IGNORE)
-            strlcat(opts, ",ignore", sizeof(opts));
+            str_append(opts, sizeof(opts), ",ignore");
 #ifdef MNT_DISCARD
         if (flags & MNT_DISCARD)
-            strlcat(opts, ",discard", sizeof(opts));
+            str_append(opts, sizeof(opts), ",discard");
 #endif
 #ifdef MNT_EXTATTR
         if (flags & MNT_EXTATTR)
-            strlcat(opts, ",extattr", sizeof(opts));
+            str_append(opts, sizeof(opts), ",extattr");
 #endif
         if (flags & MNT_LOG)
-            strlcat(opts, ",log", sizeof(opts));
+            str_append(opts, sizeof(opts), ",log");
         if (flags & MNT_SYMPERM)
-            strlcat(opts, ",symperm", sizeof(opts));
+            str_append(opts, sizeof(opts), ",symperm");
         if (flags & MNT_NODEVMTIME)
-            strlcat(opts, ",nodevmtime", sizeof(opts));
+            str_append(opts, sizeof(opts), ",nodevmtime");
 #endif
         py_dev = PyUnicode_DecodeFSDefault(fs[i].f_mntfromname);
         if (!py_dev)

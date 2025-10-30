@@ -61,7 +61,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             goto next;
 
         // check if this is a network interface by sending a ioctl
-        PSUTIL_STRNCPY(ifr.lifr_name, ksp->ks_name, sizeof(ifr.lifr_name));
+        str_copy(ifr.lifr_name, sizeof(ifr.lifr_name), ksp->ks_name);
         ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
         if (ret == -1)
             goto next;
@@ -176,7 +176,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
             if (strcmp(ksp->ks_class, "net") != 0)
                 continue;
 
-            PSUTIL_STRNCPY(ifr.lifr_name, ksp->ks_name, sizeof(ifr.lifr_name));
+            str_copy(ifr.lifr_name, sizeof(ifr.lifr_name), ksp->ks_name);
             ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
             if (ret == -1)
                 continue;  // not a network interface

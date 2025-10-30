@@ -7,7 +7,6 @@
 #include <Python.h>
 
 #include <kstat.h>
-#include <string.h>
 #include <sys/sysinfo.h>
 
 #include "../../arch/all/init.h"

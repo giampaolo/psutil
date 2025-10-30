@@ -129,7 +129,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         else if (ret == 0)
             return psutil_oserror_nsp("psutil_pid_exists -> 0");
         else
-            strcpy(pathname, "");
+            str_copy(pathname, sizeof(pathname), "");
     }
 
     return PyUnicode_DecodeFSDefault(pathname);
@@ -330,20 +330,20 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             (uintmax_t)kve->kve_end
         );
         psutil_remove_spaces(addr);
-        strlcat(
+        str_append(
             perms,
-            kve->kve_protection & KVME_PROT_READ ? "r" : "-",
-            sizeof(perms)
+            sizeof(perms),
+            kve->kve_protection & KVME_PROT_READ ? "r" : "-"
         );
-        strlcat(
+        str_append(
             perms,
-            kve->kve_protection & KVME_PROT_WRITE ? "w" : "-",
-            sizeof(perms)
+            sizeof(perms),
+            kve->kve_protection & KVME_PROT_WRITE ? "w" : "-"
         );
-        strlcat(
+        str_append(
             perms,
-            kve->kve_protection & KVME_PROT_EXEC ? "x" : "-",
-            sizeof(perms)
+            sizeof(perms),
+            kve->kve_protection & KVME_PROT_EXEC ? "x" : "-"
         );
 
         if (strlen(kve->kve_path) == 0) {
