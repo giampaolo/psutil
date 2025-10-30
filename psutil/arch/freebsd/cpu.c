@@ -157,13 +157,13 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
 
     // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
     size = sizeof(current);
-    sprintf(sensor, "dev.cpu.%d.freq", core);
+    str_format(sensor, sizeof(sensor), "dev.cpu.%d.freq", core);
     if (psutil_sysctlbyname(sensor, &current, size) != 0)
         goto error;
 
     // In case of failure, an empty string is returned.
     size = sizeof(available_freq_levels);
-    sprintf(sensor, "dev.cpu.%d.freq_levels", core);
+    str_format(sensor, sizeof(sensor), "dev.cpu.%d.freq_levels", core);
     if (psutil_sysctlbyname(sensor, &available_freq_levels, size) != 0)
         psutil_debug("cpu freq levels failed (ignored)");
 

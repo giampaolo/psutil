@@ -320,8 +320,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         kve = &freep[i];
         addr[0] = '\0';
         perms[0] = '\0';
-        sprintf(
+        str_format(
             addr,
+            sizeof(add),
             "%#*jx-%#*jx",
             ptrwidth,
             (uintmax_t)kve->kve_start,
