@@ -91,7 +91,7 @@ psutil_SetFromNTStatusErr(NTSTATUS status, const char *syscall) {
         err = RtlNtStatusToDosErrorNoTeb(status);
     // if (GetLastError() != 0)
     //     err = GetLastError();
-    sprintf(fullmsg, "(originated from %s)", syscall);
+    str_format(fullmsg, sizeof(fullmsg), "(originated from %s)", syscall);
     return PyErr_SetFromWindowsErrWithFilename(err, fullmsg);
 }
 
