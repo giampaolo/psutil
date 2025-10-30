@@ -19,6 +19,11 @@ XXXX-XX-XX
   4GB.
 - 2675_, [macOS]: `Process.status()`_ incorrectly returns "running" for 99%
   of the processes.
+- 2677_, [Windows]: fix MAC address string construction in `net_if_addrs()`_.
+  Previously, the MAC address buffer was incorrectly updated using a fixed
+  increment and `sprintf_s`, which could overflow or misformat the
+  string if the MAC length or formatting changed. Also, the final '\n' was
+  inserted unnecessarily.
 
 7.1.2
 =====
