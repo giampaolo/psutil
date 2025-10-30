@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "init.h"
 
@@ -59,7 +60,8 @@ str_copy(char *dst, size_t dst_size, const char *src) {
         return _error("str_copy: invalid arg 'dst_size' = 0");
 
 #if defined(PSUTIL_WINDOWS)
-    strcpy_s(dst, dst_size, src);
+    if (strcpy_s(dst, dst_size, src) != 0)
+        return _error("str_copy: strcpy_s failed");
 #else
     strncpy(dst, src, dst_size - 1);
     dst[dst_size - 1] = '\0';
