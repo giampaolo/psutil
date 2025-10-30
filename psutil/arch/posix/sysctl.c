@@ -134,13 +134,13 @@ psutil_sysctlbyname(const char *name, void *buf, size_t buflen) {
         return psutil_badargs("psutil_sysctlbyname");
 
     if (sysctlbyname(name, buf, &len, NULL, 0) == -1) {
-        snprintf(errbuf, sizeof(errbuf), "sysctlbyname('%s')", name);
+        str_format(errbuf, sizeof(errbuf), "sysctlbyname('%s')", name);
         psutil_oserror_wsyscall(errbuf);
         return -1;
     }
 
     if (len != buflen) {
-        snprintf(
+        str_format(
             errbuf,
             sizeof(errbuf),
             "sysctlbyname('%s') size mismatch: returned %zu, expected %zu",
@@ -173,7 +173,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
     // First query to determine required size.
     ret = sysctlbyname(name, NULL, &needed, NULL, 0);
     if (ret == -1) {
-        snprintf(
+        str_format(
             errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 1/3", name
         );
         psutil_oserror_wsyscall(errbuf);
@@ -207,7 +207,7 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
             buffer = NULL;
 
             if (sysctlbyname(name, NULL, &needed, NULL, 0) == -1) {
-                snprintf(
+                str_format(
                     errbuf,
                     sizeof(errbuf),
                     "sysctlbyname('%s') malloc 2/3",
@@ -223,14 +223,14 @@ psutil_sysctlbyname_malloc(const char *name, char **buf, size_t *buflen) {
 
         // Other errors: clean up and give up.
         free(buffer);
-        snprintf(
+        str_format(
             errbuf, sizeof(errbuf), "sysctlbyname('%s') malloc 3/3", name
         );
         psutil_oserror_wsyscall(errbuf);
         return -1;
     }
 
-    snprintf(
+    str_format(
         errbuf,
         sizeof(errbuf),
         "sysctlbyname('%s') buffer allocation retry limit exceeded",
