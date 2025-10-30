@@ -50,9 +50,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 
         // Process
 #ifdef PSUTIL_FREEBSD
-    snprintf(name_buf, sizeof(name_buf), "%s", kp.ki_comm);
+    str_format(name_buf, sizeof(name_buf), "%s", kp.ki_comm);
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
-    snprintf(name_buf, sizeof(name_buf), "%s", kp.p_comm);
+    str_format(name_buf, sizeof(name_buf), "%s", kp.p_comm);
 #endif
     py_name = PyUnicode_DecodeFSDefault(name_buf);
     if (!py_name) {

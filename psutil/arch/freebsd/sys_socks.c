@@ -320,7 +320,7 @@ psutil_gather_unix(
             continue;
 
         sun = (struct sockaddr_un *)&xup->xu_addr;
-        snprintf(
+        str_format(
             path,
             sizeof(path),
             "%.*s",

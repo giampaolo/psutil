@@ -33,7 +33,7 @@ open_address_space(pid_t pid, const char *procfs_path) {
     int fd;
     char proc_path[PATH_MAX];
 
-    snprintf(proc_path, PATH_MAX, "%s/%i/as", procfs_path, pid);
+    str_format(proc_path, PATH_MAX, "%s/%i/as", procfs_path, pid);
     fd = open(proc_path, O_RDONLY);
     if (fd < 0)
         psutil_oserror();

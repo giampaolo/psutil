@@ -366,7 +366,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 #else
                 sun = (struct sockaddr_un *)&kif->kf_un.kf_sock.kf_sa_local;
 #endif
-                snprintf(
+                str_format(
                     path,
                     sizeof(path),
                     "%.*s",

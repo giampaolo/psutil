@@ -48,7 +48,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         struct devstat current;
         char disk_name[128];
         current = stats.dinfo->devices[i];
-        snprintf(
+        str_format(
             disk_name,
             sizeof(disk_name),
             "%s%d",
