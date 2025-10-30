@@ -43,3 +43,22 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     }
     return ret;
 }
+
+
+// Safely copy src to dest, always null-terminating. Replaces unsafe
+// strcpy/strncpy.
+int
+str_copy(char *dst, size_t dst_size, const char *src) {
+    if (dst_size == 0) {
+        psutil_debug("str_copy: invalid arg 'dst_size' = 0");
+        return -1;
+    }
+
+#if defined(PSUTIL_WINDOWS)
+    strcpy_s(dst, dst_size, src);
+#else
+    strncpy(dst, src, dst_size - 1);
+    dst[dst_size - 1] = '\0';
+#endif
+    return 0;
+}
