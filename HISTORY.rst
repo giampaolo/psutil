@@ -11,6 +11,10 @@ XXXX-XX-XX
   mandatory formatting style for all C sources.
 - 2672_, [macOS], [BSD]: increase the chances to recognize zombie processes and
   raise the appropriate exception (`ZombieProcess`_).
+- 2676_, 2678_: replace unsafe `sprintf` / `snprintf` / `sprintf_s` calls with
+  `str_format()`. Replace `strlcat` / `strlcpy` with safe `str_copy` /
+  `str_append`. This unifies string handling across platforms and reduces
+  unsafe usage of standard string functions, improving robustness.
 
 **Bug fixes**
 
