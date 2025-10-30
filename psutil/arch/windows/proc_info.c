@@ -90,7 +90,7 @@ psutil_convert_ntstatus_err(NTSTATUS status, char *syscall) {
 static void
 psutil_giveup_with_ad(NTSTATUS status, char *syscall) {
     ULONG err;
-    char fullmsg[1024];
+    char fullmsg[2048];
 
     if (NT_NTWIN32(status))
         err = WIN32_FROM_NTSTATUS(status);
