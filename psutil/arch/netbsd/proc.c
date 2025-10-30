@@ -17,39 +17,36 @@
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
-
     char path[MAXPATHLEN];
-    size_t pathlen = sizeof path;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
 #ifdef KERN_PROC_CWD  // available since NetBSD 99.43
     int name[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
-    if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
-        if (errno == ENOENT)
-            psutil_oserror_nsp("sysctl -> ENOENT");
-        else
-            psutil_oserror();
-        return NULL;
-    }
+    size_t pathlen = sizeof(path);
+
+    if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0)
+        goto error;
 #else
     char buf[32];
     ssize_t len;
 
     str_format(buf, sizeof(buf), "/proc/%d/cwd", (int)pid);
     len = readlink(buf, path, sizeof(path) - 1);
-    if (len == -1) {
-        if (errno == ENOENT)
-            psutil_oserror_nsp("readlink -> ENOENT");
-        else
-            psutil_oserror();
-        return NULL;
-    }
+    if (len == -1)
+        goto error;
     path[len] = '\0';
 #endif
 
     return PyUnicode_DecodeFSDefault(path);
+
+error:
+    if (errno == ENOENT)
+        psutil_oserror_nsp("sysctl -> ENOENT");
+    else
+        psutil_oserror();
+    return NULL;
 }
 
 
