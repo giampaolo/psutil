@@ -14,6 +14,7 @@ import subprocess
 
 import pytest
 
+from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil.tests import CI_TESTING
@@ -46,14 +47,13 @@ SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
 )
 class TestExampleScripts(PsutilTestCase):
     @staticmethod
-    def assert_stdout(exe, *args, **kwargs):
-        kwargs.setdefault("env", PYTHON_EXE_ENV)
+    def assert_stdout(exe, *args):
+        env = PYTHON_EXE_ENV.copy()
+        env.pop("PSUTIL_DEBUG")  # avoid spamming to stderr
         exe = os.path.join(SCRIPTS_DIR, exe)
-        cmd = [PYTHON_EXE, exe]
-        for arg in args:
-            cmd.append(arg)
+        cmd = [PYTHON_EXE, exe, *args]
         try:
-            out = sh(cmd, **kwargs).strip()
+            out = sh(cmd, env=env).strip()
         except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
@@ -195,6 +195,8 @@ class TestInternalScripts(PsutilTestCase):
                 data = f.read()
             ast.parse(data)
 
+    # don't care about other platforms, this is really just for myself
+    @pytest.mark.skipif(not LINUX, reason="not on LINUX")
     @pytest.mark.skipif(CI_TESTING, reason="not on CI")
     def test_import_all(self):
         for path in self.ls():

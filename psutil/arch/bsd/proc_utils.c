@@ -11,10 +11,12 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <limits.h>
 #include <unistd.h>
+#ifdef PSUTIL_FREEBSD
+#include <sys/user.h>
+#endif
 
 #include "../../arch/all/init.h"
 
