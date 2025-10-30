@@ -99,7 +99,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     // in the alphabet (from A:\ to Z:\).
     for (devNum = 0; devNum <= 32; ++devNum) {
         py_tuple = NULL;
-        sprintf_s(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
+        str_format(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile(
             szDevice,
             0,
@@ -170,7 +170,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-        sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
+        str_format(szDeviceDisplay, MAX_PATH, "PhysicalDrive%i", devNum);
         py_tuple = Py_BuildValue(
             "(IILLKK)",
             diskPerformance.ReadCount,
