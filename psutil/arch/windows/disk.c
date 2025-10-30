@@ -289,18 +289,18 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             // which case the error is (21, "device not ready").
             // Let's pretend it didn't happen as we already have
             // the drive name and type ('removable').
-            strcat_s(opts, _countof(opts), "");
+            str_append(opts, sizeof(opts), "");
             SetLastError(0);
         }
         else {
             if (pflags & FILE_READ_ONLY_VOLUME)
-                strcat_s(opts, _countof(opts), "ro");
+                str_append(opts, sizeof(opts), "ro");
             else
-                strcat_s(opts, _countof(opts), "rw");
+                str_append(opts, sizeof(opts), "rw");
             if (pflags & FILE_VOLUME_IS_COMPRESSED)
-                strcat_s(opts, _countof(opts), ",compressed");
+                str_append(opts, sizeof(opts), ",compressed");
             if (pflags & FILE_READ_ONLY_VOLUME)
-                strcat_s(opts, _countof(opts), ",readonly");
+                str_append(opts, sizeof(opts), ",readonly");
 
             // Check for mount points on this volume and add/get info
             // (checks first to know if we can even have mount points)
@@ -347,8 +347,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         }
 
         if (strlen(opts) > 0)
-            strcat_s(opts, _countof(opts), ",");
-        strcat_s(opts, _countof(opts), psutil_get_drive_type(type));
+            str_append(opts, sizeof(opts), ",");
+        str_append(opts, sizeof(opts), psutil_get_drive_type(type));
 
         py_tuple = Py_BuildValue(
             "(ssss)",
