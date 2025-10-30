@@ -45,7 +45,7 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
 }
 
 
-// Safely copy src to dest, always null-terminating. Replaces unsafe
+// Safely copy `src` to `dst`, always null-terminating. Replaces unsafe
 // strcpy/strncpy.
 int
 str_copy(char *dst, size_t dst_size, const char *src) {
@@ -64,8 +64,8 @@ str_copy(char *dst, size_t dst_size, const char *src) {
 }
 
 
-// safely append src to dst, always null-terminating.
-// returns 0 on success, -1 on invalid args or truncation.
+// Safely append `src` to `dst`, always null-terminating. Returns 0 on
+// success, -1 on truncation.
 int
 str_append(char *dst, size_t dst_size, const char *src) {
     size_t dst_len;
