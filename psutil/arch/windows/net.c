@@ -142,6 +142,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
     ULONG converted_netmask;
     UINT netmask_bits;
+    int n;
+    size_t remaining;
     struct in_addr in_netmask;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
@@ -176,27 +178,31 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
             ptr = buff_macaddr;
-            *ptr = '\0';
-            for (i = 0; i < (int)pCurrAddresses->PhysicalAddressLength; i++) {
-                if (i == (pCurrAddresses->PhysicalAddressLength - 1)) {
-                    sprintf_s(
+            remaining = sizeof(buff_macaddr);
+            for (i = 0; i < pCurrAddresses->PhysicalAddressLength; i++) {
+                if (i == pCurrAddresses->PhysicalAddressLength - 1) {
+                    n = str_format(
                         ptr,
-                        _countof(buff_macaddr),
-                        "%.2X\n",
+                        remaining,
+                        "%.2X",
                         (int)pCurrAddresses->PhysicalAddress[i]
                     );
                 }
                 else {
-                    sprintf_s(
+                    n = str_format(
                         ptr,
-                        _countof(buff_macaddr),
+                        remaining,
                         "%.2X-",
                         (int)pCurrAddresses->PhysicalAddress[i]
                     );
                 }
-                ptr += 3;
+                if (n < 0) {  // error or truncated
+                    psutil_runtime_error("str_format() error");
+                    break;
+                }
+                ptr += n;
+                remaining -= n;
             }
-            *--ptr = '\0';
 
             py_mac_address = Py_BuildValue("s", buff_macaddr);
             if (py_mac_address == NULL)
