@@ -125,9 +125,9 @@ psutil_users(PyObject *self, PyObject *args) {
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
         if (address->AddressFamily == 2) {  // AF_INET == 2
-            sprintf_s(
+            str_format(
                 address_str,
-                _countof(address_str),
+                sizeof(address_str),
                 "%u.%u.%u.%u",
                 // The IP address is offset by two bytes from the start of the
                 // Address member of the WTS_CLIENT_ADDRESS structure.
