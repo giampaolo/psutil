@@ -85,6 +85,12 @@ str_append(char *dst, size_t dst_size, const char *src) {
         psutil_debug("str_append: strcat_s failed");
         return -1;
     }
+#elif defined(PSUTIL_MACOS) || defined(PSUTIL_BSD)
+    dst_len = strlcat(dst, src, dst_size);
+    if (dst_len >= dst_size) {
+        psutil_debug("str_append: truncated");
+        return -1;
+    }
 #else
     dst_len = strnlen(dst, dst_size);
     if (dst_len >= dst_size - 1) {
