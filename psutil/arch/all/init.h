@@ -117,12 +117,6 @@ extern int PSUTIL_CONN_NONE;
     } while (0)
 
 
-// strncpy() variant which appends a null terminator.
-#define PSUTIL_STRNCPY(dst, src, n) \
-    strncpy(dst, src, n - 1);       \
-    dst[n - 1] = '\0'
-
-
 PyObject *psutil_oserror(void);
 PyObject *psutil_oserror_ad(const char *msg);
 PyObject *psutil_oserror_nsp(const char *msg);
