@@ -31,6 +31,34 @@
 #include "../../arch/all/init.h"
 
 
+// macOS is apparently the only UNIX where the process "base" status
+// (running, idle, etc.) is unreliable and must be guessed from flags:
+// https://github.com/giampaolo/psutil/issues/2675
+static int
+convert_status(struct extern_proc *p, struct eproc *e) {
+    int flag = p->p_flag;
+    int eflag = e->e_flag;
+
+    // zombies and stopped
+    if (p->p_stat == SZOMB)
+        return SZOMB;
+    if (p->p_stat == SSTOP)
+        return SSTOP;
+
+    if (flag & P_SYSTEM)
+        return SIDL;  // system idle
+    if (flag & P_WEXIT)
+        return SIDL;  // waiting to exit
+    if (flag & P_PPWAIT)
+        return SIDL;  // parent waiting
+    if (eflag & EPROC_SLEADER)
+        return SSLEEP;  // session leader treated as sleeping
+
+    // Default: 99% is SRUN (running)
+    return p->p_stat;
+}
+
+
 /*
  * Return multiple process info as a Python tuple in one shot by
  * using sysctl() and filling up a kinfo_proc struct.
@@ -42,6 +70,7 @@
 PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
+    int status;
     struct kinfo_proc kp;
     PyObject *py_name = NULL;
     PyObject *py_retlist = NULL;
@@ -60,6 +89,8 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         py_name = Py_None;
     }
 
+    status = convert_status(&kp.kp_proc, &kp.kp_eproc);
+
     py_retlist = Py_BuildValue(
         _Py_PARSE_PID "llllllldiO",
         kp.kp_eproc.e_ppid,  // (pid_t) ppid
@@ -71,7 +102,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         (long)kp.kp_eproc.e_pcred.p_svgid,  // (long) saved gid
         (long long)kp.kp_eproc.e_tdev,  // (long long) tty nr
         PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
-        (int)kp.kp_proc.p_stat,  // (int) status
+        status,  // (int) status
         py_name  // (pystr) name
     );
 

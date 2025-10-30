@@ -17,6 +17,8 @@ XXXX-XX-XX
 - 2674_, [Windows]: `disk_usage()`_ could truncate values on 32-bit platforms,
   potentially reporting incorrect total/free/used space for drives larger than
   4GB.
+- 2675_, [macOS]: `Process.status()`_ incorrectly returns "running" for 99%
+  of the processes.
 
 7.1.2
 =====
