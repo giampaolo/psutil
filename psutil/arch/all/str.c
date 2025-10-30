@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  */
 
-// String utilities
+// String utilities.
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -24,7 +24,7 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     int ret;
 
     if (size == 0) {
-        psutil_debug("str_format: invalid arg");
+        psutil_debug("str_format: invalid arg 'size' = 0");
         return -1;
     }
 
@@ -37,7 +37,7 @@ str_format(char *buf, size_t size, const char *fmt, ...) {
     va_end(args);
 
     if (ret < 0 || (size_t)ret >= size) {
-        psutil_debug("str_format: error");
+        psutil_debug("str_format: error in format '%s'", fmt);
         buf[size - 1] = '\0';
         return -1;
     }

@@ -322,7 +322,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         perms[0] = '\0';
         str_format(
             addr,
-            sizeof(add),
+            sizeof(addr),
             "%#*jx-%#*jx",
             ptrwidth,
             (uintmax_t)kve->kve_start,
