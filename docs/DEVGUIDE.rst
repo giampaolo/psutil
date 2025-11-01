@@ -28,9 +28,9 @@ Once you have a compiler installed run:
 
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
   install, run tests and do pretty much anything that involves development.
-  This also includes Windows, meaning that you can run `make command` similarly
-  as if you were on UNIX (see `make.bat`_ and `winmake.py`_). Some useful
-  commands are:
+  This also includes Windows, meaning that you can run `make.bat command`
+  similarly as if you were on UNIX (see `make.bat`_ and `winmake.py`_). Some
+  useful commands are:
 
 .. code-block:: bash
 
@@ -49,15 +49,9 @@ Once you have a compiler installed run:
 
 .. code-block:: bash
 
-    make test ARGS=psutil/tests/test_system.py::TestDiskAPIs::test_disk_usage
+    make test ARGS=psutil/tests/test_system.py         # UNIX
 
-- If you're working on a new feature and you wish to compile & test it "on the
-  fly" from a test script, this is a quick & dirty way to do it:
-
-.. code-block:: bash
-
-    make test ARGS=test_script.py     # on UNIX
-    make test test_script.py          # on Windows
+    set ARGS=psutil/tests/test_system.py && make test  # Windows
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
   "edit" / development mode, meaning you can edit psutil code on the fly while
@@ -67,18 +61,27 @@ Once you have a compiler installed run:
 
 .. code-block:: bash
 
-    make test PYTHON=python3.5           # UNIX
-    make test -p C:\python35\python.exe  # Windows
+    make test PYTHON=python3.8                       # UNIX
+
+    set PYTHON=C:\Python38\python.exe && make test   # Windows
 
 Coding style
 ------------
 
-- Python code strictly follows `PEP-8`_ styling guide. In addition we use
-  ``black`` and ``ruff`` code formatters / linters. This is enforced by a GIT
-  commit hook, installed via ``make install-git-hooks``, which will reject the
-  commit if code is not compliant.
-- C code should follow `PEP-7`_ styling guides, but things are more relaxed.
-- Linters are enforced also for ``.rst`` and ``.toml`` files.
+All style and formatting checks are automatically enforced both **locally on
+each `git commit`** and **remotely via a GitHub Actions pipeline**.
+
+- A **Git commit hook**, installed with `make install-git-hooks`, runs all
+  formatters and linters before each commit. The commit is rejected if any
+  check fails.
+- **Python** code follows the `PEP-8`_ style guide. We use `black` and `ruff`
+  for formatting and linting.
+- **C** code generally follows the `PEP-7`_ style guide, with formatting
+  enforced by `clang-format`.
+- **Other files** (`.rst`, `.toml`, `.md`, `.yml`) are also validated by
+  dedicated command-line linters.
+- The **GitHub Actions pipeline** re-runs all these checks to ensure
+  consistency (via ``make lint-all``).
 
 Code organization
 -----------------
@@ -88,6 +91,7 @@ Code organization
     psutil/__init__.py                   # main psutil namespace ("import psutil")
     psutil/_ps{platform}.py              # platform-specific python wrapper
     psutil/_psutil_{platform}.c          # platform-specific C extension
+    psutil/arch/{platform}/*.c           # platform-specific C extension
     psutil/tests/test_process|system.py  # main test suite
     psutil/tests/test_{platform}.py      # platform-specific test suite
 
@@ -100,7 +104,7 @@ Typically, this is what you do:
 - Write the platform specific implementation in ``psutil/_ps{platform}.py``
   (e.g. `psutil/_pslinux.py`_).
 - If the change requires C code, write the C implementation in
-  ``psutil/_psutil_{platform}.c`` (e.g. `psutil/_psutil_linux.c`_).
+  ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/cpu.c`).
 - Write a generic test in `psutil/tests/test_system.py`_ or
   `psutil/tests/test_process.py`_.
 - If possible, write a platform-specific test in
