@@ -11,6 +11,7 @@
 #include "init.h"
 
 int PSUTIL_DEBUG = 0;
+int PSUTIL_TESTING = 0;
 int PSUTIL_CONN_NONE = 128;
 
 #ifdef Py_GIL_DISABLED
@@ -45,5 +46,7 @@ int
 psutil_setup(void) {
     if (getenv("PSUTIL_DEBUG") != NULL)
         PSUTIL_DEBUG = 1;
+    if (getenv("PSUTIL_TESTING") != NULL)
+        PSUTIL_TESTING = 1;
     return 0;
 }

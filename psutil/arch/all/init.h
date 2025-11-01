@@ -39,6 +39,7 @@
 extern int PSUTIL_DEBUG;
 // a signaler for connections without an actual status
 extern int PSUTIL_CONN_NONE;
+extern int PSUTIL_TESTING;
 
 #ifdef Py_GIL_DISABLED
     extern PyMutex utxent_lock;

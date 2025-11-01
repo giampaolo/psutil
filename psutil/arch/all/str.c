@@ -6,9 +6,10 @@
 
 // String utilities.
 
-#include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "init.h"
@@ -16,8 +17,14 @@
 
 static int
 _error(const char *msg) {
-    // print debug msg because we never check str_*() return value.
-    psutil_debug("%s", msg);
+    if (PSUTIL_TESTING) {
+        printf("CRITICAL: %s\n", msg);
+        exit(EXIT_FAILURE);  // terminate execution
+    }
+    else {
+        // Print debug msg because we never check str_*() return value.
+        psutil_debug("%s", msg);
+    }
     return -1;
 }
 
