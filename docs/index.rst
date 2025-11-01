@@ -312,12 +312,26 @@ CPU
 
     Return the average system load over the last 1, 5 and 15 minutes as a tuple.
     The "load" represents the processes which are in a runnable state, either
-    using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-    On UNIX systems this relies on `os.getloadavg`_. On Windows this is emulated
-    by using a Windows API that spawns a thread which keeps running in
-    background and updates results every 5 seconds, mimicking the UNIX behavior.
-    Thus, on Windows, the first time this is called and for the next 5 seconds
-    it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
+    using the CPU or waiting to use the CPU. On Linux it also includes processes
+    in uninterruptible sleep (usually IO wait).
+    
+    On UNIX systems this relies on `os.getloadavg`_.
+    On Windows this is emulated by using a Windows API that spawns a thread which
+    keeps running in background and updates results every 4.615 seconds.
+    Results are filled immediately using current load information, so initial results
+    are meaningful.
+
+    On Windows this function also accepts two optional parameters:
+    :param selector: specifies what metrics to include. Defaults to ``qu`` 
+      (processes in **q**ueue + processes currently **u**sing CPU).
+      For legacy psutil behavior, use ``q`` only.  For Linux-like behavior,
+      use ``qud`` (+ processes in **d**isk queue).
+    :type selector: str, optional
+    :param instant: specifies whether to return a fourth last-instant load
+      value.
+    :type instant: bool, optional
+    For more details on the Windows implementation, run ``help(psutil.getloadavg)``.
+
     The numbers returned only make sense if related to the number of CPU cores
     installed on the system. So, for instance, a value of `3.14` on a system
     with 10 logical CPUs means that the system load was 31.4% percent over the

@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "mutex": "c",
+        "init.h": "c"
+    },
+    "C_Cpp.clang_format_fallbackStyle": "Visual Studio",
+    "editor.experimentalGpuAcceleration": "off"
+}

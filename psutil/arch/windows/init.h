@@ -77,6 +77,7 @@ SC_HANDLE psutil_get_service_handle(
 int psutil_get_proc_info(
     DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer
 );
+unsigned int psutil_get_num_cpus(int fail_on_err);
 
 PyObject *psutil_cpu_count_cores(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_count_logical(PyObject *self, PyObject *args);

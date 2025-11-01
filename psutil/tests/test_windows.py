@@ -315,6 +315,19 @@ class TestSystemAPIs(WindowsTestCase):
         secs = ms / 1000.0
         assert abs(cext.uptime() - secs) < 0.5
 
+    def test_getloadavg_win_extras(self):
+        pqueavg = psutil.getloadavg(selector="q", instant=True)
+        assert len(pqueavg) == 4
+        for pque in pqueavg:
+            assert isinstance(pque, float)
+            assert pque >= 0.0
+
+        dqueavg = psutil.getloadavg(selector="d")
+        assert len(dqueavg) == 3
+        for dque in dqueavg:
+            assert isinstance(dque, float)
+            assert dque >= 0.0
+
 
 # ===================================================================
 # sensors_battery()
