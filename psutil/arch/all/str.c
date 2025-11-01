@@ -18,7 +18,8 @@
 static int
 _error(const char *msg) {
     if (PSUTIL_TESTING) {
-        printf("CRITICAL: %s\n", msg);
+        fprintf(stderr, "CRITICAL: %s\n", msg);
+        fflush(stderr);
         exit(EXIT_FAILURE);  // terminate execution
     }
     else {

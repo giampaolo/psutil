@@ -41,7 +41,7 @@ psutil_kinfo_proc(pid_t pid, void *proc) {
 #endif
 
     if (pid < 0 || proc == NULL)
-        psutil_badargs("psutil_kinfo_proc");
+        return psutil_badargs("psutil_kinfo_proc");
 
     if (sysctl(mib, len, proc, &size, NULL, 0) == -1) {
         psutil_oserror_wsyscall("sysctl(kinfo_proc)");
