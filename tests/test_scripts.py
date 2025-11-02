@@ -17,20 +17,21 @@ import pytest
 from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil.tests import CI_TESTING
-from psutil.tests import HAS_BATTERY
-from psutil.tests import HAS_MEMORY_MAPS
-from psutil.tests import HAS_SENSORS_BATTERY
-from psutil.tests import HAS_SENSORS_FANS
-from psutil.tests import HAS_SENSORS_TEMPERATURES
-from psutil.tests import PYTHON_EXE
-from psutil.tests import PYTHON_EXE_ENV
-from psutil.tests import ROOT_DIR
-from psutil.tests import SCRIPTS_DIR
-from psutil.tests import PsutilTestCase
-from psutil.tests import import_module_by_path
-from psutil.tests import psutil
-from psutil.tests import sh
+
+from . import CI_TESTING
+from . import HAS_BATTERY
+from . import HAS_MEMORY_MAPS
+from . import HAS_SENSORS_BATTERY
+from . import HAS_SENSORS_FANS
+from . import HAS_SENSORS_TEMPERATURES
+from . import PYTHON_EXE
+from . import PYTHON_EXE_ENV
+from . import ROOT_DIR
+from . import SCRIPTS_DIR
+from . import PsutilTestCase
+from . import import_module_by_path
+from . import psutil
+from . import sh
 
 INTERNAL_SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, "internal")
 SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')

@@ -8,6 +8,6 @@ $ python3 -m psutil.tests.
 
 import sys
 
-from psutil.tests import pytest
+from . import pytest
 
 sys.exit(pytest.main())

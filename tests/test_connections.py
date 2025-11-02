@@ -25,22 +25,24 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
-from psutil.tests import AF_UNIX
-from psutil.tests import HAS_NET_CONNECTIONS_UNIX
-from psutil.tests import SKIP_SYSCONS
-from psutil.tests import PsutilTestCase
-from psutil.tests import bind_socket
-from psutil.tests import bind_unix_socket
-from psutil.tests import check_connection_ntuple
-from psutil.tests import create_sockets
-from psutil.tests import filter_proc_net_connections
-from psutil.tests import pytest
-from psutil.tests import reap_children
-from psutil.tests import retry_on_failure
-from psutil.tests import skip_on_access_denied
-from psutil.tests import tcp_socketpair
-from psutil.tests import unix_socketpair
-from psutil.tests import wait_for_file
+
+from . import AF_UNIX
+from . import HAS_NET_CONNECTIONS_UNIX
+from . import ROOT_DIR
+from . import SKIP_SYSCONS
+from . import PsutilTestCase
+from . import bind_socket
+from . import bind_unix_socket
+from . import check_connection_ntuple
+from . import create_sockets
+from . import filter_proc_net_connections
+from . import pytest
+from . import reap_children
+from . import retry_on_failure
+from . import skip_on_access_denied
+from . import tcp_socketpair
+from . import unix_socketpair
+from . import wait_for_file
 
 SOCK_SEQPACKET = getattr(socket, "SOCK_SEQPACKET", object())
 
@@ -525,8 +527,9 @@ class TestSystemWideConnections(ConnectionTestCase):
             fname = self.get_testfn()
             fnames.append(fname)
             src = textwrap.dedent(f"""\
-                import time, os
-                from psutil.tests import create_sockets
+                import time, os, sys
+                sys.path.insert(0, '{ROOT_DIR}')
+                from tests import create_sockets
                 with create_sockets():
                     with open(r'{fname}', 'w') as f:
                         f.write("hello")

@@ -49,7 +49,7 @@ def import_module_by_path(path):
 
 
 tests_init = os.path.realpath(
-    os.path.join(HERE, "..", "..", "psutil", "tests", "__init__.py")
+    os.path.join(HERE, "..", "..", "tests", "__init__.py")
 )
 
 tests_init_mod = import_module_by_path(tests_init)

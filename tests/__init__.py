@@ -176,7 +176,7 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 # --- paths
 
 ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..", "..")
+    os.path.join(os.path.dirname(__file__), "..")
 )
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 HERE = os.path.realpath(os.path.dirname(__file__))
@@ -993,7 +993,7 @@ class PsutilTestCase(unittest.TestCase):
     def __str__(self):
         fqmod = self.__class__.__module__
         if not fqmod.startswith('psutil.'):
-            fqmod = 'psutil.tests.' + fqmod
+            fqmod = 'tests.' + fqmod
         return "{}.{}.{}".format(
             fqmod,
             self.__class__.__name__,

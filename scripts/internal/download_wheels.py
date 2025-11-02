@@ -17,19 +17,30 @@ https://developer.github.com/v3/actions/artifacts/.
 import argparse
 import json
 import os
+import shutil
 import sys
 import zipfile
 
 import requests
 
 from psutil._common import bytes2human
-from psutil.tests import safe_rmpath
 
 USER = "giampaolo"
 PROJECT = "psutil"
 OUTFILE = "wheels-github.zip"
 TOKEN = ""
 TIMEOUT = 30
+
+
+def safe_rmpath(path):
+    """Convenience function for removing temporary test files or dirs."""
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    else:
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
 
 
 def get_artifacts():

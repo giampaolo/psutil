@@ -20,43 +20,44 @@ import warnings
 from unittest import mock
 
 import psutil
-import psutil.tests
+import tests
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
-from psutil.tests import CI_TESTING
-from psutil.tests import COVERAGE
-from psutil.tests import HAS_NET_CONNECTIONS_UNIX
-from psutil.tests import HERE
-from psutil.tests import PYTHON_EXE
-from psutil.tests import PYTHON_EXE_ENV
-from psutil.tests import PsutilTestCase
-from psutil.tests import TestMemoryLeak
-from psutil.tests import bind_socket
-from psutil.tests import bind_unix_socket
-from psutil.tests import call_until
-from psutil.tests import chdir
-from psutil.tests import create_sockets
-from psutil.tests import fake_pytest
-from psutil.tests import filter_proc_net_connections
-from psutil.tests import get_free_port
-from psutil.tests import is_namedtuple
-from psutil.tests import process_namespace
-from psutil.tests import pytest
-from psutil.tests import reap_children
-from psutil.tests import retry
-from psutil.tests import retry_on_failure
-from psutil.tests import safe_mkdir
-from psutil.tests import safe_rmpath
-from psutil.tests import system_namespace
-from psutil.tests import tcp_socketpair
-from psutil.tests import terminate
-from psutil.tests import unix_socketpair
-from psutil.tests import wait_for_file
-from psutil.tests import wait_for_pid
+
+from . import CI_TESTING
+from . import COVERAGE
+from . import HAS_NET_CONNECTIONS_UNIX
+from . import HERE
+from . import PYTHON_EXE
+from . import PYTHON_EXE_ENV
+from . import PsutilTestCase
+from . import TestMemoryLeak
+from . import bind_socket
+from . import bind_unix_socket
+from . import call_until
+from . import chdir
+from . import create_sockets
+from . import fake_pytest
+from . import filter_proc_net_connections
+from . import get_free_port
+from . import is_namedtuple
+from . import process_namespace
+from . import pytest
+from . import reap_children
+from . import retry
+from . import retry_on_failure
+from . import safe_mkdir
+from . import safe_rmpath
+from . import system_namespace
+from . import tcp_socketpair
+from . import terminate
+from . import unix_socketpair
+from . import wait_for_file
+from . import wait_for_pid
 
 # ===================================================================
 # --- Unit tests for test utilities.
@@ -136,7 +137,7 @@ class TestSyncTestUtils(PsutilTestCase):
     def test_wait_for_pid(self):
         wait_for_pid(os.getpid())
         nopid = max(psutil.pids()) + 99999
-        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+        with mock.patch('tests.retry.__iter__', return_value=iter([0])):
             with pytest.raises(psutil.NoSuchProcess):
                 wait_for_pid(nopid)
 
@@ -156,7 +157,7 @@ class TestSyncTestUtils(PsutilTestCase):
 
     def test_wait_for_file_no_file(self):
         testfn = self.get_testfn()
-        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+        with mock.patch('tests.retry.__iter__', return_value=iter([0])):
             with pytest.raises(OSError):
                 wait_for_file(testfn)
 
@@ -202,7 +203,7 @@ class TestFSTestUtils(PsutilTestCase):
         assert not os.path.exists(testfn)
         # test other exceptions are raised
         with mock.patch(
-            'psutil.tests.os.stat', side_effect=OSError(errno.EINVAL, "")
+            'tests.os.stat', side_effect=OSError(errno.EINVAL, "")
         ) as m:
             with pytest.raises(OSError):
                 safe_rmpath(testfn)
@@ -224,8 +225,8 @@ class TestProcessUtils(PsutilTestCase):
         assert p.is_running()
         reap_children()
         assert not p.is_running()
-        assert not psutil.tests._pids_started
-        assert not psutil.tests._subprocesses_started
+        assert not tests._pids_started
+        assert not tests._subprocesses_started
 
     def test_spawn_children_pair(self):
         child, grandchild = self.spawn_children_pair()
@@ -530,7 +531,7 @@ class TestFakePytest(PsutilTestCase):
                     def test_passed(self):
                         pass
                 """).lstrip())
-        with mock.patch.object(psutil.tests, "HERE", tmpdir):
+        with mock.patch.object(tests, "HERE", tmpdir):
             with contextlib.redirect_stderr(io.StringIO()):
                 suite = fake_pytest.main()
             assert suite.countTestCases() == 1
