@@ -1,9 +1,9 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-7.1.3 (IN DEVELOPMENT)
-======================
+7.1.3
+=====
 
-XXXX-XX-XX
+2025-11-02
 
 **Enhancements**
 
@@ -28,6 +28,7 @@ XXXX-XX-XX
   increment and `sprintf_s`, which could overflow or misformat the
   string if the MAC length or formatting changed. Also, the final '\n' was
   inserted unnecessarily.
+- 2679_, [OpenBSD], [NetBSD], [critical]: can't build due to C syntax error.
 
 7.1.2
 =====
