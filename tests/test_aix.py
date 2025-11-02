@@ -45,9 +45,9 @@ class AIXSpecificTestCase(PsutilTestCase):
 
         psutil_result = psutil.virtual_memory()
 
-        # TOLERANCE_SYS_MEM from psutil.tests is not enough. For some reason
-        # we're seeing differences of ~1.2 MB. 2 MB is still a good tolerance
-        # when compared to GBs.
+        # TOLERANCE_SYS_MEM is not enough. For some reason we're seeing
+        # differences of ~1.2 MB. 2 MB is still a good tolerance when
+        # compared to GBs.
         TOLERANCE_SYS_MEM = 2 * KB * KB  # 2 MB
         assert psutil_result.total == total
         assert abs(psutil_result.used - used) < TOLERANCE_SYS_MEM

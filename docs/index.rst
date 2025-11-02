@@ -2624,7 +2624,7 @@ Running tests
 
 ::
 
-    $ python3 -m psutil.tests
+    $ make test
 
 Debug mode
 ==========

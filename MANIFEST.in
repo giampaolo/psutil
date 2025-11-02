@@ -180,7 +180,6 @@ include scripts/winservices.py
 include setup.py
 include tests/README.rst
 include tests/__init__.py
-include tests/__main__.py
 include tests/test_aix.py
 include tests/test_bsd.py
 include tests/test_connections.py

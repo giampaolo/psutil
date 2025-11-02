@@ -279,9 +279,7 @@ _pids_started = set()
 class fake_pytest:
     """A class that mimics some basic pytest APIs. This is meant for
     when unit tests are run in production, where pytest may not be
-    installed. Still, the user can test psutil installation via:
-
-        $ python3 -m psutil.tests
+    installed.
     """
 
     @staticmethod

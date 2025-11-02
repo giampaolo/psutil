@@ -136,7 +136,7 @@ test-memleaks:  ## Memory leak tests.
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
-	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
+	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v tests.test_sudo
 
 test-last-failed:  ## Re-run tests which failed on last run
 	$(RUN_TEST) --last-failed $(ARGS)
