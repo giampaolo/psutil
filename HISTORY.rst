@@ -1,5 +1,20 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.2.0 (IN DEVELOPMENT)
+======================
+
+XXXX-XX-XX
+
+**Enhancements**
+
+- 2680_: unit tests are no longer installed / part of the distribution. They
+  now live under `tests/` instead of `psutil/tests`.
+
+**Compatibility notes**
+
+- 2680_: `import psutil.tests` no longer works (but it was never documented to
+  begin with).
+
 7.1.3
 =====
 
