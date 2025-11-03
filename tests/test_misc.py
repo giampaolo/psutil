@@ -27,12 +27,13 @@ from psutil._common import memoize_when_activated
 from psutil._common import parse_environ_block
 from psutil._common import supports_ipv6
 from psutil._common import wrap_numbers
-from psutil.tests import HAS_NET_IO_COUNTERS
-from psutil.tests import PsutilTestCase
-from psutil.tests import process_namespace
-from psutil.tests import pytest
-from psutil.tests import reload_module
-from psutil.tests import system_namespace
+
+from . import HAS_NET_IO_COUNTERS
+from . import PsutilTestCase
+from . import process_namespace
+from . import pytest
+from . import reload_module
+from . import system_namespace
 
 # ===================================================================
 # --- Test classes' repr(), str(), ...

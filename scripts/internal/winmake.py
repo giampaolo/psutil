@@ -12,7 +12,7 @@ used directly. Like on POSIX, you can run multiple targets serially:
 
 To run a specific test:
 
-    set ARGS=psutil/tests/test_system.py && make.bat test
+    set ARGS=-k tests/test_system.py && make.bat test
 """
 
 import fnmatch
@@ -289,10 +289,17 @@ def install_pydeps_dev():
 @clicmd
 def test(args=ARGS):
     """Run tests."""
-    sh(
-        [PYTHON, "-m", "pytest", "--ignore=psutil/tests/test_memleaks.py"]
-        + args
-    )
+    # Disable pytest cache on Windows because we usually get
+    # PermissionDenied on start. Related to network drives (e.g. Z:\).
+    sh([
+        PYTHON,
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "--ignore=tests/test_memleaks.py",
+        *args,
+    ])
 
 
 @clicmd

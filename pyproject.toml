@@ -105,8 +105,8 @@ ignore = [
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
 ".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
-"psutil/tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
-"psutil/tests/test_sudo.py" = ["PT009"]
+"tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
+"tests/test_sudo.py" = ["PT009"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [
@@ -150,8 +150,8 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 omit = [
-    "psutil/tests/*",
     "setup.py",
+    "tests/*",
 ]
 
 [tool.pylint.messages_control]
@@ -195,8 +195,8 @@ disable = [
 [tool.vulture]
 exclude = [
     "docs/conf.py",
-    "psutil/tests/",
     "scripts/internal/winmake.py",
+    "tests/",
 ]
 ignore_decorators = [
     "@_common.deprecated_method",
@@ -256,7 +256,7 @@ addopts = '''
     -p subtests
     -p xdist
     '''
-testpaths = ["psutil/tests/"]
+testpaths = ["tests/"]
 
 [build-system]
 build-backend = "setuptools.build_meta"

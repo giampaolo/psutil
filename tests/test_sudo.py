@@ -20,8 +20,9 @@ from psutil import FREEBSD
 from psutil import LINUX
 from psutil import OPENBSD
 from psutil import WINDOWS
-from psutil.tests import CI_TESTING
-from psutil.tests import PsutilTestCase
+
+from . import CI_TESTING
+from . import PsutilTestCase
 
 
 def get_systime():

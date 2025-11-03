@@ -176,7 +176,7 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 # --- paths
 
 ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..", "..")
+    os.path.join(os.path.dirname(__file__), "..")
 )
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 HERE = os.path.realpath(os.path.dirname(__file__))
@@ -279,9 +279,7 @@ _pids_started = set()
 class fake_pytest:
     """A class that mimics some basic pytest APIs. This is meant for
     when unit tests are run in production, where pytest may not be
-    installed. Still, the user can test psutil installation via:
-
-        $ python3 -m psutil.tests
+    installed.
     """
 
     @staticmethod
@@ -458,8 +456,16 @@ def spawn_subproc(cmd=None, **kwds):
         # Prevents the subprocess to open error dialogs. This will also
         # cause stderr to be suppressed, which is suboptimal in order
         # to debug broken tests.
-        CREATE_NO_WINDOW = 0x8000000
-        kwds.setdefault("creationflags", CREATE_NO_WINDOW)
+        # CREATE_NO_WINDOW = 0x8000000
+        # kwds.setdefault("creationflags", CREATE_NO_WINDOW)
+
+        # New: hopefully this should achieve the same and not suppress
+        # stderr.
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        kwds.setdefault("startupinfo", startupinfo)
+
     if cmd is None:
         testfn = get_testfn(dir=os.getcwd())
         try:
@@ -993,7 +999,7 @@ class PsutilTestCase(unittest.TestCase):
     def __str__(self):
         fqmod = self.__class__.__module__
         if not fqmod.startswith('psutil.'):
-            fqmod = 'psutil.tests.' + fqmod
+            fqmod = 'tests.' + fqmod
         return "{}.{}.{}".format(
             fqmod,
             self.__class__.__name__,

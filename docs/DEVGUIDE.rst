@@ -18,14 +18,6 @@ Once you have a compiler installed run:
     make install
     make test
 
-- If you don't have the source code, and just want to test psutil installation.
-  This will work also if ``pytest`` module is not installed (e.g. production
-  environments) by using unittest's test runner:
-
-.. code-block:: bash
-
-    python3 -m psutil.tests
-
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
   install, run tests and do pretty much anything that involves development.
   This also includes Windows, meaning that you can run `make.bat command`
@@ -49,9 +41,9 @@ Once you have a compiler installed run:
 
 .. code-block:: bash
 
-    make test ARGS=psutil/tests/test_system.py         # UNIX
+    make test ARGS=tests/test_system.py         # UNIX
 
-    set ARGS=psutil/tests/test_system.py && make test  # Windows
+    set ARGS=tests/test_system.py && make test  # Windows
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
   "edit" / development mode, meaning you can edit psutil code on the fly while
@@ -92,8 +84,8 @@ Code organization
     psutil/_ps{platform}.py              # platform-specific python wrapper
     psutil/_psutil_{platform}.c          # platform-specific C extension
     psutil/arch/{platform}/*.c           # platform-specific C extension
-    psutil/tests/test_process|system.py  # main test suite
-    psutil/tests/test_{platform}.py      # platform-specific test suite
+    tests/test_process|system.py         # main test suite
+    tests/test_{platform}.py             # platform-specific test suite
 
 Adding a new API
 ----------------
@@ -105,10 +97,10 @@ Typically, this is what you do:
   (e.g. `psutil/_pslinux.py`_).
 - If the change requires C code, write the C implementation in
   ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/cpu.c`).
-- Write a generic test in `psutil/tests/test_system.py`_ or
-  `psutil/tests/test_process.py`_.
+- Write a generic test in `tests/test_system.py`_ or
+  `tests/test_process.py`_.
 - If possible, write a platform-specific test in
-  ``psutil/tests/test_{platform}.py`` (e.g. `psutil/tests/test_linux.py`_).
+  ``tests/test_{platform}.py`` (e.g. `tests/test_linux.py`_).
   This usually means testing the return value of the new API against
   a system CLI tool.
 - Update the doc in ``docs/index.py``.
@@ -151,6 +143,6 @@ Documentation
 .. _`psutil/__init__.py`: https://github.com/giampaolo/psutil/blob/master/psutil/__init__.py
 .. _`psutil/_pslinux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
 .. _`psutil/_psutil_linux.c`: https://github.com/giampaolo/psutil/blob/master/psutil/_psutil_linux.c
-.. _`psutil/tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_linux.py
-.. _`psutil/tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_process.py
-.. _`psutil/tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/psutil/tests/test_system.py
+.. _`tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_linux.py
+.. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
+.. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py

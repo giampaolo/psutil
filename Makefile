@@ -92,51 +92,51 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest
 
 test:  ## Run all tests.
-	# To run a specific test do `make test ARGS=psutil/tests/test_process.py::TestProcess::test_cmdline`
-	$(RUN_TEST) --ignore=psutil/tests/test_memleaks.py --ignore=psutil/tests/test_sudo.py $(ARGS)
+	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`
+	$(RUN_TEST) --ignore=tests/test_memleaks.py --ignore=tests/test_sudo.py $(ARGS)
 
 test-parallel:  ## Run all tests in parallel.
-	$(RUN_TEST) --ignore=psutil/tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
 
 test-process:  ## Run process-related API tests.
-	$(RUN_TEST) psutil/tests/test_process.py $(ARGS)
+	$(RUN_TEST) tests/test_process.py $(ARGS)
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
-	$(RUN_TEST) psutil/tests/test_process_all.py $(ARGS)
+	$(RUN_TEST) tests/test_process_all.py $(ARGS)
 
 test-system:  ## Run system-related API tests.
-	$(RUN_TEST) psutil/tests/test_system.py $(ARGS)
+	$(RUN_TEST) tests/test_system.py $(ARGS)
 
 test-misc:  ## Run miscellaneous tests.
-	$(RUN_TEST) psutil/tests/test_misc.py $(ARGS)
+	$(RUN_TEST) tests/test_misc.py $(ARGS)
 
 test-scripts:  ## Run scripts tests.
-	$(RUN_TEST) psutil/tests/test_scripts.py $(ARGS)
+	$(RUN_TEST) tests/test_scripts.py $(ARGS)
 
 test-testutils:  ## Run test utils tests.
-	$(RUN_TEST) psutil/tests/test_testutils.py $(ARGS)
+	$(RUN_TEST) tests/test_testutils.py $(ARGS)
 
 test-unicode:  ## Test APIs dealing with strings.
-	$(RUN_TEST) psutil/tests/test_unicode.py $(ARGS)
+	$(RUN_TEST) tests/test_unicode.py $(ARGS)
 
 test-contracts:  ## APIs sanity tests.
-	$(RUN_TEST) psutil/tests/test_contracts.py $(ARGS)
+	$(RUN_TEST) tests/test_contracts.py $(ARGS)
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
-	$(RUN_TEST) psutil/tests/test_connections.py $(ARGS)
+	$(RUN_TEST) tests/test_connections.py $(ARGS)
 
 test-posix:  ## POSIX specific tests.
-	$(RUN_TEST) psutil/tests/test_posix.py $(ARGS)
+	$(RUN_TEST) tests/test_posix.py $(ARGS)
 
 test-platform:  ## Run specific platform tests only.
-	$(RUN_TEST) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
+	$(RUN_TEST) tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
 
 test-memleaks:  ## Memory leak tests.
-	$(RUN_TEST) psutil/tests/test_memleaks.py $(ARGS)
+	$(RUN_TEST) tests/test_memleaks.py $(ARGS)
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
-	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v psutil.tests.test_sudo
+	$(SUDO) $(PYTHON_ENV_VARS) $(PYTHON) -m unittest -v tests.test_sudo
 
 test-last-failed:  ## Re-run tests which failed on last run
 	$(RUN_TEST) --last-failed $(ARGS)
@@ -144,7 +144,7 @@ test-last-failed:  ## Re-run tests which failed on last run
 test-coverage:  ## Run test coverage.
 	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=psutil/tests/test_memleaks.py $(ARGS)
+	$(PYTHON_ENV_VARS) $(PYTHON) -m coverage run -m pytest --ignore=tests/test_memleaks.py $(ARGS)
 	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
 	$(PYTHON) -m coverage html
@@ -228,7 +228,7 @@ ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest psutil/tests/
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest tests/
 
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
@@ -237,7 +237,7 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs psutil.tests
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs ../tests
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

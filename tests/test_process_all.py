@@ -27,16 +27,17 @@ from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
-from psutil.tests import CI_TESTING
-from psutil.tests import PYTEST_PARALLEL
-from psutil.tests import VALID_PROC_STATUSES
-from psutil.tests import PsutilTestCase
-from psutil.tests import check_connection_ntuple
-from psutil.tests import create_sockets
-from psutil.tests import is_namedtuple
-from psutil.tests import is_win_secure_system_proc
-from psutil.tests import process_namespace
-from psutil.tests import pytest
+
+from . import CI_TESTING
+from . import PYTEST_PARALLEL
+from . import VALID_PROC_STATUSES
+from . import PsutilTestCase
+from . import check_connection_ntuple
+from . import create_sockets
+from . import is_namedtuple
+from . import is_win_secure_system_proc
+from . import process_namespace
+from . import pytest
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
@@ -121,7 +122,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def iter_proc_info(self):
         # Fixes "can't pickle <function proc_info>: it's not the
         # same object as test_process_all.proc_info".
-        from psutil.tests.test_process_all import proc_info
+        from tests.test_process_all import proc_info
 
         if USE_PROC_POOL:
             return self.pool.imap_unordered(proc_info, psutil.pids())
