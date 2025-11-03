@@ -1,5 +1,4 @@
-Instructions for running tests
-==============================
+# Instructions for running tests
 
 Install deps (e.g. pytest):
 
@@ -12,7 +11,6 @@ Run tests:
 .. code-block:: bash
 
     make test
-
 
 Run tests in parallel (faster):
 
@@ -31,3 +29,13 @@ Test C extension memory leaks:
 .. code-block:: bash
 
     make test-memleaks
+
+# Running tests on Windows
+
+Same as above, just replace `make` with `make.bat`, e.g.:
+
+.. code-block:: bash
+
+    make.bat install-pydeps-test
+    make.bat test
+    set ARGS=-k tests.test_system.TestDiskAPIs && make.bat test

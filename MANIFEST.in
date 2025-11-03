@@ -178,7 +178,7 @@ include scripts/top.py
 include scripts/who.py
 include scripts/winservices.py
 include setup.py
-include tests/README.rst
+include tests/README.md
 include tests/__init__.py
 include tests/test_aix.py
 include tests/test_bsd.py
