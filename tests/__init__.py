@@ -81,7 +81,7 @@ __all__ = [
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'TestMemoryLeak', 'PsutilTestCase',
     'process_namespace', 'system_namespace',
-    'is_win_secure_system_proc', 'fake_pytest',
+    'is_win_secure_system_proc',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -269,108 +269,6 @@ AF_UNIX = getattr(socket, "AF_UNIX", object())
 
 _subprocesses_started = set()
 _pids_started = set()
-
-
-# ===================================================================
-# --- fake pytest
-# ===================================================================
-
-
-class fake_pytest:
-    """A class that mimics some basic pytest APIs. This is meant for
-    when unit tests are run in production, where pytest may not be
-    installed.
-    """
-
-    @staticmethod
-    def _warn_on_exit():
-        def _warn_on_exit():
-            warnings.warn(
-                "Fake pytest module was used. Test results may be inaccurate.",
-                UserWarning,
-                stacklevel=1,
-            )
-
-        atexit.register(_warn_on_exit)
-
-    @staticmethod
-    def main(*args, **kw):  # noqa: ARG004
-        """Mimics pytest.main(). It has the same effect as running
-        `python3 -m unittest -v` from the project root directory.
-        """
-        suite = unittest.TestLoader().discover(HERE)
-        unittest.TextTestRunner(verbosity=2).run(suite)
-        return suite
-
-    @staticmethod
-    def raises(exc, match=None):
-        """Mimics `pytest.raises`."""
-
-        class ExceptionInfo:
-            _exc = None
-
-            @property
-            def value(self):
-                return self._exc
-
-        @contextlib.contextmanager
-        def context(exc, match=None):
-            einfo = ExceptionInfo()
-            try:
-                yield einfo
-            except exc as err:
-                if match and not re.search(match, str(err)):
-                    msg = f'"{match}" does not match "{err}"'
-                    raise AssertionError(msg)
-                einfo._exc = err
-            else:
-                raise AssertionError(f"{exc!r} not raised")
-
-        return context(exc, match=match)
-
-    @staticmethod
-    def warns(warning, match=None):
-        """Mimics `pytest.warns`."""
-        if match:
-            return unittest.TestCase().assertWarnsRegex(warning, match)
-        return unittest.TestCase().assertWarns(warning)
-
-    @staticmethod
-    def skip(reason=""):
-        """Mimics `unittest.SkipTest`."""
-        raise unittest.SkipTest(reason)
-
-    @staticmethod
-    def fail(reason=""):
-        """Mimics `pytest.fail`."""
-        return unittest.TestCase().fail(reason)
-
-    class mark:
-
-        @staticmethod
-        def skipif(condition, reason=""):
-            """Mimics `@pytest.mark.skipif` decorator."""
-            return unittest.skipIf(condition, reason)
-
-        class xdist_group:
-            """Mimics `@pytest.mark.xdist_group` decorator (no-op)."""
-
-            def __init__(self, name=None):
-                pass
-
-            def __call__(self, cls_or_meth):
-                return cls_or_meth
-
-
-# to make pytest.fail() exception catchable
-fake_pytest.fail.Exception = AssertionError
-
-
-if pytest is None:
-    pytest = fake_pytest
-    # monkey patch future `import pytest` statements
-    sys.modules["pytest"] = fake_pytest
-    fake_pytest._warn_on_exit()
 
 
 # ===================================================================

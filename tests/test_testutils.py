@@ -14,9 +14,6 @@ import os
 import socket
 import stat
 import subprocess
-import textwrap
-import unittest
-import warnings
 from unittest import mock
 
 import psutil
@@ -31,7 +28,6 @@ from psutil._common import supports_ipv6
 from . import CI_TESTING
 from . import COVERAGE
 from . import HAS_NET_CONNECTIONS_UNIX
-from . import HERE
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import PsutilTestCase
@@ -41,7 +37,6 @@ from . import bind_unix_socket
 from . import call_until
 from . import chdir
 from . import create_sockets
-from . import fake_pytest
 from . import filter_proc_net_connections
 from . import get_free_port
 from . import is_namedtuple
@@ -446,126 +441,6 @@ class TestMemLeakClass(TestMemoryLeak):
 
         with pytest.raises(pytest.fail.Exception):
             self.execute_w_exc(ZeroDivisionError, fun_2)
-
-
-class TestFakePytest(PsutilTestCase):
-    def run_test_class(self, klass):
-        suite = unittest.TestSuite()
-        suite.addTest(klass)
-        # silence output
-        runner = unittest.TextTestRunner(stream=io.StringIO())
-        result = runner.run(suite)
-        return result
-
-    def test_raises(self):
-        with fake_pytest.raises(ZeroDivisionError) as cm:
-            1 / 0  # noqa: B018
-        assert isinstance(cm.value, ZeroDivisionError)
-
-        with fake_pytest.raises(ValueError, match="foo") as cm:
-            raise ValueError("foo")
-
-        try:
-            with fake_pytest.raises(ValueError, match="foo") as cm:
-                raise ValueError("bar")
-        except AssertionError as err:
-            assert str(err) == '"foo" does not match "bar"'  # noqa: PT017
-        else:
-            return pytest.fail("exception not raised")
-
-    def test_mark(self):
-        @fake_pytest.mark.xdist_group(name="serial")
-        def foo():
-            return 1
-
-        assert foo() == 1
-
-        @fake_pytest.mark.xdist_group(name="serial")
-        class Foo:
-            def bar(self):
-                return 1
-
-        assert Foo().bar() == 1
-
-    def test_skipif(self):
-        class TestCase(unittest.TestCase):
-            @fake_pytest.mark.skipif(True, reason="reason")
-            def foo(self):
-                assert 1 == 1  # noqa: PLR0133
-
-        result = self.run_test_class(TestCase("foo"))
-        assert result.wasSuccessful()
-        assert len(result.skipped) == 1
-        assert result.skipped[0][1] == "reason"
-
-        class TestCase(unittest.TestCase):
-            @fake_pytest.mark.skipif(False, reason="reason")
-            def foo(self):
-                assert 1 == 1  # noqa: PLR0133
-
-        result = self.run_test_class(TestCase("foo"))
-        assert result.wasSuccessful()
-        assert len(result.skipped) == 0
-
-    def test_skip(self):
-        class TestCase(unittest.TestCase):
-            def foo(self):
-                fake_pytest.skip("reason")
-                assert 1 == 0  # noqa: PLR0133
-
-        result = self.run_test_class(TestCase("foo"))
-        assert result.wasSuccessful()
-        assert len(result.skipped) == 1
-        assert result.skipped[0][1] == "reason"
-
-    def test_main(self):
-        tmpdir = self.get_testfn(dir=HERE)
-        os.mkdir(tmpdir)
-        with open(os.path.join(tmpdir, "__init__.py"), "w"):
-            pass
-        with open(os.path.join(tmpdir, "test_file.py"), "w") as f:
-            f.write(textwrap.dedent("""\
-                import unittest
-
-                class TestCase(unittest.TestCase):
-                    def test_passed(self):
-                        pass
-                """).lstrip())
-        with mock.patch.object(tests, "HERE", tmpdir):
-            with contextlib.redirect_stderr(io.StringIO()):
-                suite = fake_pytest.main()
-            assert suite.countTestCases() == 1
-
-    def test_warns(self):
-        # success
-        with fake_pytest.warns(UserWarning):
-            warnings.warn("foo", UserWarning, stacklevel=1)
-
-        # failure
-        try:
-            with fake_pytest.warns(UserWarning):
-                warnings.warn("foo", DeprecationWarning, stacklevel=1)
-        except AssertionError:
-            pass
-        else:
-            return pytest.fail("exception not raised")
-
-        # match success
-        with fake_pytest.warns(UserWarning, match="foo"):
-            warnings.warn("foo", UserWarning, stacklevel=1)
-
-        # match failure
-        try:
-            with fake_pytest.warns(UserWarning, match="foo"):
-                warnings.warn("bar", UserWarning, stacklevel=1)
-        except AssertionError:
-            pass
-        else:
-            return pytest.fail("exception not raised")
-
-    def test_fail(self):
-        with fake_pytest.raises(fake_pytest.fail.Exception):
-            raise fake_pytest.fail("reason")
 
 
 class TestTestingUtils(PsutilTestCase):
