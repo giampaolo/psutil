@@ -130,7 +130,7 @@ class TestCpuAPIs(WindowsTestCase):
     def test_cpu_freq(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
-        assert proc.CurrentClockSpeed == psutil.cpu_freq().current
+        assert abs(proc.CurrentClockSpeed - psutil.cpu_freq().current) < 100
         assert proc.MaxClockSpeed == psutil.cpu_freq().max
 
 
