@@ -16,7 +16,7 @@ on:
       - "psutil/arch/netbsd/**"
       - "psutil/arch/openbsd/**"
       - "psutil/arch/posix/**"
-      - "psutil/tests/test_bsd.py"
+      - "tests/test_bsd.py"
       - "setup.py"
   pull_request:
     paths: *bsd_paths

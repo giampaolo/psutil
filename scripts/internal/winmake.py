@@ -12,7 +12,7 @@ used directly. Like on POSIX, you can run multiple targets serially:
 
 To run a specific test:
 
-    set ARGS=psutil/tests/test_system.py && make.bat test
+    set ARGS=-k tests/test_system.py && make.bat test
 """
 
 import fnmatch

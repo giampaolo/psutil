@@ -150,8 +150,8 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 omit = [
-    "psutil/tests/*",
     "setup.py",
+    "tests/*",
 ]
 
 [tool.pylint.messages_control]
@@ -195,8 +195,8 @@ disable = [
 [tool.vulture]
 exclude = [
     "docs/conf.py",
-    "psutil/tests/",
     "scripts/internal/winmake.py",
+    "tests/",
 ]
 ignore_decorators = [
     "@_common.deprecated_method",

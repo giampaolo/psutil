@@ -13,7 +13,7 @@ rem To compile for a specific Python version run:
 rem     set PYTHON=C:\Python34\python.exe & make.bat build
 rem
 rem To run a specific test:
-rem     set ARGS=psutil/tests/test_system.py::TestMemoryAPIs::test_virtual_memory && make.bat test
+rem     set ARGS=-k tests/test_system.py && make.bat test
 rem ==========================================================================
 
 if "%PYTHON%" == "" (
