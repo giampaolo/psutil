@@ -456,8 +456,16 @@ def spawn_subproc(cmd=None, **kwds):
         # Prevents the subprocess to open error dialogs. This will also
         # cause stderr to be suppressed, which is suboptimal in order
         # to debug broken tests.
-        CREATE_NO_WINDOW = 0x8000000
-        kwds.setdefault("creationflags", CREATE_NO_WINDOW)
+        # CREATE_NO_WINDOW = 0x8000000
+        # kwds.setdefault("creationflags", CREATE_NO_WINDOW)
+
+        # New: hopefully this should achieve the same and not suppress
+        # stderr.
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        kwds.setdefault("startupinfo", startupinfo)
+
     if cmd is None:
         testfn = get_testfn(dir=os.getcwd())
         try:
