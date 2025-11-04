@@ -2283,7 +2283,6 @@ memory-leak detection tests.
   .. attribute:: tolerance
     :value: 0
 
-
     Allowed memory difference (in bytes) before considering it a leak.
 
   .. attribute:: verbose
