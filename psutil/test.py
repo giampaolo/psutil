@@ -18,28 +18,28 @@ __all__ = ["MemoryLeakTestCase"]
 
 
 class MemoryLeakTestCase(unittest.TestCase):
-    """Test framework class for detecting function memory leaks,
-    typically functions implemented in C which forgot to free() memory
-    from the heap. It does so by checking whether the process memory
-    usage increased before and after calling the function many times.
+    """A testing framework for detecting memory leaks in functions,
+    typically those implemented in C that forget to free() heap memory,
+    call Py_DECREF on Python objects, and so on. It works by comparing
+    the process's memory usage before and after repeatedly calling the
+    target function.
 
-    Note that this is hard (probably impossible) to do reliably, due
-    to how the OS handles memory, the GC and so on (memory can even
-    decrease!). In order to avoid false positives, in case of failure
-    (mem > 0) we retry the test for up to 5 times, increasing call
-    repetitions each time. If the memory keeps increasing then it's a
-    failure.
+    Detecting memory leaks reliably is inherently difficult (and
+    sometimes impossible) because of how the OS manages memory, garbage
+    collection, and caching. Memory usage may even decrease between
+    runs. So this is not meant to be bullet proof. To reduce false
+    positives, when an increase in memory is detected (mem > 0), the
+    test is retried up to five times, increasing the number of function
+    calls each time. If memory continues to grow, the test is
+    considered a failure.
 
-    We currently check RSS, VMS and USS [1] memory. mallinfo() on Linux
-    and _heapwalk() on Windows should give even more precision [2], but
-    at the moment they are not implemented.
+    The test currently monitors RSS, VMS, and USS [1]. mallinfo() on
+    Linux and _heapwalk() on Windows could provide even more precise
+    results [2], but these are not yet implemented.
 
-    PyPy appears to be completely unstable for this framework, probably
-    because of its JIT, so tests on PYPY are skipped.
+    Usage example:
 
-    Usage:
-
-        import psutil.test import MemoryLeakTestCase
+        from psutil.test import MemoryLeakTestCase
 
         class TestLeaks(MemoryLeakTestCase):
             def test_fun(self):
