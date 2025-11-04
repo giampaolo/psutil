@@ -2253,7 +2253,8 @@ memory-leak detection tests.
   .. versionadded:: 7.2.0
 
   .. warning::
-    This class is experimental, meaning its API may change in the future.
+    This class is experimental, meaning its API or internal algorithm may
+    change in the future.
 
   Usage example::
 
