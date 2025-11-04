@@ -8,8 +8,6 @@ import os
 import sys
 import unittest
 
-import pytest
-
 import psutil
 
 from ._common import POSIX
@@ -103,13 +101,13 @@ class MemoryLeakTestCase(unittest.TestCase):
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            return pytest.fail(msg)
+            return self.fail(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
             msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            return pytest.fail(msg)
+            return self.fail(msg)
 
     def _call_ntimes(self, fun, times):
         """Get memory samples (rss, vms, uss) before and after calling
@@ -169,7 +167,7 @@ class MemoryLeakTestCase(unittest.TestCase):
             prev_mem = diffs
 
         msg = "\n" + "\n".join(messages)
-        return pytest.fail(msg)
+        return self.fail(msg)
 
     # ---
 
@@ -216,6 +214,6 @@ class MemoryLeakTestCase(unittest.TestCase):
             except exc:
                 pass
             else:
-                return pytest.fail(f"{fun} did not raise {exc}")
+                return self.fail(f"{fun} did not raise {exc}")
 
         self.execute(call, **kwargs)
