@@ -403,7 +403,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
         try:
             # will consume around 60M in total
             with pytest.raises(
-                pytest.fail.Exception,
+                AssertionError,
                 match=rf"Run \#{MemoryLeakTestCase.retries}",
             ):
                 with contextlib.redirect_stdout(
@@ -421,7 +421,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
 
         box = []
         kind = "fd" if POSIX else "handle"
-        with pytest.raises(pytest.fail.Exception, match="unclosed " + kind):
+        with pytest.raises(AssertionError, match="unclosed " + kind):
             self.execute(fun)
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
@@ -448,20 +448,6 @@ class TestMemLeakClass(MemoryLeakTestCase):
             fun, times=times, warmup_times=0, tolerance=200 * 1024 * 1024
         )
         assert len(ls) == times + 1
-
-    def test_execute_w_exc(self):
-        def fun_1():
-            1 / 0  # noqa: B018
-
-        self.execute_w_exc(ZeroDivisionError, fun_1)
-        with pytest.raises(ZeroDivisionError):
-            self.execute_w_exc(OSError, fun_1)
-
-        def fun_2():
-            pass
-
-        with pytest.raises(pytest.fail.Exception):
-            self.execute_w_exc(ZeroDivisionError, fun_2)
 
 
 class TestTestingUtils(PsutilTestCase):
