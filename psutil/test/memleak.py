@@ -208,16 +208,3 @@ class MemoryLeakTestCase(unittest.TestCase):
 
         self._check_fds(fun)
         self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)
-
-    def execute_w_exc(self, exc, fun, **kwargs):
-        """Run execute() expecting fun() to raise exc on every call."""
-
-        def call():
-            try:
-                fun()
-            except exc:
-                pass
-            else:
-                return self.fail(f"{fun} did not raise {exc}")
-
-        self.execute(call, **kwargs)

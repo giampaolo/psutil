@@ -86,6 +86,21 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     proc = thisproc
 
+    def execute_w_exc(self, exc, fun, **kwargs):
+        """Run MemoryLeakTestCase.execute() expecting fun() to raise
+        exc on every call.
+        """
+
+        def call():
+            try:
+                fun()
+            except exc:
+                pass
+            else:
+                return self.fail(f"{fun} did not raise {exc}")
+
+        self.execute(call, **kwargs)
+
     def test_coverage(self):
         ns = process_namespace(None)
         ns.test_class_coverage(self, ns.getters + ns.setters)

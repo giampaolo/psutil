@@ -2295,11 +2295,6 @@ memory-leak detection tests.
 
     Run a full leak test on a callable.
 
-  .. method:: execute_w_exception(exc, fun, times=None, warmup_times=None, retries=None, tolerance=None)
-
-    Run ``execute()`` expecting ``fun()`` to raise exc on every call.
-
-
 Constants
 =========
 
