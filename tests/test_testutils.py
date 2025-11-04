@@ -368,7 +368,6 @@ class TestNetUtils(PsutilTestCase):
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 @pytest.mark.xdist_group(name="serial")
 class TestMemLeakClass(MemoryLeakTestCase):
-    retries = 10 if CI_TESTING else 5
 
     @retry_on_failure()
     def test_times(self):
