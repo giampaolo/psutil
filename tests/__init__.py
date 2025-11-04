@@ -1058,8 +1058,6 @@ class PsutilTestCase(unittest.TestCase):
         # assert proc == ppid(), os.getpid()
 
 
-@pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
-@pytest.mark.xdist_group(name="serial")
 class TestMemoryLeak(PsutilTestCase):
     """Test framework class for detecting function memory leaks,
     typically functions implemented in C which forgot to free() memory
@@ -1073,12 +1071,9 @@ class TestMemoryLeak(PsutilTestCase):
     repetitions each time. If the memory keeps increasing then it's a
     failure.
 
-    If available (Linux, OSX, Windows), USS memory is used for comparison,
-    since it's supposed to be more precise, see:
-    https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
-    If not, RSS memory is used. mallinfo() on Linux and _heapwalk() on
-    Windows may give even more precision, but at the moment are not
-    implemented.
+    We currently check RSS, VMS and USS [1] memory. mallinfo() on Linux
+    and _heapwalk() on Windows should give even more precision [2], but
+    at the moment they are not implemented.
 
     PyPy appears to be completely unstable for this framework, probably
     because of its JIT, so tests on PYPY are skipped.
@@ -1086,9 +1081,11 @@ class TestMemoryLeak(PsutilTestCase):
     Usage:
 
         class TestLeaks(psutil.tests.TestMemoryLeak):
-
             def test_fun(self):
                 self.execute(some_function)
+
+    [1] https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
+    [2] https://github.com/giampaolo/psutil/issues/1275
     """
 
     # Configurable class attrs.
@@ -1097,6 +1094,7 @@ class TestMemoryLeak(PsutilTestCase):
     tolerance = 0  # memory
     retries = 10 if CI_TESTING else 5
     verbose = True
+
     _thisproc = psutil.Process()
     _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG'))
 
@@ -1108,11 +1106,19 @@ class TestMemoryLeak(PsutilTestCase):
     def tearDownClass(cls):
         psutil._set_debug(cls._psutil_debug_orig)
 
+    def _log(self, msg):
+        if self.verbose:
+            print_color(msg, color="yellow", file=sys.stderr)
+
+    # --- getters
+
     def _get_mem(self):
-        # USS is the closest thing we have to "real" memory usage and it
-        # should be less likely to produce false positives.
         mem = self._thisproc.memory_full_info()
-        return getattr(mem, "uss", mem.rss)
+        return {
+            "rss": mem.rss,
+            "vms": mem.vms,
+            "uss": getattr(mem, "uss", 0),
+        }
 
     def _get_num_fds(self):
         if POSIX:
@@ -1120,9 +1126,7 @@ class TestMemoryLeak(PsutilTestCase):
         else:
             return self._thisproc.num_handles()
 
-    def _log(self, msg):
-        if self.verbose:
-            print_color(msg, color="yellow", file=sys.stderr)
+    # --- checkers
 
     def _check_fds(self, fun):
         """Makes sure num_fds() (POSIX) or num_handles() (Windows) does
@@ -1147,8 +1151,8 @@ class TestMemoryLeak(PsutilTestCase):
             return pytest.fail(msg)
 
     def _call_ntimes(self, fun, times):
-        """Get 2 distinct memory samples, before and after having
-        called fun repeatedly, and return the memory difference.
+        """Get memory samples (rss, vms, uss) before and after calling
+        fun repeatedly, and return the diffs as a dict.
         """
         gc.collect(generation=1)
         mem1 = self._get_mem()
@@ -1158,34 +1162,53 @@ class TestMemoryLeak(PsutilTestCase):
         gc.collect(generation=1)
         mem2 = self._get_mem()
         assert gc.garbage == []
-        diff = mem2 - mem1  # can also be negative
-        return diff
+        diffs = {k: mem2[k] - mem1[k] for k in mem1}
+        return diffs
 
     def _check_mem(self, fun, times, retries, tolerance):
         messages = []
-        prev_mem = 0
+        prev_mem = {}
         increase = times
+        b2h = functools.partial(bytes2human, format="%(value)i%(symbol)s")
+
         for idx in range(1, retries + 1):
-            mem = self._call_ntimes(fun, times)
-            msg = "Run #{}: extra-mem={}, per-call={}, calls={}".format(
-                idx,
-                bytes2human(mem),
-                bytes2human(mem / times),
-                times,
-            )
-            messages.append(msg)
-            success = mem <= tolerance or mem <= prev_mem
-            if success:
-                if idx > 1:
-                    self._log(msg)
-                return None
-            else:
+            diffs = self._call_ntimes(fun, times)
+
+            # Filter only metrics with positive diffs (possible leaks).
+            positive_diffs = {k: v for k, v in diffs.items() if v > 0}
+
+            # Build message only for those metrics.
+            if positive_diffs:
+                msg_parts = [
+                    f"{k}=+{b2h(v)}" for k, v in positive_diffs.items()
+                ]
+                msg = "Run #{}: {} (ncalls={}, avg-per-call=+{})".format(
+                    idx,
+                    ", ".join(msg_parts),
+                    times,
+                    b2h(sum(positive_diffs.values()) / times),
+                )
                 if idx == 1:
-                    print()  # noqa: T201
+                    msg = "\n" + msg
+                messages.append(msg)
                 self._log(msg)
-                times += increase
-                prev_mem = mem
-        return pytest.fail(". ".join(messages))
+
+            # Determine if memory stabilized or decreased.
+            success = all(
+                diffs.get(k, 0) <= tolerance
+                or diffs.get(k, 0) <= prev_mem.get(k, 0)
+                for k in diffs
+            )
+            if success:
+                if idx > 1 and positive_diffs:
+                    self._log("Memory stabilized (no further growth detected)")
+                return None
+
+            times += increase
+            prev_mem = diffs
+
+        msg = "\n" + "\n".join(messages)
+        return pytest.fail(msg)
 
     # ---
 
@@ -1202,6 +1225,7 @@ class TestMemoryLeak(PsutilTestCase):
         )
         retries = retries if retries is not None else self.retries
         tolerance = tolerance if tolerance is not None else self.tolerance
+
         try:
             assert times >= 1, "times must be >= 1"
             assert warmup_times >= 0, "warmup_times must be >= 0"
@@ -1211,6 +1235,7 @@ class TestMemoryLeak(PsutilTestCase):
             raise ValueError(str(err))
 
         self._call_ntimes(fun, warmup_times)  # warm up
+
         self._check_fds(fun)
         self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)
 

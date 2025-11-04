@@ -28,6 +28,7 @@ from psutil._common import supports_ipv6
 from . import CI_TESTING
 from . import COVERAGE
 from . import HAS_NET_CONNECTIONS_UNIX
+from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import PsutilTestCase
@@ -364,6 +365,7 @@ class TestNetUtils(PsutilTestCase):
             assert types[socket.SOCK_DGRAM] >= 2
 
 
+@pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 @pytest.mark.xdist_group(name="serial")
 class TestMemLeakClass(TestMemoryLeak):
     @retry_on_failure()
@@ -398,7 +400,9 @@ class TestMemLeakClass(TestMemoryLeak):
 
         try:
             # will consume around 60M in total
-            with pytest.raises(pytest.fail.Exception, match="extra-mem"):
+            with pytest.raises(
+                pytest.fail.Exception, match=rf"Run \#{TestMemoryLeak.retries}"
+            ):
                 with contextlib.redirect_stdout(
                     io.StringIO()
                 ), contextlib.redirect_stderr(io.StringIO()):
