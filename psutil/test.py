@@ -185,13 +185,18 @@ class MemoryLeakTestCase(unittest.TestCase):
         retries = retries if retries is not None else self.retries
         tolerance = tolerance if tolerance is not None else self.tolerance
 
-        try:
-            assert times >= 1, "times must be >= 1"
-            assert warmup_times >= 0, "warmup_times must be >= 0"
-            assert retries >= 0, "retries must be >= 0"
-            assert tolerance >= 0, "tolerance must be >= 0"
-        except AssertionError as err:
-            raise ValueError(str(err)) from err
+        if times < 1:
+            msg = f"times must be >= 1 (got {times})"
+            raise ValueError(msg)
+        if warmup_times < 0:
+            msg = f"warmup_times must be >= 0 (got {warmup_times})"
+            raise ValueError(msg)
+        if retries < 0:
+            msg = f"retries must be >= 0 (got {retries})"
+            raise ValueError(msg)
+        if tolerance < 0:
+            msg = f"tolerance must be >= 0 (got {tolerance})"
+            raise ValueError(msg)
 
         self._call_ntimes(fun, warmup_times)  # warm up
 
