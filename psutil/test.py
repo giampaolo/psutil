@@ -37,6 +37,9 @@ class MemoryLeakTestCase(unittest.TestCase):
     Linux and _heapwalk() on Windows could provide even more precise
     results [2], but these are not yet implemented.
 
+    In addition it also ensures that the target function does not leak
+    file descriptors (UNIX) or handles (Windows).
+
     Usage example:
 
         from psutil.test import MemoryLeakTestCase
@@ -49,11 +52,15 @@ class MemoryLeakTestCase(unittest.TestCase):
     [2] https://github.com/giampaolo/psutil/issues/1275
     """
 
-    # Configurable class attrs.
+    # Number of times to call the tested function in each iteration.
     times = 200
+    # Maximum number of retries if memory growth is detected.
     retries = 5
+    # Number of warm-up calls before measurements begin.
     warmup_times = 10
-    tolerance = 0  # memory
+    # Allowed memory difference (in bytes) before considering it a leak.
+    tolerance = 0
+    # Whether to print detailed progress and diagnostic messages.
     verbose = True
 
     _thisproc = psutil.Process()
@@ -179,7 +186,7 @@ class MemoryLeakTestCase(unittest.TestCase):
     def execute(
         self, fun, times=None, warmup_times=None, retries=None, tolerance=None
     ):
-        """Test a callable."""
+        """Run a full leak test on a callable."""
         times = times if times is not None else self.times
         warmup_times = (
             warmup_times if warmup_times is not None else self.warmup_times
@@ -206,9 +213,7 @@ class MemoryLeakTestCase(unittest.TestCase):
         self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)
 
     def execute_w_exc(self, exc, fun, **kwargs):
-        """Convenience method to test a callable while making sure it
-        raises an exception on every call.
-        """
+        """Run execute() expecting fun() to raise exc on every call."""
 
         def call():
             try:
