@@ -25,7 +25,7 @@ class MemoryLeakTestCase(unittest.TestCase):
     target function.
 
     Detecting memory leaks reliably is inherently difficult (and
-    sometimes impossible) because of how the OS manages memory, garbage
+    probably impossible) because of how the OS manages memory, garbage
     collection, and caching. Memory usage may even decrease between
     runs. So this is not meant to be bullet proof. To reduce false
     positives, when an increase in memory is detected (mem > 0), the
@@ -51,9 +51,9 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     # Configurable class attrs.
     times = 200
+    retries = 5
     warmup_times = 10
     tolerance = 0  # memory
-    retries = 10
     verbose = True
 
     _thisproc = psutil.Process()
