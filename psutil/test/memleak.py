@@ -9,12 +9,9 @@ import sys
 import unittest
 
 import psutil
-
-from ._common import POSIX
-from ._common import bytes2human
-from ._common import print_color
-
-__all__ = ["MemoryLeakTestCase"]
+from psutil._common import POSIX
+from psutil._common import bytes2human
+from psutil._common import print_color
 
 
 class MemoryLeakTestCase(unittest.TestCase):
