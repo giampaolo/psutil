@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Test framework for detecting memory leaks in C functions."""
+
 import functools
 import gc
 import os
@@ -46,6 +48,9 @@ class MemoryLeakTestCase(unittest.TestCase):
         class TestLeaks(MemoryLeakTestCase):
             def test_fun(self):
                 self.execute(some_function)
+
+    NOTE - This class is experimental, meaning its API or internal
+    algorithm may change in the future.
 
     [1] https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
     [2] https://github.com/giampaolo/psutil/issues/1275

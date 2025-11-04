@@ -417,7 +417,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
         def fun():
             f = open(__file__)  # noqa: SIM115
             self.addCleanup(f.close)
-            box.append(f)
+            box.append(f)  # prevent auto-gc
 
         box = []
         kind = "fd" if POSIX else "handle"
