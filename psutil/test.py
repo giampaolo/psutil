@@ -19,23 +19,23 @@ __all__ = ["MemoryLeakTestCase"]
 
 class MemoryLeakTestCase(unittest.TestCase):
     """A testing framework for detecting memory leaks in functions,
-    typically those implemented in C that forget to free() heap memory,
-    call Py_DECREF on Python objects, and so on. It works by comparing
-    the process's memory usage before and after repeatedly calling the
-    target function.
+    typically those implemented in C that forget to `free()` heap
+    memory, call `Py_DECREF` on Python objects, and so on. It works by
+    comparing the process's memory usage before and after repeatedly
+    calling the target function.
 
     Detecting memory leaks reliably is inherently difficult (and
     probably impossible) because of how the OS manages memory, garbage
     collection, and caching. Memory usage may even decrease between
     runs. So this is not meant to be bullet proof. To reduce false
     positives, when an increase in memory is detected (mem > 0), the
-    test is retried up to five times, increasing the number of function
+    test is retried up to 5 times, increasing the number of function
     calls each time. If memory continues to grow, the test is
     considered a failure.
 
-    The test currently monitors RSS, VMS, and USS [1]. mallinfo() on
-    Linux and _heapwalk() on Windows could provide even more precise
-    results [2], but these are not yet implemented.
+    The test currently monitors RSS, VMS, and USS [1] memory.
+    `mallinfo()` on Linux and `_heapwalk()` on Windows could provide
+    even more precise results [2], but these are not yet implemented.
 
     In addition it also ensures that the target function does not leak
     file descriptors (UNIX) or handles (Windows).

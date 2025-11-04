@@ -2222,6 +2222,84 @@ Example code:
    'status': 'stopped',
    'username': 'NT AUTHORITY\\LocalService'}
 
+Testing utilities
+=================
+
+The ``psutil.test`` subpackage includes a helper class to assist in writing
+memory-leak detection tests.
+
+.. class:: psutil.test.MemoryLeakTestCase
+
+  A testing framework for detecting memory leaks in functions, typically those
+  implemented in C that forget to ``free()`` heap memory, call ``Py_DECREF`` on
+  Python objects, and so on. It works by comparing the process's memory usage
+  before and after repeatedly calling the target function.
+
+  Detecting memory leaks reliably is inherently difficult (and probably
+  impossible) because of how the OS manages memory, garbage collection, and
+  caching. Memory usage may even decrease between runs. So this is not meant to
+  be bullet proof. To reduce false positives, when an increase in memory is
+  detected (mem > 0), the test is retried up to 5 times, increasing the
+  number of function calls each time. If memory continues to grow, the test is
+  considered a failure.
+  The test currently monitors RSS, VMS, and `USS <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__ memory.
+  ``mallinfo()`` on Linux and ``_heapwalk()`` on Windows could provide
+  even more precise results (see `issue 1275 <https://github.com/giampaolo/psutil/issues/1275>`__),
+  but these are not yet implemented.
+
+  In addition it also ensures that the target function does not leak
+  file descriptors (UNIX) or handles (Windows).
+
+  .. versionadded:: 7.2.0
+
+  .. warning::
+    This class is experimental, meaning its API may change in the future.
+
+  Usage example::
+
+    from psutil.test import MemoryLeakTestCase
+
+    class TestLeaks(MemoryLeakTestCase):
+        def test_fun(self):
+            self.execute(some_function)
+
+  Class attributes and methods:
+
+  .. attribute:: times
+    :value: 200
+
+    Number of times to call the tested function in each iteration.
+
+  .. attribute:: retries
+    :value: 5
+
+    Maximum number of retries if memory growth is detected.
+
+  .. attribute:: warmup_times
+    :value: 10
+
+    Number of warm-up calls before measurements begin.
+
+  .. attribute:: tolerance
+    :value: 0
+
+
+    Allowed memory difference (in bytes) before considering it a leak.
+
+  .. attribute:: verbose
+    :value: True
+
+    Whether to print detailed progress and diagnostic messages.
+
+  .. method:: execute(fun, times=None, warmup_times=None, retries=None, tolerance=None)
+
+    Run a full leak test on a callable.
+
+  .. method:: execute_w_exception(exc, fun, times=None, warmup_times=None, retries=None, tolerance=None)
+
+    Run ``execute()`` expecting ``fun()`` to raise exc on every call.
+
+
 Constants
 =========
 
