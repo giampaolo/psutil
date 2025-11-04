@@ -181,7 +181,13 @@ class MemoryLeakTestCase(unittest.TestCase):
         return fun()
 
     def execute(
-        self, fun, times=None, warmup_times=None, retries=None, tolerance=None
+        self,
+        fun,
+        *,
+        times=None,
+        warmup_times=None,
+        retries=None,
+        tolerance=None,
     ):
         """Run a full leak test on a callable."""
         times = times if times is not None else self.times

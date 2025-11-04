@@ -2290,7 +2290,7 @@ memory-leak detection tests.
 
     Whether to print detailed progress and diagnostic messages.
 
-  .. method:: execute(fun, times=None, warmup_times=None, retries=None, tolerance=None)
+  .. method:: execute(fun, *, times=None, warmup_times=None, retries=None, tolerance=None)
 
     Run a full leak test on a callable.
 
