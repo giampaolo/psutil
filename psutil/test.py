@@ -39,7 +39,9 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     Usage:
 
-        class TestLeaks(psutil.tests.MemoryLeakTestCase):
+        import psutil.test import MemoryLeakTestCase
+
+        class TestLeaks(MemoryLeakTestCase):
             def test_fun(self):
                 self.execute(some_function)
 
