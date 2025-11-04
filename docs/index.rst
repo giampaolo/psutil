@@ -2294,7 +2294,8 @@ memory-leak detection tests.
 
   .. method:: execute(fun, *, times=None, warmup_times=None, retries=None, tolerance=None)
 
-    Run a full leak test on a callable.
+    Run a full leak test on a callable. If specified, the optional arguments
+    override the class attributes with the same name.
 
 Constants
 =========

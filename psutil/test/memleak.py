@@ -191,7 +191,10 @@ class MemoryLeakTestCase(unittest.TestCase):
         retries=None,
         tolerance=None,
     ):
-        """Run a full leak test on a callable."""
+        """Run a full leak test on a callable. If specified, the
+        optional arguments override the class attributes with the same
+        name.
+        """
         times = times if times is not None else self.times
         warmup_times = (
             warmup_times if warmup_times is not None else self.warmup_times
