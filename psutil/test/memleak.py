@@ -13,6 +13,8 @@ from psutil._common import POSIX
 from psutil._common import bytes2human
 from psutil._common import print_color
 
+thisproc = psutil.Process()
+
 
 class MemoryLeakTestCase(unittest.TestCase):
     """A testing framework for detecting memory leaks in functions,
@@ -60,11 +62,9 @@ class MemoryLeakTestCase(unittest.TestCase):
     # Whether to print detailed progress and diagnostic messages.
     verbose = True
 
-    _thisproc = psutil.Process()
-    _psutil_debug_orig = bool(os.getenv('PSUTIL_DEBUG'))
-
     @classmethod
     def setUpClass(cls):
+        cls._psutil_debug_orig = bool(os.getenv("PSUTIL_DEBUG"))
         psutil._set_debug(False)  # avoid spamming to stderr
 
     @classmethod
@@ -78,7 +78,7 @@ class MemoryLeakTestCase(unittest.TestCase):
     # --- getters
 
     def _get_mem(self):
-        mem = self._thisproc.memory_full_info()
+        mem = thisproc.memory_full_info()
         return {
             "rss": mem.rss,
             "vms": mem.vms,
@@ -87,9 +87,9 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _get_num_fds(self):
         if POSIX:
-            return self._thisproc.num_fds()
+            return thisproc.num_fds()
         else:
-            return self._thisproc.num_handles()
+            return thisproc.num_handles()
 
     # --- checkers
 
