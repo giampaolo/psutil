@@ -24,6 +24,7 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil.test import MemoryLeakTestCase
 
 from . import AARCH64
 from . import HAS_CPU_AFFINITY
@@ -38,7 +39,6 @@ from . import HAS_RLIMIT
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
-from . import TestMemoryLeak
 from . import create_sockets
 from . import get_testfn
 from . import process_namespace
@@ -81,7 +81,7 @@ def fewtimes_if_linux():
 # ===================================================================
 
 
-class TestProcessObjectLeaks(TestMemoryLeak):
+class TestProcessObjectLeaks(MemoryLeakTestCase):
     """Test leaks of Process class methods."""
 
     proc = thisproc
@@ -317,7 +317,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-class TestProcessDualImplementation(TestMemoryLeak):
+class TestProcessDualImplementation(MemoryLeakTestCase):
     def test_cmdline_peb_true(self):
         self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
 
@@ -330,7 +330,7 @@ class TestProcessDualImplementation(TestMemoryLeak):
 # ===================================================================
 
 
-class TestModuleFunctionsLeaks(TestMemoryLeak):
+class TestModuleFunctionsLeaks(MemoryLeakTestCase):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):

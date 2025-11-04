@@ -24,6 +24,7 @@ from psutil import POSIX
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
+from psutil.test import MemoryLeakTestCase
 
 from . import CI_TESTING
 from . import COVERAGE
@@ -32,7 +33,6 @@ from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import PsutilTestCase
-from . import TestMemoryLeak
 from . import bind_socket
 from . import bind_unix_socket
 from . import call_until
@@ -367,7 +367,9 @@ class TestNetUtils(PsutilTestCase):
 
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 @pytest.mark.xdist_group(name="serial")
-class TestMemLeakClass(TestMemoryLeak):
+class TestMemLeakClass(MemoryLeakTestCase):
+    retries = 10 if CI_TESTING else 5
+
     @retry_on_failure()
     def test_times(self):
         def fun():
@@ -401,7 +403,8 @@ class TestMemLeakClass(TestMemoryLeak):
         try:
             # will consume around 60M in total
             with pytest.raises(
-                pytest.fail.Exception, match=rf"Run \#{TestMemoryLeak.retries}"
+                pytest.fail.Exception,
+                match=rf"Run \#{MemoryLeakTestCase.retries}",
             ):
                 with contextlib.redirect_stdout(
                     io.StringIO()
