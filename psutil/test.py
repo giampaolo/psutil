@@ -16,6 +16,8 @@ from ._common import POSIX
 from ._common import bytes2human
 from ._common import print_color
 
+__all__ = ["MemoryLeakTestCase"]
+
 
 class MemoryLeakTestCase(unittest.TestCase):
     """Test framework class for detecting function memory leaks,
