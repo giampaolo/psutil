@@ -59,8 +59,8 @@ class MemoryLeakTestCase(unittest.TestCase):
     warmup_times = 10
     # Allowed memory difference (in bytes) before considering it a leak.
     tolerance = 0
-    # Whether to print detailed progress and diagnostic messages.
-    verbose = True
+    # 0 = no messages; 1 = print diagnostics when memory increases.
+    verbosity = 1
 
     @classmethod
     def setUpClass(cls):
@@ -71,8 +71,8 @@ class MemoryLeakTestCase(unittest.TestCase):
     def tearDownClass(cls):
         psutil._set_debug(cls._psutil_debug_orig)
 
-    def _log(self, msg):
-        if self.verbose:
+    def _log(self, msg, level):
+        if level <= self.verbosity:
             print_color(msg, color="yellow", file=sys.stderr)
 
     # --- getters
@@ -156,7 +156,7 @@ class MemoryLeakTestCase(unittest.TestCase):
                 if idx == 1:
                     msg = "\n" + msg
                 messages.append(msg)
-                self._log(msg)
+                self._log(msg, 1)
 
             # Determine if memory stabilized or decreased.
             success = all(
@@ -166,7 +166,9 @@ class MemoryLeakTestCase(unittest.TestCase):
             )
             if success:
                 if idx > 1 and positive_diffs:
-                    self._log("Memory stabilized (no further growth detected)")
+                    self._log(
+                        "Memory stabilized (no further growth detected)", 1
+                    )
                 return None
 
             times += increase

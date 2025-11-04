@@ -2285,10 +2285,11 @@ memory-leak detection tests.
 
     Allowed memory difference (in bytes) before considering it a leak.
 
-  .. attribute:: verbose
-    :value: True
+  .. attribute:: verbosity
+    :value: 1
 
-    Whether to print detailed progress and diagnostic messages.
+    0 = no messages; 1 = print diagnostics when memory increases during the
+    test run.
 
   .. method:: execute(fun, *, times=None, warmup_times=None, retries=None, tolerance=None)
 
