@@ -21,6 +21,7 @@ import tests
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
+from psutil import WINDOWS
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
@@ -421,6 +422,20 @@ class TestMemLeakClass(MemoryLeakTestCase):
         box = []
         kind = "fd" if POSIX else "handle"
         with pytest.raises(pytest.fail.Exception, match="unclosed " + kind):
+            self.execute(fun)
+
+    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+    def test_unclosed_handles(self):
+        import win32api
+        import win32con
+
+        def fun():
+            handle = win32api.OpenProcess(
+                win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
+            )
+            self.addCleanup(win32api.CloseHandle, handle)
+
+        with pytest.raises(AssertionError, match="unclosed handle"):
             self.execute(fun)
 
     def test_tolerance(self):
