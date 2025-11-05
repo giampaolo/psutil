@@ -157,8 +157,11 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
             self.execute(lambda: self.proc.ionice(value))
         else:
             self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
-            fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
-            self.execute_w_exc(OSError, fun)
+
+    @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    def test_ionice_set_badarg(self):
+        fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
+        self.execute_w_exc(OSError, fun)
 
     @pytest.mark.skipif(not HAS_PROC_IO_COUNTERS, reason="not supported")
     @fewtimes_if_linux()
@@ -236,6 +239,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     def test_cpu_affinity_set(self):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
+
+    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
+    def test_cpu_affinity_set_badarg(self):
         self.execute_w_exc(ValueError, lambda: self.proc.cpu_affinity([-1]))
 
     @fewtimes_if_linux()
@@ -258,6 +264,10 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE, limit))
+
+    @pytest.mark.skipif(not LINUX, reason="LINUX only")
+    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
+    def test_rlimit_set_badarg(self):
         self.execute_w_exc((OSError, ValueError), lambda: self.proc.rlimit(-1))
 
     @fewtimes_if_linux()
