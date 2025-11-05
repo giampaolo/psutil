@@ -83,7 +83,7 @@ class MemoryLeakTestCase(unittest.TestCase):
     def _malloc_release(self):
         """Release unused memory held by the allocator back to the OS."""
         if hasattr(psutil._psplatform, "malloc_release"):
-            # Linux
+            # Linux, FreeBSD
             psutil._psplatform.malloc_release()
 
     # --- getters
