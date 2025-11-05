@@ -64,6 +64,7 @@ include psutil/arch/freebsd/cpu.c
 include psutil/arch/freebsd/disk.c
 include psutil/arch/freebsd/init.h
 include psutil/arch/freebsd/mem.c
+include psutil/arch/freebsd/memalloc.c
 include psutil/arch/freebsd/pids.c
 include psutil/arch/freebsd/proc.c
 include psutil/arch/freebsd/proc_socks.c
