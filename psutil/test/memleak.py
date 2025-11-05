@@ -80,6 +80,12 @@ class MemoryLeakTestCase(unittest.TestCase):
         if level <= self.verbosity:
             print_color(msg, color="yellow", file=sys.stderr)
 
+    def _malloc_release(self):
+        """Release unused memory held by the allocator back to the OS."""
+        if hasattr(psutil._psplatform, "malloc_release"):
+            # Linux
+            psutil._psplatform.malloc_release()
+
     # --- getters
 
     def _get_mem(self):
@@ -125,6 +131,9 @@ class MemoryLeakTestCase(unittest.TestCase):
         fun repeatedly, and return the diffs as a dict.
         """
         gc.collect(generation=1)
+
+        self._malloc_release()
+
         mem1 = self._get_mem()
         for x in range(times):
             ret = self.call(fun)
