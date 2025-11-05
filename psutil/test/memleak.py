@@ -136,50 +136,44 @@ class MemoryLeakTestCase(unittest.TestCase):
         return diffs
 
     def _check_mem(self, fun, times, retries, tolerance):
+        prev = {}
         messages = []
-        prev_mem = {}
-        increase = times
         b2h = functools.partial(bytes2human, format="%(value)i%(symbol)s")
 
         for idx in range(1, retries + 1):
             diffs = self._call_ntimes(fun, times)
+            leaks = {k: v for k, v in diffs.items() if v > 0}
 
-            # Filter only metrics with positive diffs (possible leaks).
-            positive_diffs = {k: v for k, v in diffs.items() if v > 0}
-
-            # Build message only for those metrics.
-            if positive_diffs:
-                msg_parts = [
-                    f"{k}=+{b2h(v)}" for k, v in positive_diffs.items()
-                ]
-                msg = "Run #{}: {} (ncalls={}, avg-per-call=+{})".format(
-                    idx,
-                    ", ".join(msg_parts),
-                    times,
-                    b2h(sum(positive_diffs.values()) / times),
+            if leaks:
+                parts = [f"{k}=+{b2h(v)}" for k, v in leaks.items()]
+                avg = b2h(sum(leaks.values()) / times)
+                msg = (
+                    f"Run #{idx}: {', '.join(parts)} "
+                    f"(ncalls={times}, avg-per-call=+{avg})"
                 )
                 if idx == 1:
                     msg = "\n" + msg
                 messages.append(msg)
                 self._log(msg, 1)
 
-            # Determine if memory stabilized or decreased.
-            success = all(
+            stable = all(
                 diffs.get(k, 0) <= tolerance
-                or diffs.get(k, 0) <= prev_mem.get(k, 0)
+                or diffs.get(k, 0) <= prev.get(k, 0)
                 for k in diffs
             )
-            if success:
-                if idx > 1 and positive_diffs:
+            if stable:
+                if idx > 1 and leaks:
                     self._log(
                         "Memory stabilized (no further growth detected)", 1
                     )
-                return None
+                return
 
-            times += increase
-            prev_mem = diffs
+            prev = diffs
+            times += times  # double calls each retry
 
-        msg = "\n" + "\n".join(messages)
+        msg = f"Memory kept increasing after {retries} runs." + "\n".join(
+            messages
+        )
         return self.fail(msg)
 
     # ---
