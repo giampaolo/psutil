@@ -21,9 +21,11 @@ import tests
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
+from psutil import WINDOWS
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
+from psutil.test import MemoryLeakTestCase
 
 from . import CI_TESTING
 from . import COVERAGE
@@ -32,7 +34,6 @@ from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import PsutilTestCase
-from . import TestMemoryLeak
 from . import bind_socket
 from . import bind_unix_socket
 from . import call_until
@@ -367,7 +368,8 @@ class TestNetUtils(PsutilTestCase):
 
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 @pytest.mark.xdist_group(name="serial")
-class TestMemLeakClass(TestMemoryLeak):
+class TestMemLeakClass(MemoryLeakTestCase):
+
     @retry_on_failure()
     def test_times(self):
         def fun():
@@ -401,7 +403,8 @@ class TestMemLeakClass(TestMemoryLeak):
         try:
             # will consume around 60M in total
             with pytest.raises(
-                pytest.fail.Exception, match=rf"Run \#{TestMemoryLeak.retries}"
+                AssertionError,
+                match=rf"Run \#{MemoryLeakTestCase.retries}",
             ):
                 with contextlib.redirect_stdout(
                     io.StringIO()
@@ -414,11 +417,25 @@ class TestMemLeakClass(TestMemoryLeak):
         def fun():
             f = open(__file__)  # noqa: SIM115
             self.addCleanup(f.close)
-            box.append(f)
+            box.append(f)  # prevent auto-gc
 
         box = []
         kind = "fd" if POSIX else "handle"
-        with pytest.raises(pytest.fail.Exception, match="unclosed " + kind):
+        with pytest.raises(AssertionError, match="unclosed " + kind):
+            self.execute(fun)
+
+    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+    def test_unclosed_handles(self):
+        import win32api
+        import win32con
+
+        def fun():
+            handle = win32api.OpenProcess(
+                win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
+            )
+            self.addCleanup(win32api.CloseHandle, handle)
+
+        with pytest.raises(AssertionError, match="unclosed handle"):
             self.execute(fun)
 
     def test_tolerance(self):
@@ -431,20 +448,6 @@ class TestMemLeakClass(TestMemoryLeak):
             fun, times=times, warmup_times=0, tolerance=200 * 1024 * 1024
         )
         assert len(ls) == times + 1
-
-    def test_execute_w_exc(self):
-        def fun_1():
-            1 / 0  # noqa: B018
-
-        self.execute_w_exc(ZeroDivisionError, fun_1)
-        with pytest.raises(ZeroDivisionError):
-            self.execute_w_exc(OSError, fun_1)
-
-        def fun_2():
-            pass
-
-        with pytest.raises(pytest.fail.Exception):
-            self.execute_w_exc(ZeroDivisionError, fun_2)
 
 
 class TestTestingUtils(PsutilTestCase):

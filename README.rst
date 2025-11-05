@@ -454,6 +454,17 @@ Further process APIs
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
     >>>
 
+Detecting memory leaks in C functions
+-------------------------------------
+
+.. code-block:: python
+
+    from psutil.test import MemoryLeakTestCase
+
+    class TestLeaks(MemoryLeakTestCase):
+        def test_fun(self):
+            self.execute(some_function)
+
 Windows services
 ----------------
 

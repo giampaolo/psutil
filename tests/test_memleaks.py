@@ -24,8 +24,10 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil.test import MemoryLeakTestCase
 
 from . import AARCH64
+from . import CI_TESTING
 from . import HAS_CPU_AFFINITY
 from . import HAS_CPU_FREQ
 from . import HAS_ENVIRON
@@ -38,7 +40,6 @@ from . import HAS_RLIMIT
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
-from . import TestMemoryLeak
 from . import create_sockets
 from . import get_testfn
 from . import process_namespace
@@ -50,6 +51,9 @@ from . import terminate
 
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
+if CI_TESTING:
+    MemoryLeakTestCase.retries *= 2
+
 FEW_TIMES = 5
 
 
@@ -81,10 +85,25 @@ def fewtimes_if_linux():
 # ===================================================================
 
 
-class TestProcessObjectLeaks(TestMemoryLeak):
+class TestProcessObjectLeaks(MemoryLeakTestCase):
     """Test leaks of Process class methods."""
 
     proc = thisproc
+
+    def execute_w_exc(self, exc, fun, **kwargs):
+        """Run MemoryLeakTestCase.execute() expecting fun() to raise
+        exc on every call.
+        """
+
+        def call():
+            try:
+                fun()
+            except exc:
+                pass
+            else:
+                return self.fail(f"{fun} did not raise {exc}")
+
+        self.execute(call, **kwargs)
 
     def test_coverage(self):
         ns = process_namespace(None)
@@ -317,7 +336,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
 
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-class TestProcessDualImplementation(TestMemoryLeak):
+class TestProcessDualImplementation(MemoryLeakTestCase):
     def test_cmdline_peb_true(self):
         self.execute(lambda: cext.proc_cmdline(os.getpid(), use_peb=True))
 
@@ -330,7 +349,7 @@ class TestProcessDualImplementation(TestMemoryLeak):
 # ===================================================================
 
 
-class TestModuleFunctionsLeaks(TestMemoryLeak):
+class TestModuleFunctionsLeaks(MemoryLeakTestCase):
     """Test leaks of psutil module functions."""
 
     def test_coverage(self):
