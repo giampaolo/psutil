@@ -6,6 +6,7 @@
 
 #include <Python.h>
 #include <malloc/malloc.h>
+#include <mach/mach_init.h>
 
 #include "../../arch/all/init.h"
 
@@ -37,12 +38,31 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 }
 
 
+// Release unused memory from the default malloc zone back to the OS.
 PyObject *
 psutil_malloc_trim(PyObject *self, PyObject *args) {
-    malloc_zone_t *zone = malloc_default_zone();
+    vm_address_t *zones = NULL;
+    unsigned int count = 0;
+    kern_return_t kr;
 
-    if (!zone)
-        return psutil_runtime_error("malloc_default_zone() failed");
-    malloc_zone_pressure_relief(zone, 0);  // 0 = release all possible
+    // Get list of all malloc zones
+    kr = malloc_get_all_zones(mach_task_self(), NULL, &zones, &count);
+    if (kr != KERN_SUCCESS || count == 0 || zones == NULL) {
+        // Fallback: try default zone only
+        malloc_zone_t *default_zone = malloc_default_zone();
+        if (default_zone) {
+            malloc_zone_pressure_relief(default_zone, 0);
+        }
+    }
+    else {
+        // Trim each zone
+        for (unsigned int i = 0; i < count; i++) {
+            malloc_zone_t *zone = (malloc_zone_t *)zones[i];
+            if (zone) {
+                malloc_zone_pressure_relief(zone, 0);
+            }
+        }
+    }
+
     Py_RETURN_NONE;
 }
