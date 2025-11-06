@@ -14,9 +14,6 @@
 
 #include "../../arch/all/init.h"
 
-#define _STRINGIFY(x) #x
-#define STRINGIFY(x) _STRINGIFY(x)
-
 
 // Return low-level heap statistics from the C allocator. Return
 // jemalloc heap stats via `mallctl()`. Mimics Linux `mallinfo2()`:
@@ -66,16 +63,19 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 // More effective than Linux `malloc_trim(0)`.
 PyObject *
 psutil_malloc_trim(PyObject *self, PyObject *args) {
+    char cmd[64];
     int ret;
 
-#ifdef MALLCTL_ARENAS_ALL  // FreeBSD
-    ret = mallctl(
-        "arena." STRINGIFY(MALLCTL_ARENAS_ALL) ".purge", NULL, NULL, NULL, 0
-    );
+#ifdef MALLCTL_ARENAS_ALL
+    // FreeBSD. MALLCTL_ARENAS_ALL is a magic number (4096) which means "all
+    // arenas".
+    str_format(cmd, sizeof(cmd), "arena.%u.purge", MALLCTL_ARENAS_ALL);
+
+    ret = mallctl(cmd, NULL, NULL, NULL, 0);
     if (ret != 0)
         return psutil_oserror();
 #else
-    char cmd[64];
+    // NetBSD: iterate over all arenas.
     unsigned narenas;
     size_t sz = sizeof(narenas);
 
@@ -84,7 +84,7 @@ psutil_malloc_trim(PyObject *self, PyObject *args) {
         return psutil_oserror_wsyscall("mallctl('arenas.narenas')");
 
     for (unsigned i = 0; i < narenas; i++) {
-        snprintf(cmd, sizeof(cmd), "arena.%u.purge", i);
+        str_format(cmd, sizeof(cmd), "arena.%u.purge", i);
         ret = mallctl(cmd, NULL, NULL, NULL, 0);
         if (ret != 0)
             return psutil_oserror_wsyscall("mallctl('arena.{n}.purge')");
