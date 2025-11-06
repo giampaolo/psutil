@@ -63,14 +63,13 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 // More effective than Linux `malloc_trim(0)`.
 PyObject *
 psutil_malloc_trim(PyObject *self, PyObject *args) {
-    char cmd[64];
+    char cmd[32];
     int ret;
 
 #ifdef MALLCTL_ARENAS_ALL
     // FreeBSD. MALLCTL_ARENAS_ALL is a magic number (4096) which means "all
     // arenas".
     str_format(cmd, sizeof(cmd), "arena.%u.purge", MALLCTL_ARENAS_ALL);
-
     ret = mallctl(cmd, NULL, NULL, NULL, 0);
     if (ret != 0)
         return psutil_oserror();
