@@ -546,14 +546,15 @@ def swap_memory():
 # =====================================================================
 
 
-def malloc_info():
-    """Release unused memory held by the allocator back to the OS."""
-    return pmallinfo(*cext.malloc_info())
+if hasattr(cext, "malloc_info"):  # not available on musl / alpine linux
 
+    def malloc_info():
+        """Return low-level heap statistics from the C allocator (glibc)."""
+        return pmallinfo(*cext.malloc_info())
 
-def malloc_release():
-    """Release unused memory held by the allocator back to the OS."""
-    return cext.malloc_release()
+    def malloc_release():
+        """Release unused memory held by the allocator back to the OS."""
+        return cext.malloc_release()
 
 
 # =====================================================================
