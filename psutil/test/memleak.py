@@ -16,6 +16,20 @@ from psutil._common import bytes2human
 from psutil._common import print_color
 
 thisproc = psutil.Process()
+b2h = functools.partial(bytes2human, format="%(value)i%(symbol)s")
+
+
+def format_run_line(idx, diffs, times):
+    parts = [f"{k}={'+' + b2h(v):<6}" for k, v in diffs.items() if v > 0]
+    metrics = " | ".join(parts)
+    avg = "0B"
+    if parts:
+        first_key = next(k for k, v in diffs.items() if v > 0)
+        avg = b2h(diffs[first_key] // times)
+    s = f"Run #{idx:>2}: {metrics:<50} (calls={times:>5}, avg/call=+{avg})"
+    if idx == 1:
+        s = "\n" + s
+    return s
 
 
 class MemoryLeakTestCase(unittest.TestCase):
@@ -138,23 +152,15 @@ class MemoryLeakTestCase(unittest.TestCase):
     def _check_mem(self, fun, times, retries, tolerance):
         prev = {}
         messages = []
-        b2h = functools.partial(bytes2human, format="%(value)i%(symbol)s")
 
         for idx in range(1, retries + 1):
             diffs = self._call_ntimes(fun, times)
             leaks = {k: v for k, v in diffs.items() if v > 0}
 
             if leaks:
-                parts = [f"{k}=+{b2h(v)}" for k, v in leaks.items()]
-                avg = b2h(sum(leaks.values()) / times)
-                msg = (
-                    f"Run #{idx}: {', '.join(parts)} "
-                    f"(ncalls={times}, avg-per-call=+{avg})"
-                )
-                if idx == 1:
-                    msg = "\n" + msg
-                messages.append(msg)
-                self._log(msg, 1)
+                line = format_run_line(idx, leaks, times)
+                messages.append(line)
+                self._log(line, 1)
 
             stable = all(
                 diffs.get(k, 0) <= tolerance
