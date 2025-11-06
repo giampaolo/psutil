@@ -393,7 +393,7 @@ elif NETBSD:
             + glob.glob("psutil/arch/netbsd/*.c")
         ),
         define_macros=macros,
-        libraries=["kvm"],
+        libraries=["kvm", "jemalloc"],
         # fmt: off
         # python 2.7 compatibility requires no comma
         **py_limited_api

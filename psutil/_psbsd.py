@@ -159,14 +159,14 @@ if FREEBSD:
                                      'read_bytes', 'write_bytes',
                                      'read_time', 'write_time',
                                      'busy_time'])
-    pmallinfo = namedtuple('pmallinfo', [
-        'heap_used',
-        'mmap_used',
-        'heap_total',
-    ])
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
+pmallinfo = namedtuple('pmallinfo', [
+    'heap_used',
+    'mmap_used',
+    'heap_total',
+])
 # fmt: on
 
 
@@ -234,15 +234,14 @@ def swap_memory():
 # =====================================================================
 
 
-if FREEBSD:
+def malloc_info():
+    """Return low-level heap statistics from the C allocator (glibc)."""
+    return pmallinfo(*cext.malloc_info())
 
-    def malloc_info():
-        """Return low-level heap statistics from the C allocator (glibc)."""
-        return pmallinfo(*cext.malloc_info())
 
-    def malloc_trim():
-        """Release unused memory held by the allocator back to the OS."""
-        return cext.malloc_trim()
+def malloc_trim():
+    """Release unused memory held by the allocator back to the OS."""
+    return cext.malloc_trim()
 
 
 # =====================================================================

@@ -6,7 +6,11 @@
 
 #include <Python.h>
 #include <stdlib.h>
+#if defined(PSUTIL_FREEBSD)
 #include <malloc_np.h>
+#else
+#include <malloc.h>
+#endif
 
 #include "../../arch/all/init.h"
 
