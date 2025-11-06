@@ -552,9 +552,9 @@ if hasattr(cext, "malloc_info"):  # not available on musl / alpine linux
         """Return low-level heap statistics from the C allocator (glibc)."""
         return pmallinfo(*cext.malloc_info())
 
-    def malloc_release():
+    def malloc_trim():
         """Release unused memory held by the allocator back to the OS."""
-        return cext.malloc_release()
+        return cext.malloc_trim()
 
 
 # =====================================================================

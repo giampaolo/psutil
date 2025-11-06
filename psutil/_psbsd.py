@@ -229,9 +229,9 @@ def swap_memory():
 # =====================================================================
 
 
-def malloc_release():
+def malloc_trim():
     """Release unused memory held by the allocator back to the OS."""
-    return cext.malloc_release()
+    return cext.malloc_trim()
 
 
 # =====================================================================

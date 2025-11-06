@@ -28,8 +28,8 @@ PyObject *psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args);
 
 // Does not exist on musl / alpine linux.
 #if defined(__GLIBC__)
-#define PSUTIL_HAS_MALLOC_RELEASE
+#define PSUTIL_HAS_malloc_trim
 #define PSUTIL_HAS_MALLOC_INFO
-PyObject *psutil_malloc_release(PyObject *self, PyObject *args);
+PyObject *psutil_malloc_trim(PyObject *self, PyObject *args);
 PyObject *psutil_malloc_info(PyObject *self, PyObject *args);
 #endif

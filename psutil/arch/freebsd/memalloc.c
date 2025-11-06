@@ -16,7 +16,7 @@
 
 // Purges unused pages.
 PyObject *
-psutil_malloc_release(PyObject *self, PyObject *args) {
+psutil_malloc_trim(PyObject *self, PyObject *args) {
     int ret = mallctl(
         "arena." STRINGIFY(MALLCTL_ARENAS_ALL) ".purge", NULL, NULL, NULL, 0
     );
