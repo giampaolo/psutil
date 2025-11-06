@@ -15,6 +15,7 @@ PyObject *psutil_cpu_stats(PyObject *self, PyObject *args);
 PyObject *psutil_cpu_topology(PyObject *self, PyObject *args);
 PyObject *psutil_disk_io_counters(PyObject *self, PyObject *args);
 PyObject *psutil_malloc_trim(PyObject *self, PyObject *args);
+PyObject *psutil_malloc_info(PyObject *self, PyObject *args);
 PyObject *psutil_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_per_cpu_times(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);

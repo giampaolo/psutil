@@ -11,6 +11,8 @@
 #include "../../arch/all/init.h"
 
 
+// psutil_malloc_info() -> (heap_used, mmap_used, heap_total)
+// Return low-level heap statistics from the C allocator (glibc).
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     void *handle;

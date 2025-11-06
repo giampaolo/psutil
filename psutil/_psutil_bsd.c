@@ -73,6 +73,7 @@ static PyMethodDef mod_methods[] = {
     {"pids", psutil_pids, METH_VARARGS},
     {"swap_mem", psutil_swap_mem, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD)
+    {"malloc_info", psutil_malloc_info, METH_VARARGS},
     {"malloc_trim", psutil_malloc_trim, METH_VARARGS},
 #endif
 #if defined(PSUTIL_OPENBSD)
