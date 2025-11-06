@@ -6,7 +6,8 @@
 
 #include <Python.h>
 #include <malloc/malloc.h>
-#include <mach/mach_init.h>
+#include <mach/mach.h>
+#include <mach/vm_map.h>
 
 #include "../../arch/all/init.h"
 
@@ -53,14 +54,14 @@ psutil_malloc_trim(PyObject *self, PyObject *args) {
         if (default_zone) {
             malloc_zone_pressure_relief(default_zone, 0);
         }
+        Py_RETURN_NONE;
     }
-    else {
-        // Trim each zone
-        for (unsigned int i = 0; i < count; i++) {
-            malloc_zone_t *zone = (malloc_zone_t *)zones[i];
-            if (zone) {
-                malloc_zone_pressure_relief(zone, 0);
-            }
+
+    // Trim each zone
+    for (unsigned int i = 0; i < count; i++) {
+        malloc_zone_t *zone = (malloc_zone_t *)zones[i];
+        if (zone) {
+            malloc_zone_pressure_relief(zone, 0);
         }
     }
 
