@@ -6,6 +6,52 @@
 
 #include <Python.h>
 #include <malloc.h>
+#include <dlfcn.h>
+
+
+PyObject *
+psutil_malloc_info(PyObject *self, PyObject *args) {
+    void *handle;
+    void *fun;
+    void *mi;
+    const char *fmt;
+
+    handle = dlopen("libc.so.6", RTLD_LAZY);
+    if (handle)
+        fun = dlsym(handle, "mallinfo2");
+    else
+        fun = NULL;
+
+    if (fun != NULL) {
+        static struct mallinfo2 m2;
+        m2 = ((struct mallinfo2(*)(void))fun)();
+        fmt = "KKK";
+        mi = &m2;
+    }
+    else {
+        static struct mallinfo m1;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        m1 = mallinfo();
+#pragma GCC diagnostic pop
+        fmt = "iii";
+        mi = &m1;
+    }
+
+    if (handle)
+        dlclose(handle);
+
+    return Py_BuildValue(
+        fmt,
+        // Total allocated space via `malloc` (bytes currently in use by app)
+        (unsigned long long)((struct mallinfo2 *)mi)->uordblks,
+        // Bytes in `mmap`-ed regions (large allocations). Should be stable
+        // unless you're allocating huge blocks.
+        (unsigned long long)((struct mallinfo2 *)mi)->hblkhd,
+        // non-mmapped heap space
+        (unsigned long long)((struct mallinfo2 *)mi)->arena
+    );
+}
 
 
 // Release unused memory held by the allocator back to the OS.

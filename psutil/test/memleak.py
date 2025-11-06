@@ -90,10 +90,15 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _get_mem(self):
         mem = thisproc.memory_full_info()
+        malloc = 0
+        if hasattr(psutil._psplatform, "malloc_info"):
+            # Linux
+            malloc = psutil._psplatform.malloc_info().heap_used
         return {
             "rss": mem.rss,
             "vms": mem.vms,
             "uss": getattr(mem, "uss", 0),
+            "malloc": malloc,
         }
 
     def _get_num_fds(self):

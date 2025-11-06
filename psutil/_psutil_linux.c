@@ -36,6 +36,10 @@ static PyMethodDef mod_methods[] = {
 #ifdef PSUTIL_HAS_MALLOC_RELEASE
     {"malloc_release", psutil_malloc_release, METH_VARARGS},
 #endif
+#ifdef PSUTIL_HAS_MALLOC_INFO
+    {"malloc_info", psutil_malloc_info, METH_VARARGS},
+#endif
+
     // --- linux specific
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
     // --- others

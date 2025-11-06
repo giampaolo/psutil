@@ -28,3 +28,5 @@ PyObject *psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args);
 
 PyObject *psutil_malloc_release(PyObject *self, PyObject *args);
 #define PSUTIL_HAS_MALLOC_RELEASE  // TODO
+PyObject *psutil_malloc_info(PyObject *self, PyObject *args);
+#define PSUTIL_HAS_MALLOC_INFO  // TODO
