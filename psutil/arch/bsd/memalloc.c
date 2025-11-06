@@ -66,10 +66,30 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 // More effective than Linux `malloc_trim(0)`.
 PyObject *
 psutil_malloc_trim(PyObject *self, PyObject *args) {
-    int ret = mallctl(
+    int ret;
+
+#ifdef MALLCTL_ARENAS_ALL  // FreeBSD
+    ret = mallctl(
         "arena." STRINGIFY(MALLCTL_ARENAS_ALL) ".purge", NULL, NULL, NULL, 0
     );
     if (ret != 0)
         return psutil_oserror();
+#else
+    char cmd[64];
+    unsigned narenas;
+    size_t sz = sizeof(narenas);
+
+    ret = mallctl("arenas.narenas", &narenas, &sz, NULL, 0);
+    if (ret != 0)
+        return psutil_oserror_wsyscall("mallctl('arenas.narenas')");
+
+    for (unsigned i = 0; i < narenas; i++) {
+        snprintf(cmd, sizeof(cmd), "arena.%u.purge", i);
+        ret = mallctl(cmd, NULL, NULL, NULL, 0);
+        if (ret != 0)
+            return psutil_oserror_wsyscall("mallctl('arena.{n}.purge')");
+    }
+#endif
+
     Py_RETURN_NONE;
 }
