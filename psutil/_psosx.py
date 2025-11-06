@@ -99,6 +99,12 @@ svmem = namedtuple(
 pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
 # psutil.Process.memory_full_info()
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
+# psutil.malloc_info()
+pmallinfo = namedtuple('pmallinfo', [
+    'heap_used',
+    'mmap_used',
+    'heap_total',
+])
 # fmt: on
 
 
@@ -127,6 +133,16 @@ def swap_memory():
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, round_=1)
     return _common.sswap(total, used, free, percent, sin, sout)
+
+
+# =====================================================================
+# --- malloc memory
+# =====================================================================
+
+
+def malloc_info():
+    """Return low-level heap statistics from the C allocator (glibc)."""
+    return pmallinfo(*cext.malloc_info())
 
 
 # =====================================================================
