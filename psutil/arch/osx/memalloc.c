@@ -21,8 +21,8 @@
 //   - heap_total ~ size_allocated       (total committed)
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
-    malloc_zone_t *zone = malloc_default_zone();
     malloc_statistics_t stats = {0};
+    malloc_zone_t *zone = malloc_default_zone();
 
     if (!zone)
         return psutil_runtime_error("malloc_default_zone() failed");
@@ -34,4 +34,15 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     uint64_t heap_total = (uint64_t)stats.size_allocated;
 
     return Py_BuildValue("KKK", heap_used, mmap_used, heap_total);
+}
+
+
+PyObject *
+psutil_malloc_trim(PyObject *self, PyObject *args) {
+    malloc_zone_t *zone = malloc_default_zone();
+
+    if (!zone)
+        return psutil_runtime_error("malloc_default_zone() failed");
+    malloc_zone_pressure_relief(zone, 0);  // 0 = release all possible
+    Py_RETURN_NONE;
 }

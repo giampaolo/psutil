@@ -141,8 +141,13 @@ def swap_memory():
 
 
 def malloc_info():
-    """Return low-level heap statistics from the C allocator (glibc)."""
+    """Return low-level heap statistics from the C allocator."""
     return pmallinfo(*cext.malloc_info())
+
+
+def malloc_trim():
+    """Release unused memory held by the allocator back to the OS."""
+    return cext.malloc_trim()
 
 
 # =====================================================================
