@@ -43,6 +43,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 PyObject *
 psutil_malloc_trim(PyObject *self, PyObject *args) {
     vm_address_t *zones = NULL;
+    malloc_zone_t *default_zone;
     unsigned int count = 0;
     kern_return_t kr;
 
@@ -50,10 +51,12 @@ psutil_malloc_trim(PyObject *self, PyObject *args) {
     kr = malloc_get_all_zones(mach_task_self(), NULL, &zones, &count);
     if (kr != KERN_SUCCESS || count == 0 || zones == NULL) {
         // Fallback: try default zone only
-        malloc_zone_t *default_zone = malloc_default_zone();
-        if (default_zone) {
+        psutil_debug("malloc_get_all_zones() failed (ignored)");
+        default_zone = malloc_default_zone();
+        if (default_zone)
             malloc_zone_pressure_relief(default_zone, 0);
-        }
+        else
+            psutil_debug("malloc_default_zone() failed (ignored)");
         Py_RETURN_NONE;
     }
 
