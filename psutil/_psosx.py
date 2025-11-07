@@ -498,7 +498,7 @@ class Process:
         # getrusage() numbers seems to confirm this theory.
         # We set it to 0.
         vol = self._get_pidtaskinfo()[pidtaskinfo_map['volctxsw']]
-        return _common.pctxsw(vol, 0)
+        return ntp.pctxsw(vol, 0)
 
     @wrap_exceptions
     def num_threads(self):

@@ -2078,7 +2078,7 @@ class Process:
                 " probably older than 2.6.23"
             )
             raise NotImplementedError(msg)
-        return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
+        return ntp.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):

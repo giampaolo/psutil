@@ -1119,4 +1119,4 @@ class Process:
     def num_ctx_switches(self):
         ctx_switches = self._proc_info()[pinfo_map['ctx_switches']]
         # only voluntary ctx switches are supported
-        return _common.pctxsw(ctx_switches, 0)
+        return ntp.pctxsw(ctx_switches, 0)

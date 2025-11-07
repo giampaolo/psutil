@@ -542,7 +542,7 @@ class Process:
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
+        return ntp.pctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def wait(self, timeout=None):

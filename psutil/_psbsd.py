@@ -785,7 +785,7 @@ class Process:
     @wrap_exceptions
     def num_ctx_switches(self):
         rawtuple = self.oneshot()
-        return _common.pctxsw(
+        return ntp.pctxsw(
             rawtuple[kinfo_proc_map['ctx_switches_vol']],
             rawtuple[kinfo_proc_map['ctx_switches_unvol']],
         )

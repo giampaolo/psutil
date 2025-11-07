@@ -722,7 +722,7 @@ class Process:
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(
+        return ntp.pctxsw(
             *cext.proc_num_ctx_switches(self.pid, self._procfs_path)
         )
 
