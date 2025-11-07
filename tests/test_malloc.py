@@ -6,6 +6,9 @@
 
 """Tests for psutil.malloc_* functions."""
 
+import ctypes
+import gc
+
 import pytest
 
 import psutil
@@ -17,8 +20,38 @@ if hasattr(psutil._psplatform, "malloc_info"):
     malloc_info = psutil._psplatform.malloc_info
 
 
+MALLOC_SIZE = 10 * 1024 * 1024  # 10M
+
+
+def leak_large_malloc():
+    # allocate X MB
+    ptr = ctypes.create_string_buffer(MALLOC_SIZE)
+    # touch all memory (like memset(p, 0, size))
+    ptr.raw = b'\x00' * len(ptr)
+    return ptr
+
+
+def free_pointer(ptr):
+    del ptr
+    gc.collect()
+
+
+class TestMallocInfo(PsutilTestCase):
+    def test_mmap_leak(self):
+        mem1 = malloc_info()
+        ptr = leak_large_malloc()
+        mem2 = malloc_info()
+        free_pointer(ptr)
+
+        assert mem2.heap_used > mem1.heap_used
+        assert mem2.mmap_used > mem1.mmap_used
+        diff = (mem2.heap_used - mem1.heap_used) + (
+            mem2.mmap_used - mem1.mmap_used
+        )
+        assert abs(MALLOC_SIZE - diff) < 50 * 1024  # 50KB tolerance
+
+
 if WINDOWS:
-    import ctypes
     from ctypes import wintypes
 
     kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
@@ -46,6 +79,9 @@ if WINDOWS:
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 class TestMallocWindows(PsutilTestCase):
     def test_heap_count(self):
+        """Test that HeapCreate() without HeapDestroy() increases
+        heap_count.
+        """
         initial = malloc_info().heap_count
 
         heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
