@@ -36,6 +36,7 @@ except ImportError:
     pwd = None
 
 from . import _common
+from . import _ntuples as _ntp
 from ._common import AIX
 from ._common import BSD
 from ._common import CONN_CLOSE
@@ -1162,7 +1163,7 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        valid_types = list(_psplatform.pfullmem._fields)
+        valid_types = list(_ntp.pfullmem._fields)
         if memtype not in valid_types:
             msg = (
                 f"invalid memtype {memtype!r}; valid types are"
@@ -1171,7 +1172,7 @@ class Process:
             raise ValueError(msg)
         fun = (
             self.memory_info
-            if memtype in _psplatform.pmem._fields
+            if memtype in _ntp.pmem._fields
             else self.memory_full_info
         )
         metrics = fun()
@@ -1211,11 +1212,9 @@ class Process:
                         d[path] = list(map(lambda x, y: x + y, d[path], nums))
                     except KeyError:
                         d[path] = nums
-                nt = _psplatform.pmmap_grouped
-                return [nt(path, *d[path]) for path in d]
+                return [_ntp.pmmap_grouped(path, *d[path]) for path in d]
             else:
-                nt = _psplatform.pmmap_ext
-                return [nt(*x) for x in it]
+                return [_ntp.pmmap_ext(*x) for x in it]
 
     def open_files(self):
         """Return files opened by process as a list of
@@ -1751,7 +1750,7 @@ def _cpu_busy_time(times):
 def _cpu_times_deltas(t1, t2):
     assert t1._fields == t2._fields, (t1, t2)
     field_deltas = []
-    for field in _psplatform.scputimes._fields:
+    for field in _ntp.scputimes._fields:
         field_delta = getattr(t2, field) - getattr(t1, field)
         # CPU times are always supposed to increase over time
         # or at least remain the same and that's because time
@@ -1766,7 +1765,7 @@ def _cpu_times_deltas(t1, t2):
         # https://gitlab.com/procps-ng/procps/blob/v3.3.12/top/top.c#L5063
         field_delta = max(0, field_delta)
         field_deltas.append(field_delta)
-    return _psplatform.scputimes(*field_deltas)
+    return _ntp.scputimes(*field_deltas)
 
 
 def cpu_percent(interval=None, percpu=False):
@@ -1885,7 +1884,7 @@ def cpu_times_percent(interval=None, percpu=False):
             # make sure we don't return negative values or values over 100%
             field_perc = min(max(0.0, field_perc), 100.0)
             nums.append(field_perc)
-        return _psplatform.scputimes(*nums)
+        return _ntp.scputimes(*nums)
 
     # system-wide usage
     if not percpu:
