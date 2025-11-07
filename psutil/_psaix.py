@@ -12,7 +12,6 @@ import os
 import re
 import subprocess
 import sys
-from collections import namedtuple
 
 from . import _common
 from . import _ntuples as ntp
@@ -80,21 +79,6 @@ proc_info_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms'])
-# psutil.Process.memory_full_info()
-pfullmem = pmem
-# psutil.Process.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
-# psutil.virtual_memory()
-svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-
-
-# =====================================================================
 # --- memory
 # =====================================================================
 
@@ -102,7 +86,7 @@ svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 def virtual_memory():
     total, avail, free, _pinned, inuse = cext.virtual_mem()
     percent = usage_percent((total - avail), total, round_=1)
-    return svmem(total, avail, percent, inuse, free)
+    return ntp.svmem(total, avail, percent, inuse, free)
 
 
 def swap_memory():
@@ -121,13 +105,13 @@ def swap_memory():
 def cpu_times():
     """Return system-wide CPU times as a named tuple."""
     ret = cext.per_cpu_times()
-    return scputimes(*[sum(x) for x in zip(*ret)])
+    return ntp.scputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = cext.per_cpu_times()
-    return [scputimes(*x) for x in ret]
+    return [ntp.scputimes(*x) for x in ret]
 
 
 def cpu_count_logical():
@@ -498,7 +482,7 @@ class Process:
         ret = self._proc_basic_info()
         rss = ret[proc_info_map['rss']] * 1024
         vms = ret[proc_info_map['vms']] * 1024
-        return pmem(rss, vms)
+        return ntp.pmem(rss, vms)
 
     memory_full_info = memory_info
 

@@ -4,6 +4,7 @@
 
 from collections import namedtuple
 
+from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD
 from ._common import LINUX
@@ -411,4 +412,24 @@ elif SUNOS:
     # psutil.Process.memory_maps(grouped=False)
     pmmap_ext = namedtuple(
         'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields)
+    )
+
+# ===================================================================
+# --- AIX
+# ===================================================================
+
+elif AIX:
+
+    # psutil.Process.memory_info()
+    pmem = namedtuple('pmem', ['rss', 'vms'])
+
+    # psutil.Process.memory_full_info()
+    pfullmem = pmem
+
+    # psutil.Process.cpu_times()
+    scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+
+    # psutil.virtual_memory()
+    svmem = namedtuple(
+        'svmem', ['total', 'available', 'percent', 'used', 'free']
     )
