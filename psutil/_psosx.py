@@ -225,7 +225,7 @@ def sensors_battery():
         secsleft = _common.POWER_TIME_UNKNOWN
     else:
         secsleft = minsleft * 60
-    return _common.sbattery(percent, secsleft, power_plugged)
+    return ntp.sbattery(percent, secsleft, power_plugged)
 
 
 # =====================================================================
