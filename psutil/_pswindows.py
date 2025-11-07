@@ -173,6 +173,12 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'other_count', 'other_bytes'])
+# psutil.malloc_info()
+pmallinfo = namedtuple('pmallinfo', [
+    'heap_used',
+    'mmap_used',
+    'heap_total',
+])
 # fmt: on
 
 
@@ -249,6 +255,16 @@ def swap_memory():
     free = total - used
     percent = round(percentswap, 1)
     return _common.sswap(total, used, free, percent, 0, 0)
+
+
+# =====================================================================
+# --- malloc memory
+# =====================================================================
+
+
+def malloc_info():
+    """Return low-level heap statistics from the C allocator (glibc)."""
+    return pmallinfo(*cext.malloc_info())
 
 
 # =====================================================================

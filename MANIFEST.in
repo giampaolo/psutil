@@ -123,6 +123,7 @@ include psutil/arch/windows/disk.c
 include psutil/arch/windows/init.c
 include psutil/arch/windows/init.h
 include psutil/arch/windows/mem.c
+include psutil/arch/windows/memalloc.c
 include psutil/arch/windows/net.c
 include psutil/arch/windows/ntextapi.h
 include psutil/arch/windows/pids.c
