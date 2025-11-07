@@ -271,9 +271,9 @@ def net_connections(kind, _pid=-1):
         # TODO: refactor and use _common.conn_to_ntuple.
         if fam in {AF_INET, AF_INET6}:
             if laddr:
-                laddr = _common.addr(*laddr)
+                laddr = ntp.addr(*laddr)
             if raddr:
-                raddr = _common.addr(*raddr)
+                raddr = ntp.addr(*raddr)
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)

@@ -860,7 +860,7 @@ class NetConnections:
                 if not supports_ipv6():
                     raise _Ipv6UnsupportedError from None
                 raise
-        return _common.addr(ip, port)
+        return ntp.addr(ip, port)
 
     @staticmethod
     def process_inet(file, family, type_, inodes, filter_pid=None):
