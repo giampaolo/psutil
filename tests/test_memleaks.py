@@ -32,6 +32,7 @@ from . import HAS_CPU_AFFINITY
 from . import HAS_CPU_FREQ
 from . import HAS_ENVIRON
 from . import HAS_IONICE
+from . import HAS_MALLOC_INFO
 from . import HAS_MEMORY_MAPS
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_PROC_CPU_NUM
@@ -489,6 +490,14 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
 
     def test_set_debug(self):
         self.execute(lambda: psutil._set_debug(False))
+
+    @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
+    def test_malloc_info(self):
+        self.execute(psutil.malloc_info)
+
+    @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
+    def test_malloc_trim(self):
+        self.execute(psutil.malloc_trim)
 
     if WINDOWS:
 
