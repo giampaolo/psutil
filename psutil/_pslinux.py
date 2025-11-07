@@ -1429,7 +1429,7 @@ def sensors_fans():
             continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
         label = cat(base + '_label', fallback='').strip()
-        ret[unit_name].append(_common.sfan(label, current))
+        ret[unit_name].append(ntp.sfan(label, current))
 
     return dict(ret)
 
