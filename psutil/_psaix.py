@@ -260,7 +260,7 @@ def net_if_stats():
         output_flags = ','.join(flags)
         isup = 'running' in flags
         duplex = duplex_map.get(duplex, NIC_DUPLEX_UNKNOWN)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu, output_flags)
+        ret[name] = ntp.snicstats(isup, duplex, speed, mtu, output_flags)
     return ret
 
 
