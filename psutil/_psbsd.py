@@ -848,7 +848,7 @@ class Process:
     @wrap_exceptions
     def io_counters(self):
         rawtuple = self.oneshot()
-        return _common.pio(
+        return ntp.pio(
             rawtuple[kinfo_proc_map['read_io_count']],
             rawtuple[kinfo_proc_map['write_io_count']],
             -1,

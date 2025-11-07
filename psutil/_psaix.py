@@ -560,4 +560,4 @@ class Process:
                 if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name) from err
                 raise
-            return _common.pio(rc, wc, rb, wb)
+            return ntp.pio(rc, wc, rb, wb)
