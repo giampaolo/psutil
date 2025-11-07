@@ -961,9 +961,7 @@ class NetConnections:
                 ls = self.process_unix(path, family, inodes, filter_pid=pid)
             for fd, family, type_, laddr, raddr, status, bound_pid in ls:
                 if pid:
-                    conn = _common.pconn(
-                        fd, family, type_, laddr, raddr, status
-                    )
+                    conn = ntp.pconn(fd, family, type_, laddr, raddr, status)
                 else:
                     conn = _common.sconn(
                         fd, family, type_, laddr, raddr, status, bound_pid
