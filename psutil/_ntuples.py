@@ -169,7 +169,9 @@ if LINUX:
     )
 
     # psutil.Process().memory_info()
-    pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+    pmem = namedtuple(
+        'pmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty']
+    )
 
     # psutil.Process().memory_full_info()
     pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
