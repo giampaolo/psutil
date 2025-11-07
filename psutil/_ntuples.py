@@ -7,6 +7,7 @@ from collections import namedtuple
 from ._common import BSD
 from ._common import FREEBSD
 from ._common import LINUX
+from ._common import MACOS
 from ._common import SUNOS
 from ._common import WINDOWS
 
@@ -277,6 +278,35 @@ elif WINDOWS:
             'other_bytes',
         ],
     )
+
+# ===================================================================
+# --- macOS
+# ===================================================================
+
+elif MACOS:
+
+    # psutil.cpu_times()
+    scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
+    # psutil.virtual_memory()
+    svmem = namedtuple(
+        'svmem',
+        [
+            'total',
+            'available',
+            'percent',
+            'used',
+            'free',
+            'active',
+            'inactive',
+            'wired',
+        ],
+    )
+
+    # psutil.Process.memory_info()
+    pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
+
+    # psutil.Process.memory_full_info()
+    pfullmem = namedtuple('pfullmem', pmem._fields + ('uss',))
 
 # ===================================================================
 # --- BSD

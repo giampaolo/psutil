@@ -13,9 +13,8 @@ import sys
 import threading
 import time
 
-import ntp
-
 from . import _common
+from . import _ntuples as ntp
 from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess

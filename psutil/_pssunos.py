@@ -13,9 +13,8 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
-import ntp
-
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_sunos as cext
 from ._common import AF_INET6

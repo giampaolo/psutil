@@ -7,11 +7,9 @@
 import errno
 import functools
 import os
-from collections import namedtuple
-
-import ntp
 
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_osx as cext
 from ._common import AccessDenied
@@ -86,25 +84,6 @@ pidtaskinfo_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# fmt: off
-# psutil.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
-# psutil.virtual_memory()
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'wired'])
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
-# psutil.Process.memory_full_info()
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
-# fmt: on
-
-
-# =====================================================================
 # --- memory
 # =====================================================================
 
@@ -121,7 +100,9 @@ def virtual_memory():
     # cmdline utility.
     free -= speculative
     percent = usage_percent((total - avail), total, round_=1)
-    return svmem(total, avail, percent, used, free, active, inactive, wired)
+    return ntp.svmem(
+        total, avail, percent, used, free, active, inactive, wired
+    )
 
 
 def swap_memory():
@@ -139,7 +120,7 @@ def swap_memory():
 def cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = cext.cpu_times()
-    return scputimes(user, nice, system, idle)
+    return ntp.scputimes(user, nice, system, idle)
 
 
 def per_cpu_times():
@@ -147,7 +128,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle = cpu_t
-        item = scputimes(user, nice, system, idle)
+        item = ntp.scputimes(user, nice, system, idle)
         ret.append(item)
     return ret
 
@@ -461,7 +442,7 @@ class Process:
     @wrap_exceptions
     def memory_info(self):
         rawtuple = self._get_pidtaskinfo()
-        return pmem(
+        return ntp.pmem(
             rawtuple[pidtaskinfo_map['rss']],
             rawtuple[pidtaskinfo_map['vms']],
             rawtuple[pidtaskinfo_map['pfaults']],
@@ -472,7 +453,7 @@ class Process:
     def memory_full_info(self):
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
-        return pfullmem(*basic_mem + (uss,))
+        return ntp.pfullmem(*basic_mem + (uss,))
 
     @wrap_exceptions
     def cpu_times(self):
