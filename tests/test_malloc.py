@@ -22,20 +22,25 @@ if WINDOWS:
     from ctypes import wintypes
 
     kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-
-    HeapCreate = kernel32.HeapCreate
-    HeapCreate.argtypes = [
-        wintypes.DWORD,
-        ctypes.c_size_t,
-        ctypes.c_size_t,
-    ]
-    HeapCreate.restype = wintypes.HANDLE
-
-    HeapDestroy = kernel32.HeapDestroy
-    HeapDestroy.argtypes = [wintypes.HANDLE]
-    HeapDestroy.restype = wintypes.BOOL
-
     HEAP_NO_SERIALIZE = 0x00000001
+
+    def HeapCreate(opts, initial_size, max_size):
+        fun = kernel32.HeapCreate
+        fun.argtypes = [
+            wintypes.DWORD,
+            ctypes.c_size_t,
+            ctypes.c_size_t,
+        ]
+        fun.restype = wintypes.HANDLE
+        heap = fun(opts, initial_size, max_size)
+        assert heap != 0, "HeapCreate failed"
+        return heap
+
+    def HeapDestroy(heap):
+        fun = kernel32.HeapDestroy
+        fun.argtypes = [wintypes.HANDLE]
+        fun.restype = wintypes.BOOL
+        assert fun(heap) != 0, "HeapDestroy failed"
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     class TestMallocWindows(PsutilTestCase):
