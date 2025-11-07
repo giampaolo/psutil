@@ -2252,7 +2252,7 @@ def net_if_addrs():
             while addr.count(separator) < 5:
                 addr += f"{separator}00"
 
-        nt = _common.snicaddr(fam, addr, mask, broadcast, ptp)
+        nt = _ntp.snicaddr(fam, addr, mask, broadcast, ptp)
 
         # On Windows broadcast is None, so we determine it via
         # ipaddress module.
