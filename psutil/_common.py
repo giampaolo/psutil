@@ -224,7 +224,17 @@ pconn = namedtuple(
 
 # psutil.net_connections() and psutil.Process.net_connections()
 addr = namedtuple('addr', ['ip', 'port'])
-
+# psutil.malloc_info() (mallinfo Linux struct)
+pmallinfo = namedtuple(
+    "pmallinfo",
+    [
+        "heap_used",  # uordblks, memory allocated via malloc()
+        "mmap_used",  # hblkhd, memory allocated via mmap() (large blocks)
+        "heap_total",  # arena, total main heap size (sbrk)
+    ],
+)
+if WINDOWS:
+    pmallinfo = namedtuple("pmallinfo", pmallinfo._fields + ("heap_count",))
 
 # ===================================================================
 # --- Process.net_connections() 'kind' parameter mapping

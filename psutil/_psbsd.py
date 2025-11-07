@@ -26,6 +26,7 @@ from ._common import conn_to_ntuple
 from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._common import pmallinfo
 from ._common import usage_percent
 
 __extra__all__ = []
@@ -162,11 +163,6 @@ if FREEBSD:
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
-pmallinfo = namedtuple('pmallinfo', [
-    'heap_used',
-    'mmap_used',
-    'heap_total',
-])
 # fmt: on
 
 

@@ -26,6 +26,7 @@ from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
+from ._common import pmallinfo
 from ._common import usage_percent
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
@@ -173,13 +174,6 @@ pmmap_ext = namedtuple(
 pio = namedtuple('pio', ['read_count', 'write_count',
                          'read_bytes', 'write_bytes',
                          'other_count', 'other_bytes'])
-# psutil.malloc_info()
-pmallinfo = namedtuple('pmallinfo', [
-    'heap_used',
-    'mmap_used',
-    'heap_total',
-    'heap_count',
-])
 # fmt: on
 
 

@@ -43,6 +43,7 @@ from ._common import open_binary
 from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
+from ._common import pmallinfo
 from ._common import supports_ipv6
 from ._common import usage_percent
 
@@ -189,13 +190,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 pcputimes = namedtuple('pcputimes',
                        ['user', 'system', 'children_user', 'children_system',
                         'iowait'])
-
-# psutil.malloc_info() (mallinfo Linux struct)
-pmallinfo = namedtuple('pmallinfo', [
-    'heap_used',  # uordblks, memory allocated via malloc()
-    'mmap_used',  # hblkhd, memory allocated via mmap() (large blocks)
-    'heap_total',  # arena, total main heap size (sbrk)
-])
 # fmt: on
 
 

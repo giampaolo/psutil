@@ -21,6 +21,7 @@ from ._common import debug
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
+from ._common import pmallinfo
 from ._common import usage_percent
 
 __extra__all__ = []
@@ -99,12 +100,6 @@ svmem = namedtuple(
 pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
 # psutil.Process.memory_full_info()
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
-# psutil.malloc_info()
-pmallinfo = namedtuple('pmallinfo', [
-    'heap_used',
-    'mmap_used',
-    'heap_total',
-])
 # fmt: on
 
 
