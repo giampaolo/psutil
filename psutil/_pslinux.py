@@ -2300,4 +2300,4 @@ class Process:
     def gids(self, _gids_re=re.compile(br'Gid:\t(\d+)\t(\d+)\t(\d+)')):
         data = self._read_status_file()
         real, effective, saved = _gids_re.findall(data)[0]
-        return _common.pgids(int(real), int(effective), int(saved))
+        return ntp.pgids(int(real), int(effective), int(saved))

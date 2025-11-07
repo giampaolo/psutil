@@ -731,7 +731,7 @@ class Process:
     @wrap_exceptions
     def gids(self):
         rawtuple = self.oneshot()
-        return _common.pgids(
+        return ntp.pgids(
             rawtuple[kinfo_proc_map['real_gid']],
             rawtuple[kinfo_proc_map['effective_gid']],
             rawtuple[kinfo_proc_map['saved_gid']],
