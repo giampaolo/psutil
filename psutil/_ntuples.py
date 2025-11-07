@@ -7,6 +7,7 @@ from collections import namedtuple
 from ._common import BSD
 from ._common import FREEBSD
 from ._common import LINUX
+from ._common import SUNOS
 from ._common import WINDOWS
 
 # ===================================================================
@@ -346,3 +347,38 @@ elif BSD:
             'sdiskio',
             ['read_count', 'write_count', 'read_bytes', 'write_bytes'],
         )
+
+# ===================================================================
+# --- SunOS
+# ===================================================================
+
+elif SUNOS:
+
+    # psutil.cpu_times()
+    scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+
+    # psutil.cpu_times(percpu=True)
+    pcputimes = namedtuple(
+        'pcputimes', ['user', 'system', 'children_user', 'children_system']
+    )
+
+    # psutil.virtual_memory()
+    svmem = namedtuple(
+        'svmem', ['total', 'available', 'percent', 'used', 'free']
+    )
+
+    # psutil.Process.memory_info()
+    pmem = namedtuple('pmem', ['rss', 'vms'])
+
+    # psutil.Process.memory_full_info()
+    pfullmem = pmem
+
+    # psutil.Process.memory_maps(grouped=True)
+    pmmap_grouped = namedtuple(
+        'pmmap_grouped', ['path', 'rss', 'anonymous', 'locked']
+    )
+
+    # psutil.Process.memory_maps(grouped=False)
+    pmmap_ext = namedtuple(
+        'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields)
+    )

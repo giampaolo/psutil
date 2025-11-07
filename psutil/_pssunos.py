@@ -90,32 +90,6 @@ proc_info_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# psutil.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
-# psutil.cpu_times(percpu=True)
-pcputimes = namedtuple(
-    'pcputimes', ['user', 'system', 'children_user', 'children_system']
-)
-# psutil.virtual_memory()
-svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms'])
-pfullmem = pmem
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped', ['path', 'rss', 'anonymous', 'locked']
-)
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields)
-)
-
-
-# =====================================================================
 # --- memory
 # =====================================================================
 
@@ -128,7 +102,7 @@ def virtual_memory():
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, round_=1)
-    return svmem(total, avail, percent, used, free)
+    return ntp.svmem(total, avail, percent, used, free)
 
 
 def swap_memory():
@@ -180,13 +154,13 @@ def swap_memory():
 def cpu_times():
     """Return system-wide CPU times as a named tuple."""
     ret = cext.per_cpu_times()
-    return scputimes(*[sum(x) for x in zip(*ret)])
+    return ntp.scputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = cext.per_cpu_times()
-    return [scputimes(*x) for x in ret]
+    return [ntp.scputimes(*x) for x in ret]
 
 
 def cpu_count_logical():
@@ -548,7 +522,7 @@ class Process:
         ret = self._proc_basic_info()
         rss = ret[proc_info_map['rss']] * 1024
         vms = ret[proc_info_map['vms']] * 1024
-        return pmem(rss, vms)
+        return ntp.pmem(rss, vms)
 
     memory_full_info = memory_info
 
