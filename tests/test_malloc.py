@@ -12,6 +12,7 @@ import gc
 import pytest
 
 import psutil
+from psutil import LINUX
 from psutil import WINDOWS
 
 from . import PsutilTestCase
@@ -47,9 +48,13 @@ class TestMallocInfo(PsutilTestCase):
 
         assert mem2.heap_used > mem1.heap_used
         assert mem2.mmap_used > mem1.mmap_used
-        diff = (mem2.heap_used - mem1.heap_used) + (
-            mem2.mmap_used - mem1.mmap_used
-        )
+        if LINUX:
+            diff = (mem2.heap_used - mem1.heap_used) + (
+                mem2.mmap_used - mem1.mmap_used
+            )
+        else:  # BSD
+            diff = mem2.heap_used - mem1.heap_used
+
         assert abs(MALLOC_SIZE - diff) < 50 * 1024  # 50KB tolerance
 
 
