@@ -68,6 +68,10 @@ class TestMallocInfo(PsutilTestCase):
 if WINDOWS:
     from ctypes import wintypes
 
+    import win32api
+    import win32con
+    import win32process
+
     kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
     HEAP_NO_SERIALIZE = 0x00000001
 
@@ -89,6 +93,20 @@ if WINDOWS:
         fun.restype = wintypes.BOOL
         assert fun(heap) != 0, "HeapDestroy failed"
 
+    def VirtualAllocEx(size):
+        return win32process.VirtualAllocEx(
+            win32api.GetCurrentProcess(),
+            0,
+            size,
+            win32con.MEM_COMMIT | win32con.MEM_RESERVE,
+            win32con.PAGE_READWRITE,
+        )
+
+    def VirtualFreeEx(addr):
+        win32process.VirtualFreeEx(
+            win32api.GetCurrentProcess(), addr, 0, win32con.MEM_RELEASE
+        )
+
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     @pytest.mark.xdist_group(name="serial")
     class TestMallocWindows(PsutilTestCase):
@@ -103,3 +121,19 @@ if WINDOWS:
             finally:
                 HeapDestroy(heap)
             assert malloc_info().heap_count == base
+
+        def test_mmap_used(self):
+            """Test that VirtualAllocEx() without VirtualFreeEx() increases
+            mmap_used.
+            """
+            mem1 = malloc_info()
+            addr = VirtualAllocEx(MALLOC_SIZE)
+            mem2 = malloc_info()
+
+            assert mem2.mmap_used - mem1.mmap_used == MALLOC_SIZE
+            assert mem2.heap_used == mem1.heap_used
+            assert mem2.heap_count == mem1.heap_count
+
+            VirtualFreeEx(addr)
+            mem3 = malloc_info()
+            assert mem3 == mem1
