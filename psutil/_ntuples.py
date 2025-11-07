@@ -18,32 +18,32 @@ from ._common import WINDOWS
 
 # psutil.swap_memory()
 sswap = namedtuple(
-    "sswap", ["total", "used", "free", "percent", "sin", "sout"]
+    "sswap", ("total", "used", "free", "percent", "sin", "sout")
 )
 
 # psutil.disk_usage()
-sdiskusage = namedtuple("sdiskusage", ["total", "used", "free", "percent"])
+sdiskusage = namedtuple("sdiskusage", ("total", "used", "free", "percent"))
 
 # psutil.disk_io_counters()
 sdiskio = namedtuple(
     "sdiskio",
-    [
+    (
         "read_count",
         "write_count",
         "read_bytes",
         "write_bytes",
         "read_time",
         "write_time",
-    ],
+    ),
 )
 
 # psutil.disk_partitions()
-sdiskpart = namedtuple("sdiskpart", ["device", "mountpoint", "fstype", "opts"])
+sdiskpart = namedtuple("sdiskpart", ("device", "mountpoint", "fstype", "opts"))
 
 # psutil.net_io_counters()
 snetio = namedtuple(
     "snetio",
-    [
+    (
         "bytes_sent",
         "bytes_recv",
         "packets_sent",
@@ -52,43 +52,43 @@ snetio = namedtuple(
         "errout",
         "dropin",
         "dropout",
-    ],
+    ),
 )
 
 # psutil.users()
-suser = namedtuple("suser", ["name", "terminal", "host", "started", "pid"])
+suser = namedtuple("suser", ("name", "terminal", "host", "started", "pid"))
 
 # psutil.net_connections()
 sconn = namedtuple(
-    "sconn", ["fd", "family", "type", "laddr", "raddr", "status", "pid"]
+    "sconn", ("fd", "family", "type", "laddr", "raddr", "status", "pid")
 )
 
 # psutil.net_if_addrs()
 snicaddr = namedtuple(
-    "snicaddr", ["family", "address", "netmask", "broadcast", "ptp"]
+    "snicaddr", ("family", "address", "netmask", "broadcast", "ptp")
 )
 
 # psutil.net_if_stats()
 snicstats = namedtuple(
-    "snicstats", ["isup", "duplex", "speed", "mtu", "flags"]
+    "snicstats", ("isup", "duplex", "speed", "mtu", "flags")
 )
 
 # psutil.cpu_stats()
 scpustats = namedtuple(
-    "scpustats", ["ctx_switches", "interrupts", "soft_interrupts", "syscalls"]
+    "scpustats", ("ctx_switches", "interrupts", "soft_interrupts", "syscalls")
 )
 
 # psutil.cpu_freq()
-scpufreq = namedtuple("scpufreq", ["current", "min", "max"])
+scpufreq = namedtuple("scpufreq", ("current", "min", "max"))
 
 # psutil.sensors_temperatures()
-shwtemp = namedtuple("shwtemp", ["label", "current", "high", "critical"])
+shwtemp = namedtuple("shwtemp", ("label", "current", "high", "critical"))
 
 # psutil.sensors_battery()
-sbattery = namedtuple("sbattery", ["percent", "secsleft", "power_plugged"])
+sbattery = namedtuple("sbattery", ("percent", "secsleft", "power_plugged"))
 
 # psutil.sensors_fans()
-sfan = namedtuple("sfan", ["label", "current"])
+sfan = namedtuple("sfan", ("label", "current"))
 
 # ===================================================================
 # --- Process class
@@ -96,39 +96,39 @@ sfan = namedtuple("sfan", ["label", "current"])
 
 # psutil.Process.cpu_times()
 pcputimes = namedtuple(
-    "pcputimes", ["user", "system", "children_user", "children_system"]
+    "pcputimes", ("user", "system", "children_user", "children_system")
 )
 
 # psutil.Process.open_files()
-popenfile = namedtuple("popenfile", ["path", "fd"])
+popenfile = namedtuple("popenfile", ("path", "fd"))
 
 # psutil.Process.threads()
-pthread = namedtuple("pthread", ["id", "user_time", "system_time"])
+pthread = namedtuple("pthread", ("id", "user_time", "system_time"))
 
 # psutil.Process.uids()
-puids = namedtuple("puids", ["real", "effective", "saved"])
+puids = namedtuple("puids", ("real", "effective", "saved"))
 
 # psutil.Process.gids()
-pgids = namedtuple("pgids", ["real", "effective", "saved"])
+pgids = namedtuple("pgids", ("real", "effective", "saved"))
 
 # psutil.Process.io_counters()
 pio = namedtuple(
-    "pio", ["read_count", "write_count", "read_bytes", "write_bytes"]
+    "pio", ("read_count", "write_count", "read_bytes", "write_bytes")
 )
 
 # psutil.Process.ionice()
-pionice = namedtuple("pionice", ["ioclass", "value"])
+pionice = namedtuple("pionice", ("ioclass", "value"))
 
 # psutil.Process.ctx_switches()
-pctxsw = namedtuple("pctxsw", ["voluntary", "involuntary"])
+pctxsw = namedtuple("pctxsw", ("voluntary", "involuntary"))
 
 # psutil.Process.net_connections()
 pconn = namedtuple(
-    "pconn", ["fd", "family", "type", "laddr", "raddr", "status"]
+    "pconn", ("fd", "family", "type", "laddr", "raddr", "status")
 )
 
 # psutil.net_connections() and psutil.Process.net_connections()
-addr = namedtuple("addr", ["ip", "port"])
+addr = namedtuple("addr", ("ip", "port"))
 
 # ===================================================================
 # --- Linux
@@ -141,7 +141,7 @@ if LINUX:
     # psutil.virtual_memory()
     svmem = namedtuple(
         "svmem",
-        [
+        (
             "total",
             "available",
             "percent",
@@ -153,13 +153,13 @@ if LINUX:
             "cached",
             "shared",
             "slab",
-        ],
+        ),
     )
 
     # psutil.disk_io_counters()
     sdiskio = namedtuple(
         "sdiskio",
-        [
+        (
             "read_count",
             "write_count",
             "read_bytes",
@@ -169,17 +169,17 @@ if LINUX:
             "read_merged_count",
             "write_merged_count",
             "busy_time",
-        ],
+        ),
     )
 
     # psutil.Process().open_files()
     popenfile = namedtuple(
-        "popenfile", ["path", "fd", "position", "mode", "flags"]
+        "popenfile", ("path", "fd", "position", "mode", "flags")
     )
 
     # psutil.Process().memory_info()
     pmem = namedtuple(
-        "pmem", ["rss", "vms", "shared", "text", "lib", "data", "dirty"]
+        "pmem", ("rss", "vms", "shared", "text", "lib", "data", "dirty")
     )
 
     # psutil.Process().memory_full_info()
@@ -188,7 +188,7 @@ if LINUX:
     # psutil.Process().memory_maps(grouped=True)
     pmmap_grouped = namedtuple(
         "pmmap_grouped",
-        [
+        (
             "path",
             "rss",
             "size",
@@ -200,7 +200,7 @@ if LINUX:
             "referenced",
             "anonymous",
             "swap",
-        ],
+        ),
     )
 
     # psutil.Process().memory_maps(grouped=False)
@@ -211,20 +211,20 @@ if LINUX:
     # psutil.Process.io_counters()
     pio = namedtuple(
         "pio",
-        [
+        (
             "read_count",
             "write_count",
             "read_bytes",
             "write_bytes",
             "read_chars",
             "write_chars",
-        ],
+        ),
     )
 
     # psutil.Process.cpu_times()
     pcputimes = namedtuple(
         "pcputimes",
-        ["user", "system", "children_user", "children_system", "iowait"],
+        ("user", "system", "children_user", "children_system", "iowait"),
     )
 
 # ===================================================================
@@ -235,16 +235,16 @@ elif WINDOWS:
 
     # psutil.cpu_times()
     scputimes = namedtuple(
-        "scputimes", ["user", "system", "idle", "interrupt", "dpc"]
+        "scputimes", ("user", "system", "idle", "interrupt", "dpc")
     )
     # psutil.virtual_memory()
     svmem = namedtuple(
-        "svmem", ["total", "available", "percent", "used", "free"]
+        "svmem", ("total", "available", "percent", "used", "free")
     )
     # psutil.Process.memory_info()
     pmem = namedtuple(
         "pmem",
-        [
+        (
             "rss",
             "vms",
             "num_page_faults",
@@ -257,12 +257,12 @@ elif WINDOWS:
             "pagefile",
             "peak_pagefile",
             "private",
-        ],
+        ),
     )
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
     # psutil.Process.memory_maps(grouped=True)
-    pmmap_grouped = namedtuple("pmmap_grouped", ["path", "rss"])
+    pmmap_grouped = namedtuple("pmmap_grouped", ("path", "rss"))
     # psutil.Process.memory_maps(grouped=False)
     pmmap_ext = namedtuple(
         "pmmap_ext", "addr perms " + " ".join(pmmap_grouped._fields)
@@ -270,14 +270,14 @@ elif WINDOWS:
     # psutil.Process.io_counters()
     pio = namedtuple(
         "pio",
-        [
+        (
             "read_count",
             "write_count",
             "read_bytes",
             "write_bytes",
             "other_count",
             "other_bytes",
-        ],
+        ),
     )
 
 # ===================================================================
@@ -287,11 +287,11 @@ elif WINDOWS:
 elif MACOS:
 
     # psutil.cpu_times()
-    scputimes = namedtuple("scputimes", ["user", "nice", "system", "idle"])
+    scputimes = namedtuple("scputimes", ("user", "nice", "system", "idle"))
     # psutil.virtual_memory()
     svmem = namedtuple(
         "svmem",
-        [
+        (
             "total",
             "available",
             "percent",
@@ -300,11 +300,11 @@ elif MACOS:
             "active",
             "inactive",
             "wired",
-        ],
+        ),
     )
 
     # psutil.Process.memory_info()
-    pmem = namedtuple("pmem", ["rss", "vms", "pfaults", "pageins"])
+    pmem = namedtuple("pmem", ("rss", "vms", "pfaults", "pageins"))
 
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
@@ -318,7 +318,7 @@ elif BSD:
     # psutil.virtual_memory()
     svmem = namedtuple(
         "svmem",
-        [
+        (
             "total",
             "available",
             "percent",
@@ -330,23 +330,23 @@ elif BSD:
             "cached",
             "shared",
             "wired",
-        ],
+        ),
     )
 
     # psutil.cpu_times()
     scputimes = namedtuple(
-        "scputimes", ["user", "nice", "system", "idle", "irq"]
+        "scputimes", ("user", "nice", "system", "idle", "irq")
     )
 
     # psutil.Process.memory_info()
-    pmem = namedtuple("pmem", ["rss", "vms", "text", "data", "stack"])
+    pmem = namedtuple("pmem", ("rss", "vms", "text", "data", "stack"))
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
     # psutil.Process.cpu_times()
     pcputimes = namedtuple(
-        "pcputimes", ["user", "system", "children_user", "children_system"]
+        "pcputimes", ("user", "system", "children_user", "children_system")
     )
 
     # psutil.Process.memory_maps(grouped=True)
@@ -363,7 +363,7 @@ elif BSD:
     if FREEBSD:
         sdiskio = namedtuple(
             "sdiskio",
-            [
+            (
                 "read_count",
                 "write_count",
                 "read_bytes",
@@ -371,12 +371,12 @@ elif BSD:
                 "read_time",
                 "write_time",
                 "busy_time",
-            ],
+            ),
         )
     else:
         sdiskio = namedtuple(
             "sdiskio",
-            ["read_count", "write_count", "read_bytes", "write_bytes"],
+            ("read_count", "write_count", "read_bytes", "write_bytes"),
         )
 
 # ===================================================================
@@ -386,27 +386,27 @@ elif BSD:
 elif SUNOS:
 
     # psutil.cpu_times()
-    scputimes = namedtuple("scputimes", ["user", "system", "idle", "iowait"])
+    scputimes = namedtuple("scputimes", ("user", "system", "idle", "iowait"))
 
     # psutil.cpu_times(percpu=True)
     pcputimes = namedtuple(
-        "pcputimes", ["user", "system", "children_user", "children_system"]
+        "pcputimes", ("user", "system", "children_user", "children_system")
     )
 
     # psutil.virtual_memory()
     svmem = namedtuple(
-        "svmem", ["total", "available", "percent", "used", "free"]
+        "svmem", ("total", "available", "percent", "used", "free")
     )
 
     # psutil.Process.memory_info()
-    pmem = namedtuple("pmem", ["rss", "vms"])
+    pmem = namedtuple("pmem", ("rss", "vms"))
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
     # psutil.Process.memory_maps(grouped=True)
     pmmap_grouped = namedtuple(
-        "pmmap_grouped", ["path", "rss", "anonymous", "locked"]
+        "pmmap_grouped", ("path", "rss", "anonymous", "locked")
     )
 
     # psutil.Process.memory_maps(grouped=False)
@@ -421,15 +421,15 @@ elif SUNOS:
 elif AIX:
 
     # psutil.Process.memory_info()
-    pmem = namedtuple("pmem", ["rss", "vms"])
+    pmem = namedtuple("pmem", ("rss", "vms"))
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
     # psutil.Process.cpu_times()
-    scputimes = namedtuple("scputimes", ["user", "system", "idle", "iowait"])
+    scputimes = namedtuple("scputimes", ("user", "system", "idle", "iowait"))
 
     # psutil.virtual_memory()
     svmem = namedtuple(
-        "svmem", ["total", "available", "percent", "used", "free"]
+        "svmem", ("total", "available", "percent", "used", "free")
     )
