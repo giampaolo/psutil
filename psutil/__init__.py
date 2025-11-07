@@ -2167,10 +2167,10 @@ def net_io_counters(pernic=False, nowrap=True):
         rawdict = _wrap_numbers(rawdict, 'psutil.net_io_counters')
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = _common.snetio(*fields)
+            rawdict[nic] = _ntp.snetio(*fields)
         return rawdict
     else:
-        return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
+        return _ntp.snetio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 net_io_counters.cache_clear = functools.partial(
