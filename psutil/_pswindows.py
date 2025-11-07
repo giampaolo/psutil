@@ -1005,7 +1005,7 @@ class Process:
         for file in raw_file_names:
             file = convert_dos_path(file)
             if isfile_strict(file):
-                ntuple = _common.popenfile(file, -1)
+                ntuple = ntp.popenfile(file, -1)
                 ret.add(ntuple)
         return list(ret)
 

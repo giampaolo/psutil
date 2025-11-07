@@ -875,7 +875,7 @@ class Process:
     def open_files(self):
         """Return files opened by process as a list of namedtuples."""
         rawlist = cext.proc_open_files(self.pid)
-        return [_common.popenfile(path, fd) for path, fd in rawlist]
+        return [ntp.popenfile(path, fd) for path, fd in rawlist]
 
     @wrap_exceptions
     def num_fds(self):

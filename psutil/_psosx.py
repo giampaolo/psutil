@@ -512,7 +512,7 @@ class Process:
         rawlist = cext.proc_open_files(self.pid)
         for path, fd in rawlist:
             if isfile_strict(path):
-                ntuple = _common.popenfile(path, fd)
+                ntuple = ntp.popenfile(path, fd)
                 files.append(ntuple)
         return files
 

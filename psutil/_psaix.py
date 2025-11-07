@@ -531,7 +531,7 @@ class Process:
                 path = path[1:]
             if path.lower() == "cannot be retrieved":
                 continue
-            retlist.append(_common.popenfile(path, int(fd)))
+            retlist.append(ntp.popenfile(path, int(fd)))
         return retlist
 
     @wrap_exceptions

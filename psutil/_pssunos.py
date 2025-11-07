@@ -608,7 +608,7 @@ class Process:
                     continue
                 else:
                     if isfile_strict(file):
-                        retlist.append(_common.popenfile(file, int(fd)))
+                        retlist.append(ntp.popenfile(file, int(fd)))
         if hit_enoent:
             self._assert_alive()
         return retlist
