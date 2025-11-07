@@ -278,7 +278,7 @@ def net_connections(kind, _pid=-1):
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)
         if _pid == -1:
-            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
+            nt = ntp.sconn(fd, fam, type_, laddr, raddr, status, pid)
         else:
             nt = ntp.pconn(fd, fam, type_, laddr, raddr, status)
         ret.add(nt)

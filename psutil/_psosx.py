@@ -251,7 +251,7 @@ def net_connections(kind='inet'):
             if cons:
                 for c in cons:
                     c = list(c) + [pid]
-                    ret.append(_common.sconn(*c))
+                    ret.append(ntp.sconn(*c))
     return ret
 
 

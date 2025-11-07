@@ -963,7 +963,7 @@ class NetConnections:
                 if pid:
                     conn = ntp.pconn(fd, family, type_, laddr, raddr, status)
                 else:
-                    conn = _common.sconn(
+                    conn = ntp.sconn(
                         fd, family, type_, laddr, raddr, status, bound_pid
                     )
                 ret.add(conn)
