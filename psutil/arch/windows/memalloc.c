@@ -9,6 +9,8 @@
 #include <windows.h>
 #include <malloc.h>
 
+#include "../../arch/all/init.h"
+
 
 // Returns:
 // - heap_used: sum of used blocks (like Linux `mallinfo()` `uordblks`);
