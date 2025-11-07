@@ -42,17 +42,18 @@ if WINDOWS:
         fun.restype = wintypes.BOOL
         assert fun(heap) != 0, "HeapDestroy failed"
 
-    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-    class TestMallocWindows(PsutilTestCase):
-        def test_heap_count(self):
-            initial = malloc_info().heap_count
 
-            heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
-            assert heap != 0, "HeapCreate failed"
+@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+class TestMallocWindows(PsutilTestCase):
+    def test_heap_count(self):
+        initial = malloc_info().heap_count
 
-            try:
-                assert malloc_info().heap_count == initial + 1
-            finally:
-                HeapDestroy(heap)
+        heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
+        assert heap != 0, "HeapCreate failed"
 
-            assert malloc_info().heap_count == initial
+        try:
+            assert malloc_info().heap_count == initial + 1
+        finally:
+            HeapDestroy(heap)
+
+        assert malloc_info().heap_count == initial
