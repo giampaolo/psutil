@@ -461,12 +461,12 @@ class Process:
     @wrap_exceptions
     def uids(self):
         real, effective, saved, _, _, _ = self._proc_cred()
-        return _common.puids(real, effective, saved)
+        return ntp.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
         _, _, _, real, effective, saved = self._proc_cred()
-        return _common.puids(real, effective, saved)
+        return ntp.puids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):

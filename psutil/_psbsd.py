@@ -722,7 +722,7 @@ class Process:
     @wrap_exceptions
     def uids(self):
         rawtuple = self.oneshot()
-        return _common.puids(
+        return ntp.puids(
             rawtuple[kinfo_proc_map['real_uid']],
             rawtuple[kinfo_proc_map['effective_uid']],
             rawtuple[kinfo_proc_map['saved_uid']],

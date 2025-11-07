@@ -481,7 +481,7 @@ class Process:
             real = self._proc_basic_info()[proc_info_map['uid']]
             effective = self._proc_basic_info()[proc_info_map['euid']]
             saved = None
-        return _common.puids(real, effective, saved)
+        return ntp.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
@@ -491,7 +491,7 @@ class Process:
             real = self._proc_basic_info()[proc_info_map['gid']]
             effective = self._proc_basic_info()[proc_info_map['egid']]
             saved = None
-        return _common.puids(real, effective, saved)
+        return ntp.puids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):

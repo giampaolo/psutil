@@ -434,7 +434,7 @@ class Process:
     @wrap_exceptions
     def uids(self):
         rawtuple = self._get_kinfo_proc()
-        return _common.puids(
+        return ntp.puids(
             rawtuple[kinfo_proc_map['ruid']],
             rawtuple[kinfo_proc_map['euid']],
             rawtuple[kinfo_proc_map['suid']],
@@ -443,7 +443,7 @@ class Process:
     @wrap_exceptions
     def gids(self):
         rawtuple = self._get_kinfo_proc()
-        return _common.puids(
+        return ntp.puids(
             rawtuple[kinfo_proc_map['rgid']],
             rawtuple[kinfo_proc_map['egid']],
             rawtuple[kinfo_proc_map['sgid']],

@@ -2174,7 +2174,7 @@ class Process:
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
             ioclass = IOPriority(ioclass)
-            return _common.pionice(ioclass, value)
+            return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
@@ -2294,7 +2294,7 @@ class Process:
     def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):
         data = self._read_status_file()
         real, effective, saved = _uids_re.findall(data)[0]
-        return _common.puids(int(real), int(effective), int(saved))
+        return ntp.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
     def gids(self, _gids_re=re.compile(br'Gid:\t(\d+)\t(\d+)\t(\d+)')):
