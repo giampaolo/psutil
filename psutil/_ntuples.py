@@ -277,6 +277,7 @@ elif MACOS:
 
     # psutil.cpu_times()
     scputimes = nt("scputimes", ("user", "nice", "system", "idle"))
+
     # psutil.virtual_memory()
     svmem = nt(
         "svmem",
