@@ -320,7 +320,7 @@ def users():
             continue
         if hostname in localhost:
             hostname = 'localhost'
-        nt = _common.suser(user, tty, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 

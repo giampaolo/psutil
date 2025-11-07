@@ -1535,7 +1535,7 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
-        nt = _common.suser(user, tty or None, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 

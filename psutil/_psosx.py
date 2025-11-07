@@ -320,7 +320,7 @@ def users():
             continue  # reboot or shutdown
         if not tstamp:
             continue
-        nt = _common.suser(user, tty or None, hostname or None, tstamp, pid)
+        nt = ntp.suser(user, tty or None, hostname or None, tstamp, pid)
         retlist.append(nt)
     return retlist
 
