@@ -1274,7 +1274,7 @@ def disk_partitions(all=False):
         if not all:
             if not device or fstype not in fstypes:
                 continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        ntuple = ntp.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
 
     return retlist

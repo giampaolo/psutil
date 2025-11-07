@@ -240,7 +240,7 @@ def disk_partitions(all=False):
                 # https://github.com/giampaolo/psutil/issues/1674
                 debug(f"skipping {mountpoint!r}: {err}")
                 continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        ntuple = ntp.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
