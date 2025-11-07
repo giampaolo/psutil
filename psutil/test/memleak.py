@@ -12,6 +12,7 @@ import unittest
 
 import psutil
 from psutil._common import POSIX
+from psutil._common import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import print_color
 
@@ -104,15 +105,18 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _get_mem(self):
         mem = thisproc.memory_full_info()
-        heap_used = mmap_used = 0
+        heap_used = mmap_used = heap_count = 0
         if hasattr(psutil._psplatform, "malloc_info"):
-            # Linux, macOS, BSD
+            # Linux, Windows, macOS, BSD
             mallinfo = psutil._psplatform.malloc_info()
             heap_used = mallinfo.heap_used
             mmap_used = mallinfo.mmap_used
+            if WINDOWS:
+                heap_count = mallinfo.heap_count
         return {
             "heap": heap_used,
             "mmap": mmap_used,
+            "heap_count": heap_count,
             "uss": getattr(mem, "uss", 0),
             "rss": mem.rss,
             "vms": mem.vms,
