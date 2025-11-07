@@ -200,8 +200,8 @@ def is_storage_device(name):
 
 
 @memoize
-def set_scputimes_ntuple(procfs_path):
-    """Set a namedtuple of variable fields depending on the CPU times
+def _scputimes_ntuple(procfs_path):
+    """Return a namedtuple of variable fields depending on the CPU times
     available on this Linux kernel version which may be:
     (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
@@ -220,15 +220,20 @@ def set_scputimes_ntuple(procfs_path):
     if vlen >= 10:
         # Linux >= 3.2.0
         fields.append('guest_nice')
-    ntp.scputimes = namedtuple('scputimes', fields)
+    return namedtuple('scputimes', fields)
 
 
+# Set it into _ntuples.py namespace.
 try:
-    set_scputimes_ntuple("/proc")
+    ntp.scputimes = _scputimes_ntuple("/proc")
 except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
     debug(f"ignoring exception on import: {err!r}")
     ntp.scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+
+# XXX: must be available also at this module level in order to be
+# serialized (tests/test_misc.py::TestMisc::test_serialization).
+scputimes = ntp.scputimes
 
 
 # =====================================================================
@@ -496,7 +501,6 @@ def cpu_times():
     Last 3 fields may not be available on all Linux kernel versions.
     """
     procfs_path = get_procfs_path()
-    set_scputimes_ntuple(procfs_path)  # XXX why is this called?
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
     fields = values[1 : len(ntp.scputimes._fields) + 1]
@@ -509,7 +513,6 @@ def per_cpu_times():
     for every CPU available on the system.
     """
     procfs_path = get_procfs_path()
-    set_scputimes_ntuple(procfs_path)  # XXX why is this called?
     cpus = []
     with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
