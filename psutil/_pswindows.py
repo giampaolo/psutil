@@ -327,7 +327,7 @@ def cpu_freq():
     """
     curr, max_ = cext.cpu_freq()
     min_ = 0.0
-    return [_common.scpufreq(float(curr), min_, float(max_))]
+    return [ntp.scpufreq(float(curr), min_, float(max_))]
 
 
 _loadavg_initialized = False

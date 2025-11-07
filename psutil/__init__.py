@@ -30,6 +30,8 @@ import sys
 import threading
 import time
 
+import ntp
+
 try:
     import pwd
 except ImportError:
@@ -1954,7 +1956,7 @@ if hasattr(_psplatform, "cpu_freq"):
                     min_ = mins / num_cpus
                     max_ = maxs / num_cpus
 
-                return _common.scpufreq(current, min_, max_)
+                return ntp.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")
 

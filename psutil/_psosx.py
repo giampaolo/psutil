@@ -178,7 +178,7 @@ if cext.has_cpu_freq():  # not always available on ARM64
         https://arstechnica.com/civis/viewtopic.php?f=19&t=465002.
         """
         curr, min_, max_ = cext.cpu_freq()
-        return [_common.scpufreq(curr, min_, max_)]
+        return [ntp.scpufreq(curr, min_, max_)]
 
 
 # =====================================================================

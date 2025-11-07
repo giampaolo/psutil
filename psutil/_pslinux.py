@@ -703,14 +703,14 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                     online_path = f"/sys/devices/system/cpu/cpu{i}/online"
                     # if cpu core is offline, set to all zeroes
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(_common.scpufreq(0.0, 0.0, 0.0))
+                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
             curr = int(curr) / 1000
             max_ = int(bcat(pjoin(path, "scaling_max_freq"))) / 1000
             min_ = int(bcat(pjoin(path, "scaling_min_freq"))) / 1000
-            ret.append(_common.scpufreq(curr, min_, max_))
+            ret.append(ntp.scpufreq(curr, min_, max_))
         return ret
 
 else:
@@ -719,7 +719,7 @@ else:
         """Alternate implementation using /proc/cpuinfo.
         min and max frequencies are not available and are set to None.
         """
-        return [_common.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
+        return [ntp.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
 
 
 # =====================================================================

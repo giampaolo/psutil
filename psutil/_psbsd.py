@@ -342,14 +342,14 @@ if FREEBSD:
                     max_freq = int(available_freq.split(" ")[0].split("/")[0])
                 except (IndexError, ValueError):
                     max_freq = None
-            ret.append(_common.scpufreq(current, min_freq, max_freq))
+            ret.append(ntp.scpufreq(current, min_freq, max_freq))
         return ret
 
 elif OPENBSD:
 
     def cpu_freq():
         curr = float(cext.cpu_freq())
-        return [_common.scpufreq(curr, 0.0, 0.0)]
+        return [ntp.scpufreq(curr, 0.0, 0.0)]
 
 
 # =====================================================================
