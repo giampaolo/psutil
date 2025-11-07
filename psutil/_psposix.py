@@ -10,10 +10,10 @@ import os
 import signal
 import time
 
+from . import _ntuples as ntp
 from ._common import MACOS
 from ._common import TimeoutExpired
 from ._common import memoize
-from ._common import sdiskusage
 from ._common import usage_percent
 
 if MACOS:
@@ -185,7 +185,7 @@ def disk_usage(path):
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:
     # https://github.com/giampaolo/psutil/issues/829#issuecomment-223750462
-    return sdiskusage(
+    return ntp.sdiskusage(
         total=total, used=used, free=avail_to_user, percent=usage_percent_user
     )
 

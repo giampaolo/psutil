@@ -17,7 +17,6 @@ import stat
 import sys
 import threading
 import warnings
-from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
@@ -53,10 +52,6 @@ __all__ = [
     'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
-    # named tuples
-    'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
-    'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
-    'sdiskusage', 'snetio', 'snicaddr', 'snicstats', 'sswap', 'suser',
     # utility functions
     'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
@@ -145,85 +140,6 @@ globals().update(BatteryTime.__members__)
 
 ENCODING = sys.getfilesystemencoding()
 ENCODING_ERRS = sys.getfilesystemencodeerrors()
-
-
-# ===================================================================
-# --- namedtuples
-# ===================================================================
-
-# --- for system functions
-
-# fmt: off
-# psutil.swap_memory()
-sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
-                             'sout'])
-# psutil.disk_usage()
-sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent'])
-# psutil.disk_io_counters()
-sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                 'read_bytes', 'write_bytes',
-                                 'read_time', 'write_time'])
-# psutil.disk_partitions()
-sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
-# psutil.net_io_counters()
-snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
-                               'packets_sent', 'packets_recv',
-                               'errin', 'errout',
-                               'dropin', 'dropout'])
-# psutil.users()
-suser = namedtuple('suser', ['name', 'terminal', 'host', 'started', 'pid'])
-# psutil.net_connections()
-sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
-                             'status', 'pid'])
-# psutil.net_if_addrs()
-snicaddr = namedtuple('snicaddr',
-                      ['family', 'address', 'netmask', 'broadcast', 'ptp'])
-# psutil.net_if_stats()
-snicstats = namedtuple('snicstats',
-                       ['isup', 'duplex', 'speed', 'mtu', 'flags'])
-# psutil.cpu_stats()
-scpustats = namedtuple(
-    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
-# psutil.cpu_freq()
-scpufreq = namedtuple('scpufreq', ['current', 'min', 'max'])
-# psutil.sensors_temperatures()
-shwtemp = namedtuple(
-    'shwtemp', ['label', 'current', 'high', 'critical'])
-# psutil.sensors_battery()
-sbattery = namedtuple('sbattery', ['percent', 'secsleft', 'power_plugged'])
-# psutil.sensors_fans()
-sfan = namedtuple('sfan', ['label', 'current'])
-# fmt: on
-
-# --- for Process methods
-
-# psutil.Process.cpu_times()
-pcputimes = namedtuple(
-    'pcputimes', ['user', 'system', 'children_user', 'children_system']
-)
-# psutil.Process.open_files()
-popenfile = namedtuple('popenfile', ['path', 'fd'])
-# psutil.Process.threads()
-pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
-# psutil.Process.uids()
-puids = namedtuple('puids', ['real', 'effective', 'saved'])
-# psutil.Process.gids()
-pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
-# psutil.Process.io_counters()
-pio = namedtuple(
-    'pio', ['read_count', 'write_count', 'read_bytes', 'write_bytes']
-)
-# psutil.Process.ionice()
-pionice = namedtuple('pionice', ['ioclass', 'value'])
-# psutil.Process.ctx_switches()
-pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
-# psutil.Process.net_connections()
-pconn = namedtuple(
-    'pconn', ['fd', 'family', 'type', 'laddr', 'raddr', 'status']
-)
-
-# psutil.net_connections() and psutil.Process.net_connections()
-addr = namedtuple('addr', ['ip', 'port'])
 
 
 # ===================================================================
@@ -584,11 +500,13 @@ def socktype_to_enum(num):
 
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     """Convert a raw connection tuple to a proper ntuple."""
+    from . import _ntuples as ntp
+
     if fam in {socket.AF_INET, AF_INET6}:
         if laddr:
-            laddr = addr(*laddr)
+            laddr = ntp.addr(*laddr)
         if raddr:
-            raddr = addr(*raddr)
+            raddr = ntp.addr(*raddr)
     if type_ == socket.SOCK_STREAM and fam in {AF_INET, AF_INET6}:
         status = status_map.get(status, CONN_NONE)
     else:
@@ -596,9 +514,9 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     fam = sockfam_to_enum(fam)
     type_ = socktype_to_enum(type_)
     if pid is None:
-        return pconn(fd, fam, type_, laddr, raddr, status)
+        return ntp.pconn(fd, fam, type_, laddr, raddr, status)
     else:
-        return sconn(fd, fam, type_, laddr, raddr, status, pid)
+        return ntp.sconn(fd, fam, type_, laddr, raddr, status, pid)
 
 
 def broadcast_addr(addr):

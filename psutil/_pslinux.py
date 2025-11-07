@@ -22,6 +22,7 @@ from collections import defaultdict
 from collections import namedtuple
 
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_linux as cext
 from ._common import ENCODING
@@ -142,49 +143,6 @@ TCP_STATUSES = {
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# fmt: off
-# psutil.virtual_memory()
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared', 'slab'])
-# psutil.disk_io_counters()
-sdiskio = namedtuple(
-    'sdiskio', ['read_count', 'write_count',
-                'read_bytes', 'write_bytes',
-                'read_time', 'write_time',
-                'read_merged_count', 'write_merged_count',
-                'busy_time'])
-# psutil.Process().open_files()
-popenfile = namedtuple(
-    'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
-# psutil.Process().memory_info()
-pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
-# psutil.Process().memory_full_info()
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
-# psutil.Process().memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped',
-    ['path', 'rss', 'size', 'pss', 'shared_clean', 'shared_dirty',
-     'private_clean', 'private_dirty', 'referenced', 'anonymous', 'swap'])
-# psutil.Process().memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-# psutil.Process.io_counters()
-pio = namedtuple('pio', ['read_count', 'write_count',
-                         'read_bytes', 'write_bytes',
-                         'read_chars', 'write_chars'])
-# psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system',
-                        'iowait'])
-# fmt: on
-
-
-# =====================================================================
 # --- utils
 # =====================================================================
 
@@ -242,14 +200,13 @@ def is_storage_device(name):
 
 
 @memoize
-def set_scputimes_ntuple(procfs_path):
-    """Set a namedtuple of variable fields depending on the CPU times
+def _scputimes_ntuple(procfs_path):
+    """Return a namedtuple of variable fields depending on the CPU times
     available on this Linux kernel version which may be:
     (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
     Used by cpu_times() function.
     """
-    global scputimes
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()[1:]
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
@@ -263,15 +220,20 @@ def set_scputimes_ntuple(procfs_path):
     if vlen >= 10:
         # Linux >= 3.2.0
         fields.append('guest_nice')
-    scputimes = namedtuple('scputimes', fields)
+    return namedtuple('scputimes', fields)
 
 
+# Set it into _ntuples.py namespace.
 try:
-    set_scputimes_ntuple("/proc")
+    ntp.scputimes = _scputimes_ntuple("/proc")
 except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
     debug(f"ignoring exception on import: {err!r}")
-    scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+    ntp.scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+
+# XXX: must be available also at this module level in order to be
+# serialized (tests/test_misc.py::TestMisc::test_serialization).
+scputimes = ntp.scputimes
 
 
 # =====================================================================
@@ -456,7 +418,7 @@ def virtual_memory():
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
-    return svmem(
+    return ntp.svmem(
         total,
         avail,
         percent,
@@ -523,7 +485,7 @@ def swap_memory():
                 msg += "be determined and were set to 0"
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
-    return _common.sswap(total, used, free, percent, sin, sout)
+    return ntp.sswap(total, used, free, percent, sin, sout)
 
 
 # =====================================================================
@@ -539,12 +501,11 @@ def cpu_times():
     Last 3 fields may not be available on all Linux kernel versions.
     """
     procfs_path = get_procfs_path()
-    set_scputimes_ntuple(procfs_path)
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
-    fields = values[1 : len(scputimes._fields) + 1]
+    fields = values[1 : len(ntp.scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
-    return scputimes(*fields)
+    return ntp.scputimes(*fields)
 
 
 def per_cpu_times():
@@ -552,7 +513,6 @@ def per_cpu_times():
     for every CPU available on the system.
     """
     procfs_path = get_procfs_path()
-    set_scputimes_ntuple(procfs_path)
     cpus = []
     with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
@@ -560,9 +520,9 @@ def per_cpu_times():
         for line in f:
             if line.startswith(b'cpu'):
                 values = line.split()
-                fields = values[1 : len(scputimes._fields) + 1]
+                fields = values[1 : len(ntp.scputimes._fields) + 1]
                 fields = [float(x) / CLOCK_TICKS for x in fields]
-                entry = scputimes(*fields)
+                entry = ntp.scputimes(*fields)
                 cpus.append(entry)
         return cpus
 
@@ -658,9 +618,7 @@ def cpu_stats():
             ):
                 break
     syscalls = 0
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 def _cpu_get_cpuinfo_freq():
@@ -704,14 +662,14 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                     online_path = f"/sys/devices/system/cpu/cpu{i}/online"
                     # if cpu core is offline, set to all zeroes
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(_common.scpufreq(0.0, 0.0, 0.0))
+                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
             curr = int(curr) / 1000
             max_ = int(bcat(pjoin(path, "scaling_max_freq"))) / 1000
             min_ = int(bcat(pjoin(path, "scaling_min_freq"))) / 1000
-            ret.append(_common.scpufreq(curr, min_, max_))
+            ret.append(ntp.scpufreq(curr, min_, max_))
         return ret
 
 else:
@@ -720,7 +678,7 @@ else:
         """Alternate implementation using /proc/cpuinfo.
         min and max frequencies are not available and are set to None.
         """
-        return [_common.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
+        return [ntp.scpufreq(x, 0.0, 0.0) for x in _cpu_get_cpuinfo_freq()]
 
 
 # =====================================================================
@@ -861,7 +819,7 @@ class NetConnections:
                 if not supports_ipv6():
                     raise _Ipv6UnsupportedError from None
                 raise
-        return _common.addr(ip, port)
+        return ntp.addr(ip, port)
 
     @staticmethod
     def process_inet(file, family, type_, inodes, filter_pid=None):
@@ -962,11 +920,9 @@ class NetConnections:
                 ls = self.process_unix(path, family, inodes, filter_pid=pid)
             for fd, family, type_, laddr, raddr, status, bound_pid in ls:
                 if pid:
-                    conn = _common.pconn(
-                        fd, family, type_, laddr, raddr, status
-                    )
+                    conn = ntp.pconn(fd, family, type_, laddr, raddr, status)
                 else:
-                    conn = _common.sconn(
+                    conn = ntp.sconn(
                         fd, family, type_, laddr, raddr, status, bound_pid
                     )
                 ret.add(conn)
@@ -1050,7 +1006,7 @@ def net_if_stats():
         else:
             output_flags = ','.join(flags)
             isup = 'running' in flags
-            ret[name] = _common.snicstats(
+            ret[name] = ntp.snicstats(
                 isup, duplex_map[duplex], speed, mtu, output_flags
             )
     return ret
@@ -1277,7 +1233,7 @@ def disk_partitions(all=False):
         if not all:
             if not device or fstype not in fstypes:
                 continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        ntuple = ntp.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
 
     return retlist
@@ -1432,7 +1388,7 @@ def sensors_fans():
             continue
         unit_name = cat(os.path.join(os.path.dirname(base), 'name')).strip()
         label = cat(base + '_label', fallback='').strip()
-        ret[unit_name].append(_common.sfan(label, current))
+        ret[unit_name].append(ntp.sfan(label, current))
 
     return dict(ret)
 
@@ -1524,7 +1480,7 @@ def sensors_battery():
     else:
         secsleft = _common.POWER_TIME_UNKNOWN
 
-    return _common.sbattery(percent, secsleft, power_plugged)
+    return ntp.sbattery(percent, secsleft, power_plugged)
 
 
 # =====================================================================
@@ -1538,7 +1494,7 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, pid = item
-        nt = _common.suser(user, tty or None, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -1848,7 +1804,7 @@ class Process:
                 msg = f"{fname} file was empty"
                 raise RuntimeError(msg)
             try:
-                return pio(
+                return ntp.pio(
                     fields[b'syscr'],  # read syscalls
                     fields[b'syscw'],  # write syscalls
                     fields[b'read_bytes'],  # read bytes
@@ -1871,7 +1827,9 @@ class Process:
         children_utime = float(values['children_utime']) / CLOCK_TICKS
         children_stime = float(values['children_stime']) / CLOCK_TICKS
         iowait = float(values['blkio_ticks']) / CLOCK_TICKS
-        return pcputimes(utime, stime, children_utime, children_stime, iowait)
+        return ntp.pcputimes(
+            utime, stime, children_utime, children_stime, iowait
+        )
 
     @wrap_exceptions
     def cpu_num(self):
@@ -1916,7 +1874,7 @@ class Process:
             vms, rss, shared, text, lib, data, dirty = (
                 int(x) * PAGESIZE for x in f.readline().split()[:7]
             )
-        return pmem(rss, vms, shared, text, lib, data, dirty)
+        return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
@@ -1982,7 +1940,7 @@ class Process:
             else:
                 uss, pss, swap = self._parse_smaps()
             basic_mem = self.memory_info()
-            return pfullmem(*basic_mem + (uss, pss, swap))
+            return ntp.pfullmem(*basic_mem + (uss, pss, swap))
 
     else:
         memory_full_info = memory_info
@@ -2081,7 +2039,7 @@ class Process:
                 " probably older than 2.6.23"
             )
             raise NotImplementedError(msg)
-        return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
+        return ntp.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(br'Threads:\t(\d+)')):
@@ -2110,7 +2068,7 @@ class Process:
             values = st.split(b' ')
             utime = float(values[11]) / CLOCK_TICKS
             stime = float(values[12]) / CLOCK_TICKS
-            ntuple = _common.pthread(int(thread_id), utime, stime)
+            ntuple = ntp.pthread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         if hit_enoent:
             self._raise_if_not_alive()
@@ -2177,7 +2135,7 @@ class Process:
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
             ioclass = IOPriority(ioclass)
-            return _common.pionice(ioclass, value)
+            return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
@@ -2271,7 +2229,7 @@ class Process:
                         hit_enoent = True
                     else:
                         mode = file_flags_to_mode(flags)
-                        ntuple = popenfile(
+                        ntuple = ntp.popenfile(
                             path, int(fd), int(pos), mode, flags
                         )
                         retlist.append(ntuple)
@@ -2297,10 +2255,10 @@ class Process:
     def uids(self, _uids_re=re.compile(br'Uid:\t(\d+)\t(\d+)\t(\d+)')):
         data = self._read_status_file()
         real, effective, saved = _uids_re.findall(data)[0]
-        return _common.puids(int(real), int(effective), int(saved))
+        return ntp.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
     def gids(self, _gids_re=re.compile(br'Gid:\t(\d+)\t(\d+)\t(\d+)')):
         data = self._read_status_file()
         real, effective, saved = _gids_re.findall(data)[0]
-        return _common.pgids(int(real), int(effective), int(saved))
+        return ntp.pgids(int(real), int(effective), int(saved))

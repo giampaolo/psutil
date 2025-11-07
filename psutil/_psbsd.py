@@ -13,6 +13,7 @@ from collections import namedtuple
 from xml.etree import ElementTree  # noqa: ICN001
 
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_bsd as cext
 from ._common import FREEBSD
@@ -128,44 +129,6 @@ kinfo_proc_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# fmt: off
-# psutil.virtual_memory()
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared', 'wired'])
-# psutil.cpu_times()
-scputimes = namedtuple(
-    'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
-# psutil.Process.memory_full_info()
-pfullmem = pmem
-# psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
-# psutil.disk_io_counters()
-if FREEBSD:
-    sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                     'read_bytes', 'write_bytes',
-                                     'read_time', 'write_time',
-                                     'busy_time'])
-else:
-    sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                     'read_bytes', 'write_bytes'])
-# fmt: on
-
-
-# =====================================================================
 # --- memory
 # =====================================================================
 
@@ -202,7 +165,7 @@ def virtual_memory():
         used = active + wired + cached
 
     percent = usage_percent((total - avail), total, round_=1)
-    return svmem(
+    return ntp.svmem(
         total,
         avail,
         percent,
@@ -221,7 +184,7 @@ def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, round_=1)
-    return _common.sswap(total, used, free, percent, sin, sout)
+    return ntp.sswap(total, used, free, percent, sin, sout)
 
 
 # =====================================================================
@@ -232,7 +195,7 @@ def swap_memory():
 def cpu_times():
     """Return system per-CPU times as a namedtuple."""
     user, nice, system, idle, irq = cext.cpu_times()
-    return scputimes(user, nice, system, idle, irq)
+    return ntp.scputimes(user, nice, system, idle, irq)
 
 
 def per_cpu_times():
@@ -240,7 +203,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle, irq = cpu_t
-        item = scputimes(user, nice, system, idle, irq)
+        item = ntp.scputimes(user, nice, system, idle, irq)
         ret.append(item)
     return ret
 
@@ -314,7 +277,7 @@ def cpu_stats():
         ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
             cext.cpu_stats()
         )
-    return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
+    return ntp.scpustats(ctxsw, intrs, soft_intrs, syscalls)
 
 
 if FREEBSD:
@@ -340,14 +303,14 @@ if FREEBSD:
                     max_freq = int(available_freq.split(" ")[0].split("/")[0])
                 except (IndexError, ValueError):
                     max_freq = None
-            ret.append(_common.scpufreq(current, min_freq, max_freq))
+            ret.append(ntp.scpufreq(current, min_freq, max_freq))
         return ret
 
 elif OPENBSD:
 
     def cpu_freq():
         curr = float(cext.cpu_freq())
-        return [_common.scpufreq(curr, 0.0, 0.0)]
+        return [ntp.scpufreq(curr, 0.0, 0.0)]
 
 
 # =====================================================================
@@ -364,7 +327,7 @@ def disk_partitions(all=False):
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        ntuple = ntp.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -400,9 +363,7 @@ def net_if_stats():
                 duplex = _common.NicDuplex(duplex)
             output_flags = ','.join(flags)
             isup = 'running' in flags
-            ret[name] = _common.snicstats(
-                isup, duplex, speed, mtu, output_flags
-            )
+            ret[name] = ntp.snicstats(isup, duplex, speed, mtu, output_flags)
     return ret
 
 
@@ -447,7 +408,7 @@ if FREEBSD:
             secsleft = _common.POWER_TIME_UNKNOWN
         else:
             secsleft = minsleft * 60
-        return _common.sbattery(percent, secsleft, power_plugged)
+        return ntp.sbattery(percent, secsleft, power_plugged)
 
     def sensors_temperatures():
         """Return CPU cores temperatures if available, else an empty dict."""
@@ -459,9 +420,7 @@ if FREEBSD:
                 if high <= 0:
                     high = None
                 name = f"Core {cpu}"
-                ret["coretemp"].append(
-                    _common.shwtemp(name, current, high, high)
-                )
+                ret["coretemp"].append(ntp.shwtemp(name, current, high, high))
             except NotImplementedError:
                 pass
 
@@ -510,7 +469,7 @@ def users():
         user, tty, hostname, tstamp, pid = item
         if tty == '~':
             continue  # reboot or shutdown
-        nt = _common.suser(user, tty or None, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty or None, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -722,7 +681,7 @@ class Process:
     @wrap_exceptions
     def uids(self):
         rawtuple = self.oneshot()
-        return _common.puids(
+        return ntp.puids(
             rawtuple[kinfo_proc_map['real_uid']],
             rawtuple[kinfo_proc_map['effective_uid']],
             rawtuple[kinfo_proc_map['saved_uid']],
@@ -731,7 +690,7 @@ class Process:
     @wrap_exceptions
     def gids(self):
         rawtuple = self.oneshot()
-        return _common.pgids(
+        return ntp.pgids(
             rawtuple[kinfo_proc_map['real_gid']],
             rawtuple[kinfo_proc_map['effective_gid']],
             rawtuple[kinfo_proc_map['saved_gid']],
@@ -740,7 +699,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         rawtuple = self.oneshot()
-        return _common.pcputimes(
+        return ntp.pcputimes(
             rawtuple[kinfo_proc_map['user_time']],
             rawtuple[kinfo_proc_map['sys_time']],
             rawtuple[kinfo_proc_map['ch_user_time']],
@@ -756,7 +715,7 @@ class Process:
     @wrap_exceptions
     def memory_info(self):
         rawtuple = self.oneshot()
-        return pmem(
+        return ntp.pmem(
             rawtuple[kinfo_proc_map['rss']],
             rawtuple[kinfo_proc_map['vms']],
             rawtuple[kinfo_proc_map['memtext']],
@@ -785,7 +744,7 @@ class Process:
     @wrap_exceptions
     def num_ctx_switches(self):
         rawtuple = self.oneshot()
-        return _common.pctxsw(
+        return ntp.pctxsw(
             rawtuple[kinfo_proc_map['ctx_switches_vol']],
             rawtuple[kinfo_proc_map['ctx_switches_unvol']],
         )
@@ -796,7 +755,7 @@ class Process:
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = _common.pthread(thread_id, utime, stime)
+            ntuple = ntp.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         if OPENBSD:
             self._assert_alive()
@@ -848,7 +807,7 @@ class Process:
     @wrap_exceptions
     def io_counters(self):
         rawtuple = self.oneshot()
-        return _common.pio(
+        return ntp.pio(
             rawtuple[kinfo_proc_map['read_io_count']],
             rawtuple[kinfo_proc_map['write_io_count']],
             -1,
@@ -875,7 +834,7 @@ class Process:
     def open_files(self):
         """Return files opened by process as a list of namedtuples."""
         rawlist = cext.proc_open_files(self.pid)
-        return [_common.popenfile(path, fd) for path, fd in rawlist]
+        return [ntp.popenfile(path, fd) for path, fd in rawlist]
 
     @wrap_exceptions
     def num_fds(self):

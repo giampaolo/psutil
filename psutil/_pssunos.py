@@ -14,6 +14,7 @@ from collections import namedtuple
 from socket import AF_INET
 
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_sunos as cext
 from ._common import AF_INET6
@@ -88,32 +89,6 @@ proc_info_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# psutil.cpu_times()
-scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
-# psutil.cpu_times(percpu=True)
-pcputimes = namedtuple(
-    'pcputimes', ['user', 'system', 'children_user', 'children_system']
-)
-# psutil.virtual_memory()
-svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms'])
-pfullmem = pmem
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped', ['path', 'rss', 'anonymous', 'locked']
-)
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields)
-)
-
-
-# =====================================================================
 # --- memory
 # =====================================================================
 
@@ -126,7 +101,7 @@ def virtual_memory():
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, round_=1)
-    return svmem(total, avail, percent, used, free)
+    return ntp.svmem(total, avail, percent, used, free)
 
 
 def swap_memory():
@@ -165,7 +140,7 @@ def swap_memory():
         free += int(int(f) * 512)
     used = total - free
     percent = usage_percent(used, total, round_=1)
-    return _common.sswap(
+    return ntp.sswap(
         total, used, free, percent, sin * PAGE_SIZE, sout * PAGE_SIZE
     )
 
@@ -178,13 +153,13 @@ def swap_memory():
 def cpu_times():
     """Return system-wide CPU times as a named tuple."""
     ret = cext.per_cpu_times()
-    return scputimes(*[sum(x) for x in zip(*ret)])
+    return ntp.scputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = cext.per_cpu_times()
-    return [scputimes(*x) for x in ret]
+    return [ntp.scputimes(*x) for x in ret]
 
 
 def cpu_count_logical():
@@ -205,9 +180,7 @@ def cpu_stats():
     """Return various CPU stats as a named tuple."""
     ctx_switches, interrupts, syscalls, _traps = cext.cpu_stats()
     soft_interrupts = 0
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 # =====================================================================
@@ -240,7 +213,7 @@ def disk_partitions(all=False):
                 # https://github.com/giampaolo/psutil/issues/1674
                 debug(f"skipping {mountpoint!r}: {err}")
                 continue
-        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        ntuple = ntp.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -271,16 +244,16 @@ def net_connections(kind, _pid=-1):
         # TODO: refactor and use _common.conn_to_ntuple.
         if fam in {AF_INET, AF_INET6}:
             if laddr:
-                laddr = _common.addr(*laddr)
+                laddr = ntp.addr(*laddr)
             if raddr:
-                raddr = _common.addr(*raddr)
+                raddr = ntp.addr(*raddr)
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type_ = socktype_to_enum(type_)
         if _pid == -1:
-            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
+            nt = ntp.sconn(fd, fam, type_, laddr, raddr, status, pid)
         else:
-            nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
+            nt = ntp.pconn(fd, fam, type_, laddr, raddr, status)
         ret.add(nt)
     return list(ret)
 
@@ -292,7 +265,7 @@ def net_if_stats():
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu, '')
+        ret[name] = ntp.snicstats(isup, duplex, speed, mtu, '')
     return ret
 
 
@@ -320,7 +293,7 @@ def users():
             continue
         if hostname in localhost:
             hostname = 'localhost'
-        nt = _common.suser(user, tty, hostname, tstamp, pid)
+        nt = ntp.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
 
@@ -481,7 +454,7 @@ class Process:
             real = self._proc_basic_info()[proc_info_map['uid']]
             effective = self._proc_basic_info()[proc_info_map['euid']]
             saved = None
-        return _common.puids(real, effective, saved)
+        return ntp.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
@@ -491,7 +464,7 @@ class Process:
             real = self._proc_basic_info()[proc_info_map['gid']]
             effective = self._proc_basic_info()[proc_info_map['egid']]
             saved = None
-        return _common.puids(real, effective, saved)
+        return ntp.puids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
@@ -509,7 +482,7 @@ class Process:
                 times = (0.0, 0.0, 0.0, 0.0)
             else:
                 raise
-        return _common.pcputimes(*times)
+        return ntp.pcputimes(*times)
 
     @wrap_exceptions
     def cpu_num(self):
@@ -548,7 +521,7 @@ class Process:
         ret = self._proc_basic_info()
         rss = ret[proc_info_map['rss']] * 1024
         vms = ret[proc_info_map['vms']] * 1024
-        return pmem(rss, vms)
+        return ntp.pmem(rss, vms)
 
     memory_full_info = memory_info
 
@@ -586,7 +559,7 @@ class Process:
                     continue
                 raise
             else:
-                nt = _common.pthread(tid, utime, stime)
+                nt = ntp.pthread(tid, utime, stime)
                 ret.append(nt)
         if hit_enoent:
             self._assert_alive()
@@ -608,7 +581,7 @@ class Process:
                     continue
                 else:
                     if isfile_strict(file):
-                        retlist.append(_common.popenfile(file, int(fd)))
+                        retlist.append(ntp.popenfile(file, int(fd)))
         if hit_enoent:
             self._assert_alive()
         return retlist
@@ -661,10 +634,9 @@ class Process:
 
         # UNIX sockets
         if kind in {'all', 'unix'}:
-            ret.extend([
-                _common.pconn(*conn)
-                for conn in self._get_unix_sockets(self.pid)
-            ])
+            ret.extend(
+                [ntp.pconn(*conn) for conn in self._get_unix_sockets(self.pid)]
+            )
         return ret
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss anon locked')
@@ -723,7 +695,7 @@ class Process:
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(
+        return ntp.pctxsw(
             *cext.proc_num_ctx_switches(self.pid, self._procfs_path)
         )
 
