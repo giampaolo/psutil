@@ -14,6 +14,8 @@ import threading
 import time
 from collections import namedtuple
 
+import ntp
+
 from . import _common
 from ._common import ENCODING
 from ._common import AccessDenied
@@ -248,7 +250,7 @@ def swap_memory():
 
     free = total - used
     percent = round(percentswap, 1)
-    return _common.sswap(total, used, free, percent, 0, 0)
+    return ntp.sswap(total, used, free, percent, 0, 0)
 
 
 # =====================================================================
@@ -316,9 +318,7 @@ def cpu_stats():
     """Return CPU statistics."""
     ctx_switches, interrupts, _dpcs, syscalls = cext.cpu_stats()
     soft_interrupts = 0
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 def cpu_freq():

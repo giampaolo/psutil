@@ -9,6 +9,8 @@ import functools
 import os
 from collections import namedtuple
 
+import ntp
+
 from . import _common
 from . import _psposix
 from . import _psutil_osx as cext
@@ -126,7 +128,7 @@ def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, round_=1)
-    return _common.sswap(total, used, free, percent, sin, sout)
+    return ntp.sswap(total, used, free, percent, sin, sout)
 
 
 # =====================================================================
@@ -164,9 +166,7 @@ def cpu_stats():
     ctx_switches, interrupts, soft_interrupts, syscalls, _traps = (
         cext.cpu_stats()
     )
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 if cext.has_cpu_freq():  # not always available on ARM64

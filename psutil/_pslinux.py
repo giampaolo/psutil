@@ -22,6 +22,7 @@ from collections import defaultdict
 from collections import namedtuple
 
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_linux as cext
 from ._common import ENCODING
@@ -523,7 +524,7 @@ def swap_memory():
                 msg += "be determined and were set to 0"
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
                 sin = sout = 0
-    return _common.sswap(total, used, free, percent, sin, sout)
+    return ntp.sswap(total, used, free, percent, sin, sout)
 
 
 # =====================================================================
@@ -658,9 +659,7 @@ def cpu_stats():
             ):
                 break
     syscalls = 0
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 def _cpu_get_cpuinfo_freq():

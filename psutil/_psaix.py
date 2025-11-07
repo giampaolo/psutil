@@ -14,6 +14,8 @@ import subprocess
 import sys
 from collections import namedtuple
 
+import ntp
+
 from . import _common
 from . import _psposix
 from . import _psutil_aix as cext
@@ -109,7 +111,7 @@ def swap_memory():
     total, free, sin, sout = cext.swap_mem()
     used = total - free
     percent = usage_percent(used, total, round_=1)
-    return _common.sswap(total, used, free, percent, sin, sout)
+    return ntp.sswap(total, used, free, percent, sin, sout)
 
 
 # =====================================================================
@@ -153,9 +155,7 @@ def cpu_count_cores():
 def cpu_stats():
     """Return various CPU stats as a named tuple."""
     ctx_switches, interrupts, soft_interrupts, syscalls = cext.cpu_stats()
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 # =====================================================================

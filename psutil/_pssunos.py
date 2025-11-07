@@ -13,6 +13,8 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
+import ntp
+
 from . import _common
 from . import _psposix
 from . import _psutil_sunos as cext
@@ -165,7 +167,7 @@ def swap_memory():
         free += int(int(f) * 512)
     used = total - free
     percent = usage_percent(used, total, round_=1)
-    return _common.sswap(
+    return ntp.sswap(
         total, used, free, percent, sin * PAGE_SIZE, sout * PAGE_SIZE
     )
 
@@ -205,9 +207,7 @@ def cpu_stats():
     """Return various CPU stats as a named tuple."""
     ctx_switches, interrupts, syscalls, _traps = cext.cpu_stats()
     soft_interrupts = 0
-    return _common.scpustats(
-        ctx_switches, interrupts, soft_interrupts, syscalls
-    )
+    return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 # =====================================================================

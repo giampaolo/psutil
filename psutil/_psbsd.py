@@ -12,6 +12,8 @@ from collections import defaultdict
 from collections import namedtuple
 from xml.etree import ElementTree  # noqa: ICN001
 
+import ntp
+
 from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
@@ -221,7 +223,7 @@ def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, round_=1)
-    return _common.sswap(total, used, free, percent, sin, sout)
+    return ntp.sswap(total, used, free, percent, sin, sout)
 
 
 # =====================================================================
@@ -314,7 +316,7 @@ def cpu_stats():
         ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
             cext.cpu_stats()
         )
-    return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
+    return ntp.scpustats(ctxsw, intrs, soft_intrs, syscalls)
 
 
 if FREEBSD:
