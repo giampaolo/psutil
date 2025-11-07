@@ -404,7 +404,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
             # will consume around 60M in total
             with pytest.raises(
                 AssertionError,
-                match=rf"Run \#{MemoryLeakTestCase.retries}",
+                match=r"Memory kept increasing",
             ):
                 with contextlib.redirect_stdout(
                     io.StringIO()

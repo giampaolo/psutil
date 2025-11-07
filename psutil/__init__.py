@@ -36,6 +36,7 @@ except ImportError:
     pwd = None
 
 from . import _common
+from . import _ntuples as _ntp
 from ._common import AIX
 from ._common import BSD
 from ._common import CONN_CLOSE
@@ -1162,7 +1163,7 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        valid_types = list(_psplatform.pfullmem._fields)
+        valid_types = list(_ntp.pfullmem._fields)
         if memtype not in valid_types:
             msg = (
                 f"invalid memtype {memtype!r}; valid types are"
@@ -1171,7 +1172,7 @@ class Process:
             raise ValueError(msg)
         fun = (
             self.memory_info
-            if memtype in _psplatform.pmem._fields
+            if memtype in _ntp.pmem._fields
             else self.memory_full_info
         )
         metrics = fun()
@@ -1211,11 +1212,9 @@ class Process:
                         d[path] = list(map(lambda x, y: x + y, d[path], nums))
                     except KeyError:
                         d[path] = nums
-                nt = _psplatform.pmmap_grouped
-                return [nt(path, *d[path]) for path in d]
+                return [_ntp.pmmap_grouped(path, *d[path]) for path in d]
             else:
-                nt = _psplatform.pmmap_ext
-                return [nt(*x) for x in it]
+                return [_ntp.pmmap_ext(*x) for x in it]
 
     def open_files(self):
         """Return files opened by process as a list of
@@ -1751,7 +1750,7 @@ def _cpu_busy_time(times):
 def _cpu_times_deltas(t1, t2):
     assert t1._fields == t2._fields, (t1, t2)
     field_deltas = []
-    for field in _psplatform.scputimes._fields:
+    for field in _ntp.scputimes._fields:
         field_delta = getattr(t2, field) - getattr(t1, field)
         # CPU times are always supposed to increase over time
         # or at least remain the same and that's because time
@@ -1766,7 +1765,7 @@ def _cpu_times_deltas(t1, t2):
         # https://gitlab.com/procps-ng/procps/blob/v3.3.12/top/top.c#L5063
         field_delta = max(0, field_delta)
         field_deltas.append(field_delta)
-    return _psplatform.scputimes(*field_deltas)
+    return _ntp.scputimes(*field_deltas)
 
 
 def cpu_percent(interval=None, percpu=False):
@@ -1885,7 +1884,7 @@ def cpu_times_percent(interval=None, percpu=False):
             # make sure we don't return negative values or values over 100%
             field_perc = min(max(0.0, field_perc), 100.0)
             nums.append(field_perc)
-        return _psplatform.scputimes(*nums)
+        return _ntp.scputimes(*nums)
 
     # system-wide usage
     if not percpu:
@@ -1955,7 +1954,7 @@ if hasattr(_psplatform, "cpu_freq"):
                     min_ = mins / num_cpus
                     max_ = maxs / num_cpus
 
-                return _common.scpufreq(current, min_, max_)
+                return _ntp.scpufreq(current, min_, max_)
 
     __all__.append("cpu_freq")
 
@@ -2114,13 +2113,12 @@ def disk_io_counters(perdisk=False, nowrap=True):
         return {} if perdisk else None
     if nowrap:
         rawdict = _wrap_numbers(rawdict, 'psutil.disk_io_counters')
-    nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = nt(*fields)
+            rawdict[disk] = _ntp.sdiskio(*fields)
         return rawdict
     else:
-        return nt(*(sum(x) for x in zip(*rawdict.values())))
+        return _ntp.sdiskio(*(sum(x) for x in zip(*rawdict.values())))
 
 
 disk_io_counters.cache_clear = functools.partial(
@@ -2167,10 +2165,10 @@ def net_io_counters(pernic=False, nowrap=True):
         rawdict = _wrap_numbers(rawdict, 'psutil.net_io_counters')
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = _common.snetio(*fields)
+            rawdict[nic] = _ntp.snetio(*fields)
         return rawdict
     else:
-        return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
+        return _ntp.snetio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 net_io_counters.cache_clear = functools.partial(
@@ -2252,7 +2250,7 @@ def net_if_addrs():
             while addr.count(separator) < 5:
                 addr += f"{separator}00"
 
-        nt = _common.snicaddr(fam, addr, mask, broadcast, ptp)
+        nt = _ntp.snicaddr(fam, addr, mask, broadcast, ptp)
 
         # On Windows broadcast is None, so we determine it via
         # ipaddress module.
@@ -2321,9 +2319,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
                 elif critical and not high:
                     high = critical
 
-                ret[name].append(
-                    _common.shwtemp(label, current, high, critical)
-                )
+                ret[name].append(_ntp.shwtemp(label, current, high, critical))
 
         return dict(ret)
 
