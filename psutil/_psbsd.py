@@ -459,9 +459,7 @@ if FREEBSD:
                 if high <= 0:
                     high = None
                 name = f"Core {cpu}"
-                ret["coretemp"].append(
-                    _common.shwtemp(name, current, high, high)
-                )
+                ret["coretemp"].append(ntp.shwtemp(name, current, high, high))
             except NotImplementedError:
                 pass
 

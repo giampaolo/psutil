@@ -2321,9 +2321,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
                 elif critical and not high:
                     high = critical
 
-                ret[name].append(
-                    _common.shwtemp(label, current, high, critical)
-                )
+                ret[name].append(_ntp.shwtemp(label, current, high, critical))
 
         return dict(ret)
 
