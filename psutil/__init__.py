@@ -2115,13 +2115,12 @@ def disk_io_counters(perdisk=False, nowrap=True):
         return {} if perdisk else None
     if nowrap:
         rawdict = _wrap_numbers(rawdict, 'psutil.disk_io_counters')
-    nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = nt(*fields)
+            rawdict[disk] = _ntp.sdiskio(*fields)
         return rawdict
     else:
-        return nt(*(sum(x) for x in zip(*rawdict.values())))
+        return _ntp.sdiskio(*(sum(x) for x in zip(*rawdict.values())))
 
 
 disk_io_counters.cache_clear = functools.partial(
