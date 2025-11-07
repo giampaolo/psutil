@@ -586,7 +586,7 @@ class Process:
                     continue
                 raise
             else:
-                nt = _common.pthread(tid, utime, stime)
+                nt = ntp.pthread(tid, utime, stime)
                 ret.append(nt)
         if hit_enoent:
             self._assert_alive()
