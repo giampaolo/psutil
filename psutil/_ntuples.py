@@ -7,6 +7,7 @@ from collections import namedtuple
 from ._common import BSD
 from ._common import FREEBSD
 from ._common import LINUX
+from ._common import WINDOWS
 
 # ===================================================================
 # --- system functions
@@ -221,6 +222,59 @@ if LINUX:
     pcputimes = namedtuple(
         'pcputimes',
         ['user', 'system', 'children_user', 'children_system', 'iowait'],
+    )
+
+# ===================================================================
+# --- Windows
+# ===================================================================
+
+elif WINDOWS:
+
+    # psutil.cpu_times()
+    scputimes = namedtuple(
+        'scputimes', ['user', 'system', 'idle', 'interrupt', 'dpc']
+    )
+    # psutil.virtual_memory()
+    svmem = namedtuple(
+        'svmem', ['total', 'available', 'percent', 'used', 'free']
+    )
+    # psutil.Process.memory_info()
+    pmem = namedtuple(
+        'pmem',
+        [
+            'rss',
+            'vms',
+            'num_page_faults',
+            'peak_wset',
+            'wset',
+            'peak_paged_pool',
+            'paged_pool',
+            'peak_nonpaged_pool',
+            'nonpaged_pool',
+            'pagefile',
+            'peak_pagefile',
+            'private',
+        ],
+    )
+    # psutil.Process.memory_full_info()
+    pfullmem = namedtuple('pfullmem', pmem._fields + ('uss',))
+    # psutil.Process.memory_maps(grouped=True)
+    pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
+    # psutil.Process.memory_maps(grouped=False)
+    pmmap_ext = namedtuple(
+        'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields)
+    )
+    # psutil.Process.io_counters()
+    pio = namedtuple(
+        'pio',
+        [
+            'read_count',
+            'write_count',
+            'read_bytes',
+            'write_bytes',
+            'other_count',
+            'other_bytes',
+        ],
     )
 
 # ===================================================================

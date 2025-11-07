@@ -12,7 +12,6 @@ import signal
 import sys
 import threading
 import time
-from collections import namedtuple
 
 import ntp
 
@@ -148,37 +147,6 @@ pinfo_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# fmt: off
-# psutil.cpu_times()
-scputimes = namedtuple('scputimes',
-                       ['user', 'system', 'idle', 'interrupt', 'dpc'])
-# psutil.virtual_memory()
-svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-# psutil.Process.memory_info()
-pmem = namedtuple(
-    'pmem', ['rss', 'vms',
-             'num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
-             'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
-             'pagefile', 'peak_pagefile', 'private'])
-# psutil.Process.memory_full_info()
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-# psutil.Process.io_counters()
-pio = namedtuple('pio', ['read_count', 'write_count',
-                         'read_bytes', 'write_bytes',
-                         'other_count', 'other_bytes'])
-# fmt: on
-
-
-# =====================================================================
 # --- utils
 # =====================================================================
 
@@ -224,7 +192,7 @@ def virtual_memory():
     free = availphys
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return svmem(total, avail, percent, used, free)
+    return ntp.svmem(total, avail, percent, used, free)
 
 
 def swap_memory():
@@ -289,8 +257,10 @@ def cpu_times():
     # Internally, GetSystemTimes() is used, and it doesn't return
     # interrupt and dpc times. cext.per_cpu_times() does, so we
     # rely on it to get those only.
-    percpu_summed = scputimes(*[sum(n) for n in zip(*cext.per_cpu_times())])
-    return scputimes(
+    percpu_summed = ntp.scputimes(
+        *[sum(n) for n in zip(*cext.per_cpu_times())]
+    )
+    return ntp.scputimes(
         user, system, idle, percpu_summed.interrupt, percpu_summed.dpc
     )
 
@@ -299,7 +269,7 @@ def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
     for user, system, idle, interrupt, dpc in cext.per_cpu_times():
-        item = scputimes(user, system, idle, interrupt, dpc)
+        item = ntp.scputimes(user, system, idle, interrupt, dpc)
         ret.append(item)
     return ret
 
@@ -843,14 +813,14 @@ class Process:
         t = self._get_raw_meminfo()
         rss = t[2]  # wset
         vms = t[7]  # pagefile
-        return pmem(*(rss, vms) + t)
+        return ntp.pmem(*(rss, vms) + t)
 
     @wrap_exceptions
     def memory_full_info(self):
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
         uss *= getpagesize()
-        return pfullmem(*basic_mem + (uss,))
+        return ntp.pfullmem(*basic_mem + (uss,))
 
     def memory_maps(self):
         try:
@@ -1061,7 +1031,7 @@ class Process:
                 info[pinfo_map['io_count_others']],
                 info[pinfo_map['io_bytes_others']],
             )
-        return pio(*ret)
+        return ntp.pio(*ret)
 
     @wrap_exceptions
     def status(self):
