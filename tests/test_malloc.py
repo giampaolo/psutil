@@ -67,26 +67,34 @@ if WINDOWS:
     import win32con
     import win32process
 
-    kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel32 = ctypes.windll.kernel32
     HEAP_NO_SERIALIZE = 0x00000001
 
-    def HeapCreate(opts, initial_size, max_size):
-        fun = kernel32.HeapCreate
-        fun.argtypes = [
-            wintypes.DWORD,
-            ctypes.c_size_t,
-            ctypes.c_size_t,
-        ]
+    # --- for `heap_used`
+
+    def GetProcessHeap():
+        fun = kernel32.GetProcessHeap
+        fun.argtypes = []
         fun.restype = wintypes.HANDLE
-        heap = fun(opts, initial_size, max_size)
-        assert heap != 0, "HeapCreate failed"
+        heap = fun()
+        assert heap != 0, "GetProcessHeap failed"
         return heap
 
-    def HeapDestroy(heap):
-        fun = kernel32.HeapDestroy
-        fun.argtypes = [wintypes.HANDLE]
+    def HeapAlloc(heap, size):
+        fun = kernel32.HeapAlloc
+        fun.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.c_size_t]
+        fun.restype = ctypes.c_void_p
+        addr = fun(heap, 0, size)
+        assert addr, "HeapAlloc failed"
+        return addr
+
+    def HeapFree(heap, addr):
+        fun = kernel32.HeapFree
+        fun.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.c_void_p]
         fun.restype = wintypes.BOOL
-        assert fun(heap) != 0, "HeapDestroy failed"
+        assert fun(heap, 0, addr) != 0, "HeapFree failed"
+
+    # --- for `mmap_used`
 
     def VirtualAllocEx(size):
         return win32process.VirtualAllocEx(
@@ -102,20 +110,49 @@ if WINDOWS:
             win32api.GetCurrentProcess(), addr, 0, win32con.MEM_RELEASE
         )
 
+    # --- for `heap_count`
+
+    def HeapCreate(initial_size, max_size):
+        fun = kernel32.HeapCreate
+        fun.argtypes = [
+            wintypes.DWORD,
+            ctypes.c_size_t,
+            ctypes.c_size_t,
+        ]
+        fun.restype = wintypes.HANDLE
+        heap = fun(HEAP_NO_SERIALIZE, initial_size, max_size)
+        assert heap != 0, "HeapCreate failed"
+        return heap
+
+    def HeapDestroy(heap):
+        fun = kernel32.HeapDestroy
+        fun.argtypes = [wintypes.HANDLE]
+        fun.restype = wintypes.BOOL
+        assert fun(heap) != 0, "HeapDestroy failed"
+
+    # ---
+
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     @pytest.mark.xdist_group(name="serial")
     class TestMallocWindows(PsutilTestCase):
-        def test_heap_count(self):
-            """Test that HeapCreate() without HeapDestroy() increases
-            heap_count.
-            """
-            base = psutil.malloc_info().heap_count
-            heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
-            try:
-                assert psutil.malloc_info().heap_count == base + 1
-            finally:
-                HeapDestroy(heap)
-            assert psutil.malloc_info().heap_count == base
+
+        def test_heap_used(self):
+            """Test that HeapAlloc() without HeapFree() increases heap_used."""
+            # Note: a bigger size puts the memory into `mmap_used`
+            # instead, so keep it small on purpose.
+            size = 64 * 1024
+            heap = GetProcessHeap()
+            mem1 = psutil.malloc_info()
+            addr = HeapAlloc(heap, 64 * 1024)
+            mem2 = psutil.malloc_info()
+
+            assert mem2.heap_used - mem1.heap_used == size
+            assert mem2.mmap_used == mem1.mmap_used
+            assert mem2.heap_count == mem1.heap_count
+
+            HeapFree(heap, addr)
+            mem3 = psutil.malloc_info()
+            assert mem3 == mem1
 
         def test_mmap_used(self):
             """Test that VirtualAllocEx() without VirtualFreeEx() increases
@@ -132,3 +169,15 @@ if WINDOWS:
             VirtualFreeEx(addr)
             mem3 = psutil.malloc_info()
             assert mem3 == mem1
+
+        def test_heap_count(self):
+            """Test that HeapCreate() without HeapDestroy() increases
+            heap_count.
+            """
+            base = psutil.malloc_info().heap_count
+            heap = HeapCreate(1024 * 1024, 0)
+            try:
+                assert psutil.malloc_info().heap_count == base + 1
+            finally:
+                HeapDestroy(heap)
+            assert psutil.malloc_info().heap_count == base
