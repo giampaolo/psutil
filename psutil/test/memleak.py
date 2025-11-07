@@ -99,7 +99,7 @@ class MemoryLeakTestCase(unittest.TestCase):
         """Release unused memory held by the allocator back to the OS."""
         if hasattr(psutil._psplatform, "malloc_trim"):
             # Linux, macOS, FreeBSD
-            psutil._psplatform.malloc_trim()
+            psutil.malloc_trim()
 
     # --- getters
 
@@ -108,7 +108,7 @@ class MemoryLeakTestCase(unittest.TestCase):
         heap_used = mmap_used = heap_count = 0
         if hasattr(psutil._psplatform, "malloc_info"):
             # Linux, Windows, macOS, BSD
-            mallinfo = psutil._psplatform.malloc_info()
+            mallinfo = psutil.malloc_info()
             heap_used = mallinfo.heap_used
             mmap_used = mallinfo.mmap_used
             if WINDOWS:

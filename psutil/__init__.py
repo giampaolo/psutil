@@ -2406,6 +2406,21 @@ if WINDOWS:
 
 
 # =====================================================================
+# --- malloc / heap
+# =====================================================================
+
+
+def malloc_info():
+    """Return low-level heap statistics from the C allocator (glibc)."""
+    return _ntp.pmallinfo(*_psplatform.malloc_info())
+
+
+def malloc_trim():
+    """Release unused memory held by the allocator back to the OS."""
+    _psplatform.malloc_trim()
+
+
+# =====================================================================
 
 
 def _set_debug(value):

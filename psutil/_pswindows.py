@@ -26,7 +26,6 @@ from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
-from ._common import pmallinfo
 from ._common import usage_percent
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
@@ -221,19 +220,9 @@ def swap_memory():
     return ntp.sswap(total, used, free, percent, 0, 0)
 
 
-# =====================================================================
-# --- malloc memory
-# =====================================================================
-
-
-def malloc_info():
-    """Return low-level heap statistics from the C allocator (glibc)."""
-    return pmallinfo(*cext.malloc_info())
-
-
-def malloc_trim():
-    """Release unused memory held by the allocator back to the OS."""
-    return cext.malloc_trim()
+# malloc / heap functions
+malloc_info = cext.malloc_info
+malloc_trim = cext.malloc_trim
 
 
 # =====================================================================

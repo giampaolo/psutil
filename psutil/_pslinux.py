@@ -488,19 +488,9 @@ def swap_memory():
     return ntp.sswap(total, used, free, percent, sin, sout)
 
 
-# =====================================================================
-# --- malloc memory
-# =====================================================================
-
-
-def malloc_info():
-    """Return low-level heap statistics from the C allocator (glibc)."""
-    return ntp.pmallinfo(*cext.malloc_info())
-
-
-def malloc_trim():
-    """Release unused memory held by the allocator back to the OS."""
-    return cext.malloc_trim()
+# malloc / heap functions
+malloc_info = cext.malloc_info
+malloc_trim = cext.malloc_trim
 
 
 # =====================================================================

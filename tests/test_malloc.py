@@ -17,11 +17,6 @@ from psutil import WINDOWS
 
 from . import PsutilTestCase
 
-if hasattr(psutil._psplatform, "malloc_info"):
-    malloc_info = psutil._psplatform.malloc_info
-    malloc_trim = psutil._psplatform.malloc_trim
-
-
 MALLOC_SIZE = 10 * 1024 * 1024  # 10M
 
 
@@ -37,15 +32,15 @@ def leak_large_malloc():
 def free_pointer(ptr):
     del ptr
     gc.collect()
-    malloc_trim()
+    psutil.malloc_trim()
 
 
 @pytest.mark.xdist_group(name="serial")
 class TestMallocInfo(PsutilTestCase):
     def test_increase(self):
-        mem1 = malloc_info()
+        mem1 = psutil.malloc_info()
         ptr = leak_large_malloc()
-        mem2 = malloc_info()
+        mem2 = psutil.malloc_info()
         free_pointer(ptr)
 
         assert mem2.heap_used > mem1.heap_used
@@ -114,26 +109,26 @@ if WINDOWS:
             """Test that HeapCreate() without HeapDestroy() increases
             heap_count.
             """
-            base = malloc_info().heap_count
+            base = psutil.malloc_info().heap_count
             heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
             try:
-                assert malloc_info().heap_count == base + 1
+                assert psutil.malloc_info().heap_count == base + 1
             finally:
                 HeapDestroy(heap)
-            assert malloc_info().heap_count == base
+            assert psutil.malloc_info().heap_count == base
 
         def test_mmap_used(self):
             """Test that VirtualAllocEx() without VirtualFreeEx() increases
             mmap_used.
             """
-            mem1 = malloc_info()
+            mem1 = psutil.malloc_info()
             addr = VirtualAllocEx(MALLOC_SIZE)
-            mem2 = malloc_info()
+            mem2 = psutil.malloc_info()
 
             assert mem2.mmap_used - mem1.mmap_used == MALLOC_SIZE
             assert mem2.heap_used == mem1.heap_used
             assert mem2.heap_count == mem1.heap_count
 
             VirtualFreeEx(addr)
-            mem3 = malloc_info()
+            mem3 = psutil.malloc_info()
             assert mem3 == mem1

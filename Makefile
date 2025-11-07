@@ -125,6 +125,9 @@ test-contracts:  ## APIs sanity tests.
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	$(RUN_TEST) tests/test_connections.py $(ARGS)
 
+test-malloc:  ## Test psutil.malloc_*().
+	$(RUN_TEST) tests/test_malloc.py $(ARGS)
+
 test-posix:  ## POSIX specific tests.
 	$(RUN_TEST) tests/test_posix.py $(ARGS)
 
