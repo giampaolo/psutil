@@ -26,6 +26,7 @@ MALLOC_SIZE = 10 * 1024 * 1024  # 10M
 
 
 def leak_large_malloc():
+    """Emulate a malloc() call in C."""
     # allocate X MB
     ptr = ctypes.create_string_buffer(MALLOC_SIZE)
     # touch all memory (like memset(p, 0, size))
@@ -39,6 +40,7 @@ def free_pointer(ptr):
     malloc_trim()
 
 
+@pytest.mark.xdist_group(name="serial")
 class TestMallocInfo(PsutilTestCase):
     def test_mmap_leak(self):
         mem1 = malloc_info()
@@ -49,6 +51,10 @@ class TestMallocInfo(PsutilTestCase):
         assert mem2.heap_used > mem1.heap_used
         assert mem2.mmap_used > mem1.mmap_used
         if LINUX:
+            # malloc(10 MB) forces glibc to use mmap(), not the heap,
+            # and malloc_info().mmap_used (which is hblkhd) does
+            # increase by ~10 MB. On Linux, the entire 10 MB goes into
+            # mmap_used.
             diff = (mem2.heap_used - mem1.heap_used) + (
                 mem2.mmap_used - mem1.mmap_used
             )
@@ -84,6 +90,7 @@ if WINDOWS:
 
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+@pytest.mark.xdist_group(name="serial")
 class TestMallocWindows(PsutilTestCase):
     def test_heap_count(self):
         """Test that HeapCreate() without HeapDestroy() increases

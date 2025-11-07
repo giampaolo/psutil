@@ -268,6 +268,11 @@ def malloc_info():
     return pmallinfo(*cext.malloc_info())
 
 
+def malloc_trim():
+    """Release unused memory held by the allocator back to the OS."""
+    return cext.malloc_trim()
+
+
 # =====================================================================
 # --- disk
 # =====================================================================

@@ -85,3 +85,21 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         (Py_ssize_t)heap_count
     );
 }
+
+
+// Release unused memory from the process heap back to the OS.
+// Equivalent to Linux malloc_trim(0).
+PyObject *
+psutil_malloc_trim(PyObject *self, PyObject *args) {
+    HANDLE hHeap = GetProcessHeap();
+    BOOL released;
+
+    if (hHeap == NULL)
+        return psutil_oserror_wsyscall("GetProcessHeap");
+
+    released = HeapCompact(hHeap, 0);
+    if (released == 0 && GetLastError() != 0)
+        return psutil_oserror_wsyscall("HeapCompact");
+
+    return PyBool_FromLong(released);
+}
