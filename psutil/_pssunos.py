@@ -509,7 +509,7 @@ class Process:
                 times = (0.0, 0.0, 0.0, 0.0)
             else:
                 raise
-        return _common.pcputimes(*times)
+        return ntp.pcputimes(*times)
 
     @wrap_exceptions
     def cpu_num(self):

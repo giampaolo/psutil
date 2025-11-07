@@ -972,7 +972,7 @@ class Process:
             user = info[pinfo_map['user_time']]
             system = info[pinfo_map['kernel_time']]
         # Children user/system times are not retrievable (set to 0).
-        return _common.pcputimes(user, system, 0.0, 0.0)
+        return ntp.pcputimes(user, system, 0.0, 0.0)
 
     @wrap_exceptions
     def suspend(self):

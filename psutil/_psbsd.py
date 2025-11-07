@@ -740,7 +740,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         rawtuple = self.oneshot()
-        return _common.pcputimes(
+        return ntp.pcputimes(
             rawtuple[kinfo_proc_map['user_time']],
             rawtuple[kinfo_proc_map['sys_time']],
             rawtuple[kinfo_proc_map['ch_user_time']],

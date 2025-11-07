@@ -477,7 +477,7 @@ class Process:
     @wrap_exceptions
     def cpu_times(self):
         rawtuple = self._get_pidtaskinfo()
-        return _common.pcputimes(
+        return ntp.pcputimes(
             rawtuple[pidtaskinfo_map['cpuutime']],
             rawtuple[pidtaskinfo_map['cpustime']],
             # children user / system times are not retrievable (set to 0)
