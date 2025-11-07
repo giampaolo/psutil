@@ -2422,6 +2422,7 @@ if hasattr(_psplatform, "malloc_info"):
         _psplatform.malloc_trim()
 
     __all__.append("malloc_info")
+    __all__.append("malloc_trim")
 
 
 # =====================================================================
