@@ -4,6 +4,8 @@
 
 from collections import namedtuple
 
+from ._common import LINUX
+
 # ===================================================================
 # --- system functions
 # ===================================================================
@@ -121,3 +123,92 @@ pconn = namedtuple(
 
 # psutil.net_connections() and psutil.Process.net_connections()
 addr = namedtuple('addr', ['ip', 'port'])
+
+
+if LINUX:
+    # psutil.virtual_memory()
+    svmem = namedtuple(
+        'svmem',
+        [
+            'total',
+            'available',
+            'percent',
+            'used',
+            'free',
+            'active',
+            'inactive',
+            'buffers',
+            'cached',
+            'shared',
+            'slab',
+        ],
+    )
+
+    # psutil.disk_io_counters()
+    sdiskio = namedtuple(
+        'sdiskio',
+        [
+            'read_count',
+            'write_count',
+            'read_bytes',
+            'write_bytes',
+            'read_time',
+            'write_time',
+            'read_merged_count',
+            'write_merged_count',
+            'busy_time',
+        ],
+    )
+
+    # psutil.Process().open_files()
+    popenfile = namedtuple(
+        'popenfile', ['path', 'fd', 'position', 'mode', 'flags']
+    )
+
+    # psutil.Process().memory_info()
+    pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+
+    # psutil.Process().memory_full_info()
+    pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
+
+    # psutil.Process().memory_maps(grouped=True)
+    pmmap_grouped = namedtuple(
+        'pmmap_grouped',
+        [
+            'path',
+            'rss',
+            'size',
+            'pss',
+            'shared_clean',
+            'shared_dirty',
+            'private_clean',
+            'private_dirty',
+            'referenced',
+            'anonymous',
+            'swap',
+        ],
+    )
+
+    # psutil.Process().memory_maps(grouped=False)
+    pmmap_ext = namedtuple(
+        'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields)
+    )
+
+    # psutil.Process.io_counters()
+    pio = namedtuple(
+        'pio',
+        [
+            'read_count',
+            'write_count',
+            'read_bytes',
+            'write_bytes',
+            'read_chars',
+            'write_chars',
+        ],
+    )
+
+    # psutil.Process.cpu_times()
+    pcputimes = namedtuple(
+        'pcputimes',
+        ['user', 'system', 'children_user', 'children_system', 'iowait'],
+    )

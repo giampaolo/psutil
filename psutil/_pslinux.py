@@ -143,49 +143,6 @@ TCP_STATUSES = {
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# fmt: off
-# psutil.virtual_memory()
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared', 'slab'])
-# psutil.disk_io_counters()
-sdiskio = namedtuple(
-    'sdiskio', ['read_count', 'write_count',
-                'read_bytes', 'write_bytes',
-                'read_time', 'write_time',
-                'read_merged_count', 'write_merged_count',
-                'busy_time'])
-# psutil.Process().open_files()
-popenfile = namedtuple(
-    'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
-# psutil.Process().memory_info()
-pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
-# psutil.Process().memory_full_info()
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
-# psutil.Process().memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped',
-    ['path', 'rss', 'size', 'pss', 'shared_clean', 'shared_dirty',
-     'private_clean', 'private_dirty', 'referenced', 'anonymous', 'swap'])
-# psutil.Process().memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-# psutil.Process.io_counters()
-pio = namedtuple('pio', ['read_count', 'write_count',
-                         'read_bytes', 'write_bytes',
-                         'read_chars', 'write_chars'])
-# psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system',
-                        'iowait'])
-# fmt: on
-
-
-# =====================================================================
 # --- utils
 # =====================================================================
 
@@ -457,7 +414,7 @@ def virtual_memory():
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
-    return svmem(
+    return ntp.svmem(
         total,
         avail,
         percent,
@@ -1845,7 +1802,7 @@ class Process:
                 msg = f"{fname} file was empty"
                 raise RuntimeError(msg)
             try:
-                return pio(
+                return ntp.pio(
                     fields[b'syscr'],  # read syscalls
                     fields[b'syscw'],  # write syscalls
                     fields[b'read_bytes'],  # read bytes
@@ -1868,7 +1825,9 @@ class Process:
         children_utime = float(values['children_utime']) / CLOCK_TICKS
         children_stime = float(values['children_stime']) / CLOCK_TICKS
         iowait = float(values['blkio_ticks']) / CLOCK_TICKS
-        return pcputimes(utime, stime, children_utime, children_stime, iowait)
+        return ntp.pcputimes(
+            utime, stime, children_utime, children_stime, iowait
+        )
 
     @wrap_exceptions
     def cpu_num(self):
@@ -1913,7 +1872,7 @@ class Process:
             vms, rss, shared, text, lib, data, dirty = (
                 int(x) * PAGESIZE for x in f.readline().split()[:7]
             )
-        return pmem(rss, vms, shared, text, lib, data, dirty)
+        return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
@@ -1979,7 +1938,7 @@ class Process:
             else:
                 uss, pss, swap = self._parse_smaps()
             basic_mem = self.memory_info()
-            return pfullmem(*basic_mem + (uss, pss, swap))
+            return ntp.pfullmem(*basic_mem + (uss, pss, swap))
 
     else:
         memory_full_info = memory_info
@@ -2268,7 +2227,7 @@ class Process:
                         hit_enoent = True
                     else:
                         mode = file_flags_to_mode(flags)
-                        ntuple = popenfile(
+                        ntuple = ntp.popenfile(
                             path, int(fd), int(pos), mode, flags
                         )
                         retlist.append(ntuple)
