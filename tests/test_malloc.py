@@ -18,6 +18,7 @@ from . import PsutilTestCase
 
 if hasattr(psutil._psplatform, "malloc_info"):
     malloc_info = psutil._psplatform.malloc_info
+    malloc_trim = psutil._psplatform.malloc_trim
 
 
 MALLOC_SIZE = 10 * 1024 * 1024  # 10M
@@ -34,6 +35,7 @@ def leak_large_malloc():
 def free_pointer(ptr):
     del ptr
     gc.collect()
+    malloc_trim()
 
 
 class TestMallocInfo(PsutilTestCase):
