@@ -159,6 +159,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
             self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
 
     @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
     def test_ionice_set_badarg(self):
         fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
         self.execute_w_exc(OSError, fun)
