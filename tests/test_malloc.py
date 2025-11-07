@@ -42,7 +42,7 @@ def free_pointer(ptr):
 
 @pytest.mark.xdist_group(name="serial")
 class TestMallocInfo(PsutilTestCase):
-    def test_mmap_leak(self):
+    def test_increase(self):
         mem1 = malloc_info()
         ptr = leak_large_malloc()
         mem2 = malloc_info()
@@ -50,6 +50,7 @@ class TestMallocInfo(PsutilTestCase):
 
         assert mem2.heap_used > mem1.heap_used
         assert mem2.mmap_used > mem1.mmap_used
+
         if LINUX:
             # malloc(10 MB) forces glibc to use mmap(), not the heap,
             # and malloc_info().mmap_used (which is hblkhd) does
@@ -58,7 +59,7 @@ class TestMallocInfo(PsutilTestCase):
             diff = (mem2.heap_used - mem1.heap_used) + (
                 mem2.mmap_used - mem1.mmap_used
             )
-        else:  # BSD
+        else:
             diff = mem2.heap_used - mem1.heap_used
 
         assert abs(MALLOC_SIZE - diff) < 50 * 1024  # 50KB tolerance
@@ -88,22 +89,21 @@ if WINDOWS:
         fun.restype = wintypes.BOOL
         assert fun(heap) != 0, "HeapDestroy failed"
 
+    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
+    @pytest.mark.xdist_group(name="serial")
+    class TestMallocWindows(PsutilTestCase):
+        def test_heap_count(self):
+            """Test that HeapCreate() without HeapDestroy() increases
+            heap_count.
+            """
+            initial = malloc_info().heap_count
 
-@pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-@pytest.mark.xdist_group(name="serial")
-class TestMallocWindows(PsutilTestCase):
-    def test_heap_count(self):
-        """Test that HeapCreate() without HeapDestroy() increases
-        heap_count.
-        """
-        initial = malloc_info().heap_count
+            heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
+            assert heap != 0, "HeapCreate failed"
 
-        heap = HeapCreate(HEAP_NO_SERIALIZE, 1024 * 1024, 0)
-        assert heap != 0, "HeapCreate failed"
+            try:
+                assert malloc_info().heap_count == initial + 1
+            finally:
+                HeapDestroy(heap)
 
-        try:
-            assert malloc_info().heap_count == initial + 1
-        finally:
-            HeapDestroy(heap)
-
-        assert malloc_info().heap_count == initial
+            assert malloc_info().heap_count == initial
