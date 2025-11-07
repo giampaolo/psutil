@@ -12,9 +12,8 @@ from collections import defaultdict
 from collections import namedtuple
 from xml.etree import ElementTree  # noqa: ICN001
 
-import ntp
-
 from . import _common
+from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_bsd as cext
 from ._common import FREEBSD
@@ -130,44 +129,6 @@ kinfo_proc_map = dict(
 
 
 # =====================================================================
-# --- named tuples
-# =====================================================================
-
-
-# fmt: off
-# psutil.virtual_memory()
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared', 'wired'])
-# psutil.cpu_times()
-scputimes = namedtuple(
-    'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
-# psutil.Process.memory_full_info()
-pfullmem = pmem
-# psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
-# psutil.Process.memory_maps(grouped=True)
-pmmap_grouped = namedtuple(
-    'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
-# psutil.Process.memory_maps(grouped=False)
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
-# psutil.disk_io_counters()
-if FREEBSD:
-    sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                     'read_bytes', 'write_bytes',
-                                     'read_time', 'write_time',
-                                     'busy_time'])
-else:
-    sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                     'read_bytes', 'write_bytes'])
-# fmt: on
-
-
-# =====================================================================
 # --- memory
 # =====================================================================
 
@@ -204,7 +165,7 @@ def virtual_memory():
         used = active + wired + cached
 
     percent = usage_percent((total - avail), total, round_=1)
-    return svmem(
+    return ntp.svmem(
         total,
         avail,
         percent,
@@ -234,7 +195,7 @@ def swap_memory():
 def cpu_times():
     """Return system per-CPU times as a namedtuple."""
     user, nice, system, idle, irq = cext.cpu_times()
-    return scputimes(user, nice, system, idle, irq)
+    return ntp.scputimes(user, nice, system, idle, irq)
 
 
 def per_cpu_times():
@@ -242,7 +203,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle, irq = cpu_t
-        item = scputimes(user, nice, system, idle, irq)
+        item = ntp.scputimes(user, nice, system, idle, irq)
         ret.append(item)
     return ret
 
@@ -754,7 +715,7 @@ class Process:
     @wrap_exceptions
     def memory_info(self):
         rawtuple = self.oneshot()
-        return pmem(
+        return ntp.pmem(
             rawtuple[kinfo_proc_map['rss']],
             rawtuple[kinfo_proc_map['vms']],
             rawtuple[kinfo_proc_map['memtext']],

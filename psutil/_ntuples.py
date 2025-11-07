@@ -4,6 +4,8 @@
 
 from collections import namedtuple
 
+from ._common import BSD
+from ._common import FREEBSD
 from ._common import LINUX
 
 # ===================================================================
@@ -124,6 +126,9 @@ pconn = namedtuple(
 # psutil.net_connections() and psutil.Process.net_connections()
 addr = namedtuple('addr', ['ip', 'port'])
 
+# ===================================================================
+# --- Linux
+# ===================================================================
 
 if LINUX:
     # This gets set from _pslinux.py
@@ -217,3 +222,73 @@ if LINUX:
         'pcputimes',
         ['user', 'system', 'children_user', 'children_system', 'iowait'],
     )
+
+# ===================================================================
+# --- BSD
+# ===================================================================
+
+elif BSD:
+
+    # psutil.virtual_memory()
+    svmem = namedtuple(
+        'svmem',
+        [
+            'total',
+            'available',
+            'percent',
+            'used',
+            'free',
+            'active',
+            'inactive',
+            'buffers',
+            'cached',
+            'shared',
+            'wired',
+        ],
+    )
+
+    # psutil.cpu_times()
+    scputimes = namedtuple(
+        'scputimes', ['user', 'nice', 'system', 'idle', 'irq']
+    )
+
+    # psutil.Process.memory_info()
+    pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
+
+    # psutil.Process.memory_full_info()
+    pfullmem = pmem
+
+    # psutil.Process.cpu_times()
+    pcputimes = namedtuple(
+        'pcputimes', ['user', 'system', 'children_user', 'children_system']
+    )
+
+    # psutil.Process.memory_maps(grouped=True)
+    pmmap_grouped = namedtuple(
+        'pmmap_grouped', 'path rss, private, ref_count, shadow_count'
+    )
+
+    # psutil.Process.memory_maps(grouped=False)
+    pmmap_ext = namedtuple(
+        'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count'
+    )
+
+    # psutil.disk_io_counters()
+    if FREEBSD:
+        sdiskio = namedtuple(
+            'sdiskio',
+            [
+                'read_count',
+                'write_count',
+                'read_bytes',
+                'write_bytes',
+                'read_time',
+                'write_time',
+                'busy_time',
+            ],
+        )
+    else:
+        sdiskio = namedtuple(
+            'sdiskio',
+            ['read_count', 'write_count', 'read_bytes', 'write_bytes'],
+        )
