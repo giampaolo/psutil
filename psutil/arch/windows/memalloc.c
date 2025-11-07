@@ -11,9 +11,13 @@
 
 
 // Returns:
-// - heap_used:  sum of used blocks (like uordblks)
-// - mmap_used:  VirtualAlloc'd regions (like hblkhd)
-// - heap_total: total committed heap (like arena)
+// - heap_used: sum of used blocks (like Linux `mallinfo()` `uordblks`);
+//   should catch `malloc()` without `free()`.
+// - mmap_used: VirtualAlloc'd regions (like Linux `mallinfo()` `hblkhd`);
+//   should catch `VirtualAlloc()` without `VirtualFree()`.
+// - heap_total: total committed heap (like Linux `mallinfo()` `arena`)
+// - heap_count: number of heaps, should catch `HeapCreate()` without
+//   `HeapDestroy()`.
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     HANDLE process = GetCurrentProcess();
@@ -23,6 +27,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     SIZE_T total_heap = 0;
     SIZE_T mmap_used = 0;
     SIZE_T heap_total;
+    DWORD heap_count;
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
     int status;
@@ -55,12 +60,26 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         addr = (LPBYTE)mbi.BaseAddress + mbi.RegionSize;
     }
 
+    // Get number of heaps
+    heap_count = GetProcessHeaps(0, NULL);
+    if (heap_count > 0) {
+        HANDLE *heaps = malloc(heap_count * sizeof(HANDLE));
+        if (heaps) {
+            GetProcessHeaps(heap_count, heaps);
+            free(heaps);
+        }
+    }
+
     heap_total = total_heap + mmap_used;
 
     // heap_used  = CRT heap used
     // mmap_used  = VirtualAlloc'd (large)
     // heap_total = CRT heap total + mmap
     return Py_BuildValue(
-        "nnn", (Py_ssize_t)used, (Py_ssize_t)mmap_used, (Py_ssize_t)heap_total
+        "nnnn",
+        (Py_ssize_t)used,
+        (Py_ssize_t)mmap_used,
+        (Py_ssize_t)heap_total,
+        (Py_ssize_t)heap_count
     );
 }

@@ -178,6 +178,7 @@ pmallinfo = namedtuple('pmallinfo', [
     'heap_used',
     'mmap_used',
     'heap_total',
+    'heap_count',
 ])
 # fmt: on
 
