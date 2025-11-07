@@ -33,6 +33,8 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
     int status;
+    int is_heap_region;
+    HANDLE *heaps = NULL;
 
     // CRT heap walk (small allocations)
     while ((status = _heapwalk(&hinfo)) == _HEAPOK) {
@@ -42,47 +44,49 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         }
     }
 
-    if (status != _HEAPEND && status != _HEAPEMPTY)
-        return psutil_runtime_error("_heapwalk failed");
+    // Get number of heaps
+    heap_count = GetProcessHeaps(0, NULL);
+    if (heap_count > 0) {
+        heaps = (HANDLE *)malloc(heap_count * sizeof(HANDLE));
+        if (heaps) {
+            GetProcessHeaps(heap_count, heaps);
+        }
+    }
 
-    // VirtualAlloc'd regions (large allocations / mmap equivalent)
+    // VirtualAlloc'd regions (large allocations / mmap|hblkhd equivalent)
     while (VirtualQuery(addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
-        if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE) {
-            // Exclude CRT heap (already counted above)
-            if (!(mbi.AllocationProtect & PAGE_READWRITE)
-                || mbi.RegionSize < 64 * 1024)
-            {
-                // Heuristic: small RW regions are likely heap
-                // Skip to avoid double-counting
+        if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE
+            && (mbi.AllocationProtect & PAGE_READWRITE))
+        {
+            // Is this region part of any NT heap?
+            is_heap_region = 0;
+            if (heaps) {
+                for (DWORD i = 0; i < heap_count; i++) {
+                    if (mbi.AllocationBase == heaps[i]) {
+                        is_heap_region = 1;
+                        break;
+                    }
+                }
             }
-            else {
+
+            if (!is_heap_region) {
                 mmap_used += mbi.RegionSize;
             }
         }
         addr = (LPBYTE)mbi.BaseAddress + mbi.RegionSize;
     }
 
-    // Get number of heaps
-    heap_count = GetProcessHeaps(0, NULL);
-    if (heap_count > 0) {
-        HANDLE *heaps = malloc(heap_count * sizeof(HANDLE));
-        if (heaps) {
-            GetProcessHeaps(heap_count, heaps);
-            free(heaps);
-        }
-    }
+    if (heaps)
+        free(heaps);
 
     heap_total = total_heap + mmap_used;
 
-    // heap_used  = CRT heap used
-    // mmap_used  = VirtualAlloc'd (large)
-    // heap_total = CRT heap total + mmap
     return Py_BuildValue(
         "nnnn",
-        (Py_ssize_t)used,
-        (Py_ssize_t)mmap_used,
-        (Py_ssize_t)heap_total,
-        (Py_ssize_t)heap_count
+        (Py_ssize_t)used,  // heap_used
+        (Py_ssize_t)mmap_used,  // mmap_used (VirtualAlloc'd (large))
+        (Py_ssize_t)heap_total,  // total reserved
+        (Py_ssize_t)heap_count  // number of heaps
     );
 }
 
