@@ -126,6 +126,9 @@ addr = namedtuple('addr', ['ip', 'port'])
 
 
 if LINUX:
+    # This gets set from _pslinux.py
+    scputimes = None
+
     # psutil.virtual_memory()
     svmem = namedtuple(
         'svmem',

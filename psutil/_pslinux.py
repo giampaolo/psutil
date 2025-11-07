@@ -207,7 +207,6 @@ def set_scputimes_ntuple(procfs_path):
      [guest_nice]]])
     Used by cpu_times() function.
     """
-    global scputimes
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()[1:]
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
@@ -221,7 +220,7 @@ def set_scputimes_ntuple(procfs_path):
     if vlen >= 10:
         # Linux >= 3.2.0
         fields.append('guest_nice')
-    scputimes = namedtuple('scputimes', fields)
+    ntp.scputimes = namedtuple('scputimes', fields)
 
 
 try:
@@ -229,7 +228,7 @@ try:
 except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
     debug(f"ignoring exception on import: {err!r}")
-    scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+    ntp.scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
 
 
 # =====================================================================
@@ -497,12 +496,12 @@ def cpu_times():
     Last 3 fields may not be available on all Linux kernel versions.
     """
     procfs_path = get_procfs_path()
-    set_scputimes_ntuple(procfs_path)
+    set_scputimes_ntuple(procfs_path)  # XXX why is this called?
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
-    fields = values[1 : len(scputimes._fields) + 1]
+    fields = values[1 : len(ntp.scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
-    return scputimes(*fields)
+    return ntp.scputimes(*fields)
 
 
 def per_cpu_times():
@@ -510,7 +509,7 @@ def per_cpu_times():
     for every CPU available on the system.
     """
     procfs_path = get_procfs_path()
-    set_scputimes_ntuple(procfs_path)
+    set_scputimes_ntuple(procfs_path)  # XXX why is this called?
     cpus = []
     with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
@@ -518,9 +517,9 @@ def per_cpu_times():
         for line in f:
             if line.startswith(b'cpu'):
                 values = line.split()
-                fields = values[1 : len(scputimes._fields) + 1]
+                fields = values[1 : len(ntp.scputimes._fields) + 1]
                 fields = [float(x) / CLOCK_TICKS for x in fields]
-                entry = scputimes(*fields)
+                entry = ntp.scputimes(*fields)
                 cpus.append(entry)
         return cpus
 
