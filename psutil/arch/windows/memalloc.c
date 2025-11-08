@@ -49,6 +49,8 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
             heap_used += hinfo._size;
         }
     }
+    if ((status != _HEAPEND) && (status != _HEAPOK))
+        return psutil_oserror_wsyscall("_heapwalk");
 
     // Get number of heaps (+ heap handles)
     heap_count = GetProcessHeaps(0, NULL);  // 1st: get count
