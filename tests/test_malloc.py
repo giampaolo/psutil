@@ -7,6 +7,7 @@
 """Tests for psutil.malloc_* functions."""
 
 import ctypes
+import gc
 
 import pytest
 
@@ -22,10 +23,27 @@ MALLOC_SIZE = 10 * 1024 * 1024  # 10M
 
 class MallocTestCase(PsutilTestCase):
     def setUp(self):
-        psutil.malloc_trim()
+        trim_memory()
 
-    def tearDown(self):
-        psutil.malloc_trim()
+    @classmethod
+    def tearDownClass(cls):
+        trim_memory()
+
+
+def trim_memory():
+    gc.collect()
+    psutil.malloc_trim()
+
+
+def assert_within_percent(actual, expected, percent):
+    """Assert that `actual` is within `percent` tolerance of `expected`."""
+    lower = expected * (1 - percent / 100)
+    upper = expected * (1 + percent / 100)
+    if not (lower <= actual <= upper):
+        raise AssertionError(
+            f"{actual} is not within {percent}% tolerance of expected"
+            f" {expected} (allowed range: {lower} - {upper})"
+        )
 
 
 if POSIX:
@@ -58,17 +76,32 @@ class TestMallocUnix(MallocTestCase):
     @retry_on_failure()
     def test_heap_used(self):
         """Test that malloc() without free() increases heap_used."""
+        size = self.MALLOC_SIZE
+
         mem1 = psutil.malloc_info()
-        ptr = malloc(self.MALLOC_SIZE)
+        ptr = malloc(size)
         mem2 = psutil.malloc_info()
+
         try:
-            assert mem2.heap_used > mem1.heap_used
-            assert mem2.mmap_used == mem1.mmap_used
+            # heap_used should increase (roughly) by the requested size
+            diff = mem2.heap_used - mem1.heap_used
+            assert diff > 0
+            assert_within_percent(diff, size, percent=10)
+
+            # mmap_used should not increase for small allocations, but
+            # sometimes it does.
+            diff = mem2.mmap_used - mem1.mmap_used
+            if diff != 0:
+                assert diff > 0
+                assert_within_percent(diff, size, percent=10)
         finally:
             free(ptr)
 
+        # assert we returned close to the baseline (mem1) after free()
+        trim_memory()
         mem3 = psutil.malloc_info()
-        assert mem3 == mem1
+        assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
+        assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
 
 if WINDOWS:
