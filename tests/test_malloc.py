@@ -7,12 +7,11 @@
 """Tests for psutil.malloc_* functions."""
 
 import ctypes
-import gc
 
 import pytest
 
 import psutil
-from psutil import LINUX
+from psutil import POSIX
 from psutil import WINDOWS
 
 from . import PsutilTestCase
@@ -29,45 +28,47 @@ class MallocTestCase(PsutilTestCase):
         psutil.malloc_trim()
 
 
-def leak_large_malloc():
-    """Emulate a malloc() call in C."""
-    # allocate X MB
-    ptr = ctypes.create_string_buffer(MALLOC_SIZE)
-    # touch all memory (like memset(p, 0, size))
-    ptr.raw = b'\x00' * len(ptr)
-    return ptr
+if POSIX:
+    libc = ctypes.CDLL(None)
+
+    def malloc(size):
+        """Allocate memory via malloc(), affects heap_used."""
+        fun = libc.malloc
+        fun.argtypes = [ctypes.c_size_t]
+        fun.restype = ctypes.c_void_p
+        ptr = fun(size)
+        assert ptr, "malloc() failed"
+        return ptr
+
+    def free(ptr):
+        """Free malloc() memory."""
+        fun = libc.free
+        fun.argtypes = [ctypes.c_void_p]
+        fun.restype = None
+        fun(ptr)
 
 
-def free_pointer(ptr):
-    del ptr
-    gc.collect()
-    psutil.malloc_trim()
+# --- tests
 
 
-@pytest.mark.xdist_group(name="serial")
-class TestMallocInfo(MallocTestCase):
+@pytest.mark.skipif(not POSIX, reason="not POSIX")
+class TestMallocUnix:
+    MALLOC_SIZE = 64 * 1024  # 64 KiB
+
     @retry_on_failure()
-    def test_increase(self):
+    def test_heap_used(self):
+        """Test that malloc() without free() increases heap_used."""
         mem1 = psutil.malloc_info()
-        ptr = leak_large_malloc()
+        ptr = malloc(self.MALLOC_SIZE)
         mem2 = psutil.malloc_info()
-        free_pointer(ptr)
+        try:
+            assert mem2.heap_used > mem1.heap_used
+            assert mem2.mmap_used == mem1.mmap_used
+        finally:
+            free(ptr)
 
-        assert mem2.heap_used > mem1.heap_used
-        assert mem2.mmap_used > mem1.mmap_used
-
-        if LINUX:
-            # malloc(10 MB) forces glibc to use mmap(), not the heap,
-            # and malloc_info().mmap_used (which is hblkhd) does
-            # increase by ~10 MB. On Linux, the entire 10 MB goes into
-            # mmap_used.
-            diff = (mem2.heap_used - mem1.heap_used) + (
-                mem2.mmap_used - mem1.mmap_used
-            )
-        else:
-            diff = mem2.heap_used - mem1.heap_used
-
-        assert abs(MALLOC_SIZE - diff) < 50 * 1024  # 50KB tolerance
+        mem3 = psutil.malloc_info()
+        assert mem3 == mem1
 
 
 if WINDOWS:
