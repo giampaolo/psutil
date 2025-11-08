@@ -30,22 +30,22 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     HANDLE process = GetCurrentProcess();
     MEMORY_BASIC_INFORMATION mbi;
     LPVOID addr = NULL;
-    SIZE_T used = 0;
-    SIZE_T total_heap = 0;
+    SIZE_T heap_used = 0;
     SIZE_T mmap_used = 0;
     SIZE_T heap_total;
     DWORD heap_count;
+    SIZE_T crt_heap_total = 0;
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
     int status;
     int is_heap_region;
     HANDLE *heaps = NULL;
 
-    // CRT heap walk (small allocations)
+    // Walk CRT heaps to measure used and total heap
     while ((status = _heapwalk(&hinfo)) == _HEAPOK) {
-        total_heap += hinfo._size;
+        crt_heap_total += hinfo._size;
         if (hinfo._useflag == _USEDENTRY) {
-            used += hinfo._size;
+            heap_used += hinfo._size;
         }
     }
 
@@ -63,7 +63,6 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE
             && (mbi.AllocationProtect & PAGE_READWRITE))
         {
-            // Is this region part of any NT heap?
             is_heap_region = 0;
             if (heaps) {
                 for (DWORD i = 0; i < heap_count; i++) {
@@ -84,11 +83,11 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     if (heaps)
         free(heaps);
 
-    heap_total = total_heap + mmap_used;
+    heap_total = crt_heap_total + mmap_used;
 
     return Py_BuildValue(
         "nnnn",
-        (Py_ssize_t)used,
+        (Py_ssize_t)heap_used,
         (Py_ssize_t)mmap_used,
         (Py_ssize_t)heap_total,
         (Py_ssize_t)heap_count
