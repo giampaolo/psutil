@@ -12,14 +12,19 @@
 #include "../../arch/all/init.h"
 
 
-// Returns:
-// - heap_used: sum of used blocks (like Linux `mallinfo()` `uordblks`);
-//   should catch `malloc()` without `free()`.
-// - mmap_used: VirtualAlloc'd regions (like Linux `mallinfo()` `hblkhd`);
-//   should catch `VirtualAlloc()` without `VirtualFree()`.
-// - heap_total: total committed heap (like Linux `mallinfo()` `arena`)
-// - heap_count: number of heaps, should catch `HeapCreate()` without
-//   `HeapDestroy()`.
+// Returns a tuple with:
+//
+// - heap_used: sum of used blocks, like `uordblks` on Linux. Catches
+//   small `malloc()` without `free()` and small `HeapAlloc()` without
+//   `HeapFree()`. If big than some KB they go to `mmap_used`.
+//
+// - mmap_used: VirtualAlloc'd regions, like `hblkhd` on Linux. catches
+//   `VirtualAlloc()` without `VirtualFree()`.
+//
+// - heap_total: total committed heap, like `arena` on Linux.
+//
+// - heap_count: number of heaps (Windows only). Catches `HeapCreate()`
+//   without `HeapDestroy()`.
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     HANDLE process = GetCurrentProcess();
@@ -83,10 +88,10 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 
     return Py_BuildValue(
         "nnnn",
-        (Py_ssize_t)used,  // heap_used
-        (Py_ssize_t)mmap_used,  // mmap_used (VirtualAlloc'd (large))
-        (Py_ssize_t)heap_total,  // total reserved
-        (Py_ssize_t)heap_count  // number of heaps
+        (Py_ssize_t)used,
+        (Py_ssize_t)mmap_used,
+        (Py_ssize_t)heap_total,
+        (Py_ssize_t)heap_count
     );
 }
 
