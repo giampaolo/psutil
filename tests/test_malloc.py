@@ -139,18 +139,21 @@ if WINDOWS:
         def test_heap_used(self):
             """Test that HeapAlloc() without HeapFree() increases heap_used."""
             # Note: a bigger size puts the memory into `mmap_used`
-            # instead, so keep it small on purpose.
+            # instead, so we keep it small on purpose.
             size = 64 * 1024
-            heap = GetProcessHeap()
+
             mem1 = psutil.malloc_info()
+            heap = GetProcessHeap()
             addr = HeapAlloc(heap, 64 * 1024)
             mem2 = psutil.malloc_info()
 
-            assert mem2.heap_used - mem1.heap_used == size
-            assert mem2.mmap_used == mem1.mmap_used
-            assert mem2.heap_count == mem1.heap_count
+            try:
+                assert mem2.heap_used - mem1.heap_used == size
+                assert mem2.mmap_used == mem1.mmap_used
+                assert mem2.heap_count == mem1.heap_count
+            finally:
+                HeapFree(heap, addr)
 
-            HeapFree(heap, addr)
             mem3 = psutil.malloc_info()
             assert mem3 == mem1
 
@@ -162,11 +165,13 @@ if WINDOWS:
             addr = VirtualAllocEx(MALLOC_SIZE)
             mem2 = psutil.malloc_info()
 
-            assert mem2.mmap_used - mem1.mmap_used == MALLOC_SIZE
-            assert mem2.heap_used == mem1.heap_used
-            assert mem2.heap_count == mem1.heap_count
+            try:
+                assert mem2.mmap_used - mem1.mmap_used == MALLOC_SIZE
+                assert mem2.heap_used == mem1.heap_used
+                assert mem2.heap_count == mem1.heap_count
+            finally:
+                VirtualFreeEx(addr)
 
-            VirtualFreeEx(addr)
             mem3 = psutil.malloc_info()
             assert mem3 == mem1
 
@@ -174,10 +179,15 @@ if WINDOWS:
             """Test that HeapCreate() without HeapDestroy() increases
             heap_count.
             """
-            base = psutil.malloc_info().heap_count
+            mem1 = psutil.malloc_info()
             heap = HeapCreate(1024 * 1024, 0)
+            mem2 = psutil.malloc_info()
             try:
-                assert psutil.malloc_info().heap_count == base + 1
+                assert mem2.heap_count == mem1.heap_count + 1
+                assert mem2.heap_used == mem1.heap_used
+                assert mem2.mmap_used == mem1.mmap_used
             finally:
                 HeapDestroy(heap)
-            assert psutil.malloc_info().heap_count == base
+
+            mem3 = psutil.malloc_info()
+            assert mem3 == mem1
