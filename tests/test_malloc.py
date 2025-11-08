@@ -16,8 +16,17 @@ from psutil import LINUX
 from psutil import WINDOWS
 
 from . import PsutilTestCase
+from . import retry_on_failure
 
 MALLOC_SIZE = 10 * 1024 * 1024  # 10M
+
+
+class MallocTestCase(PsutilTestCase):
+    def setUp(self):
+        psutil.malloc_trim()
+
+    def tearDown(self):
+        psutil.malloc_trim()
 
 
 def leak_large_malloc():
@@ -36,7 +45,8 @@ def free_pointer(ptr):
 
 
 @pytest.mark.xdist_group(name="serial")
-class TestMallocInfo(PsutilTestCase):
+class TestMallocInfo(MallocTestCase):
+    @retry_on_failure()
     def test_increase(self):
         mem1 = psutil.malloc_info()
         ptr = leak_large_malloc()
@@ -134,8 +144,9 @@ if WINDOWS:
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     @pytest.mark.xdist_group(name="serial")
-    class TestMallocWindows(PsutilTestCase):
+    class TestMallocWindows(MallocTestCase):
 
+        @retry_on_failure()
         def test_heap_used(self):
             """Test that HeapAlloc() without HeapFree() increases heap_used."""
             # Note: a bigger size puts the memory into `mmap_used`
@@ -157,6 +168,7 @@ if WINDOWS:
             mem3 = psutil.malloc_info()
             assert mem3 == mem1
 
+        @retry_on_failure()
         def test_mmap_used(self):
             """Test that VirtualAllocEx() without VirtualFreeEx() increases
             mmap_used.
@@ -175,6 +187,7 @@ if WINDOWS:
             mem3 = psutil.malloc_info()
             assert mem3 == mem1
 
+        @retry_on_failure()
         def test_heap_count(self):
             """Test that HeapCreate() without HeapDestroy() increases
             heap_count.

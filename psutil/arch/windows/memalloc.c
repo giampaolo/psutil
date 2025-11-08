@@ -16,9 +16,9 @@
 //
 // - heap_used: sum of used blocks, like `uordblks` on Linux. Catches
 //   small `malloc()` without `free()` and small `HeapAlloc()` without
-//   `HeapFree()`. If big than some KB they go to `mmap_used`.
+//   `HeapFree()`. If bigger than some KB they go into `mmap_used`.
 //
-// - mmap_used: VirtualAlloc'd regions, like `hblkhd` on Linux. catches
+// - mmap_used: VirtualAlloc'd regions, like `hblkhd` on Linux. Catches
 //   `VirtualAlloc()` without `VirtualFree()`.
 //
 // - heap_total: total committed heap, like `arena` on Linux.
