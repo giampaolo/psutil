@@ -52,7 +52,7 @@ if POSIX:
 
 
 @pytest.mark.skipif(not POSIX, reason="not POSIX")
-class TestMallocUnix:
+class TestMallocUnix(MallocTestCase):
     MALLOC_SIZE = 64 * 1024  # 64 KiB
 
     @retry_on_failure()
