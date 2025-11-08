@@ -53,9 +53,11 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     heap_count = GetProcessHeaps(0, NULL);
     if (heap_count > 0) {
         heaps = (HANDLE *)malloc(heap_count * sizeof(HANDLE));
-        if (heaps) {
-            GetProcessHeaps(heap_count, heaps);
+        if (!heaps) {
+            PyErr_NoMemory();
+            return NULL;
         }
+        GetProcessHeaps(heap_count, heaps);
     }
 
     // VirtualAlloc'd regions (large allocations / mmap|hblkhd equivalent)
