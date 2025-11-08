@@ -27,7 +27,6 @@
 //   without `HeapDestroy()`.
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
-    HANDLE process = GetCurrentProcess();
     MEMORY_BASIC_INFORMATION mbi;
     LPVOID addr = NULL;
     SIZE_T heap_used = 0;
@@ -39,7 +38,6 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
     int status;
-    int is_heap_region;
     HANDLE *heaps = NULL;
 
     // Walk CRT heaps to measure used and total heap
@@ -72,13 +70,11 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE
             && (mbi.AllocationProtect & PAGE_READWRITE))
         {
-            is_heap_region = 0;
-            if (heaps) {
-                for (DWORD i = 0; i < heap_count; i++) {
-                    if (mbi.AllocationBase == heaps[i]) {
-                        is_heap_region = 1;
-                        break;
-                    }
+            int is_heap_region = 0;
+            for (DWORD i = 0; i < heap_count; i++) {
+                if (mbi.AllocationBase == heaps[i]) {
+                    is_heap_region = 1;
+                    break;
                 }
             }
 
