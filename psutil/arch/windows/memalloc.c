@@ -35,6 +35,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     SIZE_T heap_total;
     DWORD heap_count;
     SIZE_T crt_heap_total = 0;
+    DWORD written;
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
     int status;
@@ -49,8 +50,8 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         }
     }
 
-    // Get number of heaps
-    heap_count = GetProcessHeaps(0, NULL);
+    // Get number of heaps (+ heap handles)
+    heap_count = GetProcessHeaps(0, NULL);  // 1st: get count
     if (heap_count == 0)
         return psutil_oserror_wsyscall("GetProcessHeaps (1/2)");
     heaps = (HANDLE *)malloc(heap_count * sizeof(HANDLE));
@@ -58,7 +59,11 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         return NULL;
     }
-    GetProcessHeaps(heap_count, heaps);
+    written = GetProcessHeaps(heap_count, heaps);  // 2nd: get heaps handles
+    if (written == 0) {
+        free(heaps);
+        return psutil_oserror_wsyscall("GetProcessHeaps (2/2)");
+    }
 
     // VirtualAlloc'd regions (large allocations / mmap|hblkhd equivalent)
     while (VirtualQuery(addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
@@ -82,8 +87,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         addr = (LPBYTE)mbi.BaseAddress + mbi.RegionSize;
     }
 
-    if (heaps)
-        free(heaps);
+    free(heaps);
 
     heap_total = crt_heap_total + mmap_used;
 
