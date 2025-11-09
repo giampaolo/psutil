@@ -19,6 +19,10 @@ from psutil import WINDOWS
 from . import PsutilTestCase
 from . import retry_on_failure
 
+HEAP_SIZE = 64 * 1024  # 64 KiB
+MMAP_SIZE = 10 * 1024 * 1024  # 10 MiB  (large enough to trigger mmap())
+
+
 # =====================================================================
 # --- UNIX utils
 # =====================================================================
@@ -193,13 +197,11 @@ def assert_within_percent(actual, expected, percent):
 
 @pytest.mark.skipif(not POSIX, reason="not POSIX")
 class TestMallocUnix(MallocTestCase):
-    MALLOC_SIZE = 64 * 1024  # 64 KiB
-    MMAP_SIZE = 10 * 1024 * 1024  # 10 MiB
 
     @retry_on_failure()
     def test_heap_used(self):
         """Test that malloc() without free() increases heap_used."""
-        size = self.MALLOC_SIZE
+        size = HEAP_SIZE
 
         mem1 = psutil.malloc_info()
         ptr = malloc(size)
@@ -229,7 +231,7 @@ class TestMallocUnix(MallocTestCase):
     @retry_on_failure()
     def test_mmap_used(self):
         """Test that large malloc() increases mmap_used."""
-        size = self.MMAP_SIZE  # choose a size large enough to trigger mmap()
+        size = MMAP_SIZE
 
         mem1 = psutil.malloc_info()
         ptr = malloc(size)
@@ -264,13 +266,11 @@ class TestMallocWindows(MallocTestCase):
     @retry_on_failure()
     def test_heap_used(self):
         """Test that HeapAlloc() without HeapFree() increases heap_used."""
-        # Note: a bigger size puts the memory into `mmap_used`
-        # instead, so we keep it small on purpose.
-        size = 64 * 1024
+        size = HEAP_SIZE
 
         mem1 = psutil.malloc_info()
         heap = GetProcessHeap()
-        addr = HeapAlloc(heap, 64 * 1024)
+        addr = HeapAlloc(heap, size)
         mem2 = psutil.malloc_info()
 
         try:
@@ -288,12 +288,14 @@ class TestMallocWindows(MallocTestCase):
         """Test that VirtualAllocEx() without VirtualFreeEx() increases
         mmap_used.
         """
+        size = MMAP_SIZE
+
         mem1 = psutil.malloc_info()
-        addr = VirtualAllocEx(MALLOC_SIZE)
+        addr = VirtualAllocEx(size)
         mem2 = psutil.malloc_info()
 
         try:
-            assert mem2.mmap_used - mem1.mmap_used == MALLOC_SIZE
+            assert mem2.mmap_used - mem1.mmap_used == size
             assert mem2.heap_used == mem1.heap_used
             assert mem2.heap_count == mem1.heap_count
         finally:
@@ -308,7 +310,7 @@ class TestMallocWindows(MallocTestCase):
         heap_count.
         """
         mem1 = psutil.malloc_info()
-        heap = HeapCreate(1024 * 1024, 0)
+        heap = HeapCreate(HEAP_SIZE, 0)
         mem2 = psutil.malloc_info()
         try:
             assert mem2.heap_count == mem1.heap_count + 1
