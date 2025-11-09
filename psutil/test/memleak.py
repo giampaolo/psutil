@@ -41,7 +41,6 @@ descriptors (UNIX) or handles (Windows) such as:
 - `CreateFile()` / `CreateProcess()` / ... without `CloseHandle()`
   (Windows)
 
-
 Usage example:
 
     from psutil.test import MemoryLeakTestCase
