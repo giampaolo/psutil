@@ -4,7 +4,35 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for psutil.malloc_* functions."""
+"""Tests for `psutil.malloc_info()`.
+
+This module deliberately creates **controlled memory leaks** by calling
+low-level C allocation functions (`malloc()`, `HeapAlloc()`,
+`VirtualAllocEx()`, etc.) **without** freeing them - exactly how
+real-world memory leaks occur in native C extensions code.
+
+By bypassing Python's memory manager entirely (via `ctypes`), we
+directly exercise the underlying system allocator:
+
+UNIX
+
+- Small `malloc()` allocations (≤128KB on glibc) without `free()`
+  increase `heap_used`.
+- Large `malloc()` allocations  without `free()` trigger `mmap()` and
+  increase `mmap_used`.
+    - Note: direct `mmap()` / `munmap()` via `ctypes` was attempted but
+      proved unreliable.
+
+Windows
+
+- `HeapAlloc()` without `HeapFree()` increases `heap_used`.
+- `VirtualAllocEx()` without `VirtualFreeEx()` increases `mmap_used`.
+- `HeapCreate()` without `HeapDestroy()` increases `heap_count`.
+
+These tests ensure that `psutil.malloc_info()` detects unreleased
+native memory across different allocators (glibc on Linux,
+jemalloc on BSD/macOS, Windows CRT).
+"""
 
 import ctypes
 import gc
@@ -161,7 +189,9 @@ class TestMalloc(MallocTestCase):
     @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
     @retry_on_failure()
     def test_heap_used(self):
-        """Test that malloc() without free() increases heap_used."""
+        """Test that a small malloc() allocation without free()
+        increases heap_used.
+        """
         size = HEAP_SIZE
 
         mem1 = psutil.malloc_info()
@@ -191,7 +221,9 @@ class TestMalloc(MallocTestCase):
 
     @retry_on_failure()
     def test_mmap_used(self):
-        """Test that large mmap() allocation increases mmap_used."""
+        """Test that a large malloc allocation increases mmap_used.
+        NOTE: `mmap()` / `munmap()` via ctypes proved to be unreliable.
+        """
         size = MMAP_SIZE
 
         mem1 = psutil.malloc_info()
@@ -223,6 +255,9 @@ class TestMalloc(MallocTestCase):
         mem3 = psutil.malloc_info()
         assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
+
+        if WINDOWS:
+            assert mem1.heap_count == mem2.heap_count == mem3.heap_count
 
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
