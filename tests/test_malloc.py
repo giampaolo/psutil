@@ -13,6 +13,7 @@ import mmap
 import pytest
 
 import psutil
+from psutil import LINUX
 from psutil import POSIX
 from psutil import WINDOWS
 
@@ -244,7 +245,7 @@ class TestMallocUnix(MallocTestCase):
         size = MMAP_SIZE
 
         mem1 = psutil.malloc_info()
-        ptr = mmap_alloc(size)
+        ptr = malloc(size)
         mem2 = psutil.malloc_info()
 
         try:
@@ -253,14 +254,19 @@ class TestMallocUnix(MallocTestCase):
             assert diff > 0
             assert_within_percent(diff, size, percent=10)
 
-            # heap_used should not increase significantly
             diff = mem2.heap_used - mem1.heap_used
             if diff != 0:
-                assert diff >= 0
-                # allow tiny metadata
-                assert_within_percent(diff, 0, percent=5)
+                if LINUX:
+                    # heap_used should not increase significantly
+                    assert diff >= 0
+                    assert_within_percent(diff, 0, percent=5)
+                else:
+                    # On BSD jemalloc allocates big memory both into
+                    # heap_used and mmap_used.
+                    assert_within_percent(diff, size, percent=10)
+
         finally:
-            munmap_free(ptr, size)
+            free(ptr)
 
         # assert we returned close to the baseline (mem1) after free()
         trim_memory()
