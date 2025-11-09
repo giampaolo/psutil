@@ -35,7 +35,12 @@ The types of allocations this should catch include:
 - `HeapCreate()` without `HeapDestroy()` (Windows)
 
 In addition it also ensures that the target function does not leak file
-descriptors (UNIX) or handles (Windows).
+descriptors (UNIX) or handles (Windows) such as:
+
+- `open()` without a corresponding `close()` (UNIX)
+- `CreateFile()` / `CreateProcess()` / ... without `CloseHandle()`
+  (Windows)
+
 
 Usage example:
 
