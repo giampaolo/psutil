@@ -16,9 +16,23 @@ increase in memory is detected (mem > 0), the test is retried up to 5
 times, increasing the number of function calls each time. If memory
 continues to grow, the test is considered a failure.
 
-The test monitors RSS, VMS, and USS [1] memory. `mallinfo()`
-on Linux and `_heapwalk()` on Windows could provide even more precise
-results [2], but these are not yet implemented.
+The test monitors RSS, VMS, and USS [1] memory. On supported platforms,
+it also monitors **malloc / mmap metrics** (`heap_used`, `mmap_used`
+from `psutil.malloc_info()`).
+
+In other words, it is specifically designed to catch cases where a C
+extension or other native code allocates memory via `malloc()` or
+similar functions but fails to call `free()`, resulting in unreleased
+memory that would otherwise remain in the process heap or in mapped
+memory regions.
+
+The types of allocations this should catch include:
+
+- `malloc()` without a corresponding `free()`
+- `mmap()` without `munmap()`
+- `HeapAlloc()` without `HeapFree()` (Windows)
+- `VirtualAlloc()` without `VirtualFree()` (Windows)
+- `HeapCreate()` without `HeapDestroy()` (Windows)
 
 In addition it also ensures that the target function does not leak file
 descriptors (UNIX) or handles (Windows).
