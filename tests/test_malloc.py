@@ -8,7 +8,6 @@
 
 import ctypes
 import gc
-import mmap
 
 import pytest
 
@@ -25,87 +24,37 @@ MMAP_SIZE = 10 * 1024 * 1024  # 10 MiB  (large enough to trigger mmap())
 
 
 # =====================================================================
-# --- UNIX utils
+# --- Utils
 # =====================================================================
 
 
-if POSIX:
-
+if POSIX:  # noqa: SIM108
     libc = ctypes.CDLL(None)
-
-    # --- malloc/free wrappers for small heap allocations
-
-    def malloc(size):
-        """Allocate memory via malloc(), affects heap_used."""
-        fun = libc.malloc
-        fun.argtypes = [ctypes.c_size_t]
-        fun.restype = ctypes.c_void_p
-        ptr = fun(size)
-        assert ptr, "malloc() failed"
-        return ptr
-
-    def free(ptr):
-        """Free malloc() memory."""
-        fun = libc.free
-        fun.argtypes = [ctypes.c_void_p]
-        fun.restype = None
-        fun(ptr)
-
-    # --- mmap/munmap wrappers for large allocations
-
-    PROT_READ = 1
-    PROT_WRITE = 2
-    MAP_PRIVATE = 2
-    MAP_ANONYMOUS = getattr(mmap, "MAP_ANONYMOUS", 0x20)  # fallback
-
-    PAGE_SIZE = 4096
-
-    def touch(ptr, size):
-        """Write one byte per page to force memory commitment."""
-        array_type = ctypes.c_char * size
-        buf = array_type.from_address(ptr)
-        for i in range(0, size, PAGE_SIZE):
-            buf[i] = b"x"[0]
-
-    def mmap_alloc(size):
-        """Allocate memory via mmap(), affects mmap_used."""
-        fun = libc.mmap
-        fun.argtypes = [
-            ctypes.c_void_p,  # addr
-            ctypes.c_size_t,  # length
-            ctypes.c_int,  # prot
-            ctypes.c_int,  # flags
-            ctypes.c_int,  # fd
-            ctypes.c_size_t,  # offset
-        ]
-        fun.restype = ctypes.c_void_p
-        ptr = fun(
-            0,
-            size,
-            PROT_READ | PROT_WRITE,
-            MAP_PRIVATE | MAP_ANONYMOUS,
-            -1,
-            0,
-        )
-        assert ptr != ctypes.c_void_p(-1).value, "mmap() failed"
-        touch(ptr, MMAP_SIZE)
-        return ptr
-
-    def munmap_free(ptr, size):
-        """Free memory allocated via mmap()."""
-        fun = libc.munmap
-        fun.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
-        fun.restype = ctypes.c_int
-        ret = fun(ptr, size)
-        assert ret == 0, "munmap() failed"
+else:
+    libc = ctypes.CDLL("msvcrt.dll")
 
 
-# =====================================================================
-# --- Windows utils
-# =====================================================================
+def malloc(size):
+    """Allocate memory via malloc(). If passed a small size, usually
+    affects heap_used, else mmap_used (not on Windows).
+    """
+    fun = libc.malloc
+    fun.argtypes = [ctypes.c_size_t]
+    fun.restype = ctypes.c_void_p
+    ptr = fun(size)
+    assert ptr, "malloc() failed"
+    return ptr
 
 
-elif WINDOWS:
+def free(ptr):
+    """Free malloc() memory."""
+    fun = libc.free
+    fun.argtypes = [ctypes.c_void_p]
+    fun.restype = None
+    fun(ptr)
+
+
+if WINDOWS:
     from ctypes import wintypes
 
     import win32api
@@ -181,15 +130,6 @@ elif WINDOWS:
 # =====================================================================
 
 
-class MallocTestCase(PsutilTestCase):
-    def setUp(self):
-        trim_memory()
-
-    @classmethod
-    def tearDownClass(cls):
-        trim_memory()
-
-
 def trim_memory():
     gc.collect()
     psutil.malloc_trim()
@@ -206,9 +146,19 @@ def assert_within_percent(actual, expected, percent):
         )
 
 
-@pytest.mark.skipif(not POSIX, reason="not POSIX")
-class TestMallocUnix(MallocTestCase):
+class MallocTestCase(PsutilTestCase):
+    def setUp(self):
+        trim_memory()
 
+    @classmethod
+    def tearDownClass(cls):
+        trim_memory()
+
+
+class TestMalloc(MallocTestCase):
+
+    # On Windows malloc() increases mmap_used
+    @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
     @retry_on_failure()
     def test_heap_used(self):
         """Test that malloc() without free() increases heap_used."""
