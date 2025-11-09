@@ -57,6 +57,15 @@ if POSIX:
     MAP_PRIVATE = 2
     MAP_ANONYMOUS = getattr(mmap, "MAP_ANONYMOUS", 0x20)  # fallback
 
+    PAGE_SIZE = 4096
+
+    def touch(ptr, size):
+        """Write one byte per page to force memory commitment."""
+        array_type = ctypes.c_char * size
+        buf = array_type.from_address(ptr)
+        for i in range(0, size, PAGE_SIZE):
+            buf[i] = b"x"[0]
+
     def mmap_alloc(size):
         """Allocate memory via mmap(), affects mmap_used."""
         fun = libc.mmap
@@ -78,6 +87,7 @@ if POSIX:
             0,
         )
         assert ptr != ctypes.c_void_p(-1).value, "mmap() failed"
+        touch(ptr, MMAP_SIZE)
         return ptr
 
     def munmap_free(ptr, size):
@@ -230,11 +240,11 @@ class TestMallocUnix(MallocTestCase):
 
     @retry_on_failure()
     def test_mmap_used(self):
-        """Test that large malloc() increases mmap_used."""
+        """Test that large mmap() allocation increases mmap_used."""
         size = MMAP_SIZE
 
         mem1 = psutil.malloc_info()
-        ptr = malloc(size)
+        ptr = mmap_alloc(size)
         mem2 = psutil.malloc_info()
 
         try:
@@ -243,14 +253,14 @@ class TestMallocUnix(MallocTestCase):
             assert diff > 0
             assert_within_percent(diff, size, percent=10)
 
-            # heap_used should not increase significantly for large allocations
+            # heap_used should not increase significantly
             diff = mem2.heap_used - mem1.heap_used
             if diff != 0:
                 assert diff >= 0
-                # small fluctuation allowed due to allocator metadata
-                assert_within_percent(diff, size, percent=10)
+                # allow tiny metadata
+                assert_within_percent(diff, 0, percent=5)
         finally:
-            free(ptr)
+            munmap_free(ptr, size)
 
         # assert we returned close to the baseline (mem1) after free()
         trim_memory()
