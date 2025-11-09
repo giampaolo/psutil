@@ -2,7 +2,42 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Test framework for detecting memory leaks in C functions."""
+"""A testing framework for detecting memory leaks in functions,
+typically those implemented in C that forget to `free()` heap memory,
+call `Py_DECREF` on Python objects, and so on. It works by comparing
+the process's memory usage before and after repeatedly calling the
+target function.
+
+Detecting memory leaks reliably is inherently difficult (and probably
+impossible) because of how the OS manages memory, garbage collection,
+and caching. Memory usage may even decrease between runs. So this is
+not meant to be bullet proof. To reduce false positives, when an
+increase in memory is detected (mem > 0), the test is retried up to 5
+times, increasing the number of function calls each time. If memory
+continues to grow, the test is considered a failure.
+
+The test monitors RSS, VMS, and USS [1] memory. `mallinfo()`
+on Linux and `_heapwalk()` on Windows could provide even more precise
+results [2], but these are not yet implemented.
+
+In addition it also ensures that the target function does not leak file
+descriptors (UNIX) or handles (Windows).
+
+Usage example:
+
+    from psutil.test import MemoryLeakTestCase
+
+    class TestLeaks(MemoryLeakTestCase):
+        def test_fun(self):
+            self.execute(some_function)
+
+NOTE - This class is experimental, meaning its API or internal
+algorithm may change in the future.
+
+[1] https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
+[2] https://github.com/giampaolo/psutil/issues/1275
+"""
+
 
 import functools
 import gc
@@ -34,43 +69,6 @@ def format_run_line(idx, diffs, times):
 
 
 class MemoryLeakTestCase(unittest.TestCase):
-    """A testing framework for detecting memory leaks in functions,
-    typically those implemented in C that forget to `free()` heap
-    memory, call `Py_DECREF` on Python objects, and so on. It works by
-    comparing the process's memory usage before and after repeatedly
-    calling the target function.
-
-    Detecting memory leaks reliably is inherently difficult (and
-    probably impossible) because of how the OS manages memory, garbage
-    collection, and caching. Memory usage may even decrease between
-    runs. So this is not meant to be bullet proof. To reduce false
-    positives, when an increase in memory is detected (mem > 0), the
-    test is retried up to 5 times, increasing the number of function
-    calls each time. If memory continues to grow, the test is
-    considered a failure.
-
-    The test currently monitors RSS, VMS, and USS [1] memory.
-    `mallinfo()` on Linux and `_heapwalk()` on Windows could provide
-    even more precise results [2], but these are not yet implemented.
-
-    In addition it also ensures that the target function does not leak
-    file descriptors (UNIX) or handles (Windows).
-
-    Usage example:
-
-        from psutil.test import MemoryLeakTestCase
-
-        class TestLeaks(MemoryLeakTestCase):
-            def test_fun(self):
-                self.execute(some_function)
-
-    NOTE - This class is experimental, meaning its API or internal
-    algorithm may change in the future.
-
-    [1] https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
-    [2] https://github.com/giampaolo/psutil/issues/1275
-    """
-
     # Number of times to call the tested function in each iteration.
     times = 200
     # Maximum number of retries if memory growth is detected.
@@ -81,6 +79,8 @@ class MemoryLeakTestCase(unittest.TestCase):
     tolerance = 0
     # 0 = no messages; 1 = print diagnostics when memory increases.
     verbosity = 1
+
+    __doc__ = __doc__
 
     @classmethod
     def setUpClass(cls):
