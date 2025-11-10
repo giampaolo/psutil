@@ -56,7 +56,6 @@ algorithm may change in the future.
 [2] https://github.com/giampaolo/psutil/issues/1275
 """
 
-
 import functools
 import gc
 import os
