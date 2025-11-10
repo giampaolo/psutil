@@ -6,7 +6,6 @@
 
 """Linux specific tests."""
 
-
 import collections
 import contextlib
 import errno

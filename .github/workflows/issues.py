@@ -9,7 +9,6 @@ is created. Assign labels, provide replies, closes issues, etc. depending
 on the situation.
 """
 
-
 import functools
 import json
 import os

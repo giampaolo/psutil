@@ -11,7 +11,6 @@ asus
     cpu_fan              3200 RPM
 """
 
-
 import sys
 
 import psutil

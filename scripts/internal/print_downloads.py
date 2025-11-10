@@ -11,7 +11,6 @@ Useful sites:
 * https://hugovk.github.io/top-pypi-packages/.
 """
 
-
 import json
 import os
 import shlex

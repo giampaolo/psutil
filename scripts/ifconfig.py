@@ -42,7 +42,6 @@ wlp3s0:
          broadcast : ff:ff:ff:ff:ff:ff
 """
 
-
 import socket
 
 import psutil

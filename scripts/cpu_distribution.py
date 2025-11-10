@@ -38,7 +38,6 @@ rcu_b                                                                 cpuhp
 kwork
 """
 
-
 import collections
 import os
 import shutil
