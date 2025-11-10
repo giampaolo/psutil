@@ -9,7 +9,6 @@ Process.oneshot() ctx manager.
 See: https://github.com/giampaolo/psutil/issues/799.
 """
 
-
 import sys
 import textwrap
 import timeit

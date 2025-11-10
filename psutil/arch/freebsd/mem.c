@@ -4,7 +4,6 @@
  * found in the LICENSE file.
  */
 
-
 #include <Python.h>
 #include <kvm.h>
 #include <sys/sysctl.h>

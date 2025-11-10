@@ -29,7 +29,6 @@ binpath: C:\Windows\system32\svchost.exe -k netsvcs
 ...
 """
 
-
 import os
 import sys
 

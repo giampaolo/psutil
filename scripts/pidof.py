@@ -11,7 +11,6 @@ $ pidof python
 1140 1138 1136 1134 1133 1129 1127 1125 1121 1120 1119
 """
 
-
 import sys
 
 import psutil

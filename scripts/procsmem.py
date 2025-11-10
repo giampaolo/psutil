@@ -35,7 +35,6 @@ PID     User    Cmdline                            USS     PSS    Swap     RSS
 
 """
 
-
 import sys
 
 import psutil

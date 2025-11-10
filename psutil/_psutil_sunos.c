@@ -2,14 +2,15 @@
  * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
+ */
+
+/*
  * Functions specific to Sun OS Solaris platforms.
  *
  * Thanks to Justin Venus who originally wrote a consistent part of
  * this in Cython which I later on translated in C.
- */
-
-/* fix compilation issue on SunOS 5.10, see:
+ *
+ * Fix compilation issue on SunOS 5.10, see:
  * https://github.com/giampaolo/psutil/issues/421
  * https://github.com/giampaolo/psutil/issues/1077
  */

@@ -4,7 +4,6 @@
 
 """Linux platform implementation."""
 
-
 import base64
 import collections
 import enum

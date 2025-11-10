@@ -44,7 +44,6 @@ open_files           238     71.3%   ACCESS DENIED
 Totals: access-denied=1744, calls=10020, processes=334
 """
 
-
 import time
 from collections import defaultdict
 
