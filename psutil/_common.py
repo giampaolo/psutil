@@ -772,11 +772,9 @@ def term_supports_colors(file=sys.stdout):  # pragma: no cover
 
         assert file.isatty()
         curses.setupterm()
-        assert curses.tigetnum("colors") > 0
+        return curses.tigetnum("colors") > 0
     except Exception:  # noqa: BLE001
         return False
-    else:
-        return True
 
 
 def hilite(s, color=None, bold=False):  # pragma: no cover
