@@ -221,7 +221,7 @@ trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
 skip = [
-    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
+    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x} cp3*t-musllinux*",
 ]
 test-extras = ["test"]  # same as doing `pip install .[test]`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
