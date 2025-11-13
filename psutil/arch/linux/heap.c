@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+#if defined(__GLIBC__)  // not available on musl / alpine
 #include <Python.h>
 #include <malloc.h>
 #include <dlfcn.h>
@@ -69,3 +70,4 @@ psutil_malloc_trim(PyObject *self, PyObject *args) {
     int ret = malloc_trim(0);
     return PyBool_FromLong(ret);
 }
+#endif  // __GLIBC__

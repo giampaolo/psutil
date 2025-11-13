@@ -487,9 +487,10 @@ def swap_memory():
     return ntp.sswap(total, used, free, percent, sin, sout)
 
 
-# malloc / heap functions
-malloc_info = cext.malloc_info
-malloc_trim = cext.malloc_trim
+# malloc / heap functions; require glibc
+if hasattr(cext, "malloc_info"):
+    malloc_info = cext.malloc_info
+    malloc_trim = cext.malloc_trim
 
 
 # =====================================================================
