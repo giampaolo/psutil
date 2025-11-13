@@ -50,7 +50,7 @@ main() {
     elif [ $HAS_PACMAN ]; then
         $SUDO pacman -S --noconfirm python gcc net-tools coreutils util-linux sudo
     elif [ $HAS_APK ]; then
-        $SUDO apk add --no-confirm python3-dev gcc musl-dev linux-headers coreutils procps
+        $SUDO apk add --no-interactive python3-dev gcc musl-dev linux-headers coreutils procps
     elif [ $FREEBSD ]; then
         $SUDO pkg install -y python3 gcc
     elif [ $NETBSD ]; then
