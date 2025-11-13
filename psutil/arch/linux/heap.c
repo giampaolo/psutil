@@ -30,6 +30,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     if (fun != NULL) {
         // mallinfo2() appeared in glibc 2.33, February 2021.
         static struct mallinfo2 m2;
+
         m2 = ((struct mallinfo2(*)(void))fun)();
         fmt = "KKK";
         mi = &m2;
@@ -38,9 +39,10 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         // mallinfo() is deprecated. It uses 'int' fields which overflow for
         // heaps > 2 GiB.
         static struct mallinfo m1;
-        psutil_debug("WARNING: using deprecated mallinfo()");
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        psutil_debug("WARNING: using deprecated mallinfo()");
         m1 = mallinfo();
 #pragma GCC diagnostic pop
         fmt = "iii";
