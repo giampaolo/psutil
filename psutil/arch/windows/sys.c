@@ -24,7 +24,7 @@ history before the move:
 
 // The number of seconds passed since boot. This is a monotonic timer,
 // not affected by system clock updates. On Windows 7+ it also includes
-// the time spent during suspend / hybernate.
+// the time spent during suspend / hibernate.
 PyObject *
 psutil_uptime(PyObject *self, PyObject *args) {
     double uptimeSeconds;
