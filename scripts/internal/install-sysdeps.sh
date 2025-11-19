@@ -33,7 +33,6 @@ case "$UNAME_S" in
     SunOS)
         SUNOS=true
         ;;
-
 esac
 
 # Check if running as root
