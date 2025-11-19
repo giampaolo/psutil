@@ -7,6 +7,7 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 2403_, [Linux]: publish wheels for Linux musl.
 - 2680_: unit tests are no longer installed / part of the distribution. They
   now live under `tests/` instead of `psutil/tests`.
 

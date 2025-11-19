@@ -221,8 +221,7 @@ trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
 skip = [
-    "*-musllinux*",
-    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
+    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x} cp3*t-musllinux*",
 ]
 test-extras = ["test"]  # same as doing `pip install .[test]`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
@@ -230,7 +229,7 @@ test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci
 # Run tests on Python 3.13. On all other Python versions do a lightweight
 # import test.
 [[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10,11,12,13t,14,14t}-* cp313-macosx*"
+select = "cp3{8,9,10,11,12,13t,14,14t}-* cp313-macosx* *-musllinux*"
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
