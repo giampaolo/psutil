@@ -238,23 +238,23 @@ select = "cp38-macosx*"  # In macOS use Python 3.8: higher Python version hang f
 test-extras = ["test"]
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
-[tool.pytest.ini_options]
-addopts = '''
-    --verbose
-    --capture=no
-    --no-header
-    --tb=short
-    --strict-config
-    --strict-markers
-    --instafail
-    -p no:junitxml
-    -p no:doctest
-    -p no:nose
-    -p no:pastebin
-    -p instafail
-    -p subtests
-    -p xdist
-    '''
+[tool.pytest]
+addopts = [
+    "--capture=no",
+    "--instafail",
+    "--no-header",
+    "--strict-config",
+    "--strict-markers",
+    "--tb=short",
+    "--verbose",
+    "-p instafail",
+    "-p no:doctest",
+    "-p no:junitxml",
+    "-p no:nose",
+    "-p no:pastebin",
+    "-p xdist",
+]
+verbosity_subtests = "0"
 testpaths = ["tests/"]
 
 [build-system]

@@ -79,7 +79,6 @@ Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 TEST_DEPS = [
     "pytest",
     "pytest-instafail",
-    "pytest-subtests",
     "pytest-xdist",
     "setuptools",
     "pywin32 ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
