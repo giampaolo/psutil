@@ -221,8 +221,7 @@ trailing_comma_inline_array = true
 
 [tool.cibuildwheel]
 skip = [
-    "*-musllinux*",
-    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x}",  # Only test cp36/cp313 on qemu tested architectures
+    "cp3{8,9,10,11,12}-*linux_{ppc64le,s390x} cp3*t-musllinux*",
 ]
 test-extras = ["test"]  # same as doing `pip install .[test]`
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
@@ -230,7 +229,7 @@ test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci
 # Run tests on Python 3.13. On all other Python versions do a lightweight
 # import test.
 [[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10,11,12,13t,14,14t}-* cp313-macosx*"
+select = "cp3{8,9,10,11,12,13t,14,14t}-* cp313-macosx* *-musllinux*"
 test-extras = []
 test-command = "python -c \"import psutil; print(psutil.__version__)\""
 
@@ -239,23 +238,23 @@ select = "cp38-macosx*"  # In macOS use Python 3.8: higher Python version hang f
 test-extras = ["test"]
 test-command = "make -C {project} PYTHON=python PSUTIL_ROOT_DIR=\"{project}\" ci-test-cibuildwheel"
 
-[tool.pytest.ini_options]
-addopts = '''
-    --verbose
-    --capture=no
-    --no-header
-    --tb=short
-    --strict-config
-    --strict-markers
-    --instafail
-    -p no:junitxml
-    -p no:doctest
-    -p no:nose
-    -p no:pastebin
-    -p instafail
-    -p subtests
-    -p xdist
-    '''
+[tool.pytest]
+addopts = [
+    "--capture=no",
+    "--instafail",
+    "--no-header",
+    "--strict-config",
+    "--strict-markers",
+    "--tb=short",
+    "--verbose",
+    "-p instafail",
+    "-p no:doctest",
+    "-p no:junitxml",
+    "-p no:nose",
+    "-p no:pastebin",
+    "-p xdist",
+]
+verbosity_subtests = "0"
 testpaths = ["tests/"]
 
 [build-system]

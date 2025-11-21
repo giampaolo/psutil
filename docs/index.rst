@@ -38,8 +38,9 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-Supported Python versions are **2.7** and **3.6+**.
-`PyPy <http://pypy.org/>`__ is also known to work.
+Supported Python versions are cPython 3.6+ and `PyPy <https://pypy.org/>`__.
+Latest psutil version supporting Python 2.7 is
+`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
@@ -2751,8 +2752,9 @@ If you want to develop psutil take a look at the `DEVGUIDE.rst`_.
 Platforms support history
 =========================
 
-* psutil 7.1.2 (XXXX-XX): publish wheels for free-threaded Python
-* psutil 7.1.2 (XXXX-XX): no longer publish wheels for 32-bit Python
+* psutil 7.2.0 (XXXX-XX): publish wheels for Linux musl
+* psutil 7.1.2 (2025-10): publish wheels for free-threaded Python
+* psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python
   (**Linux** and **Windows**)
 * psutil 7.1.1 (2025-10): drop **SunOS 10**
 * psutil 7.1.0 (2025-09): drop **FreeBSD 8**
