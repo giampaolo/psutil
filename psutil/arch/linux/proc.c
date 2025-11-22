@@ -106,7 +106,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         }
         if (sched_getaffinity(pid, setsize, mask) == 0)
             break;
-        // CPU_FREE(mask);
+        CPU_FREE(mask);
         if (errno != EINVAL)
             return psutil_oserror();
         if (ncpus > INT_MAX / 2) {

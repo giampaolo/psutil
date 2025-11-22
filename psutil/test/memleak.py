@@ -89,6 +89,12 @@ class MemoryLeakError(AssertionError):
     """Raised when a memory leak is detected."""
 
 
+class UnclosedFdError(AssertionError):
+    """Raised when an unclosed file descriptor (UNIX) or handle
+    (Windows) is detected.
+    """
+
+
 class MemoryLeakTestCase(unittest.TestCase):
     # Number of times to call the tested function in each iteration.
     times = 200
@@ -165,13 +171,13 @@ class MemoryLeakTestCase(unittest.TestCase):
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            return self.fail(msg)
+            raise UnclosedFdError(msg)
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
             msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            return self.fail(msg)
+            raise UnclosedFdError(msg)
 
     def _call_ntimes(self, fun, times):
         """Get memory samples (rss, vms, uss) before and after calling
