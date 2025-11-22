@@ -146,7 +146,7 @@ class MemoryLeakTestCase(unittest.TestCase):
     def _get_mem(self):
         mem = thisproc.memory_full_info()
         heap_used = mmap_used = 0
-        if hasattr(psutil._psplatform, "malloc_info"):
+        if hasattr(psutil, "malloc_info"):
             # Linux, Windows, macOS, BSD
             mallinfo = psutil.malloc_info()
             heap_used = mallinfo.heap_used
@@ -189,8 +189,8 @@ class MemoryLeakTestCase(unittest.TestCase):
             if diff > 1:
                 type_ += "s"
             msg = (
-                f"{diff} unclosed {type_} after calling {qualname(fun)!r} 1"
-                " time"
+                f"detected {diff} unclosed {type_} after calling"
+                f" {qualname(fun)!r} 1 time"
             )
             raise UnclosedFdError(msg)
 
@@ -211,8 +211,8 @@ class MemoryLeakTestCase(unittest.TestCase):
             raise UnclosedHeapCreateError(msg)
         if diff > 0:
             msg = (
-                f"{diff} unclosed HeapCreate() after calling {qualname(fun)!r}"
-                " 1 time"
+                f"detected {diff} HeapCreate() without a corresponding "
+                f" HeapDestroy() after calling {qualname(fun)!r} 1 time"
             )
             raise UnclosedHeapCreateError(msg)
 
