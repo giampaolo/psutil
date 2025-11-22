@@ -12,6 +12,22 @@
 #include <dlfcn.h>
 
 
+// A copy of glibc's mallinfo2 layout. Allows compilation even if
+// <malloc.h> doesn't define mallinfo2.
+struct my_mallinfo2 {
+    size_t arena;
+    size_t ordblks;
+    size_t smblks;
+    size_t hblks;
+    size_t hblkhd;
+    size_t usmblks;
+    size_t fsmblks;
+    size_t uordblks;
+    size_t fordblks;
+    size_t keepcost;
+};
+
+
 // psutil_malloc_info() -> (heap_used, mmap_used, heap_total)
 // Return low-level heap statistics from the C allocator (glibc).
 PyObject *
@@ -25,7 +41,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         sym = dlsym(handle, "mallinfo2");
 
     if (sym != NULL) {
-        struct mallinfo2 m2 = ((struct mallinfo2(*)(void))sym)();
+        struct my_mallinfo2 m2 = ((struct my_mallinfo2(*)(void))sym)();
         uord = (unsigned long long)m2.uordblks;
         mmap = (unsigned long long)m2.hblkhd;
         arena = (unsigned long long)m2.arena;
