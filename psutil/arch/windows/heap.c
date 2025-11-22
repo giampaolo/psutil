@@ -36,7 +36,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     int status;
     HANDLE *heaps = NULL;
 
-    // Walk CRT heaps to measure used and total heap
+    // Walk CRT heaps to measure heap used.
     while ((status = _heapwalk(&hinfo)) == _HEAPOK) {
         if (hinfo._useflag == _USEDENTRY) {
             heap_used += hinfo._size;
@@ -83,7 +83,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     free(heaps);
 
     return Py_BuildValue(
-        "nnnn",
+        "nnn",
         (Py_ssize_t)heap_used,
         (Py_ssize_t)mmap_used,
         (Py_ssize_t)heap_count
