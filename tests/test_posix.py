@@ -416,7 +416,7 @@ class TestSystemAPIs(PsutilTestCase):
         if not tstamp:
             return pytest.skip(f"cannot interpret tstamp in who output\n{out}")
 
-        with self.subTest(psutil=psutil.users(), who=out):
+        with self.subTest(psutil=str(psutil.users()), who=out):
             for idx, u in enumerate(psutil.users()):
                 psutil_value = datetime.datetime.fromtimestamp(
                     u.started

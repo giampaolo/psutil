@@ -244,7 +244,7 @@ class TestMiscAPIs(PsutilTestCase):
         users = psutil.users()
         assert users
         for user in users:
-            with self.subTest(user=user):
+            with self.subTest(user=str(user)):
                 assert user.name
                 assert isinstance(user.name, str)
                 assert isinstance(user.terminal, (str, type(None)))
@@ -488,7 +488,9 @@ class TestCpuAPIs(PsutilTestCase):
         per_cpu = psutil.cpu_times(percpu=True)
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
         for field in base._fields:
-            with self.subTest(field=field, base=base, per_cpu=per_cpu):
+            with self.subTest(
+                field=field, base=str(base), per_cpu=str(per_cpu)
+            ):
                 assert (
                     abs(getattr(base, field) - getattr(summed_values, field))
                     < 2
