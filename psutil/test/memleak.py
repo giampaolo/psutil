@@ -137,7 +137,7 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _malloc_trim(self):
         """Release unused memory held by the allocator back to the OS."""
-        if hasattr(psutil._psplatform, "malloc_trim"):
+        if hasattr(psutil, "malloc_trim"):
             # Linux, macOS, FreeBSD
             psutil.malloc_trim()
 
@@ -184,6 +184,7 @@ class MemoryLeakTestCase(unittest.TestCase):
                 " resource from a previous test)"
             )
             raise UnclosedFdError(msg)
+
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
@@ -209,6 +210,7 @@ class MemoryLeakTestCase(unittest.TestCase):
         if diff < 0:
             msg = f"negative diff {diff!r}"
             raise UnclosedHeapCreateError(msg)
+
         if diff > 0:
             msg = (
                 f"detected {diff} HeapCreate() without a corresponding "
