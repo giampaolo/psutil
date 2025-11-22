@@ -20,7 +20,7 @@ The test monitors RSS, VMS, and USS [1] memory. On supported platforms,
 it also monitors **malloc / mmap metrics** (`heap_used`, `mmap_used`
 from `psutil.malloc_info()`).
 
-In other words, it is specifically designed to catch cases where a C
+In other words, this is specifically designed to catch cases where a C
 extension or other native code allocates memory via `malloc()` or
 similar functions but fails to call `free()`, resulting in unreleased
 memory that would otherwise remain in the process heap or in mapped
@@ -83,6 +83,10 @@ def format_run_line(idx, diffs, times):
     if idx == 1:
         s = "\n" + s
     return s
+
+
+class MemoryLeakError(AssertionError):
+    """Raised when a memory leak is detected."""
 
 
 class MemoryLeakTestCase(unittest.TestCase):
@@ -215,10 +219,10 @@ class MemoryLeakTestCase(unittest.TestCase):
             prev = diffs
             times += times  # double calls each retry
 
-        msg = f"Memory kept increasing after {retries} runs." + "\n".join(
+        msg = f"memory kept increasing after {retries} runs" + "\n".join(
             messages
         )
-        return self.fail(msg)
+        raise MemoryLeakError(msg)
 
     # ---
 
