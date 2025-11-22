@@ -32,6 +32,7 @@ struct my_mallinfo2 {
 // Return low-level heap statistics from the C allocator (glibc).
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
+    static int warned = 0;
     void *handle = NULL;
     void *fun = NULL;
     unsigned long long uord, mmap, arena;
@@ -54,7 +55,10 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     else {
         struct mallinfo m1;
 
-        psutil_debug("WARNING: using deprecated mallinfo().");
+        if (!warned) {
+            psutil_debug("WARNING: using deprecated mallinfo()");
+            warned = 1;
+        }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
