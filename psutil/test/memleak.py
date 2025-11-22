@@ -85,6 +85,13 @@ def format_run_line(idx, diffs, times):
     return s
 
 
+def qualname(obj):
+    """Return a human-readable qualified name for a function, method or
+    class.
+    """
+    return getattr(obj, "__qualname__", getattr(obj, "__name__", str(obj)))
+
+
 class MemoryLeakError(AssertionError):
     """Raised when a memory leak is detected."""
 
@@ -161,9 +168,9 @@ class MemoryLeakTestCase(unittest.TestCase):
     # --- checkers
 
     def _check_fds(self, fun):
-        """Makes sure num_fds() (POSIX) or num_handles() (Windows) does
-        not increase after calling a function.  Used to discover forgotten
-        close(2) and CloseHandle syscalls.
+        """Makes sure `num_fds()` (POSIX) or `num_handles()` (Windows)
+        do not increase after calling function 1 time.  Used to
+        discover forgotten `close(2)` and `CloseHandle()`.
         """
 
         before = self._get_num_fds()
@@ -181,7 +188,10 @@ class MemoryLeakTestCase(unittest.TestCase):
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
-            msg = f"{diff} unclosed {type_} after calling {fun!r} 1 time"
+            msg = (
+                f"{diff} unclosed {type_} after calling {qualname(fun)!r} 1"
+                " time"
+            )
             raise UnclosedFdError(msg)
 
     def _check_heap_count(self, fun):
@@ -200,7 +210,10 @@ class MemoryLeakTestCase(unittest.TestCase):
             msg = f"negative diff {diff!r}"
             raise UnclosedHeapCreateError(msg)
         if diff > 0:
-            msg = f"{diff} unclosed HeapCreate() after calling {fun!r} 1 time"
+            msg = (
+                f"{diff} unclosed HeapCreate() after calling {qualname(fun)!r}"
+                " 1 time"
+            )
             raise UnclosedHeapCreateError(msg)
 
     def _call_ntimes(self, fun, times):
