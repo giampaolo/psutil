@@ -33,15 +33,18 @@ struct my_mallinfo2 {
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     void *handle = NULL;
-    void *sym = NULL;
+    void *fun = NULL;
     unsigned long long uord, mmap, arena;
 
     handle = dlopen("libc.so.6", RTLD_LAZY);
     if (handle != NULL)
-        sym = dlsym(handle, "mallinfo2");
+        fun = dlsym(handle, "mallinfo2");
 
-    if (sym != NULL) {
-        struct my_mallinfo2 m2 = ((struct my_mallinfo2(*)(void))sym)();
+    if (fun != NULL) {
+        struct my_mallinfo2 m2;
+
+        m2 = ((struct my_mallinfo2(*)(void))fun)();
+
         uord = (unsigned long long)m2.uordblks;
         mmap = (unsigned long long)m2.hblkhd;
         arena = (unsigned long long)m2.arena;
