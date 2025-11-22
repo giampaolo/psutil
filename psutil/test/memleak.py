@@ -141,6 +141,9 @@ class MemoryLeakTestCase(unittest.TestCase):
             # Linux, macOS, FreeBSD
             psutil.malloc_trim()
 
+    def _warmup(self, fun, warmup_times):
+        self._call_ntimes(fun, warmup_times)
+
     # --- getters
 
     def _get_mem(self):
@@ -307,8 +310,7 @@ class MemoryLeakTestCase(unittest.TestCase):
             msg = f"tolerance must be >= 0 (got {tolerance})"
             raise ValueError(msg)
 
-        self._call_ntimes(fun, warmup_times)  # warm up
-
+        self._warmup(fun, warmup_times)
         self._check_fds(fun)
         if WINDOWS:
             self._check_heap_count(fun)
