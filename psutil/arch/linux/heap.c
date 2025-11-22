@@ -4,12 +4,12 @@
  * found in the LICENSE file.
  */
 
-#if defined(__GLIBC__)  // not available on musl / alpine
+#include "../../arch/all/init.h"
+
+#if defined(PSUTIL_HAS_MALLOC_INFO)  // not available on musl / alpine
 #include <Python.h>
 #include <malloc.h>
 #include <dlfcn.h>
-
-#include "../../arch/all/init.h"
 
 
 // psutil_malloc_info() -> (heap_used, mmap_used, heap_total)
@@ -72,4 +72,4 @@ psutil_malloc_trim(PyObject *self, PyObject *args) {
     int ret = malloc_trim(0);
     return PyBool_FromLong(ret);
 }
-#endif  // __GLIBC__
+#endif  // PSUTIL_HAS_MALLOC_INFO
