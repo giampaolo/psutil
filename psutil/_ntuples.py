@@ -91,7 +91,6 @@ if LINUX or WINDOWS or MACOS or BSD:
         [
             "heap_used",  # uordblks, memory allocated via malloc()
             "mmap_used",  # hblkhd, memory allocated via mmap() (large blocks)
-            "heap_total",  # arena, total main heap size (sbrk)
         ],
     )
     if WINDOWS:

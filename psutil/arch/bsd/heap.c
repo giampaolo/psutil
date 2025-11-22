@@ -19,7 +19,6 @@
 // jemalloc heap stats via `mallctl()`. Mimics Linux `mallinfo2()`:
 //   - heap_used  ~ stats.allocated  (like `uordblks`)
 //   - mmap_used  ~ stats.mapped     (like `hblkhd`)
-//   - heap_total ~ stats.active     (similar to `arena`)
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     uint64_t epoch = 0;
@@ -49,12 +48,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     if (ret != 0)
         return psutil_oserror_wsyscall("mallctl('stats.mapped')");
 
-    sz_val = sizeof(active);
-    ret = mallctl("stats.active", &active, &sz_val, NULL, 0);
-    if (ret != 0)
-        return psutil_oserror_wsyscall("mallctl('stats.active')");
-
-    return Py_BuildValue("KKK", allocated, mapped, active);
+    return Py_BuildValue("KK", allocated, mapped);
 }
 
 

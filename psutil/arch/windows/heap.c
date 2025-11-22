@@ -21,19 +21,15 @@
 // - mmap_used: VirtualAlloc'd regions, like `hblkhd` on Linux. Catches
 //   `VirtualAlloc()` without `VirtualFree()`.
 //
-// - heap_total: total committed heap, like `arena` on Linux.
-//
-// - heap_count: number of heaps (Windows only). Catches `HeapCreate()`
-//   without `HeapDestroy()`.
+// - heap_count (Windows only): number of heaps (Windows only). Catches
+//   `HeapCreate()` without `HeapDestroy()`.
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     MEMORY_BASIC_INFORMATION mbi;
     LPVOID addr = NULL;
     SIZE_T heap_used = 0;
     SIZE_T mmap_used = 0;
-    SIZE_T heap_total;
     DWORD heap_count;
-    SIZE_T crt_heap_total = 0;
     DWORD written;
     _HEAPINFO hinfo = {0};
     hinfo._pentry = NULL;
@@ -42,7 +38,6 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 
     // Walk CRT heaps to measure used and total heap
     while ((status = _heapwalk(&hinfo)) == _HEAPOK) {
-        crt_heap_total += hinfo._size;
         if (hinfo._useflag == _USEDENTRY) {
             heap_used += hinfo._size;
         }
@@ -87,13 +82,10 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 
     free(heaps);
 
-    heap_total = crt_heap_total + mmap_used;
-
     return Py_BuildValue(
         "nnnn",
         (Py_ssize_t)heap_used,
         (Py_ssize_t)mmap_used,
-        (Py_ssize_t)heap_total,
         (Py_ssize_t)heap_count
     );
 }

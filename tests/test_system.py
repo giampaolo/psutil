@@ -265,7 +265,6 @@ class TestMiscAPIs(PsutilTestCase):
         m = psutil.malloc_info()
         assert m.heap_used > 0
         assert m.mmap_used > 0
-        assert m.heap_total > 0
 
     @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
     def test_malloc_trim(self):

@@ -12,7 +12,7 @@
 #include "../../arch/all/init.h"
 
 
-// psutil_malloc_info() -> (heap_used, mmap_used, heap_total)
+// psutil_malloc_info() -> (heap_used, mmap_used)
 //
 // Return libmalloc heap stats via `malloc_zone_statistics()`.
 // Compatible with macOS 10.6+ (Sierra and earlier).
@@ -20,12 +20,11 @@
 // Mapping:
 //   - heap_used  ~ size_in_use          (live allocated bytes)
 //   - mmap_used  ~ 0                    (no direct stat)
-//   - heap_total ~ size_allocated       (total committed)
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     malloc_statistics_t stats = {0};
     malloc_zone_t *zone = malloc_default_zone();
-    uint64_t heap_used, mmap_used, heap_total;
+    uint64_t heap_used, mmap_used;
 
     if (!zone)
         return psutil_runtime_error("malloc_default_zone() failed");
@@ -34,8 +33,7 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 
     heap_used = (uint64_t)stats.size_in_use;
     mmap_used = 0;
-    heap_total = (uint64_t)stats.size_allocated;
-    return Py_BuildValue("KKK", heap_used, mmap_used, heap_total);
+    return Py_BuildValue("KK", heap_used, mmap_used);
 }
 
 

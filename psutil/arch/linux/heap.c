@@ -28,14 +28,14 @@ struct my_mallinfo2 {
 };
 
 
-// psutil_malloc_info() -> (heap_used, mmap_used, heap_total)
+// psutil_malloc_info() -> (heap_used, mmap_used)
 // Return low-level heap statistics from the C allocator (glibc).
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
     static int warned = 0;
     void *handle = NULL;
     void *fun = NULL;
-    unsigned long long uord, mmap, arena;
+    unsigned long long uord, mmap;
 
     handle = dlopen("libc.so.6", RTLD_LAZY);
     if (handle != NULL) {
@@ -49,7 +49,6 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 
         uord = (unsigned long long)m2.uordblks;
         mmap = (unsigned long long)m2.hblkhd;
-        arena = (unsigned long long)m2.arena;
     }
     else {
         struct mallinfo m1;
@@ -66,13 +65,12 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
 
         uord = (unsigned long long)m1.uordblks;
         mmap = (unsigned long long)m1.hblkhd;
-        arena = (unsigned long long)m1.arena;
     }
 
     if (handle)
         dlclose(handle);
 
-    return Py_BuildValue("KKK", uord, mmap, arena);
+    return Py_BuildValue("KK", uord, mmap);
 }
 
 
