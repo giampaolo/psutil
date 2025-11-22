@@ -16,52 +16,38 @@
 // Return low-level heap statistics from the C allocator (glibc).
 PyObject *
 psutil_malloc_info(PyObject *self, PyObject *args) {
-    void *handle;
-    void *fun;
-    void *mi;
-    const char *fmt;
+    void *handle = NULL;
+    void *sym = NULL;
+    unsigned long long uord, mmap, arena;
 
     handle = dlopen("libc.so.6", RTLD_LAZY);
-    if (handle)
-        fun = dlsym(handle, "mallinfo2");
-    else
-        fun = NULL;
+    if (handle != NULL)
+        sym = dlsym(handle, "mallinfo2");
 
-    if (fun != NULL) {
-        // mallinfo2() appeared in glibc 2.33, February 2021.
-        static struct mallinfo2 m2;
-
-        m2 = ((struct mallinfo2(*)(void))fun)();
-        fmt = "KKK";
-        mi = &m2;
+    if (sym != NULL) {
+        struct mallinfo2 m2 = ((struct mallinfo2(*)(void))sym)();
+        uord = (unsigned long long)m2.uordblks;
+        mmap = (unsigned long long)m2.hblkhd;
+        arena = (unsigned long long)m2.arena;
     }
     else {
-        // mallinfo() is deprecated. It uses 'int' fields which overflow for
-        // heaps > 2 GiB.
-        static struct mallinfo m1;
+        struct mallinfo m1;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-        psutil_debug("WARNING: using deprecated mallinfo()");
+        psutil_debug("WARNING: using deprecated mallinfo().");
         m1 = mallinfo();
 #pragma GCC diagnostic pop
-        fmt = "iii";
-        mi = &m1;
+
+        uord = (unsigned long long)m1.uordblks;
+        mmap = (unsigned long long)m1.hblkhd;
+        arena = (unsigned long long)m1.arena;
     }
 
     if (handle)
         dlclose(handle);
 
-    return Py_BuildValue(
-        fmt,
-        // Total allocated space via `malloc` (bytes currently in use by app)
-        (unsigned long long)((struct mallinfo2 *)mi)->uordblks,
-        // Bytes in `mmap`-ed regions (large allocations). Should be stable
-        // unless you're allocating huge blocks.
-        (unsigned long long)((struct mallinfo2 *)mi)->hblkhd,
-        // non-mmapped heap space
-        (unsigned long long)((struct mallinfo2 *)mi)->arena
-    );
+    return Py_BuildValue("KKK", uord, mmap, arena);
 }
 
 
