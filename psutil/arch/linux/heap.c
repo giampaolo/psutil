@@ -49,9 +49,10 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     else {
         struct mallinfo m1;
 
+        psutil_debug("WARNING: using deprecated mallinfo().");
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-        psutil_debug("WARNING: using deprecated mallinfo().");
         m1 = mallinfo();
 #pragma GCC diagnostic pop
 
