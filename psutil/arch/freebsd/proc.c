@@ -5,6 +5,7 @@
  */
 
 #include <Python.h>
+#include <sys/cpuset.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <libutil.h>
