@@ -95,6 +95,12 @@ class UnclosedFdError(AssertionError):
     """
 
 
+class UnclosedHeapCreateError(AssertionError):
+    """Raised on Windows when test detects HeapCreate() without a
+    corresponding HeapDestroy().
+    """
+
+
 class MemoryLeakTestCase(unittest.TestCase):
     # Number of times to call the tested function in each iteration.
     times = 200
@@ -132,18 +138,15 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _get_mem(self):
         mem = thisproc.memory_full_info()
-        heap_used = mmap_used = heap_count = 0
+        heap_used = mmap_used = 0
         if hasattr(psutil._psplatform, "malloc_info"):
             # Linux, Windows, macOS, BSD
             mallinfo = psutil.malloc_info()
             heap_used = mallinfo.heap_used
             mmap_used = mallinfo.mmap_used
-            if WINDOWS:
-                heap_count = mallinfo.heap_count
         return {
             "heap": heap_used,
             "mmap": mmap_used,
-            "heap_count": heap_count,
             "uss": getattr(mem, "uss", 0),
             "rss": mem.rss,
             "vms": mem.vms,
@@ -162,10 +165,12 @@ class MemoryLeakTestCase(unittest.TestCase):
         not increase after calling a function.  Used to discover forgotten
         close(2) and CloseHandle syscalls.
         """
+
         before = self._get_num_fds()
         self.call(fun)
         after = self._get_num_fds()
         diff = after - before
+
         if diff < 0:
             msg = (
                 f"negative diff {diff!r} (gc probably collected a"
@@ -176,8 +181,27 @@ class MemoryLeakTestCase(unittest.TestCase):
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
-            msg = f"{diff} unclosed {type_} after calling {fun!r}"
+            msg = f"{diff} unclosed {type_} after calling {fun!r} 1 time"
             raise UnclosedFdError(msg)
+
+    def _check_heap_count(self, fun):
+        """Windows only. Calls function once, and detects HeapCreate()
+        without a corresponding HeapDestroy().
+        """
+        if not WINDOWS:
+            return
+
+        before = psutil.malloc_info().heap_count
+        self.call(fun)
+        after = psutil.malloc_info().heap_count
+        diff = after - before
+
+        if diff < 0:
+            msg = f"negative diff {diff!r}"
+            raise UnclosedHeapCreateError(msg)
+        if diff > 0:
+            msg = f"{diff} unclosed HeapCreate() after calling {fun!r} 1 time"
+            raise UnclosedHeapCreateError(msg)
 
     def _call_ntimes(self, fun, times):
         """Get memory samples (rss, vms, uss) before and after calling
@@ -271,4 +295,6 @@ class MemoryLeakTestCase(unittest.TestCase):
         self._call_ntimes(fun, warmup_times)  # warm up
 
         self._check_fds(fun)
+        if WINDOWS:
+            self._check_heap_count(fun)
         self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)
