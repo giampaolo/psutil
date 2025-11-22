@@ -39,6 +39,7 @@ from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
 from . import HAS_GETLOADAVG
+from . import HAS_MALLOC_INFO
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
@@ -258,6 +259,17 @@ class TestMiscAPIs(PsutilTestCase):
                     assert user.pid is None
                 else:
                     psutil.Process(user.pid)
+
+    @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
+    def test_malloc_info(self):
+        m = psutil.malloc_info()
+        assert m.heap_used > 0
+        assert m.mmap_used > 0
+        assert m.heap_total > 0
+
+    @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
+    def test_malloc_trim(self):
+        psutil.malloc_trim()
 
     def test_os_constants(self):
         names = [
