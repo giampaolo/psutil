@@ -37,8 +37,10 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
     unsigned long long uord, mmap, arena;
 
     handle = dlopen("libc.so.6", RTLD_LAZY);
-    if (handle != NULL)
+    if (handle != NULL) {
         fun = dlsym(handle, "mallinfo2");
+        dlclose(handle);
+    }
 
     if (fun != NULL) {
         struct my_mallinfo2 m2;
@@ -63,9 +65,6 @@ psutil_malloc_info(PyObject *self, PyObject *args) {
         mmap = (unsigned long long)m1.hblkhd;
         arena = (unsigned long long)m1.arena;
     }
-
-    if (handle)
-        dlclose(handle);
 
     return Py_BuildValue("KKK", uord, mmap, arena);
 }
