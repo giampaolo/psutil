@@ -26,6 +26,8 @@ from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
 from psutil.test import MemoryLeakTestCase
+from psutil.test.memleak import MemoryLeakError
+from psutil.test.memleak import UnclosedFdError
 
 from . import CI_TESTING
 from . import COVERAGE
@@ -402,10 +404,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
 
         try:
             # will consume around 60M in total
-            with pytest.raises(
-                AssertionError,
-                match=r"Memory kept increasing",
-            ):
+            with pytest.raises(MemoryLeakError):
                 with contextlib.redirect_stdout(
                     io.StringIO()
                 ), contextlib.redirect_stderr(io.StringIO()):
@@ -420,8 +419,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
             box.append(f)  # prevent auto-gc
 
         box = []
-        kind = "fd" if POSIX else "handle"
-        with pytest.raises(AssertionError, match="unclosed " + kind):
+        with pytest.raises(UnclosedFdError):
             self.execute(fun)
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
@@ -435,7 +433,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
             )
             self.addCleanup(win32api.CloseHandle, handle)
 
-        with pytest.raises(AssertionError, match="unclosed handle"):
+        with pytest.raises(UnclosedFdError):
             self.execute(fun)
 
     def test_tolerance(self):
