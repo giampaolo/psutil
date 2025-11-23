@@ -73,9 +73,8 @@ psutil_heap_info(PyObject *self, PyObject *args) {
         return NULL;
 
     for (unsigned int i = 0; i < count; i++) {
-        malloc_zone_t *zone = zones[i];
         malloc_statistics_t stats = {0};
-        malloc_zone_statistics(zone, &stats);
+        malloc_zone_statistics(zones[i], &stats);
         heap_used += (uint64_t)stats.size_in_use;
     }
 
