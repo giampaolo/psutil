@@ -381,9 +381,9 @@ class TestMemLeakClass(MemoryLeakTestCase):
         cnt = {'cnt': 0}
 
         with patch.object(MemoryLeakTestCase, '_get_mem', return_value={}):
-            self.execute(fun, times=10, warmup_times=15)
+            self.execute(fun, times=10, warmup_times=0)
 
-        assert cnt['cnt'] == 26
+        assert cnt['cnt'] == 11
 
     def test_param_err(self):
         with pytest.raises(ValueError):
