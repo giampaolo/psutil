@@ -454,6 +454,16 @@ Further process APIs
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
     >>>
 
+Heap info
+---------
+
+.. code-block:: python
+
+    >>> import psutil
+    >>> psutil.malloc_info()
+    pmallinfo(heap_used=5177792, mmap_used=819200)
+    >>> psutil.malloc_trim()
+
 Detecting memory leaks in C functions
 -------------------------------------
 
