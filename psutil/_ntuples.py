@@ -86,15 +86,15 @@ sfan = nt("sfan", ("label", "current"))
 
 # psutil.heap_info() (mallinfo2 Linux struct)
 if LINUX or WINDOWS or MACOS or BSD:
-    pmallinfo = nt(
-        "pmallinfo",
+    pheap = nt(
+        "pheap",
         [
             "heap_used",  # uordblks, memory allocated via malloc()
             "mmap_used",  # hblkhd, memory allocated via mmap() (large blocks)
         ],
     )
     if WINDOWS:
-        pmallinfo = nt("pmallinfo", pmallinfo._fields + ("heap_count",))
+        pheap = nt("pheap", pheap._fields + ("heap_count",))
 
 # ===================================================================
 # --- Process class

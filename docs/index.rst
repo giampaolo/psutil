@@ -2161,7 +2161,7 @@ Python's memory tracking misses.
 
    >>> import psutil
    >>> psutil.heap_info()
-   pmallinfo(heap_used=5177792, mmap_used=819200)
+   pheap(heap_used=5177792, mmap_used=819200)
 
   These fields reflect how unreleased C allocations affect the heap:
 

@@ -2427,7 +2427,7 @@ if hasattr(_psplatform, "heap_info"):
         - `heap_count` (Windows only): number of private heaps created
           via `HeapCreate()`.
         """
-        return _ntp.pmallinfo(*_psplatform.heap_info())
+        return _ntp.pheap(*_psplatform.heap_info())
 
     def heap_trim():
         """Attempt to release unused C heap memory back to the OS.
