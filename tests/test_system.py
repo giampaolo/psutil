@@ -268,6 +268,8 @@ class TestMiscAPIs(PsutilTestCase):
             assert m.mmap_used == 0  # not supported
         else:
             assert m.mmap_used > 0
+        if WINDOWS:
+            assert m.heap_count >= 0
 
     @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
     def test_malloc_trim(self):

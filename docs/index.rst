@@ -2149,8 +2149,7 @@ Python's memory tracking misses.
 .. function:: malloc_info()
 
   Return low-level heap statistics from the system's C allocator. On Linux,
-  this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_. On
-  Windows, it surfaces the number of private heaps maintained by the process.
+  this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
   Returns a namedtuple containing:
 
   - ``heap_used``: total number of bytes allocated via ``malloc()`` (small
