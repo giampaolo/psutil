@@ -390,6 +390,8 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         // ones that match.
         ifname_found = 0;
         Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_ifc_info);
+
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
             str_format(descr, MAX_PATH, "%wS", pCurrAddresses->Description);
@@ -412,7 +414,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
             continue;
         }
 
-        // is up?
+        Py_CLEAR(py_is_up);
         if ((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED
              || pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL)
             && pIfRow->dwAdminStatus == 1)
@@ -443,6 +445,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
 
     free(pIfTable);
     free(pAddresses);
+    Py_CLEAR(py_nic_name);
+    Py_CLEAR(py_ifc_info);
+    Py_CLEAR(py_is_up);
     return py_retdict;
 
 error:
