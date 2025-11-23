@@ -165,10 +165,16 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     pCurrAddresses = pAddresses;
 
     while (pCurrAddresses) {
+        Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_tuple);
+        Py_CLEAR(py_address);
+        Py_CLEAR(py_mac_address);
+        Py_CLEAR(py_netmask);
+
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
         netmaskIntRet = NULL;
-        py_nic_name = NULL;
+
         py_nic_name = PyUnicode_FromWideChar(
             pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName)
         );
@@ -224,6 +230,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+
             Py_CLEAR(py_tuple);
             Py_CLEAR(py_mac_address);
         }
@@ -278,6 +285,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     continue;
                 }
 
+                Py_CLEAR(py_address);
+                Py_CLEAR(py_netmask);
+
                 py_address = PyUnicode_FromString(buff_addr);
                 if (py_address == NULL)
                     goto error;
@@ -301,11 +311,11 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     Py_None,  // broadcast (not supported)
                     Py_None  // ptp (not supported on Windows)
                 );
-
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
+
                 Py_CLEAR(py_tuple);
                 Py_CLEAR(py_address);
                 Py_CLEAR(py_netmask);
@@ -313,6 +323,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 pUnicast = pUnicast->Next;
             }
         }
+
         Py_CLEAR(py_nic_name);
         pCurrAddresses = pCurrAddresses->Next;
     }
@@ -323,9 +334,10 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 error:
     if (pAddresses)
         free(pAddresses);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
+    Py_XDECREF(py_mac_address);
     Py_XDECREF(py_nic_name);
     Py_XDECREF(py_netmask);
     return NULL;
