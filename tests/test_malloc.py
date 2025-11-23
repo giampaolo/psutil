@@ -41,6 +41,7 @@ import pytest
 
 import psutil
 from psutil import LINUX
+from psutil import MACOS
 from psutil import POSIX
 from psutil import WINDOWS
 
@@ -219,6 +220,7 @@ class TestMalloc(MallocTestCase):
         assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
+    @pytest.mark.skipif(MACOS, reason="not supported")
     @retry_on_failure()
     def test_mmap_used(self):
         """Test that a large malloc allocation increases mmap_used.

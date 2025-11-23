@@ -2155,7 +2155,8 @@ Python's memory tracking misses.
 
   - ``heap_used``: total number of bytes allocated via ``malloc()`` (small
     allocations).
-  - ``mmap_used``: total number of bytes allocated via ``mmap()``.
+  - ``mmap_used``: total number of bytes allocated via ``mmap()``. Always set
+    to 0 on macOS.
   - ``heap_count``: (Windows only) number of private heaps created via
     ``HeapCreate()``.
 
