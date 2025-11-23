@@ -13,7 +13,10 @@ XXXX-XX-XX
 
 **Bug fixes**
 
-* 2684_, [FreeBSD], [critical]: compilation fails on FreeBSD 14 due to missing include.
+* 2684_, [FreeBSD], [critical]: compilation fails on FreeBSD 14 due to missing
+  include.
+* 2691_, [Windows]: fix memory leak in `net_if_stats()`_ memory leak due to
+  missing ``Py_CLEAR``.
 
 **Compatibility notes**
 
