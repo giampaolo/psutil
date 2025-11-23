@@ -165,10 +165,16 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     pCurrAddresses = pAddresses;
 
     while (pCurrAddresses) {
+        Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_tuple);
+        Py_CLEAR(py_address);
+        Py_CLEAR(py_mac_address);
+        Py_CLEAR(py_netmask);
+
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
         netmaskIntRet = NULL;
-        py_nic_name = NULL;
+
         py_nic_name = PyUnicode_FromWideChar(
             pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName)
         );
@@ -224,6 +230,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
+
             Py_CLEAR(py_tuple);
             Py_CLEAR(py_mac_address);
         }
@@ -278,6 +285,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     continue;
                 }
 
+                Py_CLEAR(py_address);
+                Py_CLEAR(py_netmask);
+
                 py_address = PyUnicode_FromString(buff_addr);
                 if (py_address == NULL)
                     goto error;
@@ -301,11 +311,11 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     Py_None,  // broadcast (not supported)
                     Py_None  // ptp (not supported on Windows)
                 );
-
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
+
                 Py_CLEAR(py_tuple);
                 Py_CLEAR(py_address);
                 Py_CLEAR(py_netmask);
@@ -313,6 +323,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 pUnicast = pUnicast->Next;
             }
         }
+
         Py_CLEAR(py_nic_name);
         pCurrAddresses = pCurrAddresses->Next;
     }
@@ -323,9 +334,10 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 error:
     if (pAddresses)
         free(pAddresses);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
+    Py_XDECREF(py_mac_address);
     Py_XDECREF(py_nic_name);
     Py_XDECREF(py_netmask);
     return NULL;
@@ -341,7 +353,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     int i;
     DWORD dwSize = 0;
     DWORD dwRetVal = 0;
-    MIB_IFTABLE *pIfTable;
+    MIB_IFTABLE *pIfTable = NULL;
     MIB_IFROW *pIfRow;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
@@ -389,6 +401,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         // provides friendly names *and* descriptions and find the
         // ones that match.
         ifname_found = 0;
+        Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_ifc_info);
+
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
             str_format(descr, MAX_PATH, "%wS", pCurrAddresses->Description);
@@ -411,7 +426,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
             continue;
         }
 
-        // is up?
+        Py_CLEAR(py_is_up);
         if ((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED
              || pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL)
             && pIfRow->dwAdminStatus == 1)
@@ -432,24 +447,29 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         );
         if (!py_ifc_info)
             goto error;
+
         if (PyDict_SetItem(py_retdict, py_nic_name, py_ifc_info))
             goto error;
-        Py_CLEAR(py_nic_name);
+
         Py_CLEAR(py_ifc_info);
+        Py_CLEAR(py_nic_name);
     }
 
     free(pIfTable);
     free(pAddresses);
+    Py_CLEAR(py_nic_name);
+    Py_CLEAR(py_ifc_info);
+    Py_CLEAR(py_is_up);
     return py_retdict;
 
 error:
     Py_XDECREF(py_is_up);
     Py_XDECREF(py_ifc_info);
     Py_XDECREF(py_nic_name);
-    Py_DECREF(py_retdict);
-    if (pIfTable != NULL)
+    Py_XDECREF(py_retdict);
+    if (pIfTable)
         free(pIfTable);
-    if (pAddresses != NULL)
+    if (pAddresses)
         free(pAddresses);
     return NULL;
 }
