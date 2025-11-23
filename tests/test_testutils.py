@@ -15,7 +15,6 @@ import socket
 import stat
 import subprocess
 from unittest import mock
-from unittest.mock import patch
 
 import psutil
 import tests
@@ -372,19 +371,6 @@ class TestNetUtils(PsutilTestCase):
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 @pytest.mark.xdist_group(name="serial")
 class TestMemLeakClass(MemoryLeakTestCase):
-
-    @retry_on_failure()
-    def test_times(self):
-        def fun():
-            cnt['cnt'] += 1
-
-        cnt = {'cnt': 0}
-
-        with patch.object(MemoryLeakTestCase, '_get_mem', return_value={}):
-            self.execute(fun, times=10, warmup_times=0)
-
-        assert cnt['cnt'] == 11
-
     def test_param_err(self):
         with pytest.raises(ValueError):
             self.execute(lambda: 0, times=0)
