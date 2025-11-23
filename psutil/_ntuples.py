@@ -84,7 +84,7 @@ sbattery = nt("sbattery", ("percent", "secsleft", "power_plugged"))
 # psutil.sensors_fans()
 sfan = nt("sfan", ("label", "current"))
 
-# psutil.malloc_info() (mallinfo2 Linux struct)
+# psutil.heap_info() (mallinfo2 Linux struct)
 if LINUX or WINDOWS or MACOS or BSD:
     pmallinfo = nt(
         "pmallinfo",

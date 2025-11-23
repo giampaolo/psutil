@@ -6,7 +6,7 @@
 
 #include "../../arch/all/init.h"
 
-#if defined(PSUTIL_HAS_MALLOC_INFO)  // not available on musl / alpine
+#if defined(PSUTIL_HAS_HEAP_INFO)  // not available on musl / alpine
 #include <Python.h>
 #include <malloc.h>
 #include <dlfcn.h>
@@ -28,10 +28,10 @@ struct my_mallinfo2 {
 };
 
 
-// psutil_malloc_info() -> (heap_used, mmap_used)
+// psutil_heap_info() -> (heap_used, mmap_used)
 // Return low-level heap statistics from the C allocator (glibc).
 PyObject *
-psutil_malloc_info(PyObject *self, PyObject *args) {
+psutil_heap_info(PyObject *self, PyObject *args) {
     static int warned = 0;
     void *handle = NULL;
     void *fun = NULL;
@@ -81,4 +81,4 @@ psutil_malloc_trim(PyObject *self, PyObject *args) {
     int ret = malloc_trim(0);
     return PyBool_FromLong(ret);
 }
-#endif  // PSUTIL_HAS_MALLOC_INFO
+#endif  // PSUTIL_HAS_HEAP_INFO

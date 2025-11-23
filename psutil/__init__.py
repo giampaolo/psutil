@@ -2411,9 +2411,9 @@ if WINDOWS:
 
 
 # Linux, Windows, macOS, BSD
-if hasattr(_psplatform, "malloc_info"):
+if hasattr(_psplatform, "heap_info"):
 
-    def malloc_info():
+    def heap_info():
         """Return low-level heap statistics from the C heap allocator
         (glibc).
 
@@ -2427,7 +2427,7 @@ if hasattr(_psplatform, "malloc_info"):
         - `heap_count` (Windows only): number of private heaps created
           via `HeapCreate()`.
         """
-        return _ntp.pmallinfo(*_psplatform.malloc_info())
+        return _ntp.pmallinfo(*_psplatform.heap_info())
 
     def malloc_trim():
         """Attempt to release unused C heap memory back to the OS.
@@ -2438,7 +2438,7 @@ if hasattr(_psplatform, "malloc_info"):
         """
         _psplatform.malloc_trim()
 
-    __all__.append("malloc_info")
+    __all__.append("heap_info")
     __all__.append("malloc_trim")
 
 

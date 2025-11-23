@@ -460,7 +460,7 @@ Heap info
 .. code-block:: python
 
     >>> import psutil
-    >>> psutil.malloc_info()
+    >>> psutil.heap_info()
     pmallinfo(heap_used=5177792, mmap_used=819200)
     >>> psutil.malloc_trim()
 

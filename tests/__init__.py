@@ -184,7 +184,7 @@ HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
-HAS_MALLOC_INFO = hasattr(psutil, "malloc_info")
+HAS_HEAP_INFO = hasattr(psutil, "heap_info")
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
@@ -1263,8 +1263,8 @@ class system_namespace:
         getters += [('sensors_fans', (), {})]
     if HAS_SENSORS_BATTERY:
         getters += [('sensors_battery', (), {})]
-    if HAS_MALLOC_INFO:
-        getters += [('malloc_info', (), {})]
+    if HAS_HEAP_INFO:
+        getters += [('heap_info', (), {})]
         getters += [('malloc_trim', (), {})]
 
     if WINDOWS:

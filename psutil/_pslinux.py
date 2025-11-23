@@ -488,8 +488,8 @@ def swap_memory():
 
 
 # malloc / heap functions; require glibc
-if hasattr(cext, "malloc_info"):
-    malloc_info = cext.malloc_info
+if hasattr(cext, "heap_info"):
+    heap_info = cext.heap_info
     malloc_trim = cext.malloc_trim
 
 

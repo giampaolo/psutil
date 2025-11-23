@@ -24,7 +24,7 @@
 // - heap_count (Windows only): number of heaps (Windows only). Catches
 //   `HeapCreate()` without `HeapDestroy()`.
 PyObject *
-psutil_malloc_info(PyObject *self, PyObject *args) {
+psutil_heap_info(PyObject *self, PyObject *args) {
     MEMORY_BASIC_INFORMATION mbi;
     LPVOID addr = NULL;
     SIZE_T heap_used = 0;

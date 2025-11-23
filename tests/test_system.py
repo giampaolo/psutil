@@ -39,7 +39,7 @@ from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
 from . import HAS_GETLOADAVG
-from . import HAS_MALLOC_INFO
+from . import HAS_HEAP_INFO
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
@@ -260,9 +260,9 @@ class TestMiscAPIs(PsutilTestCase):
                 else:
                     psutil.Process(user.pid)
 
-    @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
-    def test_malloc_info(self):
-        m = psutil.malloc_info()
+    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_info(self):
+        m = psutil.heap_info()
         assert m.heap_used > 0
         if MACOS:
             assert m.mmap_used == 0  # not supported
@@ -271,7 +271,7 @@ class TestMiscAPIs(PsutilTestCase):
         if WINDOWS:
             assert m.heap_count >= 0
 
-    @pytest.mark.skipif(not HAS_MALLOC_INFO, reason="not supported")
+    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
     def test_malloc_trim(self):
         psutil.malloc_trim()
 

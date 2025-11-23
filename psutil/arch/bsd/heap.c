@@ -20,7 +20,7 @@
 //   - heap_used  ~ stats.allocated  (like `uordblks`)
 //   - mmap_used  ~ stats.mapped     (like `hblkhd`)
 PyObject *
-psutil_malloc_info(PyObject *self, PyObject *args) {
+psutil_heap_info(PyObject *self, PyObject *args) {
     uint64_t epoch = 0;
     uint64_t allocated = 0, active = 0, mapped = 0;
     size_t sz_epoch = sizeof(epoch);

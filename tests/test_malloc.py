@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for `psutil.malloc_info()`.
+"""Tests for `psutil.heap_info()`.
 
 This module deliberately creates **controlled memory leaks** by calling
 low-level C allocation functions (`malloc()`, `HeapAlloc()`,
@@ -29,7 +29,7 @@ Windows
 - `VirtualAllocEx()` without `VirtualFreeEx()` increases `mmap_used`.
 - `HeapCreate()` without `HeapDestroy()` increases `heap_count`.
 
-These tests ensure that `psutil.malloc_info()` detects unreleased
+These tests ensure that `psutil.heap_info()` detects unreleased
 native memory across different allocators (glibc on Linux,
 jemalloc on BSD/macOS, Windows CRT).
 """
@@ -195,9 +195,9 @@ class TestMalloc(MallocTestCase):
         """
         size = HEAP_SIZE
 
-        mem1 = psutil.malloc_info()
+        mem1 = psutil.heap_info()
         ptr = malloc(size)
-        mem2 = psutil.malloc_info()
+        mem2 = psutil.heap_info()
 
         try:
             # heap_used should increase (roughly) by the requested size
@@ -216,7 +216,7 @@ class TestMalloc(MallocTestCase):
 
         # assert we returned close to the baseline (mem1) after free()
         trim_memory()
-        mem3 = psutil.malloc_info()
+        mem3 = psutil.heap_info()
         assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
@@ -228,9 +228,9 @@ class TestMalloc(MallocTestCase):
         """
         size = MMAP_SIZE
 
-        mem1 = psutil.malloc_info()
+        mem1 = psutil.heap_info()
         ptr = malloc(size)
-        mem2 = psutil.malloc_info()
+        mem2 = psutil.heap_info()
 
         try:
             # mmap_used should increase (roughly) by the requested size
@@ -254,7 +254,7 @@ class TestMalloc(MallocTestCase):
 
         # assert we returned close to the baseline (mem1) after free()
         trim_memory()
-        mem3 = psutil.malloc_info()
+        mem3 = psutil.heap_info()
         assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
@@ -271,10 +271,10 @@ class TestMallocWindows(MallocTestCase):
         """Test that HeapAlloc() without HeapFree() increases heap_used."""
         size = HEAP_SIZE
 
-        mem1 = psutil.malloc_info()
+        mem1 = psutil.heap_info()
         heap = GetProcessHeap()
         addr = HeapAlloc(heap, size)
-        mem2 = psutil.malloc_info()
+        mem2 = psutil.heap_info()
 
         try:
             assert mem2.heap_used - mem1.heap_used == size
@@ -283,7 +283,7 @@ class TestMallocWindows(MallocTestCase):
         finally:
             HeapFree(heap, addr)
 
-        mem3 = psutil.malloc_info()
+        mem3 = psutil.heap_info()
         assert mem3 == mem1
 
     @retry_on_failure()
@@ -293,9 +293,9 @@ class TestMallocWindows(MallocTestCase):
         """
         size = MMAP_SIZE
 
-        mem1 = psutil.malloc_info()
+        mem1 = psutil.heap_info()
         addr = VirtualAllocEx(size)
-        mem2 = psutil.malloc_info()
+        mem2 = psutil.heap_info()
 
         try:
             assert mem2.mmap_used - mem1.mmap_used == size
@@ -304,7 +304,7 @@ class TestMallocWindows(MallocTestCase):
         finally:
             VirtualFreeEx(addr)
 
-        mem3 = psutil.malloc_info()
+        mem3 = psutil.heap_info()
         assert mem3 == mem1
 
     @retry_on_failure()
@@ -312,9 +312,9 @@ class TestMallocWindows(MallocTestCase):
         """Test that HeapCreate() without HeapDestroy() increases
         heap_count.
         """
-        mem1 = psutil.malloc_info()
+        mem1 = psutil.heap_info()
         heap = HeapCreate(HEAP_SIZE, 0)
-        mem2 = psutil.malloc_info()
+        mem2 = psutil.heap_info()
         try:
             assert mem2.heap_count == mem1.heap_count + 1
             assert mem2.heap_used == mem1.heap_used
@@ -322,5 +322,5 @@ class TestMallocWindows(MallocTestCase):
         finally:
             HeapDestroy(heap)
 
-        mem3 = psutil.malloc_info()
+        mem3 = psutil.heap_info()
         assert mem3 == mem1

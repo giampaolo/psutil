@@ -18,7 +18,7 @@ continues to grow, the test is considered a failure.
 
 The test monitors RSS, VMS, and USS [1] memory. On supported platforms,
 it also monitors **heap metrics** (`heap_used`, `mmap_used` from
-`psutil.malloc_info()`).
+`psutil.heap_info()`).
 
 In other words, this is specifically designed to catch cases where a C
 extension or other native code allocates memory via `malloc()` or
@@ -149,9 +149,9 @@ class MemoryLeakTestCase(unittest.TestCase):
     def _get_mem(self):
         mem = thisproc.memory_full_info()
         heap_used = mmap_used = 0
-        if hasattr(psutil, "malloc_info"):
+        if hasattr(psutil, "heap_info"):
             # Linux, Windows, macOS, BSD
-            mallinfo = psutil.malloc_info()
+            mallinfo = psutil.heap_info()
             heap_used = mallinfo.heap_used
             mmap_used = mallinfo.mmap_used
         return {
@@ -205,9 +205,9 @@ class MemoryLeakTestCase(unittest.TestCase):
         if not WINDOWS:
             return
 
-        before = psutil.malloc_info().heap_count
+        before = psutil.heap_info().heap_count
         self.call(fun)
-        after = psutil.malloc_info().heap_count
+        after = psutil.heap_info().heap_count
         diff = after - before
 
         if diff < 0:

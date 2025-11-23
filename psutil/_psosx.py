@@ -113,7 +113,7 @@ def swap_memory():
 
 
 # malloc / heap functions
-malloc_info = cext.malloc_info
+heap_info = cext.heap_info
 malloc_trim = cext.malloc_trim
 
 

@@ -129,17 +129,17 @@ class TestAvailSystemAPIs(PsutilTestCase):
             LINUX or WINDOWS or FREEBSD or MACOS
         )
 
-    def test_malloc_info(self):
-        hasit = hasattr(psutil, "malloc_info")
+    def test_heap_info(self):
+        hasit = hasattr(psutil, "heap_info")
         if LINUX:
-            assert hasit == platform.libc_ver() != ("", "")
+            assert hasit == bool(platform.libc_ver() != ("", ""))
         else:
             assert hasit == MACOS or WINDOWS or BSD
 
     def test_malloc_trim(self):
         hasit = hasattr(psutil, "malloc_trim")
         if LINUX:
-            assert hasit == platform.libc_ver() != ("", "")
+            assert hasit == bool(platform.libc_ver() != ("", ""))
         else:
             assert hasit == MACOS or WINDOWS or BSD
 

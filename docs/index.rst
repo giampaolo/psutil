@@ -2146,7 +2146,7 @@ steadily across iterations, the C code is likely retaining memory it should be
 releasing. This provides an allocator-level way to spot native leaks that
 Python's memory tracking misses.
 
-.. function:: malloc_info()
+.. function:: heap_info()
 
   Return low-level heap statistics from the system's C allocator. On Linux,
   this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
@@ -2160,7 +2160,7 @@ Python's memory tracking misses.
     ``HeapCreate()``.
 
    >>> import psutil
-   >>> psutil.malloc_info()
+   >>> psutil.heap_info()
    pmallinfo(heap_used=5177792, mmap_used=819200)
 
   These fields reflect how unreleased C allocations affect the heap:
@@ -2314,7 +2314,7 @@ memory-leak detection tests.
   considered a failure.
   The test currently monitors RSS, VMS, and `USS <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__ memory.
   On supported platforms, it also monitors **heap metrics** (``heap_used``, ``mmap_used`` from
-  :func:`malloc_info`).
+  :func:`heap_info`).
 
   In addition it also ensures that the target function does not leak
   file descriptors (UNIX) or handles (Windows).
