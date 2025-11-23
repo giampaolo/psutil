@@ -12,6 +12,46 @@
 #include "../../arch/all/init.h"
 
 
+static int
+get_zones(malloc_zone_t ***out_zones, unsigned int *out_count) {
+    vm_address_t *raw = NULL;
+    unsigned int count = 0;
+    kern_return_t kr;
+    malloc_zone_t **zones;
+    malloc_zone_t *zone;
+
+    *out_zones = NULL;
+    *out_count = 0;
+
+    kr = malloc_get_all_zones(mach_task_self(), NULL, &raw, &count);
+    if (kr == KERN_SUCCESS && raw != NULL && count > 0) {
+        *out_zones = (malloc_zone_t **)raw;
+        *out_count = count;
+        return 1;  // success
+    }
+
+    psutil_debug("malloc_get_all_zones() failed; using malloc_default_zone()");
+
+    zones = (malloc_zone_t **)malloc(sizeof(malloc_zone_t *));
+    if (!zones) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    zone = malloc_default_zone();
+    if (!zone) {
+        free(zones);
+        psutil_runtime_error("malloc_default_zone() failed");
+        return -1;
+    }
+
+    zones[0] = zone;
+    *out_zones = zones;
+    *out_count = 1;
+    return 0;  // fallback, caller must free()
+}
+
+
 // psutil_heap_info() -> (heap_used, mmap_used)
 //
 // Return libmalloc heap stats via `malloc_zone_statistics()`.
@@ -22,17 +62,29 @@
 //   - mmap_used  ~ 0                    (no direct stat)
 PyObject *
 psutil_heap_info(PyObject *self, PyObject *args) {
-    malloc_statistics_t stats = {0};
-    malloc_zone_t *zone = malloc_default_zone();
-    uint64_t heap_used, mmap_used;
+    malloc_zone_t **zones = NULL;
+    unsigned int count = 0;
+    int ok;
+    uint64_t heap_used = 0;
+    uint64_t mmap_used = 0;
 
-    if (!zone)
-        return psutil_runtime_error("malloc_default_zone() failed");
+    ok = get_zones(&zones, &count);
+    if (ok == -1)
+        return NULL;
 
-    malloc_zone_statistics(zone, &stats);
+    for (unsigned int i = 0; i < count; i++) {
+        malloc_statistics_t stats = {0};
+        malloc_zone_t *zone = zones[i];
 
-    heap_used = (uint64_t)stats.size_in_use;
-    mmap_used = 0;
+        if (zone)
+            malloc_zone_statistics(zone, &stats);
+
+        heap_used += (uint64_t)stats.size_in_use;
+    }
+
+    if (!ok)
+        free(zones);
+
     return Py_BuildValue("KK", heap_used, mmap_used);
 }
 
@@ -40,31 +92,19 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 // Release unused memory from the default malloc zone back to the OS.
 PyObject *
 psutil_heap_trim(PyObject *self, PyObject *args) {
-    vm_address_t *zones = NULL;
-    malloc_zone_t *default_zone;
+    malloc_zone_t **zones = NULL;
     unsigned int count = 0;
-    kern_return_t kr;
+    int ok;
 
-    // Get list of all malloc zones
-    kr = malloc_get_all_zones(mach_task_self(), NULL, &zones, &count);
-    if (kr != KERN_SUCCESS || count == 0 || zones == NULL) {
-        // Fallback: try default zone only
-        psutil_debug("malloc_get_all_zones() failed (ignored)");
-        default_zone = malloc_default_zone();
-        if (default_zone)
-            malloc_zone_pressure_relief(default_zone, 0);
-        else
-            psutil_debug("malloc_default_zone() failed (ignored)");
-        Py_RETURN_NONE;
-    }
+    ok = get_zones(&zones, &count);
+    if (ok == -1)
+        return NULL;
 
-    // Trim each zone
-    for (unsigned int i = 0; i < count; i++) {
-        malloc_zone_t *zone = (malloc_zone_t *)zones[i];
-        if (zone) {
-            malloc_zone_pressure_relief(zone, 0);
-        }
-    }
+    for (unsigned int i = 0; i < count; i++)
+        malloc_zone_pressure_relief(zones[i], 0);
+
+    if (!ok)
+        free(zones);
 
     Py_RETURN_NONE;
 }
