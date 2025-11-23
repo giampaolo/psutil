@@ -341,7 +341,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     int i;
     DWORD dwSize = 0;
     DWORD dwRetVal = 0;
-    MIB_IFTABLE *pIfTable;
+    MIB_IFTABLE *pIfTable = NULL;
     MIB_IFROW *pIfRow;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
@@ -389,6 +389,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         // provides friendly names *and* descriptions and find the
         // ones that match.
         ifname_found = 0;
+        Py_CLEAR(py_nic_name);
+        Py_CLEAR(py_ifc_info);
+
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
             str_format(descr, MAX_PATH, "%wS", pCurrAddresses->Description);
@@ -411,7 +414,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
             continue;
         }
 
-        // is up?
+        Py_CLEAR(py_is_up);
         if ((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED
              || pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL)
             && pIfRow->dwAdminStatus == 1)
@@ -432,24 +435,29 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         );
         if (!py_ifc_info)
             goto error;
+
         if (PyDict_SetItem(py_retdict, py_nic_name, py_ifc_info))
             goto error;
-        Py_CLEAR(py_nic_name);
+
         Py_CLEAR(py_ifc_info);
+        Py_CLEAR(py_nic_name);
     }
 
     free(pIfTable);
     free(pAddresses);
+    Py_CLEAR(py_nic_name);
+    Py_CLEAR(py_ifc_info);
+    Py_CLEAR(py_is_up);
     return py_retdict;
 
 error:
     Py_XDECREF(py_is_up);
     Py_XDECREF(py_ifc_info);
     Py_XDECREF(py_nic_name);
-    Py_DECREF(py_retdict);
-    if (pIfTable != NULL)
+    Py_XDECREF(py_retdict);
+    if (pIfTable)
         free(pIfTable);
-    if (pAddresses != NULL)
+    if (pAddresses)
         free(pAddresses);
     return NULL;
 }
