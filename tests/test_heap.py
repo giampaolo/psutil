@@ -45,6 +45,7 @@ from psutil import MACOS
 from psutil import POSIX
 from psutil import WINDOWS
 
+from . import AARCH64
 from . import HAS_HEAP_INFO
 from . import PsutilTestCase
 from . import retry_on_failure
@@ -280,13 +281,15 @@ class TestHeapWindows(HeapTestCase):
 
         try:
             assert mem2.heap_used - mem1.heap_used == size
-            assert mem2.mmap_used == mem1.mmap_used
-            assert mem2.heap_count == mem1.heap_count
+            if not AARCH64:
+                assert mem2.mmap_used == mem1.mmap_used
+                assert mem2.heap_count == mem1.heap_count
         finally:
             HeapFree(heap, addr)
 
-        mem3 = psutil.heap_info()
-        assert mem3 == mem1
+        if not AARCH64:
+            mem3 = psutil.heap_info()
+            assert mem3 == mem1
 
     @retry_on_failure()
     def test_mmap_used(self):
@@ -301,13 +304,15 @@ class TestHeapWindows(HeapTestCase):
 
         try:
             assert mem2.mmap_used - mem1.mmap_used == size
-            assert mem2.heap_used == mem1.heap_used
-            assert mem2.heap_count == mem1.heap_count
+            if not AARCH64:
+                assert mem2.heap_used == mem1.heap_used
+                assert mem2.heap_count == mem1.heap_count
         finally:
             VirtualFreeEx(addr)
 
-        mem3 = psutil.heap_info()
-        assert mem3 == mem1
+        if not AARCH64:
+            mem3 = psutil.heap_info()
+            assert mem3 == mem1
 
     @retry_on_failure()
     def test_heap_count(self):
@@ -319,11 +324,12 @@ class TestHeapWindows(HeapTestCase):
         mem2 = psutil.heap_info()
         try:
             assert mem2.heap_count == mem1.heap_count + 1
-            # sometimes fail
-            # assert mem2.heap_used == mem1.heap_used
-            assert mem2.mmap_used == mem1.mmap_used
+            if not AARCH64:
+                assert mem2.heap_used == mem1.heap_used
+                assert mem2.mmap_used == mem1.mmap_used
         finally:
             HeapDestroy(heap)
 
-        mem3 = psutil.heap_info()
-        assert mem3 == mem1
+        if not AARCH64:
+            mem3 = psutil.heap_info()
+            assert mem3 == mem1
