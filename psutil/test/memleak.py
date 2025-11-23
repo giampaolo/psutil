@@ -17,8 +17,8 @@ times, increasing the number of function calls each time. If memory
 continues to grow, the test is considered a failure.
 
 The test monitors RSS, VMS, and USS [1] memory. On supported platforms,
-it also monitors **malloc / mmap metrics** (`heap_used`, `mmap_used`
-from `psutil.malloc_info()`).
+it also monitors **heap metrics** (`heap_used`, `mmap_used` from
+`psutil.malloc_info()`).
 
 In other words, this is specifically designed to catch cases where a C
 extension or other native code allocates memory via `malloc()` or
