@@ -45,6 +45,7 @@ from psutil import MACOS
 from psutil import POSIX
 from psutil import WINDOWS
 
+from . import HAS_HEAP_INFO
 from . import PsutilTestCase
 from . import retry_on_failure
 
@@ -175,7 +176,8 @@ def assert_within_percent(actual, expected, percent):
         )
 
 
-class MallocTestCase(PsutilTestCase):
+@pytest.mark.skipif(not HAS_HEAP_INFO, reason="heap_info() not supported")
+class HeapTestCase(PsutilTestCase):
     def setUp(self):
         trim_memory()
 
@@ -184,7 +186,7 @@ class MallocTestCase(PsutilTestCase):
         trim_memory()
 
 
-class TestMalloc(MallocTestCase):
+class TestHeap(HeapTestCase):
 
     # On Windows malloc() increases mmap_used
     @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
@@ -264,7 +266,7 @@ class TestMalloc(MallocTestCase):
 
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 @pytest.mark.xdist_group(name="serial")
-class TestMallocWindows(MallocTestCase):
+class TestHeapWindows(HeapTestCase):
 
     @retry_on_failure()
     def test_heap_used(self):

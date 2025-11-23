@@ -191,8 +191,8 @@ include tests/test_aix.py
 include tests/test_bsd.py
 include tests/test_connections.py
 include tests/test_contracts.py
+include tests/test_heap.py
 include tests/test_linux.py
-include tests/test_malloc.py
 include tests/test_memleaks.py
 include tests/test_misc.py
 include tests/test_osx.py
