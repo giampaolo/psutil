@@ -76,8 +76,16 @@ psutil_heap_info(PyObject *self, PyObject *args) {
         malloc_statistics_t stats = {0};
         malloc_zone_t *zone = zones[i];
 
-        if (zone)
+        if (zone) {
             malloc_zone_statistics(zone, &stats);
+            // printf(
+            //     "blocks=%u, used=%zd, max-used=%zd, allocated=%zd\n",
+            //     stats.blocks_in_use,
+            //     stats.size_in_use,
+            //     stats.max_size_in_use,
+            //     stats.size_allocated
+            // );
+        }
 
         heap_used += (uint64_t)stats.size_in_use;
     }
