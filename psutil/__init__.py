@@ -2414,11 +2414,28 @@ if WINDOWS:
 if hasattr(_psplatform, "malloc_info"):
 
     def malloc_info():
-        """Return low-level heap statistics from the C allocator (glibc)."""
+        """Return low-level heap statistics from the C heap allocator
+        (glibc).
+
+        - `heap_used`: the total number of bytes allocated via
+          malloc/free . These are typically allocations smaller than
+          MMAP_THRESHOLD.
+
+        - `mmap_used`: the total number of bytes allocated via mmap.
+          These are larger allocations that bypass the normal heap.
+
+        - `heap_count` (Windows only): number of private heaps created
+          via `HeapCreate()`.
+        """
         return _ntp.pmallinfo(*_psplatform.malloc_info())
 
     def malloc_trim():
-        """Release unused memory held by the allocator back to the OS."""
+        """Attempt to release unused C heap memory back to the OS.
+
+        Only affects memory allocated via malloc/free in C extensions.
+        Memory used by Python objects or mmap-ed regions is usually not
+        affected.
+        """
         _psplatform.malloc_trim()
 
     __all__.append("malloc_info")
