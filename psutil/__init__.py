@@ -2429,17 +2429,17 @@ if hasattr(_psplatform, "heap_info"):
         """
         return _ntp.pmallinfo(*_psplatform.heap_info())
 
-    def malloc_trim():
+    def heap_trim():
         """Attempt to release unused C heap memory back to the OS.
 
         Only affects memory allocated via malloc/free in C extensions.
         Memory used by Python objects or mmap-ed regions is usually not
         affected.
         """
-        _psplatform.malloc_trim()
+        _psplatform.heap_trim()
 
     __all__.append("heap_info")
-    __all__.append("malloc_trim")
+    __all__.append("heap_trim")
 
 
 # =====================================================================

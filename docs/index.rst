@@ -2183,14 +2183,14 @@ Python's memory tracking misses.
 
   Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, BSD
 
-.. function:: malloc_trim()
+.. function:: heap_trim()
 
    Attempt to return unused heap memory from the C allocator back to the
    operating system.
    This only affects memory managed by ``malloc()``/``free()`` within C
    extensions. Memory owned by Python objects themselves, or memory backed
    by ``mmap()`` regions, is usually unaffected.
-   ``malloc_trim()`` may help reduce resident memory after large temporary
+   ``heap_trim()`` may help reduce resident memory after large temporary
    C-level allocations, but its effectiveness depends on allocator
    behavior and fragmentation patterns.
 

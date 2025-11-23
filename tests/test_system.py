@@ -272,8 +272,8 @@ class TestMiscAPIs(PsutilTestCase):
             assert m.heap_count >= 0
 
     @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
-    def test_malloc_trim(self):
-        psutil.malloc_trim()
+    def test_heap_trim(self):
+        psutil.heap_trim()
 
     def test_os_constants(self):
         names = [

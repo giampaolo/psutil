@@ -496,8 +496,8 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
         self.execute(psutil.heap_info)
 
     @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
-    def test_malloc_trim(self):
-        self.execute(psutil.malloc_trim)
+    def test_heap_trim(self):
+        self.execute(psutil.heap_trim)
 
     if WINDOWS:
 

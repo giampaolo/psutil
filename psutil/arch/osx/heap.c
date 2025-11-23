@@ -39,7 +39,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 
 // Release unused memory from the default malloc zone back to the OS.
 PyObject *
-psutil_malloc_trim(PyObject *self, PyObject *args) {
+psutil_heap_trim(PyObject *self, PyObject *args) {
     vm_address_t *zones = NULL;
     malloc_zone_t *default_zone;
     unsigned int count = 0;

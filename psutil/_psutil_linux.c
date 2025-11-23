@@ -36,8 +36,8 @@ static PyMethodDef mod_methods[] = {
 #ifdef PSUTIL_HAS_HEAP_INFO
     {"heap_info", psutil_heap_info, METH_VARARGS},
 #endif
-#ifdef PSUTIL_HAS_MALLOC_TRIM
-    {"malloc_trim", psutil_malloc_trim, METH_VARARGS},
+#ifdef PSUTIL_HAS_HEAP_TRIM
+    {"heap_trim", psutil_heap_trim, METH_VARARGS},
 #endif
 
     // --- linux specific

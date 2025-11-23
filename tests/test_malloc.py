@@ -161,7 +161,7 @@ if WINDOWS:
 
 def trim_memory():
     gc.collect()
-    psutil.malloc_trim()
+    psutil.heap_trim()
 
 
 def assert_within_percent(actual, expected, percent):

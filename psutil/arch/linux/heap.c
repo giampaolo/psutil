@@ -76,8 +76,8 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 
 // Release unused memory held by the allocator back to the OS.
 PyObject *
-psutil_malloc_trim(PyObject *self, PyObject *args) {
-    // malloc_trim returns 1 if some memory was released, else 0.
+psutil_heap_trim(PyObject *self, PyObject *args) {
+    // heap_trim returns 1 if some memory was released, else 0.
     int ret = malloc_trim(0);
     return PyBool_FromLong(ret);
 }

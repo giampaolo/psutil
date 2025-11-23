@@ -136,8 +136,8 @@ class TestAvailSystemAPIs(PsutilTestCase):
         else:
             assert hasit == MACOS or WINDOWS or BSD
 
-    def test_malloc_trim(self):
-        hasit = hasattr(psutil, "malloc_trim")
+    def test_heap_trim(self):
+        hasit = hasattr(psutil, "heap_trim")
         if LINUX:
             assert hasit == bool(platform.libc_ver() != ("", ""))
         else:

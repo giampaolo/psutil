@@ -54,9 +54,9 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 
 // Release unused memory from all jemalloc arenas back to the OS.
 // Aggressively purges free pages from all arenas (main + per-thread).
-// More effective than Linux `malloc_trim(0)`.
+// More effective than Linux `heap_trim(0)`.
 PyObject *
-psutil_malloc_trim(PyObject *self, PyObject *args) {
+psutil_heap_trim(PyObject *self, PyObject *args) {
     char cmd[32];
     int ret;
 

@@ -1265,7 +1265,7 @@ class system_namespace:
         getters += [('sensors_battery', (), {})]
     if HAS_HEAP_INFO:
         getters += [('heap_info', (), {})]
-        getters += [('malloc_trim', (), {})]
+        getters += [('heap_trim', (), {})]
 
     if WINDOWS:
         getters += [('win_service_iter', (), {})]

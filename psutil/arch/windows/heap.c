@@ -93,9 +93,9 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 
 // Release unused memory from the process heap back to the OS. Return
 // the size of the largest committed free block in the heap, in bytes.
-// Equivalent to Linux malloc_trim(0).
+// Equivalent to Linux heap_trim(0).
 PyObject *
-psutil_malloc_trim(PyObject *self, PyObject *args) {
+psutil_heap_trim(PyObject *self, PyObject *args) {
     HANDLE hHeap = GetProcessHeap();
     SIZE_T largest_free;
 
