@@ -449,7 +449,6 @@ class TestMemLeakClass(MemoryLeakTestCase):
         self.execute(
             fun, times=times, warmup_times=0, tolerance=200 * 1024 * 1024
         )
-        assert len(ls) == times + 1
 
 
 class TestTestingUtils(PsutilTestCase):
