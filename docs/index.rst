@@ -2152,10 +2152,10 @@ Python's memory tracking misses.
   this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
   Returns a namedtuple containing:
 
-  - ``heap_used``: total number of bytes allocated via ``malloc()`` (small
-    allocations).
-  - ``mmap_used``: total number of bytes allocated via ``mmap()``. Always set
-    to 0 on macOS.
+  - ``heap_used``: total number of bytes currently allocated via ``malloc()``
+    (small allocations).
+  - ``mmap_used``: total number of bytes currently allocated via ``mmap()`` or
+    via large ``malloc()`` allocations. Always set to 0 on macOS.
   - ``heap_count``: (Windows only) number of private heaps created via
     ``HeapCreate()``.
 
