@@ -16,8 +16,8 @@ increase in memory is detected (mem > 0), the test is retried up to 5
 times, increasing the number of function calls each time. If memory
 continues to grow, the test is considered a failure.
 
-The test monitors RSS, VMS, and USS [1] memory. On supported platforms,
-it also monitors **heap metrics** (`heap_used`, `mmap_used` from
+The test monitors RSS, VMS, and USS [1] memory. In addition, it also
+monitors **heap metrics** (`heap_used`, `mmap_used` from
 `psutil.heap_info()`).
 
 In other words, this is specifically designed to catch cases where a C

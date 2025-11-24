@@ -2410,7 +2410,7 @@ if WINDOWS:
 # =====================================================================
 
 
-# Linux, Windows, macOS, BSD
+# Linux + glibc, Windows, macOS, BSD
 if hasattr(_psplatform, "heap_info"):
 
     def heap_info():
@@ -2418,11 +2418,11 @@ if hasattr(_psplatform, "heap_info"):
         (glibc).
 
         - `heap_used`: the total number of bytes allocated via
-          malloc/free . These are typically allocations smaller than
+          malloc/free. These are typically allocations smaller than
           MMAP_THRESHOLD.
 
-        - `mmap_used`: the total number of bytes allocated via mmap.
-          These are larger allocations that bypass the normal heap.
+        - `mmap_used`: the total number of bytes allocated via `mmap()`
+          or via large ``malloc()`` allocations.
 
         - `heap_count` (Windows only): number of private heaps created
           via `HeapCreate()`.
@@ -2430,11 +2430,20 @@ if hasattr(_psplatform, "heap_info"):
         return _ntp.pheap(*_psplatform.heap_info())
 
     def heap_trim():
-        """Attempt to release unused C heap memory back to the OS.
+        """Request that the underlying allocator free any unused memory
+        it's holding in the heap (typically small `malloc()`
+        allocations).
 
-        Only affects memory allocated via malloc/free in C extensions.
-        Memory used by Python objects or mmap-ed regions is usually not
-        affected.
+        In practice, modern allocators rarely comply, so this is not a
+        general-purpose memory-reduction tool and won't meaningfully
+        shrink RSS in real programs. Its primary value is in **leak
+        detection tools**.
+
+        Calling `heap_trim()` before taking measurements helps reduce
+        allocator noise, giving you a cleaner baseline so that changes
+        in `heap_used` come from the code you're testing, not from
+        internal allocator caching or fragmentation. Its effectiveness
+        depends on allocator behavior and fragmentation patterns.
         """
         _psplatform.heap_trim()
 
