@@ -64,9 +64,9 @@ PyObject *
 psutil_heap_info(PyObject *self, PyObject *args) {
     malloc_zone_t **zones = NULL;
     unsigned int count = 0;
-    int ok;
     uint64_t heap_used = 0;
     uint64_t mmap_used = 0;
+    int ok;
 
     ok = get_zones(&zones, &count);
     if (ok == -1)
@@ -85,7 +85,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 }
 
 
-// Release unused memory from the default malloc zone back to the OS.
+// Return unused heap memory back to the OS.
 PyObject *
 psutil_heap_trim(PyObject *self, PyObject *args) {
     malloc_zone_t **zones = NULL;

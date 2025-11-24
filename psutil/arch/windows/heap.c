@@ -21,7 +21,7 @@
 // - mmap_used: VirtualAlloc'd regions, like `hblkhd` on Linux. Catches
 //   `VirtualAlloc()` without `VirtualFree()`.
 //
-// - heap_count (Windows only): number of heaps (Windows only). Catches
+// - heap_count (Windows only): number of private heaps. Catches
 //   `HeapCreate()` without `HeapDestroy()`.
 PyObject *
 psutil_heap_info(PyObject *self, PyObject *args) {
@@ -45,7 +45,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
     if ((status != _HEAPEND) && (status != _HEAPOK))
         return psutil_oserror_wsyscall("_heapwalk");
 
-    // Get number of heaps (+ heap handles)
+    // Get number of heaps (+ heap handles).
     heap_count = GetProcessHeaps(0, NULL);  // 1st: get count
     if (heap_count == 0)
         return psutil_oserror_wsyscall("GetProcessHeaps (1/2)");
@@ -60,7 +60,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
         return psutil_oserror_wsyscall("GetProcessHeaps (2/2)");
     }
 
-    // VirtualAlloc'd regions (large allocations / mmap|hblkhd equivalent)
+    // VirtualAlloc'd regions (large allocations / mmap|hblkhd equivalent).
     while (VirtualQuery(addr, &mbi, sizeof(mbi)) == sizeof(mbi)) {
         if (mbi.State == MEM_COMMIT && mbi.Type == MEM_PRIVATE
             && (mbi.AllocationProtect & PAGE_READWRITE))
@@ -91,9 +91,9 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 }
 
 
-// Release unused memory from the process heap back to the OS. Return
-// the size of the largest committed free block in the heap, in bytes.
-// Equivalent to Linux heap_trim(0).
+// Return unused heap memory back to the OS. Return the size of the
+// largest committed free block in the heap, in bytes. Equivalent to
+// Linux `heap_trim(0)`.
 PyObject *
 psutil_heap_trim(PyObject *self, PyObject *args) {
     HANDLE hHeap = GetProcessHeap();

@@ -52,7 +52,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
 }
 
 
-// Release unused memory from all jemalloc arenas back to the OS.
+// Release unused heap memory from all jemalloc arenas back to the OS.
 // Aggressively purges free pages from all arenas (main + per-thread).
 // More effective than Linux `heap_trim(0)`.
 PyObject *
@@ -68,7 +68,7 @@ psutil_heap_trim(PyObject *self, PyObject *args) {
     if (ret != 0)
         return psutil_oserror();
 #else
-    // NetBSD: iterate over all arenas.
+    // Iterate over all arenas.
     unsigned narenas;
     size_t sz = sizeof(narenas);
 

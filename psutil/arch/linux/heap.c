@@ -6,7 +6,7 @@
 
 #include "../../arch/all/init.h"
 
-#if defined(PSUTIL_HAS_HEAP_INFO)  // not available on musl / alpine
+#if defined(PSUTIL_HAS_HEAP_INFO)  // Not available on MUSL / Alpine Linux
 #include <Python.h>
 #include <malloc.h>
 #include <dlfcn.h>
@@ -42,6 +42,7 @@ psutil_heap_info(PyObject *self, PyObject *args) {
         fun = dlsym(handle, "mallinfo2");
     }
 
+    // mallinfo2() appeared in glibc 2.33, February 2021.
     if (fun != NULL) {
         struct my_mallinfo2 m2;
 
@@ -50,6 +51,10 @@ psutil_heap_info(PyObject *self, PyObject *args) {
         uord = (unsigned long long)m2.uordblks;
         mmap = (unsigned long long)m2.hblkhd;
     }
+
+    // mallinfo() is broken due to its fields that are 32-bit
+    // integers, meaning they overflow if process allocates more than
+    // 2GB in the heap.
     else {
         struct mallinfo m1;
 
