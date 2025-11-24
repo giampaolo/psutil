@@ -2185,14 +2185,18 @@ Python's memory tracking misses.
 
 .. function:: heap_trim()
 
-   Attempt to return unused heap memory from the C allocator back to the
-   operating system.
-   This only affects memory managed by ``malloc()``/``free()`` within C
-   extensions. Memory owned by Python objects themselves, or memory backed
-   by ``mmap()`` regions, is usually unaffected.
-   ``heap_trim()`` may help reduce resident memory after large temporary
-   C-level allocations, but its effectiveness depends on allocator
-   behavior and fragmentation patterns.
+  Request that the underlying allocator free any unused memory it's holding in
+  the heap (typically small ``malloc()`` allocations).
+
+  In practice, modern allocators rarely comply, so this is not a
+  general-purpose memory-reduction tool and won't meaningfully shrink RSS in
+  real programs. Its primary value is in **leak detection tools**.
+
+  Calling ``heap_trim()`` before taking measurements helps reduce allocator
+  noise, giving you a cleaner baseline so that changes in ``heap_used`` come
+  from the code you're testing, not from internal allocator caching or
+  fragmentation. Its effectiveness depends on allocator behavior and
+  fragmentation patterns.
 
   .. versionadded:: 7.2.0
 
