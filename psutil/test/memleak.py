@@ -59,7 +59,6 @@ algorithm may change in the future.
 import functools
 import gc
 import os
-import sys
 import unittest
 
 import psutil
@@ -135,7 +134,7 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _log(self, msg, level):
         if level <= self.verbosity:
-            print_color(msg, color="yellow", file=sys.stderr)
+            print_color(msg, color="yellow")
 
     def _heap_trim(self):
         """Release unused memory held by the allocator back to the OS."""
