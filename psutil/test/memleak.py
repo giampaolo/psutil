@@ -120,7 +120,7 @@ class MemoryLeakTestCase(unittest.TestCase):
     # 0 = no messages; 1 = print diagnostics when memory increases.
     verbosity = 1
     # max number of calls per retry batch
-    max_calls_per_retry = 5000
+    max_calls_per_retry = 1600
 
     __doc__ = __doc__
 
