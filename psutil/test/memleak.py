@@ -140,7 +140,6 @@ class MemoryLeakTestCase(unittest.TestCase):
     def _heap_trim(self):
         """Release unused memory held by the allocator back to the OS."""
         if hasattr(psutil, "heap_trim"):
-            # Linux, macOS, FreeBSD
             psutil.heap_trim()
 
     def _warmup(self, fun, warmup_times):
@@ -152,7 +151,6 @@ class MemoryLeakTestCase(unittest.TestCase):
         mem = thisproc.memory_full_info()
         heap_used = mmap_used = 0
         if hasattr(psutil, "heap_info"):
-            # Linux, Windows, macOS, BSD
             mallinfo = psutil.heap_info()
             heap_used = mallinfo.heap_used
             mmap_used = mallinfo.mmap_used

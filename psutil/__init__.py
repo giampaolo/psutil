@@ -2410,7 +2410,7 @@ if WINDOWS:
 # =====================================================================
 
 
-# Linux + glibc, Windows, macOS, BSD
+# Linux + glibc, Windows, macOS, FreeBSD, NetBSD
 if hasattr(_psplatform, "heap_info"):
 
     def heap_info():

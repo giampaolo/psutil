@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+#if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
 #include <Python.h>
 #include <stdlib.h>
 #if defined(PSUTIL_FREEBSD)
@@ -68,7 +69,7 @@ psutil_heap_trim(PyObject *self, PyObject *args) {
     if (ret != 0)
         return psutil_oserror();
 #else
-    // Iterate over all arenas.
+    // NetBSD. Iterate over all arenas.
     unsigned narenas;
     size_t sz = sizeof(narenas);
 
@@ -86,3 +87,4 @@ psutil_heap_trim(PyObject *self, PyObject *args) {
 
     Py_RETURN_NONE;
 }
+#endif  // PSUTIL_FREEBSD || PSUTIL_NETBSD

@@ -2181,7 +2181,7 @@ Python's memory tracking misses.
 
   .. versionadded:: 7.2.0
 
-  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, BSD
+  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
 
 .. function:: heap_trim()
 
@@ -2200,7 +2200,7 @@ Python's memory tracking misses.
 
   .. versionadded:: 7.2.0
 
-  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, BSD
+  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
 
 Windows services
 ================
