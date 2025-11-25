@@ -2129,6 +2129,79 @@ Process class
 
   .. versionchanged:: 4.4.0 added context manager support
 
+C heap introspection
+====================
+
+The following functions provide direct access to the platform's native C heap
+allocator (such as glibc's ``malloc`` on Linux or ``jemalloc`` on BSD). They
+are low-level interfaces intended for detecting memory leaks in C extensions,
+which are usually not revealed via standard RSS/VMS metrics. These functions do
+not reflect Python object memory; they operate solely on allocations made in C
+via ``malloc()``, ``free()``, and related calls.
+
+The general idea behind these functions is straightforward: capture the state
+of the C heap before and after repeatedly invoking a function implemented in a
+C extension, and compare the results. If ``heap_used`` or ``mmap_used`` grows
+steadily across iterations, the C code is likely retaining memory it should be
+releasing. This provides an allocator-level way to spot native leaks that
+Python's memory tracking misses.
+
+.. function:: heap_info()
+
+  Return low-level heap statistics from the system's C allocator. On Linux,
+  this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
+  Returns a namedtuple containing:
+
+  - ``heap_used``: total number of bytes currently allocated via ``malloc()``
+    (small allocations).
+  - ``mmap_used``: total number of bytes currently allocated via ``mmap()`` or
+    via large ``malloc()`` allocations. Always set to 0 on macOS.
+  - ``heap_count``: (Windows only) number of private heaps created via
+    ``HeapCreate()``.
+
+   >>> import psutil
+   >>> psutil.heap_info()
+   pheap(heap_used=5177792, mmap_used=819200)
+
+  These fields reflect how unreleased C allocations affect the heap:
+
+  +---------------+------------------------------------------------------------------------------------+-----------------+
+  | Platform      | Allocation type                                                                    | Affected field  |
+  +===============+====================================================================================+=================+
+  | UNIX / glibc  | small ``malloc()`` ≤128KB without ``free()``                                       | ``heap_used``   |
+  +---------------+------------------------------------------------------------------------------------+-----------------+
+  | UNIX / glibc  | large ``malloc()`` >128KB without ``free()`` , or ``mmap()`` without ``munmap()``  | ``mmap_used``   |
+  +---------------+------------------------------------------------------------------------------------+-----------------+
+  | Windows       | ``HeapAlloc()`` without ``HeapFree()``                                             | ``heap_used``   |
+  +---------------+------------------------------------------------------------------------------------+-----------------+
+  | Windows       | ``VirtualAlloc()`` without ``VirtualFree()``                                       | ``mmap_used``   |
+  +---------------+------------------------------------------------------------------------------------+-----------------+
+  | Windows       | ``HeapCreate()`` without ``HeapDestroy()``                                         | ``heap_count``  |
+  +---------------+------------------------------------------------------------------------------------+-----------------+
+
+  .. versionadded:: 7.2.0
+
+  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
+
+.. function:: heap_trim()
+
+  Request that the underlying allocator free any unused memory it's holding in
+  the heap (typically small ``malloc()`` allocations).
+
+  In practice, modern allocators rarely comply, so this is not a
+  general-purpose memory-reduction tool and won't meaningfully shrink RSS in
+  real programs. Its primary value is in **leak detection tools**.
+
+  Calling ``heap_trim()`` before taking measurements helps reduce allocator
+  noise, giving you a cleaner baseline so that changes in ``heap_used`` come
+  from the code you're testing, not from internal allocator caching or
+  fragmentation. Its effectiveness depends on allocator behavior and
+  fragmentation patterns.
+
+  .. versionadded:: 7.2.0
+
+  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
+
 Windows services
 ================
 
@@ -2244,9 +2317,8 @@ memory-leak detection tests.
   number of function calls each time. If memory continues to grow, the test is
   considered a failure.
   The test currently monitors RSS, VMS, and `USS <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__ memory.
-  ``mallinfo()`` on Linux and ``_heapwalk()`` on Windows could provide
-  even more precise results (see `issue 1275 <https://github.com/giampaolo/psutil/issues/1275>`__),
-  but these are not yet implemented.
+  On supported platforms, it also monitors **heap metrics** (``heap_used``, ``mmap_used`` from
+  :func:`heap_info`).
 
   In addition it also ensures that the target function does not leak
   file descriptors (UNIX) or handles (Windows).
@@ -3203,6 +3275,7 @@ Timeline
 .. _`issue #1007`: https://github.com/giampaolo/psutil/issues/1007
 .. _`issue #1040`: https://github.com/giampaolo/psutil/issues/1040
 .. _`issue #883`: https://github.com/giampaolo/psutil/issues/883
+.. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
 .. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
 .. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py

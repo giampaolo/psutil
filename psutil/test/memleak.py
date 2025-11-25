@@ -2,16 +2,68 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Test framework for detecting memory leaks in C functions."""
+"""A testing framework for detecting memory leaks in functions,
+typically those implemented in C that forget to `free()` heap memory,
+call `Py_DECREF` on Python objects, and so on. It works by comparing
+the process's memory usage before and after repeatedly calling the
+target function.
+
+Detecting memory leaks reliably is inherently difficult (and probably
+impossible) because of how the OS manages memory, garbage collection,
+and caching. Memory usage may even decrease between runs. So this is
+not meant to be bullet proof. To reduce false positives, when an
+increase in memory is detected (mem > 0), the test is retried up to 5
+times, increasing the number of function calls each time. If memory
+continues to grow, the test is considered a failure.
+
+The test monitors RSS, VMS, and USS [1] memory. In addition, it also
+monitors **heap metrics** (`heap_used`, `mmap_used` from
+`psutil.heap_info()`).
+
+In other words, this is specifically designed to catch cases where a C
+extension or other native code allocates memory via `malloc()` or
+similar functions but fails to call `free()`, resulting in unreleased
+memory that would otherwise remain in the process heap or in mapped
+memory regions.
+
+The types of allocations this should catch include:
+
+- `malloc()` without a corresponding `free()`
+- `mmap()` without `munmap()`
+- `HeapAlloc()` without `HeapFree()` (Windows)
+- `VirtualAlloc()` without `VirtualFree()` (Windows)
+- `HeapCreate()` without `HeapDestroy()` (Windows)
+
+In addition it also ensures that the target function does not leak file
+descriptors (UNIX) or handles (Windows) such as:
+
+- `open()` without a corresponding `close()` (UNIX)
+- `CreateFile()` / `CreateProcess()` / ... without `CloseHandle()`
+  (Windows)
+
+Usage example:
+
+    from psutil.test import MemoryLeakTestCase
+
+    class TestLeaks(MemoryLeakTestCase):
+        def test_fun(self):
+            self.execute(some_function)
+
+NOTE - This class is experimental, meaning its API or internal
+algorithm may change in the future.
+
+[1] https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
+[2] https://github.com/giampaolo/psutil/issues/1275
+"""
 
 import functools
 import gc
 import os
-import sys
 import unittest
 
 import psutil
 from psutil._common import POSIX
+from psutil._common import WINDOWS
 from psutil._common import bytes2human
 from psutil._common import print_color
 
@@ -32,44 +84,30 @@ def format_run_line(idx, diffs, times):
     return s
 
 
-class MemoryLeakTestCase(unittest.TestCase):
-    """A testing framework for detecting memory leaks in functions,
-    typically those implemented in C that forget to `free()` heap
-    memory, call `Py_DECREF` on Python objects, and so on. It works by
-    comparing the process's memory usage before and after repeatedly
-    calling the target function.
+def qualname(obj):
+    """Return a human-readable qualified name for a function, method or
+    class.
+    """
+    return getattr(obj, "__qualname__", getattr(obj, "__name__", str(obj)))
 
-    Detecting memory leaks reliably is inherently difficult (and
-    probably impossible) because of how the OS manages memory, garbage
-    collection, and caching. Memory usage may even decrease between
-    runs. So this is not meant to be bullet proof. To reduce false
-    positives, when an increase in memory is detected (mem > 0), the
-    test is retried up to 5 times, increasing the number of function
-    calls each time. If memory continues to grow, the test is
-    considered a failure.
 
-    The test currently monitors RSS, VMS, and USS [1] memory.
-    `mallinfo()` on Linux and `_heapwalk()` on Windows could provide
-    even more precise results [2], but these are not yet implemented.
+class MemoryLeakError(AssertionError):
+    """Raised when a memory leak is detected."""
 
-    In addition it also ensures that the target function does not leak
-    file descriptors (UNIX) or handles (Windows).
 
-    Usage example:
-
-        from psutil.test import MemoryLeakTestCase
-
-        class TestLeaks(MemoryLeakTestCase):
-            def test_fun(self):
-                self.execute(some_function)
-
-    NOTE - This class is experimental, meaning its API or internal
-    algorithm may change in the future.
-
-    [1] https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python
-    [2] https://github.com/giampaolo/psutil/issues/1275
+class UnclosedFdError(AssertionError):
+    """Raised when an unclosed file descriptor (UNIX) or handle
+    (Windows) is detected.
     """
 
+
+class UnclosedHeapCreateError(AssertionError):
+    """Raised on Windows when test detects HeapCreate() without a
+    corresponding HeapDestroy().
+    """
+
+
+class MemoryLeakTestCase(unittest.TestCase):
     # Number of times to call the tested function in each iteration.
     times = 200
     # Maximum number of retries if memory growth is detected.
@@ -80,6 +118,10 @@ class MemoryLeakTestCase(unittest.TestCase):
     tolerance = 0
     # 0 = no messages; 1 = print diagnostics when memory increases.
     verbosity = 1
+    # max number of calls per retry batch
+    max_calls_per_retry = 1600
+
+    __doc__ = __doc__
 
     @classmethod
     def setUpClass(cls):
@@ -92,16 +134,31 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _log(self, msg, level):
         if level <= self.verbosity:
-            print_color(msg, color="yellow", file=sys.stderr)
+            print_color(msg, color="yellow")
+
+    def _heap_trim(self):
+        """Release unused memory held by the allocator back to the OS."""
+        if hasattr(psutil, "heap_trim"):
+            psutil.heap_trim()
+
+    def _warmup(self, fun, warmup_times):
+        self._call_ntimes(fun, warmup_times)
 
     # --- getters
 
     def _get_mem(self):
         mem = thisproc.memory_full_info()
+        heap_used = mmap_used = 0
+        if hasattr(psutil, "heap_info"):
+            mallinfo = psutil.heap_info()
+            heap_used = mallinfo.heap_used
+            mmap_used = mallinfo.mmap_used
         return {
+            "heap": heap_used,
+            "mmap": mmap_used,
+            "uss": getattr(mem, "uss", 0),
             "rss": mem.rss,
             "vms": mem.vms,
-            "uss": getattr(mem, "uss", 0),
         }
 
     def _get_num_fds(self):
@@ -113,32 +170,64 @@ class MemoryLeakTestCase(unittest.TestCase):
     # --- checkers
 
     def _check_fds(self, fun):
-        """Makes sure num_fds() (POSIX) or num_handles() (Windows) does
-        not increase after calling a function.  Used to discover forgotten
-        close(2) and CloseHandle syscalls.
+        """Makes sure `num_fds()` (POSIX) or `num_handles()` (Windows)
+        do not increase after calling function 1 time.  Used to
+        discover forgotten `close(2)` and `CloseHandle()`.
         """
+
         before = self._get_num_fds()
         self.call(fun)
         after = self._get_num_fds()
         diff = after - before
+
         if diff < 0:
             msg = (
                 f"negative diff {diff!r} (gc probably collected a"
                 " resource from a previous test)"
             )
-            return self.fail(msg)
+            raise UnclosedFdError(msg)
+
         if diff > 0:
             type_ = "fd" if POSIX else "handle"
             if diff > 1:
                 type_ += "s"
-            msg = f"{diff} unclosed {type_} after calling {fun!r}"
-            return self.fail(msg)
+            msg = (
+                f"detected {diff} unclosed {type_} after calling"
+                f" {qualname(fun)!r} 1 time"
+            )
+            raise UnclosedFdError(msg)
+
+    def _check_heap_count(self, fun):
+        """Windows only. Calls function once, and detects HeapCreate()
+        without a corresponding HeapDestroy().
+        """
+        if not WINDOWS:
+            return
+
+        before = psutil.heap_info().heap_count
+        self.call(fun)
+        after = psutil.heap_info().heap_count
+        diff = after - before
+
+        if diff < 0:
+            msg = f"negative diff {diff!r}"
+            raise UnclosedHeapCreateError(msg)
+
+        if diff > 0:
+            msg = (
+                f"detected {diff} HeapCreate() without a corresponding "
+                f" HeapDestroy() after calling {qualname(fun)!r} 1 time"
+            )
+            raise UnclosedHeapCreateError(msg)
 
     def _call_ntimes(self, fun, times):
         """Get memory samples (rss, vms, uss) before and after calling
         fun repeatedly, and return the diffs as a dict.
         """
         gc.collect(generation=1)
+
+        self._heap_trim()
+
         mem1 = self._get_mem()
         for x in range(times):
             ret = self.call(fun)
@@ -175,12 +264,14 @@ class MemoryLeakTestCase(unittest.TestCase):
                 return
 
             prev = diffs
-            times += times  # double calls each retry
+            times *= 2  # double calls each retry
+            if self.max_calls_per_retry:
+                times = min(times, self.max_calls_per_retry)
 
-        msg = f"Memory kept increasing after {retries} runs." + "\n".join(
+        msg = f"memory kept increasing after {retries} runs" + "\n".join(
             messages
         )
-        return self.fail(msg)
+        raise MemoryLeakError(msg)
 
     # ---
 
@@ -195,6 +286,7 @@ class MemoryLeakTestCase(unittest.TestCase):
         warmup_times=None,
         retries=None,
         tolerance=None,
+        max_calls_per_retry=None,
     ):
         """Run a full leak test on a callable. If specified, the
         optional arguments override the class attributes with the same
@@ -206,6 +298,7 @@ class MemoryLeakTestCase(unittest.TestCase):
         )
         retries = retries if retries is not None else self.retries
         tolerance = tolerance if tolerance is not None else self.tolerance
+        max_calls_per_retry = max_calls_per_retry or self.max_calls_per_retry
 
         if times < 1:
             msg = f"times must be >= 1 (got {times})"
@@ -219,8 +312,14 @@ class MemoryLeakTestCase(unittest.TestCase):
         if tolerance < 0:
             msg = f"tolerance must be >= 0 (got {tolerance})"
             raise ValueError(msg)
+        if max_calls_per_retry < 0:
+            msg = (
+                f"max_calls_per_retry must be >= 0 (got {max_calls_per_retry})"
+            )
+            raise ValueError(msg)
 
-        self._call_ntimes(fun, warmup_times)  # warm up
-
+        self._warmup(fun, warmup_times)
         self._check_fds(fun)
+        if WINDOWS:
+            self._check_heap_count(fun)
         self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)

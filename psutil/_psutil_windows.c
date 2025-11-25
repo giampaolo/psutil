@@ -75,6 +75,8 @@ static PyMethodDef PsutilMethods[] = {
     {"init_loadavg_counter",
      (PyCFunction)psutil_init_loadavg_counter,
      METH_VARARGS},
+    {"heap_info", psutil_heap_info, METH_VARARGS},
+    {"heap_trim", psutil_heap_trim, METH_VARARGS},
     {"net_connections", psutil_net_connections, METH_VARARGS},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS},

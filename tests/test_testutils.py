@@ -26,6 +26,8 @@ from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
 from psutil.test import MemoryLeakTestCase
+from psutil.test.memleak import MemoryLeakError
+from psutil.test.memleak import UnclosedFdError
 
 from . import CI_TESTING
 from . import COVERAGE
@@ -369,16 +371,6 @@ class TestNetUtils(PsutilTestCase):
 @pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
 @pytest.mark.xdist_group(name="serial")
 class TestMemLeakClass(MemoryLeakTestCase):
-
-    @retry_on_failure()
-    def test_times(self):
-        def fun():
-            cnt['cnt'] += 1
-
-        cnt = {'cnt': 0}
-        self.execute(fun, times=10, warmup_times=15)
-        assert cnt['cnt'] == 26
-
     def test_param_err(self):
         with pytest.raises(ValueError):
             self.execute(lambda: 0, times=0)
@@ -402,10 +394,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
 
         try:
             # will consume around 60M in total
-            with pytest.raises(
-                AssertionError,
-                match=r"Memory kept increasing",
-            ):
+            with pytest.raises(MemoryLeakError):
                 with contextlib.redirect_stdout(
                     io.StringIO()
                 ), contextlib.redirect_stderr(io.StringIO()):
@@ -420,8 +409,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
             box.append(f)  # prevent auto-gc
 
         box = []
-        kind = "fd" if POSIX else "handle"
-        with pytest.raises(AssertionError, match="unclosed " + kind):
+        with pytest.raises(UnclosedFdError):
             self.execute(fun)
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
@@ -435,7 +423,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
             )
             self.addCleanup(win32api.CloseHandle, handle)
 
-        with pytest.raises(AssertionError, match="unclosed handle"):
+        with pytest.raises(UnclosedFdError):
             self.execute(fun)
 
     def test_tolerance(self):
@@ -447,7 +435,6 @@ class TestMemLeakClass(MemoryLeakTestCase):
         self.execute(
             fun, times=times, warmup_times=0, tolerance=200 * 1024 * 1024
         )
-        assert len(ls) == times + 1
 
 
 class TestTestingUtils(PsutilTestCase):

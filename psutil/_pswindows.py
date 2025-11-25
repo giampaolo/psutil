@@ -220,6 +220,11 @@ def swap_memory():
     return ntp.sswap(total, used, free, percent, 0, 0)
 
 
+# malloc / heap functions
+heap_info = cext.heap_info
+heap_trim = cext.heap_trim
+
+
 # =====================================================================
 # --- disk
 # =====================================================================

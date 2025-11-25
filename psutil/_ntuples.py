@@ -84,6 +84,18 @@ sbattery = nt("sbattery", ("percent", "secsleft", "power_plugged"))
 # psutil.sensors_fans()
 sfan = nt("sfan", ("label", "current"))
 
+# psutil.heap_info() (mallinfo2 Linux struct)
+if LINUX or WINDOWS or MACOS or BSD:
+    pheap = nt(
+        "pheap",
+        [
+            "heap_used",  # uordblks, memory allocated via malloc()
+            "mmap_used",  # hblkhd, memory allocated via mmap() (large blocks)
+        ],
+    )
+    if WINDOWS:
+        pheap = nt("pheap", pheap._fields + ("heap_count",))
+
 # ===================================================================
 # --- Process class
 # ===================================================================

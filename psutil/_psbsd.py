@@ -187,6 +187,12 @@ def swap_memory():
     return ntp.sswap(total, used, free, percent, sin, sout)
 
 
+# malloc / heap functions (FreeBSD / NetBSD)
+if hasattr(cext, "heap_info"):
+    heap_info = cext.heap_info
+    heap_trim = cext.heap_trim
+
+
 # =====================================================================
 # --- CPU
 # =====================================================================

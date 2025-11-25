@@ -184,6 +184,7 @@ HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
 HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_IONICE = hasattr(psutil.Process, "ionice")
+HAS_HEAP_INFO = hasattr(psutil, "heap_info")
 HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
@@ -1248,6 +1249,7 @@ class system_namespace:
         ('users', (), {}),
         ('virtual_memory', (), {}),
     ]
+
     if HAS_CPU_FREQ:
         if MACOS and AARCH64:  # skipped due to #1892
             pass
@@ -1261,6 +1263,10 @@ class system_namespace:
         getters += [('sensors_fans', (), {})]
     if HAS_SENSORS_BATTERY:
         getters += [('sensors_battery', (), {})]
+    if HAS_HEAP_INFO:
+        getters += [('heap_info', (), {})]
+        getters += [('heap_trim', (), {})]
+
     if WINDOWS:
         getters += [('win_service_iter', (), {})]
         getters += [('win_service_get', ('alg',), {})]

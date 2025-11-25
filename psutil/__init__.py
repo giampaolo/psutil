@@ -2406,6 +2406,52 @@ if WINDOWS:
 
 
 # =====================================================================
+# --- malloc / heap
+# =====================================================================
+
+
+# Linux + glibc, Windows, macOS, FreeBSD, NetBSD
+if hasattr(_psplatform, "heap_info"):
+
+    def heap_info():
+        """Return low-level heap statistics from the C heap allocator
+        (glibc).
+
+        - `heap_used`: the total number of bytes allocated via
+          malloc/free. These are typically allocations smaller than
+          MMAP_THRESHOLD.
+
+        - `mmap_used`: the total number of bytes allocated via `mmap()`
+          or via large ``malloc()`` allocations.
+
+        - `heap_count` (Windows only): number of private heaps created
+          via `HeapCreate()`.
+        """
+        return _ntp.pheap(*_psplatform.heap_info())
+
+    def heap_trim():
+        """Request that the underlying allocator free any unused memory
+        it's holding in the heap (typically small `malloc()`
+        allocations).
+
+        In practice, modern allocators rarely comply, so this is not a
+        general-purpose memory-reduction tool and won't meaningfully
+        shrink RSS in real programs. Its primary value is in **leak
+        detection tools**.
+
+        Calling `heap_trim()` before taking measurements helps reduce
+        allocator noise, giving you a cleaner baseline so that changes
+        in `heap_used` come from the code you're testing, not from
+        internal allocator caching or fragmentation. Its effectiveness
+        depends on allocator behavior and fragmentation patterns.
+        """
+        _psplatform.heap_trim()
+
+    __all__.append("heap_info")
+    __all__.append("heap_trim")
+
+
+# =====================================================================
 
 
 def _set_debug(value):

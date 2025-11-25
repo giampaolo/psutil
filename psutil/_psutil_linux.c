@@ -33,6 +33,13 @@ static PyMethodDef mod_methods[] = {
     // --- system related functions
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS},
     {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS},
+#ifdef PSUTIL_HAS_HEAP_INFO
+    {"heap_info", psutil_heap_info, METH_VARARGS},
+#endif
+#ifdef PSUTIL_HAS_HEAP_TRIM
+    {"heap_trim", psutil_heap_trim, METH_VARARGS},
+#endif
+
     // --- linux specific
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS},
     // --- others

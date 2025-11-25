@@ -25,3 +25,11 @@ PyObject *psutil_proc_ioprio_set(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args);
 #endif
+
+// Does not exist on MUSL / Alpine Linux.
+#if defined(__GLIBC__)
+#define PSUTIL_HAS_HEAP_INFO
+#define PSUTIL_HAS_HEAP_TRIM
+PyObject *psutil_heap_trim(PyObject *self, PyObject *args);
+PyObject *psutil_heap_info(PyObject *self, PyObject *args);
+#endif

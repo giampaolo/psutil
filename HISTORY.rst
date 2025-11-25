@@ -7,6 +7,9 @@ XXXX-XX-XX
 
 **Enhancements**
 
+- 1275_: new `heap_info()`_ and `heap_trim()`_ functions, providing direct
+  access to the platform's native C heap allocator. Useful to create tools to
+  detect memory leaks.
 - 2403_, [Linux]: publish wheels for Linux musl.
 - 2680_: unit tests are no longer installed / part of the distribution. They
   now live under `tests/` instead of `psutil/tests`.
@@ -2842,6 +2845,8 @@ In most cases accessing the old names will work but it will cause a
 .. _`disk_partitions()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_partitions
 .. _`disk_usage()`: https://psutil.readthedocs.io/en/latest/#psutil.disk_usage
 .. _`getloadavg()`: https://psutil.readthedocs.io/en/latest/#psutil.getloadavg
+.. _`heap_info()`: https://psutil.readthedocs.io/en/latest/#psutil.heap_info
+.. _`heap_trim()`: https://psutil.readthedocs.io/en/latest/#psutil.heap_trim
 .. _`net_connections()`: https://psutil.readthedocs.io/en/latest/#psutil.net_connections
 .. _`net_if_addrs()`: https://psutil.readthedocs.io/en/latest/#psutil.net_if_addrs
 .. _`net_if_stats()`: https://psutil.readthedocs.io/en/latest/#psutil.net_if_stats

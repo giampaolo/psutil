@@ -90,6 +90,8 @@ PyObject *psutil_get_loadavg();
 PyObject *psutil_get_open_files(DWORD pid, HANDLE hProcess);
 PyObject *psutil_getpagesize(PyObject *self, PyObject *args);
 PyObject *psutil_init_loadavg_counter();
+PyObject *psutil_heap_info(PyObject *self, PyObject *args);
+PyObject *psutil_heap_trim(PyObject *self, PyObject *args);
 PyObject *psutil_net_connections(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_addrs(PyObject *self, PyObject *args);
 PyObject *psutil_net_if_stats(PyObject *self, PyObject *args);

@@ -55,6 +55,7 @@ include psutil/arch/all/pids.c
 include psutil/arch/all/str.c
 include psutil/arch/bsd/cpu.c
 include psutil/arch/bsd/disk.c
+include psutil/arch/bsd/heap.c
 include psutil/arch/bsd/init.c
 include psutil/arch/bsd/init.h
 include psutil/arch/bsd/net.c
@@ -71,6 +72,7 @@ include psutil/arch/freebsd/proc_socks.c
 include psutil/arch/freebsd/sensors.c
 include psutil/arch/freebsd/sys_socks.c
 include psutil/arch/linux/disk.c
+include psutil/arch/linux/heap.c
 include psutil/arch/linux/init.h
 include psutil/arch/linux/mem.c
 include psutil/arch/linux/net.c
@@ -92,6 +94,7 @@ include psutil/arch/openbsd/socks.c
 include psutil/arch/openbsd/users.c
 include psutil/arch/osx/cpu.c
 include psutil/arch/osx/disk.c
+include psutil/arch/osx/heap.c
 include psutil/arch/osx/init.c
 include psutil/arch/osx/init.h
 include psutil/arch/osx/mem.c
@@ -118,6 +121,7 @@ include psutil/arch/sunos/proc.c
 include psutil/arch/sunos/sys.c
 include psutil/arch/windows/cpu.c
 include psutil/arch/windows/disk.c
+include psutil/arch/windows/heap.c
 include psutil/arch/windows/init.c
 include psutil/arch/windows/init.h
 include psutil/arch/windows/mem.c
@@ -187,6 +191,7 @@ include tests/test_aix.py
 include tests/test_bsd.py
 include tests/test_connections.py
 include tests/test_contracts.py
+include tests/test_heap.py
 include tests/test_linux.py
 include tests/test_memleaks.py
 include tests/test_misc.py

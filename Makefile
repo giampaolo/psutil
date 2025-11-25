@@ -125,6 +125,9 @@ test-contracts:  ## APIs sanity tests.
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	$(RUN_TEST) tests/test_connections.py $(ARGS)
 
+test-malloc:  ## Test psutil.malloc_*() APIs.
+	$(RUN_TEST) tests/test_malloc.py $(ARGS)
+
 test-posix:  ## POSIX specific tests.
 	$(RUN_TEST) tests/test_posix.py $(ARGS)
 
@@ -237,7 +240,8 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs ../tests
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs --ignore=../tests/test_memleaks.py ../tests
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs ../tests/test_memleaks.py
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

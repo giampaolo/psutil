@@ -9,10 +9,12 @@ returned types and APIs availability.
 Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
+import platform
 import signal
 
 import psutil
 from psutil import AIX
+from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
 from psutil import MACOS
@@ -126,6 +128,20 @@ class TestAvailSystemAPIs(PsutilTestCase):
         assert hasattr(psutil, "sensors_battery") == (
             LINUX or WINDOWS or FREEBSD or MACOS
         )
+
+    def test_heap_info(self):
+        hasit = hasattr(psutil, "heap_info")
+        if LINUX:
+            assert hasit == bool(platform.libc_ver() != ("", ""))
+        else:
+            assert hasit == MACOS or WINDOWS or BSD
+
+    def test_heap_trim(self):
+        hasit = hasattr(psutil, "heap_trim")
+        if LINUX:
+            assert hasit == bool(platform.libc_ver() != ("", ""))
+        else:
+            assert hasit == MACOS or WINDOWS or BSD
 
 
 class TestAvailProcessAPIs(PsutilTestCase):

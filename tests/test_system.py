@@ -39,6 +39,7 @@ from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
 from . import HAS_GETLOADAVG
+from . import HAS_HEAP_INFO
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
@@ -258,6 +259,21 @@ class TestMiscAPIs(PsutilTestCase):
                     assert user.pid is None
                 else:
                     psutil.Process(user.pid)
+
+    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_info(self):
+        m = psutil.heap_info()
+        assert m.heap_used > 0
+        if MACOS:
+            assert m.mmap_used == 0  # not supported
+        else:
+            assert m.mmap_used > 0
+        if WINDOWS:
+            assert m.heap_count >= 0
+
+    @pytest.mark.skipif(not HAS_HEAP_INFO, reason="not supported")
+    def test_heap_trim(self):
+        psutil.heap_trim()
 
     def test_os_constants(self):
         names = [
