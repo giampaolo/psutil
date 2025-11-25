@@ -765,16 +765,13 @@ def decode(s):
 
 @memoize
 def term_supports_colors(file=sys.stdout):  # pragma: no cover
-    if os.name == 'nt':
-        return True
+    if not hasattr(file, "isatty") or not file.isatty():
+        return False
     try:
-        import curses
-
-        assert file.isatty()
-        curses.setupterm()
-        return curses.tigetnum("colors") > 0
+        file.fileno()
     except Exception:  # noqa: BLE001
         return False
+    return True
 
 
 def hilite(s, color=None, bold=False):  # pragma: no cover
