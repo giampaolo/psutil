@@ -58,7 +58,9 @@ algorithm may change in the future.
 
 import functools
 import gc
+import logging
 import os
+import sys
 import unittest
 
 import psutil
@@ -118,8 +120,6 @@ class MemoryLeakTestCase(unittest.TestCase):
     tolerance = 0
     # 0 = no messages; 1 = print diagnostics when memory increases.
     verbosity = 1
-    # max number of calls per retry batch
-    max_calls_per_retry = 1600
 
     __doc__ = __doc__
 
@@ -134,15 +134,36 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     def _log(self, msg, level):
         if level <= self.verbosity:
-            print_color(msg, color="yellow")
+            if WINDOWS:
+                # On Windows we use ctypes to add colors. Avoid that to
+                # not interfere with memory observations.
+                print(msg)  # noqa: T201
+            else:
+                print_color(msg, color="yellow")
+            # Force flush to not interfere with memory observations.
+            sys.stdout.flush()
 
-    def _heap_trim(self):
-        """Release unused memory held by the allocator back to the OS."""
+    def _trim_mem(self):
+        """Release unused memory. Aims to stabilize memory measurements."""
+        # flush standard streams
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        # flush logging handlers
+        for handler in logging.root.handlers:
+            handler.flush()
+
+        # full garbage collection
+        gc.collect()
+        assert gc.garbage == []
+
+        # release free heap memory back to the OS
         if hasattr(psutil, "heap_trim"):
             psutil.heap_trim()
 
     def _warmup(self, fun, warmup_times):
-        self._call_ntimes(fun, warmup_times)
+        for _ in range(warmup_times):
+            self.call(fun)
 
     # --- getters
 
@@ -150,9 +171,9 @@ class MemoryLeakTestCase(unittest.TestCase):
         mem = thisproc.memory_full_info()
         heap_used = mmap_used = 0
         if hasattr(psutil, "heap_info"):
-            mallinfo = psutil.heap_info()
-            heap_used = mallinfo.heap_used
-            mmap_used = mallinfo.mmap_used
+            heap = psutil.heap_info()
+            heap_used = heap.heap_used
+            mmap_used = heap.mmap_used
         return {
             "heap": heap_used,
             "mmap": mmap_used,
@@ -221,20 +242,18 @@ class MemoryLeakTestCase(unittest.TestCase):
             raise UnclosedHeapCreateError(msg)
 
     def _call_ntimes(self, fun, times):
-        """Get memory samples (rss, vms, uss) before and after calling
-        fun repeatedly, and return the diffs as a dict.
+        """Get memory samples before and after calling fun repeatedly,
+        and return the diffs as a dict.
         """
-        gc.collect(generation=1)
-
-        self._heap_trim()
-
+        self._trim_mem()
         mem1 = self._get_mem()
-        for x in range(times):
-            ret = self.call(fun)
-            del x, ret
-        gc.collect(generation=1)
+
+        for _ in range(times):
+            self.call(fun)
+
+        self._trim_mem()
         mem2 = self._get_mem()
-        assert gc.garbage == []
+
         diffs = {k: mem2[k] - mem1[k] for k in mem1}
         return diffs
 
@@ -265,8 +284,6 @@ class MemoryLeakTestCase(unittest.TestCase):
 
             prev = diffs
             times *= 2  # double calls each retry
-            if self.max_calls_per_retry:
-                times = min(times, self.max_calls_per_retry)
 
         msg = f"memory kept increasing after {retries} runs" + "\n".join(
             messages
@@ -281,12 +298,11 @@ class MemoryLeakTestCase(unittest.TestCase):
     def execute(
         self,
         fun,
-        *,
+        *args,
         times=None,
         warmup_times=None,
         retries=None,
         tolerance=None,
-        max_calls_per_retry=None,
     ):
         """Run a full leak test on a callable. If specified, the
         optional arguments override the class attributes with the same
@@ -298,7 +314,6 @@ class MemoryLeakTestCase(unittest.TestCase):
         )
         retries = retries if retries is not None else self.retries
         tolerance = tolerance if tolerance is not None else self.tolerance
-        max_calls_per_retry = max_calls_per_retry or self.max_calls_per_retry
 
         if times < 1:
             msg = f"times must be >= 1 (got {times})"
@@ -312,11 +327,9 @@ class MemoryLeakTestCase(unittest.TestCase):
         if tolerance < 0:
             msg = f"tolerance must be >= 0 (got {tolerance})"
             raise ValueError(msg)
-        if max_calls_per_retry < 0:
-            msg = (
-                f"max_calls_per_retry must be >= 0 (got {max_calls_per_retry})"
-            )
-            raise ValueError(msg)
+
+        if args:
+            fun = functools.partial(fun, *args)
 
         self._warmup(fun, warmup_times)
         self._check_fds(fun)
