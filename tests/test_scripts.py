@@ -50,7 +50,7 @@ class TestExampleScripts(PsutilTestCase):
     @staticmethod
     def assert_stdout(exe, *args):
         env = PYTHON_EXE_ENV.copy()
-        env.pop("PSUTIL_DEBUG")  # avoid spamming to stderr
+        env.pop("PSUTIL_DEBUG", None)  # avoid spamming to stderr
         exe = os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe, *args]
         try:

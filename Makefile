@@ -91,24 +91,24 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest
 
-test:  ## Run all tests.
+test:  ## Run all tests (except memleak tests).
 	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`
-	$(RUN_TEST) --ignore=tests/test_memleaks.py --ignore=tests/test_sudo.py $(ARGS)
+	$(RUN_TEST) --ignore=tests/test_memleaks.py $(ARGS)
 
-test-parallel:  ## Run all tests in parallel.
+test-parallel:  ## Run all tests (except memleak tests) in parallel.
 	$(RUN_TEST) --ignore=tests/test_memleaks.py -p xdist -n auto --dist loadgroup $(ARGS)
 
-test-process:  ## Run process-related API tests.
-	$(RUN_TEST) tests/test_process.py $(ARGS)
+test-process:  ## Run process-related tests.
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -k "test_process.py or test_proc or test_pid or Process or pids or pid_exists" $(ARGS)
 
 test-process-all:  ## Run tests which iterate over all process PIDs.
-	$(RUN_TEST) tests/test_process_all.py $(ARGS)
+	$(RUN_TEST) -k test_process_all.py $(ARGS)
 
 test-system:  ## Run system-related API tests.
-	$(RUN_TEST) tests/test_system.py $(ARGS)
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -k "test_system.py or test_sys or System or disk or sensors or net_io_counters or net_if_addrs or net_if_stats or users or pids or win_service_ or boot_time" $(ARGS)
 
 test-misc:  ## Run miscellaneous tests.
-	$(RUN_TEST) tests/test_misc.py $(ARGS)
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -k "test_misc.py or Misc" $(ARGS)
 
 test-scripts:  ## Run scripts tests.
 	$(RUN_TEST) tests/test_scripts.py $(ARGS)
@@ -123,13 +123,13 @@ test-contracts:  ## APIs sanity tests.
 	$(RUN_TEST) tests/test_contracts.py $(ARGS)
 
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
-	$(RUN_TEST) tests/test_connections.py $(ARGS)
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -k "test_connections.py or net_" $(ARGS)
 
-test-malloc:  ## Test psutil.malloc_*() APIs.
-	$(RUN_TEST) tests/test_malloc.py $(ARGS)
+test-heap:  ## Test psutil.heap_*() APIs.
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -k "test_heap.py or heap_" $(ARGS)
 
 test-posix:  ## POSIX specific tests.
-	$(RUN_TEST) tests/test_posix.py $(ARGS)
+	$(RUN_TEST) --ignore=tests/test_memleaks.py -k "test_posix.py or posix_ or Posix" $(ARGS)
 
 test-platform:  ## Run specific platform tests only.
 	$(RUN_TEST) tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)

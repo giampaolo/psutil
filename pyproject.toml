@@ -255,6 +255,7 @@ addopts = [
 ]
 verbosity_subtests = "0"
 testpaths = ["tests/"]
+python_files = ["test_*.py"]
 
 [build-system]
 build-backend = "setuptools.build_meta"
