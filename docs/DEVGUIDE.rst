@@ -20,8 +20,6 @@ Once you have a compiler installed run:
 
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
   install, run tests and do pretty much anything that involves development.
-  This also includes Windows, meaning that you can run `make.bat command`
-  similarly as if you were on UNIX (see `make.bat`_ and `winmake.py`_). Some
   useful commands are:
 
 .. code-block:: bash
@@ -41,9 +39,7 @@ Once you have a compiler installed run:
 
 .. code-block:: bash
 
-    make test ARGS=tests/test_system.py         # UNIX
-
-    set ARGS=tests/test_system.py && make test  # Windows
+    make test ARGS=tests/test_system.py
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
   "edit" / development mode, meaning you can edit psutil code on the fly while
@@ -53,9 +49,21 @@ Once you have a compiler installed run:
 
 .. code-block:: bash
 
-    make test PYTHON=python3.8                       # UNIX
+    make test PYTHON=python3.8
 
-    set PYTHON=C:\Python38\python.exe && make test   # Windows
+Windows
+-------
+
+- The recommended way to develop on Windows is using ``make``, just like on
+  UNIX systems.
+- First, install `Git for Windows`_ and launch a **Git Bash shell**. This
+  provides a Unix-like environment where ``make`` works.
+- Once inside Git Bash, you can run the usual ``make`` commands:
+
+.. code-block:: bash
+
+    make build
+    make test-parallel
 
 Coding style
 ------------
@@ -132,11 +140,10 @@ Documentation
 - doc can be built with ``make install-pydeps-dev; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
-.. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
+.. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
+.. _`Git for Windows`: <https://git-scm.com/install/windows>`
 .. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst
-.. _`make.bat`: https://github.com/giampaolo/psutil/blob/master/make.bat
-.. _`winmake.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/winmake.py
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
@@ -146,3 +153,5 @@ Documentation
 .. _`tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_linux.py
 .. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
 .. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
+.. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
+.. _`winmake.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/winmake.py

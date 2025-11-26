@@ -24,7 +24,6 @@ include docs/conf.py
 include docs/index.rst
 include docs/make.bat
 include docs/requirements.txt
-include make.bat
 include psutil/__init__.py
 include psutil/_common.py
 include psutil/_ntuples.py
@@ -167,7 +166,6 @@ include scripts/internal/print_sysinfo.py
 include scripts/internal/print_timeline.py
 include scripts/internal/purge_installation.py
 include scripts/internal/test_python2_setup_py.py
-include scripts/internal/winmake.py
 include scripts/iotop.py
 include scripts/killall.py
 include scripts/meminfo.py

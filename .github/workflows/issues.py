@@ -37,7 +37,7 @@ LABELS_MAP = {
     ],
     "windows": [
         "windows", "win32", "WinError", "WindowsError", "win10", "win7",
-        "win ", "mingw", "msys", "studio", "microsoft", "make.bat",
+        "win ", "mingw", "msys", "studio", "microsoft",
         "CloseHandle", "GetLastError", "NtQuery", "DLL", "MSVC", "TCHAR",
         "WCHAR", ".bat", "OpenProcess", "TerminateProcess",
         "windows error", "NtWow64", "NTSTATUS", "Visual Studio",

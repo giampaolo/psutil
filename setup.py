@@ -98,7 +98,7 @@ DEV_DEPS = TEST_DEPS + [
     "pylint",
     "pyperf",
     "pypinfo",
-    "pyreadline ; os_name == 'nt'",
+    "pyreadline3 ; os_name == 'nt'",
     "pytest-cov",
     "requests",
     "rstcheck",

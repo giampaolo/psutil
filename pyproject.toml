@@ -195,7 +195,6 @@ disable = [
 [tool.vulture]
 exclude = [
     "docs/conf.py",
-    "scripts/internal/winmake.py",
     "tests/",
 ]
 ignore_decorators = [
