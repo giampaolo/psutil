@@ -93,20 +93,65 @@ def qualname(obj):
     return getattr(obj, "__qualname__", getattr(obj, "__name__", str(obj)))
 
 
+# --- exceptions
+
+
+class UnclosedResourceError(AssertionError):
+    """Base class for errors raised when some resource created during a
+    function call is left unclosed or unfreed afterward.
+    """
+
+    resource_name = "resource"  # override in subclasses
+
+    def __init__(self, count, fun_name):
+        self.count = count
+        self.fun_name = fun_name
+        name = self.resource_name
+        name += "s" if count > 1 else ""  # pluralize
+        msg = (
+            f"detected {count} unclosed {name} after calling {fun_name!r} 1"
+            " time"
+        )
+        super().__init__(msg)
+
+
+class UnclosedFdError(UnclosedResourceError):
+    """Raised when an unclosed file descriptor is detected after
+    calling function once. Used to detect forgotten close(). UNIX only.
+    """
+
+    resource_name = "file descriptor"
+
+
+class UnclosedHandleError(UnclosedResourceError):
+    """Raised when an unclosed handle is detected after calling
+    function once. Used to detect forgotten CloseHandle().
+    Windows only.
+    """
+
+    resource_name = "handle"
+
+
+class UnclosedHeapCreateError(UnclosedResourceError):
+    """Raised when test detects HeapCreate() without a corresponding
+    HeapDestroy() after calling function once. Windows only.
+    """
+
+    resource_name = "HeapCreate() call"
+
+
 class MemoryLeakError(AssertionError):
-    """Raised when a memory leak is detected."""
+    """Raised when a memory leak is detected after calling function
+    many times. Aims to detect:
 
-
-class UnclosedFdError(AssertionError):
-    """Raised when an unclosed file descriptor (UNIX) or handle
-    (Windows) is detected.
+    - `malloc()` without a corresponding `free()`
+    - `mmap()` without `munmap()`
+    - `HeapAlloc()` without `HeapFree()` (Windows)
+    - `VirtualAlloc()` without `VirtualFree()` (Windows)
     """
 
 
-class UnclosedHeapCreateError(AssertionError):
-    """Raised on Windows when test detects HeapCreate() without a
-    corresponding HeapDestroy().
-    """
+# ---
 
 
 class MemoryLeakTestCase(unittest.TestCase):
@@ -167,6 +212,13 @@ class MemoryLeakTestCase(unittest.TestCase):
 
     # --- getters
 
+    def _get_oneshot(self):
+        return {
+            "num_fds": thisproc.num_fds() if POSIX else 0,
+            "num_handles": thisproc.num_handles() if WINDOWS else 0,
+            "heap_count": psutil.heap_info().heap_count if WINDOWS else 0,
+        }
+
     def _get_mem(self):
         mem = thisproc.memory_full_info()
         heap_used = mmap_used = 0
@@ -182,64 +234,34 @@ class MemoryLeakTestCase(unittest.TestCase):
             "vms": mem.vms,
         }
 
-    def _get_num_fds(self):
-        if POSIX:
-            return thisproc.num_fds()
-        else:
-            return thisproc.num_handles()
-
     # --- checkers
 
-    def _check_fds(self, fun):
-        """Makes sure `num_fds()` (POSIX) or `num_handles()` (Windows)
-        do not increase after calling function 1 time.  Used to
-        discover forgotten `close(2)` and `CloseHandle()`.
-        """
-
-        before = self._get_num_fds()
+    def _check_oneshot(self, fun):
+        before = self._get_oneshot()
         self.call(fun)
-        after = self._get_num_fds()
-        diff = after - before
+        after = self._get_oneshot()
 
-        if diff < 0:
-            msg = (
-                f"negative diff {diff!r} (gc probably collected a"
-                " resource from a previous test)"
-            )
-            raise UnclosedFdError(msg)
+        for what, value_before in before.items():
+            value_after = after[what]
+            diff = value_after - value_before
 
-        if diff > 0:
-            type_ = "fd" if POSIX else "handle"
-            if diff > 1:
-                type_ += "s"
-            msg = (
-                f"detected {diff} unclosed {type_} after calling"
-                f" {qualname(fun)!r} 1 time"
-            )
-            raise UnclosedFdError(msg)
+            if diff < 0:
+                msg = (
+                    f"WARNING: {what!r} decreased by {abs(diff)} after calling"
+                    f" {qualname(fun)!r} 1 time"
+                )
+                self._log(msg, 0)
 
-    def _check_heap_count(self, fun):
-        """Windows only. Calls function once, and detects HeapCreate()
-        without a corresponding HeapDestroy().
-        """
-        if not WINDOWS:
-            return
-
-        before = psutil.heap_info().heap_count
-        self.call(fun)
-        after = psutil.heap_info().heap_count
-        diff = after - before
-
-        if diff < 0:
-            msg = f"negative diff {diff!r}"
-            raise UnclosedHeapCreateError(msg)
-
-        if diff > 0:
-            msg = (
-                f"detected {diff} HeapCreate() without a corresponding "
-                f" HeapDestroy() after calling {qualname(fun)!r} 1 time"
-            )
-            raise UnclosedHeapCreateError(msg)
+            elif diff > 0:
+                mapping = {
+                    "num_fds": UnclosedFdError,
+                    "num_handles": UnclosedHandleError,
+                    "heap_count": UnclosedHeapCreateError,
+                }
+                exc = mapping.get(what)
+                if exc is None:
+                    raise ValueError(what)
+                raise exc(diff, qualname(fun))
 
     def _call_ntimes(self, fun, times):
         """Get memory samples before and after calling fun repeatedly,
@@ -331,8 +353,6 @@ class MemoryLeakTestCase(unittest.TestCase):
         if args:
             fun = functools.partial(fun, *args)
 
+        self._check_oneshot(fun)
         self._warmup(fun, warmup_times)
-        self._check_fds(fun)
-        if WINDOWS:
-            self._check_heap_count(fun)
         self._check_mem(fun, times=times, retries=retries, tolerance=tolerance)

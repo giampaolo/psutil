@@ -28,6 +28,7 @@ from psutil._common import supports_ipv6
 from psutil.test import MemoryLeakTestCase
 from psutil.test.memleak import MemoryLeakError
 from psutil.test.memleak import UnclosedFdError
+from psutil.test.memleak import UnclosedHandleError
 
 from . import CI_TESTING
 from . import COVERAGE
@@ -402,7 +403,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
         finally:
             del ls
 
-    def test_unclosed_files(self):
+    def test_unclosed_fds(self):
         def fun():
             f = open(__file__)  # noqa: SIM115
             self.addCleanup(f.close)
@@ -423,7 +424,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
             )
             self.addCleanup(win32api.CloseHandle, handle)
 
-        with pytest.raises(UnclosedFdError):
+        with pytest.raises(UnclosedHandleError):
             self.execute(fun)
 
     def test_tolerance(self):
