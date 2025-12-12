@@ -52,9 +52,8 @@ from . import terminate
 
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
-MemoryLeakTestCase.retries = 10
 
-FEW_TIMES = 5
+FEW_TIMES = 20
 
 
 def fewtimes_if_linux():
