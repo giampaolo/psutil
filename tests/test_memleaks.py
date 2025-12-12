@@ -17,6 +17,8 @@ because of how its JIT handles memory, so tests are skipped.
 import functools
 import os
 
+from psutil.test import MemoryLeakTestCase
+
 import psutil
 from psutil import LINUX
 from psutil import MACOS
@@ -24,7 +26,6 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil.test import MemoryLeakTestCase
 
 from . import AARCH64
 from . import CI_TESTING
