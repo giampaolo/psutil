@@ -17,7 +17,7 @@ because of how its JIT handles memory, so tests are skipped.
 import functools
 import os
 
-from psutil.test import MemoryLeakTestCase
+from psleak import MemoryLeakTestCase
 
 import psutil
 from psutil import LINUX
