@@ -28,7 +28,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 
 from . import AARCH64
-from . import CI_TESTING
 from . import HAS_CPU_AFFINITY
 from . import HAS_CPU_FREQ
 from . import HAS_ENVIRON
@@ -53,8 +52,7 @@ from . import terminate
 
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
-if CI_TESTING:
-    MemoryLeakTestCase.retries *= 2
+MemoryLeakTestCase.retries = 10
 
 FEW_TIMES = 5
 
