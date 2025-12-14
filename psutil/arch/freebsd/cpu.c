@@ -103,7 +103,7 @@ psutil_cpu_topology(PyObject *self, PyObject *args) {
     }
 
     py_str = Py_BuildValue("s", topology);
-    free(topology);
+    // free(topology);
     return py_str;
 }
 

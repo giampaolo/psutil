@@ -35,7 +35,7 @@ jobs:
         with:
           usesh: true
           run: |
-            make ci-test
+            make ci-test PYTHON=python3
 
   openbsd:
     # if: false
@@ -47,7 +47,7 @@ jobs:
         with:
           usesh: true
           run: |
-            make ci-test
+            make ci-test PYTHON=python3
 
   netbsd:
     if: false # XXX: disabled
@@ -59,4 +59,4 @@ jobs:
         with:
           usesh: true
           run: |
-            make ci-test
+            make ci-test PYTHON=python3
