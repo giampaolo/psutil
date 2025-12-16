@@ -230,8 +230,9 @@ ci-lint:  ## Run all linters on GitHub CI.
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) build install
 	$(MAKE) print-sysinfo
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest tests/
+	$(MAKE) test
 
 ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
