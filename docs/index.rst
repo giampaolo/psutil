@@ -14,7 +14,7 @@ Quick links
 - `Download <https://pypi.org/project/psutil/#files>`__
 - `Blog <https://gmpy.dev/tags/psutil>`__
 - `Contributing <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
+- `Development guide`_
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
@@ -2765,7 +2765,7 @@ FAQs
   the Python script as a Windows service (ProcessHacker does this).
 
 * Q: is MinGW supported on Windows?
-* A: no, you should Visual Studio (see `development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_).
+* A: no, you should Visual Studio (see `development guide`_).
 
 Running tests
 =============
@@ -3258,6 +3258,7 @@ Timeline
 .. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`Development guide`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`DEVGUIDE.rst`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
