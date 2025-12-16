@@ -244,9 +244,8 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	rm -rf .tests
 	mkdir -p .tests
 	cp -r tests/* .tests/
-	cd .tests
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "not test_memleaks.py"
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "test_memleaks.py"
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "not test_memleaks.py"
+	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "test_memleaks.py"
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
