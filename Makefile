@@ -230,7 +230,7 @@ ci-lint:  ## Run all linters on GitHub CI.
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
-	$(MAKE) build install
+	$(MAKE) build
 	$(MAKE) print-sysinfo
 	$(MAKE) test
 
