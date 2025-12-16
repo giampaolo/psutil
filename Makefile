@@ -41,6 +41,7 @@ clean:  ## Remove all build files.
 		.failed-tests.txt \
 		.pytest_cache \
 		.ruff_cache/ \
+		.tests \
 		build/ \
 		dist/ \
 		docs/_build/ \
@@ -240,9 +241,12 @@ ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
 	$(MAKE) install-sysdeps
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
+	rm -rf .tests
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs --ignore=../tests/test_memleaks.py ../tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs ../tests/test_memleaks.py
+	cp -r tests/* .tests/
+	cd .tests
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "not test_memleaks.py"
+	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "test_memleaks.py"
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
