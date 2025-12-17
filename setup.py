@@ -487,7 +487,7 @@ def main():
         url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
         license='BSD-3-Clause',
-        packages=['psutil'],
+        packages=['psutil', 'psutil.test'],
         ext_modules=[ext],
         options=options,
         classifiers=[
