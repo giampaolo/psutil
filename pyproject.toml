@@ -207,6 +207,7 @@ ignore_decorators = [
 ignore_messages = [
     "Duplicate explicit target name",
     "Duplicate implicit target name",
+    "Duplicate name \"development guide\" for external target",
     "Hyperlink target \".*?\" is not referenced",
     "Target name overrides implicit target name \"development guide\"",
 ]

@@ -75,7 +75,7 @@ install-sysdeps:
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-git-hooks
@@ -230,20 +230,21 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) install-pydeps-test
 	$(MAKE) build
 	$(MAKE) print-sysinfo
 	$(MAKE) test
+	$(MAKE) test-memleaks
 
-ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
-	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
-	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
+ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	$(MAKE) install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
-	rm -rf .tests
+	# Tests must be run from a separate directory so pytest does not import
+	# from the source tree and instead exercises only the installed wheel.
+	rm -rf .tests tests/__pycache__
 	mkdir -p .tests
-	cp -r tests/* .tests/
+	cp -r tests .tests/
 	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "not test_memleaks.py"
 	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "test_memleaks.py"
 
