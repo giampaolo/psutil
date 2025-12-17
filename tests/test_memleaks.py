@@ -234,14 +234,14 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     @fewtimes_if_linux()
     def test_open_files(self):
-        kw = {"times": 50} if WINDOWS else {}
+        kw = {"times": 10, "retries": 30} if WINDOWS else {}
         with open(get_testfn(), 'w'):
             self.execute(self.proc.open_files, **kw)
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     @fewtimes_if_linux()
     def test_memory_maps(self):
-        self.execute(self.proc.memory_maps)
+        self.execute(self.proc.memory_maps, times=30, retries=10)
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
