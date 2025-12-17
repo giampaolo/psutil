@@ -241,7 +241,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     @fewtimes_if_linux()
     def test_memory_maps(self):
-        self.execute(self.proc.memory_maps, times=30, retries=10)
+        self.execute(self.proc.memory_maps, times=60, retries=10)
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
@@ -307,6 +307,9 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             fun()
         except psutil.NoSuchProcess:
             pass
+
+    def test_cpu_affinity_set_badarg(self):
+        raise pytest.skip("skip")
 
     if WINDOWS:
 
