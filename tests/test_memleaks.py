@@ -89,21 +89,6 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     proc = thisproc
 
-    def execute_w_exc(self, exc, fun, **kwargs):
-        """Run MemoryLeakTestCase.execute() expecting fun() to raise
-        exc on every call.
-        """
-
-        def call():
-            try:
-                fun()
-            except exc:
-                pass
-            else:
-                return self.fail(f"{fun} did not raise {exc}")
-
-        self.execute(call, **kwargs)
-
     def test_coverage(self):
         ns = process_namespace(None)
         ns.test_class_coverage(self, ns.getters + ns.setters)
@@ -161,7 +146,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
     def test_ionice_set_badarg(self):
         fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
-        self.execute_w_exc(OSError, fun)
+        self.execute_w_exc(OSError, fun, retries=20)
 
     @pytest.mark.skipif(not HAS_PROC_IO_COUNTERS, reason="not supported")
     @fewtimes_if_linux()
@@ -243,7 +228,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity_set_badarg(self):
-        self.execute_w_exc(ValueError, lambda: self.proc.cpu_affinity([-1]))
+        self.execute_w_exc(
+            ValueError, lambda: self.proc.cpu_affinity([-1]), retries=20
+        )
 
     @fewtimes_if_linux()
     def test_open_files(self):
@@ -270,7 +257,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_set_badarg(self):
-        self.execute_w_exc((OSError, ValueError), lambda: self.proc.rlimit(-1))
+        self.execute_w_exc(
+            (OSError, ValueError), lambda: self.proc.rlimit(-1), retries=20
+        )
 
     @fewtimes_if_linux()
     # Windows implementation is based on a single system-wide
