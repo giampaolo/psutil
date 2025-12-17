@@ -453,6 +453,14 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
             self.execute(lambda: psutil.net_connections(kind='all'))
 
     def test_net_if_addrs(self):
+        if WINDOWS:
+            # Calling GetAdaptersAddresses() for the first time
+            # allocates internal OS handles. These handles persist for
+            # the lifetime of the process, causing psleak to report
+            # "unclosed handles". Call it here first to avoid false
+            # positives.
+            psutil.net_if_addrs()
+
         # Note: verified that on Windows this was a false positive.
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
