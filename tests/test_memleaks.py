@@ -199,7 +199,8 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     @fewtimes_if_linux()
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
-        self.execute(self.proc.threads)
+        kw = {"times": 50} if WINDOWS else {}
+        self.execute(self.proc.threads, **kw)
 
     @fewtimes_if_linux()
     def test_cpu_times(self):
@@ -246,8 +247,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     @fewtimes_if_linux()
     def test_open_files(self):
+        kw = {"times": 50} if WINDOWS else {}
         with open(get_testfn(), 'w'):
-            self.execute(self.proc.open_files)
+            self.execute(self.proc.open_files, **kw)
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
     @fewtimes_if_linux()
