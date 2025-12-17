@@ -492,6 +492,12 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
         self.execute(psutil.boot_time)
 
     def test_users(self):
+        if WINDOWS:
+            # The first time this is called it allocates internal OS
+            # handles. These handles persist for the lifetime of the
+            # process, causing psleak to report "unclosed handles".
+            # Call it here first to avoid false positives.
+            psutil.users()
         self.execute(psutil.users)
 
     def test_set_debug(self):
