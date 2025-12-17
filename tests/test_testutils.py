@@ -403,6 +403,7 @@ class TestMemLeakClass(MemoryLeakTestCase):
         finally:
             del ls
 
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_unclosed_fds(self):
         def fun():
             f = open(__file__)  # noqa: SIM115

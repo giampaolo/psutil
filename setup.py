@@ -81,10 +81,13 @@ TEST_DEPS = [
     "pytest-instafail",
     "pytest-xdist",
     "setuptools",
-    "pywin32 ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
-    "wheel ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
-    "wmi ; os_name == 'nt' and platform_python_implementation != 'PyPy'",
 ]
+if WINDOWS and not hasattr(sys, "pypy_version_info"):
+    TEST_DEPS.extend([
+        "pywin32",
+        "wheel",
+        "wmi",
+    ])
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
@@ -92,13 +95,11 @@ DEV_DEPS = TEST_DEPS + [
     "abi3audit",
     "black",
     "check-manifest",
-    "colorama ; os_name == 'nt'",
     "coverage",
     "packaging",
     "pylint",
     "pyperf",
     "pypinfo",
-    "pyreadline3 ; os_name == 'nt'",
     "pytest-cov",
     "requests",
     "rstcheck",
@@ -112,6 +113,12 @@ DEV_DEPS = TEST_DEPS + [
     "vulture",
     "wheel",
 ]
+
+if WINDOWS:
+    DEV_DEPS.extend([
+        "colorama",
+        "pyreadline3",
+    ])
 
 # The pre-processor macros that are passed to the C compiler when
 # building the extension.
@@ -480,7 +487,7 @@ def main():
         url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
         license='BSD-3-Clause',
-        packages=['psutil'],
+        packages=['psutil', 'psutil.test'],
         ext_modules=[ext],
         options=options,
         classifiers=[

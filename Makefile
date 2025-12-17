@@ -41,6 +41,7 @@ clean:  ## Remove all build files.
 		.failed-tests.txt \
 		.pytest_cache \
 		.ruff_cache/ \
+		.tests \
 		build/ \
 		dist/ \
 		docs/_build/ \
@@ -74,12 +75,12 @@ install-sysdeps:
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-git-hooks
 	$(MAKE) install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) -e .[test,dev]
+	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.DEV_DEPS))"`
 
 install-git-hooks:  ## Install GIT pre-commit hook.
 	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
@@ -229,19 +230,23 @@ ci-lint:  ## Run all linters on GitHub CI.
 
 ci-test:  ## Run tests on GitHub CI. Used by BSD runners.
 	$(MAKE) install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) install-pydeps-test
+	$(MAKE) build
 	$(MAKE) print-sysinfo
-	$(PYTHON_ENV_VARS) $(PYTHON) -m pytest tests/
+	$(MAKE) test
+	$(MAKE) test-memleaks
 
-ci-test-cibuildwheel:  ## Run tests from cibuildwheel.
-	# testing the wheels means we can't use other test targets which are rebuilding the python extensions
-	# we also need to run the tests from another folder for pytest not to use the sources but only what's been installed
+ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	$(MAKE) install-sysdeps
-	PIP_BREAK_SYSTEM_PACKAGES=1 $(MAKE) install-pydeps-test
+	$(MAKE) install-pydeps-test
 	$(MAKE) print-sysinfo
+	# Tests must be run from a separate directory so pytest does not import
+	# from the source tree and instead exercises only the installed wheel.
+	rm -rf .tests tests/__pycache__
 	mkdir -p .tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs --ignore=../tests/test_memleaks.py ../tests
-	cd .tests/ && $(PYTHON_ENV_VARS) $(PYTHON) -m pytest --pyargs ../tests/test_memleaks.py
+	cp -r tests .tests/
+	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "not test_memleaks.py"
+	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "test_memleaks.py"
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

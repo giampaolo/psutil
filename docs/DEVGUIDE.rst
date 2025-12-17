@@ -153,5 +153,4 @@ Documentation
 .. _`tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_linux.py
 .. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
 .. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
-.. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
 .. _`winmake.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/winmake.py
