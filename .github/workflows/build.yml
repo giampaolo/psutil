@@ -25,11 +25,11 @@ jobs:
       matrix:
         include:
           - { os: ubuntu-latest, arch: x86_64 }
-          # - { os: ubuntu-24.04-arm, arch: aarch64 }
-          # - { os: macos-15, arch: x86_64 }
-          # - { os: macos-15, arch: arm64 }
-          # - { os: windows-2025, arch: AMD64 }
-          # - { os: windows-11-arm, arch: ARM64 }
+          - { os: ubuntu-24.04-arm, arch: aarch64 }
+          - { os: macos-15, arch: x86_64 }
+          - { os: macos-15, arch: arm64 }
+          - { os: windows-2025, arch: AMD64 }
+          - { os: windows-11-arm, arch: ARM64 }
     steps:
       - uses: actions/checkout@v5
 
