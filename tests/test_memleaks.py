@@ -99,6 +99,8 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     @fewtimes_if_linux()
     def test_cmdline(self):
+        if WINDOWS:
+            self.proc.cmdline()
         self.execute(self.proc.cmdline)
 
     @fewtimes_if_linux()
