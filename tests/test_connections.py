@@ -528,7 +528,8 @@ class TestSystemWideConnections(ConnectionTestCase):
             fnames.append(fname)
             src = textwrap.dedent(f"""\
                 import time, os, sys
-                sys.path.insert(0, r'{ROOT_DIR}')
+                if 'CIBUILDWHEEL' not in os.environ:
+                    sys.path.insert(0, r'{ROOT_DIR}')
                 from tests import create_sockets
                 with create_sockets():
                     with open(r'{fname}', 'w') as f:
