@@ -225,10 +225,13 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of logical CPUs in the system (same as `os.cpu_count`_)
+  Return the number of logical CPUs in the system (similar to `os.cpu_count`_)
   or ``None`` if undetermined.
+  Unlike `os.cpu_count`_, this is not influenced by the ``PYTHON_CPU_COUNT``
+  environment variable introduced in Python 3.13.
   "logical CPUs" means the number of physical cores multiplied by the number
   of threads that can run on each core (this is known as Hyper Threading).
+  This is what cloud providers often refer to as vCPUs.
   If *logical* is ``False`` return the number of physical cores only, or
   ``None`` if undetermined.
   On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
