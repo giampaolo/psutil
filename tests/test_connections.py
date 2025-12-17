@@ -530,9 +530,7 @@ class TestSystemWideConnections(ConnectionTestCase):
                 import time, os, sys
                 if 'CIBUILDWHEEL' not in os.environ:
                     sys.path.insert(0, r'{ROOT_DIR}')
-                    from tests import create_sockets
-                else:
-                    from . import create_sockets
+                from tests import create_sockets
                 with create_sockets():
                     with open(r'{fname}', 'w') as f:
                         f.write("hello")
