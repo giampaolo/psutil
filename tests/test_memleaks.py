@@ -4,14 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for detecting function memory leaks (typically the ones
-implemented in C). It does so by calling a function many times and
-checking whether process memory usage keeps increasing between
-calls or over time.
-Note that this may produce false positives (especially on Windows
-for some reason).
-PyPy appears to be completely unstable for this framework, probably
-because of how its JIT handles memory, so tests are skipped.
+"""Regression test suite for detecting memory leaks in the underlying C
+extension. Based on https://github.com/giampaolo/psleak.
 """
 
 import functools
@@ -432,7 +426,8 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
 
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
-        self.execute(psutil.sensors_fans)
+        times = FEW_TIMES if LINUX else self.times
+        self.execute(psutil.sensors_fans, times=times)
 
     # --- others
 
