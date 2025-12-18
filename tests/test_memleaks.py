@@ -68,7 +68,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         self.execute(self.proc.name)
 
     def test_cmdline(self):
-        if WINDOWS:
+        if WINDOWS and self.proc.is_running():
             self.proc.cmdline()
         self.execute(self.proc.cmdline)
 
