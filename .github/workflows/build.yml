@@ -12,7 +12,9 @@
 on: [push, pull_request]
 name: build
 concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && github.sha || '' }}
+  # Cancel build if a new one starts, but don't interrupt all jobs on the first
+  # failure.
+  group: build-${{ github.ref }}
   cancel-in-progress: true
 jobs:
 
