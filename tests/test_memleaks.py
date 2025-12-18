@@ -53,6 +53,7 @@ from . import terminate
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 
+MemoryLeakTestCase.humanize = False
 TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)
 
