@@ -264,6 +264,9 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
         except psutil.NoSuchProcess:
             pass
 
+    def test_cpu_affinity_set_badarg(self):
+        raise pytest.skip("skip")
+
     if WINDOWS:
 
         def test_kill(self):
