@@ -245,9 +245,6 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     paths. We'll check those code paths.
     """
 
-    times = 50
-    retries = 20
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -266,9 +263,6 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             fun()
         except psutil.NoSuchProcess:
             pass
-
-    def test_cpu_affinity_set_badarg(self):
-        raise pytest.skip("skip")
 
     if WINDOWS:
 
