@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 """Regression test suite for detecting memory leaks in the underlying C
-extension. Based on https://github.com/giampaolo/psleak.
+extension. Requires https://github.com/giampaolo/psleak.
 """
 
 import functools
