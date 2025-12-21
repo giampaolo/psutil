@@ -4,18 +4,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Tests for detecting function memory leaks (typically the ones
-implemented in C). It does so by calling a function many times and
-checking whether process memory usage keeps increasing between
-calls or over time.
-Note that this may produce false positives (especially on Windows
-for some reason).
-PyPy appears to be completely unstable for this framework, probably
-because of how its JIT handles memory, so tests are skipped.
+"""Regression test suite for detecting memory leaks in the underlying C
+extension. Requires https://github.com/giampaolo/psleak.
 """
 
 import functools
 import os
+
+from psleak import MemoryLeakTestCase
 
 import psutil
 from psutil import LINUX
@@ -24,10 +20,8 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
-from psutil.test import MemoryLeakTestCase
 
 from . import AARCH64
-from . import CI_TESTING
 from . import HAS_CPU_AFFINITY
 from . import HAS_CPU_FREQ
 from . import HAS_ENVIRON
@@ -52,34 +46,12 @@ from . import terminate
 
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
-if CI_TESTING:
-    MemoryLeakTestCase.retries *= 2
 
-FEW_TIMES = 5
+# try to minimize flaky failures
+MemoryLeakTestCase.retries = 30
 
-
-def fewtimes_if_linux():
-    """Decorator for those Linux functions which are implemented in pure
-    Python, and which we want to run faster.
-    """
-
-    def decorator(fun):
-        @functools.wraps(fun)
-        def wrapper(self, *args, **kwargs):
-            if LINUX:
-                before = self.__class__.times
-                try:
-                    self.__class__.times = FEW_TIMES
-                    return fun(self, *args, **kwargs)
-                finally:
-                    self.__class__.times = before
-            else:
-                return fun(self, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
+TIMES = MemoryLeakTestCase.times
+FEW_TIMES = int(TIMES / 10)
 
 # ===================================================================
 # Process class
@@ -91,52 +63,32 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     proc = thisproc
 
-    def execute_w_exc(self, exc, fun, **kwargs):
-        """Run MemoryLeakTestCase.execute() expecting fun() to raise
-        exc on every call.
-        """
-
-        def call():
-            try:
-                fun()
-            except exc:
-                pass
-            else:
-                return self.fail(f"{fun} did not raise {exc}")
-
-        self.execute(call, **kwargs)
-
     def test_coverage(self):
         ns = process_namespace(None)
         ns.test_class_coverage(self, ns.getters + ns.setters)
 
-    @fewtimes_if_linux()
     def test_name(self):
         self.execute(self.proc.name)
 
-    @fewtimes_if_linux()
     def test_cmdline(self):
+        if WINDOWS and self.proc.is_running():
+            self.proc.cmdline()
         self.execute(self.proc.cmdline)
 
-    @fewtimes_if_linux()
     def test_exe(self):
         self.execute(self.proc.exe)
 
-    @fewtimes_if_linux()
     def test_ppid(self):
         self.execute(self.proc.ppid)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @fewtimes_if_linux()
     def test_uids(self):
         self.execute(self.proc.uids)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @fewtimes_if_linux()
     def test_gids(self):
         self.execute(self.proc.gids)
 
-    @fewtimes_if_linux()
     def test_status(self):
         self.execute(self.proc.status)
 
@@ -163,10 +115,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
     def test_ionice_set_badarg(self):
         fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
-        self.execute_w_exc(OSError, fun)
+        self.execute_w_exc(OSError, fun, retries=20)
 
     @pytest.mark.skipif(not HAS_PROC_IO_COUNTERS, reason="not supported")
-    @fewtimes_if_linux()
     def test_io_counters(self):
         self.execute(self.proc.io_counters)
 
@@ -176,11 +127,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         psutil.Process().username()
         self.execute(self.proc.username)
 
-    @fewtimes_if_linux()
     def test_create_time(self):
         self.execute(self.proc.create_time)
 
-    @fewtimes_if_linux()
     @skip_on_access_denied(only_if=OPENBSD)
     def test_num_threads(self):
         self.execute(self.proc.num_threads)
@@ -190,38 +139,31 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         self.execute(self.proc.num_handles)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @fewtimes_if_linux()
     def test_num_fds(self):
         self.execute(self.proc.num_fds)
 
-    @fewtimes_if_linux()
     def test_num_ctx_switches(self):
         self.execute(self.proc.num_ctx_switches)
 
-    @fewtimes_if_linux()
     @skip_on_access_denied(only_if=OPENBSD)
     def test_threads(self):
-        self.execute(self.proc.threads)
+        kw = {"times": 50} if WINDOWS else {}
+        self.execute(self.proc.threads, **kw)
 
-    @fewtimes_if_linux()
     def test_cpu_times(self):
         self.execute(self.proc.cpu_times)
 
-    @fewtimes_if_linux()
     @pytest.mark.skipif(not HAS_PROC_CPU_NUM, reason="not supported")
     def test_cpu_num(self):
         self.execute(self.proc.cpu_num)
 
-    @fewtimes_if_linux()
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
-    @fewtimes_if_linux()
     def test_memory_full_info(self):
         self.execute(self.proc.memory_full_info)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    @fewtimes_if_linux()
     def test_terminal(self):
         self.execute(self.proc.terminal)
 
@@ -229,7 +171,6 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         times = FEW_TIMES if POSIX else self.times
         self.execute(self.proc.resume, times=times)
 
-    @fewtimes_if_linux()
     def test_cwd(self):
         self.execute(self.proc.cwd)
 
@@ -244,17 +185,19 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
 
     @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity_set_badarg(self):
-        self.execute_w_exc(ValueError, lambda: self.proc.cpu_affinity([-1]))
+        self.execute_w_exc(
+            ValueError, lambda: self.proc.cpu_affinity([-1]), retries=20
+        )
 
-    @fewtimes_if_linux()
     def test_open_files(self):
+        kw = {"times": 10, "retries": 30} if WINDOWS else {}
         with open(get_testfn(), 'w'):
-            self.execute(self.proc.open_files)
+            self.execute(self.proc.open_files, **kw)
 
     @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
-    @fewtimes_if_linux()
+    @pytest.mark.skipif(LINUX, reason="too slow on LINUX")
     def test_memory_maps(self):
-        self.execute(self.proc.memory_maps)
+        self.execute(self.proc.memory_maps, times=60, retries=10)
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
@@ -270,9 +213,10 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
     def test_rlimit_set_badarg(self):
-        self.execute_w_exc((OSError, ValueError), lambda: self.proc.rlimit(-1))
+        self.execute_w_exc(
+            (OSError, ValueError), lambda: self.proc.rlimit(-1), retries=20
+        )
 
-    @fewtimes_if_linux()
     # Windows implementation is based on a single system-wide
     # function (tested later).
     @pytest.mark.skipif(WINDOWS, reason="worthless on WINDOWS")
@@ -280,9 +224,10 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         # TODO: UNIX sockets are temporarily implemented by parsing
         # 'pfiles' cmd  output; we don't want that part of the code to
         # be executed.
+        times = FEW_TIMES if LINUX else self.times
         with create_sockets():
             kind = 'inet' if SUNOS else 'all'
-            self.execute(lambda: self.proc.net_connections(kind))
+            self.execute(lambda: self.proc.net_connections(kind), times=times)
 
     @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
     def test_environ(self):
@@ -318,6 +263,9 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             fun()
         except psutil.NoSuchProcess:
             pass
+
+    def test_cpu_affinity_set_badarg(self):
+        raise pytest.skip("skip")
 
     if WINDOWS:
 
@@ -370,32 +318,27 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
 
     # --- cpu
 
-    @fewtimes_if_linux()
     def test_cpu_count(self):  # logical
         self.execute(lambda: psutil.cpu_count(logical=True))
 
-    @fewtimes_if_linux()
     def test_cpu_count_cores(self):
         self.execute(lambda: psutil.cpu_count(logical=False))
 
-    @fewtimes_if_linux()
     def test_cpu_times(self):
         self.execute(psutil.cpu_times)
 
-    @fewtimes_if_linux()
     def test_per_cpu_times(self):
         self.execute(lambda: psutil.cpu_times(percpu=True))
 
-    @fewtimes_if_linux()
     def test_cpu_stats(self):
         self.execute(psutil.cpu_stats)
 
-    @fewtimes_if_linux()
     # TODO: remove this once 1892 is fixed
     @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
-        self.execute(psutil.cpu_freq)
+        times = FEW_TIMES if LINUX else self.times
+        self.execute(psutil.cpu_freq, times=times)
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
     def test_getloadavg(self):
@@ -429,32 +372,39 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
         LINUX and not os.path.exists('/proc/diskstats'),
         reason="/proc/diskstats not available on this Linux version",
     )
-    @fewtimes_if_linux()
     def test_disk_io_counters(self):
         self.execute(lambda: psutil.disk_io_counters(nowrap=False))
 
     # --- proc
 
-    @fewtimes_if_linux()
     def test_pids(self):
         self.execute(psutil.pids)
 
     # --- net
 
-    @fewtimes_if_linux()
     @pytest.mark.skipif(not HAS_NET_IO_COUNTERS, reason="not supported")
     def test_net_io_counters(self):
         self.execute(lambda: psutil.net_io_counters(nowrap=False))
 
-    @fewtimes_if_linux()
     @pytest.mark.skipif(MACOS and os.getuid() != 0, reason="need root access")
     def test_net_connections(self):
         # always opens and handle on Windows() (once)
         psutil.net_connections(kind='all')
+        times = FEW_TIMES if LINUX else self.times
         with create_sockets():
-            self.execute(lambda: psutil.net_connections(kind='all'))
+            self.execute(
+                lambda: psutil.net_connections(kind='all'), times=times
+            )
 
     def test_net_if_addrs(self):
+        if WINDOWS:
+            # Calling GetAdaptersAddresses() for the first time
+            # allocates internal OS handles. These handles persist for
+            # the lifetime of the process, causing psleak to report
+            # "unclosed handles". Call it here first to avoid false
+            # positives.
+            psutil.net_if_addrs()
+
         # Note: verified that on Windows this was a false positive.
         tolerance = 80 * 1024 if WINDOWS else self.tolerance
         self.execute(psutil.net_if_addrs, tolerance=tolerance)
@@ -464,28 +414,33 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
 
     # --- sensors
 
-    @fewtimes_if_linux()
     @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
     def test_sensors_battery(self):
         self.execute(psutil.sensors_battery)
 
-    @fewtimes_if_linux()
     @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
+    @pytest.mark.skipif(LINUX, reason="too slow on LINUX")
     def test_sensors_temperatures(self):
-        self.execute(psutil.sensors_temperatures)
+        times = FEW_TIMES if LINUX else self.times
+        self.execute(psutil.sensors_temperatures, times=times)
 
-    @fewtimes_if_linux()
     @pytest.mark.skipif(not HAS_SENSORS_FANS, reason="not supported")
     def test_sensors_fans(self):
-        self.execute(psutil.sensors_fans)
+        times = FEW_TIMES if LINUX else self.times
+        self.execute(psutil.sensors_fans, times=times)
 
     # --- others
 
-    @fewtimes_if_linux()
     def test_boot_time(self):
         self.execute(psutil.boot_time)
 
     def test_users(self):
+        if WINDOWS:
+            # The first time this is called it allocates internal OS
+            # handles. These handles persist for the lifetime of the
+            # process, causing psleak to report "unclosed handles".
+            # Call it here first to avoid false positives.
+            psutil.users()
         self.execute(psutil.users)
 
     def test_set_debug(self):

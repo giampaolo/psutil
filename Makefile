@@ -76,6 +76,7 @@ install-sysdeps:
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install git+https://github.com/giampaolo/psleak.git
 
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-git-hooks
@@ -136,7 +137,7 @@ test-platform:  ## Run specific platform tests only.
 	$(RUN_TEST) tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS", "AIX") if getattr(psutil, x)][0])'`.py $(ARGS)
 
 test-memleaks:  ## Memory leak tests.
-	$(RUN_TEST) tests/test_memleaks.py $(ARGS)
+	PYTHONMALLOC=malloc $(RUN_TEST) -k test_memleaks.py $(ARGS)
 
 test-sudo:  ## Run tests requiring root privileges.
 	# Use unittest runner because pytest may not be installed as root.
@@ -246,7 +247,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 	mkdir -p .tests
 	cp -r tests .tests/
 	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "not test_memleaks.py"
-	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) $(PYTHON) -m pytest -k "test_memleaks.py"
+	cd .tests/ && PYTHONPATH=$$(pwd) $(PYTHON_ENV_VARS) PYTHONMALLOC=malloc $(PYTHON) -m pytest -k "test_memleaks.py"
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit

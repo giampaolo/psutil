@@ -7,9 +7,7 @@
 """Tests for testing utils."""
 
 import collections
-import contextlib
 import errno
-import io
 import os
 import socket
 import stat
@@ -21,19 +19,11 @@ import tests
 from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import POSIX
-from psutil import WINDOWS
 from psutil._common import open_binary
 from psutil._common import open_text
 from psutil._common import supports_ipv6
-from psutil.test import MemoryLeakTestCase
-from psutil.test.memleak import MemoryLeakError
-from psutil.test.memleak import UnclosedFdError
-from psutil.test.memleak import UnclosedHandleError
 
-from . import CI_TESTING
-from . import COVERAGE
 from . import HAS_NET_CONNECTIONS_UNIX
-from . import PYPY
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import PsutilTestCase
@@ -49,7 +39,6 @@ from . import process_namespace
 from . import pytest
 from . import reap_children
 from . import retry
-from . import retry_on_failure
 from . import safe_mkdir
 from . import safe_rmpath
 from . import system_namespace
@@ -367,76 +356,6 @@ class TestNetUtils(PsutilTestCase):
                 assert fams[socket.AF_UNIX] >= 2
             assert types[socket.SOCK_STREAM] >= 2
             assert types[socket.SOCK_DGRAM] >= 2
-
-
-@pytest.mark.skipif(PYPY, reason="unreliable on PYPY")
-@pytest.mark.xdist_group(name="serial")
-class TestMemLeakClass(MemoryLeakTestCase):
-    def test_param_err(self):
-        with pytest.raises(ValueError):
-            self.execute(lambda: 0, times=0)
-        with pytest.raises(ValueError):
-            self.execute(lambda: 0, times=-1)
-        with pytest.raises(ValueError):
-            self.execute(lambda: 0, warmup_times=-1)
-        with pytest.raises(ValueError):
-            self.execute(lambda: 0, tolerance=-1)
-        with pytest.raises(ValueError):
-            self.execute(lambda: 0, retries=-1)
-
-    @retry_on_failure()
-    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI")
-    @pytest.mark.skipif(COVERAGE, reason="skipped during test coverage")
-    def test_leak_mem(self):
-        ls = []
-
-        def fun(ls=ls):
-            ls.append("x" * 248 * 1024)
-
-        try:
-            # will consume around 60M in total
-            with pytest.raises(MemoryLeakError):
-                with contextlib.redirect_stdout(
-                    io.StringIO()
-                ), contextlib.redirect_stderr(io.StringIO()):
-                    self.execute(fun, times=100)
-        finally:
-            del ls
-
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    def test_unclosed_fds(self):
-        def fun():
-            f = open(__file__)  # noqa: SIM115
-            self.addCleanup(f.close)
-            box.append(f)  # prevent auto-gc
-
-        box = []
-        with pytest.raises(UnclosedFdError):
-            self.execute(fun)
-
-    @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-    def test_unclosed_handles(self):
-        import win32api
-        import win32con
-
-        def fun():
-            handle = win32api.OpenProcess(
-                win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-            )
-            self.addCleanup(win32api.CloseHandle, handle)
-
-        with pytest.raises(UnclosedHandleError):
-            self.execute(fun)
-
-    def test_tolerance(self):
-        def fun():
-            ls.append("x" * 24 * 1024)
-
-        ls = []
-        times = 100
-        self.execute(
-            fun, times=times, warmup_times=0, tolerance=200 * 1024 * 1024
-        )
 
 
 class TestTestingUtils(PsutilTestCase):

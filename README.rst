@@ -464,17 +464,6 @@ Heap info
     pheap(heap_used=5177792, mmap_used=819200)
     >>> psutil.heap_trim()
 
-Detecting memory leaks in C functions
--------------------------------------
-
-.. code-block:: python
-
-    from psutil.test import MemoryLeakTestCase
-
-    class TestLeaks(MemoryLeakTestCase):
-        def test_fun(self):
-            self.execute(some_function)
-
 Windows services
 ----------------
 
