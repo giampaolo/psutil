@@ -77,6 +77,7 @@ Py_GIL_DISABLED = sysconfig.get_config_var("Py_GIL_DISABLED")
 # Test deps, installable via `pip install .[test]` or
 # `make install-pydeps-test`.
 TEST_DEPS = [
+    "psleak",
     "pytest",
     "pytest-instafail",
     "pytest-xdist",
