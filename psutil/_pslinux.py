@@ -1608,9 +1608,14 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-def _parse_fdinfo(f):
+def _parse_fdinfo(f, pos_default=0, flags_default=0):
     # f:  a file opened in binary
-    pos, flags = None, None
+    #
+    # defaults are supplied so that in the edge case that
+    # the fdindo does not have values, the function
+    # can still return int values instead of None.
+    # the caller `open_files()` assumes the return values are int values.
+    pos, flags = pos_default, flags_default
     for _ in [0, 1]:
         line_vals = f.readline().split()
         if line_vals is None or len(line_vals) < 2:

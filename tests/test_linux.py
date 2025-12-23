@@ -1965,12 +1965,14 @@ ino:	29836347532685335"""
         # https://github.com/giampaolo/psutil/issues/2596
         fdinfo_content = """\
 flags:	02100000"""
-        self._do_test_fdinfo_parsing(fdinfo_content, (None, 0o2100000))
+        # pos: defaulted to 0
+        self._do_test_fdinfo_parsing(fdinfo_content, (0, 0o2100000))
 
     def test_open_files_fdinfo_parsing_empty(self):
         # extereme case the file is empty (not seen in practice)
         fdinfo_content = ""
-        self._do_test_fdinfo_parsing(fdinfo_content, (None, None))
+        # defaulted to 0s
+        self._do_test_fdinfo_parsing(fdinfo_content, (0, 0))
 
     def _do_test_fdinfo_parsing(self, content, expected):
         # `f`` needs to be a file in binary mode,
