@@ -1,15 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-7.2.0 (IN DEVELOPMENT)
-======================
+7.2.0
+=====
 
-XXXX-XX-XX
+2025-12-23
 
 **Enhancements**
 
 - 1275_: new `heap_info()`_ and `heap_trim()`_ functions, providing direct
-  access to the platform's native C heap allocator. Useful to create tools to
-  detect memory leaks.
+  access to the platform's native C heap allocator (glibc, mimalloc,
+  libmalloc). Useful to create tools to detect memory leaks.
 - 2403_, [Linux]: publish wheels for Linux musl.
 - 2680_: unit tests are no longer installed / part of the distribution. They
   now live under `tests/` instead of `psutil/tests`.
@@ -18,8 +18,8 @@ XXXX-XX-XX
 
 * 2684_, [FreeBSD], [critical]: compilation fails on FreeBSD 14 due to missing
   include.
-* 2691_, [Windows]: fix memory leak in `net_if_stats()`_ memory leak due to
-  missing ``Py_CLEAR``.
+* 2691_, [Windows]: fix memory leak in `net_if_stats()`_ due to missing
+  ``Py_CLEAR``.
 
 **Compatibility notes**
 

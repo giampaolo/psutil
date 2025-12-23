@@ -2753,7 +2753,7 @@ If you want to develop psutil take a look at the `DEVGUIDE.rst`_.
 Platforms support history
 =========================
 
-* psutil 7.2.0 (XXXX-XX): publish wheels for Linux musl
+* psutil 7.2.0 (2025-12): publish wheels for Linux musl
 * psutil 7.1.2 (2025-10): publish wheels for free-threaded Python
 * psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python
   (**Linux** and **Windows**)
