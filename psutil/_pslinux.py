@@ -1420,11 +1420,14 @@ def sensors_battery():
                     return ret.strip()
         return None
 
-    bats = [
-        x
-        for x in os.listdir(POWER_SUPPLY_PATH)
-        if x.startswith('BAT') or 'battery' in x.lower()
-    ]
+    try:
+        bats = [
+            x
+            for x in os.listdir(POWER_SUPPLY_PATH)
+            if x.startswith('BAT') or 'battery' in x.lower()
+        ]
+    except FileNotFoundError:
+        return None
     if not bats:
         return None
     # Get the first available battery. Usually this is "BAT0", except
