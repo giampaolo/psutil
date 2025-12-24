@@ -75,6 +75,7 @@ install-sysdeps:
 
 install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	$(MAKE) install-pip
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) `$(PYTHON) -c "import setup; print(' '.join(setup.TEST_DEPS))"`
 
 install-pydeps-dev:  ## Install python deps meant for local development.

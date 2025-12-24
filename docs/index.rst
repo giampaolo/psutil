@@ -2149,6 +2149,9 @@ steadily across iterations, the C code is likely retaining memory it should be
 releasing. This provides an allocator-level way to spot native leaks that
 Python's memory tracking misses.
 
+Checkout `psleak`_ project to see a practical example of how these APIs can be
+used to detect memory leaks in C extensions.
+
 .. function:: heap_info()
 
   Return low-level heap statistics from the system's C allocator. On Linux,
@@ -2780,8 +2783,12 @@ PyPy3.
 Timeline
 ========
 
+- 2025-12-23:
+  `7.2.0 <https://pypi.org/project/psutil/7.2.0/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#720>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-7.1.3...release-7.2.0#files_bucket>`__
 - 2025-11-02:
-  `7.1.3 <https://pypi.org/project/psutil/7.1.2/#files>`__ -
+  `7.1.3 <https://pypi.org/project/psutil/7.1.3/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#713>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-7.1.2...release-7.1.3#files_bucket>`__
 - 2025-10-25:
@@ -3225,6 +3232,7 @@ Timeline
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://docs.microsoft.com/en-us/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
 .. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
 .. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`psleak`: https://github.com/giampaolo/psleak
 .. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
 .. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
 .. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
