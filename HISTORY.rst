@@ -1,5 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.2.1
+=====
+
+2025-12-29
+
+**Bug fixes**
+
+- 2699_, [FreeBSD], [NetBSD]: `heap_info()`_ does not detect small allocations
+  (<= 1K). In order to fix that, we now flush internal jemalloc cache before
+  fetching the metrics.
+
 7.2.0
 =====
 

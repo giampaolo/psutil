@@ -28,6 +28,14 @@ psutil_heap_info(PyObject *self, PyObject *args) {
     size_t sz_val;
     int ret;
 
+    // Flush per-thread tcache so small leaks become visible.
+    // Originates from https://github.com/giampaolo/psleak/issues/6. In
+    // there we had failures for small allocations, which disappeared
+    // after we added this.
+    ret = mallctl("thread.tcache.flush", NULL, NULL, NULL, 0);
+    if (ret != 0)
+        return psutil_oserror_wsyscall("mallctl('thread.tcache.flush')");
+
     // Read current epoch
     ret = mallctl("epoch", &epoch, &sz_epoch, NULL, 0);
     if (ret != 0)
