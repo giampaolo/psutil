@@ -9,6 +9,8 @@
 #include <mach/mach.h>
 #include <mach/vm_map.h>
 
+#include <AvailabilityMacros.h>
+
 #include "../../arch/all/init.h"
 
 
@@ -96,8 +98,11 @@ psutil_heap_trim(PyObject *self, PyObject *args) {
     if (ok == -1)
         return NULL;
 
+// malloc_zone_pressure_relief added in macOS 10.7.
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
     for (unsigned int i = 0; i < count; i++)
         malloc_zone_pressure_relief(zones[i], 0);
+#endif
 
     if (!ok)
         free(zones);
