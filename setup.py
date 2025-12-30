@@ -82,13 +82,10 @@ TEST_DEPS = [
     "pytest-instafail",
     "pytest-xdist",
     "setuptools",
+    'pywin32 ; os_name == "nt" and implementation_name != "pypy"',
+    'wheel ; os_name == "nt" and implementation_name != "pypy"',
+    'wmi ; os_name == "nt" and implementation_name != "pypy"',
 ]
-if WINDOWS and not hasattr(sys, "pypy_version_info"):
-    TEST_DEPS.extend([
-        "pywin32",
-        "wheel",
-        "wmi",
-    ])
 
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
@@ -113,13 +110,9 @@ DEV_DEPS = TEST_DEPS + [
     "virtualenv",
     "vulture",
     "wheel",
+    'colorama ; os_name == "nt"',
+    'pyreadline3 ; os_name == "nt"',
 ]
-
-if WINDOWS:
-    DEV_DEPS.extend([
-        "colorama",
-        "pyreadline3",
-    ])
 
 # The pre-processor macros that are passed to the C compiler when
 # building the extension.
