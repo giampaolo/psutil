@@ -6,7 +6,7 @@
 PYTHON = python3
 ARGS =
 
-PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade
+PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade --upgrade-strategy eager
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 SUDO = $(if $(filter $(OS),Windows_NT),,sudo -E)
 DPRINT = ~/.dprint/bin/dprint
