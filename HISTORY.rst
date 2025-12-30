@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.2.2 (IN DEVELOPMENT)
+======================
+
+XXXX-XX
+
+**Bug fixes**
+
+- 2701_, [macOS]: fix compilation error on macOS < 10.7.  (patch by Sergey
+  Fedorov)
+
 7.2.1
 =====
 
