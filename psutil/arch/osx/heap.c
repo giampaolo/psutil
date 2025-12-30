@@ -8,7 +8,6 @@
 #include <malloc/malloc.h>
 #include <mach/mach.h>
 #include <mach/vm_map.h>
-
 #include <AvailabilityMacros.h>
 
 #include "../../arch/all/init.h"
