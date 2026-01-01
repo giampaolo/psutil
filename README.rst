@@ -118,12 +118,12 @@ Sponsors
             <img style="width:195px;height:34px;" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
         </a>
         &nbsp;&nbsp
-        <a href="https://www.apivoid.com/">
-            <img style="width:155px;" src="https://gmpy.dev/images/apivoid-logo.svg" />
-        </a>
-        &nbsp;&nbsp
         <a href="https://sansec.io/">
             <img style="width:180px;height:34px;" src="https://sansec.io/assets/images/logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://www.apivoid.com/">
+            <img style="width:155px;" src="https://gmpy.dev/images/apivoid-logo.svg" />
         </a>
     </div>
 
