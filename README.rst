@@ -488,6 +488,8 @@ Portings
 Supporters
 ==========
 
+People who donated money over the years:
+
 .. raw:: html
 
     <div>
