@@ -64,11 +64,15 @@ Sponsors
 
     <div>
         <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="185" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
+            <img style="width:195px;height:34px;" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
         </a>
         &nbsp;&nbsp
         <a href="https://sansec.io/">
-            <img src="https://sansec.io/assets/images/logo.svg" />
+            <img style="width:180px;height:34px;" src="https://sansec.io/assets/images/logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://www.apivoid.com/">
+            <img style="width:155px;" src="https://gmpy.dev/images/apivoid-logo.svg" />
         </a>
     </div>
 
