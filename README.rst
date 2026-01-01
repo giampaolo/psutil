@@ -118,12 +118,12 @@ Sponsors
             <img style="width:195px;height:34px;" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
         </a>
         &nbsp;&nbsp
-        <a href="https://sansec.io/">
-            <img style="width:180px;height:34px;" src="https://sansec.io/assets/images/logo.svg" />
-        </a>
-        &nbsp;&nbsp
         <a href="https://www.apivoid.com/">
             <img style="width:155px;" src="https://gmpy.dev/images/apivoid-logo.svg" />
+        </a>
+        &nbsp;&nbsp
+        <a href="https://sansec.io/">
+            <img style="width:180px;height:34px;" src="https://sansec.io/assets/images/logo.svg" />
         </a>
     </div>
 
@@ -163,7 +163,6 @@ Supporters
       <a href="https://github.com/u93"><img height="35" width="35" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
       <a href="https://opencollective.com/alexey-vazhnov"><img height="35" width="35" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
       <a href="https://opencollective.com/chenyoo-hao"><img height="35" width="35" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
-
     </div>
 
 Example usages
