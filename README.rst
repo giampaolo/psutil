@@ -121,6 +121,10 @@ Sponsors
         <a href="https://sansec.io/">
             <img src="https://sansec.io/assets/images/logo.svg" />
         </a>
+        &nbsp;&nbsp
+        <a href="https://www.apivoid.com/">
+            <img src="https://gmpy.dev/images/apivoid-logo-small.png" />
+        </a>
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
