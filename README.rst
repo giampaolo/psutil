@@ -134,6 +134,13 @@ Supporters
 .. raw:: html
 
     <div>
+      <a href="https://github.com/sansecio"><img height="40" width="40" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
+      <a href="https://github.com/ofek"><img height="40" width="40" title="Ofek Lev" src="hhttps://avatars.githubusercontent.com/u/9677399?v=4" /></a>
+      <a href="https://github.com/Trash-Nothing"><img height="40" width="40" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
+      <a href="https://github.com/roboflow"><img height="40" width="40" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
+      <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
+
+
       <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
       <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
       <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
@@ -144,7 +151,6 @@ Supporters
       <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
       <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
       <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
-      <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
       <a href="https://github.com/robusta-dev"><img height="40" width="40" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
       <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
       <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
