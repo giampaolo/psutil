@@ -135,7 +135,7 @@ Supporters
 
     <div>
       <a href="https://github.com/sansecio"><img height="40" width="40" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
-      <a href="https://github.com/ofek"><img height="40" width="40" title="Ofek Lev" src="hhttps://avatars.githubusercontent.com/u/9677399?v=4" /></a>
+      <a href="https://github.com/ofek"><img height="40" width="40" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
       <a href="https://github.com/Trash-Nothing"><img height="40" width="40" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
       <a href="https://github.com/roboflow"><img height="40" width="40" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
       <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
