@@ -131,49 +131,42 @@ Sponsors
 Supporters
 ==========
 
-Current:
-
 .. raw:: html
 
     <div>
-      <a href="https://github.com/sansecio"><img height="40" width="40" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
-      <a href="https://github.com/ofek"><img height="40" width="40" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
-      <a href="https://github.com/Trash-Nothing"><img height="40" width="40" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
-      <a href="https://github.com/roboflow"><img height="40" width="40" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
-      <a href="https://github.com/eallrich"><img height="40" width="40" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
+      <a href="https://github.com/eallrich"><img height="30" width="30" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
+      <a href="https://github.com/ofek"><img height="30" width="30" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
+      <a href="https://github.com/roboflow"><img height="30" width="30" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
+      <a href="https://github.com/sansecio"><img height="30" width="30" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
+      <a href="https://github.com/Trash-Nothing"><img height="30" width="30" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
 
-      <a href="https://github.com/abramov-v"><img height="40" width="40" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
-      <a href="https://github.com/alexdlaird"><img height="40" width="40" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
-      <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
-      <a href="https://github.com/ArtyomVancyan"><img height="40" width="40" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
-      <a href="https://github.com/c0m4r"><img height="40" width="40" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
-      <a href="https://github.com/coskundeniz"><img height="40" width="40" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
-      <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
-      <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
-      <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
-      <a href="https://github.com/great-work-told-is"><img height="40" width="40" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
-      <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
-      <a href="https://github.com/inarikami"><img height="40" width="40" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
-      <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
-      <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
-      <a href="https://github.com/maxesisn"><img height="40" width="40" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
-      <a href="https://github.com/Mehver"><img height="40" width="40" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
-      <a href="https://github.com/mirbyte"><img height="40" width="40" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
-      <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
-      <a href="https://github.com/robusta-dev"><img height="40" width="40" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
-      <a href="https://github.com/sasozivanovic"><img height="40" width="40" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
-      <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
-      <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
-      <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
-      <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+      <a href="https://github.com/abramov-v"><img height="30" width="30" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
+      <a href="https://github.com/alexdlaird"><img height="30" width="30" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="30" width="30" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/ArtyomVancyan"><img height="30" width="30" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
+      <a href="https://github.com/c0m4r"><img height="30" width="30" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
+      <a href="https://github.com/coskundeniz"><img height="30" width="30" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="30" width="30" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/dbwiddis"><img height="30" width="30" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/getsentry"><img height="30" width="30" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
+      <a href="https://github.com/great-work-told-is"><img height="30" width="30" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
+      <a href="https://github.com/guilt"><img height="30" width="30" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
+      <a href="https://github.com/inarikami"><img height="30" width="30" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
+      <a href="https://github.com/indeedeng"><img height="30" width="30" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
+      <a href="https://github.com/JeremyGrosser"><img height="30" width="30" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
+      <a href="https://github.com/maxesisn"><img height="30" width="30" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
+      <a href="https://github.com/Mehver"><img height="30" width="30" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
+      <a href="https://github.com/mirbyte"><img height="30" width="30" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
+      <a href="https://github.com/PySimpleGUI"><img height="30" width="30" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
+      <a href="https://github.com/robusta-dev"><img height="30" width="30" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
+      <a href="https://github.com/sasozivanovic"><img height="30" width="30" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="30" width="30" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://github.com/u93"><img height="30" width="30" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="30" width="30" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="30" width="30" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
 
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
-
-Contributing
-============
-
-See `contributing guidelines <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__.
 
 Example usages
 ==============
