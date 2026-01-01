@@ -131,6 +131,8 @@ Sponsors
 Supporters
 ==========
 
+Current:
+
 .. raw:: html
 
     <div>
@@ -143,6 +145,34 @@ Supporters
     </div>
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
+Past:
+
+.. raw:: html
+
+    <a href="https://github.com/abramov-v"><img height="40" width="40" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
+    <a href="https://github.com/alexdlaird"><img height="40" width="40" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
+    <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+    <a href="https://github.com/ArtyomVancyan"><img height="40" width="40" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
+    <a href="https://github.com/c0m4r"><img height="40" width="40" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
+    <a href="https://github.com/coskundeniz"><img height="40" width="40" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
+    <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+    <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+    <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
+    <a href="https://github.com/great-work-told-is"><img height="40" width="40" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
+    <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
+    <a href="https://github.com/inarikami"><img height="40" width="40" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
+    <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
+    <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
+    <a href="https://github.com/maxesisn"><img height="40" width="40" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
+    <a href="https://github.com/Mehver"><img height="40" width="40" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
+    <a href="https://github.com/mirbyte"><img height="40" width="40" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
+    <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
+    <a href="https://github.com/robusta-dev"><img height="40" width="40" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
+    <a href="https://github.com/sasozivanovic"><img height="40" width="40" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
+    <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+    <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
+    <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+    <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
 
 Contributing
 ============
@@ -503,33 +533,3 @@ Portings
 - C: https://github.com/hamon-in/cpslib
 - Rust: https://github.com/rust-psutil/rust-psutil
 - Nim: https://github.com/johnscillieri/psutil-nim
-
-Past supporters
-===============
-
-.. raw:: html
-
-    <a href="https://github.com/abramov-v"><img height="40" width="40" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
-    <a href="https://github.com/alexdlaird"><img height="40" width="40" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
-    <a href="https://github.com/aristocratos"><img height="40" width="40" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
-    <a href="https://github.com/ArtyomVancyan"><img height="40" width="40" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
-    <a href="https://github.com/c0m4r"><img height="40" width="40" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
-    <a href="https://github.com/coskundeniz"><img height="40" width="40" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
-    <a href="https://github.com/cybersecgeek"><img height="40" width="40" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
-    <a href="https://github.com/dbwiddis"><img height="40" width="40" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
-    <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
-    <a href="https://github.com/great-work-told-is"><img height="40" width="40" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
-    <a href="https://github.com/guilt"><img height="40" width="40" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
-    <a href="https://github.com/inarikami"><img height="40" width="40" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
-    <a href="https://github.com/indeedeng"><img height="40" width="40" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
-    <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
-    <a href="https://github.com/maxesisn"><img height="40" width="40" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
-    <a href="https://github.com/Mehver"><img height="40" width="40" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
-    <a href="https://github.com/mirbyte"><img height="40" width="40" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
-    <a href="https://github.com/PySimpleGUI"><img height="40" width="40" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
-    <a href="https://github.com/robusta-dev"><img height="40" width="40" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
-    <a href="https://github.com/sasozivanovic"><img height="40" width="40" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
-    <a href="https://github.com/scoutapm-sponsorships"><img height="40" width="40" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
-    <a href="https://github.com/u93"><img height="40" width="40" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
-    <a href="https://opencollective.com/alexey-vazhnov"><img height="40" width="40" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
-    <a href="https://opencollective.com/chenyoo-hao"><img height="40" width="40" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
