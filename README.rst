@@ -523,3 +523,14 @@ Past supporters
     <a href="https://github.com/JeremyGrosser"><img height="40" width="40" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
     <a href="https://github.com/getsentry"><img height="40" width="40" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
     <a href="https://github.com/c0m4r"><img height="40" width="40" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
+    <a href="https://github.com/inarikami"><img height="40" width="40" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
+    <a href="https://github.com/ArtyomVancyan"><img height="40" width="40" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
+    <a href="https://github.com/coskundeniz"><img height="40" width="40" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
+    <a href="https://github.com/great-work-told-is"><img height="40" width="40" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
+    <a href="https://github.com/alexdlaird"><img height="40" width="40" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
+    <a href="https://github.com/c0m4r"><img height="40" width="40" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
+    <a href="https://github.com/Mehver"><img height="40" width="40" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
+    <a href="https://github.com/sasozivanovic"><img height="40" width="40" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
+    <a href="https://github.com/abramov-v"><img height="40" width="40" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
+    <a href="https://github.com/maxesisn"><img height="40" width="40" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
+    <a href="https://github.com/mirbyte"><img height="40" width="40" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
