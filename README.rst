@@ -126,7 +126,6 @@ Sponsors
             <img style="width:155px;" src="https://gmpy.dev/images/apivoid-logo.svg" />
         </a>
     </div>
-    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
 Supporters
 ==========
@@ -166,7 +165,6 @@ Supporters
       <a href="https://opencollective.com/chenyoo-hao"><img height="35" width="35" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
 
     </div>
-    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 Example usages
 ==============
