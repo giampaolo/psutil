@@ -127,7 +127,7 @@ Sponsors
         </a>
     </div>
 
-    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a> (here in the doc)</sup>
 
 Example usages
 ==============
