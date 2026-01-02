@@ -11,7 +11,7 @@ dist upload.
 import argparse
 import re
 
-summary = """\
+quick_links = """\
 Quick links
 ===========
 
@@ -25,28 +25,30 @@ Quick links
 - `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 """
 
-funding = """\
-Sponsors
-========
-
-.. image:: https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.png
-  :width: 200
-  :alt: Alternative text
-
-`Add your logo <https://github.com/sponsors/giampaolo>`__.
-
-Example usages"""
-
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('file', type=str)
     args = parser.parse_args()
     with open(args.file) as f:
-        data = f.read()
-    data = re.sub(r".. raw:: html\n+\s+<div align[\s\S]*?/div>", summary, data)
-    data = re.sub(r"Sponsors\n========[\s\S]*?Example usages", funding, data)
-    print(data)
+        text = f.read()
+
+    # Remove "Sponsors" section
+    pattern = re.compile(
+        r"^Sponsors\n=+\n.*?^Example usages\n=+",
+        re.DOTALL | re.MULTILINE,
+    )
+    text = pattern.sub("Example usages\n==============", text)
+
+    # Remove "Supporters" section
+    text = re.sub(
+        r"^Supporters\n=+\n[\s\S]*\Z",
+        "",
+        text,
+        flags=re.MULTILINE,
+    )
+
+    print(text)
 
 
 if __name__ == '__main__':
