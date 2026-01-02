@@ -65,25 +65,26 @@ Sponsors
 
 .. raw:: html
 
-    <table border="0" cellpadding="10" cellspacing="0">
+    <table style="border-collapse: collapse;">
       <tr>
-        <td align="center">
+        <td style="padding: 10px; text-align: center;">
           <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="200" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg">
+            <img style="width:200px;" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg">
           </a>
         </td>
-        <td align="center">
+        <td style="padding: 10px; text-align: center;">
           <a href="https://sansec.io/">
             <img src="https://sansec.io/assets/images/logo.svg">
           </a>
         </td>
-        <td align="center">
+        <td style="padding: 10px; text-align: center;">
           <a href="https://www.apivoid.com/">
-            <img width="180" src="https://gmpy.dev/images/apivoid-logo.svg">
+            <img style="width:180px;" src="https://gmpy.dev/images/apivoid-logo.svg">
           </a>
         </td>
       </tr>
     </table>
+
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
