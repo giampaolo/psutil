@@ -60,23 +60,31 @@ and have your logo displayed in here and psutil `doc <https://psutil.readthedocs
 Sponsors
 --------
 
+Sponsors
+========
+
 .. raw:: html
 
-    <div>
-        <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img style="width:195px;height:34px;" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" />
-        </a>
-        &nbsp;&nbsp
-        <a href="https://sansec.io/">
-            <img style="width:180px;height:34px;" src="https://sansec.io/assets/images/logo.svg" />
-        </a>
-        &nbsp;&nbsp
-        <a href="https://www.apivoid.com/">
-            <img style="width:155px;" src="https://gmpy.dev/images/apivoid-logo.svg" />
-        </a>
-    </div>
+    <table border="0" cellpadding="10" cellspacing="0">
+      <tr>
+        <td align="center">
+          <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
+            <img width="200" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg">
+          </a>
+        </td>
+        <td align="center">
+          <a href="https://sansec.io/">
+            <img src="https://sansec.io/assets/images/logo.svg">
+          </a>
+        </td>
+        <td align="center">
+          <a href="https://www.apivoid.com/">
+            <img width="180" src="https://gmpy.dev/images/apivoid-logo.svg">
+          </a>
+        </td>
+      </tr>
+    </table>
 
-    <br />
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
 Install
