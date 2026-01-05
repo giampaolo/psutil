@@ -61,17 +61,17 @@ Windows
 -------
 
 - To build or install psutil from source on Windows, you need to have
-  **`Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`__**
+  `Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`__.
   or later installed. For detailed instructions, see the
   `CPython Developer Guide <https://devguide.python.org/getting-started/setup-building/#windows>`__.
-- **MinGW is not supported** for building psutil on Windows.
+- MinGW is not supported for building psutil on Windows.
 - To build directly from the source tarball (.tar.gz) on PYPI, run::
 
     pip install --no-binary :all: psutil
 
 - If you want to clone psutil's GIT repository and build / develop locally,
-  first install: **`Git for Windows <https://git-scm.com/install/windows>`__**
-  and launch a **Git Bash shell**. This provides a Unix-like environment where
+  first install: `Git for Windows <https://git-scm.com/install/windows>`__
+  and launch a Git Bash shell. This provides a Unix-like environment where
   ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands::
 

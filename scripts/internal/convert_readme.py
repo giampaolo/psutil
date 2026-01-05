@@ -33,6 +33,11 @@ def main():
     with open(args.file) as f:
         text = f.read()
 
+    # Rewrite summary
+    text = re.sub(
+        r".. raw:: html\n+\s+<div align[\s\S]*?/div>", quick_links, text
+    )
+
     # Remove "Sponsors" section
     pattern = re.compile(
         r"^Sponsors\n=+\n.*?^Example usages\n=+",

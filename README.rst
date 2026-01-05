@@ -1,6 +1,6 @@
-|  |downloads| |stars| |forks| |contributors| |coverage|
-|  |version| |packages| |license|
-|  |github-actions-wheels|  |github-actions-bsd| |doc| |twitter| |tidelift|
+|  |downloads| |stars| |forks| |contributors| |packages|
+|  |version| |license| |stackoverflow| |twitter| |tidelift|
+|  |github-actions-wheels| |github-actions-bsd|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://clickpy.clickhouse.com/dashboard/psutil
@@ -18,6 +18,10 @@
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
 
+.. |stackoverflow| image:: https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg
+    :target: https://stackoverflow.com/questions/tagged/psutil
+    :alt: Stackoverflow
+
 .. |github-actions-wheels| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Windows
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
     :alt: Linux, macOS, Windows
@@ -25,14 +29,6 @@
 .. |github-actions-bsd| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=FreeBSD,%20NetBSD,%20OpenBSD
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests
     :alt: FreeBSD, NetBSD, OpenBSD
-
-.. |coverage| image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
-    :target: https://coveralls.io/github/giampaolo/psutil?branch=master
-    :alt: Test coverage (coverall.io)
-
-.. |doc| image:: https://readthedocs.org/projects/psutil/badge/?version=latest
-    :target: https://psutil.readthedocs.io/en/latest/
-    :alt: Documentation Status
 
 .. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
     :target: https://pypi.org/project/psutil
@@ -46,7 +42,7 @@
     :target: https://github.com/giampaolo/psutil/blob/master/LICENSE
     :alt: License
 
-.. |twitter| image:: https://img.shields.io/twitter/follow/grodola.svg?label=follow&style=flat&logo=twitter&logoColor=4FADFF
+.. |twitter| image:: https://img.shields.io/twitter/follow/grodola?style=flat
     :target: https://twitter.com/grodola
     :alt: Twitter Follow
 
@@ -95,19 +91,6 @@ Supported Python versions are cPython 3.6+ and `PyPy <https://pypy.org/>`__.
 Latest psutil version supporting Python 2.7 is
 `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
 
-Funding
-=======
-
-While psutil is free software and will always be, the project would benefit
-immensely from some funding.
-Keeping up with bug reports and maintenance has become hardly sustainable for
-me alone in terms of time.
-If you're a company that's making significant use of psutil you can consider
-becoming a sponsor via `GitHub Sponsors <https://github.com/sponsors/giampaolo>`__,
-`Open Collective <https://opencollective.com/psutil>`__ or
-`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__
-and have your logo displayed in here and psutil `doc <https://psutil.readthedocs.io>`__.
-
 Sponsors
 ========
 
@@ -134,6 +117,21 @@ Sponsors
     </table>
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+
+Funding
+=======
+
+While psutil is free software and will always be, the project would benefit
+immensely from some funding.
+psutil is among the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__
+most-downloaded Python packages, and keeping up with bug reports, user support,
+and ongoing maintenance has become increasingly difficult to sustain as a
+one-person effort.
+If you're a company that's making significant use of psutil you can consider
+becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
+`Open Collective <https://opencollective.com/psutil>`__ or
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
+Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`__.
 
 Example usages
 ==============
