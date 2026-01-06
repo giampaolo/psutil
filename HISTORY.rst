@@ -213,6 +213,7 @@ XXXX-XX
 **Enhancements**
 
 - 2471_: use Vulture CLI tool to detect dead code.
+- 2385_, [Linux]: add support for zfs arc memory stats. (patch by Hudson Gerwing)
 
 **Bug fixes**
 
