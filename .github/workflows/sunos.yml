@@ -35,4 +35,4 @@ jobs:
             python3 -c "import psutil"
             python3 scripts/internal/install_pip.py
             python3 -m pip install --break-system-packages --user .[test]
-            python3 -m pytest tests/test_memleaks.py
+            PYTHONMALLOC=malloc PYTHONUNBUFFERED=1 python3 -m pytest tests/test_memleaks.py
