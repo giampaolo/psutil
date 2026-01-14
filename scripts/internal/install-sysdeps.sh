@@ -47,7 +47,7 @@ main() {
         $SUDO apt-get install -y net-tools coreutils util-linux sudo  # for tests
     elif [ $HAS_YUM ]; then
         $SUDO yum install -y python3-devel gcc
-        $SUDO yum install -y net-tools coreutils-single util-linux sudo  # for tests
+        $SUDO yum install -y net-tools coreutils-single util-linux sudo procps-ng  # for tests
     elif [ $HAS_PACMAN ]; then
         $SUDO pacman -S --noconfirm python gcc
         $SUDO pacman -S --noconfirm net-tools coreutils util-linux sudo  # for tests
