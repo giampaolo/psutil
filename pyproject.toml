@@ -83,6 +83,7 @@ ignore = [
     "RUF022",  # `__all__` is not sorted
     "RUF028",  # This suppression comment is invalid
     "RUF031",  # [*] Avoid parentheses for tuples in subscripts
+    "RUF067",  # `__init__` module should only contain docstrings and re-exports
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`

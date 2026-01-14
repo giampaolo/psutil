@@ -47,8 +47,9 @@ from . import terminate
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 
-# try to minimize flaky failures
-MemoryLeakTestCase.retries = 30
+
+MemoryLeakTestCase.retries = 30  # minimize false positives
+MemoryLeakTestCase.verbosity = 1
 
 TIMES = MemoryLeakTestCase.times
 FEW_TIMES = int(TIMES / 10)

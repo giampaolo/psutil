@@ -16,7 +16,7 @@ directly exercise the underlying system allocator:
 
 UNIX
 
-- Small `malloc()` allocations (≤128KB on glibc) without `free()`
+- Small `malloc()` allocations (≤ 128KB on glibc) without `free()`
   increase `heap_used`.
 - Large `malloc()` allocations  without `free()` trigger `mmap()` and
   increase `mmap_used`.
@@ -49,8 +49,13 @@ from . import HAS_HEAP_INFO
 from . import PsutilTestCase
 from . import retry_on_failure
 
-HEAP_SIZE = 64 * 1024  # 64 KiB
-MMAP_SIZE = 10 * 1024 * 1024  # 10 MiB  (large enough to trigger mmap())
+# Small allocation (64 KiB), below M_MMAP_THRESHOLD (128 KiB).
+# Increases heap_used (uordblks) without triggering mmap().
+HEAP_SIZE = 64 * 1024
+# Large allocation (64 MiB), exceeds DEFAULT_MMAP_THRESHOLD_MAX (32
+# MiB). Forces malloc() to use mmap() internally and increases
+# mmap_used (hblkhd). See `man mallopt`.
+MMAP_SIZE = 64 * 1024 * 1024
 
 
 # =====================================================================
@@ -222,7 +227,7 @@ class TestHeap(HeapTestCase):
         assert_within_percent(mem3.heap_used, mem1.heap_used, percent=10)
         assert_within_percent(mem3.mmap_used, mem1.mmap_used, percent=10)
 
-    @pytest.mark.skipif(MACOS, reason="not supported")
+    @pytest.mark.skipif(MACOS, reason="not supported on MACOS")
     @retry_on_failure()
     def test_mmap_used(self):
         """Test that a large malloc allocation increases mmap_used.
