@@ -1458,7 +1458,7 @@ class TestProcess(PsutilTestCase):
             return
 
         p = psutil.Process(0)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError if POSIX else psutil.AccessDenied):
             p.wait()
         with pytest.raises(ValueError):
             p.terminate()
