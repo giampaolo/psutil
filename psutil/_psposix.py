@@ -221,11 +221,13 @@ def can_use_pidfd():
         return False
     try:
         pidfd = os.pidfd_open(os.getpid(), 0)
-    except OSError:
+    except OSError as err:
         # blocked by security policy like SECCOMP
+        debug(f"can't use pidfd_open() due to {err}")
         return False
-    os.close(pidfd)
-    return True
+    else:
+        os.close(pidfd)
+        return True
 
 
 @memoize
