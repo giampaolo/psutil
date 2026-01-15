@@ -13,7 +13,6 @@ import signal
 import time
 
 from . import _ntuples as ntp
-from ._common import LINUX
 from ._common import MACOS
 from ._common import TimeoutExpired
 from ._common import debug
@@ -122,17 +121,12 @@ def wait_pid_posix(
     If timeout=0 either return immediately or raise TimeoutExpired
     (non-blocking).
     """
-    # PID 0 passed to waitpid() waits for any child of the current
-    # process to change state.
-    assert pid > 0
-
     interval = 0.0001
     max_interval = 0.04
     flags = 0
     stop_at = None
 
     if timeout is not None:
-        assert timeout >= 0
         flags |= os.WNOHANG
         if timeout != 0:
             stop_at = _timer() + timeout
@@ -166,8 +160,18 @@ def wait_pid_posix(
                 return convert_exit_code(status)
 
 
+def _waitpid(pid, timeout, proc_name):
+    try:
+        retpid, status = os.waitpid(pid, 0)
+    except ChildProcessError:
+        # PID is not a child of os.getpid().
+        return wait_pid_posix(pid, timeout, proc_name)
+    else:
+        assert retpid != 0
+        return convert_exit_code(status)
+
+
 def wait_pid_linux(pid, timeout=None, proc_name=None):
-    assert pid > 0
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
@@ -187,21 +191,12 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
         events = poller.poll(timeout_ms)  # wait
         if not events:
             raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-
-        try:
-            retpid, status = os.waitpid(pid, 0)
-        except ChildProcessError:
-            # PID is not a child of os.getpid().
-            return wait_pid_posix(pid, timeout, proc_name)
-        else:
-            assert retpid != 0
-            return convert_exit_code(status)
+        return _waitpid(pid, timeout, proc_name)
     finally:
         os.close(pidfd)
 
 
 def wait_pid_bsd(pid, timeout=None, proc_name=None):
-    assert pid > 0
     kq = select.kqueue()
     try:
         kev = select.kevent(
@@ -213,16 +208,7 @@ def wait_pid_bsd(pid, timeout=None, proc_name=None):
         events = kq.control([kev], 1, timeout)  # wait
         if not events:
             raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-
-        try:
-            retpid, status = os.waitpid(pid, 0)
-        except ChildProcessError:
-            # PID is not a child of os.getpid().
-            return wait_pid_posix(pid, timeout, proc_name)
-        else:
-            assert retpid != 0
-            return convert_exit_code(status)
-
+        return _waitpid(pid, timeout, proc_name)
     finally:
         kq.close()
 
@@ -254,7 +240,13 @@ def can_use_kqueue():
 
 
 def wait_pid(pid, timeout=None, proc_name=None):
-    if LINUX and can_use_pidfd():
+    # PID 0 passed to waitpid() waits for any child of the current
+    # process to change state.
+    assert pid > 0
+    if timeout is not None:
+        assert timeout >= 0
+
+    if can_use_pidfd():
         return wait_pid_linux(pid, timeout, proc_name)
     elif can_use_kqueue():
         return wait_pid_bsd(pid, timeout, proc_name)
