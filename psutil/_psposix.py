@@ -134,7 +134,7 @@ def wait_pid_posix(
     def sleep_or_timeout(interval):
         # Sleep for some time and return a new increased interval.
         if timeout == 0 or (stop_at is not None and _timer() >= stop_at):
-            raise TimeoutExpired(timeout, pid=pid)
+            raise TimeoutExpired(timeout)
         _sleep(interval)
         return _min(interval * 2, max_interval)
 
@@ -160,18 +160,18 @@ def wait_pid_posix(
                 return convert_exit_code(status)
 
 
-def _waitpid(pid, timeout, proc_name):
+def _waitpid(pid, timeout):
     try:
         retpid, status = os.waitpid(pid, 0)
     except ChildProcessError:
         # PID is not a child of os.getpid().
-        return wait_pid_posix(pid, timeout, proc_name)
+        return wait_pid_posix(pid, timeout)
     else:
         assert retpid != 0
         return convert_exit_code(status)
 
 
-def wait_pid_linux(pid, timeout=None, proc_name=None):
+def wait_pid_linux(pid, timeout=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
@@ -181,7 +181,7 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
             # EMFILE, ENFILE: too many open files
             # ENODEV: anonymous inode filesystem not supported
             debug(f"pidfd_open() failed ({err!r}); use fallback")
-            return wait_pid_posix(pid, timeout, proc_name)
+            return wait_pid_posix(pid, timeout)
         raise
 
     try:
@@ -194,19 +194,19 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
         timeout_ms = None if timeout is None else int(timeout * 1000)
         events = poller.poll(timeout_ms)  # wait
         if not events:
-            raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-        return _waitpid(pid, timeout, proc_name)
+            raise TimeoutExpired(timeout)
+        return _waitpid(pid, timeout)
     finally:
         os.close(pidfd)
 
 
-def wait_pid_bsd(pid, timeout=None, proc_name=None):
+def wait_pid_bsd(pid, timeout=None):
     try:
         kq = select.kqueue()
     except OSError as err:
         if err.errno in {errno.EMFILE, errno.ENFILE}:  # too many open files
             debug(f"kqueue() failed ({err!r}); use fallback")
-            return wait_pid_posix(pid, timeout, proc_name)
+            return wait_pid_posix(pid, timeout)
         raise
 
     try:
@@ -218,8 +218,8 @@ def wait_pid_bsd(pid, timeout=None, proc_name=None):
         )
         events = kq.control([kev], 1, timeout)  # wait
         if not events:
-            raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-        return _waitpid(pid, timeout, proc_name)
+            raise TimeoutExpired(timeout)
+        return _waitpid(pid, timeout)
     finally:
         kq.close()
 
@@ -252,7 +252,7 @@ def can_use_kqueue():
     return all(hasattr(select, x) for x in names)
 
 
-def wait_pid(pid, timeout=None, proc_name=None):
+def wait_pid(pid, timeout=None):
     # PID 0 passed to waitpid() waits for any child of the current
     # process to change state.
     assert pid > 0
@@ -260,11 +260,11 @@ def wait_pid(pid, timeout=None, proc_name=None):
         assert timeout >= 0
 
     if can_use_pidfd():
-        return wait_pid_linux(pid, timeout, proc_name)
+        return wait_pid_linux(pid, timeout)
     elif can_use_kqueue():
-        return wait_pid_bsd(pid, timeout, proc_name)
+        return wait_pid_bsd(pid, timeout)
     else:
-        return wait_pid_posix(pid, timeout, proc_name)
+        return wait_pid_posix(pid, timeout)
 
 
 wait_pid.__doc__ = wait_pid_posix.__doc__
