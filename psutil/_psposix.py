@@ -116,7 +116,7 @@ def wait_pid_posix(
 
     If PID does not exist at all return None immediately.
 
-    If timeout is not None and process is still alive raise
+    If timeout is specified and process is still alive raise
     TimeoutExpired.
 
     If timeout=0 either return immediately or raise TimeoutExpired

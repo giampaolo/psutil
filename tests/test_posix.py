@@ -435,7 +435,7 @@ class TestSystemAPIs(PsutilTestCase):
             assert m.called
 
     def test_os_waitpid_let_raise(self):
-        # os.waitpid() is supposed to catch EINTR and ECHILD only.
+        # os.waitpid() is supposed to catch ECHILD only.
         # Test that any other errno results in an exception.
         with mock.patch(
             "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
