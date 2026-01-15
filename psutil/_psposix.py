@@ -95,7 +95,6 @@ def convert_exit_code(status):
 def wait_pid_posix(
     pid,
     timeout=None,
-    proc_name=None,
     _waitpid=os.waitpid,
     _timer=getattr(time, 'monotonic', time.time),  # noqa: B008
     _min=min,
@@ -135,7 +134,7 @@ def wait_pid_posix(
     def sleep_or_timeout(interval):
         # Sleep for some time and return a new increased interval.
         if timeout == 0 or (stop_at is not None and _timer() >= stop_at):
-            raise TimeoutExpired(timeout, pid=pid, name=proc_name)
+            raise TimeoutExpired(timeout, pid=pid)
         _sleep(interval)
         return _min(interval * 2, max_interval)
 

@@ -1369,7 +1369,13 @@ class Process:
 
         if self._exitcode is not _SENTINEL:
             return self._exitcode
-        self._exitcode = self._proc.wait(timeout)
+
+        try:
+            self._exitcode = self._proc.wait(timeout)
+        except TimeoutExpired as err:
+            exc = TimeoutExpired(timeout, pid=self.pid, name=self._name)
+            raise exc from err
+
         return self._exitcode
 
 

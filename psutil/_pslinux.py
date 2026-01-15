@@ -1582,8 +1582,8 @@ def ppid_map():
 
 
 def wrap_exceptions(fun):
-    """Decorator which translates bare OSError and OSError exceptions
-    into NoSuchProcess and AccessDenied.
+    """Decorator which translates bare OSError exceptions into
+    NoSuchProcess and AccessDenied.
     """
 
     @functools.wraps(fun)
@@ -1843,7 +1843,7 @@ class Process:
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        return _psposix.wait_pid(self.pid, timeout, self._name)
+        return _psposix.wait_pid(self.pid, timeout)
 
     @wrap_exceptions
     def create_time(self, monotonic=False):

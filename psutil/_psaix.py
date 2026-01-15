@@ -529,7 +529,7 @@ class Process:
 
     @wrap_exceptions
     def wait(self, timeout=None):
-        return _psposix.wait_pid(self.pid, timeout, self._name)
+        return _psposix.wait_pid(self.pid, timeout)
 
     if HAS_PROC_IO_COUNTERS:
 
