@@ -239,7 +239,7 @@ def can_use_kqueue():
         "KQ_FILTER_PROC",
         "KQ_NOTE_EXIT",
     )
-    return all(x for x in names if hasattr(select, x))
+    return all(hasattr(select, x) for x in names)
 
 
 def wait_pid(pid, timeout=None, proc_name=None):
