@@ -194,10 +194,37 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
             # PID is not a child of os.getpid().
             return wait_pid_posix(pid, timeout, proc_name)
         else:
-            assert retpid != 0, retpid
+            assert retpid != 0
             return convert_exit_code(status)
     finally:
         os.close(pidfd)
+
+
+def wait_pid_bsd(pid, timeout=None, proc_name=None):
+    assert pid > 0
+    kq = select.kqueue()
+    try:
+        kev = select.kevent(
+            pid,
+            filter=select.KQ_FILTER_PROC,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ONESHOT,
+            fflags=select.KQ_NOTE_EXIT,
+        )
+        events = kq.control([kev], 1, timeout)  # wait
+        if not events:
+            raise TimeoutExpired(timeout, pid=pid, name=proc_name)
+
+        try:
+            retpid, status = os.waitpid(pid, 0)
+        except ChildProcessError:
+            # PID is not a child of os.getpid().
+            return wait_pid_posix(pid, timeout, proc_name)
+        else:
+            assert retpid != 0
+            return convert_exit_code(status)
+
+    finally:
+        kq.close()
 
 
 @memoize
@@ -214,11 +241,28 @@ def can_use_pidfd():
     return True
 
 
+@memoize
+def can_use_kqueue():
+    names = (
+        "kqueue",
+        "KQ_EV_ADD",
+        "KQ_EV_ONESHOT",
+        "KQ_FILTER_PROC",
+        "KQ_NOTE_EXIT",
+    )
+    return all(x for x in names if hasattr(select, x))
+
+
 def wait_pid(pid, timeout=None, proc_name=None):
     if LINUX and can_use_pidfd():
         return wait_pid_linux(pid, timeout, proc_name)
+    elif can_use_kqueue():
+        return wait_pid_bsd(pid, timeout, proc_name)
     else:
         return wait_pid_posix(pid, timeout, proc_name)
+
+
+wait_pid.__doc__ = wait_pid_posix.__doc__
 
 
 def disk_usage(path):
