@@ -175,12 +175,12 @@ def _waitpid(pid, timeout, proc_name):
 def wait_pid_linux(pid, timeout=None, proc_name=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
-    except ProcessLookupError:
-        return wait_pid_posix(pid, timeout, proc_name)
     except OSError as err:
-        # EMFILE / ENFILE: too many open files
-        # ENODEV: anonymous inode filesystem not supported
+        if err.errno == errno.ESRCH:  # no such process
+            return None
         if err.errno in {errno.EMFILE, errno.ENFILE, errno.ENODEV}:
+            # EMFILE, ENFILE: too many open files
+            # ENODEV: anonymous inode filesystem not supported
             debug(f"pidfd_open() failed ({err!r}); use fallback")
             return wait_pid_posix(pid, timeout, proc_name)
         raise
