@@ -237,6 +237,15 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError, match="can't wait for PID 0"):
             p.wait()
 
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_wait_zombie(self):
+        parent, zombie = self.spawn_zombie()
+        with pytest.raises(psutil.TimeoutExpired):
+            zombie.wait(0.001)
+        parent.terminate()
+        parent.wait()
+        zombie.wait()
+
     def test_cpu_percent(self):
         p = psutil.Process()
         p.cpu_percent(interval=0.001)
@@ -1376,11 +1385,14 @@ class TestProcess(PsutilTestCase):
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process(self):
-        _parent, zombie = self.spawn_zombie()
+        parent, zombie = self.spawn_zombie()
         self.assert_proc_zombie(zombie)
         if hasattr(psutil._psplatform.cext, "proc_is_zombie"):
             assert not psutil._psplatform.cext.proc_is_zombie(os.getpid())
             assert psutil._psplatform.cext.proc_is_zombie(zombie.pid)
+        parent.terminate()
+        parent.wait()
+        zombie.wait()
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_zombie_process_is_running_w_exc(self):
@@ -1459,7 +1471,7 @@ class TestProcess(PsutilTestCase):
 
         p = psutil.Process(0)
         exc = psutil.AccessDenied if WINDOWS else ValueError
-        with pytest.raises(exc):
+        with pytest.raises(ValueError):
             p.wait()
         with pytest.raises(exc):
             p.terminate()
