@@ -176,9 +176,11 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
+        if err.errno in {errno.EBADF, errno.EINVAL}:
+            raise
         if err.errno != errno.ESRCH:
             # Likely EMFILE/ENFILE (open FD limit reached).
-            debug(f"pidfd_open failed ({err!r}); use fallback")
+            debug(f"pidfd_open() failed ({err!r}); use fallback")
         return wait_pid_posix(pid, timeout, proc_name)
 
     try:
@@ -198,7 +200,15 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
 
 
 def wait_pid_bsd(pid, timeout=None, proc_name=None):
-    kq = select.kqueue()
+    try:
+        kq = select.kqueue()
+    except OSError as err:
+        if err.errno in {errno.EBADF, errno.EINVAL}:
+            raise
+        # Likely EMFILE/ENFILE (open FD limit reached).
+        debug(f"kqueue() failed ({err!r}); use fallback")
+        return wait_pid_posix(pid, timeout, proc_name)
+
     try:
         kev = select.kevent(
             pid,
