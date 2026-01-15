@@ -7,10 +7,12 @@
 import enum
 import glob
 import os
+import select
 import signal
 import time
 
 from . import _ntuples as ntp
+from ._common import LINUX
 from ._common import MACOS
 from ._common import TimeoutExpired
 from ._common import memoize
@@ -89,7 +91,7 @@ def convert_exit_code(status):
     raise ValueError(msg)
 
 
-def wait_pid(
+def wait_pid_posix(
     pid,
     timeout=None,
     proc_name=None,
@@ -159,6 +161,39 @@ def wait_pid(
                 interval = sleep_or_timeout(interval)
             else:
                 return convert_exit_code(status)
+
+
+def wait_pid_linux(pid, timeout=None, proc_name=None):
+    if pid <= 0:
+        # see "man waitpid"
+        msg = "can't wait for PID 0"
+        raise ValueError(msg)
+
+    try:
+        pidfd = os.pidfd_open(pid, 0)
+    except ProcessLookupError:
+        return wait_pid_posix(pid, timeout, proc_name)
+
+    try:
+        rlist, _, _ = select.select([pidfd], [], [], timeout)  # block
+        if rlist:
+            try:
+                retpid, status = os.waitpid(pid, 0)
+            except ChildProcessError:
+                return wait_pid_posix(pid, timeout, proc_name)
+            else:
+                assert retpid != 0, retpid
+                return convert_exit_code(status)
+        raise TimeoutExpired(timeout, pid=pid, name=proc_name)
+    finally:
+        os.close(pidfd)
+
+
+def wait_pid(pid, timeout=None, proc_name=None):
+    if LINUX:
+        return wait_pid_linux(pid, timeout, proc_name)
+    else:
+        return wait_pid_posix(pid, timeout, proc_name)
 
 
 def disk_usage(path):
