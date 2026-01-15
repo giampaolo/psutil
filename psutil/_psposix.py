@@ -165,11 +165,7 @@ def wait_pid_posix(
 
 
 def wait_pid_linux(pid, timeout=None, proc_name=None):
-    if pid <= 0:
-        # see "man waitpid"
-        msg = "can't wait for PID 0"
-        raise ValueError(msg)
-
+    assert pid > 0
     try:
         pidfd = os.pidfd_open(pid, 0)
     except ProcessLookupError:
