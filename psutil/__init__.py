@@ -1340,22 +1340,33 @@ class Process:
             self._proc.kill()
 
     def wait(self, timeout=None):
-        """Wait for process to terminate and, if process is a children
+        """Wait for process to terminate, and if process is a children
         of os.getpid(), also return its exit code, else None.
         On Windows there's no such limitation (exit code is always
         returned).
 
-        If the process is already terminated immediately return None
+        If the process is already terminated, immediately return None
         instead of raising NoSuchProcess.
 
         If *timeout* (in seconds) is specified and process is still
-        alive raise TimeoutExpired.
+        alive, raise TimeoutExpired.
 
-        To wait for multiple Process(es) use psutil.wait_procs().
+        If *timeout=0* either return immediately or raise
+        TimeoutExpired (non-blocking).
+
+        To wait for multiple Process objects use psutil.wait_procs().
         """
-        if timeout is not None and not timeout >= 0:
-            msg = "timeout must be a positive integer"
+        if self.pid == 0:
+            msg = "can't wait for PID 0"
             raise ValueError(msg)
+        if timeout is not None:
+            if not isinstance(timeout, (int, float)):
+                msg = f"timeout must be an int or float (got {type(timeout)})"
+                raise TypeError(msg)
+            if timeout < 0:
+                msg = f"timeout must be positive or zero (got {timeout})"
+                raise ValueError(msg)
+
         if self._exitcode is not _SENTINEL:
             return self._exitcode
         self._exitcode = self._proc.wait(timeout)

@@ -206,8 +206,6 @@ class TestProcess(PsutilTestCase):
             p.wait(0.01)
         with pytest.raises(psutil.TimeoutExpired):
             p.wait(0)
-        with pytest.raises(ValueError, match="must be a positive integer"):
-            p.wait(-1)
 
     def test_wait_timeout_nonblocking(self):
         p = self.spawn_psproc()
@@ -228,6 +226,16 @@ class TestProcess(PsutilTestCase):
         else:
             assert code == signal.SIGTERM
         self.assert_proc_gone(p)
+
+    def test_wait_errors(self):
+        p = psutil.Process()
+        with pytest.raises(TypeError, match="must be an int or float"):
+            p.wait("foo")
+        with pytest.raises(ValueError, match="must be positive or zero"):
+            p.wait(-1)
+        p._pid = 0
+        with pytest.raises(ValueError, match="can't wait for PID 0"):
+            p.wait()
 
     def test_cpu_percent(self):
         p = psutil.Process()
