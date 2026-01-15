@@ -5,6 +5,7 @@
 """Routines common to all posix systems."""
 
 import enum
+import errno
 import glob
 import os
 import select
@@ -15,6 +16,7 @@ from . import _ntuples as ntp
 from ._common import LINUX
 from ._common import MACOS
 from ._common import TimeoutExpired
+from ._common import debug
 from ._common import memoize
 from ._common import usage_percent
 
@@ -168,24 +170,28 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
     assert pid > 0
     try:
         pidfd = os.pidfd_open(pid, 0)
-    except ProcessLookupError:
+    except OSError as err:
+        if err.errno != errno.ESRCH:
+            # Likely EMFILE/ENFILE (open FD limit reached).
+            debug(f"pidfd_open failed ({err!r}); use fallback")
         return wait_pid_posix(pid, timeout, proc_name)
 
     try:
         # poll() / select() have the advantage of not requiring any
-        # extra file descriptor, contrarily to epoll() / kqueue().
+        # extra file descriptor, contrary to epoll() / kqueue().
         # select() crashes if process opens > 1024 FDs, so we use
         # poll().
         poller = select.poll()
         poller.register(pidfd, select.POLLIN)
         timeout_ms = None if timeout is None else int(timeout * 1000)
-        events = poller.poll(timeout_ms)
+        events = poller.poll(timeout_ms)  # wait
         if not events:
             raise TimeoutExpired(timeout, pid=pid, name=proc_name)
+
         try:
             retpid, status = os.waitpid(pid, 0)
         except ChildProcessError:
-            # PID is not a child of os.getpid()
+            # PID is not a child of os.getpid().
             return wait_pid_posix(pid, timeout, proc_name)
         else:
             assert retpid != 0, retpid
