@@ -1470,17 +1470,18 @@ class TestProcess(PsutilTestCase):
             return
 
         p = psutil.Process(0)
+        exc = psutil.AccessDenied if WINDOWS else ValueError
         with pytest.raises(ValueError):
             p.wait()
-        with pytest.raises(ValueError):
+        with pytest.raises(exc):
             p.terminate()
-        with pytest.raises(ValueError):
+        with pytest.raises(exc):
             p.suspend()
-        with pytest.raises(ValueError):
+        with pytest.raises(exc):
             p.resume()
-        with pytest.raises(ValueError):
+        with pytest.raises(exc):
             p.kill()
-        with pytest.raises(ValueError):
+        with pytest.raises(exc):
             p.send_signal(signal.SIGTERM)
 
         # test all methods
