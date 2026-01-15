@@ -441,7 +441,7 @@ class TestSystemAPIs(PsutilTestCase):
             "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
         ) as m:
             with pytest.raises(OSError):
-                psutil._psposix.wait_pid(os.getpid())
+                psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
 
     def test_os_waitpid_bad_ret_status(self):
@@ -450,7 +450,7 @@ class TestSystemAPIs(PsutilTestCase):
             "psutil._psposix.os.waitpid", return_value=(1, -1)
         ) as m:
             with pytest.raises(ValueError):
-                psutil._psposix.wait_pid(os.getpid())
+                psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
