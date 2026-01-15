@@ -206,7 +206,7 @@ class TestProcess(PsutilTestCase):
             p.wait(0.01)
         with pytest.raises(psutil.TimeoutExpired):
             p.wait(0)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="must be a positive integer"):
             p.wait(-1)
 
     def test_wait_timeout_nonblocking(self):
