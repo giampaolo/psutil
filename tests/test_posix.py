@@ -435,22 +435,13 @@ class TestSystemAPIs(PsutilTestCase):
             assert m.called
 
     def test_os_waitpid_let_raise(self):
-        # os.waitpid() is supposed to catch EINTR and ECHILD only.
+        # os.waitpid() is supposed to catch ECHILD only.
         # Test that any other errno results in an exception.
         with mock.patch(
             "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
         ) as m:
             with pytest.raises(OSError):
                 psutil._psposix.wait_pid(os.getpid())
-            assert m.called
-
-    def test_os_waitpid_eintr(self):
-        # os.waitpid() is supposed to "retry" on EINTR.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", side_effect=OSError(errno.EINTR, "")
-        ) as m:
-            with pytest.raises(psutil._psposix.TimeoutExpired):
-                psutil._psposix.wait_pid(os.getpid(), timeout=0.01)
             assert m.called
 
     def test_os_waitpid_bad_ret_status(self):
