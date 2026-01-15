@@ -59,6 +59,7 @@ def negsig_to_enum(num):
 
 
 def convert_exit_code(status):
+    """Convert a os.waitpid() status to an exit code."""
     if os.WIFEXITED(status):
         # Process terminated normally by calling exit(3) or _exit(2),
         # or by returning from main(). The return value is the
@@ -82,6 +83,8 @@ def convert_exit_code(status):
     #     # with WCONTINUED flag.
     #     interval = sleep(interval)
     #     continue
+
+    # Should never happen.
     msg = f"unknown process exit status {status!r}"
     raise ValueError(msg)
 
@@ -140,8 +143,6 @@ def wait_pid(
     while True:
         try:
             retpid, status = os.waitpid(pid, flags)
-        except InterruptedError:
-            interval = sleep_or_timeout(interval)
         except ChildProcessError:
             # This has two meanings:
             # - PID is not a child of os.getpid() in which case
