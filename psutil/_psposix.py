@@ -71,7 +71,7 @@ def convert_exit_code(status):
         # Process exited due to a signal. Return the negative value
         # of that signal.
         return negsig_to_enum(-os.WTERMSIG(status))
-    # elif os.WIFSTOPPED(status):
+    # if os.WIFSTOPPED(status):
     #     # Process was stopped via SIGSTOP or is being traced, and
     #     # waitpid() was called with WUNTRACED flag. PID is still
     #     # alive. From now on waitpid() will keep returning (0, 0)
@@ -80,7 +80,7 @@ def convert_exit_code(status):
     #     # ignore SIGTERM.
     #     interval = sleep(interval)
     #     continue
-    # elif os.WIFCONTINUED(status):
+    # if os.WIFCONTINUED(status):
     #     # Process was resumed via SIGCONT and waitpid() was called
     #     # with WCONTINUED flag.
     #     interval = sleep(interval)
@@ -120,16 +120,17 @@ def wait_pid_posix(
     If timeout=0 either return immediately or raise TimeoutExpired
     (non-blocking).
     """
-    if pid <= 0:
-        # see "man waitpid"
-        msg = "can't wait for PID 0"
-        raise ValueError(msg)
+    # PID 0 passed to waitpid() waits for any child of the current
+    # process to change state.
+    assert pid > 0
 
     interval = 0.0001
+    max_interval = 0.04
     flags = 0
     stop_at = None
 
     if timeout is not None:
+        assert timeout >= 0
         flags |= os.WNOHANG
         if timeout != 0:
             stop_at = _timer() + timeout
@@ -139,7 +140,7 @@ def wait_pid_posix(
         if timeout == 0 or (stop_at is not None and _timer() >= stop_at):
             raise TimeoutExpired(timeout, pid=pid, name=proc_name)
         _sleep(interval)
-        return _min(interval * 2, 0.04)
+        return _min(interval * 2, max_interval)
 
     # See: https://linux.die.net/man/2/waitpid
     while True:
