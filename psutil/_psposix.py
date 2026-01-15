@@ -203,11 +203,11 @@ def wait_pid_bsd(pid, timeout=None, proc_name=None):
     try:
         kq = select.kqueue()
     except OSError as err:
-        if err.errno in {errno.EBADF, errno.EINVAL}:
-            raise
-        # Likely EMFILE or ENFILE (open FD limit reached).
-        debug(f"kqueue() failed ({err!r}); use fallback")
-        return wait_pid_posix(pid, timeout, proc_name)
+        if err.errno in {errno.EMFILE, errno.ENFILE}:
+            # open FDs limit reached
+            debug(f"kqueue() failed ({err!r}); use fallback")
+            return wait_pid_posix(pid, timeout, proc_name)
+        raise
 
     try:
         kev = select.kevent(
