@@ -175,13 +175,15 @@ def _waitpid(pid, timeout, proc_name):
 def wait_pid_linux(pid, timeout=None, proc_name=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
-    except OSError as err:
-        if err.errno in {errno.EBADF, errno.EINVAL}:
-            raise
-        if err.errno != errno.ESRCH:
-            # Likely EMFILE or ENFILE (open FD limit reached).
-            debug(f"pidfd_open() failed ({err!r}); use fallback")
+    except ProcessLookupError:
         return wait_pid_posix(pid, timeout, proc_name)
+    except OSError as err:
+        # EMFILE / ENFILE: too many open files
+        # ENODEV: anonymous inode filesystem not supported
+        if err.errno in {errno.EMFILE, errno.ENFILE, errno.ENODEV}:
+            debug(f"pidfd_open() failed ({err!r}); use fallback")
+            return wait_pid_posix(pid, timeout, proc_name)
+        raise
 
     try:
         # poll() / select() have the advantage of not requiring any
@@ -203,8 +205,7 @@ def wait_pid_bsd(pid, timeout=None, proc_name=None):
     try:
         kq = select.kqueue()
     except OSError as err:
-        if err.errno in {errno.EMFILE, errno.ENFILE}:
-            # open FDs limit reached
+        if err.errno in {errno.EMFILE, errno.ENFILE}:  # too many open files
             debug(f"kqueue() failed ({err!r}); use fallback")
             return wait_pid_posix(pid, timeout, proc_name)
         raise
