@@ -164,6 +164,20 @@ def wait_pid_posix(
                 return convert_exit_code(status)
 
 
+@memoize
+def can_use_pidfd():
+    # Availability: Linux >= 5.3, Python >= 3.9
+    if not hasattr(os, "pidfd_open"):
+        return False
+    try:
+        pidfd = os.pidfd_open(os.getpid(), 0)
+    except OSError:
+        # blocked by security policy like SECCOMP
+        return False
+    os.close(pidfd)
+    return True
+
+
 def wait_pid_linux(pid, timeout=None, proc_name=None):
     assert pid > 0
     try:
@@ -177,6 +191,7 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
             try:
                 retpid, status = os.waitpid(pid, 0)
             except ChildProcessError:
+                # PID is not a child of os.getpid()
                 return wait_pid_posix(pid, timeout, proc_name)
             else:
                 assert retpid != 0, retpid
@@ -187,7 +202,7 @@ def wait_pid_linux(pid, timeout=None, proc_name=None):
 
 
 def wait_pid(pid, timeout=None, proc_name=None):
-    if LINUX:
+    if LINUX and can_use_pidfd():
         return wait_pid_linux(pid, timeout, proc_name)
     else:
         return wait_pid_posix(pid, timeout, proc_name)
