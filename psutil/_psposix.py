@@ -164,6 +164,36 @@ def wait_pid_posix(
                 return convert_exit_code(status)
 
 
+def wait_pid_linux(pid, timeout=None, proc_name=None):
+    assert pid > 0
+    try:
+        pidfd = os.pidfd_open(pid, 0)
+    except ProcessLookupError:
+        return wait_pid_posix(pid, timeout, proc_name)
+
+    try:
+        # poll() / select() have the advantage of not requiring any
+        # extra file descriptor, contrarily to epoll() / kqueue().
+        # select() crashes if process opens > 1024 FDs, so we use
+        # poll().
+        poller = select.poll()
+        poller.register(pidfd, select.POLLIN)
+        timeout_ms = None if timeout is None else int(timeout * 1000)
+        events = poller.poll(timeout_ms)
+        if not events:
+            raise TimeoutExpired(timeout, pid=pid, name=proc_name)
+        try:
+            retpid, status = os.waitpid(pid, 0)
+        except ChildProcessError:
+            # PID is not a child of os.getpid()
+            return wait_pid_posix(pid, timeout, proc_name)
+        else:
+            assert retpid != 0, retpid
+            return convert_exit_code(status)
+    finally:
+        os.close(pidfd)
+
+
 @memoize
 def can_use_pidfd():
     # Availability: Linux >= 5.3, Python >= 3.9
@@ -176,29 +206,6 @@ def can_use_pidfd():
         return False
     os.close(pidfd)
     return True
-
-
-def wait_pid_linux(pid, timeout=None, proc_name=None):
-    assert pid > 0
-    try:
-        pidfd = os.pidfd_open(pid, 0)
-    except ProcessLookupError:
-        return wait_pid_posix(pid, timeout, proc_name)
-
-    try:
-        rlist, _, _ = select.select([pidfd], [], [], timeout)  # block
-        if rlist:
-            try:
-                retpid, status = os.waitpid(pid, 0)
-            except ChildProcessError:
-                # PID is not a child of os.getpid()
-                return wait_pid_posix(pid, timeout, proc_name)
-            else:
-                assert retpid != 0, retpid
-                return convert_exit_code(status)
-        raise TimeoutExpired(timeout, pid=pid, name=proc_name)
-    finally:
-        os.close(pidfd)
 
 
 def wait_pid(pid, timeout=None, proc_name=None):
