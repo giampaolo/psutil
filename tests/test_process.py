@@ -58,6 +58,7 @@ from . import call_until
 from . import copyload_shared_lib
 from . import create_c_exe
 from . import create_py_exe
+from . import get_nonexistent_pid
 from . import process_namespace
 from . import pytest
 from . import reap_children
@@ -1633,13 +1634,11 @@ class TestProcessWait(PsutilTestCase):
         reason="LINUX only" if not LINUX else "not supported",
     )
     def test_pidfd_open_errors(self):
-        # Test that os.pidfd_open() errors are caught and fallback to
-        # wait_pid_posix() is used.
         from psutil._psposix import wait_pid_pidfd_open
 
-        p = self.spawn_psproc()
-        p.terminate()
-
+        # Test that os.pidfd_open() errors are caught and fallback to
+        # wait_pid_posix() is used.
+        pid = get_nonexistent_pid()
         for err in (
             errno.EMFILE,
             errno.ENFILE,
@@ -1649,7 +1648,7 @@ class TestProcessWait(PsutilTestCase):
                 "psutil._psposix.os.pidfd_open",
                 side_effect=OSError(err, os.strerror(err)),
             ) as m:
-                wait_pid_pidfd_open(p.pid)
+                assert wait_pid_pidfd_open(pid) is None
             assert m.called
 
     # --- tests for wait_pid_kqueue()
@@ -1662,9 +1661,7 @@ class TestProcessWait(PsutilTestCase):
         # wait_pid_posix() is used.
         from psutil._psposix import wait_pid_kqueue
 
-        p = self.spawn_psproc()
-        p.terminate()
-
+        pid = get_nonexistent_pid()
         for err in (
             errno.EACCES,
             errno.EPERM,
@@ -1675,7 +1672,7 @@ class TestProcessWait(PsutilTestCase):
                 "select.kqueue",
                 side_effect=OSError(err, os.strerror(err)),
             ) as m:
-                wait_pid_kqueue(p.pid)
+                assert wait_pid_kqueue(pid) is None
             assert m.called
 
     @pytest.mark.skipif(
