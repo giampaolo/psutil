@@ -41,6 +41,9 @@ from . import system_namespace
 
 
 class TestSpecialMethods(PsutilTestCase):
+    def test_deliberate_failure(self):
+        pytest.fail("Deliberate failure to test CI fail-fast setting")
+
     def test_check_pid_range(self):
         with pytest.raises(OverflowError):
             psutil._psplatform.cext.check_pid_range(2**128)
