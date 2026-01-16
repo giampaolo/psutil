@@ -171,7 +171,7 @@ def _waitpid(pid, timeout):
         return convert_exit_code(status)
 
 
-def wait_pid_linux(pid, timeout=None):
+def wait_pid_pidfd_open(pid, timeout=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
@@ -200,7 +200,7 @@ def wait_pid_linux(pid, timeout=None):
         os.close(pidfd)
 
 
-def wait_pid_bsd(pid, timeout=None):
+def wait_pid_kqueue(pid, timeout=None):
     try:
         kq = select.kqueue()
     except OSError as err:
@@ -260,9 +260,9 @@ def wait_pid(pid, timeout=None):
         assert timeout >= 0
 
     if can_use_pidfd():
-        return wait_pid_linux(pid, timeout)
+        return wait_pid_pidfd_open(pid, timeout)
     elif can_use_kqueue():
-        return wait_pid_bsd(pid, timeout)
+        return wait_pid_kqueue(pid, timeout)
     else:
         return wait_pid_posix(pid, timeout)
 
