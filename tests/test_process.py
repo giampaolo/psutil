@@ -1603,8 +1603,10 @@ class TestProcessWait(PsutilTestCase):
         parent.wait()
         zombie.wait()
 
+    # --- tests for wait_pid_posix()
+
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    def test_os_waitpid_let_raise(self):
+    def test_os_waitpid_error(self):
         # os.waitpid() is supposed to catch ECHILD only.
         # Test that any other errno results in an exception.
         with mock.patch(
@@ -1624,10 +1626,12 @@ class TestProcessWait(PsutilTestCase):
                 psutil._psposix.wait_pid(os.getpid())
             assert m.called
 
+    # --- tests for wait_pid_kqueue()
+
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
     )
-    def test_proc_wait_pid_kqueue_race(self):
+    def test_kqueue_race(self):
         sproc = self.spawn_subproc()
         psproc = psutil.Process(sproc.pid)
         real_kqueue = select.kqueue
@@ -1644,6 +1648,30 @@ class TestProcessWait(PsutilTestCase):
         with mock.patch("select.kqueue", side_effect=kqueue_wrapper) as m:
             psproc.wait()
         assert m.called
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
+    def test_kqueue_errors(self):
+        # Test that kq.control() errors are caught and fallback to
+        # wait_pid_posix() is used.
+        from psutil._psposix import wait_pid_kqueue
+
+        p = self.spawn_psproc()
+        p.terminate()
+
+        for err in (
+            errno.EACCES,
+            errno.EPERM,
+            errno.EMFILE,
+            errno.ENFILE,
+        ):
+            with mock.patch(
+                "select.kqueue",
+                side_effect=OSError(err, os.strerror(err)),
+            ) as m:
+                wait_pid_kqueue(p.pid)
+            assert m.called
 
 
 # ===================================================================
