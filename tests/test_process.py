@@ -1662,12 +1662,7 @@ class TestProcessWait(PsutilTestCase):
         from psutil._psposix import wait_pid_kqueue
 
         pid = get_nonexistent_pid()
-        for err in (
-            errno.EACCES,
-            errno.EPERM,
-            errno.EMFILE,
-            errno.ENFILE,
-        ):
+        for err in (errno.EMFILE, errno.ENFILE):
             with mock.patch(
                 "select.kqueue",
                 side_effect=OSError(err, os.strerror(err)),

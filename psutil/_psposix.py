@@ -205,12 +205,7 @@ def wait_pid_kqueue(pid, timeout=None):
     try:
         kq = select.kqueue()
     except OSError as err:
-        if err.errno in {
-            errno.EMFILE,  # too many open files
-            errno.ENFILE,  # too many open files
-            errno.EACCES,  # permission denied
-            errno.EPERM,  # permission denied
-        }:
+        if err.errno in {errno.EMFILE, errno.ENFILE}:  # too many open files
             debug(f"kqueue() failed ({err!r}); use fallback")
             return wait_pid_posix(pid, timeout)
         raise
@@ -224,8 +219,12 @@ def wait_pid_kqueue(pid, timeout=None):
         )
         try:
             events = kq.control([kev], 1, timeout)  # wait
-        except ProcessLookupError:  # should never happen
-            return None
+        except OSError as err:
+            if err.errno == errno.ESRCH:  # no such process
+                return None
+            if err.errno in {errno.EACCES, errno.EPERM}:  # access denied
+                debug(f"kqueue.control() failed ({err!r}); use fallback")
+                return wait_pid_posix(pid, timeout)
         else:
             if not events:
                 raise TimeoutExpired(timeout)
