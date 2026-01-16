@@ -10,6 +10,7 @@ import datetime
 import errno
 import os
 import re
+import select
 import shutil
 import subprocess
 import time
@@ -452,6 +453,29 @@ class TestSystemAPIs(PsutilTestCase):
             with pytest.raises(ValueError):
                 psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="BSD and MACOS only"
+    )
+    def test_proc_wait_pid_kqueue_race(self):
+        sproc = self.spawn_subproc()
+        psproc = psutil.Process(sproc.pid)
+        real_kqueue = select.kqueue
+
+        def kqueue_wrapper(*args, **kwargs):
+            # Kill the process after kqueue() is created but before
+            # kevent/control happens, then verify that we can
+            # Process.wait() on it.
+            kq = real_kqueue(*args, **kwargs)
+            sproc.terminate()
+            sproc.wait()
+            return kq
+
+        with mock.patch(
+            "select.kqueue", create=True, side_effect=kqueue_wrapper
+        ) as m:
+            psproc.wait()
+        assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @pytest.mark.skipif(AIX, reason="unreliable on AIX")
