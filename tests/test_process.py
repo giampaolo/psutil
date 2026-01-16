@@ -1500,6 +1500,12 @@ class TestProcessWait(PsutilTestCase):
         code = p.wait()
         assert code == -signal.SIGTERM
         assert isinstance(code, enum.IntEnum)
+        # second call is cached
+        assert code == -signal.SIGTERM
+        # Call the underlying implementation. Done to exercise the
+        # poll/kqueue machinery on a gone PID. Also, waitpid() is
+        # supposed to fail with ESRCH.
+        assert p._proc.wait() is None
 
     @pytest.mark.skipif(NETBSD, reason="fails on NETBSD")
     def test_wait_stopped(self):
