@@ -1673,6 +1673,24 @@ class TestProcessWait(PsutilTestCase):
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
     )
+    def test_kqueue_control_errors(self):
+        # Test that kq.control() errors are caught and fallback to
+        # wait_pid_posix() is used.
+        from psutil._psposix import wait_pid_kqueue
+
+        pid = get_nonexistent_pid()
+        for err in (errno.EACCES, errno.EPERM):
+            kq_mock = mock.Mock()
+            kq_mock.control.side_effect = OSError(err, os.strerror(err))
+            kq_mock.close = mock.Mock()
+
+            with mock.patch("select.kqueue", return_value=kq_mock):
+                assert wait_pid_kqueue(pid) is None
+            assert kq_mock.control.called
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
     def test_kqueue_race(self):
         sproc = self.spawn_subproc()
         psproc = psutil.Process(sproc.pid)
