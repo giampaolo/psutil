@@ -71,7 +71,7 @@ __all__ = [
     "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
-    'spawn_children_pair', "get_nonexistent_pid",
+    'spawn_children_pair',
     # threads
     'ThreadTask',
     # test utils
@@ -623,13 +623,6 @@ def reap_children(recursive=False):
         for p in alive:
             warn(f"couldn't terminate process {p!r}; attempting kill()")
             terminate(p, sig=signal.SIGKILL)
-
-
-def get_nonexistent_pid():
-    sproc = spawn_subproc()
-    sproc.terminate()
-    sproc.wait()
-    return sproc.pid
 
 
 # ===================================================================

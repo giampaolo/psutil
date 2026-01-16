@@ -58,7 +58,6 @@ from . import call_until
 from . import copyload_shared_lib
 from . import create_c_exe
 from . import create_py_exe
-from . import get_nonexistent_pid
 from . import process_namespace
 from . import pytest
 from . import reap_children
@@ -1634,22 +1633,34 @@ class TestProcessWait(PsutilTestCase):
         reason="LINUX only" if not LINUX else "not supported",
     )
     def test_pidfd_open_errors(self):
+        # Test that os.pidfd_open() errors are caught and fallback is
+        # used.
         from psutil._psposix import wait_pid_pidfd_open
 
-        # Test that os.pidfd_open() errors are caught and fallback to
-        # wait_pid_posix() is used.
-        pid = get_nonexistent_pid()
-        for err in (
+        sproc = self.spawn_subproc()
+        sproc.terminate()
+
+        for idx, err in enumerate((
             errno.EMFILE,
             errno.ENFILE,
             errno.ENODEV,
-        ):
+        )):
             with mock.patch(
-                "psutil._psposix.os.pidfd_open",
+                "os.pidfd_open",
                 side_effect=OSError(err, os.strerror(err)),
             ) as m:
-                assert wait_pid_pidfd_open(pid) is None
+                # the second time waitpid() does not return the exit code
+                code = -signal.SIGTERM if idx == 0 else None
+                assert wait_pid_pidfd_open(sproc.pid) == code
             assert m.called
+
+        # illegittimate error
+        with mock.patch(
+            "os.pidfd_open",
+            side_effect=OSError(errno.EBADF, os.strerror(errno.EBADF)),
+        ) as m:
+            with pytest.raises(OSError):
+                wait_pid_pidfd_open(sproc.pid)
 
     # --- tests for wait_pid_kqueue()
 
