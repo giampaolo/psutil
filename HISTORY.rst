@@ -5,6 +5,15 @@
 
 XXXX-XX
 
+**Enhancements**
+
+- 2705_: [Linux]: `Process.wait()`_ now uses ``pidfd_open()`` + ``poll()`` for
+  waiting, resulting in no busy loop and faster response times. Requires
+  Linux >= 5.3 and Python >= 3.9. Falls back to traditional polling if
+  unavailable.
+- 2705_: [macOS], [BSD]: `Process.wait()`_ now uses ``kqueue()`` for waiting,
+  resulting in no busy loop and faster response times.
+
 **Bug fixes**
 
 - 2701_, [macOS]: fix compilation error on macOS < 10.7.  (patch by Sergey
