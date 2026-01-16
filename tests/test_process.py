@@ -1657,35 +1657,42 @@ class TestProcessWait(PsutilTestCase):
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
     )
     def test_kqueue_errors(self):
-        # Test that kq.control() errors are caught and fallback to
-        # wait_pid_posix() is used.
+        # Test that kqueue() errors are caught and fallback is used.
         from psutil._psposix import wait_pid_kqueue
 
-        pid = get_nonexistent_pid()
-        for err in (errno.EMFILE, errno.ENFILE):
+        sproc = self.spawn_subproc()
+        sproc.terminate()
+
+        for idx, err in enumerate((errno.EMFILE, errno.ENFILE)):
             with mock.patch(
                 "select.kqueue",
                 side_effect=OSError(err, os.strerror(err)),
             ) as m:
-                assert wait_pid_kqueue(pid) is None
+                # the second time waitpid() does not return the exit code
+                code = -signal.SIGTERM if idx == 0 else None
+                assert wait_pid_kqueue(sproc.pid) == code
             assert m.called
 
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
     )
     def test_kqueue_control_errors(self):
-        # Test that kq.control() errors are caught and fallback to
-        # wait_pid_posix() is used.
+        # Test that kqueue.control() errors are caught and fallback is used.
         from psutil._psposix import wait_pid_kqueue
 
-        pid = get_nonexistent_pid()
-        for err in (errno.EACCES, errno.EPERM):
+        sproc = self.spawn_subproc()
+        sproc.terminate()
+
+        for idx, err in enumerate((errno.EACCES, errno.EPERM)):
+
             kq_mock = mock.Mock()
             kq_mock.control.side_effect = OSError(err, os.strerror(err))
             kq_mock.close = mock.Mock()
 
             with mock.patch("select.kqueue", return_value=kq_mock):
-                assert wait_pid_kqueue(pid) is None
+                # the second time waitpid() does not return the exit code
+                code = -signal.SIGTERM if idx == 0 else None
+                assert wait_pid_kqueue(sproc.pid) == code
             assert kq_mock.control.called
 
     @pytest.mark.skipif(
