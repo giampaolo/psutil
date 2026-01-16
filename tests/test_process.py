@@ -8,6 +8,7 @@
 
 import collections
 import contextlib
+import enum
 import errno
 import getpass
 import io
@@ -122,129 +123,6 @@ class TestProcess(PsutilTestCase):
         with mock.patch('psutil.os.kill', side_effect=PermissionError):
             with pytest.raises(psutil.AccessDenied):
                 p.send_signal(sig)
-
-    def test_wait_exited(self):
-        # Test waitpid() + WIFEXITED -> WEXITSTATUS.
-        # normal return, same as exit(0)
-        cmd = [PYTHON_EXE, "-c", "pass"]
-        p = self.spawn_psproc(cmd)
-        code = p.wait()
-        assert code == 0
-        self.assert_proc_gone(p)
-        # exit(1), implicit in case of error
-        cmd = [PYTHON_EXE, "-c", "1 / 0"]
-        p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
-        code = p.wait()
-        assert code == 1
-        self.assert_proc_gone(p)
-        # via sys.exit()
-        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
-        p = self.spawn_psproc(cmd)
-        code = p.wait()
-        assert code == 5
-        self.assert_proc_gone(p)
-        # via os._exit()
-        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
-        p = self.spawn_psproc(cmd)
-        code = p.wait()
-        assert code == 5
-        self.assert_proc_gone(p)
-
-    @pytest.mark.skipif(NETBSD, reason="fails on NETBSD")
-    def test_wait_stopped(self):
-        p = self.spawn_psproc()
-        if POSIX:
-            # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
-            # Note: if a process is stopped it ignores SIGTERM.
-            p.send_signal(signal.SIGSTOP)
-            with pytest.raises(psutil.TimeoutExpired):
-                p.wait(timeout=0.001)
-            p.send_signal(signal.SIGCONT)
-            with pytest.raises(psutil.TimeoutExpired):
-                p.wait(timeout=0.001)
-            p.send_signal(signal.SIGTERM)
-            assert p.wait() == -signal.SIGTERM
-            assert p.wait() == -signal.SIGTERM
-        else:
-            p.suspend()
-            with pytest.raises(psutil.TimeoutExpired):
-                p.wait(timeout=0.001)
-            p.resume()
-            with pytest.raises(psutil.TimeoutExpired):
-                p.wait(timeout=0.001)
-            p.terminate()
-            assert p.wait() == signal.SIGTERM
-            assert p.wait() == signal.SIGTERM
-
-    def test_wait_non_children(self):
-        # Test wait() against a process which is not our direct
-        # child.
-        child, grandchild = self.spawn_children_pair()
-        with pytest.raises(psutil.TimeoutExpired):
-            child.wait(0.01)
-        with pytest.raises(psutil.TimeoutExpired):
-            grandchild.wait(0.01)
-        # We also terminate the direct child otherwise the
-        # grandchild will hang until the parent is gone.
-        child.terminate()
-        grandchild.terminate()
-        child_ret = child.wait()
-        grandchild_ret = grandchild.wait()
-        if POSIX:
-            assert child_ret == -signal.SIGTERM
-            # For processes which are not our children we're supposed
-            # to get None.
-            assert grandchild_ret is None
-        else:
-            assert child_ret == signal.SIGTERM
-            assert child_ret == signal.SIGTERM
-
-    def test_wait_timeout(self):
-        p = self.spawn_psproc()
-        p.name()
-        with pytest.raises(psutil.TimeoutExpired):
-            p.wait(0.01)
-        with pytest.raises(psutil.TimeoutExpired):
-            p.wait(0)
-
-    def test_wait_timeout_nonblocking(self):
-        p = self.spawn_psproc()
-        with pytest.raises(psutil.TimeoutExpired):
-            p.wait(0)
-        p.kill()
-        stop_at = time.time() + GLOBAL_TIMEOUT
-        while time.time() < stop_at:
-            try:
-                code = p.wait(0)
-                break
-            except psutil.TimeoutExpired:
-                pass
-        else:
-            return pytest.fail('timeout')
-        if POSIX:
-            assert code == -signal.SIGKILL
-        else:
-            assert code == signal.SIGTERM
-        self.assert_proc_gone(p)
-
-    def test_wait_errors(self):
-        p = psutil.Process()
-        with pytest.raises(TypeError, match="must be an int or float"):
-            p.wait("foo")
-        with pytest.raises(ValueError, match="must be positive or zero"):
-            p.wait(-1)
-        p._pid = 0
-        with pytest.raises(ValueError, match="can't wait for PID 0"):
-            p.wait()
-
-    @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    def test_wait_zombie(self):
-        parent, zombie = self.spawn_zombie()
-        with pytest.raises(psutil.TimeoutExpired):
-            zombie.wait(0.001)
-        parent.terminate()
-        parent.wait()
-        zombie.wait()
 
     def test_cpu_percent(self):
         p = psutil.Process()
@@ -1578,6 +1456,166 @@ class TestProcess(PsutilTestCase):
         assert env == {"A": "1", "C": "3"}
         sproc.communicate()
         assert sproc.returncode == 0
+
+
+# ===================================================================
+# --- psutil.Process.wait tests
+# ===================================================================
+
+
+class TestProcessWait(PsutilTestCase):
+
+    def test_wait_exited(self):
+        # Test waitpid() + WIFEXITED -> WEXITSTATUS.
+        # normal return, same as exit(0)
+        cmd = [PYTHON_EXE, "-c", "pass"]
+        p = self.spawn_psproc(cmd)
+        code = p.wait()
+        assert code == 0
+        self.assert_proc_gone(p)
+        # exit(1), implicit in case of error
+        cmd = [PYTHON_EXE, "-c", "1 / 0"]
+        p = self.spawn_psproc(cmd, stderr=subprocess.PIPE)
+        code = p.wait()
+        assert code == 1
+        self.assert_proc_gone(p)
+        # via sys.exit()
+        cmd = [PYTHON_EXE, "-c", "import sys; sys.exit(5);"]
+        p = self.spawn_psproc(cmd)
+        code = p.wait()
+        assert code == 5
+        self.assert_proc_gone(p)
+        # via os._exit()
+        cmd = [PYTHON_EXE, "-c", "import os; os._exit(5);"]
+        p = self.spawn_psproc(cmd)
+        code = p.wait()
+        assert code == 5
+        self.assert_proc_gone(p)
+
+    @pytest.mark.skipif(not POSIX, reason="not POSIX")
+    def test_wait_signaled(self):
+        p = psutil.Process(self.spawn_subproc().pid)
+        p.terminate()
+        code = p.wait()
+        assert code == -signal.SIGTERM
+        assert isinstance(code, enum.IntEnum)
+
+    @pytest.mark.skipif(NETBSD, reason="fails on NETBSD")
+    def test_wait_stopped(self):
+        p = self.spawn_psproc()
+        if POSIX:
+            # Test waitpid() + WIFSTOPPED and WIFCONTINUED.
+            # Note: if a process is stopped it ignores SIGTERM.
+            p.send_signal(signal.SIGSTOP)
+            with pytest.raises(psutil.TimeoutExpired):
+                p.wait(timeout=0.001)
+            p.send_signal(signal.SIGCONT)
+            with pytest.raises(psutil.TimeoutExpired):
+                p.wait(timeout=0.001)
+            p.send_signal(signal.SIGTERM)
+            assert p.wait() == -signal.SIGTERM
+            assert p.wait() == -signal.SIGTERM
+        else:
+            p.suspend()
+            with pytest.raises(psutil.TimeoutExpired):
+                p.wait(timeout=0.001)
+            p.resume()
+            with pytest.raises(psutil.TimeoutExpired):
+                p.wait(timeout=0.001)
+            p.terminate()
+            assert p.wait() == signal.SIGTERM
+            assert p.wait() == signal.SIGTERM
+
+    def test_wait_non_children(self):
+        # Test wait() against a process which is not our direct
+        # child.
+        child, grandchild = self.spawn_children_pair()
+        with pytest.raises(psutil.TimeoutExpired):
+            child.wait(0.01)
+        with pytest.raises(psutil.TimeoutExpired):
+            grandchild.wait(0.01)
+        # We also terminate the direct child otherwise the
+        # grandchild will hang until the parent is gone.
+        child.terminate()
+        grandchild.terminate()
+        child_ret = child.wait()
+        grandchild_ret = grandchild.wait()
+        if POSIX:
+            assert child_ret == -signal.SIGTERM
+            # For processes which are not our children we're supposed
+            # to get None.
+            assert grandchild_ret is None
+        else:
+            assert child_ret == signal.SIGTERM
+            assert child_ret == signal.SIGTERM
+
+    def test_wait_timeout(self):
+        p = self.spawn_psproc()
+        p.name()
+        with pytest.raises(psutil.TimeoutExpired):
+            p.wait(0.01)
+        with pytest.raises(psutil.TimeoutExpired):
+            p.wait(0)
+
+    def test_wait_timeout_nonblocking(self):
+        p = self.spawn_psproc()
+        with pytest.raises(psutil.TimeoutExpired):
+            p.wait(0)
+        p.kill()
+        stop_at = time.time() + GLOBAL_TIMEOUT
+        while time.time() < stop_at:
+            try:
+                code = p.wait(0)
+                break
+            except psutil.TimeoutExpired:
+                pass
+        else:
+            return pytest.fail('timeout')
+        if POSIX:
+            assert code == -signal.SIGKILL
+        else:
+            assert code == signal.SIGTERM
+        self.assert_proc_gone(p)
+
+    def test_wait_errors(self):
+        p = psutil.Process()
+        with pytest.raises(TypeError, match="must be an int or float"):
+            p.wait("foo")
+        with pytest.raises(ValueError, match="must be positive or zero"):
+            p.wait(-1)
+        p._pid = 0
+        with pytest.raises(ValueError, match="can't wait for PID 0"):
+            p.wait()
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_wait_zombie(self):
+        parent, zombie = self.spawn_zombie()
+        with pytest.raises(psutil.TimeoutExpired):
+            zombie.wait(0.001)
+        parent.terminate()
+        parent.wait()
+        zombie.wait()
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_os_waitpid_let_raise(self):
+        # os.waitpid() is supposed to catch ECHILD only.
+        # Test that any other errno results in an exception.
+        with mock.patch(
+            "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
+        ) as m:
+            with pytest.raises(OSError):
+                psutil._psposix.wait_pid(os.getpid())
+            assert m.called
+
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_os_waitpid_bad_ret_status(self):
+        # Simulate os.waitpid() returning a bad status.
+        with mock.patch(
+            "psutil._psposix.os.waitpid", return_value=(1, -1)
+        ) as m:
+            with pytest.raises(ValueError):
+                psutil._psposix.wait_pid(os.getpid())
+            assert m.called
 
 
 # ===================================================================

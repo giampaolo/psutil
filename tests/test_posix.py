@@ -434,25 +434,6 @@ class TestSystemAPIs(PsutilTestCase):
                 psutil._psposix.pid_exists(os.getpid())
             assert m.called
 
-    def test_os_waitpid_let_raise(self):
-        # os.waitpid() is supposed to catch ECHILD only.
-        # Test that any other errno results in an exception.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
-        ) as m:
-            with pytest.raises(OSError):
-                psutil._psposix.wait_pid(os.getpid())
-            assert m.called
-
-    def test_os_waitpid_bad_ret_status(self):
-        # Simulate os.waitpid() returning a bad status.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", return_value=(1, -1)
-        ) as m:
-            with pytest.raises(ValueError):
-                psutil._psposix.wait_pid(os.getpid())
-            assert m.called
-
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @pytest.mark.skipif(AIX, reason="unreliable on AIX")
     @retry_on_failure()

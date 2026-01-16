@@ -10,7 +10,6 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import platform
-import signal
 
 import psutil
 from psutil import AIX
@@ -326,13 +325,3 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(user.pid, (int, type(None)))
             if isinstance(user.pid, int):
                 assert user.pid > 0
-
-
-class TestProcessWaitType(PsutilTestCase):
-    @pytest.mark.skipif(not POSIX, reason="not POSIX")
-    def test_negative_signal(self):
-        p = psutil.Process(self.spawn_subproc().pid)
-        p.terminate()
-        code = p.wait()
-        assert code == -signal.SIGTERM
-        assert isinstance(code, enum.IntEnum)
