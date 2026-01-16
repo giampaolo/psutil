@@ -175,8 +175,10 @@ def wait_pid_pidfd_open(pid, timeout=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
-        if err.errno == errno.ESRCH:  # no such process
-            return None
+        if err.errno == errno.ESRCH:
+            # No such process. os.waitpid() may still be able to return
+            # the status code.
+            return wait_pid_posix(pid, timeout)
         if err.errno in {errno.EMFILE, errno.ENFILE, errno.ENODEV}:
             # EMFILE, ENFILE: too many open files
             # ENODEV: anonymous inode filesystem not supported

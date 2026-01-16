@@ -1641,6 +1641,7 @@ class TestProcessWait(PsutilTestCase):
         sproc.terminate()
 
         for idx, err in enumerate((
+            errno.ESRCH,
             errno.EMFILE,
             errno.ENFILE,
             errno.ENODEV,
@@ -1654,7 +1655,7 @@ class TestProcessWait(PsutilTestCase):
                 assert wait_pid_pidfd_open(sproc.pid) == code
             assert m.called
 
-        # illegittimate error
+        # illegitimate error
         with mock.patch(
             "os.pidfd_open",
             side_effect=OSError(errno.EBADF, os.strerror(errno.EBADF)),
