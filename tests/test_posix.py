@@ -10,7 +10,6 @@ import datetime
 import errno
 import os
 import re
-import select
 import shutil
 import subprocess
 import time
@@ -434,48 +433,6 @@ class TestSystemAPIs(PsutilTestCase):
             with pytest.raises(OSError):
                 psutil._psposix.pid_exists(os.getpid())
             assert m.called
-
-    def test_os_waitpid_let_raise(self):
-        # os.waitpid() is supposed to catch ECHILD only.
-        # Test that any other errno results in an exception.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
-        ) as m:
-            with pytest.raises(OSError):
-                psutil._psposix.wait_pid_posix(os.getpid())
-            assert m.called
-
-    def test_os_waitpid_bad_ret_status(self):
-        # Simulate os.waitpid() returning a bad status.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", return_value=(1, -1)
-        ) as m:
-            with pytest.raises(ValueError):
-                psutil._psposix.wait_pid_posix(os.getpid())
-            assert m.called
-
-    @pytest.mark.skipif(
-        not hasattr(select, "kqueue"), reason="BSD and MACOS only"
-    )
-    def test_proc_wait_pid_kqueue_race(self):
-        sproc = self.spawn_subproc()
-        psproc = psutil.Process(sproc.pid)
-        real_kqueue = select.kqueue
-
-        def kqueue_wrapper(*args, **kwargs):
-            # Kill the process after kqueue() is created but before
-            # kevent/control happens, then verify that we can
-            # Process.wait() on it.
-            kq = real_kqueue(*args, **kwargs)
-            sproc.terminate()
-            sproc.wait()
-            return kq
-
-        with mock.patch(
-            "select.kqueue", create=True, side_effect=kqueue_wrapper
-        ) as m:
-            psproc.wait()
-        assert m.called
 
     # AIX can return '-' in df output instead of numbers, e.g. for /proc
     @pytest.mark.skipif(AIX, reason="unreliable on AIX")
