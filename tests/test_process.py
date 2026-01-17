@@ -14,6 +14,7 @@ import getpass
 import io
 import itertools
 import os
+import random
 import select
 import signal
 import socket
@@ -1640,12 +1641,9 @@ class TestProcessWait(PsutilTestCase):
         sproc = self.spawn_subproc()
         sproc.terminate()
 
-        for idx, err in enumerate((
-            errno.ESRCH,
-            errno.EMFILE,
-            errno.ENFILE,
-            errno.ENODEV,
-        )):
+        errors = [errno.ESRCH, errno.EMFILE, errno.ENFILE, errno.ENODEV]
+        random.shuffle(errors)
+        for idx, err in enumerate(errors):
             with mock.patch(
                 "os.pidfd_open",
                 side_effect=OSError(err, os.strerror(err)),
