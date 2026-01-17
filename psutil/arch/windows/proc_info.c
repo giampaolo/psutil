@@ -533,6 +533,8 @@ psutil_cmdline_query_proc(DWORD pid, WCHAR **pdata, SIZE_T *psize) {
 error:
     if (buffer != NULL)
         free(buffer);
+    if (bufWchar != NULL)
+        free(bufWchar);
     if (hProcess != NULL)
         CloseHandle(hProcess);
     return -1;
