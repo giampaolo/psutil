@@ -686,6 +686,7 @@ _psutil_user_token_from_pid(DWORD pid) {
         {
             if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
                 free(userToken);
+                userToken = NULL;
                 continue;
             }
             else {
@@ -701,6 +702,8 @@ _psutil_user_token_from_pid(DWORD pid) {
     return userToken;
 
 error:
+    if (userToken != NULL)
+        free(userToken);
     if (hProcess != NULL)
         CloseHandle(hProcess);
     if (hToken != NULL)
