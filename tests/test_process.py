@@ -1611,7 +1611,7 @@ class TestProcessWait(PsutilTestCase):
         # os.waitpid() is supposed to catch ECHILD only.
         # Test that any other errno results in an exception.
         with mock.patch(
-            "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
+            "os.waitpid", side_effect=OSError(errno.EBADF, "")
         ) as m:
             with pytest.raises(OSError):
                 psutil._psposix.wait_pid_posix(os.getpid())
@@ -1620,9 +1620,7 @@ class TestProcessWait(PsutilTestCase):
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_os_waitpid_bad_ret_status(self):
         # Simulate os.waitpid() returning a bad status.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", return_value=(1, -1)
-        ) as m:
+        with mock.patch("os.waitpid", return_value=(1, -1)) as m:
             with pytest.raises(ValueError):
                 psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
@@ -1656,7 +1654,7 @@ class TestProcessWait(PsutilTestCase):
         # illegitimate error
         with mock.patch(
             "os.pidfd_open",
-            side_effect=OSError(errno.EBADF, os.strerror(errno.EBADF)),
+            side_effect=OSError(errno.EBADF),
         ) as m:
             with pytest.raises(OSError):
                 wait_pid_pidfd_open(sproc.pid)
