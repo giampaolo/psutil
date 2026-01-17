@@ -1717,7 +1717,9 @@ class TestProcessWait(PsutilTestCase):
         sproc = self.spawn_subproc()
         sproc.terminate()
 
-        for idx, err in enumerate((errno.EACCES, errno.EPERM)):
+        errors = [errno.EACCES, errno.EPERM, errno.ESRCH]
+        random.shuffle(errors)
+        for idx, err in enumerate(errors):
             kq_mock = mock.Mock()
             kq_mock.control.side_effect = OSError(err, os.strerror(err))
             kq_mock.close = mock.Mock()
