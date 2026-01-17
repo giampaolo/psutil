@@ -5,14 +5,17 @@
 """Routines common to all posix systems."""
 
 import enum
+import errno
 import glob
 import os
+import select
 import signal
 import time
 
 from . import _ntuples as ntp
 from ._common import MACOS
 from ._common import TimeoutExpired
+from ._common import debug
 from ._common import memoize
 from ._common import usage_percent
 
@@ -89,7 +92,7 @@ def convert_exit_code(status):
     raise ValueError(msg)
 
 
-def wait_pid(
+def wait_pid_posix(
     pid,
     timeout=None,
     _waitpid=os.waitpid,
@@ -118,17 +121,12 @@ def wait_pid(
     If timeout=0 either return immediately or raise TimeoutExpired
     (non-blocking).
     """
-    # PID 0 passed to waitpid() waits for any child of the current
-    # process to change state.
-    assert pid > 0
-
     interval = 0.0001
     max_interval = 0.04
     flags = 0
     stop_at = None
 
     if timeout is not None:
-        assert timeout >= 0
         flags |= os.WNOHANG
         if timeout != 0:
             stop_at = _timer() + timeout
@@ -136,7 +134,7 @@ def wait_pid(
     def sleep_or_timeout(interval):
         # Sleep for some time and return a new increased interval.
         if timeout == 0 or (stop_at is not None and _timer() >= stop_at):
-            raise TimeoutExpired(timeout, pid=pid)
+            raise TimeoutExpired(timeout)
         _sleep(interval)
         return _min(interval * 2, max_interval)
 
@@ -160,6 +158,133 @@ def wait_pid(
                 interval = sleep_or_timeout(interval)
             else:
                 return convert_exit_code(status)
+
+
+def _waitpid(pid, timeout):
+    """Wrapper around os.waitpid(). PID is supposed to be gone already,
+    it just returns the exit code.
+    """
+    try:
+        retpid, status = os.waitpid(pid, 0)
+    except ChildProcessError:
+        # PID is not a child of os.getpid().
+        return wait_pid_posix(pid, timeout)
+    else:
+        assert retpid != 0
+        return convert_exit_code(status)
+
+
+def wait_pid_pidfd_open(pid, timeout=None):
+    """Wait for PID to terminate using pidfd_open() + poll(). Linux >=
+    5.3 + Python >= 3.9 only.
+    """
+    try:
+        pidfd = os.pidfd_open(pid, 0)
+    except OSError as err:
+        if err.errno == errno.ESRCH:
+            # No such process. os.waitpid() may still be able to return
+            # the status code.
+            return wait_pid_posix(pid, timeout)
+        if err.errno in {errno.EMFILE, errno.ENFILE, errno.ENODEV}:
+            # EMFILE, ENFILE: too many open files
+            # ENODEV: anonymous inode filesystem not supported
+            debug(f"pidfd_open() failed ({err!r}); use fallback")
+            return wait_pid_posix(pid, timeout)
+        raise
+
+    try:
+        # poll() / select() have the advantage of not requiring any
+        # extra file descriptor, contrary to epoll() / kqueue().
+        # select() crashes if process opens > 1024 FDs, so we use
+        # poll().
+        poller = select.poll()
+        poller.register(pidfd, select.POLLIN)
+        timeout_ms = None if timeout is None else int(timeout * 1000)
+        events = poller.poll(timeout_ms)  # wait
+
+        if not events:
+            raise TimeoutExpired(timeout)
+        return _waitpid(pid, timeout)
+    finally:
+        os.close(pidfd)
+
+
+def wait_pid_kqueue(pid, timeout=None):
+    """Wait for PID to terminate using kqueue(). macOS and BSD only."""
+    try:
+        kq = select.kqueue()
+    except OSError as err:
+        if err.errno in {errno.EMFILE, errno.ENFILE}:  # too many open files
+            debug(f"kqueue() failed ({err!r}); use fallback")
+            return wait_pid_posix(pid, timeout)
+        raise
+
+    try:
+        kev = select.kevent(
+            pid,
+            filter=select.KQ_FILTER_PROC,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ONESHOT,
+            fflags=select.KQ_NOTE_EXIT,
+        )
+        try:
+            events = kq.control([kev], 1, timeout)  # wait
+        except OSError as err:
+            if err.errno in {errno.EACCES, errno.EPERM, errno.ESRCH}:
+                debug(f"kqueue.control() failed ({err!r}); use fallback")
+                return wait_pid_posix(pid, timeout)
+            raise
+        else:
+            if not events:
+                raise TimeoutExpired(timeout)
+            return _waitpid(pid, timeout)
+    finally:
+        kq.close()
+
+
+@memoize
+def can_use_pidfd():
+    # Availability: Linux >= 5.3, Python >= 3.9
+    if not hasattr(os, "pidfd_open"):
+        return False
+    try:
+        pidfd = os.pidfd_open(os.getpid(), 0)
+    except OSError as err:
+        # blocked by security policy like SECCOMP
+        debug(f"can't use pidfd_open() due to {err}")
+        return False
+    else:
+        os.close(pidfd)
+        return True
+
+
+@memoize
+def can_use_kqueue():
+    names = (
+        "kqueue",
+        "KQ_EV_ADD",
+        "KQ_EV_ONESHOT",
+        "KQ_FILTER_PROC",
+        "KQ_NOTE_EXIT",
+    )
+    return all(hasattr(select, x) for x in names)
+
+
+def wait_pid(pid, timeout=None):
+    # PID 0 passed to waitpid() waits for any child of the current
+    # process to change state.
+    assert pid > 0
+    if timeout is not None:
+        assert timeout >= 0
+
+    if can_use_pidfd():
+        return wait_pid_pidfd_open(pid, timeout)
+    elif can_use_kqueue():
+        return wait_pid_kqueue(pid, timeout)
+    else:
+        return wait_pid_posix(pid, timeout)
+
+
+wait_pid.__doc__ = wait_pid_posix.__doc__
 
 
 def disk_usage(path):

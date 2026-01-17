@@ -2093,6 +2093,10 @@ Process class
     .. versionchanged:: 5.7.1 on POSIX, in case of negative signal, return it
       as a human readable `enum`_.
 
+    .. versionchanged:: 7.2.2 on Linux (>= 5.3, Python >= 3.9) and macOS/BSD,
+      use ``pidfd_open()`` and ``kqueue()`` respectively, instead of less
+      efficient busy-loop polling.
+
 .. class:: Popen(*args, **kwargs)
 
   Same as `subprocess.Popen`_ but in addition it provides all

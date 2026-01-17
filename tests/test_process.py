@@ -14,6 +14,8 @@ import getpass
 import io
 import itertools
 import os
+import random
+import select
 import signal
 import socket
 import stat
@@ -1499,6 +1501,12 @@ class TestProcessWait(PsutilTestCase):
         code = p.wait()
         assert code == -signal.SIGTERM
         assert isinstance(code, enum.IntEnum)
+        # second call is cached
+        assert code == -signal.SIGTERM
+        # Call the underlying implementation. Done to exercise the
+        # poll/kqueue machinery on a gone PID. Also, waitpid() is
+        # supposed to fail with ESRCH.
+        assert p._proc.wait() is None
 
     @pytest.mark.skipif(NETBSD, reason="fails on NETBSD")
     def test_wait_stopped(self):
@@ -1596,26 +1604,141 @@ class TestProcessWait(PsutilTestCase):
         parent.wait()
         zombie.wait()
 
+    # --- tests for wait_pid_posix()
+
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
-    def test_os_waitpid_let_raise(self):
+    def test_os_waitpid_error(self):
         # os.waitpid() is supposed to catch ECHILD only.
         # Test that any other errno results in an exception.
         with mock.patch(
-            "psutil._psposix.os.waitpid", side_effect=OSError(errno.EBADF, "")
+            "os.waitpid", side_effect=OSError(errno.EBADF, "")
         ) as m:
             with pytest.raises(OSError):
-                psutil._psposix.wait_pid(os.getpid())
+                psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_os_waitpid_bad_ret_status(self):
         # Simulate os.waitpid() returning a bad status.
-        with mock.patch(
-            "psutil._psposix.os.waitpid", return_value=(1, -1)
-        ) as m:
+        with mock.patch("os.waitpid", return_value=(1, -1)) as m:
             with pytest.raises(ValueError):
-                psutil._psposix.wait_pid(os.getpid())
+                psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
+
+    # --- tests for pidfd_open() and kqueue()
+
+    def assert_wait_pid_errors(self, patch_target, wait_func, errors):
+        # Test that legitimate errors are caught and wait_pid_posix()
+        # fallback is used.
+        sproc = self.spawn_subproc()
+        sproc.terminate()
+
+        errors = list(errors)
+        random.shuffle(errors)
+        for idx, err in enumerate(errors):
+            with mock.patch(
+                patch_target,
+                side_effect=OSError(err, os.strerror(err)),
+            ) as m:
+                # the second time waitpid() does not return the exit code
+                code = -signal.SIGTERM if idx == 0 else None
+                assert wait_func(sproc.pid) == code
+            assert m.called
+
+        # illegitimate error
+        with mock.patch(
+            patch_target,
+            side_effect=OSError(errno.EBADF),
+        ):
+            with pytest.raises(OSError):
+                wait_func(sproc.pid)
+
+    @pytest.mark.skipif(
+        not hasattr(os, "pidfd_open"),
+        reason="LINUX only" if not LINUX else "not supported",
+    )
+    def test_pidfd_open_errors(self):
+        from psutil._psposix import wait_pid_pidfd_open
+
+        self.assert_wait_pid_errors(
+            "os.pidfd_open",
+            wait_pid_pidfd_open,
+            [errno.ESRCH, errno.EMFILE, errno.ENFILE, errno.ENODEV],
+        )
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
+    def test_kqueue_errors(self):
+        from psutil._psposix import wait_pid_kqueue
+
+        self.assert_wait_pid_errors(
+            "select.kqueue",
+            wait_pid_kqueue,
+            [errno.EMFILE, errno.ENFILE],
+        )
+
+    def assert_wait_pid_race(self, patch_target, real_func):
+        # Kill process after patch_target succeeds but before wait()
+        # completes, then verify Process.wait() still works.
+        sproc = self.spawn_subproc()
+        psproc = psutil.Process(sproc.pid)
+
+        def wrapper(*args, **kwargs):
+            ret = real_func(*args, **kwargs)
+            sproc.terminate()
+            sproc.wait()
+            return ret
+
+        with mock.patch(patch_target, side_effect=wrapper) as m:
+            psproc.wait()
+        assert m.called
+
+    @pytest.mark.skipif(
+        not hasattr(os, "pidfd_open"),
+        reason="LINUX only" if not LINUX else "not supported",
+    )
+    def test_pidfd_open_race(self):
+        self.assert_wait_pid_race("os.pidfd_open", os.pidfd_open)
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
+    def test_kqueue_race(self):
+        self.assert_wait_pid_race("select.kqueue", select.kqueue)
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
+    def test_kqueue_control_errors(self):
+        # Test that kqueue.control() errors are caught and fallback is used.
+        from psutil._psposix import wait_pid_kqueue
+
+        sproc = self.spawn_subproc()
+        sproc.terminate()
+
+        errors = [errno.EACCES, errno.EPERM, errno.ESRCH]
+        random.shuffle(errors)
+        for idx, err in enumerate(errors):
+            kq_mock = mock.Mock()
+            kq_mock.control.side_effect = OSError(err, os.strerror(err))
+            kq_mock.close = mock.Mock()
+
+            with mock.patch("select.kqueue", return_value=kq_mock):
+                # the second time waitpid() does not return the exit code
+                code = -signal.SIGTERM if idx == 0 else None
+                assert wait_pid_kqueue(sproc.pid) == code
+            assert kq_mock.control.called
+
+        # illegitimate error
+        kq_mock = mock.Mock()
+        kq_mock.control.side_effect = OSError(
+            errno.EBADF, os.strerror(errno.EBADF)
+        )
+        kq_mock.close = mock.Mock()
+        with mock.patch("select.kqueue", return_value=kq_mock):
+            with pytest.raises(OSError):
+                wait_pid_kqueue(sproc.pid)
 
 
 # ===================================================================
