@@ -1659,6 +1659,27 @@ class TestProcessWait(PsutilTestCase):
             with pytest.raises(OSError):
                 wait_pid_pidfd_open(sproc.pid)
 
+    @pytest.mark.skipif(
+        not hasattr(os, "pidfd_open"),
+        reason="LINUX only" if not LINUX else "not supported",
+    )
+    def test_pidfd_open_race(self):
+        # Kill the process after pidfd_open() succeeds but before
+        # poll() happens, then verify that we can Process.wait() on it.
+        sproc = self.spawn_subproc()
+        psproc = psutil.Process(sproc.pid)
+        real_pidfd_open = os.pidfd_open
+
+        def pidfd_open_wrapper(*args, **kwargs):
+            pidfd = real_pidfd_open(*args, **kwargs)
+            sproc.terminate()
+            sproc.wait()
+            return pidfd
+
+        with mock.patch("os.pidfd_open", side_effect=pidfd_open_wrapper) as m:
+            psproc.wait()
+        assert m.called
+
     # --- tests for wait_pid_kqueue()
 
     @pytest.mark.skipif(
@@ -1724,14 +1745,14 @@ class TestProcessWait(PsutilTestCase):
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
     )
     def test_kqueue_race(self):
+        # Kill the process after kqueue() is created but before
+        # kevent/control happens, then verify that we can
+        # Process.wait() on it.
         sproc = self.spawn_subproc()
         psproc = psutil.Process(sproc.pid)
         real_kqueue = select.kqueue
 
         def kqueue_wrapper(*args, **kwargs):
-            # Kill the process after kqueue() is created but before
-            # kevent/control happens, then verify that we can
-            # Process.wait() on it.
             kq = real_kqueue(*args, **kwargs)
             sproc.terminate()
             sproc.wait()
