@@ -223,7 +223,9 @@ def wait_pid_kqueue(pid, timeout=None):
             events = kq.control([kev], 1, timeout)  # wait
         except OSError as err:
             if err.errno == errno.ESRCH:  # no such process
-                return None
+                # No such process. os.waitpid() may still be able to
+                # return the status code.
+                return wait_pid_posix(pid, timeout)
             if err.errno in {errno.EACCES, errno.EPERM}:  # access denied
                 debug(f"kqueue.control() failed ({err!r}); use fallback")
                 return wait_pid_posix(pid, timeout)
