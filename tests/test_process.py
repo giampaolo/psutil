@@ -1625,39 +1625,58 @@ class TestProcessWait(PsutilTestCase):
                 psutil._psposix.wait_pid_posix(os.getpid())
             assert m.called
 
-    # --- tests for wait_pid_pidfd_open()
+    # --- tests for pidfd_open() and kqueue()
+
+    def assert_wait_pid_errors(self, patch_target, wait_func, errors):
+        # Test that legitimate errors are caught and wait_pid_posix()
+        # fallback is used.
+        sproc = self.spawn_subproc()
+        sproc.terminate()
+
+        errors = list(errors)
+        random.shuffle(errors)
+        for idx, err in enumerate(errors):
+            with mock.patch(
+                patch_target,
+                side_effect=OSError(err, os.strerror(err)),
+            ) as m:
+                # the second time waitpid() does not return the exit code
+                code = -signal.SIGTERM if idx == 0 else None
+                assert wait_func(sproc.pid) == code
+            assert m.called
+
+        # illegitimate error
+        with mock.patch(
+            patch_target,
+            side_effect=OSError(errno.EBADF),
+        ):
+            with pytest.raises(OSError):
+                wait_func(sproc.pid)
 
     @pytest.mark.skipif(
         not hasattr(os, "pidfd_open"),
         reason="LINUX only" if not LINUX else "not supported",
     )
     def test_pidfd_open_errors(self):
-        # Test that os.pidfd_open() errors are caught and fallback is
-        # used.
         from psutil._psposix import wait_pid_pidfd_open
 
-        sproc = self.spawn_subproc()
-        sproc.terminate()
-
-        errors = [errno.ESRCH, errno.EMFILE, errno.ENFILE, errno.ENODEV]
-        random.shuffle(errors)
-        for idx, err in enumerate(errors):
-            with mock.patch(
-                "os.pidfd_open",
-                side_effect=OSError(err, os.strerror(err)),
-            ) as m:
-                # the second time waitpid() does not return the exit code
-                code = -signal.SIGTERM if idx == 0 else None
-                assert wait_pid_pidfd_open(sproc.pid) == code
-            assert m.called
-
-        # illegitimate error
-        with mock.patch(
+        self.assert_wait_pid_errors(
             "os.pidfd_open",
-            side_effect=OSError(errno.EBADF),
-        ) as m:
-            with pytest.raises(OSError):
-                wait_pid_pidfd_open(sproc.pid)
+            wait_pid_pidfd_open,
+            [errno.ESRCH, errno.EMFILE, errno.ENFILE, errno.ENODEV],
+        )
+
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
+    def test_kqueue_errors(self):
+        from psutil._psposix import wait_pid_kqueue
+
+        self.assert_wait_pid_errors(
+            "select.kqueue",
+            wait_pid_kqueue,
+            [errno.EMFILE, errno.ENFILE],
+        )
 
     @pytest.mark.skipif(
         not hasattr(os, "pidfd_open"),
@@ -1679,36 +1698,6 @@ class TestProcessWait(PsutilTestCase):
         with mock.patch("os.pidfd_open", side_effect=pidfd_open_wrapper) as m:
             psproc.wait()
         assert m.called
-
-    # --- tests for wait_pid_kqueue()
-
-    @pytest.mark.skipif(
-        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
-    )
-    def test_kqueue_errors(self):
-        # Test that kqueue() errors are caught and fallback is used.
-        from psutil._psposix import wait_pid_kqueue
-
-        sproc = self.spawn_subproc()
-        sproc.terminate()
-
-        for idx, err in enumerate((errno.EMFILE, errno.ENFILE)):
-            with mock.patch(
-                "select.kqueue",
-                side_effect=OSError(err, os.strerror(err)),
-            ) as m:
-                # the second time waitpid() does not return the exit code
-                code = -signal.SIGTERM if idx == 0 else None
-                assert wait_pid_kqueue(sproc.pid) == code
-            assert m.called
-
-        # illegitimate error
-        with mock.patch(
-            "select.kqueue",
-            side_effect=OSError(errno.EBADF),
-        ) as m:
-            with pytest.raises(OSError):
-                wait_pid_kqueue(sproc.pid)
 
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
