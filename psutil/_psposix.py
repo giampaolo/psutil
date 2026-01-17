@@ -161,6 +161,9 @@ def wait_pid_posix(
 
 
 def _waitpid(pid, timeout):
+    """Wrapper around os.waitpid(). PID is supposed to be gone already,
+    it just returns the exit code.
+    """
     try:
         retpid, status = os.waitpid(pid, 0)
     except ChildProcessError:
@@ -172,6 +175,9 @@ def _waitpid(pid, timeout):
 
 
 def wait_pid_pidfd_open(pid, timeout=None):
+    """Wait for PID to terminate using pidfd_open() + poll(). Linux >=
+    5.3 + Python >= 3.9 only.
+    """
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
@@ -204,6 +210,7 @@ def wait_pid_pidfd_open(pid, timeout=None):
 
 
 def wait_pid_kqueue(pid, timeout=None):
+    """Wait for PID to terminate using kqueue(). macOS and BSD only."""
     try:
         kq = select.kqueue()
     except OSError as err:
