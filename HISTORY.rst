@@ -18,6 +18,7 @@ XXXX-XX
 
 - 2701_, [macOS]: fix compilation error on macOS < 10.7.  (patch by Sergey
   Fedorov)
+- 2707_, [macOS]: fix potential memory leaks in error paths.
 
 7.2.1
 =====
