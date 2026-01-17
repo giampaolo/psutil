@@ -291,6 +291,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (psutil_sysctlbyname("sysctl.proc_cputype", &cpu_type, sizeof(cpu_type))
         != 0)
     {
+        mach_port_deallocate(mach_task_self(), task);
         return NULL;
     }
 
@@ -299,6 +300,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     for (addr = MACH_VM_MIN_ADDRESS;; addr += size) {
         prev_addr = addr;
         info_count = VM_REGION_TOP_INFO_COUNT;  // reset before each call
+        object_name = MACH_PORT_NULL;
 
         kr = mach_vm_region(
             task,
@@ -309,6 +311,12 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             &info_count,
             &object_name
         );
+
+        if (object_name != MACH_PORT_NULL) {
+            mach_port_deallocate(mach_task_self(), object_name);
+            object_name = MACH_PORT_NULL;
+        }
+
         if (kr == KERN_INVALID_ADDRESS) {
             // Done iterating VM regions.
             break;
