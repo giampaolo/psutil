@@ -1678,26 +1678,34 @@ class TestProcessWait(PsutilTestCase):
             [errno.EMFILE, errno.ENFILE],
         )
 
+    def assert_wait_pid_race(self, patch_target, real_func):
+        # Kill process after patch_target succeeds but before wait()
+        # completes, then verify Process.wait() still works.
+        sproc = self.spawn_subproc()
+        psproc = psutil.Process(sproc.pid)
+
+        def wrapper(*args, **kwargs):
+            ret = real_func(*args, **kwargs)
+            sproc.terminate()
+            sproc.wait()
+            return ret
+
+        with mock.patch(patch_target, side_effect=wrapper) as m:
+            psproc.wait()
+        assert m.called
+
     @pytest.mark.skipif(
         not hasattr(os, "pidfd_open"),
         reason="LINUX only" if not LINUX else "not supported",
     )
     def test_pidfd_open_race(self):
-        # Kill the process after pidfd_open() succeeds but before
-        # poll() happens, then verify that we can Process.wait() on it.
-        sproc = self.spawn_subproc()
-        psproc = psutil.Process(sproc.pid)
-        real_pidfd_open = os.pidfd_open
+        self.assert_wait_pid_race("os.pidfd_open", os.pidfd_open)
 
-        def pidfd_open_wrapper(*args, **kwargs):
-            pidfd = real_pidfd_open(*args, **kwargs)
-            sproc.terminate()
-            sproc.wait()
-            return pidfd
-
-        with mock.patch("os.pidfd_open", side_effect=pidfd_open_wrapper) as m:
-            psproc.wait()
-        assert m.called
+    @pytest.mark.skipif(
+        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
+    )
+    def test_kqueue_race(self):
+        self.assert_wait_pid_race("select.kqueue", select.kqueue)
 
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
@@ -1729,27 +1737,6 @@ class TestProcessWait(PsutilTestCase):
         with mock.patch("select.kqueue", return_value=kq_mock):
             with pytest.raises(OSError):
                 wait_pid_kqueue(sproc.pid)
-
-    @pytest.mark.skipif(
-        not hasattr(select, "kqueue"), reason="MACOS and BSD only"
-    )
-    def test_kqueue_race(self):
-        # Kill the process after kqueue() is created but before
-        # kevent/control happens, then verify that we can
-        # Process.wait() on it.
-        sproc = self.spawn_subproc()
-        psproc = psutil.Process(sproc.pid)
-        real_kqueue = select.kqueue
-
-        def kqueue_wrapper(*args, **kwargs):
-            kq = real_kqueue(*args, **kwargs)
-            sproc.terminate()
-            sproc.wait()
-            return kq
-
-        with mock.patch("select.kqueue", side_effect=kqueue_wrapper) as m:
-            psproc.wait()
-        assert m.called
 
 
 # ===================================================================
