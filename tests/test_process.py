@@ -1681,6 +1681,14 @@ class TestProcessWait(PsutilTestCase):
                 assert wait_pid_kqueue(sproc.pid) == code
             assert m.called
 
+        # illegitimate error
+        with mock.patch(
+            "select.kqueue",
+            side_effect=OSError(errno.EBADF),
+        ) as m:
+            with pytest.raises(OSError):
+                wait_pid_kqueue(sproc.pid)
+
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"
     )
@@ -1692,7 +1700,6 @@ class TestProcessWait(PsutilTestCase):
         sproc.terminate()
 
         for idx, err in enumerate((errno.EACCES, errno.EPERM)):
-
             kq_mock = mock.Mock()
             kq_mock.control.side_effect = OSError(err, os.strerror(err))
             kq_mock.close = mock.Mock()
@@ -1702,6 +1709,16 @@ class TestProcessWait(PsutilTestCase):
                 code = -signal.SIGTERM if idx == 0 else None
                 assert wait_pid_kqueue(sproc.pid) == code
             assert kq_mock.control.called
+
+        # illegitimate error
+        kq_mock = mock.Mock()
+        kq_mock.control.side_effect = OSError(
+            errno.EBADF, os.strerror(errno.EBADF)
+        )
+        kq_mock.close = mock.Mock()
+        with mock.patch("select.kqueue", return_value=kq_mock):
+            with pytest.raises(OSError):
+                wait_pid_kqueue(sproc.pid)
 
     @pytest.mark.skipif(
         not hasattr(select, "kqueue"), reason="MACOS and BSD only"

@@ -227,6 +227,7 @@ def wait_pid_kqueue(pid, timeout=None):
             if err.errno in {errno.EACCES, errno.EPERM}:  # access denied
                 debug(f"kqueue.control() failed ({err!r}); use fallback")
                 return wait_pid_posix(pid, timeout)
+            raise
         else:
             if not events:
                 raise TimeoutExpired(timeout)
