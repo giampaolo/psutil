@@ -447,15 +447,20 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         Py_CLEAR(py_tuple);
     }
 
+    // deallocate thread_list if it was allocated
     if (thread_list != NULL) {
         vm_deallocate(
             mach_task_self(),
             (vm_address_t)thread_list,
             thread_count * sizeof(thread_act_t)
         );
+        thread_list = NULL;
     }
+
+    // deallocate the task port
     if (task != MACH_PORT_NULL) {
         mach_port_deallocate(mach_task_self(), task);
+        task = MACH_PORT_NULL;
     }
 
     return py_retlist;
@@ -470,9 +475,12 @@ error:
             (vm_address_t)thread_list,
             thread_count * sizeof(thread_act_t)
         );
+        thread_list = NULL;
     }
+
     if (task != MACH_PORT_NULL) {
         mach_port_deallocate(mach_task_self(), task);
+        task = MACH_PORT_NULL;
     }
 
     return NULL;
