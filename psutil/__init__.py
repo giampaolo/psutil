@@ -204,7 +204,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "7.2.1"
+__version__ = "7.2.2"
 version_info = tuple(int(num) for num in __version__.split('.'))
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -1620,11 +1620,12 @@ def wait_procs(procs, timeout=None, callback=None):
     if timeout is not None and not timeout >= 0:
         msg = f"timeout must be a positive integer, got {timeout}"
         raise ValueError(msg)
-    gone = set()
-    alive = set(procs)
     if callback is not None and not callable(callback):
         msg = f"callback {callback!r} is not a callable"
         raise TypeError(msg)
+
+    gone = set()
+    alive = set(procs)
     if timeout is not None:
         deadline = _timer() + timeout
 
