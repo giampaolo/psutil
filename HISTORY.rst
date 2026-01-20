@@ -20,6 +20,9 @@
   Fedorov)
 - 2707_, [macOS]: fix potential memory leaks in error paths of
   `Process.memory_full_info()` and `Process.threads()`.
+- 2708_, [macOS]: Process.cmdline()`_ and `Process.environ()`_ may fail with
+  ``OSError: [Errno 0] Undefined error`` (from ``sysctl(KERN_PROCARGS2)``).
+  They now raise `AccessDenied`_ instead.
 
 7.2.1
 =====
