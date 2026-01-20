@@ -259,6 +259,7 @@ def can_use_pidfd():
 
 @memoize
 def can_use_kqueue():
+    # Availability: macOS, BSD
     names = (
         "kqueue",
         "KQ_EV_ADD",
