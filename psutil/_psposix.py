@@ -242,15 +242,18 @@ def wait_pid_kqueue(pid, timeout=None):
 
 
 @memoize
-def can_use_pidfd():
+def can_use_pidfd_open():
     # Availability: Linux >= 5.3, Python >= 3.9
     if not hasattr(os, "pidfd_open"):
         return False
     try:
         pidfd = os.pidfd_open(os.getpid(), 0)
     except OSError as err:
-        # blocked by security policy like SECCOMP
-        debug(f"can't use pidfd_open() due to {err}")
+        if err.errno in {errno.EMFILE, errno.ENFILE}:  # noqa: SIM103
+            # transitory 'too many open files'
+            return True
+        # likely blocked by security policy like SECCOMP (EPERM,
+        # EACCES, ENOSYS)
         return False
     else:
         os.close(pidfd)
@@ -267,7 +270,27 @@ def can_use_kqueue():
         "KQ_FILTER_PROC",
         "KQ_NOTE_EXIT",
     )
-    return all(hasattr(select, x) for x in names)
+    if not all(hasattr(select, x) for x in names):
+        return False
+    kq = None
+    try:
+        kq = select.kqueue()
+        kev = select.kevent(
+            os.getpid(),
+            filter=select.KQ_FILTER_PROC,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ONESHOT,
+            fflags=select.KQ_NOTE_EXIT,
+        )
+        kq.control([kev], 1, 0)
+        return True
+    except OSError as err:
+        if err.errno in {errno.EMFILE, errno.ENFILE}:  # noqa: SIM103
+            # transitory 'too many open files'
+            return True
+        return False
+    finally:
+        if kq is not None:
+            kq.close()
 
 
 def wait_pid(pid, timeout=None):
@@ -277,7 +300,7 @@ def wait_pid(pid, timeout=None):
     if timeout is not None:
         assert timeout >= 0
 
-    if can_use_pidfd():
+    if can_use_pidfd_open():
         return wait_pid_pidfd_open(pid, timeout)
     elif can_use_kqueue():
         return wait_pid_kqueue(pid, timeout)
