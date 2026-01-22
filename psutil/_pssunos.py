@@ -283,16 +283,8 @@ def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.users()
-    localhost = (':0.0', ':0')
     for item in rawlist:
-        user, tty, hostname, tstamp, user_process, pid = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
-            continue
-        if hostname in localhost:
-            hostname = 'localhost'
+        user, tty, hostname, tstamp, pid = item
         nt = ntp.suser(user, tty, hostname, tstamp, pid)
         retlist.append(nt)
     return retlist
