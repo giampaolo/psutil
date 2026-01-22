@@ -63,7 +63,6 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
-    'sphinxcontrib.googleanalytics',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -376,6 +375,3 @@ html_css_files = [
     'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
     'css/custom.css',
 ]
-
-googleanalytics_id = "G-G7374TFB11"
-googleanalytics_enabled = True
