@@ -2087,14 +2087,31 @@ Process class
     >>> p.wait()
     <Negsignal.SIGTERM: -15>
 
+    .. note::
+
+      When ``timeout`` is not ``None`` and the platform supports it, an
+      efficient event-driven mechanism is used to wait for process termination:
+
+      - Linux >= 5.3 with Python >= 3.9 uses `os.pidfd_open`_ + `select.poll`_
+      - macOS and other BSD variants use `select.kqueue`_ + ``KQ_FILTER_PROC``
+        + ``KQ_NOTE_EXIT``
+      - Windows uses ``WaitForSingleObject``
+
+      If none of these mechanisms are available, the function falls back to a
+      busy loop (non-blocking call and short sleeps).
+
+    .. versionchanged:: 3.15
+      if *timeout* is not ``None``, use efficient event-driven implementation
+      on Linux >= 5.3 and macOS / BSD.
+
     .. versionchanged:: 5.7.1 return value is cached (instead of returning
       ``None``).
 
     .. versionchanged:: 5.7.1 on POSIX, in case of negative signal, return it
       as a human readable `enum`_.
 
-    .. versionchanged:: 7.2.2 on Linux (>= 5.3, Python >= 3.9) and macOS/BSD,
-      use ``pidfd_open()`` and ``kqueue()`` respectively, instead of less
+    .. versionchanged:: 7.2.2 on Linux >= 5.3 + Python >= 3.9 and macOS/BSD,
+      use `os.pidfd_open`_ and `select.kqueue`_ respectively, instead of less
       efficient busy-loop polling.
 
 .. class:: Popen(*args, **kwargs)
@@ -3227,6 +3244,7 @@ Timeline
 .. _`os.O_RDONLY`: https://docs.python.org/3/library/os.html#os.O_RDONLY
 .. _`os.O_TRUNC`: https://docs.python.org/3/library/os.html#os.O_TRUNC
 .. _`os.open`: https://docs.python.org/3/library/os.html#os.open
+.. _`os.pidfd_open`: https://docs.python.org//library/os.html#os.pidfd_open
 .. _`os.setpriority`: https://docs.python.org/3/library/os.html#os.setpriority
 .. _`os.times`: https://docs.python.org//library/os.html#os.times
 .. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
@@ -3236,6 +3254,8 @@ Timeline
 .. _`psleak`: https://github.com/giampaolo/psleak
 .. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
 .. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
+.. _`select.kqueue`: https://docs.python.org//library/select.html#select.kqueue
+.. _`select.poll`: https://docs.python.org//library/select.html#select.poll
 .. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
 .. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set.
 .. _`SetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
