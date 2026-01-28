@@ -497,6 +497,7 @@ People who donated money over the years:
 .. raw:: html
 
     <div>
+      <a href="https://github.com/codingjoe"><img height="35" width="35" title="Johannes Maron" src="https://avatars.githubusercontent.com/u/1772890?v=4" /></a>
       <a href="https://github.com/eallrich"><img height="35" width="35" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
       <a href="https://github.com/ofek"><img height="35" width="35" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
       <a href="https://github.com/roboflow"><img height="35" width="35" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>

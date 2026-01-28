@@ -2100,7 +2100,7 @@ Process class
       If none of these mechanisms are available, the function falls back to a
       busy loop (non-blocking call and short sleeps).
 
-    .. versionchanged:: 3.15
+    .. versionchanged:: 5.7.2
       if *timeout* is not ``None``, use efficient event-driven implementation
       on Linux >= 5.3 and macOS / BSD.
 
