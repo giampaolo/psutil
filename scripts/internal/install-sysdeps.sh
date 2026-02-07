@@ -49,6 +49,7 @@ fi
 install_build_deps() {
     # Debian / Ubuntu
     if [ $HAS_APT ]; then
+        $SUDO apt-get update
         $SUDO apt-get install -y python3-dev gcc
     # Redhat / Fedora
     elif [ $RPM_MGR ]; then
