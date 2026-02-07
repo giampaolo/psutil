@@ -181,16 +181,10 @@ def wait_pid_pidfd_open(pid, timeout=None):
     try:
         pidfd = os.pidfd_open(pid, 0)
     except OSError as err:
-        if err.errno == errno.ESRCH:
-            # No such process. os.waitpid() may still be able to return
-            # the status code.
-            return wait_pid_posix(pid, timeout)
-        if err.errno in {errno.EMFILE, errno.ENFILE, errno.ENODEV}:
-            # EMFILE, ENFILE: too many open files
-            # ENODEV: anonymous inode filesystem not supported
-            debug(f"pidfd_open() failed ({err!r}); use fallback")
-            return wait_pid_posix(pid, timeout)
-        raise
+        # ESRCH = no such process, EMFILE / ENFILE = too many open files
+        if err.errno not in {errno.ESRCH, errno.EMFILE, errno.ENFILE}:
+            debug(f"pidfd_open() failed unexpectedly ({err!r}); use fallback")
+        return wait_pid_posix(pid, timeout)
 
     try:
         # poll() / select() have the advantage of not requiring any
@@ -214,10 +208,9 @@ def wait_pid_kqueue(pid, timeout=None):
     try:
         kq = select.kqueue()
     except OSError as err:
-        if err.errno in {errno.EMFILE, errno.ENFILE}:  # too many open files
-            debug(f"kqueue() failed ({err!r}); use fallback")
-            return wait_pid_posix(pid, timeout)
-        raise
+        if err.errno not in {errno.EMFILE, errno.ENFILE}:
+            debug(f"kqueue() failed unexpectedly ({err!r}); use fallback")
+        return wait_pid_posix(pid, timeout)
 
     try:
         kev = select.kevent(

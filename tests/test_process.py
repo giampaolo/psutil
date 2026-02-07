@@ -1628,7 +1628,7 @@ class TestProcessWait(PsutilTestCase):
     # --- tests for pidfd_open() and kqueue()
 
     def assert_wait_pid_errors(self, patch_target, wait_func, errors):
-        # Test that legitimate errors are caught and wait_pid_posix()
+        # Test that all errors are caught and wait_pid_posix()
         # fallback is used.
         sproc = self.spawn_subproc()
         sproc.terminate()
@@ -1645,14 +1645,6 @@ class TestProcessWait(PsutilTestCase):
                 assert wait_func(sproc.pid) == code
             assert m.called
 
-        # illegitimate error
-        with mock.patch(
-            patch_target,
-            side_effect=OSError(errno.EBADF),
-        ):
-            with pytest.raises(OSError):
-                wait_func(sproc.pid)
-
     @pytest.mark.skipif(
         not hasattr(os, "pidfd_open"),
         reason="LINUX only" if not LINUX else "not supported",
@@ -1663,7 +1655,7 @@ class TestProcessWait(PsutilTestCase):
         self.assert_wait_pid_errors(
             "os.pidfd_open",
             wait_pid_pidfd_open,
-            [errno.ESRCH, errno.EMFILE, errno.ENFILE, errno.ENODEV],
+            [errno.ESRCH, errno.EMFILE, errno.ENFILE, errno.EBADF],
         )
 
     @pytest.mark.skipif(
@@ -1675,7 +1667,7 @@ class TestProcessWait(PsutilTestCase):
         self.assert_wait_pid_errors(
             "select.kqueue",
             wait_pid_kqueue,
-            [errno.EMFILE, errno.ENFILE],
+            [errno.EMFILE, errno.ENFILE, errno.EBADF],
         )
 
     def assert_wait_pid_race(self, patch_target, real_func):

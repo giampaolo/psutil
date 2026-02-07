@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.2.3
+=====
+
+XXXX-XX-XX
+
+**Bug fixes**
+
+- 2715_, [Linux]: ``wait_pid_pidfd_open()`` (from `Process.wait()`_) crashes
+  with ``EINVAL`` due to kernel race condition.
+
 7.2.2
 =====
 
