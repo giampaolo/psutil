@@ -2793,9 +2793,13 @@ PyPy3.
 Timeline
 ========
 
+- 2026-02-08:
+  `7.2.3 <https://pypi.org/project/psutil/7.2.3/#files>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#723>`__ -
+  `diff <https://github.com/giampaolo/psutil/compare/release-7.2.2...release-7.2.3#files_bucket>`__
 - 2026-01-28:
   `7.2.2 <https://pypi.org/project/psutil/7.2.2/#files>`__ -
-  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#721>`__ -
+  `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#722>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/release-7.2.1...release-7.2.2#files_bucket>`__
 - 2025-12-29:
   `7.2.1 <https://pypi.org/project/psutil/7.2.1/#files>`__ -
