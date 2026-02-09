@@ -250,7 +250,7 @@ ci-test-cibuildwheel:  ## Run CI tests for the built wheels.
 
 ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(PYTHON) -m pip install -U setuptools virtualenv twine check-manifest validate-pyproject[all] abi3audit
-	$(MAKE) sdist
+	$(MAKE) create-sdist
 	mv wheelhouse/* dist/
 	$(MAKE) check-dist
 	$(MAKE) install
@@ -259,6 +259,28 @@ ci-check-dist:  ## Run all sanity checks re. to the package distribution.
 # ===================================================================
 # Distribution
 # ===================================================================
+
+# --- create
+
+generate-manifest:  ## Generates MANIFEST.in file.
+	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
+
+create-sdist:  ## Create tar.gz source distribution.
+	$(MAKE) generate-manifest
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
+
+create-wheels:  ## Create .whl files
+	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
+
+download-wheels:  ## Download latest wheels hosted on github.
+	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
+	$(MAKE) print-dist
+
+create-dist:  ## Create .tar.gz + .whl distribution.
+	$(MAKE) create-sdist
+	$(MAKE) download-wheels
+
+# --- check
 
 check-manifest:  ## Check sanity of MANIFEST.in file.
 	$(PYTHON) -m check_manifest -v
@@ -282,19 +304,12 @@ check-dist:  ## Run all sanity checks re. to the package distribution.
 	$(MAKE) check-sdist
 	$(MAKE) check-wheels
 
-generate-manifest:  ## Generates MANIFEST.in file.
-	$(PYTHON) scripts/internal/generate_manifest.py > MANIFEST.in
-
-sdist:  ## Create tar.gz source distribution.
-	$(MAKE) generate-manifest
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py sdist
-
-create-wheels:  ## Create .whl files
-	$(PYTHON_ENV_VARS) $(PYTHON) setup.py bdist_wheel
+# --- release
 
 pre-release:  ## Check if we're ready to produce a new release.
 	$(MAKE) clean
-	$(MAKE) sdist
+	$(MAKE) create-dist
+	$(MAKE) check-dist
 	$(MAKE) install
 	@$(PYTHON) -c \
 		"import requests, sys; \
@@ -310,8 +325,6 @@ pre-release:  ## Check if we're ready to produce a new release.
 		assert ver in doc, '%r not found in docs/index.rst' % ver; \
 		assert ver in history, '%r not found in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
-	$(MAKE) download-wheels
-	$(MAKE) check-dist
 	$(MAKE) print-hashes
 	$(MAKE) print-dist
 
@@ -319,10 +332,6 @@ release:  ## Upload a new release.
 	$(PYTHON) -m twine upload dist/*.tar.gz
 	$(PYTHON) -m twine upload dist/*.whl
 	$(MAKE) git-tag-release
-
-download-wheels:  ## Download latest wheels hosted on github.
-	$(PYTHON) scripts/internal/download_wheels.py --tokenfile=~/.github.token
-	$(MAKE) print-dist
 
 git-tag-release:  ## Git-tag a new release.
 	git tag -a release-`python3 -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
