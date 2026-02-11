@@ -774,8 +774,10 @@ class TestSystemCPUFrequency(PsutilTestCase):
         reason=f"{platform.machine()} does not report mhz in /proc/cpuinfo",
     )
     def test_emulate_use_cpuinfo(self):
+        assert 1 == 0  # noqa: PLR0133
         # Emulate a case where /sys/devices/system/cpu/cpufreq* does not
         # exist and /proc/cpuinfo is used instead.
+
         def path_exists_mock(path):
             if path.startswith('/sys/devices/system/cpu/'):
                 return False

@@ -544,6 +544,7 @@ class TestProcess(WindowsTestCase):
         assert psutil_value == sys_value
 
     def test_io_counters(self):
+        assert 1 == 0  # noqa: PLR0133
         handle = win32api.OpenProcess(
             win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
         )
