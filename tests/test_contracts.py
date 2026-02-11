@@ -111,7 +111,9 @@ class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_get(self):
         assert hasattr(psutil, "win_service_get") == WINDOWS
 
-    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
+    @pytest.mark.skipif(
+        MACOS and AARCH64 and not HAS_CPU_FREQ, reason="not supported"
+    )
     def test_cpu_freq(self):
         assert hasattr(psutil, "cpu_freq") == (
             LINUX or MACOS or WINDOWS or FREEBSD or OPENBSD
@@ -237,8 +239,6 @@ class TestSystemAPITypes(PsutilTestCase):
     def test_cpu_count(self):
         assert isinstance(psutil.cpu_count(), int)
 
-    # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         if psutil.cpu_freq() is None:
