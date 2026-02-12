@@ -72,7 +72,6 @@ import warnings
 from contextlib import closing
 
 import psutil
-from psutil import BSD
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
@@ -225,9 +224,6 @@ class TestFSAPIs(BaseUnicodeTest):
             new = set(p.open_files())
         path = (new - start).pop().path
         assert isinstance(path, str)
-        if BSD and not path:
-            # XXX - see https://github.com/giampaolo/psutil/issues/595
-            return pytest.skip("open_files on BSD is broken")
         if self.expect_exact_path_match():
             assert os.path.normcase(path) == os.path.normcase(self.funky_name)
 

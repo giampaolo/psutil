@@ -888,8 +888,6 @@ class TestProcess(PsutilTestCase):
             p.cpu_affinity(combo)
             assert sorted(p.cpu_affinity()) == sorted(combo)
 
-    # TODO: #595
-    @pytest.mark.skipif(BSD, reason="broken on BSD")
     def test_open_files(self):
         p = psutil.Process()
         testfn = self.get_testfn()
@@ -927,8 +925,6 @@ class TestProcess(PsutilTestCase):
         for file in filenames:
             assert os.path.isfile(file), file
 
-    # TODO: #595
-    @pytest.mark.skipif(BSD, reason="broken on BSD")
     def test_open_files_2(self):
         # test fd and path fields
         p = psutil.Process()

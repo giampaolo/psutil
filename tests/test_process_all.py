@@ -344,9 +344,6 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert f.position >= 0
                 assert f.mode in {'r', 'w', 'a', 'r+', 'a+'}
                 assert f.flags > 0
-            elif BSD and not f.path:
-                # XXX see: https://github.com/giampaolo/psutil/issues/595
-                continue
             assert os.path.isabs(f.path), f
             try:
                 st = os.stat(f.path)
