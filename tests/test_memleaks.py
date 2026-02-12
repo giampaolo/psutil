@@ -21,7 +21,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 
-from . import AARCH64
 from . import HAS_CPU_AFFINITY
 from . import HAS_CPU_FREQ
 from . import HAS_ENVIRON
@@ -334,8 +333,6 @@ class TestModuleFunctionsLeaks(MemoryLeakTestCase):
     def test_cpu_stats(self):
         self.execute(psutil.cpu_stats)
 
-    # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         times = FEW_TIMES if LINUX else self.times

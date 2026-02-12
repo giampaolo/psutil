@@ -594,8 +594,6 @@ class TestCpuAPIs(PsutilTestCase):
             if not AIX and name in {'ctx_switches', 'interrupts'}:
                 assert value > 0
 
-    # TODO: remove this once 1892 is fixed
-    @pytest.mark.skipif(MACOS and AARCH64, reason="skipped due to #1892")
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     def test_cpu_freq(self):
         def check_ls(ls):

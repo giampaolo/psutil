@@ -1251,10 +1251,7 @@ class system_namespace:
     ]
 
     if HAS_CPU_FREQ:
-        if MACOS and AARCH64:  # skipped due to #1892
-            pass
-        else:
-            getters += [('cpu_freq', (), {'percpu': True})]
+        getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_GETLOADAVG:
         getters += [('getloadavg', (), {})]
     if HAS_SENSORS_TEMPERATURES:
