@@ -4,26 +4,25 @@ name: issues
 on:
   issues:
     types: [opened]
-  pull_request:
-    typed: [opened]
+  pull_request_target:
+    types: [opened]
   issue_comment:
     types: [created]
+permissions:
+  issues: write
+  pull-requests: write
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # install python
-      - uses: actions/checkout@v4
       - name: Install Python
         uses: actions/setup-python@v6
         with:
           python-version: "3.x"
 
-      # install deps
       - name: Install deps
         run: python3 -m pip install PyGithub
 
-      # run
       - name: Run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
