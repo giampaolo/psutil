@@ -108,6 +108,7 @@ ignore = [
 ".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
 "tests/test_sudo.py" = ["PT009"]
+"tests/test_linux.py" = ["RUF069"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [
