@@ -298,6 +298,8 @@ if FREEBSD:
         for cpu in range(num_cpus):
             try:
                 current, available_freq = cext.cpu_freq(cpu)
+            except UnicodeError:
+                continue
             except NotImplementedError:
                 continue
             if available_freq:
