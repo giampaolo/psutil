@@ -870,12 +870,10 @@ def get_testfn(suffix="", dir=None):
     deletion at interpreter exit. It's technically racy but probably
     not really due to the time variant.
     """
-    while True:
-        name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix, dir=dir)
-        if not os.path.exists(name):  # also include dirs
-            path = os.path.realpath(name)  # needed for OSX
-            atexit.register(safe_rmpath, path)
-            return path
+    name = tempfile.mktemp(prefix=TESTFN_PREFIX, suffix=suffix, dir=dir)
+    path = os.path.realpath(name)  # needed for OSX
+    atexit.register(safe_rmpath, path)
+    return path
 
 
 # ===================================================================
