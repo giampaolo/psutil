@@ -1948,6 +1948,40 @@ class TestProcess(PsutilTestCase):
                     assert p.open_files() == []
                     assert m.called
 
+    # Test parsing variants of fdinfo content ( during Process.open_files() )
+
+    def test_open_files_fdinfo_parsing_avg(self):
+        # Case typical fdinfo file content
+        fdinfo_content = """\
+pos:	0
+flags:	02100000
+mnt_id:	129
+ino:	29836347532685335"""
+        self._do_test_fdinfo_parsing(fdinfo_content, (0, 0o2100000))
+
+    def test_open_files_fdinfo_parsing_only_flags(self):
+        # Case only flags.
+        # Seen in Docker python + Google Cloud Run
+        # https://github.com/giampaolo/psutil/issues/2596
+        fdinfo_content = """\
+flags:	02100000"""
+        # pos: defaulted to 0
+        self._do_test_fdinfo_parsing(fdinfo_content, (0, 0o2100000))
+
+    def test_open_files_fdinfo_parsing_empty(self):
+        # extereme case the file is empty (not seen in practice)
+        fdinfo_content = ""
+        # defaulted to 0s
+        self._do_test_fdinfo_parsing(fdinfo_content, (0, 0))
+
+    def _do_test_fdinfo_parsing(self, content, expected):
+        # `f`` needs to be a file in binary mode,
+        # simulating what is done in Process.open_flles()
+        f = io.BytesIO(content.encode())
+        actual_pos, actual_flags = psutil._pslinux._parse_fdinfo(f)
+        assert actual_pos == expected[0]
+        assert actual_flags == expected[1]
+
     # --- mocked tests
 
     def test_terminal_mocked(self):
