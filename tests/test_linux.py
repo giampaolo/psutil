@@ -1860,6 +1860,44 @@ class TestProcess(PsutilTestCase):
             assert pss == 3 * 1024
             assert swap == 15 * 1024
 
+    def test_memory_info_hugetlb_mocked(self):
+        # Test that memory_info() correctly parses HugetlbPages from
+        # /proc/pid/status (available since Linux 4.4).
+        pid = os.getpid()
+        status_content = textwrap.dedent(f"""\
+            Name:\tpython3
+            Pid:\t{pid}
+            VmSize:\t23456 kB
+            VmRSS:\t12345 kB
+            HugetlbPages:\t4096 kB
+            Threads:\t1
+            """).encode()
+        with mock_open_content({f"/proc/{pid}/status": status_content}):
+            mem = psutil.Process(pid).memory_info()
+            assert mem.hugetlb == 4096 * 1024
+
+    def test_memory_info_hugetlb_mocked_missing(self):
+        # When HugetlbPages is not in /proc/pid/status (kernel < 4.4),
+        # hugetlb should default to 0.
+        pid = os.getpid()
+        status_content = textwrap.dedent(f"""\
+            Name:\tpython3
+            Pid:\t{pid}
+            VmSize:\t23456 kB
+            VmRSS:\t12345 kB
+            Threads:\t1
+            """).encode()
+        with mock_open_content({f"/proc/{pid}/status": status_content}):
+            mem = psutil.Process(pid).memory_info()
+            assert mem.hugetlb == 0
+
+    def test_memory_info_hugetlb_field(self):
+        # Basic check that the field exists and is a non-negative int.
+        mem = psutil.Process().memory_info()
+        assert hasattr(mem, 'hugetlb')
+        assert isinstance(mem.hugetlb, int)
+        assert mem.hugetlb >= 0
+
     def test_open_files_mode(self):
         def get_test_file(fname):
             p = psutil.Process()

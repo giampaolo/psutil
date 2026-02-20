@@ -179,7 +179,10 @@ if LINUX:
     popenfile = nt("popenfile", ("path", "fd", "position", "mode", "flags"))
 
     # psutil.Process().memory_info()
-    pmem = nt("pmem", ("rss", "vms", "shared", "text", "lib", "data", "dirty"))
+    pmem = nt(
+        "pmem",
+        ("rss", "vms", "shared", "text", "lib", "data", "dirty", "hugetlb"),
+    )
 
     # psutil.Process().memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss", "pss", "swap"))
