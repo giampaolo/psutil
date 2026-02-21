@@ -20,7 +20,7 @@ from psutil import WINDOWS
 
 from . import CI_TESTING
 from . import HAS_BATTERY
-from . import HAS_MEMORY_MAPS
+from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
@@ -119,7 +119,7 @@ class TestExampleScripts(PsutilTestCase):
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 

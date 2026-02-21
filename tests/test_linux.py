@@ -30,7 +30,7 @@ from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
 from . import HAS_GETLOADAVG
-from . import HAS_RLIMIT
+from . import HAS_PROC_RLIMIT
 from . import RISCV64
 from . import TOLERANCE_DISK_USAGE
 from . import TOLERANCE_SYS_MEM
@@ -2075,7 +2075,7 @@ class TestProcess(PsutilTestCase):
                 with pytest.raises(psutil.NoSuchProcess):
                     p.memory_info()
 
-    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_zombie(self):
         # Emulate a case where rlimit() raises ENOSYS, which may
         # happen in case of zombie process:

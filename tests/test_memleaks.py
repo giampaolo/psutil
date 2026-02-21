@@ -21,16 +21,16 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 
-from . import HAS_CPU_AFFINITY
 from . import HAS_CPU_FREQ
-from . import HAS_ENVIRON
 from . import HAS_HEAP_INFO
-from . import HAS_IONICE
-from . import HAS_MEMORY_MAPS
 from . import HAS_NET_IO_COUNTERS
+from . import HAS_PROC_CPU_AFFINITY
 from . import HAS_PROC_CPU_NUM
+from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_IO_COUNTERS
-from . import HAS_RLIMIT
+from . import HAS_PROC_IONICE
+from . import HAS_PROC_MEMORY_MAPS
+from . import HAS_PROC_RLIMIT
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
@@ -99,11 +99,11 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         niceness = thisproc.nice()
         self.execute(lambda: self.proc.nice(niceness))
 
-    @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_IONICE, reason="not supported")
     def test_ionice(self):
         self.execute(self.proc.ionice)
 
-    @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_IONICE, reason="not supported")
     def test_ionice_set(self):
         if WINDOWS:
             value = thisproc.ionice()
@@ -111,7 +111,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         else:
             self.execute(lambda: self.proc.ionice(psutil.IOPRIO_CLASS_NONE))
 
-    @pytest.mark.skipif(not HAS_IONICE, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_IONICE, reason="not supported")
     @pytest.mark.skipif(WINDOWS, reason="not on WINDOWS")
     def test_ionice_set_badarg(self):
         fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
@@ -174,16 +174,16 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     def test_cwd(self):
         self.execute(self.proc.cwd)
 
-    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity(self):
         self.execute(self.proc.cpu_affinity)
 
-    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity_set(self):
         affinity = thisproc.cpu_affinity()
         self.execute(lambda: self.proc.cpu_affinity(affinity))
 
-    @pytest.mark.skipif(not HAS_CPU_AFFINITY, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_CPU_AFFINITY, reason="not supported")
     def test_cpu_affinity_set_badarg(self):
         self.execute_w_exc(
             ValueError, lambda: self.proc.cpu_affinity([-1]), retries=20
@@ -194,24 +194,24 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         with open(get_testfn(), 'w'):
             self.execute(self.proc.open_files, **kw)
 
-    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     @pytest.mark.skipif(LINUX, reason="too slow on LINUX")
     def test_memory_maps(self):
         self.execute(self.proc.memory_maps, times=60, retries=10)
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
-    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit(self):
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE))
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
-    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_set(self):
         limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(lambda: self.proc.rlimit(psutil.RLIMIT_NOFILE, limit))
 
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
-    @pytest.mark.skipif(not HAS_RLIMIT, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit_set_badarg(self):
         self.execute_w_exc(
             (OSError, ValueError), lambda: self.proc.rlimit(-1), retries=20
@@ -229,7 +229,7 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
             kind = 'inet' if SUNOS else 'all'
             self.execute(lambda: self.proc.net_connections(kind), times=times)
 
-    @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_ENVIRON, reason="not supported")
     def test_environ(self):
         self.execute(self.proc.environ)
 

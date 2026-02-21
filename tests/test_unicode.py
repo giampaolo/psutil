@@ -81,9 +81,9 @@ from psutil import WINDOWS
 
 from . import ASCII_FS
 from . import CI_TESTING
-from . import HAS_ENVIRON
-from . import HAS_MEMORY_MAPS
 from . import HAS_NET_CONNECTIONS_UNIX
+from . import HAS_PROC_ENVIRON
+from . import HAS_PROC_MEMORY_MAPS
 from . import INVALID_UNICODE_SUFFIX
 from . import PYPY
 from . import TESTFN_PREFIX
@@ -271,7 +271,7 @@ class TestFSAPIs(BaseUnicodeTest):
         safe_mkdir(dname)
         psutil.disk_usage(dname)
 
-    @pytest.mark.skipif(not HAS_MEMORY_MAPS, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):
         with copyload_shared_lib(suffix=self.funky_suffix) as funky_path:
 
@@ -308,7 +308,7 @@ class TestNonFSAPIS(BaseUnicodeTest):
 
     funky_suffix = UNICODE_SUFFIX
 
-    @pytest.mark.skipif(not HAS_ENVIRON, reason="not supported")
+    @pytest.mark.skipif(not HAS_PROC_ENVIRON, reason="not supported")
     @pytest.mark.skipif(PYPY and WINDOWS, reason="segfaults on PYPY + WINDOWS")
     def test_proc_environ(self):
         # Note: differently from others, this test does not deal

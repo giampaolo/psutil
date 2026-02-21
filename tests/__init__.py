@@ -64,11 +64,12 @@ __all__ = [
     'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
-    "HAS_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_ENVIRON", "HAS_PROC_IO_COUNTERS",
-    "HAS_IONICE", "HAS_MEMORY_MAPS", "HAS_PROC_CPU_NUM", "HAS_RLIMIT",
-    "HAS_SENSORS_BATTERY", "HAS_BATTERY", "HAS_SENSORS_FANS",
-    "HAS_SENSORS_TEMPERATURES", "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS",
-    "MACOS_12PLUS", "COVERAGE", 'AARCH64', "PYTEST_PARALLEL",
+    "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
+    "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE", "HAS_PROC_MEMORY_MAPS",
+    "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
+    "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
+    "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
+    "AARCH64", "PYTEST_PARALLEL",
     # subprocesses
     'pyrun', 'terminate', 'reap_children', 'spawn_subproc', 'spawn_zombie',
     'spawn_children_pair',
@@ -180,21 +181,23 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 
-HAS_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
-HAS_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
-HAS_IONICE = hasattr(psutil.Process, "ionice")
 HAS_HEAP_INFO = hasattr(psutil, "heap_info")
-HAS_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
-HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
-HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
-HAS_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_SENSORS_BATTERY = hasattr(psutil, "sensors_battery")
 HAS_SENSORS_FANS = hasattr(psutil, "sensors_fans")
 HAS_SENSORS_TEMPERATURES = hasattr(psutil, "sensors_temperatures")
-HAS_THREADS = hasattr(psutil.Process, "threads")
+
+HAS_PROC_CPU_AFFINITY = hasattr(psutil.Process, "cpu_affinity")
+HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
+HAS_PROC_ENVIRON = hasattr(psutil.Process, "environ")
+HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
+HAS_PROC_IONICE = hasattr(psutil.Process, "ionice")
+HAS_PROC_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
+HAS_PROC_RLIMIT = hasattr(psutil.Process, "rlimit")
+HAS_PROC_THREADS = hasattr(psutil.Process, "threads")
+
 SKIP_SYSCONS = (MACOS or AIX) and os.getuid() != 0
 
 try:
@@ -1131,19 +1134,19 @@ class process_namespace:
         getters += [('num_fds', (), {})]
     if HAS_PROC_IO_COUNTERS:
         getters += [('io_counters', (), {})]
-    if HAS_IONICE:
+    if HAS_PROC_IONICE:
         getters += [('ionice', (), {})]
-    if HAS_RLIMIT:
+    if HAS_PROC_RLIMIT:
         getters += [('rlimit', (psutil.RLIMIT_NOFILE,), {})]
-    if HAS_CPU_AFFINITY:
+    if HAS_PROC_CPU_AFFINITY:
         getters += [('cpu_affinity', (), {})]
     if HAS_PROC_CPU_NUM:
         getters += [('cpu_num', (), {})]
-    if HAS_ENVIRON:
+    if HAS_PROC_ENVIRON:
         getters += [('environ', (), {})]
     if WINDOWS:
         getters += [('num_handles', (), {})]
-    if HAS_MEMORY_MAPS:
+    if HAS_PROC_MEMORY_MAPS:
         getters += [('memory_maps', (), {'grouped': False})]
 
     setters = []
@@ -1151,14 +1154,14 @@ class process_namespace:
         setters += [('nice', (0,), {})]
     else:
         setters += [('nice', (psutil.NORMAL_PRIORITY_CLASS,), {})]
-    if HAS_RLIMIT:
+    if HAS_PROC_RLIMIT:
         setters += [('rlimit', (psutil.RLIMIT_NOFILE, (1024, 4096)), {})]
-    if HAS_IONICE:
+    if HAS_PROC_IONICE:
         if LINUX:
             setters += [('ionice', (psutil.IOPRIO_CLASS_NONE, 0), {})]
         else:
             setters += [('ionice', (psutil.IOPRIO_NORMAL,), {})]
-    if HAS_CPU_AFFINITY:
+    if HAS_PROC_CPU_AFFINITY:
         setters += [('cpu_affinity', ([_get_eligible_cpu()],), {})]
 
     killers = [
