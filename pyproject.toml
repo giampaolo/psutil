@@ -106,7 +106,7 @@ ignore = [
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
 ".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
-"tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "TRY003"]
+"tests/*" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "RUF069", "TRY003"]
 "tests/test_sudo.py" = ["PT009"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
