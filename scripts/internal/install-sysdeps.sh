@@ -60,6 +60,9 @@ main() {
         $SUDO /usr/sbin/pkg_add -v pkgin
         $SUDO pkgin update
         $SUDO pkgin -y install python311-* gcc12-*
+        if [ ! -e /usr/pkg/bin/python3 ]; then
+            $SUDO ln -s /usr/pkg/bin/python3.11 /usr/pkg/bin/python3
+        fi
     elif [ $OPENBSD ]; then
         $SUDO pkg_add gcc python3
     elif [ $SUNOS ]; then
