@@ -1146,7 +1146,9 @@ class Process:
         - peak_vms: peak virtual memory size
         - rss_anon: anonymous resident memory (heap, stack, etc.)
         - rss_file: file-backed resident memory
+        - rss_shmem: shared memory resident
         - swap: memory swapped to disk
+        - hugetlb: memory in huge TLB pages
 
         All numbers are expressed in bytes.
         """

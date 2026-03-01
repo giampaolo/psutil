@@ -1890,11 +1890,14 @@ class Process:
         _vmhwm_re=re.compile(br"VmHWM:\s+(\d+)"),
         _rssanon_re=re.compile(br"RssAnon:\s+(\d+)"),
         _rssfile_re=re.compile(br"RssFile:\s+(\d+)"),
+        _rssshmem_re=re.compile(br"RssShmem:\s+(\d+)"),
         _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
+        _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
     ):
         # Read /proc/{pid}/status which provides peak RSS/VMS and a
-        # cheaper way to get swap (no smaps parsing needed). RssAnon
-        # and RssFile were added in Linux 4.5; VmSwap in 2.6.34.
+        # cheaper way to get swap (no smaps parsing needed).
+        # RssAnon/RssFile/RssShmem were added in Linux 4.5;
+        # VmSwap in 2.6.34; HugetlbPages in 4.4.
         data = self._read_status_file()
         basic_mem = self.memory_info()
 
@@ -1906,14 +1909,18 @@ class Process:
         peak_rss = parse(_vmhwm_re)
         rss_anon = parse(_rssanon_re)
         rss_file = parse(_rssfile_re)
+        rss_shmem = parse(_rssshmem_re)
         swap = parse(_vmswap_re)
+        hugetlb = parse(_hugetlb_re)
         return ntp.pmem2(
             **basic_mem._asdict(),
             peak_rss=peak_rss,
             peak_vms=peak_vms,
             rss_anon=rss_anon,
             rss_file=rss_file,
+            rss_shmem=rss_shmem,
             swap=swap,
+            hugetlb=hugetlb,
         )
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:

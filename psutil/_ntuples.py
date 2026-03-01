@@ -188,7 +188,15 @@ if LINUX:
     pmem2 = nt(
         "pmem2",
         pmem._fields
-        + ("peak_rss", "peak_vms", "rss_anon", "rss_file", "swap"),
+        + (
+            "peak_rss",
+            "peak_vms",
+            "rss_anon",
+            "rss_file",
+            "rss_shmem",
+            "swap",
+            "hugetlb",
+        ),
     )
 
     # psutil.Process().memory_full_info()
