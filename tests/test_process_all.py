@@ -313,6 +313,13 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool
             assert ret.peak_pagefile >= ret.pagefile
 
+    def memory_info2(self, ret, info):
+        assert is_namedtuple(ret)
+        if hasattr(ret, "peak_rss"):
+            assert ret.peak_rss >= ret.rss
+        if hasattr(ret, "peak_vms"):
+            assert ret.peak_vms >= ret.vms
+
     def memory_full_info(self, ret, info):
         assert is_namedtuple(ret)
         total = psutil.virtual_memory().total

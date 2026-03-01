@@ -476,6 +476,13 @@ class TestProcess(PsutilTestCase):
         for name in mem._fields:
             assert getattr(mem, name) >= 0
 
+    @pytest.mark.skipif(not LINUX, reason="Linux only")
+    def test_memory_info2(self):
+        p = psutil.Process()
+        mem = p.memory_info2()
+        for name in mem._fields:
+            assert getattr(mem, name) >= 0, name
+
     def test_memory_full_info(self):
         p = psutil.Process()
         total = psutil.virtual_memory().total

@@ -1905,8 +1905,8 @@ class Process:
             m = regex.search(data)
             return int(m.group(1)) * 1024 if m else 0
 
-        peak_vms = parse(_vmpeak_re)
         peak_rss = parse(_vmhwm_re)
+        peak_vms = parse(_vmpeak_re)
         rss_anon = parse(_rssanon_re)
         rss_file = parse(_rssfile_re)
         rss_shmem = parse(_rssshmem_re)
