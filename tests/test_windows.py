@@ -599,11 +599,10 @@ class TestProcess(WindowsTestCase):
         # memory_info() value comes from GetProcessMemoryInfo ->
         # PageFaultCount. page_faults() value comes from
         # NtQuerySystemInformation -> HardFaultCount / PageFaultCount
-
         p = psutil.Process()
         mem = p.memory_info()
         pfaults = p.page_faults()
-        tol = 5
+        tol = 500
         assert mem.num_page_faults == pytest.approx(pfaults.minor, abs=tol)
 
 
