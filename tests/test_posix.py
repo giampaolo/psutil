@@ -315,6 +315,18 @@ class TestProcess(PsutilTestCase):
         psutil_nice = psutil.Process().nice()
         assert ps_nice == psutil_nice
 
+    def test_num_ctx_switches(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        cws = psutil.Process().num_ctx_switches()
+        assert cws.voluntary == pytest.approx(ru.ru_nvcsw, abs=1)
+        assert cws.involuntary == pytest.approx(ru.ru_nivcsw, abs=1)
+
+    def test_cpu_times(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        cws = psutil.Process().cpu_times()
+        assert cws.user == pytest.approx(ru.ru_utime, abs=0.1)
+        assert cws.system == pytest.approx(ru.ru_stime, abs=0.1)
+
 
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestSystemAPIs(PsutilTestCase):
