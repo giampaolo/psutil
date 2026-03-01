@@ -1863,23 +1863,32 @@ class Process:
         return self._ctime + boot_time()
 
     @wrap_exceptions
-    def memory_info(self):
+    def memory_info(
+        self, _hugetlb_re=re.compile(br'HugetlbPages:\s+(\d+) kB')
+    ):
         #  ============================================================
-        # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
+        # | FIELD   | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================
-        # | rss    | resident set size                   |      | RES  |
-        # | vms    | total program size                  | size | VIRT |
-        # | shared | shared pages (from shared mappings) |      | SHR  |
-        # | text   | text ('code')                       | trs  | CODE |
-        # | lib    | library (unused in Linux 2.6)       | lrs  |      |
-        # | data   | data + stack                        | drs  | DATA |
-        # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
+        # | rss     | resident set size                   |      | RES  |
+        # | vms     | total program size                  | size | VIRT |
+        # | shared  | shared pages (from shared mappings) |      | SHR  |
+        # | text    | text ('code')                       | trs  | CODE |
+        # | lib     | library (unused in Linux 2.6)       | lrs  |      |
+        # | data    | data + stack                        | drs  | DATA |
+        # | dirty   | dirty pages (unused in Linux 2.6)   | dt   |      |
+        # | hugetlb | size of hugetlb memory portions     |      |      |
         #  ============================================================
         with open_binary(f"{self._procfs_path}/{self.pid}/statm") as f:
             vms, rss, shared, text, lib, data, dirty = (
                 int(x) * PAGESIZE for x in f.readline().split()[:7]
             )
-        return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
+        # HugetlbPages is in /proc/pid/status (since Linux 4.4).
+        hugetlb = 0
+        data_status = self._read_status_file()
+        m = _hugetlb_re.search(data_status)
+        if m:
+            hugetlb = int(m.group(1)) * 1024
+        return ntp.pmem(rss, vms, shared, text, lib, data, dirty, hugetlb)
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 

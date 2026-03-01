@@ -1133,6 +1133,11 @@ class Process:
         The "portable" fields available on all platforms are `rss` and `vms`.
 
         All numbers are expressed in bytes.
+
+        **Linux specific fields**:
+
+        - **hugetlb**: size of hugetlb memory portions (since Linux 4.4).
+          0 if not available.
         """
         return self._proc.memory_info()
 
