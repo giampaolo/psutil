@@ -389,6 +389,25 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return process page faults as a (minor, major) tuple.
+ */
+PyObject *
+psutil_proc_page_faults(PyObject *self, PyObject *args) {
+    int pid;
+    char path[1000];
+    prusage_t info;
+    const char *procfs_path;
+
+    if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
+        return NULL;
+    str_format(path, sizeof(path), "%s/%i/usage", procfs_path, pid);
+    if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
+        return NULL;
+    return Py_BuildValue("(kk)", info.pr_minf, info.pr_majf);
+}
+
+
+/*
  * Process IO counters.
  *
  * Commented out and left here as a reminder.  Apparently we cannot

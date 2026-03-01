@@ -1215,14 +1215,11 @@ class Process:
             else:
                 return [_ntp.pmmap_ext(*x) for x in it]
 
-    # Linux, macOS, BSD
-    if hasattr(_psplatform.Process, "page_faults"):
-
-        def page_faults(self):
-            """Return the number of page faults for this process as a
-            (minor, major) namedtuple.
-            """
-            return self._proc.page_faults()
+    def page_faults(self):
+        """Return the number of page faults for this process as a
+        (minor, major) namedtuple.
+        """
+        return self._proc.page_faults()
 
     def open_files(self):
         """Return files opened by process as a list of
