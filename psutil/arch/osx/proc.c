@@ -123,11 +123,18 @@ PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
+    unsigned long maj_faults;
+    unsigned long min_faults;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         return NULL;
+
+    // matches getrusage().ru_majflt
+    maj_faults = (unsigned long)pti.pti_pageins;
+    // matches getrusage().ru_minflt
+    min_faults = (unsigned long)pti.pti_faults - maj_faults;
 
     return Py_BuildValue(
         "(ddKKkkkk)",
@@ -144,8 +151,8 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
         // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
         pti.pti_resident_size,  // (uns long long) rss
         pti.pti_virtual_size,  // (uns long long) vms
-        (unsigned long)pti.pti_faults,  // number of page faults (pages)
-        (unsigned long)pti.pti_pageins,  // number of actual pageins (pages)
+        min_faults,
+        maj_faults,
         (unsigned long)pti.pti_threadnum,  // num threads
         // Unvoluntary not available on macOS. `pti_csw` refers to the
         // sum of voluntary + involuntary. getrusage() numbers confirm

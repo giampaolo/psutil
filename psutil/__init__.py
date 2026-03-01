@@ -933,7 +933,7 @@ class Process:
         """
         return self._proc.num_ctx_switches()
 
-    # Linux only
+    # Linux, macOS
     if hasattr(_psplatform.Process, "page_faults"):
 
         def page_faults(self):

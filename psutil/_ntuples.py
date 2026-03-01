@@ -126,6 +126,9 @@ pionice = nt("pionice", ("ioclass", "value"))
 # psutil.Process.ctx_switches()
 pctxsw = nt("pctxsw", ("voluntary", "involuntary"))
 
+# psutil.Process.page_faults()
+ppagefaults = nt("ppagefaults", ("minor", "major"))
+
 # psutil.Process.net_connections()
 pconn = nt("pconn", ("fd", "family", "type", "laddr", "raddr", "status"))
 
@@ -225,9 +228,6 @@ if LINUX:
         "pcputimes",
         ("user", "system", "children_user", "children_system", "iowait"),
     )
-
-    # psutil.Process.page_faults()
-    ppagefaults = nt("ppagefaults", ("minor", "major"))
 
 # ===================================================================
 # --- Windows
