@@ -1215,7 +1215,7 @@ class Process:
             else:
                 return [_ntp.pmmap_ext(*x) for x in it]
 
-    # Linux, macOS
+    # Linux, macOS, BSD
     if hasattr(_psplatform.Process, "page_faults"):
 
         def page_faults(self):
