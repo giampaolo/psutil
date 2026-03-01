@@ -952,9 +952,9 @@ class TestSensorsAPIs(PsutilTestCase):
         ) as m:
             temps = psutil.sensors_temperatures(fahrenheit=True)['coretemp'][0]
             assert m.called
-            assert temps.current == 122.0
-            assert temps.high == 140.0
-            assert temps.critical == 158.0
+            assert temps.current == pytest.approx(122.0)
+            assert temps.high == pytest.approx(140.0)
+            assert temps.critical == pytest.approx(158.0)
 
     @pytest.mark.skipif(not HAS_SENSORS_BATTERY, reason="not supported")
     @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")

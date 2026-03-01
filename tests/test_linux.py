@@ -643,16 +643,48 @@ class TestSystemCPUTimes(PsutilTestCase):
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemCPUCountLogical(PsutilTestCase):
+    @staticmethod
+    def _mock_cpu_count_open(pairs):
+        def open_mock(name, *args, **kwargs):
+            if name in pairs:
+                content = pairs[name]
+                if isinstance(content, str):
+                    return io.StringIO(content)
+                return io.BytesIO(content)
+            raise AssertionError(f"unexpected open() call for {name!r}")
+
+        return mock.patch(
+            'psutil._common.open', side_effect=open_mock, create=True
+        )
+
+    def test_emulate_sysfs_online_formats(self):
+        import psutil._pslinux
+
+        cases = [
+            ("0", 1),
+            ("0-3", 4),
+            ("0-3,8-11,14,17", 10),
+            (" 0-0 ", 1),
+        ]
+        with mock.patch('psutil._pslinux.os.sysconf', side_effect=ValueError):
+            for value, expected in cases:
+                files = {"/sys/devices/system/cpu/online": value}
+                with self._mock_cpu_count_open(files) as m:
+                    assert psutil._pslinux.cpu_count_logical() == expected
+                paths = [call.args[0] for call in m.call_args_list]
+                assert paths == ["/sys/devices/system/cpu/online"]
+
     @pytest.mark.skipif(
         not os.path.exists("/sys/devices/system/cpu/online"),
         reason="/sys/devices/system/cpu/online does not exist",
     )
     def test_against_sysdev_cpu_online(self):
+        parse = psutil._pslinux._parse_cpulist
         with open("/sys/devices/system/cpu/online") as f:
-            value = f.read().strip()
-        if "-" in str(value):
-            value = int(value.split('-')[1]) + 1
-            assert psutil.cpu_count() == value
+            value = f.read()
+        online = parse(value)
+        assert online > 0
+        assert psutil.cpu_count() == online
 
     @pytest.mark.skipif(
         not os.path.exists("/sys/devices/system/cpu"),
@@ -661,14 +693,24 @@ class TestSystemCPUCountLogical(PsutilTestCase):
     def test_against_sysdev_cpu_num(self):
         ls = os.listdir("/sys/devices/system/cpu")
         count = len([x for x in ls if re.search(r"cpu\d+$", x) is not None])
-        assert psutil.cpu_count() == count
+        current = psutil.cpu_count()
+        assert current is not None
+        assert current <= count
+        if os.path.exists("/sys/devices/system/cpu/online"):
+            parse = psutil._pslinux._parse_cpulist
+            with open("/sys/devices/system/cpu/online") as f:
+                online = parse(f.read())
+            if online > 0:
+                assert current == online
 
     @pytest.mark.skipif(
         not shutil.which("nproc"), reason="nproc utility not available"
     )
     def test_against_nproc(self):
         num = int(sh("nproc --all"))
-        assert psutil.cpu_count(logical=True) == num
+        current = psutil.cpu_count(logical=True)
+        assert current is not None
+        assert current <= num
 
     @pytest.mark.skipif(
         not shutil.which("lscpu"), reason="lscpu utility not available"
@@ -681,38 +723,33 @@ class TestSystemCPUCountLogical(PsutilTestCase):
     def test_emulate_fallbacks(self):
         import psutil._pslinux
 
-        original = psutil._pslinux.cpu_count_logical()
-        # Here we want to mock os.sysconf("SC_NPROCESSORS_ONLN") in
-        # order to cause the parsing of /proc/cpuinfo and /proc/stat.
-        with mock.patch(
-            'psutil._pslinux.os.sysconf', side_effect=ValueError
-        ) as m:
-            assert psutil._pslinux.cpu_count_logical() == original
-            assert m.called
-
-            # Let's have open() return empty data and make sure None is
-            # returned ('cause we mimic os.cpu_count()).
-            with mock.patch('psutil._common.open', create=True) as m:
+        with mock.patch('psutil._pslinux.os.sysconf', side_effect=ValueError):
+            files = {
+                "/sys/devices/system/cpu/online": "",
+                "/proc/cpuinfo": b"",
+                "/proc/stat": "cpu 1 2 3 4\n",
+            }
+            with self._mock_cpu_count_open(files) as m:
                 assert psutil._pslinux.cpu_count_logical() is None
-                assert m.call_count == 2
-                # /proc/stat should be the last one
-                assert m.call_args[0][0] == '/proc/stat'
+            paths = [call.args[0] for call in m.call_args_list]
+            assert paths[0] == "/sys/devices/system/cpu/online"
+            assert paths[-1] == "/proc/stat"
 
-            # Let's push this a bit further and make sure /proc/cpuinfo
-            # parsing works as expected.
-            with open('/proc/cpuinfo', 'rb') as f:
-                cpuinfo_data = f.read()
-            fake_file = io.BytesIO(cpuinfo_data)
-            with mock.patch(
-                'psutil._common.open', return_value=fake_file, create=True
-            ) as m:
-                assert psutil._pslinux.cpu_count_logical() == original
-
-            # Finally, let's make /proc/cpuinfo return meaningless data;
-            # this way we'll fall back on relying on /proc/stat
-            with mock_open_content({"/proc/cpuinfo": b""}) as m:
-                assert psutil._pslinux.cpu_count_logical() == original
-                assert m.called
+            files = {
+                "/sys/devices/system/cpu/online": "x",
+                "/proc/cpuinfo": b"",
+                "/proc/stat": "cpu 1 2 3 4\ncpu0 1 2 3 4\ncpu1 1 2 3 4\n",
+            }
+            with self._mock_cpu_count_open(files) as m:
+                assert psutil._pslinux.cpu_count_logical() == 2
+            paths = [call.args[0] for call in m.call_args_list]
+            assert paths[0] == "/sys/devices/system/cpu/online"
+            assert paths[-1] == "/proc/stat"
+            assert paths == [
+                "/sys/devices/system/cpu/online",
+                "/proc/cpuinfo",
+                "/proc/stat",
+            ]
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")

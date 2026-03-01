@@ -532,12 +532,45 @@ def per_cpu_times():
         return cpus
 
 
+def _parse_cpulist(cpulist):
+    """Parse a Linux CPU list string (e.g. "0-3,8,10-11")."""
+    cpulist = cpulist.strip()
+    if not cpulist:
+        return 0
+    num = 0
+    for chunk in cpulist.split(','):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        if '-' in chunk:
+            start, _, end = chunk.partition('-')
+            start = int(start)
+            end = int(end)
+            if start > end:
+                msg = f"invalid CPU range {chunk!r}"
+                raise ValueError(msg)
+            num += end - start + 1
+        else:
+            int(chunk)
+            num += 1
+    return num
+
+
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
     except ValueError:
-        # as a second fallback we try to parse /proc/cpuinfo
+        # Fallback: /sys/devices/system/cpu/online
+        try:
+            with open_text("/sys/devices/system/cpu/online") as f:
+                num = _parse_cpulist(f.read())
+        except (OSError, ValueError):
+            num = 0
+        if num > 0:
+            return num
+
+        # Fallback: /proc/cpuinfo
         num = 0
         with open_binary(f"{get_procfs_path()}/cpuinfo") as f:
             for line in f:
@@ -546,7 +579,7 @@ def cpu_count_logical():
 
         # unknown format (e.g. amrel/sparc architectures), see:
         # https://github.com/giampaolo/psutil/issues/200
-        # try to parse /proc/stat as a last resort
+        # Last resort: /proc/stat
         if num == 0:
             search = re.compile(r'cpu\d')
             with open_text(f"{get_procfs_path()}/stat") as f:
