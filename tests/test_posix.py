@@ -320,6 +320,8 @@ class TestProcess(PsutilTestCase):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
         tol = 10
+        if "PYTEST_XDIST_WORKER_COUNT" in os.environ:
+            tol *= int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
         if MACOS:
             assert cws.voluntary + cws.involuntary == pytest.approx(
                 ru.ru_nvcsw + ru.ru_nivcsw, abs=tol * 2
