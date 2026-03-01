@@ -9,6 +9,8 @@
 
 - 2715_, [Linux]: ``wait_pid_pidfd_open()`` (from `Process.wait()`_) crashes
   with ``EINVAL`` due to kernel race condition.
+- 2726_, [macOS]: `Process.num_ctx_switches()`_ return an unusual high number
+  due to a C type precision issue.
 
 7.2.2
 =====

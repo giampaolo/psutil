@@ -316,6 +316,7 @@ class TestProcess(PsutilTestCase):
         assert ps_nice == psutil_nice
 
     @retry_on_failure()
+    @pytest.mark.skipif(MACOS, reason="pti_csw is total (vol+invol) on MACOS")
     def test_num_ctx_switches(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()

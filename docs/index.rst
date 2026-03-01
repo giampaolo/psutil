@@ -1482,6 +1482,11 @@ Process class
     The number voluntary and involuntary context switches performed by
     this process (cumulative).
 
+    .. note::
+      (macOS) *involuntary* value is always set to 0, while *voluntary* value
+      reflect the total number of context switches (voluntary + involuntary).
+      This is a limitation of the OS.
+
     .. versionchanged:: 5.4.1 added AIX support
 
   .. method:: num_fds()

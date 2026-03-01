@@ -147,13 +147,13 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
         // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
         pti.pti_resident_size,  // (uns long long) rss
         pti.pti_virtual_size,  // (uns long long) vms
-        pti.pti_faults,  // (uns long) number of page faults (pages)
-        pti.pti_pageins,  // (uns long) number of actual pageins (pages)
-        pti.pti_threadnum,  // (uns long) num threads
+        (unsigned long)pti.pti_faults,  // number of page faults (pages)
+        (unsigned long)pti.pti_pageins,  // number of actual pageins (pages)
+        (unsigned long)pti.pti_threadnum,  // num threads
         // Unvoluntary value seems not to be available;
         // pti.pti_csw probably refers to the sum of the two;
         // getrusage() numbers seems to confirm this theory.
-        pti.pti_csw  // (uns long) voluntary ctx switches
+        (unsigned long)pti.pti_csw  // voluntary ctx switches
     );
 }
 
