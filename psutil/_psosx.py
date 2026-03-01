@@ -458,6 +458,14 @@ class Process:
         return ntp.pfullmem(*basic_mem + (uss,))
 
     @wrap_exceptions
+    def page_faults(self):
+        rawtuple = self._get_pidtaskinfo()
+        return ntp.ppagefaults(
+            rawtuple[pidtaskinfo_map['minor_faults']],
+            rawtuple[pidtaskinfo_map['major_faults']],
+        )
+
+    @wrap_exceptions
     def cpu_times(self):
         rawtuple = self._get_pidtaskinfo()
         return ntp.pcputimes(
@@ -482,14 +490,6 @@ class Process:
         # We set it to 0.
         vol = self._get_pidtaskinfo()[pidtaskinfo_map['volctxsw']]
         return ntp.pctxsw(vol, 0)
-
-    @wrap_exceptions
-    def page_faults(self):
-        rawtuple = self._get_pidtaskinfo()
-        return ntp.ppagefaults(
-            rawtuple[pidtaskinfo_map['minor_faults']],
-            rawtuple[pidtaskinfo_map['major_faults']],
-        )
 
     @wrap_exceptions
     def num_threads(self):
