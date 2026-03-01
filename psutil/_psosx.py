@@ -447,13 +447,8 @@ class Process:
     @wrap_exceptions
     def memory_info(self):
         rawtuple = self._get_pidtaskinfo()
-        minor = rawtuple[pidtaskinfo_map['minor_faults']]
-        major = rawtuple[pidtaskinfo_map['major_faults']]
         return ntp.pmem(
-            rawtuple[pidtaskinfo_map['rss']],
-            rawtuple[pidtaskinfo_map['vms']],
-            minor + major,  # pfaults = total page faults
-            major,  # pageins
+            rawtuple[pidtaskinfo_map['rss']], rawtuple[pidtaskinfo_map['vms']]
         )
 
     @wrap_exceptions
