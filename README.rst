@@ -347,6 +347,9 @@ Process management
      pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
      ...]
     >>>
+    >>> p.page_faults()
+    ppagefaults(minor=5905, major=3)
+    >>>
     >>> p.io_counters()
     pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632, read_chars=456232, write_chars=517543)
     >>>

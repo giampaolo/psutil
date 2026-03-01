@@ -1218,6 +1218,18 @@ class Process:
     def page_faults(self):
         """Return the number of page faults for this process as a
         (minor, major) namedtuple.
+
+        - *minor* (a.k.a. *soft* faults): occur when a memory page is
+          not currently mapped into the process address space, but is
+          already present in physical RAM (e.g. a shared library page
+          loaded by another process). The kernel resolves these without
+          disk I/O.
+
+        - *major* (a.k.a. *hard* faults): occur when the page must be
+          fetched from disk. These are expensive because they stall the
+          process until I/O completes.
+
+        Both counters are cumulative since process creation.
         """
         return self._proc.page_faults()
 

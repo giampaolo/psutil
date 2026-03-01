@@ -337,7 +337,6 @@ class TestProcess(PsutilTestCase):
         assert cws.user == pytest.approx(ru.ru_utime, abs=0.3)
         assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
 
-    @pytest.mark.skipif(not LINUX and not MACOS, reason="Linux, macOS only")
     @retry_on_failure()
     def test_page_faults(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)

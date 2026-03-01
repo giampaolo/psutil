@@ -3,6 +3,11 @@
 7.3.0 (IN DEVELOPMENT)
 ======================
 
+**Enhancements**
+
+- 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
+  namedtuple.
+
 **Bug fixes**
 
 - 2726_, [macOS]: `Process.num_ctx_switches()`_ return an unusual high number

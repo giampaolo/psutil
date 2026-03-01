@@ -1859,8 +1859,8 @@ Process class
 
     - **minor** (a.k.a. *soft* faults): occur when a memory page is not
       currently mapped into the process address space, but is already present
-      in physical RAM (e.g. a shared library page loaded by another process).
-      The kernel resolves these without disk I/O.
+      in physical RAM (e.g. a shared library loaded by another process). The
+      kernel resolves these without disk I/O.
     - **major** (a.k.a. *hard* faults): occur when the page must be fetched
       from disk. These are expensive because they stall the process until I/O
       completes.
@@ -1870,7 +1870,7 @@ Process class
       >>> import psutil
       >>> p = psutil.Process()
       >>> p.page_faults()
-      ppagefaults(minor=11219, major=3)
+      ppagefaults(minor=5905, major=3)
 
     .. versionadded:: 7.3.0
 
