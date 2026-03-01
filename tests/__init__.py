@@ -1122,6 +1122,7 @@ class process_namespace:
         ('num_ctx_switches', (), {}),
         ('num_threads', (), {}),
         ('open_files', (), {}),
+        ('page_faults', (), {}),
         ('ppid', (), {}),
         ('status', (), {}),
         ('threads', (), {}),

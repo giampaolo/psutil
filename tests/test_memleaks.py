@@ -199,6 +199,9 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     def test_memory_maps(self):
         self.execute(self.proc.memory_maps, times=60, retries=10)
 
+    def test_page_faults(self):
+        self.execute(self.proc.page_faults)
+
     @pytest.mark.skipif(not LINUX, reason="LINUX only")
     @pytest.mark.skipif(not HAS_PROC_RLIMIT, reason="not supported")
     def test_rlimit(self):
