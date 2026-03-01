@@ -1050,6 +1050,7 @@ psutil_proc_page_faults(PyObject *self, PyObject *args) {
     return ret;
 }
 
+
 /*
  * Return True if all process threads are in waiting/suspended state.
  */
