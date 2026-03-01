@@ -1899,29 +1899,20 @@ class Process:
         # RssAnon/RssFile/RssShmem were added in Linux 4.5;
         # VmSwap in 2.6.34; HugetlbPages in 4.4.
         data = self._read_status_file()
-        basic_mem = self.memory_info()
 
         def parse(regex):
             m = regex.search(data)
             return int(m.group(1)) * 1024 if m else 0
 
-        peak_rss = parse(_vmhwm_re)
-        peak_vms = parse(_vmpeak_re)
-        rss_anon = parse(_rssanon_re)
-        rss_file = parse(_rssfile_re)
-        rss_shmem = parse(_rssshmem_re)
-        swap = parse(_vmswap_re)
-        hugetlb = parse(_hugetlb_re)
-        return ntp.pmem2(
-            **basic_mem._asdict(),
-            peak_rss=peak_rss,
-            peak_vms=peak_vms,
-            rss_anon=rss_anon,
-            rss_file=rss_file,
-            rss_shmem=rss_shmem,
-            swap=swap,
-            hugetlb=hugetlb,
-        )
+        return {
+            "peak_rss": parse(_vmhwm_re),
+            "peak_vms": parse(_vmpeak_re),
+            "rss_anon": parse(_rssanon_re),
+            "rss_file": parse(_rssfile_re),
+            "rss_shmem": parse(_rssshmem_re),
+            "swap": parse(_vmswap_re),
+            "hugetlb": parse(_hugetlb_re),
+        }
 
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 

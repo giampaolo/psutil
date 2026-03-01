@@ -1152,7 +1152,11 @@ class Process:
 
         All numbers are expressed in bytes.
         """
-        return self._proc.memory_info2()
+        base = self.memory_info()
+        if hasattr(self._proc, "memory_info2"):
+            extras = self._proc.memory_info2()
+            return _ntp.pmem2(**base._asdict(), **extras)
+        return base
 
     def memory_full_info(self):
         """This method returns the same information as memory_info(),
