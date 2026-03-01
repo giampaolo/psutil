@@ -48,6 +48,7 @@ static PyMethodDef PsutilMethods[] = {
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
     {"proc_num_handles", psutil_proc_num_handles, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
+    {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
     {"proc_priority_get", psutil_proc_priority_get, METH_VARARGS},
     {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS},
     {"proc_suspend_or_resume", psutil_proc_suspend_or_resume, METH_VARARGS},

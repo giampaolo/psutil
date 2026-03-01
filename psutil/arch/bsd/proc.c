@@ -117,9 +117,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 1200031
-        "(OillllllLdllllddddlllllbO)",
+        "(OillllllLdllllddddlllllbllO)",
 #else
-        "(OillllllidllllddddlllllbO)",
+        "(OillllllidllllddddlllllbllO)",
 #endif
 #ifdef PSUTIL_FREEBSD
         py_ppid,  // (pid_t) ppid
@@ -154,6 +154,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memstack,  // (long) mem stack
         // others
         oncpu,  // (int) the CPU we are on
+        // page faults
+        (long)kp.ki_rusage.ru_minflt,  // (long) minor page faults
+        (long)kp.ki_rusage.ru_majflt,  // (long) major page faults
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
         py_ppid,  // (pid_t) ppid
         (int)kp.p_stat,  // (int) status
@@ -189,6 +192,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         memstack,  // (long) mem stack
         // others
         oncpu,  // (int) the CPU we are on
+        // page faults
+        (long)kp.p_uru_minflt,  // (long) minor page faults
+        (long)kp.p_uru_majflt,  // (long) major page faults
 #endif
         py_name  // (pystr) name
     );

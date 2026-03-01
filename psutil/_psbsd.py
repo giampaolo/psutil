@@ -124,7 +124,9 @@ kinfo_proc_map = dict(
     memdata=21,
     memstack=22,
     cpunum=23,
-    name=24,
+    min_faults=24,
+    maj_faults=25,
+    name=26,
 )
 
 
@@ -753,6 +755,14 @@ class Process:
         return ntp.pctxsw(
             rawtuple[kinfo_proc_map['ctx_switches_vol']],
             rawtuple[kinfo_proc_map['ctx_switches_unvol']],
+        )
+
+    @wrap_exceptions
+    def page_faults(self):
+        rawtuple = self.oneshot()
+        return ntp.ppagefaults(
+            rawtuple[kinfo_proc_map['min_faults']],
+            rawtuple[kinfo_proc_map['maj_faults']],
         )
 
     @wrap_exceptions

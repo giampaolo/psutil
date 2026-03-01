@@ -561,6 +561,12 @@ class TestProcess(PsutilTestCase):
         if LINUX or MACOS or WINDOWS:
             p.memory_percent(memtype='uss')
 
+    def test_page_faults(self):
+        p = psutil.Process()
+        pfaults = p.page_faults()
+        assert pfaults.minor > 0
+        assert pfaults.major >= 0
+
     def test_is_running(self):
         p = self.spawn_psproc()
         assert p.is_running()

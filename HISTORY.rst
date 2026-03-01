@@ -1,7 +1,12 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-7.2.4 (IN DEVELOPMENT)
+7.3.0 (IN DEVELOPMENT)
 ======================
+
+**Enhancements**
+
+- 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
+  namedtuple.
 
 **Bug fixes**
 
@@ -10,6 +15,11 @@
 - 2411_ [macOS]: `Process.cpu_times()`_ and `Process.cpu_percent()`_
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+
+**Compatibility notes**
+
+- `Process.memory_info()`_ on macOS no longer returns *pfaults* and *pageins*
+  fields. Use `Process.page_faults()`_ method instead.
 
 7.2.3
 =====
@@ -2961,6 +2971,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.num_threads()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.num_threads
 .. _`Process.oneshot()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.oneshot
 .. _`Process.open_files()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.open_files
+.. _`Process.page_faults()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.page_faults
 .. _`Process.parent()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.parent
 .. _`Process.parents()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.parents
 .. _`Process.pid`: https://psutil.readthedocs.io/en/latest/#psutil.Process.pid

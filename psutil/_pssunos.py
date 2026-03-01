@@ -700,5 +700,10 @@ class Process:
         )
 
     @wrap_exceptions
+    def page_faults(self):
+        ret = cext.proc_page_faults(self.pid, self._procfs_path)
+        return ntp.ppagefaults(*ret)
+
+    @wrap_exceptions
     def wait(self, timeout=None):
         return _psposix.wait_pid(self.pid, timeout)

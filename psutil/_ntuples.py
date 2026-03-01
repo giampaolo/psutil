@@ -126,6 +126,9 @@ pionice = nt("pionice", ("ioclass", "value"))
 # psutil.Process.ctx_switches()
 pctxsw = nt("pctxsw", ("voluntary", "involuntary"))
 
+# psutil.Process.page_faults()
+ppagefaults = nt("ppagefaults", ("minor", "major"))
+
 # psutil.Process.net_connections()
 pconn = nt("pconn", ("fd", "family", "type", "laddr", "raddr", "status"))
 
@@ -306,7 +309,7 @@ elif MACOS:
     )
 
     # psutil.Process.memory_info()
-    pmem = nt("pmem", ("rss", "vms", "pfaults", "pageins"))
+    pmem = nt("pmem", ("rss", "vms"))
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))

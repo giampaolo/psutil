@@ -320,6 +320,8 @@ class TestProcess(PsutilTestCase):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
         tol = 10
+        if "PYTEST_XDIST_WORKER_COUNT" in os.environ:
+            tol *= int(os.environ["PYTEST_XDIST_WORKER_COUNT"])
         if MACOS:
             assert cws.voluntary + cws.involuntary == pytest.approx(
                 ru.ru_nvcsw + ru.ru_nivcsw, abs=tol * 2
@@ -334,6 +336,26 @@ class TestProcess(PsutilTestCase):
         cws = psutil.Process().cpu_times()
         assert cws.user == pytest.approx(ru.ru_utime, abs=0.3)
         assert cws.system == pytest.approx(ru.ru_stime, abs=0.3)
+
+    @retry_on_failure()
+    def test_page_faults(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        pf = psutil.Process().page_faults()
+        tol = 5
+        assert pf.minor == pytest.approx(ru.ru_minflt, abs=tol)
+        assert pf.major == pytest.approx(ru.ru_majflt, abs=tol)
+
+    @pytest.mark.skipif(not LINUX and not MACOS, reason="Linux, macOS only")
+    def test_page_faults_minor_increase(self):
+        # Access 200 new anonymous pages; each first access triggers a
+        # minor fault.
+        p = psutil.Process()
+        pf_before = p.page_faults()
+        with mmap.mmap(-1, 200 * mmap.PAGESIZE) as m:
+            for i in range(0, 200 * mmap.PAGESIZE, mmap.PAGESIZE):
+                m[i : i + 1] = b'\x00'
+        pf_after = p.page_faults()
+        assert pf_after.minor > pf_before.minor
 
 
 @pytest.mark.skipif(not POSIX, reason="POSIX only")

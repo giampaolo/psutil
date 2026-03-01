@@ -76,8 +76,8 @@ pidtaskinfo_map = dict(
     cpustime=1,
     rss=2,
     vms=3,
-    pfaults=4,
-    pageins=5,
+    minor_faults=4,
+    major_faults=5,
     numthreads=6,
     volctxsw=7,
 )
@@ -448,10 +448,7 @@ class Process:
     def memory_info(self):
         rawtuple = self._get_pidtaskinfo()
         return ntp.pmem(
-            rawtuple[pidtaskinfo_map['rss']],
-            rawtuple[pidtaskinfo_map['vms']],
-            rawtuple[pidtaskinfo_map['pfaults']],
-            rawtuple[pidtaskinfo_map['pageins']],
+            rawtuple[pidtaskinfo_map['rss']], rawtuple[pidtaskinfo_map['vms']]
         )
 
     @wrap_exceptions
@@ -459,6 +456,14 @@ class Process:
         basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
         return ntp.pfullmem(*basic_mem + (uss,))
+
+    @wrap_exceptions
+    def page_faults(self):
+        rawtuple = self._get_pidtaskinfo()
+        return ntp.ppagefaults(
+            rawtuple[pidtaskinfo_map['minor_faults']],
+            rawtuple[pidtaskinfo_map['major_faults']],
+        )
 
     @wrap_exceptions
     def cpu_times(self):

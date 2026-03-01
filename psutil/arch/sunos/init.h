@@ -38,5 +38,6 @@ PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_maps(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name_and_args(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_ctx_switches(PyObject *self, PyObject *args);
+PyObject *psutil_proc_page_faults(PyObject *self, PyObject *args);
 PyObject *psutil_proc_query_thread(PyObject *self, PyObject *args);
 PyObject *psutil_swap_mem(PyObject *self, PyObject *args);

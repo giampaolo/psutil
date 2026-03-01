@@ -432,6 +432,13 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert isinstance(ret, int)
         assert ret >= 0
 
+    def page_faults(self, ret, info):
+        assert is_namedtuple(ret)
+        assert isinstance(ret.minor, int)
+        assert isinstance(ret.major, int)
+        assert ret.minor >= 0
+        assert ret.major >= 0
+
     def nice(self, ret, info):
         assert isinstance(ret, int)
         if POSIX:

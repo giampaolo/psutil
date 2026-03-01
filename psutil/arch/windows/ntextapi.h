@@ -294,9 +294,10 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
 typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     ULONG NextEntryOffset;
     ULONG NumberOfThreads;
-    LARGE_INTEGER SpareLi1;
-    LARGE_INTEGER SpareLi2;
-    LARGE_INTEGER SpareLi3;
+    ULONGLONG WorkingSetPrivateSize;
+    ULONG HardFaultCount;
+    ULONG NumberOfThreadsHighWatermark;
+    ULONGLONG CycleTime;
     LARGE_INTEGER CreateTime;
     LARGE_INTEGER UserTime;
     LARGE_INTEGER KernelTime;
@@ -306,7 +307,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     HANDLE InheritedFromUniqueProcessId;
     ULONG HandleCount;
     ULONG SessionId;
-    ULONG_PTR PageDirectoryBase;
+    ULONG_PTR UniqueProcessKey;
     SIZE_T PeakVirtualSize;
     SIZE_T VirtualSize;
     DWORD PageFaultCount;
