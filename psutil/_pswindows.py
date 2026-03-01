@@ -826,6 +826,11 @@ class Process:
         uss *= getpagesize()
         return ntp.pfullmem(*basic_mem + (uss,))
 
+    @wrap_exceptions
+    def page_faults(self):
+        ret = cext.proc_page_faults(self.pid)
+        return ntp.ppagefaults(*ret)
+
     def memory_maps(self):
         try:
             raw = cext.proc_memory_maps(self.pid)

@@ -1025,6 +1025,29 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return process page faults as a (minor, major) tuple.
+ * Windows' PageFaultCount (from SYSTEM_PROCESS_INFORMATION, obtained via
+ * NtQuerySystemInformation(SystemProcessInformation)) is a combined total
+ * and does not distinguish between minor (soft) and major (hard) faults,
+ * so we return the total as minor and 0 as major.
+ */
+PyObject *
+psutil_proc_page_faults(PyObject *self, PyObject *args) {
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    PyObject *ret;
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if (psutil_get_proc_info(pid, &process, &buffer) != 0)
+        return NULL;
+    ret = Py_BuildValue("(kk)", (unsigned long)process->PageFaultCount, 0UL);
+    free(buffer);
+    return ret;
+}
+
+/*
  * Return True if all process threads are in waiting/suspended state.
  */
 PyObject *
