@@ -123,23 +123,20 @@ PyObject *
 psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
-    uint64_t total_user;
-    uint64_t total_system;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         return NULL;
 
-    total_user = pti.pti_total_user * PSUTIL_MACH_TIMEBASE_INFO.numer;
-    total_user /= PSUTIL_MACH_TIMEBASE_INFO.denom;
-    total_system = pti.pti_total_system * PSUTIL_MACH_TIMEBASE_INFO.numer;
-    total_system /= PSUTIL_MACH_TIMEBASE_INFO.denom;
-
     return Py_BuildValue(
         "(ddKKkkkk)",
-        (float)total_user / 1000000000.0,  // (float) cpu user time
-        (float)total_system / 1000000000.0,  // (float) cpu sys time
+        // pti_total_user/system are in Mach ticks; hw.tbfrequency gives
+        // ticks/second and is not intercepted by Rosetta 2, unlike
+        // mach_timebase_info() which returns numer=1/denom=1 for x86_64
+        // processes on Apple Silicon, causing a 41.67x undercount there.
+        (double)pti.pti_total_user / PSUTIL_HW_TBFREQUENCY,  // cpu user time
+        (double)pti.pti_total_system / PSUTIL_HW_TBFREQUENCY,  // cpu sys time
         // Note about memory: determining other mem stats on macOS is a mess:
         // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
         // I just give up.
