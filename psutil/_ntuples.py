@@ -309,7 +309,7 @@ elif MACOS:
     )
 
     # psutil.Process.memory_info()
-    pmem = nt("pmem", ("rss", "vms", "pfaults", "pageins"))
+    pmem = nt("pmem", ("rss", "vms"))
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))
