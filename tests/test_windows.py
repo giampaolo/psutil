@@ -594,6 +594,18 @@ class TestProcess(WindowsTestCase):
         with pytest.raises(psutil.NoSuchProcess):
             proc.exe()
 
+    @retry_on_failure()
+    def test_page_faults(self):
+        # memory_info() value comes from GetProcessMemoryInfo ->
+        # PageFaultCount. page_faults() value comes from
+        # NtQuerySystemInformation -> HardFaultCount / PageFaultCount
+
+        p = psutil.Process()
+        mem = p.memory_info()
+        pfaults = p.page_faults()
+        tol = 5
+        assert mem.num_page_faults == pytest.approx(pfaults.minor, abs=tol)
+
 
 class TestProcessWMI(WindowsTestCase):
     """Compare Process API results with WMI."""
