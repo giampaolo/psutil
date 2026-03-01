@@ -147,9 +147,9 @@ psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
         (unsigned long)pti.pti_faults,  // number of page faults (pages)
         (unsigned long)pti.pti_pageins,  // number of actual pageins (pages)
         (unsigned long)pti.pti_threadnum,  // num threads
-        // Unvoluntary value seems not to be available;
-        // pti.pti_csw probably refers to the sum of the two;
-        // getrusage() numbers seems to confirm this theory.
+        // Unvoluntary not available on macOS. `pti_csw` refers to the
+        // sum of voluntary + involuntary. getrusage() numbers confirm
+        // this theory.
         (unsigned long)pti.pti_csw  // voluntary ctx switches
     );
 }

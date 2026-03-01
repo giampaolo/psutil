@@ -316,12 +316,17 @@ class TestProcess(PsutilTestCase):
         assert ps_nice == psutil_nice
 
     @retry_on_failure()
-    @pytest.mark.skipif(MACOS, reason="pti_csw is total (vol+invol) on MACOS")
     def test_num_ctx_switches(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         cws = psutil.Process().num_ctx_switches()
-        assert cws.voluntary == pytest.approx(ru.ru_nvcsw, abs=10)
-        assert cws.involuntary == pytest.approx(ru.ru_nivcsw, abs=10)
+        tol = 10
+        if MACOS:
+            assert cws.voluntary + cws.involuntary == pytest.approx(
+                ru.ru_nvcsw + ru.ru_nivcsw, abs=tol * 2
+            )
+        else:
+            assert cws.voluntary == pytest.approx(ru.ru_nvcsw, abs=tol)
+            assert cws.involuntary == pytest.approx(ru.ru_nivcsw, abs=tol)
 
     @retry_on_failure()
     def test_cpu_times(self):
