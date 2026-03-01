@@ -10,7 +10,7 @@
 #include <libproc.h>
 #include <mach/mach_time.h>
 
-extern struct mach_timebase_info PSUTIL_MACH_TIMEBASE_INFO;
+extern uint64_t PSUTIL_HW_TBFREQUENCY;
 
 int psutil_setup_osx(void);
 int _psutil_pids(pid_t **pids_array, int *pids_count);
