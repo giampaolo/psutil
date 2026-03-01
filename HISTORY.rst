@@ -1,5 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+7.2.4 (IN DEVELOPMENT)
+======================
+
+**Bug fixes**
+
+- 2726_, [macOS]: `Process.num_ctx_switches()`_ return an unusual high number
+  due to a C type precision issue.
+- 2411_ [macOS]: `Process.cpu_times()`_ and `Process.cpu_percent()`_
+  calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
+  lower).
+
 7.2.3
 =====
 
@@ -9,8 +20,6 @@
 
 - 2715_, [Linux]: ``wait_pid_pidfd_open()`` (from `Process.wait()`_) crashes
   with ``EINVAL`` due to kernel race condition.
-- 2726_, [macOS]: `Process.num_ctx_switches()`_ return an unusual high number
-  due to a C type precision issue.
 
 7.2.2
 =====
