@@ -1136,6 +1136,22 @@ class Process:
         """
         return self._proc.memory_info()
 
+    def memory_info2(self):
+        """Return a namedtuple extending memory_info() with extra
+        metrics.
+
+        Extra fields (Linux only):
+
+        - peak_rss: peak resident set size ("high water mark")
+        - peak_vms: peak virtual memory size
+        - rss_anon: anonymous resident memory (heap, stack, etc.)
+        - rss_file: file-backed resident memory
+        - swap: memory swapped to disk
+
+        All numbers are expressed in bytes.
+        """
+        return self._proc.memory_info2()
+
     def memory_full_info(self):
         """This method returns the same information as memory_info(),
         plus, on some platform (Linux, macOS, Windows), also provides

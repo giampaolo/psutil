@@ -1883,6 +1883,39 @@ class Process:
             )
         return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
 
+    @wrap_exceptions
+    def memory_info2(
+        self,
+        _vmpeak_re=re.compile(br"VmPeak:\s+(\d+)"),
+        _vmhwm_re=re.compile(br"VmHWM:\s+(\d+)"),
+        _rssanon_re=re.compile(br"RssAnon:\s+(\d+)"),
+        _rssfile_re=re.compile(br"RssFile:\s+(\d+)"),
+        _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
+    ):
+        # Read /proc/{pid}/status which provides peak RSS/VMS and a
+        # cheaper way to get swap (no smaps parsing needed). RssAnon
+        # and RssFile were added in Linux 4.5; VmSwap in 2.6.34.
+        data = self._read_status_file()
+        basic_mem = self.memory_info()
+
+        def parse(regex):
+            m = regex.search(data)
+            return int(m.group(1)) * 1024 if m else 0
+
+        peak_vms = parse(_vmpeak_re)
+        peak_rss = parse(_vmhwm_re)
+        rss_anon = parse(_rssanon_re)
+        rss_file = parse(_rssfile_re)
+        swap = parse(_vmswap_re)
+        return ntp.pmem2(
+            **basic_mem._asdict(),
+            peak_rss=peak_rss,
+            peak_vms=peak_vms,
+            rss_anon=rss_anon,
+            rss_file=rss_file,
+            swap=swap,
+        )
+
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
         def _parse_smaps_rollup(self):

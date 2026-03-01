@@ -184,6 +184,13 @@ if LINUX:
     # psutil.Process().memory_info()
     pmem = nt("pmem", ("rss", "vms", "shared", "text", "lib", "data", "dirty"))
 
+    # psutil.Process().memory_info2()
+    pmem2 = nt(
+        "pmem2",
+        pmem._fields
+        + ("peak_rss", "peak_vms", "rss_anon", "rss_file", "swap"),
+    )
+
     # psutil.Process().memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss", "pss", "swap"))
 
