@@ -328,6 +328,15 @@ class TestProcess(PsutilTestCase):
             assert cws.voluntary == pytest.approx(ru.ru_nvcsw, abs=tol)
             assert cws.involuntary == pytest.approx(ru.ru_nivcsw, abs=tol)
 
+    @pytest.mark.skipif(not LINUX, reason="Linux only")
+    @retry_on_failure()
+    def test_page_faults(self):
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        pf = psutil.Process().page_faults()
+        tol = 20
+        assert pf.minor == pytest.approx(ru.ru_minflt, abs=tol)
+        assert pf.major == pytest.approx(ru.ru_majflt, abs=tol)
+
     @retry_on_failure()
     def test_cpu_times(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)

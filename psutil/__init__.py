@@ -933,6 +933,15 @@ class Process:
         """
         return self._proc.num_ctx_switches()
 
+    # Linux only
+    if hasattr(_psplatform.Process, "page_faults"):
+
+        def page_faults(self):
+            """Return the number of page faults for this process as a
+            (minor, major) namedtuple.
+            """
+            return self._proc.page_faults()
+
     def num_threads(self):
         """Return the number of threads used by this process."""
         return self._proc.num_threads()

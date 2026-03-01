@@ -226,6 +226,9 @@ if LINUX:
         ("user", "system", "children_user", "children_system", "iowait"),
     )
 
+    # psutil.Process.page_faults()
+    ppagefaults = nt("ppagefaults", ("minor", "major"))
+
 # ===================================================================
 # --- Windows
 # ===================================================================

@@ -1693,6 +1693,8 @@ class Process:
         ret['status'] = fields[0]
         ret['ppid'] = fields[1]
         ret['ttynr'] = fields[4]
+        ret['minflt'] = fields[7]
+        ret['majflt'] = fields[9]
         ret['utime'] = fields[11]
         ret['stime'] = fields[12]
         ret['children_utime'] = fields[13]
@@ -2023,6 +2025,11 @@ class Process:
                 )
                 ls.append(item)
             return ls
+
+    @wrap_exceptions
+    def page_faults(self):
+        values = self._parse_stat_file()
+        return ntp.ppagefaults(int(values['minflt']), int(values['majflt']))
 
     @wrap_exceptions
     def cwd(self):
