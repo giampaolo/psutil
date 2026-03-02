@@ -361,13 +361,13 @@ class Process:
         os.stat(f"{self._procfs_path}/{self.pid}")
 
     def oneshot_enter(self):
+        self._oneshot.cache_activate(self)
         self._proc_name_and_args.cache_activate(self)
-        self._proc_oneshot.cache_activate(self)
         self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
+        self._oneshot.cache_deactivate(self)
         self._proc_name_and_args.cache_deactivate(self)
-        self._proc_oneshot.cache_deactivate(self)
         self._proc_cred.cache_deactivate(self)
 
     @wrap_exceptions
@@ -377,7 +377,7 @@ class Process:
 
     @wrap_exceptions
     @memoize_when_activated
-    def _proc_oneshot(self):
+    def _oneshot(self):
         if self.pid == 0 and not os.path.exists(
             f"{self._procfs_path}/{self.pid}/psinfo"
         ):
@@ -418,18 +418,18 @@ class Process:
 
     @wrap_exceptions
     def create_time(self):
-        return self._proc_oneshot()[proc_info_map['create_time']]
+        return self._oneshot()[proc_info_map['create_time']]
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_oneshot()[proc_info_map['num_threads']]
+        return self._oneshot()[proc_info_map['num_threads']]
 
     @wrap_exceptions
     def nice_get(self):
         # Note #1: getpriority(3) doesn't work for realtime processes.
         # Psinfo is what ps uses, see:
         # https://github.com/giampaolo/psutil/issues/1194
-        return self._proc_oneshot()[proc_info_map['nice']]
+        return self._oneshot()[proc_info_map['nice']]
 
     @wrap_exceptions
     def nice_set(self, value):
@@ -443,7 +443,7 @@ class Process:
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = self._proc_oneshot()[proc_info_map['ppid']]
+        self._ppid = self._oneshot()[proc_info_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
@@ -451,8 +451,8 @@ class Process:
         try:
             real, effective, saved, _, _, _ = self._proc_cred()
         except AccessDenied:
-            real = self._proc_oneshot()[proc_info_map['uid']]
-            effective = self._proc_oneshot()[proc_info_map['euid']]
+            real = self._oneshot()[proc_info_map['uid']]
+            effective = self._oneshot()[proc_info_map['euid']]
             saved = None
         return ntp.puids(real, effective, saved)
 
@@ -461,8 +461,8 @@ class Process:
         try:
             _, _, _, real, effective, saved = self._proc_cred()
         except AccessDenied:
-            real = self._proc_oneshot()[proc_info_map['gid']]
-            effective = self._proc_oneshot()[proc_info_map['egid']]
+            real = self._oneshot()[proc_info_map['gid']]
+            effective = self._oneshot()[proc_info_map['egid']]
             saved = None
         return ntp.puids(real, effective, saved)
 
@@ -492,7 +492,7 @@ class Process:
     def terminal(self):
         procfs_path = self._procfs_path
         hit_enoent = False
-        tty = wrap_exceptions(self._proc_oneshot()[proc_info_map['ttynr']])
+        tty = wrap_exceptions(self._oneshot()[proc_info_map['ttynr']])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -518,7 +518,7 @@ class Process:
 
     @wrap_exceptions
     def memory_info(self):
-        ret = self._proc_oneshot()
+        ret = self._oneshot()
         rss = ret[proc_info_map['rss']] * 1024
         vms = ret[proc_info_map['vms']] * 1024
         return ntp.pmem(rss, vms)
@@ -527,7 +527,7 @@ class Process:
 
     @wrap_exceptions
     def status(self):
-        code = self._proc_oneshot()[proc_info_map['status']]
+        code = self._oneshot()[proc_info_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
