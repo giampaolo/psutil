@@ -308,7 +308,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert isinstance(value, int)
             assert value >= 0
         if WINDOWS:
-            assert ret.peak_wset >= ret.rss
+            assert ret.peak_rss >= ret.rss
             assert ret.peak_paged_pool >= ret.paged_pool
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool
             assert ret.peak_vms >= ret.vms

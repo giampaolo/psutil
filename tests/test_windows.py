@@ -491,7 +491,7 @@ class TestProcess(WindowsTestCase):
     def test_memory_info(self):
         win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
         ps = psutil.Process(self.pid).memory_info()
-        assert ps.peak_wset == win['PeakWorkingSetSize']
+        assert ps.peak_rss == win['PeakWorkingSetSize']
         assert ps.rss == win['WorkingSetSize']
         assert ps.peak_paged_pool == win['QuotaPeakPagedPoolUsage']
         assert ps.paged_pool == win['QuotaPagedPoolUsage']
@@ -502,6 +502,8 @@ class TestProcess(WindowsTestCase):
 
         with pytest.warns(DeprecationWarning, match="wset is deprecated"):
             assert ps.wset == ps.rss
+        with pytest.warns(DeprecationWarning, match="peak_wset is deprecated"):
+            assert ps.peak_wset == ps.peak_rss
         with pytest.warns(DeprecationWarning, match="pagefile is deprecated"):
             assert ps.pagefile == ps.vms
         with pytest.warns(

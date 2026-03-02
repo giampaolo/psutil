@@ -1655,7 +1655,7 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | text    |         | data     |         |     | peak_wset (maps to ``PeakWorkingSetSize``)                  |
+    | text    |         | data     |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | lib     |         | stack    |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1700,6 +1700,9 @@ Process class
     - **wset** *(Windows, deprecated)*: deprecated alias for ``rss``.
       Use ``rss`` instead.
 
+    - **peak_wset** *(Windows, deprecated)*: deprecated alias for ``peak_rss``.
+      Use ``peak_rss`` instead.
+
     - **pagefile** *(Windows, deprecated)*: deprecated alias for ``vms``.
       Use ``vms`` instead.
 
@@ -1726,6 +1729,7 @@ Process class
 
     .. versionchanged::
       7.3.0 Windows: *wset* is deprecated; use *rss* instead.
+      *peak_wset* is deprecated and renamed to *peak_rss*.
       *pagefile* is deprecated; use *vms* instead.
       *peak_pagefile* is deprecated and renamed to *peak_vms*.
 

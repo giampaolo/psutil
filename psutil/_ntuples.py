@@ -264,7 +264,7 @@ elif WINDOWS:
             "rss",
             "vms",
             "num_page_faults",
-            "peak_wset",
+            "peak_rss",
             "peak_paged_pool",
             "paged_pool",
             "peak_nonpaged_pool",
@@ -278,6 +278,7 @@ elif WINDOWS:
         __slots__ = ()
 
         wset = deprecated_property(replacement="rss")
+        peak_wset = deprecated_property(replacement="peak_rss")
         pagefile = deprecated_property(replacement="vms")
         peak_pagefile = deprecated_property(replacement="peak_vms")
 
