@@ -826,10 +826,10 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     py_retlist = Py_BuildValue(
 #if defined(_WIN64)
         "kkdddkKKKKKK"
-        "kKKKKKKKKK",
+        "kKKKKKKKKKKK",
 #else
         "kkdddkKKKKKK"
-        "kIIIIIIIII",
+        "kIIIIIIIIIII",
 #endif
         process->HandleCount,  // num handles
         ctx_switches,  // num ctx switches
@@ -854,7 +854,9 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         process->QuotaNonPagedPoolUsage,  // non paged pool
         process->PagefileUsage,  // pagefile
         process->PeakPagefileUsage,  // peak pagefile
-        process->PrivatePageCount  // private
+        process->PrivatePageCount,  // private
+        process->VirtualSize,  // virtual
+        process->PeakVirtualSize  // peak virtual
     );
 
     free(buffer);

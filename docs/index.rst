@@ -1681,7 +1681,9 @@ Process class
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
       Windows this is an alias for `pagefile` field and maps to
-      ``PagefileUsage``.
+      ``PagefileUsage`` (private committed bytes), which is not the true
+      virtual address space size. For that, use ``virtual`` from
+      :meth:`memory_info2`.
 
     - **shared**: *(Linux)*
       memory that could be potentially shared with other processes.
@@ -1726,23 +1728,23 @@ Process class
     not implemented this returns the same result as :meth:`memory_info`.
     All numbers are expressed in bytes.
 
-    +-------------+----------------+
-    | Linux       | macOS          |
-    +=============+================+
-    | peak_rss    | peak_rss       |
-    +-------------+----------------+
-    | peak_vms    | rss_anon       |
-    +-------------+----------------+
-    | rss_anon    | rss_file       |
-    +-------------+----------------+
-    | rss_file    | compressed     |
-    +-------------+----------------+
-    | rss_shmem   | phys_footprint |
-    +-------------+----------------+
-    | swap        |                |
-    +-------------+----------------+
-    | hugetlb     |                |
-    +-------------+----------------+
+    +-------------+----------------+--------------+
+    | Linux       | macOS          | Windows      |
+    +=============+================+==============+
+    | peak_rss    | peak_rss       | virtual      |
+    +-------------+----------------+--------------+
+    | peak_vms    | rss_anon       | peak_virtual |
+    +-------------+----------------+--------------+
+    | rss_anon    | rss_file       |              |
+    +-------------+----------------+--------------+
+    | rss_file    | compressed     |              |
+    +-------------+----------------+--------------+
+    | rss_shmem   | phys_footprint |              |
+    +-------------+----------------+--------------+
+    | swap        |                |              |
+    +-------------+----------------+--------------+
+    | hugetlb     |                |              |
+    +-------------+----------------+--------------+
 
     - **peak_rss**: peak resident set size ("high water mark").
     - **peak_vms** *(Linux)*: peak virtual memory size.
@@ -1755,6 +1757,10 @@ Process class
     - **hugetlb** *(Linux)*: memory backed by huge TLB pages.
     - **phys_footprint** *(macOS)*: total physical memory footprint including
       compressed pages; this is what Xcode's memory gauge shows.
+    - **virtual** *(Windows)*: total virtual address space size. Unlike ``vms``
+      in :meth:`memory_info`, this is the true virtual memory size
+      (``VirtualSize`` from ``SYSTEM_PROCESS_INFORMATION``).
+    - **peak_virtual** *(Windows)*: peak virtual address space size.
 
     .. versionadded:: 7.X.X
 

@@ -1159,6 +1159,13 @@ class Process:
         - phys_footprint: total physical memory footprint (includes
           compressed pages); this is what Xcode's memory gauge shows
 
+        Windows:
+
+        - virtual: total virtual address space size (true VMS
+          equivalent, unlike `vms` in memory_info() which is pagefile
+          usage)
+        - peak_virtual: peak virtual address space size
+
         All numbers are expressed in bytes.
         """
         base = self.memory_info()

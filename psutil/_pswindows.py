@@ -142,6 +142,8 @@ pinfo_map = dict(
     pagefile=19,
     peak_pagefile=20,
     mem_private=21,
+    virtual=22,
+    peak_virtual=23,
 )
 
 
@@ -818,6 +820,14 @@ class Process:
         rss = t[2]  # wset
         vms = t[7]  # pagefile
         return ntp.pmem(*(rss, vms) + t)
+
+    @wrap_exceptions
+    def memory_info2(self):
+        info = self._proc_info()
+        return {
+            "virtual": info[pinfo_map['virtual']],
+            "peak_virtual": info[pinfo_map['peak_virtual']],
+        }
 
     @wrap_exceptions
     def memory_full_info(self):
