@@ -1722,6 +1722,45 @@ Process class
     .. versionchanged::
       7.3.0 BSD: adds *peak_rss*
 
+  .. method:: memory_info2()
+
+    Return a named tuple extending :meth:`memory_info` with additional
+    platform-specific memory metrics. On platforms where extra fields are
+    not implemented this returns the same result as :meth:`memory_info`.
+    All numbers are expressed in bytes.
+
+    +-------------+----------------+
+    | Linux       | macOS          |
+    +=============+================+
+    | peak_rss    | peak_rss       |
+    +-------------+----------------+
+    | peak_vms    | rss_anon       |
+    +-------------+----------------+
+    | rss_anon    | rss_file       |
+    +-------------+----------------+
+    | rss_file    | compressed     |
+    +-------------+----------------+
+    | rss_shmem   | phys_footprint |
+    +-------------+----------------+
+    | swap        |                |
+    +-------------+----------------+
+    | hugetlb     |                |
+    +-------------+----------------+
+
+    - **peak_rss**: peak resident set size ("high water mark").
+    - **peak_vms** *(Linux)*: peak virtual memory size.
+    - **rss_anon** *(Linux, macOS)*: anonymous resident memory (heap, stack,
+      etc.). On macOS this maps to ``task_vm_info.internal``.
+    - **rss_file** *(Linux, macOS)*: file-backed resident memory. On macOS this
+      maps to ``task_vm_info.external``.
+    - **rss_shmem** *(Linux)*: shared memory resident pages.
+    - **swap** *(Linux)*: memory swapped out to disk.
+    - **hugetlb** *(Linux)*: memory backed by huge TLB pages.
+    - **phys_footprint** *(macOS)*: total physical memory footprint including
+      compressed pages; this is what Xcode's memory gauge shows.
+
+    .. versionadded:: 7.X.X
+
   .. method:: memory_full_info()
 
     This method returns the same information as :meth:`memory_info`, plus, on
