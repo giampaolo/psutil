@@ -37,6 +37,9 @@ from . import spawn_subproc
 from . import terminate
 
 if WINDOWS and not PYPY:
+    import ctypes
+    import ctypes.wintypes
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         import win32api  # requires "pip install pywin32"
@@ -54,7 +57,15 @@ cext = psutil._psplatform.cext
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 @pytest.mark.skipif(PYPY, reason="pywin32 not available on PYPY")
 class WindowsTestCase(PsutilTestCase):
-    pass
+
+    def OpenProcess(self, pid=None):
+        handle = win32api.OpenProcess(
+            win32con.PROCESS_QUERY_INFORMATION,
+            win32con.FALSE,
+            pid or os.getpid(),
+        )
+        self.addCleanup(win32api.CloseHandle, handle)
+        return handle
 
 
 def powershell(cmd):
@@ -108,9 +119,7 @@ class TestCpuAPIs(WindowsTestCase):
     def test_cpu_count_vs_GetSystemInfo(self):
         # Will likely fail on many-cores systems:
         # https://stackoverflow.com/questions/31209256
-        sys_value = win32api.GetSystemInfo()[5]
-        psutil_value = psutil.cpu_count()
-        assert sys_value == psutil_value
+        assert psutil.cpu_count() == win32api.GetSystemInfo()[5]
 
     def test_cpu_count_logical_vs_wmi(self):
         w = wmi.WMI()
@@ -235,26 +244,24 @@ class TestSystemAPIs(WindowsTestCase):
         for disk in psutil.disk_partitions():
             if 'cdrom' in disk.opts:
                 continue
-            sys_value = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
-            psutil_value = psutil.disk_usage(disk.mountpoint)
-            assert abs(sys_value[0] - psutil_value.free) < TOLERANCE_DISK_USAGE
-            assert (
-                abs(sys_value[1] - psutil_value.total) < TOLERANCE_DISK_USAGE
-            )
-            assert psutil_value.used == psutil_value.total - psutil_value.free
+            win = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
+            ps = psutil.disk_usage(disk.mountpoint)
+            assert abs(win[0] - ps.free) < TOLERANCE_DISK_USAGE
+            assert abs(win[1] - ps.total) < TOLERANCE_DISK_USAGE
+            assert ps.used == ps.total - ps.free
 
     def test_disk_partitions(self):
-        sys_value = [
+        win = [
             x + '\\'
             for x in win32api.GetLogicalDriveStrings().split("\\\x00")
             if x and not x.startswith('A:')
         ]
-        psutil_value = [
+        ps = [
             x.mountpoint
             for x in psutil.disk_partitions(all=True)
             if not x.mountpoint.startswith('A:')
         ]
-        assert sys_value == psutil_value
+        assert win == ps
 
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
@@ -431,12 +438,9 @@ class TestProcess(WindowsTestCase):
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-        )
+        self.OpenProcess()
         after = p.num_handles()
         assert after == before + 1
-        win32api.CloseHandle(handle)
         assert p.num_handles() == before
 
     def test_ctrl_signals(self):
@@ -460,107 +464,72 @@ class TestProcess(WindowsTestCase):
         assert psutil.Process().username() == name
 
     def test_cmdline(self):
-        sys_value = re.sub(r"[ ]+", " ", win32api.GetCommandLine()).strip()
-        psutil_value = ' '.join(psutil.Process().cmdline())
+        win = re.sub(r"[ ]+", " ", win32api.GetCommandLine()).strip()
+        ps = " ".join(psutil.Process().cmdline())
         # The PyWin32 command line may retain quotes around argv[0] if they
         # were used unnecessarily, while psutil will omit them. So remove
-        # the first 2 quotes from sys_value if not in psutil_value.
+        # the first 2 quotes from win if not in ps.
         # A path to an executable will not contain quotes, so this is safe.
-        sys_value = sys_value.replace('"', "")
-        psutil_value = psutil_value.replace('"', "")
-        assert sys_value == psutil_value
+        win = win.replace('"', "")
+        ps = ps.replace('"', "")
+        assert win == ps
 
     # XXX - occasional failures
 
     # def test_cpu_times(self):
-    #     handle = win32api.OpenProcess(
-    #         win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-    #     )
-    #     self.addCleanup(win32api.CloseHandle, handle)
     #     a = psutil.Process().cpu_times()
-    #     b = win32process.GetProcessTimes(handle)
+    #     b = win32process.GetProcessTimes(self.OpenProcess())
     #     assert abs(a.user - b['UserTime'] / 10000000.0) < 0.2
     #     assert abs(a.user - b['KernelTime'] / 10000000.0) < 0.2
 
     def test_nice(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
-        sys_value = win32process.GetPriorityClass(handle)
-        psutil_value = psutil.Process().nice()
-        assert psutil_value == sys_value
+        win = win32process.GetPriorityClass(self.OpenProcess())
+        ps = psutil.Process().nice()
+        assert ps == win
 
     def test_memory_info(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, self.pid
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
-        sys_value = win32process.GetProcessMemoryInfo(handle)
-        psutil_value = psutil.Process(self.pid).memory_info()
-        assert sys_value['PeakWorkingSetSize'] == psutil_value.peak_wset
-        assert sys_value['WorkingSetSize'] == psutil_value.wset
-        assert (
-            sys_value['QuotaPeakPagedPoolUsage']
-            == psutil_value.peak_paged_pool
-        )
-        assert sys_value['QuotaPagedPoolUsage'] == psutil_value.paged_pool
-        assert (
-            sys_value['QuotaPeakNonPagedPoolUsage']
-            == psutil_value.peak_nonpaged_pool
-        )
-        assert (
-            sys_value['QuotaNonPagedPoolUsage'] == psutil_value.nonpaged_pool
-        )
-        assert sys_value['PagefileUsage'] == psutil_value.pagefile
-        assert sys_value['PeakPagefileUsage'] == psutil_value.peak_pagefile
+        win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
+        ps = psutil.Process(self.pid).memory_info()
+        assert ps.peak_wset == win['PeakWorkingSetSize']
+        assert ps.wset == win['WorkingSetSize']
+        assert ps.peak_paged_pool == win['QuotaPeakPagedPoolUsage']
+        assert ps.paged_pool == win['QuotaPagedPoolUsage']
+        assert ps.peak_nonpaged_pool == win['QuotaPeakNonPagedPoolUsage']
+        assert ps.nonpaged_pool == win['QuotaNonPagedPoolUsage']
+        assert ps.pagefile == win['PagefileUsage']
+        assert ps.peak_pagefile == win['PeakPagefileUsage']
 
-        assert psutil_value.rss == psutil_value.wset
-        assert psutil_value.vms == psutil_value.pagefile
+        assert ps.rss == ps.wset
+        assert ps.vms == ps.pagefile
 
     def test_wait(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, self.pid
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
         p = psutil.Process(self.pid)
         p.terminate()
-        psutil_value = p.wait()
-        sys_value = win32process.GetExitCodeProcess(handle)
-        assert psutil_value == sys_value
+        ps = p.wait()
+        win = win32process.GetExitCodeProcess(self.OpenProcess(self.pid))
+        assert ps == win
 
     def test_cpu_affinity(self):
         def from_bitmask(x):
             return [i for i in range(64) if (1 << i) & x]
 
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, self.pid
+        win = from_bitmask(
+            win32process.GetProcessAffinityMask(self.OpenProcess(self.pid))[0]
         )
-        self.addCleanup(win32api.CloseHandle, handle)
-        sys_value = from_bitmask(
-            win32process.GetProcessAffinityMask(handle)[0]
-        )
-        psutil_value = psutil.Process(self.pid).cpu_affinity()
-        assert psutil_value == sys_value
+        ps = psutil.Process(self.pid).cpu_affinity()
+        assert ps == win
 
     def test_io_counters(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
-        sys_value = win32process.GetProcessIoCounters(handle)
-        psutil_value = psutil.Process().io_counters()
-        assert psutil_value.read_count == sys_value['ReadOperationCount']
-        assert psutil_value.write_count == sys_value['WriteOperationCount']
-        assert psutil_value.read_bytes == sys_value['ReadTransferCount']
-        assert psutil_value.write_bytes == sys_value['WriteTransferCount']
-        assert psutil_value.other_count == sys_value['OtherOperationCount']
-        assert psutil_value.other_bytes == sys_value['OtherTransferCount']
+        win = win32process.GetProcessIoCounters(self.OpenProcess())
+        ps = psutil.Process().io_counters()
+        assert ps.read_count == win['ReadOperationCount']
+        assert ps.write_count == win['WriteOperationCount']
+        assert ps.read_bytes == win['ReadTransferCount']
+        assert ps.write_bytes == win['WriteTransferCount']
+        assert ps.other_count == win['OtherOperationCount']
+        assert ps.other_bytes == win['OtherTransferCount']
 
     def test_num_handles(self):
-        import ctypes
-        import ctypes.wintypes
-
         PROCESS_QUERY_INFORMATION = 0x400
         handle = ctypes.windll.kernel32.OpenProcess(
             PROCESS_QUERY_INFORMATION, 0, self.pid
@@ -571,9 +540,9 @@ class TestProcess(WindowsTestCase):
         ctypes.windll.kernel32.GetProcessHandleCount(
             handle, ctypes.byref(hndcnt)
         )
-        sys_value = hndcnt.value
-        psutil_value = psutil.Process(self.pid).num_handles()
-        assert psutil_value == sys_value
+        win = hndcnt.value
+        ps = psutil.Process(self.pid).num_handles()
+        assert ps == win
 
     def test_error_partial_copy(self):
         # https://github.com/giampaolo/psutil/issues/875
