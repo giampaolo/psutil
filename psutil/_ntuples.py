@@ -332,8 +332,8 @@ elif MACOS:
         pmem._fields
         + (
             "peak_rss",
-            "internal",
-            "external",
+            "rss_anon",
+            "rss_file",
             "compressed",
             "phys_footprint",
         ),

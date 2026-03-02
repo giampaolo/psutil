@@ -269,14 +269,6 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
 /*
  * Return extended memory info via task_info(TASK_VM_INFO).
- * Returns (peak_rss, internal, external, compressed, phys_footprint).
- * - peak_rss: high-water mark of resident memory (resident_size_peak)
- * - internal: anonymous memory (heap, stack) - like Linux RssAnon
- * - external: file-backed resident memory - like Linux RssFile
- * - compressed: pages compressed by the macOS memory compressor,
- *   conceptually analogous to Linux VmSwap
- * - phys_footprint: actual physical memory footprint including
- *   compressed pages; this is what Xcode's memory gauge shows
  */
 PyObject *
 psutil_proc_memory_info2(PyObject *self, PyObject *args) {
@@ -298,11 +290,11 @@ psutil_proc_memory_info2(PyObject *self, PyObject *args) {
     }
     return Py_BuildValue(
         "KKKKK",
-        (unsigned long long)info.resident_size_peak,
-        (unsigned long long)info.internal,
-        (unsigned long long)info.external,
-        (unsigned long long)info.compressed,
-        (unsigned long long)info.phys_footprint
+        (unsigned long long)info.resident_size_peak,  // peak_rss, Linux VmPeak
+        (unsigned long long)info.internal,  // rss_anon, Linux RssAnon
+        (unsigned long long)info.external,  // rss_file, Linux RssFile
+        (unsigned long long)info.compressed,  // osx-specific
+        (unsigned long long)info.phys_footprint  // osx-specific
     );
 }
 
