@@ -1653,19 +1653,19 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | vms     | vms     | vms      | vms     | vms | vms (maps to ``PagefileUsage``)                             |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
+    | shared  |         | text     |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | text    |         | data     |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
+    | text    |         | data     |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | lib     |         | stack    |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
+    | lib     |         | stack    |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         | peak_rss |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
+    | data    |         | peak_rss |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | dirty   |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
+    | dirty   |         |          |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
+    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
+    |         |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | private (maps to ``PrivateUsage``)                          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
