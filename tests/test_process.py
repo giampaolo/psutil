@@ -469,8 +469,9 @@ class TestProcess(PsutilTestCase):
 
         if WINDOWS:
             mem = p.memory_info()
-            assert mem.rss == mem.wset
             assert mem.vms == mem.pagefile
+            with pytest.warns(DeprecationWarning, match="wset is deprecated"):
+                assert mem.wset == mem.rss
 
         mem = p.memory_info()
         for name in mem._fields:

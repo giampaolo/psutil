@@ -795,7 +795,6 @@ class Process:
             vms=d["PagefileUsage"],
             num_page_faults=d["PageFaultCount"],
             peak_wset=d["PeakWorkingSetSize"],
-            wset=d["WorkingSetSize"],
             peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
             paged_pool=d["QuotaPagedPoolUsage"],
             peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],

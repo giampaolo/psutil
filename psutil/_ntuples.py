@@ -257,14 +257,13 @@ elif WINDOWS:
     svmem = nt("svmem", ("total", "available", "percent", "used", "free"))
 
     # psutil.Process.memory_info()
-    pmem = nt(
+    _pmem_nt = nt(
         "pmem",
         (
             "rss",
             "vms",
             "num_page_faults",
             "peak_wset",
-            "wset",
             "peak_paged_pool",
             "paged_pool",
             "peak_nonpaged_pool",
@@ -275,11 +274,42 @@ elif WINDOWS:
         ),
     )
 
+    class pmem(_pmem_nt):
+        __slots__ = ()
+
+        @property
+        def wset(self):
+            import warnings
+
+            warnings.warn(
+                "wset is deprecated, use rss instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return self.rss
+
     # psutil.Process.memory_info2()
-    pmem2 = nt(
+    _pmem2_nt = nt(
         "pmem2",
         pmem._fields + ("virtual", "peak_virtual"),
     )
+
+    class pmem2(pmem, _pmem2_nt):
+        __slots__ = ()
+        _fields = _pmem2_nt._fields
+        __repr__ = _pmem2_nt.__repr__
+
+        def __new__(cls, *args, **kwargs):
+            return _pmem2_nt.__new__(cls, *args, **kwargs)
+
+        @classmethod
+        def _make(cls, iterable):
+            result = tuple.__new__(cls, iterable)
+            n = len(cls._fields)
+            if len(result) != n:
+                msg = f"Expected {n} arguments, got {len(result)}"
+                raise TypeError(msg)
+            return result
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))

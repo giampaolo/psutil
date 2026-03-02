@@ -1649,7 +1649,7 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | Linux   | macOS   | BSD      | Solaris | AIX | Windows                                                     |
     +=========+=========+==========+=========+=====+=============================================================+
-    | rss     | rss     | rss      | rss     | rss | rss (alias for ``wset``, maps to ``WorkingSetSize``)        |
+    | rss     | rss     | rss      | rss     | rss | rss (maps to ``WorkingSetSize``)                            |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | vms     | vms     | vms      | vms     | vms | vms (alias for ``pagefile``, maps to ``PagefileUsage``)     |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1657,13 +1657,11 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | text    |         | data     |         |     | peak_wset (maps to ``PeakWorkingSetSize``)                  |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | lib     |         | stack    |         |     | wset (maps to ``WorkingSetSize``)                           |
+    | lib     |         | stack    |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         | peak_rss |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
+    | data    |         | peak_rss |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | dirty   |         |          |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
+    | dirty   |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1675,8 +1673,7 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
-      a process has used. On UNIX it matches ``top`` RES column. On Windows
-      this is an alias for `wset` field.
+      a process has used. On UNIX it matches ``top`` RES column.
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
@@ -1702,6 +1699,9 @@ Process class
 
     - **peak_rss** *(BSD)*: peak resident set size ("high water mark").
 
+    - **wset** *(Windows, deprecated)*: deprecated alias for ``rss``.
+      Use ``rss`` instead.
+
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
     structure doc. Example on Linux:
 
@@ -1719,6 +1719,9 @@ Process class
 
     .. versionchanged::
       7.3.0 BSD: adds *peak_rss*
+
+    .. versionchanged::
+      7.3.0 Windows: *wset* is deprecated; use *rss* instead.
 
   .. method:: memory_info2()
 
