@@ -11,6 +11,7 @@ from ._common import LINUX
 from ._common import MACOS
 from ._common import SUNOS
 from ._common import WINDOWS
+from ._common import deprecated_property
 
 # ===================================================================
 # --- system functions
@@ -277,16 +278,7 @@ elif WINDOWS:
     class pmem(_pmem_nt):
         __slots__ = ()
 
-        @property
-        def wset(self):
-            import warnings
-
-            warnings.warn(
-                "wset is deprecated, use rss instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return self.rss
+        wset = deprecated_property(replacement="rss")
 
     # psutil.Process.memory_info2()
     _pmem2_nt = nt(

@@ -564,6 +564,31 @@ def deprecated_method(replacement):
     return outer
 
 
+class deprecated_property:
+    """A descriptor which can be used to mark a property as deprecated.
+    'replacement' is the attribute name to use instead. Usage::
+
+        class Foo:
+            bar = deprecated_property("baz")
+    """
+
+    def __init__(self, replacement):
+        self.replacement = replacement
+        self._msg = None
+
+    def __set_name__(self, owner, name):
+        self._msg = (
+            f"{name} is deprecated and will be removed; use"
+            f" {self.replacement} instead"
+        )
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        warnings.warn(self._msg, category=DeprecationWarning, stacklevel=2)
+        return getattr(obj, self.replacement)
+
+
 class _WrapNumbers:
     """Watches numbers so that they don't overflow and wrap
     (reset to zero).
