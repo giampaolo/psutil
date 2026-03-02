@@ -792,7 +792,7 @@ class Process:
         except OSError as err:
             if is_permission_err(err):
                 # TODO: the C ext can probably be refactored in order
-                # to get this from cext.proc_info()
+                # to get this from cext.proc_oneshot()
                 debug("attempting memory_info() fallback (slower)")
                 info = self._proc_oneshot()
                 return {
