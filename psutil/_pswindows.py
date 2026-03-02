@@ -934,8 +934,8 @@ class Process:
                 raise
             debug("attempting cpu_times() fallback (slower)")
             info = self._oneshot()
-            user = info['user_time']
-            system = info['kernel_time']
+            user = info["user_time"]
+            system = info["kernel_time"]
         # Children user/system times are not retrievable (set to 0).
         return ntp.pcputimes(user, system, 0.0, 0.0)
 
