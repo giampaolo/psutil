@@ -723,7 +723,7 @@ class Process:
         """Return multiple information about this process as a
         raw tuple.
         """
-        ret = cext.proc_info(self.pid)
+        ret = cext.proc_oneshot(self.pid)
         assert len(ret) == len(pinfo_map)
         return ret
 
@@ -792,7 +792,7 @@ class Process:
         except OSError as err:
             if is_permission_err(err):
                 # TODO: the C ext can probably be refactored in order
-                # to get this from cext.proc_info()
+                # to get this from cext.proc_oneshot()
                 debug("attempting memory_info() fallback (slower)")
                 info = self._oneshot()
                 return (
