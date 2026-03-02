@@ -1659,7 +1659,7 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | lib     |         | stack    |         |     | wset (maps to ``WorkingSetSize``)                           |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
+    | data    |         | peak_rss |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | dirty   |         |          |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1681,7 +1681,7 @@ Process class
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
       Windows this is an alias for `pagefile` field, which is not the true
-      virtual address space size. For that, use ``virtual`` from
+      virtual address space size (VMS). For that, use ``virtual`` from
       :meth:`memory_info2`.
 
     - **shared**: *(Linux)*
