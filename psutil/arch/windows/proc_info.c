@@ -778,7 +778,7 @@ error:
  * Get various process information by using NtQuerySystemInformation.
  * We use this as a fallback when faster functions fail with access
  * denied. This is slower because it iterates over all processes.
- * Returned tuple includes the following process info:
+ * Returned dict includes the following process info:
  *
  * - num_threads()
  * - ctx_switches()
@@ -792,21 +792,24 @@ PyObject *
 psutil_proc_oneshot(PyObject *self, PyObject *args) {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
+    PVOID buffer = NULL;
     ULONG i;
     ULONG ctx_switches = 0;
     double user_time;
     double kernel_time;
     double create_time;
-    PyObject *py_retlist;
+    PyObject *dict = PyDict_New();
 
+    if (!dict)
+        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
+        goto error;
     if (psutil_get_proc_info(pid, &process, &buffer) != 0)
-        return NULL;
+        goto error;
 
     for (i = 0; i < process->NumberOfThreads; i++)
         ctx_switches += process->Threads[i].ContextSwitches;
+
     user_time = (double)process->UserTime.HighPart * HI_T
                 + (double)process->UserTime.LowPart * LO_T;
     kernel_time = (double)process->KernelTime.HighPart * HI_T
@@ -823,35 +826,39 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
         create_time = psutil_LargeIntegerToUnixTime(process->CreateTime);
     }
 
-    py_retlist = Py_BuildValue(
-        "kkdddkKKKKKKKKKKKKKKKK",
-        process->HandleCount,  // num handles
-        ctx_switches,  // num ctx switches
-        user_time,  // cpu user time
-        kernel_time,  // cpu kernel time
-        create_time,  // create time
-        process->NumberOfThreads,  // num threads
-        // IO counters
-        process->ReadOperationCount.QuadPart,  // io rcount
-        process->WriteOperationCount.QuadPart,  // io wcount
-        process->ReadTransferCount.QuadPart,  // io rbytes
-        process->WriteTransferCount.QuadPart,  // io wbytes
-        process->OtherOperationCount.QuadPart,  // io others count
-        process->OtherTransferCount.QuadPart,  // io others bytes
-        (unsigned long long)process->PageFaultCount,  // num page faults
-        (unsigned long long)process->PeakWorkingSetSize,  // peak wset
-        (unsigned long long)process->WorkingSetSize,  // wset
-        (unsigned long long
-        )process->QuotaPeakPagedPoolUsage,  // peak paged pool
-        (unsigned long long)process->QuotaPagedPoolUsage,  // paged pool
-        (unsigned long long
-        )process->QuotaPeakNonPagedPoolUsage,  // peak non paged pool
-        (unsigned long long)process->QuotaNonPagedPoolUsage,  // non paged pool
-        (unsigned long long)process->PagefileUsage,  // pagefile
-        (unsigned long long)process->PeakPagefileUsage,  // peak pagefile
-        (unsigned long long)process->PrivatePageCount  // private
-    );
+    // clang-format off
+    if (!psutil_dict_add(dict, "num_handles", "k", process->HandleCount)) goto error;
+    if (!psutil_dict_add(dict, "ctx_switches", "k", ctx_switches)) goto error;
+    if (!psutil_dict_add(dict, "user_time", "d", user_time)) goto error;
+    if (!psutil_dict_add(dict, "kernel_time", "d", kernel_time)) goto error;
+    if (!psutil_dict_add(dict, "create_time", "d", create_time)) goto error;
+    if (!psutil_dict_add(dict, "num_threads", "k", process->NumberOfThreads)) goto error;
+    // I/O
+    if (!psutil_dict_add(dict, "io_rcount", "K", process->ReadOperationCount.QuadPart)) goto error;
+    if (!psutil_dict_add(dict, "io_wcount", "K", process->WriteOperationCount.QuadPart)) goto error;
+    if (!psutil_dict_add(dict, "io_rbytes", "K", process->ReadTransferCount.QuadPart)) goto error;
+    if (!psutil_dict_add(dict, "io_wbytes", "K", process->WriteTransferCount.QuadPart)) goto error;
+    if (!psutil_dict_add(dict, "io_count_others", "K", process->OtherOperationCount.QuadPart)) goto error;
+    if (!psutil_dict_add(dict, "io_bytes_others", "K", process->OtherTransferCount.QuadPart)) goto error;
+    // process memory
+    if (!psutil_dict_add(dict, "PageFaultCount", "K", (unsigned long long)process->PageFaultCount)) goto error;
+    if (!psutil_dict_add(dict, "PeakWorkingSetSize", "K", (unsigned long long)process->PeakWorkingSetSize)) goto error;
+    if (!psutil_dict_add(dict, "WorkingSetSize", "K", (unsigned long long)process->WorkingSetSize)) goto error;
+    if (!psutil_dict_add(dict, "QuotaPeakPagedPoolUsage", "K", (unsigned long long)process->QuotaPeakPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "QuotaPagedPoolUsage", "K", (unsigned long long)process->QuotaPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (unsigned long long)process->QuotaPeakNonPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "QuotaNonPagedPoolUsage", "K", (unsigned long long)process->QuotaNonPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "PagefileUsage", "K", (unsigned long long)process->PagefileUsage)) goto error;
+    if (!psutil_dict_add(dict, "PeakPagefileUsage", "K", (unsigned long long)process->PeakPagefileUsage)) goto error;
+    if (!psutil_dict_add(dict, "PrivatePageCount", "K", (unsigned long long)process->PrivatePageCount)) goto error;
+    // clang-format on
 
     free(buffer);
-    return py_retlist;
+    return dict;
+
+error:
+    if (buffer != NULL)
+        free(buffer);
+    Py_DECREF(dict);
+    return NULL;
 }
