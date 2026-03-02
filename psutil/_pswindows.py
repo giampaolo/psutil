@@ -794,7 +794,7 @@ class Process:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_oneshot()
                 debug("attempting memory_info() fallback (slower)")
-                info = self._proc_oneshot()
+                info = self._oneshot()
                 return {
                     'PageFaultCount': info[pinfo_map['num_page_faults']],
                     'PeakWorkingSetSize': info[pinfo_map['peak_wset']],
