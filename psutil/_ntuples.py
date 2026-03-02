@@ -327,7 +327,17 @@ elif MACOS:
     pmem = nt("pmem", ("rss", "vms"))
 
     # psutil.Process.memory_info2()
-    pmem2 = nt("pmem2", pmem._fields + ("peak_rss",))
+    pmem2 = nt(
+        "pmem2",
+        pmem._fields
+        + (
+            "peak_rss",
+            "internal",
+            "external",
+            "compressed",
+            "phys_footprint",
+        ),
+    )
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))

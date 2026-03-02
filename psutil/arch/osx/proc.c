@@ -268,31 +268,42 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
 
 /*
- * Return peak RSS (high-water mark) of the process via
- * task_info(MACH_TASK_BASIC_INFO). mach_task_basic_info.resident_size_max
- * is the maximum resident memory size over the process lifetime.
+ * Return extended memory info via task_info(TASK_VM_INFO).
+ * Returns (peak_rss, internal, external, compressed, phys_footprint).
+ * - peak_rss: high-water mark of resident memory (resident_size_peak)
+ * - internal: anonymous memory (heap, stack) - like Linux RssAnon
+ * - external: file-backed resident memory - like Linux RssFile
+ * - compressed: pages compressed by the macOS memory compressor,
+ *   conceptually analogous to Linux VmSwap
+ * - phys_footprint: actual physical memory footprint including
+ *   compressed pages; this is what Xcode's memory gauge shows
  */
 PyObject *
-psutil_proc_memory_peak_rss(PyObject *self, PyObject *args) {
+psutil_proc_memory_info2(PyObject *self, PyObject *args) {
     pid_t pid;
     mach_port_t task = MACH_PORT_NULL;
     kern_return_t kr;
-    struct mach_task_basic_info info;
-    mach_msg_type_number_t info_count = MACH_TASK_BASIC_INFO_COUNT;
+    task_vm_info_data_t info;
+    mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_task_for_pid(pid, &task) != 0)
         return NULL;
-    kr = task_info(
-        task, MACH_TASK_BASIC_INFO, (task_info_t)&info, &info_count
-    );
+    kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
     mach_port_deallocate(mach_task_self(), task);
     if (kr != KERN_SUCCESS) {
-        psutil_runtime_error("task_info(MACH_TASK_BASIC_INFO) syscall failed");
+        psutil_runtime_error("task_info(TASK_VM_INFO) syscall failed");
         return NULL;
     }
-    return PyLong_FromUnsignedLongLong(info.resident_size_max);
+    return Py_BuildValue(
+        "KKKKK",
+        (unsigned long long)info.resident_size_peak,
+        (unsigned long long)info.internal,
+        (unsigned long long)info.external,
+        (unsigned long long)info.compressed,
+        (unsigned long long)info.phys_footprint
+    );
 }
 
 

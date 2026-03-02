@@ -1153,6 +1153,11 @@ class Process:
         macOS:
 
         - peak_rss: peak resident set size ("high water mark")
+        - internal: anonymous resident memory (heap, stack, etc.)
+        - external: file-backed resident memory
+        - compressed: memory compressed by the OS memory compressor
+        - phys_footprint: total physical memory footprint (includes
+          compressed pages); this is what Xcode's memory gauge shows
 
         All numbers are expressed in bytes.
         """
