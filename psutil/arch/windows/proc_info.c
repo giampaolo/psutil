@@ -824,13 +824,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     }
 
     py_retlist = Py_BuildValue(
-#if defined(_WIN64)
-        "kkdddkKKKKKK"
-        "kKKKKKKKKK",
-#else
-        "kkdddkKKKKKK"
-        "kIIIIIIIII",
-#endif
+        "kkdddkKKKKKKKKKKKKKKKK",
         process->HandleCount,  // num handles
         ctx_switches,  // num ctx switches
         user_time,  // cpu user time
@@ -844,17 +838,18 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         process->WriteTransferCount.QuadPart,  // io wbytes
         process->OtherOperationCount.QuadPart,  // io others count
         process->OtherTransferCount.QuadPart,  // io others bytes
-        // memory
-        process->PageFaultCount,  // num page faults
-        process->PeakWorkingSetSize,  // peak wset
-        process->WorkingSetSize,  // wset
-        process->QuotaPeakPagedPoolUsage,  // peak paged pool
-        process->QuotaPagedPoolUsage,  // paged pool
-        process->QuotaPeakNonPagedPoolUsage,  // peak non paged pool
-        process->QuotaNonPagedPoolUsage,  // non paged pool
-        process->PagefileUsage,  // pagefile
-        process->PeakPagefileUsage,  // peak pagefile
-        process->PrivatePageCount  // private
+        (unsigned long long)process->PageFaultCount,  // num page faults
+        (unsigned long long)process->PeakWorkingSetSize,  // peak wset
+        (unsigned long long)process->WorkingSetSize,  // wset
+        (unsigned long long
+        )process->QuotaPeakPagedPoolUsage,  // peak paged pool
+        (unsigned long long)process->QuotaPagedPoolUsage,  // paged pool
+        (unsigned long long
+        )process->QuotaPeakNonPagedPoolUsage,  // peak non paged pool
+        (unsigned long long)process->QuotaNonPagedPoolUsage,  // non paged pool
+        (unsigned long long)process->PagefileUsage,  // pagefile
+        (unsigned long long)process->PeakPagefileUsage,  // peak pagefile
+        (unsigned long long)process->PrivatePageCount  // private
     );
 
     free(buffer);
