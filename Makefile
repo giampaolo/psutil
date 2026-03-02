@@ -91,7 +91,8 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Tests
 # ===================================================================
 
-RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest
+# disable cache on Windows because it causes "Permission denied" errors
+RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(if $(filter $(OS),Windows_NT),-p no:cacheprovider,)
 
 test:  ## Run all tests (except memleak tests).
 	# To run a specific test do `make test ARGS=tests/test_process.py::TestProcess::test_cmdline`

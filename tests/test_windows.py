@@ -438,9 +438,10 @@ class TestProcess(WindowsTestCase):
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
-        self.OpenProcess()
+        handle = self.OpenProcess()
         after = p.num_handles()
         assert after == before + 1
+        win32api.CloseHandle(handle)
         assert p.num_handles() == before
 
     def test_ctrl_signals(self):
