@@ -110,7 +110,6 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
 
         // clang-format off
 
-        // --- FreeBSD
 #ifdef PSUTIL_FREEBSD
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.ki_ppid)) goto error;
     if (!pydict_add(dict, "status", "i", (int)kp.ki_stat)) goto error;
@@ -132,9 +131,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "ch_sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime))) goto error;
     if (!pydict_add(dict, "min_faults", "l", (long)kp.ki_rusage.ru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.ki_rusage.ru_majflt)) goto error;
-
-    // --- OpenBSD / NetBSD
-#if defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
+#else
+    // OpenBSD / NetBSD
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.p_ppid)) goto error;
     if (!pydict_add(dict, "status", "i", (int)kp.p_stat)) goto error;
     if (!pydict_add(dict, "real_uid", "l", (long)kp.p_ruid)) goto error;
@@ -158,8 +156,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "min_faults", "l", (long)kp.p_uru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.p_uru_majflt)) goto error;
 #endif
-
-    // --- All BSD
+    // all BSDs
     if (!pydict_add(dict, "rss", "l", rss)) goto error;
     if (!pydict_add(dict, "vms", "l", vms)) goto error;
     if (!pydict_add(dict, "memtext", "l", memtext)) goto error;
