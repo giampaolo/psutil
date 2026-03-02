@@ -769,18 +769,18 @@ class Process:
                 debug("attempting memory_info() fallback (slower)")
                 info = self._oneshot()
                 return {
-                    'PageFaultCount': info['PageFaultCount'],
-                    'PeakWorkingSetSize': info['PeakWorkingSetSize'],
-                    'WorkingSetSize': info['WorkingSetSize'],
-                    'QuotaPeakPagedPoolUsage': info['QuotaPeakPagedPoolUsage'],
-                    'QuotaPagedPoolUsage': info['QuotaPagedPoolUsage'],
+                    "PageFaultCount": info["PageFaultCount"],
+                    "PeakWorkingSetSize": info["PeakWorkingSetSize"],
+                    "WorkingSetSize": info["WorkingSetSize"],
+                    "QuotaPeakPagedPoolUsage": info["QuotaPeakPagedPoolUsage"],
+                    "QuotaPagedPoolUsage": info["QuotaPagedPoolUsage"],
                     'QuotaPeakNonPagedPoolUsage': info[
                         'QuotaPeakNonPagedPoolUsage'
                     ],
-                    'QuotaNonPagedPoolUsage': info['QuotaNonPagedPoolUsage'],
-                    'PagefileUsage': info['PagefileUsage'],
-                    'PeakPagefileUsage': info['PeakPagefileUsage'],
-                    'PrivateUsage': info['PrivatePageCount'],
+                    "QuotaNonPagedPoolUsage": info["QuotaNonPagedPoolUsage"],
+                    "PagefileUsage": info["PagefileUsage"],
+                    "PeakPagefileUsage": info["PeakPagefileUsage"],
+                    "PrivateUsage": info["PrivatePageCount"],
                 }
             raise
 
@@ -791,18 +791,18 @@ class Process:
         # struct.
         d = self._get_raw_meminfo()
         return ntp.pmem(
-            rss=d['WorkingSetSize'],
-            vms=d['PagefileUsage'],
-            num_page_faults=d['PageFaultCount'],
-            peak_wset=d['PeakWorkingSetSize'],
-            wset=d['WorkingSetSize'],
-            peak_paged_pool=d['QuotaPeakPagedPoolUsage'],
-            paged_pool=d['QuotaPagedPoolUsage'],
-            peak_nonpaged_pool=d['QuotaPeakNonPagedPoolUsage'],
-            nonpaged_pool=d['QuotaNonPagedPoolUsage'],
-            pagefile=d['PagefileUsage'],
-            peak_pagefile=d['PeakPagefileUsage'],
-            private=d['PrivateUsage'],
+            rss=d["WorkingSetSize"],
+            vms=d["PagefileUsage"],
+            num_page_faults=d["PageFaultCount"],
+            peak_wset=d["PeakWorkingSetSize"],
+            wset=d["WorkingSetSize"],
+            peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
+            paged_pool=d["QuotaPagedPoolUsage"],
+            peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
+            nonpaged_pool=d["QuotaNonPagedPoolUsage"],
+            pagefile=d["PagefileUsage"],
+            peak_pagefile=d["PeakPagefileUsage"],
+            private=d["PrivateUsage"],
         )
 
     @wrap_exceptions
@@ -909,12 +909,12 @@ class Process:
                 if fast_only:
                     raise
                 debug("attempting create_time() fallback (slower)")
-                return self._oneshot()['create_time']
+                return self._oneshot()["create_time"]
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return self._oneshot()['num_threads']
+        return self._oneshot()["num_threads"]
 
     @wrap_exceptions
     def threads(self):
@@ -1019,12 +1019,12 @@ class Process:
             debug("attempting io_counters() fallback (slower)")
             info = self._oneshot()
             ret = (
-                info['io_rcount'],
-                info['io_wcount'],
-                info['io_rbytes'],
-                info['io_wbytes'],
-                info['io_count_others'],
-                info['io_bytes_others'],
+                info["io_rcount"],
+                info["io_wcount"],
+                info["io_rbytes"],
+                info["io_wbytes"],
+                info["io_count_others"],
+                info["io_bytes_others"],
             )
         return ntp.pio(*ret)
 
@@ -1077,11 +1077,11 @@ class Process:
         except OSError as err:
             if is_permission_err(err):
                 debug("attempting num_handles() fallback (slower)")
-                return self._oneshot()['num_handles']
+                return self._oneshot()["num_handles"]
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = self._oneshot()['ctx_switches']
+        ctx_switches = self._oneshot()["ctx_switches"]
         # only voluntary ctx switches are supported
         return ntp.pctxsw(ctx_switches, 0)
