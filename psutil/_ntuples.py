@@ -263,13 +263,13 @@ elif WINDOWS:
         (
             "rss",
             "vms",
+            "num_page_faults",
+            "paged_pool",
+            "nonpaged_pool",
             "peak_rss",
             "peak_vms",
-            "num_page_faults",
             "peak_paged_pool",
-            "paged_pool",
             "peak_nonpaged_pool",
-            "nonpaged_pool",
         ),
     )
 

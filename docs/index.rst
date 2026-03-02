@@ -1653,19 +1653,19 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | vms     | vms     | vms      | vms     | vms | vms (maps to ``PagefileUsage``)                             |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | shared  |         | text     |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
+    | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | text    |         | data     |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
+    | text    |         | data     |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | lib     |         | stack    |         |     | num_page_faults (maps to ``PageFaultCount``)                |
+    | lib     |         | stack    |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         | peak_rss |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
+    | data    |         | peak_rss |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | dirty   |         |          |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
+    | dirty   |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
+    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
+    |         |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
