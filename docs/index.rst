@@ -1674,17 +1674,14 @@ Process class
     |         |         |          |         |     | private                      |
     +---------+---------+----------+---------+-----+------------------------------+
 
-    - **rss**: aka "Resident Set Size", this is the non-swapped physical
-      memory a process has used.
-      On UNIX it matches "top"'s RES column).
-      On Windows this is an alias for `wset` field and it matches "Mem Usage"
-      column of taskmgr.exe.
+    - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
+      a process has used. On UNIX it matches ``top`` RES column. On Windows
+      this is an alias for `wset` field and maps to ``WorkingSetSize``.
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
-      memory used by the process.
-      On UNIX it matches "top"'s VIRT column.
-      On Windows this is an alias for `pagefile` field and it matches
-      "Mem Usage" "VM Size" column of taskmgr.exe.
+      memory used by the process. On UNIX it matches ``top`` VIRT column. On
+      Windows this is an alias for `pagefile` field and maps to
+      ``PagefileUsage``.
 
     - **shared**: *(Linux)*
       memory that could be potentially shared with other processes.
@@ -3323,7 +3320,7 @@ Timeline
 .. _`os.setpriority`: https://docs.python.org/3/library/os.html#os.setpriority
 .. _`os.times`: https://docs.python.org//library/os.html#os.times
 .. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
-.. _`PROCESS_MEMORY_COUNTERS_EX`: https://docs.microsoft.com/en-us/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
+.. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
 .. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
 .. _`psleak`: https://github.com/giampaolo/psleak
