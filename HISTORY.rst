@@ -15,6 +15,7 @@
 - 2411_ [macOS]: `Process.cpu_times()`_ and `Process.cpu_percent()`_
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+- 2732_, [Linux]: net_if_duplex_speed: handle EBUSY from ioctl(SIOCETHTOOL).
 
 **Compatibility notes**
 
