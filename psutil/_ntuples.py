@@ -269,8 +269,7 @@ elif WINDOWS:
             "paged_pool",
             "peak_nonpaged_pool",
             "nonpaged_pool",
-            "pagefile",
-            "peak_pagefile",
+            "peak_vms",
             "private",
         ),
     )
@@ -279,6 +278,8 @@ elif WINDOWS:
         __slots__ = ()
 
         wset = deprecated_property(replacement="rss")
+        pagefile = deprecated_property(replacement="vms")
+        peak_pagefile = deprecated_property(replacement="peak_vms")
 
     # psutil.Process.memory_info2()
     _pmem2 = nt(

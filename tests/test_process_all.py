@@ -311,7 +311,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert ret.peak_wset >= ret.rss
             assert ret.peak_paged_pool >= ret.paged_pool
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool
-            assert ret.peak_pagefile >= ret.pagefile
+            assert ret.peak_vms >= ret.vms
 
     def memory_info2(self, ret, info):
         assert is_namedtuple(ret)

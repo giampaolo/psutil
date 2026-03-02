@@ -497,12 +497,17 @@ class TestProcess(WindowsTestCase):
         assert ps.paged_pool == win['QuotaPagedPoolUsage']
         assert ps.peak_nonpaged_pool == win['QuotaPeakNonPagedPoolUsage']
         assert ps.nonpaged_pool == win['QuotaNonPagedPoolUsage']
-        assert ps.pagefile == win['PagefileUsage']
-        assert ps.peak_pagefile == win['PeakPagefileUsage']
+        assert ps.vms == win['PagefileUsage']
+        assert ps.peak_vms == win['PeakPagefileUsage']
 
-        assert ps.vms == ps.pagefile
         with pytest.warns(DeprecationWarning, match="wset is deprecated"):
             assert ps.wset == ps.rss
+        with pytest.warns(DeprecationWarning, match="pagefile is deprecated"):
+            assert ps.pagefile == ps.vms
+        with pytest.warns(
+            DeprecationWarning, match="peak_pagefile is deprecated"
+        ):
+            assert ps.peak_pagefile == ps.peak_vms
 
     def test_wait(self):
         p = psutil.Process(self.pid)

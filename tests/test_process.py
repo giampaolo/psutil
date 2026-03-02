@@ -469,9 +469,16 @@ class TestProcess(PsutilTestCase):
 
         if WINDOWS:
             mem = p.memory_info()
-            assert mem.vms == mem.pagefile
             with pytest.warns(DeprecationWarning, match="wset is deprecated"):
                 assert mem.wset == mem.rss
+            with pytest.warns(
+                DeprecationWarning, match="pagefile is deprecated"
+            ):
+                assert mem.pagefile == mem.vms
+            with pytest.warns(
+                DeprecationWarning, match="peak_pagefile is deprecated"
+            ):
+                assert mem.peak_pagefile == mem.peak_vms
 
         mem = p.memory_info()
         for name in mem._fields:

@@ -799,8 +799,7 @@ class Process:
             paged_pool=d["QuotaPagedPoolUsage"],
             peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
             nonpaged_pool=d["QuotaNonPagedPoolUsage"],
-            pagefile=d["PagefileUsage"],
-            peak_pagefile=d["PeakPagefileUsage"],
+            peak_vms=d["PeakPagefileUsage"],
             private=d["PrivateUsage"],
         )
 

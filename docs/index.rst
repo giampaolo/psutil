@@ -1651,7 +1651,7 @@ Process class
     +=========+=========+==========+=========+=====+=============================================================+
     | rss     | rss     | rss      | rss     | rss | rss (maps to ``WorkingSetSize``)                            |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | vms     | vms     | vms      | vms     | vms | vms (alias for ``pagefile``, maps to ``PagefileUsage``)     |
+    | vms     | vms     | vms      | vms     | vms | vms (maps to ``PagefileUsage``)                             |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1665,9 +1665,7 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | pagefile (maps to ``PagefileUsage``)                        |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_pagefile (maps to ``PeakPagefileUsage``)               |
+    |         |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | private (maps to ``PrivateUsage``)                          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1677,8 +1675,8 @@ Process class
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
-      Windows this is an alias for `pagefile` field, which is not the true
-      virtual address space size (VMS). For that, use ``virtual`` from
+      Windows it maps to ``PagefileUsage``, which is not the true virtual
+      address space size (VMS). For that, use ``virtual`` from
       :meth:`memory_info2`.
 
     - **shared**: *(Linux)*
@@ -1702,6 +1700,12 @@ Process class
     - **wset** *(Windows, deprecated)*: deprecated alias for ``rss``.
       Use ``rss`` instead.
 
+    - **pagefile** *(Windows, deprecated)*: deprecated alias for ``vms``.
+      Use ``vms`` instead.
+
+    - **peak_pagefile** *(Windows, deprecated)*: deprecated alias for
+      ``peak_vms``. Use ``peak_vms`` instead.
+
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
     structure doc. Example on Linux:
 
@@ -1722,6 +1726,8 @@ Process class
 
     .. versionchanged::
       7.3.0 Windows: *wset* is deprecated; use *rss* instead.
+      *pagefile* is deprecated; use *vms* instead.
+      *peak_pagefile* is deprecated and renamed to *peak_vms*.
 
   .. method:: memory_info2()
 
