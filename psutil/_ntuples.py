@@ -258,7 +258,7 @@ elif WINDOWS:
     svmem = nt("svmem", ("total", "available", "percent", "used", "free"))
 
     # psutil.Process.memory_info()
-    _pmem_nt = nt(
+    _pmem = nt(
         "pmem",
         (
             "rss",
@@ -275,24 +275,24 @@ elif WINDOWS:
         ),
     )
 
-    class pmem(_pmem_nt):
+    class pmem(_pmem):
         __slots__ = ()
 
         wset = deprecated_property(replacement="rss")
 
     # psutil.Process.memory_info2()
-    _pmem2_nt = nt(
+    _pmem2 = nt(
         "pmem2",
         pmem._fields + ("virtual", "peak_virtual"),
     )
 
-    class pmem2(pmem, _pmem2_nt):
+    class pmem2(pmem, _pmem2):
         __slots__ = ()
-        _fields = _pmem2_nt._fields
-        __repr__ = _pmem2_nt.__repr__
+        _fields = _pmem2._fields
+        __repr__ = _pmem2.__repr__
 
         def __new__(cls, *args, **kwargs):
-            return _pmem2_nt.__new__(cls, *args, **kwargs)
+            return _pmem2.__new__(cls, *args, **kwargs)
 
         @classmethod
         def _make(cls, iterable):
