@@ -1667,8 +1667,6 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | private (maps to ``PrivateUsage``)                          |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
       a process has used. On UNIX it matches ``top`` RES column.
@@ -1709,6 +1707,9 @@ Process class
     - **peak_pagefile** *(Windows, deprecated)*: deprecated alias for
       ``peak_vms``. Use ``peak_vms`` instead.
 
+    - **private** *(Windows, deprecated)*: deprecated alias for ``vms``.
+      Use ``vms`` instead.
+
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
     structure doc. Example on Linux:
 
@@ -1732,6 +1733,7 @@ Process class
       *peak_wset* is deprecated and renamed to *peak_rss*.
       *pagefile* is deprecated; use *vms* instead.
       *peak_pagefile* is deprecated and renamed to *peak_vms*.
+      *private* is deprecated; use *vms* instead.
 
   .. method:: memory_info2()
 

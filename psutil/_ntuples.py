@@ -270,7 +270,6 @@ elif WINDOWS:
             "paged_pool",
             "peak_nonpaged_pool",
             "nonpaged_pool",
-            "private",
         ),
     )
 
@@ -281,6 +280,7 @@ elif WINDOWS:
         peak_wset = deprecated_property(replacement="peak_rss")
         pagefile = deprecated_property(replacement="vms")
         peak_pagefile = deprecated_property(replacement="peak_vms")
+        private = deprecated_property(replacement="vms")
 
     # psutil.Process.memory_info2()
     _pmem2 = nt(

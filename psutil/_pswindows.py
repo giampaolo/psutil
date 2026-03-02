@@ -800,7 +800,6 @@ class Process:
             paged_pool=d["QuotaPagedPoolUsage"],
             peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
             nonpaged_pool=d["QuotaNonPagedPoolUsage"],
-            private=d["PrivateUsage"],
         )
 
     @wrap_exceptions
