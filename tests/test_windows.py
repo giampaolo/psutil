@@ -37,6 +37,9 @@ from . import spawn_subproc
 from . import terminate
 
 if WINDOWS and not PYPY:
+    import ctypes
+    import ctypes.wintypes
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         import win32api  # requires "pip install pywin32"
@@ -54,7 +57,15 @@ cext = psutil._psplatform.cext
 @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
 @pytest.mark.skipif(PYPY, reason="pywin32 not available on PYPY")
 class WindowsTestCase(PsutilTestCase):
-    pass
+
+    def OpenProcess(self, pid=None):
+        handle = win32api.OpenProcess(
+            win32con.PROCESS_QUERY_INFORMATION,
+            win32con.FALSE,
+            pid or os.getpid(),
+        )
+        self.addCleanup(win32api.CloseHandle, handle)
+        return handle
 
 
 def powershell(cmd):
@@ -427,12 +438,9 @@ class TestProcess(WindowsTestCase):
     def test_num_handles_increment(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-        )
+        self.OpenProcess()
         after = p.num_handles()
         assert after == before + 1
-        win32api.CloseHandle(handle)
         assert p.num_handles() == before
 
     def test_ctrl_signals(self):
@@ -469,30 +477,18 @@ class TestProcess(WindowsTestCase):
     # XXX - occasional failures
 
     # def test_cpu_times(self):
-    #     handle = win32api.OpenProcess(
-    #         win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-    #     )
-    #     self.addCleanup(win32api.CloseHandle, handle)
     #     a = psutil.Process().cpu_times()
-    #     b = win32process.GetProcessTimes(handle)
+    #     b = win32process.GetProcessTimes(self.OpenProcess())
     #     assert abs(a.user - b['UserTime'] / 10000000.0) < 0.2
     #     assert abs(a.user - b['KernelTime'] / 10000000.0) < 0.2
 
     def test_nice(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
-        win = win32process.GetPriorityClass(handle)
+        win = win32process.GetPriorityClass(self.OpenProcess())
         ps = psutil.Process().nice()
         assert ps == win
 
     def test_memory_info(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, self.pid
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
-        win = win32process.GetProcessMemoryInfo(handle)
+        win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
         ps = psutil.Process(self.pid).memory_info()
         assert ps.peak_wset == win['PeakWorkingSetSize']
         assert ps.wset == win['WorkingSetSize']
@@ -507,34 +503,24 @@ class TestProcess(WindowsTestCase):
         assert ps.vms == ps.pagefile
 
     def test_wait(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, self.pid
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
         p = psutil.Process(self.pid)
         p.terminate()
         ps = p.wait()
-        win = win32process.GetExitCodeProcess(handle)
+        win = win32process.GetExitCodeProcess(self.OpenProcess(self.pid))
         assert ps == win
 
     def test_cpu_affinity(self):
         def from_bitmask(x):
             return [i for i in range(64) if (1 << i) & x]
 
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, self.pid
+        win = from_bitmask(
+            win32process.GetProcessAffinityMask(self.OpenProcess(self.pid))[0]
         )
-        self.addCleanup(win32api.CloseHandle, handle)
-        win = from_bitmask(win32process.GetProcessAffinityMask(handle)[0])
         ps = psutil.Process(self.pid).cpu_affinity()
         assert ps == win
 
     def test_io_counters(self):
-        handle = win32api.OpenProcess(
-            win32con.PROCESS_QUERY_INFORMATION, win32con.FALSE, os.getpid()
-        )
-        self.addCleanup(win32api.CloseHandle, handle)
-        win = win32process.GetProcessIoCounters(handle)
+        win = win32process.GetProcessIoCounters(self.OpenProcess())
         ps = psutil.Process().io_counters()
         assert ps.read_count == win['ReadOperationCount']
         assert ps.write_count == win['WriteOperationCount']
@@ -544,9 +530,6 @@ class TestProcess(WindowsTestCase):
         assert ps.other_bytes == win['OtherTransferCount']
 
     def test_num_handles(self):
-        import ctypes
-        import ctypes.wintypes
-
         PROCESS_QUERY_INFORMATION = 0x400
         handle = ctypes.windll.kernel32.OpenProcess(
             PROCESS_QUERY_INFORMATION, 0, self.pid
