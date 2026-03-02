@@ -326,6 +326,9 @@ elif MACOS:
     # psutil.Process.memory_info()
     pmem = nt("pmem", ("rss", "vms"))
 
+    # psutil.Process.memory_info2()
+    pmem2 = nt("pmem2", pmem._fields + ("peak_rss",))
+
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))
 

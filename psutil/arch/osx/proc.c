@@ -18,6 +18,7 @@
 #include <sys/sysctl.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
+#include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
@@ -264,6 +265,29 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
     return base <= addr && addr < (base + size);
 }
+
+
+/*
+ * Return peak RSS of the process via proc_pid_rusage() +
+ * RUSAGE_INFO_V4 (macOS 10.12+). ri_resident_size_max is the high-water
+ * mark of resident memory over the process lifetime.
+ * RUSAGE_INFO_V4 may not be available on older SDKs.
+ */
+#ifdef RUSAGE_INFO_V4
+PyObject *
+psutil_proc_memory_peak_rss(PyObject *self, PyObject *args) {
+    pid_t pid;
+    struct rusage_info_v4 ri;
+
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        return NULL;
+    if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri) != 0) {
+        psutil_oserror();
+        return NULL;
+    }
+    return PyLong_FromUnsignedLongLong(ri.ri_resident_size_max);
+}
+#endif
 
 
 /*

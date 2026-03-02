@@ -451,6 +451,13 @@ class Process:
             rawtuple[pidtaskinfo_map['rss']], rawtuple[pidtaskinfo_map['vms']]
         )
 
+    if hasattr(cext, "proc_memory_peak_rss"):
+
+        @wrap_exceptions
+        def memory_info2(self):
+            peak_rss = cext.proc_memory_peak_rss(self.pid)
+            return {"peak_rss": peak_rss}
+
     @wrap_exceptions
     def memory_full_info(self):
         basic_mem = self.memory_info()

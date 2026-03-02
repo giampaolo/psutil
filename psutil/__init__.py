@@ -1140,7 +1140,7 @@ class Process:
         """Return a namedtuple extending memory_info() with extra
         metrics.
 
-        Extra fields (Linux only):
+        Linux:
 
         - peak_rss: peak resident set size ("high water mark")
         - peak_vms: peak virtual memory size
@@ -1149,6 +1149,10 @@ class Process:
         - rss_shmem: shared memory resident
         - swap: memory swapped to disk
         - hugetlb: memory in huge TLB pages
+
+        macOS:
+
+        - peak_rss: peak resident set size ("high water mark")
 
         All numbers are expressed in bytes.
         """
