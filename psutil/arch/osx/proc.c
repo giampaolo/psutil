@@ -277,25 +277,36 @@ psutil_proc_memory_info2(PyObject *self, PyObject *args) {
     kern_return_t kr;
     task_vm_info_data_t info;
     mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
+    PyObject *dict = PyDict_New();
 
+    if (!dict)
+        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
+        goto error;
     if (psutil_task_for_pid(pid, &task) != 0)
-        return NULL;
+        goto error;
+
     kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
     mach_port_deallocate(mach_task_self(), task);
+    task = MACH_PORT_NULL;
     if (kr != KERN_SUCCESS) {
         psutil_runtime_error("task_info(TASK_VM_INFO) syscall failed");
-        return NULL;
+        goto error;
     }
-    return Py_BuildValue(
-        "KKKKK",
-        (unsigned long long)info.resident_size_peak,  // peak_rss, Linux VmPeak
-        (unsigned long long)info.internal,  // rss_anon, Linux RssAnon
-        (unsigned long long)info.external,  // rss_file, Linux RssFile
-        (unsigned long long)info.compressed,  // osx-specific
-        (unsigned long long)info.phys_footprint  // osx-specific
-    );
+
+    // clang-format off
+    if (!pydict_add(dict, "peak_rss", "K", (unsigned long long)info.resident_size_peak)) goto error;
+    if (!pydict_add(dict, "rss_anon", "K", (unsigned long long)info.internal)) goto error;
+    if (!pydict_add(dict, "rss_file", "K", (unsigned long long)info.external)) goto error;
+    if (!pydict_add(dict, "compressed", "K", (unsigned long long)info.compressed)) goto error;
+    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)info.phys_footprint)) goto error;
+    // clang-format on
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
 
 

@@ -453,16 +453,7 @@ class Process:
 
     @wrap_exceptions
     def memory_info2(self):
-        peak_rss, rss_anon, rss_file, compressed, phys_footprint = (
-            cext.proc_memory_info2(self.pid)
-        )
-        return {
-            "peak_rss": peak_rss,
-            "rss_anon": rss_anon,
-            "rss_file": rss_file,
-            "compressed": compressed,
-            "phys_footprint": phys_footprint,
-        }
+        return cext.proc_memory_info2(self.pid)
 
     @wrap_exceptions
     def memory_full_info(self):
