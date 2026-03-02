@@ -345,14 +345,9 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     }
     CloseHandle(hProcess);
 
-    // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
-    // is an (unsigned long long) and on 32bits is an (unsigned int).
-    // "_WIN64" is defined if we're running a 64bit Python interpreter not
-    // exclusively if the *system* is 64bit.
-#if defined(_WIN64)
     return Py_BuildValue(
-        "(kKKKKKKKKK)",
-        cnt.PageFaultCount,  // unsigned long
+        "(KKKKKKKKKK)",
+        (unsigned long long)cnt.PageFaultCount,
         (unsigned long long)cnt.PeakWorkingSetSize,
         (unsigned long long)cnt.WorkingSetSize,
         (unsigned long long)cnt.QuotaPeakPagedPoolUsage,
@@ -363,21 +358,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned long long)cnt.PeakPagefileUsage,
         (unsigned long long)cnt.PrivateUsage
     );
-#else
-    return Py_BuildValue(
-        "(kIIIIIIIII)",
-        cnt.PageFaultCount,  // unsigned long
-        (unsigned int)cnt.PeakWorkingSetSize,
-        (unsigned int)cnt.WorkingSetSize,
-        (unsigned int)cnt.QuotaPeakPagedPoolUsage,
-        (unsigned int)cnt.QuotaPagedPoolUsage,
-        (unsigned int)cnt.QuotaPeakNonPagedPoolUsage,
-        (unsigned int)cnt.QuotaNonPagedPoolUsage,
-        (unsigned int)cnt.PagefileUsage,
-        (unsigned int)cnt.PeakPagefileUsage,
-        (unsigned int)cnt.PrivateUsage
-    );
-#endif
 }
 
 
