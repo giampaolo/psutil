@@ -2,9 +2,9 @@
 #include <stdarg.h>
 
 
-// Build a Python object from a Py_BuildValue format string and add it
-// to an existing dict. Steals reference to the object. Returns 0 on
-// success, -1 on failure. Does not DECREF the dict.
+// Build a Python object from a Py_BuildValue format string and set it
+// as key in an existing dict. Returns 1 on success, 0 on failure with
+// a Python exception set.
 int
 pydict_add(PyObject *dict, const char *key, const char *fmt, ...) {
     int ret = 0;  // 0 = failure
