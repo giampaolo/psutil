@@ -320,20 +320,23 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process memory information as a Python tuple.
+ * Return process memory information as a Python dict.
  */
 PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD pid;
     PROCESS_MEMORY_COUNTERS_EX cnt;
+    PyObject *dict = PyDict_New();
 
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!dict)
         return NULL;
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
-        return NULL;
+        goto error;
 
     if (!GetProcessMemoryInfo(
             hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt, sizeof(cnt)
@@ -341,43 +344,27 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     {
         psutil_oserror();
         CloseHandle(hProcess);
-        return NULL;
+        goto error;
     }
     CloseHandle(hProcess);
 
-    // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
-    // is an (unsigned long long) and on 32bits is an (unsigned int).
-    // "_WIN64" is defined if we're running a 64bit Python interpreter not
-    // exclusively if the *system* is 64bit.
-#if defined(_WIN64)
-    return Py_BuildValue(
-        "(kKKKKKKKKK)",
-        cnt.PageFaultCount,  // unsigned long
-        (unsigned long long)cnt.PeakWorkingSetSize,
-        (unsigned long long)cnt.WorkingSetSize,
-        (unsigned long long)cnt.QuotaPeakPagedPoolUsage,
-        (unsigned long long)cnt.QuotaPagedPoolUsage,
-        (unsigned long long)cnt.QuotaPeakNonPagedPoolUsage,
-        (unsigned long long)cnt.QuotaNonPagedPoolUsage,
-        (unsigned long long)cnt.PagefileUsage,
-        (unsigned long long)cnt.PeakPagefileUsage,
-        (unsigned long long)cnt.PrivateUsage
-    );
-#else
-    return Py_BuildValue(
-        "(kIIIIIIIII)",
-        cnt.PageFaultCount,  // unsigned long
-        (unsigned int)cnt.PeakWorkingSetSize,
-        (unsigned int)cnt.WorkingSetSize,
-        (unsigned int)cnt.QuotaPeakPagedPoolUsage,
-        (unsigned int)cnt.QuotaPagedPoolUsage,
-        (unsigned int)cnt.QuotaPeakNonPagedPoolUsage,
-        (unsigned int)cnt.QuotaNonPagedPoolUsage,
-        (unsigned int)cnt.PagefileUsage,
-        (unsigned int)cnt.PeakPagefileUsage,
-        (unsigned int)cnt.PrivateUsage
-    );
-#endif
+    // clang-format off
+    if (!pydict_add(dict, "PageFaultCount", "K", (ULONGLONG)cnt.PageFaultCount)) goto error;
+    if (!pydict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)cnt.PeakWorkingSetSize)) goto error;
+    if (!pydict_add(dict, "WorkingSetSize", "K", (ULONGLONG)cnt.WorkingSetSize)) goto error;
+    if (!pydict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPeakPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPeakNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "PagefileUsage", "K", (ULONGLONG)cnt.PagefileUsage)) goto error;
+    if (!pydict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)cnt.PeakPagefileUsage)) goto error;
+    if (!pydict_add(dict, "PrivateUsage", "K", (ULONGLONG)cnt.PrivateUsage)) goto error;
+    // clang-format on
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
 
 
@@ -983,11 +970,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hProcess);
-#ifdef _WIN64
     return Py_BuildValue("K", (unsigned long long)proc_mask);
-#else
-    return Py_BuildValue("k", (unsigned long)proc_mask);
-#endif
 }
 
 
@@ -1001,14 +984,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
 
-#ifdef _WIN64
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "K", &pid, &mask))
-#else
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "k", &pid, &mask))
-#endif
-    {
         return NULL;
-    }
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
@@ -1171,15 +1148,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             );
             if (py_str == NULL)
                 goto error;
-#ifdef _WIN64
             py_tuple = Py_BuildValue(
                 "(KsOI)",
                 (unsigned long long)baseAddress,
-#else
-            py_tuple = Py_BuildValue(
-                "(ksOI)",
-                (unsigned long)baseAddress,
-#endif
                 get_region_protection_string(basicInfo.Protect),
                 py_str,
                 basicInfo.RegionSize

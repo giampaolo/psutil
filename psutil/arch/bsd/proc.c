@@ -24,7 +24,7 @@
  * them as a big Python tuple.
  */
 PyObject *
-psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
+psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     pid_t pid;
     long rss;
     long vms;

@@ -33,7 +33,6 @@
 
 static PyMethodDef mod_methods[] = {
     // --- process-related functions
-    {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS},
     {"proc_cpu_num", psutil_proc_cpu_num, METH_VARARGS},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS},
     {"proc_cred", psutil_proc_cred, METH_VARARGS},
@@ -41,6 +40,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS},
     {"proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS},
+    {"proc_oneshot", psutil_proc_oneshot, METH_VARARGS},
     {"proc_page_faults", psutil_proc_page_faults, METH_VARARGS},
     {"query_process_thread", psutil_proc_query_thread, METH_VARARGS},
 

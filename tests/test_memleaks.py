@@ -237,8 +237,8 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
         self.execute(self.proc.environ)
 
     @pytest.mark.skipif(not WINDOWS, reason="WINDOWS only")
-    def test_proc_info(self):
-        self.execute(lambda: cext.proc_info(os.getpid()))
+    def test_proc_oneshot(self):
+        self.execute(lambda: cext.proc_oneshot(os.getpid()))
 
 
 class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
@@ -287,11 +287,11 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
         def test_wait(self):
             self.execute(self.proc.wait)
 
-        def test_proc_info(self):
+        def test_proc_oneshot(self):
             # test dual implementation
             def call():
                 try:
-                    return cext.proc_info(self.proc.pid)
+                    return cext.proc_oneshot(self.proc.pid)
                 except ProcessLookupError:
                     pass
 

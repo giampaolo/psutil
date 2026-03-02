@@ -1483,9 +1483,9 @@ Process class
     this process (cumulative).
 
     .. note::
-      (macOS) *involuntary* value is always set to 0, while *voluntary* value
-      reflect the total number of context switches (voluntary + involuntary).
-      This is a limitation of the OS.
+      (Windows, macOS) *involuntary* value is always set to 0, while
+      *voluntary* value reflect the total number of context switches (voluntary
+      + involuntary). This is a limitation of the OS.
 
     .. versionchanged:: 5.4.1 added AIX support
 

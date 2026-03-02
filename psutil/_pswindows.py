@@ -119,33 +119,6 @@ class IOPriority(enum.IntEnum):
 
 globals().update(IOPriority.__members__)
 
-pinfo_map = dict(
-    num_handles=0,
-    ctx_switches=1,
-    user_time=2,
-    kernel_time=3,
-    create_time=4,
-    num_threads=5,
-    io_rcount=6,
-    io_wcount=7,
-    io_rbytes=8,
-    io_wbytes=9,
-    io_count_others=10,
-    io_bytes_others=11,
-    num_page_faults=12,
-    peak_wset=13,
-    wset=14,
-    peak_paged_pool=15,
-    paged_pool=16,
-    peak_non_paged_pool=17,
-    non_paged_pool=18,
-    pagefile=19,
-    peak_pagefile=20,
-    mem_private=21,
-    virtual=22,
-    peak_virtual=23,
-)
-
 
 # =====================================================================
 # --- utils
@@ -713,21 +686,19 @@ class Process:
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self._proc_info.cache_activate(self)
+        self._oneshot.cache_activate(self)
         self.exe.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_info.cache_deactivate(self)
+        self._oneshot.cache_deactivate(self)
         self.exe.cache_deactivate(self)
 
     @memoize_when_activated
-    def _proc_info(self):
+    def _oneshot(self):
         """Return multiple information about this process as a
-        raw tuple.
+        raw dict.
         """
-        ret = cext.proc_info(self.pid)
-        assert len(ret) == len(pinfo_map)
-        return ret
+        return cext.proc_oneshot(self.pid)
 
     def name(self):
         """Return process name, which on Windows is always the final
@@ -794,21 +765,23 @@ class Process:
         except OSError as err:
             if is_permission_err(err):
                 # TODO: the C ext can probably be refactored in order
-                # to get this from cext.proc_info()
+                # to get this from cext.proc_oneshot()
                 debug("attempting memory_info() fallback (slower)")
-                info = self._proc_info()
-                return (
-                    info[pinfo_map['num_page_faults']],
-                    info[pinfo_map['peak_wset']],
-                    info[pinfo_map['wset']],
-                    info[pinfo_map['peak_paged_pool']],
-                    info[pinfo_map['paged_pool']],
-                    info[pinfo_map['peak_non_paged_pool']],
-                    info[pinfo_map['non_paged_pool']],
-                    info[pinfo_map['pagefile']],
-                    info[pinfo_map['peak_pagefile']],
-                    info[pinfo_map['mem_private']],
-                )
+                info = self._oneshot()
+                return {
+                    "PageFaultCount": info["PageFaultCount"],
+                    "PeakWorkingSetSize": info["PeakWorkingSetSize"],
+                    "WorkingSetSize": info["WorkingSetSize"],
+                    "QuotaPeakPagedPoolUsage": info["QuotaPeakPagedPoolUsage"],
+                    "QuotaPagedPoolUsage": info["QuotaPagedPoolUsage"],
+                    "QuotaPeakNonPagedPoolUsage": info[
+                        "QuotaPeakNonPagedPoolUsage"
+                    ],
+                    "QuotaNonPagedPoolUsage": info["QuotaNonPagedPoolUsage"],
+                    "PagefileUsage": info["PagefileUsage"],
+                    "PeakPagefileUsage": info["PeakPagefileUsage"],
+                    "PrivateUsage": info["PrivatePageCount"],
+                }
             raise
 
     @wrap_exceptions
@@ -816,17 +789,28 @@ class Process:
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage.
         # Underlying C function returns fields of PROCESS_MEMORY_COUNTERS
         # struct.
-        t = self._get_raw_meminfo()
-        rss = t[2]  # wset
-        vms = t[7]  # pagefile
-        return ntp.pmem(*(rss, vms) + t)
+        d = self._get_raw_meminfo()
+        return ntp.pmem(
+            rss=d["WorkingSetSize"],
+            vms=d["PagefileUsage"],
+            num_page_faults=d["PageFaultCount"],
+            peak_wset=d["PeakWorkingSetSize"],
+            wset=d["WorkingSetSize"],
+            peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
+            paged_pool=d["QuotaPagedPoolUsage"],
+            peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
+            nonpaged_pool=d["QuotaNonPagedPoolUsage"],
+            pagefile=d["PagefileUsage"],
+            peak_pagefile=d["PeakPagefileUsage"],
+            private=d["PrivateUsage"],
+        )
 
     @wrap_exceptions
     def memory_info2(self):
-        info = self._proc_info()
+        d = self._proc_info()
         return {
-            "virtual": info[pinfo_map['virtual']],
-            "peak_virtual": info[pinfo_map['peak_virtual']],
+            "virtual": d["VirtualSize"],
+            "peak_virtual": d["PeakVirtualSize"],
         }
 
     @wrap_exceptions
@@ -933,12 +917,12 @@ class Process:
                 if fast_only:
                     raise
                 debug("attempting create_time() fallback (slower)")
-                return self._proc_info()[pinfo_map['create_time']]
+                return self._oneshot()["create_time"]
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_info()[pinfo_map['num_threads']]
+        return self._oneshot()["num_threads"]
 
     @wrap_exceptions
     def threads(self):
@@ -957,9 +941,9 @@ class Process:
             if not is_permission_err(err):
                 raise
             debug("attempting cpu_times() fallback (slower)")
-            info = self._proc_info()
-            user = info[pinfo_map['user_time']]
-            system = info[pinfo_map['kernel_time']]
+            info = self._oneshot()
+            user = info["user_time"]
+            system = info["kernel_time"]
         # Children user/system times are not retrievable (set to 0).
         return ntp.pcputimes(user, system, 0.0, 0.0)
 
@@ -1041,14 +1025,14 @@ class Process:
             if not is_permission_err(err):
                 raise
             debug("attempting io_counters() fallback (slower)")
-            info = self._proc_info()
+            info = self._oneshot()
             ret = (
-                info[pinfo_map['io_rcount']],
-                info[pinfo_map['io_wcount']],
-                info[pinfo_map['io_rbytes']],
-                info[pinfo_map['io_wbytes']],
-                info[pinfo_map['io_count_others']],
-                info[pinfo_map['io_bytes_others']],
+                info["io_rcount"],
+                info["io_wcount"],
+                info["io_rbytes"],
+                info["io_wbytes"],
+                info["io_count_others"],
+                info["io_bytes_others"],
             )
         return ntp.pio(*ret)
 
@@ -1101,11 +1085,11 @@ class Process:
         except OSError as err:
             if is_permission_err(err):
                 debug("attempting num_handles() fallback (slower)")
-                return self._proc_info()[pinfo_map['num_handles']]
+                return self._oneshot()["num_handles"]
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = self._proc_info()[pinfo_map['ctx_switches']]
+        ctx_switches = self._oneshot()["ctx_switches"]
         # only voluntary ctx switches are supported
         return ntp.pctxsw(ctx_switches, 0)
