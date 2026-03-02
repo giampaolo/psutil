@@ -827,30 +827,30 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     }
 
     // clang-format off
-    if (!psutil_dict_add(dict, "num_handles", "k", proc->HandleCount)) goto error;
-    if (!psutil_dict_add(dict, "ctx_switches", "k", ctx_switches)) goto error;
-    if (!psutil_dict_add(dict, "user_time", "d", user_time)) goto error;
-    if (!psutil_dict_add(dict, "kernel_time", "d", kernel_time)) goto error;
-    if (!psutil_dict_add(dict, "create_time", "d", create_time)) goto error;
-    if (!psutil_dict_add(dict, "num_threads", "k", proc->NumberOfThreads)) goto error;
+    if (!pydict_add(dict, "num_handles", "k", proc->HandleCount)) goto error;
+    if (!pydict_add(dict, "ctx_switches", "k", ctx_switches)) goto error;
+    if (!pydict_add(dict, "user_time", "d", user_time)) goto error;
+    if (!pydict_add(dict, "kernel_time", "d", kernel_time)) goto error;
+    if (!pydict_add(dict, "create_time", "d", create_time)) goto error;
+    if (!pydict_add(dict, "num_threads", "k", proc->NumberOfThreads)) goto error;
     // I/O
-    if (!psutil_dict_add(dict, "io_rcount", "K", proc->ReadOperationCount.QuadPart)) goto error;
-    if (!psutil_dict_add(dict, "io_wcount", "K", proc->WriteOperationCount.QuadPart)) goto error;
-    if (!psutil_dict_add(dict, "io_rbytes", "K", proc->ReadTransferCount.QuadPart)) goto error;
-    if (!psutil_dict_add(dict, "io_wbytes", "K", proc->WriteTransferCount.QuadPart)) goto error;
-    if (!psutil_dict_add(dict, "io_count_others", "K", proc->OtherOperationCount.QuadPart)) goto error;
-    if (!psutil_dict_add(dict, "io_bytes_others", "K", proc->OtherTransferCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_rcount", "K", proc->ReadOperationCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_wcount", "K", proc->WriteOperationCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_rbytes", "K", proc->ReadTransferCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_wbytes", "K", proc->WriteTransferCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_count_others", "K", proc->OtherOperationCount.QuadPart)) goto error;
+    if (!pydict_add(dict, "io_bytes_others", "K", proc->OtherTransferCount.QuadPart)) goto error;
     // proc memory
-    if (!psutil_dict_add(dict, "PageFaultCount", "K", (ULONGLONG)proc->PageFaultCount)) goto error;
-    if (!psutil_dict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)proc->PeakWorkingSetSize)) goto error;
-    if (!psutil_dict_add(dict, "WorkingSetSize", "K", (ULONGLONG)proc->WorkingSetSize)) goto error;
-    if (!psutil_dict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakNonPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaNonPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "PagefileUsage", "K", (ULONGLONG)proc->PagefileUsage)) goto error;
-    if (!psutil_dict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)proc->PeakPagefileUsage)) goto error;
-    if (!psutil_dict_add(dict, "PrivatePageCount", "K", (ULONGLONG)proc->PrivatePageCount)) goto error;
+    if (!pydict_add(dict, "PageFaultCount", "K", (ULONGLONG)proc->PageFaultCount)) goto error;
+    if (!pydict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)proc->PeakWorkingSetSize)) goto error;
+    if (!pydict_add(dict, "WorkingSetSize", "K", (ULONGLONG)proc->WorkingSetSize)) goto error;
+    if (!pydict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaPeakNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)proc->QuotaNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "PagefileUsage", "K", (ULONGLONG)proc->PagefileUsage)) goto error;
+    if (!pydict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)proc->PeakPagefileUsage)) goto error;
+    if (!pydict_add(dict, "PrivatePageCount", "K", (ULONGLONG)proc->PrivatePageCount)) goto error;
     // clang-format on
 
     free(buffer);

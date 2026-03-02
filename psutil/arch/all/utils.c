@@ -6,7 +6,7 @@
 // to an existing dict. Steals reference to the object. Returns 0 on
 // success, -1 on failure. Does not DECREF the dict.
 int
-psutil_dict_add(PyObject *dict, const char *key, const char *fmt, ...) {
+pydict_add(PyObject *dict, const char *key, const char *fmt, ...) {
     int ret = 0;  // 0 = failure
     PyObject *obj = NULL;
     va_list ap;

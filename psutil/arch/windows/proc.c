@@ -349,16 +349,16 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     CloseHandle(hProcess);
 
     // clang-format off
-    if (!psutil_dict_add(dict, "PageFaultCount", "K", (ULONGLONG)cnt.PageFaultCount)) goto error;
-    if (!psutil_dict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)cnt.PeakWorkingSetSize)) goto error;
-    if (!psutil_dict_add(dict, "WorkingSetSize", "K", (ULONGLONG)cnt.WorkingSetSize)) goto error;
-    if (!psutil_dict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPeakPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPeakNonPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaNonPagedPoolUsage)) goto error;
-    if (!psutil_dict_add(dict, "PagefileUsage", "K", (ULONGLONG)cnt.PagefileUsage)) goto error;
-    if (!psutil_dict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)cnt.PeakPagefileUsage)) goto error;
-    if (!psutil_dict_add(dict, "PrivateUsage", "K", (ULONGLONG)cnt.PrivateUsage)) goto error;
+    if (!pydict_add(dict, "PageFaultCount", "K", (ULONGLONG)cnt.PageFaultCount)) goto error;
+    if (!pydict_add(dict, "PeakWorkingSetSize", "K", (ULONGLONG)cnt.PeakWorkingSetSize)) goto error;
+    if (!pydict_add(dict, "WorkingSetSize", "K", (ULONGLONG)cnt.WorkingSetSize)) goto error;
+    if (!pydict_add(dict, "QuotaPeakPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPeakPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaPeakNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "QuotaNonPagedPoolUsage", "K", (ULONGLONG)cnt.QuotaNonPagedPoolUsage)) goto error;
+    if (!pydict_add(dict, "PagefileUsage", "K", (ULONGLONG)cnt.PagefileUsage)) goto error;
+    if (!pydict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)cnt.PeakPagefileUsage)) goto error;
+    if (!pydict_add(dict, "PrivateUsage", "K", (ULONGLONG)cnt.PrivateUsage)) goto error;
     // clang-format on
     return dict;
 
