@@ -99,36 +99,6 @@ AF_LINK = cext.AF_LINK
 
 HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
 
-kinfo_proc_map = dict(
-    ppid=0,
-    status=1,
-    real_uid=2,
-    effective_uid=3,
-    saved_uid=4,
-    real_gid=5,
-    effective_gid=6,
-    saved_gid=7,
-    ttynr=8,
-    create_time=9,
-    ctx_switches_vol=10,
-    ctx_switches_unvol=11,
-    read_io_count=12,
-    write_io_count=13,
-    user_time=14,
-    sys_time=15,
-    ch_user_time=16,
-    ch_sys_time=17,
-    rss=18,
-    vms=19,
-    memtext=20,
-    memdata=21,
-    memstack=22,
-    cpunum=23,
-    min_faults=24,
-    maj_faults=25,
-    name=26,
-)
-
 
 # =====================================================================
 # --- memory
@@ -599,10 +569,8 @@ class Process:
     @wrap_exceptions
     @memoize_when_activated
     def oneshot(self):
-        """Retrieves multiple process info in one shot as a raw tuple."""
-        ret = cext.proc_oneshot_kinfo(self.pid)
-        assert len(ret) == len(kinfo_proc_map)
-        return ret
+        """Retrieves multiple process info in one shot as a raw dict."""
+        return cext.proc_oneshot_kinfo(self.pid)
 
     def oneshot_enter(self):
         self.oneshot.cache_activate(self)
@@ -612,7 +580,7 @@ class Process:
 
     @wrap_exceptions
     def name(self):
-        name = self.oneshot()[kinfo_proc_map['name']]
+        name = self.oneshot()["name"]
         return name if name is not None else cext.proc_name(self.pid)
 
     @wrap_exceptions
@@ -674,7 +642,7 @@ class Process:
 
     @wrap_exceptions
     def terminal(self):
-        tty_nr = self.oneshot()[kinfo_proc_map['ttynr']]
+        tty_nr = self.oneshot()["ttynr"]
         tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -683,59 +651,44 @@ class Process:
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = self.oneshot()[kinfo_proc_map['ppid']]
+        self._ppid = self.oneshot()["ppid"]
         return self._ppid
 
     @wrap_exceptions
     def uids(self):
-        rawtuple = self.oneshot()
-        return ntp.puids(
-            rawtuple[kinfo_proc_map['real_uid']],
-            rawtuple[kinfo_proc_map['effective_uid']],
-            rawtuple[kinfo_proc_map['saved_uid']],
-        )
+        d = self.oneshot()
+        return ntp.puids(d["real_uid"], d["effective_uid"], d["saved_uid"])
 
     @wrap_exceptions
     def gids(self):
-        rawtuple = self.oneshot()
-        return ntp.pgids(
-            rawtuple[kinfo_proc_map['real_gid']],
-            rawtuple[kinfo_proc_map['effective_gid']],
-            rawtuple[kinfo_proc_map['saved_gid']],
-        )
+        d = self.oneshot()
+        return ntp.pgids(d["real_gid"], d["effective_gid"], d["saved_gid"])
 
     @wrap_exceptions
     def cpu_times(self):
-        rawtuple = self.oneshot()
+        d = self.oneshot()
         return ntp.pcputimes(
-            rawtuple[kinfo_proc_map['user_time']],
-            rawtuple[kinfo_proc_map['sys_time']],
-            rawtuple[kinfo_proc_map['ch_user_time']],
-            rawtuple[kinfo_proc_map['ch_sys_time']],
+            d["user_time"], d["sys_time"], d["ch_user_time"], d["ch_sys_time"]
         )
 
     if FREEBSD:
 
         @wrap_exceptions
         def cpu_num(self):
-            return self.oneshot()[kinfo_proc_map['cpunum']]
+            return self.oneshot()["cpunum"]
 
     @wrap_exceptions
     def memory_info(self):
-        rawtuple = self.oneshot()
+        d = self.oneshot()
         return ntp.pmem(
-            rawtuple[kinfo_proc_map['rss']],
-            rawtuple[kinfo_proc_map['vms']],
-            rawtuple[kinfo_proc_map['memtext']],
-            rawtuple[kinfo_proc_map['memdata']],
-            rawtuple[kinfo_proc_map['memstack']],
+            d["rss"], d["vms"], d["memtext"], d["memdata"], d["memstack"]
         )
 
     memory_full_info = memory_info
 
     @wrap_exceptions
     def create_time(self, monotonic=False):
-        ctime = self.oneshot()[kinfo_proc_map['create_time']]
+        ctime = self.oneshot()["create_time"]
         if NETBSD and not monotonic:
             # NetBSD: ctime subject to system clock updates.
             ctime = adjust_proc_create_time(ctime)
@@ -751,19 +704,13 @@ class Process:
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        rawtuple = self.oneshot()
-        return ntp.pctxsw(
-            rawtuple[kinfo_proc_map['ctx_switches_vol']],
-            rawtuple[kinfo_proc_map['ctx_switches_unvol']],
-        )
+        d = self.oneshot()
+        return ntp.pctxsw(d["ctx_switches_vol"], d["ctx_switches_unvol"])
 
     @wrap_exceptions
     def page_faults(self):
-        rawtuple = self.oneshot()
-        return ntp.ppagefaults(
-            rawtuple[kinfo_proc_map['min_faults']],
-            rawtuple[kinfo_proc_map['maj_faults']],
-        )
+        d = self.oneshot()
+        return ntp.ppagefaults(d["min_faults"], d["maj_faults"])
 
     @wrap_exceptions
     def threads(self):
@@ -816,19 +763,14 @@ class Process:
 
     @wrap_exceptions
     def status(self):
-        code = self.oneshot()[kinfo_proc_map['status']]
+        code = self.oneshot()["status"]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def io_counters(self):
-        rawtuple = self.oneshot()
-        return ntp.pio(
-            rawtuple[kinfo_proc_map['read_io_count']],
-            rawtuple[kinfo_proc_map['write_io_count']],
-            -1,
-            -1,
-        )
+        d = self.oneshot()
+        return ntp.pio(d["read_io_count"], d["write_io_count"], -1, -1)
 
     @wrap_exceptions
     def cwd(self):
