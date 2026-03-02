@@ -774,8 +774,8 @@ class Process:
                     "WorkingSetSize": info["WorkingSetSize"],
                     "QuotaPeakPagedPoolUsage": info["QuotaPeakPagedPoolUsage"],
                     "QuotaPagedPoolUsage": info["QuotaPagedPoolUsage"],
-                    'QuotaPeakNonPagedPoolUsage': info[
-                        'QuotaPeakNonPagedPoolUsage'
+                    "QuotaPeakNonPagedPoolUsage": info[
+                        "QuotaPeakNonPagedPoolUsage"
                     ],
                     "QuotaNonPagedPoolUsage": info["QuotaNonPagedPoolUsage"],
                     "PagefileUsage": info["PagefileUsage"],
