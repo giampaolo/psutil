@@ -43,9 +43,7 @@ PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
 PyObject *psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args);
-#ifdef RUSAGE_INFO_V4
 PyObject *psutil_proc_memory_peak_rss(PyObject *self, PyObject *args);
-#endif
 PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_net_connections(PyObject *self, PyObject *args);

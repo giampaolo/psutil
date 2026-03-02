@@ -23,9 +23,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_exe", psutil_proc_exe, METH_VARARGS},
     {"proc_is_zombie", psutil_proc_is_zombie, METH_VARARGS},
     {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS},
-#ifdef RUSAGE_INFO_V4
     {"proc_memory_peak_rss", psutil_proc_memory_peak_rss, METH_VARARGS},
-#endif
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
     {"proc_name", psutil_proc_name, METH_VARARGS},
     {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},

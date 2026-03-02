@@ -268,26 +268,32 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
 
 
 /*
- * Return peak RSS of the process via proc_pid_rusage() +
- * RUSAGE_INFO_V4 (macOS 10.12+). ri_resident_size_max is the high-water
- * mark of resident memory over the process lifetime.
- * RUSAGE_INFO_V4 may not be available on older SDKs.
+ * Return peak RSS (high-water mark) of the process via
+ * task_info(MACH_TASK_BASIC_INFO). mach_task_basic_info.resident_size_max
+ * is the maximum resident memory size over the process lifetime.
  */
-#ifdef RUSAGE_INFO_V4
 PyObject *
 psutil_proc_memory_peak_rss(PyObject *self, PyObject *args) {
     pid_t pid;
-    struct rusage_info_v4 ri;
+    mach_port_t task = MACH_PORT_NULL;
+    kern_return_t kr;
+    struct mach_task_basic_info info;
+    mach_msg_type_number_t info_count = MACH_TASK_BASIC_INFO_COUNT;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
-    if (proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&ri) != 0) {
-        psutil_oserror();
+    if (psutil_task_for_pid(pid, &task) != 0)
+        return NULL;
+    kr = task_info(
+        task, MACH_TASK_BASIC_INFO, (task_info_t)&info, &info_count
+    );
+    mach_port_deallocate(mach_task_self(), task);
+    if (kr != KERN_SUCCESS) {
+        psutil_runtime_error("task_info(MACH_TASK_BASIC_INFO) syscall failed");
         return NULL;
     }
-    return PyLong_FromUnsignedLongLong(ri.ri_resident_size_max);
+    return PyLong_FromUnsignedLongLong(info.resident_size_max);
 }
-#endif
 
 
 /*
