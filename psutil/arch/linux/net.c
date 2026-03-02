@@ -93,11 +93,12 @@ psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
         }
     }
     else {
-        if ((errno == EOPNOTSUPP) || (errno == EINVAL)) {
+        if ((errno == EOPNOTSUPP) || (errno == EINVAL) || (errno == EBUSY)) {
             // EOPNOTSUPP may occur in case of wi-fi cards.
             // For EINVAL see:
             // https://github.com/giampaolo/psutil/issues/797
             //     #issuecomment-202999532
+            // EBUSY may occur with broken drivers or busy devices.
             duplex = DUPLEX_UNKNOWN;
             speed = 0;
         }
