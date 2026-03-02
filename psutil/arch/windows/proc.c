@@ -320,20 +320,23 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process memory information as a Python tuple.
+ * Return process memory information as a Python dict.
  */
 PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD pid;
     PROCESS_MEMORY_COUNTERS_EX cnt;
+    PyObject *dict = PyDict_New();
 
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+    if (!dict)
         return NULL;
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
 
     hProcess = psutil_handle_from_pid(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess)
-        return NULL;
+        goto error;
 
     if (!GetProcessMemoryInfo(
             hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt, sizeof(cnt)
@@ -341,23 +344,27 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     {
         psutil_oserror();
         CloseHandle(hProcess);
-        return NULL;
+        goto error;
     }
     CloseHandle(hProcess);
 
-    return Py_BuildValue(
-        "(KKKKKKKKKK)",
-        (unsigned long long)cnt.PageFaultCount,
-        (unsigned long long)cnt.PeakWorkingSetSize,
-        (unsigned long long)cnt.WorkingSetSize,
-        (unsigned long long)cnt.QuotaPeakPagedPoolUsage,
-        (unsigned long long)cnt.QuotaPagedPoolUsage,
-        (unsigned long long)cnt.QuotaPeakNonPagedPoolUsage,
-        (unsigned long long)cnt.QuotaNonPagedPoolUsage,
-        (unsigned long long)cnt.PagefileUsage,
-        (unsigned long long)cnt.PeakPagefileUsage,
-        (unsigned long long)cnt.PrivateUsage
-    );
+    // clang-format off
+    if (!psutil_dict_add(dict, "PageFaultCount", "K", (unsigned long long)cnt.PageFaultCount)) goto error;
+    if (!psutil_dict_add(dict, "PeakWorkingSetSize", "K", (unsigned long long)cnt.PeakWorkingSetSize)) goto error;
+    if (!psutil_dict_add(dict, "WorkingSetSize", "K", (unsigned long long)cnt.WorkingSetSize)) goto error;
+    if (!psutil_dict_add(dict, "QuotaPeakPagedPoolUsage", "K", (unsigned long long)cnt.QuotaPeakPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "QuotaPagedPoolUsage", "K", (unsigned long long)cnt.QuotaPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "QuotaPeakNonPagedPoolUsage", "K", (unsigned long long)cnt.QuotaPeakNonPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "QuotaNonPagedPoolUsage", "K", (unsigned long long)cnt.QuotaNonPagedPoolUsage)) goto error;
+    if (!psutil_dict_add(dict, "PagefileUsage", "K", (unsigned long long)cnt.PagefileUsage)) goto error;
+    if (!psutil_dict_add(dict, "PeakPagefileUsage", "K", (unsigned long long)cnt.PeakPagefileUsage)) goto error;
+    if (!psutil_dict_add(dict, "PrivateUsage", "K", (unsigned long long)cnt.PrivateUsage)) goto error;
+    return dict;
+    // clang-format on
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
 
 

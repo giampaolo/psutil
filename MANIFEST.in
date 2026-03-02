@@ -53,6 +53,7 @@ include psutil/arch/all/init.c
 include psutil/arch/all/init.h
 include psutil/arch/all/pids.c
 include psutil/arch/all/str.c
+include psutil/arch/all/utils.c
 include psutil/arch/bsd/cpu.c
 include psutil/arch/bsd/disk.c
 include psutil/arch/bsd/heap.c

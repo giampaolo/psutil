@@ -795,18 +795,24 @@ class Process:
                 # to get this from cext.proc_info()
                 debug("attempting memory_info() fallback (slower)")
                 info = self._proc_info()
-                return (
-                    info[pinfo_map['num_page_faults']],
-                    info[pinfo_map['peak_wset']],
-                    info[pinfo_map['wset']],
-                    info[pinfo_map['peak_paged_pool']],
-                    info[pinfo_map['paged_pool']],
-                    info[pinfo_map['peak_non_paged_pool']],
-                    info[pinfo_map['non_paged_pool']],
-                    info[pinfo_map['pagefile']],
-                    info[pinfo_map['peak_pagefile']],
-                    info[pinfo_map['mem_private']],
-                )
+                return {
+                    'PageFaultCount': info[pinfo_map['num_page_faults']],
+                    'PeakWorkingSetSize': info[pinfo_map['peak_wset']],
+                    'WorkingSetSize': info[pinfo_map['wset']],
+                    'QuotaPeakPagedPoolUsage': info[
+                        pinfo_map['peak_paged_pool']
+                    ],
+                    'QuotaPagedPoolUsage': info[pinfo_map['paged_pool']],
+                    'QuotaPeakNonPagedPoolUsage': info[
+                        pinfo_map['peak_non_paged_pool']
+                    ],
+                    'QuotaNonPagedPoolUsage': info[
+                        pinfo_map['non_paged_pool']
+                    ],
+                    'PagefileUsage': info[pinfo_map['pagefile']],
+                    'PeakPagefileUsage': info[pinfo_map['peak_pagefile']],
+                    'PrivateUsage': info[pinfo_map['mem_private']],
+                }
             raise
 
     @wrap_exceptions
@@ -814,10 +820,21 @@ class Process:
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage.
         # Underlying C function returns fields of PROCESS_MEMORY_COUNTERS
         # struct.
-        t = self._get_raw_meminfo()
-        rss = t[2]  # wset
-        vms = t[7]  # pagefile
-        return ntp.pmem(*(rss, vms) + t)
+        d = self._get_raw_meminfo()
+        return ntp.pmem(
+            rss=d['WorkingSetSize'],
+            vms=d['PagefileUsage'],
+            num_page_faults=d['PageFaultCount'],
+            peak_wset=d['PeakWorkingSetSize'],
+            wset=d['WorkingSetSize'],
+            peak_paged_pool=d['QuotaPeakPagedPoolUsage'],
+            paged_pool=d['QuotaPagedPoolUsage'],
+            peak_nonpaged_pool=d['QuotaPeakNonPagedPoolUsage'],
+            nonpaged_pool=d['QuotaNonPagedPoolUsage'],
+            pagefile=d['PagefileUsage'],
+            peak_pagefile=d['PeakPagefileUsage'],
+            private=d['PrivateUsage'],
+        )
 
     @wrap_exceptions
     def memory_full_info(self):

@@ -130,6 +130,7 @@ int str_format(char *buf, size_t size, const char *fmt, ...);
 
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
+int psutil_dict_add(PyObject *dict, const char *key, const char *fmt, ...);
 
 // ====================================================================
 // --- Exposed to Python
