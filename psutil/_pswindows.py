@@ -711,15 +711,15 @@ class Process:
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self._proc_info.cache_activate(self)
+        self._oneshot.cache_activate(self)
         self.exe.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_info.cache_deactivate(self)
+        self._oneshot.cache_deactivate(self)
         self.exe.cache_deactivate(self)
 
     @memoize_when_activated
-    def _proc_info(self):
+    def _oneshot(self):
         """Return multiple information about this process as a
         raw tuple.
         """
@@ -794,7 +794,7 @@ class Process:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
                 debug("attempting memory_info() fallback (slower)")
-                info = self._proc_info()
+                info = self._oneshot()
                 return (
                     info[pinfo_map['num_page_faults']],
                     info[pinfo_map['peak_wset']],
@@ -923,12 +923,12 @@ class Process:
                 if fast_only:
                     raise
                 debug("attempting create_time() fallback (slower)")
-                return self._proc_info()[pinfo_map['create_time']]
+                return self._oneshot()[pinfo_map['create_time']]
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_info()[pinfo_map['num_threads']]
+        return self._oneshot()[pinfo_map['num_threads']]
 
     @wrap_exceptions
     def threads(self):
@@ -947,7 +947,7 @@ class Process:
             if not is_permission_err(err):
                 raise
             debug("attempting cpu_times() fallback (slower)")
-            info = self._proc_info()
+            info = self._oneshot()
             user = info[pinfo_map['user_time']]
             system = info[pinfo_map['kernel_time']]
         # Children user/system times are not retrievable (set to 0).
@@ -1031,7 +1031,7 @@ class Process:
             if not is_permission_err(err):
                 raise
             debug("attempting io_counters() fallback (slower)")
-            info = self._proc_info()
+            info = self._oneshot()
             ret = (
                 info[pinfo_map['io_rcount']],
                 info[pinfo_map['io_wcount']],
@@ -1091,11 +1091,11 @@ class Process:
         except OSError as err:
             if is_permission_err(err):
                 debug("attempting num_handles() fallback (slower)")
-                return self._proc_info()[pinfo_map['num_handles']]
+                return self._oneshot()[pinfo_map['num_handles']]
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = self._proc_info()[pinfo_map['ctx_switches']]
+        ctx_switches = self._oneshot()[pinfo_map['ctx_switches']]
         # only voluntary ctx switches are supported
         return ntp.pctxsw(ctx_switches, 0)

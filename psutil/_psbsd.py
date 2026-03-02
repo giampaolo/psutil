@@ -600,7 +600,7 @@ class Process:
     @memoize_when_activated
     def oneshot(self):
         """Retrieves multiple process info in one shot as a raw tuple."""
-        ret = cext.proc_oneshot_info(self.pid)
+        ret = cext.proc_oneshot_kinfo(self.pid)
         assert len(ret) == len(kinfo_proc_map)
         return ret
 
