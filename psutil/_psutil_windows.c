@@ -58,7 +58,7 @@ static PyMethodDef PsutilMethods[] = {
     {"proc_wait", psutil_proc_wait, METH_VARARGS},
 
     // --- alternative pinfo interface
-    {"proc_info", psutil_proc_info, METH_VARARGS},
+    {"proc_info", psutil_proc_oneshot, METH_VARARGS},
 
     // --- system-related functions
     {"uptime", psutil_uptime, METH_VARARGS},

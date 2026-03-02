@@ -789,7 +789,7 @@ error:
  * - memory_info() (fallback)
  */
 PyObject *
-psutil_proc_info(PyObject *self, PyObject *args) {
+psutil_proc_oneshot(PyObject *self, PyObject *args) {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
