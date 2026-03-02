@@ -1695,23 +1695,10 @@ Process class
 
     - **peak_rss** *(BSD)*: peak resident set size ("high water mark").
 
-    - **wset** *(Windows, deprecated)*: deprecated alias for ``rss``.
-      Use ``rss`` instead.
-
-    - **peak_wset** *(Windows, deprecated)*: deprecated alias for ``peak_rss``.
-      Use ``peak_rss`` instead.
-
-    - **pagefile** *(Windows, deprecated)*: deprecated alias for ``vms``.
-      Use ``vms`` instead.
-
-    - **peak_pagefile** *(Windows, deprecated)*: deprecated alias for
-      ``peak_vms``. Use ``peak_vms`` instead.
-
-    - **private** *(Windows, deprecated)*: deprecated alias for ``vms``.
-      Use ``vms`` instead.
-
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
-    structure doc. Example on Linux:
+    doc.
+
+    Example on Linux:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1726,14 +1713,12 @@ Process class
       :meth:`page_faults` method instead.
 
     .. versionchanged::
-      7.3.0 BSD: adds *peak_rss*
+      7.3.0 BSD: added *peak_rss*
 
     .. versionchanged::
-      7.3.0 Windows: *wset* is deprecated; use *rss* instead.
-      *peak_wset* is deprecated and renamed to *peak_rss*.
-      *pagefile* is deprecated; use *vms* instead.
-      *peak_pagefile* is deprecated and renamed to *peak_vms*.
-      *private* is deprecated; use *vms* instead.
+      7.3.0 Windows: several fields were deprecated and turned into aliases:
+      *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and *private* →
+      *vms*, *peak_pagefile* → *peak_vms*.
 
   .. method:: memory_info2()
 
@@ -1776,7 +1761,7 @@ Process class
       (``VirtualSize`` from ``SYSTEM_PROCESS_INFORMATION``).
     - **peak_virtual** *(Windows)*: peak virtual address space size.
 
-    .. versionadded:: 7.X.X
+    .. versionadded:: 7.3.0
 
   .. method:: memory_full_info()
 
