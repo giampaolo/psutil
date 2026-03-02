@@ -91,7 +91,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
  * as a Python tuple.
  */
 static PyObject *
-psutil_proc_basic_info(PyObject *self, PyObject *args) {
+psutil_proc_oneshot(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
@@ -940,11 +940,11 @@ error:
 static PyMethodDef PsutilMethods[] = {
     // --- process-related functions
     {"proc_args", psutil_proc_args, METH_VARARGS},
-    {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS},
     {"proc_cred", psutil_proc_cred, METH_VARARGS},
     {"proc_environ", psutil_proc_environ, METH_VARARGS},
     {"proc_name", psutil_proc_name, METH_VARARGS},
+    {"proc_oneshot", psutil_proc_oneshot, METH_VARARGS},
 #ifdef CURR_VERSION_THREAD
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
 #endif

@@ -68,7 +68,7 @@ convert_status(struct extern_proc *p, struct eproc *e) {
  * information.
  */
 PyObject *
-psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
+psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     pid_t pid;
     int status;
     struct kinfo_proc kp;
@@ -120,7 +120,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
  * processes.
  */
 PyObject *
-psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
+psutil_proc_oneshot_pidtaskinfo(PyObject *self, PyObject *args) {
     pid_t pid;
     struct proc_taskinfo pti;
     unsigned long maj_faults;

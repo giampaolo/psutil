@@ -43,7 +43,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
  * as a Python tuple.
  */
 PyObject *
-psutil_proc_basic_info(PyObject *self, PyObject *args) {
+psutil_proc_oneshot(PyObject *self, PyObject *args) {
     int pid;
     char path[1000];
     psinfo_t info;

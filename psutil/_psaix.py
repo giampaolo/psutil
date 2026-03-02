@@ -326,17 +326,17 @@ class Process:
         self._procfs_path = get_procfs_path()
 
     def oneshot_enter(self):
-        self._proc_basic_info.cache_activate(self)
+        self._proc_oneshot.cache_activate(self)
         self._proc_cred.cache_activate(self)
 
     def oneshot_exit(self):
-        self._proc_basic_info.cache_deactivate(self)
+        self._proc_oneshot.cache_deactivate(self)
         self._proc_cred.cache_deactivate(self)
 
     @wrap_exceptions
     @memoize_when_activated
-    def _proc_basic_info(self):
-        return cext.proc_basic_info(self.pid, self._procfs_path)
+    def _proc_oneshot(self):
+        return cext.proc_oneshot(self.pid, self._procfs_path)
 
     @wrap_exceptions
     @memoize_when_activated
@@ -390,11 +390,11 @@ class Process:
 
     @wrap_exceptions
     def create_time(self):
-        return self._proc_basic_info()[proc_info_map['create_time']]
+        return self._proc_oneshot()[proc_info_map['create_time']]
 
     @wrap_exceptions
     def num_threads(self):
-        return self._proc_basic_info()[proc_info_map['num_threads']]
+        return self._proc_oneshot()[proc_info_map['num_threads']]
 
     if HAS_THREADS:
 
@@ -438,7 +438,7 @@ class Process:
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = self._proc_basic_info()[proc_info_map['ppid']]
+        self._ppid = self._proc_oneshot()[proc_info_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
@@ -458,7 +458,7 @@ class Process:
 
     @wrap_exceptions
     def terminal(self):
-        ttydev = self._proc_basic_info()[proc_info_map['ttynr']]
+        ttydev = self._proc_oneshot()[proc_info_map['ttynr']]
         # convert from 64-bit dev_t to 32-bit dev_t and then map the device
         ttydev = ((ttydev & 0x0000FFFF00000000) >> 16) | (ttydev & 0xFFFF)
         # try to match rdev of /dev/pts/* files ttydev
@@ -479,7 +479,7 @@ class Process:
 
     @wrap_exceptions
     def memory_info(self):
-        ret = self._proc_basic_info()
+        ret = self._proc_oneshot()
         rss = ret[proc_info_map['rss']] * 1024
         vms = ret[proc_info_map['vms']] * 1024
         return ntp.pmem(rss, vms)
@@ -488,7 +488,7 @@ class Process:
 
     @wrap_exceptions
     def status(self):
-        code = self._proc_basic_info()[proc_info_map['status']]
+        code = self._proc_oneshot()[proc_info_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 

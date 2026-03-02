@@ -46,7 +46,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_environ", psutil_proc_environ, METH_VARARGS},
     {"proc_name", psutil_proc_name, METH_VARARGS},
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS},
-    {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS},
+    {"proc_oneshot_kinfo", psutil_proc_oneshot_kinfo, METH_VARARGS},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS},
     {"proc_threads", psutil_proc_threads, METH_VARARGS},
 #if defined(PSUTIL_FREEBSD) || defined(PSUTIL_NETBSD)
