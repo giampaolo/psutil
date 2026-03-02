@@ -31,6 +31,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memtext;
     long memdata;
     long memstack;
+    long peak_rss;
     int oncpu;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 kp;
@@ -69,6 +70,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     memtext = (long)kp.ki_tsize * pagesize;
     memdata = (long)kp.ki_dsize * pagesize;
     memstack = (long)kp.ki_ssize * pagesize;
+    // ru_maxrss is in KB on FreeBSD
+    peak_rss = kp.ki_rusage.ru_maxrss * 1024;
 #else
     rss = (long)kp.p_vm_rssize * pagesize;
 #ifdef PSUTIL_OPENBSD
@@ -85,6 +88,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     memtext = (long)kp.p_vm_tsize * pagesize;
     memdata = (long)kp.p_vm_dsize * pagesize;
     memstack = (long)kp.p_vm_ssize * pagesize;
+    // p_uru_maxrss is in KB on OpenBSD/NetBSD
+    peak_rss = kp.p_uru_maxrss * 1024;
 #endif
 
 #ifdef PSUTIL_FREEBSD
@@ -117,9 +122,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     // Return a single big tuple with all process info.
     py_retlist = Py_BuildValue(
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 1200031
-        "(OillllllLdllllddddlllllbllO)",
+        "(OillllllLdllllddddlllllblllO)",
 #else
-        "(OillllllidllllddddlllllbllO)",
+        "(OillllllidllllddddlllllblllO)",
 #endif
 #ifdef PSUTIL_FREEBSD
         py_ppid,  // (pid_t) ppid
@@ -157,6 +162,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // page faults
         (long)kp.ki_rusage.ru_minflt,  // (long) minor page faults
         (long)kp.ki_rusage.ru_majflt,  // (long) major page faults
+        //
+        peak_rss,  // (long) peak rss
 #elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
         py_ppid,  // (pid_t) ppid
         (int)kp.p_stat,  // (int) status
@@ -195,6 +202,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // page faults
         (long)kp.p_uru_minflt,  // (long) minor page faults
         (long)kp.p_uru_majflt,  // (long) major page faults
+        //
+        peak_rss,  // (long) peak rss
 #endif
         py_name  // (pystr) name
     );

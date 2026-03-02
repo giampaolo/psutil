@@ -126,7 +126,8 @@ kinfo_proc_map = dict(
     cpunum=23,
     min_faults=24,
     maj_faults=25,
-    name=26,
+    peak_rss=26,
+    name=27,
 )
 
 
@@ -729,6 +730,7 @@ class Process:
             rawtuple[kinfo_proc_map['memtext']],
             rawtuple[kinfo_proc_map['memdata']],
             rawtuple[kinfo_proc_map['memstack']],
+            rawtuple[kinfo_proc_map['peak_rss']],
         )
 
     memory_full_info = memory_info

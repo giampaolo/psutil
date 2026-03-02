@@ -370,7 +370,7 @@ elif BSD:
     scputimes = nt("scputimes", ("user", "nice", "system", "idle", "irq"))
 
     # psutil.Process.memory_info()
-    pmem = nt("pmem", ("rss", "vms", "text", "data", "stack"))
+    pmem = nt("pmem", ("rss", "vms", "text", "data", "stack", "peak_rss"))
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
