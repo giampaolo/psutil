@@ -970,11 +970,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hProcess);
-#ifdef _WIN64
     return Py_BuildValue("K", (unsigned long long)proc_mask);
-#else
-    return Py_BuildValue("k", (unsigned long)proc_mask);
-#endif
 }
 
 
@@ -988,14 +984,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
 
-#ifdef _WIN64
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID "K", &pid, &mask))
-#else
-    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "k", &pid, &mask))
-#endif
-    {
         return NULL;
-    }
     hProcess = psutil_handle_from_pid(pid, access);
     if (hProcess == NULL)
         return NULL;
@@ -1158,15 +1148,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             );
             if (py_str == NULL)
                 goto error;
-#ifdef _WIN64
             py_tuple = Py_BuildValue(
                 "(KsOI)",
                 (unsigned long long)baseAddress,
-#else
-            py_tuple = Py_BuildValue(
-                "(ksOI)",
-                (unsigned long)baseAddress,
-#endif
                 get_region_protection_string(basicInfo.Protect),
                 py_str,
                 basicInfo.RegionSize
