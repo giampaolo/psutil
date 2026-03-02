@@ -60,7 +60,7 @@ convert_status(struct extern_proc *p, struct eproc *e) {
 
 
 /*
- * Return multiple process info as a Python tuple in one shot by
+ * Return multiple process info as a Python dict in one shot by
  * using sysctl() and filling up a kinfo_proc struct.
  * It should be possible to do this for all processes without
  * incurring into permission (EPERM) errors.
@@ -73,12 +73,14 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     int status;
     struct kinfo_proc kp;
     PyObject *py_name = NULL;
-    PyObject *py_retlist = NULL;
+    PyObject *dict = PyDict_New();
 
+    if (!dict)
+        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
+        goto error;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
+        goto error;
 
     py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
     if (!py_name) {
@@ -91,28 +93,32 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
 
     status = convert_status(&kp.kp_proc, &kp.kp_eproc);
 
-    py_retlist = Py_BuildValue(
-        _Py_PARSE_PID "llllllldiO",
-        kp.kp_eproc.e_ppid,  // (pid_t) ppid
-        (long)kp.kp_eproc.e_pcred.p_ruid,  // (long) real uid
-        (long)kp.kp_eproc.e_ucred.cr_uid,  // (long) effective uid
-        (long)kp.kp_eproc.e_pcred.p_svuid,  // (long) saved uid
-        (long)kp.kp_eproc.e_pcred.p_rgid,  // (long) real gid
-        (long)kp.kp_eproc.e_ucred.cr_groups[0],  // (long) effective gid
-        (long)kp.kp_eproc.e_pcred.p_svgid,  // (long) saved gid
-        (long long)kp.kp_eproc.e_tdev,  // (long long) tty nr
-        PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
-        status,  // (int) status
-        py_name  // (pystr) name
-    );
+    // clang-format off
+    if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.kp_eproc.e_ppid)) goto error;
+    if (!pydict_add(dict, "ruid", "l", (long)kp.kp_eproc.e_pcred.p_ruid)) goto error;
+    if (!pydict_add(dict, "euid", "l", (long)kp.kp_eproc.e_ucred.cr_uid)) goto error;
+    if (!pydict_add(dict, "suid", "l", (long)kp.kp_eproc.e_pcred.p_svuid)) goto error;
+    if (!pydict_add(dict, "rgid", "l", (long)kp.kp_eproc.e_pcred.p_rgid)) goto error;
+    if (!pydict_add(dict, "egid", "l", (long)kp.kp_eproc.e_ucred.cr_groups[0])) goto error;
+    if (!pydict_add(dict, "sgid", "l", (long)kp.kp_eproc.e_pcred.p_svgid)) goto error;
+    if (!pydict_add(dict, "ttynr", "l", (long)kp.kp_eproc.e_tdev)) goto error;
+    if (!pydict_add(dict, "ctime", "d", PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime))) goto error;
+    if (!pydict_add(dict, "status", "i", status)) goto error;
+    if (!pydict_add(dict, "name", "O", py_name)) goto error;
+    // clang-format on
 
     Py_DECREF(py_name);
-    return py_retlist;
+    return dict;
+
+error:
+    Py_XDECREF(py_name);
+    Py_DECREF(dict);
+    return NULL;
 }
 
 
 /*
- * Return multiple process info as a Python tuple in one shot by
+ * Return multiple process info as a Python dict in one shot by
  * using proc_pidinfo(PROC_PIDTASKINFO) and filling a proc_taskinfo
  * struct.
  * Contrarily from proc_kinfo above this function will fail with
@@ -125,40 +131,46 @@ psutil_proc_oneshot_pidtaskinfo(PyObject *self, PyObject *args) {
     struct proc_taskinfo pti;
     unsigned long maj_faults;
     unsigned long min_faults;
+    PyObject *dict = PyDict_New();
 
+    if (!dict)
+        return NULL;
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
-        return NULL;
+        goto error;
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
-        return NULL;
+        goto error;
 
     // matches getrusage().ru_majflt
     maj_faults = (unsigned long)pti.pti_pageins;
     // matches getrusage().ru_minflt
     min_faults = (unsigned long)pti.pti_faults - maj_faults;
 
-    return Py_BuildValue(
-        "(ddKKkkkk)",
-        // pti_total_user/system are in Mach ticks; hw.tbfrequency gives
-        // ticks/second and is not intercepted by Rosetta 2, unlike
-        // mach_timebase_info() which returns numer=1/denom=1 for x86_64
-        // processes on Apple Silicon, causing a 41.67x undercount there.
-        (double)pti.pti_total_user / PSUTIL_HW_TBFREQUENCY,  // cpu user time
-        (double)pti.pti_total_system / PSUTIL_HW_TBFREQUENCY,  // cpu sys time
-        // Note about memory: determining other mem stats on macOS is a mess:
-        // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
-        // I just give up.
-        // struct proc_regioninfo pri;
-        // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
-        pti.pti_resident_size,  // (uns long long) rss
-        pti.pti_virtual_size,  // (uns long long) vms
-        min_faults,
-        maj_faults,
-        (unsigned long)pti.pti_threadnum,  // num threads
-        // Unvoluntary not available on macOS. `pti_csw` refers to the
-        // sum of voluntary + involuntary. getrusage() numbers confirm
-        // this theory.
-        (unsigned long)pti.pti_csw  // voluntary ctx switches
-    );
+    // clang-format off
+    // pti_total_user/system are in Mach ticks; hw.tbfrequency gives
+    // ticks/second and is not intercepted by Rosetta 2, unlike
+    // mach_timebase_info() which returns numer=1/denom=1 for x86_64
+    // processes on Apple Silicon, causing a 41.67x undercount there.
+    if (!pydict_add(dict, "cpu_utime", "d", (double)pti.pti_total_user / PSUTIL_HW_TBFREQUENCY)) goto error;
+    if (!pydict_add(dict, "cpu_stime", "d", (double)pti.pti_total_system / PSUTIL_HW_TBFREQUENCY)) goto error;
+    // Note about memory: determining other mem stats on macOS is a mess:
+    // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
+    // I just give up.
+    if (!pydict_add(dict, "rss", "K", pti.pti_resident_size)) goto error;
+    if (!pydict_add(dict, "vms", "K", pti.pti_virtual_size)) goto error;
+    if (!pydict_add(dict, "minor_faults", "k", min_faults)) goto error;
+    if (!pydict_add(dict, "major_faults", "k", maj_faults)) goto error;
+    if (!pydict_add(dict, "num_threads", "k", (unsigned long)pti.pti_threadnum)) goto error;
+    // Unvoluntary not available on macOS. `pti_csw` refers to the
+    // sum of voluntary + involuntary. getrusage() numbers confirm
+    // this theory.
+    if (!pydict_add(dict, "volctxsw", "k", (unsigned long)pti.pti_csw)) goto error;
+    // clang-format on
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
 
 
