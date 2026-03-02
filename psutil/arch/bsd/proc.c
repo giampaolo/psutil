@@ -115,11 +115,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "real_gid", "l", (long)kp.ki_rgid)) goto error;
     if (!pydict_add(dict, "effective_gid", "l", (long)kp.ki_groups[0])) goto error;
     if (!pydict_add(dict, "saved_gid", "l", (long)kp.ki_svuid)) goto error;
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 1200031
-    if (!pydict_add(dict, "ttynr", "L", kp.ki_tdev)) goto error;
-#else
-    if (!pydict_add(dict, "ttynr", "i", (int)kp.ki_tdev)) goto error;
-#endif
+    if (!pydict_add(dict, "ttynr", "L", (unsigned long long)kp.ki_tdev)) goto error;
     if (!pydict_add(dict, "create_time", "d", PSUTIL_TV2DOUBLE(kp.ki_start))) goto error;
     if (!pydict_add(dict, "ctx_switches_vol", "l", kp.ki_rusage.ru_nvcsw)) goto error;
     if (!pydict_add(dict, "ctx_switches_unvol", "l", kp.ki_rusage.ru_nivcsw)) goto error;
@@ -131,7 +127,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "ch_sys_time", "d", PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime))) goto error;
     if (!pydict_add(dict, "min_faults", "l", (long)kp.ki_rusage.ru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.ki_rusage.ru_majflt)) goto error;
-#elif defined(PSUTIL_OPENBSD) || defined(PSUTIL_NETBSD)
+#else
+    // OpenBSD / NetBSD
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.p_ppid)) goto error;
     if (!pydict_add(dict, "status", "i", (int)kp.p_stat)) goto error;
     if (!pydict_add(dict, "real_uid", "l", (long)kp.p_ruid)) goto error;
@@ -155,6 +152,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "min_faults", "l", (long)kp.p_uru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.p_uru_majflt)) goto error;
 #endif
+
+    // all BSDs
     if (!pydict_add(dict, "rss", "l", rss)) goto error;
     if (!pydict_add(dict, "vms", "l", vms)) goto error;
     if (!pydict_add(dict, "memtext", "l", memtext)) goto error;
@@ -162,8 +161,8 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "memstack", "l", memstack)) goto error;
     if (!pydict_add(dict, "cpunum", "i", oncpu)) goto error;
     if (!pydict_add(dict, "name", "O", py_name)) goto error;
-    // clang-format on
 
+    // clang-format on
     Py_DECREF(py_name);
     return dict;
 
