@@ -371,7 +371,7 @@ class Process:
     @memoize_when_activated
     def _get_kinfo_proc(self):
         # Note: should work with all PIDs without permission issues.
-        ret = cext.proc_kinfo_oneshot(self.pid)
+        ret = cext.proc_oneshot_kinfo(self.pid)
         assert len(ret) == len(kinfo_proc_map)
         return ret
 
