@@ -1674,17 +1674,14 @@ Process class
     |         |         |       |         |     | private                      |
     +---------+---------+-------+---------+-----+------------------------------+
 
-    - **rss**: aka "Resident Set Size", this is the non-swapped physical
-      memory a process has used.
-      On UNIX it matches "top"'s RES column).
-      On Windows this is an alias for `wset` field and it matches "Mem Usage"
-      column of taskmgr.exe.
+    - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
+      a process has used. On UNIX it matches ``top`` RES column. On Windows
+      this is an alias for `wset` field and maps to ``WorkingSetSize``.
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
-      memory used by the process.
-      On UNIX it matches "top"'s VIRT column.
-      On Windows this is an alias for `pagefile` field and it matches
-      "Mem Usage" "VM Size" column of taskmgr.exe.
+      memory used by the process. On UNIX it matches ``top`` VIRT column. On
+      Windows this is an alias for `pagefile` field and maps to
+      ``PagefileUsage``.
 
     - **shared**: *(Linux)*
       memory that could be potentially shared with other processes.
@@ -1711,7 +1708,7 @@ Process class
       pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
 
     .. versionchanged::
-      4.0.0 multiple fields are returned, not only `rss` and `vms`.
+      4.0.0 multiple fields are returned, not only *rss* and *vms*.
 
     .. versionchanged::
       7.3.0 macOS: *pfaults* and *pageins* are no longer returned. Use
@@ -3247,10 +3244,10 @@ Timeline
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
-.. _`GetDriveType`: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdrivetypea
-.. _`GetExitCodeProcess`: https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
+.. _`GetDriveType`: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea
+.. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
-.. _`GetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
+.. _`GetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`hash`: https://docs.python.org/3/library/functions.html#hash
 .. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
@@ -3279,7 +3276,7 @@ Timeline
 .. _`os.setpriority`: https://docs.python.org/3/library/os.html#os.setpriority
 .. _`os.times`: https://docs.python.org//library/os.html#os.times
 .. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
-.. _`PROCESS_MEMORY_COUNTERS_EX`: https://docs.microsoft.com/en-us/windows/desktop/api/psapi/ns-psapi-_process_memory_counters_ex
+.. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
 .. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
 .. _`psleak`: https://github.com/giampaolo/psleak
@@ -3289,7 +3286,7 @@ Timeline
 .. _`select.poll`: https://docs.python.org//library/select.html#select.poll
 .. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
 .. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set.
-.. _`SetPriorityClass`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
+.. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
 .. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage.
 .. _`signal module`: https://docs.python.org//library/signal.html
 .. _`SOCK_DGRAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_DGRAM
@@ -3299,7 +3296,7 @@ Timeline
 .. _`subprocess.Popen.wait`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
-.. _`TerminateProcess`: https://docs.microsoft.com/en-us/windows/desktop/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess
 .. _`threading.get_ident`: https://docs.python.org/3/library/threading.html#threading.get_ident
 .. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
 .. _`Tidelift security contact`: https://tidelift.com/security
