@@ -1743,9 +1743,9 @@ Process class
       7.3.0 BSD: added *peak_rss*
 
     .. versionchanged::
-      7.3.0 Windows: several fields were deprecated and turned into aliases:
-      *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and *private* →
-      *vms*, *peak_pagefile* → *peak_vms*.
+      7.3.0 Windows: renamed several fields (old names are kept as deprecated
+      aliases): *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and
+      *private* → *vms*, *peak_pagefile* → *peak_vms*.
 
   .. method:: memory_info_ex()
 

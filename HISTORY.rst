@@ -7,6 +7,30 @@
 
 - 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
   namedtuple.
+- 2731_: Reorganization of process memory APIs.
+
+  - Add new `Process.memory_info_ex()`_ method, which extends
+    `Process.memory_info()`_ with platform-specific metrics:
+
+    - Linux: *peak_rss*, *peak_vms*, *rss_anon*, *rss_file*, *rss_shmem*,
+      *swap*, *hugetlb*
+    - macOS: *peak_rss*, *rss_anon*, *rss_file*, *wired*, *compressed*,
+      *phys_footprint*
+    - Windows: *virtual*, *peak_virtual*
+
+  - Add new `Process.memory_footprint()`_ method, which returns *uss*, *pss*
+    and *swap* metrics (what `Process.memory_full_info()`_ used to return,
+    which is now **deprecated**).
+
+  - macOS: `Process.memory_info()`_ no longer returns *pfaults* and *pageins*
+    fields. Use `Process.page_faults()`_ method instead.
+
+  - Windows: `Process.memory_info()`_ renamed several fields (old names are
+    kept as deprecated aliases): *wset* → *rss*, *peak_wset* → *peak_rss*,
+    *pagefile* → *vms*, *peak_pagefile* → *peak_vms*, *private* → *vms*.
+
+  - `Process.memory_full_info()`_ is **deprecated**. Use the new
+    `Process.memory_footprint()`_ instead.
 
 **Bug fixes**
 
@@ -19,8 +43,17 @@
 
 **Compatibility notes**
 
-- `Process.memory_info()`_ on macOS no longer returns *pfaults* and *pageins*
-  fields. Use `Process.page_faults()`_ method instead.
+- See 2731_ description above. Changes which break backwards compatibility are:
+
+  - macOS: `Process.memory_info()`_ no longer returns *pfaults* and *pageins*
+    fields (use `Process.page_faults()`_ method instead). Code that now breaks:
+    ``rss, vms, pfaults, pageins = Process().memory_info()``.
+
+  - Windows: `Process.memory_info()`_ renamed several fields and the named
+    tuple is shorter. Old names are kept as deprecated aliases, but if you rely
+    on indexing (e.g. ``Process.memory_info()[3]``) you should update your code
+    to use namedtuple attribute access instead (e.g.
+    ``Process.memory_info().rss``).
 
 7.2.3
 =====
@@ -2958,6 +2991,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.ionice()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.ionice
 .. _`Process.is_running()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.is_running
 .. _`Process.kill()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.kill
+.. _`Process.memory_footprint()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_footprint
 .. _`Process.memory_full_info()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_full_info
 .. _`Process.memory_info()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_info
 .. _`Process.memory_info_ex()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.memory_info_ex
