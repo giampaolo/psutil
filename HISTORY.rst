@@ -7,7 +7,7 @@
 
 - 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
   namedtuple.
-- 2731_: Reorganization of process memory APIs.
+- 2731_, 2736_, 2723_, 2733_: Reorganization of process memory APIs.
 
   - Add new `Process.memory_info_ex()`_ method, which extends
     `Process.memory_info()`_ with platform-specific metrics:
@@ -24,20 +24,20 @@
 
   - `Process.memory_info()`_ named tuple changed:
 
-    - Linux: no longer includes *lib* and *dirty* fields, which have been 0
-      since Linux 2.6. They remain as **deprecated** aliases that return 0 and
-      emit a `DeprecationWarning`.
+    - BSD: added *peak_rss*.
 
-    - macOS: no longer returns *pfaults* and *pageins* fields. Use
-      `Process.page_faults()`_ method instead.
+    - Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
+      aliases returning 0 and emitting `DeprecationWarning` are kept.
 
-    - Windows: renamed several fields (old names are kept as deprecated
-      aliases): *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* → *vms*,
-      *peak_pagefile* → *peak_vms*, *private* → *vms*.
+    - macOS: *pfaults* and *pageins* removed with **no
+      backward-compataliases**. Use `Process.page_faults()`_ instead.
+
+    - Windows: renamed fields (old names kept as deprecated aliases): *wset* →
+      *rss*, *peak_wset* → *peak_rss*, *pagefile* / *private* → *vms*,
+      *peak_pagefile* → *peak_vms*.
 
   - `Process.memory_full_info()`_ is **deprecated**. Use the new
     `Process.memory_footprint()`_ instead.
-
 
 **Bug fixes**
 
@@ -54,27 +54,10 @@ Changes that break backwards compatibility:
 
 - `Process.memory_info()`_:
 
-  - Linux: the *lib* and *dirty* fields are no longer returned. Code using
-    index-based unpacking like this will break:
-
-    ``rss, vms, shared, text, lib, data, dirty = Process().memory_info()``
-
-     Use attribute access instead:
-
-    ``Process().memory_info().dirty  # deprecated alias``
-
-  - macOS: the *pfaults* and *pageins* fields are no longer returned. Use the
-    `Process.page_faults()`_ method instead. Index-based unpacking like this
-    will break:
-
-    ``rss, vms, pfaults, pageins = Process().memory_info()``
-
-  - Windows: several fields were renamed and the named tuple is shorter. Old
-    names remain as deprecated aliases, but if you rely on indexing
-    (e.g., ``Process.memory_info()[3]``), update your code to use namedtuple
-    attribute access instead:
-
-    ``Process.memory_info().rss``
+  - The returned named tuple changed size and field order.
+    Positional access (e.g. ``p.memory_info()[3]`` or ``a, b, c =
+    p.memory_info()``) may break or silently return the wrong field. Always use
+    attribute access instead (e.g. ``p.memory_info().rss``).
 
 7.2.3
 =====
