@@ -339,7 +339,33 @@ Memory
   Return statistics about system memory usage as a named tuple including the
   following fields, expressed in bytes.
 
-  Main metrics:
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | Linux     | macOS     | BSD       | Windows   | Solaris   | AIX       |
+  +===========+===========+===========+===========+===========+===========+
+  | total     | total     | total     | total     | total     | total     |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | available | available | available | available | available | available |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | percent   | percent   | percent   | percent   | percent   | percent   |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | used      | used      | used      | used      | used      | used      |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | free      | free      | free      | free      | free      | free      |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | active    | active    | active    |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | inactive  | inactive  | inactive  |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | buffers   |           | buffers   |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | cached    |           | cached    |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | shared    |           | shared    |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | slab      |           |           |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  |           | wired     | wired     |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
 
   - **total**: total physical memory (exclusive swap).
   - **available**: the memory that can be given instantly to processes without
@@ -348,9 +374,6 @@ Memory
     on the platform. It is supposed to be used to monitor actual memory usage
     in a cross platform fashion.
   - **percent**: the percentage usage calculated as ``(total - available) / total * 100``.
-
-  Other metrics:
-
   - **used**: memory used, calculated differently depending on the platform and
     designed for informational purposes only. **total - free** does not
     necessarily match **used**.
@@ -358,15 +381,15 @@ Memory
     note that this doesn't reflect the actual memory available (use
     **available** instead). **total - used** does not necessarily match
     **free**.
-  - **active** *(UNIX)*: memory currently in use or very recently used, and so
-    it is in RAM.
-  - **inactive** *(UNIX)*: memory that is marked as not used.
+  - **active** *(Linux, macOS, BSD)*: memory currently in use or very recently
+    used, and so it is in RAM.
+  - **inactive** *(Linux, macOS, BSD)*: memory that is marked as not used.
   - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
   - **cached** *(Linux, BSD)*: cache for various things.
   - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
     multiple processes.
   - **slab** *(Linux)*: in-kernel data structures cache.
-  - **wired** *(BSD, macOS)*: memory that is marked to always stay in RAM. It is
+  - **wired** *(macOS, BSD)*: memory that is marked to always stay in RAM. It is
     never moved to disk.
 
   The sum of **used** and **available** does not necessarily equal **total**.
