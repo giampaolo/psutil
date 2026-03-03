@@ -403,7 +403,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp.tcpConnEntryInfo.ce_state;
 
                 // add item
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiNNiI)",
                         -1,
@@ -452,7 +452,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp6.tcp6ConnEntryInfo.ce_state;
 
                 // add item
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiNNiI)",
                         -1,
@@ -495,7 +495,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiNNiI)",
                         -1,
@@ -531,7 +531,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiNNiI)",
                         -1,

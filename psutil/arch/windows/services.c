@@ -186,7 +186,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             goto error;
 
         // Construct the result.
-        if (!pylist_append(py_retlist, "(OO)", py_name, py_display_name))
+        if (!pylist_append_fmt(py_retlist, "(OO)", py_name, py_display_name))
             goto error;
         Py_DECREF(py_display_name);
         Py_DECREF(py_name);

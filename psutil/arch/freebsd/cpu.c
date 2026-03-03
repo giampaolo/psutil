@@ -56,7 +56,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     for (int i = 0; i < ncpu; i++) {
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(ddddd)",
                 (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,

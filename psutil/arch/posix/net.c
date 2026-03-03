@@ -179,7 +179,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
         if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(siOOOO)",
                 ifa->ifa_name,

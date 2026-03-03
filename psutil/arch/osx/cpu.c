@@ -306,7 +306,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     cpu_load_info = (processor_cpu_load_info_data_t *)info_array;
 
     for (natural_t i = 0; i < cpu_count; i++) {
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(dddd)",
                 (double)cpu_load_info[i].cpu_ticks[CPU_STATE_USER] / CLK_TCK,

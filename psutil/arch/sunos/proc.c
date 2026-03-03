@@ -578,7 +578,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         py_path = PyUnicode_DecodeFSDefault(name);
         if (!py_path)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "kksOkkk",
                 (unsigned long)p->pr_vaddr,

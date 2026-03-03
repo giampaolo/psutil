@@ -134,7 +134,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         // we return only busy kernel time subtracting
         // idle time from kernel time
         systemt = kernel - idle;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist, "(ddddd)", user, systemt, idle, interrupt, dpc
             ))
             goto error;

@@ -94,7 +94,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         py_mountp = PyUnicode_DecodeFSDefault(mt.mnt_mountp);
         if (!py_mountp)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(OOss)",
                 py_dev,  // device

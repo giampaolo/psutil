@@ -123,7 +123,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
 
             // populate tuple and list
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiNNil)",
                     kif->fd_fd,
@@ -146,7 +146,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (!py_lpath)
                 goto error;
 
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiOsil)",
                     kif->fd_fd,

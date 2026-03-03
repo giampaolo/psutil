@@ -213,7 +213,7 @@ psutil_gather_inet(
             py_raddr = Py_BuildValue("()");
         if (!py_raddr)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "iiiNNi" _Py_PARSE_PID,
                 xf->xf_fd,  // fd
@@ -329,7 +329,7 @@ psutil_gather_unix(
         if (!py_lpath)
             goto error;
 
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(iiiOsii)",
                 xf->xf_fd,  // fd

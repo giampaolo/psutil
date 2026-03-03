@@ -160,7 +160,7 @@ psutil_users(PyObject *self, PyObject *args) {
         if (py_username == NULL)
             goto error;
 
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "OOd",
                 py_username,

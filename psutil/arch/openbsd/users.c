@@ -44,7 +44,7 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(ut.ut_host);
         if (!py_hostname)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(OOOdO)",
                 py_username,  // username

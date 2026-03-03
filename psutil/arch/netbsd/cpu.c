@@ -70,7 +70,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         mib[2] = i;
         if (psutil_sysctl(mib, 3, &cpu_time, sizeof(cpu_time)) != 0)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(ddddd)",
                 (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,

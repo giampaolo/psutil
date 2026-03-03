@@ -447,7 +447,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         }
 
         basic_info_th = (thread_basic_info_t)thinfo_basic;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "Iff",
                 j + 1,
@@ -566,7 +566,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
             if (!py_path)
                 goto error;
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist, "(Oi)", py_path, (int)fdp_pointer->proc_fd
                 ))
             {
@@ -770,7 +770,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_raddr)
                     goto error;
 
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiNNi)",
                         fd,
@@ -798,7 +798,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_raddr)
                     goto error;
 
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiOOi)",
                         fd,

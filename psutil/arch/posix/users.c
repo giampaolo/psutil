@@ -70,7 +70,7 @@ psutil_users(PyObject *self, PyObject *args) {
         if (!py_hostname)
             goto error;
 
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "OOOd" _Py_PARSE_PID,
                 py_username,  // username

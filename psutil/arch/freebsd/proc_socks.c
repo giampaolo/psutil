@@ -339,7 +339,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                     py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiNNi)",
                         kif->kf_fd,
@@ -378,7 +378,7 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_laddr)
                     goto error;
 
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(iiiOsi)",
                         kif->kf_fd,

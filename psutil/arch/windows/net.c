@@ -212,7 +212,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
             if (py_mac_address == NULL)
                 goto error;
 
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(OiOOOO)",
                     py_nic_name,
@@ -294,7 +294,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     py_netmask = Py_None;
                 }
 
-                if (!pylist_append(
+                if (!pylist_append_fmt(
                         py_retlist,
                         "(OiOOOO)",
                         py_nic_name,

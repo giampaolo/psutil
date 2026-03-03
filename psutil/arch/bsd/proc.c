@@ -403,7 +403,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             py_path = PyUnicode_DecodeFSDefault(path);
             if (!py_path)
                 goto error;
-            if (!pylist_append(py_retlist, "(Oi)", py_path, fd))
+            if (!pylist_append_fmt(py_retlist, "(Oi)", py_path, fd))
                 goto error;
             Py_CLEAR(py_path);
         }

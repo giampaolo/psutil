@@ -108,7 +108,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kp[i].p_tid < 0)
             continue;
         if (kp[i].p_pid == pid) {
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     _Py_PARSE_PID "dd",
                     kp[i].p_tid,

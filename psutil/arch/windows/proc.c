@@ -591,7 +591,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
              * process has executed in user/kernel mode I borrowed the code
              * below from Python's Modules/posixmodule.c
              */
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "kdd",
                     te32.th32ThreadID,
@@ -1143,7 +1143,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             );
             if (py_str == NULL)
                 goto error;
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(KsOI)",
                     (unsigned long long)baseAddress,

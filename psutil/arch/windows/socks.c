@@ -217,7 +217,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiNNiI)",
                     -1,
@@ -303,7 +303,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiNNiI)",
                     -1,
@@ -363,7 +363,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiNNiI)",
                     -1,
@@ -423,7 +423,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiNNiI)",
                     -1,

@@ -317,7 +317,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                             mp_path, sizeof(mp_path), mp_buf
                         );  // append mount point
 
-                        if (!pylist_append(
+                        if (!pylist_append_fmt(
                                 py_retlist,
                                 "(ssss)",
                                 drive_letter,
@@ -344,7 +344,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             str_append(opts, sizeof(opts), ",");
         str_append(opts, sizeof(opts), psutil_get_drive_type(type));
 
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(ssss)",
                 drive_letter,

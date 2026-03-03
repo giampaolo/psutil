@@ -327,7 +327,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (threadt[i].pid != pid)
             continue;
 
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "Idd",
                 threadt[i].tid,
@@ -501,7 +501,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         py_mountp = PyUnicode_DecodeFSDefault(mt->mnt_dir);
         if (!py_mountp)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(OOss)",
                 py_dev,  // device
@@ -726,7 +726,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < ncpu; i++) {
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "(dddd)",
                 (double)cpu[i].user / ticks,

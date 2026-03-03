@@ -6,7 +6,7 @@
 // it to a list. Returns 1 on success, 0 on failure with a Python
 // exception set.
 int
-pylist_append(PyObject *list, const char *fmt, ...) {
+pylist_append_fmt(PyObject *list, const char *fmt, ...) {
     int ret = 0;  // 0 = failure
     PyObject *obj = NULL;
     va_list ap;

@@ -421,7 +421,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             }
 
             // append tuple to list
-            if (!pylist_append(
+            if (!pylist_append_fmt(
                     py_retlist,
                     "(iiiOOii)",
                     k->kif->ki_fd,

@@ -169,7 +169,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kl[i].l_stat == LSIDL || kl[i].l_stat == LSZOMB)
             continue;
         // XXX: return 2 "user" times, no "system" time available
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "idd",
                 kl[i].l_lid,

@@ -182,7 +182,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     for (i = 0; i < size / sizeof(*kip); i++) {
         kipp = &kip[i];
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "Idd",
                 kipp->ki_tid,
@@ -380,7 +380,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         py_path = PyUnicode_DecodeFSDefault(path);
         if (!py_path)
             goto error;
-        if (!pylist_append(
+        if (!pylist_append_fmt(
                 py_retlist,
                 "ssOiiii",
                 addr,  // "start-end" address
@@ -434,7 +434,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 
     for (i = 0; i < CPU_SETSIZE; i++) {
         if (CPU_ISSET(i, &mask)) {
-            if (!pylist_append(py_retlist, "i", i))
+            if (!pylist_append_fmt(py_retlist, "i", i))
                 goto error;
         }
     }
