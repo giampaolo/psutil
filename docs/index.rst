@@ -1736,14 +1736,14 @@ Process class
       4.0.0 multiple fields are returned, not only *rss* and *vms*.
 
     .. versionchanged::
-      7.3.0 macOS: *pfaults* and *pageins* are no longer returned. Use
+      8.0.0 macOS: *pfaults* and *pageins* are no longer returned. Use
       :meth:`page_faults` method instead.
 
     .. versionchanged::
-      7.3.0 BSD: added *peak_rss*
+      8.0.0 BSD: added *peak_rss*
 
     .. versionchanged::
-      7.3.0 Windows: renamed several fields (old names are kept as deprecated
+      8.0.0 Windows: renamed several fields (old names are kept as deprecated
       aliases): *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and
       *private* → *vms*, *peak_pagefile* → *peak_vms*.
 
@@ -1797,7 +1797,7 @@ Process class
     - **peak_virtual** *(Windows)*: peak virtual address space size
       (``VirtualPeakSize`` from ``SYSTEM_PROCESS_INFORMATION``).
 
-    .. versionadded:: 7.3.0
+    .. versionadded:: 8.0.0
 
   .. method:: memory_footprint()
 
@@ -1836,7 +1836,7 @@ Process class
 
     See also `procsmem.py`_ for an example application.
 
-    .. versionadded:: 7.3.0
+    .. versionadded:: 8.0.0
 
     Availability: Linux, macOS, Windows
 
@@ -1848,7 +1848,7 @@ Process class
     .. versionadded:: 4.0.0
 
     .. warning::
-      deprecated in version 7.3.0; use :meth:`memory_footprint` instead.
+      deprecated in version 8.0.0; use :meth:`memory_footprint` instead.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -1961,7 +1961,7 @@ Process class
       >>> p.page_faults()
       ppagefaults(minor=5905, major=3)
 
-    .. versionadded:: 7.3.0
+    .. versionadded:: 8.0.0
 
   .. method:: open_files()
 
