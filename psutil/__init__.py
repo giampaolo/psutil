@@ -1178,16 +1178,16 @@ class Process:
     if hasattr(_psplatform.Process, "memory_footprint"):
 
         def memory_footprint(self):
-            """Return a namedtuple with USS, PSS and swap memory
+            """Return a named tuple with USS, PSS and swap memory
             metrics. These provide a better representation of
             actual process memory usage.
 
             USS is the memory unique to a process and which would
             be freed if the process was terminated right now.
 
-            It does so by passing through the whole process
-            address. As such it usually requires higher user
-            privileges than memory_info() and is considerably
+            It does so by passing through the whole process address. As
+            such it usually requires higher user privileges than
+            memory_info() or memory_info_ex() and is considerably
             slower.
             """
             return self._proc.memory_footprint()

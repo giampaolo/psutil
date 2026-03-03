@@ -1766,12 +1766,12 @@ Process class
   .. method:: memory_footprint()
 
     Return a named tuple with USS, PSS and swap memory metrics.
-    These provide a better representation of "effective" process memory
-    consumption (in case of USS) as explained in detail in this
+    These provide a better representation of actual process memory
+    consumption as explained in detail in this
     `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
-    :meth:`memory_info` and is considerably slower.
+    :meth:`memory_info` or :meth:`memory_info_ex` and is considerably slower.
 
     - **uss** *(Linux, macOS, Windows)*:
       aka "Unique Set Size", this is the memory which is unique to a process
@@ -1806,8 +1806,8 @@ Process class
 
   .. method:: memory_full_info()
 
-    This method returns the same information as :meth:`memory_info`, plus
-    additional metrics (USS, PSS and swap) from :meth:`memory_footprint`.
+    This method returns the same information as :meth:`memory_info` plus
+    :meth:`memory_footprint` in a single named tuple.
 
     .. versionadded:: 4.0.0
 
