@@ -1669,7 +1669,7 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
-      a process has used. On UNIX it matches ``top`` RES column.
+      a process is using. On UNIX it matches ``top`` RES column.
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
@@ -1686,14 +1686,16 @@ Process class
       executable code. This matches "top"'s CODE column).
 
     - **data** *(Linux, BSD)*:
-      aka DRS (data resident set) the amount of physical memory devoted to
-      other than executable code. It matches "top"'s DATA column).
+      aka DRS (Data Resident Set) the amount of physical memory devoted to
+      other than executable code. It matches "top"'s DATA column.
 
     - **lib** *(Linux)*: the memory used by shared libraries.
 
     - **dirty** *(Linux)*: the number of dirty pages.
 
-    - **peak_rss** *(BSD)*: peak resident set size ("high water mark").
+    - **peak_rss** *(BSD)*: aka "peak Resident Set Size" or "high water mark".
+      It's the highest amount of physical memory the process has ever used at
+      any point during its lifetime.
 
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
     doc.
@@ -1723,9 +1725,9 @@ Process class
   .. method:: memory_info_ex()
 
     Return a named tuple extending :meth:`memory_info` with additional
-    platform-specific memory metrics. On platforms where extra fields are
-    not implemented this returns the same result as :meth:`memory_info`.
-    All numbers are expressed in bytes.
+    platform-specific memory metrics. On platforms where extra fields are not
+    implemented this returns the same result as :meth:`memory_info`. All
+    numbers are expressed in bytes.
 
     +-------------+----------------+--------------+
     | Linux       | macOS          | Windows      |
@@ -1745,14 +1747,20 @@ Process class
     | hugetlb     |                |              |
     +-------------+----------------+--------------+
 
-    - **peak_rss**: peak resident set size ("high water mark").
-    - **peak_vms** *(Linux)*: peak virtual memory size.
+    - **peak_rss**: aka "peak Resident Set Size" or "high water mark". It's the
+      highest amount of physical memory the process has ever used at any point
+      during its lifetime.
+    - **peak_vms** *(Linux)*: aka "peak Virtual Memory Size". It's highest
+      amount of virtual memory the process has ever used at any point during
+      its lifetime.
     - **rss_anon** *(Linux, macOS)*: anonymous resident memory (heap, stack,
       etc.). On macOS this maps to ``task_vm_info.internal``.
     - **rss_file** *(Linux, macOS)*: file-backed resident memory. On macOS this
       maps to ``task_vm_info.external``.
     - **rss_shmem** *(Linux)*: shared memory resident pages.
-    - **swap** *(Linux)*: memory swapped out to disk.
+    - **swap** *(Linux)*: memory swapped out to disk. Equivalent to
+      ``memory_footprint().swap`` but faster, as it reads from
+      */proc/pid/status* instead of */proc/pid/smaps*.
     - **hugetlb** *(Linux)*: memory backed by huge TLB pages.
     - **phys_footprint** *(macOS)*: total physical memory footprint including
       compressed pages; this is what Xcode's memory gauge shows.
