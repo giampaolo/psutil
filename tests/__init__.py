@@ -1068,8 +1068,9 @@ class PsutilTestCase(unittest.TestCase):
             assert ntuple.peak_rss >= ntuple.rss
         if hasattr(ntuple, "peak_vms"):
             assert ntuple.peak_vms >= ntuple.vms
-        if WINDOWS:
+        if hasattr(ntuple, "peak_paged_pool"):  # Windows
             assert ntuple.peak_paged_pool >= ntuple.paged_pool
+        if hasattr(ntuple, "peak_nonpaged_pool"):  # Windows
             assert ntuple.peak_nonpaged_pool >= ntuple.nonpaged_pool
 
 
