@@ -449,6 +449,7 @@ class TestProcess(PsutilTestCase):
     @retry_on_failure()
     def test_memory_info(self):
         p = psutil.Process()
+        self.check_proc_memory(p.memory_info())
 
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.memory_info()[:2]
@@ -468,26 +469,11 @@ class TestProcess(PsutilTestCase):
         assert percent2 > percent1
         del memarr
 
-        if WINDOWS:
-            mem = p.memory_info()
-            with pytest.warns(DeprecationWarning, match="wset is deprecated"):
-                assert mem.wset == mem.rss
-            with pytest.warns(
-                DeprecationWarning, match="pagefile is deprecated"
-            ):
-                assert mem.pagefile == mem.vms
-            with pytest.warns(
-                DeprecationWarning, match="peak_pagefile is deprecated"
-            ):
-                assert mem.peak_pagefile == mem.peak_vms
-
-        mem = p.memory_info()
-        for name in mem._fields:
-            assert getattr(mem, name) >= 0
-
     def test_memory_info_ex(self):
+        # tested more extensively in test_process_all.py
         p = psutil.Process()
         mem = p.memory_info_ex()
+        self.check_proc_memory(mem)
         total = psutil.virtual_memory().total
         for name in mem._fields:
             value = getattr(mem, name)
@@ -499,8 +485,7 @@ class TestProcess(PsutilTestCase):
     def test_memory_footprint(self):
         p = psutil.Process()
         mem = p.memory_footprint()
-        for name in mem._fields:
-            assert getattr(mem, name) >= 0
+        self.check_proc_memory(mem)
 
     def test_memory_full_info(self):
         p = psutil.Process()

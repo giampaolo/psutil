@@ -302,22 +302,10 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret in list(range(psutil.cpu_count()))
 
     def memory_info(self, ret, info):
-        assert is_namedtuple(ret)
-        for value in ret:
-            assert isinstance(value, int)
-            assert value >= 0
-        if WINDOWS:
-            assert ret.peak_rss >= ret.rss
-            assert ret.peak_paged_pool >= ret.paged_pool
-            assert ret.peak_nonpaged_pool >= ret.nonpaged_pool
-            assert ret.peak_vms >= ret.vms
+        self.check_proc_memory(ret)
 
     def memory_info_ex(self, ret, info):
-        assert is_namedtuple(ret)
-        if hasattr(ret, "peak_rss"):
-            assert ret.peak_rss >= ret.rss
-        if hasattr(ret, "peak_vms"):
-            assert ret.peak_vms >= ret.vms
+        self.check_proc_memory(ret)
 
     def memory_footprint(self, ret, info):
         assert is_namedtuple(ret)
