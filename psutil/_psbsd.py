@@ -689,8 +689,6 @@ class Process:
             peak_rss=d["peak_rss"],
         )
 
-    memory_full_info = memory_info
-
     @wrap_exceptions
     def create_time(self, monotonic=False):
         ctime = self.oneshot()["create_time"]

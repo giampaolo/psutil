@@ -1982,15 +1982,6 @@ class Process:
             uss, pss, swap = self._get_smaps_uss_pss_swap()
             return ntp.pfootprint(uss, pss, swap)
 
-        @wrap_exceptions
-        def memory_full_info(self):
-            uss, pss, swap = self._get_smaps_uss_pss_swap()
-            basic_mem = self.memory_info()
-            return ntp.pfullmem(*basic_mem + (uss, pss, swap))
-
-    else:
-        memory_full_info = memory_info
-
     if HAS_PROC_SMAPS:
 
         @wrap_exceptions

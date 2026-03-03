@@ -817,13 +817,6 @@ class Process:
         return ntp.pfootprint(uss)
 
     @wrap_exceptions
-    def memory_full_info(self):
-        basic_mem = self.memory_info()
-        uss = cext.proc_memory_uss(self.pid)
-        uss *= getpagesize()
-        return ntp.pfullmem(*basic_mem + (uss,))
-
-    @wrap_exceptions
     def page_faults(self):
         ret = cext.proc_page_faults(self.pid)
         return ntp.ppagefaults(*ret)

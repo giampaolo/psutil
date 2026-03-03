@@ -422,12 +422,6 @@ class Process:
         return ntp.pfootprint(uss)
 
     @wrap_exceptions
-    def memory_full_info(self):
-        basic_mem = self.memory_info()
-        uss = cext.proc_memory_uss(self.pid)
-        return ntp.pfullmem(*basic_mem + (uss,))
-
-    @wrap_exceptions
     def page_faults(self):
         d = self._oneshot_pidtaskinfo()
         return ntp.ppagefaults(d["minor_faults"], d["major_faults"])

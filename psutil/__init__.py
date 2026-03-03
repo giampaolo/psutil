@@ -1213,7 +1213,11 @@ class Process:
             "memory_full_info() is deprecated; use memory_footprint() instead"
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        return self._proc.memory_full_info()
+        basic_mem = self.memory_info()
+        if hasattr(self, "memory_footprint"):
+            fp = self.memory_footprint()
+            return _ntp.pfullmem(*basic_mem + fp)
+        return _ntp.pfullmem(*basic_mem)
 
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
