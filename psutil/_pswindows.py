@@ -786,20 +786,19 @@ class Process:
 
     @wrap_exceptions
     def memory_info(self):
-        # on Windows RSS == WorkingSetSize and VSM == PagefileUsage.
         # Underlying C function returns fields of PROCESS_MEMORY_COUNTERS
         # struct.
         d = self._get_raw_meminfo()
         return ntp.pmem(
             rss=d["WorkingSetSize"],
             vms=d["PagefileUsage"],
+            num_page_faults=d["PageFaultCount"],
+            paged_pool=d["QuotaPagedPoolUsage"],
+            nonpaged_pool=d["QuotaNonPagedPoolUsage"],
             peak_rss=d["PeakWorkingSetSize"],
             peak_vms=d["PeakPagefileUsage"],
-            num_page_faults=d["PageFaultCount"],
             peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
-            paged_pool=d["QuotaPagedPoolUsage"],
             peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
-            nonpaged_pool=d["QuotaNonPagedPoolUsage"],
         )
 
     @wrap_exceptions

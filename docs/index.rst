@@ -1696,8 +1696,8 @@ Process class
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
-      Windows it maps to ``PagefileUsage``, which is not the true virtual
-      address space size (VMS). For that, use ``virtual`` from
+      Windows it maps to ``Private``, which is not exactly the virtual address
+      space size (VMS) as intended on UNIX. For that, use ``virtual`` from
       :meth:`memory_info_ex`.
 
     - **shared**: *(Linux)*
@@ -1757,17 +1757,17 @@ Process class
     +=============+================+==============+
     | peak_rss    | peak_rss       | virtual      |
     +-------------+----------------+--------------+
-    | peak_vms    | rss_anon       | peak_virtual |
+    | peak_vms    |                | peak_virtual |
     +-------------+----------------+--------------+
-    | rss_anon    | rss_file       |              |
+    | rss_anon    | rss_anon       |              |
     +-------------+----------------+--------------+
-    | rss_file    | wired          |              |
+    | rss_file    | rss_file       |              |
     +-------------+----------------+--------------+
-    | rss_shmem   | compressed     |              |
+    | rss_shmem   | wired          |              |
     +-------------+----------------+--------------+
-    | swap        | phys_footprint |              |
+    | swap        | compressed     |              |
     +-------------+----------------+--------------+
-    | hugetlb     |                |              |
+    | hugetlb     | phys_footprint |              |
     +-------------+----------------+--------------+
 
     - **peak_rss**: aka "peak Resident Set Size" or "high water mark". It's the
@@ -1792,7 +1792,8 @@ Process class
     - **virtual** *(Windows)*: total virtual address space size. Unlike ``vms``
       in :meth:`memory_info`, this is the true virtual memory size
       (``VirtualSize`` from ``SYSTEM_PROCESS_INFORMATION``).
-    - **peak_virtual** *(Windows)*: peak virtual address space size.
+    - **peak_virtual** *(Windows)*: peak virtual address space size
+      (``VirtualPeakSize`` from ``SYSTEM_PROCESS_INFORMATION``).
 
     .. versionadded:: 7.3.0
 
