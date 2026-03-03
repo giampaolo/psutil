@@ -1968,18 +1968,17 @@ class Process:
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
             return (uss, pss, swap)
 
-        def _get_smaps_uss_pss_swap(self):
-            if HAS_PROC_SMAPS_ROLLUP:  # faster
-                try:
-                    return self._parse_smaps_rollup()
-                except (ProcessLookupError, FileNotFoundError):
-                    return self._parse_smaps()
-            else:
-                return self._parse_smaps()
-
         @wrap_exceptions
         def memory_footprint(self):
-            uss, pss, swap = self._get_smaps_uss_pss_swap()
+            def fetch():
+                if HAS_PROC_SMAPS_ROLLUP:  # faster
+                    try:
+                        return self._parse_smaps_rollup()
+                    except (ProcessLookupError, FileNotFoundError):
+                        pass
+                return self._parse_smaps()
+
+            uss, pss, swap = fetch()
             return ntp.pfootprint(uss, pss, swap)
 
     if HAS_PROC_SMAPS:
