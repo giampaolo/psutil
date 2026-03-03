@@ -45,6 +45,7 @@ cwd                              300      0.00151
 num_fds                          300      0.00391
 memory_info                      300      0.00597
 memory_percent                   300      0.00648
+memory_info_ex                   300      0.00701
 io_counters                      300      0.00707
 name                             300      0.00894
 status                           300      0.00900
@@ -64,7 +65,7 @@ cpu_percent                      300      0.01463
 open_files                       300      0.01630
 username                         300      0.01655
 environ                          300      0.02250
-memory_full_info                 300      0.07066
+memory_foorprint                 300      0.07066
 memory_maps                      300      0.74281
 """
 
