@@ -1654,8 +1654,7 @@ def warn(msg):
 def is_namedtuple(x):
     """Check if object is an instance of namedtuple."""
     t = type(x)
-    b = t.__bases__
-    if len(b) != 1 or b[0] is not tuple:
+    if tuple not in t.__mro__:
         return False
     f = getattr(t, '_fields', None)
     if not isinstance(f, tuple):
