@@ -283,7 +283,7 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
  * Return extended memory info via task_info(TASK_VM_INFO).
  */
 PyObject *
-psutil_proc_memory_info2(PyObject *self, PyObject *args) {
+psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     pid_t pid;
     mach_port_t task = MACH_PORT_NULL;
     kern_return_t kr;

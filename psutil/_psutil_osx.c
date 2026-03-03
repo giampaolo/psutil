@@ -23,7 +23,7 @@ static PyMethodDef mod_methods[] = {
     {"proc_environ", psutil_proc_environ, METH_VARARGS},
     {"proc_exe", psutil_proc_exe, METH_VARARGS},
     {"proc_is_zombie", psutil_proc_is_zombie, METH_VARARGS},
-    {"proc_memory_info2", psutil_proc_memory_info2, METH_VARARGS},
+    {"proc_memory_info_ex", psutil_proc_memory_info_ex, METH_VARARGS},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS},
     {"proc_name", psutil_proc_name, METH_VARARGS},
     {"proc_net_connections", psutil_proc_net_connections, METH_VARARGS},

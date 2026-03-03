@@ -62,9 +62,9 @@ class TestProcess(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    def test_memory_info2(self):
+    def test_memory_info_ex(self):
         p = psutil.Process()
-        mem = p.memory_info2()
+        mem = p.memory_info_ex()
         assert mem.rss_anon + mem.rss_file <= mem.rss
         assert mem.phys_footprint > 0
 

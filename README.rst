@@ -336,8 +336,8 @@ Process management
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
-    >>> p.memory_full_info()  # "real" USS memory usage (Linux, macOS, Win only)
-    pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
+    >>> p.memory_footprint()  # "real" USS memory usage
+    pfootprint(uss=6545408, pss=6872064, swap=0)
     >>> p.memory_percent()
     0.7823
     >>> p.memory_maps()

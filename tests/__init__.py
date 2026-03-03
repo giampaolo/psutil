@@ -65,7 +65,8 @@ __all__ = [
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
-    "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE", "HAS_PROC_MEMORY_MAPS",
+    "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
+    "HAS_PROC_MEMORY_FOOTPRINT", "HAS_PROC_MEMORY_MAPS",
     "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
     "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
     "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
@@ -194,6 +195,7 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_PROC_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_PROC_IONICE = hasattr(psutil.Process, "ionice")
+HAS_PROC_MEMORY_FOOTPRINT = hasattr(psutil.Process, "memory_footprint")
 HAS_PROC_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_PROC_THREADS = hasattr(psutil.Process, "threads")
@@ -1116,6 +1118,7 @@ class process_namespace:
         ('exe', (), {}),
         ('memory_full_info', (), {}),
         ('memory_info', (), {}),
+        ('memory_info_ex', (), {}),
         ('name', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
@@ -1147,6 +1150,8 @@ class process_namespace:
         getters += [('environ', (), {})]
     if WINDOWS:
         getters += [('num_handles', (), {})]
+    if HAS_PROC_MEMORY_FOOTPRINT:
+        getters += [('memory_footprint', (), {})]
     if HAS_PROC_MEMORY_MAPS:
         getters += [('memory_maps', (), {'grouped': False})]
 

@@ -1884,7 +1884,7 @@ class Process:
         return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
 
     @wrap_exceptions
-    def memory_info2(
+    def memory_info_ex(
         self,
         _vmpeak_re=re.compile(br"VmPeak:\s+(\d+)"),
         _vmhwm_re=re.compile(br"VmHWM:\s+(\d+)"),
@@ -1968,15 +1968,23 @@ class Process:
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
             return (uss, pss, swap)
 
-        @wrap_exceptions
-        def memory_full_info(self):
+        def _get_smaps_uss_pss_swap(self):
             if HAS_PROC_SMAPS_ROLLUP:  # faster
                 try:
-                    uss, pss, swap = self._parse_smaps_rollup()
+                    return self._parse_smaps_rollup()
                 except (ProcessLookupError, FileNotFoundError):
-                    uss, pss, swap = self._parse_smaps()
+                    return self._parse_smaps()
             else:
-                uss, pss, swap = self._parse_smaps()
+                return self._parse_smaps()
+
+        @wrap_exceptions
+        def memory_footprint(self):
+            uss, pss, swap = self._get_smaps_uss_pss_swap()
+            return ntp.pfootprint(uss, pss, swap)
+
+        @wrap_exceptions
+        def memory_full_info(self):
+            uss, pss, swap = self._get_smaps_uss_pss_swap()
             basic_mem = self.memory_info()
             return ntp.pfullmem(*basic_mem + (uss, pss, swap))
 

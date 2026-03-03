@@ -1172,7 +1172,7 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     |                              |                               | :meth:`username`             | :meth:`username`             |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_full_info`     |                               |                              |                              |                          |                          |
+    | :meth:`memory_footprint`     |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1257,7 +1257,7 @@ Process class
     If *attrs* is specified it must be a list of strings reflecting available
     :class:`Process` class's attribute names. Here's a list of possible string
     values:
-    ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'```.
+    ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_footprint'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_info_ex'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'```.
     If *attrs* argument is not passed all public read only attributes are
     assumed.
     *ad_value* is the value which gets assigned to a dict key in case
@@ -1273,7 +1273,7 @@ Process class
       >>>
       >>> # get a list of valid attrs names
       >>> list(psutil.Process().as_dict().keys())
-      ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_full_info', 'memory_info', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
+      ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
     .. versionchanged::
       3.0.0 *ad_value* is used also when incurring into
@@ -1675,7 +1675,7 @@ Process class
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
       Windows it maps to ``PagefileUsage``, which is not the true virtual
       address space size (VMS). For that, use ``virtual`` from
-      :meth:`memory_info2`.
+      :meth:`memory_info_ex`.
 
     - **shared**: *(Linux)*
       memory that could be potentially shared with other processes.
@@ -1720,7 +1720,7 @@ Process class
       *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and *private* →
       *vms*, *peak_pagefile* → *peak_vms*.
 
-  .. method:: memory_info2()
+  .. method:: memory_info_ex()
 
     Return a named tuple extending :meth:`memory_info` with additional
     platform-specific memory metrics. On platforms where extra fields are
@@ -1763,19 +1763,15 @@ Process class
 
     .. versionadded:: 7.3.0
 
-  .. method:: memory_full_info()
+  .. method:: memory_footprint()
 
-    This method returns the same information as :meth:`memory_info`, plus, on
-    some platform (Linux, macOS, Windows), also provides additional metrics
-    (USS, PSS and swap).
-    The additional metrics provide a better representation of "effective"
-    process memory consumption (in case of USS) as explained in detail in this
+    Return a named tuple with USS, PSS and swap memory metrics.
+    These provide a better representation of "effective" process memory
+    consumption (in case of USS) as explained in detail in this
     `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
     :meth:`memory_info` and is considerably slower.
-    On platforms where extra fields are not implemented this simply returns the
-    same metrics as :meth:`memory_info`.
 
     - **uss** *(Linux, macOS, Windows)*:
       aka "Unique Set Size", this is the memory which is unique to a process
@@ -1799,13 +1795,24 @@ Process class
 
       >>> import psutil
       >>> p = psutil.Process()
-      >>> p.memory_full_info()
-      pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
-      >>>
+      >>> p.memory_footprint()
+      pfootprint(uss=6545408, pss=6872064, swap=0)
 
     See also `procsmem.py`_ for an example application.
 
+    .. versionadded:: 7.3.0
+
+    Availability: Linux, macOS, Windows
+
+  .. method:: memory_full_info()
+
+    This method returns the same information as :meth:`memory_info`, plus
+    additional metrics (USS, PSS and swap) from :meth:`memory_footprint`.
+
     .. versionadded:: 4.0.0
+
+    .. warning::
+      deprecated in version 7.3.0; use :meth:`memory_footprint` instead.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -1813,8 +1820,8 @@ Process class
     process memory utilization as a percentage.
     *memtype* argument is a string that dictates what type of process memory
     you want to compare against. You can choose between the named tuple field
-    names returned by :meth:`memory_info` and :meth:`memory_full_info`
-    (defaults to ``"rss"``).
+    names returned by :meth:`memory_info`, :meth:`memory_info_ex` and
+    :meth:`memory_footprint` (defaults to ``"rss"``).
 
     .. versionchanged:: 4.0.0 added `memtype` parameter.
 

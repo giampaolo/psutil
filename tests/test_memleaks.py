@@ -160,8 +160,14 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
+    def test_memory_info_ex(self):
+        self.execute(self.proc.memory_info_ex)
+
+    def test_memory_footprint(self):
+        self.execute(self.proc.memory_footprint)
+
     def test_memory_full_info(self):
-        self.execute(self.proc.memory_full_info)
+        pass  # deprecated
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_terminal(self):

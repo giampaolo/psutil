@@ -46,6 +46,7 @@ from . import HAS_PROC_CPU_NUM
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
+from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
@@ -484,28 +485,34 @@ class TestProcess(PsutilTestCase):
         for name in mem._fields:
             assert getattr(mem, name) >= 0
 
-    @pytest.mark.skipif(not LINUX, reason="Linux only")
-    def test_memory_info2(self):
+    def test_memory_info_ex(self):
         p = psutil.Process()
-        mem = p.memory_info2()
+        mem = p.memory_info_ex()
+        total = psutil.virtual_memory().total
         for name in mem._fields:
-            assert getattr(mem, name) >= 0, name
+            value = getattr(mem, name)
+            assert value >= 0, name
+            if name != "vms":
+                assert value <= total
+
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
+    def test_memory_footprint(self):
+        p = psutil.Process()
+        mem = p.memory_footprint()
+        for name in mem._fields:
+            assert getattr(mem, name) >= 0
 
     def test_memory_full_info(self):
         p = psutil.Process()
         total = psutil.virtual_memory().total
-        mem = p.memory_full_info()
+        with self.assertWarns(DeprecationWarning):
+            mem = p.memory_full_info()
         for name in mem._fields:
             value = getattr(mem, name)
             assert value >= 0
             if (name == "vms" and OSX) or LINUX:
                 continue
             assert value <= total
-        if LINUX or WINDOWS or MACOS:
-            assert mem.uss >= 0
-        if LINUX:
-            assert mem.pss >= 0
-            assert mem.swap >= 0
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):

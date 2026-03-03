@@ -803,12 +803,18 @@ class Process:
         )
 
     @wrap_exceptions
-    def memory_info2(self):
+    def memory_info_ex(self):
         d = self._proc_info()
         return {
             "virtual": d["VirtualSize"],
             "peak_virtual": d["PeakVirtualSize"],
         }
+
+    @wrap_exceptions
+    def memory_footprint(self):
+        uss = cext.proc_memory_uss(self.pid)
+        uss *= getpagesize()
+        return ntp.pfootprint(uss)
 
     @wrap_exceptions
     def memory_full_info(self):

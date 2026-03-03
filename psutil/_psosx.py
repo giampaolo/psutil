@@ -413,8 +413,13 @@ class Process:
         return ntp.pmem(d["rss"], d["vms"])
 
     @wrap_exceptions
-    def memory_info2(self):
-        return cext.proc_memory_info2(self.pid)
+    def memory_info_ex(self):
+        return cext.proc_memory_info_ex(self.pid)
+
+    @wrap_exceptions
+    def memory_footprint(self):
+        uss = cext.proc_memory_uss(self.pid)
+        return ntp.pfootprint(uss)
 
     @wrap_exceptions
     def memory_full_info(self):

@@ -185,9 +185,9 @@ if LINUX:
     # psutil.Process().memory_info()
     pmem = nt("pmem", ("rss", "vms", "shared", "text", "lib", "data", "dirty"))
 
-    # psutil.Process().memory_info2()
-    pmem2 = nt(
-        "pmem2",
+    # psutil.Process().memory_info_ex()
+    pmem_ex = nt(
+        "pmem_ex",
         pmem._fields
         + (
             "peak_rss",
@@ -199,6 +199,9 @@ if LINUX:
             "hugetlb",
         ),
     )
+
+    # psutil.Process().memory_footprint()
+    pfootprint = nt("pfootprint", ("uss", "pss", "swap"))
 
     # psutil.Process().memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss", "pss", "swap"))
@@ -282,19 +285,19 @@ elif WINDOWS:
         peak_pagefile = deprecated_property(replacement="peak_vms")
         private = deprecated_property(replacement="vms")
 
-    # psutil.Process.memory_info2()
-    _pmem2 = nt(
-        "pmem2",
+    # psutil.Process.memory_info_ex()
+    _pmem_ex = nt(
+        "pmem_ex",
         pmem._fields + ("virtual", "peak_virtual"),
     )
 
-    class pmem2(pmem, _pmem2):
+    class pmem_ex(pmem, _pmem_ex):
         __slots__ = ()
-        _fields = _pmem2._fields
-        __repr__ = _pmem2.__repr__
+        _fields = _pmem_ex._fields
+        __repr__ = _pmem_ex.__repr__
 
         def __new__(cls, *args, **kwargs):
-            return _pmem2.__new__(cls, *args, **kwargs)
+            return _pmem_ex.__new__(cls, *args, **kwargs)
 
         @classmethod
         def _make(cls, iterable):
@@ -304,6 +307,9 @@ elif WINDOWS:
                 msg = f"Expected {n} arguments, got {len(result)}"
                 raise TypeError(msg)
             return result
+
+    # psutil.Process.memory_footprint()
+    pfootprint = nt("pfootprint", ("uss",))
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))
@@ -356,9 +362,9 @@ elif MACOS:
     # psutil.Process.memory_info()
     pmem = nt("pmem", ("rss", "vms"))
 
-    # psutil.Process.memory_info2()
-    pmem2 = nt(
-        "pmem2",
+    # psutil.Process.memory_info_ex()
+    pmem_ex = nt(
+        "pmem_ex",
         pmem._fields
         + (
             "peak_rss",
@@ -368,6 +374,9 @@ elif MACOS:
             "phys_footprint",
         ),
     )
+
+    # psutil.Process.memory_footprint()
+    pfootprint = nt("pfootprint", ("uss",))
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))

@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import warnings
 
 try:
     import pwd
@@ -1136,7 +1137,7 @@ class Process:
         """
         return self._proc.memory_info()
 
-    def memory_info2(self):
+    def memory_info_ex(self):
         """Return a namedtuple extending memory_info() with extra
         metrics.
 
@@ -1169,10 +1170,27 @@ class Process:
         All numbers are expressed in bytes.
         """
         base = self.memory_info()
-        if hasattr(self._proc, "memory_info2"):
-            extras = self._proc.memory_info2()
-            return _ntp.pmem2(**base._asdict(), **extras)
+        if hasattr(self._proc, "memory_info_ex"):
+            extras = self._proc.memory_info_ex()
+            return _ntp.pmem_ex(**base._asdict(), **extras)
         return base
+
+    if hasattr(_psplatform.Process, "memory_footprint"):
+
+        def memory_footprint(self):
+            """Return a namedtuple with USS, PSS and swap memory
+            metrics. These provide a better representation of
+            actual process memory usage.
+
+            USS is the memory unique to a process and which would
+            be freed if the process was terminated right now.
+
+            It does so by passing through the whole process
+            address. As such it usually requires higher user
+            privileges than memory_info() and is considerably
+            slower.
+            """
+            return self._proc.memory_footprint()
 
     def memory_full_info(self):
         """This method returns the same information as memory_info(),
@@ -1187,7 +1205,14 @@ class Process:
         It does so by passing through the whole process address.
         As such it usually requires higher user privileges than
         memory_info() and is considerably slower.
+
+        .. deprecated:: 7.3.0
+            Use :meth:`memory_footprint` instead.
         """
+        msg = (
+            "memory_full_info() is deprecated; use memory_footprint() instead"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
         return self._proc.memory_full_info()
 
     def memory_percent(self, memtype="rss"):
@@ -1200,18 +1225,29 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        valid_types = list(_ntp.pfullmem._fields)
+        valid_types = list(_ntp.pmem._fields)
+        if hasattr(_ntp, "pmem_ex"):
+            valid_types += [
+                f for f in _ntp.pmem_ex._fields if f not in valid_types
+            ]
+        if hasattr(_ntp, "pfootprint"):
+            valid_types += [
+                f for f in _ntp.pfootprint._fields if f not in valid_types
+            ]
         if memtype not in valid_types:
             msg = (
                 f"invalid memtype {memtype!r}; valid types are"
                 f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
-        fun = (
-            self.memory_info
-            if memtype in _ntp.pmem._fields
-            else self.memory_full_info
-        )
+        if memtype in _ntp.pmem._fields:
+            fun = self.memory_info
+        elif (
+            hasattr(_ntp, "pfootprint") and memtype in _ntp.pfootprint._fields
+        ):
+            fun = self.memory_footprint
+        else:
+            fun = self.memory_info_ex
         metrics = fun()
         value = getattr(metrics, memtype)
 
@@ -1440,7 +1476,7 @@ _as_dict_attrnames = {
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'oneshot'}
+      'connections', 'memory_full_info', 'oneshot'}
 }
 # fmt: on
 
