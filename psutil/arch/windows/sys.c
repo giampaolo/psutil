@@ -85,7 +85,6 @@ psutil_users(PyObject *self, PyObject *args) {
 
     for (i = 0; i < count; i++) {
         py_address = NULL;
-        py_tuple = NULL;
         sessionId = sessions[i].SessionId;
         if (buffer_user != NULL)
             WTSFreeMemory(buffer_user);

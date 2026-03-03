@@ -564,7 +564,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // If the thread belongs to the process, increase the counter.
     do {
         if (te32.th32OwnerProcessID == pid) {
-            py_tuple = NULL;
             hThread = NULL;
             hThread = OpenThread(
                 THREAD_QUERY_INFORMATION, FALSE, te32.th32ThreadID
