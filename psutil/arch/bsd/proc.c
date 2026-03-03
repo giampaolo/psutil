@@ -91,6 +91,21 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     memstack = (long)kp.p_vm_ssize * pagesize;
 #endif
 
+    // kernel doesn't always update peak_rss atomically, so rss can
+    // briefly exceed it. Difference is almost always 16KB. peak_rss is
+    // 0 for kernel/root PIDs: we leave it as-is so the caller knows it
+    // can't be relied upon.
+    if ((peak_rss < rss && peak_rss != 0)) {
+        psutil_debug(
+            "pid: %ld, ru_maxrss (%ld KB) < rss (%ld KB); using rss as "
+            "peak_rss",
+            (long)pid,
+            peak_rss / 1024,
+            rss / 1024
+        );
+        peak_rss = rss;  // use rss as peak_rss
+    }
+
 #ifdef PSUTIL_FREEBSD
     // what CPU we're on; top was used as an example:
     // https://svnweb.freebsd.org/base/head/usr.bin/top/machine.c?
