@@ -1736,6 +1736,10 @@ Process class
       4.0.0 multiple fields are returned, not only *rss* and *vms*.
 
     .. versionchanged::
+      8.0.0 Linux: *lib* and *dirty* are deprecated (they were always 0 since
+      Linux 2.6).
+
+    .. versionchanged::
       8.0.0 macOS: *pfaults* and *pageins* are no longer returned. Use
       :meth:`page_faults` method instead.
 

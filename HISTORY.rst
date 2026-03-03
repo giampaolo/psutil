@@ -32,6 +32,9 @@
   - `Process.memory_full_info()`_ is **deprecated**. Use the new
     `Process.memory_footprint()`_ instead.
 
+  - Linux: `Process.memory_info()`_ *lib* and *dirty* fields are
+    **deprecated** (they have always been 0 since Linux 2.6).
+
 **Bug fixes**
 
 - 2726_, [macOS]: `Process.num_ctx_switches()`_ return an unusual high number

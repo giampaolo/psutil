@@ -487,9 +487,7 @@ class TestProcess(PsutilTestCase):
             assert mem._fields[2:] == (
                 "shared",
                 "text",
-                "lib",
                 "data",
-                "dirty",
                 "peak_rss",
                 "peak_vms",
                 "rss_anon",

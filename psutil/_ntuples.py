@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import warnings
 from collections import namedtuple as nt
 
 from ._common import AIX
@@ -183,7 +184,24 @@ if LINUX:
     popenfile = nt("popenfile", ("path", "fd", "position", "mode", "flags"))
 
     # psutil.Process().memory_info()
-    pmem = nt("pmem", ("rss", "vms", "shared", "text", "lib", "data", "dirty"))
+    _pmem = nt("pmem", ("rss", "vms", "shared", "text", "data"))
+
+    class pmem(_pmem):
+        __slots__ = ()
+
+        @property
+        def lib(self):
+            # It has always been 0 since Linux 2.6.
+            msg = "'lib' field is deprecated and will be removed"
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return 0
+
+        @property
+        def dirty(self):
+            # It has always been 0 since Linux 2.6.
+            msg = "'dirty' field is deprecated and will be removed"
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return 0
 
     # psutil.Process().memory_info_ex()
     pmem_ex = nt(
