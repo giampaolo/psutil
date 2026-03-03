@@ -1732,20 +1732,26 @@ Process class
       4.0.0 multiple fields are returned, not only *rss* and *vms*.
 
     .. versionchanged::
-      8.0.0 Linux: *lib* and *dirty* are deprecated (they were always 0 since
-      Linux 2.6).
+      8.0.0 Linux, macOS, Windows: the returned named tuple changed in size, so
+      index-based unpacking will break. Use attribute names (field access)
+      instead of positional indexing.
+
+    .. versionchanged::
+      8.0.0 Linux: no longer includes *lib* and *dirty* fields, which have been
+      0 since Linux 2.6. They remain as **deprecated** aliases that return 0
+      and emit a `DeprecationWarning`.
 
     .. versionchanged::
       8.0.0 macOS: *pfaults* and *pageins* are no longer returned. Use
       :meth:`page_faults` method instead.
 
     .. versionchanged::
-      8.0.0 BSD: added *peak_rss*
-
-    .. versionchanged::
       8.0.0 Windows: renamed several fields (old names are kept as deprecated
       aliases): *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and
       *private* → *vms*, *peak_pagefile* → *peak_vms*.
+
+    .. versionchanged::
+      8.0.0 BSD: added *peak_rss*
 
   .. method:: memory_info_ex()
 
