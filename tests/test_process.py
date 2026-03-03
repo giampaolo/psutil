@@ -479,10 +479,12 @@ class TestProcess(PsutilTestCase):
                 value = getattr(mem, name)
                 assert value <= total
 
+    def test_memory_info_ex_fields_order(self):
+        mem = psutil.Process().memory_info_ex()
+        common = ("rss", "vms")
+        assert mem._fields[:2] == common
         if LINUX:
-            assert mem._fields == (
-                "rss",
-                "vms",
+            assert mem._fields[2:] == (
                 "shared",
                 "text",
                 "lib",
@@ -497,9 +499,7 @@ class TestProcess(PsutilTestCase):
                 "hugetlb",
             )
         elif MACOS:
-            assert mem._fields == (
-                "rss",
-                "vms",
+            assert mem._fields[2:] == (
                 "peak_rss",
                 "rss_anon",
                 "rss_file",
@@ -508,9 +508,7 @@ class TestProcess(PsutilTestCase):
                 "phys_footprint",
             )
         elif WINDOWS:
-            assert mem._fields == (
-                "rss",
-                "vms",
+            assert mem._fields[2:] == (
                 "num_page_faults",
                 "paged_pool",
                 "nonpaged_pool",
@@ -522,7 +520,7 @@ class TestProcess(PsutilTestCase):
                 "peak_virtual",
             )
         else:
-            assert mem._fields == p.memory_info()._fields
+            assert mem._fields[2:] == ()
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):

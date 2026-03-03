@@ -406,7 +406,7 @@ Memory
   >>> mem
   svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
   >>>
-  >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
+  >>> THRESHOLD = 500 * 1024 * 1024  # 500MB
   >>> if mem.available <= THRESHOLD:
   ...     print("warning")
   ...
