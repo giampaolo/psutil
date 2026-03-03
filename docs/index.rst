@@ -1714,10 +1714,6 @@ Process class
       aka DRS (Data Resident Set) the amount of physical memory devoted to
       other than executable code. It matches "top"'s DATA column.
 
-    - **lib** *(Linux)*: the memory used by shared libraries.
-
-    - **dirty** *(Linux)*: the number of dirty pages.
-
     - **peak_rss** *(BSD)*: aka "peak Resident Set Size" or "high water mark".
       It's the highest amount of physical memory the process has ever used at
       any point during its lifetime. Can be 0 for kernel PIDs.
