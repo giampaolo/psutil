@@ -851,6 +851,8 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "PagefileUsage", "K", (ULONGLONG)proc->PagefileUsage)) goto error;
     if (!pydict_add(dict, "PeakPagefileUsage", "K", (ULONGLONG)proc->PeakPagefileUsage)) goto error;
     if (!pydict_add(dict, "PrivatePageCount", "K", (ULONGLONG)proc->PrivatePageCount)) goto error;
+    if (!pydict_add(dict, "VirtualSize", "K", (ULONGLONG)proc->VirtualSize)) goto error;
+    if (!pydict_add(dict, "PeakVirtualSize", "K", (ULONGLONG)proc->PeakVirtualSize)) goto error;
     // clang-format on
 
     free(buffer);

@@ -345,6 +345,37 @@ class TestMemoryAPIs(PsutilTestCase):
                         f"{name!r} > total (total={mem.total}, {name}={value})"
                     )
 
+    def test_virtual_memory_fields_order(self):
+        mem = psutil.virtual_memory()
+        common = ("total", "available", "percent", "used", "free")
+        assert mem._fields[:5] == common
+        if LINUX:
+            assert mem._fields[5:] == (
+                "active",
+                "inactive",
+                "buffers",
+                "cached",
+                "shared",
+                "slab",
+            )
+        elif MACOS:
+            assert mem._fields[5:] == (
+                "active",
+                "inactive",
+                "wired",
+            )
+        elif BSD:
+            assert mem._fields[5:] == (
+                "active",
+                "inactive",
+                "buffers",
+                "cached",
+                "shared",
+                "wired",
+            )
+        elif WINDOWS or SUNOS or AIX:
+            assert mem._fields[5:] == ()
+
     def test_swap_memory(self):
         mem = psutil.swap_memory()
         assert mem._fields == (

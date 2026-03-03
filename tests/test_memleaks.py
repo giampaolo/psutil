@@ -29,6 +29,7 @@ from . import HAS_PROC_CPU_NUM
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
+from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_RLIMIT
 from . import HAS_SENSORS_BATTERY
@@ -160,8 +161,12 @@ class TestProcessObjectLeaks(MemoryLeakTestCase):
     def test_memory_info(self):
         self.execute(self.proc.memory_info)
 
-    def test_memory_full_info(self):
-        self.execute(self.proc.memory_full_info)
+    def test_memory_info_ex(self):
+        self.execute(self.proc.memory_info_ex)
+
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
+    def test_memory_footprint(self):
+        self.execute(self.proc.memory_footprint)
 
     @pytest.mark.skipif(not POSIX, reason="POSIX only")
     def test_terminal(self):

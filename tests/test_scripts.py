@@ -20,6 +20,7 @@ from psutil import WINDOWS
 
 from . import CI_TESTING
 from . import HAS_BATTERY
+from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_SENSORS_BATTERY
 from . import HAS_SENSORS_FANS
@@ -123,9 +124,8 @@ class TestExampleScripts(PsutilTestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', str(os.getpid()))
 
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_procsmem(self):
-        if 'uss' not in psutil.Process().memory_full_info()._fields:
-            return pytest.skip("not supported")
         self.assert_stdout('procsmem.py')
 
     def test_killall(self):

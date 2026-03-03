@@ -11,6 +11,7 @@ from ._common import LINUX
 from ._common import MACOS
 from ._common import SUNOS
 from ._common import WINDOWS
+from ._common import deprecated_property
 
 # ===================================================================
 # --- system functions
@@ -184,6 +185,24 @@ if LINUX:
     # psutil.Process().memory_info()
     pmem = nt("pmem", ("rss", "vms", "shared", "text", "lib", "data", "dirty"))
 
+    # psutil.Process().memory_info_ex()
+    pmem_ex = nt(
+        "pmem_ex",
+        pmem._fields
+        + (
+            "peak_rss",
+            "peak_vms",
+            "rss_anon",
+            "rss_file",
+            "rss_shmem",
+            "swap",
+            "hugetlb",
+        ),
+    )
+
+    # psutil.Process().memory_footprint()
+    pfootprint = nt("pfootprint", ("uss", "pss", "swap"))
+
     # psutil.Process().memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss", "pss", "swap"))
 
@@ -242,23 +261,55 @@ elif WINDOWS:
     svmem = nt("svmem", ("total", "available", "percent", "used", "free"))
 
     # psutil.Process.memory_info()
-    pmem = nt(
+    _pmem = nt(
         "pmem",
         (
             "rss",
             "vms",
             "num_page_faults",
-            "peak_wset",
-            "wset",
-            "peak_paged_pool",
             "paged_pool",
-            "peak_nonpaged_pool",
             "nonpaged_pool",
-            "pagefile",
-            "peak_pagefile",
-            "private",
+            "peak_rss",
+            "peak_vms",
+            "peak_paged_pool",
+            "peak_nonpaged_pool",
         ),
     )
+
+    class pmem(_pmem):
+        __slots__ = ()
+
+        wset = deprecated_property(replacement="rss")
+        peak_wset = deprecated_property(replacement="peak_rss")
+        pagefile = deprecated_property(replacement="vms")
+        peak_pagefile = deprecated_property(replacement="peak_vms")
+        private = deprecated_property(replacement="vms")
+
+    # psutil.Process.memory_info_ex()
+    _pmem_ex = nt(
+        "pmem_ex",
+        pmem._fields + ("virtual", "peak_virtual"),
+    )
+
+    class pmem_ex(pmem, _pmem_ex):
+        __slots__ = ()
+        _fields = _pmem_ex._fields
+        __repr__ = _pmem_ex.__repr__
+
+        def __new__(cls, *args, **kwargs):
+            return _pmem_ex.__new__(cls, *args, **kwargs)
+
+        @classmethod
+        def _make(cls, iterable):
+            result = tuple.__new__(cls, iterable)
+            n = len(cls._fields)
+            if len(result) != n:
+                msg = f"Expected {n} arguments, got {len(result)}"
+                raise TypeError(msg)
+            return result
+
+    # psutil.Process.memory_footprint()
+    pfootprint = nt("pfootprint", ("uss",))
 
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))
@@ -311,6 +362,23 @@ elif MACOS:
     # psutil.Process.memory_info()
     pmem = nt("pmem", ("rss", "vms"))
 
+    # psutil.Process.memory_info_ex()
+    pmem_ex = nt(
+        "pmem_ex",
+        pmem._fields
+        + (
+            "peak_rss",
+            "rss_anon",
+            "rss_file",
+            "wired",
+            "compressed",
+            "phys_footprint",
+        ),
+    )
+
+    # psutil.Process.memory_footprint()
+    pfootprint = nt("pfootprint", ("uss",))
+
     # psutil.Process.memory_full_info()
     pfullmem = nt("pfullmem", pmem._fields + ("uss",))
 
@@ -342,7 +410,7 @@ elif BSD:
     scputimes = nt("scputimes", ("user", "nice", "system", "idle", "irq"))
 
     # psutil.Process.memory_info()
-    pmem = nt("pmem", ("rss", "vms", "text", "data", "stack"))
+    pmem = nt("pmem", ("rss", "vms", "text", "data", "stack", "peak_rss"))
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem

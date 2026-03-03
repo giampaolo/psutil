@@ -24,7 +24,6 @@ from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 
@@ -139,13 +138,10 @@ class TestFetchAllProcesses(PsutilTestCase):
                     meth(value, info)
                 except Exception:  # noqa: BLE001
                     s = '\n' + '=' * 70 + '\n'
-                    s += (
-                        "FAIL: name=test_{}, pid={}, ret={}\ninfo={}\n".format(
-                            name,
-                            info['pid'],
-                            repr(value),
-                            info,
-                        )
+                    s += "FAIL: name=test_{}, pid={}, ret={}\n\n".format(
+                        name,
+                        info['pid'],
+                        repr(value),
                     )
                     s += '-' * 70
                     s += f"\n{traceback.format_exc()}"
@@ -303,31 +299,17 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret in list(range(psutil.cpu_count()))
 
     def memory_info(self, ret, info):
-        assert is_namedtuple(ret)
-        for value in ret:
-            assert isinstance(value, int)
-            assert value >= 0
-        if WINDOWS:
-            assert ret.peak_wset >= ret.wset
-            assert ret.peak_paged_pool >= ret.paged_pool
-            assert ret.peak_nonpaged_pool >= ret.nonpaged_pool
-            assert ret.peak_pagefile >= ret.pagefile
+        self.check_proc_memory(ret)
 
-    def memory_full_info(self, ret, info):
+    def memory_info_ex(self, ret, info):
+        self.check_proc_memory(ret)
+
+    def memory_footprint(self, ret, info):
         assert is_namedtuple(ret)
-        total = psutil.virtual_memory().total
         for name in ret._fields:
             value = getattr(ret, name)
             assert isinstance(value, int)
             assert value >= 0
-            if LINUX or (OSX and name in {'vms', 'data'}):
-                # On Linux there are processes (e.g. 'goa-daemon') whose
-                # VMS is incredibly high for some reason.
-                continue
-            assert value <= total, name
-
-        if LINUX:
-            assert ret.pss >= ret.uss
 
     def open_files(self, ret, info):
         assert isinstance(ret, list)

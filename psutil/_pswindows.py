@@ -786,7 +786,6 @@ class Process:
 
     @wrap_exceptions
     def memory_info(self):
-        # on Windows RSS == WorkingSetSize and VSM == PagefileUsage.
         # Underlying C function returns fields of PROCESS_MEMORY_COUNTERS
         # struct.
         d = self._get_raw_meminfo()
@@ -794,23 +793,27 @@ class Process:
             rss=d["WorkingSetSize"],
             vms=d["PagefileUsage"],
             num_page_faults=d["PageFaultCount"],
-            peak_wset=d["PeakWorkingSetSize"],
-            wset=d["WorkingSetSize"],
-            peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
             paged_pool=d["QuotaPagedPoolUsage"],
-            peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
             nonpaged_pool=d["QuotaNonPagedPoolUsage"],
-            pagefile=d["PagefileUsage"],
-            peak_pagefile=d["PeakPagefileUsage"],
-            private=d["PrivateUsage"],
+            peak_rss=d["PeakWorkingSetSize"],
+            peak_vms=d["PeakPagefileUsage"],
+            peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
+            peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
         )
 
     @wrap_exceptions
-    def memory_full_info(self):
-        basic_mem = self.memory_info()
+    def memory_info_ex(self):
+        d = self._oneshot()
+        return {
+            "virtual": d["VirtualSize"],
+            "peak_virtual": d["PeakVirtualSize"],
+        }
+
+    @wrap_exceptions
+    def memory_footprint(self):
         uss = cext.proc_memory_uss(self.pid)
         uss *= getpagesize()
-        return ntp.pfullmem(*basic_mem + (uss,))
+        return ntp.pfootprint(uss)
 
     @wrap_exceptions
     def page_faults(self):

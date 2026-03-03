@@ -681,10 +681,13 @@ class Process:
     def memory_info(self):
         d = self.oneshot()
         return ntp.pmem(
-            d["rss"], d["vms"], d["memtext"], d["memdata"], d["memstack"]
+            rss=d["rss"],
+            vms=d["vms"],
+            text=d["memtext"],
+            data=d["memdata"],
+            stack=d["memstack"],
+            peak_rss=d["peak_rss"],
         )
-
-    memory_full_info = memory_info
 
     @wrap_exceptions
     def create_time(self, monotonic=False):

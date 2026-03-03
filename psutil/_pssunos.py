@@ -523,8 +523,6 @@ class Process:
         vms = ret[proc_info_map['vms']] * 1024
         return ntp.pmem(rss, vms)
 
-    memory_full_info = memory_info
-
     @wrap_exceptions
     def status(self):
         code = self._oneshot()[proc_info_map['status']]

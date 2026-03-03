@@ -32,7 +32,7 @@ name                 0        0.0%   SUCCESS
 threads              0        0.0%   SUCCESS
 cpu_affinity         0        0.0%   SUCCESS
 memory_maps          71      21.3%   ACCESS DENIED
-memory_full_info     71      21.3%   ACCESS DENIED
+memory_footprint     71      21.3%   ACCESS DENIED
 exe                  174     52.1%   ACCESS DENIED
 environ              238     71.3%   ACCESS DENIED
 num_fds              238     71.3%   ACCESS DENIED

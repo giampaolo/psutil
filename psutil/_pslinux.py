@@ -1883,6 +1883,37 @@ class Process:
             )
         return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
 
+    @wrap_exceptions
+    def memory_info_ex(
+        self,
+        _vmpeak_re=re.compile(br"VmPeak:\s+(\d+)"),
+        _vmhwm_re=re.compile(br"VmHWM:\s+(\d+)"),
+        _rssanon_re=re.compile(br"RssAnon:\s+(\d+)"),
+        _rssfile_re=re.compile(br"RssFile:\s+(\d+)"),
+        _rssshmem_re=re.compile(br"RssShmem:\s+(\d+)"),
+        _vmswap_re=re.compile(br"VmSwap:\s+(\d+)"),
+        _hugetlb_re=re.compile(br"HugetlbPages:\s+(\d+)"),
+    ):
+        # Read /proc/{pid}/status which provides peak RSS/VMS and a
+        # cheaper way to get swap (no smaps parsing needed).
+        # RssAnon/RssFile/RssShmem were added in Linux 4.5;
+        # VmSwap in 2.6.34; HugetlbPages in 4.4.
+        data = self._read_status_file()
+
+        def parse(regex):
+            m = regex.search(data)
+            return int(m.group(1)) * 1024 if m else 0
+
+        return {
+            "peak_rss": parse(_vmhwm_re),
+            "peak_vms": parse(_vmpeak_re),
+            "rss_anon": parse(_rssanon_re),
+            "rss_file": parse(_rssfile_re),
+            "rss_shmem": parse(_rssshmem_re),
+            "swap": parse(_vmswap_re),
+            "hugetlb": parse(_hugetlb_re),
+        }
+
     if HAS_PROC_SMAPS_ROLLUP or HAS_PROC_SMAPS:
 
         def _parse_smaps_rollup(self):
@@ -1938,19 +1969,17 @@ class Process:
             return (uss, pss, swap)
 
         @wrap_exceptions
-        def memory_full_info(self):
-            if HAS_PROC_SMAPS_ROLLUP:  # faster
-                try:
-                    uss, pss, swap = self._parse_smaps_rollup()
-                except (ProcessLookupError, FileNotFoundError):
-                    uss, pss, swap = self._parse_smaps()
-            else:
-                uss, pss, swap = self._parse_smaps()
-            basic_mem = self.memory_info()
-            return ntp.pfullmem(*basic_mem + (uss, pss, swap))
+        def memory_footprint(self):
+            def fetch():
+                if HAS_PROC_SMAPS_ROLLUP:  # faster
+                    try:
+                        return self._parse_smaps_rollup()
+                    except (ProcessLookupError, FileNotFoundError):
+                        pass
+                return self._parse_smaps()
 
-    else:
-        memory_full_info = memory_info
+            uss, pss, swap = fetch()
+            return ntp.pfootprint(uss, pss, swap)
 
     if HAS_PROC_SMAPS:
 

@@ -292,41 +292,41 @@ typedef struct _SYSTEM_THREAD_INFORMATION2 {
 #define PSYSTEM_THREAD_INFORMATION PSYSTEM_THREAD_INFORMATION2
 
 typedef struct _SYSTEM_PROCESS_INFORMATION2 {
-    ULONG NextEntryOffset;
-    ULONG NumberOfThreads;
-    ULONGLONG WorkingSetPrivateSize;
-    ULONG HardFaultCount;
-    ULONG NumberOfThreadsHighWatermark;
-    ULONGLONG CycleTime;
-    LARGE_INTEGER CreateTime;
-    LARGE_INTEGER UserTime;
-    LARGE_INTEGER KernelTime;
-    UNICODE_STRING ImageName;
-    LONG BasePriority;
-    HANDLE UniqueProcessId;
-    HANDLE InheritedFromUniqueProcessId;
-    ULONG HandleCount;
-    ULONG SessionId;
-    ULONG_PTR UniqueProcessKey;
-    SIZE_T PeakVirtualSize;
-    SIZE_T VirtualSize;
-    DWORD PageFaultCount;
-    SIZE_T PeakWorkingSetSize;
-    SIZE_T WorkingSetSize;
-    SIZE_T QuotaPeakPagedPoolUsage;
-    SIZE_T QuotaPagedPoolUsage;
-    SIZE_T QuotaPeakNonPagedPoolUsage;
-    SIZE_T QuotaNonPagedPoolUsage;
-    SIZE_T PagefileUsage;
-    SIZE_T PeakPagefileUsage;
-    SIZE_T PrivatePageCount;
-    LARGE_INTEGER ReadOperationCount;
-    LARGE_INTEGER WriteOperationCount;
-    LARGE_INTEGER OtherOperationCount;
-    LARGE_INTEGER ReadTransferCount;
-    LARGE_INTEGER WriteTransferCount;
-    LARGE_INTEGER OtherTransferCount;
-    SYSTEM_THREAD_INFORMATION Threads[1];
+    ULONG NextEntryOffset;                      // The address of the previous item plus the value in the NextEntryOffset member. For the last item in the array, NextEntryOffset is 0.
+    ULONG NumberOfThreads;                      // The NumberOfThreads member contains the number of threads in the process.
+    ULONGLONG WorkingSetPrivateSize;            // The total private memory that a process currently has allocated and is physically resident in memory. // since VISTA
+    ULONG HardFaultCount;                       // The total number of hard faults for data from disk rather than from in-memory pages. // since WIN7
+    ULONG NumberOfThreadsHighWatermark;         // The peak number of threads that were running at any given point in time, indicative of potential performance bottlenecks related to thread management.
+    ULONGLONG CycleTime;                        // The sum of the cycle time of all threads in the process.
+    LARGE_INTEGER CreateTime;                   // Number of 100-nanosecond intervals since the creation time of the process. Not updated during system timezone changes.
+    LARGE_INTEGER UserTime;                     // Number of 100-nanosecond intervals the process has executed in user mode.
+    LARGE_INTEGER KernelTime;                   // Number of 100-nanosecond intervals the process has executed in kernel mode.
+    UNICODE_STRING ImageName;                   // The file name of the executable image.
+    KPRIORITY BasePriority;                     // The starting priority of the process.
+    HANDLE UniqueProcessId;                     // The identifier of the process.
+    HANDLE InheritedFromUniqueProcessId;        // The identifier of the process that created this process. Not updated and incorrectly refers to processes with recycled identifiers.
+    ULONG HandleCount;                          // The current number of open handles used by the process.
+    ULONG SessionId;                            // The identifier of the Remote Desktop Services session under which the specified process is running.
+    ULONG_PTR UniqueProcessKey;                 // since VISTA (requires SystemExtendedProcessInformation)
+    SIZE_T PeakVirtualSize;                     // The peak size, in bytes, of the virtual memory used by the process.
+    SIZE_T VirtualSize;                         // The current size, in bytes, of virtual memory used by the process.
+    ULONG PageFaultCount;                       // The total number of page faults for data that is not currently in memory. The value wraps around to zero on average 24 hours.
+    SIZE_T PeakWorkingSetSize;                  // The peak size, in kilobytes, of the working set of the process.
+    SIZE_T WorkingSetSize;                      // The number of pages visible to the process in physical memory. These pages are resident and available for use without triggering a page fault.
+    SIZE_T QuotaPeakPagedPoolUsage;             // The peak quota charged to the process for pool usage, in bytes.
+    SIZE_T QuotaPagedPoolUsage;                 // The quota charged to the process for paged pool usage, in bytes.
+    SIZE_T QuotaPeakNonPagedPoolUsage;          // The peak quota charged to the process for nonpaged pool usage, in bytes.
+    SIZE_T QuotaNonPagedPoolUsage;              // The current quota charged to the process for nonpaged pool usage.
+    SIZE_T PagefileUsage;                       // The total number of bytes of page file storage in use by the process.
+    SIZE_T PeakPagefileUsage;                   // The maximum number of bytes of page-file storage used by the process.
+    SIZE_T PrivatePageCount;                    // The number of memory pages allocated for the use by the process.
+    LARGE_INTEGER ReadOperationCount;           // The total number of read operations performed.
+    LARGE_INTEGER WriteOperationCount;          // The total number of write operations performed.
+    LARGE_INTEGER OtherOperationCount;          // The total number of I/O operations performed other than read and write operations.
+    LARGE_INTEGER ReadTransferCount;            // The total number of bytes read during a read operation.
+    LARGE_INTEGER WriteTransferCount;           // The total number of bytes written during a write operation.
+    LARGE_INTEGER OtherTransferCount;           // The total number of bytes transferred during operations other than read and write operations.
+    SYSTEM_THREAD_INFORMATION Threads[1];       // This type is not defined in the structure but was added for convenience.
 } SYSTEM_PROCESS_INFORMATION2, *PSYSTEM_PROCESS_INFORMATION2;
 
 #define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2

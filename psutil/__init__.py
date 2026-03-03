@@ -29,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import warnings
 
 try:
     import pwd
@@ -203,7 +204,7 @@ if hasattr(_psplatform.Process, "rlimit"):
 AF_LINK = _psplatform.AF_LINK
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "7.2.3"
+__version__ = "8.0.0"
 version_info = tuple(int(num) for num in __version__.split('.'))
 
 _timer = getattr(time, 'monotonic', time.time)
@@ -558,7 +559,7 @@ class Process:
                 msg = f"invalid attrs type {type(attrs)}"
                 raise TypeError(msg)
             attrs = set(attrs)
-            invalid_names = attrs - valid_names
+            invalid_names = attrs - valid_names - _as_dict_attrnames_deprecated
             if invalid_names:
                 msg = "invalid attr name{} {}".format(
                     "s" if len(invalid_names) > 1 else "",
@@ -1136,21 +1137,52 @@ class Process:
         """
         return self._proc.memory_info()
 
-    def memory_full_info(self):
-        """This method returns the same information as memory_info(),
-        plus, on some platform (Linux, macOS, Windows), also provides
-        additional metrics (USS, PSS and swap).
-        The additional metrics provide a better representation of actual
-        process memory usage.
+    def memory_info_ex(self):
+        """Return a namedtuple extending memory_info() with extra
+        metrics.
 
-        Namely USS is the memory which is unique to a process and which
-        would be freed if the process was terminated right now.
-
-        It does so by passing through the whole process address.
-        As such it usually requires higher user privileges than
-        memory_info() and is considerably slower.
+        All numbers are expressed in bytes.
         """
-        return self._proc.memory_full_info()
+        base = self.memory_info()
+        if hasattr(self._proc, "memory_info_ex"):
+            extras = self._proc.memory_info_ex()
+            return _ntp.pmem_ex(**base._asdict(), **extras)
+        return base
+
+    # Linux, macOS, Windows
+    if hasattr(_psplatform.Process, "memory_footprint"):
+
+        def memory_footprint(self):
+            """Return a named tuple with USS, PSS and swap memory
+            metrics. These provide a better representation of
+            actual process memory usage.
+
+            USS is the memory unique to a process and which would
+            be freed if the process was terminated right now.
+
+            It does so by passing through the whole process address. As
+            such it usually requires higher user privileges than
+            memory_info() or memory_info_ex() and is considerably
+            slower.
+            """
+            return self._proc.memory_footprint()
+
+    # DEPRECATED
+    def memory_full_info(self):
+        """Return the same information as memory_info() plus
+        memory_footprint() in a single named tuple.
+
+        DEPRECATED in 8.0.0. Use memory_footprint() instead.
+        """
+        msg = (
+            "memory_full_info() is deprecated; use memory_footprint() instead"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        basic_mem = self.memory_info()
+        if hasattr(self, "memory_footprint"):
+            fp = self.memory_footprint()
+            return _ntp.pfullmem(*basic_mem + fp)
+        return _ntp.pfullmem(*basic_mem)
 
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
@@ -1162,18 +1194,29 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        valid_types = list(_ntp.pfullmem._fields)
+        valid_types = list(_ntp.pmem._fields)
+        if hasattr(_ntp, "pmem_ex"):
+            valid_types += [
+                f for f in _ntp.pmem_ex._fields if f not in valid_types
+            ]
+        if hasattr(_ntp, "pfootprint"):
+            valid_types += [
+                f for f in _ntp.pfootprint._fields if f not in valid_types
+            ]
         if memtype not in valid_types:
             msg = (
                 f"invalid memtype {memtype!r}; valid types are"
                 f" {tuple(valid_types)!r}"
             )
             raise ValueError(msg)
-        fun = (
-            self.memory_info
-            if memtype in _ntp.pmem._fields
-            else self.memory_full_info
-        )
+        if memtype in _ntp.pmem._fields:
+            fun = self.memory_info
+        elif (
+            hasattr(_ntp, "pfootprint") and memtype in _ntp.pfootprint._fields
+        ):
+            fun = self.memory_footprint
+        else:
+            fun = self.memory_info_ex
         metrics = fun()
         value = getattr(metrics, memtype)
 
@@ -1402,9 +1445,13 @@ _as_dict_attrnames = {
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'oneshot'}
+      'connections', 'memory_full_info', 'oneshot'}
 }
 # fmt: on
+
+# Deprecated attrs: not returned by default but still accepted if
+# explicitly requested via as_dict(attrs=[...]).
+_as_dict_attrnames_deprecated = {'memory_full_info'}
 
 
 # =====================================================================

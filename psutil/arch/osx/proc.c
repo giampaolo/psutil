@@ -18,6 +18,7 @@
 #include <sys/sysctl.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
+#include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
@@ -275,6 +276,60 @@ psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     }
 
     return base <= addr && addr < (base + size);
+}
+
+
+/*
+ * Return extended memory info via task_info(TASK_VM_INFO).
+ */
+PyObject *
+psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
+    pid_t pid;
+    mach_port_t task = MACH_PORT_NULL;
+    kern_return_t kr;
+    task_vm_info_data_t info;
+    mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
+    PyObject *dict = PyDict_New();
+
+    if (!dict)
+        return NULL;
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
+        goto error;
+    if (psutil_task_for_pid(pid, &task) != 0)
+        goto error;
+
+    // Fetch multiple metrics. Fails with access denied for any PID not
+    // owned by us.
+    kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
+    mach_port_deallocate(mach_task_self(), task);
+    task = MACH_PORT_NULL;
+    if (kr != KERN_SUCCESS) {
+        psutil_runtime_error("task_info(TASK_VM_INFO) syscall failed");
+        goto error;
+    }
+
+    // Fetch wired memory.
+    uint64_t wired_size = 0;
+    struct rusage_info_v0 ri;
+    if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) == 0)
+        wired_size = ri.ri_wired_size;
+    else
+        psutil_debug("proc_pid_rusage() failed (pid=%i)", pid);
+
+    // clang-format off
+    if (!pydict_add(dict, "peak_rss", "K", (unsigned long long)info.resident_size_peak)) goto error;
+    if (!pydict_add(dict, "rss_anon", "K", (unsigned long long)info.internal)) goto error;
+    if (!pydict_add(dict, "rss_file", "K", (unsigned long long)info.external)) goto error;
+    if (!pydict_add(dict, "wired", "K", (unsigned long long)wired_size)) goto error;
+    if (!pydict_add(dict, "compressed", "K", (unsigned long long)info.compressed)) goto error;
+    if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)info.phys_footprint)) goto error;
+    // clang-format on
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
 
 

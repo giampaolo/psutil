@@ -339,7 +339,33 @@ Memory
   Return statistics about system memory usage as a named tuple including the
   following fields, expressed in bytes.
 
-  Main metrics:
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | Linux     | macOS     | BSD       | Windows   | Solaris   | AIX       |
+  +===========+===========+===========+===========+===========+===========+
+  | total     | total     | total     | total     | total     | total     |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | available | available | available | available | available | available |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | percent   | percent   | percent   | percent   | percent   | percent   |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | used      | used      | used      | used      | used      | used      |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | free      | free      | free      | free      | free      | free      |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | active    | active    | active    |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | inactive  | inactive  | inactive  |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | buffers   |           | buffers   |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | cached    |           | cached    |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | shared    |           | shared    |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  | slab      |           |           |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
+  |           | wired     | wired     |           |           |           |
+  +-----------+-----------+-----------+-----------+-----------+-----------+
 
   - **total**: total physical memory (exclusive swap).
   - **available**: the memory that can be given instantly to processes without
@@ -348,9 +374,6 @@ Memory
     on the platform. It is supposed to be used to monitor actual memory usage
     in a cross platform fashion.
   - **percent**: the percentage usage calculated as ``(total - available) / total * 100``.
-
-  Other metrics:
-
   - **used**: memory used, calculated differently depending on the platform and
     designed for informational purposes only. **total - free** does not
     necessarily match **used**.
@@ -358,15 +381,15 @@ Memory
     note that this doesn't reflect the actual memory available (use
     **available** instead). **total - used** does not necessarily match
     **free**.
-  - **active** *(UNIX)*: memory currently in use or very recently used, and so
-    it is in RAM.
-  - **inactive** *(UNIX)*: memory that is marked as not used.
+  - **active** *(Linux, macOS, BSD)*: memory currently in use or very recently
+    used, and so it is in RAM.
+  - **inactive** *(Linux, macOS, BSD)*: memory that is marked as not used.
   - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
   - **cached** *(Linux, BSD)*: cache for various things.
   - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
     multiple processes.
   - **slab** *(Linux)*: in-kernel data structures cache.
-  - **wired** *(BSD, macOS)*: memory that is marked to always stay in RAM. It is
+  - **wired** *(macOS, BSD)*: memory that is marked to always stay in RAM. It is
     never moved to disk.
 
   The sum of **used** and **available** does not necessarily equal **total**.
@@ -383,7 +406,7 @@ Memory
   >>> mem
   svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
   >>>
-  >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
+  >>> THRESHOLD = 500 * 1024 * 1024  # 500MB
   >>> if mem.available <= THRESHOLD:
   ...     print("warning")
   ...
@@ -1162,9 +1185,11 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`gids`                 |                               | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     | :meth:`exe`                   | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
+    | :meth:`memory_info_ex`       | :meth:`exe`                   | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_threads`          | :meth:`name`                  | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
+    | :meth:`num_ctx_switches`     | :meth:`name`                  | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`num_threads`          |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1172,7 +1197,7 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     |                              |                               | :meth:`username`             | :meth:`username`             |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_full_info`     |                               |                              |                              |                          |                          |
+    | :meth:`memory_footprint`     |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1257,7 +1282,7 @@ Process class
     If *attrs* is specified it must be a list of strings reflecting available
     :class:`Process` class's attribute names. Here's a list of possible string
     values:
-    ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'```.
+    ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_footprint'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_info_ex'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'```.
     If *attrs* argument is not passed all public read only attributes are
     assumed.
     *ad_value* is the value which gets assigned to a dict key in case
@@ -1273,7 +1298,7 @@ Process class
       >>>
       >>> # get a list of valid attrs names
       >>> list(psutil.Process().as_dict().keys())
-      ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_full_info', 'memory_info', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
+      ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
     .. versionchanged::
       3.0.0 *ad_value* is used also when incurring into
@@ -1649,38 +1674,33 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | Linux   | macOS   | BSD      | Solaris | AIX | Windows                                                     |
     +=========+=========+==========+=========+=====+=============================================================+
-    | rss     | rss     | rss      | rss     | rss | rss (alias for ``wset``, maps to ``WorkingSetSize``)        |
+    | rss     | rss     | rss      | rss     | rss | rss (maps to ``WorkingSetSize``)                            |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | vms     | vms     | vms      | vms     | vms | vms (alias for ``pagefile``, maps to ``PagefileUsage``)     |
+    | vms     | vms     | vms      | vms     | vms | vms (maps to ``PagefileUsage``)                             |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | text    |         | data     |         |     | peak_wset (maps to ``PeakWorkingSetSize``)                  |
+    | text    |         | data     |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | lib     |         | stack    |         |     | wset (maps to ``WorkingSetSize``)                           |
+    | lib     |         | stack    |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
+    | data    |         | peak_rss |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | dirty   |         |          |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
+    | dirty   |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
+    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
+    |         |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | pagefile (maps to ``PagefileUsage``)                        |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_pagefile (maps to ``PeakPagefileUsage``)               |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | private (maps to ``PrivateUsage``)                          |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
 
     - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
-      a process has used. On UNIX it matches ``top`` RES column. On Windows
-      this is an alias for `wset` field.
+      a process is using. On UNIX it matches ``top`` RES column.
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
-      Windows this is an alias for `pagefile` field.
+      Windows it maps to ``Private``, which is not exactly the virtual address
+      space size (VMS) as intended on UNIX. For that, use ``virtual`` from
+      :meth:`memory_info_ex`.
 
     - **shared**: *(Linux)*
       memory that could be potentially shared with other processes.
@@ -1691,15 +1711,21 @@ Process class
       executable code. This matches "top"'s CODE column).
 
     - **data** *(Linux, BSD)*:
-      aka DRS (data resident set) the amount of physical memory devoted to
-      other than executable code. It matches "top"'s DATA column).
+      aka DRS (Data Resident Set) the amount of physical memory devoted to
+      other than executable code. It matches "top"'s DATA column.
 
     - **lib** *(Linux)*: the memory used by shared libraries.
 
     - **dirty** *(Linux)*: the number of dirty pages.
 
+    - **peak_rss** *(BSD)*: aka "peak Resident Set Size" or "high water mark".
+      It's the highest amount of physical memory the process has ever used at
+      any point during its lifetime. Can be 0 for kernel PIDs.
+
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
-    structure doc. Example on Linux:
+    doc.
+
+    Example on Linux:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1710,22 +1736,78 @@ Process class
       4.0.0 multiple fields are returned, not only *rss* and *vms*.
 
     .. versionchanged::
-      7.3.0 macOS: *pfaults* and *pageins* are no longer returned. Use
+      8.0.0 macOS: *pfaults* and *pageins* are no longer returned. Use
       :meth:`page_faults` method instead.
 
-  .. method:: memory_full_info()
+    .. versionchanged::
+      8.0.0 BSD: added *peak_rss*
 
-    This method returns the same information as :meth:`memory_info`, plus, on
-    some platform (Linux, macOS, Windows), also provides additional metrics
-    (USS, PSS and swap).
-    The additional metrics provide a better representation of "effective"
-    process memory consumption (in case of USS) as explained in detail in this
+    .. versionchanged::
+      8.0.0 Windows: renamed several fields (old names are kept as deprecated
+      aliases): *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and
+      *private* → *vms*, *peak_pagefile* → *peak_vms*.
+
+  .. method:: memory_info_ex()
+
+    Return a named tuple extending :meth:`memory_info` with additional
+    platform-specific memory metrics. On platforms where extra fields are not
+    implemented this returns the same result as :meth:`memory_info`. All
+    numbers are expressed in bytes.
+
+    +-------------+----------------+--------------+
+    | Linux       | macOS          | Windows      |
+    +=============+================+==============+
+    | peak_rss    | peak_rss       | virtual      |
+    +-------------+----------------+--------------+
+    | peak_vms    |                | peak_virtual |
+    +-------------+----------------+--------------+
+    | rss_anon    | rss_anon       |              |
+    +-------------+----------------+--------------+
+    | rss_file    | rss_file       |              |
+    +-------------+----------------+--------------+
+    | rss_shmem   | wired          |              |
+    +-------------+----------------+--------------+
+    | swap        | compressed     |              |
+    +-------------+----------------+--------------+
+    | hugetlb     | phys_footprint |              |
+    +-------------+----------------+--------------+
+
+    - **peak_rss**: aka "peak Resident Set Size" or "high water mark". It's the
+      highest amount of physical memory the process has ever used at any point
+      during its lifetime.
+    - **peak_vms** *(Linux)*: aka "peak Virtual Memory Size". It's highest
+      amount of virtual memory the process has ever used at any point during
+      its lifetime.
+    - **rss_anon** *(Linux, macOS)*: anonymous resident memory (heap, stack,
+      etc.). On macOS this maps to ``task_vm_info.internal``.
+    - **rss_file** *(Linux, macOS)*: file-backed resident memory. On macOS this
+      maps to ``task_vm_info.external``.
+    - **rss_shmem** *(Linux)*: shared memory resident pages.
+    - **wired** *(macOS)*: memory that is marked to always stay in RAM. It is
+      never moved to disk.
+    - **swap** *(Linux)*: memory swapped out to disk. Equivalent to
+      ``memory_footprint().swap`` but faster, as it reads from
+      */proc/pid/status* instead of */proc/pid/smaps*.
+    - **hugetlb** *(Linux)*: memory backed by huge TLB pages.
+    - **phys_footprint** *(macOS)*: total physical memory footprint including
+      compressed pages; this is what Xcode's memory gauge shows.
+    - **virtual** *(Windows)*: total virtual address space size. Unlike ``vms``
+      in :meth:`memory_info`, this is the true virtual memory size
+      (``VirtualSize`` from ``SYSTEM_PROCESS_INFORMATION``).
+    - **peak_virtual** *(Windows)*: peak virtual address space size
+      (``VirtualPeakSize`` from ``SYSTEM_PROCESS_INFORMATION``).
+
+    .. versionadded:: 8.0.0
+
+  .. method:: memory_footprint()
+
+    Return a named tuple with USS, PSS and swap memory metrics.
+    These provide a better representation of actual process memory
+    consumption as explained in detail in this
     `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
     It does so by passing through the whole process address.
     As such it usually requires higher user privileges than
-    :meth:`memory_info` and is considerably slower.
-    On platforms where extra fields are not implemented this simply returns the
-    same metrics as :meth:`memory_info`.
+    :meth:`memory_info` or :meth:`memory_info_ex` and is considerably slower.
 
     - **uss** *(Linux, macOS, Windows)*:
       aka "Unique Set Size", this is the memory which is unique to a process
@@ -1749,13 +1831,24 @@ Process class
 
       >>> import psutil
       >>> p = psutil.Process()
-      >>> p.memory_full_info()
-      pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
-      >>>
+      >>> p.memory_footprint()
+      pfootprint(uss=6545408, pss=6872064, swap=0)
 
     See also `procsmem.py`_ for an example application.
 
+    .. versionadded:: 8.0.0
+
+    Availability: Linux, macOS, Windows
+
+  .. method:: memory_full_info()
+
+    This method returns the same information as :meth:`memory_info` plus
+    :meth:`memory_footprint` in a single named tuple.
+
     .. versionadded:: 4.0.0
+
+    .. warning::
+      deprecated in version 8.0.0; use :meth:`memory_footprint` instead.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -1763,8 +1856,8 @@ Process class
     process memory utilization as a percentage.
     *memtype* argument is a string that dictates what type of process memory
     you want to compare against. You can choose between the named tuple field
-    names returned by :meth:`memory_info` and :meth:`memory_full_info`
-    (defaults to ``"rss"``).
+    names returned by :meth:`memory_info`, :meth:`memory_info_ex` and
+    :meth:`memory_footprint` (defaults to ``"rss"``).
 
     .. versionchanged:: 4.0.0 added `memtype` parameter.
 
@@ -1868,7 +1961,7 @@ Process class
       >>> p.page_faults()
       ppagefaults(minor=5905, major=3)
 
-    .. versionadded:: 7.3.0
+    .. versionadded:: 8.0.0
 
   .. method:: open_files()
 

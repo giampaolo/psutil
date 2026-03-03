@@ -46,6 +46,7 @@ from . import HAS_PROC_CPU_NUM
 from . import HAS_PROC_ENVIRON
 from . import HAS_PROC_IO_COUNTERS
 from . import HAS_PROC_IONICE
+from . import HAS_PROC_MEMORY_FOOTPRINT
 from . import HAS_PROC_MEMORY_MAPS
 from . import HAS_PROC_RLIMIT
 from . import HAS_PROC_THREADS
@@ -448,6 +449,7 @@ class TestProcess(PsutilTestCase):
     @retry_on_failure()
     def test_memory_info(self):
         p = psutil.Process()
+        self.check_proc_memory(p.memory_info())
 
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.memory_info()[:2]
@@ -467,30 +469,80 @@ class TestProcess(PsutilTestCase):
         assert percent2 > percent1
         del memarr
 
-        if WINDOWS:
-            mem = p.memory_info()
-            assert mem.rss == mem.wset
-            assert mem.vms == mem.pagefile
-
-        mem = p.memory_info()
+    def test_memory_info_ex(self):
+        p = psutil.Process()
+        mem = p.memory_info_ex()
+        self.check_proc_memory(mem)
+        total = psutil.virtual_memory().total
         for name in mem._fields:
-            assert getattr(mem, name) >= 0
+            if name != "vms":
+                value = getattr(mem, name)
+                assert value <= total
+
+    def test_memory_info_ex_fields_order(self):
+        mem = psutil.Process().memory_info_ex()
+        common = ("rss", "vms")
+        assert mem._fields[:2] == common
+        if LINUX:
+            assert mem._fields[2:] == (
+                "shared",
+                "text",
+                "lib",
+                "data",
+                "dirty",
+                "peak_rss",
+                "peak_vms",
+                "rss_anon",
+                "rss_file",
+                "rss_shmem",
+                "swap",
+                "hugetlb",
+            )
+        elif MACOS:
+            assert mem._fields[2:] == (
+                "peak_rss",
+                "rss_anon",
+                "rss_file",
+                "wired",
+                "compressed",
+                "phys_footprint",
+            )
+        elif WINDOWS:
+            assert mem._fields[2:] == (
+                "num_page_faults",
+                "paged_pool",
+                "nonpaged_pool",
+                "peak_rss",
+                "peak_vms",
+                "peak_paged_pool",
+                "peak_nonpaged_pool",
+                "virtual",
+                "peak_virtual",
+            )
+        else:
+            assert mem._fields == psutil.Process().memory_info_ex()._fields
+
+    @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
+    def test_memory_footprint(self):
+        p = psutil.Process()
+        mem = p.memory_footprint()
+        self.check_proc_memory(mem)
 
     def test_memory_full_info(self):
         p = psutil.Process()
-        total = psutil.virtual_memory().total
-        mem = p.memory_full_info()
-        for name in mem._fields:
-            value = getattr(mem, name)
-            assert value >= 0
-            if (name == "vms" and OSX) or LINUX:
-                continue
-            assert value <= total
-        if LINUX or WINDOWS or MACOS:
-            assert mem.uss >= 0
-        if LINUX:
-            assert mem.pss >= 0
-            assert mem.swap >= 0
+        with pytest.warns(DeprecationWarning):
+            mem = p.memory_full_info()
+        # not returned by default
+        assert 'memory_full_info' not in p.as_dict()
+        # but explicitly requesting it should work
+        with pytest.warns(DeprecationWarning):
+            d = p.as_dict(attrs=['memory_full_info'])
+        assert 'memory_full_info' in d
+        # fields should be memory_info() + memory_footprint() (if avail)
+        expected = p.memory_info()._fields
+        if HAS_PROC_MEMORY_FOOTPRINT:
+            expected += p.memory_footprint()._fields
+        assert mem._fields == expected
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):

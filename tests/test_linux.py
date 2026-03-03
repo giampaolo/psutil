@@ -2197,6 +2197,10 @@ class TestProcess(PsutilTestCase):
         assert p._proc.create_time() != p._proc.create_time(monotonic=True)
         assert p._get_ident()[1] == p._proc.create_time(monotonic=True)
 
+    def test_memory_info_ex(self):
+        mem = psutil.Process().memory_info_ex()
+        assert mem.rss == mem.rss_anon + mem.rss_file + mem.rss_shmem
+
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestProcessAgainstStatus(PsutilTestCase):

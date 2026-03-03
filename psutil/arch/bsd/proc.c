@@ -31,6 +31,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     long memtext;
     long memdata;
     long memstack;
+    long peak_rss;
     int oncpu;
 #ifdef PSUTIL_NETBSD
     struct kinfo_proc2 kp;
@@ -70,8 +71,10 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     memtext = (long)kp.ki_tsize * pagesize;
     memdata = (long)kp.ki_dsize * pagesize;
     memstack = (long)kp.ki_ssize * pagesize;
+    peak_rss = kp.ki_rusage.ru_maxrss * 1024;  // expressed in KB
 #else
     rss = (long)kp.p_vm_rssize * pagesize;
+    peak_rss = kp.p_uru_maxrss * 1024;  // expressed in KB
 #ifdef PSUTIL_OPENBSD
     // VMS, this is how ps determines it on OpenBSD:
     // https://github.com/openbsd/src/blob/
@@ -87,6 +90,21 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     memdata = (long)kp.p_vm_dsize * pagesize;
     memstack = (long)kp.p_vm_ssize * pagesize;
 #endif
+
+    // kernel doesn't always update peak_rss atomically, so rss can
+    // briefly exceed it. Difference is almost always 16KB. peak_rss is
+    // 0 for kernel/root PIDs: we leave it as-is so the caller knows it
+    // can't be relied upon.
+    if ((peak_rss < rss && peak_rss != 0)) {
+        psutil_debug(
+            "pid: %ld, ru_maxrss (%ld KB) < rss (%ld KB); using rss as "
+            "peak_rss",
+            (long)pid,
+            peak_rss / 1024,
+            rss / 1024
+        );
+        peak_rss = rss;  // use rss as peak_rss
+    }
 
 #ifdef PSUTIL_FREEBSD
     // what CPU we're on; top was used as an example:
@@ -106,6 +124,7 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
 #endif
 
         // clang-format off
+
 #ifdef PSUTIL_FREEBSD
     if (!pydict_add(dict, "ppid", _Py_PARSE_PID, kp.ki_ppid)) goto error;
     if (!pydict_add(dict, "status", "i", (int)kp.ki_stat)) goto error;
@@ -152,13 +171,13 @@ psutil_proc_oneshot_kinfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "min_faults", "l", (long)kp.p_uru_minflt)) goto error;
     if (!pydict_add(dict, "maj_faults", "l", (long)kp.p_uru_majflt)) goto error;
 #endif
-
     // all BSDs
     if (!pydict_add(dict, "rss", "l", rss)) goto error;
     if (!pydict_add(dict, "vms", "l", vms)) goto error;
     if (!pydict_add(dict, "memtext", "l", memtext)) goto error;
     if (!pydict_add(dict, "memdata", "l", memdata)) goto error;
     if (!pydict_add(dict, "memstack", "l", memstack)) goto error;
+    if (!pydict_add(dict, "peak_rss", "l", peak_rss)) goto error;
     if (!pydict_add(dict, "cpunum", "i", oncpu)) goto error;
     if (!pydict_add(dict, "name", "O", py_name)) goto error;
 

@@ -357,6 +357,19 @@ class TestProcess(PsutilTestCase):
         pf_after = p.page_faults()
         assert pf_after.minor > pf_before.minor
 
+    def test_memory_peak_rss(self):
+        mem = psutil.Process().memory_info_ex()
+        if not hasattr(mem, "peak_rss"):
+            return pytest.skip("not supported")
+        ru = resource.getrusage(resource.RUSAGE_SELF)
+        # VmHWM (from /proc/pid/status) and ru_maxrss both track peak
+        # RSS but are synced independently. Allow 5% tolerance.
+        if MACOS:
+            rss_diff = abs(mem.peak_rss - ru.ru_maxrss)
+        else:
+            rss_diff = abs(mem.peak_rss - ru.ru_maxrss * 1024)
+        assert rss_diff <= mem.peak_rss * 0.05
+
 
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
 class TestSystemAPIs(PsutilTestCase):

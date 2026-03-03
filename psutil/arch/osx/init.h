@@ -42,6 +42,7 @@ PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_environ(PyObject *self, PyObject *args);
 PyObject *psutil_proc_exe(PyObject *self, PyObject *args);
+PyObject *psutil_proc_memory_info_ex(PyObject *self, PyObject *args);
 PyObject *psutil_proc_memory_uss(PyObject *self, PyObject *args);
 PyObject *psutil_proc_name(PyObject *self, PyObject *args);
 PyObject *psutil_proc_net_connections(PyObject *self, PyObject *args);

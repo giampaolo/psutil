@@ -33,7 +33,7 @@ if psutil.POSIX:
 
 if psutil.LINUX:
     names += [
-        # 'memory_full_info',
+        # 'memory_footprint',
         # 'memory_maps',
         'cpu_num',
         'cpu_times',
@@ -51,7 +51,7 @@ elif psutil.BSD:
         'cpu_times',
         'gids',
         'io_counters',
-        'memory_full_info',
+        'memory_footprint',
         'memory_info',
         'name',
         'num_ctx_switches',
@@ -66,7 +66,7 @@ elif psutil.SUNOS:
     names += [
         'cmdline',
         'gids',
-        'memory_full_info',
+        'memory_footprint',
         'memory_info',
         'name',
         'num_threads',

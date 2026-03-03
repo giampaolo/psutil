@@ -42,6 +42,7 @@ except ImportError:
 
 import psutil
 from psutil import AIX
+from psutil import BSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -65,7 +66,8 @@ __all__ = [
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
-    "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE", "HAS_PROC_MEMORY_MAPS",
+    "HAS_PROC_IO_COUNTERS", "HAS_PROC_IONICE",
+    "HAS_PROC_MEMORY_FOOTPRINT", "HAS_PROC_MEMORY_MAPS",
     "HAS_PROC_CPU_NUM", "HAS_PROC_RLIMIT", "HAS_SENSORS_BATTERY",
     "HAS_BATTERY", "HAS_SENSORS_FANS", "HAS_SENSORS_TEMPERATURES",
     "HAS_NET_CONNECTIONS_UNIX", "MACOS_11PLUS", "MACOS_12PLUS", "COVERAGE",
@@ -194,6 +196,7 @@ HAS_PROC_CPU_NUM = hasattr(psutil.Process, "cpu_num")
 HAS_PROC_ENVIRON = hasattr(psutil.Process, "environ")
 HAS_PROC_IO_COUNTERS = hasattr(psutil.Process, "io_counters")
 HAS_PROC_IONICE = hasattr(psutil.Process, "ionice")
+HAS_PROC_MEMORY_FOOTPRINT = hasattr(psutil.Process, "memory_footprint")
 HAS_PROC_MEMORY_MAPS = hasattr(psutil.Process, "memory_maps")
 HAS_PROC_RLIMIT = hasattr(psutil.Process, "rlimit")
 HAS_PROC_THREADS = hasattr(psutil.Process, "threads")
@@ -1056,6 +1059,28 @@ class PsutilTestCase(unittest.TestCase):
         # rid of a zombie is to kill its parent.
         # assert proc == ppid(), os.getpid()
 
+    def check_proc_memory(self, nt):
+        # Check the ntuple returned by Process.memory_*() methods.
+        assert is_namedtuple(nt)
+        for value in nt:
+            assert isinstance(value, int)
+            assert value >= 0
+        if hasattr(nt, "peak_rss"):
+            if BSD and nt.peak_rss == 0:
+                pass  # kernel threads don't have rusage tracking
+            else:
+                # VmHWM (from /proc/pid/status) and ru_maxrss both
+                # track peak RSS but are synced independently. Allow 5%
+                # tolerance.
+                diff = nt.rss - nt.peak_rss
+                assert diff <= nt.rss * 0.05
+        if hasattr(nt, "peak_vms"):
+            assert nt.peak_vms >= nt.vms
+        if hasattr(nt, "peak_paged_pool"):  # Windows
+            assert nt.peak_paged_pool >= nt.paged_pool
+        if hasattr(nt, "peak_nonpaged_pool"):  # Windows
+            assert nt.peak_nonpaged_pool >= nt.nonpaged_pool
+
 
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
@@ -1101,6 +1126,7 @@ class process_namespace:
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
         ('is_running', (), {}),
+        ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
@@ -1114,8 +1140,8 @@ class process_namespace:
         ('create_time', (), {}),
         ('cwd', (), {}),
         ('exe', (), {}),
-        ('memory_full_info', (), {}),
         ('memory_info', (), {}),
+        ('memory_info_ex', (), {}),
         ('name', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('nice', (), {}),
@@ -1147,6 +1173,8 @@ class process_namespace:
         getters += [('environ', (), {})]
     if WINDOWS:
         getters += [('num_handles', (), {})]
+    if HAS_PROC_MEMORY_FOOTPRINT:
+        getters += [('memory_footprint', (), {})]
     if HAS_PROC_MEMORY_MAPS:
         getters += [('memory_maps', (), {'grouped': False})]
 
@@ -1635,8 +1663,7 @@ def warn(msg):
 def is_namedtuple(x):
     """Check if object is an instance of namedtuple."""
     t = type(x)
-    b = t.__bases__
-    if len(b) != 1 or b[0] is not tuple:
+    if tuple not in t.__mro__:
         return False
     f = getattr(t, '_fields', None)
     if not isinstance(f, tuple):
