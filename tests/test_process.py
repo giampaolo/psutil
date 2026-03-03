@@ -520,7 +520,7 @@ class TestProcess(PsutilTestCase):
                 "peak_virtual",
             )
         else:
-            assert mem._fields[2:] == ()
+            assert mem._fields == psutil.Process().memory_info_ex()._fields
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):
