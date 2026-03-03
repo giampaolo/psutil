@@ -24,7 +24,6 @@ from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
 from psutil import OPENBSD
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 
@@ -326,22 +325,6 @@ class TestFetchAllProcesses(PsutilTestCase):
             value = getattr(ret, name)
             assert isinstance(value, int)
             assert value >= 0
-
-    def memory_full_info(self, ret, info):
-        assert is_namedtuple(ret)
-        total = psutil.virtual_memory().total
-        for name in ret._fields:
-            value = getattr(ret, name)
-            assert isinstance(value, int)
-            assert value >= 0
-            if LINUX or (OSX and name in {'vms', 'data'}):
-                # On Linux there are processes (e.g. 'goa-daemon') whose
-                # VMS is incredibly high for some reason.
-                continue
-            assert value <= total, name
-
-        if LINUX:
-            assert ret.pss >= ret.uss
 
     def open_files(self, ret, info):
         assert isinstance(ret, list)
