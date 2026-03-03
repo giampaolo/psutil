@@ -1141,32 +1141,6 @@ class Process:
         """Return a namedtuple extending memory_info() with extra
         metrics.
 
-        Linux:
-
-        - peak_rss: peak resident set size ("high water mark")
-        - peak_vms: peak virtual memory size
-        - rss_anon: anonymous resident memory (heap, stack, etc.)
-        - rss_file: file-backed resident memory
-        - rss_shmem: shared memory resident
-        - swap: memory swapped to disk
-        - hugetlb: memory in huge TLB pages
-
-        macOS:
-
-        - peak_rss: peak resident set size ("high water mark")
-        - rss_anon: anonymous resident memory (heap, stack, etc.)
-        - rss_file: file-backed resident memory
-        - compressed: memory compressed by the OS memory compressor
-        - phys_footprint: total physical memory footprint (includes
-          compressed pages); this is what Xcode's memory gauge shows
-
-        Windows:
-
-        - virtual: total virtual address space size (true VMS
-          equivalent, unlike `vms` in memory_info() which is pagefile
-          usage)
-        - peak_virtual: peak virtual address space size
-
         All numbers are expressed in bytes.
         """
         base = self.memory_info()
