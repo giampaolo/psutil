@@ -34,7 +34,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_username = NULL;
     PyObject *py_tty = NULL;
     PyObject *py_hostname = NULL;
-    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -45,7 +44,6 @@ psutil_users(PyObject *self, PyObject *args) {
     while ((ut = getutxent()) != NULL) {
         if (ut->ut_type != USER_PROCESS)
             continue;
-        py_tuple = NULL;
 
         py_username = PyUnicode_DecodeFSDefault(ut->ut_user);
         if (!py_username)
@@ -72,22 +70,21 @@ psutil_users(PyObject *self, PyObject *args) {
         if (!py_hostname)
             goto error;
 
-        py_tuple = Py_BuildValue(
-            "OOOd" _Py_PARSE_PID,
-            py_username,  // username
-            py_tty,  // tty
-            py_hostname,  // hostname
-            (double)ut->ut_tv.tv_sec,  // tstamp
-            ut->ut_pid  // process id
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "OOOd" _Py_PARSE_PID,
+                py_username,  // username
+                py_tty,  // tty
+                py_hostname,  // hostname
+                (double)ut->ut_tv.tv_sec,  // tstamp
+                ut->ut_pid  // process id
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_tty);
         Py_CLEAR(py_hostname);
-        Py_CLEAR(py_tuple);
     }
 
     teardown();
@@ -98,7 +95,6 @@ error:
     Py_XDECREF(py_username);
     Py_XDECREF(py_tty);
     Py_XDECREF(py_hostname);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
 }

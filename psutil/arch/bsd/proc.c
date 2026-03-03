@@ -352,7 +352,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 #else
     struct kinfo_proc kipp;
 #endif
-    PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -404,20 +403,16 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             py_path = PyUnicode_DecodeFSDefault(path);
             if (!py_path)
                 goto error;
-            py_tuple = Py_BuildValue("(Oi)", py_path, fd);
-            if (py_tuple == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_tuple))
+            if (!pylist_append_fmt(py_retlist, "(Oi)", py_path, fd))
                 goto error;
             Py_CLEAR(py_path);
-            Py_CLEAR(py_tuple);
         }
     }
     free(freep);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);

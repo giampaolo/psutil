@@ -133,7 +133,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     int family;
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
@@ -180,21 +179,19 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
         if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
-        py_tuple = Py_BuildValue(
-            "(siOOOO)",
-            ifa->ifa_name,
-            family,
-            py_address,
-            py_netmask,
-            py_broadcast,
-            py_ptp
-        );
-
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(siOOOO)",
+                ifa->ifa_name,
+                family,
+                py_address,
+                py_netmask,
+                py_broadcast,
+                py_ptp
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
+        }
         Py_CLEAR(py_address);
         Py_CLEAR(py_netmask);
         Py_CLEAR(py_broadcast);
@@ -208,7 +205,6 @@ error:
     if (ifaddr != NULL)
         freeifaddrs(ifaddr);
     Py_DECREF(py_retlist);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_netmask);
     Py_XDECREF(py_broadcast);
@@ -251,18 +247,7 @@ error:
 
 static int
 append_flag(PyObject *py_retlist, const char *flag_name) {
-    PyObject *py_str = NULL;
-
-    py_str = PyUnicode_FromString(flag_name);
-    if (!py_str)
-        return 0;
-    if (PyList_Append(py_retlist, py_str)) {
-        Py_DECREF(py_str);
-        return 0;
-    }
-    Py_CLEAR(py_str);
-
-    return 1;
+    return pylist_append_obj(py_retlist, PyUnicode_FromString(flag_name));
 }
 
 /*

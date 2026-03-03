@@ -46,7 +46,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     size_t size = 0;
     size_t pos = 0;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -66,13 +65,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     // separator
     if (size > 0) {
         while (pos < size) {
-            py_arg = PyUnicode_DecodeFSDefault(&procargs[pos]);
-            if (!py_arg)
+            if (!pylist_append_obj(
+                    py_retlist, PyUnicode_DecodeFSDefault(&procargs[pos])
+                ))
                 goto error;
-            if (PyList_Append(py_retlist, py_arg))
-                goto error;
-            Py_DECREF(py_arg);
-            py_arg = NULL;
             pos += strlen(&procargs[pos]) + 1;
         }
     }
@@ -81,7 +77,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
     Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);
@@ -164,7 +159,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     unsigned int i;
     size_t size = 0;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -188,24 +182,22 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     for (i = 0; i < size / sizeof(*kip); i++) {
         kipp = &kip[i];
-        py_tuple = Py_BuildValue(
-            "Idd",
-            kipp->ki_tid,
-            PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_utime),
-            PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_stime)
-        );
-        if (py_tuple == NULL)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "Idd",
+                kipp->ki_tid,
+                PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_utime),
+                PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_stime)
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
+        }
     }
 
     free(kip);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     free(kip);
     return NULL;
@@ -299,7 +291,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
     ptrwidth = 2 * sizeof(void *);
-    PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -317,7 +308,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
     }
     for (i = 0; i < cnt; i++) {
-        py_tuple = NULL;
         kve = &freep[i];
         addr[0] = '\0';
         perms[0] = '\0';
@@ -390,28 +380,27 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         py_path = PyUnicode_DecodeFSDefault(path);
         if (!py_path)
             goto error;
-        py_tuple = Py_BuildValue(
-            "ssOiiii",
-            addr,  // "start-end" address
-            perms,  // "rwx" permissions
-            py_path,  // path
-            kve->kve_resident,  // rss
-            kve->kve_private_resident,  // private
-            kve->kve_ref_count,  // ref count
-            kve->kve_shadow_count  // shadow count
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "ssOiiii",
+                addr,  // "start-end" address
+                perms,  // "rwx" permissions
+                py_path,  // path
+                kve->kve_resident,  // rss
+                kve->kve_private_resident,  // private
+                kve->kve_ref_count,  // ref count
+                kve->kve_shadow_count  // shadow count
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_DECREF(py_path);
-        Py_DECREF(py_tuple);
+        py_path = NULL;
     }
     free(freep);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (freep != NULL)
@@ -430,7 +419,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int i;
     cpuset_t mask;
     PyObject *py_retlist;
-    PyObject *py_cpu_num;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -446,10 +434,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 
     for (i = 0; i < CPU_SETSIZE; i++) {
         if (CPU_ISSET(i, &mask)) {
-            py_cpu_num = Py_BuildValue("i", i);
-            if (py_cpu_num == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_cpu_num))
+            if (!pylist_append_fmt(py_retlist, "i", i))
                 goto error;
         }
     }
@@ -457,7 +442,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cpu_num);
     Py_DECREF(py_retlist);
     return NULL;
 }

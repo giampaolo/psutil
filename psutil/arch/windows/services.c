@@ -136,7 +136,6 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     DWORD dwBytes = 0;
     DWORD i;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_name = NULL;
     PyObject *py_display_name = NULL;
 
@@ -187,14 +186,10 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             goto error;
 
         // Construct the result.
-        py_tuple = Py_BuildValue("(OO)", py_name, py_display_name);
-        if (py_tuple == NULL)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
+        if (!pylist_append_fmt(py_retlist, "(OO)", py_name, py_display_name))
             goto error;
         Py_DECREF(py_display_name);
         Py_DECREF(py_name);
-        Py_DECREF(py_tuple);
     }
 
     // Free resources.
@@ -205,7 +200,6 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 error:
     Py_DECREF(py_name);
     Py_XDECREF(py_display_name);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (sc != NULL)
         CloseServiceHandle(sc);
