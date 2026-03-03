@@ -1173,7 +1173,7 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`create_time`          | :meth:`memory_info`           | :meth:`memory_percent`       | :meth:`create_time`          |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`memory_maps`           | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      | :meth:`memory_info`      |
+    | :meth:`name`                 | :meth:`memory_info_ex`        | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      | :meth:`memory_info`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`ppid`                 | :meth:`num_ctx_switches`      | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   | :meth:`memory_percent`   |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1181,13 +1181,13 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`terminal`             | :meth:`num_threads`           | :meth:`create_time`          | :meth:`memory_info`          | :meth:`ppid`             | :meth:`ppid`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              | :meth:`username`              | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
+    |                              |                               | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`gids`                 |                               | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
+    | :meth:`gids`                 | :meth:`exe`                   | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_info_ex`       | :meth:`exe`                   | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
+    | :meth:`memory_info_ex`       | :meth:`name`                  | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     | :meth:`name`                  | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
+    | :meth:`num_ctx_switches`     |                               | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`num_threads`          |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1682,11 +1682,11 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | text    |         | data     |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | lib     |         | stack    |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
+    | data    |         | stack    |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         | peak_rss |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
+    |         |         | peak_rss |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | dirty   |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
+    |         |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1714,10 +1714,6 @@ Process class
       aka DRS (Data Resident Set) the amount of physical memory devoted to
       other than executable code. It matches "top"'s DATA column.
 
-    - **lib** *(Linux)*: the memory used by shared libraries.
-
-    - **dirty** *(Linux)*: the number of dirty pages.
-
     - **peak_rss** *(BSD)*: aka "peak Resident Set Size" or "high water mark".
       It's the highest amount of physical memory the process has ever used at
       any point during its lifetime. Can be 0 for kernel PIDs.
@@ -1730,22 +1726,33 @@ Process class
       >>> import psutil
       >>> p = psutil.Process()
       >>> p.memory_info()
-      pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
+      pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, data=9891840)
 
     .. versionchanged::
       4.0.0 multiple fields are returned, not only *rss* and *vms*.
 
     .. versionchanged::
-      8.0.0 macOS: *pfaults* and *pageins* are no longer returned. Use
-      :meth:`page_faults` method instead.
+      8.0.0 Linux: *lib* and *dirty* removed (always 0 since Linux 2.6).
+      Deprecated aliases returning 0 and emitting `DeprecationWarning` are
+      kept.
 
     .. versionchanged::
-      8.0.0 BSD: added *peak_rss*
+      8.0.0 macOS: *pfaults* and *pageins* removed with **no backward-compat
+      aliases**. Use :meth:`page_faults` instead.
 
     .. versionchanged::
-      8.0.0 Windows: renamed several fields (old names are kept as deprecated
-      aliases): *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* and
-      *private* → *vms*, *peak_pagefile* → *peak_vms*.
+      8.0.0 Windows: renamed fields (old names kept as deprecated aliases):
+      *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* / *private* →
+      *vms*, *peak_pagefile* → *peak_vms*.
+
+    .. versionchanged::
+      8.0.0 BSD: added *peak_rss*.
+
+    .. warning::
+      in version 8.0.0 the named tuple changed size and field order. Positional
+      access (e.g. ``p.memory_info()[3]`` or ``a, b, c = p.memory_info()``) may
+      break or silently return the wrong field. Always use attribute access
+      instead (e.g. ``p.memory_info().rss``).
 
   .. method:: memory_info_ex()
 

@@ -1878,10 +1878,10 @@ class Process:
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
         #  ============================================================
         with open_binary(f"{self._procfs_path}/{self.pid}/statm") as f:
-            vms, rss, shared, text, lib, data, dirty = (
+            vms, rss, shared, text, _lib, data, _dirty = (
                 int(x) * PAGESIZE for x in f.readline().split()[:7]
             )
-        return ntp.pmem(rss, vms, shared, text, lib, data, dirty)
+        return ntp.pmem(rss, vms, shared, text, data)
 
     @wrap_exceptions
     def memory_info_ex(

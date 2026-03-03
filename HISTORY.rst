@@ -7,7 +7,7 @@
 
 - 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
   namedtuple.
-- 2731_: Reorganization of process memory APIs.
+- 2731_, 2736_, 2723_, 2733_: Reorganization of process memory APIs.
 
   - Add new `Process.memory_info_ex()`_ method, which extends
     `Process.memory_info()`_ with platform-specific metrics:
@@ -22,12 +22,19 @@
     and *swap* metrics (what `Process.memory_full_info()`_ used to return,
     which is now **deprecated**).
 
-  - macOS: `Process.memory_info()`_ no longer returns *pfaults* and *pageins*
-    fields. Use `Process.page_faults()`_ method instead.
+  - `Process.memory_info()`_ named tuple changed:
 
-  - Windows: `Process.memory_info()`_ renamed several fields (old names are
-    kept as deprecated aliases): *wset* → *rss*, *peak_wset* → *peak_rss*,
-    *pagefile* → *vms*, *peak_pagefile* → *peak_vms*, *private* → *vms*.
+    - BSD: added *peak_rss*.
+
+    - Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
+      aliases returning 0 and emitting `DeprecationWarning` are kept.
+
+    - macOS: *pfaults* and *pageins* removed with **no
+      backward-compataliases**. Use `Process.page_faults()`_ instead.
+
+    - Windows: renamed fields (old names kept as deprecated aliases): *wset* →
+      *rss*, *peak_wset* → *peak_rss*, *pagefile* / *private* → *vms*,
+      *peak_pagefile* → *peak_vms*.
 
   - `Process.memory_full_info()`_ is **deprecated**. Use the new
     `Process.memory_footprint()`_ instead.
@@ -43,17 +50,14 @@
 
 **Compatibility notes**
 
-- See 2731_ description above. Changes which break backwards compatibility are:
+Changes that break backwards compatibility:
 
-  - macOS: `Process.memory_info()`_ no longer returns *pfaults* and *pageins*
-    fields (use `Process.page_faults()`_ method instead). Code that now breaks:
-    ``rss, vms, pfaults, pageins = Process().memory_info()``.
+- `Process.memory_info()`_:
 
-  - Windows: `Process.memory_info()`_ renamed several fields and the named
-    tuple is shorter. Old names are kept as deprecated aliases, but if you rely
-    on indexing (e.g. ``Process.memory_info()[3]``) you should update your code
-    to use namedtuple attribute access instead (e.g.
-    ``Process.memory_info().rss``).
+  - The returned named tuple changed size and field order.
+    Positional access (e.g. ``p.memory_info()[3]`` or ``a, b, c =
+    p.memory_info()``) may break or silently return the wrong field. Always use
+    attribute access instead (e.g. ``p.memory_info().rss``).
 
 7.2.3
 =====
