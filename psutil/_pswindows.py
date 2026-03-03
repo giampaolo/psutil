@@ -803,7 +803,7 @@ class Process:
 
     @wrap_exceptions
     def memory_info_ex(self):
-        d = self._proc_info()
+        d = self._oneshot()
         return {
             "virtual": d["VirtualSize"],
             "peak_virtual": d["PeakVirtualSize"],
