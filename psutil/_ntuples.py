@@ -184,9 +184,7 @@ if LINUX:
     popenfile = nt("popenfile", ("path", "fd", "position", "mode", "flags"))
 
     # psutil.Process().memory_info()
-    _pmem = nt("pmem", ("rss", "vms", "shared", "text", "data"))
-
-    class pmem(_pmem):
+    class pmem(nt("pmem", ("rss", "vms", "shared", "text", "data"))):
         __slots__ = ()
 
         @property

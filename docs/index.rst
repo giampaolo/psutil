@@ -1678,15 +1678,15 @@ Process class
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | vms     | vms     | vms      | vms     | vms | vms (maps to ``PagefileUsage``)                             |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
+    | shared  |         |          |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | text    |         | data     |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
+    | text    |         | text     |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | lib     |         | stack    |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
+    | data    |         | data     |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         | peak_rss |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
+    |         |         | stack    |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | dirty   |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
+    |         |         | peak_rss |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     |         |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
