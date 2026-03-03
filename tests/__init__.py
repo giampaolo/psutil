@@ -1058,20 +1058,21 @@ class PsutilTestCase(unittest.TestCase):
         # rid of a zombie is to kill its parent.
         # assert proc == ppid(), os.getpid()
 
-    def check_proc_memory(self, ntuple):
+    def check_proc_memory(self, nt):
         # Check the ntuple returned by Process.memory_*() methods.
-        assert is_namedtuple(ntuple)
-        for value in ntuple:
+        assert is_namedtuple(nt)
+        for value in nt:
             assert isinstance(value, int)
             assert value >= 0
-        if hasattr(ntuple, "peak_rss"):
-            assert ntuple.peak_rss >= ntuple.rss
-        if hasattr(ntuple, "peak_vms"):
-            assert ntuple.peak_vms >= ntuple.vms
-        if hasattr(ntuple, "peak_paged_pool"):  # Windows
-            assert ntuple.peak_paged_pool >= ntuple.paged_pool
-        if hasattr(ntuple, "peak_nonpaged_pool"):  # Windows
-            assert ntuple.peak_nonpaged_pool >= ntuple.nonpaged_pool
+        assert nt.vms > nt.rss
+        if hasattr(nt, "peak_rss"):
+            assert nt.peak_rss >= nt.rss
+        if hasattr(nt, "peak_vms"):
+            assert nt.peak_vms >= nt.vms
+        if hasattr(nt, "peak_paged_pool"):  # Windows
+            assert nt.peak_paged_pool >= nt.paged_pool
+        if hasattr(nt, "peak_nonpaged_pool"):  # Windows
+            assert nt.peak_nonpaged_pool >= nt.nonpaged_pool
 
 
 def is_win_secure_system_proc(pid):
