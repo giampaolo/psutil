@@ -94,7 +94,6 @@ psutil_gather_inet(
     int retry;
     int type;
 
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
 
@@ -214,28 +213,28 @@ psutil_gather_inet(
             py_raddr = Py_BuildValue("()");
         if (!py_raddr)
             goto error;
-        py_tuple = Py_BuildValue(
-            "iiiNNi" _Py_PARSE_PID,
-            xf->xf_fd,  // fd
-            family,  // family
-            type,  // type
-            py_laddr,  // laddr
-            py_raddr,  // raddr
-            status,  // status
-            xf->xf_pid  // pid
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "iiiNNi" _Py_PARSE_PID,
+                xf->xf_fd,  // fd
+                family,  // family
+                type,  // type
+                py_laddr,  // laddr
+                py_raddr,  // raddr
+                status,  // status
+                xf->xf_pid  // pid
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
+        }
+        py_laddr = NULL;
+        py_raddr = NULL;
     }
 
     free(buf);
     return 0;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     free(buf);
@@ -261,7 +260,6 @@ psutil_gather_unix(
     struct sockaddr_un *sun;
     char path[PATH_MAX];
 
-    PyObject *py_tuple = NULL;
     PyObject *py_lpath = NULL;
 
     switch (proto) {
@@ -331,29 +329,28 @@ psutil_gather_unix(
         if (!py_lpath)
             goto error;
 
-        py_tuple = Py_BuildValue(
-            "(iiiOsii)",
-            xf->xf_fd,  // fd
-            AF_UNIX,  // family
-            proto,  // type
-            py_lpath,  // lpath
-            "",  // rath
-            PSUTIL_CONN_NONE,  // status
-            xf->xf_pid  // pid
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(iiiOsii)",
+                xf->xf_fd,  // fd
+                AF_UNIX,  // family
+                proto,  // type
+                py_lpath,  // lpath
+                "",  // rath
+                PSUTIL_CONN_NONE,  // status
+                xf->xf_pid  // pid
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_DECREF(py_lpath);
-        Py_DECREF(py_tuple);
+        py_lpath = NULL;
     }
 
     free(buf);
     return 0;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_lpath);
     free(buf);
     return -1;

@@ -442,7 +442,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     thread_basic_info_t basic_info_th;
     mach_msg_type_number_t thread_count, thread_info_count, j;
 
-    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -492,19 +491,19 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         }
 
         basic_info_th = (thread_basic_info_t)thinfo_basic;
-        py_tuple = Py_BuildValue(
-            "Iff",
-            j + 1,
-            basic_info_th->user_time.seconds
-                + (float)basic_info_th->user_time.microseconds / 1000000.0,
-            basic_info_th->system_time.seconds
-                + (float)basic_info_th->system_time.microseconds / 1000000.0
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "Iff",
+                j + 1,
+                basic_info_th->user_time.seconds
+                    + (float)basic_info_th->user_time.microseconds / 1000000.0,
+                basic_info_th->system_time.seconds
+                    + (float)basic_info_th->system_time.microseconds
+                          / 1000000.0
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
+        }
     }
 
     // deallocate thread_list if it was allocated
@@ -526,7 +525,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_retlist);
 
     if (thread_list != NULL) {
@@ -563,7 +561,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     struct proc_fdinfo *fdp_pointer;
     struct vnode_fdinfowithpath vi;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_path = NULL;
 
     if (py_retlist == NULL)
@@ -613,14 +610,12 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
             if (!py_path)
                 goto error;
-            py_tuple = Py_BuildValue(
-                "(Oi)", py_path, (int)fdp_pointer->proc_fd
-            );
-            if (!py_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist, "(Oi)", py_path, (int)fdp_pointer->proc_fd
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_CLEAR(py_tuple);
+            }
             Py_CLEAR(py_path);
             // --- /construct python list
         }
@@ -630,7 +625,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (fds_pointer != NULL)
@@ -657,7 +651,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     struct socket_fdinfo si;
     const char *ntopret;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
     PyObject *py_af_filter = NULL;
@@ -687,7 +680,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         goto error;
 
     for (i = 0; i < num_fds; i++) {
-        py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
         fdp_pointer = &fds_pointer[i];
@@ -822,14 +814,21 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_raddr)
                     goto error;
 
-                py_tuple = Py_BuildValue(
-                    "(iiiNNi)", fd, family, type, py_laddr, py_raddr, state
-                );
-                if (!py_tuple)
+                if (!pylist_append_fmt(
+                        py_retlist,
+                        "(iiiNNi)",
+                        fd,
+                        family,
+                        type,
+                        py_laddr,
+                        py_raddr,
+                        state
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
             else if (family == AF_UNIX) {
                 py_laddr = PyUnicode_DecodeFSDefault(
@@ -843,20 +842,19 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_raddr)
                     goto error;
 
-                py_tuple = Py_BuildValue(
-                    "(iiiOOi)",
-                    fd,
-                    family,
-                    type,
-                    py_laddr,
-                    py_raddr,
-                    PSUTIL_CONN_NONE
-                );
-                if (!py_tuple)
+                if (!pylist_append_fmt(
+                        py_retlist,
+                        "(iiiOOi)",
+                        fd,
+                        family,
+                        type,
+                        py_laddr,
+                        py_raddr,
+                        PSUTIL_CONN_NONE
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
                 Py_CLEAR(py_laddr);
                 Py_CLEAR(py_raddr);
             }
@@ -867,7 +865,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);
@@ -911,7 +908,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     char *curr_arg;
     size_t argmax;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -959,12 +955,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     curr_arg = arg_ptr;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-            py_arg = PyUnicode_DecodeFSDefault(curr_arg);
-            if (!py_arg)
+            if (!pylist_append_obj(
+                    py_retlist, PyUnicode_DecodeFSDefault(curr_arg)
+                ))
                 goto error;
-            if (PyList_Append(py_retlist, py_arg))
-                goto error;
-            Py_DECREF(py_arg);
             // iterate to next arg and decrement # of args
             curr_arg = arg_ptr;
             nargs--;
@@ -975,7 +969,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
     Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);

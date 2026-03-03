@@ -114,7 +114,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     CHAR addressBufferRemote[65];
 
     PyObject *py_retlist = NULL;
-    PyObject *py_conn_tuple = NULL;
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
     PyObject *py_addr_tuple_local = NULL;
@@ -161,7 +160,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         && (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
     {
         table = NULL;
-        py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
 
@@ -219,21 +217,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            py_conn_tuple = Py_BuildValue(
-                "(iiiNNiI)",
-                -1,
-                AF_INET,
-                SOCK_STREAM,
-                py_addr_tuple_local,
-                py_addr_tuple_remote,
-                tcp4Table->table[i].dwState,
-                tcp4Table->table[i].dwOwningPid
-            );
-            if (!py_conn_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET,
+                    SOCK_STREAM,
+                    py_addr_tuple_local,
+                    py_addr_tuple_remote,
+                    tcp4Table->table[i].dwState,
+                    tcp4Table->table[i].dwOwningPid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_conn_tuple))
-                goto error;
-            Py_CLEAR(py_conn_tuple);
+            }
+            py_addr_tuple_local = NULL;
+            py_addr_tuple_remote = NULL;
         }
 
         free(table);
@@ -246,7 +245,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         && (RtlIpv6AddressToStringA != NULL))
     {
         table = NULL;
-        py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
 
@@ -305,21 +303,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_remote == NULL)
                 goto error;
 
-            py_conn_tuple = Py_BuildValue(
-                "(iiiNNiI)",
-                -1,
-                AF_INET6,
-                SOCK_STREAM,
-                py_addr_tuple_local,
-                py_addr_tuple_remote,
-                tcp6Table->table[i].dwState,
-                tcp6Table->table[i].dwOwningPid
-            );
-            if (!py_conn_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET6,
+                    SOCK_STREAM,
+                    py_addr_tuple_local,
+                    py_addr_tuple_remote,
+                    tcp6Table->table[i].dwState,
+                    tcp6Table->table[i].dwOwningPid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_conn_tuple))
-                goto error;
-            Py_CLEAR(py_conn_tuple);
+            }
+            py_addr_tuple_local = NULL;
+            py_addr_tuple_remote = NULL;
         }
 
         free(table);
@@ -332,9 +331,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         && (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
     {
         table = NULL;
-        py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
-        py_addr_tuple_remote = NULL;
         table = __GetExtendedUdpTable(AF_INET);
         if (table == NULL)
             goto error;
@@ -366,21 +363,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            py_conn_tuple = Py_BuildValue(
-                "(iiiNNiI)",
-                -1,
-                AF_INET,
-                SOCK_DGRAM,
-                py_addr_tuple_local,
-                PyTuple_New(0),
-                PSUTIL_CONN_NONE,
-                udp4Table->table[i].dwOwningPid
-            );
-            if (!py_conn_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET,
+                    SOCK_DGRAM,
+                    py_addr_tuple_local,
+                    PyTuple_New(0),
+                    PSUTIL_CONN_NONE,
+                    udp4Table->table[i].dwOwningPid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_conn_tuple))
-                goto error;
-            Py_CLEAR(py_conn_tuple);
+            }
+            py_addr_tuple_local = NULL;
         }
 
         free(table);
@@ -394,9 +391,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         && (RtlIpv6AddressToStringA != NULL))
     {
         table = NULL;
-        py_conn_tuple = NULL;
         py_addr_tuple_local = NULL;
-        py_addr_tuple_remote = NULL;
         table = __GetExtendedUdpTable(AF_INET6);
         if (table == NULL)
             goto error;
@@ -428,21 +423,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (py_addr_tuple_local == NULL)
                 goto error;
 
-            py_conn_tuple = Py_BuildValue(
-                "(iiiNNiI)",
-                -1,
-                AF_INET6,
-                SOCK_DGRAM,
-                py_addr_tuple_local,
-                PyTuple_New(0),
-                PSUTIL_CONN_NONE,
-                udp6Table->table[i].dwOwningPid
-            );
-            if (!py_conn_tuple)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET6,
+                    SOCK_DGRAM,
+                    py_addr_tuple_local,
+                    PyTuple_New(0),
+                    PSUTIL_CONN_NONE,
+                    udp6Table->table[i].dwOwningPid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_conn_tuple))
-                goto error;
-            Py_CLEAR(py_conn_tuple);
+            }
+            py_addr_tuple_local = NULL;
         }
 
         free(table);
@@ -454,7 +449,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
 error:
     psutil_conn_decref_objs();
-    Py_XDECREF(py_conn_tuple);
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
     Py_DECREF(py_retlist);

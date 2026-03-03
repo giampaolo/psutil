@@ -32,7 +32,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -70,7 +69,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < num; i++) {
-        py_tuple = NULL;
         opts[0] = 0;
 #ifdef PSUTIL_NETBSD
         flags = fs[i].f_flag;
@@ -152,20 +150,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         py_mountp = PyUnicode_DecodeFSDefault(fs[i].f_mntonname);
         if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue(
-            "(OOss)",
-            py_dev,  // device
-            py_mountp,  // mount point
-            fs[i].f_fstypename,  // fs type
-            opts  // options
-        );
-        if (!py_tuple)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOss)",
+                py_dev,  // device
+                py_mountp,  // mount point
+                fs[i].f_fstypename,  // fs type
+                opts  // options
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        Py_CLEAR(py_tuple);
     }
 
     free(fs);
@@ -174,7 +171,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_dev);
     Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (fs != NULL)
         free(fs);

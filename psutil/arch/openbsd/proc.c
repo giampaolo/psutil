@@ -26,7 +26,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     char **argv = NULL;
     char **p;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -44,12 +43,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     argv = (char **)argv_buf;
 
     for (p = argv; *p != NULL; p++) {
-        py_arg = PyUnicode_DecodeFSDefault(*p);
-        if (!py_arg)
+        if (!pylist_append_obj(py_retlist, PyUnicode_DecodeFSDefault(*p)))
             goto error;
-        if (PyList_Append(py_retlist, py_arg))
-            goto error;
-        Py_DECREF(py_arg);
     }
 
     free(argv_buf);
@@ -58,7 +53,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 error:
     if (argv_buf != NULL)
         free(argv_buf);
-    Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
 }
@@ -76,7 +70,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     char errbuf[4096];
     struct kinfo_proc *kp;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -115,17 +108,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kp[i].p_tid < 0)
             continue;
         if (kp[i].p_pid == pid) {
-            py_tuple = Py_BuildValue(
-                _Py_PARSE_PID "dd",
-                kp[i].p_tid,
-                PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
-                PSUTIL_KPT2DOUBLE(kp[i].p_ustime)
-            );
-            if (py_tuple == NULL)
+            if (!pylist_append_fmt(
+                    py_retlist,
+                    _Py_PARSE_PID "dd",
+                    kp[i].p_tid,
+                    PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
+                    PSUTIL_KPT2DOUBLE(kp[i].p_ustime)
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
+            }
         }
     }
 
@@ -133,7 +125,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (kd != NULL)
         kvm_close(kd);

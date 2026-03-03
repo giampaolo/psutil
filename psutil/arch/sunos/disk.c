@@ -76,7 +76,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     struct mnttab mt;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
-    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -95,20 +94,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         py_mountp = PyUnicode_DecodeFSDefault(mt.mnt_mountp);
         if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue(
-            "(OOss)",
-            py_dev,  // device
-            py_mountp,  // mount point
-            mt.mnt_fstype,  // fs type
-            mt.mnt_mntopts  // options
-        );
-        if (py_tuple == NULL)
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(OOss)",
+                py_dev,  // device
+                py_mountp,  // mount point
+                mt.mnt_fstype,  // fs type
+                mt.mnt_mntopts  // options
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        Py_CLEAR(py_tuple);
     }
     fclose(file);
     return py_retlist;
@@ -116,7 +114,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_dev);
     Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (file != NULL)
         fclose(file);

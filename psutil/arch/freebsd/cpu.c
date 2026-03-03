@@ -30,7 +30,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu;
     size_t size;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -57,31 +56,25 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     for (int i = 0; i < ncpu; i++) {
-        py_cputime = Py_BuildValue(
-            "(ddddd)",
-            (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
-            (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC
-        );
-        if (!py_cputime) {
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(ddddd)",
+                (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
+                (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC
+            ))
+        {
             free(cpu_time);
             goto error;
         }
-        if (PyList_Append(py_retlist, py_cputime)) {
-            Py_DECREF(py_cputime);
-            free(cpu_time);
-            goto error;
-        }
-        Py_DECREF(py_cputime);
     }
 
     free(cpu_time);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     return NULL;
 }
