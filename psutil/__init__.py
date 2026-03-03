@@ -1149,6 +1149,7 @@ class Process:
             return _ntp.pmem_ex(**base._asdict(), **extras)
         return base
 
+    # Linux, macOS, Windows
     if hasattr(_psplatform.Process, "memory_footprint"):
 
         def memory_footprint(self):
