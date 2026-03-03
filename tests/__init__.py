@@ -42,6 +42,7 @@ except ImportError:
 
 import psutil
 from psutil import AIX
+from psutil import BSD
 from psutil import LINUX
 from psutil import MACOS
 from psutil import NETBSD
@@ -1064,9 +1065,11 @@ class PsutilTestCase(unittest.TestCase):
         for value in nt:
             assert isinstance(value, int)
             assert value >= 0
-        assert nt.vms > nt.rss
         if hasattr(nt, "peak_rss"):
-            assert nt.peak_rss >= nt.rss
+            if BSD and nt.peak_rss == 0:
+                pass  # kernel threads don't have rusage tracking
+            else:
+                assert nt.peak_rss >= nt.rss
         if hasattr(nt, "peak_vms"):
             assert nt.peak_vms >= nt.vms
         if hasattr(nt, "peak_paged_pool"):  # Windows

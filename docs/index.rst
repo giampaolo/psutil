@@ -1720,7 +1720,7 @@ Process class
 
     - **peak_rss** *(BSD)*: aka "peak Resident Set Size" or "high water mark".
       It's the highest amount of physical memory the process has ever used at
-      any point during its lifetime.
+      any point during its lifetime. Can be 0 for kernel PIDs.
 
     For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
     doc.
