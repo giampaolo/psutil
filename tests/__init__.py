@@ -1069,7 +1069,11 @@ class PsutilTestCase(unittest.TestCase):
             if BSD and nt.peak_rss == 0:
                 pass  # kernel threads don't have rusage tracking
             else:
-                assert nt.peak_rss >= nt.rss
+                # VmHWM (from /proc/pid/status) and ru_maxrss both
+                # track peak RSS but are synced independently. Allow 5%
+                # tolerance.
+                diff = nt.rss - nt.peak_rss
+                assert diff <= nt.rss * 0.05
         if hasattr(nt, "peak_vms"):
             assert nt.peak_vms >= nt.vms
         if hasattr(nt, "peak_paged_pool"):  # Windows

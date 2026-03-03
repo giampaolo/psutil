@@ -364,7 +364,7 @@ class TestProcess(PsutilTestCase):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         # VmHWM (from /proc/pid/status) and ru_maxrss both track peak
         # RSS but are synced independently. Allow 5% tolerance.
-        assert abs(mem.peak_rss - ru.ru_maxrss * 1024) <= mem.peak_rss * 0.5
+        assert abs(mem.peak_rss - ru.ru_maxrss * 1024) <= mem.peak_rss * 0.05
 
 
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
