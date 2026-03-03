@@ -61,15 +61,15 @@ def main():
     for p in psutil.process_iter():
         with p.oneshot():
             try:
-                mem = p.memory_full_info()
-                info = p.as_dict(["cmdline", "username"])
+                mem = p.memory_footprint()
+                info = p.as_dict(["cmdline", "username", "memory_info"])
             except psutil.AccessDenied:
                 ad_pids.append(p.pid)
             except psutil.NoSuchProcess:
                 pass
             else:
                 p._uss = mem.uss
-                p._rss = mem.rss
+                p._rss = info["memory_info"].rss
                 if not p._uss:
                     continue
                 p._pss = getattr(mem, "pss", "")

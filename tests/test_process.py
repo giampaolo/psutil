@@ -504,15 +504,8 @@ class TestProcess(PsutilTestCase):
 
     def test_memory_full_info(self):
         p = psutil.Process()
-        total = psutil.virtual_memory().total
-        with self.assertWarns(DeprecationWarning):
-            mem = p.memory_full_info()
-        for name in mem._fields:
-            value = getattr(mem, name)
-            assert value >= 0
-            if (name == "vms" and OSX) or LINUX:
-                continue
-            assert value <= total
+        with pytest.warns(DeprecationWarning):
+            p.memory_full_info()
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):

@@ -1103,6 +1103,7 @@ class process_namespace:
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
         ('is_running', (), {}),
+        ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),
         ('parent', (), {}),
         ('parents', (), {}),
@@ -1116,7 +1117,6 @@ class process_namespace:
         ('create_time', (), {}),
         ('cwd', (), {}),
         ('exe', (), {}),
-        ('memory_full_info', (), {}),
         ('memory_info', (), {}),
         ('memory_info_ex', (), {}),
         ('name', (), {}),
