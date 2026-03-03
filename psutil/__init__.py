@@ -1166,22 +1166,12 @@ class Process:
             """
             return self._proc.memory_footprint()
 
+    # DEPRECATED
     def memory_full_info(self):
-        """This method returns the same information as memory_info(),
-        plus, on some platform (Linux, macOS, Windows), also provides
-        additional metrics (USS, PSS and swap).
-        The additional metrics provide a better representation of actual
-        process memory usage.
+        """Return the same information as memory_info() plus
+        memory_footprint() in a single named tuple.
 
-        Namely USS is the memory which is unique to a process and which
-        would be freed if the process was terminated right now.
-
-        It does so by passing through the whole process address.
-        As such it usually requires higher user privileges than
-        memory_info() and is considerably slower.
-
-        .. deprecated:: 7.3.0
-            Use :meth:`memory_footprint` instead.
+        DEPRECATED in 8.0.0. Use memory_footprint() instead.
         """
         msg = (
             "memory_full_info() is deprecated; use memory_footprint() instead"
