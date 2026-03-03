@@ -559,7 +559,7 @@ class Process:
                 msg = f"invalid attrs type {type(attrs)}"
                 raise TypeError(msg)
             attrs = set(attrs)
-            invalid_names = attrs - valid_names
+            invalid_names = attrs - valid_names - _as_dict_attrnames_deprecated
             if invalid_names:
                 msg = "invalid attr name{} {}".format(
                     "s" if len(invalid_names) > 1 else "",
@@ -1483,6 +1483,10 @@ _as_dict_attrnames = {
       'connections', 'memory_full_info', 'oneshot'}
 }
 # fmt: on
+
+# Deprecated attrs: not returned by default but still accepted if
+# explicitly requested via as_dict(attrs=[...]).
+_as_dict_attrnames_deprecated = {'memory_full_info'}
 
 
 # =====================================================================

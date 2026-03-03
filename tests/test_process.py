@@ -506,6 +506,12 @@ class TestProcess(PsutilTestCase):
         p = psutil.Process()
         with pytest.warns(DeprecationWarning):
             p.memory_full_info()
+        # not returned by default
+        assert 'memory_full_info' not in p.as_dict()
+        # but explicitly requesting it should work
+        with pytest.warns(DeprecationWarning):
+            d = p.as_dict(attrs=['memory_full_info'])
+        assert 'memory_full_info' in d
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_MAPS, reason="not supported")
     def test_memory_maps(self):
