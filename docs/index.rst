@@ -1738,11 +1738,11 @@ Process class
     +-------------+----------------+--------------+
     | rss_anon    | rss_file       |              |
     +-------------+----------------+--------------+
-    | rss_file    | compressed     |              |
+    | rss_file    | wired          |              |
     +-------------+----------------+--------------+
-    | rss_shmem   | phys_footprint |              |
+    | rss_shmem   | compressed     |              |
     +-------------+----------------+--------------+
-    | swap        |                |              |
+    | swap        | phys_footprint |              |
     +-------------+----------------+--------------+
     | hugetlb     |                |              |
     +-------------+----------------+--------------+
@@ -1758,6 +1758,8 @@ Process class
     - **rss_file** *(Linux, macOS)*: file-backed resident memory. On macOS this
       maps to ``task_vm_info.external``.
     - **rss_shmem** *(Linux)*: shared memory resident pages.
+    - **wired** *(macOS)*: memory that is marked to always stay in RAM. It is
+      never moved to disk.
     - **swap** *(Linux)*: memory swapped out to disk. Equivalent to
       ``memory_footprint().swap`` but faster, as it reads from
       */proc/pid/status* instead of */proc/pid/smaps*.

@@ -370,6 +370,7 @@ elif MACOS:
             "peak_rss",
             "rss_anon",
             "rss_file",
+            "wired",
             "compressed",
             "phys_footprint",
         ),

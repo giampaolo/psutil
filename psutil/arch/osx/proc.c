@@ -298,6 +298,8 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
     if (psutil_task_for_pid(pid, &task) != 0)
         goto error;
 
+    // Fetch multiple metrics. Fails with access denied for any PID not
+    // owned by us.
     kr = task_info(task, TASK_VM_INFO, (task_info_t)&info, &info_count);
     mach_port_deallocate(mach_task_self(), task);
     task = MACH_PORT_NULL;
@@ -306,10 +308,19 @@ psutil_proc_memory_info_ex(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // Fetch wired memory.
+    uint64_t wired_size = 0;
+    struct rusage_info_v0 ri;
+    if (proc_pid_rusage(pid, RUSAGE_INFO_V0, (rusage_info_t *)&ri) == 0)
+        wired_size = ri.ri_wired_size;
+    else
+        psutil_debug("proc_pid_rusage() failed (pid=%i)", pid);
+
     // clang-format off
     if (!pydict_add(dict, "peak_rss", "K", (unsigned long long)info.resident_size_peak)) goto error;
     if (!pydict_add(dict, "rss_anon", "K", (unsigned long long)info.internal)) goto error;
     if (!pydict_add(dict, "rss_file", "K", (unsigned long long)info.external)) goto error;
+    if (!pydict_add(dict, "wired", "K", (unsigned long long)wired_size)) goto error;
     if (!pydict_add(dict, "compressed", "K", (unsigned long long)info.compressed)) goto error;
     if (!pydict_add(dict, "phys_footprint", "K", (unsigned long long)info.phys_footprint)) goto error;
     // clang-format on
