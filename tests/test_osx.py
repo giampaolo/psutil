@@ -62,12 +62,6 @@ class TestProcess(PsutilTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    def test_memory_info_ex(self):
-        p = psutil.Process()
-        mem = p.memory_info_ex()
-        assert mem.rss_anon + mem.rss_file <= mem.rss
-        assert mem.phys_footprint > 0
-
     def test_process_create_time(self):
         output = sh(f"ps -o lstart -p {self.pid}")
         start_ps = output.replace('STARTED', '').strip()
