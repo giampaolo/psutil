@@ -129,7 +129,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     size_t size;
     struct kinfo_lwp *kl = NULL;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -170,24 +169,22 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kl[i].l_stat == LSIDL || kl[i].l_stat == LSZOMB)
             continue;
         // XXX: return 2 "user" times, no "system" time available
-        py_tuple = Py_BuildValue(
-            "idd",
-            kl[i].l_lid,
-            PSUTIL_KPT2DOUBLE(kl[i].l_rtime),
-            PSUTIL_KPT2DOUBLE(kl[i].l_rtime)
-        );
-        if (py_tuple == NULL)
+        if (!pylist_append(
+                py_retlist,
+                "idd",
+                kl[i].l_lid,
+                PSUTIL_KPT2DOUBLE(kl[i].l_rtime),
+                PSUTIL_KPT2DOUBLE(kl[i].l_rtime)
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
+        }
     }
 
     free(kl);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (kl != NULL)
         free(kl);

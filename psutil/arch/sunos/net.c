@@ -281,7 +281,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct opthdr mibhdr = {0};
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
 
@@ -404,21 +403,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp.tcpConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_STREAM,
-                    py_laddr,
-                    py_raddr,
-                    state,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET,
+                        SOCK_STREAM,
+                        py_laddr,
+                        py_raddr,
+                        state,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #if defined(AF_INET6)
@@ -452,21 +452,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 state = tp6.tcp6ConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_STREAM,
-                    py_laddr,
-                    py_raddr,
-                    state,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET6,
+                        SOCK_STREAM,
+                        py_laddr,
+                        py_raddr,
+                        state,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #endif
@@ -494,21 +495,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET,
-                    SOCK_DGRAM,
-                    py_laddr,
-                    py_raddr,
-                    PSUTIL_CONN_NONE,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET,
+                        SOCK_DGRAM,
+                        py_laddr,
+                        py_raddr,
+                        PSUTIL_CONN_NONE,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #if defined(AF_INET6)
@@ -529,21 +531,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue(
-                    "(iiiNNiI)",
-                    -1,
-                    AF_INET6,
-                    SOCK_DGRAM,
-                    py_laddr,
-                    py_raddr,
-                    PSUTIL_CONN_NONE,
-                    processed_pid
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(iiiNNiI)",
+                        -1,
+                        AF_INET6,
+                        SOCK_DGRAM,
+                        py_laddr,
+                        py_raddr,
+                        PSUTIL_CONN_NONE,
+                        processed_pid
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_CLEAR(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
         }
 #endif
@@ -554,7 +557,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);

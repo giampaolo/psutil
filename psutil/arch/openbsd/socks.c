@@ -37,7 +37,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     struct in6_addr laddr6;
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
     PyObject *py_lpath = NULL;
@@ -74,7 +73,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     for (int i = 0; i < cnt; i++) {
         const struct kinfo_file *kif = ikf + i;
-        py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
         py_lpath = NULL;
@@ -125,21 +123,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 goto error;
 
             // populate tuple and list
-            py_tuple = Py_BuildValue(
-                "(iiiNNil)",
-                kif->fd_fd,
-                kif->so_family,
-                kif->so_type,
-                py_laddr,
-                py_raddr,
-                state,
-                kif->p_pid
-            );
-            if (!py_tuple)
+            if (!pylist_append(
+                    py_retlist,
+                    "(iiiNNil)",
+                    kif->fd_fd,
+                    kif->so_family,
+                    kif->so_type,
+                    py_laddr,
+                    py_raddr,
+                    state,
+                    kif->p_pid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
+            }
+            py_laddr = NULL;
+            py_raddr = NULL;
         }
         // UNIX socket
         else if (kif->so_family == AF_UNIX) {
@@ -147,23 +146,22 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             if (!py_lpath)
                 goto error;
 
-            py_tuple = Py_BuildValue(
-                "(iiiOsil)",
-                kif->fd_fd,
-                kif->so_family,
-                kif->so_type,
-                py_lpath,
-                "",  // raddr
-                PSUTIL_CONN_NONE,
-                kif->p_pid
-            );
-            if (!py_tuple)
+            if (!pylist_append(
+                    py_retlist,
+                    "(iiiOsil)",
+                    kif->fd_fd,
+                    kif->so_family,
+                    kif->so_type,
+                    py_lpath,
+                    "",  // raddr
+                    PSUTIL_CONN_NONE,
+                    kif->p_pid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
+            }
             Py_DECREF(py_lpath);
-            Py_DECREF(py_tuple);
-            Py_INCREF(Py_None);
+            py_lpath = NULL;
         }
     }
 
@@ -171,9 +169,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
+    Py_XDECREF(py_lpath);
     Py_DECREF(py_retlist);
     if (kd != NULL)
         kvm_close(kd);

@@ -525,7 +525,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     int rc;
     FILETIME ftDummy, ftKernel, ftUser;
     HANDLE hThreadSnap = NULL;
-    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -592,19 +591,18 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
              * process has executed in user/kernel mode I borrowed the code
              * below from Python's Modules/posixmodule.c
              */
-            py_tuple = Py_BuildValue(
-                "kdd",
-                te32.th32ThreadID,
-                (double)(ftUser.dwHighDateTime * HI_T
-                         + ftUser.dwLowDateTime * LO_T),
-                (double)(ftKernel.dwHighDateTime * HI_T
-                         + ftKernel.dwLowDateTime * LO_T)
-            );
-            if (!py_tuple)
+            if (!pylist_append(
+                    py_retlist,
+                    "kdd",
+                    te32.th32ThreadID,
+                    (double)(ftUser.dwHighDateTime * HI_T
+                             + ftUser.dwLowDateTime * LO_T),
+                    (double)(ftKernel.dwHighDateTime * HI_T
+                             + ftKernel.dwLowDateTime * LO_T)
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_CLEAR(py_tuple);
+            }
 
             CloseHandle(hThread);
         }
@@ -614,7 +612,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (hThread != NULL)
         CloseHandle(hThread);
@@ -1118,7 +1115,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // required by GetMappedFileNameW
     DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_str = NULL;
 
     if (py_retlist == NULL)
@@ -1136,7 +1132,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         hProcess, baseAddress, &basicInfo, sizeof(MEMORY_BASIC_INFORMATION)
     ))
     {
-        py_tuple = NULL;
         if (baseAddress > maxAddr)
             break;
         if (GetMappedFileNameW(
@@ -1148,19 +1143,17 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             );
             if (py_str == NULL)
                 goto error;
-            py_tuple = Py_BuildValue(
-                "(KsOI)",
-                (unsigned long long)baseAddress,
-                get_region_protection_string(basicInfo.Protect),
-                py_str,
-                basicInfo.RegionSize
-            );
-
-            if (!py_tuple)
+            if (!pylist_append(
+                    py_retlist,
+                    "(KsOI)",
+                    (unsigned long long)baseAddress,
+                    get_region_protection_string(basicInfo.Protect),
+                    py_str,
+                    basicInfo.RegionSize
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_CLEAR(py_tuple);
+            }
             Py_CLEAR(py_str);
         }
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
@@ -1170,7 +1163,6 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_str);
     Py_DECREF(py_retlist);
     if (hProcess != NULL)

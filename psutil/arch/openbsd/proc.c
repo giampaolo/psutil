@@ -76,7 +76,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     char errbuf[4096];
     struct kinfo_proc *kp;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -115,17 +114,16 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (kp[i].p_tid < 0)
             continue;
         if (kp[i].p_pid == pid) {
-            py_tuple = Py_BuildValue(
-                _Py_PARSE_PID "dd",
-                kp[i].p_tid,
-                PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
-                PSUTIL_KPT2DOUBLE(kp[i].p_ustime)
-            );
-            if (py_tuple == NULL)
+            if (!pylist_append(
+                    py_retlist,
+                    _Py_PARSE_PID "dd",
+                    kp[i].p_tid,
+                    PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
+                    PSUTIL_KPT2DOUBLE(kp[i].p_ustime)
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
+            }
         }
     }
 
@@ -133,7 +131,6 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (kd != NULL)
         kvm_close(kd);

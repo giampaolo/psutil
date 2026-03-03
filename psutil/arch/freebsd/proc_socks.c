@@ -215,7 +215,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
 #endif
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
     PyObject *py_af_filter = NULL;
@@ -254,7 +253,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
         char lip[INET6_ADDRSTRLEN], rip[INET6_ADDRSTRLEN];
         char path[PATH_MAX];
         int inseq;
-        py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
 
@@ -341,20 +339,21 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                     py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue(
-                    "(iiiNNi)",
-                    kif->kf_fd,
-                    kif->kf_sock_domain,
-                    kif->kf_sock_type,
-                    py_laddr,
-                    py_raddr,
-                    state
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(iiiNNi)",
+                        kif->kf_fd,
+                        kif->kf_sock_domain,
+                        kif->kf_sock_type,
+                        py_laddr,
+                        py_raddr,
+                        state
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_DECREF(py_tuple);
+                }
+                py_laddr = NULL;
+                py_raddr = NULL;
             }
             // UNIX socket.
             // Note: remote path cannot be determined.
@@ -379,21 +378,21 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
                 if (!py_laddr)
                     goto error;
 
-                py_tuple = Py_BuildValue(
-                    "(iiiOsi)",
-                    kif->kf_fd,
-                    kif->kf_sock_domain,
-                    kif->kf_sock_type,
-                    py_laddr,
-                    "",  // raddr can't be determined
-                    PSUTIL_CONN_NONE
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(iiiOsi)",
+                        kif->kf_fd,
+                        kif->kf_sock_domain,
+                        kif->kf_sock_type,
+                        py_laddr,
+                        "",  // raddr can't be determined
+                        PSUTIL_CONN_NONE
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_DECREF(py_tuple);
+                }
                 Py_DECREF(py_laddr);
+                py_laddr = NULL;
             }
         }
     }
@@ -402,7 +401,6 @@ psutil_proc_net_connections(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);

@@ -150,7 +150,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
 
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
     PyObject *py_nic_name = NULL;
@@ -166,7 +165,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
     while (pCurrAddresses) {
         Py_CLEAR(py_nic_name);
-        Py_CLEAR(py_tuple);
         Py_CLEAR(py_address);
         Py_CLEAR(py_mac_address);
         Py_CLEAR(py_netmask);
@@ -214,24 +212,20 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
             if (py_mac_address == NULL)
                 goto error;
 
-            Py_INCREF(Py_None);
-            Py_INCREF(Py_None);
-            Py_INCREF(Py_None);
-            py_tuple = Py_BuildValue(
-                "(OiOOOO)",
-                py_nic_name,
-                -1,  // this will be converted later to AF_LINK
-                py_mac_address,
-                Py_None,  // netmask (not supported)
-                Py_None,  // broadcast (not supported)
-                Py_None  // ptp (not supported on Windows)
-            );
-            if (!py_tuple)
+            if (!pylist_append(
+                    py_retlist,
+                    "(OiOOOO)",
+                    py_nic_name,
+                    -1,  // this will be converted later to AF_LINK
+                    py_mac_address,
+                    Py_None,  // netmask (not supported)
+                    Py_None,  // broadcast (not supported)
+                    Py_None  // ptp (not supported on Windows)
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
+            }
 
-            Py_CLEAR(py_tuple);
             Py_CLEAR(py_mac_address);
         }
 
@@ -300,23 +294,20 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     py_netmask = Py_None;
                 }
 
-                Py_INCREF(Py_None);
-                Py_INCREF(Py_None);
-                py_tuple = Py_BuildValue(
-                    "(OiOOOO)",
-                    py_nic_name,
-                    family,
-                    py_address,
-                    py_netmask,
-                    Py_None,  // broadcast (not supported)
-                    Py_None  // ptp (not supported on Windows)
-                );
-                if (!py_tuple)
+                if (!pylist_append(
+                        py_retlist,
+                        "(OiOOOO)",
+                        py_nic_name,
+                        family,
+                        py_address,
+                        py_netmask,
+                        Py_None,  // broadcast (not supported)
+                        Py_None  // ptp (not supported on Windows)
+                    ))
+                {
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
+                }
 
-                Py_CLEAR(py_tuple);
                 Py_CLEAR(py_address);
                 Py_CLEAR(py_netmask);
 
@@ -335,7 +326,6 @@ error:
     if (pAddresses)
         free(pAddresses);
     Py_XDECREF(py_retlist);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_mac_address);
     Py_XDECREF(py_nic_name);

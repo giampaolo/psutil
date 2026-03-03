@@ -306,21 +306,17 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     cpu_load_info = (processor_cpu_load_info_data_t *)info_array;
 
     for (natural_t i = 0; i < cpu_count; i++) {
-        PyObject *py_cputime = Py_BuildValue(
-            "(dddd)",
-            (double)cpu_load_info[i].cpu_ticks[CPU_STATE_USER] / CLK_TCK,
-            (double)cpu_load_info[i].cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
-            (double)cpu_load_info[i].cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
-            (double)cpu_load_info[i].cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
-        );
-        if (!py_cputime) {
+        if (!pylist_append(
+                py_retlist,
+                "(dddd)",
+                (double)cpu_load_info[i].cpu_ticks[CPU_STATE_USER] / CLK_TCK,
+                (double)cpu_load_info[i].cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
+                (double)cpu_load_info[i].cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
+                (double)cpu_load_info[i].cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
+            ))
+        {
             goto error;
         }
-        if (PyList_Append(py_retlist, py_cputime)) {
-            Py_DECREF(py_cputime);
-            goto error;
-        }
-        Py_DECREF(py_cputime);
     }
 
     vm_deallocate(

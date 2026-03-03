@@ -226,7 +226,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     DWORD lpMaximumComponentLength = 0;  // max file name
     PyObject *py_all;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL) {
         return NULL;
@@ -250,7 +249,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     }
 
     while (*drive_letter != 0) {
-        py_tuple = NULL;
         opts[0] = 0;
         fs_type[0] = 0;
 
@@ -319,22 +317,18 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
                             mp_path, sizeof(mp_path), mp_buf
                         );  // append mount point
 
-                        py_tuple = Py_BuildValue(
-                            "(ssss)",
-                            drive_letter,
-                            mp_path,
-                            fs_type,  // typically "NTFS"
-                            opts
-                        );
-
-                        if (!py_tuple
-                            || PyList_Append(py_retlist, py_tuple) == -1)
+                        if (!pylist_append(
+                                py_retlist,
+                                "(ssss)",
+                                drive_letter,
+                                mp_path,
+                                fs_type,  // typically "NTFS"
+                                opts
+                            ))
                         {
                             FindVolumeMountPointClose(mp_h);
                             goto error;
                         }
-
-                        Py_CLEAR(py_tuple);
 
                         // Continue looking for more mount points
                         mp_flag = FindNextVolumeMountPoint(
@@ -350,18 +344,17 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             str_append(opts, sizeof(opts), ",");
         str_append(opts, sizeof(opts), psutil_get_drive_type(type));
 
-        py_tuple = Py_BuildValue(
-            "(ssss)",
-            drive_letter,
-            drive_letter,
-            fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
-            opts
-        );
-        if (!py_tuple)
+        if (!pylist_append(
+                py_retlist,
+                "(ssss)",
+                drive_letter,
+                drive_letter,
+                fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
+                opts
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_CLEAR(py_tuple);
+        }
         goto next;
 
     next:
@@ -373,7 +366,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
 error:
     SetErrorMode(old_mode);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;
 }

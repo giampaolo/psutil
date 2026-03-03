@@ -295,7 +295,6 @@ static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
     perfstat_thread_t *threadt = NULL;
     perfstat_id_t id;
     int i, rc, thread_count;
@@ -334,20 +333,21 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (threadt[i].pid != pid)
             continue;
 
-        py_tuple = Py_BuildValue(
-            "Idd", threadt[i].tid, threadt[i].ucpu_time, threadt[i].scpu_time
-        );
-        if (py_tuple == NULL)
+        if (!pylist_append(
+                py_retlist,
+                "Idd",
+                threadt[i].tid,
+                threadt[i].ucpu_time,
+                threadt[i].scpu_time
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
+        }
     }
     free(threadt);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (threadt != NULL)
         free(threadt);
@@ -489,7 +489,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     struct mntent *mt = NULL;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
-    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -508,20 +507,19 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
         py_mountp = PyUnicode_DecodeFSDefault(mt->mnt_dir);
         if (!py_mountp)
             goto error;
-        py_tuple = Py_BuildValue(
-            "(OOss)",
-            py_dev,  // device
-            py_mountp,  // mount point
-            mt->mnt_type,  // fs type
-            mt->mnt_opts  // options
-        );
-        if (py_tuple == NULL)
+        if (!pylist_append(
+                py_retlist,
+                "(OOss)",
+                py_dev,  // device
+                py_mountp,  // mount point
+                mt->mnt_type,  // fs type
+                mt->mnt_opts  // options
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_dev);
         Py_CLEAR(py_mountp);
-        Py_CLEAR(py_tuple);
         mt = getmntent(file);
     }
     endmntent(file);
@@ -530,7 +528,6 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_dev);
     Py_XDECREF(py_mountp);
-    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (file != NULL)
         endmntent(file);
@@ -701,7 +698,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     perfstat_cpu_t *cpu = NULL;
     perfstat_id_t id;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_cputime = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -736,24 +732,22 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < ncpu; i++) {
-        py_cputime = Py_BuildValue(
-            "(dddd)",
-            (double)cpu[i].user / ticks,
-            (double)cpu[i].sys / ticks,
-            (double)cpu[i].idle / ticks,
-            (double)cpu[i].wait / ticks
-        );
-        if (!py_cputime)
+        if (!pylist_append(
+                py_retlist,
+                "(dddd)",
+                (double)cpu[i].user / ticks,
+                (double)cpu[i].sys / ticks,
+                (double)cpu[i].idle / ticks,
+                (double)cpu[i].wait / ticks
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_DECREF(py_cputime);
+        }
     }
     free(cpu);
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
     if (cpu != NULL)
         free(cpu);

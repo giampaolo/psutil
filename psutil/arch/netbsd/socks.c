@@ -316,7 +316,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     int32_t rport;
     int32_t status;
     pid_t pid;
-    PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -422,23 +421,24 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             }
 
             // append tuple to list
-            py_tuple = Py_BuildValue(
-                "(iiiOOii)",
-                k->kif->ki_fd,
-                kp->kpcb->ki_family,
-                kp->kpcb->ki_type,
-                py_laddr,
-                py_raddr,
-                status,
-                k->kif->ki_pid
-            );
-            if (!py_tuple)
+            if (!pylist_append(
+                    py_retlist,
+                    "(iiiOOii)",
+                    k->kif->ki_fd,
+                    kp->kpcb->ki_family,
+                    kp->kpcb->ki_type,
+                    py_laddr,
+                    py_raddr,
+                    status,
+                    k->kif->ki_pid
+                ))
+            {
                 goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
+            }
             Py_DECREF(py_laddr);
+            py_laddr = NULL;
             Py_DECREF(py_raddr);
-            Py_DECREF(py_tuple);
+            py_raddr = NULL;
         }
     }
 
@@ -450,7 +450,6 @@ error:
     psutil_kiflist_clear();
     psutil_kpcblist_clear();
     Py_DECREF(py_retlist);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     return NULL;

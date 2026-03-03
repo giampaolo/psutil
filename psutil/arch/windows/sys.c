@@ -57,7 +57,6 @@ psutil_users(PyObject *self, PyObject *args) {
     PWTS_CLIENT_ADDRESS address;
     char address_str[50];
     PWTSINFOW wts_info;
-    PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_username = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -161,19 +160,18 @@ psutil_users(PyObject *self, PyObject *args) {
         if (py_username == NULL)
             goto error;
 
-        py_tuple = Py_BuildValue(
-            "OOd",
-            py_username,
-            py_address,
-            psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
-        );
-        if (!py_tuple)
+        if (!pylist_append(
+                py_retlist,
+                "OOd",
+                py_username,
+                py_address,
+                psutil_LargeIntegerToUnixTime(wts_info->ConnectTime)
+            ))
+        {
             goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
+        }
         Py_CLEAR(py_username);
         Py_CLEAR(py_address);
-        Py_CLEAR(py_tuple);
     }
 
     WTSFreeMemory(sessions);
@@ -184,7 +182,6 @@ psutil_users(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_username);
-    Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
 
