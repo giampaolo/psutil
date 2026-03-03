@@ -470,16 +470,58 @@ class TestProcess(PsutilTestCase):
         del memarr
 
     def test_memory_info_ex(self):
-        # tested more extensively in test_process_all.py
         p = psutil.Process()
         mem = p.memory_info_ex()
         self.check_proc_memory(mem)
         total = psutil.virtual_memory().total
         for name in mem._fields:
-            value = getattr(mem, name)
-            assert value >= 0, name
             if name != "vms":
+                value = getattr(mem, name)
                 assert value <= total
+
+        if LINUX:
+            assert mem._fields == (
+                "rss",
+                "vms",
+                "shared",
+                "text",
+                "lib",
+                "data",
+                "dirty",
+                "peak_rss",
+                "peak_vms",
+                "rss_anon",
+                "rss_file",
+                "rss_shmem",
+                "swap",
+                "hugetlb",
+            )
+        elif MACOS:
+            assert mem._fields == (
+                "rss",
+                "vms",
+                "peak_rss",
+                "rss_anon",
+                "rss_file",
+                "compressed",
+                "phys_footprint",
+            )
+        elif WINDOWS:
+            assert mem._fields == (
+                "rss",
+                "vms",
+                "num_page_faults",
+                "paged_pool",
+                "nonpaged_pool",
+                "peak_rss",
+                "peak_vms",
+                "peak_paged_pool",
+                "peak_nonpaged_pool",
+                "virtual",
+                "peak_virtual",
+            )
+        else:
+            assert mem._fields == p.memory_info()._fields
 
     @pytest.mark.skipif(not HAS_PROC_MEMORY_FOOTPRINT, reason="not supported")
     def test_memory_footprint(self):
