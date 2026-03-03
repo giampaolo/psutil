@@ -864,7 +864,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     char *curr_arg;
     size_t argmax;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -912,12 +911,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     curr_arg = arg_ptr;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-            py_arg = PyUnicode_DecodeFSDefault(curr_arg);
-            if (!py_arg)
+            if (!pylist_append_obj(
+                    py_retlist, PyUnicode_DecodeFSDefault(curr_arg)
+                ))
                 goto error;
-            if (PyList_Append(py_retlist, py_arg))
-                goto error;
-            Py_DECREF(py_arg);
             // iterate to next arg and decrement # of args
             curr_arg = arg_ptr;
             nargs--;
@@ -928,7 +925,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
     Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);

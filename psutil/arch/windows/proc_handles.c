@@ -214,7 +214,6 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
     HANDLE hFile = NULL;
     ULONG i = 0;
     BOOLEAN errorOccurred = FALSE;
-    PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
     ;
 
@@ -251,14 +250,13 @@ psutil_get_open_files(DWORD dwPid, HANDLE hProcess) {
             goto error;
 
         if ((globalFileName != NULL) && (globalFileName->Length > 0)) {
-            py_path = PyUnicode_FromWideChar(
-                globalFileName->Buffer, wcslen(globalFileName->Buffer)
-            );
-            if (!py_path)
+            if (!pylist_append_obj(
+                    py_retlist,
+                    PyUnicode_FromWideChar(
+                        globalFileName->Buffer, wcslen(globalFileName->Buffer)
+                    )
+                ))
                 goto error;
-            if (PyList_Append(py_retlist, py_path))
-                goto error;
-            Py_CLEAR(py_path);  // also sets to NULL
         }
 
         // Loop cleanup section.
@@ -284,8 +282,6 @@ exit:
         FREE(globalFileName);
         globalFileName = NULL;
     }
-    if (py_path != NULL)
-        Py_DECREF(py_path);
     if (handlesList != NULL)
         FREE(handlesList);
 

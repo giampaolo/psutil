@@ -247,18 +247,7 @@ error:
 
 static int
 append_flag(PyObject *py_retlist, const char *flag_name) {
-    PyObject *py_str = NULL;
-
-    py_str = PyUnicode_FromString(flag_name);
-    if (!py_str)
-        return 0;
-    if (PyList_Append(py_retlist, py_str)) {
-        Py_DECREF(py_str);
-        return 0;
-    }
-    Py_CLEAR(py_str);
-
-    return 1;
+    return pylist_append_obj(py_retlist, PyUnicode_FromString(flag_name));
 }
 
 /*

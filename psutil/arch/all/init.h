@@ -132,6 +132,7 @@ int psutil_badargs(const char *funcname);
 int psutil_setup(void);
 int pydict_add(PyObject *dict, const char *key, const char *fmt, ...);
 int pylist_append(PyObject *list, const char *fmt, ...);
+int pylist_append_obj(PyObject *list, PyObject *obj);
 
 // ====================================================================
 // --- Exposed to Python

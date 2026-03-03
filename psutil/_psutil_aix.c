@@ -162,7 +162,6 @@ static PyObject *
 psutil_proc_args(PyObject *self, PyObject *args) {
     int pid;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
     struct procsinfo procbuf;
     long arg_max;
     char *argbuf = NULL;
@@ -192,12 +191,8 @@ psutil_proc_args(PyObject *self, PyObject *args) {
      * even if the buffer is not big enough (even though it is supposed
      * to be) so the following 'while' is safe */
     while (*curarg != '\0') {
-        py_arg = PyUnicode_DecodeFSDefault(curarg);
-        if (!py_arg)
+        if (!pylist_append_obj(py_retlist, PyUnicode_DecodeFSDefault(curarg)))
             goto error;
-        if (PyList_Append(py_retlist, py_arg))
-            goto error;
-        Py_DECREF(py_arg);
         curarg = strchr(curarg, '\0') + 1;
     }
 
@@ -209,7 +204,6 @@ error:
     if (argbuf != NULL)
         free(argbuf);
     Py_XDECREF(py_retlist);
-    Py_XDECREF(py_arg);
     return NULL;
 }
 

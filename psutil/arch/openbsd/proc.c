@@ -26,7 +26,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     char **argv = NULL;
     char **p;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -44,12 +43,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     argv = (char **)argv_buf;
 
     for (p = argv; *p != NULL; p++) {
-        py_arg = PyUnicode_DecodeFSDefault(*p);
-        if (!py_arg)
+        if (!pylist_append_obj(py_retlist, PyUnicode_DecodeFSDefault(*p)))
             goto error;
-        if (PyList_Append(py_retlist, py_arg))
-            goto error;
-        Py_DECREF(py_arg);
     }
 
     free(argv_buf);
@@ -58,7 +53,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 error:
     if (argv_buf != NULL)
         free(argv_buf);
-    Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
 }

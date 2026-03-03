@@ -27,6 +27,21 @@ done:
 }
 
 
+// Append a Python object to a list and decref it. Returns 1 on
+// success, 0 on failure with a Python exception set.
+int
+pylist_append_obj(PyObject *list, PyObject *obj) {
+    if (!obj)
+        return 0;
+    if (PyList_Append(list, obj) < 0) {
+        Py_DECREF(obj);
+        return 0;
+    }
+    Py_DECREF(obj);
+    return 1;
+}
+
+
 // Build a Python object from a Py_BuildValue format string and set it
 // as key in an existing dict. Returns 1 on success, 0 on failure with
 // a Python exception set.

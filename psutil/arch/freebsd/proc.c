@@ -46,7 +46,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     size_t size = 0;
     size_t pos = 0;
     PyObject *py_retlist = PyList_New(0);
-    PyObject *py_arg = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -66,13 +65,10 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     // separator
     if (size > 0) {
         while (pos < size) {
-            py_arg = PyUnicode_DecodeFSDefault(&procargs[pos]);
-            if (!py_arg)
+            if (!pylist_append_obj(
+                    py_retlist, PyUnicode_DecodeFSDefault(&procargs[pos])
+                ))
                 goto error;
-            if (PyList_Append(py_retlist, py_arg))
-                goto error;
-            Py_DECREF(py_arg);
-            py_arg = NULL;
             pos += strlen(&procargs[pos]) + 1;
         }
     }
@@ -81,7 +77,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
     Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);
@@ -424,7 +419,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int i;
     cpuset_t mask;
     PyObject *py_retlist;
-    PyObject *py_cpu_num;
 
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
@@ -440,10 +434,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 
     for (i = 0; i < CPU_SETSIZE; i++) {
         if (CPU_ISSET(i, &mask)) {
-            py_cpu_num = Py_BuildValue("i", i);
-            if (py_cpu_num == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_cpu_num))
+            if (!pylist_append(py_retlist, "i", i))
                 goto error;
         }
     }
@@ -451,7 +442,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_cpu_num);
     Py_DECREF(py_retlist);
     return NULL;
 }
