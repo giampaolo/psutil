@@ -507,6 +507,8 @@ class TestProcess(WindowsTestCase):
             assert ps.peak_wset == ps.peak_rss
         with pytest.warns(DeprecationWarning, match="pagefile is deprecated"):
             assert ps.pagefile == ps.vms
+        with pytest.warns(DeprecationWarning, match="private is deprecated"):
+            assert ps.private == ps.vms
         with pytest.warns(
             DeprecationWarning, match="peak_pagefile is deprecated"
         ):

@@ -335,9 +335,11 @@ Process management
     1
     >>>
     >>> p.memory_info()
-    pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
+    pmem(rss=3164160, vms=4410163, shared=897433, text=302694, lib=0, data=2422374, dirty=0)
+    >>> p.memory_info_ex()
+    pmem_ex(rss=3164160, vms=4410163, shared=897433, text=302694, lib=0, data=2422374, dirty=0, peak_rss=4172190, peak_vms=6399001, rss_anon=2266726, rss_file=897433, rss_shmem=0, swap=0, hugetlb=0)
     >>> p.memory_footprint()  # "real" USS memory usage
-    pfootprint(uss=6545408, pss=6872064, swap=0)
+    pfootprint(uss=2355200, pss=2483712, swap=0)
     >>> p.memory_percent()
     0.7823
     >>> p.memory_maps()
