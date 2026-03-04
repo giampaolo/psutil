@@ -88,7 +88,6 @@ static PyMethodDef PsutilMethods[] = {
     {"ppid_map", psutil_ppid_map, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"users", psutil_users, METH_VARARGS},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS},
@@ -98,7 +97,8 @@ static PyMethodDef PsutilMethods[] = {
     {"winservice_start", psutil_winservice_start, METH_VARARGS},
     {"winservice_stop", psutil_winservice_stop, METH_VARARGS},
 
-    // --- windows API bindings
+    // --- direct Windows APIs
+    {"GetPerformanceInfo", psutil_GetPerformanceInfo, METH_VARARGS},
     {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
 
     // --- others
