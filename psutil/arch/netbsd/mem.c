@@ -53,21 +53,28 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
-    uint64_t swap_total, swap_free;
+    uint64_t swap_total = 0;
+    uint64_t swap_free = 0;
+    uint64_t swap_used = 0;
+    uint64_t sin = 0;
+    uint64_t sout = 0;
+    double percent = 0.0;
     struct swapent *swdev = NULL;
     int nswap, i;
     long pagesize = psutil_getpagesize();
+    PyObject *dict = PyDict_New();
+
+    if (dict == NULL)
+        return NULL;
 
     nswap = swapctl(SWAP_NSWAP, 0, 0);
-    if (nswap == 0) {
-        // This means there's no swap partition.
-        return Py_BuildValue("(iiiii)", 0, 0, 0, 0, 0);
-    }
+    if (nswap == 0)  // this means there's no swap partition
+        goto done;
 
     swdev = calloc(nswap, sizeof(*swdev));
     if (swdev == NULL) {
         psutil_oserror();
-        return NULL;
+        goto error;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
@@ -76,7 +83,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     // Total things up.
-    swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
             swap_total += (uint64_t)swdev[i].se_nblks * DEV_BSIZE;
@@ -93,16 +99,24 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     free(swdev);
 
-    return Py_BuildValue(
-        "(LLLll)",
-        swap_total,
-        (swap_total - swap_free),
-        swap_free,
-        (long)uv.pgswapin * pagesize,  // swap in
-        (long)uv.pgswapout * pagesize  // swap out
-    );
+    sin = (uint64_t)uv.pgswapin * pagesize;
+    sout = (uint64_t)uv.pgswapout * pagesize;
+    swap_used = swap_total - swap_free;
+    percent = psutil_usage_percent((double)swap_used, (double)swap_total, 1);
+
+done:
+    if (!(pydict_add(dict, "total", "K", swap_total)
+          | pydict_add(dict, "used", "K", swap_used)
+          | pydict_add(dict, "free", "K", swap_free)
+          | pydict_add(dict, "percent", "d", percent)
+          | pydict_add(dict, "sin", "K", sin)
+          | pydict_add(dict, "sout", "K", sout)))
+        goto error;
+
+    return dict;
 
 error:
+    Py_DECREF(dict);
     free(swdev);
     return NULL;
 }
