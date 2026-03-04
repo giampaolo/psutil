@@ -782,7 +782,7 @@ class Process:
                     "QuotaNonPagedPoolUsage": info["QuotaNonPagedPoolUsage"],
                     "PagefileUsage": info["PagefileUsage"],
                     "PeakPagefileUsage": info["PeakPagefileUsage"],
-                    "PrivateUsage": info["PrivatePageCount"],
+                    "PrivateUsage": info["PrivatePageCount"],  # adjust name
                 }
             raise
 
@@ -793,7 +793,7 @@ class Process:
         d = self._get_raw_meminfo()
         return ntp.pmem(
             rss=d["WorkingSetSize"],
-            vms=d["PagefileUsage"],
+            vms=d["PrivateUsage"],
             num_page_faults=d["PageFaultCount"],
             paged_pool=d["QuotaPagedPoolUsage"],
             nonpaged_pool=d["QuotaNonPagedPoolUsage"],

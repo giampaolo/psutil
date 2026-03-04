@@ -1676,7 +1676,7 @@ Process class
     +=========+=========+==========+=========+=====+=============================================================+
     | rss     | rss     | rss      | rss     | rss | rss (maps to ``WorkingSetSize``)                            |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | vms     | vms     | vms      | vms     | vms | vms (maps to ``PagefileUsage``)                             |
+    | vms     | vms     | vms      | vms     | vms | vms (maps to ``PrivateUsage``)                              |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
     | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
@@ -1698,8 +1698,9 @@ Process class
 
     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
       memory used by the process. On UNIX it matches ``top`` VIRT column. On
-      Windows it maps to ``Private``, which is not exactly the virtual address
-      space size (VMS) as intended on UNIX. For that, use ``virtual`` from
+      Windows it maps to ``PrivateUsage``, which is not exactly the virtual
+      address space size (VMS) as intended on UNIX. For that, use ``virtual``
+      from
       :meth:`memory_info_ex`.
 
     - **shared**: *(Linux)*
