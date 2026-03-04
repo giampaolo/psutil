@@ -171,7 +171,7 @@ def virtual_memory():
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
     mem = cext.swap_mem()
-    if FREEBSD:
+    if FREEBSD or NETBSD:
         return ntp.sswap(**mem)
     total, used, free, sin, sout = mem
     percent = usage_percent(used, total, round_=1)
