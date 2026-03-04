@@ -54,7 +54,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     uint64_t swap_total, swap_free;
-    struct swapent *swdev;
+    struct swapent *swdev = NULL;
     int nswap, i;
     long pagesize = psutil_getpagesize();
 
@@ -84,15 +84,14 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          * DEV_BSIZE;
         }
     }
-    free(swdev);
 
     // Get swap in/out
-    unsigned int total;
-    size_t size = sizeof(total);
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
     if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
         goto error;
+
+    free(swdev);
 
     return Py_BuildValue(
         "(LLLll)",
