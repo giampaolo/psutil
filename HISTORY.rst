@@ -47,6 +47,7 @@
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
 - 2732_, [Linux]: net_if_duplex_speed: handle EBUSY from ioctl(SIOCETHTOOL).
+- 2744_, [NetBSD]: fix possible double `free()` in `swap_memory()`_.
 
 **Compatibility notes**
 
