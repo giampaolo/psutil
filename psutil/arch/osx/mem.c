@@ -86,15 +86,14 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // CLI utility.
     free -= _speculative;
 
-    // clang-format off
-    if (!pydict_add(dict, "total", "K", (unsigned long long)total)) goto error;
-    if (!pydict_add(dict, "available", "K", available)) goto error;
-    if (!pydict_add(dict, "used", "K", used)) goto error;
-    if (!pydict_add(dict, "free", "K", free)) goto error;
-    if (!pydict_add(dict, "active", "K", active)) goto error;
-    if (!pydict_add(dict, "inactive", "K", inactive)) goto error;
-    if (!pydict_add(dict, "wired", "K", wired)) goto error;
-    // clang-format on
+    if (!(pydict_add(dict, "total", "K", (unsigned long long)total)
+          | pydict_add(dict, "available", "K", available)
+          | pydict_add(dict, "used", "K", used)
+          | pydict_add(dict, "free", "K", free)
+          | pydict_add(dict, "active", "K", active)
+          | pydict_add(dict, "inactive", "K", inactive)
+          | pydict_add(dict, "wired", "K", wired)))
+        goto error;
 
     return dict;
 

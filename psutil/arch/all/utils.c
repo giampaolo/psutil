@@ -1,5 +1,6 @@
 #include <Python.h>
 #include <stdarg.h>
+#include <math.h>
 
 
 // Build a Python object from a format string, append it to a list,
@@ -67,5 +68,18 @@ pydict_add(PyObject *dict, const char *key, const char *fmt, ...) {
 
 done:
     Py_DECREF(obj);
+    return ret;
+}
+
+
+double
+psutil_usage_percent(double used, double total, int round_) {
+    double ret;
+
+    if (total == 0.0)
+        return 0.0;
+    ret = (used / total) * 100.0;
+    if (round_ >= 0)
+        ret = round(ret * pow(10, round_)) / pow(10, round_);
     return ret;
 }

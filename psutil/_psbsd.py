@@ -126,6 +126,22 @@ def virtual_memory():
         # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135
         used = active + wired
         avail = total - used
+        percent = usage_percent((total - avail), total, round_=1)
+        return ntp.svmem(
+            total,
+            avail,
+            percent,
+            used,
+            free,
+            active,
+            inactive,
+            buffers,
+            cached,
+            shared,
+            wired,
+        )
+    elif FREEBSD:
+        return ntp.svmem(**mem)
     else:
         total, free, active, inactive, wired, cached, buffers, shared = mem
         # matches freebsd-memory CLI:
@@ -136,25 +152,28 @@ def virtual_memory():
         avail = inactive + cached + free
         used = active + wired + cached
 
-    percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(
-        total,
-        avail,
-        percent,
-        used,
-        free,
-        active,
-        inactive,
-        buffers,
-        cached,
-        shared,
-        wired,
-    )
+        percent = usage_percent((total - avail), total, round_=1)
+        return ntp.svmem(
+            total,
+            avail,
+            percent,
+            used,
+            free,
+            active,
+            inactive,
+            buffers,
+            cached,
+            shared,
+            wired,
+        )
 
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
-    total, used, free, sin, sout = cext.swap_mem()
+    mem = cext.swap_mem()
+    if FREEBSD:
+        return ntp.sswap(**mem)
+    total, used, free, sin, sout = mem
     percent = usage_percent(used, total, round_=1)
     return ntp.sswap(total, used, free, percent, sin, sout)
 

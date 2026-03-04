@@ -134,6 +134,7 @@ int pylist_append_obj(PyObject *list, PyObject *obj);
 
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);
+double psutil_usage_percent(double used, double total, int round_);
 
 // ====================================================================
 // --- Exposed to Python
