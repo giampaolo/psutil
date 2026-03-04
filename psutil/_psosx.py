@@ -65,19 +65,11 @@ PROC_STATUSES = {
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
-    total, active, inactive, wired, free, speculative = cext.virtual_mem()
-    # This is how Zabbix calculate avail and used mem:
-    # https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/osx/memory.c
-    # Also see: https://github.com/giampaolo/psutil/issues/1277
-    avail = inactive + free
-    used = active + wired
-    # This is NOT how Zabbix calculates free mem but it matches "free"
-    # cmdline utility.
-    free -= speculative
-    percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(
-        total, avail, percent, used, free, active, inactive, wired
+    d = cext.virtual_mem()
+    d["percent"] = usage_percent(
+        (d["total"] - d["available"]), d["total"], round_=1
     )
+    return ntp.svmem(**d)
 
 
 def swap_memory():
