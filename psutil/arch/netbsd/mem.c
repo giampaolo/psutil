@@ -22,29 +22,59 @@ original(ish) implementations:
 
 
 // Virtual memory stats, taken from:
-// https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/
-//     netbsd/memory.c
+// https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    size_t size;
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
-    long long cached;
+    unsigned long long total, free, active, inactive, wired, cached;
+    unsigned long long used, avail;
+    double percent;
+    PyObject *dict = PyDict_New();
 
-    if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
+    if (dict == NULL)
         return NULL;
 
-    // Note: zabbix does not include anonpages, but that doesn't match the
-    // "Cached" value in /proc/meminfo.
-    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L182
-    cached = (uv.filepages + uv.execpages + uv.anonpages) << uv.pageshift;
-    return Py_BuildValue(
-        "LLLLLL",
-        (long long)uv.npages << uv.pageshift,  // total
-        (long long)uv.free << uv.pageshift,  // free
-        (long long)uv.active << uv.pageshift,  // active
-        (long long)uv.inactive << uv.pageshift,  // inactive
-        (long long)uv.wired << uv.pageshift,  // wired
-        cached  // cached
-    );
+    if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
+        goto error;
+
+    total = (unsigned long long)uv.npages << uv.pageshift;
+    free = (unsigned long long)uv.free << uv.pageshift;
+    active = (unsigned long long)uv.active << uv.pageshift;
+    inactive = (unsigned long long)uv.inactive << uv.pageshift;
+    wired = (unsigned long long)uv.wired << uv.pageshift;
+
+    // Note: zabbix does not include anonpages, but that doesn't match
+    // the "Cached" value in /proc/meminfo.
+    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/
+    //   zbxsysinfo/netbsd/memory.c#L182
+    cached = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
+             << uv.pageshift;
+
+    // Before avail was calculated as (inactive + cached + free), same
+    // as zabbix, but it turned out it could exceed total (see #2233),
+    // so zabbix seems to be wrong. Htop calculates it differently, and
+    // the used value seem more realistic, so let's match htop.
+    // https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
+    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135
+    used = active + wired;
+    avail = total - used;
+    percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
+
+    if (!(pydict_add(dict, "total", "K", total)
+          | pydict_add(dict, "available", "K", avail)
+          | pydict_add(dict, "percent", "d", percent)
+          | pydict_add(dict, "used", "K", used)
+          | pydict_add(dict, "free", "K", free)
+          | pydict_add(dict, "active", "K", active)
+          | pydict_add(dict, "inactive", "K", inactive)
+          | pydict_add(dict, "wired", "K", wired)
+          | pydict_add(dict, "cached", "K", cached)))
+        goto error;
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }

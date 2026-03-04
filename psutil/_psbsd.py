@@ -27,7 +27,6 @@ from ._common import conn_to_ntuple
 from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
-from ._common import usage_percent
 
 __extra__all__ = []
 
@@ -108,38 +107,14 @@ HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
 def virtual_memory():
     mem = cext.virtual_mem()
     if NETBSD:
-        total, free, active, inactive, wired, cached = mem
         # On NetBSD buffers and shared mem is determined via /proc.
-        # The C ext set them to 0.
         with open('/proc/meminfo', 'rb') as f:
             for line in f:
                 if line.startswith(b'Buffers:'):
-                    buffers = int(line.split()[1]) * 1024
+                    mem['buffers'] = int(line.split()[1]) * 1024
                 elif line.startswith(b'MemShared:'):
-                    shared = int(line.split()[1]) * 1024
-        # Before avail was calculated as (inactive + cached + free),
-        # same as zabbix, but it turned out it could exceed total (see
-        # #2233), so zabbix seems to be wrong. Htop calculates it
-        # differently, and the used value seem more realistic, so let's
-        # match htop.
-        # https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
-        # https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135
-        used = active + wired
-        avail = total - used
-        percent = usage_percent((total - avail), total, round_=1)
-        return ntp.svmem(
-            total,
-            avail,
-            percent,
-            used,
-            free,
-            active,
-            inactive,
-            buffers,
-            cached,
-            shared,
-            wired,
-        )
+                    mem['shared'] = int(line.split()[1]) * 1024
+        return ntp.svmem(**mem)
     else:
         return ntp.svmem(**mem)
 
