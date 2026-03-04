@@ -88,7 +88,6 @@ static PyMethodDef PsutilMethods[] = {
     {"ppid_map", psutil_ppid_map, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"users", psutil_users, METH_VARARGS},
-    {"virtual_mem", psutil_virtual_mem, METH_VARARGS},
 
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS},

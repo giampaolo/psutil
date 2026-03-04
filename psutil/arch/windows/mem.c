@@ -21,25 +21,6 @@ psutil_getpagesize(PyObject *self, PyObject *args) {
 
 
 PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned long long totalPhys, availPhys, totalSys, availSys, pageSize;
-    PERFORMANCE_INFORMATION perfInfo;
-
-    if (!GetPerformanceInfo(&perfInfo, sizeof(PERFORMANCE_INFORMATION))) {
-        psutil_oserror();
-        return NULL;
-    }
-    // values are size_t, widen (if needed) to long long
-    pageSize = perfInfo.PageSize;
-    totalPhys = perfInfo.PhysicalTotal * pageSize;
-    availPhys = perfInfo.PhysicalAvailable * pageSize;
-    totalSys = perfInfo.CommitLimit * pageSize;
-    availSys = totalSys - perfInfo.CommitTotal * pageSize;
-    return Py_BuildValue("(LLLL)", totalPhys, availPhys, totalSys, availSys);
-}
-
-
-PyObject *
 psutil_GetPerformanceInfo(PyObject *self, PyObject *args) {
     PERFORMANCE_INFORMATION info;
     PyObject *dict = PyDict_New();
@@ -57,14 +38,14 @@ psutil_GetPerformanceInfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "CommitPeak", "K", (ULONGLONG)info.CommitPeak)) goto error;
     if (!pydict_add(dict, "PhysicalTotal", "K", (ULONGLONG)info.PhysicalTotal)) goto error;
     if (!pydict_add(dict, "PhysicalAvailable", "K", (ULONGLONG)info.PhysicalAvailable)) goto error;
-    if (!pydict_add(dict, "SystemCache", "K", (ULONGLONG)info.SystemCache)) goto error;
     if (!pydict_add(dict, "KernelTotal", "K", (ULONGLONG)info.KernelTotal)) goto error;
     if (!pydict_add(dict, "KernelPaged", "K", (ULONGLONG)info.KernelPaged)) goto error;
     if (!pydict_add(dict, "KernelNonpaged", "K", (ULONGLONG)info.KernelNonpaged)) goto error;
+    if (!pydict_add(dict, "SystemCache", "K", (ULONGLONG)info.SystemCache)) goto error;
     if (!pydict_add(dict, "PageSize", "K", (ULONGLONG)info.PageSize)) goto error;
-    if (!pydict_add(dict, "HandleCount", "I", (unsigned int)info.HandleCount)) goto error;
-    if (!pydict_add(dict, "ProcessCount", "I", (unsigned int)info.ProcessCount)) goto error;
-    if (!pydict_add(dict, "ThreadCount", "I", (unsigned int)info.ThreadCount)) goto error;
+    // if (!pydict_add(dict, "HandleCount", "I", (unsigned int)info.HandleCount)) goto error;
+    // if (!pydict_add(dict, "ProcessCount", "I", (unsigned int)info.ProcessCount)) goto error;
+    // if (!pydict_add(dict, "ThreadCount", "I", (unsigned int)info.ThreadCount)) goto error;
     // clang-format on
     return dict;
 
