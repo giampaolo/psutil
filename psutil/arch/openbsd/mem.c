@@ -9,7 +9,6 @@
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <sys/mount.h>
-#include <sys/swap.h>
 #include <sys/param.h>
 
 #include "../../arch/all/init.h"
@@ -59,53 +58,4 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long)0,  // buffers
         (unsigned long long)vmdata.t_vmshr + vmdata.t_rmshr  // shared
     );
-}
-
-
-PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    uint64_t swap_total, swap_free;
-    struct swapent *swdev;
-    int nswap, i;
-
-    if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        psutil_oserror();
-        return NULL;
-    }
-
-    if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        psutil_oserror();
-        goto error;
-    }
-
-    // Total things up.
-    swap_total = swap_free = 0;
-    for (i = 0; i < nswap; i++) {
-        if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
-            swap_total += swdev[i].se_nblks;
-        }
-    }
-
-    free(swdev);
-    return Py_BuildValue(
-        "(LLLII)",
-        swap_total * DEV_BSIZE,
-        (swap_total - swap_free) * DEV_BSIZE,
-        swap_free * DEV_BSIZE,
-        // swap in / swap out is not supported as the
-        // swapent struct does not provide any info
-        // about it.
-        0,
-        0
-    );
-
-error:
-    free(swdev);
-    return NULL;
 }

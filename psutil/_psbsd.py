@@ -169,13 +169,11 @@ def virtual_memory():
 
 
 def swap_memory():
-    """System swap memory as (total, used, free, sin, sout) namedtuple."""
-    mem = cext.swap_mem()
-    if FREEBSD or NETBSD:
-        return ntp.sswap(**mem)
-    total, used, free, sin, sout = mem
-    percent = usage_percent(used, total, round_=1)
-    return ntp.sswap(total, used, free, percent, sin, sout)
+    """System swap memory as a (total, used, free, percent, sin, sout)
+    named tuple. sin and sout are always 0 on OpenBSD
+    """
+    d = cext.swap_mem()
+    return ntp.sswap(**d)
 
 
 # malloc / heap functions (FreeBSD / NetBSD)

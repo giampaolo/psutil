@@ -18,6 +18,5 @@ PyObject *psutil_proc_cmdline(PyObject *self, PyObject *args);
 PyObject *psutil_proc_cwd(PyObject *self, PyObject *args);
 PyObject *psutil_proc_num_fds(PyObject *self, PyObject *args);
 PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
-PyObject *psutil_swap_mem(PyObject *self, PyObject *args);
 PyObject *psutil_users(PyObject *self, PyObject *args);
 PyObject *psutil_virtual_mem(PyObject *self, PyObject *args);

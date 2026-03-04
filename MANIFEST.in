@@ -59,6 +59,7 @@ include psutil/arch/bsd/disk.c
 include psutil/arch/bsd/heap.c
 include psutil/arch/bsd/init.c
 include psutil/arch/bsd/init.h
+include psutil/arch/bsd/mem.c
 include psutil/arch/bsd/net.c
 include psutil/arch/bsd/proc.c
 include psutil/arch/bsd/proc_utils.c
