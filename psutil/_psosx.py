@@ -74,9 +74,9 @@ def virtual_memory():
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
-    total, used, free, sin, sout = cext.swap_mem()
-    percent = usage_percent(used, total, round_=1)
-    return ntp.sswap(total, used, free, percent, sin, sout)
+    d = cext.swap_mem()
+    d["percent"] = usage_percent(d["used"], d["total"], round_=1)
+    return ntp.sswap(**d)
 
 
 # malloc / heap functions

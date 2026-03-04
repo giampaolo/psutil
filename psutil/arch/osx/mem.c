@@ -109,26 +109,31 @@ error:
  */
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
-    int mib[2];
     struct xsw_usage totals;
     vm_statistics64_data_t vmstat;
     long pagesize = psutil_getpagesize();
+    int mib[2] = {CTL_VM, VM_SWAPUSAGE};
+    PyObject *dict = PyDict_New();
 
-    mib[0] = CTL_VM;
-    mib[1] = VM_SWAPUSAGE;
-
-    if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
-        return psutil_oserror_wsyscall("sysctl(VM_SWAPUSAGE)");
-
-    if (psutil_sys_vminfo(&vmstat) != 0)
+    if (dict == NULL)
         return NULL;
 
-    return Py_BuildValue(
-        "KKKKK",
-        (unsigned long long)totals.xsu_total,
-        (unsigned long long)totals.xsu_used,
-        (unsigned long long)totals.xsu_avail,
-        (unsigned long long)vmstat.pageins * pagesize,
-        (unsigned long long)vmstat.pageouts * pagesize
-    );
+    if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
+        goto error;
+    if (psutil_sys_vminfo(&vmstat) != 0)
+        goto error;
+
+    // clang-format off
+    if (!pydict_add(dict, "total", "K", (unsigned long long)totals.xsu_total)) goto error;
+    if (!pydict_add(dict, "used", "K", (unsigned long long)totals.xsu_used)) goto error;
+    if (!pydict_add(dict, "free", "K", (unsigned long long)totals.xsu_avail)) goto error;
+    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.pageins * pagesize)) goto error;
+    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.pageouts * pagesize)) goto error;
+    // clang-format on
+
+    return dict;
+
+error:
+    Py_DECREF(dict);
+    return NULL;
 }
