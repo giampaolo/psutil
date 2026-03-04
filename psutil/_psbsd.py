@@ -140,32 +140,8 @@ def virtual_memory():
             shared,
             wired,
         )
-    elif FREEBSD:
-        return ntp.svmem(**mem)
     else:
-        total, free, active, inactive, wired, cached, buffers, shared = mem
-        # matches freebsd-memory CLI:
-        # * https://people.freebsd.org/~rse/dist/freebsd-memory
-        # * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
-        # matches zabbix:
-        # * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
-        avail = inactive + cached + free
-        used = active + wired + cached
-
-        percent = usage_percent((total - avail), total, round_=1)
-        return ntp.svmem(
-            total,
-            avail,
-            percent,
-            used,
-            free,
-            active,
-            inactive,
-            buffers,
-            cached,
-            shared,
-            wired,
-        )
+        return ntp.svmem(**mem)
 
 
 def swap_memory():
