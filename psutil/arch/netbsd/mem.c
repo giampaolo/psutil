@@ -15,7 +15,10 @@ original(ish) implementations:
 */
 
 #include <Python.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/sysctl.h>
+#include <sys/vmmeter.h>
 #include <uvm/uvm_extern.h>
 
 #include "../../arch/all/init.h"
@@ -26,23 +29,46 @@ original(ish) implementations:
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
-    int mib[] = {CTL_VM, VM_UVMEXP2};
+    struct vmtotal vmdata;
+    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
+    int vmmeter_mib[] = {CTL_VM, VM_METER};
     unsigned long long total, free, active, inactive, wired, cached;
-    unsigned long long used, avail;
+    unsigned long long buffers, shared, used, avail;
     double percent;
+    long pagesize = psutil_getpagesize();
+    FILE *f;
+    char line[256];
     PyObject *dict = PyDict_New();
 
     if (dict == NULL)
         return NULL;
 
-    if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
+    if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         goto error;
+    if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
+        goto error;
+
+    // get buffers from /proc/meminfo
+    buffers = 0;
+    f = fopen("/proc/meminfo", "r");
+    if (f != NULL) {
+        while (fgets(line, sizeof(line), f) != NULL) {
+            if (strncmp(line, "Buffers:", 8) == 0) {
+                sscanf(line + 8, "%llu", &buffers);
+                break;
+            }
+        }
+        fclose(f);
+        buffers *= 1024;
+    }
 
     total = (unsigned long long)uv.npages << uv.pageshift;
     free = (unsigned long long)uv.free << uv.pageshift;
     active = (unsigned long long)uv.active << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
     wired = (unsigned long long)uv.wired << uv.pageshift;
+    // Also in /proc/meminfo as MemShared
+    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
 
     // Note: zabbix does not include anonpages, but that doesn't match
     // the "Cached" value in /proc/meminfo.
@@ -68,8 +94,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
           | pydict_add(dict, "free", "K", free)
           | pydict_add(dict, "active", "K", active)
           | pydict_add(dict, "inactive", "K", inactive)
+          | pydict_add(dict, "buffers", "K", buffers)
           | pydict_add(dict, "wired", "K", wired)
-          | pydict_add(dict, "cached", "K", cached)))
+          | pydict_add(dict, "cached", "K", cached)
+          | pydict_add(dict, "shared", "K", shared)))
         goto error;
 
     return dict;

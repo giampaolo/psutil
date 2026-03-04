@@ -105,18 +105,8 @@ HAS_PROC_NUM_THREADS = hasattr(cext, "proc_num_threads")
 
 
 def virtual_memory():
-    mem = cext.virtual_mem()
-    if NETBSD:
-        # On NetBSD buffers and shared mem is determined via /proc.
-        with open('/proc/meminfo', 'rb') as f:
-            for line in f:
-                if line.startswith(b'Buffers:'):
-                    mem['buffers'] = int(line.split()[1]) * 1024
-                elif line.startswith(b'MemShared:'):
-                    mem['shared'] = int(line.split()[1]) * 1024
-        return ntp.svmem(**mem)
-    else:
-        return ntp.svmem(**mem)
+    d = cext.virtual_mem()
+    return ntp.svmem(**d)
 
 
 def swap_memory():
