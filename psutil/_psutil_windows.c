@@ -98,7 +98,8 @@ static PyMethodDef PsutilMethods[] = {
     {"winservice_start", psutil_winservice_start, METH_VARARGS},
     {"winservice_stop", psutil_winservice_stop, METH_VARARGS},
 
-    // --- windows API bindings
+    // --- direct Windows APIs
+    {"GetPerformanceInfo", psutil_GetPerformanceInfo, METH_VARARGS},
     {"QueryDosDevice", psutil_QueryDosDevice, METH_VARARGS},
 
     // --- others
