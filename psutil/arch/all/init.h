@@ -131,6 +131,12 @@ int str_format(char *buf, size_t size, const char *fmt, ...);
 int pydict_add(PyObject *dict, const char *key, const char *fmt, ...);
 int pylist_append_fmt(PyObject *list, const char *fmt, ...);
 int pylist_append_obj(PyObject *list, PyObject *obj);
+PyTypeObject *psutil_structseq_type_new(
+    const char *type_name, const char *doc, ...
+);
+int pystructseq_add(
+    PyObject *obj, Py_ssize_t *pos, const char *name, const char *fmt, ...
+);
 
 int psutil_badargs(const char *funcname);
 int psutil_setup(void);

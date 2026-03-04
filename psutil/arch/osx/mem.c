@@ -12,6 +12,7 @@
 // https://github.com/apple-open-source/macos/blob/master/system_cmds/vm_stat/vm_stat.c
 
 #include <Python.h>
+#include <math.h>
 #include <mach/host_info.h>
 #include <sys/sysctl.h>
 #include <mach/mach.h>
@@ -56,19 +57,37 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     uint64_t total;
     unsigned long long active, inactive, wired, free, _speculative;
     unsigned long long available, used;
+    double percent;
     int mib[2] = {CTL_HW, HW_MEMSIZE};
     vm_statistics64_data_t vm;
     long pagesize = psutil_getpagesize();
-    PyObject *dict = PyDict_New();
+    Py_ssize_t pos = 0;
+    static PyTypeObject *svmem_type = NULL;
+    PyObject *obj = NULL;
 
-    if (dict == NULL)
-        return NULL;
+    if (!svmem_type) {
+        svmem_type = psutil_structseq_type_new(
+            "svmem",
+            NULL,
+            "total",
+            "available",
+            "percent",
+            "used",
+            "free",
+            "active",
+            "inactive",
+            "wired",
+            NULL
+        );
+        if (!svmem_type)
+            return NULL;
+    }
 
     // This is also available as sysctlbyname("hw.memsize").
     if (psutil_sysctl(mib, 2, &total, sizeof(total)) != 0)
-        goto error;
+        return NULL;
     if (psutil_sys_vminfo(&vm) != 0)
-        goto error;
+        return NULL;
 
     active = (unsigned long long)vm.active_count * pagesize;
     inactive = (unsigned long long)vm.inactive_count * pagesize;
@@ -86,20 +105,30 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // CLI utility.
     free -= _speculative;
 
+    percent = total > 0
+                  ? round(((double)(total - available) / total) * 100.0 * 10.0)
+                        / 10.0
+                  : 0.0;
+
+    obj = PyStructSequence_New(svmem_type);
+    if (!obj)
+        return NULL;
+
     // clang-format off
-    if (!pydict_add(dict, "total", "K", (unsigned long long)total)) goto error;
-    if (!pydict_add(dict, "available", "K", available)) goto error;
-    if (!pydict_add(dict, "used", "K", used)) goto error;
-    if (!pydict_add(dict, "free", "K", free)) goto error;
-    if (!pydict_add(dict, "active", "K", active)) goto error;
-    if (!pydict_add(dict, "inactive", "K", inactive)) goto error;
-    if (!pydict_add(dict, "wired", "K", wired)) goto error;
+    if (!pystructseq_add(obj, &pos, "total",    "K", (unsigned long long)total)) goto error;
+    if (!pystructseq_add(obj, &pos, "available","K", available))                 goto error;
+    if (!pystructseq_add(obj, &pos, "percent",  "d", percent))                   goto error;
+    if (!pystructseq_add(obj, &pos, "used",     "K", used))                      goto error;
+    if (!pystructseq_add(obj, &pos, "free",     "K", free))                      goto error;
+    if (!pystructseq_add(obj, &pos, "active",   "K", active))                    goto error;
+    if (!pystructseq_add(obj, &pos, "inactive", "K", inactive))                  goto error;
+    if (!pystructseq_add(obj, &pos, "wired",    "K", wired))                     goto error;
     // clang-format on
 
-    return dict;
+    return obj;
 
 error:
-    Py_DECREF(dict);
+    Py_DECREF(obj);
     return NULL;
 }
 
@@ -113,27 +142,55 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     vm_statistics64_data_t vmstat;
     long pagesize = psutil_getpagesize();
     int mib[2] = {CTL_VM, VM_SWAPUSAGE};
-    PyObject *dict = PyDict_New();
+    double percent;
+    Py_ssize_t pos = 0;
+    static PyTypeObject *sswap_type = NULL;
+    PyObject *obj = NULL;
 
-    if (dict == NULL)
-        return NULL;
+    if (!sswap_type) {
+        sswap_type = psutil_structseq_type_new(
+            "sswap",
+            NULL,
+            "total",
+            "used",
+            "free",
+            "percent",
+            "sin",
+            "sout",
+            NULL
+        );
+        if (!sswap_type)
+            return NULL;
+    }
 
     if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
-        goto error;
+        return NULL;
     if (psutil_sys_vminfo(&vmstat) != 0)
-        goto error;
+        return NULL;
+
+    percent = totals.xsu_total > 0
+                  ? round(
+                        ((double)totals.xsu_used / totals.xsu_total) * 100.0
+                        * 10.0
+                    ) / 10.0
+                  : 0.0;
+
+    obj = PyStructSequence_New(sswap_type);
+    if (!obj)
+        return NULL;
 
     // clang-format off
-    if (!pydict_add(dict, "total", "K", (unsigned long long)totals.xsu_total)) goto error;
-    if (!pydict_add(dict, "used", "K", (unsigned long long)totals.xsu_used)) goto error;
-    if (!pydict_add(dict, "free", "K", (unsigned long long)totals.xsu_avail)) goto error;
-    if (!pydict_add(dict, "sin", "K", (unsigned long long)vmstat.pageins * pagesize)) goto error;
-    if (!pydict_add(dict, "sout", "K", (unsigned long long)vmstat.pageouts * pagesize)) goto error;
+    if (!pystructseq_add(obj, &pos, "total",   "K", (unsigned long long)totals.xsu_total))           goto error;
+    if (!pystructseq_add(obj, &pos, "used",    "K", (unsigned long long)totals.xsu_used))             goto error;
+    if (!pystructseq_add(obj, &pos, "free",    "K", (unsigned long long)totals.xsu_avail))            goto error;
+    if (!pystructseq_add(obj, &pos, "percent", "d", percent))                                         goto error;
+    if (!pystructseq_add(obj, &pos, "sin",     "K", (unsigned long long)vmstat.pageins * pagesize))   goto error;
+    if (!pystructseq_add(obj, &pos, "sout",    "K", (unsigned long long)vmstat.pageouts * pagesize))  goto error;
     // clang-format on
 
-    return dict;
+    return obj;
 
 error:
-    Py_DECREF(dict);
+    Py_DECREF(obj);
     return NULL;
 }

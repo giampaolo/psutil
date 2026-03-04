@@ -21,7 +21,6 @@ from ._common import debug
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
-from ._common import usage_percent
 
 __extra__all__ = []
 
@@ -65,18 +64,12 @@ PROC_STATUSES = {
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
-    d = cext.virtual_mem()
-    d["percent"] = usage_percent(
-        (d["total"] - d["available"]), d["total"], round_=1
-    )
-    return ntp.svmem(**d)
+    return cext.virtual_mem()
 
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
-    d = cext.swap_mem()
-    d["percent"] = usage_percent(d["used"], d["total"], round_=1)
-    return ntp.sswap(**d)
+    return cext.swap_mem()
 
 
 # malloc / heap functions
