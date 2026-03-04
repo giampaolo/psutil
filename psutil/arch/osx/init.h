@@ -11,7 +11,10 @@
 #include <mach/mach_time.h>
 
 extern uint64_t PSUTIL_HW_TBFREQUENCY;
+extern PyTypeObject *psutil_svmem_type;
+extern PyTypeObject *psutil_sswap_type;
 
+int psutil_osx_init_ntuples(void);
 int psutil_setup_osx(void);
 int _psutil_pids(pid_t **pids_array, int *pids_count);
 int is_zombie(size_t pid);

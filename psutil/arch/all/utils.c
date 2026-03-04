@@ -73,12 +73,12 @@ done:
 
 
 // Dynamically create a new PyStructSequence type. |type_name| is the
-// type name, |doc| is the docstring (may be NULL), followed by a
-// NULL-terminated list of field name strings. Returns NULL on error
-// with a Python exception set. The returned type is heap-allocated
-// and intended to be cached in a static variable by the caller.
+// type name, followed by a NULL-terminated list of field name strings.
+// Returns NULL on error with a Python exception set. The returned type
+// is heap-allocated and intended to be cached in a static variable by
+// the caller.
 PyTypeObject *
-psutil_structseq_type_new(const char *type_name, const char *doc, ...) {
+psutil_structseq_type_new(const char *type_name, ...) {
     va_list ap;
     int nfields = 0;
     int i;
@@ -88,7 +88,7 @@ psutil_structseq_type_new(const char *type_name, const char *doc, ...) {
     PyTypeObject *type = NULL;
 
     // Count fields.
-    va_start(ap, doc);
+    va_start(ap, type_name);
     while (va_arg(ap, const char *) != NULL)
         nfields++;
     va_end(ap);
@@ -101,7 +101,7 @@ psutil_structseq_type_new(const char *type_name, const char *doc, ...) {
     }
 
     // Fill fields array.
-    va_start(ap, doc);
+    va_start(ap, type_name);
     for (i = 0; i < nfields; i++) {
         name = va_arg(ap, const char *);
         fields[i].name = (char *)name;
@@ -112,7 +112,7 @@ psutil_structseq_type_new(const char *type_name, const char *doc, ...) {
     fields[nfields].doc = NULL;
 
     desc.name = (char *)type_name;
-    desc.doc = (char *)(doc ? doc : "");
+    desc.doc = "";
     desc.fields = fields;
     desc.n_in_sequence = nfields;
 

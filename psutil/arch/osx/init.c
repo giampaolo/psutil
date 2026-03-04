@@ -29,5 +29,7 @@ psutil_setup_osx(void) {
         psutil_oserror_wsyscall("sysctlbyname('hw.tbfrequency')");
         return -1;
     }
+    if (psutil_osx_init_ntuples() != 0)
+        return -1;
     return 0;
 }

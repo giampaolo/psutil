@@ -62,26 +62,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     vm_statistics64_data_t vm;
     long pagesize = psutil_getpagesize();
     Py_ssize_t pos = 0;
-    static PyTypeObject *svmem_type = NULL;
     PyObject *obj = NULL;
-
-    if (!svmem_type) {
-        svmem_type = psutil_structseq_type_new(
-            "svmem",
-            NULL,
-            "total",
-            "available",
-            "percent",
-            "used",
-            "free",
-            "active",
-            "inactive",
-            "wired",
-            NULL
-        );
-        if (!svmem_type)
-            return NULL;
-    }
 
     // This is also available as sysctlbyname("hw.memsize").
     if (psutil_sysctl(mib, 2, &total, sizeof(total)) != 0)
@@ -110,7 +91,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
                         / 10.0
                   : 0.0;
 
-    obj = PyStructSequence_New(svmem_type);
+    obj = PyStructSequence_New(psutil_svmem_type);
     if (!obj)
         return NULL;
 
@@ -144,24 +125,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2] = {CTL_VM, VM_SWAPUSAGE};
     double percent;
     Py_ssize_t pos = 0;
-    static PyTypeObject *sswap_type = NULL;
     PyObject *obj = NULL;
-
-    if (!sswap_type) {
-        sswap_type = psutil_structseq_type_new(
-            "sswap",
-            NULL,
-            "total",
-            "used",
-            "free",
-            "percent",
-            "sin",
-            "sout",
-            NULL
-        );
-        if (!sswap_type)
-            return NULL;
-    }
 
     if (psutil_sysctl(mib, 2, &totals, sizeof(totals)) != 0)
         return NULL;
@@ -175,7 +139,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                     ) / 10.0
                   : 0.0;
 
-    obj = PyStructSequence_New(sswap_type);
+    obj = PyStructSequence_New(psutil_sswap_type);
     if (!obj)
         return NULL;
 
