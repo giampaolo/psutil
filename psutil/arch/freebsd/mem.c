@@ -19,6 +19,13 @@
 #endif
 
 
+// shorter alias for psutil_sysctlbyname()
+static inline int
+sbn(const char *name, void *oldp, size_t oldlen) {
+    return psutil_sysctlbyname(name, oldp, oldlen);
+}
+
+
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned long total;
@@ -28,44 +35,27 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int mib[] = {CTL_VM, VM_METER};
     long pagesize = psutil_getpagesize();
 
-    size_t size_ul = sizeof(total);
-    size_t size_ui = sizeof(active);
-    size_t size_long = sizeof(buffers);
-    size_t size_vm = sizeof(vm);
-
-    PyObject *ret = NULL;
-
-    if (psutil_sysctlbyname("hw.physmem", &total, size_ul) != 0)
+    if (sbn("hw.physmem", &total, sizeof(total)) != 0)
         return NULL;
-
-    if (psutil_sysctlbyname("vm.stats.vm.v_active_count", &active, size_ui)
-        != 0)
+    if (sbn("vm.stats.vm.v_active_count", &active, sizeof(active)) != 0)
         return NULL;
-
-    if (psutil_sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, size_ui)
-        != 0)
+    if (sbn("vm.stats.vm.v_inactive_count", &inactive, sizeof(inactive)) != 0)
         return NULL;
-
-    if (psutil_sysctlbyname("vm.stats.vm.v_wire_count", &wired, size_ui) != 0)
+    if (sbn("vm.stats.vm.v_wire_count", &wired, sizeof(wired)) != 0)
+        return NULL;
+    if (sbn("vm.stats.vm.v_free_count", &free, sizeof(free)) != 0)
+        return NULL;
+    if (sbn("vfs.bufspace", &buffers, sizeof(buffers)) != 0)
         return NULL;
 
     // Optional; ignore error if not available
-    if (psutil_sysctlbyname("vm.stats.vm.v_cache_count", &cached, size_ui)
-        != 0)
-    {
+    if (sbn("vm.stats.vm.v_cache_count", &cached, sizeof(cached)) != 0) {
         PyErr_Clear();
         cached = 0;
     }
 
-    if (psutil_sysctlbyname("vm.stats.vm.v_free_count", &free, size_ui) != 0)
-        return NULL;
-
-    if (psutil_sysctlbyname("vfs.bufspace", &buffers, size_long) != 0)
-        return NULL;
-
-    if (psutil_sysctl(mib, 2, &vm, size_vm) != 0) {
+    if (psutil_sysctl(mib, 2, &vm, sizeof(vm)) != 0)
         return psutil_oserror_wsyscall("sysctl(CTL_VM | VM_METER)");
-    }
 
     return Py_BuildValue(
         "KKKKKKKK",
@@ -86,8 +76,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     // Return swap memory stats (see 'swapinfo' cmdline tool)
     kvm_t *kd;
     struct kvm_swap kvmsw[1];
-    unsigned int swapin, swapout, nodein, nodeout;
-    size_t size = sizeof(unsigned int);
+    unsigned int free, swapin, swapout, nodein, nodeout;
     long pagesize = psutil_getpagesize();
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
@@ -104,21 +93,22 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kvm_close(kd);
 
-    if (psutil_sysctlbyname("vm.stats.vm.v_swapin", &swapin, size) != 0)
+    if (sbn("vm.stats.vm.v_swapin", &swapin, sizeof(swapin)) != 0)
         return NULL;
-    if (psutil_sysctlbyname("vm.stats.vm.v_swapout", &swapout, size) != 0)
+    if (sbn("vm.stats.vm.v_swapout", &swapout, sizeof(swapout)) != 0)
         return NULL;
-    if (psutil_sysctlbyname("vm.stats.vm.v_vnodein", &nodein, size) != 0)
+    if (sbn("vm.stats.vm.v_vnodein", &nodein, sizeof(nodein)) != 0)
         return NULL;
-    if (psutil_sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, size) != 0)
+    if (sbn("vm.stats.vm.v_vnodeout", &nodeout, sizeof(nodeout)) != 0)
         return NULL;
+
+    free = (kvmsw[0].ksw_total - kvmsw[0].ksw_used);
 
     return Py_BuildValue(
         "(KKKII)",
         (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
         (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
-        (unsigned long long)kvmsw[0].ksw_total * pagesize -  // free
-            kvmsw[0].ksw_used * pagesize,
+        (unsigned long long)free * pagesize,  // free
         swapin + swapout,  // swap in
         nodein + nodeout  // swap out
     );
