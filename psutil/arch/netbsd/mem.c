@@ -87,8 +87,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     free(swdev);
 
     // Get swap in/out
-    unsigned int total;
-    size_t size = sizeof(total);
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
     if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
