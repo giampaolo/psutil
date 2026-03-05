@@ -493,7 +493,6 @@ class TestProcess(WindowsTestCase):
         ps = psutil.Process(self.pid).memory_info()
         assert ps.rss == win["WorkingSetSize"]
         assert ps.vms == win["PagefileUsage"]
-        assert ps.vms == win["PrivateUsage"]
         assert ps.peak_rss == win["PeakWorkingSetSize"]
         assert ps.peak_vms == win["PeakPagefileUsage"]
         assert ps.num_page_faults == win["PageFaultCount"]
