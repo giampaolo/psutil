@@ -474,16 +474,22 @@ Memory
   Return system swap memory statistics as a named tuple including the following
   fields:
 
-  * **total**: total swap memory in bytes
-  * **used**: used swap memory in bytes
-  * **free**: free swap memory in bytes
-  * **percent**: the percentage usage calculated as ``(total - available) / total * 100``
-  * **sin**: the number of bytes the system has swapped in from disk
-    (cumulative)
-  * **sout**: the number of bytes the system has swapped out from disk
-    (cumulative)
+  * **total**: total swap space. On Windows this is derived as
+    ``CommitLimit - PhysicalTotal``, representing virtual memory backed by
+    the page file rather than the raw page-file size.
+  * **used**: swap space currently in use.
+  * **free**: swap space not in use (``total - used``).
+  * **percent**: swap usage as a percentage, calculated as
+    ``used / total * 100``.
+  * **sin**: number of bytes the system has paged *in* from disk (pages moved
+    from swap space back into RAM) since boot (cumulative).
+  * **sout**: number of bytes the system has paged *out* to disk (pages moved
+    from RAM into swap space) since boot (cumulative). A continuously
+    increasing **sout** is a sign of memory pressure.
 
-  **sin** and **sout** on Windows are always set to ``0``.
+  **sin** and **sout** are cumulative counters since boot; monitor their rate
+  of change rather than the absolute value to detect active swapping.
+  On Windows both are always ``0``.
   See `meminfo.py`_ script providing an example on how to convert bytes in a
   human readable form.
 
