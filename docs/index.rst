@@ -1956,16 +1956,11 @@ Process class
   .. method:: memory_maps(grouped=True)
 
     Return process's mapped memory regions as a list of named tuples whose
-    fields are variable depending on the platform.
-    This method is useful to obtain a detailed representation of process
-    memory usage as explained
-    `here <https://web.archive.org/web/20180907232758/http://bmaurer.blogspot.com/2006/03/memory-usage-with-smaps.html>`__
-    (the most important value is "private" memory).
-    If *grouped* is ``True`` the mapped regions with the same *path* are
-    grouped together and the different memory fields are summed.  If *grouped*
-    is ``False`` each mapped region is shown as a single entity and the
-    named tuple will also include the mapped region's address space (*addr*)
-    and permission set (*perms*).
+    fields vary by platform (all values in bytes). If *grouped* is ``True``
+    regions with the same *path* are merged and their numeric fields summed.
+    If *grouped* is ``False`` each region is listed individually and the
+    tuple also includes *addr* (address range) and *perms* (permission
+    string e.g. ``"r-xp"``).
     See `pmap.py`_ for an example application.
 
     +---------------+---------+--------------+-----------+
@@ -1991,6 +1986,31 @@ Process class
     +---------------+---------+--------------+-----------+
     | swap          |         |              |           |
     +---------------+---------+--------------+-----------+
+
+    Linux fields (from ``/proc/<pid>/smaps``):
+
+    - **rss**: resident pages in this mapping.
+    - **size**: total virtual size; may far exceed **rss** for sparse or
+      reserved-but-unaccessed mappings.
+    - **pss**: proportional RSS. **rss** divided by the number of processes
+      sharing this mapping. Useful for fair per-process accounting.
+    - **shared_clean**: shared pages not modified (e.g. shared library code);
+      can be dropped from RAM without writing to swap.
+    - **shared_dirty**: shared pages that have been written to.
+    - **private_clean**: private unmodified pages; can be dropped without
+      writing to swap.
+    - **private_dirty**: private modified pages; must be written to swap
+      before they can be reclaimed. The key indicator of a mapping's real
+      memory cost.
+    - **referenced**: pages recently accessed.
+    - **anonymous**: pages not backed by a file (heap, stack allocations).
+    - **swap**: pages from this mapping currently in swap.
+
+    FreeBSD fields:
+
+    - **private**: pages in this mapping private to this process.
+    - **ref_count**: reference count on the VM object backing this mapping.
+    - **shadow_count**: depth of the copy-on-write shadow object chain.
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -2367,7 +2387,7 @@ steadily across iterations, the C code is likely retaining memory it should be
 releasing. This provides an allocator-level way to spot native leaks that
 Python's memory tracking misses.
 
-Checkout `psleak`_ project to see a practical example of how these APIs can be
+Check out `psleak`_ project to see a practical example of how these APIs can be
 used to detect memory leaks in C extensions.
 
 .. function:: heap_info()
