@@ -53,6 +53,9 @@
   lower).
 - 2732_, [Linux]: net_if_duplex_speed: handle EBUSY from ioctl(SIOCETHTOOL).
 - 2744_, [NetBSD]: fix possible double `free()` in `swap_memory()`_.
+- 2746_, [FreeBSD]: `Process.memory_maps()`_, `rss` and `private` fields, are
+  erroneously reported in memory pages instead of bytes. Other platforms
+  (Linux, macOS, Windows) return bytes.
 
 **Compatibility notes**
 

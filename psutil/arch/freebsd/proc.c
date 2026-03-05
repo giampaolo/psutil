@@ -291,6 +291,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
     ptrwidth = 2 * sizeof(void *);
+    long pagesize = psutil_getpagesize();
     PyObject *py_path = NULL;
     PyObject *py_retlist = PyList_New(0);
 
@@ -382,12 +383,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             goto error;
         if (!pylist_append_fmt(
                 py_retlist,
-                "ssOiiii",
+                "ssOKKii",
                 addr,  // "start-end" address
                 perms,  // "rwx" permissions
                 py_path,  // path
-                kve->kve_resident,  // rss
-                kve->kve_private_resident,  // private
+                (unsigned long long)kve->kve_resident * pagesize,  // rss
+                (unsigned long long)kve->kve_private_resident  // private
+                    * pagesize,
                 kve->kve_ref_count,  // ref count
                 kve->kve_shadow_count  // shadow count
             ))

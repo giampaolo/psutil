@@ -157,7 +157,7 @@ class BSDTestCase(PsutilTestCase):
 
 
 @pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
-class FreeBSDPsutilTestCase(PsutilTestCase):
+class FreeBSDTestCase(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc().pid
@@ -177,7 +177,7 @@ class FreeBSDPsutilTestCase(PsutilTestCase):
             _, start, stop, _perms, res = fields[:5]
             map = maps.pop()
             assert f"{start}-{stop}" == map.addr
-            assert int(res) == map.rss
+            assert int(res) * PAGESIZE == map.rss
             if not map.path.startswith('['):
                 assert fields[10] == map.path
 
