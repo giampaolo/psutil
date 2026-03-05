@@ -1898,31 +1898,27 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return a named tuple with USS, PSS and swap memory metrics.
-    These provide a better representation of actual process memory
-    consumption as explained in detail in this
+    Return a named tuple with USS, PSS and swap memory metrics. These give
+    a more accurate picture of actual memory consumption than
+    :meth:`memory_info`, as explained in this
     `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
-    It does so by passing through the whole process address.
-    As such it usually requires higher user privileges than
-    :meth:`memory_info` or :meth:`memory_info_ex` and is considerably slower.
+    It works by walking the full process address space, so it is
+    considerably slower than :meth:`memory_info` and may require elevated
+    privileges.
 
-    - **uss** *(Linux, macOS, Windows)*:
-      aka "Unique Set Size", this is the memory which is unique to a process
-      and which would be freed if the process was terminated right now.
+    - **uss** *(Linux, macOS, Windows)*: aka "Unique Set Size". This is the
+      memory which is unique to a process and which would be freed if the
+      process were terminated right now. The most representative metric for
+      actual memory usage.
 
     - **pss** *(Linux)*: aka "Proportional Set Size", is the amount of memory
       shared with other processes, accounted in a way that the amount is
-      divided evenly between the processes that share it.
-      I.e. if a process has 10 MBs all to itself and 10 MBs shared with
-      another process its PSS will be 15 MBs.
+      divided evenly between the processes that share it. I.e. if a process has
+      10 MBs all to itself, and 10 MBs shared with another process, its PSS
+      will be 15 MBs.
 
-    - **swap** *(Linux)*: amount of memory that has been swapped out to disk.
-
-    .. note::
-      `uss` is probably the most representative metric for determining how
-      much memory is actually being used by a process.
-      It represents the amount of memory that would be freed if the process
-      was terminated right now.
+    - **swap** *(Linux)*: process memory currently in swap, counted per-mapping
+      (slower, but may be more accurate than ``memory_info_ex().swap``).
 
     Example on Linux:
 
