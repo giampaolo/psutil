@@ -7,6 +7,9 @@
 
 - 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
   namedtuple.
+- 2745_: Drastically improve `virtual_memory()`_ docstring, which is now more
+  detailed, and includes a table with all the available metrics on each
+  platform.
 - 2731_, 2736_, 2723_, 2733_: Reorganization of process memory APIs.
 
   - Add new `Process.memory_info_ex()`_ method, which extends
