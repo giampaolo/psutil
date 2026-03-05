@@ -39,8 +39,8 @@ import sys
 
 import psutil
 
-if not (psutil.LINUX or psutil.MACOS or psutil.WINDOWS):
-    sys.exit("platform not supported")
+if not hasattr(psutil.Process, "memory_footprint"):
+    sys.exit("can't retrieve USS memory on this platform")
 
 
 def convert_bytes(n):
@@ -70,6 +70,7 @@ def main():
             else:
                 p._uss = mem.uss
                 p._rss = info["memory_info"].rss
+                p._vms = info["memory_info"].vms
                 if not p._uss:
                     continue
                 p._pss = getattr(mem, "pss", "")
@@ -78,9 +79,12 @@ def main():
                 procs.append(p)
 
     procs.sort(key=lambda p: p._uss)
-    templ = "{:<7} {:<7} {:>7} {:>7} {:>7} {:>7} {:>7}"
-    print(templ.format("PID", "User", "USS", "PSS", "Swap", "RSS", "Cmdline"))
-    print("=" * 78)
+    templ = "{:<7} {:<7} {:>7} {:>7} {:>7} {:>7} {:>7} {}"
+    header = templ.format(
+        "PID", "User", "USS", "PSS", "Swap", "RSS", "VMS", "Cmdline"
+    )
+    print(header)
+    print("=" * len(header))
     for p in procs[:86]:
         cmd = " ".join(p._info["cmdline"])[:50] if p._info["cmdline"] else ""
         line = templ.format(
@@ -90,6 +94,7 @@ def main():
             convert_bytes(p._pss) if p._pss else "",
             convert_bytes(p._swap) if p._swap else "",
             convert_bytes(p._rss),
+            convert_bytes(p._vms),
             cmd,
         )
         print(line)
