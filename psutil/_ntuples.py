@@ -12,7 +12,6 @@ from ._common import LINUX
 from ._common import MACOS
 from ._common import SUNOS
 from ._common import WINDOWS
-from ._common import deprecated_property
 
 # ===================================================================
 # --- system functions
@@ -277,34 +276,41 @@ elif WINDOWS:
     svmem = nt("svmem", ("total", "available", "percent", "used", "free"))
 
     # psutil.Process.memory_info()
-    _pmem = nt(
-        "pmem",
-        (
-            "rss",
-            "vms",
-            "num_page_faults",
-            "paged_pool",
-            "nonpaged_pool",
-            "peak_rss",
-            "peak_vms",
-            "peak_paged_pool",
-            "peak_nonpaged_pool",
-        ),
-    )
+    class pmem(  # noqa: SLOT002
+        nt("pmem", ("rss", "vms", "peak_rss", "peak_vms", "num_page_faults"))
+    ):
+        def __new__(
+            cls, rss, vms, peak_rss, peak_vms, num_page_faults, _deprecated
+        ):
+            inst = super().__new__(
+                cls, rss, vms, peak_rss, peak_vms, num_page_faults
+            )
+            inst.__dict__['_deprecated'] = _deprecated
+            return inst
 
-    class pmem(_pmem):
-        __slots__ = ()
-
-        wset = deprecated_property(replacement="rss")
-        peak_wset = deprecated_property(replacement="peak_rss")
-        pagefile = deprecated_property(replacement="vms")
-        peak_pagefile = deprecated_property(replacement="peak_vms")
-        private = deprecated_property(replacement="vms")
+        def __getattr__(self, name):
+            dep = self.__dict__.get('_deprecated', {})
+            if name in dep:
+                msg = (
+                    f"pmem.{name} is deprecated; use memory_info_ex() instead"
+                )
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+                return dep[name]
+            msg = f"{self.__class__.__name__} object has no attribute {name!r}"
+            raise AttributeError(msg)
 
     # psutil.Process.memory_info_ex()
     _pmem_ex = nt(
         "pmem_ex",
-        pmem._fields + ("virtual", "peak_virtual"),
+        pmem._fields
+        + (
+            "virtual",
+            "peak_virtual",
+            "paged_pool",
+            "nonpaged_pool",
+            "peak_paged_pool",
+            "peak_nonpaged_pool",
+        ),
     )
 
     class pmem_ex(pmem, _pmem_ex):

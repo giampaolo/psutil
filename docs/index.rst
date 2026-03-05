@@ -1738,32 +1738,28 @@ Process class
     The "portable" fields available on all platforms are `rss` and `vms`.
     All numbers are expressed in bytes.
 
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | Linux   | macOS   | BSD      | Solaris | AIX | Windows                                                     |
-    +=========+=========+==========+=========+=====+=============================================================+
-    | rss     | rss     | rss      | rss     | rss | rss (maps to ``WorkingSetSize``)                            |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | vms     | vms     | vms      | vms     | vms | vms (maps to ``PrivateUsage``)                              |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | shared  |         | text     |         |     | num_page_faults (maps to ``PageFaultCount``)                |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | text    |         | data     |         |     | paged_pool (maps to ``QuotaPagedPoolUsage``)                |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    | data    |         | stack    |         |     | nonpaged_pool (maps to ``QuotaNonPagedPoolUsage``)          |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         | peak_rss |         |     | peak_rss (maps to ``PeakWorkingSetSize``)                   |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_vms (maps to ``PeakPagefileUsage``)                    |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_paged_pool (maps to ``QuotaPeakPagedPoolUsage``)       |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
-    |         |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
-    +---------+---------+----------+---------+-----+-------------------------------------------------------------+
+    +---------+---------+----------+---------+-----+----------+
+    | Linux   | macOS   | BSD      | Solaris | AIX | Windows  |
+    +=========+=========+==========+=========+=====+==========+
+    | rss     | rss     | rss      | rss     | rss | rss      |
+    +---------+---------+----------+---------+-----+----------+
+    | vms     | vms     | vms      | vms     | vms | vms      |
+    +---------+---------+----------+---------+-----+----------+
+    | shared  |         | text     |         |     |          |
+    +---------+---------+----------+---------+-----+----------+
+    | text    |         | data     |         |     |          |
+    +---------+---------+----------+---------+-----+----------+
+    | data    |         | stack    |         |     |          |
+    +---------+---------+----------+---------+-----+----------+
+    |         |         | peak_rss |         |     | peak_rss |
+    +---------+---------+----------+---------+-----+----------+
+    |         |         |          |         |     | peak_vms |
+    +---------+---------+----------+---------+-----+----------+
 
     - **rss**: aka "Resident Set Size". The portion of physical memory
-      currently held by this process (code, data, stack, and mapped files
-      that are resident). Pages swapped out to disk are **not** counted.
-      On UNIX it matches the ``top`` RES column.
+      currently held by this process (code, data, stack, and mapped files that
+      are resident). Pages swapped out to disk are **not** counted. On UNIX it
+      matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
 
     - **vms**: aka "Virtual Memory Size". The total address space reserved by
       the process, including pages not yet touched, pages in swap, and
@@ -1793,25 +1789,14 @@ Process class
 
     - **peak_rss** *(BSD, Windows)*: the highest RSS value (high water mark)
       the process has ever reached. On BSD this may be ``0`` for kernel PIDs.
+      On Windows it maps to ``PeakWorkingSetSize``.
 
     - **num_page_faults** *(Windows)*: total page faults (soft + hard) since
       the process started. A hard fault requires a disk read and indicates
       memory pressure.
 
-    - **paged_pool** *(Windows)*: kernel memory used for objects created by
-      this process (open file handles, registry keys, etc.) that the OS may
-      swap to disk under memory pressure.
-
-    - **nonpaged_pool** *(Windows)*: kernel memory used for objects that must
-      stay in RAM at all times (I/O request packets, device driver buffers,
-      etc.). A large or growing value may indicate a driver memory leak.
-
     - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
-      virtual memory.
-
-    - **peak_paged_pool** *(Windows)*: peak paged-pool usage.
-
-    - **peak_nonpaged_pool** *(Windows)*: peak non-paged-pool usage.
+      virtual memory. Maps to ``PeakPagefileUsage``.
 
     For the full definitions of Windows fields see
     `PROCESS_MEMORY_COUNTERS_EX`_.
@@ -1836,9 +1821,11 @@ Process class
       aliases**. Use :meth:`page_faults` instead.
 
     .. versionchanged::
-      8.0.0 Windows: renamed fields (old names kept as deprecated aliases):
-      *wset* → *rss*, *peak_wset* → *peak_rss*, *pagefile* / *private* →
-      *vms*, *peak_pagefile* → *peak_vms*.
+      8.0.0 Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
+      *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*.
+      At the same time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
+      *peak_nonpaged_pool* were moved to :meth:`memory_info_ex`. All these old
+      names still work but raise `DeprecationWarning`.
 
     .. versionchanged::
       8.0.0 BSD: added *peak_rss*.
@@ -1856,23 +1843,23 @@ Process class
     implemented this returns the same result as :meth:`memory_info`. All
     numbers are expressed in bytes.
 
-    +-------------+----------------+--------------+
-    | Linux       | macOS          | Windows      |
-    +=============+================+==============+
-    | peak_rss    | peak_rss       | virtual      |
-    +-------------+----------------+--------------+
-    | peak_vms    |                | peak_virtual |
-    +-------------+----------------+--------------+
-    | rss_anon    | rss_anon       |              |
-    +-------------+----------------+--------------+
-    | rss_file    | rss_file       |              |
-    +-------------+----------------+--------------+
-    | rss_shmem   | wired          |              |
-    +-------------+----------------+--------------+
-    | swap        | compressed     |              |
-    +-------------+----------------+--------------+
-    | hugetlb     | phys_footprint |              |
-    +-------------+----------------+--------------+
+    +-------------+----------------+--------------------+
+    | Linux       | macOS          | Windows            |
+    +=============+================+====================+
+    | peak_rss    | peak_rss       | virtual            |
+    +-------------+----------------+--------------------+
+    | peak_vms    |                | peak_virtual       |
+    +-------------+----------------+--------------------+
+    | rss_anon    | rss_anon       | paged_pool         |
+    +-------------+----------------+--------------------+
+    | rss_file    | rss_file       | nonpaged_pool      |
+    +-------------+----------------+--------------------+
+    | rss_shmem   | wired          | peak_paged_pool    |
+    +-------------+----------------+--------------------+
+    | swap        | compressed     | peak_nonpaged_pool |
+    +-------------+----------------+--------------------+
+    | hugetlb     | phys_footprint |                    |
+    +-------------+----------------+--------------------+
 
     - **peak_rss** *(Linux, macOS)*: the highest RSS value (high water mark)
       the process has reached since it started.
@@ -1901,6 +1888,17 @@ Process class
       reserved-but-uncommitted regions (unlike **vms** in
       :meth:`memory_info`).
     - **peak_virtual** *(Windows)*: peak virtual address space size.
+    - **paged_pool** *(Windows)*: kernel memory used for objects created by
+      this process (open file handles, registry keys, etc.) that the OS may
+      swap to disk under memory pressure.
+    - **nonpaged_pool** *(Windows)*: kernel memory used for objects that must
+      stay in RAM at all times (I/O request packets, device driver buffers,
+      etc.). A large or growing value may indicate a driver memory leak.
+    - **peak_paged_pool** *(Windows)*: peak paged-pool usage.
+    - **peak_nonpaged_pool** *(Windows)*: peak non-paged-pool usage.
+
+    For the full definitions of Windows fields see
+    `PROCESS_MEMORY_COUNTERS_EX`_.
 
     .. versionadded:: 8.0.0
 

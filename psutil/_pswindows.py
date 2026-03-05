@@ -793,21 +793,35 @@ class Process:
         return ntp.pmem(
             rss=d["WorkingSetSize"],
             vms=d["PrivateUsage"],
-            num_page_faults=d["PageFaultCount"],
-            paged_pool=d["QuotaPagedPoolUsage"],
-            nonpaged_pool=d["QuotaNonPagedPoolUsage"],
             peak_rss=d["PeakWorkingSetSize"],
             peak_vms=d["PeakPagefileUsage"],
-            peak_paged_pool=d["QuotaPeakPagedPoolUsage"],
-            peak_nonpaged_pool=d["QuotaPeakNonPagedPoolUsage"],
+            num_page_faults=d["PageFaultCount"],
+            _deprecated={
+                # old aliases
+                "wset": d["WorkingSetSize"],  # 'rss'
+                "peak_wset": d["PeakWorkingSetSize"],  # 'peak_rss'
+                "pagefile": d["PrivateUsage"],  # 'vms'
+                "private": d["PrivateUsage"],  # 'vms'
+                "peak_pagefile": d["PeakPagefileUsage"],  # 'vms'
+                # fields which were moved to memory_info_ex()
+                "paged_pool": d["QuotaPagedPoolUsage"],
+                "nonpaged_pool": d["QuotaNonPagedPoolUsage"],
+                "peak_paged_pool": d["QuotaPeakPagedPoolUsage"],
+                "peak_nonpaged_pool": d["QuotaPeakNonPagedPoolUsage"],
+            },
         )
 
     @wrap_exceptions
     def memory_info_ex(self):
         d = self._oneshot()
+        raw = self._get_raw_meminfo()
         return {
             "virtual": d["VirtualSize"],
             "peak_virtual": d["PeakVirtualSize"],
+            "paged_pool": raw["QuotaPagedPoolUsage"],
+            "nonpaged_pool": raw["QuotaNonPagedPoolUsage"],
+            "peak_paged_pool": raw["QuotaPeakPagedPoolUsage"],
+            "peak_nonpaged_pool": raw["QuotaPeakNonPagedPoolUsage"],
         }
 
     @wrap_exceptions
