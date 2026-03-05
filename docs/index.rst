@@ -1866,30 +1866,33 @@ Process class
     | hugetlb     | phys_footprint |              |
     +-------------+----------------+--------------+
 
-    - **peak_rss**: aka "peak Resident Set Size" or "high water mark". It's the
-      highest amount of physical memory the process has ever used at any point
-      during its lifetime.
-    - **peak_vms** *(Linux)*: aka "peak Virtual Memory Size". It's highest
-      amount of virtual memory the process has ever used at any point during
-      its lifetime.
-    - **rss_anon** *(Linux, macOS)*: anonymous resident memory (heap, stack,
-      etc.). On macOS this maps to ``task_vm_info.internal``.
-    - **rss_file** *(Linux, macOS)*: file-backed resident memory. On macOS this
-      maps to ``task_vm_info.external``.
-    - **rss_shmem** *(Linux)*: shared memory resident pages.
-    - **wired** *(macOS)*: memory that is marked to always stay in RAM. It is
-      never moved to disk.
-    - **swap** *(Linux)*: memory swapped out to disk. Equivalent to
-      ``memory_footprint().swap`` but faster, as it reads from
-      */proc/pid/status* instead of */proc/pid/smaps*.
-    - **hugetlb** *(Linux)*: memory backed by huge TLB pages.
-    - **phys_footprint** *(macOS)*: total physical memory footprint including
-      compressed pages; this is what Xcode's memory gauge shows.
-    - **virtual** *(Windows)*: total virtual address space size. Unlike ``vms``
-      in :meth:`memory_info`, this is the true virtual memory size
-      (``VirtualSize`` from ``SYSTEM_PROCESS_INFORMATION``).
-    - **peak_virtual** *(Windows)*: peak virtual address space size
-      (``VirtualPeakSize`` from ``SYSTEM_PROCESS_INFORMATION``).
+    - **peak_rss** *(Linux, macOS)*: the highest RSS value (high water mark)
+      the process has reached since it started.
+    - **peak_vms** *(Linux)*: the highest VMS value the process has reached
+      since it started.
+    - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap, stack,
+      private mappings) not backed by any file, such as heap allocations,
+      stack, and private ``mmap(MAP_ANONYMOUS)`` regions.
+    - **rss_file** *(Linux, macOS)*: resident file-backed memory; pages mapped
+      from files (shared libraries, mmap'd files).
+    - **rss_shmem** *(Linux)*: resident shared memory pages (``tmpfs``,
+      ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals **rss**.
+    - **wired** *(macOS)*: memory pinned in RAM by the kernel on behalf of this
+      process; cannot be compressed or paged out.
+    - **swap** *(Linux)*: process memory currently in swap. Equivalent to
+      ``memory_footprint().swap`` but cheaper, as it reads from
+      ``/proc/<pid>/status`` instead of ``/proc/<pid>/smaps``.
+    - **compressed** *(macOS)*: pages held in the in-RAM memory compressor; not
+      counted in **rss**. A large value signals memory pressure but has not yet
+      triggered swapping.
+    - **hugetlb** *(Linux)*: resident memory backed by huge pages.
+    - **phys_footprint** *(macOS)*: total physical memory impact including
+      compressed pages. What Xcode and ``footprint(1)`` report; prefer this
+      over **rss** macOS memory monitoring.
+    - **virtual** *(Windows)*: true virtual address space size, including
+      reserved-but-uncommitted regions (unlike **vms** in
+      :meth:`memory_info`).
+    - **peak_virtual** *(Windows)*: peak virtual address space size.
 
     .. versionadded:: 8.0.0
 
