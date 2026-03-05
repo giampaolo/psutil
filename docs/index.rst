@@ -1945,12 +1945,11 @@ Process class
 
   .. method:: memory_percent(memtype="rss")
 
-    Compare process memory to total physical system memory and calculate
-    process memory utilization as a percentage.
-    *memtype* argument is a string that dictates what type of process memory
-    you want to compare against. You can choose between the named tuple field
-    names returned by :meth:`memory_info`, :meth:`memory_info_ex` and
-    :meth:`memory_footprint` (defaults to ``"rss"``).
+    Return process memory usage as a percentage of total physical memory
+    (``process.memory_info().rss / virtual_memory().total * 100``).
+    *memtype* can be any field name from :meth:`memory_info`,
+    :meth:`memory_info_ex`, or :meth:`memory_footprint` and controls which
+    memory value is used in the calculation (defaults to ``"rss"``).
 
     .. versionchanged:: 4.0.0 added `memtype` parameter.
 
