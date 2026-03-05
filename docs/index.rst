@@ -1752,33 +1752,61 @@ Process class
     |         |         |          |         |     | peak_nonpaged_pool (maps to ``QuotaPeakNonPagedPoolUsage``) |
     +---------+---------+----------+---------+-----+-------------------------------------------------------------+
 
-    - **rss**: aka "Resident Set Size", this is the non-swapped physical memory
-      a process is using. On UNIX it matches ``top`` RES column.
+    - **rss**: aka "Resident Set Size". The portion of physical memory
+      currently held by this process (code, data, stack, and mapped files
+      that are resident). Pages swapped out to disk are **not** counted.
+      On UNIX it matches the ``top`` RES column.
 
-    - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
-      memory used by the process. On UNIX it matches ``top`` VIRT column. On
-      Windows it maps to ``PrivateUsage``, which is close to, but not exactly
-      the same as the VMS definition used on UNIX. For that, use ``virtual``
-      from :meth:`memory_info_ex`.
+    - **vms**: aka "Virtual Memory Size". The total address space reserved by
+      the process, including pages not yet touched, pages in swap, and
+      memory-mapped files not yet accessed. Typically much larger than
+      **rss**. On UNIX it matches the ``top`` VIRT column. On Windows this
+      maps to ``PrivateUsage`` (private committed pages only), which differs
+      from the UNIX definition; use ``virtual`` from :meth:`memory_info_ex`
+      for the true virtual address space size.
 
-    - **shared**: *(Linux)*
-      memory that could be potentially shared with other processes.
-      This matches "top"'s SHR column).
+    - **shared** *(Linux)*: memory backed by a file or device (shared
+      libraries, mmap'd files, POSIX shared memory) that *could* be shared
+      with other processes. A page is counted here even if no other process
+      is currently mapping it. Matches ``top``'s SHR column.
 
-    - **text** *(Linux, BSD)*:
-      aka TRS (text resident set) the amount of memory devoted to
-      executable code. This matches "top"'s CODE column).
+    - **text** *(Linux, BSD)*: aka TRS (Text Resident Set). Resident memory
+      devoted to executable code. These pages are read-only and typically
+      shared across all processes running the same binary. Matches ``top``'s
+      CODE column.
 
-    - **data** *(Linux, BSD)*:
-      aka DRS (Data Resident Set) the amount of physical memory devoted to
-      other than executable code. It matches "top"'s DATA column.
+    - **data** *(Linux, BSD)*: aka DRS (Data Resident Set). On Linux this
+      covers the data **and** stack segments combined (from
+      ``/proc/<pid>/statm``). On BSD it covers the data segment only (see
+      **stack**). Matches ``top``'s DATA column.
 
-    - **peak_rss** *(BSD)*: aka "peak Resident Set Size" or "high water mark".
-      It's the highest amount of physical memory the process has ever used at
-      any point during its lifetime. Can be 0 for kernel PIDs.
+    - **stack** *(BSD)*: size of the process stack segment. Reported
+      separately from **data** (unlike Linux where both are combined).
 
-    For on explanation of Windows fields rely on `PROCESS_MEMORY_COUNTERS_EX`_
-    doc.
+    - **peak_rss** *(BSD, Windows)*: the highest RSS value (high water mark)
+      the process has ever reached. On BSD this may be ``0`` for kernel PIDs.
+
+    - **num_page_faults** *(Windows)*: total page faults (soft + hard) since
+      the process started. A hard fault requires a disk read and indicates
+      memory pressure.
+
+    - **paged_pool** *(Windows)*: kernel memory used for objects created by
+      this process (open file handles, registry keys, etc.) that the OS may
+      swap to disk under memory pressure.
+
+    - **nonpaged_pool** *(Windows)*: kernel memory used for objects that must
+      stay in RAM at all times (I/O request packets, device driver buffers,
+      etc.). A large or growing value may indicate a driver memory leak.
+
+    - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
+      virtual memory.
+
+    - **peak_paged_pool** *(Windows)*: peak paged-pool usage.
+
+    - **peak_nonpaged_pool** *(Windows)*: peak non-paged-pool usage.
+
+    For the full definitions of Windows fields see
+    `PROCESS_MEMORY_COUNTERS_EX`_.
 
     Example on Linux:
 
