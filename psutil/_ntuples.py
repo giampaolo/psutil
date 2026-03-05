@@ -280,20 +280,31 @@ elif WINDOWS:
         nt("pmem", ("rss", "vms", "peak_rss", "peak_vms", "num_page_faults"))
     ):
         def __new__(
-            cls, rss, vms, peak_rss, peak_vms, num_page_faults, _deprecated
+            cls,
+            rss,
+            vms,
+            peak_rss,
+            peak_vms,
+            num_page_faults,
+            _deprecated=None,
         ):
             inst = super().__new__(
                 cls, rss, vms, peak_rss, peak_vms, num_page_faults
             )
-            inst.__dict__['_deprecated'] = _deprecated
+            inst.__dict__['_deprecated'] = _deprecated or {}
             return inst
 
         def __getattr__(self, name):
             dep = self.__dict__.get('_deprecated', {})
             if name in dep:
-                msg = (
-                    f"pmem.{name} is deprecated; use memory_info_ex() instead"
-                )
+                msg = f"pmem.{name} is deprecated"
+                if name in {
+                    "paged_pool",
+                    "nonpaged_pool",
+                    "peak_paged_pool",
+                    "peak_nonpaged_pool",
+                }:
+                    msg += "; use memory_info_ex() instead"
                 warnings.warn(msg, DeprecationWarning, stacklevel=2)
                 return dep[name]
             msg = f"{self.__class__.__name__} object has no attribute {name!r}"

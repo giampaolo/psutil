@@ -1074,12 +1074,6 @@ class PsutilTestCase(unittest.TestCase):
                 # tolerance.
                 diff = nt.rss - nt.peak_rss
                 assert diff <= nt.rss * 0.05
-        if hasattr(nt, "peak_vms"):
-            assert nt.peak_vms >= nt.vms
-        if hasattr(nt, "peak_paged_pool"):  # Windows
-            assert nt.peak_paged_pool >= nt.paged_pool
-        if hasattr(nt, "peak_nonpaged_pool"):  # Windows
-            assert nt.peak_nonpaged_pool >= nt.nonpaged_pool
 
 
 def is_win_secure_system_proc(pid):

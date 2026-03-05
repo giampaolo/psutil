@@ -1738,23 +1738,25 @@ Process class
     The "portable" fields available on all platforms are `rss` and `vms`.
     All numbers are expressed in bytes.
 
-    +---------+---------+----------+---------+-----+----------+
-    | Linux   | macOS   | BSD      | Solaris | AIX | Windows  |
-    +=========+=========+==========+=========+=====+==========+
-    | rss     | rss     | rss      | rss     | rss | rss      |
-    +---------+---------+----------+---------+-----+----------+
-    | vms     | vms     | vms      | vms     | vms | vms      |
-    +---------+---------+----------+---------+-----+----------+
-    | shared  |         | text     |         |     |          |
-    +---------+---------+----------+---------+-----+----------+
-    | text    |         | data     |         |     |          |
-    +---------+---------+----------+---------+-----+----------+
-    | data    |         | stack    |         |     |          |
-    +---------+---------+----------+---------+-----+----------+
-    |         |         | peak_rss |         |     | peak_rss |
-    +---------+---------+----------+---------+-----+----------+
-    |         |         |          |         |     | peak_vms |
-    +---------+---------+----------+---------+-----+----------+
+    +---------+---------+----------+---------+-----+-----------------+
+    | Linux   | macOS   | BSD      | Solaris | AIX | Windows         |
+    +=========+=========+==========+=========+=====+=================+
+    | rss     | rss     | rss      | rss     | rss | rss             |
+    +---------+---------+----------+---------+-----+-----------------+
+    | vms     | vms     | vms      | vms     | vms | vms             |
+    +---------+---------+----------+---------+-----+-----------------+
+    | shared  |         | text     |         |     |                 |
+    +---------+---------+----------+---------+-----+-----------------+
+    | text    |         | data     |         |     |                 |
+    +---------+---------+----------+---------+-----+-----------------+
+    | data    |         | stack    |         |     |                 |
+    +---------+---------+----------+---------+-----+-----------------+
+    |         |         | peak_rss |         |     | peak_rss        |
+    +---------+---------+----------+---------+-----+-----------------+
+    |         |         |          |         |     | peak_vms        |
+    +---------+---------+----------+---------+-----+-----------------+
+    |         |         |          |         |     | num_page_faults |
+    +---------+---------+----------+---------+-----+-----------------+
 
     - **rss**: aka "Resident Set Size". The portion of physical memory
       currently held by this process (code, data, stack, and mapped files that
@@ -1791,12 +1793,12 @@ Process class
       the process has ever reached. On BSD this may be ``0`` for kernel PIDs.
       On Windows it maps to ``PeakWorkingSetSize``.
 
+    - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
+      virtual memory. Maps to ``PeakPagefileUsage``.
+
     - **num_page_faults** *(Windows)*: total page faults (soft + hard) since
       the process started. A hard fault requires a disk read and indicates
       memory pressure.
-
-    - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
-      virtual memory. Maps to ``PeakPagefileUsage``.
 
     For the full definitions of Windows fields see
     `PROCESS_MEMORY_COUNTERS_EX`_.
@@ -2062,7 +2064,7 @@ Process class
   .. method:: page_faults()
 
     Return the number of page faults for this process as a ``(minor, major)``
-    namedtuple.
+    named tuple.
 
     - **minor** (a.k.a. *soft* faults): occur when a memory page is not
       currently mapped into the process address space, but is already present
@@ -2400,7 +2402,7 @@ used to detect memory leaks in C extensions.
 
   Return low-level heap statistics from the system's C allocator. On Linux,
   this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
-  Returns a namedtuple containing:
+  Returns a named tuple containing:
 
   - ``heap_used``: total number of bytes currently allocated via ``malloc()``
     (small allocations).

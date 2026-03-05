@@ -491,16 +491,18 @@ class TestProcess(WindowsTestCase):
     def test_memory_info(self):
         win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
         ps = psutil.Process(self.pid).memory_info()
+        assert ps.rss == win["WorkingSetSize"]
+        assert ps.vms == win["PagefileUsage"]
+        assert ps.vms == win["PrivateUsage"]
+        assert ps.peak_rss == win["PeakWorkingSetSize"]
+        assert ps.peak_vms == win["PeakPagefileUsage"]
+        assert ps.num_page_faults == win["PageFaultCount"]
 
-        assert ps.rss == win['WorkingSetSize']
-        assert ps.vms == win['PagefileUsage']
-        assert ps.paged_pool == win['QuotaPagedPoolUsage']
-        assert ps.nonpaged_pool == win['QuotaNonPagedPoolUsage']
-        assert ps.peak_rss == win['PeakWorkingSetSize']
-        assert ps.peak_vms == win['PeakPagefileUsage']
-        assert ps.peak_paged_pool == win['QuotaPeakPagedPoolUsage']
-        assert ps.peak_nonpaged_pool == win['QuotaPeakNonPagedPoolUsage']
+    def test_memory_info_deprecated_fields(self):
+        win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
+        ps = psutil.Process(self.pid).memory_info()
 
+        # old aliases
         with pytest.warns(DeprecationWarning, match="wset is deprecated"):
             assert ps.wset == ps.rss
         with pytest.warns(DeprecationWarning, match="peak_wset is deprecated"):
@@ -513,6 +515,43 @@ class TestProcess(WindowsTestCase):
             DeprecationWarning, match="peak_pagefile is deprecated"
         ):
             assert ps.peak_pagefile == ps.peak_vms
+
+        # fields moved to memory_info_ex()
+        with pytest.warns(
+            DeprecationWarning, match="paged_pool is deprecated"
+        ):
+            assert ps.paged_pool == win['QuotaPagedPoolUsage']
+        with pytest.warns(
+            DeprecationWarning, match="nonpaged_pool is deprecated"
+        ):
+            assert ps.nonpaged_pool == win['QuotaNonPagedPoolUsage']
+        with pytest.warns(
+            DeprecationWarning, match="peak_paged_pool is deprecated"
+        ):
+            assert ps.peak_paged_pool == win['QuotaPeakPagedPoolUsage']
+        with pytest.warns(
+            DeprecationWarning, match="peak_nonpaged_pool is deprecated"
+        ):
+            assert ps.peak_nonpaged_pool == win['QuotaPeakNonPagedPoolUsage']
+
+        # test ntuple's __getattr__ override
+        with pytest.raises(AttributeError, match="foo"):
+            ps.foo  # noqa: B018
+
+    def test_memory_info_ex(self):
+        win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
+        ps = psutil.Process(self.pid).memory_info_ex()
+        assert ps.paged_pool == win["QuotaPagedPoolUsage"]
+        assert ps.nonpaged_pool == win["QuotaNonPagedPoolUsage"]
+        assert ps.peak_paged_pool == win["QuotaPeakPagedPoolUsage"]
+        assert ps.peak_nonpaged_pool == win["QuotaPeakNonPagedPoolUsage"]
+
+        assert ps.virtual > 0
+        assert ps.peak_virtual > 0
+
+        assert ps.peak_virtual >= ps.virtual
+        assert ps.peak_paged_pool >= ps.paged_pool
+        assert ps.peak_nonpaged_pool >= ps.nonpaged_pool
 
     def test_wait(self):
         p = psutil.Process(self.pid)
