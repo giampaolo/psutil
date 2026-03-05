@@ -25,7 +25,7 @@ original(ish) implementations:
 
 
 // Virtual memory stats, taken from:
-// https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
+// https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;

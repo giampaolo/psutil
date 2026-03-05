@@ -340,29 +340,44 @@ Memory
   following fields, expressed in bytes.
 
   - **total**: total physical memory (exclusive swap).
-  - **available**: the memory that can be given instantly to processes without
-    the system going into swap. This may be calculated by summing different
-    memory metrics that vary depending on the platform. It is supposed to be
-    used to monitor actual memory usage in a cross-platform fashion.
-  - **percent**: the percentage usage calculated as ``(total - available) / total * 100``.
-  - **used**: memory used, calculated differently depending on the platform and
-    designed for informational purposes only. **total - free** does not
-    necessarily match **used**.
-  - **free**: memory not being used at all (zeroed) that is readily available;
-    note that this doesn't reflect the actual memory available (use
-    **available** instead). **total - used** does not necessarily match
-    **free**.
-  - **active** *(Linux, macOS, BSD)*: memory currently in use or very recently
-    used, and so it is in RAM.
-  - **inactive** *(Linux, macOS, BSD)*: memory that is marked as not used.
-  - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
-  - **cached** *(Linux, BSD)*: cache for files read from the disk (the page
-    cache)
-  - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
-    multiple processes.
-  - **slab** *(Linux)*: in-kernel data structures cache.
-  - **wired** *(macOS, BSD)*: memory that is marked to always stay in RAM. It is
-    never moved to disk.
+  - **available**: memory that can be given instantly to processes without the
+    system going into swap. It is calculated by summing different memory values
+    depending on the platform (on Linux it matches the ``MemAvailable`` kernel
+    field). This is the recommended field for monitoring actual memory usage
+    in a cross-platform fashion.
+  - **percent**: the percentage usage calculated as
+    ``(total - available) / total * 100``.
+  - **used**: memory in use, calculated differently depending on the platform
+    (see the table below). It is meant for informational purposes. Neither
+    ``total - free`` nor ``total - available`` necessarily equals ``used``.
+  - **free**: memory that is not in use at all (zeroed pages). This is
+    typically much lower than **available** because the OS keeps recently
+    freed memory as reclaimable cache (see **cached** and **buffers**)
+    rather than zeroing it immediately. Do not use this to check for
+    memory pressure; use **available** instead.
+  - **active** *(Linux, macOS, BSD)*: memory currently mapped by processes
+    or recently accessed, held in RAM. It is unlikely to be reclaimed unless
+    the system is under significant memory pressure.
+  - **inactive** *(Linux, macOS, BSD)*: memory not recently accessed. It
+    still holds valid data (file cache, old allocations) but is a candidate
+    for reclamation or swapping. On BSD systems it is counted in
+    **available**.
+  - **buffers** *(Linux, BSD)*: kernel buffer cache for raw block-device I/O
+    (e.g. disk blocks read before the filesystem processes them). Can be
+    reclaimed by the OS when needed.
+  - **cached** *(Linux, BSD)*: in-memory page cache for files read from disk.
+    The OS reclaims this memory automatically when processes need it, so a
+    large **cached** value is healthy and does not indicate memory pressure.
+    On Linux this includes ``SReclaimable`` (reclaimable slab memory).
+  - **shared** *(Linux, BSD)*: memory accessible by multiple processes
+    simultaneously, such as POSIX shared memory (``shm_open``) and
+    ``tmpfs``-backed files. On Linux this corresponds to ``Shmem`` in
+    ``/proc/meminfo`` and is already counted within **active** / **inactive**.
+  - **slab** *(Linux)*: memory used by the kernel's internal object caches
+    (e.g. inode and dentry caches). The reclaimable portion
+    (``SReclaimable``) is already included in **cached**.
+  - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
+    code and critical data structures). It can never be moved to disk.
 
   Follows a table showing implementation details. All info on Linux are retrieved from `/proc/meminfo`.
 
