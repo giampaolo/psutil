@@ -379,6 +379,14 @@ Memory
   - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
     code and critical data structures). It can never be moved to disk.
 
+  .. note::
+     - On Linux, **total**, **free**, **used**,  **shared**, and **available**
+       match the output of the ``free`` command.
+     - On macOS, **free**, **active**, **inactive**, and **wired** match
+       ``vm_stat`` output.
+     - On Windows, **total**, **used** ("In use"), and **available** match
+       the Task Manager (Performance > Memory tab).
+
   Follows a table showing implementation details. All info on Linux are retrieved from `/proc/meminfo`.
 
   .. list-table::
