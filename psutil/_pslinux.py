@@ -186,8 +186,7 @@ def is_storage_device(name):
     return True.
     """
     # Re-adapted from iostat source code, see:
-    # https://github.com/sysstat/sysstat/blob/
-    #     97912938cd476645b267280069e83b1c8dc0e1c7/common.c#L208
+    # https://github.com/sysstat/sysstat/blob/97912938cd476/common.c#L208
     # Some devices may have a slash in their name (e.g. cciss/c0d0...).
     name = name.replace('/', '!')
     including_virtual = True
@@ -262,8 +261,7 @@ def calculate_avail_vmem(mems):
     * https://github.com/famzah/linux-memavailable-procfs/issues/2
     """
     # Note about "fallback" value. According to:
-    # https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
-    #     commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
+    # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398
     # ...long ago "available" memory was calculated as (free + cached),
     # We use fallback when one of these is missing from /proc/meminfo:
     # "Active(file)": introduced in 2.6.28 / Dec 2008
@@ -338,8 +336,7 @@ def virtual_memory():
         # "free" cmdline utility sums reclaimable to cached.
         # Older versions of procps used to add slab memory instead.
         # This got changed in:
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # https://gitlab.com/procps-ng/procps/-/commit/05d751c4f
         cached += mems.get(b"SReclaimable:", 0)  # since kernel 2.6.19
 
     try:
@@ -401,8 +398,7 @@ def virtual_memory():
         # If avail is greater than total or our calculation overflows,
         # that's symptomatic of running within a LCX container where such
         # values will be dramatically distorted over those of the host.
-        # https://gitlab.com/procps-ng/procps/blob/
-        #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
+        # https://gitlab.com/procps-ng/procps/blob/24fd2605c51fcc/proc/sysinfo.c#L764
         avail = free
 
     used = total - avail
@@ -1468,9 +1464,6 @@ def sensors_battery():
             power_plugged = True
 
     # Seconds left.
-    # Note to self: we may also calculate the charging ETA as per:
-    # https://github.com/thialfihar/dotfiles/blob/
-    #     013937745fd9050c30146290e8f963d65c0179e6/bin/battery.py#L55
     if power_plugged:
         secsleft = _common.POWER_TIME_UNLIMITED
     elif energy_now is not None and power_now is not None:

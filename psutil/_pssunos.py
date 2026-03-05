@@ -109,8 +109,7 @@ def swap_memory():
     sin, sout = cext.swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
-    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/
-    #     usr/src/cmd/swap/swap.c
+    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
     p = subprocess.Popen(

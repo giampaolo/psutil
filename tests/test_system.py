@@ -725,8 +725,7 @@ class TestDiskAPIs(PsutilTestCase):
                 except OSError as err:
                     if GITHUB_ACTIONS and MACOS and err.errno == errno.EIO:
                         continue
-                    # http://mail.python.org/pipermail/python-dev/
-                    #     2012-June/120787.html
+                    # http://mail.python.org/pipermail/python-dev/2012-June/120787.html
                     if err.errno not in {errno.EPERM, errno.EACCES}:
                         raise
                 else:

@@ -555,8 +555,7 @@ class Process:
                 return os.readlink(f"/proc/{self.pid}/exe")
         else:
             # OpenBSD: exe cannot be determined; references:
-            # https://chromium.googlesource.com/chromium/src/base/+/
-            #     master/base_paths_posix.cc
+            # https://chromium.googlesource.com/chromium/src/base/+/master/base_paths_posix.cc
             # We try our best guess by using which against the first
             # cmdline arg (may return None).
             import shutil

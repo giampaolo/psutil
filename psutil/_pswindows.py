@@ -368,8 +368,7 @@ def net_if_addrs():
 def sensors_battery():
     """Return battery information."""
     # For constants meaning see:
-    # https://msdn.microsoft.com/en-us/library/windows/desktop/
-    #     aa373232(v=vs.85).aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa373232(v=vs.85).aspx
     acline_status, flags, percent, secsleft = cext.sensors_battery()
     power_plugged = acline_status == 1
     no_battery = bool(flags & 128)
@@ -877,9 +876,7 @@ class Process:
             # We'll just rely on the internal polling and return None
             # when the PID disappears. Subprocess module does the same
             # (return None):
-            # https://github.com/python/cpython/blob/
-            #     be50a7b627d0aa37e08fa8e2d5568891f19903ce/
-            #     Lib/subprocess.py#L1193-L1194
+            # https://github.com/python/cpython/blob/be50a7b627d0/Lib/subprocess.py#L1193-L1194
             exit_code = None
 
         # At this point WaitForSingleObject() returned WAIT_OBJECT_0,

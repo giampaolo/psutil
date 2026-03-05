@@ -1805,9 +1805,7 @@ def _cpu_tot_time(times):
         # Htop does the same. References:
         # https://github.com/giampaolo/psutil/pull/940
         # http://unix.stackexchange.com/questions/178045
-        # https://github.com/torvalds/linux/blob/
-        #     447976ef4fd09b1be88b316d1a81553f1aa7cd07/kernel/sched/
-        #     cputime.c#L158
+        # https://github.com/torvalds/linux/blob/447976ef4/kernel/sched/cputime.c#L158
         tot -= getattr(times, "guest", 0)  # Linux 2.6.24+
         tot -= getattr(times, "guest_nice", 0)  # Linux 3.2.0+
     return tot
@@ -1823,8 +1821,7 @@ def _cpu_busy_time(times):
     # (waits for IO to complete). On Linux IO wait is *not* accounted
     # in "idle" time so we subtract it. Htop does the same.
     # References:
-    # https://github.com/torvalds/linux/blob/
-    #     447976ef4fd09b1be88b316d1a81553f1aa7cd07/kernel/sched/cputime.c#L244
+    # https://github.com/torvalds/linux/blob/447976ef4/kernel/sched/cputime.c#L244
     busy -= getattr(times, "iowait", 0)
     return busy
 

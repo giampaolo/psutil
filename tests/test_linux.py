@@ -235,12 +235,10 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
     def test_used(self):
         # Older versions of procps used slab memory to calculate used memory.
         # This got changed in:
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # https://gitlab.com/procps-ng/procps/-/commit/05d751c4f07
         # Newer versions of procps (>=4.0.1) are using yet another way to
         # compute used memory.
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
+        # https://gitlab.com/procps-ng/procps/-/commit/2184e90d2e7
         if get_free_version_info() < (4, 0, 1):
             return pytest.skip("free version too old")
         cli_value = free_physmem().used
@@ -288,12 +286,10 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
     def test_used(self):
         # Older versions of procps used slab memory to calculate used memory.
         # This got changed in:
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        # https://gitlab.com/procps-ng/procps/-/commit/05d751c4f07
         # Newer versions of procps (>=4.0.1) are using yet another way to
         # compute used memory.
-        # https://gitlab.com/procps-ng/procps/commit/
-        #     2184e90d2e7cdb582f9a5b706b47015e56707e4d
+        # https://gitlab.com/procps-ng/procps/-/commit/2184e90d2e7
         if get_free_version_info() < (4, 0, 1):
             return pytest.skip("free version too old")
         vmstat_value = vmstat('used memory') * 1024
@@ -1990,8 +1986,7 @@ class TestProcess(PsutilTestCase):
             assert m.called
 
     def test_cmdline_mixed_separators(self):
-        # https://github.com/giampaolo/psutil/issues/
-        #    1179#issuecomment-552984549
+        # https://github.com/giampaolo/psutil/issues/1179#issuecomment-552984549
         p = psutil.Process()
         fake_file = io.StringIO('foo\x20bar\x00')
         with mock.patch(
