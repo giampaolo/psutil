@@ -1673,16 +1673,19 @@ def is_namedtuple(x):
     return all(isinstance(n, str) for n in f)
 
 
+@functools.lru_cache(maxsize=None)
+def _get_hints(cls):
+    return typing.get_type_hints(
+        cls, globalns=vars(ntuples), localns={'socket': socket}
+    )
+
+
 def check_ntuple_types(nt):
     """Uses type hints from _ntuples.py to verify field types. `nt` is
     a named tuple returned by one of psutil APIs.
     """
     assert is_namedtuple(nt)
-    hints = typing.get_type_hints(
-        type(nt),
-        globalns=vars(ntuples),
-        localns={'socket': socket},
-    )
+    hints = _get_hints(type(nt))
     for field in nt._fields:
         if field not in hints:
             # field is not annotated
