@@ -21,6 +21,8 @@ from ._common import NETBSD
 from ._common import OPENBSD
 from ._common import SUNOS
 from ._common import WINDOWS
+from ._common import BatteryTime
+from ._common import NicDuplex
 
 # ===================================================================
 # --- system functions
@@ -120,7 +122,7 @@ class snicaddr(NamedTuple):
 # psutil.net_if_stats()
 class snicstats(NamedTuple):
     isup: bool
-    duplex: int
+    duplex: NicDuplex
     speed: int
     mtu: int
     flags: str
@@ -175,7 +177,7 @@ class shwtemp(NamedTuple):
 # psutil.sensors_battery()
 class sbattery(NamedTuple):
     percent: float
-    secsleft: int
+    secsleft: int | BatteryTime
     power_plugged: bool | None
 
 
