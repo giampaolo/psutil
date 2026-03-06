@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import warnings
+from collections import namedtuple
 from typing import TYPE_CHECKING
 from typing import NamedTuple
 
@@ -435,12 +436,9 @@ elif WINDOWS:
         free: int
 
     # psutil.Process.memory_info()
-    class pmem(NamedTuple):
-        rss: int
-        vms: int
-        peak_rss: int
-        peak_vms: int
-
+    class pmem(  # noqa: SLOT002
+        namedtuple("pmem", ("rss", "vms", "peak_rss", "peak_vms"))
+    ):
         def __new__(cls, rss, vms, peak_rss, peak_vms, _deprecated=None):
             inst = super().__new__(cls, rss, vms, peak_rss, peak_vms)
             inst.__dict__["_deprecated"] = _deprecated or {}
