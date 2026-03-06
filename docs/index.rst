@@ -117,10 +117,10 @@ CPU
 
   Platform-specific fields:
 
-  - **nice** *(UNIX)*: time spent by niced (prioritized) processes executing in
-    user mode; on Linux this also includes **guest_nice** time
-  - **iowait** *(Linux)*: time spent waiting for I/O to complete. This is *not*
-    accounted in **idle** time counter.
+  - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
+    executing in user mode; on Linux this also includes **guest_nice** time
+  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete.
+    This is *not* accounted in **idle** time counter.
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
   - **steal** *(Linux)*: time spent by other operating systems running

@@ -162,6 +162,29 @@ class sfan(NamedTuple):
     current: int
 
 
+# psutil.cpu_times()
+class scputimes(NamedTuple):
+    user: float
+    system: float
+    idle: float
+    if LINUX or MACOS or BSD:
+        nice: float
+    if LINUX:
+        iowait: float
+        irq: float
+        softirq: float
+        steal: float
+        guest: float
+        guest_nice: float
+    if BSD:
+        irq: float
+    if SUNOS or AIX:
+        iowait: float
+    if WINDOWS:
+        interrupt: float
+        dpc: float
+
+
 if LINUX or WINDOWS or MACOS or BSD:
 
     # psutil.heap_info()
@@ -170,27 +193,6 @@ if LINUX or WINDOWS or MACOS or BSD:
         mmap_used: int
         if WINDOWS:
             heap_count: int
-
-
-if LINUX:
-    # This gets set dynamically from _pslinux.py
-    scputimes = None
-else:
-
-    # psutil.cpu_times()
-    class scputimes(NamedTuple):
-        user: float
-        system: float
-        idle: float
-        if WINDOWS:
-            interrupt: float
-            dpc: float
-        if MACOS or BSD:
-            nice: float
-        if BSD:
-            irq: float
-        if SUNOS or AIX:
-            iowait: float
 
 
 # psutil.virtual_memory()
