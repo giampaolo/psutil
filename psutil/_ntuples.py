@@ -142,8 +142,22 @@ addr = nt("addr", ("ip", "port"))
 
 if LINUX:
 
-    # This gets set from _pslinux.py
-    scputimes = None
+    # psutil.cpu_times()
+    scputimes = nt(
+        "scputimes",
+        (
+            "user",
+            "system",
+            "idle",
+            "nice",
+            "iowait",
+            "irq",
+            "softirq",
+            "steal",
+            "guest",
+            "guest_nice",
+        ),
+    )
 
     # psutil.virtual_memory()
     svmem = nt(

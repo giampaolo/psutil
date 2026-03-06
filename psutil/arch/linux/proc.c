@@ -17,7 +17,6 @@
 // ====================================================================
 
 
-#ifdef PSUTIL_HAS_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };
@@ -74,7 +73,6 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
         return psutil_oserror();
     Py_RETURN_NONE;
 }
-#endif  // PSUTIL_HAS_IOPRIO
 
 
 // ====================================================================

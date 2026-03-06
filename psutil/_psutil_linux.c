@@ -21,11 +21,9 @@
 #endif
 
 static PyMethodDef mod_methods[] = {
-// --- per-process functions
-#ifdef PSUTIL_HAS_IOPRIO
+    // --- per-process functions
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS},
-#endif
 #ifdef PSUTIL_HAS_CPU_AFFINITY
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS},

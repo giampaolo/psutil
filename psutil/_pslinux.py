@@ -18,7 +18,6 @@ import struct
 import sys
 import warnings
 from collections import defaultdict
-from collections import namedtuple
 
 from . import _common
 from . import _ntuples as ntp
@@ -37,7 +36,6 @@ from ._common import debug
 from ._common import decode
 from ._common import get_procfs_path
 from ._common import isfile_strict
-from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import open_binary
 from ._common import open_text
@@ -195,43 +193,6 @@ def is_storage_device(name):
     else:
         path = f"/sys/block/{name}/device"
     return os.access(path, os.F_OK)
-
-
-@memoize
-def _scputimes_ntuple(procfs_path):
-    """Return a namedtuple of variable fields depending on the CPU times
-    available on this Linux kernel version which may be:
-    (user, system, idle, nice, iowait, irq, softirq, [steal, [guest,
-     [guest_nice]]])
-    Used by cpu_times() function.
-    """
-    with open_binary(f"{procfs_path}/stat") as f:
-        values = f.readline().split()[1:]
-    fields = ['user', 'system', 'idle', 'nice', 'iowait', 'irq', 'softirq']
-    vlen = len(values)
-    if vlen >= 8:
-        # Linux >= 2.6.11
-        fields.append('steal')
-    if vlen >= 9:
-        # Linux >= 2.6.24
-        fields.append('guest')
-    if vlen >= 10:
-        # Linux >= 3.2.0
-        fields.append('guest_nice')
-    return namedtuple('scputimes', fields)
-
-
-# Set it into _ntuples.py namespace.
-try:
-    ntp.scputimes = _scputimes_ntuple("/proc")
-except Exception as err:  # noqa: BLE001
-    # Don't want to crash at import time.
-    debug(f"ignoring exception on import: {err!r}")
-    ntp.scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
-
-# XXX: must be available also at this module level in order to be
-# serialized (tests/test_misc.py::TestMisc::test_serialization).
-scputimes = ntp.scputimes
 
 
 # =====================================================================
@@ -495,21 +456,33 @@ if hasattr(cext, "heap_info"):
 
 
 def cpu_times():
-    """Return a named tuple representing the following system-wide
-    CPU times:
-    (user, system, idle, nice, iowait, irq, softirq [steal, [guest,
-     [guest_nice]]])
-    Last 3 fields may not be available on all Linux kernel versions.
-    """
+    """Return a named tuple representing system-wide CPU times."""
+
+    def lsget(lst, idx, field_name):
+        try:
+            return lst[idx]
+        except IndexError:
+            debug(f"can't get {field_name} CPU time; set it to 0")
+            return 0
+
     procfs_path = get_procfs_path()
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
     nfields = len(ntp.scputimes._fields)
-    # /proc/stat order: user nice system idle [iowait irq softirq ...]
-    # ntuple order:     user system idle nice [iowait irq softirq ...]
     raw = [float(x) / CLOCK_TICKS for x in values[1 : nfields + 1]]
-    user, nice, system, idle = raw[0], raw[1], raw[2], raw[3]
-    return ntp.scputimes(user, system, idle, nice, *raw[4:])
+    user, nice, system, idle = raw[:4]
+    return ntp.scputimes(
+        user,
+        system,
+        idle,
+        nice,
+        lsget(raw, 4, "iowait"),  # Linux >= 2.5.41
+        lsget(raw, 5, "irq"),  # Linux >= 2.6.0
+        lsget(raw, 6, "softirq"),  # Linux >= 2.6.0
+        lsget(raw, 7, "steal"),  # Linux >= 2.6.11
+        lsget(raw, 8, "guest"),  # Linux >= 2.6.24
+        lsget(raw, 9, "guest_nice"),  # Linux >= 2.6.33
+    )
 
 
 def per_cpu_times():

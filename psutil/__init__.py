@@ -1764,9 +1764,9 @@ def cpu_times(percpu=False):
      - iowait (Linux)
      - irq (Linux, FreeBSD)
      - softirq (Linux)
-     - steal (Linux >= 2.6.11)
-     - guest (Linux >= 2.6.24)
-     - guest_nice (Linux >= 3.2.0)
+     - steal (Linux)
+     - guest (Linux)
+     - guest_nice (Linux)
 
     When *percpu* is True return a list of namedtuples for each CPU.
     First element of the list refers to first CPU, second element
@@ -1806,8 +1806,8 @@ def _cpu_tot_time(times):
         # https://github.com/giampaolo/psutil/pull/940
         # http://unix.stackexchange.com/questions/178045
         # https://github.com/torvalds/linux/blob/447976ef4/kernel/sched/cputime.c#L158
-        tot -= getattr(times, "guest", 0)  # Linux 2.6.24+
-        tot -= getattr(times, "guest_nice", 0)  # Linux 3.2.0+
+        tot -= times.guest
+        tot -= times.guest_nice
     return tot
 
 
