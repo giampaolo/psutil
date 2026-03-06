@@ -198,14 +198,14 @@ def is_storage_device(name):
 
 
 @memoize
-def _scputimes_ntuple(procfs_path):
+def _scputimes_ntuple():
     """Return a namedtuple of variable fields depending on the CPU times
     available on this Linux kernel version which may be:
     (user, system, idle, nice, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
     Used by cpu_times() function.
     """
-    with open_binary(f"{procfs_path}/stat") as f:
+    with open_binary("/proc/stat") as f:
         values = f.readline().split()[1:]
     fields = ['user', 'system', 'idle', 'nice', 'iowait', 'irq', 'softirq']
     vlen = len(values)
@@ -223,7 +223,7 @@ def _scputimes_ntuple(procfs_path):
 
 # Set it into _ntuples.py namespace.
 try:
-    ntp.scputimes = _scputimes_ntuple("/proc")
+    ntp.scputimes = _scputimes_ntuple()
 except Exception as err:  # noqa: BLE001
     # Don't want to crash at import time.
     debug(f"ignoring exception on import: {err!r}")
