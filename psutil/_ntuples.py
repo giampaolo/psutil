@@ -340,6 +340,31 @@ class pmmap_grouped(NamedTuple):
         locked: int
 
 
+# psutil.Process.memory_maps(grouped=False)
+class pmmap_ext(NamedTuple):
+    addr: str
+    perms: str
+    path: str
+    rss: int
+    if LINUX:
+        size: int
+        pss: int
+        shared_clean: int
+        shared_dirty: int
+        private_clean: int
+        private_dirty: int
+        referenced: int
+        anonymous: int
+        swap: int
+    elif BSD:
+        private: int
+        ref_count: int
+        shadow_count: int
+    elif SUNOS:
+        anonymous: int
+        locked: int
+
+
 # ===================================================================
 # --- Linux
 # ===================================================================
@@ -392,22 +417,6 @@ if LINUX:
         data: int
         uss: int
         pss: int
-        swap: int
-
-    # psutil.Process().memory_maps(grouped=False)
-    class pmmap_ext(NamedTuple):
-        addr: str
-        perms: str
-        path: str
-        rss: int
-        size: int
-        pss: int
-        shared_clean: int
-        shared_dirty: int
-        private_clean: int
-        private_dirty: int
-        referenced: int
-        anonymous: int
         swap: int
 
 
@@ -465,13 +474,6 @@ elif WINDOWS:
         peak_vms: int
         uss: int
 
-    # psutil.Process.memory_maps(grouped=False)
-    class pmmap_ext(NamedTuple):
-        addr: str
-        perms: str
-        path: str
-        rss: int
-
 
 # ===================================================================
 # --- macOS
@@ -520,45 +522,12 @@ elif BSD:
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
-    # psutil.Process.memory_maps(grouped=False)
-    class pmmap_ext(NamedTuple):
-        addr: str
-        perms: str
-        path: str
-        rss: int
-        private: int
-        ref_count: int
-        shadow_count: int
-
 
 # ===================================================================
 # --- SunOS
 # ===================================================================
 
-elif SUNOS:
-    # psutil.Process.memory_info()
-    class pmem(NamedTuple):
-        rss: int
-        vms: int
-
-    # psutil.Process.memory_full_info()
-    pfullmem = pmem
-
-    # psutil.Process.memory_maps(grouped=False)
-    class pmmap_ext(NamedTuple):
-        addr: str
-        perms: str
-        path: str
-        rss: int
-        anonymous: int
-        locked: int
-
-
-# ===================================================================
-# --- AIX
-# ===================================================================
-
-elif AIX:
+elif SUNOS or AIX:
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
         rss: int
