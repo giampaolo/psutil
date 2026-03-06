@@ -10,8 +10,12 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import platform
+import socket
+import types
+import typing
 
 import psutil
+import psutil._ntuples as ntuples
 from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
@@ -35,7 +39,9 @@ from . import create_sockets
 from . import enum
 from . import is_namedtuple
 from . import kernel_version
+from . import process_namespace
 from . import pytest
+from . import system_namespace
 
 # ===================================================================
 # --- APIs availability
@@ -329,3 +335,72 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(user.pid, (int, type(None)))
             if isinstance(user.pid, int):
                 assert user.pid > 0
+
+
+# ===================================================================
+# --- namedtuple field types
+# ===================================================================
+
+
+class TestNtupleFieldTypes(PsutilTestCase):
+    """Check that namedtuple field values match the type annotations
+    defined in psutil/_ntuples.py.
+    """
+
+    def check_ntuple(self, nt):
+        hints = typing.get_type_hints(
+            type(nt),
+            globalns=vars(ntuples),
+            localns={'socket': socket},
+        )
+        for field in nt._fields:
+            if field not in hints:
+                # field is not annotated
+                continue
+            value = getattr(nt, field)
+            hint = hints[field]
+            if (
+                hasattr(types, 'UnionType')
+                and isinstance(hint, types.UnionType)
+            ) or getattr(hint, '__origin__', None) is typing.Union:
+                types_ = typing.get_args(hint)
+            elif isinstance(hint, type):
+                types_ = (hint,)
+            else:
+                continue
+            assert isinstance(value, types_)
+
+    def check_result(self, ret):
+        if is_namedtuple(ret):
+            self.check_ntuple(ret)
+        elif isinstance(ret, list):
+            for item in ret:
+                if is_namedtuple(item):
+                    self.check_ntuple(item)
+
+    # ---
+
+    def test_system_ntuple_types(self):
+        for fun, name in system_namespace.iter(system_namespace.getters):
+            ret = fun()
+            with self.subTest(fun=fun):
+                if isinstance(ret, dict):
+                    for v in ret.values():
+                        if isinstance(v, list):
+                            for item in v:
+                                self.check_result(item)
+                        else:
+                            self.check_result(v)
+                else:
+                    self.check_result(ret)
+
+    def test_process_ntuple_types(self):
+        p = psutil.Process()
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters):
+            with self.subTest(fun=fun):
+                try:
+                    ret = fun()
+                except psutil.Error:
+                    continue
+                self.check_result(ret)

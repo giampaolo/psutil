@@ -1170,6 +1170,7 @@ class process_namespace:
     if HAS_PROC_MEMORY_FOOTPRINT:
         getters += [('memory_footprint', (), {})]
     if HAS_PROC_MEMORY_MAPS:
+        getters += [('memory_maps', (), {'grouped': True})]
         getters += [('memory_maps', (), {'grouped': False})]
 
     setters = []
@@ -1260,12 +1261,15 @@ class system_namespace:
         ('cpu_stats', (), {}),
         ('cpu_times', (), {'percpu': False}),
         ('cpu_times', (), {'percpu': True}),
+        ('disk_io_counters', (), {'perdisk': False}),
         ('disk_io_counters', (), {'perdisk': True}),
+        ('disk_partitions', (), {'all': False}),
         ('disk_partitions', (), {'all': True}),
         ('disk_usage', (os.getcwd(),), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
+        ('net_io_counters', (), {'pernic': False}),
         ('net_io_counters', (), {'pernic': True}),
         ('pid_exists', (os.getpid(),), {}),
         ('pids', (), {}),
@@ -1275,6 +1279,7 @@ class system_namespace:
     ]
 
     if HAS_CPU_FREQ:
+        getters += [('cpu_freq', (), {'percpu': False})]
         getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_GETLOADAVG:
         getters += [('getloadavg', (), {})]
