@@ -189,6 +189,33 @@ else:
             iowait: float
 
 
+# psutil.virtual_memory()
+class svmem(NamedTuple):
+    total: int
+    available: int
+    percent: float
+    used: int
+    free: int
+    if LINUX:
+        active: int
+        inactive: int
+        buffers: int
+        cached: int
+        shared: int
+        slab: int
+    elif BSD:
+        active: int
+        inactive: int
+        buffers: int
+        cached: int
+        shared: int
+        wired: int
+    elif MACOS:
+        active: int
+        inactive: int
+        wired: int
+
+
 # ===================================================================
 # --- Process class
 # ===================================================================
@@ -276,19 +303,6 @@ class pconn(NamedTuple):
 # ===================================================================
 
 if LINUX:
-    # psutil.virtual_memory()
-    class svmem(NamedTuple):
-        total: int
-        available: int
-        percent: float
-        used: int
-        free: int
-        active: int
-        inactive: int
-        buffers: int
-        cached: int
-        shared: int
-        slab: int
 
     # psutil.disk_io_counters()
     class sdiskio(NamedTuple):
@@ -408,14 +422,6 @@ if LINUX:
 # ===================================================================
 
 elif WINDOWS:
-    # psutil.virtual_memory()
-    class svmem(NamedTuple):
-        total: int
-        available: int
-        percent: float
-        used: int
-        free: int
-
     # psutil.Process.memory_info()
     class pmem(  # noqa: SLOT002
         namedtuple("pmem", ("rss", "vms", "peak_rss", "peak_vms"))
@@ -487,16 +493,6 @@ elif WINDOWS:
 # ===================================================================
 
 elif MACOS:
-    # psutil.virtual_memory()
-    class svmem(NamedTuple):
-        total: int
-        available: int
-        percent: float
-        used: int
-        free: int
-        active: int
-        inactive: int
-        wired: int
 
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
@@ -530,19 +526,6 @@ elif MACOS:
 # ===================================================================
 
 elif BSD:
-    # psutil.virtual_memory()
-    class svmem(NamedTuple):
-        total: int
-        available: int
-        percent: float
-        used: int
-        free: int
-        active: int
-        inactive: int
-        buffers: int
-        cached: int
-        shared: int
-        wired: int
 
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
@@ -614,14 +597,6 @@ elif SUNOS:
         children_user: float
         children_system: float
 
-    # psutil.virtual_memory()
-    class svmem(NamedTuple):
-        total: int
-        available: int
-        percent: float
-        used: int
-        free: int
-
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
         rss: int
@@ -659,11 +634,3 @@ elif AIX:
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
-
-    # psutil.virtual_memory()
-    class svmem(NamedTuple):
-        total: int
-        available: int
-        percent: float
-        used: int
-        free: int
