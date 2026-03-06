@@ -152,16 +152,16 @@ CPU
     *idle* are now always the first 3 fields on all platforms. Before the first
     3 fields on Linux, macOS and BSD were `user, nice, system`.
 
-    .. warning::
-      in version 8.0.0 the named tuple changed field order. Positional access
-      (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
-      attribute access instead (e.g. ``cpu_times().idle``).
+  .. warning::
+    in version 8.0.0 the named tuple changed field order. Positional access
+    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
+    attribute access instead (e.g. ``cpu_times().idle``).
 
-    .. warning::
-      CPU times are always supposed to increase over time, or at least remain
-      the same, and that's because time cannot go backwards.
-      Surprisingly sometimes this might not be the case (at least on Windows
-      and Linux), see `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
+  .. warning::
+    CPU times are always supposed to increase over time, or at least remain the
+    same, and that's because time cannot go backwards. Surprisingly sometimes
+    this might not be the case (at least on Windows and Linux), see `#1210
+    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
