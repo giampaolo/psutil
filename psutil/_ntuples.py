@@ -169,43 +169,24 @@ elif LINUX or MACOS or BSD:
 
 
 # psutil.cpu_times()
-if WINDOWS:
-
-    class scputimes(NamedTuple):
-        user: float
-        system: float
-        idle: float
-        interrupt: float
-        dpc: float
-
-elif MACOS:
-
-    class scputimes(NamedTuple):
-        user: float
-        nice: float
-        system: float
-        idle: float
-
-elif BSD:
-
-    class scputimes(NamedTuple):
-        user: float
-        nice: float
-        system: float
-        idle: float
-        irq: float
-
-elif SUNOS or AIX:
-
-    class scputimes(NamedTuple):
-        user: float
-        system: float
-        idle: float
-        iowait: float
-
-elif LINUX:
-    # This gets set from _pslinux.py
+if LINUX:
+    # This gets set dynamically from _pslinux.py
     scputimes = None
+else:
+
+    class scputimes(NamedTuple):
+        user: float
+        system: float
+        idle: float
+        if WINDOWS:
+            interrupt: float
+            dpc: float
+        if MACOS or BSD:
+            nice: float
+        if BSD:
+            irq: float
+        if SUNOS or AIX:
+            iowait: float
 
 
 # ===================================================================
