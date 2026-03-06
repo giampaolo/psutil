@@ -213,6 +213,12 @@ class pio(NamedTuple):
     write_count: int
     read_bytes: int
     write_bytes: int
+    if LINUX:
+        read_chars: int
+        write_chars: int
+    elif WINDOWS:
+        other_count: int
+        other_bytes: int
 
 
 # psutil.Process.ionice()
@@ -369,15 +375,6 @@ if LINUX:
         anonymous: int
         swap: int
 
-    # psutil.Process.io_counters()
-    class pio(NamedTuple):
-        read_count: int
-        write_count: int
-        read_bytes: int
-        write_bytes: int
-        read_chars: int
-        write_chars: int
-
     # psutil.Process.cpu_times()
     class pcputimes(NamedTuple):
         user: float
@@ -475,15 +472,6 @@ elif WINDOWS:
         perms: str
         path: str
         rss: int
-
-    # psutil.Process.io_counters()
-    class pio(NamedTuple):
-        read_count: int
-        write_count: int
-        read_bytes: int
-        write_bytes: int
-        other_count: int
-        other_bytes: int
 
 
 # ===================================================================
