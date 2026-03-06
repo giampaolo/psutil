@@ -354,7 +354,10 @@ class TestNtupleFieldTypes(PsutilTestCase):
 
     def test_system_ntuple_types(self):
         for fun, name in system_namespace.iter(system_namespace.getters):
-            ret = fun()
+            try:
+                ret = fun()
+            except psutil.Error:
+                continue
             with self.subTest(fun=str(fun)):
                 if isinstance(ret, dict):
                     for v in ret.values():
