@@ -49,15 +49,13 @@ class sdiskio(NamedTuple):
     write_count: int
     read_bytes: int
     write_bytes: int
+    read_time: int
+    write_time: int
     if LINUX:
-        read_time: int
-        write_time: int
         read_merged_count: int
         write_merged_count: int
         busy_time: int
     elif FREEBSD:
-        read_time: int
-        write_time: int
         busy_time: int
 
 
