@@ -367,7 +367,7 @@ class pmmap_ext(NamedTuple):
 
 
 # ===================================================================
-# --- Linux
+# --- Process memory_info(), memory_info_ex(), memory_full_info()
 # ===================================================================
 
 if LINUX:
@@ -411,11 +411,6 @@ if LINUX:
 
     # psutil.Process().memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
-
-
-# ===================================================================
-# --- Windows
-# ===================================================================
 
 elif WINDOWS:
     # psutil.Process.memory_info()
@@ -463,11 +458,6 @@ elif WINDOWS:
     # psutil.Process.memory_full_info()
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
 
-
-# ===================================================================
-# --- macOS
-# ===================================================================
-
 elif MACOS:
 
     # psutil.Process.memory_info()
@@ -492,11 +482,6 @@ elif MACOS:
         vms: int
         uss: int
 
-
-# ===================================================================
-# --- BSD
-# ===================================================================
-
 elif BSD:
 
     # psutil.Process.memory_info()
@@ -510,11 +495,6 @@ elif BSD:
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
-
-
-# ===================================================================
-# --- SunOS
-# ===================================================================
 
 elif SUNOS or AIX:
     # psutil.Process.memory_info()
