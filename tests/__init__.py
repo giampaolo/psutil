@@ -1706,7 +1706,7 @@ def check_ntuple_types(nt):
             types_ = (hint,)
         else:
             continue
-        assert isinstance(value, types_)
+        assert isinstance(value, types_), (value, types)
 
 
 if POSIX:
