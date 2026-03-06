@@ -1675,9 +1675,13 @@ def is_namedtuple(x):
 
 @functools.lru_cache(maxsize=None)
 def _get_hints(cls):
-    return typing.get_type_hints(
-        cls, globalns=vars(ntuples), localns={'socket': socket}
-    )
+    try:
+        return typing.get_type_hints(
+            cls, globalns=vars(ntuples), localns={'socket': socket}
+        )
+    except TypeError:
+        # Python < 3.10 can't evaluate "X | Y" union syntax.
+        return {}
 
 
 def check_ntuple_types(nt):
@@ -1686,6 +1690,8 @@ def check_ntuple_types(nt):
     """
     assert is_namedtuple(nt)
     hints = _get_hints(type(nt))
+    if not hints:
+        return
     for field in nt._fields:
         if field not in hints:
             # field is not annotated
