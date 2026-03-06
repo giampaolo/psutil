@@ -152,7 +152,7 @@ class sfan(NamedTuple):
     current: int
 
 
-# psutil.heap_info() (mallinfo2 Linux struct)
+# psutil.heap_info()
 if WINDOWS:
 
     class pheap(NamedTuple):
@@ -163,8 +163,8 @@ if WINDOWS:
 elif LINUX or MACOS or BSD:
 
     class pheap(NamedTuple):
-        heap_used: int  # uordblks, memory allocated via malloc()
-        mmap_used: int  # hblkhd, memory allocated via mmap() (large blocks)
+        heap_used: int
+        mmap_used: int
 
 
 # ===================================================================
