@@ -392,30 +392,22 @@ if LINUX:
             return 0
 
     # psutil.Process().memory_info_ex()
-    class pmem_ex(NamedTuple):
-        rss: int
-        vms: int
-        shared: int
-        text: int
-        data: int
-        peak_rss: int
-        peak_vms: int
-        rss_anon: int
-        rss_file: int
-        rss_shmem: int
-        swap: int
-        hugetlb: int
+    pmem_ex = namedtuple(
+        "pmem_ex",
+        pmem._fields
+        + (
+            "peak_rss",
+            "peak_vms",
+            "rss_anon",
+            "rss_file",
+            "rss_shmem",
+            "swap",
+            "hugetlb",
+        ),
+    )
 
     # psutil.Process().memory_full_info()
-    class pfullmem(NamedTuple):
-        rss: int
-        vms: int
-        shared: int
-        text: int
-        data: int
-        uss: int
-        pss: int
-        swap: int
+    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
 
 
 # ===================================================================
