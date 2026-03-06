@@ -1525,6 +1525,45 @@ def create_sockets():
                 safe_rmpath(fname)
 
 
+@functools.lru_cache(maxsize=None)
+def _get_hints(cls):
+    try:
+        return typing.get_type_hints(
+            cls, globalns=vars(ntuples), localns={'socket': socket}
+        )
+    except TypeError:
+        # Python < 3.10 can't evaluate "X | Y" union syntax.
+        return {}
+
+
+def check_ntuple_types(nt):
+    """Uses type hints from _ntuples.py to verify field types. `nt` is
+    a named tuple returned by one of psutil APIs.
+    """
+    assert is_namedtuple(nt)
+    hints = _get_hints(type(nt))
+    if not hints:
+        return
+    for field in nt._fields:
+        if field not in hints:
+            # field is not annotated
+            continue
+        value = getattr(nt, field)
+        hint = hints[field]
+        if (
+            hasattr(types, 'UnionType') and isinstance(hint, types.UnionType)
+        ) or getattr(hint, '__origin__', None) is typing.Union:
+            types_ = typing.get_args(hint)
+        elif isinstance(hint, type):
+            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
+            # return a platform-specific IntEnum subclass rather than the
+            # annotated one, so we broaden the check to int.
+            types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
+        else:
+            continue
+        assert isinstance(value, types_), (value, types_)
+
+
 def check_net_address(addr, family):
     """Check a net address validity. Supported families are IPv4,
     IPv6 and MAC addresses.
@@ -1671,45 +1710,6 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(isinstance(n, str) for n in f)
-
-
-@functools.lru_cache(maxsize=None)
-def _get_hints(cls):
-    try:
-        return typing.get_type_hints(
-            cls, globalns=vars(ntuples), localns={'socket': socket}
-        )
-    except TypeError:
-        # Python < 3.10 can't evaluate "X | Y" union syntax.
-        return {}
-
-
-def check_ntuple_types(nt):
-    """Uses type hints from _ntuples.py to verify field types. `nt` is
-    a named tuple returned by one of psutil APIs.
-    """
-    assert is_namedtuple(nt)
-    hints = _get_hints(type(nt))
-    if not hints:
-        return
-    for field in nt._fields:
-        if field not in hints:
-            # field is not annotated
-            continue
-        value = getattr(nt, field)
-        hint = hints[field]
-        if (
-            hasattr(types, 'UnionType') and isinstance(hint, types.UnionType)
-        ) or getattr(hint, '__origin__', None) is typing.Union:
-            types_ = typing.get_args(hint)
-        elif isinstance(hint, type):
-            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
-            # return a platform-specific IntEnum subclass rather than the
-            # annotated one, so we broaden the check to int.
-            types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
-        else:
-            continue
-        assert isinstance(value, types_), (value, types_)
 
 
 if POSIX:
