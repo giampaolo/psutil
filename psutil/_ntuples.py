@@ -235,6 +235,8 @@ class pcputimes(NamedTuple):
     system: float
     children_user: float
     children_system: float
+    if LINUX:
+        iowait: float
 
 
 # psutil.Process.open_files()
@@ -404,14 +406,6 @@ if LINUX:
         anonymous: int
         swap: int
 
-    # psutil.Process.cpu_times()
-    class pcputimes(NamedTuple):
-        user: float
-        system: float
-        children_user: float
-        children_system: float
-        iowait: float
-
 
 # ===================================================================
 # --- Windows
@@ -535,13 +529,6 @@ elif BSD:
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
-    # psutil.Process.cpu_times()
-    class pcputimes(NamedTuple):
-        user: float
-        system: float
-        children_user: float
-        children_system: float
-
     # psutil.Process.memory_maps(grouped=True)
     class pmmap_grouped(NamedTuple):
         path: str
@@ -566,13 +553,6 @@ elif BSD:
 # ===================================================================
 
 elif SUNOS:
-    # psutil.cpu_times(percpu=True)
-    class pcputimes(NamedTuple):
-        user: float
-        system: float
-        children_user: float
-        children_system: float
-
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
         rss: int
