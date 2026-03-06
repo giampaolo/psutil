@@ -447,25 +447,21 @@ elif WINDOWS:
             raise AttributeError(msg)
 
     # psutil.Process.memory_info_ex()
-    class pmem_ex(NamedTuple):
-        rss: int
-        vms: int
-        peak_rss: int
-        peak_vms: int
-        virtual: int
-        peak_virtual: int
-        paged_pool: int
-        nonpaged_pool: int
-        peak_paged_pool: int
-        peak_nonpaged_pool: int
+    pmem_ex = namedtuple(
+        "pmem_ex",
+        pmem._fields
+        + (
+            "virtual",
+            "peak_virtual",
+            "paged_pool",
+            "nonpaged_pool",
+            "peak_paged_pool",
+            "peak_nonpaged_pool",
+        ),
+    )
 
     # psutil.Process.memory_full_info()
-    class pfullmem(NamedTuple):
-        rss: int
-        vms: int
-        peak_rss: int
-        peak_vms: int
-        uss: int
+    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
 
 
 # ===================================================================
