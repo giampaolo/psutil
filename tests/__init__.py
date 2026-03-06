@@ -1063,7 +1063,7 @@ class PsutilTestCase(unittest.TestCase):
 
     def check_proc_memory(self, nt):
         # Check the ntuple returned by Process.memory_*() methods.
-        assert is_namedtuple(nt)
+        check_ntuple_types(nt)
         for value in nt:
             assert isinstance(value, int)
             assert value >= 0
@@ -1613,6 +1613,7 @@ def check_connection_ntuple(conn):
         else:
             assert conn.status == psutil.CONN_NONE, conn.status
 
+    check_ntuple_types(conn)
     check_ntuple(conn)
     check_family(conn)
     check_type(conn)
