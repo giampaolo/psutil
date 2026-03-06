@@ -17,6 +17,8 @@ from ._common import BSD
 from ._common import FREEBSD
 from ._common import LINUX
 from ._common import MACOS
+from ._common import NETBSD
+from ._common import OPENBSD
 from ._common import SUNOS
 from ._common import WINDOWS
 
@@ -49,13 +51,14 @@ class sdiskio(NamedTuple):
     write_count: int
     read_bytes: int
     write_bytes: int
-    read_time: int
-    write_time: int
+    if not (NETBSD or OPENBSD):
+        read_time: int
+        write_time: int
     if LINUX:
         read_merged_count: int
         write_merged_count: int
         busy_time: int
-    elif FREEBSD:
+    if FREEBSD:
         busy_time: int
 
 
