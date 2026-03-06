@@ -238,6 +238,10 @@ class pcputimes(NamedTuple):
 class popenfile(NamedTuple):
     path: str
     fd: int
+    if LINUX:
+        position: int
+        mode: str
+        flags: int
 
 
 # psutil.Process.threads()
@@ -318,14 +322,6 @@ class pconn(NamedTuple):
 # ===================================================================
 
 if LINUX:
-
-    # psutil.Process().open_files()
-    class popenfile(NamedTuple):
-        path: str
-        fd: int
-        position: int
-        mode: str
-        flags: int
 
     # psutil.Process().memory_info()
     class pmem(NamedTuple):
