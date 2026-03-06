@@ -148,10 +148,10 @@ CPU
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
 
-  .. versionchanged:: 8.0.0 field order standardized: *user*, *system*,
-    *idle* are now always the first 3 fields on all platforms. Before the first
-    3 fields on Linux, macOS and BSD were `user, nice, system`.
-
+  .. versionchanged:: 8.0.0
+     ``cpu_times()`` field order was standardized: ``user``, ``system``,
+     ``idle`` are now always the first three fields. Previously on Linux,
+     macOS, and BSD the first three were ``user``, ``nice``, ``system``.
   .. warning::
     in version 8.0.0 the named tuple changed field order. Positional access
     (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use

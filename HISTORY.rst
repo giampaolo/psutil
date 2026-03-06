@@ -44,9 +44,9 @@
   - `Process.memory_full_info()`_ is **deprecated**. Use the new
     `Process.memory_footprint()`_ instead.
 
-- 2747_: the field order of the returned named tuple was normalized on all
-  platforms, and the first 3 fields are now always  ``user, system, idle``. See
-  compatibility notes below.
+- 2747_: the field order of the named tuple returned by `cpu_times()`_ has been
+  normalized on all platforms, and the first 3 fields are now always  ``user,
+  system, idle``. See compatibility notes below.
 
 **Bug fixes**
 
@@ -70,9 +70,8 @@ Changes that break backwards compatibility:
   - On Linux, macOS and BSD the field order of the returned named tuple
     changed: ``user, system, idle`` are now always the first 3 fields on all
     platforms, with platform-specific fields (e.g. ``nice``) following.
-    Positional access (e.g. ``psutil.cpu_times()[1]``) may return the wrong
-    field. Always use attribute access instead (e.g.
-    ``psutil.cpu_times().system``).
+    Positional access (e.g. ``cpu_times()[3]``) may silently return the wrong
+    field. Always use attribute access instead (e.g. ``cpu_times().idle``).
 
 - `Process.memory_info()`_:
 
