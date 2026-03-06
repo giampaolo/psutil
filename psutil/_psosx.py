@@ -92,7 +92,7 @@ heap_trim = cext.heap_trim
 def cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = cext.cpu_times()
-    return ntp.scputimes(user, nice, system, idle)
+    return ntp.scputimes(user, system, idle, nice)
 
 
 def per_cpu_times():
@@ -100,7 +100,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle = cpu_t
-        item = ntp.scputimes(user, nice, system, idle)
+        item = ntp.scputimes(user, system, idle, nice)
         ret.append(item)
     return ret
 

@@ -131,7 +131,7 @@ if hasattr(cext, "heap_info"):
 def cpu_times():
     """Return system per-CPU times as a namedtuple."""
     user, nice, system, idle, irq = cext.cpu_times()
-    return ntp.scputimes(user, nice, system, idle, irq)
+    return ntp.scputimes(user, system, idle, nice, irq)
 
 
 def per_cpu_times():
@@ -139,7 +139,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle, irq = cpu_t
-        item = ntp.scputimes(user, nice, system, idle, irq)
+        item = ntp.scputimes(user, system, idle, nice, irq)
         ret.append(item)
     return ret
 

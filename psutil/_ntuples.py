@@ -351,7 +351,7 @@ elif WINDOWS:
 elif MACOS:
 
     # psutil.cpu_times()
-    scputimes = nt("scputimes", ("user", "nice", "system", "idle"))
+    scputimes = nt("scputimes", ("user", "system", "idle", "nice"))
 
     # psutil.virtual_memory()
     svmem = nt(
@@ -416,7 +416,7 @@ elif BSD:
     )
 
     # psutil.cpu_times()
-    scputimes = nt("scputimes", ("user", "nice", "system", "idle", "irq"))
+    scputimes = nt("scputimes", ("user", "system", "idle", "nice", "irq"))
 
     # psutil.Process.memory_info()
     pmem = nt("pmem", ("rss", "vms", "text", "data", "stack", "peak_rss"))
