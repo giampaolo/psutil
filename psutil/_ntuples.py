@@ -367,7 +367,7 @@ class pmmap_ext(NamedTuple):
 
 
 # ===================================================================
-# --- Process memory_info(), memory_info_ex(), memory_full_info()
+# --- Process memory_info() / memory_info_ex() / memory_full_info()
 # ===================================================================
 
 if LINUX:
@@ -477,10 +477,7 @@ elif MACOS:
         phys_footprint: int
 
     # psutil.Process.memory_full_info()
-    class pfullmem(NamedTuple):
-        rss: int
-        vms: int
-        uss: int
+    pfullmem = namedtuple("pfullmem", pmem._fields + ("uss",))
 
 elif BSD:
 
