@@ -285,8 +285,8 @@ elif WINDOWS:
             return inst
 
         def __getattr__(self, name):
-            dep = self.__dict__.get('_deprecated', {})
-            if name in dep:
+            depr = self.__dict__["_deprecated"]
+            if name in depr:
                 msg = f"pmem.{name} is deprecated"
                 if name in {
                     "paged_pool",
@@ -295,13 +295,16 @@ elif WINDOWS:
                     "peak_nonpaged_pool",
                 }:
                     msg += "; use memory_info_ex() instead"
+                elif name == "num_page_faults":
+                    msg += "; use page_faults() instead"
                 warnings.warn(msg, DeprecationWarning, stacklevel=2)
-                return dep[name]
+                return depr[name]
+
             msg = f"{self.__class__.__name__} object has no attribute {name!r}"
             raise AttributeError(msg)
 
     # psutil.Process.memory_info_ex()
-    _pmem_ex = nt(
+    pmem_ex = nt(
         "pmem_ex",
         pmem._fields
         + (
@@ -313,23 +316,6 @@ elif WINDOWS:
             "peak_nonpaged_pool",
         ),
     )
-
-    class pmem_ex(pmem, _pmem_ex):
-        __slots__ = ()
-        _fields = _pmem_ex._fields
-        __repr__ = _pmem_ex.__repr__
-
-        def __new__(cls, *args, **kwargs):
-            return _pmem_ex.__new__(cls, *args, **kwargs)
-
-        @classmethod
-        def _make(cls, iterable):
-            result = tuple.__new__(cls, iterable)
-            n = len(cls._fields)
-            if len(result) != n:
-                msg = f"Expected {n} arguments, got {len(result)}"
-                raise TypeError(msg)
-            return result
 
     # psutil.Process.memory_footprint()
     pfootprint = nt("pfootprint", ("uss",))

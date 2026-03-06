@@ -509,7 +509,6 @@ class TestProcess(PsutilTestCase):
             assert mem._fields[2:] == (
                 "peak_rss",
                 "peak_vms",
-                "num_page_faults",
                 "virtual",
                 "peak_virtual",
                 "paged_pool",
