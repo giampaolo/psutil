@@ -618,26 +618,6 @@ class TestSystemSwapMemory(PsutilTestCase):
 
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemCPUTimes(PsutilTestCase):
-    def test_fields(self):
-        fields = psutil.cpu_times()._fields
-        kernel_ver = re.findall(r'\d+\.\d+\.\d+', os.uname()[2])[0]
-        kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
-        if kernel_ver_info >= (2, 6, 11):
-            assert 'steal' in fields
-        else:
-            assert 'steal' not in fields
-        if kernel_ver_info >= (2, 6, 24):
-            assert 'guest' in fields
-        else:
-            assert 'guest' not in fields
-        if kernel_ver_info >= (3, 2, 0):
-            assert 'guest_nice' in fields
-        else:
-            assert 'guest_nice' not in fields
-
-
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestSystemCPUCountLogical(PsutilTestCase):
     @pytest.mark.skipif(
         not os.path.exists("/sys/devices/system/cpu/online"),

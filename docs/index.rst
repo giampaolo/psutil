@@ -123,11 +123,11 @@ CPU
     accounted in **idle** time counter.
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
-  - **steal** *(Linux 2.6.11+)*: time spent by other operating systems running
+  - **steal** *(Linux)*: time spent by other operating systems running
     in a virtualized environment
-  - **guest** *(Linux 2.6.24+)*: time spent running a virtual CPU for guest
+  - **guest** *(Linux)*: time spent running a virtual CPU for guest
     operating systems under the control of the Linux kernel
-  - **guest_nice** *(Linux 3.2.0+)*: time spent running a niced guest
+  - **guest_nice** *(Linux)*: time spent running a niced guest
     (virtual CPU for guest operating systems under the control of the Linux
     kernel)
   - **interrupt** *(Windows)*: time spent for servicing hardware interrupts (
@@ -346,9 +346,9 @@ Memory
 
   - **total**: total physical memory (exclusive swap).
   - **available**: memory that can be given instantly to processes without the
-    system going into swap. It is calculated by summing different memory values
-    depending on the platform (on Linux it matches the ``MemAvailable`` kernel
-    field). This is the recommended field for monitoring actual memory usage
+    system going into swap. On Linux it uses the ``MemAvailable`` field from
+    ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back to an
+    estimate. This is the recommended field for monitoring actual memory usage
     in a cross-platform fashion.
   - **percent**: the percentage usage calculated as
     ``(total - available) / total * 100``.
@@ -1867,13 +1867,15 @@ Process class
       the process has reached since it started.
     - **peak_vms** *(Linux)*: the highest VMS value the process has reached
       since it started.
-    - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap, stack,
-      private mappings) not backed by any file, such as heap allocations,
-      stack, and private ``mmap(MAP_ANONYMOUS)`` regions.
+    - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap,
+      stack, private mappings) not backed by any file, such as heap
+      allocations, stack, and private ``mmap(MAP_ANONYMOUS)`` regions. Set to 0
+      on Linux < 4.5.
     - **rss_file** *(Linux, macOS)*: resident file-backed memory; pages mapped
-      from files (shared libraries, mmap'd files).
+      from files (shared libraries, mmap'd files). Set to 0 on Linux < 4.5.
     - **rss_shmem** *(Linux)*: resident shared memory pages (``tmpfs``,
-      ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals **rss**.
+      ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals **rss**. Set to
+      0 on Linux < 4.5.
     - **wired** *(macOS)*: memory pinned in RAM by the kernel on behalf of this
       process; cannot be compressed or paged out.
     - **swap** *(Linux)*: process memory currently in swap. Equivalent to
@@ -1882,7 +1884,8 @@ Process class
     - **compressed** *(macOS)*: pages held in the in-RAM memory compressor; not
       counted in **rss**. A large value signals memory pressure but has not yet
       triggered swapping.
-    - **hugetlb** *(Linux)*: resident memory backed by huge pages.
+    - **hugetlb** *(Linux)*: resident memory backed by huge pages. Set to 0 on
+      Linux < 4.4.
     - **phys_footprint** *(macOS)*: total physical memory impact including
       compressed pages. What Xcode and ``footprint(1)`` report; prefer this
       over **rss** macOS memory monitoring.
