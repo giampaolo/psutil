@@ -298,6 +298,16 @@ class ppagefaults(NamedTuple):
     major: int
 
 
+# psutil.Process().memory_footprint()
+if LINUX or MACOS or WINDOWS:
+
+    class pfootprint(NamedTuple):
+        uss: int
+        if LINUX:
+            pss: int
+            swap: int
+
+
 # psutil.Process.net_connections()
 class pconn(NamedTuple):
     fd: int
@@ -358,12 +368,6 @@ if LINUX:
         rss_shmem: int
         swap: int
         hugetlb: int
-
-    # psutil.Process().memory_footprint()
-    class pfootprint(NamedTuple):
-        uss: int
-        pss: int
-        swap: int
 
     # psutil.Process().memory_full_info()
     class pfullmem(NamedTuple):
@@ -453,10 +457,6 @@ elif WINDOWS:
         peak_paged_pool: int
         peak_nonpaged_pool: int
 
-    # psutil.Process.memory_footprint()
-    class pfootprint(NamedTuple):
-        uss: int
-
     # psutil.Process.memory_full_info()
     class pfullmem(NamedTuple):
         rss: int
@@ -499,10 +499,6 @@ elif MACOS:
         wired: int
         compressed: int
         phys_footprint: int
-
-    # psutil.Process.memory_footprint()
-    class pfootprint(NamedTuple):
-        uss: int
 
     # psutil.Process.memory_full_info()
     class pfullmem(NamedTuple):
