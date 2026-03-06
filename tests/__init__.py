@@ -29,6 +29,8 @@ import textwrap
 import threading
 import time
 import traceback
+import types
+import typing
 import unittest
 import warnings
 from socket import AF_INET
@@ -80,8 +82,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace',
-    'is_win_secure_system_proc',
+    'system_namespace', 'check_ntuple', 'is_win_secure_system_proc',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1668,6 +1669,35 @@ def is_namedtuple(x):
     if not isinstance(f, tuple):
         return False
     return all(isinstance(n, str) for n in f)
+
+
+def check_ntuple(nt):
+    """Uses type hints from _ntuples.py to verify field types. `nt` is
+    a named tuple returned by one of psutil APIs.
+    """
+    import psutil._ntuples as ntuples
+
+    assert is_namedtuple(nt)
+    hints = typing.get_type_hints(
+        type(nt),
+        globalns=vars(ntuples),
+        localns={'socket': socket},
+    )
+    for field in nt._fields:
+        if field not in hints:
+            # field is not annotated
+            continue
+        value = getattr(nt, field)
+        hint = hints[field]
+        if (
+            hasattr(types, 'UnionType') and isinstance(hint, types.UnionType)
+        ) or getattr(hint, '__origin__', None) is typing.Union:
+            types_ = typing.get_args(hint)
+        elif isinstance(hint, type):
+            types_ = (hint,)
+        else:
+            continue
+        assert isinstance(value, types_)
 
 
 if POSIX:
