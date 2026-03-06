@@ -1703,7 +1703,10 @@ def check_ntuple_types(nt):
         ) or getattr(hint, '__origin__', None) is typing.Union:
             types_ = typing.get_args(hint)
         elif isinstance(hint, type):
-            types_ = (hint,)
+            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
+            # return a platform-specific IntEnum subclass rather than the
+            # annotated one, so we broaden the check to int.
+            types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
         else:
             continue
         assert isinstance(value, types_), (value, types_)
