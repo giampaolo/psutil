@@ -107,7 +107,8 @@ CPU
 
   Return system CPU times as a named tuple.
   Every attribute represents the seconds the CPU has spent in the given mode.
-  The attributes availability varies depending on the platform:
+  The attributes availability varies depending on the platform.
+  Cross-platform fields:
 
   - **user**: time spent by normal processes executing in user mode; on Linux
     this also includes **guest** time
@@ -143,9 +144,13 @@ CPU
 
     >>> import psutil
     >>> psutil.cpu_times()
-    scputimes(user=17411.7, nice=77.99, system=3797.02, idle=51266.57, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
+    scputimes(user=17411.7, system=3797.02, idle=51266.57, nice=77.99, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
+
+  .. versionchanged:: 8.0.0 field order standardized: *user*, *system*,
+    *idle* are now always the first 3 fields on all platforms. Before the first
+    3 fields on Linux, macOS and BSD were `user, nice, system`.
 
     .. warning::
       CPU times are always supposed to increase over time, or at least remain

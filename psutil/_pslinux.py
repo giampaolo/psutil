@@ -201,13 +201,13 @@ def is_storage_device(name):
 def _scputimes_ntuple(procfs_path):
     """Return a namedtuple of variable fields depending on the CPU times
     available on this Linux kernel version which may be:
-    (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
+    (user, system, idle, nice, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
     Used by cpu_times() function.
     """
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()[1:]
-    fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
+    fields = ['user', 'system', 'idle', 'nice', 'iowait', 'irq', 'softirq']
     vlen = len(values)
     if vlen >= 8:
         # Linux >= 2.6.11
@@ -497,16 +497,19 @@ if hasattr(cext, "heap_info"):
 def cpu_times():
     """Return a named tuple representing the following system-wide
     CPU times:
-    (user, nice, system, idle, iowait, irq, softirq [steal, [guest,
+    (user, system, idle, nice, iowait, irq, softirq [steal, [guest,
      [guest_nice]]])
     Last 3 fields may not be available on all Linux kernel versions.
     """
     procfs_path = get_procfs_path()
     with open_binary(f"{procfs_path}/stat") as f:
         values = f.readline().split()
-    fields = values[1 : len(ntp.scputimes._fields) + 1]
-    fields = [float(x) / CLOCK_TICKS for x in fields]
-    return ntp.scputimes(*fields)
+    nfields = len(ntp.scputimes._fields)
+    # /proc/stat order: user nice system idle [iowait irq softirq ...]
+    # ntuple order:     user system idle nice [iowait irq softirq ...]
+    raw = [float(x) / CLOCK_TICKS for x in values[1 : nfields + 1]]
+    user, nice, system, idle = raw[0], raw[1], raw[2], raw[3]
+    return ntp.scputimes(user, system, idle, nice, *raw[4:])
 
 
 def per_cpu_times():
@@ -515,15 +518,16 @@ def per_cpu_times():
     """
     procfs_path = get_procfs_path()
     cpus = []
+    nfields = len(ntp.scputimes._fields)
     with open_binary(f"{procfs_path}/stat") as f:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
         for line in f:
             if line.startswith(b'cpu'):
                 values = line.split()
-                fields = values[1 : len(ntp.scputimes._fields) + 1]
-                fields = [float(x) / CLOCK_TICKS for x in fields]
-                entry = ntp.scputimes(*fields)
+                raw = [float(x) / CLOCK_TICKS for x in values[1 : nfields + 1]]
+                user, nice, system, idle = raw[0], raw[1], raw[2], raw[3]
+                entry = ntp.scputimes(user, system, idle, nice, *raw[4:])
                 cpus.append(entry)
         return cpus
 
