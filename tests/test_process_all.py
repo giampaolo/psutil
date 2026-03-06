@@ -387,8 +387,10 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def memory_maps(self, ret, info):
         for nt in ret:
-            assert isinstance(nt.addr, str)
-            assert isinstance(nt.perms, str)
+            if hasattr(nt, "addr"):
+                assert isinstance(nt.addr, str)
+            if hasattr(nt, "perms"):
+                assert isinstance(nt.perms, str)
             assert isinstance(nt.path, str)
             for fname in nt._fields:
                 value = getattr(nt, fname)

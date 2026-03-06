@@ -43,6 +43,7 @@ except ImportError:
     pytest = None
 
 import psutil
+import psutil._ntuples as ntuples
 from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
@@ -82,7 +83,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'check_ntuple', 'is_win_secure_system_proc',
+    'system_namespace', 'check_ntuple_types', 'is_win_secure_system_proc',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1671,12 +1672,10 @@ def is_namedtuple(x):
     return all(isinstance(n, str) for n in f)
 
 
-def check_ntuple(nt):
+def check_ntuple_types(nt):
     """Uses type hints from _ntuples.py to verify field types. `nt` is
     a named tuple returned by one of psutil APIs.
     """
-    import psutil._ntuples as ntuples
-
     assert is_namedtuple(nt)
     hints = typing.get_type_hints(
         type(nt),
