@@ -126,6 +126,29 @@ class snicstats(NamedTuple):
     flags: str
 
 
+# psutil.cpu_times()
+class scputimes(NamedTuple):
+    user: float
+    system: float
+    idle: float
+    if LINUX or MACOS or BSD:
+        nice: float
+    if LINUX:
+        iowait: float
+        irq: float
+        softirq: float
+        steal: float
+        guest: float
+        guest_nice: float
+    if BSD:
+        irq: float
+    if SUNOS or AIX:
+        iowait: float
+    if WINDOWS:
+        interrupt: float
+        dpc: float
+
+
 # psutil.cpu_stats()
 class scpustats(NamedTuple):
     ctx_switches: int
@@ -160,29 +183,6 @@ class sbattery(NamedTuple):
 class sfan(NamedTuple):
     label: str
     current: int
-
-
-# psutil.cpu_times()
-class scputimes(NamedTuple):
-    user: float
-    system: float
-    idle: float
-    if LINUX or MACOS or BSD:
-        nice: float
-    if LINUX:
-        iowait: float
-        irq: float
-        softirq: float
-        steal: float
-        guest: float
-        guest_nice: float
-    if BSD:
-        irq: float
-    if SUNOS or AIX:
-        iowait: float
-    if WINDOWS:
-        interrupt: float
-        dpc: float
 
 
 if LINUX or WINDOWS or MACOS or BSD:
@@ -415,6 +415,7 @@ if LINUX:
     pfullmem = namedtuple("pfullmem", pmem._fields + ("uss", "pss", "swap"))
 
 elif WINDOWS:
+
     # psutil.Process.memory_info()
     class pmem(  # noqa: SLOT002
         namedtuple("pmem", ("rss", "vms", "peak_rss", "peak_vms"))
@@ -496,6 +497,7 @@ elif BSD:
     pfullmem = pmem
 
 elif SUNOS or AIX:
+
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
         rss: int
