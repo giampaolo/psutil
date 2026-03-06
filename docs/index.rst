@@ -884,6 +884,15 @@ Sensors
   All temperatures are expressed in celsius unless *fahrenheit* is set to
   ``True``.
   If sensors are not supported by the OS an empty dict is returned.
+  Each named tuple includes 4 fields:
+
+  - **label**: a string label for the sensor, if available, else ``""``.
+  - **current**: current temperature, or ``None`` if not available.
+  - **high**: temperature at which the system will throttle, or ``None``
+    if not available.
+  - **critical**: temperature at which the system will shut down, or
+    ``None`` if not available.
+
   Example::
 
     >>> import psutil
@@ -991,7 +1000,7 @@ Other system info
   - **name**: the name of the user.
   - **terminal**: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
-  - **host**: the host name associated with the entry, if any.
+  - **host**: the host name associated with the entry, if any, else ``None``.
   - **started**: the creation time as a floating point number expressed in
     seconds since the epoch.
   - **pid**: the PID of the login process (like sshd, tmux, gdm-session-worker,
