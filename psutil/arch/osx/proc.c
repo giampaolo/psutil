@@ -141,9 +141,9 @@ psutil_proc_oneshot_pidtaskinfo(PyObject *self, PyObject *args) {
     if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) != 0)
         goto error;
 
-    // matches getrusage().ru_majflt
+    // Match getrusage() ru_majflt and ru_minflt. getrusage() source:
+    // https://github.com/apple/darwin-xnu/blob/2ff845c2e033/bsd/kern/kern_resource.c#L1263-L1265
     maj_faults = (unsigned long)pti.pti_pageins;
-    // matches getrusage().ru_minflt
     min_faults = (unsigned long)pti.pti_faults - maj_faults;
 
     // clang-format off

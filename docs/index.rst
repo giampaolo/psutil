@@ -1755,8 +1755,6 @@ Process class
     +---------+---------+----------+---------+-----+-----------------+
     |         |         |          |         |     | peak_vms        |
     +---------+---------+----------+---------+-----+-----------------+
-    |         |         |          |         |     | num_page_faults |
-    +---------+---------+----------+---------+-----+-----------------+
 
     - **rss**: aka "Resident Set Size". The portion of physical memory
       currently held by this process (code, data, stack, and mapped files that
@@ -1796,10 +1794,6 @@ Process class
     - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
       virtual memory. Maps to ``PeakPagefileUsage``.
 
-    - **num_page_faults** *(Windows)*: total page faults (soft + hard) since
-      the process started. A hard fault requires a disk read and indicates
-      memory pressure.
-
     For the full definitions of Windows fields see
     `PROCESS_MEMORY_COUNTERS_EX`_.
 
@@ -1824,10 +1818,11 @@ Process class
 
     .. versionchanged::
       8.0.0 Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
-      *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*.
-      At the same time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
-      *peak_nonpaged_pool* were moved to :meth:`memory_info_ex`. All these old
-      names still work but raise `DeprecationWarning`.
+      *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*,
+      *num_page_faults* → :meth:`page_faults` method. At the same time
+      *paged_pool*, *nonpaged_pool*, *peak_paged_pool*, *peak_nonpaged_pool*
+      were moved to :meth:`memory_info_ex`. All these old names still work but
+      raise `DeprecationWarning`.
 
     .. versionchanged::
       8.0.0 BSD: added *peak_rss*.

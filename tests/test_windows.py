@@ -533,6 +533,12 @@ class TestProcess(WindowsTestCase):
         ):
             assert ps.peak_nonpaged_pool == win['QuotaPeakNonPagedPoolUsage']
 
+        # field moved to pages_fault()
+        with pytest.warns(
+            DeprecationWarning, match="num_page_faults is deprecated"
+        ):
+            assert ps.num_page_faults == win['PageFaultCount']
+
         # test ntuple's __getattr__ override
         with pytest.raises(AttributeError, match="foo"):
             ps.foo  # noqa: B018

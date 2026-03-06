@@ -277,20 +277,10 @@ elif WINDOWS:
 
     # psutil.Process.memory_info()
     class pmem(  # noqa: SLOT002
-        nt("pmem", ("rss", "vms", "peak_rss", "peak_vms", "num_page_faults"))
+        nt("pmem", ("rss", "vms", "peak_rss", "peak_vms"))
     ):
-        def __new__(
-            cls,
-            rss,
-            vms,
-            peak_rss,
-            peak_vms,
-            num_page_faults,
-            _deprecated=None,
-        ):
-            inst = super().__new__(
-                cls, rss, vms, peak_rss, peak_vms, num_page_faults
-            )
+        def __new__(cls, rss, vms, peak_rss, peak_vms, _deprecated=None):
+            inst = super().__new__(cls, rss, vms, peak_rss, peak_vms)
             inst.__dict__['_deprecated'] = _deprecated or {}
             return inst
 

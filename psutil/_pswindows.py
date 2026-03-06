@@ -795,7 +795,6 @@ class Process:
             vms=d["PrivateUsage"],
             peak_rss=d["PeakWorkingSetSize"],
             peak_vms=d["PeakPagefileUsage"],
-            num_page_faults=d["PageFaultCount"],
             _deprecated={
                 # old aliases
                 "wset": d["WorkingSetSize"],  # 'rss'
@@ -808,6 +807,8 @@ class Process:
                 "nonpaged_pool": d["QuotaNonPagedPoolUsage"],
                 "peak_paged_pool": d["QuotaPeakPagedPoolUsage"],
                 "peak_nonpaged_pool": d["QuotaPeakNonPagedPoolUsage"],
+                # moved to page_faults()
+                "num_page_faults": d["PageFaultCount"],
             },
         )
 
@@ -832,8 +833,8 @@ class Process:
 
     @wrap_exceptions
     def page_faults(self):
-        ret = cext.proc_page_faults(self.pid)
-        return ntp.ppagefaults(*ret)
+        t = cext.proc_page_faults(self.pid)
+        return ntp.ppagefaults(*t)
 
     def memory_maps(self):
         try:
