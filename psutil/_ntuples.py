@@ -167,6 +167,46 @@ elif LINUX or MACOS or BSD:
         mmap_used: int
 
 
+# psutil.cpu_times()
+if WINDOWS:
+
+    class scputimes(NamedTuple):
+        user: float
+        system: float
+        idle: float
+        interrupt: float
+        dpc: float
+
+elif MACOS:
+
+    class scputimes(NamedTuple):
+        user: float
+        nice: float
+        system: float
+        idle: float
+
+elif BSD:
+
+    class scputimes(NamedTuple):
+        user: float
+        nice: float
+        system: float
+        idle: float
+        irq: float
+
+elif SUNOS or AIX:
+
+    class scputimes(NamedTuple):
+        user: float
+        system: float
+        idle: float
+        iowait: float
+
+elif LINUX:
+    # This gets set from _pslinux.py
+    scputimes = None
+
+
 # ===================================================================
 # --- Process class
 # ===================================================================
@@ -254,9 +294,6 @@ class pconn(NamedTuple):
 # ===================================================================
 
 if LINUX:
-    # This gets set from _pslinux.py
-    scputimes = None
-
     # psutil.virtual_memory()
     class svmem(NamedTuple):
         total: int
@@ -389,14 +426,6 @@ if LINUX:
 # ===================================================================
 
 elif WINDOWS:
-    # psutil.cpu_times()
-    class scputimes(NamedTuple):
-        user: float
-        system: float
-        idle: float
-        interrupt: float
-        dpc: float
-
     # psutil.virtual_memory()
     class svmem(NamedTuple):
         total: int
@@ -479,13 +508,6 @@ elif WINDOWS:
 # ===================================================================
 
 elif MACOS:
-    # psutil.cpu_times()
-    class scputimes(NamedTuple):
-        user: float
-        nice: float
-        system: float
-        idle: float
-
     # psutil.virtual_memory()
     class svmem(NamedTuple):
         total: int
@@ -542,14 +564,6 @@ elif BSD:
         cached: int
         shared: int
         wired: int
-
-    # psutil.cpu_times()
-    class scputimes(NamedTuple):
-        user: float
-        nice: float
-        system: float
-        idle: float
-        irq: float
 
     # psutil.Process.memory_info()
     class pmem(NamedTuple):
@@ -614,13 +628,6 @@ elif BSD:
 # ===================================================================
 
 elif SUNOS:
-    # psutil.cpu_times()
-    class scputimes(NamedTuple):
-        user: float
-        system: float
-        idle: float
-        iowait: float
-
     # psutil.cpu_times(percpu=True)
     class pcputimes(NamedTuple):
         user: float
@@ -673,13 +680,6 @@ elif AIX:
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
-
-    # psutil.Process.cpu_times()
-    class scputimes(NamedTuple):
-        user: float
-        system: float
-        idle: float
-        iowait: float
 
     # psutil.virtual_memory()
     class svmem(NamedTuple):
