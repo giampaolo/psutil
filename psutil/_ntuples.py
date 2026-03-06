@@ -161,27 +161,22 @@ class sfan(NamedTuple):
     current: int
 
 
-# psutil.heap_info()
-if WINDOWS:
+if LINUX or WINDOWS or MACOS or BSD:
 
+    # psutil.heap_info()
     class pheap(NamedTuple):
         heap_used: int
         mmap_used: int
-        heap_count: int
-
-elif LINUX or MACOS or BSD:
-
-    class pheap(NamedTuple):
-        heap_used: int
-        mmap_used: int
+        if WINDOWS:
+            heap_count: int
 
 
-# psutil.cpu_times()
 if LINUX:
     # This gets set dynamically from _pslinux.py
     scputimes = None
 else:
 
+    # psutil.cpu_times()
     class scputimes(NamedTuple):
         user: float
         system: float
