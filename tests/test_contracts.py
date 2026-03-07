@@ -133,6 +133,12 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             if kernel_version() >= (2, 6, 8):
                 self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
 
+    def test_enum_containers(self):
+        self.check_constants(("BatteryTime",), True)
+        self.check_constants(("NicDuplex",), True)
+        self.check_constants(("ProcIOPriorityClass",), LINUX or WINDOWS)
+        self.check_constants(("ProcPriority",), WINDOWS)
+
 
 class TestAvailSystemAPIs(PsutilTestCase):
     def test_win_service_iter(self):
