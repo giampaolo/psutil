@@ -8,7 +8,7 @@ import enum
 
 from ._common import LINUX
 
-__all__ = ['NicDuplex', 'BatteryTime']
+__all__ = ['NicDuplex', 'BatteryTime', 'Priority', 'IOPriority']
 
 
 # net_if_stats()
@@ -22,6 +22,28 @@ class NicDuplex(enum.IntEnum):
 class BatteryTime(enum.IntEnum):
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2
+
+
+# Process priority (Windows)
+try:
+    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
+    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
+    from ._psutil_windows import HIGH_PRIORITY_CLASS
+    from ._psutil_windows import IDLE_PRIORITY_CLASS
+    from ._psutil_windows import NORMAL_PRIORITY_CLASS
+    from ._psutil_windows import REALTIME_PRIORITY_CLASS
+
+    class Priority(enum.IntEnum):
+        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
+        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
+        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
+        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
+        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
+        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
+
+except ImportError:
+    # Not on Windows
+    Priority = None
 
 
 if LINUX:

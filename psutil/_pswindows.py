@@ -29,12 +29,7 @@ from ._common import parse_environ_block
 from ._common import usage_percent
 from ._constants import BatteryTime
 from ._constants import NicDuplex
-from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
-from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
-from ._psutil_windows import HIGH_PRIORITY_CLASS
-from ._psutil_windows import IDLE_PRIORITY_CLASS
-from ._psutil_windows import NORMAL_PRIORITY_CLASS
-from ._psutil_windows import REALTIME_PRIORITY_CLASS
+from ._constants import Priority
 
 try:
     from . import _psutil_windows as cext
@@ -100,18 +95,6 @@ TCP_STATUSES = {
 }
 
 
-class Priority(enum.IntEnum):
-    ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
-    BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
-    HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
-    IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
-    NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
-    REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
-
-
-globals().update(Priority.__members__)
-
-
 class IOPriority(enum.IntEnum):
     IOPRIO_VERYLOW = 0
     IOPRIO_LOW = 1
@@ -119,6 +102,7 @@ class IOPriority(enum.IntEnum):
     IOPRIO_HIGH = 3
 
 
+globals().update(Priority.__members__)
 globals().update(IOPriority.__members__)
 
 
