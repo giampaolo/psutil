@@ -6,6 +6,8 @@
 
 import enum
 
+from ._common import LINUX
+
 __all__ = ['NicDuplex', 'BatteryTime']
 
 
@@ -20,3 +22,13 @@ class NicDuplex(enum.IntEnum):
 class BatteryTime(enum.IntEnum):
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2
+
+
+if LINUX:
+
+    # ioprio_* constants http://linux.die.net/man/2/ioprio_get
+    class IOPriority(enum.IntEnum):
+        IOPRIO_CLASS_NONE = 0
+        IOPRIO_CLASS_RT = 1
+        IOPRIO_CLASS_BE = 2
+        IOPRIO_CLASS_IDLE = 3

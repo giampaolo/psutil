@@ -96,10 +96,12 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-    from ._pslinux import IOPRIO_CLASS_BE  # noqa: F401
-    from ._pslinux import IOPRIO_CLASS_IDLE  # noqa: F401
-    from ._pslinux import IOPRIO_CLASS_NONE  # noqa: F401
-    from ._pslinux import IOPRIO_CLASS_RT  # noqa: F401
+    from ._constants import IOPriority
+
+    IOPRIO_CLASS_BE = IOPriority.IOPRIO_CLASS_BE
+    IOPRIO_CLASS_IDLE = IOPriority.IOPRIO_CLASS_IDLE
+    IOPRIO_CLASS_NONE = IOPriority.IOPRIO_CLASS_NONE
+    IOPRIO_CLASS_RT = IOPriority.IOPRIO_CLASS_RT
 
 elif WINDOWS:
     from . import _pswindows as _psplatform

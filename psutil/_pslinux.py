@@ -41,6 +41,7 @@ from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
 from ._constants import BatteryTime
+from ._constants import IOPriority
 from ._constants import NicDuplex
 
 # fmt: off
@@ -92,16 +93,6 @@ AddressFamily = enum.IntEnum(
 )
 AF_LINK = AddressFamily.AF_LINK
 
-
-# ioprio_* constants http://linux.die.net/man/2/ioprio_get
-class IOPriority(enum.IntEnum):
-    IOPRIO_CLASS_NONE = 0
-    IOPRIO_CLASS_RT = 1
-    IOPRIO_CLASS_BE = 2
-    IOPRIO_CLASS_IDLE = 3
-
-
-globals().update(IOPriority.__members__)
 
 # See:
 # https://github.com/torvalds/linux/blame/master/fs/proc/array.c
