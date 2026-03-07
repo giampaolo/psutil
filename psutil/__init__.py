@@ -98,24 +98,15 @@ if LINUX:
     from . import _pslinux as _psplatform
     from ._constants import ProcIOPriorityClass
 
-    IOPRIO_CLASS_BE = ProcIOPriorityClass.IOPRIO_CLASS_BE
-    IOPRIO_CLASS_IDLE = ProcIOPriorityClass.IOPRIO_CLASS_IDLE
-    IOPRIO_CLASS_NONE = ProcIOPriorityClass.IOPRIO_CLASS_NONE
-    IOPRIO_CLASS_RT = ProcIOPriorityClass.IOPRIO_CLASS_RT
+    globals().update(ProcIOPriorityClass.__members__)
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
-    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import HIGH_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import IDLE_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import NORMAL_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import REALTIME_PRIORITY_CLASS  # noqa: F401
-    from ._pswindows import CONN_DELETE_TCB  # noqa: F401
-    from ._pswindows import IOPRIO_HIGH  # noqa: F401
-    from ._pswindows import IOPRIO_LOW  # noqa: F401
-    from ._pswindows import IOPRIO_NORMAL  # noqa: F401
-    from ._pswindows import IOPRIO_VERYLOW  # noqa: F401
+    from ._constants import ProcIOPriorityClass
+    from ._constants import ProcPriority
+
+    globals().update(ProcPriority.__members__)
+    globals().update(ProcIOPriorityClass.__members__)
 
 elif MACOS:
     from . import _psosx as _psplatform
