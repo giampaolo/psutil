@@ -28,6 +28,24 @@ class ProcStatus(enum.StrEnum):
     STATUS_PARKED = "parked"  # Linux
 
 
+# Process.net_connections() and psutil.net_connections()
+class ConnStatus(enum.StrEnum):
+    CONN_ESTABLISHED = "ESTABLISHED"
+    CONN_SYN_SENT = "SYN_SENT"
+    CONN_SYN_RECV = "SYN_RECV"
+    CONN_FIN_WAIT1 = "FIN_WAIT1"
+    CONN_FIN_WAIT2 = "FIN_WAIT2"
+    CONN_TIME_WAIT = "TIME_WAIT"
+    CONN_CLOSE = "CLOSE"
+    CONN_CLOSE_WAIT = "CLOSE_WAIT"
+    CONN_LAST_ACK = "LAST_ACK"
+    CONN_LISTEN = "LISTEN"
+    CONN_CLOSING = "CLOSING"
+    CONN_NONE = "NONE"
+    if WINDOWS:
+        CONN_DELETE_TCB = "DELETE_TCB"
+
+
 # net_if_stats()
 class NicDuplex(enum.IntEnum):
     NIC_DUPLEX_FULL = 2

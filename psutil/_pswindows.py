@@ -28,6 +28,7 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 from ._constants import BatteryTime
+from ._constants import ConnStatus
 from ._constants import NicDuplex
 from ._constants import ProcIOPriorityClass
 from ._constants import ProcPriority
@@ -53,26 +54,13 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-# fmt: off
-__extra__all__ = [
-    "win_service_iter", "win_service_get",
-    # Process priority
-    "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS", "NORMAL_PRIORITY_CLASS",
-    "REALTIME_PRIORITY_CLASS",
-    # IO priority
-    "IOPRIO_VERYLOW", "IOPRIO_LOW", "IOPRIO_NORMAL", "IOPRIO_HIGH",
-    # others
-    "CONN_DELETE_TCB", "AF_LINK",
-]
-# fmt: on
+__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
 
 
 # =====================================================================
 # --- globals
 # =====================================================================
 
-CONN_DELETE_TCB = "DELETE_TCB"
 ERROR_PARTIAL_COPY = 299
 PYPY = '__pypy__' in sys.builtin_module_names
 
@@ -80,19 +68,19 @@ AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
 AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
-    cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
-    cext.MIB_TCP_STATE_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.MIB_TCP_STATE_SYN_RCVD: _common.CONN_SYN_RECV,
-    cext.MIB_TCP_STATE_FIN_WAIT1: _common.CONN_FIN_WAIT1,
-    cext.MIB_TCP_STATE_FIN_WAIT2: _common.CONN_FIN_WAIT2,
-    cext.MIB_TCP_STATE_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.MIB_TCP_STATE_CLOSED: _common.CONN_CLOSE,
-    cext.MIB_TCP_STATE_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.MIB_TCP_STATE_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.MIB_TCP_STATE_LISTEN: _common.CONN_LISTEN,
-    cext.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
-    cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.MIB_TCP_STATE_ESTAB: ConnStatus.CONN_ESTABLISHED,
+    cext.MIB_TCP_STATE_SYN_SENT: ConnStatus.CONN_SYN_SENT,
+    cext.MIB_TCP_STATE_SYN_RCVD: ConnStatus.CONN_SYN_RECV,
+    cext.MIB_TCP_STATE_FIN_WAIT1: ConnStatus.CONN_FIN_WAIT1,
+    cext.MIB_TCP_STATE_FIN_WAIT2: ConnStatus.CONN_FIN_WAIT2,
+    cext.MIB_TCP_STATE_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
+    cext.MIB_TCP_STATE_CLOSED: ConnStatus.CONN_CLOSE,
+    cext.MIB_TCP_STATE_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
+    cext.MIB_TCP_STATE_LAST_ACK: ConnStatus.CONN_LAST_ACK,
+    cext.MIB_TCP_STATE_LISTEN: ConnStatus.CONN_LISTEN,
+    cext.MIB_TCP_STATE_CLOSING: ConnStatus.CONN_CLOSING,
+    cext.MIB_TCP_STATE_DELETE_TCB: ConnStatus.CONN_DELETE_TCB,
+    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
 }
 
 

@@ -40,18 +40,6 @@ from . import _common
 from . import _ntuples as _ntp
 from ._common import AIX
 from ._common import BSD
-from ._common import CONN_CLOSE
-from ._common import CONN_CLOSE_WAIT
-from ._common import CONN_CLOSING
-from ._common import CONN_ESTABLISHED
-from ._common import CONN_FIN_WAIT1
-from ._common import CONN_FIN_WAIT2
-from ._common import CONN_LAST_ACK
-from ._common import CONN_LISTEN
-from ._common import CONN_NONE
-from ._common import CONN_SYN_RECV
-from ._common import CONN_SYN_SENT
-from ._common import CONN_TIME_WAIT
 from ._common import FREEBSD
 from ._common import LINUX
 from ._common import MACOS
@@ -70,6 +58,7 @@ from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._constants import BatteryTime
+from ._constants import ConnStatus
 from ._constants import NicDuplex
 from ._constants import ProcStatus
 
@@ -124,9 +113,6 @@ __all__ = [
     # constants
     "version_info", "__version__",
 
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
     # "CONN_IDLE", "CONN_BOUND",
 
     "AF_LINK",
@@ -177,6 +163,7 @@ def _export_enum(cls):
 
 # Populate global namespace with enums and CONSTANTs.
 _export_enum(ProcStatus)
+_export_enum(ConnStatus)
 _export_enum(NicDuplex)
 _export_enum(BatteryTime)
 if LINUX or WINDOWS:

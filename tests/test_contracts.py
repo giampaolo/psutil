@@ -83,6 +83,25 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             True,
         )
 
+    def test_conn_status(self):
+        self.check_constants(
+            (
+                "CONN_ESTABLISHED",
+                "CONN_SYN_SENT",
+                "CONN_SYN_RECV",
+                "CONN_FIN_WAIT1",
+                "CONN_FIN_WAIT2",
+                "CONN_TIME_WAIT",
+                "CONN_CLOSE",
+                "CONN_CLOSE_WAIT",
+                "CONN_LAST_ACK",
+                "CONN_LISTEN",
+                "CONN_CLOSING",
+                "CONN_NONE",
+            ),
+            True,
+        )
+
     def test_nic_duplex(self):
         self.check_constants(
             ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN"),
@@ -163,6 +182,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
 
     def test_enum_containers(self):
         self.check_constants(("ProcStatus",), True)
+        self.check_constants(("ConnStatus",), True)
         self.check_constants(("BatteryTime",), True)
         self.check_constants(("NicDuplex",), True)
         self.check_constants(("ProcIOPriorityClass",), LINUX or WINDOWS)

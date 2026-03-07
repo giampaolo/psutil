@@ -41,19 +41,12 @@ from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
 from ._constants import BatteryTime
+from ._constants import ConnStatus
 from ._constants import NicDuplex
 from ._constants import ProcIOPriorityClass
 from ._constants import ProcStatus
 
-# fmt: off
-__extra__all__ = [
-    'PROCFS_PATH',
-    # connection status constants
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
-]
-# fmt: on
+__extra__all__ = ['PROCFS_PATH']
 
 
 # =====================================================================
@@ -113,17 +106,17 @@ PROC_STATUSES = {
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
 TCP_STATUSES = {
-    "01": _common.CONN_ESTABLISHED,
-    "02": _common.CONN_SYN_SENT,
-    "03": _common.CONN_SYN_RECV,
-    "04": _common.CONN_FIN_WAIT1,
-    "05": _common.CONN_FIN_WAIT2,
-    "06": _common.CONN_TIME_WAIT,
-    "07": _common.CONN_CLOSE,
-    "08": _common.CONN_CLOSE_WAIT,
-    "09": _common.CONN_LAST_ACK,
-    "0A": _common.CONN_LISTEN,
-    "0B": _common.CONN_CLOSING,
+    "01": ConnStatus.CONN_ESTABLISHED,
+    "02": ConnStatus.CONN_SYN_SENT,
+    "03": ConnStatus.CONN_SYN_RECV,
+    "04": ConnStatus.CONN_FIN_WAIT1,
+    "05": ConnStatus.CONN_FIN_WAIT2,
+    "06": ConnStatus.CONN_TIME_WAIT,
+    "07": ConnStatus.CONN_CLOSE,
+    "08": ConnStatus.CONN_CLOSE_WAIT,
+    "09": ConnStatus.CONN_LAST_ACK,
+    "0A": ConnStatus.CONN_LISTEN,
+    "0B": ConnStatus.CONN_CLOSING,
 }
 
 
@@ -822,7 +815,7 @@ class NetConnections:
                     if type_ == socket.SOCK_STREAM:
                         status = TCP_STATUSES[status]
                     else:
-                        status = _common.CONN_NONE
+                        status = ConnStatus.CONN_NONE
                     try:
                         laddr = NetConnections.decode_address(laddr, family)
                         raddr = NetConnections.decode_address(raddr, family)
@@ -863,7 +856,7 @@ class NetConnections:
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/
                         raddr = ""
-                        status = _common.CONN_NONE
+                        status = ConnStatus.CONN_NONE
                         yield (fd, family, type_, path, raddr, status, pid)
 
     def retrieve(self, kind, pid=None):

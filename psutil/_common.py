@@ -38,10 +38,6 @@ __all__ = [
     # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
     'SUNOS', 'WINDOWS',
-    # connection constants
-    'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
-    'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
-    'CONN_NONE', 'CONN_SYN_RECV', 'CONN_SYN_SENT', 'CONN_TIME_WAIT',
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # utility functions
@@ -72,28 +68,6 @@ NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith(("sunos", "solaris"))
 AIX = sys.platform.startswith("aix")
-
-
-# ===================================================================
-# --- API constants
-# ===================================================================
-
-# Process.net_connections() and psutil.net_connections()
-CONN_ESTABLISHED = "ESTABLISHED"
-CONN_SYN_SENT = "SYN_SENT"
-CONN_SYN_RECV = "SYN_RECV"
-CONN_FIN_WAIT1 = "FIN_WAIT1"
-CONN_FIN_WAIT2 = "FIN_WAIT2"
-CONN_TIME_WAIT = "TIME_WAIT"
-CONN_CLOSE = "CLOSE"
-CONN_CLOSE_WAIT = "CLOSE_WAIT"
-CONN_LAST_ACK = "LAST_ACK"
-CONN_LISTEN = "LISTEN"
-CONN_CLOSING = "CLOSING"
-CONN_NONE = "NONE"
-
-
-# --- others
 
 ENCODING = sys.getfilesystemencoding()
 ENCODING_ERRS = sys.getfilesystemencodeerrors()
@@ -458,6 +432,7 @@ def socktype_to_enum(num):
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     """Convert a raw connection tuple to a proper ntuple."""
     from . import _ntuples as ntp
+    from ._constants import ConnStatus
 
     if fam in {socket.AF_INET, AF_INET6}:
         if laddr:
@@ -465,9 +440,9 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
         if raddr:
             raddr = ntp.addr(*raddr)
     if type_ == socket.SOCK_STREAM and fam in {AF_INET, AF_INET6}:
-        status = status_map.get(status, CONN_NONE)
+        status = status_map.get(status, ConnStatus.CONN_NONE)
     else:
-        status = CONN_NONE  # ignore whatever C returned to us
+        status = ConnStatus.CONN_NONE  # ignore whatever C returned to us
     fam = sockfam_to_enum(fam)
     type_ = socktype_to_enum(type_)
     if pid is None:
