@@ -7,8 +7,9 @@
 import enum
 
 from ._common import LINUX
+from ._common import WINDOWS
 
-__all__ = ['NicDuplex', 'BatteryTime', 'Priority', 'IOPriority']
+__all__ = ["NicDuplex", "BatteryTime"]
 
 
 # net_if_stats()
@@ -24,26 +25,19 @@ class BatteryTime(enum.IntEnum):
     POWER_TIME_UNLIMITED = -2
 
 
-# Process priority (Windows)
-try:
-    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
-    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
-    from ._psutil_windows import HIGH_PRIORITY_CLASS
-    from ._psutil_windows import IDLE_PRIORITY_CLASS
-    from ._psutil_windows import NORMAL_PRIORITY_CLASS
-    from ._psutil_windows import REALTIME_PRIORITY_CLASS
+if WINDOWS:
+    from . import _psutil_windows as cext
 
+    # Process priority (Windows)
     class Priority(enum.IntEnum):
-        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
-        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
-        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
-        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
-        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
-        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
+        ABOVE_NORMAL_PRIORITY_CLASS = cext.ABOVE_NORMAL_PRIORITY_CLASS
+        BELOW_NORMAL_PRIORITY_CLASS = cext.BELOW_NORMAL_PRIORITY_CLASS
+        HIGH_PRIORITY_CLASS = cext.HIGH_PRIORITY_CLASS
+        IDLE_PRIORITY_CLASS = cext.IDLE_PRIORITY_CLASS
+        NORMAL_PRIORITY_CLASS = cext.NORMAL_PRIORITY_CLASS
+        REALTIME_PRIORITY_CLASS = cext.REALTIME_PRIORITY_CLASS
 
-except ImportError:
-    # Not on Windows
-    Priority = None
+    __all__.append("Priority")
 
 
 if LINUX:
@@ -54,3 +48,5 @@ if LINUX:
         IOPRIO_CLASS_RT = 1
         IOPRIO_CLASS_BE = 2
         IOPRIO_CLASS_IDLE = 3
+
+    __all__.append("IOPriority")
