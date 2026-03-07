@@ -49,62 +49,89 @@ from . import system_namespace
 
 
 class TestAvailConstantsAPIs(PsutilTestCase):
+
+    def check_constants(self, names, hasit):
+        for name in names:
+            with self.subTest(name=name):
+                assert hasattr(psutil, name) == hasit
+                if hasit:
+                    assert name in psutil.__all__
+                else:
+                    assert name not in psutil.__all__
+
     def test_PROCFS_PATH(self):
         assert hasattr(psutil, "PROCFS_PATH") == (LINUX or SUNOS or AIX)
 
     def test_win_priority(self):
-        assert hasattr(psutil, "ABOVE_NORMAL_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "BELOW_NORMAL_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "HIGH_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "IDLE_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "NORMAL_PRIORITY_CLASS") == WINDOWS
-        assert hasattr(psutil, "REALTIME_PRIORITY_CLASS") == WINDOWS
+        self.check_constants(
+            (
+                "ABOVE_NORMAL_PRIORITY_CLASS",
+                "BELOW_NORMAL_PRIORITY_CLASS",
+                "HIGH_PRIORITY_CLASS",
+                "IDLE_PRIORITY_CLASS",
+                "NORMAL_PRIORITY_CLASS",
+                "REALTIME_PRIORITY_CLASS",
+            ),
+            WINDOWS,
+        )
 
     def test_linux_ioprio_linux(self):
-        assert hasattr(psutil, "IOPRIO_CLASS_NONE") == LINUX
-        assert hasattr(psutil, "IOPRIO_CLASS_RT") == LINUX
-        assert hasattr(psutil, "IOPRIO_CLASS_BE") == LINUX
-        assert hasattr(psutil, "IOPRIO_CLASS_IDLE") == LINUX
+        self.check_constants(
+            (
+                "IOPRIO_CLASS_NONE",
+                "IOPRIO_CLASS_RT",
+                "IOPRIO_CLASS_BE",
+                "IOPRIO_CLASS_IDLE",
+            ),
+            LINUX,
+        )
 
     def test_linux_ioprio_windows(self):
-        assert hasattr(psutil, "IOPRIO_HIGH") == WINDOWS
-        assert hasattr(psutil, "IOPRIO_NORMAL") == WINDOWS
-        assert hasattr(psutil, "IOPRIO_LOW") == WINDOWS
-        assert hasattr(psutil, "IOPRIO_VERYLOW") == WINDOWS
+        self.check_constants(
+            (
+                "IOPRIO_HIGH",
+                "IOPRIO_NORMAL",
+                "IOPRIO_LOW",
+                "IOPRIO_VERYLOW",
+            ),
+            WINDOWS,
+        )
 
     @pytest.mark.skipif(
         GITHUB_ACTIONS and LINUX,
         reason="unsupported on GITHUB_ACTIONS + LINUX",
     )
     def test_rlimit(self):
-        assert hasattr(psutil, "RLIM_INFINITY") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_AS") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_CORE") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_CPU") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_DATA") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_FSIZE") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_MEMLOCK") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_NOFILE") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_NPROC") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_RSS") == LINUX or FREEBSD
-        assert hasattr(psutil, "RLIMIT_STACK") == LINUX or FREEBSD
+        self.check_constants(
+            (
+                "RLIM_INFINITY",
+                "RLIMIT_AS",
+                "RLIMIT_CORE",
+                "RLIMIT_CPU",
+                "RLIMIT_DATA",
+                "RLIMIT_FSIZE",
+                "RLIMIT_MEMLOCK",
+                "RLIMIT_NOFILE",
+                "RLIMIT_NPROC",
+                "RLIMIT_RSS",
+                "RLIMIT_STACK",
+            ),
+            LINUX or FREEBSD,
+        )
+        self.check_constants(("RLIMIT_LOCKS",), LINUX)
+        self.check_constants(
+            ("RLIMIT_SWAP", "RLIMIT_SBSIZE", "RLIMIT_NPTS"), FREEBSD
+        )
 
-        assert hasattr(psutil, "RLIMIT_LOCKS") == LINUX
         if POSIX:
             if kernel_version() >= (2, 6, 8):
-                assert hasattr(psutil, "RLIMIT_MSGQUEUE") == LINUX
+                self.check_constants(("RLIMIT_MSGQUEUE",), LINUX)
             if kernel_version() >= (2, 6, 12):
-                assert hasattr(psutil, "RLIMIT_NICE") == LINUX
-            if kernel_version() >= (2, 6, 12):
-                assert hasattr(psutil, "RLIMIT_RTPRIO") == LINUX
+                self.check_constants(("RLIMIT_NICE", "RLIMIT_RTPRIO"), LINUX)
             if kernel_version() >= (2, 6, 25):
-                assert hasattr(psutil, "RLIMIT_RTTIME") == LINUX
+                self.check_constants(("RLIMIT_RTTIME",), LINUX)
             if kernel_version() >= (2, 6, 8):
-                assert hasattr(psutil, "RLIMIT_SIGPENDING") == LINUX
-
-        assert hasattr(psutil, "RLIMIT_SWAP") == FREEBSD
-        assert hasattr(psutil, "RLIMIT_SBSIZE") == FREEBSD
-        assert hasattr(psutil, "RLIMIT_NPTS") == FREEBSD
+                self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
 
 
 class TestAvailSystemAPIs(PsutilTestCase):
