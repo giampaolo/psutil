@@ -37,6 +37,7 @@ except ImportError:
     pwd = None
 
 from . import _common
+from . import _constants
 from . import _ntuples as _ntp
 from ._common import AIX
 from ._common import BSD
@@ -185,6 +186,7 @@ __all__ = [
 
 
 __all__.extend(_psplatform.__extra__all__)
+__all__.extend(_constants.__all__)
 
 # Linux, FreeBSD
 if hasattr(_psplatform.Process, "rlimit"):

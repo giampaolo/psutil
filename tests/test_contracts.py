@@ -60,7 +60,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                     assert name not in psutil.__all__
 
     def test_PROCFS_PATH(self):
-        assert hasattr(psutil, "PROCFS_PATH") == (LINUX or SUNOS or AIX)
+        self.check_constants(("PROCFS_PATH",), LINUX or SUNOS or AIX)
 
     def test_win_proc_priority(self):
         self.check_constants(
