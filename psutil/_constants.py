@@ -28,8 +28,8 @@ class BatteryTime(enum.IntEnum):
 if WINDOWS:
     from . import _psutil_windows as cext
 
-    # Process priority (Windows)
-    class Priority(enum.IntEnum):
+    # psutil.Process.nice()
+    class ProcPriority(enum.IntEnum):
         ABOVE_NORMAL_PRIORITY_CLASS = cext.ABOVE_NORMAL_PRIORITY_CLASS
         BELOW_NORMAL_PRIORITY_CLASS = cext.BELOW_NORMAL_PRIORITY_CLASS
         HIGH_PRIORITY_CLASS = cext.HIGH_PRIORITY_CLASS
@@ -37,13 +37,14 @@ if WINDOWS:
         NORMAL_PRIORITY_CLASS = cext.NORMAL_PRIORITY_CLASS
         REALTIME_PRIORITY_CLASS = cext.REALTIME_PRIORITY_CLASS
 
-    __all__.append("Priority")
+    __all__.append("ProcPriority")
 
 
 if LINUX:
 
-    # ioprio_* constants http://linux.die.net/man/2/ioprio_get
+    # psutil.Process.ionice()
     class IOPriority(enum.IntEnum):
+        # ioprio_* constants http://linux.die.net/man/2/ioprio_get
         IOPRIO_CLASS_NONE = 0
         IOPRIO_CLASS_RT = 1
         IOPRIO_CLASS_BE = 2

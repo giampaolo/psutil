@@ -29,7 +29,7 @@ from ._common import parse_environ_block
 from ._common import usage_percent
 from ._constants import BatteryTime
 from ._constants import NicDuplex
-from ._constants import Priority
+from ._constants import ProcPriority
 
 try:
     from . import _psutil_windows as cext
@@ -102,7 +102,7 @@ class IOPriority(enum.IntEnum):
     IOPRIO_HIGH = 3
 
 
-globals().update(Priority.__members__)
+globals().update(ProcPriority.__members__)
 globals().update(IOPriority.__members__)
 
 
@@ -983,7 +983,7 @@ class Process:
     @wrap_exceptions
     def nice_get(self):
         value = cext.proc_priority_get(self.pid)
-        value = Priority(value)
+        value = ProcPriority(value)
         return value
 
     @wrap_exceptions
