@@ -12,7 +12,6 @@ from collections import defaultdict
 from collections import namedtuple
 from xml.etree import ElementTree  # noqa: ICN001
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_bsd as cext
@@ -28,7 +27,9 @@ from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
 from ._constants import BatteryTime
+from ._constants import ConnStatus
 from ._constants import NicDuplex
+from ._constants import ProcStatus
 
 __extra__all__ = []
 
@@ -40,26 +41,26 @@ __extra__all__ = []
 
 if FREEBSD:
     PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SRUN: _common.STATUS_RUNNING,
-        cext.SSLEEP: _common.STATUS_SLEEPING,
-        cext.SSTOP: _common.STATUS_STOPPED,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SWAIT: _common.STATUS_WAITING,
-        cext.SLOCK: _common.STATUS_LOCKED,
+        cext.SIDL: ProcStatus.STATUS_IDLE,
+        cext.SRUN: ProcStatus.STATUS_RUNNING,
+        cext.SSLEEP: ProcStatus.STATUS_SLEEPING,
+        cext.SSTOP: ProcStatus.STATUS_STOPPED,
+        cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
+        cext.SWAIT: ProcStatus.STATUS_WAITING,
+        cext.SLOCK: ProcStatus.STATUS_LOCKED,
     }
 elif OPENBSD:
     PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SSLEEP: _common.STATUS_SLEEPING,
-        cext.SSTOP: _common.STATUS_STOPPED,
+        cext.SIDL: ProcStatus.STATUS_IDLE,
+        cext.SSLEEP: ProcStatus.STATUS_SLEEPING,
+        cext.SSTOP: ProcStatus.STATUS_STOPPED,
         # According to /usr/include/sys/proc.h SZOMB is unused.
         # test_zombie_process() shows that SDEAD is the right
         # equivalent. Also it appears there's no equivalent of
         # psutil.STATUS_DEAD. SDEAD really means STATUS_ZOMBIE.
-        # cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SDEAD: _common.STATUS_ZOMBIE,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
+        # cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
+        cext.SDEAD: ProcStatus.STATUS_ZOMBIE,
+        cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
         # From http://www.eecs.harvard.edu/~margo/cs161/videos/proc.h.txt
         # OpenBSD has SRUN and SONPROC: SRUN indicates that a process
         # is runnable but *not* yet running, i.e. is on a run queue.
@@ -67,32 +68,32 @@ elif OPENBSD:
         # a CPU, i.e. it is no longer on a run queue.
         # As such we'll map SRUN to STATUS_WAKING and SONPROC to
         # STATUS_RUNNING
-        cext.SRUN: _common.STATUS_WAKING,
-        cext.SONPROC: _common.STATUS_RUNNING,
+        cext.SRUN: ProcStatus.STATUS_WAKING,
+        cext.SONPROC: ProcStatus.STATUS_RUNNING,
     }
 elif NETBSD:
     PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SSLEEP: _common.STATUS_SLEEPING,
-        cext.SSTOP: _common.STATUS_STOPPED,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SRUN: _common.STATUS_WAKING,
-        cext.SONPROC: _common.STATUS_RUNNING,
+        cext.SIDL: ProcStatus.STATUS_IDLE,
+        cext.SSLEEP: ProcStatus.STATUS_SLEEPING,
+        cext.SSTOP: ProcStatus.STATUS_STOPPED,
+        cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
+        cext.SRUN: ProcStatus.STATUS_WAKING,
+        cext.SONPROC: ProcStatus.STATUS_RUNNING,
     }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RECEIVED: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.TCPS_ESTABLISHED: ConnStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RECEIVED: ConnStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
 }
 
 PAGESIZE = cext.getpagesize()
