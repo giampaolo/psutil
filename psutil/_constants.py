@@ -43,11 +43,11 @@ if WINDOWS:
 if LINUX:
 
     # psutil.Process.ionice()
-    class IOPriority(enum.IntEnum):
+    class ProcIOPriority(enum.IntEnum):
         # ioprio_* constants http://linux.die.net/man/2/ioprio_get
         IOPRIO_CLASS_NONE = 0
         IOPRIO_CLASS_RT = 1
         IOPRIO_CLASS_BE = 2
         IOPRIO_CLASS_IDLE = 3
 
-    __all__.append("IOPriority")
+    __all__.append("ProcIOPriority")
