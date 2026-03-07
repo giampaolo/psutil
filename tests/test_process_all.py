@@ -32,8 +32,8 @@ from . import PYTEST_PARALLEL
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
 from . import check_connection_ntuple
+from . import check_ntuple_types
 from . import create_sockets
-from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
 from . import pytest
@@ -212,13 +212,13 @@ class TestFetchAllProcesses(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
 
     def uids(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         for uid in ret:
             assert isinstance(uid, int)
             assert uid >= 0
 
     def gids(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         # note: testing all gids as above seems not to be reliable for
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
@@ -238,7 +238,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret in VALID_PROC_STATUSES
 
     def io_counters(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         for field in ret:
             assert isinstance(field, int)
             if field != -1:
@@ -271,7 +271,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def threads(self, ret, info):
         assert isinstance(ret, list)
         for t in ret:
-            assert is_namedtuple(t)
+            check_ntuple_types(t)
             assert t.id >= 0
             assert t.user_time >= 0
             assert t.system_time >= 0
@@ -279,7 +279,7 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert isinstance(field, (int, float))
 
     def cpu_times(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         for n in ret:
             assert isinstance(n, float)
             assert n >= 0
@@ -305,7 +305,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         self.check_proc_memory(ret)
 
     def memory_footprint(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         for name in ret._fields:
             value = getattr(ret, name)
             assert isinstance(value, int)
@@ -314,6 +314,7 @@ class TestFetchAllProcesses(PsutilTestCase):
     def open_files(self, ret, info):
         assert isinstance(ret, list)
         for f in ret:
+            check_ntuple_types(f)
             assert isinstance(f.fd, int)
             assert isinstance(f.path, str)
             assert f.path.strip() == f.path
@@ -345,7 +346,6 @@ class TestFetchAllProcesses(PsutilTestCase):
         with create_sockets():
             assert len(ret) == len(set(ret))
             for conn in ret:
-                assert is_namedtuple(conn)
                 check_connection_ntuple(conn)
 
     def cwd(self, ret, info):
@@ -387,8 +387,11 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def memory_maps(self, ret, info):
         for nt in ret:
-            assert isinstance(nt.addr, str)
-            assert isinstance(nt.perms, str)
+            check_ntuple_types(nt)
+            if hasattr(nt, "addr"):
+                assert isinstance(nt.addr, str)
+            if hasattr(nt, "perms"):
+                assert isinstance(nt.perms, str)
             assert isinstance(nt.path, str)
             for fname in nt._fields:
                 value = getattr(nt, fname)
@@ -415,7 +418,7 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def page_faults(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         assert isinstance(ret.minor, int)
         assert isinstance(ret.major, int)
         assert ret.minor >= 0
@@ -435,7 +438,7 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert isinstance(ret, enum.IntEnum)
 
     def num_ctx_switches(self, ret, info):
-        assert is_namedtuple(ret)
+        check_ntuple_types(ret)
         for value in ret:
             assert isinstance(value, int)
             assert value >= 0

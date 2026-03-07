@@ -21,8 +21,7 @@ on:
       - "psutil/arch/openbsd/**"
       - "psutil/arch/posix/**"
       - "setup.py"
-      - "tests/test_bsd.py"
-      - "tests/test_posix.py"
+      - "tests/**"
   pull_request:
     paths: *bsd_paths
 name: bsd

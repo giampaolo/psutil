@@ -29,6 +29,8 @@ import textwrap
 import threading
 import time
 import traceback
+import types
+import typing
 import unittest
 import warnings
 from socket import AF_INET
@@ -41,6 +43,7 @@ except ImportError:
     pytest = None
 
 import psutil
+import psutil._ntuples as ntuples
 from psutil import AIX
 from psutil import BSD
 from psutil import LINUX
@@ -80,8 +83,7 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace',
-    'is_win_secure_system_proc',
+    'system_namespace', 'check_ntuple_types', 'is_win_secure_system_proc',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1061,7 +1063,7 @@ class PsutilTestCase(unittest.TestCase):
 
     def check_proc_memory(self, nt):
         # Check the ntuple returned by Process.memory_*() methods.
-        assert is_namedtuple(nt)
+        check_ntuple_types(nt)
         for value in nt:
             assert isinstance(value, int)
             assert value >= 0
@@ -1170,6 +1172,7 @@ class process_namespace:
     if HAS_PROC_MEMORY_FOOTPRINT:
         getters += [('memory_footprint', (), {})]
     if HAS_PROC_MEMORY_MAPS:
+        getters += [('memory_maps', (), {'grouped': True})]
         getters += [('memory_maps', (), {'grouped': False})]
 
     setters = []
@@ -1260,12 +1263,15 @@ class system_namespace:
         ('cpu_stats', (), {}),
         ('cpu_times', (), {'percpu': False}),
         ('cpu_times', (), {'percpu': True}),
+        ('disk_io_counters', (), {'perdisk': False}),
         ('disk_io_counters', (), {'perdisk': True}),
+        ('disk_partitions', (), {'all': False}),
         ('disk_partitions', (), {'all': True}),
         ('disk_usage', (os.getcwd(),), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
+        ('net_io_counters', (), {'pernic': False}),
         ('net_io_counters', (), {'pernic': True}),
         ('pid_exists', (os.getpid(),), {}),
         ('pids', (), {}),
@@ -1275,6 +1281,7 @@ class system_namespace:
     ]
 
     if HAS_CPU_FREQ:
+        getters += [('cpu_freq', (), {'percpu': False})]
         getters += [('cpu_freq', (), {'percpu': True})]
     if HAS_GETLOADAVG:
         getters += [('getloadavg', (), {})]
@@ -1518,6 +1525,45 @@ def create_sockets():
                 safe_rmpath(fname)
 
 
+@functools.lru_cache(maxsize=None)
+def _get_hints(cls):
+    try:
+        return typing.get_type_hints(
+            cls, globalns=vars(ntuples), localns={'socket': socket}
+        )
+    except TypeError:
+        # Python < 3.10 can't evaluate "X | Y" union syntax.
+        return {}
+
+
+def check_ntuple_types(nt):
+    """Uses type hints from _ntuples.py to verify field types. `nt` is
+    a named tuple returned by one of psutil APIs.
+    """
+    assert is_namedtuple(nt)
+    hints = _get_hints(type(nt))
+    if not hints:
+        return
+    for field in nt._fields:
+        if field not in hints:
+            # field is not annotated
+            continue
+        value = getattr(nt, field)
+        hint = hints[field]
+        if (
+            hasattr(types, 'UnionType') and isinstance(hint, types.UnionType)
+        ) or getattr(hint, '__origin__', None) is typing.Union:
+            types_ = typing.get_args(hint)
+        elif isinstance(hint, type):
+            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
+            # return a platform-specific IntEnum subclass rather than the
+            # annotated one, so we broaden the check to int.
+            types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
+        else:
+            continue
+        assert isinstance(value, types_), (value, types_)
+
+
 def check_net_address(addr, family):
     """Check a net address validity. Supported families are IPv4,
     IPv6 and MAC addresses.
@@ -1606,6 +1652,7 @@ def check_connection_ntuple(conn):
         else:
             assert conn.status == psutil.CONN_NONE, conn.status
 
+    check_ntuple_types(conn)
     check_ntuple(conn)
     check_family(conn)
     check_type(conn)

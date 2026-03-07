@@ -44,9 +44,13 @@
   - `Process.memory_full_info()`_ is **deprecated**. Use the new
     `Process.memory_footprint()`_ instead.
 
-- 2747_: the field order of the returned named tuple was normalized on all
-  platforms, and the first 3 fields are now always  ``user, system, idle``. See
-  compatibility notes below.
+- 2747_: the field order of the named tuple returned by `cpu_times()`_ has been
+  normalized on all platforms, and the first 3 fields are now always  ``user,
+  system, idle``. See compatibility notes below.
+- 2751_: convert all named tuples in `psutil/_ntuples.py`_ from
+  ``collections.namedtuple`` to ``typing.NamedTuple`` classes with **type
+  annotations**. This makes the classes self-documenting, effectively turning
+  this module into a readable API reference.
 
 **Bug fixes**
 
@@ -70,9 +74,8 @@ Changes that break backwards compatibility:
   - On Linux, macOS and BSD the field order of the returned named tuple
     changed: ``user, system, idle`` are now always the first 3 fields on all
     platforms, with platform-specific fields (e.g. ``nice``) following.
-    Positional access (e.g. ``psutil.cpu_times()[1]``) may return the wrong
-    field. Always use attribute access instead (e.g.
-    ``psutil.cpu_times().system``).
+    Positional access (e.g. ``cpu_times()[3]``) may silently return the wrong
+    field. Always use attribute access instead (e.g. ``cpu_times().idle``).
 
 - `Process.memory_info()`_:
 
@@ -2990,7 +2993,6 @@ In most cases accessing the old names will work but it will cause a
 .. _`win_service_get()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_get
 .. _`win_service_iter()`: https://psutil.readthedocs.io/en/latest/#psutil.win_service_iter
 
-
 .. _`Process`: https://psutil.readthedocs.io/en/latest/#psutil.Process
 .. _`psutil.Popen`: https://psutil.readthedocs.io/en/latest/#psutil.Popen
 
@@ -2998,7 +3000,6 @@ In most cases accessing the old names will work but it will cause a
 .. _`NoSuchProcess`: https://psutil.readthedocs.io/en/latest/#psutil.NoSuchProcess
 .. _`TimeoutExpired`: https://psutil.readthedocs.io/en/latest/#psutil.TimeoutExpired
 .. _`ZombieProcess`: https://psutil.readthedocs.io/en/latest/#psutil.ZombieProcess
-
 
 .. _`Process.as_dict()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.as_dict
 .. _`Process.children()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.children
@@ -3049,7 +3050,6 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
 .. _`Process.wait()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.wait
 
-
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
 .. _`free.py`: https://github.com/giampaolo/psutil/blob/master/scripts/free.py
@@ -3065,6 +3065,7 @@ In most cases accessing the old names will work but it will cause a
 .. _`pstree.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pstree.py
 .. _`top.py`: https://github.com/giampaolo/psutil/blob/master/scripts/top.py
 
+.. _`psutil/_ntuples.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_ntuples.py
 
 .. _1: https://github.com/giampaolo/psutil/issues/1
 .. _2: https://github.com/giampaolo/psutil/issues/2

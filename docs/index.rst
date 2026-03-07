@@ -117,10 +117,10 @@ CPU
 
   Platform-specific fields:
 
-  - **nice** *(UNIX)*: time spent by niced (prioritized) processes executing in
-    user mode; on Linux this also includes **guest_nice** time
-  - **iowait** *(Linux)*: time spent waiting for I/O to complete. This is *not*
-    accounted in **idle** time counter.
+  - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
+    executing in user mode; on Linux this also includes **guest_nice** time
+  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete.
+    This is *not* accounted in **idle** time counter.
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
   - **steal** *(Linux)*: time spent by other operating systems running
@@ -148,15 +148,20 @@ CPU
 
   .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
 
-  .. versionchanged:: 8.0.0 field order standardized: *user*, *system*,
-    *idle* are now always the first 3 fields on all platforms. Before the first
-    3 fields on Linux, macOS and BSD were `user, nice, system`.
+  .. versionchanged:: 8.0.0
+     ``cpu_times()`` field order was standardized: ``user``, ``system``,
+     ``idle`` are now always the first three fields. Previously on Linux,
+     macOS, and BSD the first three were ``user``, ``nice``, ``system``.
+  .. warning::
+    in version 8.0.0 the named tuple changed field order. Positional access
+    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
+    attribute access instead (e.g. ``cpu_times().idle``).
 
-    .. warning::
-      CPU times are always supposed to increase over time, or at least remain
-      the same, and that's because time cannot go backwards.
-      Surprisingly sometimes this might not be the case (at least on Windows
-      and Linux), see `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
+  .. warning::
+    CPU times are always supposed to increase over time, or at least remain the
+    same, and that's because time cannot go backwards. Surprisingly sometimes
+    this might not be the case (at least on Windows and Linux), see `#1210
+    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -879,6 +884,15 @@ Sensors
   All temperatures are expressed in celsius unless *fahrenheit* is set to
   ``True``.
   If sensors are not supported by the OS an empty dict is returned.
+  Each named tuple includes 4 fields:
+
+  - **label**: a string label for the sensor, if available, else ``""``.
+  - **current**: current temperature, or ``None`` if not available.
+  - **high**: temperature at which the system will throttle, or ``None``
+    if not available.
+  - **critical**: temperature at which the system will shut down, or
+    ``None`` if not available.
+
   Example::
 
     >>> import psutil
@@ -986,7 +1000,7 @@ Other system info
   - **name**: the name of the user.
   - **terminal**: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
-  - **host**: the host name associated with the entry, if any.
+  - **host**: the host name associated with the entry, if any, else ``None``.
   - **started**: the creation time as a floating point number expressed in
     seconds since the epoch.
   - **pid**: the PID of the login process (like sshd, tmux, gdm-session-worker,
