@@ -50,11 +50,13 @@ from . import system_namespace
 
 class TestAvailConstantsAPIs(PsutilTestCase):
 
-    def check_constants(self, names, hasit):
+    def check_constants(self, names, are_avail):
         for name in names:
             with self.subTest(name=name):
-                assert hasattr(psutil, name) == hasit
-                if hasit:
+                # assert CONSTANT is/isn't in psutil namespace
+                assert hasattr(psutil, name) == are_avail
+                # assert CONSTANT is/isn't in psutil.__all__
+                if are_avail:
                     assert name in psutil.__all__
                 else:
                     assert name not in psutil.__all__
@@ -63,26 +65,25 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         self.check_constants(("PROCFS_PATH",), LINUX or SUNOS or AIX)
 
     def test_proc_status(self):
-        self.check_constants(
-            (
-                "STATUS_RUNNING",
-                "STATUS_SLEEPING",
-                "STATUS_DISK_SLEEP",
-                "STATUS_STOPPED",
-                "STATUS_TRACING_STOP",
-                "STATUS_ZOMBIE",
-                "STATUS_DEAD",
-                "STATUS_WAKE_KILL",
-                "STATUS_WAKING",
-                "STATUS_IDLE",
-                "STATUS_LOCKED",
-                "STATUS_WAITING",
-                "STATUS_SUSPENDED",
-                "STATUS_PARKED",
-            ),
-            True,
+        names = (
+            "STATUS_RUNNING",
+            "STATUS_SLEEPING",
+            "STATUS_DISK_SLEEP",
+            "STATUS_STOPPED",
+            "STATUS_TRACING_STOP",
+            "STATUS_ZOMBIE",
+            "STATUS_DEAD",
+            "STATUS_WAKE_KILL",
+            "STATUS_WAKING",
+            "STATUS_IDLE",
+            "STATUS_LOCKED",
+            "STATUS_WAITING",
+            "STATUS_SUSPENDED",
+            "STATUS_PARKED",
         )
+        self.check_constants(names, True)
 
+    def test_proc_status_strenum(self):
         mapping = (
             (psutil.STATUS_RUNNING, "running"),
             (psutil.STATUS_SLEEPING, "sleeping"),
@@ -105,24 +106,23 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             assert repr(en) != str_
 
     def test_conn_status(self):
-        self.check_constants(
-            (
-                "CONN_ESTABLISHED",
-                "CONN_SYN_SENT",
-                "CONN_SYN_RECV",
-                "CONN_FIN_WAIT1",
-                "CONN_FIN_WAIT2",
-                "CONN_TIME_WAIT",
-                "CONN_CLOSE",
-                "CONN_CLOSE_WAIT",
-                "CONN_LAST_ACK",
-                "CONN_LISTEN",
-                "CONN_CLOSING",
-                "CONN_NONE",
-            ),
-            True,
+        names = (
+            "CONN_ESTABLISHED",
+            "CONN_SYN_SENT",
+            "CONN_SYN_RECV",
+            "CONN_FIN_WAIT1",
+            "CONN_FIN_WAIT2",
+            "CONN_TIME_WAIT",
+            "CONN_CLOSE",
+            "CONN_CLOSE_WAIT",
+            "CONN_LAST_ACK",
+            "CONN_LISTEN",
+            "CONN_CLOSING",
+            "CONN_NONE",
         )
+        self.check_constants(names, True)
 
+    def test_conn_status_strenum(self):
         mapping = (
             (psutil.CONN_ESTABLISHED, "ESTABLISHED"),
             (psutil.CONN_SYN_SENT, "SYN_SENT"),
@@ -143,68 +143,61 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             assert repr(en) != str_
 
     def test_nic_duplex(self):
-        self.check_constants(
-            ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN"),
-            True,
-        )
+        names = ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN")
+        self.check_constants(names, True)
 
     def test_battery_time(self):
-        self.check_constants(
-            ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED"),
-            True,
-        )
+        names = ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED")
+        self.check_constants(names, True)
 
     def test_proc_priority_windows(self):
-        self.check_constants(
-            (
-                "ABOVE_NORMAL_PRIORITY_CLASS",
-                "BELOW_NORMAL_PRIORITY_CLASS",
-                "HIGH_PRIORITY_CLASS",
-                "IDLE_PRIORITY_CLASS",
-                "NORMAL_PRIORITY_CLASS",
-                "REALTIME_PRIORITY_CLASS",
-            ),
-            WINDOWS,
+        names = (
+            "ABOVE_NORMAL_PRIORITY_CLASS",
+            "BELOW_NORMAL_PRIORITY_CLASS",
+            "HIGH_PRIORITY_CLASS",
+            "IDLE_PRIORITY_CLASS",
+            "NORMAL_PRIORITY_CLASS",
+            "REALTIME_PRIORITY_CLASS",
         )
+        self.check_constants(names, WINDOWS)
 
     def test_proc_ioprio_class_linux(self):
-        self.check_constants(
-            (
-                "IOPRIO_CLASS_NONE",
-                "IOPRIO_CLASS_RT",
-                "IOPRIO_CLASS_BE",
-                "IOPRIO_CLASS_IDLE",
-            ),
-            LINUX,
+        names = (
+            "IOPRIO_CLASS_NONE",
+            "IOPRIO_CLASS_RT",
+            "IOPRIO_CLASS_BE",
+            "IOPRIO_CLASS_IDLE",
         )
+        self.check_constants(names, LINUX)
 
     def test_proc_ioprio_value_windows(self):
-        self.check_constants(
-            ("IOPRIO_HIGH", "IOPRIO_NORMAL", "IOPRIO_LOW", "IOPRIO_VERYLOW"),
-            WINDOWS,
+        names = (
+            "IOPRIO_HIGH",
+            "IOPRIO_NORMAL",
+            "IOPRIO_LOW",
+            "IOPRIO_VERYLOW",
         )
+        self.check_constants(names, WINDOWS)
 
     @pytest.mark.skipif(
         GITHUB_ACTIONS and LINUX,
         reason="unsupported on GITHUB_ACTIONS + LINUX",
     )
     def test_rlimit(self):
-        self.check_constants(
-            (
-                "RLIM_INFINITY",
-                "RLIMIT_AS",
-                "RLIMIT_CORE",
-                "RLIMIT_CPU",
-                "RLIMIT_DATA",
-                "RLIMIT_FSIZE",
-                "RLIMIT_MEMLOCK",
-                "RLIMIT_NOFILE",
-                "RLIMIT_NPROC",
-                "RLIMIT_RSS",
-                "RLIMIT_STACK",
-            ),
-            LINUX or FREEBSD,
+        names = (
+            "RLIM_INFINITY",
+            "RLIMIT_AS",
+            "RLIMIT_CORE",
+            "RLIMIT_CPU",
+            "RLIMIT_DATA",
+            "RLIMIT_FSIZE",
+            "RLIMIT_MEMLOCK",
+            "RLIMIT_NOFILE",
+            "RLIMIT_NPROC",
+            "RLIMIT_RSS",
+            "RLIMIT_STACK",
         )
+        self.check_constants(names, LINUX or FREEBSD)
         self.check_constants(("RLIMIT_LOCKS",), LINUX)
         self.check_constants(
             ("RLIMIT_SWAP", "RLIMIT_SBSIZE", "RLIMIT_NPTS"), FREEBSD
