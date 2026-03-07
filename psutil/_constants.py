@@ -7,10 +7,11 @@
 import enum
 
 from ._common import LINUX
+from ._common import SUNOS
 from ._common import WINDOWS
 
 
-# Process.status()
+# psutil.Process.status()
 class ProcStatus(enum.StrEnum):
     STATUS_RUNNING = "running"
     STATUS_SLEEPING = "sleeping"
@@ -28,7 +29,7 @@ class ProcStatus(enum.StrEnum):
     STATUS_PARKED = "parked"  # Linux
 
 
-# Process.net_connections() and psutil.net_connections()
+# psutil.Process.net_connections() and psutil.net_connections()
 class ConnStatus(enum.StrEnum):
     CONN_ESTABLISHED = "ESTABLISHED"
     CONN_SYN_SENT = "SYN_SENT"
@@ -44,16 +45,19 @@ class ConnStatus(enum.StrEnum):
     CONN_NONE = "NONE"
     if WINDOWS:
         CONN_DELETE_TCB = "DELETE_TCB"
+    if SUNOS:
+        CONN_IDLE = "IDLE"
+        CONN_BOUND = "BOUND"
 
 
-# net_if_stats()
+# psutil.net_if_stats()
 class NicDuplex(enum.IntEnum):
     NIC_DUPLEX_FULL = 2
     NIC_DUPLEX_HALF = 1
     NIC_DUPLEX_UNKNOWN = 0
 
 
-# sensors_battery()
+# psutil.sensors_battery()
 class BatteryTime(enum.IntEnum):
     POWER_TIME_UNKNOWN = -1
     POWER_TIME_UNLIMITED = -2

@@ -70,8 +70,6 @@ if LINUX:
     from . import _pslinux as _psplatform
     from ._constants import ProcIOPriorityClass
 
-    globals().update(ProcIOPriorityClass.__members__)
-
 elif WINDOWS:
     from . import _pswindows as _psplatform
     from ._constants import ProcIOPriorityClass
