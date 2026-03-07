@@ -62,7 +62,19 @@ class TestAvailConstantsAPIs(PsutilTestCase):
     def test_PROCFS_PATH(self):
         self.check_constants(("PROCFS_PATH",), LINUX or SUNOS or AIX)
 
-    def test_win_proc_priority(self):
+    def test_nic_duplex(self):
+        self.check_constants(
+            ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN"),
+            True,
+        )
+
+    def test_battery_time(self):
+        self.check_constants(
+            ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED"),
+            True,
+        )
+
+    def test_proc_priority_windows(self):
         self.check_constants(
             (
                 "ABOVE_NORMAL_PRIORITY_CLASS",
@@ -75,7 +87,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             WINDOWS,
         )
 
-    def test_linux_proc_ioprio_class(self):
+    def test_proc_ioprio_class_linux(self):
         self.check_constants(
             (
                 "IOPRIO_CLASS_NONE",
@@ -86,22 +98,10 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             LINUX,
         )
 
-    def test_win_proc_ioprio_value(self):
+    def test_proc_ioprio_value_windows(self):
         self.check_constants(
             ("IOPRIO_HIGH", "IOPRIO_NORMAL", "IOPRIO_LOW", "IOPRIO_VERYLOW"),
             WINDOWS,
-        )
-
-    def test_nic_duplex(self):
-        self.check_constants(
-            ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN"),
-            True,
-        )
-
-    def test_battery_time(self):
-        self.check_constants(
-            ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED"),
-            True,
         )
 
     @pytest.mark.skipif(
