@@ -22,6 +22,15 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil import BatteryTime
+from psutil import ConnStatus
+from psutil import NicDuplex
+from psutil import ProcStatus
+
+if LINUX or WINDOWS:
+    from psutil import ProcIOPriorityClass
+if WINDOWS:
+    from psutil import ProcPriority
 
 from . import AARCH64
 from . import GITHUB_ACTIONS
@@ -82,6 +91,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             "STATUS_PARKED",
         )
         self.check_constants(names, True)
+        assert sorted(ProcStatus.__members__.keys()) == sorted(names)
 
     def test_proc_status_strenum(self):
         mapping = (
@@ -106,7 +116,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             assert repr(en) != str_
 
     def test_conn_status(self):
-        names = (
+        names = [
             "CONN_ESTABLISHED",
             "CONN_SYN_SENT",
             "CONN_SYN_RECV",
@@ -119,8 +129,14 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             "CONN_LISTEN",
             "CONN_CLOSING",
             "CONN_NONE",
-        )
+        ]
+        if WINDOWS:
+            names.append("DELETE_TCB")
+        if SUNOS:
+            names.extend(["IDLE", "BOUND"])
+
         self.check_constants(names, True)
+        assert sorted(ConnStatus.__members__.keys()) == sorted(names)
 
     def test_conn_status_strenum(self):
         mapping = (
@@ -145,10 +161,38 @@ class TestAvailConstantsAPIs(PsutilTestCase):
     def test_nic_duplex(self):
         names = ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN")
         self.check_constants(names, True)
+        assert sorted(NicDuplex.__members__.keys()) == sorted(names)
 
     def test_battery_time(self):
         names = ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED")
         self.check_constants(names, True)
+        assert sorted(BatteryTime.__members__.keys()) == sorted(names)
+
+    def test_proc_ioprio_class_linux(self):
+        names = (
+            "IOPRIO_CLASS_NONE",
+            "IOPRIO_CLASS_RT",
+            "IOPRIO_CLASS_BE",
+            "IOPRIO_CLASS_IDLE",
+        )
+        self.check_constants(names, LINUX)
+        if LINUX:
+            assert sorted(ProcIOPriorityClass.__members__.keys()) == sorted(
+                names
+            )
+
+    def test_proc_ioprio_value_windows(self):
+        names = (
+            "IOPRIO_HIGH",
+            "IOPRIO_NORMAL",
+            "IOPRIO_LOW",
+            "IOPRIO_VERYLOW",
+        )
+        self.check_constants(names, WINDOWS)
+        if WINDOWS:
+            assert sorted(ProcIOPriorityClass.__members__.keys()) == sorted(
+                names
+            )
 
     def test_proc_priority_windows(self):
         names = (
@@ -160,24 +204,8 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             "REALTIME_PRIORITY_CLASS",
         )
         self.check_constants(names, WINDOWS)
-
-    def test_proc_ioprio_class_linux(self):
-        names = (
-            "IOPRIO_CLASS_NONE",
-            "IOPRIO_CLASS_RT",
-            "IOPRIO_CLASS_BE",
-            "IOPRIO_CLASS_IDLE",
-        )
-        self.check_constants(names, LINUX)
-
-    def test_proc_ioprio_value_windows(self):
-        names = (
-            "IOPRIO_HIGH",
-            "IOPRIO_NORMAL",
-            "IOPRIO_LOW",
-            "IOPRIO_VERYLOW",
-        )
-        self.check_constants(names, WINDOWS)
+        if WINDOWS:
+            assert sorted(ProcPriority.__members__.keys()) == sorted(names)
 
     @pytest.mark.skipif(
         GITHUB_ACTIONS and LINUX,
@@ -216,8 +244,8 @@ class TestAvailConstantsAPIs(PsutilTestCase):
     def test_enum_containers(self):
         self.check_constants(("ProcStatus",), True)
         self.check_constants(("ConnStatus",), True)
-        self.check_constants(("BatteryTime",), True)
         self.check_constants(("NicDuplex",), True)
+        self.check_constants(("BatteryTime",), True)
         self.check_constants(("ProcIOPriorityClass",), LINUX or WINDOWS)
         self.check_constants(("ProcPriority",), WINDOWS)
 

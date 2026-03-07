@@ -73,8 +73,16 @@ if LINUX:
         IOPRIO_CLASS_BE = 2
         IOPRIO_CLASS_IDLE = 3
 
-elif WINDOWS:
+
+if WINDOWS:
     from . import _psutil_windows as cext
+
+    # psutil.Process.ionice(ioclass=…)
+    class ProcIOPriorityClass(enum.IntEnum):
+        IOPRIO_VERYLOW = 0
+        IOPRIO_LOW = 1
+        IOPRIO_NORMAL = 2
+        IOPRIO_HIGH = 3
 
     # psutil.Process.nice()
     class ProcPriority(enum.IntEnum):
@@ -84,10 +92,3 @@ elif WINDOWS:
         IDLE_PRIORITY_CLASS = cext.IDLE_PRIORITY_CLASS
         NORMAL_PRIORITY_CLASS = cext.NORMAL_PRIORITY_CLASS
         REALTIME_PRIORITY_CLASS = cext.REALTIME_PRIORITY_CLASS
-
-    # psutil.Process.ionice(ioclass=…)
-    class ProcIOPriorityClass(enum.IntEnum):
-        IOPRIO_VERYLOW = 0
-        IOPRIO_LOW = 1
-        IOPRIO_NORMAL = 2
-        IOPRIO_HIGH = 3
