@@ -62,7 +62,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
     def test_PROCFS_PATH(self):
         assert hasattr(psutil, "PROCFS_PATH") == (LINUX or SUNOS or AIX)
 
-    def test_win_priority(self):
+    def test_win_proc_priority(self):
         self.check_constants(
             (
                 "ABOVE_NORMAL_PRIORITY_CLASS",
@@ -75,7 +75,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             WINDOWS,
         )
 
-    def test_linux_ioprio_linux(self):
+    def test_linux_proc_ioprio_class(self):
         self.check_constants(
             (
                 "IOPRIO_CLASS_NONE",
@@ -86,7 +86,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             LINUX,
         )
 
-    def test_linux_ioprio_windows(self):
+    def test_win_proc_ioprio_value(self):
         self.check_constants(
             (
                 "IOPRIO_HIGH",
