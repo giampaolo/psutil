@@ -29,6 +29,7 @@ from ._common import parse_environ_block
 from ._common import usage_percent
 from ._constants import BatteryTime
 from ._constants import NicDuplex
+from ._constants import ProcIOPriorityClass
 from ._constants import ProcPriority
 
 try:
@@ -93,17 +94,6 @@ TCP_STATUSES = {
     cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
-
-
-class IOPriority(enum.IntEnum):
-    IOPRIO_VERYLOW = 0
-    IOPRIO_LOW = 1
-    IOPRIO_NORMAL = 2
-    IOPRIO_HIGH = 3
-
-
-globals().update(ProcPriority.__members__)
-globals().update(IOPriority.__members__)
 
 
 # =====================================================================
@@ -993,7 +983,7 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = cext.proc_io_priority_get(self.pid)
-        ret = IOPriority(ret)
+        ret = ProcIOPriorityClass(ret)
         return ret
 
     @wrap_exceptions
@@ -1002,10 +992,10 @@ class Process:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
         if ioclass not in {
-            IOPriority.IOPRIO_VERYLOW,
-            IOPriority.IOPRIO_LOW,
-            IOPriority.IOPRIO_NORMAL,
-            IOPriority.IOPRIO_HIGH,
+            ProcIOPriorityClass.IOPRIO_VERYLOW,
+            ProcIOPriorityClass.IOPRIO_LOW,
+            ProcIOPriorityClass.IOPRIO_NORMAL,
+            ProcIOPriorityClass.IOPRIO_HIGH,
         }:
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
