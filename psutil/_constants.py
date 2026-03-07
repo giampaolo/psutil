@@ -10,9 +10,34 @@ from ._common import LINUX
 from ._common import SUNOS
 from ._common import WINDOWS
 
+if hasattr(enum, "StrEnum"):  # Python >= 3.11
+    StrEnum = enum.StrEnum
+else:
+
+    # A backport of Python 3.11 StrEnum class for >= Python 3.8
+    class StrEnum(str, enum.Enum):
+        def __new__(cls, *values):
+            assert len(values) <= 3
+            if len(values) == 1:
+                assert isinstance(values[0], str)
+            if len(values) >= 2:
+                assert isinstance(values[1], str)
+            if len(values) == 3:
+                assert isinstance(values[2], str)
+            value = str(*values)
+            member = str.__new__(cls, value)
+            member._value_ = value
+            return member
+
+        __str__ = str.__str__
+
+        @staticmethod
+        def _generate_next_value_(name, _start, _count, _last_values):
+            return name.lower()
+
 
 # psutil.Process.status()
-class ProcStatus(enum.StrEnum):
+class ProcStatus(StrEnum):
     STATUS_RUNNING = "running"
     STATUS_SLEEPING = "sleeping"
     STATUS_DISK_SLEEP = "disk-sleep"
@@ -30,7 +55,7 @@ class ProcStatus(enum.StrEnum):
 
 
 # psutil.Process.net_connections() and psutil.net_connections()
-class ConnStatus(enum.StrEnum):
+class ConnStatus(StrEnum):
     CONN_ESTABLISHED = "ESTABLISHED"
     CONN_SYN_SENT = "SYN_SENT"
     CONN_SYN_RECV = "SYN_RECV"
