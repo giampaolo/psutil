@@ -13,7 +13,6 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_sunos as cext
@@ -22,6 +21,7 @@ from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import conn_tmap
 from ._common import debug
 from ._common import get_procfs_path
 from ._common import isfile_strict
@@ -232,7 +232,7 @@ def net_connections(kind, _pid=-1):
     connections (as opposed to connections opened by one process only).
     Only INET sockets are returned (UNIX are not).
     """
-    families, types = _common.conn_tmap[kind]
+    families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid)
     ret = set()
     for item in rawlist:

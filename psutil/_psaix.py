@@ -13,18 +13,20 @@ import re
 import subprocess
 import sys
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_aix as cext
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
+from ._constants import ConnStatus
 from ._constants import NicDuplex
+from ._constants import ProcStatus
 
 __extra__all__ = ["PROCFS_PATH"]
 
@@ -42,26 +44,26 @@ PAGE_SIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 
 PROC_STATUSES = {
-    cext.SIDL: _common.STATUS_IDLE,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
-    cext.SACTIVE: _common.STATUS_RUNNING,
-    cext.SSWAP: _common.STATUS_RUNNING,  # TODO what status is this?
-    cext.SSTOP: _common.STATUS_STOPPED,
+    cext.SIDL: ProcStatus.STATUS_IDLE,
+    cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
+    cext.SACTIVE: ProcStatus.STATUS_RUNNING,
+    cext.SSWAP: ProcStatus.STATUS_RUNNING,  # TODO what status is this?
+    cext.SSTOP: ProcStatus.STATUS_STOPPED,
 }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.TCPS_ESTABLISHED: ConnStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RCVD: ConnStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
 }
 
 proc_info_map = dict(
@@ -184,7 +186,7 @@ def net_connections(kind, _pid=-1):
     """Return socket connections.  If pid == -1 return system-wide
     connections (as opposed to connections opened by one process only).
     """
-    families, types = _common.conn_tmap[kind]
+    families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid)
     ret = []
     for item in rawlist:
