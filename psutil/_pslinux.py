@@ -24,9 +24,6 @@ from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_linux as cext
 from ._common import ENCODING
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -43,6 +40,8 @@ from ._common import parse_environ_block
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
+from ._constants import BatteryTime
+from ._constants import NicDuplex
 
 # fmt: off
 __extra__all__ = [
@@ -965,9 +964,9 @@ def net_io_counters():
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {
-        cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
-        cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
-        cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN,
+        cext.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
+        cext.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
+        cext.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
     }
     names = net_io_counters().keys()
     ret = {}
@@ -1442,18 +1441,18 @@ def sensors_battery():
 
     # Seconds left.
     if power_plugged:
-        secsleft = _common.POWER_TIME_UNLIMITED
+        secsleft = BatteryTime.POWER_TIME_UNLIMITED
     elif energy_now is not None and power_now is not None:
         try:
             secsleft = int(energy_now / abs(power_now) * 3600)
         except ZeroDivisionError:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
     elif time_to_empty is not None:
         secsleft = int(time_to_empty * 60)
         if secsleft < 0:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
     else:
-        secsleft = _common.POWER_TIME_UNKNOWN
+        secsleft = BatteryTime.POWER_TIME_UNKNOWN
 
     return ntp.sbattery(percent, secsleft, power_plugged)
 

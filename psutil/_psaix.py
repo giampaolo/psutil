@@ -17,9 +17,6 @@ from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_aix as cext
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -27,6 +24,7 @@ from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
+from ._constants import NicDuplex
 
 __extra__all__ = ["PROCFS_PATH"]
 
@@ -211,7 +209,10 @@ def net_connections(kind, _pid=-1):
 
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
-    duplex_map = {"Full": NIC_DUPLEX_FULL, "Half": NIC_DUPLEX_HALF}
+    duplex_map = {
+        "Full": NicDuplex.NIC_DUPLEX_FULL,
+        "Half": NicDuplex.NIC_DUPLEX_HALF,
+    }
     names = {x[0] for x in net_if_addrs()}
     ret = {}
     for name in names:
@@ -242,7 +243,7 @@ def net_if_stats():
 
         output_flags = ','.join(flags)
         isup = 'running' in flags
-        duplex = duplex_map.get(duplex, NIC_DUPLEX_UNKNOWN)
+        duplex = duplex_map.get(duplex, NicDuplex.NIC_DUPLEX_UNKNOWN)
         ret[name] = ntp.snicstats(isup, duplex, speed, mtu, output_flags)
     return ret
 

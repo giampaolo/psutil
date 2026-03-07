@@ -12,6 +12,9 @@ from typing import NamedTuple
 if TYPE_CHECKING:
     import socket
 
+    from ._constants import BatteryTime
+    from ._constants import NicDuplex
+
 from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD
@@ -21,8 +24,6 @@ from ._common import NETBSD
 from ._common import OPENBSD
 from ._common import SUNOS
 from ._common import WINDOWS
-from ._common import BatteryTime
-from ._common import NicDuplex
 
 # ===================================================================
 # --- system functions

@@ -27,6 +27,8 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
+from ._constants import BatteryTime
+from ._constants import NicDuplex
 from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
 from ._psutil_windows import HIGH_PRIORITY_CLASS
@@ -342,8 +344,7 @@ def net_if_stats():
     rawdict = cext.net_if_stats()
     for name, items in rawdict.items():
         isup, duplex, speed, mtu = items
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
+        duplex = NicDuplex(duplex)
         ret[name] = ntp.snicstats(isup, duplex, speed, mtu, '')
     return ret
 
@@ -377,9 +378,9 @@ def sensors_battery():
     if no_battery:
         return None
     if power_plugged or charging:
-        secsleft = _common.POWER_TIME_UNLIMITED
+        secsleft = BatteryTime.POWER_TIME_UNLIMITED
     elif secsleft == -1:
-        secsleft = _common.POWER_TIME_UNKNOWN
+        secsleft = BatteryTime.POWER_TIME_UNKNOWN
 
     return ntp.sbattery(percent, secsleft, power_plugged)
 

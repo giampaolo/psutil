@@ -56,14 +56,9 @@ from ._common import FREEBSD
 from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import OPENBSD
 from ._common import OSX  # deprecated alias
 from ._common import POSIX
-from ._common import POWER_TIME_UNKNOWN
-from ._common import POWER_TIME_UNLIMITED
 from ._common import STATUS_DEAD
 from ._common import STATUS_DISK_SLEEP
 from ._common import STATUS_IDLE
@@ -86,6 +81,14 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
+from ._constants import BatteryTime
+from ._constants import NicDuplex
+
+NIC_DUPLEX_FULL = NicDuplex.NIC_DUPLEX_FULL
+NIC_DUPLEX_HALF = NicDuplex.NIC_DUPLEX_HALF
+NIC_DUPLEX_UNKNOWN = NicDuplex.NIC_DUPLEX_UNKNOWN
+POWER_TIME_UNKNOWN = BatteryTime.POWER_TIME_UNKNOWN
+POWER_TIME_UNLIMITED = BatteryTime.POWER_TIME_UNLIMITED
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py

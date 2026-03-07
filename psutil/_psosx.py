@@ -22,6 +22,8 @@ from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
+from ._constants import BatteryTime
+from ._constants import NicDuplex
 
 __extra__all__ = []
 
@@ -173,9 +175,9 @@ def sensors_battery():
         return None
     power_plugged = power_plugged == 1
     if power_plugged:
-        secsleft = _common.POWER_TIME_UNLIMITED
+        secsleft = BatteryTime.POWER_TIME_UNLIMITED
     elif minsleft == -1:
-        secsleft = _common.POWER_TIME_UNKNOWN
+        secsleft = BatteryTime.POWER_TIME_UNKNOWN
     else:
         secsleft = minsleft * 60
     return ntp.sbattery(percent, secsleft, power_plugged)
@@ -222,8 +224,7 @@ def net_if_stats():
             if err.errno != errno.ENODEV:
                 raise
         else:
-            if hasattr(_common, 'NicDuplex'):
-                duplex = _common.NicDuplex(duplex)
+            duplex = NicDuplex(duplex)
             output_flags = ','.join(flags)
             isup = 'running' in flags
             ret[name] = ntp.snicstats(isup, duplex, speed, mtu, output_flags)

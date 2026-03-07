@@ -56,6 +56,8 @@ from psutil import WINDOWS
 from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import supports_ipv6
+from psutil._constants import BatteryTime
+from psutil._constants import NicDuplex
 
 if POSIX:
     from psutil._psposix import wait_pid
@@ -1529,7 +1531,13 @@ def create_sockets():
 def _get_hints(cls):
     try:
         return typing.get_type_hints(
-            cls, globalns=vars(ntuples), localns={'socket': socket}
+            cls,
+            globalns=vars(ntuples),
+            localns={
+                'socket': socket,
+                'BatteryTime': BatteryTime,
+                'NicDuplex': NicDuplex,
+            },
         )
     except TypeError:
         # Python < 3.10 can't evaluate "X | Y" union syntax.
