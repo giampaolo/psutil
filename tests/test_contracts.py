@@ -83,6 +83,27 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             True,
         )
 
+        mapping = (
+            (psutil.STATUS_RUNNING, "running"),
+            (psutil.STATUS_SLEEPING, "sleeping"),
+            (psutil.STATUS_DISK_SLEEP, "disk-sleep"),
+            (psutil.STATUS_STOPPED, "stopped"),
+            (psutil.STATUS_TRACING_STOP, "tracing-stop"),
+            (psutil.STATUS_ZOMBIE, "zombie"),
+            (psutil.STATUS_DEAD, "dead"),
+            (psutil.STATUS_WAKE_KILL, "wake-kill"),
+            (psutil.STATUS_WAKING, "waking"),
+            (psutil.STATUS_IDLE, "idle"),
+            (psutil.STATUS_LOCKED, "locked"),
+            (psutil.STATUS_WAITING, "waiting"),
+            (psutil.STATUS_SUSPENDED, "suspended"),
+            (psutil.STATUS_PARKED, "parked"),
+        )
+        for en, str_ in mapping:
+            assert en == str_
+            assert str(en) == str_
+            assert repr(en) != str_
+
     def test_conn_status(self):
         self.check_constants(
             (
@@ -101,6 +122,25 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             ),
             True,
         )
+
+        mapping = (
+            (psutil.CONN_ESTABLISHED, "ESTABLISHED"),
+            (psutil.CONN_SYN_SENT, "SYN_SENT"),
+            (psutil.CONN_SYN_RECV, "SYN_RECV"),
+            (psutil.CONN_FIN_WAIT1, "FIN_WAIT1"),
+            (psutil.CONN_FIN_WAIT2, "FIN_WAIT2"),
+            (psutil.CONN_TIME_WAIT, "TIME_WAIT"),
+            (psutil.CONN_CLOSE, "CLOSE"),
+            (psutil.CONN_CLOSE_WAIT, "CLOSE_WAIT"),
+            (psutil.CONN_LAST_ACK, "LAST_ACK"),
+            (psutil.CONN_LISTEN, "LISTEN"),
+            (psutil.CONN_CLOSING, "CLOSING"),
+            (psutil.CONN_NONE, "NONE"),
+        )
+        for en, str_ in mapping:
+            assert en == str_
+            assert str(en) == str_
+            assert repr(en) != str_
 
     def test_nic_duplex(self):
         self.check_constants(
