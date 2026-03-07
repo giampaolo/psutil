@@ -13,7 +13,6 @@ import sys
 import threading
 import time
 
-from . import _common
 from . import _ntuples as ntp
 from ._common import ENCODING
 from ._common import AccessDenied
@@ -32,6 +31,7 @@ from ._constants import ConnStatus
 from ._constants import NicDuplex
 from ._constants import ProcIOPriorityClass
 from ._constants import ProcPriority
+from ._constants import ProcStatus
 
 try:
     from . import _psutil_windows as cext
@@ -1012,9 +1012,9 @@ class Process:
     def status(self):
         suspended = cext.proc_is_suspended(self.pid)
         if suspended:
-            return _common.STATUS_STOPPED
+            return ProcStatus.STATUS_STOPPED
         else:
-            return _common.STATUS_RUNNING
+            return ProcStatus.STATUS_RUNNING
 
     @wrap_exceptions
     def cpu_affinity_get(self):
