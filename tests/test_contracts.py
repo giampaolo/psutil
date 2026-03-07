@@ -62,6 +62,27 @@ class TestAvailConstantsAPIs(PsutilTestCase):
     def test_PROCFS_PATH(self):
         self.check_constants(("PROCFS_PATH",), LINUX or SUNOS or AIX)
 
+    def test_proc_status(self):
+        self.check_constants(
+            (
+                "STATUS_RUNNING",
+                "STATUS_SLEEPING",
+                "STATUS_DISK_SLEEP",
+                "STATUS_STOPPED",
+                "STATUS_TRACING_STOP",
+                "STATUS_ZOMBIE",
+                "STATUS_DEAD",
+                "STATUS_WAKE_KILL",
+                "STATUS_WAKING",
+                "STATUS_IDLE",
+                "STATUS_LOCKED",
+                "STATUS_WAITING",
+                "STATUS_SUSPENDED",
+                "STATUS_PARKED",
+            ),
+            True,
+        )
+
     def test_nic_duplex(self):
         self.check_constants(
             ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN"),
@@ -141,6 +162,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                 self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
 
     def test_enum_containers(self):
+        self.check_constants(("ProcStatus",), True)
         self.check_constants(("BatteryTime",), True)
         self.check_constants(("NicDuplex",), True)
         self.check_constants(("ProcIOPriorityClass",), LINUX or WINDOWS)

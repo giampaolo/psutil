@@ -59,18 +59,6 @@ from ._common import NETBSD
 from ._common import OPENBSD
 from ._common import OSX  # deprecated alias
 from ._common import POSIX
-from ._common import STATUS_DEAD
-from ._common import STATUS_DISK_SLEEP
-from ._common import STATUS_IDLE
-from ._common import STATUS_LOCKED
-from ._common import STATUS_PARKED
-from ._common import STATUS_RUNNING
-from ._common import STATUS_SLEEPING
-from ._common import STATUS_STOPPED
-from ._common import STATUS_TRACING_STOP
-from ._common import STATUS_WAITING
-from ._common import STATUS_WAKING
-from ._common import STATUS_ZOMBIE
 from ._common import SUNOS
 from ._common import WINDOWS
 from ._common import AccessDenied
@@ -83,6 +71,7 @@ from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._constants import BatteryTime
 from ._constants import NicDuplex
+from ._constants import ProcStatus
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -134,10 +123,6 @@ __all__ = [
 
     # constants
     "version_info", "__version__",
-
-    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
-    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
-    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_PARKED",
 
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
@@ -191,6 +176,7 @@ def _export_enum(cls):
 
 
 # Populate global namespace with enums and CONSTANTs.
+_export_enum(ProcStatus)
 _export_enum(NicDuplex)
 _export_enum(BatteryTime)
 if LINUX or WINDOWS:
@@ -443,7 +429,7 @@ class Process:
             if pid1 == pid2:
                 if ident1 and not ident2:
                     try:
-                        return self.status() == STATUS_ZOMBIE
+                        return self.status() == ProcStatus.STATUS_ZOMBIE
                     except Error:
                         pass
         return self._ident == other._ident
@@ -752,7 +738,7 @@ class Process:
         try:
             return self._proc.status()
         except ZombieProcess:
-            return STATUS_ZOMBIE
+            return ProcStatus.STATUS_ZOMBIE
 
     def username(self):
         """The name of the user that owns the process.

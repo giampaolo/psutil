@@ -43,6 +43,7 @@ from ._common import usage_percent
 from ._constants import BatteryTime
 from ._constants import NicDuplex
 from ._constants import ProcIOPriorityClass
+from ._constants import ProcStatus
 
 # fmt: off
 __extra__all__ = [
@@ -96,18 +97,18 @@ AF_LINK = AddressFamily.AF_LINK
 # ...and (TASK_* constants):
 # https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 PROC_STATUSES = {
-    "R": _common.STATUS_RUNNING,
-    "S": _common.STATUS_SLEEPING,
-    "D": _common.STATUS_DISK_SLEEP,
-    "T": _common.STATUS_STOPPED,
-    "t": _common.STATUS_TRACING_STOP,
-    "Z": _common.STATUS_ZOMBIE,
-    "X": _common.STATUS_DEAD,
-    "x": _common.STATUS_DEAD,
-    "K": _common.STATUS_WAKE_KILL,
-    "W": _common.STATUS_WAKING,
-    "I": _common.STATUS_IDLE,
-    "P": _common.STATUS_PARKED,
+    "R": ProcStatus.STATUS_RUNNING,
+    "S": ProcStatus.STATUS_SLEEPING,
+    "D": ProcStatus.STATUS_DISK_SLEEP,
+    "T": ProcStatus.STATUS_STOPPED,
+    "t": ProcStatus.STATUS_TRACING_STOP,
+    "Z": ProcStatus.STATUS_ZOMBIE,
+    "X": ProcStatus.STATUS_DEAD,
+    "x": ProcStatus.STATUS_DEAD,
+    "K": ProcStatus.STATUS_WAKE_KILL,
+    "W": ProcStatus.STATUS_WAKING,
+    "I": ProcStatus.STATUS_IDLE,
+    "P": ProcStatus.STATUS_PARKED,
 }
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h

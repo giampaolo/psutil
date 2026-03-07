@@ -10,6 +10,24 @@ from ._common import LINUX
 from ._common import WINDOWS
 
 
+# Process.status()
+class ProcStatus(enum.StrEnum):
+    STATUS_RUNNING = "running"
+    STATUS_SLEEPING = "sleeping"
+    STATUS_DISK_SLEEP = "disk-sleep"
+    STATUS_STOPPED = "stopped"
+    STATUS_TRACING_STOP = "tracing-stop"
+    STATUS_ZOMBIE = "zombie"
+    STATUS_DEAD = "dead"
+    STATUS_WAKE_KILL = "wake-kill"
+    STATUS_WAKING = "waking"
+    STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
+    STATUS_LOCKED = "locked"  # FreeBSD
+    STATUS_WAITING = "waiting"  # FreeBSD
+    STATUS_SUSPENDED = "suspended"  # NetBSD
+    STATUS_PARKED = "parked"  # Linux
+
+
 # net_if_stats()
 class NicDuplex(enum.IntEnum):
     NIC_DUPLEX_FULL = 2

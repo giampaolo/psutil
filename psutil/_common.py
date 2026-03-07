@@ -42,11 +42,6 @@ __all__ = [
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
     'CONN_NONE', 'CONN_SYN_RECV', 'CONN_SYN_SENT', 'CONN_TIME_WAIT',
-    # process status constants
-    'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
-    'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
-    'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
-    'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # utility functions
@@ -82,23 +77,6 @@ AIX = sys.platform.startswith("aix")
 # ===================================================================
 # --- API constants
 # ===================================================================
-
-
-# Process.status()
-STATUS_RUNNING = "running"
-STATUS_SLEEPING = "sleeping"
-STATUS_DISK_SLEEP = "disk-sleep"
-STATUS_STOPPED = "stopped"
-STATUS_TRACING_STOP = "tracing-stop"
-STATUS_ZOMBIE = "zombie"
-STATUS_DEAD = "dead"
-STATUS_WAKE_KILL = "wake-kill"
-STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
-STATUS_LOCKED = "locked"  # FreeBSD
-STATUS_WAITING = "waiting"  # FreeBSD
-STATUS_SUSPENDED = "suspended"  # NetBSD
-STATUS_PARKED = "parked"  # Linux
 
 # Process.net_connections() and psutil.net_connections()
 CONN_ESTABLISHED = "ESTABLISHED"
