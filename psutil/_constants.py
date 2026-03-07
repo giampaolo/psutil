@@ -17,13 +17,6 @@ else:
     # A backport of Python 3.11 StrEnum class for >= Python 3.8
     class StrEnum(str, enum.Enum):
         def __new__(cls, *values):
-            assert len(values) <= 3
-            if len(values) == 1:
-                assert isinstance(values[0], str)
-            if len(values) >= 2:
-                assert isinstance(values[1], str)
-            if len(values) == 3:
-                assert isinstance(values[2], str)
             value = str(*values)
             member = str.__new__(cls, value)
             member._value_ = value
