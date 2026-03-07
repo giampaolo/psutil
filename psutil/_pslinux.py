@@ -42,7 +42,7 @@ from ._common import supports_ipv6
 from ._common import usage_percent
 from ._constants import BatteryTime
 from ._constants import NicDuplex
-from ._constants import ProcIOPriority
+from ._constants import ProcIOPriorityClass
 
 # fmt: off
 __extra__all__ = [
@@ -2135,7 +2135,7 @@ class Process:
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
-            ioclass = ProcIOPriority(ioclass)
+            ioclass = ProcIOPriorityClass(ioclass)
             return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
@@ -2143,8 +2143,8 @@ class Process:
             if value is None:
                 value = 0
             if value and ioclass in {
-                ProcIOPriority.IOPRIO_CLASS_IDLE,
-                ProcIOPriority.IOPRIO_CLASS_NONE,
+                ProcIOPriorityClass.IOPRIO_CLASS_IDLE,
+                ProcIOPriorityClass.IOPRIO_CLASS_NONE,
             }:
                 msg = f"{ioclass!r} ioclass accepts no value"
                 raise ValueError(msg)
