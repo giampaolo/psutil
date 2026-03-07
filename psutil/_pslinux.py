@@ -19,7 +19,6 @@ import sys
 import warnings
 from collections import defaultdict
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_linux as cext
@@ -38,6 +37,7 @@ from ._common import open_binary
 from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
+from ._common import socktype_to_enum
 from ._common import supports_ipv6
 from ._common import usage_percent
 from ._constants import BatteryTime
@@ -851,7 +851,7 @@ class NetConnections:
                         continue
                     else:
                         path = tokens[-1] if len(tokens) == 8 else ''
-                        type_ = _common.socktype_to_enum(int(type_))
+                        type_ = socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/

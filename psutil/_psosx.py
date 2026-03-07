@@ -8,7 +8,6 @@ import errno
 import functools
 import os
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_osx as cext
@@ -23,7 +22,9 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 from ._constants import BatteryTime
+from ._constants import ConnStatus
 from ._constants import NicDuplex
+from ._constants import ProcStatus
 
 __extra__all__ = []
 
@@ -37,26 +38,26 @@ PAGESIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RECEIVED: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.TCPS_ESTABLISHED: ConnStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RECEIVED: ConnStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
 }
 
 PROC_STATUSES = {
-    cext.SIDL: _common.STATUS_IDLE,
-    cext.SRUN: _common.STATUS_RUNNING,
-    cext.SSLEEP: _common.STATUS_SLEEPING,
-    cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
+    cext.SIDL: ProcStatus.STATUS_IDLE,
+    cext.SRUN: ProcStatus.STATUS_RUNNING,
+    cext.SSLEEP: ProcStatus.STATUS_SLEEPING,
+    cext.SSTOP: ProcStatus.STATUS_STOPPED,
+    cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
 }
 
 
