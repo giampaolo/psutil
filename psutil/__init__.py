@@ -37,7 +37,6 @@ except ImportError:
     pwd = None
 
 from . import _common
-from . import _constants
 from . import _ntuples as _ntp
 from ._common import AIX
 from ._common import BSD
@@ -85,12 +84,6 @@ from ._common import wrap_numbers as _wrap_numbers
 from ._constants import BatteryTime
 from ._constants import NicDuplex
 
-NIC_DUPLEX_FULL = NicDuplex.NIC_DUPLEX_FULL
-NIC_DUPLEX_HALF = NicDuplex.NIC_DUPLEX_HALF
-NIC_DUPLEX_UNKNOWN = NicDuplex.NIC_DUPLEX_UNKNOWN
-POWER_TIME_UNKNOWN = BatteryTime.POWER_TIME_UNKNOWN
-POWER_TIME_UNLIMITED = BatteryTime.POWER_TIME_UNLIMITED
-
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
@@ -105,9 +98,6 @@ elif WINDOWS:
     from . import _pswindows as _psplatform
     from ._constants import ProcIOPriorityClass
     from ._constants import ProcPriority
-
-    globals().update(ProcPriority.__members__)
-    globals().update(ProcIOPriorityClass.__members__)
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -181,19 +171,35 @@ __all__ = [
 # fmt: on
 
 
-__all__.extend(_psplatform.__extra__all__)
-__all__.extend(_constants.__all__)
-
 # Linux, FreeBSD
+_globals = globals()
 if hasattr(_psplatform.Process, "rlimit"):
     # Populate global namespace with RLIM* constants.
-    _globals = globals()
     _name = None
     for _name in dir(_psplatform.cext):
         if _name.startswith('RLIM') and _name.isupper():
             _globals[_name] = getattr(_psplatform.cext, _name)
             __all__.append(_name)
-    del _globals, _name
+    del _name
+
+
+def _export_enum(cls):
+    __all__.append(cls.__name__)
+    for name, member in cls.__members__.items():
+        _globals[name] = member  # noqa: F821
+        __all__.append(name)
+
+
+# Populate global namespace with enums and CONSTANTs.
+_export_enum(NicDuplex)
+_export_enum(BatteryTime)
+if LINUX or WINDOWS:
+    _export_enum(ProcIOPriorityClass)
+if WINDOWS:
+    _export_enum(ProcPriority)
+if LINUX or SUNOS or AIX:
+    __all__.append("PROCFS_PATH")
+del _globals, _export_enum
 
 AF_LINK = _psplatform.AF_LINK
 

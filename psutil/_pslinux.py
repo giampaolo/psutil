@@ -47,9 +47,6 @@ from ._constants import ProcIOPriorityClass
 # fmt: off
 __extra__all__ = [
     'PROCFS_PATH',
-    # io prio constants
-    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
-    "IOPRIO_CLASS_IDLE",
     # connection status constants
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",

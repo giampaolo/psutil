@@ -9,8 +9,6 @@ import enum
 from ._common import LINUX
 from ._common import WINDOWS
 
-__all__ = ["NicDuplex", "BatteryTime"]
-
 
 # net_if_stats()
 class NicDuplex(enum.IntEnum):
@@ -35,9 +33,6 @@ if LINUX:
         IOPRIO_CLASS_BE = 2
         IOPRIO_CLASS_IDLE = 3
 
-    __all__.append("ProcIOPriorityClass")
-
-
 elif WINDOWS:
     from . import _psutil_windows as cext
 
@@ -56,6 +51,3 @@ elif WINDOWS:
         IOPRIO_LOW = 1
         IOPRIO_NORMAL = 2
         IOPRIO_HIGH = 3
-
-    __all__.append("ProcPriority")
-    __all__.append("ProcIOPriorityClass")

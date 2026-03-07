@@ -88,13 +88,20 @@ class TestAvailConstantsAPIs(PsutilTestCase):
 
     def test_win_proc_ioprio_value(self):
         self.check_constants(
-            (
-                "IOPRIO_HIGH",
-                "IOPRIO_NORMAL",
-                "IOPRIO_LOW",
-                "IOPRIO_VERYLOW",
-            ),
+            ("IOPRIO_HIGH", "IOPRIO_NORMAL", "IOPRIO_LOW", "IOPRIO_VERYLOW"),
             WINDOWS,
+        )
+
+    def test_nic_duplex(self):
+        self.check_constants(
+            ("NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN"),
+            True,
+        )
+
+    def test_battery_time(self):
+        self.check_constants(
+            ("POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED"),
+            True,
         )
 
     @pytest.mark.skipif(
