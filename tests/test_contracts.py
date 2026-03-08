@@ -9,9 +9,13 @@ returned types and APIs availability.
 Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
+import collections.abc
 import platform
+import types as builtin_types
+import typing
 
 import psutil
+import psutil._ntuples
 from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
@@ -523,3 +527,85 @@ class TestNtupleFieldTypes(PsutilTestCase):
                 except psutil.Error:
                     continue
                 self.check_result(ret)
+
+
+# ===================================================================
+# --- returned type hints
+# ===================================================================
+
+
+class TestReturnedTypes(PsutilTestCase):
+    """Check that annotated return types in psutil/__init__.py match
+    the actual values returned at runtime.
+    """
+
+    # Namespace for resolving annotation strings: includes both the
+    # psutil module globals (Any, Generator, Process, ...) and all
+    # ntuple types from _ntuples (scputimes, svmem, pmem, ...).
+    _hint_ns = {**vars(psutil), **vars(psutil._ntuples)}
+
+    def _get_return_hint(self, fun):
+        """Return the 'return' type hint of fun, or None."""
+        while hasattr(fun, 'func'):
+            fun = fun.func
+        underlying = getattr(fun, '__func__', fun)
+        try:
+            hints = typing.get_type_hints(underlying, globalns=self._hint_ns)
+        except Exception:  # noqa: BLE001
+            return None
+        return hints.get('return')
+
+    def _hint_to_types(self, hint):
+        """Flatten a return type hint into a tuple of types for
+        isinstance(). Returns None if the hint cannot be checked
+        (e.g. Generator).
+        """
+        if hint is None:
+            return None
+        origin = getattr(hint, '__origin__', None)
+        if origin is collections.abc.Generator:
+            return None
+        is_union = (
+            hasattr(builtin_types, 'UnionType')
+            and isinstance(hint, builtin_types.UnionType)
+        ) or origin is typing.Union
+        if is_union:
+            result = []
+            for arg in typing.get_args(hint):
+                inner = getattr(arg, '__origin__', None)
+                if arg is type(None):
+                    result.append(type(None))
+                elif inner is not None:
+                    result.append(inner)
+                elif isinstance(arg, type):
+                    result.append(arg)
+            return tuple(result) if result else None
+        if origin is not None:
+            return (origin,)
+        if isinstance(hint, type):
+            return (hint,)
+        return None
+
+    def _check(self, fun, name):
+        """Call fun() and check return value type against the hint."""
+        try:
+            ret = fun()
+        except psutil.Error:
+            return
+        hint = self._get_return_hint(fun)
+        types_ = self._hint_to_types(hint)
+        if types_ is None:
+            return
+        assert isinstance(ret, types_), (name, ret, types_)
+
+    def test_system_return_types(self):
+        for fun, name in system_namespace.iter(system_namespace.getters):
+            with self.subTest(name=name):
+                self._check(fun, name)
+
+    def test_process_return_types(self):
+        p = psutil.Process()
+        ns = process_namespace(p)
+        for fun, name in ns.iter(ns.getters):
+            with self.subTest(name=name):
+                self._check(fun, name)
