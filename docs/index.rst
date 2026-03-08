@@ -2592,14 +2592,14 @@ namespace as aliases for the enum members.
 
 .. class:: psutil.ProcessStatus
 
-  :class:`enum.StrEnum` collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
+  `enum.StrEnum`_ collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
   constants. Returned by :meth:`psutil.Process.status()`.
 
   .. versionadded:: 8.0.0
 
 .. class:: psutil.ProcessPriority
 
-  :class:`enum.IntEnum` collection of
+  `enum.IntEnum`_ collection of
   :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
   :meth:`psutil.Process.nice` on Windows.
 
@@ -2609,7 +2609,7 @@ namespace as aliases for the enum members.
 
 .. class:: psutil.ProcessIOPriority
 
-  :class:`enum.IntEnum` collection of I/O priority constants for
+  `enum.IntEnum`_ collection of I/O priority constants for
   :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
   On Windows: ``IOPRIO_*`` constants.
 
@@ -2619,7 +2619,7 @@ namespace as aliases for the enum members.
 
 .. class:: psutil.ProcessRlimit
 
-  :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
+  `enum.IntEnum`_ collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
   constants for :meth:`psutil.Process.rlimit`.
 
   Availability: Linux, FreeBSD
@@ -2628,7 +2628,7 @@ namespace as aliases for the enum members.
 
 .. class:: psutil.ConnectionStatus
 
-  :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
+  `enum.StrEnum`_ collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
   constants. Returned in the *status* field of
   :func:`psutil.net_connections` and :meth:`psutil.Process.net_connections`.
 
@@ -2636,14 +2636,14 @@ namespace as aliases for the enum members.
 
 .. class:: psutil.NicDuplex
 
-  :class:`enum.IntEnum` collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
+  `enum.IntEnum`_ collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
   constants. Returned in the *duplex* field of :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
 
 .. class:: psutil.BatteryTime
 
-  :class:`enum.IntEnum` collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
+  `enum.IntEnum`_ collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
   constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
 
   .. versionadded:: 5.1.0
@@ -3576,6 +3576,8 @@ Timeline
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`DEVGUIDE.rst`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`enum.IntEnum`: https://docs.python.org/3/library/enum.html#enum.IntEnum
+.. _`enum.StrEnum`: https://docs.python.org/3/library/enum.html#enum.StrEnum
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
 .. _`GetDriveType`: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea
