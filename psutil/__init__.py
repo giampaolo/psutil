@@ -141,7 +141,7 @@ __all__ = [
 ]
 # fmt: on
 
-
+__all__.extend(_psplatform.__extra__all__)
 _globals = globals()
 
 
