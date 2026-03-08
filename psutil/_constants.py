@@ -6,9 +6,19 @@
 
 import enum
 
+from ._common import FREEBSD
 from ._common import LINUX
 from ._common import SUNOS
 from ._common import WINDOWS
+
+if WINDOWS:
+    from . import _psutil_windows as cext
+elif LINUX:
+    from . import _psutil_linux as cext
+elif FREEBSD:
+    from . import _psutil_bsd as cext
+else:
+    cext = None
 
 if hasattr(enum, "StrEnum"):  # Python >= 3.11
     StrEnum = enum.StrEnum
@@ -110,3 +120,16 @@ if WINDOWS:
         IDLE_PRIORITY_CLASS = cext.IDLE_PRIORITY_CLASS
         NORMAL_PRIORITY_CLASS = cext.NORMAL_PRIORITY_CLASS
         REALTIME_PRIORITY_CLASS = cext.REALTIME_PRIORITY_CLASS
+
+
+if LINUX or FREEBSD:
+
+    # psutil.Process.rlimit()
+    ProcRlimit = enum.IntEnum(
+        "ProcRlimit",
+        (
+            (name, getattr(cext, name))
+            for name in dir(cext)
+            if name.startswith("RLIM") and name.isupper()
+        ),
+    )

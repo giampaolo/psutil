@@ -69,6 +69,7 @@ if LINUX:
 
     from . import _pslinux as _psplatform
     from ._constants import ProcIOPriorityClass
+    from ._constants import ProcRlimit
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
@@ -80,6 +81,9 @@ elif MACOS:
 
 elif BSD:
     from . import _psbsd as _psplatform
+
+    if FREEBSD:
+        from ._constants import ProcRlimit
 
 elif SUNOS:
     from . import _pssunos as _psplatform
@@ -138,16 +142,7 @@ __all__ = [
 # fmt: on
 
 
-# Linux, FreeBSD
 _globals = globals()
-if hasattr(_psplatform.Process, "rlimit"):
-    # Populate global namespace with RLIM* constants.
-    _name = None
-    for _name in dir(_psplatform.cext):
-        if _name.startswith('RLIM') and _name.isupper():
-            _globals[_name] = getattr(_psplatform.cext, _name)
-            __all__.append(_name)
-    del _name
 
 
 def _export_enum(cls):
@@ -166,8 +161,11 @@ if LINUX or WINDOWS:
     _export_enum(ProcIOPriorityClass)
 if WINDOWS:
     _export_enum(ProcPriority)
+if LINUX or FREEBSD:
+    _export_enum(ProcRlimit)
 if LINUX or SUNOS or AIX:
     __all__.append("PROCFS_PATH")
+
 del _globals, _export_enum
 
 AF_LINK = _psplatform.AF_LINK
