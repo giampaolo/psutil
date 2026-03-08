@@ -979,12 +979,7 @@ class Process:
         if value:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
-        if ioclass not in {
-            ProcessIOPriority.IOPRIO_VERYLOW,
-            ProcessIOPriority.IOPRIO_LOW,
-            ProcessIOPriority.IOPRIO_NORMAL,
-            ProcessIOPriority.IOPRIO_HIGH,
-        }:
+        if ioclass not in ProcessIOPriority.__members__:
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
         cext.proc_io_priority_set(self.pid, ioclass)
