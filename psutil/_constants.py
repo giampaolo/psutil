@@ -74,8 +74,8 @@ class ConnStatus(StrEnum):
     if WINDOWS:
         CONN_DELETE_TCB = "DELETE_TCB"
     if SUNOS:
-        CONN_BOUND = "BOUND"
-        CONN_IDLE = "IDLE"
+        CONN_BOUND = "CONN_BOUND"
+        CONN_IDLE = "CONN_IDLE"
 
 
 # psutil.net_if_stats()
@@ -103,7 +103,6 @@ if LINUX:
 
 
 if WINDOWS:
-    from . import _psutil_windows as cext
 
     # psutil.Process.ionice(ioclass=…)
     class ProcIOPriorityClass(enum.IntEnum):

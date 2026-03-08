@@ -131,9 +131,9 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             "CONN_NONE",
         ]
         if WINDOWS:
-            names.append("DELETE_TCB")
+            names.append("CONN_DELETE_TCB")
         if SUNOS:
-            names.extend(["IDLE", "BOUND"])
+            names.extend(["CONN_IDLE", "CONN_BOUND"])
 
         self.check_constants(names, True)
         assert sorted(ConnStatus.__members__.keys()) == sorted(names)
