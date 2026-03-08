@@ -51,6 +51,11 @@
   ``collections.namedtuple`` to ``typing.NamedTuple`` classes with **type
   annotations**. This makes the classes self-documenting, effectively turning
   this module into a readable API reference.
+- 2753_: Introduce enum classes (`ProcessStatus`_, `ConnectionStatus`_,
+  `ProcessIOPriority`_, `ProcessPriority`_, `ProcessRlimit`_) grouping related
+  constants. The individual top-level constants (e.g.
+  ``psutil.STATUS_RUNNING``) remain the primary API, and are now aliases for
+  the corresponding enum members.
 
 **Bug fixes**
 
@@ -67,7 +72,9 @@
 
 **Compatibility notes**
 
-Changes that break backwards compatibility:
+Changes that break backwards compatibility.
+
+Named tuples:
 
 - `cpu_times()`_:
 
@@ -83,6 +90,24 @@ Changes that break backwards compatibility:
     Positional access (e.g. ``p.memory_info()[3]`` or ``a, b, c =
     p.memory_info()``) may break or silently return the wrong field. Always use
     attribute access instead (e.g. ``p.memory_info().rss``).
+
+Enums:
+
+- `Process.status()`_ now returns a :class:`psutil.ProcessStatus` enum member
+  instead of a plain ``str``. Since :class:`psutil.ProcessStatus` is a
+  ``StrEnum``, it compares equal to its string value (e.g.
+  ``p.status() == "running"`` still works), but ``repr()`` and ``type()``
+  differ. Use :data:`psutil.STATUS_RUNNING` and friends as before;
+  ``psutil.STATUS_RUNNING`` is now an alias for the enum member.
+
+- `net_connections()`_ and `Process.net_connections()`_: the ``status`` field
+  now returns a :class:`psutil.ConnectionStatus` enum member instead of a
+  plain ``str``. Same ``StrEnum`` compatibility rules as above apply.
+
+- ``RLIMIT_*`` / ``RLIM_*`` constants (Linux, FreeBSD): these are now members
+  of the :class:`psutil.ProcessRlimit` ``IntEnum`` instead of plain integers.
+  Since ``IntEnum`` compares equal to integers, existing code using them as
+  arguments to :meth:`Process.rlimit` is unaffected.
 
 7.2.3
 =====
@@ -3049,6 +3074,12 @@ In most cases accessing the old names will work but it will cause a
 .. _`Process.uids()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.uids
 .. _`Process.username()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.username
 .. _`Process.wait()`: https://psutil.readthedocs.io/en/latest/#psutil.Process.wait
+
+.. _`ProcessStatus`: https://psutil.readthedocs.io/en/latest/#psutil.psutil.ProcessStatus
+.. _`ProcessPriority`: https://psutil.readthedocs.io/en/latest/#psutil.psutil.ProcessPriority
+.. _`ProcessIOPriority`: https://psutil.readthedocs.io/en/latest/#psutil.psutil.ProcessIOPriority
+.. _`ProcessRlimit`: https://psutil.readthedocs.io/en/latest/#psutil.psutil.ProcessRlimit
+.. _`ConnectionStatus`: https://psutil.readthedocs.io/en/latest/#psutil.psutil.ConnectionStatus
 
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
