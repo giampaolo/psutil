@@ -2,7 +2,22 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Constants for psutil APIs."""
+"""Enum containers backing psutil constants.
+
+This module groups constants used by psutil APIs into Enum classes.
+These enums mainly act as containers for related values and are useful
+for type annotations and introspection.
+
+In normal usage constants should be accessed directly from the psutil
+namespace instead of importing these enums, e.g.:
+
+    import psutil
+    if proc.status() == psutil.STATUS_RUNNING:
+        ...
+
+The top-level constants (e.g. ``psutil.STATUS_RUNNING``) are aliases of
+the enum members defined here and represent the primary public API.
+"""
 
 import enum
 
