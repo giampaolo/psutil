@@ -27,11 +27,6 @@ from psutil import ConnectionStatus
 from psutil import NicDuplex
 from psutil import ProcessStatus
 
-if LINUX or WINDOWS:
-    from psutil import ProcessIOPriority
-if WINDOWS:
-    from psutil import ProcessPriority
-
 from . import AARCH64
 from . import GITHUB_ACTIONS
 from . import HAS_CPU_FREQ
@@ -177,9 +172,11 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, LINUX)
         if LINUX:
-            assert sorted(ProcessIOPriority.__members__.keys()) == sorted(
-                names
-            )
+            assert sorted(
+                psutil.ProcessIOPriority.__members__.keys()
+            ) == sorted(names)
+        else:
+            not hasattr(psutil, "ProcessIOPriority")
 
     def test_proc_ioprio_value_windows(self):
         names = (
@@ -190,9 +187,9 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, WINDOWS)
         if WINDOWS:
-            assert sorted(ProcessIOPriority.__members__.keys()) == sorted(
-                names
-            )
+            assert sorted(
+                psutil.ProcessIOPriority.__members__.keys()
+            ) == sorted(names)
 
     def test_proc_priority_windows(self):
         names = (
@@ -205,7 +202,11 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, WINDOWS)
         if WINDOWS:
-            assert sorted(ProcessPriority.__members__.keys()) == sorted(names)
+            assert sorted(psutil.ProcessPriority.__members__.keys()) == sorted(
+                names
+            )
+        else:
+            not hasattr(psutil, "ProcessPriority")
 
     @pytest.mark.skipif(
         GITHUB_ACTIONS and LINUX,

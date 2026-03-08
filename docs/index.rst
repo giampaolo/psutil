@@ -1526,8 +1526,7 @@ Process class
 
     Availability: Linux, Windows Vista+
 
-    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants
-     including new ``IOPRIO_HIGH``.
+    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants.
 
     .. versionchanged:: 8.0.0 *ioclass* is now a
       :class:`psutil.ProcessIOPriority` enum member.
