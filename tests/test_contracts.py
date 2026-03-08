@@ -15,7 +15,6 @@ import types as builtin_types
 import typing
 
 import psutil
-import psutil._ntuples
 from psutil import AIX
 from psutil import BSD
 from psutil import FREEBSD
@@ -42,6 +41,7 @@ from . import PsutilTestCase
 from . import check_ntuple_types
 from . import create_sockets
 from . import enum
+from . import get_return_hint
 from . import is_namedtuple
 from . import kernel_version
 from . import process_namespace
@@ -539,22 +539,6 @@ class TestReturnedTypes(PsutilTestCase):
     the actual values returned at runtime.
     """
 
-    # Namespace for resolving annotation strings: includes both the
-    # psutil module globals (Any, Generator, Process, ...) and all
-    # ntuple types from _ntuples (scputimes, svmem, pmem, ...).
-    _hint_ns = {**vars(psutil), **vars(psutil._ntuples)}
-
-    def _get_return_hint(self, fun):
-        """Return the 'return' type hint of fun, or None."""
-        while hasattr(fun, 'func'):
-            fun = fun.func
-        underlying = getattr(fun, '__func__', fun)
-        try:
-            hints = typing.get_type_hints(underlying, globalns=self._hint_ns)
-        except Exception:  # noqa: BLE001
-            return None
-        return hints.get('return')
-
     def _hint_to_types(self, hint):
         """Flatten a return type hint into a tuple of types for
         isinstance(). Returns None if the hint cannot be checked
@@ -592,7 +576,7 @@ class TestReturnedTypes(PsutilTestCase):
             ret = fun()
         except psutil.Error:
             return
-        hint = self._get_return_hint(fun)
+        hint = get_return_hint(fun)
         types_ = self._hint_to_types(hint)
         if types_ is None:
             return

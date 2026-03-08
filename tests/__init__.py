@@ -84,7 +84,8 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'check_ntuple_types', 'is_win_secure_system_proc',
+    'system_namespace', 'check_ntuple_types', 'get_return_hint',
+    'is_win_secure_system_proc',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1571,6 +1572,24 @@ def check_ntuple_types(nt):
         else:
             continue
         assert isinstance(value, types_), (field, value, types_)
+
+
+def get_return_hint(fun):
+    """Get the 'return' type hint for a psutil API function or method.
+    Resolves annotation strings using a combined namespace of psutil
+    globals (Any, Generator, Process, ...) and ntuple types
+    (scputimes, svmem, pmem, ...). Returns None if hints cannot be
+    resolved or there is no return annotation.
+    """
+    while hasattr(fun, 'func'):
+        fun = fun.func
+    underlying = getattr(fun, '__func__', fun)
+    ns = {**vars(psutil), **vars(ntuples)}
+    try:
+        hints = typing.get_type_hints(underlying, globalns=ns)
+    except Exception:  # noqa: BLE001
+        return None
+    return hints.get('return')
 
 
 def check_net_address(addr, family):
