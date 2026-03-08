@@ -2588,7 +2588,9 @@ Constants
 The following enum classes group related constants and are useful for type
 annotations and introspection. The individual constants (e.g.
 :data:`psutil.STATUS_RUNNING`) are also accessible directly from the psutil
-namespace as aliases for the enum members.
+namespace as aliases for the enum members and should be preferred over
+accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
+``psutil.ProcessStatus.STATUS_RUNNING``).
 
 .. class:: psutil.ProcessStatus
 
