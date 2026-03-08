@@ -1691,6 +1691,7 @@ def check_ntuple_types(nt):
         assert isinstance(value, types_), (field, value, types_)
 
 
+@functools.lru_cache(maxsize=None)
 def get_return_hint(fun):
     """Get the 'return' type hint for a psutil API function or method.
     Resolves annotation strings using a combined namespace of psutil
