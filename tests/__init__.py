@@ -1644,7 +1644,8 @@ def filter_proc_net_connections(cons):
 
 
 @functools.lru_cache(maxsize=None)
-def _get_hints(cls):
+def _get_ntuple_hints(nt):
+    cls = type(nt)
     try:
         localns = {
             name: obj
@@ -1667,7 +1668,7 @@ def check_ntuple_types(nt):
     a named tuple returned by one of psutil APIs.
     """
     assert is_namedtuple(nt)
-    hints = _get_hints(type(nt))
+    hints = _get_ntuple_hints(nt)
     if not hints:
         return
     for field in nt._fields:
