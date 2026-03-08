@@ -2597,6 +2597,35 @@ namespace as aliases for the enum members.
 
   .. versionadded:: 8.0.0
 
+.. class:: psutil.ProcessPriority
+
+  :class:`enum.IntEnum` collection of
+  :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
+  :meth:`psutil.Process.nice` on Windows.
+
+  Availability: Windows
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessIOPriority
+
+  :class:`enum.IntEnum` collection of I/O priority constants for
+  :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
+  On Windows: ``IOPRIO_*`` constants.
+
+  Availability: Linux, Windows
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessRlimit
+
+  :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
+  constants for :meth:`psutil.Process.rlimit`.
+
+  Availability: Linux, FreeBSD
+
+  .. versionadded:: 8.0.0
+
 .. class:: psutil.ConnectionStatus
 
   :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
@@ -2618,35 +2647,6 @@ namespace as aliases for the enum members.
   constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
 
   .. versionadded:: 5.1.0
-
-.. class:: psutil.ProcessIOPriority
-
-  :class:`enum.IntEnum` collection of I/O priority constants for
-  :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
-  On Windows: ``IOPRIO_*`` constants.
-
-  Availability: Linux, Windows
-
-  .. versionadded:: 8.0.0
-
-.. class:: psutil.ProcessPriority
-
-  :class:`enum.IntEnum` collection of
-  :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
-  :meth:`psutil.Process.nice` on Windows.
-
-  Availability: Windows
-
-  .. versionadded:: 8.0.0
-
-.. class:: psutil.ProcessRlimit
-
-  :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
-  constants for :meth:`psutil.Process.rlimit`.
-
-  Availability: Linux, FreeBSD
-
-  .. versionadded:: 8.0.0
 
 Operating system constants
 --------------------------
