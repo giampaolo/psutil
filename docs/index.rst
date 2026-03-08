@@ -1522,7 +1522,7 @@ Process class
       ...     p.ionice(psutil.IOPRIO_HIGH)
       ...
       >>> p.ionice()  # get
-      pionice(ioclass=<ProcessIOPriorityClass.IOPRIO_CLASS_RT: 1>, value=7)
+      pionice(ioclass=<ProcessIOPriority.IOPRIO_CLASS_RT: 1>, value=7)
 
     Availability: Linux, Windows Vista+
 
@@ -1530,7 +1530,7 @@ Process class
      including new ``IOPRIO_HIGH``.
 
     .. versionchanged:: 8.0.0 *ioclass* is now a
-      :class:`psutil.ProcessIOPriorityClass` enum member.
+      :class:`psutil.ProcessIOPriority` enum member.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -2619,7 +2619,7 @@ namespace as aliases for the enum members.
 
   .. versionadded:: 5.1.0
 
-.. class:: psutil.ProcessIOPriorityClass
+.. class:: psutil.ProcessIOPriority
 
   :class:`enum.IntEnum` collection of I/O priority constants for
   :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
@@ -2752,7 +2752,7 @@ Process priority constants
   A set of integers representing the I/O priority of a process on Linux. They
   can be used in conjunction with :meth:`psutil.Process.ionice()` to get or set
   process I/O priority.
-  These constants are members of the :class:`psutil.ProcessIOPriorityClass`
+  These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
   *IOPRIO_CLASS_NONE* and *IOPRIO_CLASS_BE* (best effort) is the default for
   any process that hasn't set a specific I/O priority.
@@ -2767,7 +2767,7 @@ Process priority constants
   Availability: Linux
 
   .. versionchanged:: 8.0.0 constants are now
-    :class:`psutil.ProcessIOPriorityClass` enum members (previously
+    :class:`psutil.ProcessIOPriority` enum members (previously
     ``IOPriority`` enum).
 
 .. data:: IOPRIO_VERYLOW
@@ -2778,14 +2778,14 @@ Process priority constants
   A set of integers representing the I/O priority of a process on Windows.
   They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
   or set process I/O priority.
-  These constants are members of the :class:`psutil.ProcessIOPriorityClass`
+  These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
 
   Availability: Windows
 
   .. versionadded:: 5.6.2
   .. versionchanged:: 8.0.0 constants are now
-    :class:`psutil.ProcessIOPriorityClass` enum members (previously
+    :class:`psutil.ProcessIOPriority` enum members (previously
     ``IOPriority`` enum).
 
 Process resources constants

@@ -68,12 +68,12 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-    from ._enums import ProcessIOPriorityClass
+    from ._enums import ProcessIOPriority
     from ._enums import ProcessRlimit
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
-    from ._enums import ProcessIOPriorityClass
+    from ._enums import ProcessIOPriority
     from ._enums import ProcessPriority
 
 elif MACOS:
@@ -152,7 +152,7 @@ _export_enum(ConnectionStatus)
 _export_enum(NicDuplex)
 _export_enum(BatteryTime)
 if LINUX or WINDOWS:
-    _export_enum(ProcessIOPriorityClass)
+    _export_enum(ProcessIOPriority)
 if WINDOWS:
     _export_enum(ProcessPriority)
 if LINUX or FREEBSD:

@@ -43,7 +43,7 @@ from ._common import usage_percent
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcessIOPriorityClass
+from ._enums import ProcessIOPriority
 from ._enums import ProcessStatus
 
 __extra__all__ = ['PROCFS_PATH']
@@ -2126,7 +2126,7 @@ class Process:
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
-            ioclass = ProcessIOPriorityClass(ioclass)
+            ioclass = ProcessIOPriority(ioclass)
             return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
@@ -2134,8 +2134,8 @@ class Process:
             if value is None:
                 value = 0
             if value and ioclass in {
-                ProcessIOPriorityClass.IOPRIO_CLASS_IDLE,
-                ProcessIOPriorityClass.IOPRIO_CLASS_NONE,
+                ProcessIOPriority.IOPRIO_CLASS_IDLE,
+                ProcessIOPriority.IOPRIO_CLASS_NONE,
             }:
                 msg = f"{ioclass!r} ioclass accepts no value"
                 raise ValueError(msg)

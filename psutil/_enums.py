@@ -109,7 +109,7 @@ class BatteryTime(enum.IntEnum):
 if LINUX:
 
     # psutil.Process.ionice(ioclass=…)
-    class ProcessIOPriorityClass(enum.IntEnum):
+    class ProcessIOPriority(enum.IntEnum):
         # ioprio_* constants http://linux.die.net/man/2/ioprio_get
         IOPRIO_CLASS_NONE = 0
         IOPRIO_CLASS_RT = 1
@@ -120,7 +120,7 @@ if LINUX:
 if WINDOWS:
 
     # psutil.Process.ionice(ioclass=…)
-    class ProcessIOPriorityClass(enum.IntEnum):
+    class ProcessIOPriority(enum.IntEnum):
         IOPRIO_VERYLOW = 0
         IOPRIO_LOW = 1
         IOPRIO_NORMAL = 2

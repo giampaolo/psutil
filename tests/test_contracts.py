@@ -28,7 +28,7 @@ from psutil import NicDuplex
 from psutil import ProcessStatus
 
 if LINUX or WINDOWS:
-    from psutil import ProcessIOPriorityClass
+    from psutil import ProcessIOPriority
 if WINDOWS:
     from psutil import ProcessPriority
 
@@ -177,7 +177,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, LINUX)
         if LINUX:
-            assert sorted(ProcessIOPriorityClass.__members__.keys()) == sorted(
+            assert sorted(ProcessIOPriority.__members__.keys()) == sorted(
                 names
             )
 
@@ -190,7 +190,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, WINDOWS)
         if WINDOWS:
-            assert sorted(ProcessIOPriorityClass.__members__.keys()) == sorted(
+            assert sorted(ProcessIOPriority.__members__.keys()) == sorted(
                 names
             )
 

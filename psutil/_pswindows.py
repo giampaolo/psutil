@@ -29,7 +29,7 @@ from ._common import usage_percent
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcessIOPriorityClass
+from ._enums import ProcessIOPriority
 from ._enums import ProcessPriority
 from ._enums import ProcessStatus
 
@@ -971,7 +971,7 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = cext.proc_io_priority_get(self.pid)
-        ret = ProcessIOPriorityClass(ret)
+        ret = ProcessIOPriority(ret)
         return ret
 
     @wrap_exceptions
@@ -980,10 +980,10 @@ class Process:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
         if ioclass not in {
-            ProcessIOPriorityClass.IOPRIO_VERYLOW,
-            ProcessIOPriorityClass.IOPRIO_LOW,
-            ProcessIOPriorityClass.IOPRIO_NORMAL,
-            ProcessIOPriorityClass.IOPRIO_HIGH,
+            ProcessIOPriority.IOPRIO_VERYLOW,
+            ProcessIOPriority.IOPRIO_LOW,
+            ProcessIOPriority.IOPRIO_NORMAL,
+            ProcessIOPriority.IOPRIO_HIGH,
         }:
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
