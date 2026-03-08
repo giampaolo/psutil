@@ -242,12 +242,12 @@ class TestAvailConstantsAPIs(PsutilTestCase):
                 self.check_constants(("RLIMIT_SIGPENDING",), LINUX)
 
     def test_enum_containers(self):
-        self.check_constants(("ProcStatus",), True)
-        self.check_constants(("ConnStatus",), True)
+        self.check_constants(("ProcessStatus",), True)
+        self.check_constants(("ProcPriority",), WINDOWS)
+        self.check_constants(("ProcessIOPriority",), LINUX or WINDOWS)
+        self.check_constants(("ConnectionStatus",), True)
         self.check_constants(("NicDuplex",), True)
         self.check_constants(("BatteryTime",), True)
-        self.check_constants(("ProcIOPriorityClass",), LINUX or WINDOWS)
-        self.check_constants(("ProcPriority",), WINDOWS)
 
 
 class TestAvailSystemAPIs(PsutilTestCase):

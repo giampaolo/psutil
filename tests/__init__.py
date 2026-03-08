@@ -53,11 +53,10 @@ from psutil import OPENBSD
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil import _enums
 from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import supports_ipv6
-from psutil._enums import BatteryTime
-from psutil._enums import NicDuplex
 
 if POSIX:
     from psutil._psposix import wait_pid
@@ -1530,14 +1529,16 @@ def create_sockets():
 @functools.lru_cache(maxsize=None)
 def _get_hints(cls):
     try:
+        localns = {
+            name: obj
+            for name, obj in vars(_enums).items()
+            if isinstance(obj, type) and issubclass(obj, enum.Enum)
+        }
+        localns['socket'] = socket
         return typing.get_type_hints(
             cls,
             globalns=vars(ntuples),
-            localns={
-                'socket': socket,
-                'BatteryTime': BatteryTime,
-                'NicDuplex': NicDuplex,
-            },
+            localns=localns,
         )
     except TypeError:
         # Python < 3.10 can't evaluate "X | Y" union syntax.

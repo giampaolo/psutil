@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     import socket
 
     from ._enums import BatteryTime
+    from ._enums import ConnectionStatus
     from ._enums import NicDuplex
+    from ._enums import ProcessIOPriority
 
 from ._common import AIX
 from ._common import BSD
@@ -107,7 +109,7 @@ class sconn(NamedTuple):
     type: socket.SocketKind
     laddr: addr | tuple | str
     raddr: addr | tuple | str
-    status: str
+    status: ConnectionStatus
     pid: int | None
 
 
@@ -287,7 +289,7 @@ class pio(NamedTuple):
 
 # psutil.Process.ionice()
 class pionice(NamedTuple):
-    ioclass: int
+    ioclass: ProcessIOPriority
     value: int
 
 
@@ -320,7 +322,7 @@ class pconn(NamedTuple):
     type: socket.SocketKind
     laddr: addr | tuple | str
     raddr: addr | tuple | str
-    status: str
+    status: ConnectionStatus
 
 
 # psutil.Process.memory_maps(grouped=True)
