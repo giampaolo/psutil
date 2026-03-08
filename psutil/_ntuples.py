@@ -12,8 +12,8 @@ from typing import NamedTuple
 if TYPE_CHECKING:
     import socket
 
-    from ._constants import BatteryTime
-    from ._constants import NicDuplex
+    from ._enums import BatteryTime
+    from ._enums import NicDuplex
 
 from ._common import AIX
 from ._common import BSD

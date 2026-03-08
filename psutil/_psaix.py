@@ -24,9 +24,9 @@ from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
-from ._constants import ConnStatus
-from ._constants import NicDuplex
-from ._constants import ProcStatus
+from ._enums import ConnStatus
+from ._enums import NicDuplex
+from ._enums import ProcStatus
 
 __extra__all__ = ["PROCFS_PATH"]
 

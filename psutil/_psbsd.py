@@ -26,10 +26,10 @@ from ._common import conn_to_ntuple
 from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
-from ._constants import BatteryTime
-from ._constants import ConnStatus
-from ._constants import NicDuplex
-from ._constants import ProcStatus
+from ._enums import BatteryTime
+from ._enums import ConnStatus
+from ._enums import NicDuplex
+from ._enums import ProcStatus
 
 __extra__all__ = []
 

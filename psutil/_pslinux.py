@@ -40,11 +40,11 @@ from ._common import path_exists_strict
 from ._common import socktype_to_enum
 from ._common import supports_ipv6
 from ._common import usage_percent
-from ._constants import BatteryTime
-from ._constants import ConnStatus
-from ._constants import NicDuplex
-from ._constants import ProcIOPriorityClass
-from ._constants import ProcStatus
+from ._enums import BatteryTime
+from ._enums import ConnStatus
+from ._enums import NicDuplex
+from ._enums import ProcIOPriorityClass
+from ._enums import ProcStatus
 
 __extra__all__ = ['PROCFS_PATH']
 

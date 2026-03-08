@@ -432,7 +432,7 @@ def socktype_to_enum(num):
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     """Convert a raw connection tuple to a proper ntuple."""
     from . import _ntuples as ntp
-    from ._constants import ConnStatus
+    from ._enums import ConnStatus
 
     if fam in {socket.AF_INET, AF_INET6}:
         if laddr:

@@ -26,12 +26,12 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
-from ._constants import BatteryTime
-from ._constants import ConnStatus
-from ._constants import NicDuplex
-from ._constants import ProcIOPriorityClass
-from ._constants import ProcPriority
-from ._constants import ProcStatus
+from ._enums import BatteryTime
+from ._enums import ConnStatus
+from ._enums import NicDuplex
+from ._enums import ProcIOPriorityClass
+from ._enums import ProcPriority
+from ._enums import ProcStatus
 
 try:
     from . import _psutil_windows as cext

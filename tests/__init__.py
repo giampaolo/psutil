@@ -56,8 +56,8 @@ from psutil import WINDOWS
 from psutil._common import debug
 from psutil._common import memoize
 from psutil._common import supports_ipv6
-from psutil._constants import BatteryTime
-from psutil._constants import NicDuplex
+from psutil._enums import BatteryTime
+from psutil._enums import NicDuplex
 
 if POSIX:
     from psutil._psposix import wait_pid

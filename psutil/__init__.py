@@ -57,10 +57,10 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
-from ._constants import BatteryTime
-from ._constants import ConnStatus
-from ._constants import NicDuplex
-from ._constants import ProcStatus
+from ._enums import BatteryTime
+from ._enums import ConnStatus
+from ._enums import NicDuplex
+from ._enums import ProcStatus
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -68,13 +68,13 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-    from ._constants import ProcIOPriorityClass
-    from ._constants import ProcRlimit
+    from ._enums import ProcIOPriorityClass
+    from ._enums import ProcRlimit
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
-    from ._constants import ProcIOPriorityClass
-    from ._constants import ProcPriority
+    from ._enums import ProcIOPriorityClass
+    from ._enums import ProcPriority
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -83,7 +83,7 @@ elif BSD:
     from . import _psbsd as _psplatform
 
     if FREEBSD:
-        from ._constants import ProcRlimit
+        from ._enums import ProcRlimit
 
 elif SUNOS:
     from . import _pssunos as _psplatform
