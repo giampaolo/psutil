@@ -22,9 +22,9 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 from ._enums import BatteryTime
-from ._enums import ConnStatus
+from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcStatus
+from ._enums import ProcessStatus
 
 __extra__all__ = []
 
@@ -38,26 +38,26 @@ PAGESIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: ConnStatus.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: ConnStatus.CONN_SYN_SENT,
-    cext.TCPS_SYN_RECEIVED: ConnStatus.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: ConnStatus.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: ConnStatus.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: ConnStatus.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: ConnStatus.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: ConnStatus.CONN_LISTEN,
-    cext.TCPS_CLOSING: ConnStatus.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
+    cext.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RECEIVED: ConnectionStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
 }
 
 PROC_STATUSES = {
-    cext.SIDL: ProcStatus.STATUS_IDLE,
-    cext.SRUN: ProcStatus.STATUS_RUNNING,
-    cext.SSLEEP: ProcStatus.STATUS_SLEEPING,
-    cext.SSTOP: ProcStatus.STATUS_STOPPED,
-    cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
+    cext.SIDL: ProcessStatus.STATUS_IDLE,
+    cext.SRUN: ProcessStatus.STATUS_RUNNING,
+    cext.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+    cext.SSTOP: ProcessStatus.STATUS_STOPPED,
+    cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
 }
 
 

@@ -41,10 +41,10 @@ from ._common import socktype_to_enum
 from ._common import supports_ipv6
 from ._common import usage_percent
 from ._enums import BatteryTime
-from ._enums import ConnStatus
+from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcIOPriorityClass
-from ._enums import ProcStatus
+from ._enums import ProcessIOPriorityClass
+from ._enums import ProcessStatus
 
 __extra__all__ = ['PROCFS_PATH']
 
@@ -90,33 +90,33 @@ AF_LINK = AddressFamily.AF_LINK
 # ...and (TASK_* constants):
 # https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 PROC_STATUSES = {
-    "R": ProcStatus.STATUS_RUNNING,
-    "S": ProcStatus.STATUS_SLEEPING,
-    "D": ProcStatus.STATUS_DISK_SLEEP,
-    "T": ProcStatus.STATUS_STOPPED,
-    "t": ProcStatus.STATUS_TRACING_STOP,
-    "Z": ProcStatus.STATUS_ZOMBIE,
-    "X": ProcStatus.STATUS_DEAD,
-    "x": ProcStatus.STATUS_DEAD,
-    "K": ProcStatus.STATUS_WAKE_KILL,
-    "W": ProcStatus.STATUS_WAKING,
-    "I": ProcStatus.STATUS_IDLE,
-    "P": ProcStatus.STATUS_PARKED,
+    "R": ProcessStatus.STATUS_RUNNING,
+    "S": ProcessStatus.STATUS_SLEEPING,
+    "D": ProcessStatus.STATUS_DISK_SLEEP,
+    "T": ProcessStatus.STATUS_STOPPED,
+    "t": ProcessStatus.STATUS_TRACING_STOP,
+    "Z": ProcessStatus.STATUS_ZOMBIE,
+    "X": ProcessStatus.STATUS_DEAD,
+    "x": ProcessStatus.STATUS_DEAD,
+    "K": ProcessStatus.STATUS_WAKE_KILL,
+    "W": ProcessStatus.STATUS_WAKING,
+    "I": ProcessStatus.STATUS_IDLE,
+    "P": ProcessStatus.STATUS_PARKED,
 }
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
 TCP_STATUSES = {
-    "01": ConnStatus.CONN_ESTABLISHED,
-    "02": ConnStatus.CONN_SYN_SENT,
-    "03": ConnStatus.CONN_SYN_RECV,
-    "04": ConnStatus.CONN_FIN_WAIT1,
-    "05": ConnStatus.CONN_FIN_WAIT2,
-    "06": ConnStatus.CONN_TIME_WAIT,
-    "07": ConnStatus.CONN_CLOSE,
-    "08": ConnStatus.CONN_CLOSE_WAIT,
-    "09": ConnStatus.CONN_LAST_ACK,
-    "0A": ConnStatus.CONN_LISTEN,
-    "0B": ConnStatus.CONN_CLOSING,
+    "01": ConnectionStatus.CONN_ESTABLISHED,
+    "02": ConnectionStatus.CONN_SYN_SENT,
+    "03": ConnectionStatus.CONN_SYN_RECV,
+    "04": ConnectionStatus.CONN_FIN_WAIT1,
+    "05": ConnectionStatus.CONN_FIN_WAIT2,
+    "06": ConnectionStatus.CONN_TIME_WAIT,
+    "07": ConnectionStatus.CONN_CLOSE,
+    "08": ConnectionStatus.CONN_CLOSE_WAIT,
+    "09": ConnectionStatus.CONN_LAST_ACK,
+    "0A": ConnectionStatus.CONN_LISTEN,
+    "0B": ConnectionStatus.CONN_CLOSING,
 }
 
 
@@ -815,7 +815,7 @@ class NetConnections:
                     if type_ == socket.SOCK_STREAM:
                         status = TCP_STATUSES[status]
                     else:
-                        status = ConnStatus.CONN_NONE
+                        status = ConnectionStatus.CONN_NONE
                     try:
                         laddr = NetConnections.decode_address(laddr, family)
                         raddr = NetConnections.decode_address(raddr, family)
@@ -856,7 +856,7 @@ class NetConnections:
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/
                         raddr = ""
-                        status = ConnStatus.CONN_NONE
+                        status = ConnectionStatus.CONN_NONE
                         yield (fd, family, type_, path, raddr, status, pid)
 
     def retrieve(self, kind, pid=None):
@@ -2126,7 +2126,7 @@ class Process:
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
-            ioclass = ProcIOPriorityClass(ioclass)
+            ioclass = ProcessIOPriorityClass(ioclass)
             return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
@@ -2134,8 +2134,8 @@ class Process:
             if value is None:
                 value = 0
             if value and ioclass in {
-                ProcIOPriorityClass.IOPRIO_CLASS_IDLE,
-                ProcIOPriorityClass.IOPRIO_CLASS_NONE,
+                ProcessIOPriorityClass.IOPRIO_CLASS_IDLE,
+                ProcessIOPriorityClass.IOPRIO_CLASS_NONE,
             }:
                 msg = f"{ioclass!r} ioclass accepts no value"
                 raise ValueError(msg)

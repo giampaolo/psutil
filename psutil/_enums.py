@@ -55,7 +55,7 @@ else:
 
 
 # psutil.Process.status()
-class ProcStatus(StrEnum):
+class ProcessStatus(StrEnum):
     STATUS_DEAD = "dead"
     STATUS_DISK_SLEEP = "disk-sleep"
     STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
@@ -73,7 +73,7 @@ class ProcStatus(StrEnum):
 
 
 # psutil.Process.net_connections() and psutil.net_connections()
-class ConnStatus(StrEnum):
+class ConnectionStatus(StrEnum):
     CONN_CLOSE = "CLOSE"
     CONN_CLOSE_WAIT = "CLOSE_WAIT"
     CONN_CLOSING = "CLOSING"
@@ -109,7 +109,7 @@ class BatteryTime(enum.IntEnum):
 if LINUX:
 
     # psutil.Process.ionice(ioclass=…)
-    class ProcIOPriorityClass(enum.IntEnum):
+    class ProcessIOPriorityClass(enum.IntEnum):
         # ioprio_* constants http://linux.die.net/man/2/ioprio_get
         IOPRIO_CLASS_NONE = 0
         IOPRIO_CLASS_RT = 1
@@ -120,14 +120,14 @@ if LINUX:
 if WINDOWS:
 
     # psutil.Process.ionice(ioclass=…)
-    class ProcIOPriorityClass(enum.IntEnum):
+    class ProcessIOPriorityClass(enum.IntEnum):
         IOPRIO_VERYLOW = 0
         IOPRIO_LOW = 1
         IOPRIO_NORMAL = 2
         IOPRIO_HIGH = 3
 
     # psutil.Process.nice()
-    class ProcPriority(enum.IntEnum):
+    class ProcessPriority(enum.IntEnum):
         ABOVE_NORMAL_PRIORITY_CLASS = cext.ABOVE_NORMAL_PRIORITY_CLASS
         BELOW_NORMAL_PRIORITY_CLASS = cext.BELOW_NORMAL_PRIORITY_CLASS
         HIGH_PRIORITY_CLASS = cext.HIGH_PRIORITY_CLASS
@@ -139,8 +139,8 @@ if WINDOWS:
 if LINUX or FREEBSD:
 
     # psutil.Process.rlimit()
-    ProcRlimit = enum.IntEnum(
-        "ProcRlimit",
+    ProcessRlimit = enum.IntEnum(
+        "ProcessRlimit",
         (
             (name, getattr(cext, name))
             for name in dir(cext)

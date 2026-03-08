@@ -24,9 +24,9 @@ from ._common import conn_to_ntuple
 from ._common import get_procfs_path
 from ._common import memoize_when_activated
 from ._common import usage_percent
-from ._enums import ConnStatus
+from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcStatus
+from ._enums import ProcessStatus
 
 __extra__all__ = ["PROCFS_PATH"]
 
@@ -44,26 +44,26 @@ PAGE_SIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 
 PROC_STATUSES = {
-    cext.SIDL: ProcStatus.STATUS_IDLE,
-    cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
-    cext.SACTIVE: ProcStatus.STATUS_RUNNING,
-    cext.SSWAP: ProcStatus.STATUS_RUNNING,  # TODO what status is this?
-    cext.SSTOP: ProcStatus.STATUS_STOPPED,
+    cext.SIDL: ProcessStatus.STATUS_IDLE,
+    cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
+    cext.SACTIVE: ProcessStatus.STATUS_RUNNING,
+    cext.SSWAP: ProcessStatus.STATUS_RUNNING,  # TODO what status is this?
+    cext.SSTOP: ProcessStatus.STATUS_STOPPED,
 }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: ConnStatus.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: ConnStatus.CONN_SYN_SENT,
-    cext.TCPS_SYN_RCVD: ConnStatus.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: ConnStatus.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: ConnStatus.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: ConnStatus.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: ConnStatus.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: ConnStatus.CONN_LISTEN,
-    cext.TCPS_CLOSING: ConnStatus.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
+    cext.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
 }
 
 proc_info_map = dict(

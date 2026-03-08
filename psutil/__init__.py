@@ -58,9 +58,9 @@ from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
 from ._enums import BatteryTime
-from ._enums import ConnStatus
+from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcStatus
+from ._enums import ProcessStatus
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -68,13 +68,13 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-    from ._enums import ProcIOPriorityClass
-    from ._enums import ProcRlimit
+    from ._enums import ProcessIOPriorityClass
+    from ._enums import ProcessRlimit
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
-    from ._enums import ProcIOPriorityClass
-    from ._enums import ProcPriority
+    from ._enums import ProcessIOPriorityClass
+    from ._enums import ProcessPriority
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -83,7 +83,7 @@ elif BSD:
     from . import _psbsd as _psplatform
 
     if FREEBSD:
-        from ._enums import ProcRlimit
+        from ._enums import ProcessRlimit
 
 elif SUNOS:
     from . import _pssunos as _psplatform
@@ -147,16 +147,16 @@ def _export_enum(cls):
 
 
 # Populate global namespace with enums and CONSTANTs.
-_export_enum(ProcStatus)
-_export_enum(ConnStatus)
+_export_enum(ProcessStatus)
+_export_enum(ConnectionStatus)
 _export_enum(NicDuplex)
 _export_enum(BatteryTime)
 if LINUX or WINDOWS:
-    _export_enum(ProcIOPriorityClass)
+    _export_enum(ProcessIOPriorityClass)
 if WINDOWS:
-    _export_enum(ProcPriority)
+    _export_enum(ProcessPriority)
 if LINUX or FREEBSD:
-    _export_enum(ProcRlimit)
+    _export_enum(ProcessRlimit)
 if LINUX or SUNOS or AIX:
     __all__.append("PROCFS_PATH")
 
@@ -404,7 +404,7 @@ class Process:
             if pid1 == pid2:
                 if ident1 and not ident2:
                     try:
-                        return self.status() == ProcStatus.STATUS_ZOMBIE
+                        return self.status() == ProcessStatus.STATUS_ZOMBIE
                     except Error:
                         pass
         return self._ident == other._ident
@@ -713,7 +713,7 @@ class Process:
         try:
             return self._proc.status()
         except ZombieProcess:
-            return ProcStatus.STATUS_ZOMBIE
+            return ProcessStatus.STATUS_ZOMBIE
 
     def username(self):
         """The name of the user that owns the process.

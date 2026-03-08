@@ -23,14 +23,14 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil import BatteryTime
-from psutil import ConnStatus
+from psutil import ConnectionStatus
 from psutil import NicDuplex
-from psutil import ProcStatus
+from psutil import ProcessStatus
 
 if LINUX or WINDOWS:
-    from psutil import ProcIOPriorityClass
+    from psutil import ProcessIOPriorityClass
 if WINDOWS:
-    from psutil import ProcPriority
+    from psutil import ProcessPriority
 
 from . import AARCH64
 from . import GITHUB_ACTIONS
@@ -91,7 +91,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             "STATUS_PARKED",
         )
         self.check_constants(names, True)
-        assert sorted(ProcStatus.__members__.keys()) == sorted(names)
+        assert sorted(ProcessStatus.__members__.keys()) == sorted(names)
 
     def test_proc_status_strenum(self):
         mapping = (
@@ -136,7 +136,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
             names.extend(["CONN_IDLE", "CONN_BOUND"])
 
         self.check_constants(names, True)
-        assert sorted(ConnStatus.__members__.keys()) == sorted(names)
+        assert sorted(ConnectionStatus.__members__.keys()) == sorted(names)
 
     def test_conn_status_strenum(self):
         mapping = (
@@ -177,7 +177,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, LINUX)
         if LINUX:
-            assert sorted(ProcIOPriorityClass.__members__.keys()) == sorted(
+            assert sorted(ProcessIOPriorityClass.__members__.keys()) == sorted(
                 names
             )
 
@@ -190,7 +190,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, WINDOWS)
         if WINDOWS:
-            assert sorted(ProcIOPriorityClass.__members__.keys()) == sorted(
+            assert sorted(ProcessIOPriorityClass.__members__.keys()) == sorted(
                 names
             )
 
@@ -205,7 +205,7 @@ class TestAvailConstantsAPIs(PsutilTestCase):
         )
         self.check_constants(names, WINDOWS)
         if WINDOWS:
-            assert sorted(ProcPriority.__members__.keys()) == sorted(names)
+            assert sorted(ProcessPriority.__members__.keys()) == sorted(names)
 
     @pytest.mark.skipif(
         GITHUB_ACTIONS and LINUX,

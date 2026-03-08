@@ -27,11 +27,11 @@ from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
 from ._enums import BatteryTime
-from ._enums import ConnStatus
+from ._enums import ConnectionStatus
 from ._enums import NicDuplex
-from ._enums import ProcIOPriorityClass
-from ._enums import ProcPriority
-from ._enums import ProcStatus
+from ._enums import ProcessIOPriorityClass
+from ._enums import ProcessPriority
+from ._enums import ProcessStatus
 
 try:
     from . import _psutil_windows as cext
@@ -68,19 +68,19 @@ AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
 AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
-    cext.MIB_TCP_STATE_ESTAB: ConnStatus.CONN_ESTABLISHED,
-    cext.MIB_TCP_STATE_SYN_SENT: ConnStatus.CONN_SYN_SENT,
-    cext.MIB_TCP_STATE_SYN_RCVD: ConnStatus.CONN_SYN_RECV,
-    cext.MIB_TCP_STATE_FIN_WAIT1: ConnStatus.CONN_FIN_WAIT1,
-    cext.MIB_TCP_STATE_FIN_WAIT2: ConnStatus.CONN_FIN_WAIT2,
-    cext.MIB_TCP_STATE_TIME_WAIT: ConnStatus.CONN_TIME_WAIT,
-    cext.MIB_TCP_STATE_CLOSED: ConnStatus.CONN_CLOSE,
-    cext.MIB_TCP_STATE_CLOSE_WAIT: ConnStatus.CONN_CLOSE_WAIT,
-    cext.MIB_TCP_STATE_LAST_ACK: ConnStatus.CONN_LAST_ACK,
-    cext.MIB_TCP_STATE_LISTEN: ConnStatus.CONN_LISTEN,
-    cext.MIB_TCP_STATE_CLOSING: ConnStatus.CONN_CLOSING,
-    cext.MIB_TCP_STATE_DELETE_TCB: ConnStatus.CONN_DELETE_TCB,
-    cext.PSUTIL_CONN_NONE: ConnStatus.CONN_NONE,
+    cext.MIB_TCP_STATE_ESTAB: ConnectionStatus.CONN_ESTABLISHED,
+    cext.MIB_TCP_STATE_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    cext.MIB_TCP_STATE_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    cext.MIB_TCP_STATE_FIN_WAIT1: ConnectionStatus.CONN_FIN_WAIT1,
+    cext.MIB_TCP_STATE_FIN_WAIT2: ConnectionStatus.CONN_FIN_WAIT2,
+    cext.MIB_TCP_STATE_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    cext.MIB_TCP_STATE_CLOSED: ConnectionStatus.CONN_CLOSE,
+    cext.MIB_TCP_STATE_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    cext.MIB_TCP_STATE_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    cext.MIB_TCP_STATE_LISTEN: ConnectionStatus.CONN_LISTEN,
+    cext.MIB_TCP_STATE_CLOSING: ConnectionStatus.CONN_CLOSING,
+    cext.MIB_TCP_STATE_DELETE_TCB: ConnectionStatus.CONN_DELETE_TCB,
+    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
 }
 
 
@@ -961,7 +961,7 @@ class Process:
     @wrap_exceptions
     def nice_get(self):
         value = cext.proc_priority_get(self.pid)
-        value = ProcPriority(value)
+        value = ProcessPriority(value)
         return value
 
     @wrap_exceptions
@@ -971,7 +971,7 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = cext.proc_io_priority_get(self.pid)
-        ret = ProcIOPriorityClass(ret)
+        ret = ProcessIOPriorityClass(ret)
         return ret
 
     @wrap_exceptions
@@ -980,10 +980,10 @@ class Process:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
         if ioclass not in {
-            ProcIOPriorityClass.IOPRIO_VERYLOW,
-            ProcIOPriorityClass.IOPRIO_LOW,
-            ProcIOPriorityClass.IOPRIO_NORMAL,
-            ProcIOPriorityClass.IOPRIO_HIGH,
+            ProcessIOPriorityClass.IOPRIO_VERYLOW,
+            ProcessIOPriorityClass.IOPRIO_LOW,
+            ProcessIOPriorityClass.IOPRIO_NORMAL,
+            ProcessIOPriorityClass.IOPRIO_HIGH,
         }:
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
@@ -1012,9 +1012,9 @@ class Process:
     def status(self):
         suspended = cext.proc_is_suspended(self.pid)
         if suspended:
-            return ProcStatus.STATUS_STOPPED
+            return ProcessStatus.STATUS_STOPPED
         else:
-            return ProcStatus.STATUS_RUNNING
+            return ProcessStatus.STATUS_RUNNING
 
     @wrap_exceptions
     def cpu_affinity_get(self):
