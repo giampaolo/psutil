@@ -286,7 +286,7 @@ Process management
     >>>
     >>> p = psutil.Process(7055)
     >>> p
-    psutil.Process(pid=7055, name='python3', status='running', started='09:04:44')
+    psutil.Process(pid=7055, name='python3', status=<ProcessStatus.STATUS_RUNNING: 'running'>, started='09:04:44')
     >>> p.pid
     7055
     >>> p.name()
@@ -301,17 +301,17 @@ Process management
     >>> p.ppid()
     7054
     >>> p.parent()
-    psutil.Process(pid=4699, name='bash', status='sleeping', started='09:06:44')
+    psutil.Process(pid=4699, name='bash', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='09:06:44')
     >>> p.parents()
     [psutil.Process(pid=4699, name='bash', started='09:06:44'),
-     psutil.Process(pid=4689, name='gnome-terminal-server', status='sleeping', started='0:06:44'),
-     psutil.Process(pid=1, name='systemd', status='sleeping', started='05:56:55')]
+     psutil.Process(pid=4689, name='gnome-terminal-server', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='0:06:44'),
+     psutil.Process(pid=1, name='systemd', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='05:56:55')]
     >>> p.children(recursive=True)
-    [psutil.Process(pid=29835, name='python3', status='sleeping', started='11:45:38'),
-     psutil.Process(pid=29836, name='python3', status='waking', started='11:43:39')]
+    [psutil.Process(pid=29835, name='python3', status=<ProcessStatus.STATUS_SLEEPING: 'sleeping'>, started='11:45:38'),
+     psutil.Process(pid=29836, name='python3', status=<ProcessStatus.STATUS_WAKING: 'waking'>, started='11:43:39')]
     >>>
     >>> p.status()
-    'running'
+    <ProcessStatus.STATUS_RUNNING: 'running'>
     >>> p.create_time()
     1267551141.5019531
     >>> p.terminal()
@@ -360,8 +360,8 @@ Process management
      popenfile(path='/var/log/monit.log', fd=4, position=235542, mode='a', flags=33793)]
     >>>
     >>> p.net_connections(kind='tcp')
-    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
-     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING')]
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>)]
     >>>
     >>> p.threads()
     [pthread(id=5234, user_time=22.5, system_time=9.2891),
@@ -380,7 +380,7 @@ Process management
     >>>
     >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
     >>> p.ionice()
-    pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
+    pionice(ioclass=<ProcessIOPriorityClass.IOPRIO_CLASS_IDLE: 3>, value=0)
     >>>
     >>> p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # set resource limits (Linux only)
     >>> p.rlimit(psutil.RLIMIT_NOFILE)
@@ -392,7 +392,7 @@ Process management
      ...}
     >>>
     >>> p.as_dict()
-    {'status': 'running', 'num_ctx_switches': pctxsw(voluntary=63, involuntary=1), 'pid': 5457, ...}
+    {'status': <ProcessStatus.STATUS_RUNNING: 'running'>, 'num_ctx_switches': pctxsw(voluntary=63, involuntary=1), 'pid': 5457, ...}
     >>> p.is_running()
     True
     >>> p.suspend()
