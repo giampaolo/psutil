@@ -783,6 +783,9 @@ Network
   .. versionchanged:: 5.9.5 : OpenBSD: retrieve *laddr* path for AF_UNIX
     sockets (before it was an empty string).
 
+  .. versionchanged:: 8.0.0 *status* field is now a
+    :class:`psutil.ConnectionStatus` enum member instead of a plain ``str``.
+
 .. function:: net_if_addrs()
 
   Return the addresses associated to each NIC (network interface card)
@@ -1410,8 +1413,12 @@ Process class
 
   .. method:: status()
 
-    The current process status as a string. The returned string is one of the
+    The current process status as a :class:`psutil.ProcessStatus` enum member.
+    The returned value is one of the
     `psutil.STATUS_* <#process-status-constants>`_ constants.
+
+    .. versionchanged:: 8.0.0 return value is now a :class:`psutil.ProcessStatus`
+      enum member instead of a plain ``str``.
 
   .. method:: cwd()
 
@@ -1466,9 +1473,13 @@ Process class
     `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
     constants reflecting the MSDN documentation.
+    The return value on Windows is a :class:`psutil.ProcessPriority` enum member.
     Example which increases process priority on Windows:
 
       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
+
+    .. versionchanged:: 8.0.0 on Windows, return value is now a
+      :class:`psutil.ProcessPriority` enum member.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1517,6 +1528,9 @@ Process class
 
     .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants
      including new ``IOPRIO_HIGH``.
+
+    .. versionchanged:: 8.0.0 *ioclass* is now a
+      :class:`psutil.ProcessIOPriorityClass` enum member.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -2240,6 +2254,9 @@ Process class
     .. versionchanged:: 6.0.0 : method renamed from `connections` to
       `net_connections`.
 
+    .. versionchanged:: 8.0.0 *status* field is now a
+      :class:`psutil.ConnectionStatus` enum member instead of a plain ``str``.
+
   .. method:: connections()
 
     Same as :meth:`net_connections` (deprecated).
@@ -2568,6 +2585,69 @@ Example code:
 Constants
 =========
 
+The following enum classes group related constants and are useful for type
+annotations and introspection. The individual constants (e.g.
+:data:`psutil.STATUS_RUNNING`) are also accessible directly from the psutil
+namespace as aliases for the enum members.
+
+.. class:: psutil.ProcessStatus
+
+  :class:`enum.StrEnum` collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
+  constants. Returned by :meth:`psutil.Process.status()`.
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ConnectionStatus
+
+  :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
+  constants. Returned in the *status* field of
+  :func:`psutil.net_connections` and :meth:`psutil.Process.net_connections`.
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.NicDuplex
+
+  :class:`enum.IntEnum` collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
+  constants. Returned in the *duplex* field of :func:`psutil.net_if_stats`.
+
+  .. versionadded:: 3.0.0
+
+.. class:: psutil.BatteryTime
+
+  :class:`enum.IntEnum` collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
+  constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
+
+  .. versionadded:: 5.1.0
+
+.. class:: psutil.ProcessIOPriorityClass
+
+  :class:`enum.IntEnum` collection of I/O priority constants for
+  :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
+  On Windows: ``IOPRIO_*`` constants.
+
+  Availability: Linux, Windows
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessPriority
+
+  :class:`enum.IntEnum` collection of
+  :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
+  :meth:`psutil.Process.nice` on Windows.
+
+  Availability: Windows
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessRlimit
+
+  :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
+  constants for :meth:`psutil.Process.rlimit`.
+
+  Availability: Linux, FreeBSD
+
+  .. versionadded:: 8.0.0
+
 Operating system constants
 --------------------------
 
@@ -2635,9 +2715,12 @@ Process status constants
 .. data:: STATUS_SUSPENDED (NetBSD)
 
   Represent a process status. Returned by :meth:`psutil.Process.status()`.
+  These constants are members of the :class:`psutil.ProcessStatus` enum.
 
   .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
   .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
+  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessStatus`
+    enum members (were plain strings).
 
 Process priority constants
 --------------------------
@@ -2653,8 +2736,12 @@ Process priority constants
   Represent the priority of a process on Windows (see `SetPriorityClass`_).
   They can be used in conjunction with :meth:`psutil.Process.nice()` to get or
   set process priority.
+  These constants are members of the :class:`psutil.ProcessPriority` enum.
 
   Availability: Windows
+
+  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessPriority`
+    enum members (were plain integers).
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2665,6 +2752,8 @@ Process priority constants
   A set of integers representing the I/O priority of a process on Linux. They
   can be used in conjunction with :meth:`psutil.Process.ionice()` to get or set
   process I/O priority.
+  These constants are members of the :class:`psutil.ProcessIOPriorityClass`
+  enum.
   *IOPRIO_CLASS_NONE* and *IOPRIO_CLASS_BE* (best effort) is the default for
   any process that hasn't set a specific I/O priority.
   *IOPRIO_CLASS_RT* (real time) means the process is given first access to the
@@ -2677,6 +2766,10 @@ Process priority constants
 
   Availability: Linux
 
+  .. versionchanged:: 8.0.0 constants are now
+    :class:`psutil.ProcessIOPriorityClass` enum members (previously
+    ``IOPriority`` enum).
+
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
 .. data:: IOPRIO_NORMAL
@@ -2685,10 +2778,15 @@ Process priority constants
   A set of integers representing the I/O priority of a process on Windows.
   They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
   or set process I/O priority.
+  These constants are members of the :class:`psutil.ProcessIOPriorityClass`
+  enum.
 
   Availability: Windows
 
   .. versionadded:: 5.6.2
+  .. versionchanged:: 8.0.0 constants are now
+    :class:`psutil.ProcessIOPriorityClass` enum members (previously
+    ``IOPriority`` enum).
 
 Process resources constants
 ---------------------------
@@ -2725,11 +2823,14 @@ FreeBSD specific:
 Constants used for getting and setting process resource limits to be used in
 conjunction with :meth:`psutil.Process.rlimit()`. See `resource.getrlimit`_
 for further information.
+These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
 Availability: Linux, FreeBSD
 
 .. versionchanged:: 5.7.3 added FreeBSD support, added ``RLIMIT_SWAP``,
   ``RLIMIT_SBSIZE``, ``RLIMIT_NPTS``.
+.. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessRlimit`
+  enum members (were plain integers).
 
 Connections constants
 ---------------------
@@ -2754,6 +2855,10 @@ Connections constants
   A set of strings representing the status of a TCP connection.
   Returned by :meth:`psutil.Process.net_connections()` and
   :func:`psutil.net_connections` (`status` field).
+  These constants are members of the :class:`psutil.ConnectionStatus` enum.
+
+  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ConnectionStatus`
+    enum members (were plain strings).
 
 Hardware constants
 ------------------
