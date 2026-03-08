@@ -41,41 +41,41 @@ else:
 
 # psutil.Process.status()
 class ProcStatus(StrEnum):
-    STATUS_RUNNING = "running"
-    STATUS_SLEEPING = "sleeping"
-    STATUS_DISK_SLEEP = "disk-sleep"
-    STATUS_STOPPED = "stopped"
-    STATUS_TRACING_STOP = "tracing-stop"
-    STATUS_ZOMBIE = "zombie"
     STATUS_DEAD = "dead"
-    STATUS_WAKE_KILL = "wake-kill"
-    STATUS_WAKING = "waking"
+    STATUS_DISK_SLEEP = "disk-sleep"
     STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
     STATUS_LOCKED = "locked"  # FreeBSD
-    STATUS_WAITING = "waiting"  # FreeBSD
-    STATUS_SUSPENDED = "suspended"  # NetBSD
     STATUS_PARKED = "parked"  # Linux
+    STATUS_RUNNING = "running"
+    STATUS_SLEEPING = "sleeping"
+    STATUS_STOPPED = "stopped"
+    STATUS_SUSPENDED = "suspended"  # NetBSD
+    STATUS_TRACING_STOP = "tracing-stop"
+    STATUS_WAITING = "waiting"  # FreeBSD
+    STATUS_WAKE_KILL = "wake-kill"
+    STATUS_WAKING = "waking"
+    STATUS_ZOMBIE = "zombie"
 
 
 # psutil.Process.net_connections() and psutil.net_connections()
 class ConnStatus(StrEnum):
-    CONN_ESTABLISHED = "ESTABLISHED"
-    CONN_SYN_SENT = "SYN_SENT"
-    CONN_SYN_RECV = "SYN_RECV"
-    CONN_FIN_WAIT1 = "FIN_WAIT1"
-    CONN_FIN_WAIT2 = "FIN_WAIT2"
-    CONN_TIME_WAIT = "TIME_WAIT"
     CONN_CLOSE = "CLOSE"
     CONN_CLOSE_WAIT = "CLOSE_WAIT"
+    CONN_CLOSING = "CLOSING"
+    CONN_ESTABLISHED = "ESTABLISHED"
+    CONN_FIN_WAIT1 = "FIN_WAIT1"
+    CONN_FIN_WAIT2 = "FIN_WAIT2"
     CONN_LAST_ACK = "LAST_ACK"
     CONN_LISTEN = "LISTEN"
-    CONN_CLOSING = "CLOSING"
     CONN_NONE = "NONE"
+    CONN_SYN_RECV = "SYN_RECV"
+    CONN_SYN_SENT = "SYN_SENT"
+    CONN_TIME_WAIT = "TIME_WAIT"
     if WINDOWS:
         CONN_DELETE_TCB = "DELETE_TCB"
     if SUNOS:
-        CONN_IDLE = "IDLE"
         CONN_BOUND = "BOUND"
+        CONN_IDLE = "IDLE"
 
 
 # psutil.net_if_stats()
