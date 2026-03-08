@@ -546,17 +546,18 @@ class TestReturnedTypes(PsutilTestCase):
         """
         if hint is None:
             return None
-        origin = getattr(hint, '__origin__', None)
+        origin = typing.get_origin(hint)
+        args = typing.get_args(hint)
         if origin is collections.abc.Generator:
             return None
-        is_union = (
+        is_union = origin is typing.Union or (
             hasattr(builtin_types, 'UnionType')
-            and isinstance(hint, builtin_types.UnionType)
-        ) or origin is typing.Union
+            and origin is builtin_types.UnionType
+        )
         if is_union:
             result = []
-            for arg in typing.get_args(hint):
-                inner = getattr(arg, '__origin__', None)
+            for arg in args:
+                inner = typing.get_origin(arg)
                 if arg is type(None):
                     result.append(type(None))
                 elif inner is not None:
