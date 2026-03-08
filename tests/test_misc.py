@@ -196,6 +196,8 @@ class TestSpecialMethods(PsutilTestCase):
 class TestMisc(PsutilTestCase):
     def test__all__(self):
         dir_psutil = dir(psutil)
+        # assert there's no duplicates
+        assert len(dir_psutil) == len(set(dir_psutil))
         for name in dir_psutil:
             if name in {
                 'debug',
