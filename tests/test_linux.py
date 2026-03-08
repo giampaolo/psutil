@@ -1658,6 +1658,21 @@ class TestSensorsBattery(PsutilTestCase):
                 ):
                     assert psutil.sensors_battery().percent == 88
 
+    @pytest.mark.skipif(
+        not os.path.isfile("/sys/class/power_supply/BAT0/capacity"),
+        reason="BAT /capacity file don't exist",
+    )
+    def test_percent_against_capacity(self):
+        # Internally, if we have /energy_full, the percentage will be
+        # calculated by NOT reading the /capacity file, to get more
+        # accuracy. Check againt /capacity to make sure our percentage
+        # is calculated correctly.
+        with open("/sys/class/power_supply/BAT0/capacity") as f:
+            capacity = float(f.read())
+        assert psutil.sensors_battery().percent == pytest.approx(
+            capacity, abs=1
+        )
+
     def test_emulate_no_power(self):
         # Emulate a case where /AC0/online file nor /BAT0/status exist.
         with mock_open_exception(

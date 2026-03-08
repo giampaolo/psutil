@@ -51,6 +51,8 @@
   ``collections.namedtuple`` to ``typing.NamedTuple`` classes with **type
   annotations**. This makes the classes self-documenting, effectively turning
   this module into a readable API reference.
+- 2754_: standardize `sensors_battery()`_'s `percent` so that it returns a
+  `float` instead of `int` on all systems, not only Linux.
 
 **Bug fixes**
 
@@ -275,7 +277,7 @@ Changes that break backwards compatibility:
   trigger a segfault.
 - 2604_, [Linux]: `virtual_memory()`_ "used" memory does not match recent
   versions of ``free`` CLI utility.  (patch by Isaac K. Ko)
-- 2605_, [Linux]: `psutil.sensors_battery()` reports a negative amount for
+- 2605_, [Linux]: `sensors_battery()`_ reports a negative amount for
   seconds left.
 - 2607_, [Windows]: ``WindowsService.description()`` method may fail with
   ``ERROR_NOT_FOUND``. Now it returns an empty string instead.

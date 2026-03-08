@@ -35,7 +35,7 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         goto error;
     if (psutil_sysctlbyname("hw.acpi.acline", &power_plugged, size) != 0)
         goto error;
-    return Py_BuildValue("iii", percent, minsleft, power_plugged);
+    return Py_BuildValue("dii", (double)percent, minsleft, power_plugged);
 
 error:
     // see: https://github.com/giampaolo/psutil/issues/1074

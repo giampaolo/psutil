@@ -1561,7 +1561,7 @@ def check_ntuple_types(nt):
             types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
         else:
             continue
-        assert isinstance(value, types_), (value, types_)
+        assert isinstance(value, types_), (field, value, types_)
 
 
 def check_net_address(addr, family):
