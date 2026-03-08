@@ -96,7 +96,9 @@ psutil_sensors_battery(PyObject *self, PyObject *args) {
         time_to_empty = -1;
     }
 
-    py_tuple = Py_BuildValue("Iii", capacity, time_to_empty, is_power_plugged);
+    py_tuple = Py_BuildValue(
+        "dii", (double)capacity, time_to_empty, is_power_plugged
+    );
     if (!py_tuple)
         goto error;
 

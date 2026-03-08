@@ -501,7 +501,7 @@ class TestNtupleFieldTypes(PsutilTestCase):
                 ret = fun()
             except psutil.Error:
                 continue
-            with self.subTest(fun=str(fun)):
+            with self.subTest(name=name, fun=str(fun)):
                 if isinstance(ret, dict):
                     for v in ret.values():
                         if isinstance(v, list):
@@ -516,7 +516,7 @@ class TestNtupleFieldTypes(PsutilTestCase):
         p = psutil.Process()
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.getters):
-            with self.subTest(fun=str(fun)):
+            with self.subTest(name=name, fun=str(fun)):
                 try:
                     ret = fun()
                 except psutil.Error:

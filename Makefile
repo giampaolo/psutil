@@ -91,8 +91,8 @@ install-git-hooks:  ## Install GIT pre-commit hook.
 # Tests
 # ===================================================================
 
-# disable cache on Windows because it causes "Permission denied" errors
-_PYTEST_EXTRA != if [ "$$OS" = "Windows_NT" ]; then printf '%s' '-p no:cacheprovider'; fi
+# Cache dir on Windows often causes "Permission denied" errors
+_PYTEST_EXTRA != if [ "$$OS" = "Windows_NT" ]; then printf '%s' '-o cache_dir=/tmp/pytest-psutil-cache'; fi
 RUN_TEST = $(PYTHON_ENV_VARS) $(PYTHON) -m pytest $(_PYTEST_EXTRA)
 
 test:  ## Run all tests (except memleak tests).
