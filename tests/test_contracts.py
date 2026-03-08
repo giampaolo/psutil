@@ -35,8 +35,8 @@ from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
-from . import check_fun_types
-from . import check_ntuple_types
+from . import check_fun_type_hints
+from . import check_ntuple_type_hints
 from . import create_sockets
 from . import enum
 from . import is_namedtuple
@@ -491,11 +491,11 @@ class TestNtupleFieldTypes(PsutilTestCase):
 
     def check_result(self, ret):
         if is_namedtuple(ret):
-            check_ntuple_types(ret)
+            check_ntuple_type_hints(ret)
         elif isinstance(ret, list):
             for item in ret:
                 if is_namedtuple(item):
-                    check_ntuple_types(item)
+                    check_ntuple_type_hints(item)
 
     def test_system_ntuple_types(self):
         for fun, name in system_namespace.iter(system_namespace.getters):
@@ -541,7 +541,7 @@ class TestReturnedTypes(PsutilTestCase):
             ret = fun()
         except psutil.Error:
             return
-        check_fun_types(fun, ret)
+        check_fun_type_hints(fun, ret)
 
     def test_system_return_types(self):
         for fun, name in system_namespace.iter(system_namespace.getters):

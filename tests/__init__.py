@@ -87,7 +87,7 @@ __all__ = [
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
     'system_namespace', 'is_win_secure_system_proc',
     # type hints
-    'check_ntuple_types', 'check_fun_types',
+    'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1067,7 +1067,7 @@ class PsutilTestCase(unittest.TestCase):
 
     def check_proc_memory(self, nt):
         # Check the ntuple returned by Process.memory_*() methods.
-        check_ntuple_types(nt)
+        check_ntuple_type_hints(nt)
         for value in nt:
             assert isinstance(value, int)
             assert value >= 0
@@ -1617,7 +1617,7 @@ def check_connection_ntuple(conn):
         else:
             assert conn.status == psutil.CONN_NONE, conn.status
 
-    check_ntuple_types(conn)
+    check_ntuple_type_hints(conn)
     check_ntuple(conn)
     check_family(conn)
     check_type(conn)
@@ -1664,7 +1664,7 @@ def _get_ntuple_hints(nt):
         return {}
 
 
-def check_ntuple_types(nt):
+def check_ntuple_type_hints(nt):
     """Uses type hints from _ntuples.py to verify field types. `nt` is
     a named tuple returned by one of psutil APIs.
     """
@@ -1711,7 +1711,7 @@ def _get_return_hint(fun):
     return hints.get('return')
 
 
-def check_fun_types(fun, retval):
+def check_fun_type_hints(fun, retval):
     """Use the 'return' type hint of *fun* from psutil/__init__.py to
     verify that *retval* is an instance of the annotated type.
     Skips the check if the hint cannot be resolved or is a Generator.
