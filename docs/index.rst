@@ -751,10 +751,10 @@ Network
 
     >>> import psutil
     >>> psutil.net_connections()
-    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED', pid=1254),
-     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING', pid=2987),
-     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED', pid=None),
-     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT', pid=None)
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
      ...]
 
   .. warning::
@@ -782,6 +782,9 @@ Network
 
   .. versionchanged:: 5.9.5 : OpenBSD: retrieve *laddr* path for AF_UNIX
     sockets (before it was an empty string).
+
+  .. versionchanged:: 8.0.0 *status* field is now a
+    :class:`psutil.ConnectionStatus` enum member instead of a plain ``str``.
 
 .. function:: net_if_addrs()
 
@@ -1410,8 +1413,12 @@ Process class
 
   .. method:: status()
 
-    The current process status as a string. The returned string is one of the
+    The current process status as a :class:`psutil.ProcessStatus` enum member.
+    The returned value is one of the
     `psutil.STATUS_* <#process-status-constants>`_ constants.
+
+    .. versionchanged:: 8.0.0 return value is now a :class:`psutil.ProcessStatus`
+      enum member instead of a plain ``str``.
 
   .. method:: cwd()
 
@@ -1466,9 +1473,13 @@ Process class
     `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
     constants reflecting the MSDN documentation.
+    The return value on Windows is a :class:`psutil.ProcessPriority` enum member.
     Example which increases process priority on Windows:
 
       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
+
+    .. versionchanged:: 8.0.0 on Windows, return value is now a
+      :class:`psutil.ProcessPriority` enum member.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1511,12 +1522,14 @@ Process class
       ...     p.ionice(psutil.IOPRIO_HIGH)
       ...
       >>> p.ionice()  # get
-      pionice(ioclass=<IOPriority.IOPRIO_CLASS_RT: 1>, value=7)
+      pionice(ioclass=<ProcessIOPriority.IOPRIO_CLASS_RT: 1>, value=7)
 
     Availability: Linux, Windows Vista+
 
-    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants
-     including new ``IOPRIO_HIGH``.
+    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants.
+
+    .. versionchanged:: 8.0.0 *ioclass* is now a
+      :class:`psutil.ProcessIOPriority` enum member.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -2209,10 +2222,10 @@ Process class
       >>> p.name()
       'firefox'
       >>> p.net_connections()
-      [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status='ESTABLISHED'),
-       pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status='CLOSING'),
-       pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status='ESTABLISHED'),
-       pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status='SYN_SENT')]
+      [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
+       pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>),
+       pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
+       pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>)]
 
     .. warning::
       On Linux, retrieving connections for certain processes requires root
@@ -2239,6 +2252,9 @@ Process class
 
     .. versionchanged:: 6.0.0 : method renamed from `connections` to
       `net_connections`.
+
+    .. versionchanged:: 8.0.0 *status* field is now a
+      :class:`psutil.ConnectionStatus` enum member instead of a plain ``str``.
 
   .. method:: connections()
 
@@ -2568,6 +2584,71 @@ Example code:
 Constants
 =========
 
+The following enum classes group related constants and are useful for type
+annotations and introspection. The individual constants (e.g.
+:data:`psutil.STATUS_RUNNING`) are also accessible directly from the psutil
+namespace as aliases for the enum members and should be preferred over
+accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
+``psutil.ProcessStatus.STATUS_RUNNING``).
+
+.. class:: psutil.ProcessStatus
+
+  `enum.StrEnum`_ collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
+  constants. Returned by :meth:`psutil.Process.status()`.
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessPriority
+
+  `enum.IntEnum`_ collection of
+  :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
+  :meth:`psutil.Process.nice` on Windows.
+
+  Availability: Windows
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessIOPriority
+
+  `enum.IntEnum`_ collection of I/O priority constants for
+  :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
+  On Windows: ``IOPRIO_*`` constants.
+
+  Availability: Linux, Windows
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ProcessRlimit
+
+  `enum.IntEnum`_ collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
+  constants for :meth:`psutil.Process.rlimit`.
+
+  Availability: Linux, FreeBSD
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.ConnectionStatus
+
+  `enum.StrEnum`_ collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
+  constants. Returned in the *status* field of
+  :func:`psutil.net_connections` and :meth:`psutil.Process.net_connections`.
+
+  .. versionadded:: 8.0.0
+
+.. class:: psutil.NicDuplex
+
+  `enum.IntEnum`_ collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
+  constants. Returned in the *duplex* field of :func:`psutil.net_if_stats`.
+
+  .. versionadded:: 3.0.0
+
+.. class:: psutil.BatteryTime
+
+  `enum.IntEnum`_ collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
+  constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
+
+  .. versionadded:: 5.1.0
+
 Operating system constants
 --------------------------
 
@@ -2635,9 +2716,12 @@ Process status constants
 .. data:: STATUS_SUSPENDED (NetBSD)
 
   Represent a process status. Returned by :meth:`psutil.Process.status()`.
+  These constants are members of the :class:`psutil.ProcessStatus` enum.
 
   .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
   .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
+  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessStatus`
+    enum members (were plain strings).
 
 Process priority constants
 --------------------------
@@ -2653,8 +2737,12 @@ Process priority constants
   Represent the priority of a process on Windows (see `SetPriorityClass`_).
   They can be used in conjunction with :meth:`psutil.Process.nice()` to get or
   set process priority.
+  These constants are members of the :class:`psutil.ProcessPriority` enum.
 
   Availability: Windows
+
+  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessPriority`
+    enum members (were plain integers).
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2665,6 +2753,8 @@ Process priority constants
   A set of integers representing the I/O priority of a process on Linux. They
   can be used in conjunction with :meth:`psutil.Process.ionice()` to get or set
   process I/O priority.
+  These constants are members of the :class:`psutil.ProcessIOPriority`
+  enum.
   *IOPRIO_CLASS_NONE* and *IOPRIO_CLASS_BE* (best effort) is the default for
   any process that hasn't set a specific I/O priority.
   *IOPRIO_CLASS_RT* (real time) means the process is given first access to the
@@ -2677,6 +2767,10 @@ Process priority constants
 
   Availability: Linux
 
+  .. versionchanged:: 8.0.0 constants are now
+    :class:`psutil.ProcessIOPriority` enum members (previously
+    ``IOPriority`` enum).
+
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
 .. data:: IOPRIO_NORMAL
@@ -2685,10 +2779,15 @@ Process priority constants
   A set of integers representing the I/O priority of a process on Windows.
   They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
   or set process I/O priority.
+  These constants are members of the :class:`psutil.ProcessIOPriority`
+  enum.
 
   Availability: Windows
 
   .. versionadded:: 5.6.2
+  .. versionchanged:: 8.0.0 constants are now
+    :class:`psutil.ProcessIOPriority` enum members (previously
+    ``IOPriority`` enum).
 
 Process resources constants
 ---------------------------
@@ -2725,11 +2824,14 @@ FreeBSD specific:
 Constants used for getting and setting process resource limits to be used in
 conjunction with :meth:`psutil.Process.rlimit()`. See `resource.getrlimit`_
 for further information.
+These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
 Availability: Linux, FreeBSD
 
 .. versionchanged:: 5.7.3 added FreeBSD support, added ``RLIMIT_SWAP``,
   ``RLIMIT_SBSIZE``, ``RLIMIT_NPTS``.
+.. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessRlimit`
+  enum members (were plain integers).
 
 Connections constants
 ---------------------
@@ -2754,6 +2856,10 @@ Connections constants
   A set of strings representing the status of a TCP connection.
   Returned by :meth:`psutil.Process.net_connections()` and
   :func:`psutil.net_connections` (`status` field).
+  These constants are members of the :class:`psutil.ConnectionStatus` enum.
+
+  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ConnectionStatus`
+    enum members (were plain strings).
 
 Hardware constants
 ------------------
@@ -2885,9 +2991,9 @@ Processes owned by user::
 Processes actively running::
 
   >>> pp([(p.pid, p.info) for p in psutil.process_iter(['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
-  [(1150, {'name': 'Xorg', 'status': 'running'}),
-   (1776, {'name': 'unity-panel-service', 'status': 'running'}),
-   (20492, {'name': 'python', 'status': 'running'})]
+  [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
+   (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
+   (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
 
 Processes using log files::
 
@@ -3471,6 +3577,8 @@ Timeline
 .. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
 .. _`DEVGUIDE.rst`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`enum.IntEnum`: https://docs.python.org/3/library/enum.html#enum.IntEnum
+.. _`enum.StrEnum`: https://docs.python.org/3/library/enum.html#enum.StrEnum
 .. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
 .. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
 .. _`GetDriveType`: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea

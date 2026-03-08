@@ -13,7 +13,6 @@ import sys
 import threading
 import time
 
-from . import _common
 from . import _ntuples as ntp
 from ._common import ENCODING
 from ._common import AccessDenied
@@ -27,12 +26,12 @@ from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
-from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
-from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
-from ._psutil_windows import HIGH_PRIORITY_CLASS
-from ._psutil_windows import IDLE_PRIORITY_CLASS
-from ._psutil_windows import NORMAL_PRIORITY_CLASS
-from ._psutil_windows import REALTIME_PRIORITY_CLASS
+from ._enums import BatteryTime
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessIOPriority
+from ._enums import ProcessPriority
+from ._enums import ProcessStatus
 
 try:
     from . import _psutil_windows as cext
@@ -55,26 +54,13 @@ except ImportError as err:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-# fmt: off
-__extra__all__ = [
-    "win_service_iter", "win_service_get",
-    # Process priority
-    "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS", "NORMAL_PRIORITY_CLASS",
-    "REALTIME_PRIORITY_CLASS",
-    # IO priority
-    "IOPRIO_VERYLOW", "IOPRIO_LOW", "IOPRIO_NORMAL", "IOPRIO_HIGH",
-    # others
-    "CONN_DELETE_TCB", "AF_LINK",
-]
-# fmt: on
+__extra__all__ = ["win_service_iter", "win_service_get", "AF_LINK"]
 
 
 # =====================================================================
 # --- globals
 # =====================================================================
 
-CONN_DELETE_TCB = "DELETE_TCB"
 ERROR_PARTIAL_COPY = 299
 PYPY = '__pypy__' in sys.builtin_module_names
 
@@ -82,42 +68,20 @@ AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
 AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
-    cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
-    cext.MIB_TCP_STATE_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.MIB_TCP_STATE_SYN_RCVD: _common.CONN_SYN_RECV,
-    cext.MIB_TCP_STATE_FIN_WAIT1: _common.CONN_FIN_WAIT1,
-    cext.MIB_TCP_STATE_FIN_WAIT2: _common.CONN_FIN_WAIT2,
-    cext.MIB_TCP_STATE_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.MIB_TCP_STATE_CLOSED: _common.CONN_CLOSE,
-    cext.MIB_TCP_STATE_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.MIB_TCP_STATE_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.MIB_TCP_STATE_LISTEN: _common.CONN_LISTEN,
-    cext.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
-    cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.MIB_TCP_STATE_ESTAB: ConnectionStatus.CONN_ESTABLISHED,
+    cext.MIB_TCP_STATE_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    cext.MIB_TCP_STATE_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    cext.MIB_TCP_STATE_FIN_WAIT1: ConnectionStatus.CONN_FIN_WAIT1,
+    cext.MIB_TCP_STATE_FIN_WAIT2: ConnectionStatus.CONN_FIN_WAIT2,
+    cext.MIB_TCP_STATE_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    cext.MIB_TCP_STATE_CLOSED: ConnectionStatus.CONN_CLOSE,
+    cext.MIB_TCP_STATE_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    cext.MIB_TCP_STATE_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    cext.MIB_TCP_STATE_LISTEN: ConnectionStatus.CONN_LISTEN,
+    cext.MIB_TCP_STATE_CLOSING: ConnectionStatus.CONN_CLOSING,
+    cext.MIB_TCP_STATE_DELETE_TCB: ConnectionStatus.CONN_DELETE_TCB,
+    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
 }
-
-
-class Priority(enum.IntEnum):
-    ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
-    BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
-    HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
-    IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
-    NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
-    REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
-
-
-globals().update(Priority.__members__)
-
-
-class IOPriority(enum.IntEnum):
-    IOPRIO_VERYLOW = 0
-    IOPRIO_LOW = 1
-    IOPRIO_NORMAL = 2
-    IOPRIO_HIGH = 3
-
-
-globals().update(IOPriority.__members__)
 
 
 # =====================================================================
@@ -342,8 +306,7 @@ def net_if_stats():
     rawdict = cext.net_if_stats()
     for name, items in rawdict.items():
         isup, duplex, speed, mtu = items
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
+        duplex = NicDuplex(duplex)
         ret[name] = ntp.snicstats(isup, duplex, speed, mtu, '')
     return ret
 
@@ -377,9 +340,9 @@ def sensors_battery():
     if no_battery:
         return None
     if power_plugged or charging:
-        secsleft = _common.POWER_TIME_UNLIMITED
+        secsleft = BatteryTime.POWER_TIME_UNLIMITED
     elif secsleft == -1:
-        secsleft = _common.POWER_TIME_UNKNOWN
+        secsleft = BatteryTime.POWER_TIME_UNKNOWN
 
     return ntp.sbattery(percent, secsleft, power_plugged)
 
@@ -998,7 +961,7 @@ class Process:
     @wrap_exceptions
     def nice_get(self):
         value = cext.proc_priority_get(self.pid)
-        value = Priority(value)
+        value = ProcessPriority(value)
         return value
 
     @wrap_exceptions
@@ -1008,7 +971,7 @@ class Process:
     @wrap_exceptions
     def ionice_get(self):
         ret = cext.proc_io_priority_get(self.pid)
-        ret = IOPriority(ret)
+        ret = ProcessIOPriority(ret)
         return ret
 
     @wrap_exceptions
@@ -1016,12 +979,7 @@ class Process:
         if value:
             msg = "value argument not accepted on Windows"
             raise TypeError(msg)
-        if ioclass not in {
-            IOPriority.IOPRIO_VERYLOW,
-            IOPriority.IOPRIO_LOW,
-            IOPriority.IOPRIO_NORMAL,
-            IOPriority.IOPRIO_HIGH,
-        }:
+        if ioclass not in ProcessIOPriority:
             msg = f"{ioclass} is not a valid priority"
             raise ValueError(msg)
         cext.proc_io_priority_set(self.pid, ioclass)
@@ -1049,9 +1007,9 @@ class Process:
     def status(self):
         suspended = cext.proc_is_suspended(self.pid)
         if suspended:
-            return _common.STATUS_STOPPED
+            return ProcessStatus.STATUS_STOPPED
         else:
-            return _common.STATUS_RUNNING
+            return ProcessStatus.STATUS_RUNNING
 
     @wrap_exceptions
     def cpu_affinity_get(self):

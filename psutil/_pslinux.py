@@ -19,14 +19,10 @@ import sys
 import warnings
 from collections import defaultdict
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_linux as cext
 from ._common import ENCODING
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
@@ -41,21 +37,16 @@ from ._common import open_binary
 from ._common import open_text
 from ._common import parse_environ_block
 from ._common import path_exists_strict
+from ._common import socktype_to_enum
 from ._common import supports_ipv6
 from ._common import usage_percent
+from ._enums import BatteryTime
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessIOPriority
+from ._enums import ProcessStatus
 
-# fmt: off
-__extra__all__ = [
-    'PROCFS_PATH',
-    # io prio constants
-    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
-    "IOPRIO_CLASS_IDLE",
-    # connection status constants
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
-]
-# fmt: on
+__extra__all__ = ['PROCFS_PATH']
 
 
 # =====================================================================
@@ -94,48 +85,38 @@ AddressFamily = enum.IntEnum(
 AF_LINK = AddressFamily.AF_LINK
 
 
-# ioprio_* constants http://linux.die.net/man/2/ioprio_get
-class IOPriority(enum.IntEnum):
-    IOPRIO_CLASS_NONE = 0
-    IOPRIO_CLASS_RT = 1
-    IOPRIO_CLASS_BE = 2
-    IOPRIO_CLASS_IDLE = 3
-
-
-globals().update(IOPriority.__members__)
-
 # See:
 # https://github.com/torvalds/linux/blame/master/fs/proc/array.c
 # ...and (TASK_* constants):
 # https://github.com/torvalds/linux/blob/master/include/linux/sched.h
 PROC_STATUSES = {
-    "R": _common.STATUS_RUNNING,
-    "S": _common.STATUS_SLEEPING,
-    "D": _common.STATUS_DISK_SLEEP,
-    "T": _common.STATUS_STOPPED,
-    "t": _common.STATUS_TRACING_STOP,
-    "Z": _common.STATUS_ZOMBIE,
-    "X": _common.STATUS_DEAD,
-    "x": _common.STATUS_DEAD,
-    "K": _common.STATUS_WAKE_KILL,
-    "W": _common.STATUS_WAKING,
-    "I": _common.STATUS_IDLE,
-    "P": _common.STATUS_PARKED,
+    "R": ProcessStatus.STATUS_RUNNING,
+    "S": ProcessStatus.STATUS_SLEEPING,
+    "D": ProcessStatus.STATUS_DISK_SLEEP,
+    "T": ProcessStatus.STATUS_STOPPED,
+    "t": ProcessStatus.STATUS_TRACING_STOP,
+    "Z": ProcessStatus.STATUS_ZOMBIE,
+    "X": ProcessStatus.STATUS_DEAD,
+    "x": ProcessStatus.STATUS_DEAD,
+    "K": ProcessStatus.STATUS_WAKE_KILL,
+    "W": ProcessStatus.STATUS_WAKING,
+    "I": ProcessStatus.STATUS_IDLE,
+    "P": ProcessStatus.STATUS_PARKED,
 }
 
 # https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
 TCP_STATUSES = {
-    "01": _common.CONN_ESTABLISHED,
-    "02": _common.CONN_SYN_SENT,
-    "03": _common.CONN_SYN_RECV,
-    "04": _common.CONN_FIN_WAIT1,
-    "05": _common.CONN_FIN_WAIT2,
-    "06": _common.CONN_TIME_WAIT,
-    "07": _common.CONN_CLOSE,
-    "08": _common.CONN_CLOSE_WAIT,
-    "09": _common.CONN_LAST_ACK,
-    "0A": _common.CONN_LISTEN,
-    "0B": _common.CONN_CLOSING,
+    "01": ConnectionStatus.CONN_ESTABLISHED,
+    "02": ConnectionStatus.CONN_SYN_SENT,
+    "03": ConnectionStatus.CONN_SYN_RECV,
+    "04": ConnectionStatus.CONN_FIN_WAIT1,
+    "05": ConnectionStatus.CONN_FIN_WAIT2,
+    "06": ConnectionStatus.CONN_TIME_WAIT,
+    "07": ConnectionStatus.CONN_CLOSE,
+    "08": ConnectionStatus.CONN_CLOSE_WAIT,
+    "09": ConnectionStatus.CONN_LAST_ACK,
+    "0A": ConnectionStatus.CONN_LISTEN,
+    "0B": ConnectionStatus.CONN_CLOSING,
 }
 
 
@@ -834,7 +815,7 @@ class NetConnections:
                     if type_ == socket.SOCK_STREAM:
                         status = TCP_STATUSES[status]
                     else:
-                        status = _common.CONN_NONE
+                        status = ConnectionStatus.CONN_NONE
                     try:
                         laddr = NetConnections.decode_address(laddr, family)
                         raddr = NetConnections.decode_address(raddr, family)
@@ -870,12 +851,12 @@ class NetConnections:
                         continue
                     else:
                         path = tokens[-1] if len(tokens) == 8 else ''
-                        type_ = _common.socktype_to_enum(int(type_))
+                        type_ = socktype_to_enum(int(type_))
                         # XXX: determining the remote endpoint of a
                         # UNIX socket on Linux is not possible, see:
                         # https://serverfault.com/questions/252723/
                         raddr = ""
-                        status = _common.CONN_NONE
+                        status = ConnectionStatus.CONN_NONE
                         yield (fd, family, type_, path, raddr, status, pid)
 
     def retrieve(self, kind, pid=None):
@@ -965,9 +946,9 @@ def net_io_counters():
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     duplex_map = {
-        cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
-        cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
-        cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN,
+        cext.DUPLEX_FULL: NicDuplex.NIC_DUPLEX_FULL,
+        cext.DUPLEX_HALF: NicDuplex.NIC_DUPLEX_HALF,
+        cext.DUPLEX_UNKNOWN: NicDuplex.NIC_DUPLEX_UNKNOWN,
     }
     names = net_io_counters().keys()
     ret = {}
@@ -1442,18 +1423,18 @@ def sensors_battery():
 
     # Seconds left.
     if power_plugged:
-        secsleft = _common.POWER_TIME_UNLIMITED
+        secsleft = BatteryTime.POWER_TIME_UNLIMITED
     elif energy_now is not None and power_now is not None:
         try:
             secsleft = int(energy_now / abs(power_now) * 3600)
         except ZeroDivisionError:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
     elif time_to_empty is not None:
         secsleft = int(time_to_empty * 60)
         if secsleft < 0:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
     else:
-        secsleft = _common.POWER_TIME_UNKNOWN
+        secsleft = BatteryTime.POWER_TIME_UNKNOWN
 
     return ntp.sbattery(percent, secsleft, power_plugged)
 
@@ -2145,7 +2126,7 @@ class Process:
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
-            ioclass = IOPriority(ioclass)
+            ioclass = ProcessIOPriority(ioclass)
             return ntp.pionice(ioclass, value)
 
         @wrap_exceptions
@@ -2153,8 +2134,8 @@ class Process:
             if value is None:
                 value = 0
             if value and ioclass in {
-                IOPriority.IOPRIO_CLASS_IDLE,
-                IOPriority.IOPRIO_CLASS_NONE,
+                ProcessIOPriority.IOPRIO_CLASS_IDLE,
+                ProcessIOPriority.IOPRIO_CLASS_NONE,
             }:
                 msg = f"{ioclass!r} ioclass accepts no value"
                 raise ValueError(msg)

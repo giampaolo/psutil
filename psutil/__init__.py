@@ -40,42 +40,13 @@ from . import _common
 from . import _ntuples as _ntp
 from ._common import AIX
 from ._common import BSD
-from ._common import CONN_CLOSE
-from ._common import CONN_CLOSE_WAIT
-from ._common import CONN_CLOSING
-from ._common import CONN_ESTABLISHED
-from ._common import CONN_FIN_WAIT1
-from ._common import CONN_FIN_WAIT2
-from ._common import CONN_LAST_ACK
-from ._common import CONN_LISTEN
-from ._common import CONN_NONE
-from ._common import CONN_SYN_RECV
-from ._common import CONN_SYN_SENT
-from ._common import CONN_TIME_WAIT
 from ._common import FREEBSD
 from ._common import LINUX
 from ._common import MACOS
 from ._common import NETBSD
-from ._common import NIC_DUPLEX_FULL
-from ._common import NIC_DUPLEX_HALF
-from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import OPENBSD
 from ._common import OSX  # deprecated alias
 from ._common import POSIX
-from ._common import POWER_TIME_UNKNOWN
-from ._common import POWER_TIME_UNLIMITED
-from ._common import STATUS_DEAD
-from ._common import STATUS_DISK_SLEEP
-from ._common import STATUS_IDLE
-from ._common import STATUS_LOCKED
-from ._common import STATUS_PARKED
-from ._common import STATUS_RUNNING
-from ._common import STATUS_SLEEPING
-from ._common import STATUS_STOPPED
-from ._common import STATUS_TRACING_STOP
-from ._common import STATUS_WAITING
-from ._common import STATUS_WAKING
-from ._common import STATUS_ZOMBIE
 from ._common import SUNOS
 from ._common import WINDOWS
 from ._common import AccessDenied
@@ -86,6 +57,10 @@ from ._common import ZombieProcess
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
+from ._enums import BatteryTime
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessStatus
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -93,24 +68,13 @@ if LINUX:
     PROCFS_PATH = "/proc"
 
     from . import _pslinux as _psplatform
-    from ._pslinux import IOPRIO_CLASS_BE  # noqa: F401
-    from ._pslinux import IOPRIO_CLASS_IDLE  # noqa: F401
-    from ._pslinux import IOPRIO_CLASS_NONE  # noqa: F401
-    from ._pslinux import IOPRIO_CLASS_RT  # noqa: F401
+    from ._enums import ProcessIOPriority
+    from ._enums import ProcessRlimit
 
 elif WINDOWS:
     from . import _pswindows as _psplatform
-    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import HIGH_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import IDLE_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import NORMAL_PRIORITY_CLASS  # noqa: F401
-    from ._psutil_windows import REALTIME_PRIORITY_CLASS  # noqa: F401
-    from ._pswindows import CONN_DELETE_TCB  # noqa: F401
-    from ._pswindows import IOPRIO_HIGH  # noqa: F401
-    from ._pswindows import IOPRIO_LOW  # noqa: F401
-    from ._pswindows import IOPRIO_NORMAL  # noqa: F401
-    from ._pswindows import IOPRIO_VERYLOW  # noqa: F401
+    from ._enums import ProcessIOPriority
+    from ._enums import ProcessPriority
 
 elif MACOS:
     from . import _psosx as _psplatform
@@ -118,10 +82,11 @@ elif MACOS:
 elif BSD:
     from . import _psbsd as _psplatform
 
+    if FREEBSD:
+        from ._enums import ProcessRlimit
+
 elif SUNOS:
     from . import _pssunos as _psplatform
-    from ._pssunos import CONN_BOUND  # noqa: F401
-    from ._pssunos import CONN_IDLE  # noqa: F401
 
     # This is public writable API which is read from _pslinux.py and
     # _pssunos.py via sys.modules.
@@ -148,28 +113,10 @@ __all__ = [
     # constants
     "version_info", "__version__",
 
-    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
-    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
-    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_PARKED",
-
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
-    # "CONN_IDLE", "CONN_BOUND",
-
     "AF_LINK",
-
-    "NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN",
-
-    "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "MACOS", "OSX", "POSIX",
     "SUNOS", "WINDOWS", "AIX",
-
-    # "RLIM_INFINITY", "RLIMIT_AS", "RLIMIT_CORE", "RLIMIT_CPU", "RLIMIT_DATA",
-    # "RLIMIT_FSIZE", "RLIMIT_LOCKS", "RLIMIT_MEMLOCK", "RLIMIT_NOFILE",
-    # "RLIMIT_NPROC", "RLIMIT_RSS", "RLIMIT_STACK", "RLIMIT_MSGQUEUE",
-    # "RLIMIT_NICE", "RLIMIT_RTPRIO", "RLIMIT_RTTIME", "RLIMIT_SIGPENDING",
 
     # classes
     "Process", "Popen",
@@ -187,19 +134,33 @@ __all__ = [
 ]
 # fmt: on
 
-
 __all__.extend(_psplatform.__extra__all__)
+_globals = globals()
 
-# Linux, FreeBSD
-if hasattr(_psplatform.Process, "rlimit"):
-    # Populate global namespace with RLIM* constants.
-    _globals = globals()
-    _name = None
-    for _name in dir(_psplatform.cext):
-        if _name.startswith('RLIM') and _name.isupper():
-            _globals[_name] = getattr(_psplatform.cext, _name)
-            __all__.append(_name)
-    del _globals, _name
+
+def _export_enum(cls):
+    __all__.append(cls.__name__)
+    for name, member in cls.__members__.items():
+        if name not in _globals:  # noqa: F821
+            _globals[name] = member  # noqa: F821
+            __all__.append(name)
+
+
+# Populate global namespace with enums and CONSTANTs.
+_export_enum(ProcessStatus)
+_export_enum(ConnectionStatus)
+_export_enum(NicDuplex)
+_export_enum(BatteryTime)
+if LINUX or WINDOWS:
+    _export_enum(ProcessIOPriority)
+if WINDOWS:
+    _export_enum(ProcessPriority)
+if LINUX or FREEBSD:
+    _export_enum(ProcessRlimit)
+if LINUX or SUNOS or AIX:
+    __all__.append("PROCFS_PATH")
+
+del _globals, _export_enum
 
 AF_LINK = _psplatform.AF_LINK
 
@@ -443,7 +404,7 @@ class Process:
             if pid1 == pid2:
                 if ident1 and not ident2:
                     try:
-                        return self.status() == STATUS_ZOMBIE
+                        return self.status() == ProcessStatus.STATUS_ZOMBIE
                     except Error:
                         pass
         return self._ident == other._ident
@@ -752,7 +713,7 @@ class Process:
         try:
             return self._proc.status()
         except ZombieProcess:
-            return STATUS_ZOMBIE
+            return ProcessStatus.STATUS_ZOMBIE
 
     def username(self):
         """The name of the user that owns the process.

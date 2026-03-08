@@ -12,6 +12,11 @@ from typing import NamedTuple
 if TYPE_CHECKING:
     import socket
 
+    from ._enums import BatteryTime
+    from ._enums import ConnectionStatus
+    from ._enums import NicDuplex
+    from ._enums import ProcessIOPriority
+
 from ._common import AIX
 from ._common import BSD
 from ._common import FREEBSD
@@ -21,8 +26,6 @@ from ._common import NETBSD
 from ._common import OPENBSD
 from ._common import SUNOS
 from ._common import WINDOWS
-from ._common import BatteryTime
-from ._common import NicDuplex
 
 # ===================================================================
 # --- system functions
@@ -106,7 +109,7 @@ class sconn(NamedTuple):
     type: socket.SocketKind
     laddr: addr | tuple | str
     raddr: addr | tuple | str
-    status: str
+    status: ConnectionStatus
     pid: int | None
 
 
@@ -286,7 +289,7 @@ class pio(NamedTuple):
 
 # psutil.Process.ionice()
 class pionice(NamedTuple):
-    ioclass: int
+    ioclass: ProcessIOPriority
     value: int
 
 
@@ -319,7 +322,7 @@ class pconn(NamedTuple):
     type: socket.SocketKind
     laddr: addr | tuple | str
     raddr: addr | tuple | str
-    status: str
+    status: ConnectionStatus
 
 
 # psutil.Process.memory_maps(grouped=True)

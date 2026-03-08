@@ -12,7 +12,6 @@ from collections import defaultdict
 from collections import namedtuple
 from xml.etree import ElementTree  # noqa: ICN001
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_bsd as cext
@@ -27,6 +26,10 @@ from ._common import conn_to_ntuple
 from ._common import debug
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._enums import BatteryTime
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessStatus
 
 __extra__all__ = []
 
@@ -38,26 +41,26 @@ __extra__all__ = []
 
 if FREEBSD:
     PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SRUN: _common.STATUS_RUNNING,
-        cext.SSLEEP: _common.STATUS_SLEEPING,
-        cext.SSTOP: _common.STATUS_STOPPED,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SWAIT: _common.STATUS_WAITING,
-        cext.SLOCK: _common.STATUS_LOCKED,
+        cext.SIDL: ProcessStatus.STATUS_IDLE,
+        cext.SRUN: ProcessStatus.STATUS_RUNNING,
+        cext.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+        cext.SSTOP: ProcessStatus.STATUS_STOPPED,
+        cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
+        cext.SWAIT: ProcessStatus.STATUS_WAITING,
+        cext.SLOCK: ProcessStatus.STATUS_LOCKED,
     }
 elif OPENBSD:
     PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SSLEEP: _common.STATUS_SLEEPING,
-        cext.SSTOP: _common.STATUS_STOPPED,
+        cext.SIDL: ProcessStatus.STATUS_IDLE,
+        cext.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+        cext.SSTOP: ProcessStatus.STATUS_STOPPED,
         # According to /usr/include/sys/proc.h SZOMB is unused.
         # test_zombie_process() shows that SDEAD is the right
         # equivalent. Also it appears there's no equivalent of
         # psutil.STATUS_DEAD. SDEAD really means STATUS_ZOMBIE.
-        # cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SDEAD: _common.STATUS_ZOMBIE,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
+        # cext.SZOMB: ProcStatus.STATUS_ZOMBIE,
+        cext.SDEAD: ProcessStatus.STATUS_ZOMBIE,
+        cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
         # From http://www.eecs.harvard.edu/~margo/cs161/videos/proc.h.txt
         # OpenBSD has SRUN and SONPROC: SRUN indicates that a process
         # is runnable but *not* yet running, i.e. is on a run queue.
@@ -65,32 +68,32 @@ elif OPENBSD:
         # a CPU, i.e. it is no longer on a run queue.
         # As such we'll map SRUN to STATUS_WAKING and SONPROC to
         # STATUS_RUNNING
-        cext.SRUN: _common.STATUS_WAKING,
-        cext.SONPROC: _common.STATUS_RUNNING,
+        cext.SRUN: ProcessStatus.STATUS_WAKING,
+        cext.SONPROC: ProcessStatus.STATUS_RUNNING,
     }
 elif NETBSD:
     PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SSLEEP: _common.STATUS_SLEEPING,
-        cext.SSTOP: _common.STATUS_STOPPED,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SRUN: _common.STATUS_WAKING,
-        cext.SONPROC: _common.STATUS_RUNNING,
+        cext.SIDL: ProcessStatus.STATUS_IDLE,
+        cext.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+        cext.SSTOP: ProcessStatus.STATUS_STOPPED,
+        cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
+        cext.SRUN: ProcessStatus.STATUS_WAKING,
+        cext.SONPROC: ProcessStatus.STATUS_RUNNING,
     }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RECEIVED: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RECEIVED: ConnectionStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
 }
 
 PAGESIZE = cext.getpagesize()
@@ -295,8 +298,7 @@ def net_if_stats():
             if err.errno != errno.ENODEV:
                 raise
         else:
-            if hasattr(_common, 'NicDuplex'):
-                duplex = _common.NicDuplex(duplex)
+            duplex = NicDuplex(duplex)
             output_flags = ','.join(flags)
             isup = 'running' in flags
             ret[name] = ntp.snicstats(isup, duplex, speed, mtu, output_flags)
@@ -339,9 +341,9 @@ if FREEBSD:
             return None
         power_plugged = power_plugged == 1
         if power_plugged:
-            secsleft = _common.POWER_TIME_UNLIMITED
+            secsleft = BatteryTime.POWER_TIME_UNLIMITED
         elif minsleft == -1:
-            secsleft = _common.POWER_TIME_UNKNOWN
+            secsleft = BatteryTime.POWER_TIME_UNKNOWN
         else:
             secsleft = minsleft * 60
         return ntp.sbattery(percent, secsleft, power_plugged)

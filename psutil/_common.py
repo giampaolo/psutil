@@ -9,7 +9,6 @@ psutil or third-party modules.
 """
 
 import collections
-import enum
 import functools
 import os
 import socket
@@ -39,17 +38,6 @@ __all__ = [
     # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'MACOS', 'OSX', 'POSIX',
     'SUNOS', 'WINDOWS',
-    # connection constants
-    'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
-    'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
-    'CONN_NONE', 'CONN_SYN_RECV', 'CONN_SYN_SENT', 'CONN_TIME_WAIT',
-    # net constants
-    'NIC_DUPLEX_FULL', 'NIC_DUPLEX_HALF', 'NIC_DUPLEX_UNKNOWN',  # noqa: F822
-    # process status constants
-    'STATUS_DEAD', 'STATUS_DISK_SLEEP', 'STATUS_IDLE', 'STATUS_LOCKED',
-    'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
-    'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
-    'STATUS_WAKING', 'STATUS_ZOMBIE', 'STATUS_PARKED',
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # utility functions
@@ -80,63 +68,6 @@ NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith(("sunos", "solaris"))
 AIX = sys.platform.startswith("aix")
-
-
-# ===================================================================
-# --- API constants
-# ===================================================================
-
-
-# Process.status()
-STATUS_RUNNING = "running"
-STATUS_SLEEPING = "sleeping"
-STATUS_DISK_SLEEP = "disk-sleep"
-STATUS_STOPPED = "stopped"
-STATUS_TRACING_STOP = "tracing-stop"
-STATUS_ZOMBIE = "zombie"
-STATUS_DEAD = "dead"
-STATUS_WAKE_KILL = "wake-kill"
-STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # Linux, macOS, FreeBSD
-STATUS_LOCKED = "locked"  # FreeBSD
-STATUS_WAITING = "waiting"  # FreeBSD
-STATUS_SUSPENDED = "suspended"  # NetBSD
-STATUS_PARKED = "parked"  # Linux
-
-# Process.net_connections() and psutil.net_connections()
-CONN_ESTABLISHED = "ESTABLISHED"
-CONN_SYN_SENT = "SYN_SENT"
-CONN_SYN_RECV = "SYN_RECV"
-CONN_FIN_WAIT1 = "FIN_WAIT1"
-CONN_FIN_WAIT2 = "FIN_WAIT2"
-CONN_TIME_WAIT = "TIME_WAIT"
-CONN_CLOSE = "CLOSE"
-CONN_CLOSE_WAIT = "CLOSE_WAIT"
-CONN_LAST_ACK = "LAST_ACK"
-CONN_LISTEN = "LISTEN"
-CONN_CLOSING = "CLOSING"
-CONN_NONE = "NONE"
-
-
-# net_if_stats()
-class NicDuplex(enum.IntEnum):
-    NIC_DUPLEX_FULL = 2
-    NIC_DUPLEX_HALF = 1
-    NIC_DUPLEX_UNKNOWN = 0
-
-
-globals().update(NicDuplex.__members__)
-
-
-# sensors_battery()
-class BatteryTime(enum.IntEnum):
-    POWER_TIME_UNKNOWN = -1
-    POWER_TIME_UNLIMITED = -2
-
-
-globals().update(BatteryTime.__members__)
-
-# --- others
 
 ENCODING = sys.getfilesystemencoding()
 ENCODING_ERRS = sys.getfilesystemencodeerrors()
@@ -501,6 +432,7 @@ def socktype_to_enum(num):
 def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
     """Convert a raw connection tuple to a proper ntuple."""
     from . import _ntuples as ntp
+    from ._enums import ConnectionStatus
 
     if fam in {socket.AF_INET, AF_INET6}:
         if laddr:
@@ -508,9 +440,9 @@ def conn_to_ntuple(fd, fam, type_, laddr, raddr, status, status_map, pid=None):
         if raddr:
             raddr = ntp.addr(*raddr)
     if type_ == socket.SOCK_STREAM and fam in {AF_INET, AF_INET6}:
-        status = status_map.get(status, CONN_NONE)
+        status = status_map.get(status, ConnectionStatus.CONN_NONE)
     else:
-        status = CONN_NONE  # ignore whatever C returned to us
+        status = ConnectionStatus.CONN_NONE  # ignore whatever C returned to us
     fam = sockfam_to_enum(fam)
     type_ = socktype_to_enum(type_)
     if pid is None:

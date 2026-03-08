@@ -13,7 +13,6 @@ import sys
 from collections import namedtuple
 from socket import AF_INET
 
-from . import _common
 from . import _ntuples as ntp
 from . import _psposix
 from . import _psutil_sunos as cext
@@ -22,6 +21,7 @@ from ._common import ENCODING
 from ._common import AccessDenied
 from ._common import NoSuchProcess
 from ._common import ZombieProcess
+from ._common import conn_tmap
 from ._common import debug
 from ._common import get_procfs_path
 from ._common import isfile_strict
@@ -29,8 +29,11 @@ from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._enums import ConnectionStatus
+from ._enums import NicDuplex
+from ._enums import ProcessStatus
 
-__extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
+__extra__all__ = ["PROCFS_PATH"]
 
 
 # =====================================================================
@@ -42,34 +45,32 @@ PAGE_SIZE = cext.getpagesize()
 AF_LINK = cext.AF_LINK
 IS_64_BIT = sys.maxsize > 2**32
 
-CONN_IDLE = "IDLE"
-CONN_BOUND = "BOUND"
 
 PROC_STATUSES = {
-    cext.SSLEEP: _common.STATUS_SLEEPING,
-    cext.SRUN: _common.STATUS_RUNNING,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
-    cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SIDL: _common.STATUS_IDLE,
-    cext.SONPROC: _common.STATUS_RUNNING,  # same as run
-    cext.SWAIT: _common.STATUS_WAITING,
+    cext.SSLEEP: ProcessStatus.STATUS_SLEEPING,
+    cext.SRUN: ProcessStatus.STATUS_RUNNING,
+    cext.SZOMB: ProcessStatus.STATUS_ZOMBIE,
+    cext.SSTOP: ProcessStatus.STATUS_STOPPED,
+    cext.SIDL: ProcessStatus.STATUS_IDLE,
+    cext.SONPROC: ProcessStatus.STATUS_RUNNING,  # same as run
+    cext.SWAIT: ProcessStatus.STATUS_WAITING,
 }
 
 TCP_STATUSES = {
-    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    cext.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
-    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    cext.TCPS_CLOSED: _common.CONN_CLOSE,
-    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    cext.TCPS_LISTEN: _common.CONN_LISTEN,
-    cext.TCPS_CLOSING: _common.CONN_CLOSING,
-    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
-    cext.TCPS_IDLE: CONN_IDLE,  # sunos specific
-    cext.TCPS_BOUND: CONN_BOUND,  # sunos specific
+    cext.TCPS_ESTABLISHED: ConnectionStatus.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: ConnectionStatus.CONN_SYN_SENT,
+    cext.TCPS_SYN_RCVD: ConnectionStatus.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: ConnectionStatus.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: ConnectionStatus.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: ConnectionStatus.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: ConnectionStatus.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: ConnectionStatus.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: ConnectionStatus.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: ConnectionStatus.CONN_LISTEN,
+    cext.TCPS_CLOSING: ConnectionStatus.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: ConnectionStatus.CONN_NONE,
+    cext.TCPS_IDLE: ConnectionStatus.CONN_IDLE,  # sunos specific
+    cext.TCPS_BOUND: ConnectionStatus.CONN_BOUND,  # sunos specific
 }
 
 proc_info_map = dict(
@@ -231,7 +232,7 @@ def net_connections(kind, _pid=-1):
     connections (as opposed to connections opened by one process only).
     Only INET sockets are returned (UNIX are not).
     """
-    families, types = _common.conn_tmap[kind]
+    families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid)
     ret = set()
     for item in rawlist:
@@ -262,8 +263,7 @@ def net_if_stats():
     ret = cext.net_if_stats()
     for name, items in ret.items():
         isup, duplex, speed, mtu = items
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
+        duplex = NicDuplex(duplex)
         ret[name] = ntp.snicstats(isup, duplex, speed, mtu, '')
     return ret
 
@@ -615,7 +615,14 @@ class Process:
                     type = socket.SOCK_DGRAM
                 else:
                     type = -1
-                yield (-1, socket.AF_UNIX, type, path, "", _common.CONN_NONE)
+                yield (
+                    -1,
+                    socket.AF_UNIX,
+                    type,
+                    path,
+                    "",
+                    ConnectionStatus.CONN_NONE,
+                )
 
     @wrap_exceptions
     def net_connections(self, kind='inet'):
