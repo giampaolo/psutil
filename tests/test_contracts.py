@@ -11,7 +11,7 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 
 import collections.abc
 import platform
-import types as builtin_types
+import types
 import typing
 
 import psutil
@@ -540,27 +540,22 @@ class TestReturnedTypes(PsutilTestCase):
     """
 
     def _hint_to_types(self, hint):
-        """Flatten a return type hint into a tuple of types for
-        isinstance(). Returns None if the hint cannot be checked
-        (e.g. Generator).
+        """Flatten a return type hint into types usable by isinstance().
+        Returns None if the hint cannot be checked (e.g. Generator).
         """
         if hint is None:
             return None
+
         origin = typing.get_origin(hint)
-        args = typing.get_args(hint)
+
         if origin is collections.abc.Generator:
             return None
-        is_union = origin is typing.Union or (
-            hasattr(builtin_types, 'UnionType')
-            and origin is builtin_types.UnionType
-        )
-        if is_union:
+
+        if origin in (typing.Union, types.UnionType):  # noqa: PLR6201
             result = []
-            for arg in args:
+            for arg in typing.get_args(hint):
                 inner = typing.get_origin(arg)
-                if arg is type(None):
-                    result.append(type(None))
-                elif inner is not None:
+                if inner is not None:
                     result.append(inner)
                 elif isinstance(arg, type):
                     result.append(arg)
