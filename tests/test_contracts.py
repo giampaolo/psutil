@@ -9,10 +9,7 @@ returned types and APIs availability.
 Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
-import collections.abc
 import platform
-import types
-import typing
 
 import psutil
 from psutil import AIX
@@ -38,10 +35,10 @@ from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
+from . import check_fun_types
 from . import check_ntuple_types
 from . import create_sockets
 from . import enum
-from . import get_return_hint
 from . import is_namedtuple
 from . import kernel_version
 from . import process_namespace
@@ -539,44 +536,12 @@ class TestReturnedTypes(PsutilTestCase):
     the actual values returned at runtime.
     """
 
-    def _hint_to_types(self, hint):
-        """Flatten a return type hint into types usable by isinstance().
-        Returns None if the hint cannot be checked (e.g. Generator).
-        """
-        if hint is None:
-            return None
-
-        origin = typing.get_origin(hint)
-
-        if origin is collections.abc.Generator:
-            return None
-
-        if origin in (typing.Union, types.UnionType):  # noqa: PLR6201
-            result = []
-            for arg in typing.get_args(hint):
-                inner = typing.get_origin(arg)
-                if inner is not None:
-                    result.append(inner)
-                elif isinstance(arg, type):
-                    result.append(arg)
-            return tuple(result) if result else None
-        if origin is not None:
-            return (origin,)
-        if isinstance(hint, type):
-            return (hint,)
-        return None
-
     def _check(self, fun, name):
-        """Call fun() and check return value type against the hint."""
         try:
             ret = fun()
         except psutil.Error:
             return
-        hint = get_return_hint(fun)
-        types_ = self._hint_to_types(hint)
-        if types_ is None:
-            return
-        assert isinstance(ret, types_), (name, ret, types_)
+        check_fun_types(fun, ret)
 
     def test_system_return_types(self):
         for fun, name in system_namespace.iter(system_namespace.getters):

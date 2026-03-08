@@ -5,6 +5,7 @@
 """Test utilities."""
 
 import atexit
+import collections.abc
 import contextlib
 import ctypes
 import enum
@@ -86,7 +87,7 @@ __all__ = [
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
     'system_namespace', 'is_win_secure_system_proc',
     # type hints
-    'check_ntuple_types', 'get_return_hint',
+    'check_ntuple_types', 'check_fun_types',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1692,7 +1693,7 @@ def check_ntuple_types(nt):
 
 
 @functools.lru_cache(maxsize=None)
-def get_return_hint(fun):
+def _get_return_hint(fun):
     """Get the 'return' type hint for a psutil API function or method.
     Resolves annotation strings using a combined namespace of psutil
     globals (Any, Generator, Process, ...) and ntuple types
@@ -1708,6 +1709,36 @@ def get_return_hint(fun):
     except Exception:  # noqa: BLE001
         return None
     return hints.get('return')
+
+
+def check_fun_types(fun, retval):
+    """Use the 'return' type hint of *fun* from psutil/__init__.py to
+    verify that *retval* is an instance of the annotated type.
+    Skips the check if the hint cannot be resolved or is a Generator.
+    """
+    hint = _get_return_hint(fun)
+    if hint is None:
+        return
+    origin = typing.get_origin(hint)
+    if origin is collections.abc.Generator:
+        return
+    if origin in (typing.Union, types.UnionType):  # noqa: PLR6201
+        result = []
+        for arg in typing.get_args(hint):
+            inner = typing.get_origin(arg)
+            if inner is not None:
+                result.append(inner)
+            elif isinstance(arg, type):
+                result.append(arg)
+        types_ = tuple(result) if result else None
+    elif origin is not None:
+        types_ = (origin,)
+    elif isinstance(hint, type):
+        types_ = (hint,)
+    else:
+        return
+    if types_ is not None:
+        assert isinstance(retval, types_), (fun, retval, types_)
 
 
 # ===================================================================
