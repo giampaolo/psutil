@@ -1730,7 +1730,8 @@ def _get_return_hint(fun):
     # X | Y union syntax in annotations requires Python 3.10+ to
     # evaluate. On older versions skip the check entirely.
     if not hasattr(types, "UnionType"):
-        warn(f"skip X|Y on old python for {fun}")
+        msg = f"skip X|Y type check on old python for {fun.__name__!r}"
+        warn(msg)
         return None
     # Build a namespace that can resolve all annotations.
     psp = vars(psutil).get('_psplatform')
