@@ -1730,7 +1730,11 @@ def _get_return_hint(fun):
     """
     while hasattr(fun, 'func'):
         fun = fun.func
-    underlying = getattr(fun, '__func__', fun)
+    # X | Y union syntax in annotations requires Python 3.10+ to
+    # evaluate. On older versions skip the check entirely.
+    if not hasattr(types, "UnionType"):
+        warn(f"skip X|Y on old python for {fun}")
+        return None
     # Build a namespace that can resolve all annotations.
     psp = vars(psutil).get('_psplatform')
     psp_ns = vars(psp) if psp is not None else {}
@@ -1742,10 +1746,8 @@ def _get_return_hint(fun):
         'Any': typing.Any,
         'Callable': typing.Callable,
     }
-    try:
-        hints = typing.get_type_hints(underlying, globalns=ns)
-    except Exception:  # noqa: BLE001
-        return None
+    underlying = getattr(fun, '__func__', fun)
+    hints = typing.get_type_hints(underlying, globalns=ns)
     return hints.get('return')
 
 
