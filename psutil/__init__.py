@@ -33,9 +33,6 @@ import threading
 import time
 import warnings
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Callable
-from typing import Generator
 
 try:
     import pwd
@@ -69,6 +66,10 @@ from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
 if TYPE_CHECKING:
+    from typing import Any
+    from typing import Callable
+    from typing import Generator
+
     from ._ntuples import pconn
     from ._ntuples import pcputimes
     from ._ntuples import pctxsw
@@ -77,9 +78,11 @@ if TYPE_CHECKING:
     from ._ntuples import pio
     from ._ntuples import pionice
     from ._ntuples import pmem
+    from ._ntuples import pmem_ex
     from ._ntuples import pmmap_ext
     from ._ntuples import pmmap_grouped
     from ._ntuples import popenfile
+    from ._ntuples import ppagefaults
     from ._ntuples import pthread
     from ._ntuples import puids
     from ._ntuples import sbattery
@@ -98,6 +101,17 @@ if TYPE_CHECKING:
     from ._ntuples import sswap
     from ._ntuples import suser
     from ._ntuples import svmem
+
+    try:
+        from ._ntuples import pfootprint
+    except ImportError:
+        pfootprint = None
+
+    try:
+        from ._ntuples import pheap
+    except ImportError:
+        pheap = None
+
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -393,7 +407,7 @@ class Process:
         else:
             return (self.pid, self.create_time())
 
-    def __str__(self) -> str:
+    def __str__(self):
         info = collections.OrderedDict()
         info["pid"] = self.pid
         if self._name:
@@ -425,7 +439,7 @@ class Process:
 
     __repr__ = __str__
 
-    def __eq__(self, other: object) -> bool:
+    def __eq__(self, other):
         # Test for equality with another Process object based
         # on PID and creation time.
         if not isinstance(other, Process):
@@ -446,10 +460,10 @@ class Process:
                         pass
         return self._ident == other._ident
 
-    def __ne__(self, other: object) -> bool:
+    def __ne__(self, other):
         return not self == other
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         if self._hash is None:
             self._hash = hash(self._ident)
         return self._hash
@@ -1145,7 +1159,8 @@ class Process:
         """
         return self._proc.memory_info()
 
-    def memory_info_ex(self):
+    @memoize_when_activated
+    def memory_info_ex(self) -> pmem_ex:
         """Return a namedtuple extending memory_info() with extra
         metrics.
 
@@ -1160,7 +1175,7 @@ class Process:
     # Linux, macOS, Windows
     if hasattr(_psplatform.Process, "memory_footprint"):
 
-        def memory_footprint(self):
+        def memory_footprint(self) -> pfootprint:
             """Return a named tuple with USS, PSS and swap memory
             metrics. These provide a better representation of
             actual process memory usage.
@@ -1268,7 +1283,7 @@ class Process:
             else:
                 return [_ntp.pmmap_ext(*x) for x in it]
 
-    def page_faults(self):
+    def page_faults(self) -> ppagefaults:
         """Return the number of page faults for this process as a
         (minor, major) namedtuple.
 
@@ -1319,7 +1334,7 @@ class Process:
         return self._proc.net_connections(kind)
 
     @_common.deprecated_method(replacement="net_connections")
-    def connections(self, kind="inet"):
+    def connections(self, kind="inet") -> list[pconn]:
         return self.net_connections(kind=kind)
 
     # --- signals
@@ -1499,7 +1514,7 @@ class Popen(Process):
       >>>
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args, **kwargs):
         # Explicitly avoid to raise NoSuchProcess in case the process
         # spawned by subprocess.Popen terminates too quickly, see:
         # https://github.com/giampaolo/psutil/issues/193
@@ -2518,7 +2533,7 @@ if WINDOWS:
 # Linux + glibc, Windows, macOS, FreeBSD, NetBSD
 if hasattr(_psplatform, "heap_info"):
 
-    def heap_info():
+    def heap_info() -> pheap:
         """Return low-level heap statistics from the C heap allocator
         (glibc).
 
@@ -2534,7 +2549,7 @@ if hasattr(_psplatform, "heap_info"):
         """
         return _ntp.pheap(*_psplatform.heap_info())
 
-    def heap_trim():
+    def heap_trim() -> None:
         """Request that the underlying allocator free any unused memory
         it's holding in the heap (typically small `malloc()`
         allocations).
