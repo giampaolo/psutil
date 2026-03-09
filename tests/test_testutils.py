@@ -6,8 +6,6 @@
 
 """Tests for testing utils."""
 
-from __future__ import annotations
-
 import collections
 import errno
 import os
