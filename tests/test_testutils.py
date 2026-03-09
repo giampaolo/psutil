@@ -427,14 +427,12 @@ class TestCheckFunTypeHints(PsutilTestCase):
             check_fun_type_hints(foo, "str")
 
     def test_namedtuple(self):
-        # NamedTuples are tuples; use tuple as the annotation since
-        # locally-defined classes can't be resolved by get_type_hints().
-        NT = collections.namedtuple('NT', ['x'])
+        from psutil._ntuples import addr
 
-        def foo() -> tuple:
-            return NT(1)
+        def foo() -> addr:
+            return addr('127.0.0.1', 80)
 
-        check_fun_type_hints(foo, NT(1))
+        check_fun_type_hints(foo, addr('127.0.0.1', 80))
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
