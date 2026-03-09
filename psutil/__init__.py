@@ -15,7 +15,7 @@ sensors) in Python. Supported platforms:
  - Sun Solaris
  - AIX
 
-Supported Python versions are cPython 3.6+ and PyPy.
+Supported Python versions are cPython 3.7+ and PyPy.
 """
 
 from __future__ import annotations
