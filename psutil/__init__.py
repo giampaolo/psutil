@@ -2069,7 +2069,7 @@ if hasattr(_psplatform, "cpu_freq"):
 
 if hasattr(os, "getloadavg") or hasattr(_psplatform, "getloadavg"):
 
-    def getloadavg() -> tuple:
+    def getloadavg() -> tuple[float, float, float]:
         """Return the average system load over the last 1, 5 and 15
         minutes as a tuple.
         """

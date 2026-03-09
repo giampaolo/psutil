@@ -1756,7 +1756,6 @@ def _get_return_hint(fun):
 def check_fun_type_hints(fun, retval):
     """Use the 'return' type hint of *fun* from psutil/__init__.py to
     verify that *retval* is an instance of the annotated type.
-    Skips the check if the hint cannot be resolved or is a Generator.
     """
     hint = _get_return_hint(fun)
     if hint is None:
@@ -1765,7 +1764,7 @@ def check_fun_type_hints(fun, retval):
             return
         raise ValueError(f"no type hints defined for {fun}")
     types_ = _hint_to_types(hint)
-    assert types_
+    assert types_, hint
     assert isinstance(retval, types_), (fun, retval, types_)
 
 
