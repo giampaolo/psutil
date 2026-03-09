@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import functools
+import sys
 import types
 
 import pytest
@@ -20,12 +21,20 @@ from . import is_namedtuple
 from . import process_namespace
 from . import system_namespace
 
+
+@pytest.mark.skipif(
+    sys.version_info[:2] <= (3, 7), reason="not supported on Python <= 3.7"
+)
+class TypeHintTestCase(PsutilTestCase):
+    pass
+
+
 # ===================================================================
 # --- named tuples type hints
 # ===================================================================
 
 
-class TestTypeHintsNtuples(PsutilTestCase):
+class TestTypeHintsNtuples(TypeHintTestCase):
     """Check that namedtuple field values match the type annotations
     defined in psutil/_ntuples.py.
     """
@@ -72,7 +81,7 @@ class TestTypeHintsNtuples(PsutilTestCase):
 # ===================================================================
 
 
-class TestTypeHintsReturned(PsutilTestCase):
+class TestTypeHintsReturned(TypeHintTestCase):
     """Check that annotated return types in psutil/__init__.py match
     the actual values returned at runtime.
     """
@@ -102,7 +111,7 @@ class TestTypeHintsReturned(PsutilTestCase):
 # =====================================================================
 
 
-class TestCheckNtupleTypeHints(PsutilTestCase):
+class TestCheckNtupleTypeHints(TypeHintTestCase):
     def test_not_namedtuple(self):
         # plain tuple is rejected
         with pytest.raises(AssertionError):
@@ -146,7 +155,7 @@ class TestCheckNtupleTypeHints(PsutilTestCase):
 # =====================================================================
 
 
-class TestCheckFunTypeHints(PsutilTestCase):
+class TestCheckFunTypeHints(TypeHintTestCase):
 
     @pytest.mark.skipif(
         not hasattr(types, "UnionType"), reason="Python 3.10+ only"

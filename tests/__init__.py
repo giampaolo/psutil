@@ -1674,6 +1674,8 @@ def _hint_to_types(hint):
     isinstance(). Returns None if the hint cannot be checked (e.g.
     Generator).
     """
+    if not hasattr(typing, "get_origin") and sys.version_info[:2] <= (3, 7):
+        return None
     origin = typing.get_origin(hint)
     if origin in UNION_TYPES:
         result = []
