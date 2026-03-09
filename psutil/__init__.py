@@ -1308,7 +1308,7 @@ class Process:
         """
         return self._proc.open_files()
 
-    def net_connections(self, kind: str = 'inet') -> list[pconn]:
+    def net_connections(self, kind: str = "inet") -> list[pconn]:
         """Return socket connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) namedtuples.
         The *kind* parameter filters for connections that match the

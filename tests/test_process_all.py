@@ -32,6 +32,7 @@ from . import PYTEST_PARALLEL
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
 from . import check_connection_ntuple
+from . import check_fun_type_hints
 from . import check_ntuple_type_hints
 from . import create_sockets
 from . import is_win_secure_system_proc
@@ -41,7 +42,6 @@ from . import pytest
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
 USE_PROC_POOL = LINUX and not CI_TESTING and not PYTEST_PARALLEL
-USE_PROC_POOL = False
 
 
 def proc_info(pid):
@@ -85,10 +85,13 @@ def proc_info(pid):
         # check_exception() in case of NSP.
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
             try:
-                info[fun_name] = fun()
+                ret = fun()
             except psutil.Error as exc:
                 check_exception(exc, proc, name, ppid)
                 continue
+            else:
+                check_fun_type_hints(fun, ret)
+                info[fun_name] = ret
         do_wait()
         return info
 
