@@ -755,7 +755,7 @@ class Process:
         """The command line this process has been called with."""
         return self._proc.cmdline()
 
-    def status(self) -> str:
+    def status(self) -> ProcessStatus | str:
         """The process current status as a STATUS_* constant."""
         try:
             return self._proc.status()
