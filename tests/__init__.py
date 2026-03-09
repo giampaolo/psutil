@@ -1644,6 +1644,12 @@ def filter_proc_net_connections(cons):
 # =====================================================================
 
 
+try:
+    UNION_TYPES = (typing.Union, types.UnionType)
+except AttributeError:  # Python < 3.10
+    UNION_TYPES = (typing.Union,)
+
+
 @functools.lru_cache(maxsize=None)
 def _get_ntuple_hints(nt):
     cls = type(nt)
@@ -1672,7 +1678,7 @@ def _hint_to_types(hint):
     origin = typing.get_origin(hint)
     if origin is collections.abc.Generator:
         return None
-    if origin in {typing.Union, types.UnionType}:
+    if origin in UNION_TYPES:
         result = []
         for arg in typing.get_args(hint):
             inner = typing.get_origin(arg)
@@ -1740,6 +1746,9 @@ def check_fun_type_hints(fun, retval):
     """
     hint = _get_return_hint(fun)
     if hint is None:
+        if not hasattr(types, "UnionType"):
+            # added in python 3.10
+            return
         raise ValueError(f"no type hint defined for {fun}")
     types_ = _hint_to_types(hint)
     assert types_
