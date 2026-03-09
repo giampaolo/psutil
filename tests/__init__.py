@@ -188,7 +188,6 @@ HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 
-HAS_GETLOADAVG = hasattr(psutil, "getloadavg")
 HAS_HEAP_INFO = hasattr(psutil, "heap_info")
 HAS_NET_CONNECTIONS_UNIX = POSIX and not SUNOS
 HAS_NET_IO_COUNTERS = hasattr(psutil, "net_io_counters")
@@ -1271,6 +1270,7 @@ class system_namespace:
         ('disk_partitions', (), {'all': False}),
         ('disk_partitions', (), {'all': True}),
         ('disk_usage', (os.getcwd(),), {}),
+        ('getloadavg', (), {}),
         ('net_connections', (), {'kind': 'all'}),
         ('net_if_addrs', (), {}),
         ('net_if_stats', (), {}),
@@ -1286,8 +1286,6 @@ class system_namespace:
     if HAS_CPU_FREQ:
         getters += [('cpu_freq', (), {'percpu': False})]
         getters += [('cpu_freq', (), {'percpu': True})]
-    if HAS_GETLOADAVG:
-        getters += [('getloadavg', (), {})]
     if HAS_SENSORS_TEMPERATURES:
         getters += [('sensors_temperatures', (), {})]
     if HAS_SENSORS_FANS:

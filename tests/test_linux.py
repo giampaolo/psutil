@@ -29,7 +29,6 @@ from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
-from . import HAS_GETLOADAVG
 from . import HAS_PROC_RLIMIT
 from . import RISCV64
 from . import TOLERANCE_DISK_USAGE
@@ -58,6 +57,13 @@ SIOCGIFNETMASK = 0x891B
 SIOCGIFBRDADDR = 0x8919
 if LINUX:
     SECTOR_SIZE = 512
+
+
+@pytest.mark.skipif(not LINUX, reason="LINUX only")
+class LinuxTestCase(PsutilTestCase):
+    pass
+
+
 # =====================================================================
 # --- utils
 # =====================================================================
@@ -224,8 +230,7 @@ def mock_open_exception(for_path, exc):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
+class TestSystemVirtualMemoryAgainstFree(LinuxTestCase):
     def test_total(self):
         cli_value = free_physmem().total
         psutil_value = psutil.virtual_memory().total
@@ -275,8 +280,7 @@ class TestSystemVirtualMemoryAgainstFree(PsutilTestCase):
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
+class TestSystemVirtualMemoryAgainstVmstat(LinuxTestCase):
     def test_total(self):
         vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
@@ -321,8 +325,7 @@ class TestSystemVirtualMemoryAgainstVmstat(PsutilTestCase):
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemVirtualMemoryMocks(PsutilTestCase):
+class TestSystemVirtualMemoryMocks(LinuxTestCase):
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
         # psutil is supposed to set the missing fields to 0 and
@@ -528,8 +531,7 @@ class TestSystemVirtualMemoryMocks(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemSwapMemory(PsutilTestCase):
+class TestSystemSwapMemory(LinuxTestCase):
     @staticmethod
     def meminfo_has_swap_info():
         """Return True if /proc/meminfo provides swap metrics."""
@@ -617,8 +619,7 @@ class TestSystemSwapMemory(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemCPUCountLogical(PsutilTestCase):
+class TestSystemCPUCountLogical(LinuxTestCase):
     @pytest.mark.skipif(
         not os.path.exists("/sys/devices/system/cpu/online"),
         reason="/sys/devices/system/cpu/online does not exist",
@@ -691,8 +692,7 @@ class TestSystemCPUCountLogical(PsutilTestCase):
                 assert m.called
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemCPUCountCores(PsutilTestCase):
+class TestSystemCPUCountCores(LinuxTestCase):
     @pytest.mark.skipif(
         not shutil.which("lscpu"), reason="lscpu utility not available"
     )
@@ -724,8 +724,7 @@ class TestSystemCPUCountCores(PsutilTestCase):
         assert m2.called
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemCPUFrequency(PsutilTestCase):
+class TestSystemCPUFrequency(LinuxTestCase):
     @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
     @pytest.mark.skipif(
         AARCH64, reason="aarch64 does not always expose frequency"
@@ -879,8 +878,7 @@ class TestSystemCPUFrequency(PsutilTestCase):
                     assert freq.current == 200
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemCPUStats(PsutilTestCase):
+class TestSystemCPUStats(LinuxTestCase):
 
     # XXX: fails too often.
     # def test_ctx_switches(self):
@@ -894,9 +892,7 @@ class TestSystemCPUStats(PsutilTestCase):
         assert abs(vmstat_value - psutil_value) < 500
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestLoadAvg(PsutilTestCase):
-    @pytest.mark.skipif(not HAS_GETLOADAVG, reason="not supported")
+class TestLoadAvg(LinuxTestCase):
     def test_getloadavg(self):
         psutil_value = psutil.getloadavg()
         with open("/proc/loadavg") as f:
@@ -912,8 +908,7 @@ class TestLoadAvg(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemNetIfAddrs(PsutilTestCase):
+class TestSystemNetIfAddrs(LinuxTestCase):
     def test_ips(self):
         for name, addrs in psutil.net_if_addrs().items():
             for addr in addrs:
@@ -952,8 +947,7 @@ class TestSystemNetIfAddrs(PsutilTestCase):
     #     assert len(nics) == found
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemNetIfStats(PsutilTestCase):
+class TestSystemNetIfStats(LinuxTestCase):
     @pytest.mark.skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
@@ -1007,8 +1001,7 @@ class TestSystemNetIfStats(PsutilTestCase):
             return pytest.fail("no matches were found")
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemNetIOCounters(PsutilTestCase):
+class TestSystemNetIOCounters(LinuxTestCase):
     @pytest.mark.skipif(
         not shutil.which("ifconfig"), reason="ifconfig utility not available"
     )
@@ -1059,8 +1052,7 @@ class TestSystemNetIOCounters(PsutilTestCase):
             assert abs(stats.dropout - ifconfig_ret['dropout']) < 10
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemNetConnections(PsutilTestCase):
+class TestSystemNetConnections(LinuxTestCase):
     @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
     @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
     def test_emulate_ipv6_unsupported(self, supports_ipv6, inet_ntop):
@@ -1089,8 +1081,7 @@ class TestSystemNetConnections(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemDiskPartitions(PsutilTestCase):
+class TestSystemDiskPartitions(LinuxTestCase):
     @pytest.mark.skipif(
         not hasattr(os, 'statvfs'), reason="os.statvfs() not available"
     )
@@ -1153,8 +1144,7 @@ class TestSystemDiskPartitions(PsutilTestCase):
             psutil.PROCFS_PATH = "/proc"
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSystemDiskIoCounters(PsutilTestCase):
+class TestSystemDiskIoCounters(LinuxTestCase):
     def test_emulate_kernel_2_4(self):
         # Tests /proc/diskstats parsing format for 2.4 kernels, see:
         # https://github.com/giampaolo/psutil/issues/767
@@ -1289,8 +1279,7 @@ class TestSystemDiskIoCounters(PsutilTestCase):
                 psutil.disk_io_counters()
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestRootFsDeviceFinder(PsutilTestCase):
+class TestRootFsDeviceFinder(LinuxTestCase):
     def setUp(self):
         dev = os.stat("/").st_dev
         self.major = os.major(dev)
@@ -1358,8 +1347,7 @@ class TestRootFsDeviceFinder(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestMisc(PsutilTestCase):
+class TestMisc(LinuxTestCase):
     def test_boot_time(self):
         vmstat_value = vmstat('boot time')
         psutil_value = psutil.boot_time()
@@ -1541,9 +1529,8 @@ class TestMisc(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
 @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
-class TestSensorsBattery(PsutilTestCase):
+class TestSensorsBattery(LinuxTestCase):
     @pytest.mark.skipif(
         not shutil.which("acpi"), reason="acpi utility not available"
     )
@@ -1688,8 +1675,7 @@ class TestSensorsBattery(PsutilTestCase):
                     assert psutil.sensors_battery().power_plugged is None
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSensorsBatteryEmulated(PsutilTestCase):
+class TestSensorsBatteryEmulated(LinuxTestCase):
     def test_it(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith("/energy_now"):
@@ -1709,8 +1695,7 @@ class TestSensorsBatteryEmulated(PsutilTestCase):
         assert mopen.called
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSensorsTemperatures(PsutilTestCase):
+class TestSensorsTemperatures(LinuxTestCase):
     def test_emulate_class_hwmon(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
@@ -1776,8 +1761,7 @@ class TestSensorsTemperatures(PsutilTestCase):
                 assert temp.critical == 50.0
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestSensorsFans(PsutilTestCase):
+class TestSensorsFans(LinuxTestCase):
     def test_emulate_data(self):
         def open_mock(name, *args, **kwargs):
             if name.endswith('/name'):
@@ -1804,8 +1788,7 @@ class TestSensorsFans(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestProcess(PsutilTestCase):
+class TestProcess(LinuxTestCase):
     @retry_on_failure()
     def test_parse_smaps_vs_memory_maps(self):
         sproc = self.spawn_subproc()
@@ -2192,8 +2175,7 @@ class TestProcess(PsutilTestCase):
         assert mem.rss == mem.rss_anon + mem.rss_file + mem.rss_shmem
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestProcessAgainstStatus(PsutilTestCase):
+class TestProcessAgainstStatus(LinuxTestCase):
     """/proc/pid/stat and /proc/pid/status have many values in common.
     Whenever possible, psutil uses /proc/pid/stat (it's faster).
     For all those cases we check that the value found in
@@ -2275,8 +2257,7 @@ class TestProcessAgainstStatus(PsutilTestCase):
 # =====================================================================
 
 
-@pytest.mark.skipif(not LINUX, reason="LINUX only")
-class TestUtils(PsutilTestCase):
+class TestUtils(LinuxTestCase):
     def test_readlink(self):
         with mock.patch("os.readlink", return_value="foo (deleted)") as m:
             assert psutil._psplatform.readlink("bar") == "foo"

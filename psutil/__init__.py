@@ -170,7 +170,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "cpu_stats",  # "cpu_freq", "getloadavg"
+    "cpu_stats", "getloadavg",  # "cpu_freq",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -2067,18 +2067,16 @@ if hasattr(_psplatform, "cpu_freq"):
     __all__.append("cpu_freq")
 
 
-if hasattr(os, "getloadavg") or hasattr(_psplatform, "getloadavg"):
-
-    def getloadavg() -> tuple[float, float, float]:
-        """Return the average system load over the last 1, 5 and 15
-        minutes as a tuple.
-        """
-        if hasattr(os, "getloadavg"):
-            return os.getloadavg()
-        else:
-            return _psplatform.getloadavg()
-
-    __all__.append("getloadavg")
+def getloadavg() -> tuple[float, float, float]:
+    """Return the average system load over the last 1, 5 and 15 minutes
+    as a tuple. On Windows this is emulated by using a Windows API that
+    spawns a thread which keeps running in background and updates
+    results every 5 seconds, mimicking the UNIX behavior.
+    """
+    if hasattr(os, "getloadavg"):
+        return os.getloadavg()
+    else:
+        return _psplatform.getloadavg()
 
 
 # =====================================================================

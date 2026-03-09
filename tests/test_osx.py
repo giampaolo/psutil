@@ -53,7 +53,11 @@ def vm_stat(field):
 
 
 @pytest.mark.skipif(not MACOS, reason="MACOS only")
-class TestProcess(PsutilTestCase):
+class MacosTestCase(PsutilTestCase):
+    pass
+
+
+class TestProcess(MacosTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc().pid
@@ -74,8 +78,7 @@ class TestProcess(PsutilTestCase):
         assert year == time.strftime("%Y", time.localtime(start_psutil))
 
 
-@pytest.mark.skipif(not MACOS, reason="MACOS only")
-class TestSystemAPIs(PsutilTestCase):
+class TestSystemAPIs(MacosTestCase):
 
     # --- disk
 
