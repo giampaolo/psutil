@@ -1736,9 +1736,7 @@ def _get_return_hint(fun):
         **psp_ns,
         **vars(psutil),
         **vars(ntuples),
-        'Generator': typing.Generator,
-        'Any': typing.Any,
-        'Callable': typing.Callable,
+        **vars(typing),
     }
     underlying = getattr(fun, '__func__', fun)
     try:

@@ -495,7 +495,8 @@ class TestProcess(WindowsTestCase):
         assert ps.vms == win["PagefileUsage"]
         assert ps.peak_rss == win["PeakWorkingSetSize"]
         assert ps.peak_vms == win["PeakPagefileUsage"]
-        assert ps.num_page_faults == win["PageFaultCount"]
+        with pytest.warns(DeprecationWarning):
+            assert ps.num_page_faults == win["PageFaultCount"]
 
     def test_memory_info_deprecated_fields(self):
         win = win32process.GetProcessMemoryInfo(self.OpenProcess(self.pid))
