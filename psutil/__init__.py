@@ -2194,7 +2194,7 @@ def disk_partitions(all: bool = False) -> list[sdiskpart]:
 
 def disk_io_counters(
     perdisk: bool = False, nowrap: bool = True
-) -> sdiskio | dict[str, sdiskio] | None:
+) -> sdiskio | dict[str, sdiskio]:
     """Return system disk I/O statistics as a namedtuple including
     the following fields:
 
