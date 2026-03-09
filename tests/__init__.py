@@ -1727,12 +1727,6 @@ def _get_return_hint(fun):
     """
     while hasattr(fun, 'func'):
         fun = fun.func
-    # X | Y union syntax in annotations requires Python 3.10+ to
-    # evaluate. On older versions skip the check entirely.
-    if not hasattr(types, "UnionType"):
-        msg = f"skip X|Y type check on old python for {fun.__name__!r}"
-        warn(msg)
-        return None
     # Build a namespace that can resolve all annotations.
     psp = vars(psutil).get('_psplatform')
     psp_ns = vars(psp) if psp is not None else {}
@@ -1745,7 +1739,17 @@ def _get_return_hint(fun):
         'Callable': typing.Callable,
     }
     underlying = getattr(fun, '__func__', fun)
-    hints = typing.get_type_hints(underlying, globalns=ns)
+    try:
+        hints = typing.get_type_hints(underlying, globalns=ns)
+    except TypeError:
+        # X | Y union syntax in annotations requires Python 3.10+ to
+        # evaluate. On older versions skip the check entirely.
+        if sys.version_info < (3, 10):
+            msg = f"skip X|Y type check on old python for {fun.__name__!r}"
+            warn(msg)
+            return None
+        else:
+            raise
     return hints.get('return')
 
 

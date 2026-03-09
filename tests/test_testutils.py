@@ -383,10 +383,16 @@ class TestOtherUtils(PsutilTestCase):
         assert not is_namedtuple(tuple())
 
 
-@pytest.mark.skipif(
-    not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-)
+# =====================================================================
+# --- Tests for check_fun_type_hints()
+# =====================================================================
+
+
 class TestCheckFunTypeHints(PsutilTestCase):
+
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
     def test_no_annotation(self):
         def foo():
             return 1
@@ -410,6 +416,9 @@ class TestCheckFunTypeHints(PsutilTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
     def test_list(self):
         def foo() -> list[int]:
             return [1]
@@ -418,6 +427,9 @@ class TestCheckFunTypeHints(PsutilTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
     def test_dict(self):
         def foo() -> dict[str, int]:
             return {'a': 1}
@@ -436,6 +448,9 @@ class TestCheckFunTypeHints(PsutilTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
     def test_union_with_none(self):
         def foo() -> int | None:
             return 1
@@ -445,6 +460,9 @@ class TestCheckFunTypeHints(PsutilTestCase):
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
 
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
     def test_union_or_dict_or_none(self):
         def foo() -> int | dict[str, int] | None:
             return 1
