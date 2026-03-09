@@ -80,6 +80,8 @@
 
 Changes that break backwards compatibility.
 
+- Dropped support for Python 3.6.
+
 Named tuples:
 
 - `cpu_times()`_:
