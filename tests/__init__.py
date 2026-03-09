@@ -1751,6 +1751,25 @@ def _get_return_hint(fun):
     return hints.get('return')
 
 
+def _check_container_items(hint, value):
+    """For list[T] and dict[K, V] hints, verify element types."""
+    origin = typing.get_origin(hint)
+    args = typing.get_args(hint)
+    if origin is list and args:
+        elem_types = _hint_to_types(args[0])
+        if elem_types:
+            for item in value:
+                assert isinstance(item, elem_types), (item, elem_types)
+    elif origin is dict and len(args) == 2:
+        key_types = _hint_to_types(args[0])
+        val_types = _hint_to_types(args[1])
+        for k, v in value.items():
+            if key_types:
+                assert isinstance(k, key_types), (k, key_types)
+            if val_types:
+                assert isinstance(v, val_types), (v, val_types)
+
+
 def check_fun_type_hints(fun, retval):
     """Use the 'return' type hint of *fun* from psutil/__init__.py to
     verify that *retval* is an instance of the annotated type.
@@ -1764,6 +1783,7 @@ def check_fun_type_hints(fun, retval):
     types_ = _hint_to_types(hint)
     assert types_, hint
     assert isinstance(retval, types_), (fun, retval, types_)
+    _check_container_items(hint, retval)
 
 
 # ===================================================================

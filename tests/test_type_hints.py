@@ -197,6 +197,17 @@ class TestCheckFunTypeHints(TypeHintTestCase):
     @pytest.mark.skipif(
         not hasattr(types, "UnionType"), reason="Python 3.10+ only"
     )
+    def test_list_container(self):
+        def foo() -> list[str]:
+            pass
+
+        check_fun_type_hints(foo, ["a", "b"])
+        with pytest.raises(AssertionError):
+            check_fun_type_hints(foo, ["a", 1])
+
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
     def test_dict(self):
         def foo() -> dict[str, int]:
             return {'a': 1}
@@ -204,6 +215,17 @@ class TestCheckFunTypeHints(TypeHintTestCase):
         check_fun_type_hints(foo, foo())
         with pytest.raises(AssertionError):
             check_fun_type_hints(foo, "str")
+
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
+    def test_dict_container(self):
+        def foo() -> dict[str, str]:
+            pass
+
+        check_fun_type_hints(foo, {"a": "a", "b": "b"})
+        with pytest.raises(AssertionError):
+            check_fun_type_hints(foo, {"a": "a", "1": 1})
 
     def test_namedtuple(self):
         from psutil._ntuples import addr
