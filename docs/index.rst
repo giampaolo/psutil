@@ -337,8 +337,6 @@ CPU
        >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
        [31.4, 38.9, 46.7]
 
-    Availability: Unix, Windows
-
     .. versionadded:: 5.6.2
 
 Memory

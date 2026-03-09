@@ -29,7 +29,6 @@ from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
-from . import HAS_GETLOADAVG
 from . import HAS_PROC_RLIMIT
 from . import RISCV64
 from . import TOLERANCE_DISK_USAGE
@@ -896,7 +895,6 @@ class TestSystemCPUStats(PsutilTestCase):
 
 @pytest.mark.skipif(not LINUX, reason="LINUX only")
 class TestLoadAvg(PsutilTestCase):
-    @pytest.mark.skipif(not HAS_GETLOADAVG, reason="not supported")
     def test_getloadavg(self):
         psutil_value = psutil.getloadavg()
         with open("/proc/loadavg") as f:

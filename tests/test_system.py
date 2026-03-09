@@ -38,7 +38,6 @@ from . import GITHUB_ACTIONS
 from . import GLOBAL_TIMEOUT
 from . import HAS_BATTERY
 from . import HAS_CPU_FREQ
-from . import HAS_GETLOADAVG
 from . import HAS_HEAP_INFO
 from . import HAS_NET_IO_COUNTERS
 from . import HAS_SENSORS_BATTERY
@@ -647,7 +646,6 @@ class TestCpuAPIs(PsutilTestCase):
         if LINUX:
             assert len(ls) == psutil.cpu_count()
 
-    @pytest.mark.skipif(not HAS_GETLOADAVG, reason="not supported")
     def test_getloadavg(self):
         loadavg = psutil.getloadavg()
         assert len(loadavg) == 3
