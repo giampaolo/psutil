@@ -144,7 +144,11 @@ def df(device):
 
 
 @pytest.mark.skipif(not POSIX, reason="POSIX only")
-class TestProcess(PsutilTestCase):
+class PosixTestCase(PsutilTestCase):
+    pass
+
+
+class TestProcess(PosixTestCase):
     """Compare psutil results against 'ps' command line utility (mainly)."""
 
     @classmethod
@@ -371,8 +375,7 @@ class TestProcess(PsutilTestCase):
         assert rss_diff <= mem.peak_rss * 0.05
 
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
-class TestSystemAPIs(PsutilTestCase):
+class TestSystemAPIs(PosixTestCase):
     """Test some system APIs."""
 
     @retry_on_failure()
@@ -517,8 +520,7 @@ class TestSystemAPIs(PsutilTestCase):
                 assert abs(usage.percent - sys_percent) <= 1
 
 
-@pytest.mark.skipif(not POSIX, reason="POSIX only")
-class TestMisc(PsutilTestCase):
+class TestMisc(PosixTestCase):
     def test_getpagesize(self):
         pagesize = psutil._psplatform.cext.getpagesize()
         assert pagesize > 0
