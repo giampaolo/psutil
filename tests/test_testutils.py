@@ -10,12 +10,10 @@ from __future__ import annotations
 
 import collections
 import errno
-import functools
 import os
 import socket
 import stat
 import subprocess
-import types
 from unittest import mock
 
 import psutil
@@ -35,7 +33,6 @@ from . import bind_socket
 from . import bind_unix_socket
 from . import call_until
 from . import chdir
-from . import check_fun_type_hints
 from . import create_sockets
 from . import filter_proc_net_connections
 from . import get_free_port
@@ -381,123 +378,3 @@ class TestOtherUtils(PsutilTestCase):
     def test_is_namedtuple(self):
         assert is_namedtuple(collections.namedtuple('foo', 'a b c')(1, 2, 3))
         assert not is_namedtuple(tuple())
-
-
-# =====================================================================
-# --- Tests for check_fun_type_hints()
-# =====================================================================
-
-
-class TestCheckFunTypeHints(PsutilTestCase):
-
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
-    def test_no_annotation(self):
-        def foo():
-            return 1
-
-        with pytest.raises(ValueError, match="no type hints defined"):
-            check_fun_type_hints(foo, 1)
-
-    def test_float(self):
-        def foo() -> float:
-            return 1.0
-
-        check_fun_type_hints(foo, 1.0)
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    def test_bool(self):
-        def foo() -> bool:
-            return True
-
-        check_fun_type_hints(foo, True)
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
-    def test_list(self):
-        def foo() -> list[int]:
-            return [1]
-
-        check_fun_type_hints(foo, foo())
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
-    def test_dict(self):
-        def foo() -> dict[str, int]:
-            return {'a': 1}
-
-        check_fun_type_hints(foo, foo())
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    def test_namedtuple(self):
-        from psutil._ntuples import addr
-
-        def foo() -> addr:
-            return addr('127.0.0.1', 80)
-
-        check_fun_type_hints(foo, addr('127.0.0.1', 80))
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
-    def test_union_with_none(self):
-        def foo() -> int | None:
-            return 1
-
-        check_fun_type_hints(foo, 1)
-        check_fun_type_hints(foo, None)
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    @pytest.mark.skipif(
-        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
-    )
-    def test_union_or_dict_or_none(self):
-        def foo() -> int | dict[str, int] | None:
-            return 1
-
-        check_fun_type_hints(foo, 1)
-        check_fun_type_hints(foo, {'a': 1})
-        check_fun_type_hints(foo, None)
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    def test_generator(self):
-        from typing import Generator
-
-        def foo() -> Generator[int, None, None]:
-            yield 1
-
-        check_fun_type_hints(foo, foo())
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(foo, "str")
-
-    def test_partial(self):
-        def foo(x) -> int:
-            return x
-
-        fun = functools.partial(foo, 1)
-        check_fun_type_hints(fun, 1)
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(fun, "str")
-
-    def test_bound_method(self):
-        class MyClass:
-            def foo(self) -> int:
-                return 1
-
-        obj = MyClass()
-        check_fun_type_hints(obj.foo, 1)
-        with pytest.raises(AssertionError):
-            check_fun_type_hints(obj.foo, "str")

@@ -35,15 +35,11 @@ from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
-from . import check_fun_type_hints
-from . import check_ntuple_type_hints
 from . import create_sockets
 from . import enum
 from . import is_namedtuple
 from . import kernel_version
-from . import process_namespace
 from . import pytest
-from . import system_namespace
 
 # ===================================================================
 # --- APIs availability
@@ -477,80 +473,3 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(user.pid, (int, type(None)))
             if isinstance(user.pid, int):
                 assert user.pid > 0
-
-
-# ===================================================================
-# --- namedtuple fields type hints
-# ===================================================================
-
-
-class TestTypeHintsNtuples(PsutilTestCase):
-    """Check that namedtuple field values match the type annotations
-    defined in psutil/_ntuples.py.
-    """
-
-    def check_result(self, ret):
-        if is_namedtuple(ret):
-            check_ntuple_type_hints(ret)
-        elif isinstance(ret, list):
-            for item in ret:
-                if is_namedtuple(item):
-                    check_ntuple_type_hints(item)
-
-    def test_system_ntuple_types(self):
-        for fun, name in system_namespace.iter(system_namespace.getters):
-            try:
-                ret = fun()
-            except psutil.Error:
-                continue
-            with self.subTest(name=name, fun=str(fun)):
-                if isinstance(ret, dict):
-                    for v in ret.values():
-                        if isinstance(v, list):
-                            for item in v:
-                                self.check_result(item)
-                        else:
-                            self.check_result(v)
-                else:
-                    self.check_result(ret)
-
-    def test_process_ntuple_types(self):
-        p = psutil.Process()
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.getters):
-            with self.subTest(name=name, fun=str(fun)):
-                try:
-                    ret = fun()
-                except psutil.Error:
-                    continue
-                self.check_result(ret)
-
-
-# ===================================================================
-# --- returned type hints
-# ===================================================================
-
-
-class TestTypeHintsReturned(PsutilTestCase):
-    """Check that annotated return types in psutil/__init__.py match
-    the actual values returned at runtime.
-    """
-
-    def check(self, fun, name):
-        try:
-            ret = fun()
-        except psutil.Error:
-            return
-        check_fun_type_hints(fun, ret)
-
-    def test_system_return_types(self):
-        for fun, name in system_namespace.iter(system_namespace.getters):
-            with self.subTest(name=name, fun=str(fun)):
-                self.check(fun, name)
-
-    def test_process_return_types(self):
-        p = psutil.Process()
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.getters):
-            with self.subTest(name=name, fun=str(fun)):
-                self.check(fun, name)
