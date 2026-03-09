@@ -1740,7 +1740,7 @@ def check_fun_type_hints(fun, retval):
     """
     hint = _get_return_hint(fun)
     if hint is None:
-        return
+        raise ValueError(f"no type hint defined for {fun}")
     types_ = _hint_to_types(hint)
     if types_ is not None:
         assert isinstance(retval, types_), (fun, retval, types_)

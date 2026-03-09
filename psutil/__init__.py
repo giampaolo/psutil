@@ -2074,12 +2074,15 @@ if hasattr(_psplatform, "cpu_freq"):
 
 
 if hasattr(os, "getloadavg") or hasattr(_psplatform, "getloadavg"):
-    # Perform this hasattr check once on import time to either use the
-    # platform based code or proxy straight from the os module.
-    if hasattr(os, "getloadavg"):
-        getloadavg = os.getloadavg
-    else:
-        getloadavg = _psplatform.getloadavg
+
+    def getloadavg() -> tuple:
+        """Return the average system load over the last 1, 5 and 15
+        minutes as a tuple.
+        """
+        if hasattr(os, "getloadavg"):
+            return os.getloadavg()
+        else:
+            return _psplatform.getloadavg()
 
     __all__.append("getloadavg")
 
