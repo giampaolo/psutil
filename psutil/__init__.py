@@ -32,7 +32,7 @@ import sys
 import threading
 import time
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 try:
     import pwd
@@ -65,7 +65,7 @@ from ._enums import ConnectionStatus
 from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
-if TYPE_CHECKING:
+if _TYPE_CHECKING:
     from typing import Any
     from typing import Callable
     from typing import Generator
