@@ -1523,7 +1523,7 @@ class Popen(Process):
             self.__subproc.__enter__()
         return self
 
-    def __exit__(self, *args: Any, **kwargs: Any) -> None:
+    def __exit__(self, *args, **kwargs):
         if hasattr(self.__subproc, '__exit__'):
             return self.__subproc.__exit__(*args, **kwargs)
         else:
