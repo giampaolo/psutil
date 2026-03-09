@@ -498,6 +498,9 @@ elif BSD:
         stack: int
         peak_rss: int
 
+    # psutil.Process.memory_info_ex()
+    pmem_ex = pmem
+
     # psutil.Process.memory_full_info()
     pfullmem = pmem
 
@@ -507,6 +510,9 @@ elif SUNOS or AIX:
     class pmem(NamedTuple):
         rss: int
         vms: int
+
+    # psutil.Process.memory_info_ex()
+    pmem_ex = pmem
 
     # psutil.Process.memory_full_info()
     pfullmem = pmem
