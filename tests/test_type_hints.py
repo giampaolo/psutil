@@ -98,6 +98,50 @@ class TestTypeHintsReturned(PsutilTestCase):
 
 
 # =====================================================================
+# --- Tests for check_ntuple_type_hints() test utility fun
+# =====================================================================
+
+
+class TestCheckNtupleTypeHints(PsutilTestCase):
+    def test_not_namedtuple(self):
+        # plain tuple is rejected
+        with pytest.raises(AssertionError):
+            check_ntuple_type_hints((1, 2, 3))
+
+    def test_ok(self):
+        # addr(ip: str, port: int) - correct types
+        from psutil._ntuples import addr
+
+        check_ntuple_type_hints(addr('127.0.0.1', 80))
+
+    def test_wrong_type(self):
+        # ip should be str, passing int instead
+        from psutil._ntuples import addr
+
+        with pytest.raises(AssertionError):
+            check_ntuple_type_hints(addr(127, 80))
+
+    @pytest.mark.skipif(
+        not hasattr(types, "UnionType"), reason="Python 3.10+ only"
+    )
+    def test_union_with_none(self):
+        # suser has terminal: str | None and host: str | None
+        from psutil._ntuples import suser
+
+        check_ntuple_type_hints(suser('user', None, None, 1.0, None))
+        check_ntuple_type_hints(suser('user', '/dev/tty1', 'host', 1.0, 1))
+        with pytest.raises(AssertionError):
+            check_ntuple_type_hints(suser(1, None, None, 1.0, None))
+
+    def test_intenum_broadening(self):
+        # NicDuplex is an IntEnum; check_ntuple_type_hints broadens it to int
+        from psutil._ntuples import snicstats
+
+        nt = snicstats(True, psutil.NIC_DUPLEX_FULL, 1000, 1500, '')
+        check_ntuple_type_hints(nt)
+
+
+# =====================================================================
 # --- Tests for check_fun_type_hints() test utility fun
 # =====================================================================
 
