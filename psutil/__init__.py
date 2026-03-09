@@ -73,8 +73,10 @@ if _TYPE_CHECKING:
     from ._ntuples import pconn
     from ._ntuples import pcputimes
     from ._ntuples import pctxsw
+    from ._ntuples import pfootprint
     from ._ntuples import pfullmem
     from ._ntuples import pgids
+    from ._ntuples import pheap
     from ._ntuples import pio
     from ._ntuples import pionice
     from ._ntuples import pmem
@@ -101,21 +103,7 @@ if _TYPE_CHECKING:
     from ._ntuples import sswap
     from ._ntuples import suser
     from ._ntuples import svmem
-
-    try:
-        from ._ntuples import pfootprint
-    except ImportError:
-        pfootprint = None
-
-    try:
-        from ._ntuples import pheap
-    except ImportError:
-        pheap = None
-
-    try:
-        from ._pswindows import WindowsService
-    except ImportError:
-        WindowsService = None
+    from ._pswindows import WindowsService
 
 
 if LINUX:
