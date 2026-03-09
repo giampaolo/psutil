@@ -126,6 +126,9 @@ test-unicode:  ## Test APIs dealing with strings.
 test-contracts:  ## APIs sanity tests.
 	$(RUN_TEST) tests/test_contracts.py $(ARGS)
 
+test-type-hints:  ## Test psutil.net_connections() and Process.net_connections().
+	$(RUN_TEST) -k "TypeHints" $(ARGS)
+
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	$(RUN_TEST) -k "test_connections.py or net_" $(ARGS)
 

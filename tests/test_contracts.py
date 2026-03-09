@@ -484,7 +484,7 @@ class TestSystemAPITypes(PsutilTestCase):
 # ===================================================================
 
 
-class TestNtupleFieldTypes(PsutilTestCase):
+class TestTypeHintsNtuples(PsutilTestCase):
     """Check that namedtuple field values match the type annotations
     defined in psutil/_ntuples.py.
     """
@@ -531,7 +531,7 @@ class TestNtupleFieldTypes(PsutilTestCase):
 # ===================================================================
 
 
-class TestReturnedTypes(PsutilTestCase):
+class TestTypeHintsReturned(PsutilTestCase):
     """Check that annotated return types in psutil/__init__.py match
     the actual values returned at runtime.
     """

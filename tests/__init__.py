@@ -1759,7 +1759,7 @@ def check_fun_type_hints(fun, retval):
         if not hasattr(types, "UnionType"):
             # added in python 3.10
             return
-        raise ValueError(f"no type hint defined for {fun}")
+        raise ValueError(f"no type hints defined for {fun}")
     types_ = _hint_to_types(hint)
     assert types_
     assert isinstance(retval, types_), (fun, retval, types_)
