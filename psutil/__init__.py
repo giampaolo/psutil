@@ -859,7 +859,7 @@ class Process:
 
         def ionice(
             self, ioclass: int | None = None, value: int | None = None
-        ) -> pionice | None:
+        ) -> pionice | ProcessIOPriority | None:
             """Get or set process I/O niceness (priority).
 
             On Linux *ioclass* is one of the IOPRIO_CLASS_* constants.

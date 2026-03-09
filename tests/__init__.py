@@ -5,7 +5,6 @@
 """Test utilities."""
 
 import atexit
-import collections.abc
 import contextlib
 import ctypes
 import enum
@@ -1676,8 +1675,6 @@ def _hint_to_types(hint):
     Generator).
     """
     origin = typing.get_origin(hint)
-    if origin is collections.abc.Generator:
-        return None
     if origin in UNION_TYPES:
         result = []
         for arg in typing.get_args(hint):
