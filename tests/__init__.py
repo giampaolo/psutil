@@ -1664,32 +1664,28 @@ def _get_ntuple_hints(nt):
         return {}
 
 
-def check_ntuple_type_hints(nt):
-    """Uses type hints from _ntuples.py to verify field types. `nt` is
-    a named tuple returned by one of psutil APIs.
+def _hint_to_types(hint):
+    """Flatten a type hint into a tuple of concrete types suitable for
+    isinstance(). Returns None if the hint cannot be checked (e.g.
+    Generator).
     """
-    assert is_namedtuple(nt)
-    hints = _get_ntuple_hints(nt)
-    if not hints:
-        return
-    for field in nt._fields:
-        if field not in hints:
-            # field is not annotated
-            continue
-        value = getattr(nt, field)
-        hint = hints[field]
-        if (
-            hasattr(types, 'UnionType') and isinstance(hint, types.UnionType)
-        ) or getattr(hint, '__origin__', None) is typing.Union:
-            types_ = typing.get_args(hint)
-        elif isinstance(hint, type):
-            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
-            # return a platform-specific IntEnum subclass rather than the
-            # annotated one, so we broaden the check to int.
-            types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
-        else:
-            continue
-        assert isinstance(value, types_), (field, value, types_)
+    origin = typing.get_origin(hint)
+    if origin is collections.abc.Generator:
+        return None
+    if origin in {typing.Union, types.UnionType}:
+        result = []
+        for arg in typing.get_args(hint):
+            inner = typing.get_origin(arg)
+            if inner is not None:
+                result.append(inner)
+            elif isinstance(arg, type):
+                result.append(arg)
+        return tuple(result) if result else None
+    if origin is not None:
+        return (origin,)
+    if isinstance(hint, type):
+        return (hint,)
+    return None
 
 
 @functools.lru_cache(maxsize=None)
@@ -1711,6 +1707,32 @@ def _get_return_hint(fun):
     return hints.get('return')
 
 
+def check_ntuple_type_hints(nt):
+    """Uses type hints from _ntuples.py to verify field types. `nt` is
+    a named tuple returned by one of psutil APIs.
+    """
+    assert is_namedtuple(nt)
+    hints = _get_ntuple_hints(nt)
+    if not hints:
+        return
+    for field in nt._fields:
+        if field not in hints:
+            # field is not annotated
+            continue
+        value = getattr(nt, field)
+        types_ = _hint_to_types(hints[field])
+        if types_ is None:
+            continue
+        # For IntEnum hints (e.g. socket.AddressFamily), psutil may
+        # return a platform-specific IntEnum subclass rather than the
+        # annotated one, so we broaden the check to int.
+        types_ = tuple(
+            int if isinstance(t, type) and issubclass(t, enum.IntEnum) else t
+            for t in types_
+        )
+        assert isinstance(value, types_), (field, value, types_)
+
+
 def check_fun_type_hints(fun, retval):
     """Use the 'return' type hint of *fun* from psutil/__init__.py to
     verify that *retval* is an instance of the annotated type.
@@ -1719,24 +1741,7 @@ def check_fun_type_hints(fun, retval):
     hint = _get_return_hint(fun)
     if hint is None:
         return
-    origin = typing.get_origin(hint)
-    if origin is collections.abc.Generator:
-        return
-    if origin in (typing.Union, types.UnionType):  # noqa: PLR6201
-        result = []
-        for arg in typing.get_args(hint):
-            inner = typing.get_origin(arg)
-            if inner is not None:
-                result.append(inner)
-            elif isinstance(arg, type):
-                result.append(arg)
-        types_ = tuple(result) if result else None
-    elif origin is not None:
-        types_ = (origin,)
-    elif isinstance(hint, type):
-        types_ = (hint,)
-    else:
-        return
+    types_ = _hint_to_types(hint)
     if types_ is not None:
         assert isinstance(retval, types_), (fun, retval, types_)
 
