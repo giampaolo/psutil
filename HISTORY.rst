@@ -5,6 +5,10 @@
 
 **Enhancements**
 
+- 1946_: add inline type hints to all public APIs in `psutil/__init__.py`.
+  Type checkers (mypy, pyright, etc.) can now statically verify code that
+  uses psutil. No runtime behavior is changed; the annotations are purely
+  informational.
 - 2729_: New `Process.page_faults()`_ method, returning a ``(minor, major)``
   namedtuple.
 - 2745_: Drastically improve `virtual_memory()`_ docstring, which is now more
@@ -75,6 +79,8 @@
 **Compatibility notes**
 
 Changes that break backwards compatibility.
+
+- Dropped support for Python 3.6.
 
 Named tuples:
 

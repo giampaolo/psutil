@@ -16,6 +16,8 @@ import stat
 import time
 import traceback
 
+import pytest
+
 import psutil
 from psutil import AIX
 from psutil import BSD
@@ -32,11 +34,12 @@ from . import PYTEST_PARALLEL
 from . import VALID_PROC_STATUSES
 from . import PsutilTestCase
 from . import check_connection_ntuple
-from . import check_ntuple_types
+from . import check_fun_type_hints
+from . import check_ntuple_type_hints
 from . import create_sockets
+from . import is_namedtuple
 from . import is_win_secure_system_proc
 from . import process_namespace
-from . import pytest
 
 # Cuts the time in half, but (e.g.) on macOS the process pool stays
 # alive after join() (multiprocessing bug?), messing up other tests.
@@ -84,10 +87,15 @@ def proc_info(pid):
         # check_exception() in case of NSP.
         for fun, fun_name in ns.iter(ns.getters, clear_cache=False):
             try:
-                info[fun_name] = fun()
+                ret = fun()
             except psutil.Error as exc:
                 check_exception(exc, proc, name, ppid)
                 continue
+            else:
+                check_fun_type_hints(fun, ret)
+                if is_namedtuple(ret):
+                    check_ntuple_type_hints(ret)
+                info[fun_name] = ret
         do_wait()
         return info
 
@@ -212,13 +220,11 @@ class TestFetchAllProcesses(PsutilTestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
 
     def uids(self, ret, info):
-        check_ntuple_types(ret)
         for uid in ret:
             assert isinstance(uid, int)
             assert uid >= 0
 
     def gids(self, ret, info):
-        check_ntuple_types(ret)
         # note: testing all gids as above seems not to be reliable for
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
@@ -238,7 +244,6 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret in VALID_PROC_STATUSES
 
     def io_counters(self, ret, info):
-        check_ntuple_types(ret)
         for field in ret:
             assert isinstance(field, int)
             if field != -1:
@@ -271,7 +276,6 @@ class TestFetchAllProcesses(PsutilTestCase):
     def threads(self, ret, info):
         assert isinstance(ret, list)
         for t in ret:
-            check_ntuple_types(t)
             assert t.id >= 0
             assert t.user_time >= 0
             assert t.system_time >= 0
@@ -279,7 +283,6 @@ class TestFetchAllProcesses(PsutilTestCase):
                 assert isinstance(field, (int, float))
 
     def cpu_times(self, ret, info):
-        check_ntuple_types(ret)
         for n in ret:
             assert isinstance(n, float)
             assert n >= 0
@@ -305,7 +308,6 @@ class TestFetchAllProcesses(PsutilTestCase):
         self.check_proc_memory(ret)
 
     def memory_footprint(self, ret, info):
-        check_ntuple_types(ret)
         for name in ret._fields:
             value = getattr(ret, name)
             assert isinstance(value, int)
@@ -314,7 +316,6 @@ class TestFetchAllProcesses(PsutilTestCase):
     def open_files(self, ret, info):
         assert isinstance(ret, list)
         for f in ret:
-            check_ntuple_types(f)
             assert isinstance(f.fd, int)
             assert isinstance(f.path, str)
             assert f.path.strip() == f.path
@@ -387,7 +388,6 @@ class TestFetchAllProcesses(PsutilTestCase):
 
     def memory_maps(self, ret, info):
         for nt in ret:
-            check_ntuple_types(nt)
             if hasattr(nt, "addr"):
                 assert isinstance(nt.addr, str)
             if hasattr(nt, "perms"):
@@ -418,7 +418,6 @@ class TestFetchAllProcesses(PsutilTestCase):
         assert ret >= 0
 
     def page_faults(self, ret, info):
-        check_ntuple_types(ret)
         assert isinstance(ret.minor, int)
         assert isinstance(ret.major, int)
         assert ret.minor >= 0
@@ -438,7 +437,6 @@ class TestFetchAllProcesses(PsutilTestCase):
             assert isinstance(ret, enum.IntEnum)
 
     def num_ctx_switches(self, ret, info):
-        check_ntuple_types(ret)
         for value in ret:
             assert isinstance(value, int)
             assert value >= 0

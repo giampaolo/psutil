@@ -35,14 +35,11 @@ from . import HAS_SENSORS_FANS
 from . import HAS_SENSORS_TEMPERATURES
 from . import SKIP_SYSCONS
 from . import PsutilTestCase
-from . import check_ntuple_types
 from . import create_sockets
 from . import enum
 from . import is_namedtuple
 from . import kernel_version
-from . import process_namespace
 from . import pytest
-from . import system_namespace
 
 # ===================================================================
 # --- APIs availability
@@ -476,50 +473,3 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(user.pid, (int, type(None)))
             if isinstance(user.pid, int):
                 assert user.pid > 0
-
-
-# ===================================================================
-# --- namedtuple field types
-# ===================================================================
-
-
-class TestNtupleFieldTypes(PsutilTestCase):
-    """Check that namedtuple field values match the type annotations
-    defined in psutil/_ntuples.py.
-    """
-
-    def check_result(self, ret):
-        if is_namedtuple(ret):
-            check_ntuple_types(ret)
-        elif isinstance(ret, list):
-            for item in ret:
-                if is_namedtuple(item):
-                    check_ntuple_types(item)
-
-    def test_system_ntuple_types(self):
-        for fun, name in system_namespace.iter(system_namespace.getters):
-            try:
-                ret = fun()
-            except psutil.Error:
-                continue
-            with self.subTest(name=name, fun=str(fun)):
-                if isinstance(ret, dict):
-                    for v in ret.values():
-                        if isinstance(v, list):
-                            for item in v:
-                                self.check_result(item)
-                        else:
-                            self.check_result(v)
-                else:
-                    self.check_result(ret)
-
-    def test_process_ntuple_types(self):
-        p = psutil.Process()
-        ns = process_namespace(p)
-        for fun, name in ns.iter(ns.getters):
-            with self.subTest(name=name, fun=str(fun)):
-                try:
-                    ret = fun()
-                except psutil.Error:
-                    continue
-                self.check_result(ret)

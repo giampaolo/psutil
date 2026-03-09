@@ -4,6 +4,8 @@
 
 """Windows platform implementation."""
 
+from __future__ import annotations
+
 import contextlib
 import enum
 import functools
@@ -403,7 +405,7 @@ def win_service_get(name):
 class WindowsService:  # noqa: PLW1641
     """Represents an installed Windows service."""
 
-    def __init__(self, name, display_name):
+    def __init__(self, name: str, display_name: str):
         self._name = name
         self._display_name = display_name
 
@@ -414,14 +416,14 @@ class WindowsService:  # noqa: PLW1641
     def __repr__(self):
         return f"<{self.__str__()} at {id(self)}>"
 
-    def __eq__(self, other):
+    def __eq__(self, other: object):
         # Test for equality with another WindosService object based
         # on name.
         if not isinstance(other, WindowsService):
             return NotImplemented
         return self._name == other._name
 
-    def __ne__(self, other):
+    def __ne__(self, other: object):
         return not self == other
 
     def _query_config(self):
@@ -469,30 +471,30 @@ class WindowsService:  # noqa: PLW1641
 
     # config query
 
-    def name(self):
+    def name(self) -> str:
         """The service name. This string is how a service is referenced
         and can be passed to win_service_get() to get a new
         WindowsService instance.
         """
         return self._name
 
-    def display_name(self):
+    def display_name(self) -> str:
         """The service display name. The value is cached when this class
         is instantiated.
         """
         return self._display_name
 
-    def binpath(self):
+    def binpath(self) -> str:
         """The fully qualified path to the service binary/exe file as
         a string, including command line arguments.
         """
         return self._query_config()['binpath']
 
-    def username(self):
+    def username(self) -> str:
         """The name of the user that owns this service."""
         return self._query_config()['username']
 
-    def start_type(self):
+    def start_type(self) -> str:
         """A string which can either be "automatic", "manual" or
         "disabled".
         """
@@ -500,23 +502,23 @@ class WindowsService:  # noqa: PLW1641
 
     # status query
 
-    def pid(self):
+    def pid(self) -> int | None:
         """The process PID, if any, else None. This can be passed
         to Process class to control the service's process.
         """
         return self._query_status()['pid']
 
-    def status(self):
+    def status(self) -> str:
         """Service status as a string."""
         return self._query_status()['status']
 
-    def description(self):
+    def description(self) -> str:
         """Service long description."""
         return cext.winservice_query_descr(self.name())
 
     # utils
 
-    def as_dict(self):
+    def as_dict(self) -> dict[str, str | int | None]:
         """Utility method retrieving all the information above as a
         dictionary.
         """

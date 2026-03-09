@@ -390,7 +390,7 @@ class Process:
     @wrap_exceptions
     def gids(self):
         d = self._oneshot_kinfo()
-        return ntp.puids(d["rgid"], d["egid"], d["sgid"])
+        return ntp.pgids(d["rgid"], d["egid"], d["sgid"])
 
     @wrap_exceptions
     def terminal(self):

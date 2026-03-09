@@ -534,7 +534,7 @@ def main():
             "test": TEST_DEPS,
         }
         kwargs.update(
-            python_requires=">=3.6",
+            python_requires=">=3.7",
             extras_require=extras_require,
             zip_safe=False,
         )

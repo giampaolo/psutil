@@ -204,6 +204,7 @@ include tests/test_sudo.py
 include tests/test_sunos.py
 include tests/test_system.py
 include tests/test_testutils.py
+include tests/test_type_hints.py
 include tests/test_unicode.py
 include tests/test_windows.py
 recursive-exclude docs/_static *

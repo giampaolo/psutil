@@ -84,7 +84,9 @@ __all__ = [
     # test utils
     'unittest', 'skip_on_access_denied', 'skip_on_not_implemented',
     'retry_on_failure', 'PsutilTestCase', 'process_namespace',
-    'system_namespace', 'check_ntuple_types', 'is_win_secure_system_proc',
+    'system_namespace', 'is_win_secure_system_proc',
+    # type hints
+    'check_ntuple_type_hints', 'check_fun_type_hints',
     # fs utils
     'chdir', 'safe_rmpath', 'create_py_exe', 'create_c_exe', 'get_testfn',
     # os
@@ -1063,7 +1065,7 @@ class PsutilTestCase(unittest.TestCase):
 
     def check_proc_memory(self, nt):
         # Check the ntuple returned by Process.memory_*() methods.
-        check_ntuple_types(nt)
+        check_ntuple_type_hints(nt)
         for value in nt:
             assert isinstance(value, int)
             assert value >= 0
@@ -1524,53 +1526,6 @@ def create_sockets():
                 safe_rmpath(fname)
 
 
-@functools.lru_cache(maxsize=None)
-def _get_hints(cls):
-    try:
-        localns = {
-            name: obj
-            for name, obj in vars(_enums).items()
-            if isinstance(obj, type) and issubclass(obj, enum.Enum)
-        }
-        localns['socket'] = socket
-        return typing.get_type_hints(
-            cls,
-            globalns=vars(ntuples),
-            localns=localns,
-        )
-    except TypeError:
-        # Python < 3.10 can't evaluate "X | Y" union syntax.
-        return {}
-
-
-def check_ntuple_types(nt):
-    """Uses type hints from _ntuples.py to verify field types. `nt` is
-    a named tuple returned by one of psutil APIs.
-    """
-    assert is_namedtuple(nt)
-    hints = _get_hints(type(nt))
-    if not hints:
-        return
-    for field in nt._fields:
-        if field not in hints:
-            # field is not annotated
-            continue
-        value = getattr(nt, field)
-        hint = hints[field]
-        if (
-            hasattr(types, 'UnionType') and isinstance(hint, types.UnionType)
-        ) or getattr(hint, '__origin__', None) is typing.Union:
-            types_ = typing.get_args(hint)
-        elif isinstance(hint, type):
-            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
-            # return a platform-specific IntEnum subclass rather than the
-            # annotated one, so we broaden the check to int.
-            types_ = (int,) if issubclass(hint, enum.IntEnum) else (hint,)
-        else:
-            continue
-        assert isinstance(value, types_), (field, value, types_)
-
-
 def check_net_address(addr, family):
     """Check a net address validity. Supported families are IPv4,
     IPv6 and MAC addresses.
@@ -1659,7 +1614,7 @@ def check_connection_ntuple(conn):
         else:
             assert conn.status == psutil.CONN_NONE, conn.status
 
-    check_ntuple_types(conn)
+    check_ntuple_type_hints(conn)
     check_ntuple(conn)
     check_family(conn)
     check_type(conn)
@@ -1679,6 +1634,167 @@ def filter_proc_net_connections(cons):
                 continue
         new.append(conn)
     return new
+
+
+# =====================================================================
+# --- type hints
+# =====================================================================
+
+
+class TypeHintsChecker:
+    try:
+        UNION_TYPES = (typing.Union, types.UnionType)
+    except AttributeError:  # Python < 3.10
+        UNION_TYPES = (typing.Union,)
+
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _get_ntuple_hints(nt):
+        cls = type(nt)
+        try:
+            localns = {
+                name: obj
+                for name, obj in vars(_enums).items()
+                if isinstance(obj, type) and issubclass(obj, enum.Enum)
+            }
+            localns['socket'] = socket
+            return typing.get_type_hints(
+                cls,
+                globalns=vars(ntuples),
+                localns=localns,
+            )
+        except TypeError:
+            # Python < 3.10 can't evaluate "X | Y" union syntax.
+            return {}
+
+    @staticmethod
+    def _hint_to_types(hint):
+        """Flatten a type hint into a tuple of concrete types suitable
+        for isinstance(). Returns None if the hint cannot be checked.
+        """
+        if not hasattr(typing, "get_origin") and sys.version_info[:2] <= (
+            3,
+            7,
+        ):
+            return None
+        origin = typing.get_origin(hint)
+        if origin in TypeHintsChecker.UNION_TYPES:
+            result = []
+            for arg in typing.get_args(hint):
+                inner = typing.get_origin(arg)
+                if inner is not None:
+                    result.append(inner)
+                elif isinstance(arg, type):
+                    result.append(arg)
+            return tuple(result) if result else None
+        if origin is not None:
+            return (origin,)
+        if isinstance(hint, type):
+            return (hint,)
+        return None
+
+    @staticmethod
+    def check_ntuple_type_hints(nt):
+        """Uses type hints from _ntuples.py to verify field types. `nt`
+        is a named tuple returned by one of psutil APIs.
+        """
+        assert is_namedtuple(nt)
+        hints = TypeHintsChecker._get_ntuple_hints(nt)
+        if not hints:
+            return
+        for field in nt._fields:
+            if field not in hints:
+                # field is not annotated
+                continue
+            value = getattr(nt, field)
+            types_ = TypeHintsChecker._hint_to_types(hints[field])
+            if types_ is None:
+                continue
+            # For IntEnum hints (e.g. socket.AddressFamily), psutil may
+            # return a platform-specific IntEnum subclass rather than
+            # the annotated one, so we broaden the check to int.
+            types_ = tuple(
+                (
+                    int
+                    if isinstance(t, type) and issubclass(t, enum.IntEnum)
+                    else t
+                )
+                for t in types_
+            )
+            assert isinstance(value, types_), (field, value, types_)
+
+    @staticmethod
+    @functools.lru_cache(maxsize=None)
+    def _get_return_hint(fun):
+        """Get the 'return' type hint for a psutil API function or
+        method. Resolves annotation strings using a combined namespace
+        of psutil globals (Any, Generator, Process, ...) and ntuple
+        types (scputimes, svmem, pmem, ...). Returns None if hints
+        cannot be resolved or there is no return annotation.
+        """
+        while hasattr(fun, 'func'):
+            fun = fun.func
+        # Build a namespace that can resolve all annotations.
+        psp = vars(psutil).get('_psplatform')
+        psp_ns = vars(psp) if psp is not None else {}
+        ns = {
+            **psp_ns,
+            **vars(psutil),
+            **vars(ntuples),
+            **vars(typing),
+        }
+        underlying = getattr(fun, '__func__', fun)
+        try:
+            hints = typing.get_type_hints(underlying, globalns=ns)
+        except TypeError:
+            # X | Y union syntax in annotations requires Python 3.10+
+            # to evaluate. On older versions skip the check entirely.
+            if sys.version_info < (3, 10):
+                msg = f"skip X|Y type check on old python for {fun.__name__!r}"
+                warn(msg)
+                return None
+            else:
+                raise
+        return hints.get('return')
+
+    @staticmethod
+    def _check_container_items(hint, value):
+        """For list[T] and dict[K, V] hints, verify element types."""
+        origin = typing.get_origin(hint)
+        args = typing.get_args(hint)
+        if origin is list and args:
+            elem_types = TypeHintsChecker._hint_to_types(args[0])
+            if elem_types:
+                for item in value:
+                    assert isinstance(item, elem_types), (item, elem_types)
+        elif origin is dict and len(args) == 2:
+            key_types = TypeHintsChecker._hint_to_types(args[0])
+            val_types = TypeHintsChecker._hint_to_types(args[1])
+            for k, v in value.items():
+                if key_types:
+                    assert isinstance(k, key_types), (k, key_types)
+                if val_types:
+                    assert isinstance(v, val_types), (v, val_types)
+
+    @staticmethod
+    def check_fun_type_hints(fun, retval):
+        """Use the 'return' type hint of *fun* from psutil/__init__.py
+        to verify that *retval* is an instance of the annotated type.
+        """
+        hint = TypeHintsChecker._get_return_hint(fun)
+        if hint is None:
+            if not hasattr(types, "UnionType"):
+                # added in python 3.10
+                return
+            raise ValueError(f"no type hints defined for {fun}")
+        types_ = TypeHintsChecker._hint_to_types(hint)
+        assert types_, hint
+        assert isinstance(retval, types_), (fun, retval, types_)
+        TypeHintsChecker._check_container_items(hint, retval)
+
+
+check_ntuple_type_hints = TypeHintsChecker.check_ntuple_type_hints
+check_fun_type_hints = TypeHintsChecker.check_fun_type_hints
 
 
 # ===================================================================
