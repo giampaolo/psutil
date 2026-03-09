@@ -480,7 +480,7 @@ class TestSystemAPITypes(PsutilTestCase):
 
 
 # ===================================================================
-# --- namedtuple field types
+# --- namedtuple fields type hints
 # ===================================================================
 
 
@@ -536,7 +536,7 @@ class TestReturnedTypes(PsutilTestCase):
     the actual values returned at runtime.
     """
 
-    def _check(self, fun, name):
+    def check(self, fun, name):
         try:
             ret = fun()
         except psutil.Error:
@@ -545,12 +545,12 @@ class TestReturnedTypes(PsutilTestCase):
 
     def test_system_return_types(self):
         for fun, name in system_namespace.iter(system_namespace.getters):
-            with self.subTest(name=name):
-                self._check(fun, name)
+            with self.subTest(name=name, fun=str(fun)):
+                self.check(fun, name)
 
     def test_process_return_types(self):
         p = psutil.Process()
         ns = process_namespace(p)
         for fun, name in ns.iter(ns.getters):
-            with self.subTest(name=name):
-                self._check(fun, name)
+            with self.subTest(name=name, fun=str(fun)):
+                self.check(fun, name)
