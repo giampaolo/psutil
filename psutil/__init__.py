@@ -112,6 +112,11 @@ if _TYPE_CHECKING:
     except ImportError:
         pheap = None
 
+    try:
+        from ._pswindows import WindowsService
+    except ImportError:
+        WindowsService = None
+
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -2515,13 +2520,13 @@ def users() -> list[suser]:
 
 if WINDOWS:
 
-    def win_service_iter():
+    def win_service_iter() -> Generator[WindowsService, None, None]:
         """Return a generator yielding a WindowsService instance for all
         Windows services installed.
         """
         return _psplatform.win_service_iter()
 
-    def win_service_get(name):
+    def win_service_get(name) -> WindowsService:
         """Get a Windows service by *name*.
         Raise NoSuchProcess if no service with such name exists.
         """

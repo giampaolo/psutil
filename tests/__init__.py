@@ -1731,7 +1731,17 @@ def _get_return_hint(fun):
     while hasattr(fun, 'func'):
         fun = fun.func
     underlying = getattr(fun, '__func__', fun)
-    ns = {**vars(psutil), **vars(ntuples)}
+    # Build a namespace that can resolve all annotations.
+    psp = vars(psutil).get('_psplatform')
+    psp_ns = vars(psp) if psp is not None else {}
+    ns = {
+        **psp_ns,
+        **vars(psutil),
+        **vars(ntuples),
+        'Generator': typing.Generator,
+        'Any': typing.Any,
+        'Callable': typing.Callable,
+    }
     try:
         hints = typing.get_type_hints(underlying, globalns=ns)
     except Exception:  # noqa: BLE001
