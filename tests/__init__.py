@@ -1688,25 +1688,6 @@ def _hint_to_types(hint):
     return None
 
 
-@functools.lru_cache(maxsize=None)
-def _get_return_hint(fun):
-    """Get the 'return' type hint for a psutil API function or method.
-    Resolves annotation strings using a combined namespace of psutil
-    globals (Any, Generator, Process, ...) and ntuple types
-    (scputimes, svmem, pmem, ...). Returns None if hints cannot be
-    resolved or there is no return annotation.
-    """
-    while hasattr(fun, 'func'):
-        fun = fun.func
-    underlying = getattr(fun, '__func__', fun)
-    ns = {**vars(psutil), **vars(ntuples)}
-    try:
-        hints = typing.get_type_hints(underlying, globalns=ns)
-    except Exception:  # noqa: BLE001
-        return None
-    return hints.get('return')
-
-
 def check_ntuple_type_hints(nt):
     """Uses type hints from _ntuples.py to verify field types. `nt` is
     a named tuple returned by one of psutil APIs.
@@ -1733,6 +1714,25 @@ def check_ntuple_type_hints(nt):
         assert isinstance(value, types_), (field, value, types_)
 
 
+@functools.lru_cache(maxsize=None)
+def _get_return_hint(fun):
+    """Get the 'return' type hint for a psutil API function or method.
+    Resolves annotation strings using a combined namespace of psutil
+    globals (Any, Generator, Process, ...) and ntuple types
+    (scputimes, svmem, pmem, ...). Returns None if hints cannot be
+    resolved or there is no return annotation.
+    """
+    while hasattr(fun, 'func'):
+        fun = fun.func
+    underlying = getattr(fun, '__func__', fun)
+    ns = {**vars(psutil), **vars(ntuples)}
+    try:
+        hints = typing.get_type_hints(underlying, globalns=ns)
+    except Exception:  # noqa: BLE001
+        return None
+    return hints.get('return')
+
+
 def check_fun_type_hints(fun, retval):
     """Use the 'return' type hint of *fun* from psutil/__init__.py to
     verify that *retval* is an instance of the annotated type.
@@ -1742,8 +1742,8 @@ def check_fun_type_hints(fun, retval):
     if hint is None:
         raise ValueError(f"no type hint defined for {fun}")
     types_ = _hint_to_types(hint)
-    if types_ is not None:
-        assert isinstance(retval, types_), (fun, retval, types_)
+    assert types_
+    assert isinstance(retval, types_), (fun, retval, types_)
 
 
 # ===================================================================
