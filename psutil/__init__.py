@@ -69,6 +69,7 @@ if _TYPE_CHECKING:
     from typing import Any
     from typing import Callable
     from typing import Generator
+    from typing import Iterator
 
     from ._ntuples import pconn
     from ._ntuples import pcputimes
@@ -1593,7 +1594,7 @@ _pids_reused = set()
 
 def process_iter(
     attrs: list[str] | None = None, ad_value: Any = None
-) -> Generator[Process, None, None]:
+) -> Iterator[Process]:
     """Return a generator yielding a Process instance for all
     running processes.
 
@@ -2508,7 +2509,7 @@ def users() -> list[suser]:
 
 if WINDOWS:
 
-    def win_service_iter() -> Generator[WindowsService, None, None]:
+    def win_service_iter() -> Iterator[WindowsService]:
         """Return a generator yielding a WindowsService instance for all
         Windows services installed.
         """
