@@ -1,6 +1,8 @@
-.wy-nav-content {
-    max-width: 70% !important;
-    padding: 15px !important;
+@media (min-width: 1200px) {
+    .wy-nav-content {
+        max-width: 1000px;
+        padding-left: 20px !important;
+    }
 }
 
 .rst-content dl:not(.docutils) {
