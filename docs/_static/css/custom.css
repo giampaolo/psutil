@@ -15,12 +15,12 @@
     border-right:10px !important;
 }
 
-.local-toc li ul li {
-    padding-left: 20px !important;
-}
-
 .rst-content ul p {
     margin-bottom: 0px !important;
+}
+
+.rst-content ul {
+    margin-top: 0px !important;
 }
 
 .rst-content li {
