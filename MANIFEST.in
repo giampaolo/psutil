@@ -3,6 +3,7 @@ include .dprint.jsonc
 include .gitignore
 include CONTRIBUTING.md
 include CREDITS
+include HISTORY.rst
 include LICENSE
 include MANIFEST.in
 include Makefile
