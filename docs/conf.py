@@ -40,13 +40,15 @@ VERSION = get_version()
 sys.path.insert(0, os.path.join(HERE, '_ext'))
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.coverage',
-    'sphinx.ext.extlinks',
-    'sphinx.ext.imgmath',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.intersphinx',
-    'changelog_anchors',  # our custom extension in _ext/ dir
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.imgmath",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
+    # our own custom extensions in _ext/ dir
+    "add_home_link",
+    "changelog_anchors",
 ]
 
 # project info
