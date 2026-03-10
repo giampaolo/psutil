@@ -5,8 +5,14 @@
     }
 }
 
-.rst-content div[role="navigation"] {
+/* hide top navigation */
+.rst-content > div[role="navigation"] {
     display: none;
+}
+
+/* leave footer navigation visible */
+footer div[role="navigation"][aria-label="Footer"] {
+    display: block;
 }
 
 .rst-content dl:not(.docutils) {
