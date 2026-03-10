@@ -10,6 +10,7 @@
    Install <install>
    API Reference <api>
    Recipes <recipes>
+   FAQs <faq>
    Development guide <devguide>
 
 psutil documentation
@@ -96,21 +97,6 @@ becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
 `PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
 Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`__.
 
-FAQs
-====
-
-* Q: Why do I get :class:`AccessDenied` for certain processes?
-* A: This may happen when you query processes owned by another user,
-  especially on macOS (see issue `#883`_) and Windows.
-  Unfortunately there's not much you can do about this except running the
-  Python process with higher privileges.
-  On Unix you may run the Python process as root or use the SUID bit
-  (``ps`` and ``netstat`` does this).
-  On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
-  the Python script as a Windows service (ProcessHacker does this).
-
-* Q: is MinGW supported on Windows?
-* A: no, you should Visual Studio (see `development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_).
 
 Debug mode
 ==========
