@@ -1,4 +1,5 @@
 .. include:: _links.rst
+.. currentmodule:: psutil
 
 API reference
 =============
