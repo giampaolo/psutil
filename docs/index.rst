@@ -10,6 +10,7 @@
    Install <install>
    API Reference <api>
    Recipes <recipes>
+   Development guide <devguide>
 
 psutil documentation
 ====================

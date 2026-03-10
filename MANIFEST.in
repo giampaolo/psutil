@@ -10,7 +10,6 @@ include Makefile
 include README.rst
 include SECURITY.md
 include docs/.readthedocs.yaml
-include docs/DEVGUIDE.rst
 include docs/DEVNOTES
 include docs/Makefile
 include docs/README
@@ -24,6 +23,7 @@ include docs/_templates/layout.html
 include docs/api.rst
 include docs/auto-build.sh
 include docs/conf.py
+include docs/devguide.rst
 include docs/index.rst
 include docs/install.rst
 include docs/make.bat

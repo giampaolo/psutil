@@ -1,8 +1,8 @@
-psutil development guide
-========================
+Development guide
+=================
 
 Build, setup and running tests
-..............................
+------------------------------
 
 psutil makes extensive use of C extension modules, meaning a C compiler is
 required, see
@@ -136,7 +136,7 @@ AIX and Solaris does not have continuous test integration.
 Documentation
 -------------
 
-- doc source code is written in a single file: ``docs/index.rst``.
+- doc is under ``docs/``.
 - doc can be built with ``make install-pydeps-dev; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
