@@ -72,6 +72,22 @@ Giampaolo - https://gmpy.dev/about
 """
 
 
+def rst_to_text(s):
+    """Strip RST/Sphinx markup, returning plain text."""
+    # :gh:`123` -> #123
+    s = re.sub(r':gh:`(\d+)`', r'#\1', s)
+    # :meth:, :func:, :class:, :attr:, :exc:, :mod:, :data:, etc.
+    # :role:`text` -> text (also handles :role:`~text` and :role:`mod.text`)
+    s = re.sub(r':[a-z]+:`~?([^`]+)`', r'\1', s)
+    # ``code`` -> `code`
+    s = re.sub(r'``([^`]+)``', r'`\1`', s)
+    # **bold** -> bold
+    s = re.sub(r'\*\*([^*]+)\*\*', r'\1', s)
+    # *italic* -> italic
+    s = re.sub(r'\*([^*]+)\*', r'\1', s)
+    return s
+
+
 def get_changes():
     """Get the most recent changes for this release by parsing
     docs/changelog.rst file.
@@ -107,7 +123,9 @@ def get_changes():
     while not block[-1]:
         block.pop(-1)
 
-    return "\n".join(block)
+    text = "\n".join(block)
+    text = rst_to_text(text)
+    return text
 
 
 def main():
