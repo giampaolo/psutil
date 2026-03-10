@@ -23,7 +23,7 @@ import zipfile
 
 import requests
 
-from psutil._common import bytes2human
+from scripts.internal._mirror import bytes2human
 
 USER = "giampaolo"
 PROJECT = "psutil"
