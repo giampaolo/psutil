@@ -71,31 +71,32 @@ Kill process tree
 Filtering and sorting processes
 -------------------------------
 
-A collection of code samples showing how to use :func:`process_iter()` to filter processes and sort them. Setup::
-
-.. code-block:: python
-
-  >>> import psutil
-  >>> from pprint import pprint as pp
+A collection of code samples showing how to use :func:`process_iter()` to filter processes and sort them.
 
 Processes owned by user:
 
 .. code-block:: python
 
   >>> import getpass
+  >>> import psutil
+  >>> from pprint import pprint as pp
   >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(['name', 'username']) if p.info['username'] == getpass.getuser()])
   (16832, 'bash'),
   (19772, 'ssh'),
   (20492, 'python')]
 
-Processes actively running::
+Processes actively running:
+
+.. code-block:: python
 
   >>> pp([(p.pid, p.info) for p in psutil.process_iter(['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
   [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
    (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
    (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
 
-Processes using log files::
+Processes using log files:
+
+.. code-block:: python
 
   >>> for p in psutil.process_iter(['name', 'open_files']):
   ...      for file in p.info['open_files'] or []:
@@ -106,14 +107,18 @@ Processes using log files::
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
   2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
 
-Processes consuming more than 500M of memory::
+Processes consuming more than 500M of memory:
+
+.. code-block:: python
 
   >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
   [(2650, 'chrome', 532324352),
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
 
-Top 3 processes which consumed the most CPU time::
+Top 3 processes which consumed the most CPU time:
+
+.. code-block:: python
 
   >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
   [(2721, 'chrome', 10219.73),
