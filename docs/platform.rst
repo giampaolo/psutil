@@ -4,7 +4,7 @@ Platform support
 Python
 ------
 
-Supported Python versions: cPython 3.7+ and PyPy3.
+Supported Python versions: Python 3.7+ and PyPy.
 
 Python 2.7
 ----------
@@ -19,8 +19,8 @@ To install it:
 
     $ python2 -m pip install psutil==6.1.*
 
-History
--------
+Support history
+---------------
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6
 * psutil 7.2.0 (2025-12): publish Linux musl wheels
