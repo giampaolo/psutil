@@ -6,6 +6,25 @@
 Psutil documentation
 ====================
 
+|  |downloads| |stars| |forks| |contributors|
+
+.. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
+    :target: https://clickpy.clickhouse.com/dashboard/psutil
+    :alt: Downloads
+
+.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/stargazers
+    :alt: Github stars
+
+.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/network/members
+    :alt: Github forks
+
+.. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/graphs/contributors
+    :alt: Contributors
+
+
 psutil (python system and process utilities) is a cross-platform library for
 retrieving information on running
 **processes** and **system utilization** (CPU, memory, disks, network, sensors)
