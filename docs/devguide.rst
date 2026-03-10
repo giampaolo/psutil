@@ -5,8 +5,7 @@ Build, setup and running tests
 ------------------------------
 
 psutil makes extensive use of C extension modules, meaning a C compiler is
-required, see
-`install instructions <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__.
+required, see :doc:`install instructions <install>`.
 Once you have a compiler installed run:
 
 .. code-block:: bash
