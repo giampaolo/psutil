@@ -104,3 +104,4 @@ Table of Contents
    Development guide <devguide>
    FAQs <faq>
    Timeline <timeline>
+   Changelog <changelog>
