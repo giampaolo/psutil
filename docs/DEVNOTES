@@ -127,3 +127,10 @@ RESOURCES
 - top: http://www.unixtop.org/
 - oshi: https://github.com/oshi/oshi
 - netdata: https://github.com/netdata/netdata
+
+STATS
+=====
+
+- https://pepy.tech/projects/psutil
+- https://clickpy.clickhouse.com/dashboard/psutil
+- https://pypistats.org/packages/psutil
