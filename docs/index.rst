@@ -51,7 +51,6 @@ Sponsors
 
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup><br/><br/>
 
-
 Funding
 -------
 
@@ -82,7 +81,7 @@ Table of Contents
    Install <install>
    API Reference <api>
    Recipes <recipes>
-   Platform support <platforms>
+   Platform support <platform>
    Development guide <devguide>
    FAQs <faq>
    Timeline <timeline>
