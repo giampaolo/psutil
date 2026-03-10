@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Prints release announce based on HISTORY.rst file content.
+"""Prints release announce based on docs/changelog.rst file content.
 See: https://pip.pypa.io/en/stable/reference/pip_install/#hash-checking-mode.
 
 """
@@ -18,7 +18,7 @@ from psutil import __version__
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.realpath(os.path.join(HERE, '..', '..'))
-HISTORY = os.path.join(ROOT, 'HISTORY.rst')
+CHANGELOG = os.path.join(ROOT, 'docs', 'changelog.rst')
 PRINT_HASHES_SCRIPT = os.path.join(
     ROOT, 'scripts', 'internal', 'print_hashes.py'
 )
@@ -28,9 +28,7 @@ PRJ_VERSION = __version__
 PRJ_URL_HOME = 'https://github.com/giampaolo/psutil'
 PRJ_URL_DOC = 'http://psutil.readthedocs.io'
 PRJ_URL_DOWNLOAD = 'https://pypi.org/project/psutil/#files'
-PRJ_URL_WHATSNEW = (
-    'https://github.com/giampaolo/psutil/blob/master/HISTORY.rst'
-)
+PRJ_URL_WHATSNEW = 'https://psutil.readthedocs.io/en/latest/changelog.html'
 
 template = """\
 Hello all,
@@ -76,9 +74,9 @@ Giampaolo - https://gmpy.dev/about
 
 def get_changes():
     """Get the most recent changes for this release by parsing
-    HISTORY.rst file.
+    docs/changelog.rst file.
     """
-    with open(HISTORY) as f:
+    with open(CHANGELOG) as f:
         lines = f.readlines()
 
     block = []
@@ -86,7 +84,7 @@ def get_changes():
     # eliminate the part preceding the first block
     while lines:
         line = lines.pop(0)
-        if line.startswith('===='):
+        if line.startswith('^^^^'):
             break
     else:
         raise ValueError("something wrong")
@@ -98,7 +96,7 @@ def get_changes():
         if re.match(r"^- \d+_", line):
             line = re.sub(r"^- (\d+)_", r"- #\1", line)
 
-        if line.startswith('===='):
+        if line.startswith('^^^^'):
             break
         block.append(line)
     else:
