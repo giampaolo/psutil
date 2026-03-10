@@ -4,7 +4,6 @@ include .gitignore
 include CONTRIBUTING.md
 include CREDITS
 include HISTORY.rst
-include INSTALL.rst
 include LICENSE
 include MANIFEST.in
 include Makefile
@@ -25,6 +24,7 @@ include docs/_templates/layout.html
 include docs/auto-build.sh
 include docs/conf.py
 include docs/index.rst
+include docs/install.rst
 include docs/make.bat
 include docs/requirements.txt
 include psutil/__init__.py

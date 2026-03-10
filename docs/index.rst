@@ -992,7 +992,7 @@ Other system info
 
   .. note::
     on Windows this function may return a time which is off by 1 second if it's
-    used across different processes (see `issue #1007`_).
+    used across different processes (see issue `#1007`_).
 
 .. function:: users()
 
@@ -3056,7 +3056,7 @@ FAQs
 
 * Q: Why do I get :class:`AccessDenied` for certain processes?
 * A: This may happen when you query processes owned by another user,
-  especially on macOS (see `issue #883`_) and Windows.
+  especially on macOS (see issue `#883`_) and Windows.
   Unfortunately there's not much you can do about this except running the
   Python process with higher privileges.
   On Unix you may run the Python process as root or use the SUID bit
