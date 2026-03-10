@@ -109,12 +109,16 @@ Code organization
 
 .. code-block:: bash
 
-    psutil/__init__.py                   # main psutil namespace ("import psutil")
-    psutil/_ps{platform}.py              # platform-specific python wrapper
-    psutil/_psutil_{platform}.c          # platform-specific C extension
-    psutil/arch/{platform}/*.c           # platform-specific C extension
-    tests/test_process|system.py         # main test suite
-    tests/test_{platform}.py             # platform-specific test suite
+    psutil/__init__.py                   # Main API namespace ("import psutil")
+    psutil/_common.py                    # Generic utilities
+    psutil/_ntuples.py                   # Named tuples returned by psutil APIs
+    psutil/_enums.py                     # Enum containers backing psutil constants
+    psutil/_ps{platform}.py              # Platform-specific python wrappers
+    psutil/_psutil_{platform}.c          # Platform-specific C extensions (entry point)
+    psutil/arch/all/*.c                  # C code common to all platforms
+    psutil/arch/{platform}/*.c           # Platform-specific C extension
+    tests/test_process|system.py         # Main system/process API tests
+    tests/test_{platform}.py             # Platform-specific tests
 
 Adding a new API
 ----------------
@@ -132,7 +136,7 @@ Typically, this is what you do:
   ``tests/test_{platform}.py`` (e.g. `tests/test_linux.py`_).
   This usually means testing the return value of the new API against
   a system CLI tool.
-- Update the doc in ``docs/index.py``.
+- Update the doc in ``docs/api.rst``.
 - Update `HISTORY.rst`_ and `CREDITS`_ files.
 - Make a pull request.
 
