@@ -1,8 +1,8 @@
-psutil development guide
-========================
+Development guide
+=================
 
 Build, setup and running tests
-..............................
+------------------------------
 
 psutil makes extensive use of C extension modules, meaning a C compiler is
 required, see
@@ -64,6 +64,28 @@ Windows
 
     make build
     make test-parallel
+
+Debug mode
+----------
+
+If you want to debug unusual situations or want to report a bug, it may be
+useful to enable debug mode via ``PSUTIL_DEBUG`` environment variable. In this
+mode, psutil may (or may not) print additional information to stderr. Usually
+these are error conditions which are not severe, and hence are ignored (instead
+of crashing). Unit tests automatically run with debug mode enabled. On UNIX:
+
+::
+
+  $ PSUTIL_DEBUG=1 python3 script.py
+  psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
+
+On Windows:
+
+::
+
+  set PSUTIL_DEBUG=1 python.exe script.py
+  psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
+
 
 Coding style
 ------------
@@ -129,14 +151,14 @@ Make a pull request
 Continuous integration
 ----------------------
 
-Unit tests are automatically run on every ``git push`` on **Linux**, **macOS**,
-**Windows**, **FreeBSD**, **NetBSD**, **OpenBSD**.
-AIX and Solaris does not have continuous test integration.
+Unit tests are automatically run on every ``git push`` on all platforms except
+AIX. See config files in  `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_
+directory.
 
 Documentation
 -------------
 
-- doc source code is written in a single file: ``docs/index.rst``.
+- doc is under ``docs/``.
 - doc can be built with ``make install-pydeps-dev; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
