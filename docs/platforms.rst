@@ -1,6 +1,9 @@
 Platforms support
 =================
 
+History
+-------
+
 * psutil 8.0.0 (XXXX-XX): drop Python 3.6
 * psutil 7.2.0 (2025-12): publish wheels for Linux musl
 * psutil 7.1.2 (2025-10): publish wheels for free-threaded Python
@@ -27,7 +30,7 @@ Supported Python versions at the time of writing are cPython 2.7, 3.6+ and
 PyPy3.
 
 Python 2.7
-==========
+----------
 
 Latest version spporting Python 2.7 is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
 The 6.1.X serie may receive critical bug-fixes but no new features. It will

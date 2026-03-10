@@ -3,35 +3,8 @@
 .. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
 .. include:: _links.rst
 
-
-.. toctree::
-   :maxdepth: 2
-
-   Install <install>
-   API Reference <api>
-   Recipes <recipes>
-   Platforms support <platforms>
-   Development guide <devguide>
-   FAQs <faq>
-   Timeline <timeline>
-
-psutil documentation
+Psutil documentation
 ====================
-
-Quick links
------------
-
-- `Home page <https://github.com/giampaolo/psutil>`__
-- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-- `Forum <http://groups.google.com/group/psutil/topics>`__
-- `Download <https://pypi.org/project/psutil/#files>`__
-- `Blog <https://gmpy.dev/tags/psutil>`__
-- `Contributing <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`__
-- `Development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_
-- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
-
-About
------
 
 psutil (python system and process utilities) is a cross-platform library for
 retrieving information on running
@@ -42,7 +15,7 @@ process resources** and the **management of running processes**.
 It implements many functionalities offered by UNIX command line tools
 such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
-psutil currently supports the following platforms:
+psutil currently supports the following platforms, from **Python 3.7** onwards:
 
 - **Linux**
 - **Windows**
@@ -51,14 +24,8 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-Supported Python versions are cPython 3.7+ and `PyPy <https://pypy.org/>`__.
-Latest psutil version supporting Python 2.7 is
-`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
-
-The psutil documentation you're reading is distributed as a single HTML page.
-
 Sponsors
-========
+--------
 
 .. raw:: html
 
@@ -85,7 +52,7 @@ Sponsors
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
 
 Funding
-=======
+-------
 
 While psutil is free software and will always be, the project would benefit
 immensely from some funding.
@@ -100,7 +67,21 @@ becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
 Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`__.
 
 Security
-========
+--------
 
 To report a security vulnerability, please use the `Tidelift security
 contact`_.  Tidelift will coordinate the fix and disclosure.
+
+Table of Contents
+-----------------
+
+.. toctree::
+   :maxdepth: 2
+
+   Install <install>
+   API Reference <api>
+   Recipes <recipes>
+   Platforms support <platforms>
+   Development guide <devguide>
+   FAQs <faq>
+   Timeline <timeline>
