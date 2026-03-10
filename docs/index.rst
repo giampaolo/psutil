@@ -81,7 +81,7 @@ Table of Contents
    Install <install>
    API Reference <api>
    Recipes <recipes>
-   Platforms support <platforms>
+   Platform support <platforms>
    Development guide <devguide>
    FAQs <faq>
    Timeline <timeline>
