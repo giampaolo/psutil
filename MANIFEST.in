@@ -27,6 +27,7 @@ include docs/conf.py
 include docs/index.rst
 include docs/install.rst
 include docs/make.bat
+include docs/recipes.rst
 include docs/requirements.txt
 include psutil/__init__.py
 include psutil/_common.py

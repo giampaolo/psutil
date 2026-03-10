@@ -13,10 +13,10 @@ If wheels are not available for your platform or architecture, or you wish to
 build & install psutil from sources, keep reading.
 
 Compile psutil from sources
-===========================
+---------------------------
 
 UNIX
-----
+^^^^
 
 On all UNIX systems you can use the `install-sysdeps.sh
 <https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh>`__
@@ -35,7 +35,7 @@ After system deps are installed, you can compile & install psutil with::
     pip install --no-binary :all: psutil
 
 Linux
------
+^^^^^
 
 Debian / Ubuntu::
 
@@ -58,7 +58,7 @@ Alpine::
     pip install --no-binary :all: psutil
 
 Windows
--------
+^^^^^^^
 
 - To build or install psutil from source on Windows, you need to have
   `Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`__.
@@ -79,7 +79,7 @@ Windows
     make install
 
 macOS
------
+^^^^^
 
 Install Xcode first:
 
@@ -89,7 +89,7 @@ Install Xcode first:
     pip install --no-binary :all: psutil
 
 FreeBSD
--------
+^^^^^^^
 
 ::
 
@@ -97,7 +97,7 @@ FreeBSD
     python3 -m pip install psutil
 
 OpenBSD
--------
+^^^^^^^
 
 ::
 
@@ -106,7 +106,7 @@ OpenBSD
     pip install psutil
 
 NetBSD
-------
+^^^^^^
 
 Assuming Python 3.11 (the most recent at the time of writing):
 
@@ -118,7 +118,7 @@ Assuming Python 3.11 (the most recent at the time of writing):
     python3.11 -m pip install psutil
 
 Sun Solaris
------------
+^^^^^^^^^^^
 
 If ``cc`` compiler is not installed create a symbolic link to ``gcc``::
 
@@ -130,10 +130,10 @@ Install::
     pip install psutil
 
 Troubleshooting
-===============
+---------------
 
 Install pip
------------
+^^^^^^^^^^^
 
 If you don't have pip you can install it with wget::
 
@@ -149,7 +149,7 @@ cmd.exe and install it with::
     py get-pip.py
 
 "pip not found"
----------------
+^^^^^^^^^^^^^^^
 
 Sometimes pip is installed but it's not available in your ``PATH``
 ("pip command not found" or similar). Try this::
@@ -157,7 +157,7 @@ Sometimes pip is installed but it's not available in your ``PATH``
     python3 -m pip install psutil
 
 Permission errors (UNIX)
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you want to install psutil system-wide and you bump into permission errors
 either run as root user or prepend ``sudo``::

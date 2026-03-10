@@ -3,6 +3,14 @@
 .. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
 .. include:: _links.rst
 
+
+.. toctree::
+   :maxdepth: 2
+
+   Install <install>
+   API Reference <api>
+   Recipes <recipes>
+
 psutil documentation
 ====================
 
@@ -87,165 +95,6 @@ becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
 `PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
 Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`__.
 
-Install
-=======
-
-On Linux, Windows, macOS::
-
-  pip install psutil
-
-For other platforms see more detailed
-`install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
-instructions.
-
-Recipes
-=======
-
-Find process by name
---------------------
-
-Check string against :meth:`Process.name()`:
-
-::
-
-  import psutil
-
-  def find_procs_by_name(name):
-      "Return a list of processes matching 'name'."
-      ls = []
-      for p in psutil.process_iter(['name']):
-          if p.info['name'] == name:
-              ls.append(p)
-      return ls
-
-A bit more advanced, check string against :meth:`Process.name()`,
-:meth:`Process.exe()` and :meth:`Process.cmdline()`:
-
-::
-
-  import os
-  import psutil
-
-  def find_procs_by_name(name):
-      "Return a list of processes matching 'name'."
-      ls = []
-      for p in psutil.process_iter(["name", "exe", "cmdline"]):
-          if name == p.info['name'] or \
-                  p.info['exe'] and os.path.basename(p.info['exe']) == name or \
-                  p.info['cmdline'] and p.info['cmdline'][0] == name:
-              ls.append(p)
-      return ls
-
-Kill process tree
------------------
-
-::
-
-  import os
-  import signal
-  import psutil
-
-  def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
-                     timeout=None, on_terminate=None):
-      """Kill a process tree (including grandchildren) with signal
-      "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callback function which is
-      called as soon as a child terminates.
-      """
-      assert pid != os.getpid(), "won't kill myself"
-      parent = psutil.Process(pid)
-      children = parent.children(recursive=True)
-      if include_parent:
-          children.append(parent)
-      for p in children:
-          try:
-              p.send_signal(sig)
-          except psutil.NoSuchProcess:
-              pass
-      gone, alive = psutil.wait_procs(children, timeout=timeout,
-                                      callback=on_terminate)
-      return (gone, alive)
-
-Filtering and sorting processes
--------------------------------
-
-A collection of code samples showing how to use :func:`process_iter()` to filter processes and sort them. Setup::
-
-  >>> import psutil
-  >>> from pprint import pprint as pp
-
-Processes owned by user::
-
-  >>> import getpass
-  >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(['name', 'username']) if p.info['username'] == getpass.getuser()])
-  (16832, 'bash'),
-  (19772, 'ssh'),
-  (20492, 'python')]
-
-Processes actively running::
-
-  >>> pp([(p.pid, p.info) for p in psutil.process_iter(['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
-  [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
-   (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
-   (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
-
-Processes using log files::
-
-  >>> for p in psutil.process_iter(['name', 'open_files']):
-  ...      for file in p.info['open_files'] or []:
-  ...          if file.path.endswith('.log'):
-  ...               print("%-5s %-10s %s" % (p.pid, p.info['name'][:10], file.path))
-  ...
-  1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
-  2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
-  2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
-
-Processes consuming more than 500M of memory::
-
-  >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
-  [(2650, 'chrome', 532324352),
-   (3038, 'chrome', 1120088064),
-   (21915, 'sublime_text', 615407616)]
-
-Top 3 processes which consumed the most CPU time::
-
-  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
-  [(2721, 'chrome', 10219.73),
-   (1150, 'Xorg', 11116.989999999998),
-   (2650, 'chrome', 18451.97)]
-
-Bytes conversion
-----------------
-
-::
-
-  import psutil
-
-  def bytes2human(n):
-      # http://code.activestate.com/recipes/578019
-      # >>> bytes2human(10000)
-      # '9.8K'
-      # >>> bytes2human(100001221)
-      # '95.4M'
-      symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-      prefix = {}
-      for i, s in enumerate(symbols):
-          prefix[s] = 1 << (i + 1) * 10
-      for s in reversed(symbols):
-          if abs(n) >= prefix[s]:
-              value = float(n) / prefix[s]
-              return '%.1f%s' % (value, s)
-      return "%sB" % n
-
-  total = psutil.disk_usage('/').total
-  print(total)
-  print(bytes2human(total))
-
-...prints::
-
-  100399730688
-  93.5G
-
 FAQs
 ====
 
@@ -261,13 +110,6 @@ FAQs
 
 * Q: is MinGW supported on Windows?
 * A: no, you should Visual Studio (see `development guide <https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst>`_).
-
-Running tests
-=============
-
-::
-
-    $ make test
 
 Debug mode
 ==========
