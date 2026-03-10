@@ -128,20 +128,16 @@ Enums:
   Since ``IntEnum`` compares equal to integers, existing code using them as
   arguments to :meth:`Process.rlimit` is unaffected.
 
-7.2.3
-^^^^^
-
-2026-02-08
+7.2.3 — 2026-02-08
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`2715`, [Linux]: ``wait_pid_pidfd_open()`` (from :meth:`Process.wait()`)
   crashes with ``EINVAL`` due to kernel race condition.
 
-7.2.2
-^^^^^
-
-2026-01-28
+7.2.2 — 2026-01-28
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -162,10 +158,8 @@ Enums:
   may fail with ``OSError: [Errno 0] Undefined error`` (from
   ``sysctl(KERN_PROCARGS2)``). They now raise :exc:`AccessDenied` instead.
 
-7.2.1
-^^^^^
-
-2025-12-29
+7.2.1 — 2025-12-29
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -173,10 +167,8 @@ Enums:
   allocations (<= 1K). In order to fix that, we now flush internal jemalloc
   cache before fetching the metrics.
 
-7.2.0
-^^^^^
-
-2025-12-23
+7.2.0 — 2025-12-23
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -199,10 +191,8 @@ Enums:
 - :gh:`2680`: `import psutil.tests` no longer works (but it was never
   documented to begin with).
 
-7.1.3
-^^^^^
-
-2025-11-02
+7.1.3 — 2025-11-02
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -230,10 +220,8 @@ Enums:
 - :gh:`2679`, [OpenBSD], [NetBSD], [critical]: can't build due to C syntax
   error.
 
-7.1.2
-^^^^^
-
-2025-10-25
+7.1.2 — 2025-10-25
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -257,10 +245,8 @@ Enums:
 - :gh:`2657`: stop publishing prebuilt Linux and Windows wheels for 32-bit
   Python.
 
-7.1.1
-^^^^^
-
-2025-10-19
+7.1.1 — 2025-10-19
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -278,10 +264,8 @@ Enums:
 
 * :gh:`2645`: SunOS 10 is no longer supported.
 
-7.1.0
-^^^^^
-
-2025-09-17
+7.1.0 — 2025-09-17
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -338,10 +322,8 @@ Enums:
 
 - :gh:`2571`: dropped support for FreeBSD 8 and earlier.
 
-7.0.0
-^^^^^
-
-2025-02-13
+7.0.0 — 2025-02-13
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -367,10 +349,8 @@ Enums:
 - :gh:`2480`: Python 2.7 is no longer supported.
 - :gh:`2490`: removed long deprecated ``Process.memory_info_ex()`` method.
 
-6.1.1
-^^^^^
-
-2024-12-19
+6.1.1 — 2024-12-19
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -383,10 +363,8 @@ Enums:
 - :gh:`2470`, [Linux]: :func:`users()` may return "localhost" instead of the
   actual IP address of the user logged in.
 
-6.1.0
-^^^^^
-
-2024-10-17
+6.1.0 — 2024-10-17
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -418,10 +396,8 @@ Enums:
   :meth:`Process.open_files()` may fail with :exc:`NoSuchProcess` for PID 0.
   Instead, we now return "null" values (0 and [] respectively).
 
-6.0.0
-=^^^^^
-
-2024-06-18
+6.0.0 — 2024-06-18
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -481,10 +457,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   deprecated (triggers a ``DeprecationWarning``) and will be removed in the
   future.
 
-5.9.8
-^^^^^
-
-2024-01-19
+5.9.8 — 2024-01-19
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -507,10 +481,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2222`, [macOS]: `cpu_freq()` now returns fixed values for `min` and
   `max` frequencies in all Apple Silicon chips.
 
-5.9.7
-^^^^^
-
-2023-12-17
+5.9.7 — 2023-12-17
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -522,10 +494,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2325`, [PyPy]: psutil did not compile on PyPy due to missing
   `PyErr_SetExcFromWindowsErrWithFilenameObject` cPython API.
 
-5.9.6
-^^^^^
-
-2023-10-15
+5.9.6 — 2023-10-15
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -573,10 +543,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2308`, [OpenBSD]: :meth:`Process.threads()` always fail with
   AccessDenied (also as root).
 
-5.9.5
-^^^^^
-
-2023-04-17
+5.9.5 — 2023-04-17
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -631,10 +599,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   ``FileNotFoundError`` if cwd no longer exists. Return an empty string
   instead.
 
-5.9.4
-^^^^^
-
-2022-11-07
+5.9.4 — 2022-11-07
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -653,10 +619,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2160`, [Windows]: Get Windows percent swap usage from performance
   counters. (patch by Daniel Widdis)
 
-5.9.3
-^^^^^
-
-2022-10-18
+5.9.3 — 2022-10-18
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -681,10 +645,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2153`, [macOS] Fix race condition in
   test_posix.TestProcess.test_cmdline. (patch by Matthieu Darbois)
 
-5.9.2
-^^^^^
-
-2022-09-04
+5.9.2 — 2022-09-04
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -698,10 +660,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2128`, [NetBSD]: :func:`swap_memory()` was miscalculated.  (patch by
   Thomas Klausner)
 
-5.9.1
-^^^^^
-
-2022-05-20
+5.9.1 — 2022-05-20
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -725,10 +685,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2050`, [Linux]: :func:`virtual_memory()` may raise ``ValueError`` if
   running in a LCX container.
 
-5.9.0
-^^^^^
-
-2021-12-29
+5.9.0 — 2021-12-29
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -790,10 +748,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2023`, [Linux]: :func:`cpu_freq()` return order is wrong on systems with
   more than 9 CPUs.
 
-5.8.0
-^^^^^
-
-2020-12-19
+5.8.0 — 2020-12-19
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -830,10 +786,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   alive.
 - :gh:`1891`, [macOS]: get rid of deprecated ``getpagesize()``.
 
-5.7.3
-^^^^^
-
-2020-10-23
+5.7.3 — 2020-10-23
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -860,19 +814,15 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   determined but not the remaining values, still return a result instead of
   ``None``. (patch by aristocratos)
 
-5.7.2
-^^^^^
-
-2020-07-15
+5.7.2 — 2020-07-15
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - wheels for 2.7 were inadvertently deleted.
 
-5.7.1
-^^^^^
-
-2020-07-15
+5.7.1 — 2020-07-15
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -902,10 +852,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1781`, **[critical]**: :func:`getloadavg()` can crash the Python
   interpreter. (patch by Ammar Askar)
 
-5.7.0
-^^^^^
-
-2020-02-18
+5.7.0 — 2020-02-18
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -954,20 +902,16 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1695`, [Linux]: could not compile on kernels <= 2.6.13 due to
   ``PSUTIL_HAS_IOPRIO`` not being defined.  (patch by Anselm Kruis)
 
-5.6.7
-^^^^^
-
-2019-11-26
+5.6.7 — 2019-11-26
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`1630`, [Windows], **[critical]**: can't compile source distribution due
   to C syntax error.
 
-5.6.6
-^^^^^
-
-2019-11-25
+5.6.6 — 2019-11-25
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -981,19 +925,15 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1619`, [OpenBSD], **[critical]**: compilation fails due to C syntax
   error. (patch by Nathan Houghton)
 
-5.6.5
-^^^^^
-
-2019-11-06
+5.6.5 — 2019-11-06
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`1615`: remove ``pyproject.toml`` as it was causing installation issues.
 
-5.6.4
-^^^^^
-
-2019-11-04
+5.6.4 — 2019-11-04
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1028,10 +968,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1606`, [SunOS], **[critical]**: compilation fails on SunOS 5.10. (patch
   by vser1)
 
-5.6.3
-^^^^^
-
-2019-06-11
+5.6.3 — 2019-06-11
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1048,10 +986,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1526`, [NetBSD], **[critical]**: :meth:`Process.cmdline()` could raise
   ``MemoryError``.  (patch by Kamil Rytarowski)
 
-5.6.2
-^^^^^
-
-2019-04-26
+5.6.2 — 2019-04-26
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1102,10 +1038,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1493`, [Linux]: :func:`cpu_freq()`: handle the case where
   ``/sys/devices/system/cpu/cpufreq/`` exists but it's empty.
 
-5.6.1
-^^^^^
-
-2019-03-11
+5.6.1 — 2019-03-11
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -1116,10 +1050,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   segfaults. ``NtQueryVirtualMemory`` is now used instead of
   ``QueryWorkingSet`` to calculate USS memory.
 
-5.6.0
-^^^^^
-
-2019-03-05
+5.6.0 — 2019-03-05
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1174,10 +1106,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1291`, [OSX], **[critical]**: :meth:`Process.memory_maps()` was removed
   because inherently broken (segfault) for years.
 
-5.5.1
-^^^^^
-
-2019-02-15
+5.5.1 — 2019-02-15
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1194,10 +1124,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1408`, [AIX], **[critical]**: psutil won't compile on AIX 7.1 due to
   missing header.  (patch by Arnon Yaari)
 
-5.5.0
-^^^^^
-
-2019-01-23
+5.5.0 — 2019-01-23
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1227,10 +1155,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1376`, [Windows]: check if variable is ``NULL`` before ``free()`` ing
   it. (patch by EccoTheFlintstone)
 
-5.4.8
-^^^^^
-
-2018-10-30
+5.4.8 — 2018-10-30
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1261,10 +1187,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1346`, [SunOS]: :func:`net_connections()` returns an empty list.  (patch
   by Oleksii Shevchuk)
 
-5.4.7
-^^^^^
-
-2018-08-14
+5.4.7 — 2018-08-14
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1296,10 +1220,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1323`, [Linux]: :func:`sensors_temperatures()` may fail with
   ``ValueError``.
 
-5.4.6
-^^^^^
-
-2018-06-07
+5.4.6 — 2018-06-07
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -1311,20 +1233,16 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   swallow
   :exc:`AccessDenied` exceptions.
 
-5.4.5
-^^^^^
-
-2018-04-14
+5.4.5 — 2018-04-14
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`1268`: setup.py's ``extra_require`` parameter requires latest setuptools
   version, breaking quite a lot of installations.
 
-5.4.4
-^^^^^
-
-2018-04-13
+5.4.4 — 2018-04-13
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1373,10 +1291,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`771`, [Windows]: :func:`cpu_count()` with ``logical=False`` on Windows
   XP and Vista is no longer supported and returns ``None``.
 
-5.4.3
-^^^^^
-
-*2018-01-01*
+5.4.3 — 2018-01-01
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1386,10 +1302,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`1193`: :func:`pids()` may return ``False`` on macOS.
 
-5.4.2
-^^^^^
-
-*2017-12-07*
+5.4.2 — 2017-12-07
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1416,10 +1330,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1187`, [macOS]: :func:`pids()` does not return PID 0 on recent macOS
   versions.
 
-5.4.1
-^^^^^
-
-*2017-11-08*
+5.4.1 — 2017-11-08
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1438,10 +1350,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1167`, [Windows]: :func:`net_io_counters()` packets count now include
   also non-unicast packets.  (patch by Matthew Long)
 
-5.4.0
-^^^^^
-
-*2017-10-12*
+5.4.0 — 2017-10-12
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1464,10 +1374,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1138`, [Linux]: can't compile on CentOS 5.0 and RedHat 5.0. (patch by
   Prodesire)
 
-5.3.1
-^^^^^
-
-*2017-09-10*
+5.3.1 — 2017-09-10
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1483,10 +1391,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1120`: ``.exe`` files for Windows are no longer uploaded on PyPI as per
   PEP-527. Only wheels are provided.
 
-5.3.0
-^^^^^
-
-*2017-09-01*
+5.3.0 — 2017-09-01
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1606,10 +1512,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   ``WindowsService.bin_path()``, ``WindowsService.description()``,
   ``WindowsService.display_name()``, ``WindowsService.username()``.
 
-5.2.2
-^^^^^
-
-*2017-04-10*
+5.2.2 — 2017-04-10
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -1624,10 +1528,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1010`, [Linux]: :func:`virtual_memory()` may raise ``ValueError`` on
   Ubuntu 14.04.
 
-5.2.1
-^^^^^
-
-*2017-03-24*
+5.2.1 — 2017-03-24
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -1639,10 +1541,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`997`, [FreeBSD]: :func:`virtual_memory()` may fail due to missing
   ``sysctl`` parameter on FreeBSD 12.
 
-5.2.0
-^^^^^
-
-*2017-03-05*
+5.2.0 — 2017-03-05
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1670,10 +1570,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`973`, **[critical]**: :func:`cpu_percent()` may raise
   ``ZeroDivisionError``.
 
-5.1.2
-^^^^^
-
-*2017-02-03*
+5.1.2 — 2017-02-03
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -1684,10 +1582,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`970`, [Linux]: :func:`sensors_battery()` ``name`` and ``label`` fields
   on Python 3 are bytes instead of str.
 
-5.1.1
-^^^^^
-
-*2017-02-03*
+5.1.1 — 2017-02-03
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1704,10 +1600,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   ``FileNotFoundError``.
 - :gh:`966`, [Linux]: :func:`sensors_battery()` ``power_plugged`` may lie.
 
-5.1.0
-^^^^^
-
-*2017-02-01*
+5.1.0 — 2017-02-01
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1732,10 +1626,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`961`, [Windows]: ``WindowsService.description()`` method may fail with
   ``ERROR_MUI_FILE_NOT_FOUND``.
 
-5.0.1
-^^^^^
-
-*2016-12-21*
+5.0.1 — 2016-12-21
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1753,10 +1645,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   not properly taken into account.
 - :gh:`944`, [OpenBSD]: :func:`pids()` was omitting PID 0.
 
-5.0.0
-^^^^^
-
-*2016-11-06*
+5.0.0 — 2016-11-06
+^^^^^^^^^^^^^^^^^^
 
 **Enhncements**
 
@@ -1772,29 +1662,23 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`933`, [Windows]: memory leak in :func:`cpu_stats()` and
   ``WindowsService.description()`` method.
 
-4.4.2
-^^^^^
-
-*2016-10-26*
+4.4.2 — 2016-10-26
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`931`, **[critical]**: psutil no longer compiles on Solaris.
 
-4.4.1
-^^^^^
-
-*2016-10-25*
+4.4.1 — 2016-10-25
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`927`, **[critical]**: :class:`Popen` ``__del__`` may cause maximum
   recursion depth error.
 
-4.4.0
-^^^^^
-
-*2016-10-23*
+4.4.0 — 2016-10-23
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1836,10 +1720,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   set if process is gone.
 - :gh:`916`, [macOS]: fix many compilation warnings.
 
-4.3.1
-^^^^^
-
-*2016-09-01*
+4.3.1 — 2016-09-01
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1864,10 +1746,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   with wrong timeout unit (ms instead of sec).
 - :gh:`870`, [Windows]: handle leak inside ``psutil_get_process_data``.
 
-4.3.0
-^^^^^
-
-*2016-06-18*
+4.3.0 — 2016-06-18
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1889,10 +1769,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   4.3GB in Windows Vista (NT 6.0) and above using 64bit values from newer win
   APIs.
 
-4.2.0
-^^^^^
-
-*2016-05-14*
+4.2.0 — 2016-05-14
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1913,10 +1791,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`813`: :meth:`Process.as_dict()` should ignore extraneous attribute names
   which gets attached to the :class:`Process` instance.
 
-4.1.0
-^^^^^
-
-*2016-03-12*
+4.1.0 — 2016-03-12
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1942,10 +1818,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   values were set to 0.
 - :gh:`790`, [macOS], **[critical]**: psutil won't compile on macOS 10.4.
 
-4.0.0
-^^^^^
-
-*2016-02-17*
+4.0.0 — 2016-02-17
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -1990,10 +1864,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   2.6 kernels and it's broken on 2.4 kernels.
 - :gh:`770`, [NetBSD]: :func:`disk_io_counters()` metrics didn't update.
 
-3.4.2
-^^^^^
-
-*2016-01-20*
+3.4.2 — 2016-01-20
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2006,10 +1878,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`730`, [FreeBSD], **[critical]**: :func:`virtual_memory()` crashes with
   "OSError: [Errno 12] Cannot allocate memory".
 
-3.4.1
-^^^^^
-
-*2016-01-15*
+3.4.1 — 2016-01-15
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2034,10 +1904,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`724`, [FreeBSD]: :func:`virtual_memory()` ``total`` is slightly
   incorrect.
 
-3.3.0
-^^^^^
-
-*2015-11-25*
+3.3.0 — 2015-11-25
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2050,10 +1918,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`692`, [POSIX]: :meth:`Process.name()` is no longer cached as it may
   change.
 
-3.2.2
-^^^^^
-
-*2015-10-04*
+3.2.2 — 2015-10-04
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2069,20 +1935,16 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`688`, [Windows]: compilation fails with MSVC 2015, Python 3.5. (patch by
   Mike Sarahan)
 
-3.2.1
-^^^^^
-
-*2015-09-03*
+3.2.1 — 2015-09-03
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`677`, [Linux], **[critical]**: can't install psutil due to bug in
   setup.py.
 
-3.2.0
-^^^^^
-
-*2015-09-02*
+3.2.0 — 2015-09-02
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2116,10 +1978,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`675`, [Linux]: :func:`net_connections()`: ``UnicodeDecodeError`` may
   occur when listing UNIX sockets.
 
-3.1.1
-^^^^^
-
-*2015-07-15*
+3.1.1 — 2015-07-15
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2128,10 +1988,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`645`, [Linux]: :func:`cpu_times_percent()` may produce negative results.
 - :gh:`656`: ``from psutil import *`` does not work.
 
-3.1.0
-^^^^^
-
-*2015-07-15*
+3.1.0 — 2015-07-15
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2163,10 +2021,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`641`, [Windows]: replace deprecated string functions with safe
   equivalents.
 
-3.0.1
-^^^^^
-
-*2015-06-18*
+3.0.1 — 2015-06-18
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2177,10 +2033,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`635`, [POSIX], **[critical]**: crash on module import if ``enum``
   package is installed on Python < 3.4.
 
-3.0.0
-^^^^^
-
-*2015-06-13*
+3.0.0 — 2015-06-13
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2227,20 +2081,16 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`628`, [Linux]: :meth:`Process.name()` truncates string in case it
   contains spaces or parentheses.
 
-2.2.1
-^^^^^
-
-*2015-02-02*
+2.2.1 — 2015-02-02
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`572`, [Linux]: fix "ValueError: ambiguous inode with multiple PIDs
   references" for :meth:`Process.connections()`. (patch by Bruno Binet)
 
-2.2.0
-^^^^^
-
-*2015-01-06*
+2.2.0 — 2015-01-06
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2272,18 +2122,14 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`571`, [Linux]: :meth:`Process.open_files()` might swallow
   :exc:`AccessDenied` exceptions and return an incomplete list of open files.
 
-2.1.3
-^^^^^
-
-*2014-09-26*
+2.1.3 — 2014-09-26
+^^^^^^^^^^^^^^^^^^
 
 - :gh:`536`, [Linux], **[critical]**: fix "undefined symbol: CPU_ALLOC"
   compilation error.
 
-2.1.2
-^^^^^
-
-*2014-09-21*
+2.1.2 — 2014-09-21
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2314,10 +2160,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`533`, [Linux]: :meth:`Process.memory_maps()` may raise ``TypeError`` on
   old Linux distros.
 
-2.1.1
-^^^^^
-
-*2014-04-30*
+2.1.1 — 2014-04-30
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2327,10 +2171,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`491`, [Linux]: :func:`net_connections()` exceptions. (patch by Alexander
   Grothe)
 
-2.1.0
-^^^^^
-
-*2014-04-08*
+2.1.0 — 2014-04-08
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2343,10 +2185,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   (patch by Naveed Roudsari)
 - :gh:`489`, [Linux]: :func:`disk_partitions()` return an empty list.
 
-2.0.0
-^^^^^
-
-*2014-03-10*
+2.0.0 — 2014-03-10
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2518,10 +2358,8 @@ cases accessing the old names will work but it will cause a
   :func:`wait_procs()` has been renamed to ``returncode`` for consistency with
   ``subprocess.Popen``.
 
-1.2.1
-^^^^^
-
-*2013-11-25*
+1.2.1 — 2013-11-25
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2532,10 +2370,8 @@ cases accessing the old names will work but it will cause a
 - :gh:`443`, [Linux]: :meth:`Process.cpu_affinity()` can't set affinity on
   systems with more than 64 cores.
 
-1.2.0
-^^^^^
-
-*2013-11-20*
+1.2.0 — 2013-11-20
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2549,40 +2385,32 @@ cases accessing the old names will work but it will cause a
 - :gh:`348`, [Windows]: fix "ImportError: DLL load failed" occurring on module
   import on Windows XP / Vista.
 
-1.1.3
-^^^^^
-
-*2013-11-07*
+1.1.3 — 2013-11-07
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`442`, [Linux], **[critical]**: psutil won't compile on certain version
   of Linux because of missing ``prlimit(2)`` syscall.
 
-1.1.2
-^^^^^
-
-*2013-10-22*
+1.1.2 — 2013-10-22
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`442`, [Linux], **[critical]**: psutil won't compile on Debian 6.0
   because of missing ``prlimit(2)`` syscall.
 
-1.1.1
-^^^^^
-
-*2013-10-08*
+1.1.1 — 2013-10-08
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`442`, [Linux], **[critical]**: psutil won't compile on kernels < 2.6.36
   due to missing ``prlimit(2)`` syscall.
 
-1.1.0
-^^^^^
-
-*2013-09-28*
+1.1.0 — 2013-09-28
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2618,20 +2446,16 @@ cases accessing the old names will work but it will cause a
 - :gh:`408`: turn ``STATUS_*`` and ``CONN_*`` constants into plain Python
   strings.
 
-1.0.1
-^^^^^
-
-*2013-07-12*
+1.0.1 — 2013-07-12
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
 - :gh:`405`: :func:`net_io_counters()` ``pernic=True`` no longer works as
   intended in 1.0.0.
 
-1.0.0
-^^^^^
-
-*2013-07-10*
+1.0.0 — 2013-07-10
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2661,10 +2485,8 @@ cases accessing the old names will work but it will cause a
   renamed to ``laddr`` and ``raddr``.
 - psutil.network_io_counters() renamed to :func:`net_io_counters()`.
 
-0.7.1
-^^^^^
-
-*2013-05-03*
+0.7.1 — 2013-05-03
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2676,10 +2498,8 @@ cases accessing the old names will work but it will cause a
   instead of
   :exc:`AccessDenied`.
 
-0.7.0
-^^^^^
-
-*2013-04-12*
+0.7.0 — 2013-04-12
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2749,10 +2569,8 @@ cases accessing the old names will work but it will cause a
   ``RuntimeError``.
 - ``psutil.error`` module is deprecated and scheduled for removal.
 
-0.6.1
-^^^^^
-
-*2012-08-16*
+0.6.1 — 2012-08-16
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2770,10 +2588,8 @@ cases accessing the old names will work but it will cause a
   :exc:`AccessDenied`.
 - :meth:`Process.exe()` is no longer resolved in case it's a symlink.
 
-0.6.0
-^^^^^
-
-*2012-08-13*
+0.6.0 — 2012-08-13
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2844,10 +2660,8 @@ cases accessing the old names will work but it will cause a
 - [Windows], [BSD]: ``psutil.virtmem_usage()`` now returns information about
   swap memory instead of virtual memory.
 
-0.5.1
-^^^^^
-
-*2012-06-29*
+0.5.1 — 2012-06-29
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2861,10 +2675,8 @@ cases accessing the old names will work but it will cause a
 - :gh:`294`, [Windows]: :meth:`Process.cpu_affinity()` is only able to set CPU
   #0.
 
-0.5.0
-^^^^^
-
-*2012-06-27*
+0.5.0 — 2012-06-27
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -2943,10 +2755,8 @@ cases accessing the old names will work but it will cause a
 - ``psutil.STATUS_*`` constants can now be compared by using their string
   representation.
 
-0.4.1
-^^^^^
-
-*2011-12-14*
+0.4.1 — 2011-12-14
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 
@@ -2959,10 +2769,8 @@ cases accessing the old names will work but it will cause a
   :meth:`Process.memory_info()`,
   :meth:`Process.suspend()` and :meth:`Process.resume()` methods.
 
-0.4.0
-^^^^^
-
-*2011-10-29*
+0.4.0 — 2011-10-29
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -3002,10 +2810,8 @@ cases accessing the old names will work but it will cause a
 - :gh:`226`, [FreeBSD], **[critical]**: crash at import time on FreeBSD 7 and
   minor.
 
-0.3.0
-^^^^^
-
-*2011-07-08*
+0.3.0 — 2011-07-08
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -3038,10 +2844,8 @@ cases accessing the old names will work but it will cause a
   :meth:`Process.threads()` methods can raise :exc:`NoSuchProcess` exception
   while process still exists.
 
-0.2.1
-^^^^^
-
-*2011-03-20*
+0.2.1 — 2011-03-20
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -3085,10 +2889,8 @@ cases accessing the old names will work but it will cause a
 - :class:`Process` ``uid`` and ``gid`` properties are deprecated in favor of
   ``uids`` and ``gids`` properties.
 
-0.2.0
-^^^^^
-
-*2010-11-13*
+0.2.0 — 2010-11-13
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -3158,10 +2960,8 @@ cases accessing the old names will work but it will cause a
 - :meth:`Process.cpu_percent()` and :func:`cpu_percent()` no longer returns
   immediately by default (see issue :gh:`123`).
 
-0.1.3
-^^^^^
-
-*2010-03-02*
+0.1.3 — 2010-03-02
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -3194,10 +2994,8 @@ cases accessing the old names will work but it will cause a
   if
   :meth:`Process.kill()` was used first.
 
-0.1.2
-^^^^^
-
-*2009-05-06*
+0.1.2 — 2009-05-06
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 
@@ -3220,10 +3018,8 @@ cases accessing the old names will work but it will cause a
 - :gh:`42`, [Windows]: :meth:`Process.memory_percent()` raises
   :exc:`AccessDenied`.
 
-0.1.1
-^^^^^
-
-*2009-03-06*
+0.1.1 — 2009-03-06
+^^^^^^^^^^^^^^^^^^
 
 **Enhancements**
 

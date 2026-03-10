@@ -13,11 +13,11 @@ import re
 
 from docutils import nodes
 
-VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+VERSION_RE = re.compile(r"^(\d+\.\d+\.\d+)")
 
 
-def add_version_anchors(app, doctree):
-    if app.env.docname != "changelog":
+def add_version_anchors(app, doctree, docname):
+    if docname != "changelog":
         return
 
     for node in doctree.traverse(nodes.section):
@@ -26,11 +26,12 @@ def add_version_anchors(app, doctree):
             continue
 
         text = title.astext()
-        if VERSION_RE.match(text):
-            anchor = text.replace(".", "")
+        m = VERSION_RE.match(text)
+        if m:
+            anchor = m.group(1).replace(".", "")
             if anchor not in node["ids"]:
                 node["ids"].insert(0, anchor)
 
 
 def setup(app):
-    app.connect("doctree-read", add_version_anchors)
+    app.connect("doctree-resolved", add_version_anchors)
