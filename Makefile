@@ -1,6 +1,10 @@
-# Shortcuts for various tasks (UNIX only).
-# To use a specific Python version run: "make install PYTHON=python3.3"
-# You can set the variables below from the command line.
+# Shortcuts for various development tasks.
+#
+# - To use this on Windows install Git For Windows first, then launch a Git
+#   Bash Shell.
+# - To use a specific Python version run: `make install PYTHON=python3.3`.
+# - To append an argument to a command use ARGS, e.g: `make test ARGS="-k
+#   some_test`.
 
 # Configurable
 PYTHON = python3

@@ -4,41 +4,41 @@ Development guide
 Build, setup and running tests
 ------------------------------
 
-psutil makes extensive use of C extension modules, meaning a C compiler is
-required, see :doc:`install instructions <install>`.
-Once you have a compiler installed run:
+- psutil makes extensive use of C extension modules, meaning a C compiler is
+  required, see :doc:`install instructions <install>`. Once you have a compiler
+  installed run:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    git clone git@github.com:giampaolo/psutil.git
-    make install-sysdeps      # install gcc and python headers
-    make install-pydeps-test  # install python deps necessary to run unit tests
-    make build
-    make install
-    make test
+      git clone git@github.com:giampaolo/psutil.git
+      make install-sysdeps      # install gcc and python headers
+      make install-pydeps-test  # install python deps necessary to run unit tests
+      make build
+      make install
+      make test
 
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
-  install, run tests and do pretty much anything that involves development.
-  useful commands are:
+  install, run tests and do pretty much anything that involves development,
+  including on Windows. Some useful commands:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    make clean                # remove build files
-    make install-pydeps-dev   # install dev deps (ruff, black, ...)
-    make test                 # run tests
-    make test-parallel        # run tests in parallel (faster)
-    make test-memleaks        # run memory leak tests
-    make test-coverage        # run test coverage
-    make lint-all             # run linters
-    make fix-all              # fix linters errors
-    make uninstall
-    make help
+      make clean                # remove build files
+      make install-pydeps-dev   # install dev deps (ruff, black, ...)
+      make test                 # run tests
+      make test-parallel        # run tests in parallel (faster)
+      make test-memleaks        # run memory leak tests
+      make test-coverage        # run test coverage
+      make lint-all             # run linters
+      make fix-all              # fix linters errors
+      make uninstall
+      make help
 
 - To run a specific unit test:
 
-.. code-block:: bash
+  .. code-block::
 
-    make test ARGS=tests/test_system.py
+      make test ARGS=tests/test_system.py
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
   "edit" / development mode, meaning you can edit psutil code on the fly while
@@ -46,9 +46,9 @@ Once you have a compiler installed run:
 
 - If you want to target a specific Python version:
 
-.. code-block:: bash
+  .. code-block::
 
-    make test PYTHON=python3.8
+      make test PYTHON=python3.8
 
 Windows
 -------
@@ -59,10 +59,10 @@ Windows
   provides a Unix-like environment where ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    make build
-    make test-parallel
+      make build
+      make test-parallel
 
 Debug mode
 ----------
