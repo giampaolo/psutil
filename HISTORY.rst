@@ -62,6 +62,9 @@
   the corresponding enum members.
 - 2754_: standardize `sensors_battery()`_'s `percent` so that it returns a
   `float` instead of `int` on all systems, not only Linux.
+- 2757_: split the documentation from a single-page HTML document into multiple
+  sub-sections. Sections now include separate pages for API reference,
+  installation, release timeline, FAQs, and more.
 
 **Bug fixes**
 
