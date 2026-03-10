@@ -321,7 +321,7 @@ def on_new_pr(issue):
     pass
     # pr = get_repo().get_pull(issue.number)
     # files = [x.filename for x in list(pr.get_files())]
-    # if "HISTORY.rst" not in files:
+    # if "changelog.rst" not in files:
     #     issue.create_comment(REPLY_UPDATE_CHANGELOG)
 
 

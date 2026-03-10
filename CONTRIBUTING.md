@@ -29,5 +29,5 @@
 - In order to get acquainted with the code base and tooling, take a look at the
   **[Development Guide](https://psutil.readthedocs.io/devguide)**.
 - If you can, remember to update
-  [HISTORY.rst](https://github.com/giampaolo/psutil/blob/master/HISTORY.rst)
+  [changelog.rst](https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst)
   and [CREDITS](https://github.com/giampaolo/psutil/blob/master/CREDITS) file.

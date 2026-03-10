@@ -64,7 +64,7 @@
         <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://github.com/giampaolo/psutil/blob/master/HISTORY.rst"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/changelog"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 
 Summary

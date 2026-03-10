@@ -137,7 +137,7 @@ Typically, this is what you do:
   This usually means testing the return value of the new API against
   a system CLI tool.
 - Update the doc in ``docs/api.rst``.
-- Update `HISTORY.rst`_ and `CREDITS`_ files.
+- Update `changelog.rst`_ and `CREDITS`_ files.
 - Make a pull request.
 
 Make a pull request
@@ -168,7 +168,7 @@ Documentation
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
 .. _`Git for Windows`: <https://git-scm.com/install/windows>`
-.. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst
+.. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/

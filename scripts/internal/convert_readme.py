@@ -21,7 +21,7 @@ Quick links
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <https://gmpy.dev/tags/psutil>`_
-- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
+- `What's new <https://psutil.readthedocs.io/changelog>`_
 """
 
 

@@ -353,9 +353,6 @@ git-tag-release:  ## Git-tag a new release.
 print-announce:  ## Print announce of new release.
 	@$(PYTHON) scripts/internal/print_announce.py
 
-print-timeline:  ## Print releases' timeline.
-	@$(PYTHON) scripts/internal/print_timeline.py
-
 print-access-denied: ## Print AD exceptions
 	$(PYTHON) scripts/internal/print_access_denied.py
 
