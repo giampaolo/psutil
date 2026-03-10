@@ -75,9 +75,3 @@
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
 .. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess
-
-.. === Issues
-
-.. _`#1007`: https://github.com/giampaolo/psutil/issues/1007
-.. _`#1040`: https://github.com/giampaolo/psutil/issues/1040
-.. _`#883`: https://github.com/giampaolo/psutil/issues/883
