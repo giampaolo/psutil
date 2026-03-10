@@ -27,6 +27,7 @@
 import ast
 import datetime
 import os
+import sys
 
 PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
@@ -50,13 +51,9 @@ def get_version():
 
 VERSION = get_version()
 
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+sys.path.insert(0, os.path.join(HERE, '_ext'))
+
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
@@ -64,6 +61,7 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+    'changelog_anchors',  # our custom extension in _ext/ dir
 ]
 
 extlinks = {

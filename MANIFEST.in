@@ -12,6 +12,7 @@ include docs/.readthedocs.yaml
 include docs/DEVNOTES
 include docs/Makefile
 include docs/README
+include docs/_ext/changelog_anchors.py
 include docs/_links.rst
 include docs/_static/copybutton.js
 include docs/_static/css/custom.css
