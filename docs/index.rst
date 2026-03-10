@@ -99,30 +99,6 @@ becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
 `PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
 Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`__.
 
-
-Debug mode
-==========
-
-If you want to debug unusual situations or want to report a bug, it may be
-useful to enable debug mode via ``PSUTIL_DEBUG`` environment variable.
-In this mode, psutil may (or may not) print additional information to stderr.
-Usually these are error conditions which are not severe, and hence are ignored
-(instead of crashing).
-Unit tests automatically run with debug mode enabled.
-On UNIX:
-
-::
-
-  $ PSUTIL_DEBUG=1 python3 script.py
-  psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
-
-On Windows:
-
-::
-
-  set PSUTIL_DEBUG=1 python.exe script.py
-  psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
-
 Security
 ========
 
