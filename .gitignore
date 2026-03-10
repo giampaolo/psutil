@@ -16,6 +16,7 @@ syntax: glob
 .idea/
 .tox/
 build/
+docs/_build/
 dist/
 wheelhouse/
 .tests/
