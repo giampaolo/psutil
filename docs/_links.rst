@@ -2,7 +2,6 @@
 .. _`BPO-12442`: https://bugs.python.org/issue12442
 .. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
-.. _`DEVGUIDE.rst`: https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
