@@ -3,8 +3,9 @@
 API reference
 =============
 
-.. toctree::
-   :maxdepth: 2
+.. contents::
+   :local:
+   :depth: 3
 
 System related functions
 ------------------------
@@ -249,7 +250,7 @@ CPU
     .. versionadded:: 5.6.2
 
 Memory
-------
+^^^^^^
 
 .. function:: virtual_memory()
 
@@ -428,7 +429,7 @@ Memory
      Linux containers such as Docker and Heroku.
 
 Disks
------
+^^^^^
 
 .. function:: disk_partitions(all=False)
 
@@ -549,7 +550,7 @@ Disks
     4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
 
 Network
--------
+^^^^^^^
 
 .. function:: net_io_counters(pernic=False, nowrap=True)
 
@@ -784,7 +785,7 @@ Network
   .. versionchanged:: 5.9.3 *flags* field was added on POSIX.
 
 Sensors
--------
+^^^^^^^
 
 .. function:: sensors_temperatures(fahrenheit=False)
 
@@ -881,7 +882,7 @@ Sensors
   .. versionchanged:: 5.4.2 added macOS support
 
 Other system info
------------------
+^^^^^^^^^^^^^^^^^
 
 .. function:: boot_time()
 
@@ -927,10 +928,10 @@ Other system info
     5.3.0 added "pid" field
 
 Processes
-=========
+---------
 
 Functions
----------
+^^^^^^^^^
 
 .. function:: pids()
 
@@ -1037,7 +1038,7 @@ Functions
         p.kill()
 
 Exceptions
-----------
+^^^^^^^^^^
 
 .. class:: Error()
 
@@ -1079,7 +1080,7 @@ Exceptions
   *name* attribute is available if :meth:`Process.name()` was previously called.
 
 Process class
--------------
+^^^^^^^^^^^^^
 
 .. class:: Process(pid=None)
 
@@ -2290,6 +2291,11 @@ Process class
       use `os.pidfd_open`_ and `select.kqueue`_ respectively, instead of less
       efficient busy-loop polling.
 
+----
+
+Popen class
+^^^^^^^^^^^
+
 .. class:: Popen(*args, **kwargs)
 
   Same as `subprocess.Popen`_ but in addition it provides all
@@ -2319,7 +2325,7 @@ Process class
   .. versionchanged:: 4.4.0 added context manager support
 
 C heap introspection
-====================
+--------------------
 
 The following functions provide direct access to the platform's native C heap
 allocator (such as glibc's ``malloc`` on Linux or ``jemalloc`` on BSD). They
@@ -2395,7 +2401,7 @@ used to detect memory leaks in C extensions.
   Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
 
 Windows services
-================
+----------------
 
 .. function:: win_service_iter()
 
@@ -2488,8 +2494,10 @@ Example code:
    'status': 'stopped',
    'username': 'NT AUTHORITY\\LocalService'}
 
+----
+
 Constants
-=========
+---------
 
 The following enum classes group related constants and are useful for type
 annotations and introspection. The individual constants (e.g.
@@ -2557,7 +2565,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
   .. versionadded:: 5.1.0
 
 Operating system constants
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-oses:
 .. data:: POSIX
@@ -2604,7 +2612,7 @@ Operating system constants
   .. versionchanged:: 5.4.0 also available on AIX.
 
 Process status constants
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
@@ -2631,7 +2639,7 @@ Process status constants
     enum members (were plain strings).
 
 Process priority constants
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-prio:
 .. data:: REALTIME_PRIORITY_CLASS
@@ -2697,7 +2705,7 @@ Process priority constants
     ``IOPriority`` enum).
 
 Process resources constants
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Linux / FreeBSD:
 
@@ -2741,7 +2749,7 @@ Availability: Linux, FreeBSD
   enum members (were plain integers).
 
 Connections constants
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED
@@ -2769,7 +2777,7 @@ Connections constants
     enum members (were plain strings).
 
 Hardware constants
-------------------
+^^^^^^^^^^^^^^^^^^
 
 .. _const-aflink:
 .. data:: AF_LINK
