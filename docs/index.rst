@@ -49,7 +49,8 @@ Sponsors
       </tr>
     </table>
 
-    <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup><br/><br/>
+
 
 Funding
 -------

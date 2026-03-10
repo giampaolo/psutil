@@ -13,6 +13,8 @@ FAQs
   On Windows you may run the Python process as NT AUTHORITY\\SYSTEM or install
   the Python script as a Windows service (ProcessHacker does this).
 
+----
+
 * Q: is MinGW supported on Windows?
 * A: no, Visual Studio is the only compiler support on Windows (see
   :doc:`devguide`).
