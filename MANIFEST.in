@@ -21,6 +21,7 @@ include docs/_static/css/custom.css
 include docs/_static/favicon.ico
 include docs/_static/sidebar.js
 include docs/_templates/layout.html
+include docs/api.rst
 include docs/auto-build.sh
 include docs/conf.py
 include docs/index.rst
