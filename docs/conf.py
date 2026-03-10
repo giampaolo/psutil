@@ -60,10 +60,15 @@ VERSION = get_version()
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
+    'sphinx.ext.extlinks',
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
 ]
+
+extlinks = {
+    'gh': ('https://github.com/giampaolo/psutil/issues/%s', '#%s'),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
