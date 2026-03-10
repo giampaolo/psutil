@@ -881,6 +881,8 @@ Sensors
 
   .. versionchanged:: 5.4.2 added macOS support
 
+----
+
 Other system info
 ^^^^^^^^^^^^^^^^^
 
@@ -926,6 +928,8 @@ Other system info
 
   .. versionchanged::
     5.3.0 added "pid" field
+
+----
 
 Processes
 ---------
@@ -2324,6 +2328,8 @@ Popen class
 
   .. versionchanged:: 4.4.0 added context manager support
 
+----
+
 C heap introspection
 --------------------
 
@@ -2399,6 +2405,8 @@ used to detect memory leaks in C extensions.
   .. versionadded:: 7.2.0
 
   Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
+
+----
 
 Windows services
 ----------------
