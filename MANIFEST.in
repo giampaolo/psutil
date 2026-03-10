@@ -3,7 +3,6 @@ include .dprint.jsonc
 include .gitignore
 include CONTRIBUTING.md
 include CREDITS
-include HISTORY.rst
 include LICENSE
 include MANIFEST.in
 include Makefile
@@ -21,6 +20,7 @@ include docs/_static/sidebar.js
 include docs/_templates/layout.html
 include docs/api.rst
 include docs/auto-build.sh
+include docs/changelog.rst
 include docs/conf.py
 include docs/devguide.rst
 include docs/faq.rst
