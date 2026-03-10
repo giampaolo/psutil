@@ -5,6 +5,10 @@
     }
 }
 
+.rst-content div[role="navigation"] {
+    display: none;
+}
+
 .rst-content dl:not(.docutils) {
     margin: 0px 0px 0px 0px !important;
 }
