@@ -5,6 +5,8 @@
 # is detected. Requires: sudo apt install inotify-tools.
 
 DIR="."
+make clean
+make html
 while inotifywait -r -e modify,create,delete,move "$DIR"; do
     make html
 done
