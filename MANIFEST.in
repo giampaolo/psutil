@@ -4,6 +4,7 @@ include .gitignore
 include CONTRIBUTING.md
 include CREDITS
 include HISTORY.rst
+include INSTALL.rst
 include LICENSE
 include MANIFEST.in
 include Makefile
