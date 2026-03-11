@@ -7,7 +7,7 @@ A collection of standalone, copy-paste solutions to specific problems. Each
 recipe focuses on a single problem and provides a minimal solution which can be
 adapted to real-world code. The examples are intentionally short and avoid
 unnecessary abstractions so that the underlying psutil APIs are easy to
-understand.
+understand. Most of them are not meant to be used in production.
 
 .. contents::
    :local:
@@ -476,30 +476,46 @@ alternating :meth:`Process.suspend` and :meth:`Process.resume`:
 
 ----
 
-Watchdog: restart a process automatically if it dies:
+Restart a process automatically if it dies:
 
 .. code-block:: python
 
   import subprocess
   import time
+
   import psutil
 
-  def watchdog(cmd, max_restarts=5, interval=1):
-      """Run cmd, restarting it up to max_restarts times if it exits."""
+
+  def watchdog(cmd, max_restarts=None, interval=1):
+      """Run cmd as a persistent process. Restart on failure, optionally
+      with a max restarts. Logs start, exit, and restart events.
+      """
       restarts = 0
-      while restarts <= max_restarts:
+      while True:
           proc = subprocess.Popen(cmd)
           p = psutil.Process(proc.pid)
-          print("started pid={}".format(p.pid))
+          print(f"started PID {p.pid}")
           proc.wait()
+
           if proc.returncode == 0:
+              # success
+              print(f"PID {p.pid} exited cleanly")
               break
+
+          # failure
           restarts += 1
-          print("died (returncode={}), restarting ({}/{})".format(
-              proc.returncode, restarts, max_restarts))
+          print(f"PID {p.pid} died, restarting ({restarts})")
+
+          if max_restarts is not None and restarts > max_restarts:
+              print("max restarts reached, giving up")
+              break
+
           time.sleep(interval)
-      else:
-          print("max restarts reached, giving up")
+
+
+  if __name__ == "__main__":
+      watchdog(["python3", "script.py"])
+
 
 System
 ------
