@@ -6,10 +6,10 @@ Recipes
 Processes
 ---------
 
-Find process by name
-^^^^^^^^^^^^^^^^^^^^
+Finding processes
+^^^^^^^^^^^^^^^^^
 
-Check string against :meth:`Process.name()`:
+Find process by name:
 
 .. code-block:: python
 
@@ -41,9 +41,6 @@ A bit more advanced, check string against :meth:`Process.name()`,
               ls.append(p)
       return ls
 
-Find process by port
-^^^^^^^^^^^^^^^^^^^^
-
 Find the process listening on a given TCP port:
 
 .. code-block:: python
@@ -58,8 +55,37 @@ Find the process listening on a given TCP port:
                   return proc
       return None
 
-Find zombie processes
-^^^^^^^^^^^^^^^^^^^^
+Find all processes that have a given environment variable set to a specific
+value (e.g. to identify processes running inside a virtualenv):
+
+.. code-block:: python
+
+  import psutil
+
+  def find_procs_by_env(key, value):
+      ls = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              if p.environ().get(key) == value:
+                  ls.append(p)
+          except (psutil.NoSuchProcess, psutil.AccessDenied):
+              pass
+      return ls
+
+Find all processes that have an active connection to a given remote IP:
+
+.. code-block:: python
+
+  import psutil
+
+  def find_procs_by_remote_host(host):
+      ls = []
+      for proc in psutil.process_iter(['pid', 'name']):
+          for conn in proc.net_connections(kind='inet'):
+              if conn.raddr and conn.raddr.ip == host:
+                  ls.append(proc)
+                  break
+      return ls
 
 Find all zombie (defunct) processes:
 
@@ -71,60 +97,29 @@ Find all zombie (defunct) processes:
       return [p for p in psutil.process_iter(['name', 'status'])
               if p.info['status'] == psutil.STATUS_ZOMBIE]
 
-Monitor process
-^^^^^^^^^^^^^^^
-
-Periodically monitor CPU and memory usage of a process using
-:meth:`Process.oneshot` for efficiency:
+Find all processes that have a given file open (useful on Windows):
 
 .. code-block:: python
 
-  import time
   import psutil
 
-  def monitor(pid, interval=1):
-      p = psutil.Process(pid)
-      while p.is_running():
-          with p.oneshot():
-              cpu = p.cpu_percent()
-              mem = p.memory_info().rss
-              print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
-          time.sleep(interval)
-
-Kill process tree
-^^^^^^^^^^^^^^^^^
-
-.. code-block:: python
-
-  import os
-  import signal
-  import psutil
-
-  def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
-                     timeout=None, on_terminate=None):
-      """Kill a process tree (including grandchildren) with signal
-      "sig" and return a (gone, still_alive) tuple.
-      "on_terminate", if specified, is a callback function which is
-      called as soon as a child terminates.
-      """
-      assert pid != os.getpid(), "won't kill myself"
-      parent = psutil.Process(pid)
-      children = parent.children(recursive=True)
-      if include_parent:
-          children.append(parent)
-      for p in children:
+  def find_procs_using_file(path):
+      ls = []
+      for p in psutil.process_iter(['pid', 'name']):
           try:
-              p.send_signal(sig)
-          except psutil.NoSuchProcess:
+              for f in p.open_files():
+                  if f.path == path:
+                      ls.append(p)
+                      break
+          except psutil.AccessDenied:
               pass
-      gone, alive = psutil.wait_procs(children, timeout=timeout,
-                                      callback=on_terminate)
-      return (gone, alive)
+      return ls
 
 Filtering and sorting processes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A collection of code samples showing how to use :func:`process_iter()` to filter processes and sort them.
+A collection of code samples showing how to use :func:`process_iter()` to
+filter and sort processes.
 
 Processes owned by user:
 
@@ -178,8 +173,163 @@ Top 3 processes which consumed the most CPU time:
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
 
-Terminate processes by name
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
+
+.. code-block:: python
+
+  import psutil
+
+  def top_io_procs(n=5):
+      procs = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              io = p.io_counters()
+              procs.append((io.read_bytes + io.write_bytes, p))
+          except (psutil.NoSuchProcess, psutil.AccessDenied):
+              pass
+      procs.sort(key=lambda x: x[0], reverse=True)
+      return procs[:n]
+
+Top N processes by open file descriptors (useful for diagnosing fd leaks):
+
+.. code-block:: python
+
+  import psutil
+
+  def top_open_files(n=5):
+      procs = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              procs.append((p.num_fds(), p))
+          except (psutil.NoSuchProcess, psutil.AccessDenied):
+              pass
+      procs.sort(key=lambda x: x[0], reverse=True)
+      return procs[:n]
+
+Inspecting a process
+^^^^^^^^^^^^^^^^^^^^
+
+List all files currently opened by a process:
+
+.. code-block:: python
+
+  import psutil
+
+  def files_opened_by(pid):
+      p = psutil.Process(pid)
+      try:
+          return [f.path for f in p.open_files()]
+      except psutil.AccessDenied:
+          return []
+
+Walk up the parent chain up to PID 1 (``init`` / ``launchd``):
+
+.. code-block:: python
+
+  import psutil
+
+  def parent_chain(pid):
+      p = psutil.Process(pid)
+      chain = []
+      while True:
+          parent = p.parent()
+          if parent is None:
+              break
+          chain.append(parent)
+          p = parent
+      return chain
+
+Compute how long a process has been running:
+
+.. code-block:: python
+
+  import datetime
+  import time
+  import psutil
+
+  def proc_uptime(pid):
+      p = psutil.Process(pid)
+      elapsed = time.time() - p.create_time()
+      return str(datetime.timedelta(seconds=int(elapsed)))
+
+Collect a process and all its descendants into a flat list:
+
+.. code-block:: python
+
+  import psutil
+
+  def get_proc_tree(pid):
+      parent = psutil.Process(pid)
+      return [parent] + parent.children(recursive=True)
+
+Monitoring processes
+^^^^^^^^^^^^^^^^^^^^
+
+Periodically monitor CPU and memory usage of a process using
+:meth:`Process.oneshot` for efficiency:
+
+.. code-block:: python
+
+  import time
+  import psutil
+
+  def monitor(pid, interval=1):
+      p = psutil.Process(pid)
+      while p.is_running():
+          with p.oneshot():
+              cpu = p.cpu_percent()
+              mem = p.memory_info().rss
+              print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
+          time.sleep(interval)
+
+Spawn a child process and monitor its resource usage until completion:
+
+.. code-block:: python
+
+  import subprocess
+  import time
+  import psutil
+
+  proc = subprocess.Popen(['my-app', '--arg'])
+  p = psutil.Process(proc.pid)
+  while proc.poll() is None:
+      with p.oneshot():
+          cpu = p.cpu_percent()
+          mem = p.memory_info().rss
+          print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
+      time.sleep(1)
+
+Controlling processes
+^^^^^^^^^^^^^^^^^^^^^
+
+Kill a process tree (including grandchildren):
+
+.. code-block:: python
+
+  import os
+  import signal
+  import psutil
+
+  def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
+                     timeout=None, on_terminate=None):
+      """Kill a process tree (including grandchildren) with signal
+      "sig" and return a (gone, still_alive) tuple.
+      "on_terminate", if specified, is a callback function which is
+      called as soon as a child terminates.
+      """
+      assert pid != os.getpid(), "won't kill myself"
+      parent = psutil.Process(pid)
+      children = parent.children(recursive=True)
+      if include_parent:
+          children.append(parent)
+      for p in children:
+          try:
+              p.send_signal(sig)
+          except psutil.NoSuchProcess:
+              pass
+      gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                      callback=on_terminate)
+      return (gone, alive)
 
 Terminate all processes matching a given name:
 
@@ -192,8 +342,20 @@ Terminate all processes matching a given name:
           if p.info['name'] == name:
               p.terminate()
 
-Wait for a process to finish
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
+exit within the timeout:
+
+.. code-block:: python
+
+  import psutil
+
+  def graceful_kill(pid, timeout=3):
+      p = psutil.Process(pid)
+      p.terminate()
+      try:
+          p.wait(timeout=timeout)
+      except psutil.TimeoutExpired:
+          p.kill()
 
 Wait for a process to terminate, with an optional timeout:
 
@@ -208,9 +370,6 @@ Wait for a process to terminate, with an optional timeout:
           return p.wait(timeout=timeout)
       except psutil.TimeoutExpired:
           return None
-
-Suspend and resume a process
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Temporarily pause and resume a process using a context manager:
 
@@ -232,210 +391,8 @@ Temporarily pause and resume a process using a context manager:
   with suspended(pid):
       pass  # process is paused here
 
-Get process tree
-^^^^^^^^^^^^^^^^
-
-Collect a process and all its descendants into a flat list:
-
-.. code-block:: python
-
-  import psutil
-
-  def get_proc_tree(pid):
-      parent = psutil.Process(pid)
-      return [parent] + parent.children(recursive=True)
-
-Find processes connected to a host
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Find all processes that have an active connection to a given remote IP:
-
-.. code-block:: python
-
-  import psutil
-
-  def find_procs_by_remote_host(host):
-      ls = []
-      for proc in psutil.process_iter(['pid', 'name']):
-          for conn in proc.net_connections(kind='inet'):
-              if conn.raddr and conn.raddr.ip == host:
-                  ls.append(proc)
-                  break
-      return ls
-
-Find processes with most open file descriptors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Useful for diagnosing file descriptor leaks:
-
-.. code-block:: python
-
-  import psutil
-
-  def top_open_files(n=5):
-      procs = []
-      for p in psutil.process_iter(['pid', 'name']):
-          try:
-              procs.append((p.num_fds(), p))
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
-              pass
-      procs.sort(key=lambda x: x[0], reverse=True)
-      return procs[:n]
-
-Process uptime
-^^^^^^^^^^^^^^
-
-Compute how long a process has been running:
-
-.. code-block:: python
-
-  import datetime
-  import time
-  import psutil
-
-  def proc_uptime(pid):
-      p = psutil.Process(pid)
-      elapsed = time.time() - p.create_time()
-      return str(datetime.timedelta(seconds=int(elapsed)))
-
-Run a subprocess and monitor it
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Spawn a child process and monitor its resource usage until completion:
-
-.. code-block:: python
-
-  import subprocess
-  import time
-  import psutil
-
-  proc = subprocess.Popen(['my-app', '--arg'])
-  p = psutil.Process(proc.pid)
-  while proc.poll() is None:
-      with p.oneshot():
-          cpu = p.cpu_percent()
-          mem = p.memory_info().rss
-          print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
-      time.sleep(1)
-
-Files opened by process
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-List all files currently opened by a process:
-
-.. code-block:: python
-
-  import psutil
-
-  def files_opened_by(pid):
-      p = psutil.Process(pid)
-      try:
-          return [f.path for f in p.open_files()]
-      except psutil.AccessDenied:
-          return []
-
-Find processes using a file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Find all processes that have a given file open (useful on Windows):
-
-.. code-block:: python
-
-  import psutil
-
-  def find_procs_using_file(path):
-      ls = []
-      for p in psutil.process_iter(['pid', 'name']):
-          try:
-              for f in p.open_files():
-                  if f.path == path:
-                      ls.append(p)
-                      break
-          except psutil.AccessDenied:
-              pass
-      return ls
-
-Graceful shutdown
-^^^^^^^^^^^^^^^^^
-
-Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
-exit within the timeout:
-
-.. code-block:: python
-
-  import psutil
-
-  def graceful_kill(pid, timeout=3):
-      p = psutil.Process(pid)
-      p.terminate()
-      try:
-          p.wait(timeout=timeout)
-      except psutil.TimeoutExpired:
-          p.kill()
-
-Find process by environment variable
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Find all processes that have a given environment variable set to a specific
-value (e.g. to identify processes running inside a virtualenv):
-
-.. code-block:: python
-
-  import psutil
-
-  def find_procs_by_env(key, value):
-      ls = []
-      for p in psutil.process_iter(['pid', 'name']):
-          try:
-              if p.environ().get(key) == value:
-                  ls.append(p)
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
-              pass
-      return ls
-
-Parent process chain
-^^^^^^^^^^^^^^^^^^^^^
-
-Walk up the parent chain of a process up to PID 1 (``init`` / ``launchd``):
-
-.. code-block:: python
-
-  import psutil
-
-  def parent_chain(pid):
-      p = psutil.Process(pid)
-      chain = []
-      while True:
-          parent = p.parent()
-          if parent is None:
-              break
-          chain.append(parent)
-          p = parent
-      return chain
-
-Top processes by disk I/O
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Find the top N processes by cumulative disk read + write bytes (similar to
-``iotop``):
-
-.. code-block:: python
-
-  import psutil
-
-  def top_io_procs(n=5):
-      procs = []
-      for p in psutil.process_iter(['pid', 'name']):
-          try:
-              io = p.io_counters()
-              procs.append((io.read_bytes + io.write_bytes, p))
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
-              pass
-      procs.sort(key=lambda x: x[0], reverse=True)
-      return procs[:n]
-
 Bytes conversion
-----------------
+^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
