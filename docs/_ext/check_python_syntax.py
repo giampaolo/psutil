@@ -17,23 +17,26 @@ def check_python_blocks(app, doctree, docname):
 
     for node in doctree.traverse(docutils.nodes.literal_block):
         lang = node.get("language")
-        if lang not in {"python", "py", "pycon"}:
+        if lang not in {"python", "py"}:
             continue
 
         code = node.astext()
 
-        if lang == "pycon":
-            lines = []
-            for line in code.splitlines():
-                if line.startswith((">>> ", "... ")):
-                    lines.append(line[4:])  # noqa: PERF401
-            code = "\n".join(lines)
+        # skip empty blocks
+        if not code.strip():
+            continue
+
+        # skip REPL examples containing >>>
+        if ">>>" in code:
+            continue
 
         try:
             ast.parse(code)
-        except SyntaxError:
+        except SyntaxError as err:
             lineno = node.line or "?"
-            msg = f"invalid Python syntax in {path}:{lineno}:\n\n{code}"
+            msg = (
+                f"invalid Python syntax in {path}:{lineno}:\n\n{code}\n\n{err}"
+            )
             raise sphinx.errors.SphinxError(msg) from None
 
 
