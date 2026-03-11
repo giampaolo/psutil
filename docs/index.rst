@@ -104,3 +104,8 @@ Table of Contents
    Development guide <devguide>
    FAQs <faq>
    Timeline <timeline>
+
+.. toctree::
+   :titlesonly:
+
+   Changelog <changelog>

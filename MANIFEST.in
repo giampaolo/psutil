@@ -4,6 +4,7 @@ include .gitignore
 include CONTRIBUTING.md
 include CREDITS
 include HISTORY.rst
+include INSTALL.rst
 include LICENSE
 include MANIFEST.in
 include Makefile
@@ -13,6 +14,8 @@ include docs/.readthedocs.yaml
 include docs/DEVNOTES
 include docs/Makefile
 include docs/README
+include docs/_ext/add_home_link.py
+include docs/_ext/changelog_anchors.py
 include docs/_links.rst
 include docs/_static/copybutton.js
 include docs/_static/css/custom.css
@@ -21,6 +24,7 @@ include docs/_static/sidebar.js
 include docs/_templates/layout.html
 include docs/api.rst
 include docs/auto-build.sh
+include docs/changelog.rst
 include docs/conf.py
 include docs/devguide.rst
 include docs/faq.rst
@@ -171,7 +175,6 @@ include scripts/internal/print_dist.py
 include scripts/internal/print_downloads.py
 include scripts/internal/print_hashes.py
 include scripts/internal/print_sysinfo.py
-include scripts/internal/print_timeline.py
 include scripts/internal/purge_installation.py
 include scripts/internal/test_python2_setup_py.py
 include scripts/iotop.py

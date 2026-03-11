@@ -1,6 +1,10 @@
-# Shortcuts for various tasks (UNIX only).
-# To use a specific Python version run: "make install PYTHON=python3.3"
-# You can set the variables below from the command line.
+# Shortcuts for various development tasks.
+#
+# - To use this on Windows install Git For Windows first, then launch a Git
+#   Bash Shell.
+# - To use a specific Python version run: `make install PYTHON=python3.3`.
+# - To append an argument to a command use ARGS, e.g: `make test ARGS="-k
+#   some_test`.
 
 # Configurable
 PYTHON = python3
@@ -323,13 +327,9 @@ pre-release:  ## Check if we're ready to produce a new release.
 		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
 		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
 		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
-	@$(PYTHON) -c \
-		"from psutil import __version__ as ver; \
-		doc = open('docs/index.rst').read(); \
-		history = open('HISTORY.rst').read(); \
-		assert ver in doc, '%r not found in docs/index.rst' % ver; \
-		assert ver in history, '%r not found in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
+	@ver=$$($(PYTHON) -c "from psutil import __version__; print(__version__)"); \
+		grep -q "$$ver" docs/changelog.rst || { echo "ERR: version $$ver not found in docs/changelog.rst"; exit 1; }; \
+		grep -q "$$ver" docs/timeline.rst || { echo "ERR: version $$ver not found in docs/timeline.rst"; exit 1; }
 	$(MAKE) print-hashes
 	$(MAKE) print-dist
 
@@ -348,9 +348,6 @@ git-tag-release:  ## Git-tag a new release.
 
 print-announce:  ## Print announce of new release.
 	@$(PYTHON) scripts/internal/print_announce.py
-
-print-timeline:  ## Print releases' timeline.
-	@$(PYTHON) scripts/internal/print_timeline.py
 
 print-access-denied: ## Print AD exceptions
 	$(PYTHON) scripts/internal/print_access_denied.py

@@ -4,42 +4,41 @@ Development guide
 Build, setup and running tests
 ------------------------------
 
-psutil makes extensive use of C extension modules, meaning a C compiler is
-required, see
-`install instructions <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`__.
-Once you have a compiler installed run:
+- psutil makes extensive use of C extension modules, meaning a C compiler is
+  required, see :doc:`install instructions <install>`. Once you have a compiler
+  installed run:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    git clone git@github.com:giampaolo/psutil.git
-    make install-sysdeps      # install gcc and python headers
-    make install-pydeps-test  # install python deps necessary to run unit tests
-    make build
-    make install
-    make test
+      git clone git@github.com:giampaolo/psutil.git
+      make install-sysdeps      # install gcc and python headers
+      make install-pydeps-test  # install python deps necessary to run unit tests
+      make build
+      make install
+      make test
 
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
-  install, run tests and do pretty much anything that involves development.
-  useful commands are:
+  install, run tests and do pretty much anything that involves development,
+  including on Windows. Some useful commands:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    make clean                # remove build files
-    make install-pydeps-dev   # install dev deps (ruff, black, ...)
-    make test                 # run tests
-    make test-parallel        # run tests in parallel (faster)
-    make test-memleaks        # run memory leak tests
-    make test-coverage        # run test coverage
-    make lint-all             # run linters
-    make fix-all              # fix linters errors
-    make uninstall
-    make help
+      make clean                # remove build files
+      make install-pydeps-dev   # install dev deps (ruff, black, ...)
+      make test                 # run tests
+      make test-parallel        # run tests in parallel (faster)
+      make test-memleaks        # run memory leak tests
+      make test-coverage        # run test coverage
+      make lint-all             # run linters
+      make fix-all              # fix linters errors
+      make uninstall
+      make help
 
 - To run a specific unit test:
 
-.. code-block:: bash
+  .. code-block::
 
-    make test ARGS=tests/test_system.py
+      make test ARGS=tests/test_system.py
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
   "edit" / development mode, meaning you can edit psutil code on the fly while
@@ -47,9 +46,9 @@ Once you have a compiler installed run:
 
 - If you want to target a specific Python version:
 
-.. code-block:: bash
+  .. code-block::
 
-    make test PYTHON=python3.8
+      make test PYTHON=python3.8
 
 Windows
 -------
@@ -60,10 +59,10 @@ Windows
   provides a Unix-like environment where ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands:
 
-.. code-block:: bash
+  .. code-block:: bash
 
-    make build
-    make test-parallel
+      make build
+      make test-parallel
 
 Debug mode
 ----------
@@ -110,12 +109,16 @@ Code organization
 
 .. code-block:: bash
 
-    psutil/__init__.py                   # main psutil namespace ("import psutil")
-    psutil/_ps{platform}.py              # platform-specific python wrapper
-    psutil/_psutil_{platform}.c          # platform-specific C extension
-    psutil/arch/{platform}/*.c           # platform-specific C extension
-    tests/test_process|system.py         # main test suite
-    tests/test_{platform}.py             # platform-specific test suite
+    psutil/__init__.py                   # Main API namespace ("import psutil")
+    psutil/_common.py                    # Generic utilities
+    psutil/_ntuples.py                   # Named tuples returned by psutil APIs
+    psutil/_enums.py                     # Enum containers backing psutil constants
+    psutil/_ps{platform}.py              # Platform-specific python wrappers
+    psutil/_psutil_{platform}.c          # Platform-specific C extensions (entry point)
+    psutil/arch/all/*.c                  # C code common to all platforms
+    psutil/arch/{platform}/*.c           # Platform-specific C extension
+    tests/test_process|system.py         # Main system/process API tests
+    tests/test_{platform}.py             # Platform-specific tests
 
 Adding a new API
 ----------------
@@ -133,8 +136,8 @@ Typically, this is what you do:
   ``tests/test_{platform}.py`` (e.g. `tests/test_linux.py`_).
   This usually means testing the return value of the new API against
   a system CLI tool.
-- Update the doc in ``docs/index.py``.
-- Update `HISTORY.rst`_ and `CREDITS`_ files.
+- Update the doc in ``docs/api.rst``.
+- Update `changelog.rst`_ and `CREDITS`_ files.
 - Make a pull request.
 
 Make a pull request
@@ -165,7 +168,7 @@ Documentation
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
 .. _`Git for Windows`: <https://git-scm.com/install/windows>`
-.. _`HISTORY.rst`: https://github.com/giampaolo/psutil/blob/master/HISTORY.rst
+.. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/

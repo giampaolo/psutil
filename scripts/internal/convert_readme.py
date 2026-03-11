@@ -16,13 +16,12 @@ Quick links
 ===========
 
 - `Home page <https://github.com/giampaolo/psutil>`_
-- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Documentation <http://psutil.readthedocs.io>`_
 - `Download <https://pypi.org/project/psutil/#files>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <https://gmpy.dev/tags/psutil>`_
-- `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
+- `What's new <https://psutil.readthedocs.io/changelog>`_
 """
 
 

@@ -904,7 +904,7 @@ Other system info
 
   .. note::
     on Windows this function may return a time which is off by 1 second if it's
-    used across different processes (see issue `#1007`_).
+    used across different processes (see issue :gh:`1007`).
 
 .. function:: users()
 
