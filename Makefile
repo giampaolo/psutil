@@ -327,13 +327,9 @@ pre-release:  ## Check if we're ready to produce a new release.
 		res = requests.get('https://pypi.org/pypi/psutil/json', timeout=5); \
 		versions = sorted(res.json()['releases'], key=parse, reverse=True); \
 		sys.exit('version %r already exists on PYPI' % __version__) if __version__ in versions else 0"
-	@$(PYTHON) -c \
-		"from psutil import __version__ as ver; \
-		doc = open('docs/index.rst').read(); \
-		history = open('HISTORY.rst').read(); \
-		assert ver in doc, '%r not found in docs/index.rst' % ver; \
-		assert ver in history, '%r not found in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history, 'XXXX found in HISTORY.rst';"
+	@ver=$$($(PYTHON) -c "from psutil import __version__; print(__version__)"); \
+		grep -q "$$ver" docs/changelog.rst || { echo "ERR: version $$ver not found in docs/changelog.rst"; exit 1; }; \
+		grep -q "$$ver" docs/timeline.rst || { echo "ERR: version $$ver not found in docs/timeline.rst"; exit 1; }
 	$(MAKE) print-hashes
 	$(MAKE) print-dist
 
