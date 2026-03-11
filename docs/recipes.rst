@@ -34,9 +34,9 @@ A bit more advanced, check string against :meth:`Process.name()`,
       ls = []
       for p in psutil.process_iter(["name", "exe", "cmdline"]):
           if (
-              name == p.info['name']
-              or (p.info['exe'] and os.path.basename(p.info['exe']) == name)
-              or (p.info['cmdline'] and p.info['cmdline'][0] == name)
+              name == p.info["name"]
+              or (p.info["exe"] and os.path.basename(p.info["exe"]) == name)
+              or (p.info["cmdline"] and p.info["cmdline"][0] == name)
           ):
               ls.append(p)
       return ls
@@ -48,7 +48,6 @@ Find the process listening on a given TCP port:
   import psutil
 
   def find_proc_by_port(port):
-      """Return the process listening on the given port, or None."""
       for proc in psutil.process_iter():
           for conn in proc.net_connections(kind="tcp"):
               if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
@@ -64,7 +63,7 @@ value (e.g. to identify processes running inside a virtualenv):
 
   def find_procs_by_env(key, value):
       ls = []
-      for p in psutil.process_iter(['pid', 'name']):
+      for p in psutil.process_iter(["pid", "name"]):
           try:
               if p.environ().get(key) == value:
                   ls.append(p)
@@ -80,8 +79,8 @@ Find all processes that have an active connection to a given remote IP:
 
   def find_procs_by_remote_host(host):
       ls = []
-      for proc in psutil.process_iter(['pid', 'name']):
-          for conn in proc.net_connections(kind='inet'):
+      for proc in psutil.process_iter(["pid", "name"]):
+          for conn in proc.net_connections(kind="inet"):
               if conn.raddr and conn.raddr.ip == host:
                   ls.append(proc)
                   break
@@ -94,8 +93,8 @@ Find all zombie (defunct) processes:
   import psutil
 
   def find_zombies():
-      return [p for p in psutil.process_iter(['name', 'status'])
-              if p.info['status'] == psutil.STATUS_ZOMBIE]
+      return [p for p in psutil.process_iter(["name", "status"])
+              if p.info["status"] == psutil.STATUS_ZOMBIE]
 
 Find all processes that have a given file open (useful on Windows):
 
@@ -105,7 +104,7 @@ Find all processes that have a given file open (useful on Windows):
 
   def find_procs_using_file(path):
       ls = []
-      for p in psutil.process_iter(['pid', 'name']):
+      for p in psutil.process_iter(["pid", "name"]):
           try:
               for f in p.open_files():
                   if f.path == path:
@@ -128,7 +127,7 @@ Processes owned by user:
   >>> import getpass
   >>> import psutil
   >>> from pprint import pprint as pp
-  >>> pp([(p.pid, p.info['name']) for p in psutil.process_iter(['name', 'username']) if p.info['username'] == getpass.getuser()])
+  >>> pp([(p.pid, p.info["name"]) for p in psutil.process_iter(["name", "username"]) if p.info["username"] == getpass.getuser()])
   (16832, 'bash'),
   (19772, 'ssh'),
   (20492, 'python')]
@@ -137,7 +136,7 @@ Processes actively running:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info) for p in psutil.process_iter(['name', 'status']) if p.info['status'] == psutil.STATUS_RUNNING])
+  >>> pp([(p.pid, p.info) for p in psutil.process_iter(["name", "status"]) if p.info["status"] == psutil.STATUS_RUNNING])
   [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
    (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
    (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
@@ -146,10 +145,10 @@ Processes using log files:
 
 .. code-block:: python
 
-  >>> for p in psutil.process_iter(['name', 'open_files']):
-  ...      for file in p.info['open_files'] or []:
-  ...          if file.path.endswith('.log'):
-  ...               print("%-5s %-10s %s" % (p.pid, p.info['name'][:10], file.path))
+  >>> for p in psutil.process_iter(["name", "open_files"]):
+  ...      for file in p.info["open_files"] or []:
+  ...          if file.path.endswith(".log"):
+  ...               print("%-5s %-10s %s" % (p.pid, p.info["name"][:10], file.path))
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
@@ -159,7 +158,7 @@ Processes consuming more than 500M of memory:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info['name'], p.info['memory_info'].rss) for p in psutil.process_iter(['name', 'memory_info']) if p.info['memory_info'].rss > 500 * 1024 * 1024])
+  >>> pp([(p.pid, p.info["name"], p.info["memory_info"].rss) for p in psutil.process_iter(["name", "memory_info"]) if p.info["memory_info"].rss > 500 * 1024 * 1024])
   [(2650, 'chrome', 532324352),
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
@@ -168,7 +167,7 @@ Top 3 processes which consumed the most CPU time:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info['name'], sum(p.info['cpu_times'])) for p in sorted(psutil.process_iter(['name', 'cpu_times']), key=lambda p: sum(p.info['cpu_times'][:2]))][-3:])
+  >>> pp([(p.pid, p.info["name"], sum(p.info["cpu_times"])) for p in sorted(psutil.process_iter(["name", "cpu_times"]), key=lambda p: sum(p.info["cpu_times"][:2]))][-3:])
   [(2721, 'chrome', 10219.73),
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
@@ -181,7 +180,7 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
 
   def top_io_procs(n=5):
       procs = []
-      for p in psutil.process_iter(['pid', 'name']):
+      for p in psutil.process_iter(["pid", "name"]):
           try:
               io = p.io_counters()
               procs.append((io.read_bytes + io.write_bytes, p))
@@ -198,7 +197,7 @@ Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
   def top_open_files(n=5):
       procs = []
-      for p in psutil.process_iter(['pid', 'name']):
+      for p in psutil.process_iter(["pid", "name"]):
           try:
               procs.append((p.num_fds(), p))
           except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -279,7 +278,7 @@ Periodically monitor CPU and memory usage of a process using
           with p.oneshot():
               cpu = p.cpu_percent()
               mem = p.memory_info().rss
-              print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
+              print("cpu=%-6s mem=%s" % (str(cpu) + "%", bytes2human(mem)))
           time.sleep(interval)
 
 Spawn a child process and monitor its resource usage until completion:
@@ -290,13 +289,13 @@ Spawn a child process and monitor its resource usage until completion:
   import time
   import psutil
 
-  proc = subprocess.Popen(['my-app', '--arg'])
+  proc = subprocess.Popen(["my-app", "--arg"])
   p = psutil.Process(proc.pid)
   while proc.poll() is None:
       with p.oneshot():
           cpu = p.cpu_percent()
           mem = p.memory_info().rss
-          print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
+          print("cpu=%-6s mem=%s" % (str(cpu) + "%", bytes2human(mem)))
       time.sleep(1)
 
 Controlling processes
@@ -338,8 +337,8 @@ Terminate all processes matching a given name:
   import psutil
 
   def terminate_procs_by_name(name):
-      for p in psutil.process_iter(['name']):
-          if p.info['name'] == name:
+      for p in psutil.process_iter(["name"]):
+          if p.info["name"] == name:
               p.terminate()
 
 Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
@@ -364,7 +363,6 @@ Wait for a process to terminate, with an optional timeout:
   import psutil
 
   def wait_for_proc(pid, timeout=None):
-      """Wait for process to terminate. Return exit code or None on timeout."""
       p = psutil.Process(pid)
       try:
           return p.wait(timeout=timeout)
@@ -405,17 +403,17 @@ Bytes conversion
       >>> bytes2human(100001221)
       '95.4M'
       """
-      symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+      symbols = ("K", "M", "G", "T", "P", "E", "Z", "Y")
       prefix = {}
       for i, s in enumerate(symbols):
           prefix[s] = 1 << (i + 1) * 10
       for s in reversed(symbols):
           if abs(n) >= prefix[s]:
               value = float(n) / prefix[s]
-              return '%.1f%s' % (value, s)
+              return "%.1f%s" % (value, s)
       return "%sB" % n
 
-  total = psutil.disk_usage('/').total
+  total = psutil.disk_usage("/").total
   print(total)
   print(bytes2human(total))
 
