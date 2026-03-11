@@ -78,6 +78,8 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 htmlhelp_basename = f"{PROJECT_NAME}-doc"
 
+copybutton_exclude = '.linenos, .gp'
+
 latex_documents = [
     (master_doc, 'psutil.tex', 'psutil Documentation', AUTHOR, 'manual')
 ]
