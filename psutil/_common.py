@@ -41,7 +41,7 @@ __all__ = [
     # other constants
     'ENCODING', 'ENCODING_ERRS', 'AF_INET6',
     # utility functions
-    'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
+    'conn_tmap', 'deprecated_method', 'isfile_strict',
     'parse_environ_block', 'path_exists_strict', 'usage_percent',
     'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum', "wrap_numbers",
     'open_text', 'open_binary', 'cat', 'bcat',
@@ -223,51 +223,6 @@ def usage_percent(used, total, round_=None):
         return ret
 
 
-def memoize(fun):
-    """A simple memoize decorator for functions supporting (hashable)
-    positional arguments.
-    It also provides a cache_clear() function for clearing the cache:
-
-    >>> @memoize
-    ... def foo()
-    ...     return 1
-        ...
-    >>> foo()
-    1
-    >>> foo.cache_clear()
-    >>>
-
-    It supports:
-     - functions
-     - classes (acts as a @singleton)
-     - staticmethods
-     - classmethods
-
-    It does NOT support:
-     - methods
-    """
-
-    @functools.wraps(fun)
-    def wrapper(*args, **kwargs):
-        key = (args, frozenset(sorted(kwargs.items())))
-        try:
-            return cache[key]
-        except KeyError:
-            try:
-                ret = cache[key] = fun(*args, **kwargs)
-            except Exception as err:
-                raise err from None
-            return ret
-
-    def cache_clear():
-        """Clear cache."""
-        cache.clear()
-
-    cache = {}
-    wrapper.cache_clear = cache_clear
-    return wrapper
-
-
 def memoize_when_activated(fun):
     """A memoize decorator which is disabled by default. It can be
     activated and deactivated on request.
@@ -275,7 +230,7 @@ def memoize_when_activated(fun):
     accepting no arguments.
 
     >>> class Foo:
-    ...     @memoize
+    ...     @memoize_when_activated
     ...     def foo()
     ...         print(1)
     ...
@@ -720,7 +675,7 @@ def decode(s):
 # =====================================================================
 
 
-@memoize
+@functools.lru_cache
 def term_supports_colors(file=sys.stdout):  # pragma: no cover
     if not hasattr(file, "isatty") or not file.isatty():
         return False

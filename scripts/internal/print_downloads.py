@@ -11,6 +11,7 @@ Useful sites:
 * https://hugovk.github.io/top-pypi-packages/.
 """
 
+import functools
 import json
 import os
 import shlex
@@ -18,8 +19,6 @@ import subprocess
 import sys
 
 import pypinfo  # noqa: F401
-
-from psutil._common import memoize
 
 AUTH_FILE = os.path.expanduser("~/.pypinfo.json")
 PKGNAME = 'psutil'
@@ -36,7 +35,7 @@ bytes_billed = 0
 # --- get
 
 
-@memoize
+@functools.lru_cache
 def sh(cmd):
     assert os.path.exists(AUTH_FILE)
     env = os.environ.copy()
@@ -55,7 +54,7 @@ def sh(cmd):
     return stdout.strip()
 
 
-@memoize
+@functools.lru_cache
 def query(cmd):
     global bytes_billed
     ret = json.loads(sh(cmd))

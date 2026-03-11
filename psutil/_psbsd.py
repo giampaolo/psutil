@@ -24,7 +24,6 @@ from ._common import ZombieProcess
 from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
-from ._common import memoize
 from ._common import memoize_when_activated
 from ._enums import BatteryTime
 from ._enums import ConnectionStatus
@@ -417,7 +416,7 @@ def users():
 # =====================================================================
 
 
-@memoize
+@functools.lru_cache
 def _pid_0_exists():
     try:
         Process(0).name()

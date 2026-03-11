@@ -75,7 +75,7 @@ class TestExampleScripts(PsutilTestCase):
         # make sure all example scripts have a test method defined
         meths = dir(self)
         for name in os.listdir(SCRIPTS_DIR):
-            if name.endswith('.py'):
+            if name.endswith('.py') and not name.startswith("_"):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
                     # self.assert_stdout(name)
                     return pytest.fail(

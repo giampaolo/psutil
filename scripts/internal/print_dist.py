@@ -10,8 +10,8 @@ import argparse
 import collections
 import os
 
-from psutil._common import bytes2human
-from psutil._common import print_color
+from scripts.internal._mirror import bytes2human
+from scripts.internal._mirror import print_color
 
 
 class Wheel:

@@ -24,7 +24,6 @@ from ._common import conn_tmap
 from ._common import conn_to_ntuple
 from ._common import debug
 from ._common import isfile_strict
-from ._common import memoize
 from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import usage_percent
@@ -113,7 +112,7 @@ def convert_dos_path(s):
     return os.path.join(driveletter, remainder)
 
 
-@memoize
+@functools.lru_cache
 def getpagesize():
     return cext.getpagesize()
 
