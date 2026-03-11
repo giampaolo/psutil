@@ -305,6 +305,30 @@ Collect a process and all its descendants into a flat list:
       parent = psutil.Process(pid)
       return [parent] + parent.children(recursive=True)
 
+Print a process tree (similar to ``pstree``):
+
+.. code-block:: python
+
+  import psutil
+
+  def pstree(pid=None, indent=0):
+      parent = psutil.Process(pid) if pid else psutil.Process(psutil.ppid_map()[0])
+      name = "{} ({})".format(parent.name(), parent.pid)
+      print("{}{}".format("  " * indent, name))
+      for child in parent.children():
+          pstree(child.pid, indent + 1)
+
+.. code-block:: none
+
+  systemd (1)
+    networkd (432)
+    sshd (891)
+      sshd (12345)
+        bash (12346)
+          python (12347)
+
+----
+
 Monitoring processes
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -452,6 +476,53 @@ Temporarily pause and resume a process using a context manager:
   # usage
   with suspended(pid):
       pass  # process is paused here
+
+----
+
+CPU throttle: limit a process's CPU usage to a target percentage by
+alternating :meth:`Process.suspend` and :meth:`Process.resume`:
+
+.. code-block:: python
+
+  import time
+  import psutil
+
+  def throttle(pid, max_cpu_percent=50, interval=0.1):
+      """Slow down a process so it uses at most max_cpu_percent% CPU."""
+      p = psutil.Process(pid)
+      while p.is_running():
+          cpu = p.cpu_percent(interval=interval)
+          if cpu > max_cpu_percent:
+              p.suspend()
+              time.sleep(interval * cpu / max_cpu_percent)
+              p.resume()
+
+----
+
+Watchdog: restart a process automatically if it dies:
+
+.. code-block:: python
+
+  import subprocess
+  import time
+  import psutil
+
+  def watchdog(cmd, max_restarts=5, interval=1):
+      """Run cmd, restarting it up to max_restarts times if it exits."""
+      restarts = 0
+      while restarts <= max_restarts:
+          proc = subprocess.Popen(cmd)
+          p = psutil.Process(proc.pid)
+          print("started pid={}".format(p.pid))
+          proc.wait()
+          if proc.returncode == 0:
+              break
+          restarts += 1
+          print("died (returncode={}), restarting ({}/{})".format(
+              proc.returncode, restarts, max_restarts))
+          time.sleep(interval)
+      else:
+          print("max restarts reached, giving up")
 
 System
 ------
