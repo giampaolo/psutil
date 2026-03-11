@@ -3,8 +3,11 @@
 Recipes
 =======
 
+Processes
+---------
+
 Find process by name
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Check string against :meth:`Process.name()`:
 
@@ -13,10 +16,9 @@ Check string against :meth:`Process.name()`:
   import psutil
 
   def find_procs_by_name(name):
-      "Return a list of processes matching 'name'."
       ls = []
-      for p in psutil.process_iter(['name']):
-          if p.info['name'] == name:
+      for p in psutil.process_iter(["name"]):
+          if p.info["name"] == name:
               ls.append(p)
       return ls
 
@@ -29,17 +31,68 @@ A bit more advanced, check string against :meth:`Process.name()`,
   import psutil
 
   def find_procs_by_name(name):
-      "Return a list of processes matching 'name'."
       ls = []
       for p in psutil.process_iter(["name", "exe", "cmdline"]):
-          if name == p.info['name'] or \
-                  p.info['exe'] and os.path.basename(p.info['exe']) == name or \
-                  p.info['cmdline'] and p.info['cmdline'][0] == name:
+          if (
+              name == p.info['name']
+              or (p.info['exe'] and os.path.basename(p.info['exe']) == name)
+              or (p.info['cmdline'] and p.info['cmdline'][0] == name)
+          ):
               ls.append(p)
       return ls
 
+Find process by port
+^^^^^^^^^^^^^^^^^^^^
+
+Find the process listening on a given TCP port:
+
+.. code-block:: python
+
+  import psutil
+
+  def find_proc_by_port(port):
+      """Return the process listening on the given port, or None."""
+      for proc in psutil.process_iter():
+          for conn in proc.net_connections(kind="tcp"):
+              if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
+                  return proc
+      return None
+
+Find zombie processes
+^^^^^^^^^^^^^^^^^^^^
+
+Find all zombie (defunct) processes:
+
+.. code-block:: python
+
+  import psutil
+
+  def find_zombies():
+      return [p for p in psutil.process_iter(['name', 'status'])
+              if p.info['status'] == psutil.STATUS_ZOMBIE]
+
+Monitor process
+^^^^^^^^^^^^^^^
+
+Periodically monitor CPU and memory usage of a process using
+:meth:`Process.oneshot` for efficiency:
+
+.. code-block:: python
+
+  import time
+  import psutil
+
+  def monitor(pid, interval=1):
+      p = psutil.Process(pid)
+      while p.is_running():
+          with p.oneshot():
+              cpu = p.cpu_percent()
+              mem = p.memory_info().rss
+              print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
+          time.sleep(interval)
+
 Kill process tree
------------------
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -69,7 +122,7 @@ Kill process tree
       return (gone, alive)
 
 Filtering and sorting processes
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A collection of code samples showing how to use :func:`process_iter()` to filter processes and sort them.
 
