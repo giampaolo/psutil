@@ -46,9 +46,11 @@ extensions = [
     "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx_copybutton",
     # our own custom extensions in _ext/ dir
     "add_home_link",
     "changelog_anchors",
+    "check_python_syntax",
 ]
 
 # project info
@@ -75,6 +77,8 @@ todo_include_todos = False
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 htmlhelp_basename = f"{PROJECT_NAME}-doc"
+
+copybutton_exclude = '.linenos, .gp'
 
 latex_documents = [
     (master_doc, 'psutil.tex', 'psutil Documentation', AUTHOR, 'manual')
