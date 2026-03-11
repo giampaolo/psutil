@@ -399,12 +399,14 @@ Temporarily pause and resume a process using a context manager:
   with suspended(pid):
       pass  # process is paused here
 
-Bytes conversion
-^^^^^^^^^^^^^^^^
+System
+------
+
+All APIs returning amounts (memory, disk, network I/O) express them in bytes.
+This ``bytes2human()`` utility function used in the examples below converts
+them to a human-readable string:
 
 .. code-block:: python
-
-  import psutil
 
   def bytes2human(n):
       """
@@ -423,11 +425,101 @@ Bytes conversion
               return "%.1f%s" % (value, s)
       return "%sB" % n
 
-  total = psutil.disk_usage("/").total
-  print(total)
-  print(bytes2human(total))
+Memory
+^^^^^^
+
+Print a summary of system memory usage:
+
+.. code-block:: python
+
+  import psutil
+
+  mem = psutil.virtual_memory()
+  print(mem)
 
 ...prints::
 
-  100399730688
-  93.5G
+  svmem(total=8374149120, available=3192442880, percent=61.9, used=4765270016, free=260874240, ...)
+
+Show both RAM and swap usage in human-readable form:
+
+.. code-block:: python
+
+  import psutil
+
+  def print_memory():
+      ram = psutil.virtual_memory()
+      swap = psutil.swap_memory()
+      print("RAM:  total=%s, used=%s, free=%s, percent=%s%%" % (
+          bytes2human(ram.total), bytes2human(ram.used),
+          bytes2human(ram.available), ram.percent))
+      print("swap: total=%s, used=%s, free=%s, percent=%s%%" % (
+          bytes2human(swap.total), bytes2human(swap.used),
+          bytes2human(swap.free), swap.percent))
+
+CPU
+^^^
+
+Print CPU usage percentage for each core:
+
+.. code-block:: python
+
+  import psutil
+
+  for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
+      print("cpu%s: %s%%" % (i, pct))
+
+...prints::
+
+  cpu0: 4.2%
+  cpu1: 10.5%
+  cpu2: 2.1%
+  cpu3: 8.0%
+
+Disks
+^^^^^
+
+Show disk usage for all mounted partitions:
+
+.. code-block:: python
+
+  import psutil
+
+  def print_disk_usage():
+      for part in psutil.disk_partitions():
+          usage = psutil.disk_usage(part.mountpoint)
+          print(
+              "%s: total=%s, used=%s, free=%s, percent=%s%%" % (
+              part.mountpoint,
+              bytes2human(usage.total), bytes2human(usage.used),
+              bytes2human(usage.free), usage.percent)
+          )
+
+Network
+^^^^^^^
+
+List IP addresses for each network interface:
+
+.. code-block:: python
+
+  import psutil
+
+  def print_net_addrs():
+      for iface, addrs in psutil.net_if_addrs().items():
+          for addr in addrs:
+              if addr.family.name == "AF_INET":
+                  print("%s: address=%s, netmask=%s" % (
+                      iface, addr.address, addr.netmask))
+
+Show bytes sent and received per network interface:
+
+.. code-block:: python
+
+  import psutil
+
+  def print_net_io():
+      for iface, stats in psutil.net_io_counters(pernic=True).items():
+          print("%s: sent=%s, recv=%s" % (
+              iface,
+              bytes2human(stats.bytes_sent),
+              bytes2human(stats.bytes_recv)))
