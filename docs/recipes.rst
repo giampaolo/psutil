@@ -323,30 +323,6 @@ Periodically monitor CPU and memory usage of a process using
   cpu=4.2%   mem=23.4M
   cpu=3.1%   mem=23.5M
 
-----
-
-Spawn a child process and monitor its resource usage until completion:
-
-.. code-block:: python
-
-  import subprocess
-  import time
-  import psutil
-
-  proc = subprocess.Popen(["my-app", "--arg"])
-  p = psutil.Process(proc.pid)
-  while proc.poll() is None:
-      with p.oneshot():
-          cpu = p.cpu_percent()
-          mem = p.memory_info().rss
-          print("cpu={:<6} mem={}".format(str(cpu) + "%", mem / 1024 / 1024))
-      time.sleep(1)
-
-.. code-block:: none
-
-  cpu=12.3%  mem=45.1M
-  cpu=8.7%   mem=45.2M
-
 Controlling processes
 ^^^^^^^^^^^^^^^^^^^^^
 
