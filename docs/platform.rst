@@ -2,14 +2,12 @@ Platform support
 ================
 
 Python
-------
+^^^^^^
 
-Supported Python versions: Python 3.7+ and PyPy.
+**Current Python:** 3.7+ and PyPy.
 
-Python 2.7
-----------
-
-Latest psutil version supporting Python 2.7 is `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
+**Python 2.7**: latest psutil version supporting Python 2.7 is
+`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
 The 6.1.X serie may receive critical bug-fixes but no new features. It will
 be maintained in the dedicated
 `python2 <https://github.com/giampaolo/psutil/tree/python2>`__ branch.
@@ -23,10 +21,9 @@ Support history
 ---------------
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6
-* psutil 7.2.0 (2025-12): publish Linux musl wheels
-* psutil 7.1.2 (2025-10): publish free-threaded Python wheels
-* psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and
-  Windows)
+* psutil 7.2.0 (2025-12): publish wheels for **Linux musl**
+* psutil 7.1.2 (2025-10): publish wheels for **free-threaded Python**
+* psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and  Windows)
 * psutil 7.1.1 (2025-10): drop **SunOS 10**
 * psutil 7.1.0 (2025-09): drop **FreeBSD 8**
 * psutil 7.0.0 (2025-02): drop Python 2.7
