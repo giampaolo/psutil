@@ -71,6 +71,9 @@ Changelog
 - :gh:`2757`: split the documentation from a single-page HTML document into
   multiple sub-sections. Sections now include separate pages for API reference,
   installation, release timeline, FAQs, and more.
+- :gh:`2760`: moved 18 years old HISTORY.rst into docs/changelog.rst for
+  better integration. Original file remains in the root with a note pointing to
+  the new location.
 
 **Bug fixes**
 
