@@ -104,21 +104,15 @@ Find all processes that have a given file open (useful on Windows):
 
   def find_procs_using_file(path):
       ls = []
-      for p in psutil.process_iter():
-          try:
-              for f in p.open_files():
-                  if f.path == path:
-                      ls.append(p)
-                      break
-          except psutil.Error:
-              pass
+      for p in psutil.process_iter(["open_files"]):
+          for f in p.info["open_files"]:
+              if f.path == path:
+                  ls.append(p)
+                  break
       return ls
 
 Filtering and sorting processes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A collection of code samples showing how to use :func:`process_iter()` to
-filter and sort processes.
 
 Processes owned by user:
 
@@ -188,14 +182,16 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
 
   import psutil
 
+
   def top_io_procs(n=5):
       procs = []
-      for p in psutil.process_iter():
+      for p in psutil.process_iter(["io_counters"]):
           try:
               io = p.io_counters()
-              procs.append((io.read_bytes + io.write_bytes, p))
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
+          except psutil.Error:
               pass
+          else:
+              procs.append((io.read_bytes + io.write_bytes, p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 
@@ -216,92 +212,6 @@ Top N processes by open file descriptors (useful for diagnosing fd leaks):
               pass
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
-
-Inspecting a process
-^^^^^^^^^^^^^^^^^^^^
-
-List all files currently opened by a process:
-
-.. code-block:: python
-
-  import psutil
-
-  def files_opened_by(pid):
-      p = psutil.Process(pid)
-      try:
-          return [f.path for f in p.open_files()]
-      except psutil.AccessDenied:
-          return []
-
-----
-
-Walk up the parent chain up to PID 1 (``init`` / ``launchd``):
-
-.. code-block:: python
-
-  import psutil
-
-  def parent_chain(pid):
-      p = psutil.Process(pid)
-      chain = []
-      while True:
-          parent = p.parent()
-          if parent is None:
-              break
-          chain.append(parent)
-          p = parent
-      return chain
-
-----
-
-Compute how long a process has been running:
-
-.. code-block:: python
-
-  import datetime
-  import time
-  import psutil
-
-  def proc_uptime(pid):
-      p = psutil.Process(pid)
-      elapsed = time.time() - p.create_time()
-      return str(datetime.timedelta(seconds=int(elapsed)))
-
-----
-
-Collect a process and all its descendants into a flat list:
-
-.. code-block:: python
-
-  import psutil
-
-  def get_proc_tree(pid):
-      parent = psutil.Process(pid)
-      return [parent] + parent.children(recursive=True)
-
-Print a process tree (similar to ``pstree``):
-
-.. code-block:: python
-
-  import psutil
-
-  def pstree(pid=None, indent=0):
-      parent = psutil.Process(pid or 1)
-      name = "{} ({})".format(parent.name(), parent.pid)
-      print("{}{}".format("  " * indent, name))
-      for child in parent.children():
-          pstree(child.pid, indent + 1)
-
-.. code-block:: none
-
-  systemd (1)
-    networkd (432)
-    sshd (891)
-      sshd (12345)
-        bash (12346)
-          python (12347)
-
-----
 
 Monitoring processes
 ^^^^^^^^^^^^^^^^^^^^
@@ -555,12 +465,23 @@ Show both RAM and swap usage in human-readable form:
   def print_memory():
       ram = psutil.virtual_memory()
       swap = psutil.swap_memory()
-      print("RAM:  total={}, used={}, free={}, percent={}%".format(
-          bytes2human(ram.total), bytes2human(ram.used),
-          bytes2human(ram.available), ram.percent))
-      print("Swap: total={}, used={}, free={}, percent={}%".format(
-          bytes2human(swap.total), bytes2human(swap.used),
-          bytes2human(swap.free), swap.percent))
+      print(
+          "RAM:  total={}, used={}, free={}, percent={}%".format(
+              bytes2human(ram.total),
+              bytes2human(ram.used),
+              bytes2human(ram.available),
+              ram.percent,
+          )
+      )
+      print(
+          "Swap: total={}, used={}, free={}, percent={}%".format(
+              bytes2human(swap.total),
+              bytes2human(swap.used),
+              bytes2human(swap.free),
+              swap.percent,
+          )
+      )
+
 
 .. code-block:: none
 
