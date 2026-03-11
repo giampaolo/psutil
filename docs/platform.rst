@@ -4,21 +4,61 @@ Platform support
 Python
 ^^^^^^
 
-**Current Python:** 3.7+ and PyPy.
+**Current Python:** 3.7 and PyPy3.
 
-**Python 2.7**: latest psutil version supporting Python 2.7 is
-`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
-The 6.1.X serie may receive critical bug-fixes but no new features. It will
-be maintained in the dedicated
+**Python 2.7**: latest psutil version supporting it is
+`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__ (Dec 2024).
+The 6.1.X series may still receive critical bug-fixes but no new features.
+It will be maintained in the dedicated
 `python2 <https://github.com/giampaolo/psutil/tree/python2>`__ branch.
-To install it:
+To install psutil on Python 2.7 run:
 
 ::
 
-    $ python2 -m pip install psutil==6.1.*
+    python2 -m pip install psutil==6.1.*
+
+Operating systems
+^^^^^^^^^^^^^^^^^
+
+================  ================  ====  =================================================  =========
+Platform          Minimum version   Year  How enforced                                       CI tested
+================  ================  ====  =================================================  =========
+Linux             2.6.13 (soft)     2005  graceful fallbacks; no hard check                  yes
+Windows           Vista             2007  hard check at import + build time                  yes
+macOS             10.7 (Lion)       2011  ``MAC_OS_X_VERSION_MIN_REQUIRED`` in C             yes
+FreeBSD           12.0              2018  graceful fallbacks via ``#if __FreeBSD_version``   yes
+NetBSD            5.0               2009  graceful fallbacks via ``#if __NetBSD_Version__``  yes
+OpenBSD           unknown                                                                    yes
+SunOS / Solaris   unknown                                                                    memleak tests only
+AIX               unknown                                                                    no
+================  ================  ====  =================================================  =========
+
+Note: psutil may work on older versions of the above platforms but it is not
+guaranteed.
+
+Architectures
+^^^^^^^^^^^^^
+
+Supported CPU architectures and platforms tested in CI or with prebuilt wheels:
+
+================  ===========================  ===========================
+Architecture      CI-tested platforms          Wheel builds
+================  ===========================  ===========================
+x86_64            Linux, macOS, Windows        Linux, macOS, Windows
+aarch64 / ARM64   Linux, macOS, Windows        Linux, macOS, Windows
+================  ===========================  ===========================
+
+Notes:
+
+- Linux wheels are built for both glibc (manylinux) and musl.
+- macOS wheels are universal2 (include both x86_64 and arm64 slices).
+- Windows wheels are labeled AMD64 or ARM64 according to architecture.
+- Other architectures (i686, ppc64le, s390x, riscv64, ...) are supported
+  but not CI-tested. They can be compiled from the source tarball
+  (``pip install psutil --no-binary psutil``).
 
 Support history
----------------
+^^^^^^^^^^^^^^^
 
 * psutil 8.0.0 (2026-XX): drop Python 3.6
 * psutil 7.2.0 (2025-12): publish wheels for **Linux musl**

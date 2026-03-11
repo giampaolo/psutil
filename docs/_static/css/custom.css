@@ -15,6 +15,17 @@ footer div[role="navigation"][aria-label="Footer"] {
     display: block;
 }
 
+/* HTML tables */
+.wy-table-responsive table th,
+.wy-table-responsive table td {
+    padding: 10px !important;
+}
+
+/* HTML tables */
+.wy-table-responsive table thead {
+    background-color: #eeeeee;
+}
+
 .rst-content dl:not(.docutils) {
     margin: 0px 0px 0px 0px !important;
 }

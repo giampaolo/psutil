@@ -9,27 +9,49 @@ Changelog
 
 **Enhancements**
 
-- :gh:`2761`, :gh:`2757`, :gh:`2760`: Tons of doc improvements:
+Doc:
+
+- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`. Tons of doc improvements. In
+  order of importance:
+
   - Split the documentation from a single-page HTML document into multiple
-    sub-sections. Sections now include separate pages for API reference,
+    sections. Sections now include separate pages for API reference,
     installation, release timeline, FAQs, and more.
-  - Moved 18 years old HISTORY.rst into docs/changelog.rst for better
-    integration. Original file remains in the root with a note pointing to the
-    new location.
-  - Added tons of new examples in docs/recipes.rst.
+  - Moved 18 years old ``HISTORY.rst`` and ``INSTALL.rst`` files into
+    ``docs/changelog.rst`` and ``docs/install.rst`` for better integration.
+    Original files remain in the project root with a note pointing to the new
+    locations.
+  - Added a summary table of officially supported operating systems and
+    architectures.
+  - Added tons of new examples in ``docs/recipes.rst``.
+  - Drastically improved :func:`virtual_memory()` doc, which is now more
+    detailed, and includes a table with all the available metrics on each
+    platform.
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
   - Use sphinx extension to validate Python code snippets syntax at build-time.
 
-- :gh:`1946`: add inline type hints to all public APIs in `psutil/__init__.py`.
+Type hints / enums:
+
+- :gh:`1946`: Add inline type hints to all public APIs in `psutil/__init__.py`.
   Type checkers (mypy, pyright, etc.) can now statically verify code that uses
   psutil. No runtime behavior is changed; the annotations are purely
   informational.
+- :gh:`2751`: Convert all named tuples in `psutil/_ntuples.py`_ from
+  ``collections.namedtuple`` to ``typing.NamedTuple`` classes with **type
+  annotations**. This makes the classes self-documenting, effectively turning
+  this module into a readable API reference.
+- :gh:`2753`: Introduce enum classes (:class:`ProcessStatus`,
+  :class:`ConnectionStatus`,
+  :class:`ProcessIOPriority`, :class:`ProcessPriority`, :class:`ProcessRlimit`)
+  grouping related constants. The individual top-level constants (e.g.
+  ``psutil.STATUS_RUNNING``) remain the primary API, and are now aliases
+  for the corresponding enum members.
+
+New APIs:
+
 - :gh:`2729`: New :meth:`Process.page_faults()` method, returning a ``(minor,
   major)`` namedtuple.
-- :gh:`2745`: Drastically improve :func:`virtual_memory()` docstring, which is
-  now more detailed, and includes a table with all the available metrics on
-  each platform.
 - :gh:`2731`, :gh:`2736`, :gh:`2723`, :gh:`2733`: Reorganization of process
   memory APIs.
 
@@ -65,19 +87,11 @@ Changelog
   - :meth:`Process.memory_full_info()` is **deprecated**. Use the new
     :meth:`Process.memory_footprint()` instead.
 
+Others:
+
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times()`
   has been normalized on all platforms, and the first 3 fields are now always
   ``user, system, idle``. See compatibility notes below.
-- :gh:`2751`: convert all named tuples in `psutil/_ntuples.py`_ from
-  ``collections.namedtuple`` to ``typing.NamedTuple`` classes with **type
-  annotations**. This makes the classes self-documenting, effectively turning
-  this module into a readable API reference.
-- :gh:`2753`: Introduce enum classes (:class:`ProcessStatus`,
-  :class:`ConnectionStatus`,
-  :class:`ProcessIOPriority`, :class:`ProcessPriority`, :class:`ProcessRlimit`)
-  grouping related constants. The individual top-level constants (e.g.
-  ``psutil.STATUS_RUNNING``) remain the primary API, and are now aliases
-  for the corresponding enum members.
 - :gh:`2754`: standardize :func:`sensors_battery()`'s `percent` so that it
   returns a `float` instead of `int` on all systems, not only Linux.
 
