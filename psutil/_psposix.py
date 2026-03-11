@@ -6,6 +6,7 @@
 
 import enum
 import errno
+import functools
 import glob
 import os
 import select
@@ -16,7 +17,6 @@ from . import _ntuples as ntp
 from ._common import MACOS
 from ._common import TimeoutExpired
 from ._common import debug
-from ._common import memoize
 from ._common import usage_percent
 
 if MACOS:
@@ -234,7 +234,7 @@ def wait_pid_kqueue(pid, timeout=None):
         kq.close()
 
 
-@memoize
+@functools.lru_cache
 def can_use_pidfd_open():
     # Availability: Linux >= 5.3, Python >= 3.9
     if not hasattr(os, "pidfd_open"):
@@ -253,7 +253,7 @@ def can_use_pidfd_open():
         return True
 
 
-@memoize
+@functools.lru_cache
 def can_use_kqueue():
     # Availability: macOS, BSD
     names = (
@@ -340,7 +340,7 @@ def disk_usage(path):
     )
 
 
-@memoize
+@functools.lru_cache
 def get_terminal_map():
     """Get a map of device-id -> path as a dict.
     Used by Process.terminal().

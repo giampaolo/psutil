@@ -181,7 +181,7 @@ def get_urls(fname):
         return parse_generic(fname)
 
 
-@memoize
+@functools.lru_cache
 def validate_url(url):
     """Validate the URL by attempting an HTTP connection.
     Makes an HTTP-HEAD request for each URL.

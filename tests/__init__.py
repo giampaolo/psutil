@@ -55,7 +55,6 @@ from psutil import SUNOS
 from psutil import WINDOWS
 from psutil import _enums
 from psutil._common import debug
-from psutil._common import memoize
 from psutil._common import supports_ipv6
 
 if POSIX:
@@ -124,7 +123,7 @@ AARCH64 = platform.machine().lower() in {"aarch64", "arm64"}
 RISCV64 = platform.machine() == "riscv64"
 
 
-@memoize
+@functools.lru_cache
 def macos_version():
     version_str = platform.mac_ver()[0]
     version = tuple(map(int, version_str.split(".")[:2]))
@@ -1082,7 +1081,7 @@ class PsutilTestCase(unittest.TestCase):
 
 def is_win_secure_system_proc(pid):
     # see: https://github.com/giampaolo/psutil/issues/2338
-    @memoize
+    @functools.lru_cache
     def get_procs():
         ret = {}
         out = sh("tasklist.exe /NH /FO csv")
