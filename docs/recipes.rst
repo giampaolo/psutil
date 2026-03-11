@@ -42,7 +42,7 @@ A bit more advanced, check string against :meth:`Process.name()`,
   import os
   import psutil
 
-  def find_procs_by_name(name):
+  def find_procs_by_name_ex(name):
       ls = []
       for p in psutil.process_iter(["name", "exe", "cmdline"]):
           if (
@@ -63,9 +63,14 @@ Find the process listening on a given TCP port:
 
   def find_proc_by_port(port):
       for proc in psutil.process_iter():
-          for conn in proc.net_connections(kind="tcp"):
-              if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
-                  return proc
+          try:
+              cons = proc.net_connections(kind="tcp")
+          except psutil.Error:
+              pass
+          else:
+              for conn in cons:
+                  if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
+                      return proc
       return None
 
 ----
@@ -281,7 +286,7 @@ Print a process tree (similar to ``pstree``):
   import psutil
 
   def pstree(pid=None, indent=0):
-      parent = psutil.Process(pid) if pid else psutil.Process(psutil.ppid_map()[0])
+      parent = psutil.Process(pid or 1)
       name = "{} ({})".format(parent.name(), parent.pid)
       print("{}{}".format("  " * indent, name))
       for child in parent.children():
@@ -332,16 +337,23 @@ Kill a process tree (including grandchildren):
 
   import os
   import signal
+
   import psutil
 
-  def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
-                     timeout=None, on_terminate=None):
+
+  def kill_proc_tree(
+      pid,
+      sig=signal.SIGTERM,
+      include_parent=True,
+      timeout=None,
+      on_terminate=None,
+  ):
       """Kill a process tree (including grandchildren) with signal
       "sig" and return a (gone, still_alive) tuple.
       "on_terminate", if specified, is a callback function which is
       called as soon as a child terminates.
       """
-      assert pid != os.getpid(), "won't kill myself"
+      assert pid != os.getpid(), "I won't kill myself!"
       parent = psutil.Process(pid)
       children = parent.children(recursive=True)
       if include_parent:
@@ -351,8 +363,9 @@ Kill a process tree (including grandchildren):
               p.send_signal(sig)
           except psutil.NoSuchProcess:
               pass
-      gone, alive = psutil.wait_procs(children, timeout=timeout,
-                                      callback=on_terminate)
+      gone, alive = psutil.wait_procs(
+          children, timeout=timeout, callback=on_terminate
+      )
       return (gone, alive)
 
 ----
@@ -402,21 +415,6 @@ exit within the timeout:
           p.wait(timeout=timeout)
       except psutil.TimeoutExpired:
           p.kill()
-
-----
-
-Wait for a process to terminate, with an optional timeout:
-
-.. code-block:: python
-
-  import psutil
-
-  def wait_for_proc(pid, timeout=None):
-      p = psutil.Process(pid)
-      try:
-          return p.wait(timeout=timeout)
-      except psutil.TimeoutExpired:
-          return None
 
 ----
 
