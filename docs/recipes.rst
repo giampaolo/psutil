@@ -355,6 +355,85 @@ Find all processes that have a given file open (useful on Windows):
               pass
       return ls
 
+Graceful shutdown
+^^^^^^^^^^^^^^^^^
+
+Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
+exit within the timeout:
+
+.. code-block:: python
+
+  import psutil
+
+  def graceful_kill(pid, timeout=3):
+      p = psutil.Process(pid)
+      p.terminate()
+      try:
+          p.wait(timeout=timeout)
+      except psutil.TimeoutExpired:
+          p.kill()
+
+Find process by environment variable
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Find all processes that have a given environment variable set to a specific
+value (e.g. to identify processes running inside a virtualenv):
+
+.. code-block:: python
+
+  import psutil
+
+  def find_procs_by_env(key, value):
+      ls = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              if p.environ().get(key) == value:
+                  ls.append(p)
+          except (psutil.NoSuchProcess, psutil.AccessDenied):
+              pass
+      return ls
+
+Parent process chain
+^^^^^^^^^^^^^^^^^^^^^
+
+Walk up the parent chain of a process up to PID 1 (``init`` / ``launchd``):
+
+.. code-block:: python
+
+  import psutil
+
+  def parent_chain(pid):
+      p = psutil.Process(pid)
+      chain = []
+      while True:
+          parent = p.parent()
+          if parent is None:
+              break
+          chain.append(parent)
+          p = parent
+      return chain
+
+Top processes by disk I/O
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Find the top N processes by cumulative disk read + write bytes (similar to
+``iotop``):
+
+.. code-block:: python
+
+  import psutil
+
+  def top_io_procs(n=5):
+      procs = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              io = p.io_counters()
+              procs.append((io.read_bytes + io.write_bytes, p))
+          except (psutil.NoSuchProcess, psutil.AccessDenied):
+              pass
+      procs.sort(key=lambda x: x[0], reverse=True)
+      return procs[:n]
+
 Bytes conversion
 ----------------
 
