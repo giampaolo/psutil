@@ -3,11 +3,11 @@
 Recipes
 =======
 
-A collection of standalone, copy-paste solutions to specific problems.
-Each recipe focuses on a single problem and provides a minimal, copy-paste
-solution which can be adapted to real-world code. The examples are
-intentionally short and avoid unnecessary abstractions so that the underlying
-psutil APIs are easy to understand.
+A collection of standalone, copy-paste solutions to specific problems. Each
+recipe focuses on a single problem and provides a minimal solution which can be
+adapted to real-world code. The examples are intentionally short and avoid
+unnecessary abstractions so that the underlying psutil APIs are easy to
+understand.
 
 .. contents::
    :local:
@@ -32,6 +32,8 @@ Find process by name:
               ls.append(p)
       return ls
 
+----
+
 A bit more advanced, check string against :meth:`Process.name()`,
 :meth:`Process.exe()` and :meth:`Process.cmdline()`:
 
@@ -51,6 +53,8 @@ A bit more advanced, check string against :meth:`Process.name()`,
               ls.append(p)
       return ls
 
+----
+
 Find the process listening on a given TCP port:
 
 .. code-block:: python
@@ -63,6 +67,8 @@ Find the process listening on a given TCP port:
               if conn.laddr.port == port and conn.status == psutil.CONN_LISTEN:
                   return proc
       return None
+
+----
 
 Find all processes that have a given environment variable set to a specific
 value (e.g. to identify processes running inside a virtualenv):
@@ -80,6 +86,8 @@ value (e.g. to identify processes running inside a virtualenv):
           except psutil.Error:
               pass
       return ls
+
+----
 
 Find all processes that have an active connection to a given remote IP:
 
@@ -100,6 +108,8 @@ Find all processes that have an active connection to a given remote IP:
                       ls.append(proc)
       return ls
 
+----
+
 Find all zombie (defunct) processes:
 
 .. code-block:: python
@@ -109,6 +119,8 @@ Find all zombie (defunct) processes:
   def find_zombies():
       return [p for p in psutil.process_iter(["name", "status"])
               if p.info["status"] == psutil.STATUS_ZOMBIE]
+
+----
 
 Find all processes that have a given file open (useful on Windows):
 
@@ -146,6 +158,8 @@ Processes owned by user:
   (19772, 'ssh'),
   (20492, 'python')]
 
+----
+
 Processes actively running:
 
 .. code-block:: python
@@ -154,6 +168,8 @@ Processes actively running:
   [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
    (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
    (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
+
+----
 
 Processes using log files:
 
@@ -168,6 +184,8 @@ Processes using log files:
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
   2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
 
+----
+
 Processes consuming more than 500M of memory:
 
 .. code-block:: python
@@ -177,6 +195,8 @@ Processes consuming more than 500M of memory:
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
 
+----
+
 Top 3 processes which consumed the most CPU time:
 
 .. code-block:: python
@@ -185,6 +205,8 @@ Top 3 processes which consumed the most CPU time:
   [(2721, 'chrome', 10219.73),
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
+
+----
 
 Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
 
@@ -202,6 +224,8 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
               pass
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
+
+----
 
 Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
@@ -235,6 +259,8 @@ List all files currently opened by a process:
       except psutil.AccessDenied:
           return []
 
+----
+
 Walk up the parent chain up to PID 1 (``init`` / ``launchd``):
 
 .. code-block:: python
@@ -252,6 +278,8 @@ Walk up the parent chain up to PID 1 (``init`` / ``launchd``):
           p = parent
       return chain
 
+----
+
 Compute how long a process has been running:
 
 .. code-block:: python
@@ -264,6 +292,8 @@ Compute how long a process has been running:
       p = psutil.Process(pid)
       elapsed = time.time() - p.create_time()
       return str(datetime.timedelta(seconds=int(elapsed)))
+
+----
 
 Collect a process and all its descendants into a flat list:
 
@@ -292,8 +322,15 @@ Periodically monitor CPU and memory usage of a process using
           with p.oneshot():
               cpu = p.cpu_percent()
               mem = p.memory_info().rss
-              print("cpu={:<6} mem={}".format(str(cpu) + "%", bytes2human(mem)))
+              print("cpu={:<6} mem={}".format(str(cpu) + "%", mem / 1024 / 1024))
           time.sleep(interval)
+
+.. code-block:: none
+
+  cpu=4.2%   mem=23.4M
+  cpu=3.1%   mem=23.5M
+
+----
 
 Spawn a child process and monitor its resource usage until completion:
 
@@ -309,8 +346,13 @@ Spawn a child process and monitor its resource usage until completion:
       with p.oneshot():
           cpu = p.cpu_percent()
           mem = p.memory_info().rss
-          print("cpu={:<6} mem={}".format(str(cpu) + "%", bytes2human(mem)))
+          print("cpu={:<6} mem={}".format(str(cpu) + "%", mem / 1024 / 1024))
       time.sleep(1)
+
+.. code-block:: none
+
+  cpu=12.3%  mem=45.1M
+  cpu=8.7%   mem=45.2M
 
 Controlling processes
 ^^^^^^^^^^^^^^^^^^^^^
@@ -344,6 +386,8 @@ Kill a process tree (including grandchildren):
                                       callback=on_terminate)
       return (gone, alive)
 
+----
+
 Terminate all processes matching a given name:
 
 .. code-block:: python
@@ -354,6 +398,8 @@ Terminate all processes matching a given name:
       for p in psutil.process_iter(["name"]):
           if p.info["name"] == name:
               p.terminate()
+
+----
 
 Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
 exit within the timeout:
@@ -370,6 +416,8 @@ exit within the timeout:
       except psutil.TimeoutExpired:
           p.kill()
 
+----
+
 Wait for a process to terminate, with an optional timeout:
 
 .. code-block:: python
@@ -382,6 +430,8 @@ Wait for a process to terminate, with an optional timeout:
           return p.wait(timeout=timeout)
       except psutil.TimeoutExpired:
           return None
+
+----
 
 Temporarily pause and resume a process using a context manager:
 
@@ -442,36 +492,53 @@ Show both RAM and swap usage in human-readable form:
       ram = psutil.virtual_memory()
       swap = psutil.swap_memory()
       print("RAM:  total={}, used={}, free={}, percent={}%".format(
-          bytes2human(ram.total),
-          bytes2human(ram.used),
-          bytes2human(ram.available),
-          ram.percent
-      ))
+          bytes2human(ram.total), bytes2human(ram.used),
+          bytes2human(ram.available), ram.percent))
       print("Swap: total={}, used={}, free={}, percent={}%".format(
-          bytes2human(swap.total),
-          bytes2human(swap.used),
-          bytes2human(swap.free),
-          swap.percent
-      ))
+          bytes2human(swap.total), bytes2human(swap.used),
+          bytes2human(swap.free), swap.percent))
+
+.. code-block:: none
+
+  RAM:  total=8.0G, used=4.5G, free=3.0G, percent=56.2%
+  Swap: total=2.0G, used=0.1G, free=1.9G, percent=4.1%
 
 CPU
 ^^^
 
-Print CPU usage percentage for each core:
+Print real-time CPU usage percentage:
 
 .. code-block:: python
 
   import psutil
 
-  for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
-      print("CPU-{}: {}%".format(i, pct))
+  while True:
+      print("CPU: {}%".format(psutil.cpu_percent(interval=1)))
 
-...prints::
+.. code-block:: none
 
-  CPU-0: 4.2%
-  CPU-1: 10.5%
-  CPU-2: 2.1%
-  CPU-3: 8.0%
+  CPU: 2.1%
+  CPU: 1.4%
+  CPU: 0.9%
+
+----
+
+For each CPU core:
+
+.. code-block:: python
+
+  import psutil
+
+  while True:
+      for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
+          print("CPU-{}: {}%".format(i, pct))
+      print()
+
+.. code-block:: none
+
+  CPU-0: 1.0%
+  CPU-1: 2.1%
+  CPU-2: 3.0%
 
 Disks
 ^^^^^
@@ -485,13 +552,39 @@ Show disk usage for all mounted partitions:
   def print_disk_usage():
       for part in psutil.disk_partitions():
           usage = psutil.disk_usage(part.mountpoint)
-          print("{}: total={}, used={}, free={}, percent={}%".format(
+          print("{:<20} total={:<8} used={:<8} free={:<8} percent={}%".format(
               part.mountpoint,
-              bytes2human(usage.total),
-              bytes2human(usage.used),
-              bytes2human(usage.free),
-              usage.percent)
-          )
+              bytes2human(usage.total), bytes2human(usage.used),
+              bytes2human(usage.free), usage.percent))
+
+.. code-block:: none
+
+  /               total=47.8G    used=17.4G    free=27.9G    percent=38.4%
+  /boot/efi       total=256.0M   used=73.6M    free=182.4M   percent=28.8%
+  /home           total=878.7G   used=497.5G   free=336.5G   percent=59.7%
+
+
+----
+
+Show real-time disk I/O:
+
+.. code-block:: python
+
+  import psutil, time
+
+  def disk_io():
+      while True:
+          before = psutil.disk_io_counters()
+          time.sleep(1)
+          after = psutil.disk_io_counters()
+          r = after.read_bytes - before.read_bytes
+          w = after.write_bytes - before.write_bytes
+          print("Read: {}/s, Write: {}/s".format(bytes2human(r), bytes2human(w)))
+
+.. code-block:: none
+
+  Read: 1.2M/s, Write: 256.0K/s
+  Read: 0.0B/s, Write: 128.0K/s
 
 Network
 ^^^^^^^
@@ -500,28 +593,76 @@ List IP addresses for each network interface:
 
 .. code-block:: python
 
-  import psutil
+  import psutil, socket
 
   def print_net_addrs():
       for iface, addrs in psutil.net_if_addrs().items():
           for addr in addrs:
-              if addr.family.name == "AF_INET":
-                  print("{}: address={}, netmask={}".format(
-                      iface,
-                      addr.address,
-                      addr.netmask)
+              if addr.family == socket.AF_INET:
+                  print(
+                      "{:<15} address={:<15} netmask={}".format(
+                          iface, addr.address, addr.netmask
+                      )
                   )
 
-Show bytes sent and received per network interface:
+.. code-block:: none
+
+  lo              address=127.0.0.1       netmask=255.0.0.0
+  eth0            address=10.0.0.4        netmask=255.255.255.0
+
+----
+
+Show real-time network I/O per interface:
+
+.. code-block:: python
+
+  import psutil, time
+
+  def net_io():
+      while True:
+          before = psutil.net_io_counters(pernic=True)
+          time.sleep(1)
+          after = psutil.net_io_counters(pernic=True)
+          for iface in after:
+              s = after[iface].bytes_sent - before[iface].bytes_sent
+              r = after[iface].bytes_recv - before[iface].bytes_recv
+              print(
+                  "{:<10} sent={:<10} recv={}".format(
+                      iface, bytes2human(s) + "/s", bytes2human(r) + "/s"
+                  )
+              )
+          print()
+
+.. code-block:: none
+
+  lo         sent=0.0B/s    recv=0.0B/s
+  eth0       sent=12.3K/s   recv=45.6K/s
+
+----
+
+List all active TCP connections with their status:
 
 .. code-block:: python
 
   import psutil
 
-  def print_net_io():
-      for iface, stats in psutil.net_io_counters(pernic=True).items():
-          print("{}: sent={}, recv={}".format(
-              iface,
-              bytes2human(stats.bytes_sent),
-              bytes2human(stats.bytes_recv)
-          ))
+  def netstat():
+      templ = "{:<20} {:<20} {:<13} {:<6}"
+      print(templ.format("Local", "Remote", "Status", "PID"))
+      for conn in psutil.net_connections(kind="tcp"):
+          laddr = "{}:{}".format(conn.laddr.ip, conn.laddr.port)
+          raddr = (
+              "{}:{}".format(conn.raddr.ip, conn.raddr.port)
+              if conn.raddr
+              else "-"
+          )
+          print(templ.format(laddr, raddr, conn.status, conn.pid or ""))
+
+.. code-block:: none
+
+  Local             Remote              Status        PID
+  :::1716           -                   LISTEN        223441
+  127.0.0.1:631     -                   LISTEN
+  10.0.0.4:45278    20.222.111.74:443   ESTABLISHED   437213
+  10.0.0.4:40130    172.14.148.135:443  ESTABLISHED
+  0.0.0.0:22        -                   LISTEN        723345
