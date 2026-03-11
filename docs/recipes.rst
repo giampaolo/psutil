@@ -63,11 +63,11 @@ value (e.g. to identify processes running inside a virtualenv):
 
   def find_procs_by_env(key, value):
       ls = []
-      for p in psutil.process_iter(["pid", "name"]):
+      for p in psutil.process_iter():
           try:
               if p.environ().get(key) == value:
                   ls.append(p)
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
+          except psutil.Error:
               pass
       return ls
 
@@ -79,11 +79,15 @@ Find all processes that have an active connection to a given remote IP:
 
   def find_procs_by_remote_host(host):
       ls = []
-      for proc in psutil.process_iter(["pid", "name"]):
-          for conn in proc.net_connections(kind="inet"):
-              if conn.raddr and conn.raddr.ip == host:
-                  ls.append(proc)
-                  break
+      for proc in psutil.process_iter():
+          try:
+              cons = proc.net_connections(kind="inet")
+          except psutil.Error:
+              pass
+          else:
+              for conn in cons:
+                  if conn.raddr and conn.raddr.ip == host:
+                      ls.append(proc)
       return ls
 
 Find all zombie (defunct) processes:
@@ -104,13 +108,13 @@ Find all processes that have a given file open (useful on Windows):
 
   def find_procs_using_file(path):
       ls = []
-      for p in psutil.process_iter(["pid", "name"]):
+      for p in psutil.process_iter():
           try:
               for f in p.open_files():
                   if f.path == path:
                       ls.append(p)
                       break
-          except psutil.AccessDenied:
+          except psutil.Error:
               pass
       return ls
 
@@ -180,7 +184,7 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
 
   def top_io_procs(n=5):
       procs = []
-      for p in psutil.process_iter(["pid", "name"]):
+      for p in psutil.process_iter():
           try:
               io = p.io_counters()
               procs.append((io.read_bytes + io.write_bytes, p))
@@ -197,7 +201,7 @@ Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
   def top_open_files(n=5):
       procs = []
-      for p in psutil.process_iter(["pid", "name"]):
+      for p in psutil.process_iter():
           try:
               procs.append((p.num_fds(), p))
           except (psutil.NoSuchProcess, psutil.AccessDenied):
