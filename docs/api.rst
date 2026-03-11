@@ -2518,7 +2518,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 .. class:: psutil.ProcessStatus
 
   `enum.StrEnum`_ collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
-  constants. Returned by :meth:`psutil.Process.status()`.
+  constants. Returned by :meth:`Process.status()`.
 
   .. versionadded:: 8.0.0
 
@@ -2526,7 +2526,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   `enum.IntEnum`_ collection of
   :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
-  :meth:`psutil.Process.nice` on Windows.
+  :meth:`Process.nice` on Windows.
 
   Availability: Windows
 
@@ -2535,7 +2535,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 .. class:: psutil.ProcessIOPriority
 
   `enum.IntEnum`_ collection of I/O priority constants for
-  :meth:`psutil.Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
+  :meth:`Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
   On Windows: ``IOPRIO_*`` constants.
 
   Availability: Linux, Windows
@@ -2545,7 +2545,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 .. class:: psutil.ProcessRlimit
 
   `enum.IntEnum`_ collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
-  constants for :meth:`psutil.Process.rlimit`.
+  constants for :meth:`Process.rlimit`.
 
   Availability: Linux, FreeBSD
 
@@ -2555,7 +2555,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   `enum.StrEnum`_ collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
   constants. Returned in the *status* field of
-  :func:`psutil.net_connections` and :meth:`psutil.Process.net_connections`.
+  :func:`psutil.net_connections` and :meth:`Process.net_connections`.
 
   .. versionadded:: 8.0.0
 
@@ -2620,7 +2620,7 @@ Process status constants
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
 
-  Represent a process status. Returned by :meth:`psutil.Process.status()`.
+  Represent a process status. Returned by :meth:`Process.status()`.
   These constants are members of the :class:`psutil.ProcessStatus` enum.
 
   .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
@@ -2640,7 +2640,7 @@ Process priority constants
 .. data:: BELOW_NORMAL_PRIORITY_CLASS
 
   Represent the priority of a process on Windows (see `SetPriorityClass`_).
-  They can be used in conjunction with :meth:`psutil.Process.nice()` to get or
+  They can be used in conjunction with :meth:`Process.nice()` to get or
   set process priority.
   These constants are members of the :class:`psutil.ProcessPriority` enum.
 
@@ -2656,7 +2656,7 @@ Process priority constants
 .. data:: IOPRIO_CLASS_IDLE
 
   A set of integers representing the I/O priority of a process on Linux. They
-  can be used in conjunction with :meth:`psutil.Process.ionice()` to get or set
+  can be used in conjunction with :meth:`Process.ionice()` to get or set
   process I/O priority.
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
@@ -2682,7 +2682,7 @@ Process priority constants
 .. data:: IOPRIO_HIGH
 
   A set of integers representing the I/O priority of a process on Windows.
-  They can be used in conjunction with :meth:`psutil.Process.ionice()` to get
+  They can be used in conjunction with :meth:`Process.ionice()` to get
   or set process I/O priority.
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
@@ -2727,7 +2727,7 @@ FreeBSD specific:
   .. data:: RLIMIT_NPTS
 
 Constants used for getting and setting process resource limits to be used in
-conjunction with :meth:`psutil.Process.rlimit()`. See `resource.getrlimit`_
+conjunction with :meth:`Process.rlimit()`. See `resource.getrlimit`_
 for further information.
 These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
@@ -2759,7 +2759,7 @@ Connections constants
 .. data:: CONN_BOUND (Solaris)
 
   A set of strings representing the status of a TCP connection.
-  Returned by :meth:`psutil.Process.net_connections()` and
+  Returned by :meth:`Process.net_connections()` and
   :func:`psutil.net_connections` (`status` field).
   These constants are members of the :class:`psutil.ConnectionStatus` enum.
 
