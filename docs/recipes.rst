@@ -9,6 +9,10 @@ solution which can be adapted to real-world code. The examples are
 intentionally short and avoid unnecessary abstractions so that the underlying
 psutil APIs are easy to understand.
 
+.. contents::
+   :local:
+   :depth: 3
+
 Processes
 ---------
 
@@ -158,7 +162,7 @@ Processes using log files:
   >>> for p in psutil.process_iter(["name", "open_files"]):
   ...      for file in p.info["open_files"] or []:
   ...          if file.path.endswith(".log"):
-  ...               print("%-5s %-10s %s" % (p.pid, p.info["name"][:10], file.path))
+  ...               print("{:<5} {:<10} {}".format(p.pid, p.info["name"][:10], file.path))
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
@@ -288,7 +292,7 @@ Periodically monitor CPU and memory usage of a process using
           with p.oneshot():
               cpu = p.cpu_percent()
               mem = p.memory_info().rss
-              print("cpu=%-6s mem=%s" % (str(cpu) + "%", bytes2human(mem)))
+              print("cpu={:<6} mem={}".format(str(cpu) + "%", bytes2human(mem)))
           time.sleep(interval)
 
 Spawn a child process and monitor its resource usage until completion:
@@ -305,7 +309,7 @@ Spawn a child process and monitor its resource usage until completion:
       with p.oneshot():
           cpu = p.cpu_percent()
           mem = p.memory_info().rss
-          print("cpu=%-6s mem=%s" % (str(cpu) + "%", bytes2human(mem)))
+          print("cpu={:<6} mem={}".format(str(cpu) + "%", bytes2human(mem)))
       time.sleep(1)
 
 Controlling processes
@@ -422,8 +426,8 @@ them to a human-readable string:
       for s in reversed(symbols):
           if abs(n) >= prefix[s]:
               value = float(n) / prefix[s]
-              return "%.1f%s" % (value, s)
-      return "%sB" % n
+              return "{:.1f}{}".format(value, s)
+      return "{}B".format(n)
 
 Memory
 ^^^^^^
@@ -450,10 +454,10 @@ Show both RAM and swap usage in human-readable form:
   def print_memory():
       ram = psutil.virtual_memory()
       swap = psutil.swap_memory()
-      print("RAM:  total=%s, used=%s, free=%s, percent=%s%%" % (
+      print("RAM:  total={}, used={}, free={}, percent={}%".format(
           bytes2human(ram.total), bytes2human(ram.used),
           bytes2human(ram.available), ram.percent))
-      print("swap: total=%s, used=%s, free=%s, percent=%s%%" % (
+      print("swap: total={}, used={}, free={}, percent={}%".format(
           bytes2human(swap.total), bytes2human(swap.used),
           bytes2human(swap.free), swap.percent))
 
@@ -467,7 +471,7 @@ Print CPU usage percentage for each core:
   import psutil
 
   for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
-      print("cpu%s: %s%%" % (i, pct))
+      print("cpu{}: {}%".format(i, pct))
 
 ...prints::
 
@@ -488,12 +492,10 @@ Show disk usage for all mounted partitions:
   def print_disk_usage():
       for part in psutil.disk_partitions():
           usage = psutil.disk_usage(part.mountpoint)
-          print(
-              "%s: total=%s, used=%s, free=%s, percent=%s%%" % (
+          print("{}: total={}, used={}, free={}, percent={}%".format(
               part.mountpoint,
               bytes2human(usage.total), bytes2human(usage.used),
-              bytes2human(usage.free), usage.percent)
-          )
+              bytes2human(usage.free), usage.percent))
 
 Network
 ^^^^^^^
@@ -508,7 +510,7 @@ List IP addresses for each network interface:
       for iface, addrs in psutil.net_if_addrs().items():
           for addr in addrs:
               if addr.family.name == "AF_INET":
-                  print("%s: address=%s, netmask=%s" % (
+                  print("{}: address={}, netmask={}".format(
                       iface, addr.address, addr.netmask))
 
 Show bytes sent and received per network interface:
@@ -519,7 +521,7 @@ Show bytes sent and received per network interface:
 
   def print_net_io():
       for iface, stats in psutil.net_io_counters(pernic=True).items():
-          print("%s: sent=%s, recv=%s" % (
+          print("{}: sent={}, recv={}".format(
               iface,
               bytes2human(stats.bytes_sent),
               bytes2human(stats.bytes_recv)))
