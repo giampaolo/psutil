@@ -178,6 +178,146 @@ Top 3 processes which consumed the most CPU time:
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
 
+Terminate processes by name
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Terminate all processes matching a given name:
+
+.. code-block:: python
+
+  import psutil
+
+  def terminate_procs_by_name(name):
+      for p in psutil.process_iter(['name']):
+          if p.info['name'] == name:
+              p.terminate()
+
+Wait for a process to finish
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Wait for a process to terminate, with an optional timeout:
+
+.. code-block:: python
+
+  import psutil
+
+  def wait_for_proc(pid, timeout=None):
+      """Wait for process to terminate. Return exit code or None on timeout."""
+      p = psutil.Process(pid)
+      try:
+          return p.wait(timeout=timeout)
+      except psutil.TimeoutExpired:
+          return None
+
+Suspend and resume a process
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Temporarily pause and resume a process using a context manager:
+
+.. code-block:: python
+
+  import contextlib
+  import psutil
+
+  @contextlib.contextmanager
+  def suspended(pid):
+      p = psutil.Process(pid)
+      p.suspend()
+      try:
+          yield p
+      finally:
+          p.resume()
+
+  # usage:
+  with suspended(pid):
+      pass  # process is paused here
+
+Get process tree
+^^^^^^^^^^^^^^^^
+
+Collect a process and all its descendants into a flat list:
+
+.. code-block:: python
+
+  import psutil
+
+  def get_proc_tree(pid):
+      parent = psutil.Process(pid)
+      return [parent] + parent.children(recursive=True)
+
+Find processes connected to a host
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Find all processes that have an active connection to a given remote IP:
+
+.. code-block:: python
+
+  import psutil
+
+  def find_procs_by_remote_host(host):
+      ls = []
+      for proc in psutil.process_iter(['pid', 'name']):
+          for conn in proc.net_connections(kind='inet'):
+              if conn.raddr and conn.raddr.ip == host:
+                  ls.append(proc)
+                  break
+      return ls
+
+Find processes with most open file descriptors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Useful for diagnosing file descriptor leaks:
+
+.. code-block:: python
+
+  import psutil
+
+  def top_open_files(n=5):
+      procs = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              procs.append((p.num_fds(), p))
+          except (psutil.NoSuchProcess, psutil.AccessDenied):
+              pass
+      procs.sort(key=lambda x: x[0], reverse=True)
+      return procs[:n]
+
+Process uptime
+^^^^^^^^^^^^^^
+
+Compute how long a process has been running:
+
+.. code-block:: python
+
+  import datetime
+  import time
+  import psutil
+
+  def proc_uptime(pid):
+      p = psutil.Process(pid)
+      elapsed = time.time() - p.create_time()
+      return str(datetime.timedelta(seconds=int(elapsed)))
+
+Run a subprocess and monitor it
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Spawn a child process and monitor its resource usage until completion:
+
+.. code-block:: python
+
+  import subprocess
+  import time
+  import psutil
+
+  proc = subprocess.Popen(['my-app', '--arg'])
+  p = psutil.Process(proc.pid)
+  while proc.poll() is None:
+      with p.oneshot():
+          cpu = p.cpu_percent()
+          mem = p.memory_info().rss
+          print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
+      time.sleep(1)
+
 Bytes conversion
 ----------------
 
@@ -186,11 +326,12 @@ Bytes conversion
   import psutil
 
   def bytes2human(n):
-      # http://code.activestate.com/recipes/578019
-      # >>> bytes2human(10000)
-      # '9.8K'
-      # >>> bytes2human(100001221)
-      # '95.4M'
+      """
+      >>> bytes2human(10000)
+      '9.8K'
+      >>> bytes2human(100001221)
+      '95.4M'
+      """
       symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
       prefix = {}
       for i, s in enumerate(symbols):
