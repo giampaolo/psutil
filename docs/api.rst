@@ -2601,25 +2601,6 @@ Operating system constants
   .. warning::
     deprecated in version 5.4.7; use :const:`MACOS` instead.
 
-.. _const-procfs_path:
-.. data:: PROCFS_PATH
-
-  The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
-  ``"/proc"``).
-  You may want to re-set this constant right after importing psutil in case
-  your /proc filesystem is mounted elsewhere or if you want to retrieve
-  information about Linux containers such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`__
-  for more info).
-  It must be noted that this trick works only for APIs which rely on /proc
-  filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
-
-  Availability: Linux, Solaris, AIX
-
-  .. versionadded:: 3.2.3
-  .. versionchanged:: 3.4.2 also available on Solaris.
-  .. versionchanged:: 5.4.0 also available on AIX.
-
 Process status constants
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -2713,8 +2694,8 @@ Process priority constants
     :class:`psutil.ProcessIOPriority` enum members (previously
     ``IOPriority`` enum).
 
-Process resources constants
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Process resource constants
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Linux / FreeBSD:
 
@@ -2818,6 +2799,28 @@ Hardware constants
   May be assigned to :func:`psutil.sensors_battery()`'s *secsleft* field.
 
   .. versionadded:: 5.1.0
+
+Other constants
+^^^^^^^^^^^^^^^
+
+.. _const-procfs_path:
+.. data:: PROCFS_PATH
+
+  The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
+  ``"/proc"``).
+  You may want to re-set this constant right after importing psutil in case
+  your /proc filesystem is mounted elsewhere or if you want to retrieve
+  information about Linux containers such as Docker, Heroku or LXC (see
+  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`__
+  for more info).
+  It must be noted that this trick works only for APIs which rely on /proc
+  filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
+
+  Availability: Linux, Solaris, AIX
+
+  .. versionadded:: 3.2.3
+  .. versionchanged:: 3.4.2 also available on Solaris.
+  .. versionchanged:: 5.4.0 also available on AIX.
 
 .. _const-version-info:
 .. data:: version_info
