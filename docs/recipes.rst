@@ -432,19 +432,6 @@ them to a human-readable string:
 Memory
 ^^^^^^
 
-Print a summary of system memory usage:
-
-.. code-block:: python
-
-  import psutil
-
-  mem = psutil.virtual_memory()
-  print(mem)
-
-...prints::
-
-  svmem(total=8374149120, available=3192442880, percent=61.9, used=4765270016, free=260874240, ...)
-
 Show both RAM and swap usage in human-readable form:
 
 .. code-block:: python
@@ -455,11 +442,17 @@ Show both RAM and swap usage in human-readable form:
       ram = psutil.virtual_memory()
       swap = psutil.swap_memory()
       print("RAM:  total={}, used={}, free={}, percent={}%".format(
-          bytes2human(ram.total), bytes2human(ram.used),
-          bytes2human(ram.available), ram.percent))
-      print("swap: total={}, used={}, free={}, percent={}%".format(
-          bytes2human(swap.total), bytes2human(swap.used),
-          bytes2human(swap.free), swap.percent))
+          bytes2human(ram.total),
+          bytes2human(ram.used),
+          bytes2human(ram.available),
+          ram.percent
+      ))
+      print("Swap: total={}, used={}, free={}, percent={}%".format(
+          bytes2human(swap.total),
+          bytes2human(swap.used),
+          bytes2human(swap.free),
+          swap.percent
+      ))
 
 CPU
 ^^^
@@ -471,14 +464,14 @@ Print CPU usage percentage for each core:
   import psutil
 
   for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
-      print("cpu{}: {}%".format(i, pct))
+      print("CPU-{}: {}%".format(i, pct))
 
 ...prints::
 
-  cpu0: 4.2%
-  cpu1: 10.5%
-  cpu2: 2.1%
-  cpu3: 8.0%
+  CPU-0: 4.2%
+  CPU-1: 10.5%
+  CPU-2: 2.1%
+  CPU-3: 8.0%
 
 Disks
 ^^^^^
@@ -494,8 +487,11 @@ Show disk usage for all mounted partitions:
           usage = psutil.disk_usage(part.mountpoint)
           print("{}: total={}, used={}, free={}, percent={}%".format(
               part.mountpoint,
-              bytes2human(usage.total), bytes2human(usage.used),
-              bytes2human(usage.free), usage.percent))
+              bytes2human(usage.total),
+              bytes2human(usage.used),
+              bytes2human(usage.free),
+              usage.percent)
+          )
 
 Network
 ^^^^^^^
@@ -511,7 +507,10 @@ List IP addresses for each network interface:
           for addr in addrs:
               if addr.family.name == "AF_INET":
                   print("{}: address={}, netmask={}".format(
-                      iface, addr.address, addr.netmask))
+                      iface,
+                      addr.address,
+                      addr.netmask)
+                  )
 
 Show bytes sent and received per network interface:
 
@@ -524,4 +523,5 @@ Show bytes sent and received per network interface:
           print("{}: sent={}, recv={}".format(
               iface,
               bytes2human(stats.bytes_sent),
-              bytes2human(stats.bytes_recv)))
+              bytes2human(stats.bytes_recv)
+          ))
