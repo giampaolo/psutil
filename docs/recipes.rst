@@ -318,6 +318,43 @@ Spawn a child process and monitor its resource usage until completion:
           print("cpu=%-6s mem=%s" % (str(cpu) + '%', bytes2human(mem)))
       time.sleep(1)
 
+Files opened by process
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+List all files currently opened by a process:
+
+.. code-block:: python
+
+  import psutil
+
+  def files_opened_by(pid):
+      p = psutil.Process(pid)
+      try:
+          return [f.path for f in p.open_files()]
+      except psutil.AccessDenied:
+          return []
+
+Find processes using a file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Find all processes that have a given file open (useful on Windows):
+
+.. code-block:: python
+
+  import psutil
+
+  def find_procs_using_file(path):
+      ls = []
+      for p in psutil.process_iter(['pid', 'name']):
+          try:
+              for f in p.open_files():
+                  if f.path == path:
+                      ls.append(p)
+                      break
+          except psutil.AccessDenied:
+              pass
+      return ls
+
 Bytes conversion
 ----------------
 
