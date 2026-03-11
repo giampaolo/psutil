@@ -70,25 +70,6 @@ Find the process listening on a given TCP port:
 
 ----
 
-Find all processes that have a given environment variable set to a specific
-value (e.g. to identify processes running inside a virtualenv):
-
-.. code-block:: python
-
-  import psutil
-
-  def find_procs_by_env(key, value):
-      ls = []
-      for p in psutil.process_iter():
-          try:
-              if p.environ().get(key) == value:
-                  ls.append(p)
-          except psutil.Error:
-              pass
-      return ls
-
-----
-
 Find all processes that have an active connection to a given remote IP:
 
 .. code-block:: python
@@ -107,18 +88,6 @@ Find all processes that have an active connection to a given remote IP:
                   if conn.raddr and conn.raddr.ip == host:
                       ls.append(proc)
       return ls
-
-----
-
-Find all zombie (defunct) processes:
-
-.. code-block:: python
-
-  import psutil
-
-  def find_zombies():
-      return [p for p in psutil.process_iter(["name", "status"])
-              if p.info["status"] == psutil.STATUS_ZOMBIE]
 
 ----
 
@@ -412,6 +381,24 @@ Kill a process tree (including grandchildren):
 
 ----
 
+Kill / reap zombie (defunct) processes:
+
+
+.. code-block:: python
+
+  import psutil
+
+  def kill_zombies():
+      for p in psutil.process_iter(["status"]):
+          if p.info["status"] == psutil.STATUS_ZOMBIE:
+              parent = p.parent()
+              if parent:
+                  parent.terminate()
+                  parent.wait()
+                  p.wait()
+
+----
+
 Terminate all processes matching a given name:
 
 .. code-block:: python
@@ -454,6 +441,22 @@ Wait for a process to terminate, with an optional timeout:
           return p.wait(timeout=timeout)
       except psutil.TimeoutExpired:
           return None
+
+----
+
+Restart a process:
+
+.. code-block:: python
+
+  import subprocess
+  import psutil
+
+  def restart_process(pid):
+      p = psutil.Process(pid)
+      cmd = p.cmdline()
+      p.terminate()
+      p.wait()
+      return subprocess.Popen(cmd)
 
 ----
 
