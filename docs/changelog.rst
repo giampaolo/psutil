@@ -9,6 +9,18 @@ Changelog
 
 **Enhancements**
 
+- :gh:`2761`, :gh:`2757`, :gh:`2760`: Tons of doc improvements:
+  - Split the documentation from a single-page HTML document into multiple
+    sub-sections. Sections now include separate pages for API reference,
+    installation, release timeline, FAQs, and more.
+  - Moved 18 years old HISTORY.rst into docs/changelog.rst for better
+    integration. Original file remains in the root with a note pointing to the
+    new location.
+  - Added tons of new examples in docs/recipes.rst.
+  - Show a clickable COPY button to copy code snippets.
+  - Show ``psutil.`` prefix for all APIs.
+  - Use sphinx extension to validate Python code snippets syntax at build-time.
+
 - :gh:`1946`: add inline type hints to all public APIs in `psutil/__init__.py`.
   Type checkers (mypy, pyright, etc.) can now statically verify code that uses
   psutil. No runtime behavior is changed; the annotations are purely
@@ -68,12 +80,6 @@ Changelog
   for the corresponding enum members.
 - :gh:`2754`: standardize :func:`sensors_battery()`'s `percent` so that it
   returns a `float` instead of `int` on all systems, not only Linux.
-- :gh:`2757`: split the documentation from a single-page HTML document into
-  multiple sub-sections. Sections now include separate pages for API reference,
-  installation, release timeline, FAQs, and more.
-- :gh:`2760`: moved 18 years old HISTORY.rst into docs/changelog.rst for
-  better integration. Original file remains in the root with a note pointing to
-  the new location.
 
 **Bug fixes**
 
