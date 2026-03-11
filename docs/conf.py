@@ -46,6 +46,7 @@ extensions = [
     "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx_copybutton",
     # our own custom extensions in _ext/ dir
     "add_home_link",
     "changelog_anchors",
