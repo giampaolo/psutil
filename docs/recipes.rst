@@ -3,6 +3,12 @@
 Recipes
 =======
 
+A collection of standalone, copy-paste solutions to specific problems.
+Each recipe focuses on a single problem and provides a minimal, copy-paste
+solution which can be adapted to real-world code. The examples are
+intentionally short and avoid unnecessary abstractions so that the underlying
+psutil APIs are easy to understand.
+
 Processes
 ---------
 
@@ -389,7 +395,7 @@ Temporarily pause and resume a process using a context manager:
       finally:
           p.resume()
 
-  # usage:
+  # usage
   with suspended(pid):
       pass  # process is paused here
 
