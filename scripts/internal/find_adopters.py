@@ -36,6 +36,7 @@ MAX_STARS = 0
 MAX_PAGES = 0
 TOKEN = ""
 SKIP = set()
+RELAXED = False
 
 # Fixed files to check for dependency declarations.
 _FIXED_DEP_FILES = {
@@ -285,6 +286,29 @@ def fetch_dep_files(session, candidates):
     return result
 
 
+def code_search_import(session, full_name):
+    """Use GitHub code search REST API to check if a repo
+    contains 'import PROJECT' or 'from PROJECT import' in
+    .py files. Returns True if found.
+    """
+    url = "https://api.github.com/search/code"
+    q = (
+        f'"import {PROJECT}" OR "from {PROJECT} import" '
+        f'repo:{full_name} language:Python'
+    )
+    resp = session.get(url, params={"q": q, "per_page": 1})
+    if resp.status_code == 403:
+        # Rate limit hit; wait and retry once.
+        stderr("    code search rate limited, waiting 60s...")
+        time.sleep(60)
+        resp = session.get(url, params={"q": q, "per_page": 1})
+    if resp.status_code != 200:
+        stderr(f"    code search error: {resp.status_code} {resp.text[:200]}")
+        return False
+    data = resp.json()
+    return data.get("total_count", 0) > 0
+
+
 def classify_dependency(file_contents):
     """Classify the dependency type from fetched file contents.
 
@@ -467,7 +491,7 @@ def generate_rst(projects):
 
 def parse_cli():
     """Parse CLI arguments and set global constants."""
-    global PROJECT, MIN_STARS, MAX_STARS, MAX_PAGES, TOKEN, SKIP
+    global PROJECT, MIN_STARS, MAX_STARS, MAX_PAGES, TOKEN, SKIP, RELAXED
 
     parser = argparse.ArgumentParser(
         description=(
@@ -509,6 +533,16 @@ def parse_cli():
         default=[],
         help="Repos to skip (e.g. 'owner/repo').",
     )
+    parser.add_argument(
+        "--relaxed",
+        action="store_true",
+        default=False,
+        help=(
+            "Also search for 'import PROJECT' or "
+            "'from PROJECT import' in .py files "
+            "(uses GitHub code search)."
+        ),
+    )
     args = parser.parse_args()
 
     PROJECT = args.project
@@ -519,6 +553,7 @@ def parse_cli():
         TOKEN = f.read().strip()
     SKIP = set(args.skip)
     SKIP.add("vinta/awesome-python")
+    RELAXED = args.relaxed
 
 
 def main():
@@ -545,8 +580,9 @@ def main():
     stderr(f"After filtering: {len(candidates)} candidates.")
 
     # Batch-fetch dependency files for all candidates.
-    stderr("Fetching dependency files...")
-    all_dep_files = fetch_dep_files(session, candidates)
+    if not RELAXED:
+        stderr("Fetching dependency files...")
+        all_dep_files = fetch_dep_files(session, candidates)
 
     # Verify each candidate.
     confirmed = []
@@ -556,21 +592,39 @@ def main():
             f" https://github.com/{c['full_name']}"
             f" ({c['stars']} stars)..."
         )
-        file_contents = all_dep_files.get(c["full_name"], {})
-        status, detail = classify_dependency(file_contents)
-        if status != "no":
-            c["dep_type"] = status
-            c["dep_detail"] = detail
-            confirmed.append(c)
-            stderr(
-                f"    -> {status} dependency (via {detail})",
-                color="green",
-            )
+        if RELAXED:
+            # Search for import statements in .py files.
+            if code_search_import(session, c["full_name"]):
+                c["dep_type"] = "direct"
+                c["dep_detail"] = "import in .py"
+                confirmed.append(c)
+                stderr(
+                    "    -> direct dependency (via import in .py)",
+                    color="green",
+                )
+            else:
+                stderr(
+                    "    -> not a dependency, skipping",
+                    color="yellow",
+                )
+            # Code search is rate-limited to 10 req/min.
+            time.sleep(7)
         else:
-            stderr(
-                "    -> not a dependency, skipping",
-                color="yellow",
-            )
+            file_contents = all_dep_files.get(c["full_name"], {})
+            status, detail = classify_dependency(file_contents)
+            if status != "no":
+                c["dep_type"] = status
+                c["dep_detail"] = detail
+                confirmed.append(c)
+                stderr(
+                    f"    -> {status} dependency (via {detail})",
+                    color="green",
+                )
+            else:
+                stderr(
+                    "    -> not a dependency, skipping",
+                    color="yellow",
+                )
 
     stderr()
     stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.")
