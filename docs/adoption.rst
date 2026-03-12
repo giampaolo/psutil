@@ -19,6 +19,86 @@ Tier 1 (>40k GitHub stars)
      - Description
      - Stars
      - psutil usage
+   * - |thefuck-logo| `thefuck <https://github.com/nvbn/thefuck>`__
+     - Magnificent app which corrects your previous console comm...
+     - |thefuck-stars|
+     -
+   * - |browser-use-logo| `browser-use <https://github.com/browser-use/browser-use>`__
+     - 🌐 Make websites accessible for AI agents. Automate tasks ...
+     - |browser-use-stars|
+     -
+   * - |deep-live-cam-logo| `Deep-Live-Cam <https://github.com/hacksider/Deep-Live-Cam>`__
+     - real time face swap and one-click video deepfake with onl...
+     - |deep-live-cam-stars|
+     -
+   * - |vllm-logo| `vllm <https://github.com/vllm-project/vllm>`__
+     - A high-throughput and memory-efficient inference and serv...
+     - |vllm-stars|
+     -
+   * - |openhands-logo| `OpenHands <https://github.com/OpenHands/OpenHands>`__
+     - 🙌 OpenHands: AI-Driven Development
+     - |openhands-stars|
+     -
+   * - |localstack-logo| `localstack <https://github.com/localstack/localstack>`__
+     - 💻 A fully functional local AWS cloud stack. Develop and t...
+     - |localstack-stars|
+     -
+   * - |open-interpreter-logo| `open-interpreter <https://github.com/openinterpreter/open-interpreter>`__
+     - A natural language interface for computers
+     - |open-interpreter-stars|
+     -
+   * - |crawl4ai-logo| `crawl4ai <https://github.com/unclecode/crawl4ai>`__
+     - 🚀🤖 Crawl4AI: Open-source LLM Friendly Web Crawler & Scrap...
+     - |crawl4ai-stars|
+     -
+   * - |openpilot-logo| `openpilot <https://github.com/commaai/openpilot>`__
+     - openpilot is an operating system for robotics. Currently,...
+     - |openpilot-stars|
+     -
+   * - |yolov5-logo| `yolov5 <https://github.com/ultralytics/yolov5>`__
+     - YOLOv5 🚀 in PyTorch > ONNX > CoreML > TFLite
+     - |yolov5-stars|
+     -
+   * - |gpt-sovits-logo| `GPT-SoVITS <https://github.com/RVC-Boss/GPT-SoVITS>`__
+     - 1 min voice data can also be used to train a good TTS mod...
+     - |gpt-sovits-stars|
+     -
+   * - |unsloth-logo| `unsloth <https://github.com/unslothai/unsloth>`__
+     - Fine-tuning & Reinforcement Learning for LLMs. 🦥 Train Op...
+     - |unsloth-stars|
+     -
+   * - |n8n-workflows-logo| `n8n-workflows <https://github.com/Zie619/n8n-workflows>`__
+     - all of the workflows of n8n i could find (also from the s...
+     - |n8n-workflows-stars|
+     -
+   * - |odoo-logo| `odoo <https://github.com/odoo/odoo>`__
+     - Odoo. Open Source Apps To Grow Your Business.
+     - |odoo-stars|
+     -
+   * - |freqtrade-logo| `freqtrade <https://github.com/freqtrade/freqtrade>`__
+     - Free, open source crypto trading bot
+     - |freqtrade-stars|
+     -
+   * - |nanochat-logo| `nanochat <https://github.com/karpathy/nanochat>`__
+     - The best ChatGPT that $100 can buy.
+     - |nanochat-stars|
+     -
+   * - |exo-logo| `exo <https://github.com/exo-explore/exo>`__
+     - Run frontier AI locally.
+     - |exo-stars|
+     -
+   * - |aider-logo| `aider <https://github.com/Aider-AI/aider>`__
+     - aider is AI pair programming in your terminal
+     - |aider-stars|
+     -
+   * - |deepspeed-logo| `DeepSpeed <https://github.com/deepspeedai/DeepSpeed>`__
+     - DeepSpeed is a deep learning optimization library that ma...
+     - |deepspeed-stars|
+     -
+   * - |colossalai-logo| `ColossalAI <https://github.com/hpcaitech/ColossalAI>`__
+     - Making large AI models cheaper, faster and more accessible
+     - |colossalai-stars|
+     -
    * - |tensorflow-logo| `TensorFlow <https://github.com/tensorflow/tensorflow>`__
      - Open source machine learning framework by Google
      - |tensorflow-stars|
@@ -30,6 +110,10 @@ Tier 1 (>40k GitHub stars)
    * - |transformers-logo| `Transformers <https://github.com/huggingface/transformers>`__
      - State-of-the-art ML models for text, vision and audio
      - |transformers-stars|
+     -
+   * - |comfyui-logo| `ComfyUI <https://github.com/Comfy-Org/ComfyUI>`__
+     - The most powerful and modular diffusion model GUI, api an...
+     - |comfyui-stars|
      -
    * - |pytorch-logo| `PyTorch <https://github.com/pytorch/pytorch>`__
      - Tensors and dynamic neural networks with GPU acceleration
@@ -90,6 +174,10 @@ Tier 1 (>40k GitHub stars)
    * - |ray-logo| `Ray <https://github.com/ray-project/ray>`__
      - AI compute engine with distributed runtime
      - |ray-stars|
+     -
+   * - |minimind-logo| `minimind <https://github.com/jingyaogong/minimind>`__
+     -
+     - |minimind-stars|
      -
 
 Tier 2 (10k-40k GitHub stars)
@@ -330,6 +418,28 @@ How this list was compiled
 .. |mitmproxy-stars| image:: https://img.shields.io/github/stars/mitmproxy/mitmproxy.svg?style=plastic
 .. |gradio-stars| image:: https://img.shields.io/github/stars/gradio-app/gradio.svg?style=plastic
 .. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=plastic
+.. |comfyui-stars| image:: https://img.shields.io/github/stars/Comfy-Org/ComfyUI.svg?style=plastic
+.. |thefuck-stars| image:: https://img.shields.io/github/stars/nvbn/thefuck.svg?style=plastic
+.. |browser-use-stars| image:: https://img.shields.io/github/stars/browser-use/browser-use.svg?style=plastic
+.. |deep-live-cam-stars| image:: https://img.shields.io/github/stars/hacksider/Deep-Live-Cam.svg?style=plastic
+.. |vllm-stars| image:: https://img.shields.io/github/stars/vllm-project/vllm.svg?style=plastic
+.. |openhands-stars| image:: https://img.shields.io/github/stars/OpenHands/OpenHands.svg?style=plastic
+.. |localstack-stars| image:: https://img.shields.io/github/stars/localstack/localstack.svg?style=plastic
+.. |open-interpreter-stars| image:: https://img.shields.io/github/stars/openinterpreter/open-interpreter.svg?style=plastic
+.. |crawl4ai-stars| image:: https://img.shields.io/github/stars/unclecode/crawl4ai.svg?style=plastic
+.. |openpilot-stars| image:: https://img.shields.io/github/stars/commaai/openpilot.svg?style=plastic
+.. |yolov5-stars| image:: https://img.shields.io/github/stars/ultralytics/yolov5.svg?style=plastic
+.. |gpt-sovits-stars| image:: https://img.shields.io/github/stars/RVC-Boss/GPT-SoVITS.svg?style=plastic
+.. |unsloth-stars| image:: https://img.shields.io/github/stars/unslothai/unsloth.svg?style=plastic
+.. |n8n-workflows-stars| image:: https://img.shields.io/github/stars/Zie619/n8n-workflows.svg?style=plastic
+.. |odoo-stars| image:: https://img.shields.io/github/stars/odoo/odoo.svg?style=plastic
+.. |freqtrade-stars| image:: https://img.shields.io/github/stars/freqtrade/freqtrade.svg?style=plastic
+.. |nanochat-stars| image:: https://img.shields.io/github/stars/karpathy/nanochat.svg?style=plastic
+.. |exo-stars| image:: https://img.shields.io/github/stars/exo-explore/exo.svg?style=plastic
+.. |aider-stars| image:: https://img.shields.io/github/stars/Aider-AI/aider.svg?style=plastic
+.. |deepspeed-stars| image:: https://img.shields.io/github/stars/deepspeedai/DeepSpeed.svg?style=plastic
+.. |colossalai-stars| image:: https://img.shields.io/github/stars/hpcaitech/ColossalAI.svg?style=plastic
+.. |minimind-stars| image:: https://img.shields.io/github/stars/jingyaogong/minimind.svg?style=plastic
 
 .. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=plastic
 .. |detectron2-stars| image:: https://img.shields.io/github/stars/facebookresearch/detectron2.svg?style=plastic
@@ -398,6 +508,28 @@ How this list was compiled
 .. |mitmproxy-logo| image:: https://github.com/mitmproxy.png?s=28 :height: 28
 .. |gradio-logo| image:: https://github.com/gradio-app.png?s=28 :height: 28
 .. |ray-logo| image:: https://github.com/ray-project.png?s=28 :height: 28
+.. |comfyui-logo| image:: https://github.com/Comfy-Org.png?s=28 :height: 28
+.. |thefuck-logo| image:: https://github.com/nvbn.png?s=28 :height: 28
+.. |browser-use-logo| image:: https://github.com/browser-use.png?s=28 :height: 28
+.. |deep-live-cam-logo| image:: https://github.com/hacksider.png?s=28 :height: 28
+.. |vllm-logo| image:: https://github.com/vllm-project.png?s=28 :height: 28
+.. |openhands-logo| image:: https://github.com/OpenHands.png?s=28 :height: 28
+.. |localstack-logo| image:: https://github.com/localstack.png?s=28 :height: 28
+.. |open-interpreter-logo| image:: https://github.com/openinterpreter.png?s=28 :height: 28
+.. |crawl4ai-logo| image:: https://github.com/unclecode.png?s=28 :height: 28
+.. |openpilot-logo| image:: https://github.com/commaai.png?s=28 :height: 28
+.. |yolov5-logo| image:: https://github.com/ultralytics.png?s=28 :height: 28
+.. |gpt-sovits-logo| image:: https://github.com/RVC-Boss.png?s=28 :height: 28
+.. |unsloth-logo| image:: https://github.com/unslothai.png?s=28 :height: 28
+.. |n8n-workflows-logo| image:: https://github.com/Zie619.png?s=28 :height: 28
+.. |odoo-logo| image:: https://github.com/odoo.png?s=28 :height: 28
+.. |freqtrade-logo| image:: https://github.com/freqtrade.png?s=28 :height: 28
+.. |nanochat-logo| image:: https://github.com/karpathy.png?s=28 :height: 28
+.. |exo-logo| image:: https://github.com/exo-explore.png?s=28 :height: 28
+.. |aider-logo| image:: https://github.com/Aider-AI.png?s=28 :height: 28
+.. |deepspeed-logo| image:: https://github.com/deepspeedai.png?s=28 :height: 28
+.. |colossalai-logo| image:: https://github.com/hpcaitech.png?s=28 :height: 28
+.. |minimind-logo| image:: https://github.com/jingyaogong.png?s=28 :height: 28
 
 .. |glances-logo| image:: https://github.com/nicolargo.png?s=28 :height: 28
 .. |detectron2-logo| image:: https://github.com/facebookresearch.png?s=28 :height: 28

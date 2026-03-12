@@ -536,8 +536,7 @@ def generate_rst(projects):
 
             logo_images.append(
                 f".. |{name}-logo| image:: "
-                f"https://github.com/{owner}.png?s=28"
-                "\n   :height: 28"
+                f"https://github.com/{owner}.png?s=28 :height: 28"
             )
 
         lines.append("")
