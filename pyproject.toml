@@ -13,6 +13,9 @@ line-length = 79
 
 [tool.ruff.lint]
 preview = true
+extend-safe-fixes = [
+    "PLR6201",  # turn `1 in (1, 2)` into `1 in {1, 2}`
+]
 select = [
     # To get a list of all values: `python3 -m ruff linter`.
     "ALL",
