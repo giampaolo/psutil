@@ -27,14 +27,14 @@ Tier 1 (>40k GitHub stars)
      - Web UI for Stable Diffusion image generation
      - |sd-webui-stars|
      -
-   * - |transformers-logo| `HuggingFace Transformers <https://github.com/huggingface/transformers>`__
+   * - |transformers-logo| `Transformers <https://github.com/huggingface/transformers>`__
      - State-of-the-art ML models for text, vision and audio
      - |transformers-stars|
      -
    * - |pytorch-logo| `PyTorch <https://github.com/pytorch/pytorch>`__
      - Tensors and dynamic neural networks with GPU acceleration
      - |pytorch-stars|
-     -
+     - unit tests, benchmark scripts
    * - |homeassistant-logo| `Home Assistant <https://github.com/home-assistant/core>`__
      - Open source home automation platform
      - |homeassistant-stars|
@@ -46,10 +46,6 @@ Tier 1 (>40k GitHub stars)
    * - |keras-logo| `Keras <https://github.com/keras-team/keras>`__
      - Deep learning for humans
      - |keras-stars|
-     -
-   * - |scrapy-logo| `Scrapy <https://github.com/scrapy/scrapy>`__
-     - High-level web crawling and scraping framework
-     - |scrapy-stars|
      -
    * - |rich-logo| `Rich <https://github.com/Textualize/rich>`__
      - Rich text and beautiful formatting in the terminal
@@ -331,7 +327,6 @@ How this list was compiled
 .. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=plastic
 .. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg?style=plastic
 .. |keras-stars| image:: https://img.shields.io/github/stars/keras-team/keras.svg?style=plastic
-.. |scrapy-stars| image:: https://img.shields.io/github/stars/scrapy/scrapy.svg?style=plastic
 .. |rich-stars| image:: https://img.shields.io/github/stars/Textualize/rich.svg?style=plastic
 .. |autogen-stars| image:: https://img.shields.io/github/stars/microsoft/autogen.svg?style=plastic
 .. |faceswap-stars| image:: https://img.shields.io/github/stars/deepfakes/faceswap.svg?style=plastic
@@ -402,7 +397,6 @@ How this list was compiled
 .. |homeassistant-logo| image:: https://github.com/home-assistant.png?s=28 :height: 28
 .. |ansible-logo| image:: https://github.com/ansible.png?s=28 :height: 28
 .. |keras-logo| image:: https://github.com/keras-team.png?s=28 :height: 28
-.. |scrapy-logo| image:: https://github.com/scrapy.png?s=28 :height: 28
 .. |rich-logo| image:: https://github.com/Textualize.png?s=28 :height: 28
 .. |autogen-logo| image:: https://github.com/microsoft.png?s=28 :height: 28
 .. |faceswap-logo| image:: https://github.com/deepfakes.png?s=28 :height: 28
