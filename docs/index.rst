@@ -43,6 +43,9 @@ psutil currently supports the following platforms, from **Python 3.7** onwards:
 - **Sun Solaris**
 - **AIX**
 
+psutil is used by `many notable projects <adoption>`__ including
+TensorFlow, PyTorch, Home Assistant, Ansible, and Celery.
+
 Sponsors
 --------
 
