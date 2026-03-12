@@ -325,335 +325,140 @@ How this list was compiled
 .. ============================================================================
 
 .. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg?style=plastic
-   :target: https://github.com/tensorflow/tensorflow
 .. |sd-webui-stars| image:: https://img.shields.io/github/stars/AUTOMATIC1111/stable-diffusion-webui.svg?style=plastic
-   :target: https://github.com/AUTOMATIC1111/stable-diffusion-webui
 .. |transformers-stars| image:: https://img.shields.io/github/stars/huggingface/transformers.svg?style=plastic
-   :target: https://github.com/huggingface/transformers
 .. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=plastic
-   :target: https://github.com/pytorch/pytorch
 .. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=plastic
-   :target: https://github.com/home-assistant/core
 .. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg?style=plastic
-   :target: https://github.com/ansible/ansible
 .. |keras-stars| image:: https://img.shields.io/github/stars/keras-team/keras.svg?style=plastic
-   :target: https://github.com/keras-team/keras
 .. |scrapy-stars| image:: https://img.shields.io/github/stars/scrapy/scrapy.svg?style=plastic
-   :target: https://github.com/scrapy/scrapy
 .. |rich-stars| image:: https://img.shields.io/github/stars/Textualize/rich.svg?style=plastic
-   :target: https://github.com/Textualize/rich
 .. |autogen-stars| image:: https://img.shields.io/github/stars/microsoft/autogen.svg?style=plastic
-   :target: https://github.com/microsoft/autogen
 .. |faceswap-stars| image:: https://img.shields.io/github/stars/deepfakes/faceswap.svg?style=plastic
-   :target: https://github.com/deepfakes/faceswap
 .. |ultralytics-stars| image:: https://img.shields.io/github/stars/ultralytics/ultralytics.svg?style=plastic
-   :target: https://github.com/ultralytics/ultralytics
 .. |airflow-stars| image:: https://img.shields.io/github/stars/apache/airflow.svg?style=plastic
-   :target: https://github.com/apache/airflow
 .. |streamlit-stars| image:: https://img.shields.io/github/stars/streamlit/streamlit.svg?style=plastic
-   :target: https://github.com/streamlit/streamlit
 .. |sentry-stars| image:: https://img.shields.io/github/stars/getsentry/sentry.svg?style=plastic
-   :target: https://github.com/getsentry/sentry
 .. |spark-stars| image:: https://img.shields.io/github/stars/apache/spark.svg?style=plastic
-   :target: https://github.com/apache/spark
 .. |mitmproxy-stars| image:: https://img.shields.io/github/stars/mitmproxy/mitmproxy.svg?style=plastic
-   :target: https://github.com/mitmproxy/mitmproxy
 .. |gradio-stars| image:: https://img.shields.io/github/stars/gradio-app/gradio.svg?style=plastic
-   :target: https://github.com/gradio-app/gradio
 .. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=plastic
-   :target: https://github.com/ray-project/ray
-.. |osquery-stars| image:: https://img.shields.io/github/stars/osquery/osquery.svg?style=plastic
-   :target: https://github.com/osquery/osquery
 
 .. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=plastic
-   :target: https://github.com/nicolargo/glances
 .. |detectron2-stars| image:: https://img.shields.io/github/stars/facebookresearch/detectron2.svg?style=plastic
-   :target: https://github.com/facebookresearch/detectron2
 .. |mmdetection-stars| image:: https://img.shields.io/github/stars/open-mmlab/mmdetection.svg?style=plastic
-   :target: https://github.com/open-mmlab/mmdetection
 .. |lightning-stars| image:: https://img.shields.io/github/stars/Lightning-AI/pytorch-lightning.svg?style=plastic
-   :target: https://github.com/Lightning-AI/pytorch-lightning
 .. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg?style=plastic
-   :target: https://github.com/celery/celery
 .. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg?style=plastic
-   :target: https://github.com/locustio/locust
 .. |mlflow-stars| image:: https://img.shields.io/github/stars/mlflow/mlflow.svg?style=plastic
-   :target: https://github.com/mlflow/mlflow
 .. |dash-stars| image:: https://img.shields.io/github/stars/plotly/dash.svg?style=plastic
-   :target: https://github.com/plotly/dash
 .. |bokeh-stars| image:: https://img.shields.io/github/stars/bokeh/bokeh.svg?style=plastic
-   :target: https://github.com/bokeh/bokeh
 .. |luigi-stars| image:: https://img.shields.io/github/stars/spotify/luigi.svg?style=plastic
-   :target: https://github.com/spotify/luigi
 .. |awscli-stars| image:: https://img.shields.io/github/stars/aws/aws-cli.svg?style=plastic
-   :target: https://github.com/aws/aws-cli
 .. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=plastic
-   :target: https://github.com/saltstack/salt
 .. |nuitka-stars| image:: https://img.shields.io/github/stars/Nuitka/Nuitka.svg?style=plastic
-   :target: https://github.com/Nuitka/Nuitka
 .. |pytest-stars| image:: https://img.shields.io/github/stars/pytest-dev/pytest.svg?style=plastic
-   :target: https://github.com/pytest-dev/pytest
 .. |dask-stars| image:: https://img.shields.io/github/stars/dask/dask.svg?style=plastic
-   :target: https://github.com/dask/dask
 .. |optuna-stars| image:: https://img.shields.io/github/stars/optuna/optuna.svg?style=plastic
-   :target: https://github.com/optuna/optuna
 .. |jupyter-stars| image:: https://img.shields.io/github/stars/jupyter/notebook.svg?style=plastic
-   :target: https://github.com/jupyter/notebook
 .. |pyinstaller-stars| image:: https://img.shields.io/github/stars/pyinstaller/pyinstaller.svg?style=plastic
-   :target: https://github.com/pyinstaller/pyinstaller
 .. |numba-stars| image:: https://img.shields.io/github/stars/numba/numba.svg?style=plastic
-   :target: https://github.com/numba/numba
 .. |wandb-stars| image:: https://img.shields.io/github/stars/wandb/wandb.svg?style=plastic
-   :target: https://github.com/wandb/wandb
 .. |cython-stars| image:: https://img.shields.io/github/stars/cython/cython.svg?style=plastic
-   :target: https://github.com/cython/cython
 .. |modin-stars| image:: https://img.shields.io/github/stars/modin-project/modin.svg?style=plastic
-   :target: https://github.com/modin-project/modin
 .. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg?style=plastic
-   :target: https://github.com/aristocratos/bpytop
 .. |bashtop-stars| image:: https://img.shields.io/github/stars/aristocratos/bashtop.svg?style=plastic
-   :target: https://github.com/aristocratos/bashtop
 .. |flash-attn-stars| image:: https://img.shields.io/github/stars/Dao-AILab/flash-attention.svg?style=plastic
-   :target: https://github.com/Dao-AILab/flash-attention
+.. |osquery-stars| image:: https://img.shields.io/github/stars/osquery/osquery.svg?style=plastic
 
 .. |conan-stars| image:: https://img.shields.io/github/stars/conan-io/conan.svg?style=plastic
-   :target: https://github.com/conan-io/conan
 .. |spyder-stars| image:: https://img.shields.io/github/stars/spyder-ide/spyder.svg?style=plastic
-   :target: https://github.com/spyder-ide/spyder
 .. |jupyterhub-stars| image:: https://img.shields.io/github/stars/jupyterhub/jupyterhub.svg?style=plastic
-   :target: https://github.com/jupyterhub/jupyterhub
 .. |ajenti-stars| image:: https://img.shields.io/github/stars/ajenti/ajenti.svg?style=plastic
-   :target: https://github.com/ajenti/ajenti
 .. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg?style=plastic
-   :target: https://github.com/google/grr
 .. |buildbot-stars| image:: https://img.shields.io/github/stars/buildbot/buildbot.svg?style=plastic
-   :target: https://github.com/buildbot/buildbot
 .. |stui-stars| image:: https://img.shields.io/github/stars/amanusk/s-tui.svg?style=plastic
-   :target: https://github.com/amanusk/s-tui
 .. |joblib-stars| image:: https://img.shields.io/github/stars/joblib/joblib.svg?style=plastic
-   :target: https://github.com/joblib/joblib
 .. |xpra-stars| image:: https://img.shields.io/github/stars/Xpra-org/xpra.svg?style=plastic
-   :target: https://github.com/Xpra-org/xpra
 .. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg?style=plastic
-   :target: https://github.com/Jahaja/psdash
 .. |scons-stars| image:: https://img.shields.io/github/stars/SCons/scons.svg?style=plastic
-   :target: https://github.com/SCons/scons
 .. |diamond-stars| image:: https://img.shields.io/github/stars/python-diamond/Diamond.svg?style=plastic
-   :target: https://github.com/python-diamond/Diamond
 .. |ptop-stars| image:: https://img.shields.io/github/stars/darxtrix/ptop.svg?style=plastic
-   :target: https://github.com/darxtrix/ptop
 .. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=plastic
-   :target: https://github.com/giampaolo/psleak
 .. |auto-cpufreq-stars| image:: https://img.shields.io/github/stars/AdnanHodzic/auto-cpufreq.svg?style=plastic
-   :target: https://github.com/AdnanHodzic/auto-cpufreq
 .. |nvitop-stars| image:: https://img.shields.io/github/stars/XuehaiPan/nvitop.svg?style=plastic
-   :target: https://github.com/XuehaiPan/nvitop
 .. |memory-profiler-stars| image:: https://img.shields.io/github/stars/pythonprofilers/memory_profiler.svg?style=plastic
-   :target: https://github.com/pythonprofilers/memory_profiler
 .. |asitop-stars| image:: https://img.shields.io/github/stars/tlkh/asitop.svg?style=plastic
-   :target: https://github.com/tlkh/asitop
 .. |loki-stars| image:: https://img.shields.io/github/stars/Neo23x0/Loki.svg?style=plastic
-   :target: https://github.com/Neo23x0/Loki
 .. |tiptop-stars| image:: https://img.shields.io/github/stars/nschloe/tiptop.svg?style=plastic
-   :target: https://github.com/nschloe/tiptop
 
 .. Logo images
 .. ============================================================================
 
-.. |tensorflow-logo| image:: https://github.com/tensorflow.png?s=28
-   :height: 28
-   :target: https://github.com/tensorflow/tensorflow
-.. |sd-webui-logo| image:: https://github.com/AUTOMATIC1111.png?s=28
-   :height: 28
-   :target: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-.. |transformers-logo| image:: https://github.com/huggingface.png?s=28
-   :height: 28
-   :target: https://github.com/huggingface/transformers
-.. |pytorch-logo| image:: https://github.com/pytorch.png?s=28
-   :height: 28
-   :target: https://github.com/pytorch/pytorch
-.. |homeassistant-logo| image:: https://github.com/home-assistant.png?s=28
-   :height: 28
-   :target: https://github.com/home-assistant/core
-.. |ansible-logo| image:: https://github.com/ansible.png?s=28
-   :height: 28
-   :target: https://github.com/ansible/ansible
-.. |keras-logo| image:: https://github.com/keras-team.png?s=28
-   :height: 28
-   :target: https://github.com/keras-team/keras
-.. |scrapy-logo| image:: https://github.com/scrapy.png?s=28
-   :height: 28
-   :target: https://github.com/scrapy/scrapy
-.. |rich-logo| image:: https://github.com/Textualize.png?s=28
-   :height: 28
-   :target: https://github.com/Textualize/rich
-.. |autogen-logo| image:: https://github.com/microsoft.png?s=28
-   :height: 28
-   :target: https://github.com/microsoft/autogen
-.. |faceswap-logo| image:: https://github.com/deepfakes.png?s=28
-   :height: 28
-   :target: https://github.com/deepfakes/faceswap
-.. |ultralytics-logo| image:: https://github.com/ultralytics.png?s=28
-   :height: 28
-   :target: https://github.com/ultralytics/ultralytics
-.. |airflow-logo| image:: https://github.com/apache.png?s=28
-   :height: 28
-   :target: https://github.com/apache/airflow
-.. |streamlit-logo| image:: https://github.com/streamlit.png?s=28
-   :height: 28
-   :target: https://github.com/streamlit/streamlit
-.. |sentry-logo| image:: https://github.com/getsentry.png?s=28
-   :height: 28
-   :target: https://github.com/getsentry/sentry
-.. |spark-logo| image:: https://github.com/apache.png?s=28
-   :height: 28
-   :target: https://github.com/apache/spark
-.. |mitmproxy-logo| image:: https://github.com/mitmproxy.png?s=28
-   :height: 28
-   :target: https://github.com/mitmproxy/mitmproxy
-.. |gradio-logo| image:: https://github.com/gradio-app.png?s=28
-   :height: 28
-   :target: https://github.com/gradio-app/gradio
-.. |ray-logo| image:: https://github.com/ray-project.png?s=28
-   :height: 28
-   :target: https://github.com/ray-project/ray
+.. |tensorflow-logo| image:: https://github.com/tensorflow.png?s=28 :height: 28
+.. |sd-webui-logo| image:: https://github.com/AUTOMATIC1111.png?s=28 :height: 28
+.. |transformers-logo| image:: https://github.com/huggingface.png?s=28 :height: 28
+.. |pytorch-logo| image:: https://github.com/pytorch.png?s=28 :height: 28
+.. |homeassistant-logo| image:: https://github.com/home-assistant.png?s=28 :height: 28
+.. |ansible-logo| image:: https://github.com/ansible.png?s=28 :height: 28
+.. |keras-logo| image:: https://github.com/keras-team.png?s=28 :height: 28
+.. |scrapy-logo| image:: https://github.com/scrapy.png?s=28 :height: 28
+.. |rich-logo| image:: https://github.com/Textualize.png?s=28 :height: 28
+.. |autogen-logo| image:: https://github.com/microsoft.png?s=28 :height: 28
+.. |faceswap-logo| image:: https://github.com/deepfakes.png?s=28 :height: 28
+.. |ultralytics-logo| image:: https://github.com/ultralytics.png?s=28 :height: 28
+.. |airflow-logo| image:: https://github.com/apache.png?s=28 :height: 28
+.. |streamlit-logo| image:: https://github.com/streamlit.png?s=28 :height: 28
+.. |sentry-logo| image:: https://github.com/getsentry.png?s=28 :height: 28
+.. |spark-logo| image:: https://github.com/apache.png?s=28 :height: 28
+.. |mitmproxy-logo| image:: https://github.com/mitmproxy.png?s=28 :height: 28
+.. |gradio-logo| image:: https://github.com/gradio-app.png?s=28 :height: 28
+.. |ray-logo| image:: https://github.com/ray-project.png?s=28 :height: 28
 
-.. |glances-logo| image:: https://github.com/nicolargo.png?s=28
-   :height: 28
-   :target: https://github.com/nicolargo/glances
-.. |detectron2-logo| image:: https://github.com/facebookresearch.png?s=28
-   :height: 28
-   :target: https://github.com/facebookresearch/detectron2
-.. |mmdetection-logo| image:: https://github.com/open-mmlab.png?s=28
-   :height: 28
-   :target: https://github.com/open-mmlab/mmdetection
-.. |lightning-logo| image:: https://github.com/Lightning-AI.png?s=28
-   :height: 28
-   :target: https://github.com/Lightning-AI/pytorch-lightning
-.. |celery-logo| image:: https://github.com/celery.png?s=28
-   :height: 28
-   :target: https://github.com/celery/celery
-.. |locust-logo| image:: https://github.com/locustio.png?s=28
-   :height: 28
-   :target: https://github.com/locustio/locust
-.. |mlflow-logo| image:: https://github.com/mlflow.png?s=28
-   :height: 28
-   :target: https://github.com/mlflow/mlflow
-.. |dash-logo| image:: https://github.com/plotly.png?s=28
-   :height: 28
-   :target: https://github.com/plotly/dash
-.. |bokeh-logo| image:: https://github.com/bokeh.png?s=28
-   :height: 28
-   :target: https://github.com/bokeh/bokeh
-.. |luigi-logo| image:: https://github.com/spotify.png?s=28
-   :height: 28
-   :target: https://github.com/spotify/luigi
-.. |awscli-logo| image:: https://github.com/aws.png?s=28
-   :height: 28
-   :target: https://github.com/aws/aws-cli
-.. |salt-logo| image:: https://github.com/saltstack.png?s=28
-   :height: 28
-   :target: https://github.com/saltstack/salt
-.. |nuitka-logo| image:: https://github.com/Nuitka.png?s=28
-   :height: 28
-   :target: https://github.com/Nuitka/Nuitka
-.. |pytest-logo| image:: https://github.com/pytest-dev.png?s=28
-   :height: 28
-   :target: https://github.com/pytest-dev/pytest
-.. |dask-logo| image:: https://github.com/dask.png?s=28
-   :height: 28
-   :target: https://github.com/dask/dask
-.. |optuna-logo| image:: https://github.com/optuna.png?s=28
-   :height: 28
-   :target: https://github.com/optuna/optuna
-.. |jupyter-logo| image:: https://github.com/jupyter.png?s=28
-   :height: 28
-   :target: https://github.com/jupyter/notebook
-.. |pyinstaller-logo| image:: https://github.com/pyinstaller.png?s=28
-   :height: 28
-   :target: https://github.com/pyinstaller/pyinstaller
-.. |numba-logo| image:: https://github.com/numba.png?s=28
-   :height: 28
-   :target: https://github.com/numba/numba
-.. |wandb-logo| image:: https://github.com/wandb.png?s=28
-   :height: 28
-   :target: https://github.com/wandb/wandb
-.. |cython-logo| image:: https://github.com/cython.png?s=28
-   :height: 28
-   :target: https://github.com/cython/cython
-.. |modin-logo| image:: https://github.com/modin-project.png?s=28
-   :height: 28
-   :target: https://github.com/modin-project/modin
-.. |bpytop-logo| image:: https://github.com/aristocratos.png?s=28
-   :height: 28
-   :target: https://github.com/aristocratos/bpytop
-.. |bashtop-logo| image:: https://github.com/aristocratos.png?s=28
-   :height: 28
-   :target: https://github.com/aristocratos/bashtop
-.. |flash-attn-logo| image:: https://github.com/Dao-AILab.png?s=28
-   :height: 28
-   :target: https://github.com/Dao-AILab/flash-attention
+.. |glances-logo| image:: https://github.com/nicolargo.png?s=28 :height: 28
+.. |detectron2-logo| image:: https://github.com/facebookresearch.png?s=28 :height: 28
+.. |mmdetection-logo| image:: https://github.com/open-mmlab.png?s=28 :height: 28
+.. |lightning-logo| image:: https://github.com/Lightning-AI.png?s=28 :height: 28
+.. |celery-logo| image:: https://github.com/celery.png?s=28 :height: 28
+.. |locust-logo| image:: https://github.com/locustio.png?s=28 :height: 28
+.. |mlflow-logo| image:: https://github.com/mlflow.png?s=28 :height: 28
+.. |dash-logo| image:: https://github.com/plotly.png?s=28 :height: 28
+.. |bokeh-logo| image:: https://github.com/bokeh.png?s=28 :height: 28
+.. |luigi-logo| image:: https://github.com/spotify.png?s=28 :height: 28
+.. |awscli-logo| image:: https://github.com/aws.png?s=28 :height: 28
+.. |salt-logo| image:: https://github.com/saltstack.png?s=28 :height: 28
+.. |nuitka-logo| image:: https://github.com/Nuitka.png?s=28 :height: 28
+.. |pytest-logo| image:: https://github.com/pytest-dev.png?s=28 :height: 28
+.. |dask-logo| image:: https://github.com/dask.png?s=28 :height: 28
+.. |optuna-logo| image:: https://github.com/optuna.png?s=28 :height: 28
+.. |jupyter-logo| image:: https://github.com/jupyter.png?s=28 :height: 28
+.. |pyinstaller-logo| image:: https://github.com/pyinstaller.png?s=28 :height: 28
+.. |numba-logo| image:: https://github.com/numba.png?s=28 :height: 28
+.. |wandb-logo| image:: https://github.com/wandb.png?s=28 :height: 28
+.. |cython-logo| image:: https://github.com/cython.png?s=28 :height: 28
+.. |modin-logo| image:: https://github.com/modin-project.png?s=28 :height: 28
+.. |bpytop-logo| image:: https://github.com/aristocratos.png?s=28 :height: 28
+.. |bashtop-logo| image:: https://github.com/aristocratos.png?s=28 :height: 28
+.. |flash-attn-logo| image:: https://github.com/Dao-AILab.png?s=28 :height: 28
+.. |osquery-logo| image:: https://github.com/osquery.png?s=28 :height: 28
 
-.. |conan-logo| image:: https://github.com/conan-io.png?s=28
-   :height: 28
-   :target: https://github.com/conan-io/conan
-.. |spyder-logo| image:: https://github.com/spyder-ide.png?s=28
-   :height: 28
-   :target: https://github.com/spyder-ide/spyder
-.. |jupyterhub-logo| image:: https://github.com/jupyterhub.png?s=28
-   :height: 28
-   :target: https://github.com/jupyterhub/jupyterhub
-.. |ajenti-logo| image:: https://github.com/ajenti.png?s=28
-   :height: 28
-   :target: https://github.com/ajenti/ajenti
-.. |grr-logo| image:: https://github.com/google.png?s=28
-   :height: 28
-   :target: https://github.com/google/grr
-.. |buildbot-logo| image:: https://github.com/buildbot.png?s=28
-   :height: 28
-   :target: https://github.com/buildbot/buildbot
-.. |stui-logo| image:: https://github.com/amanusk.png?s=28
-   :height: 28
-   :target: https://github.com/amanusk/s-tui
-.. |joblib-logo| image:: https://github.com/joblib.png?s=28
-   :height: 28
-   :target: https://github.com/joblib/joblib
-.. |xpra-logo| image:: https://github.com/Xpra-org.png?s=28
-   :height: 28
-   :target: https://github.com/Xpra-org/xpra
-.. |psdash-logo| image:: https://github.com/Jahaja.png?s=28
-   :height: 28
-   :target: https://github.com/Jahaja/psdash
-.. |scons-logo| image:: https://github.com/SCons.png?s=28
-   :height: 28
-   :target: https://github.com/SCons/scons
-.. |diamond-logo| image:: https://github.com/python-diamond.png?s=28
-   :height: 28
-   :target: https://github.com/python-diamond/Diamond
-.. |ptop-logo| image:: https://github.com/darxtrix.png?s=28
-   :height: 28
-   :target: https://github.com/darxtrix/ptop
-.. |psleak-logo| image:: https://github.com/giampaolo.png?s=28
-   :height: 28
-   :target: https://github.com/giampaolo/psleak
-.. |auto-cpufreq-logo| image:: https://github.com/AdnanHodzic.png?s=28
-   :height: 28
-   :target: https://github.com/AdnanHodzic/auto-cpufreq
-.. |nvitop-logo| image:: https://github.com/XuehaiPan.png?s=28
-   :height: 28
-   :target: https://github.com/XuehaiPan/nvitop
-.. |memory-profiler-logo| image:: https://github.com/pythonprofilers.png?s=28
-   :height: 28
-   :target: https://github.com/pythonprofilers/memory_profiler
-.. |asitop-logo| image:: https://github.com/tlkh.png?s=28
-   :height: 28
-   :target: https://github.com/tlkh/asitop
-.. |loki-logo| image:: https://github.com/Neo23x0.png?s=28
-   :height: 28
-   :target: https://github.com/Neo23x0/Loki
-.. |tiptop-logo| image:: https://github.com/nschloe.png?s=28
-   :height: 28
-   :target: https://github.com/nschloe/tiptop
-.. |osquery-logo| image:: https://github.com/osquery.png?s=28
-   :height: 28
-   :target: https://github.com/osquery/osquery
+.. |conan-logo| image:: https://github.com/conan-io.png?s=28 :height: 28
+.. |spyder-logo| image:: https://github.com/spyder-ide.png?s=28 :height: 28
+.. |jupyterhub-logo| image:: https://github.com/jupyterhub.png?s=28 :height: 28
+.. |ajenti-logo| image:: https://github.com/ajenti.png?s=28 :height: 28
+.. |grr-logo| image:: https://github.com/google.png?s=28 :height: 28
+.. |buildbot-logo| image:: https://github.com/buildbot.png?s=28 :height: 28
+.. |stui-logo| image:: https://github.com/amanusk.png?s=28 :height: 28
+.. |joblib-logo| image:: https://github.com/joblib.png?s=28 :height: 28
+.. |xpra-logo| image:: https://github.com/Xpra-org.png?s=28 :height: 28
+.. |psdash-logo| image:: https://github.com/Jahaja.png?s=28 :height: 28
+.. |scons-logo| image:: https://github.com/SCons.png?s=28 :height: 28
+.. |diamond-logo| image:: https://github.com/python-diamond.png?s=28 :height: 28
+.. |ptop-logo| image:: https://github.com/darxtrix.png?s=28 :height: 28
+.. |psleak-logo| image:: https://github.com/giampaolo.png?s=28 :height: 28
+.. |auto-cpufreq-logo| image:: https://github.com/AdnanHodzic.png?s=28 :height: 28
+.. |nvitop-logo| image:: https://github.com/XuehaiPan.png?s=28 :height: 28
+.. |memory-profiler-logo| image:: https://github.com/pythonprofilers.png?s=28 :height: 28
+.. |asitop-logo| image:: https://github.com/tlkh.png?s=28 :height: 28
+.. |loki-logo| image:: https://github.com/Neo23x0.png?s=28 :height: 28
+.. |tiptop-logo| image:: https://github.com/nschloe.png?s=28 :height: 28
