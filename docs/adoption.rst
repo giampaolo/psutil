@@ -203,6 +203,10 @@ Tier 2 (10k-40k GitHub stars)
      - Terminal resource monitor (Bash)
      - |bashtop-stars|
      - optional data collection mode
+   * - |flash-attn-logo| `Flash Attention <https://github.com/Dao-AILab/flash-attention>`__
+     - Fast and memory-efficient exact attention
+     - |flash-attn-stars|
+     - build-time memory detection
 
 Tier 3 (1k-10k GitHub stars)
 ------------------------------
@@ -271,6 +275,30 @@ Tier 3 (1k-10k GitHub stars)
      - Memory and resource leak detection framework
      - |psleak-stars|
      - measures process memory and resources
+   * - |auto-cpufreq-logo| `auto-cpufreq <https://github.com/AdnanHodzic/auto-cpufreq>`__
+     - Automatic CPU speed and power optimizer for Linux
+     - |auto-cpufreq-stars|
+     - core dependency for CPU monitoring
+   * - |nvitop-logo| `nvitop <https://github.com/XuehaiPan/nvitop>`__
+     - Interactive NVIDIA-GPU process viewer
+     - |nvitop-stars|
+     - host CPU/memory stats
+   * - |memory-profiler-logo| `memory_profiler <https://github.com/pythonprofilers/memory_profiler>`__
+     - Line-by-line memory profiler for Python
+     - |memory-profiler-stars|
+     - core dependency for memory measurement
+   * - |asitop-logo| `asitop <https://github.com/tlkh/asitop>`__
+     - Apple Silicon performance monitoring CLI
+     - |asitop-stars|
+     - core dependency for system metrics
+   * - |loki-logo| `Loki <https://github.com/Neo23x0/Loki>`__
+     - Simple IOC and YARA scanner
+     - |loki-stars|
+     - process scanning and enumeration
+   * - |tiptop-logo| `tiptop <https://github.com/nschloe/tiptop>`__
+     - Command-line system monitor
+     - |tiptop-stars|
+     - core dependency for all metrics
 
 
 .. Star badges
@@ -362,6 +390,8 @@ Tier 3 (1k-10k GitHub stars)
    :target: https://github.com/aristocratos/bpytop
 .. |bashtop-stars| image:: https://img.shields.io/github/stars/aristocratos/bashtop.svg?style=plastic
    :target: https://github.com/aristocratos/bashtop
+.. |flash-attn-stars| image:: https://img.shields.io/github/stars/Dao-AILab/flash-attention.svg?style=plastic
+   :target: https://github.com/Dao-AILab/flash-attention
 
 .. |conan-stars| image:: https://img.shields.io/github/stars/conan-io/conan.svg?style=plastic
    :target: https://github.com/conan-io/conan
@@ -391,6 +421,18 @@ Tier 3 (1k-10k GitHub stars)
    :target: https://github.com/darxtrix/ptop
 .. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=plastic
    :target: https://github.com/giampaolo/psleak
+.. |auto-cpufreq-stars| image:: https://img.shields.io/github/stars/AdnanHodzic/auto-cpufreq.svg?style=plastic
+   :target: https://github.com/AdnanHodzic/auto-cpufreq
+.. |nvitop-stars| image:: https://img.shields.io/github/stars/XuehaiPan/nvitop.svg?style=plastic
+   :target: https://github.com/XuehaiPan/nvitop
+.. |memory-profiler-stars| image:: https://img.shields.io/github/stars/pythonprofilers/memory_profiler.svg?style=plastic
+   :target: https://github.com/pythonprofilers/memory_profiler
+.. |asitop-stars| image:: https://img.shields.io/github/stars/tlkh/asitop.svg?style=plastic
+   :target: https://github.com/tlkh/asitop
+.. |loki-stars| image:: https://img.shields.io/github/stars/Neo23x0/Loki.svg?style=plastic
+   :target: https://github.com/Neo23x0/Loki
+.. |tiptop-stars| image:: https://img.shields.io/github/stars/nschloe/tiptop.svg?style=plastic
+   :target: https://github.com/nschloe/tiptop
 
 .. Logo images
 
@@ -524,6 +566,9 @@ Tier 3 (1k-10k GitHub stars)
 .. |bashtop-logo| image:: https://github.com/aristocratos.png?s=28
    :height: 28
    :target: https://github.com/aristocratos/bashtop
+.. |flash-attn-logo| image:: https://github.com/Dao-AILab.png?s=28
+   :height: 28
+   :target: https://github.com/Dao-AILab/flash-attention
 
 .. |conan-logo| image:: https://github.com/conan-io.png?s=28
    :height: 28
@@ -567,3 +612,21 @@ Tier 3 (1k-10k GitHub stars)
 .. |psleak-logo| image:: https://github.com/giampaolo.png?s=28
    :height: 28
    :target: https://github.com/giampaolo/psleak
+.. |auto-cpufreq-logo| image:: https://github.com/AdnanHodzic.png?s=28
+   :height: 28
+   :target: https://github.com/AdnanHodzic/auto-cpufreq
+.. |nvitop-logo| image:: https://github.com/XuehaiPan.png?s=28
+   :height: 28
+   :target: https://github.com/XuehaiPan/nvitop
+.. |memory-profiler-logo| image:: https://github.com/pythonprofilers.png?s=28
+   :height: 28
+   :target: https://github.com/pythonprofilers/memory_profiler
+.. |asitop-logo| image:: https://github.com/tlkh.png?s=28
+   :height: 28
+   :target: https://github.com/tlkh/asitop
+.. |loki-logo| image:: https://github.com/Neo23x0.png?s=28
+   :height: 28
+   :target: https://github.com/Neo23x0/Loki
+.. |tiptop-logo| image:: https://github.com/nschloe.png?s=28
+   :height: 28
+   :target: https://github.com/nschloe/tiptop
