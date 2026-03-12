@@ -139,6 +139,10 @@ Tier 2 (10k-40k GitHub stars)
      - Data apps and dashboards for Python
      - |dash-stars|
      -
+   * - |osquery-logo| `OSQuery <https://github.com/osquery/osquery>`__
+     - SQL powered OS monitoring and analytics by Facebook
+     - |osquery-stars|
+     - unit tests
    * - |bokeh-logo| `Bokeh <https://github.com/bokeh/bokeh>`__
      - Interactive data visualization in the browser
      - |bokeh-stars|
@@ -301,7 +305,24 @@ Tier 3 (1k-10k GitHub stars)
      - measures process memory and resources
 
 
+How this list was compiled
+--------------------------
+
+- `GitHub dependency graph <https://github.com/giampaolo/psutil/network/dependents>`_
+  was used to identify packages and repositories that depend on psutil.
+- GitHub code search with query "psutil in:readme language:Python", sorted
+  by stars, was used to find additional projects that mention psutil in their
+  README.
+- Each candidate was then manually verified by checking the project's
+  pyproject.toml, setup.py, setup.cfg or requirements.txt to confirm that
+  psutil is an actual dependency (direct, build-time, or optional), not just
+  a passing mention.
+- Projects were excluded if they only mention psutil in documentation or
+  examples without declaring it as a dependency.
+- Star counts are pulled dynamically from `shields.io <https://shields.io/>`_ badges.
+
 .. Star badges
+.. ============================================================================
 
 .. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg?style=plastic
    :target: https://github.com/tensorflow/tensorflow
@@ -341,6 +362,8 @@ Tier 3 (1k-10k GitHub stars)
    :target: https://github.com/gradio-app/gradio
 .. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=plastic
    :target: https://github.com/ray-project/ray
+.. |osquery-stars| image:: https://img.shields.io/github/stars/osquery/osquery.svg?style=plastic
+   :target: https://github.com/osquery/osquery
 
 .. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=plastic
    :target: https://github.com/nicolargo/glances
@@ -435,6 +458,7 @@ Tier 3 (1k-10k GitHub stars)
    :target: https://github.com/nschloe/tiptop
 
 .. Logo images
+.. ============================================================================
 
 .. |tensorflow-logo| image:: https://github.com/tensorflow.png?s=28
    :height: 28
@@ -630,19 +654,6 @@ Tier 3 (1k-10k GitHub stars)
 .. |tiptop-logo| image:: https://github.com/nschloe.png?s=28
    :height: 28
    :target: https://github.com/nschloe/tiptop
-
-How this list was compiled
---------------------------
-
-- `GitHub dependency graph <https://github.com/giampaolo/psutil/network/dependents>`_
-  was used to identify packages and repositories that depend on psutil.
-- GitHub code search with query "psutil in:readme language:Python", sorted
-  by stars, was used to find additional projects that mention psutil in their
-  README.
-- Each candidate was then manually verified by checking the project's
-  pyproject.toml, setup.py, setup.cfg or requirements.txt to confirm that
-  psutil is an actual dependency (direct, build-time, or optional), not just
-  a passing mention.
-- Projects were excluded if they only mention psutil in documentation or
-  examples without declaring it as a dependency.
-- Star counts are pulled dynamically from `shields.io <https://shields.io/>`_ badges.
+.. |osquery-logo| image:: https://github.com/osquery.png?s=28
+   :height: 28
+   :target: https://github.com/osquery/osquery
