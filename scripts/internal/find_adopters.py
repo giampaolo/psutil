@@ -171,14 +171,12 @@ def search_github_code(session):
     'from PROJECT import' in .py files using GitHub code
     search REST API. Returns a list of candidates with
     repo metadata fetched via GraphQL.
+
+    Note: the code search API does not support the stars:
+    qualifier, so we fetch all results, deduplicate by repo,
+    then filter by MIN_STARS after fetching metadata.
     """
-    stars_q = f"stars:>={MIN_STARS}"
-    if MAX_STARS:
-        stars_q = f"stars:{MIN_STARS}..{MAX_STARS}"
-    search_q = (
-        f'"import {PROJECT}" OR "from {PROJECT} import" '
-        f'language:Python {stars_q}'
-    )
+    search_q = f'"import {PROJECT}" OR "from {PROJECT} import" language:Python'
     url = "https://api.github.com/search/code"
     seen = set()
     repo_names = []
@@ -254,6 +252,19 @@ def search_github_code(session):
                 "html_url": node["url"],
                 "archived": node["isArchived"],
             })
+
+    # Filter by stars (code search API doesn't support stars:).
+    before = len(results)
+    results = [
+        r
+        for r in results
+        if r["stars"] >= MIN_STARS
+        and (not MAX_STARS or r["stars"] <= MAX_STARS)
+    ]
+    if len(results) < before:
+        stderr(
+            f"  filtered {before - len(results)} repos below {MIN_STARS} stars"
+        )
     return results
 
 
@@ -272,7 +283,7 @@ def _build_fixed_dep_fragment():
     # Also fetch the requirements/ directory listing.
     fields.append(
         "    requirementsDir: object("
-        "expression: \"HEAD:requirements\") {\n"  # noqa: Q003
+        "expression: \"HEAD:requirements\") {\n"
         "      ... on Tree { entries { name } }\n"
         "    }"
     )
