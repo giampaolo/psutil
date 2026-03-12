@@ -4,18 +4,31 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Search GitHub for notable projects that use a given project
+r"""Search GitHub for notable projects that use a given project
 as a dependency.
 
-Uses the GitHub GraphQL API to find Python repositories that
-mention the project in their README, then verifies each candidate
-by batch-fetching its dependency files (pyproject.toml, setup.py,
-setup.cfg, requirements.txt) for an actual dependency declaration.
+Works in two stages:
+
+1. Search (--search): discover candidate repos.
+   - "readme": find Python repos mentioning PROJECT in their
+     README via GitHub GraphQL API (fast, ~15 queries).
+   - "import": find repos with 'import PROJECT' or
+     'from PROJECT import' in .py files via GitHub code
+     search REST API (slower, rate-limited to 10 req/min).
+
+2. Filter (--filter): verify candidates.
+   - "dependency": batch-fetch dependency files
+     (pyproject.toml, setup.py, setup.cfg, requirements.txt,
+     requirements/*.txt) and check for an actual dependency
+     declaration.
+   - "null": no filtering; all candidates pass through.
 
 Output is RsT formatted, ready to paste into docs/adoption.rst.
 
 Usage:
-    python3 find_adopters.py --project psutil --token ~/.github.api.key
+    python3 find_adopters.py \
+        --project psutil --token ~/.github.api.key \
+        --search=readme --filter=dependency
 """
 
 import argparse
@@ -36,7 +49,8 @@ MAX_STARS = 0
 MAX_PAGES = 0
 TOKEN = ""
 SKIP = set()
-RELAXED = False
+SEARCH = ""
+FILTER = ""
 
 # Fixed files to check for dependency declarations.
 _FIXED_DEP_FILES = {
@@ -149,6 +163,97 @@ def search_github(session):
             break
         cursor = page_info["endCursor"]
         time.sleep(1)
+    return results
+
+
+def search_github_code(session):
+    """Search for repos containing 'import PROJECT' or
+    'from PROJECT import' in .py files using GitHub code
+    search REST API. Returns a list of candidates with
+    repo metadata fetched via GraphQL.
+    """
+    stars_q = f"stars:>={MIN_STARS}"
+    if MAX_STARS:
+        stars_q = f"stars:{MIN_STARS}..{MAX_STARS}"
+    search_q = (
+        f'"import {PROJECT}" OR "from {PROJECT} import" '
+        f'language:Python {stars_q}'
+    )
+    url = "https://api.github.com/search/code"
+    seen = set()
+    repo_names = []
+    for page in range(1, MAX_PAGES + 1):
+        params = {"q": search_q, "per_page": 100, "page": page}
+        resp = session.get(url, params=params)
+        if resp.status_code == 403:
+            stderr("  code search rate limited, waiting 60s...")
+            time.sleep(60)
+            resp = session.get(url, params=params)
+        if resp.status_code != 200:
+            stderr(
+                f"  code search error: {resp.status_code} {resp.text[:200]}"
+            )
+            break
+        data = resp.json()
+        items = data.get("items", [])
+        if not items:
+            break
+        for item in items:
+            repo = item.get("repository", {})
+            full_name = repo.get("full_name", "")
+            if full_name and full_name not in seen:
+                seen.add(full_name)
+                repo_names.append(full_name)
+        stderr(
+            f"  code search page {page}: got {len(items)} "
+            f"results ({len(repo_names)} unique repos so far)"
+        )
+        if len(items) < 100:
+            break
+        # Code search: 10 req/min.
+        time.sleep(7)
+
+    if not repo_names:
+        return []
+
+    # Fetch repo metadata (stars, description, archived)
+    # via GraphQL batches.
+    stderr(f"  fetching metadata for {len(repo_names)} repos...")
+    results = []
+    for start in range(0, len(repo_names), _BATCH_SIZE):
+        batch = repo_names[start : start + _BATCH_SIZE]
+        repo_parts = []
+        for i, full_name in enumerate(batch):
+            owner, name = full_name.split("/", 1)
+            repo_parts.append(
+                f"  repo{i}: repository("
+                f'owner: "{owner}", name: "{name}") {{\n'
+                f"    nameWithOwner\n"
+                f"    owner {{ login }}\n"
+                f"    name\n"
+                f"    url\n"
+                f"    description\n"
+                f"    stargazerCount\n"
+                f"    isArchived\n"
+                f"  }}"
+            )
+        query = "query {\n" + "\n".join(repo_parts) + "\n}"
+        data = graphql(session, query)
+        if data is None:
+            continue
+        for i, full_name in enumerate(batch):
+            node = data.get(f"repo{i}")
+            if not node:
+                continue
+            results.append({
+                "full_name": node["nameWithOwner"],
+                "owner": node["owner"]["login"],
+                "repo": node["name"],
+                "stars": node["stargazerCount"],
+                "description": node.get("description") or "",
+                "html_url": node["url"],
+                "archived": node["isArchived"],
+            })
     return results
 
 
@@ -284,29 +389,6 @@ def fetch_dep_files(session, candidates):
                         result[c["full_name"]][path] = obj["text"]
 
     return result
-
-
-def code_search_import(session, full_name):
-    """Use GitHub code search REST API to check if a repo
-    contains 'import PROJECT' or 'from PROJECT import' in
-    .py files. Returns True if found.
-    """
-    url = "https://api.github.com/search/code"
-    q = (
-        f'"import {PROJECT}" OR "from {PROJECT} import" '
-        f'repo:{full_name} language:Python'
-    )
-    resp = session.get(url, params={"q": q, "per_page": 1})
-    if resp.status_code == 403:
-        # Rate limit hit; wait and retry once.
-        stderr("    code search rate limited, waiting 60s...")
-        time.sleep(60)
-        resp = session.get(url, params={"q": q, "per_page": 1})
-    if resp.status_code != 200:
-        stderr(f"    code search error: {resp.status_code} {resp.text[:200]}")
-        return False
-    data = resp.json()
-    return data.get("total_count", 0) > 0
 
 
 def classify_dependency(file_contents):
@@ -491,7 +573,7 @@ def generate_rst(projects):
 
 def parse_cli():
     """Parse CLI arguments and set global constants."""
-    global PROJECT, MIN_STARS, MAX_STARS, MAX_PAGES, TOKEN, SKIP, RELAXED
+    global PROJECT, MIN_STARS, MAX_STARS, MAX_PAGES, TOKEN, SKIP, SEARCH, FILTER  # noqa: E501
 
     parser = argparse.ArgumentParser(
         description=(
@@ -534,13 +616,22 @@ def parse_cli():
         help="Repos to skip (e.g. 'owner/repo').",
     )
     parser.add_argument(
-        "--relaxed",
-        action="store_true",
-        default=False,
+        "--search",
+        required=True,
+        choices=["readme", "import"],
         help=(
-            "Also search for 'import PROJECT' or "
-            "'from PROJECT import' in .py files "
-            "(uses GitHub code search)."
+            "Search strategy: 'readme' searches for "
+            "PROJECT in README (fast), 'import' searches "
+            "for import statements in .py files (slower)."
+        ),
+    )
+    parser.add_argument(
+        "--filter",
+        default="dependency",
+        choices=["dependency", "null"],
+        help=(
+            "Filter strategy: 'dependency' checks dep "
+            "files (default), 'null' accepts all candidates."
         ),
     )
     args = parser.parse_args()
@@ -553,63 +644,55 @@ def parse_cli():
         TOKEN = f.read().strip()
     SKIP = set(args.skip)
     SKIP.add("vinta/awesome-python")
-    RELAXED = args.relaxed
+    SEARCH = args.search
+    FILTER = args.filter
 
 
 def main():
     parse_cli()
     session = get_session(TOKEN)
 
-    stderr(
-        f"Searching GitHub for Python repos mentioning {PROJECT} "
-        f"(>={MIN_STARS} stars)..."
-    )
-    candidates = search_github(session)
+    # --- Step 1: Search ---
+    if SEARCH == "readme":
+        stderr(
+            "Searching GitHub for Python repos mentioning "
+            f"{PROJECT} (>={MIN_STARS} stars)..."
+        )
+        candidates = search_github(session)
+    elif SEARCH == "import":
+        stderr(
+            f"Searching GitHub code for 'import {PROJECT}' "
+            f"(>={MIN_STARS} stars)..."
+        )
+        candidates = search_github_code(session)
     stderr(f"Found {len(candidates)} candidates.")
 
-    # Filter out skipped and archived repos.
+    # Always filter out skipped and archived repos.
     filtered = []
     for c in candidates:
         if c["full_name"] in SKIP:
             continue
         if c["archived"]:
-            stderr(f"  skipping {c['full_name']} (archived)")
+            stderr(
+                f"  skipping {c['full_name']} (archived)",
+                color="yellow",
+            )
             continue
         filtered.append(c)
     candidates = filtered
     stderr(f"After filtering: {len(candidates)} candidates.")
 
-    # Batch-fetch dependency files for all candidates.
-    if not RELAXED:
+    # --- Step 2: Filter ---
+    if FILTER == "dependency":
         stderr("Fetching dependency files...")
         all_dep_files = fetch_dep_files(session, candidates)
-
-    # Verify each candidate.
-    confirmed = []
-    for i, c in enumerate(candidates, 1):
-        stderr(
-            f"  [{i}/{len(candidates)}] Checking"
-            f" https://github.com/{c['full_name']}"
-            f" ({c['stars']} stars)..."
-        )
-        if RELAXED:
-            # Search for import statements in .py files.
-            if code_search_import(session, c["full_name"]):
-                c["dep_type"] = "direct"
-                c["dep_detail"] = "import in .py"
-                confirmed.append(c)
-                stderr(
-                    "    -> direct dependency (via import in .py)",
-                    color="green",
-                )
-            else:
-                stderr(
-                    "    -> not a dependency, skipping",
-                    color="yellow",
-                )
-            # Code search is rate-limited to 10 req/min.
-            time.sleep(7)
-        else:
+        confirmed = []
+        for i, c in enumerate(candidates, 1):
+            stderr(
+                f"  [{i}/{len(candidates)}] Checking"
+                f" https://github.com/{c['full_name']}"
+                f" ({c['stars']} stars)..."
+            )
             file_contents = all_dep_files.get(c["full_name"], {})
             status, detail = classify_dependency(file_contents)
             if status != "no":
@@ -625,6 +708,12 @@ def main():
                     "    -> not a dependency, skipping",
                     color="yellow",
                 )
+    elif FILTER == "null":
+        confirmed = []
+        for c in candidates:
+            c["dep_type"] = "direct"
+            c["dep_detail"] = ""
+            confirmed.append(c)
 
     stderr()
     stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.")
