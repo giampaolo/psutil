@@ -60,10 +60,9 @@
         <br />
         <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.readthedocs.io/adoption"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.readthedocs.io/changelog"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
     </div>
