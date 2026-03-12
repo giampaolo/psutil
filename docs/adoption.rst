@@ -267,14 +267,6 @@ Tier 3 (1k-10k GitHub stars)
      - Metrics collection daemon for Graphite
      - |diamond-stars|
      - psutil-backed collectors
-   * - |ptop-logo| `ptop <https://github.com/darxtrix/ptop>`__
-     - Terminal task manager
-     - |ptop-stars|
-     - core dependency for all metrics
-   * - |psleak-logo| `psleak <https://github.com/giampaolo/psleak>`__
-     - Memory and resource leak detection framework
-     - |psleak-stars|
-     - measures process memory and resources
    * - |auto-cpufreq-logo| `auto-cpufreq <https://github.com/AdnanHodzic/auto-cpufreq>`__
      - Automatic CPU speed and power optimizer for Linux
      - |auto-cpufreq-stars|
@@ -299,6 +291,14 @@ Tier 3 (1k-10k GitHub stars)
      - Command-line system monitor
      - |tiptop-stars|
      - core dependency for all metrics
+   * - |ptop-logo| `ptop <https://github.com/darxtrix/ptop>`__
+     - Terminal task manager
+     - |ptop-stars|
+     - core dependency for all metrics
+   * - |psleak-logo| `psleak <https://github.com/giampaolo/psleak>`__
+     - Memory and resource leak detection framework
+     - |psleak-stars|
+     - measures process memory and resources
 
 
 .. Star badges
@@ -630,3 +630,19 @@ Tier 3 (1k-10k GitHub stars)
 .. |tiptop-logo| image:: https://github.com/nschloe.png?s=28
    :height: 28
    :target: https://github.com/nschloe/tiptop
+
+How this list was compiled
+--------------------------
+
+- `GitHub dependency graph <https://github.com/giampaolo/psutil/network/dependents>`_
+  was used to identify packages and repositories that depend on psutil.
+- GitHub code search with query "psutil in:readme language:Python", sorted
+  by stars, was used to find additional projects that mention psutil in their
+  README.
+- Each candidate was then manually verified by checking the project's
+  pyproject.toml, setup.py, setup.cfg or requirements.txt to confirm that
+  psutil is an actual dependency (direct, build-time, or optional), not just
+  a passing mention.
+- Projects were excluded if they only mention psutil in documentation or
+  examples without declaring it as a dependency.
+- Star counts are pulled dynamically from `shields.io <https://shields.io/>`_ badges.
