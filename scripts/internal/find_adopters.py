@@ -17,13 +17,11 @@ Requirements:
     pip install requests
 
 Usage:
-    export GITHUB_TOKEN=ghp_...
-    python3 scripts/internal/find_adopters.py [--min-stars 1000]
+    python3 find_adopters.py --token /path/to/token/file
 """
 
 import argparse
 import base64
-import os
 import re
 import sys
 import time
@@ -60,11 +58,10 @@ PSUTIL_PATTERNS = [
 ]
 
 
-def get_session(token=None):
+def get_session(token):
     s = requests.Session()
     s.headers["Accept"] = "application/vnd.github.v3+json"
-    if token:
-        s.headers["Authorization"] = f"token {token}"
+    s.headers["Authorization"] = f"Bearer {token}"
     return s
 
 
@@ -353,14 +350,19 @@ def main():
     parser.add_argument(
         "--min-stars",
         type=int,
-        default=1000,
-        help="Minimum GitHub stars to consider (default: 1000).",
+        default=300,
+        help="Minimum GitHub stars to consider (default: 300).",
     )
     parser.add_argument(
         "--max-pages",
         type=int,
         default=5,
         help="Max search result pages to fetch (default: 5).",
+    )
+    parser.add_argument(
+        "--token",
+        required=True,
+        help="Path to a file containing the GitHub token.",
     )
     parser.add_argument(
         "--skip",
@@ -370,13 +372,8 @@ def main():
     )
     args = parser.parse_args()
 
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        print(
-            "warning: GITHUB_TOKEN not set; rate limit is 60 req/hr",
-            file=sys.stderr,
-        )
-        print("  export GITHUB_TOKEN=ghp_... for 5000 req/hr", file=sys.stderr)
+    with open(args.token) as f:
+        token = f.read().strip()
     session = get_session(token)
 
     # Always skip psutil itself and meta-lists.
