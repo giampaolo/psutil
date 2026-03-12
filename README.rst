@@ -479,24 +479,23 @@ on PyPI, with `760,000+ dependent GitHub repositories
 <https://github.com/giampaolo/psutil/network/dependents>`__ and 14,000+
 dependent packages. Some notable projects using psutil:
 
-- `TensorFlow <https://github.com/tensorflow/tensorflow>`__,
-  `PyTorch <https://github.com/pytorch/pytorch>`__,
-  `HuggingFace Transformers <https://github.com/huggingface/transformers>`__,
-  `Keras <https://github.com/keras-team/keras>`__,
-  `Ultralytics (YOLO) <https://github.com/ultralytics/ultralytics>`__
-- `Home Assistant <https://github.com/home-assistant/core>`__,
-  `Ansible <https://github.com/ansible/ansible>`__,
-  `Apache Airflow <https://github.com/apache/airflow>`__,
-  `Sentry <https://github.com/getsentry/sentry>`__
-- `Celery <https://github.com/celery/celery>`__,
-  `Scrapy <https://github.com/scrapy/scrapy>`__,
-  `Streamlit <https://github.com/streamlit/streamlit>`__,
-  `Dask <https://github.com/dask/dask>`__
-- `Glances <https://github.com/nicolargo/glances>`__,
-  `bpytop <https://github.com/aristocratos/bpytop>`__,
-  `Ajenti <https://github.com/ajenti/ajenti>`__,
-  `GRR <https://github.com/google/grr>`__
-- `psleak <https://github.com/giampaolo/psleak>`__
+- |rm-tensorflow| `TensorFlow <https://github.com/tensorflow/tensorflow>`__
+- |rm-pytorch| `PyTorch <https://github.com/pytorch/pytorch>`__
+- |rm-transformers| `HuggingFace Transformers <https://github.com/huggingface/transformers>`__
+- |rm-keras| `Keras <https://github.com/keras-team/keras>`__
+- |rm-ultralytics| `Ultralytics (YOLO) <https://github.com/ultralytics/ultralytics>`__
+- |rm-homeassistant| `Home Assistant <https://github.com/home-assistant/core>`__
+- |rm-ansible| `Ansible <https://github.com/ansible/ansible>`__
+- |rm-airflow| `Apache Airflow <https://github.com/apache/airflow>`__
+- |rm-sentry| `Sentry <https://github.com/getsentry/sentry>`__
+- |rm-celery| `Celery <https://github.com/celery/celery>`__
+- |rm-scrapy| `Scrapy <https://github.com/scrapy/scrapy>`__
+- |rm-streamlit| `Streamlit <https://github.com/streamlit/streamlit>`__
+- |rm-dask| `Dask <https://github.com/dask/dask>`__
+- |rm-glances| `Glances <https://github.com/nicolargo/glances>`__
+- |rm-bpytop| `bpytop <https://github.com/aristocratos/bpytop>`__
+- |rm-grr| `GRR <https://github.com/google/grr>`__
+- |rm-psleak| `psleak <https://github.com/giampaolo/psleak>`__
 
 `Full list <https://psutil.readthedocs.io/adoption>`__.
 
@@ -551,3 +550,55 @@ People who donated money over the years:
     </div>
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
+.. |rm-tensorflow| image:: https://github.com/tensorflow.png?s=20
+   :height: 20
+   :target: https://github.com/tensorflow/tensorflow
+.. |rm-pytorch| image:: https://github.com/pytorch.png?s=20
+   :height: 20
+   :target: https://github.com/pytorch/pytorch
+.. |rm-transformers| image:: https://github.com/huggingface.png?s=20
+   :height: 20
+   :target: https://github.com/huggingface/transformers
+.. |rm-keras| image:: https://github.com/keras-team.png?s=20
+   :height: 20
+   :target: https://github.com/keras-team/keras
+.. |rm-ultralytics| image:: https://github.com/ultralytics.png?s=20
+   :height: 20
+   :target: https://github.com/ultralytics/ultralytics
+.. |rm-homeassistant| image:: https://github.com/home-assistant.png?s=20
+   :height: 20
+   :target: https://github.com/home-assistant/core
+.. |rm-ansible| image:: https://github.com/ansible.png?s=20
+   :height: 20
+   :target: https://github.com/ansible/ansible
+.. |rm-airflow| image:: https://github.com/apache.png?s=20
+   :height: 20
+   :target: https://github.com/apache/airflow
+.. |rm-sentry| image:: https://github.com/getsentry.png?s=20
+   :height: 20
+   :target: https://github.com/getsentry/sentry
+.. |rm-celery| image:: https://github.com/celery.png?s=20
+   :height: 20
+   :target: https://github.com/celery/celery
+.. |rm-scrapy| image:: https://github.com/scrapy.png?s=20
+   :height: 20
+   :target: https://github.com/scrapy/scrapy
+.. |rm-streamlit| image:: https://github.com/streamlit.png?s=20
+   :height: 20
+   :target: https://github.com/streamlit/streamlit
+.. |rm-dask| image:: https://github.com/dask.png?s=20
+   :height: 20
+   :target: https://github.com/dask/dask
+.. |rm-glances| image:: https://github.com/nicolargo.png?s=20
+   :height: 20
+   :target: https://github.com/nicolargo/glances
+.. |rm-bpytop| image:: https://github.com/aristocratos.png?s=20
+   :height: 20
+   :target: https://github.com/aristocratos/bpytop
+.. |rm-grr| image:: https://github.com/google.png?s=20
+   :height: 20
+   :target: https://github.com/google/grr
+.. |rm-psleak| image:: https://github.com/giampaolo.png?s=20
+   :height: 20
+   :target: https://github.com/giampaolo/psleak

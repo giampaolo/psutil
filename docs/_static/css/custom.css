@@ -193,3 +193,10 @@ div.body div.admonition, div.body div.impl-detail {
 .note code {
     background: #d6d6d6 !important;
 }
+
+/* Project logos in adoption page tables */
+.document td img[alt$="-logo"] {
+    height: 20px !important;
+    width: 20px !important;
+    vertical-align: middle;
+}
