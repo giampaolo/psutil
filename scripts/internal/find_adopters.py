@@ -29,6 +29,8 @@ import time
 
 import requests
 
+from psutil._common import print_color
+
 GITHUB_API = "https://api.github.com"
 
 # Set by parse_cli()
@@ -113,6 +115,7 @@ def search_github(session):
                 "stars": item["stargazers_count"],
                 "description": item["description"] or "",
                 "html_url": item["html_url"],
+                "archived": item.get("archived", False),
             })
         stderr(
             f"  search page {page}: got {len(items)} results "
@@ -415,14 +418,27 @@ def main():
             f"  [{i}/{len(candidates)}] Checking"
             f" https://github.com/{c['full_name']} ({c['stars']} stars)..."
         )
+        if c["archived"]:
+            print_color(
+                "    -> archived, skipping", color="yellow", file=sys.stderr
+            )
+            continue
         status, detail = check_dependency(session, owner, repo)
         if status != "no":
             c["dep_type"] = status
             c["dep_detail"] = detail
             confirmed.append(c)
-            stderr(f"    -> {status} dependency (via {detail})")
+            print_color(
+                f"    -> {status} dependency (via {detail})",
+                color="green",
+                file=sys.stderr,
+            )
         else:
-            stderr("    -> not a dependency, skipping")
+            print_color(
+                "    -> not a dependency, skipping",
+                color="yellow",
+                file=sys.stderr,
+            )
 
     stderr()
     stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.")
