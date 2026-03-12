@@ -165,6 +165,7 @@ include scripts/internal/bench_oneshot.py
 include scripts/internal/bench_oneshot_2.py
 include scripts/internal/convert_readme.py
 include scripts/internal/download_wheels.py
+include scripts/internal/find_adopters.py
 include scripts/internal/find_broken_links.py
 include scripts/internal/generate_manifest.py
 include scripts/internal/git_pre_commit.py
