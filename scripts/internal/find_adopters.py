@@ -7,22 +7,18 @@
 """Search GitHub for notable projects that use a given project
 as a dependency.
 
-Uses the GitHub search API to find Python repositories that mention
-the project in their README, then verifies each candidate by
-checking its dependency files (pyproject.toml, setup.py, setup.cfg,
-requirements.txt) for an actual dependency declaration.
+Uses the GitHub GraphQL API to find Python repositories that
+mention the project in their README, then verifies each candidate
+by batch-fetching its dependency files (pyproject.toml, setup.py,
+setup.cfg, requirements.txt) for an actual dependency declaration.
 
-Output is RST formatted, ready to paste into docs/adoption.rst.
-
-Requirements:
-    pip install requests
+Output is RsT formatted, ready to paste into docs/adoption.rst.
 
 Usage:
     python3 find_adopters.py --project psutil --token ~/.github.api.key
 """
 
 import argparse
-import base64
 import re
 import sys
 import time
@@ -31,9 +27,9 @@ import requests
 
 from psutil._common import print_color
 
-GITHUB_API = "https://api.github.com"
+GITHUB_GRAPHQL = "https://api.github.com/graphql"
 
-# Set by parse_cli()
+# Set by parse_cli().
 PROJECT = ""
 MIN_STARS = 0
 MAX_STARS = 0
@@ -53,97 +49,182 @@ DEP_FILES = [
     "requirements/production.txt",
 ]
 
+# GraphQL alias names for each dep file (must be valid
+# identifiers).
+_DEP_FILE_ALIASES = {
+    "pyproject.toml": "pyprojectToml",
+    "setup.py": "setupPy",
+    "setup.cfg": "setupCfg",
+    "requirements.txt": "requirementsTxt",
+    "requirements/base.txt": "requirementsBase",
+    "requirements/main.txt": "requirementsMain",
+    "requirements/install.txt": "requirementsInstall",
+    "requirements/production.txt": "requirementsProduction",
+}
 
-def stderr(msg=""):
-    print(msg, file=sys.stderr)
+# Max repos to batch in a single GraphQL query.
+_BATCH_SIZE = 10
+
+
+def stderr(msg="", color=None):
+    if color:
+        print_color(msg, color=color, file=sys.stderr)
+    else:
+        print(msg, file=sys.stderr)
+
+
+def graphql(session, query, variables=None):
+    """Execute a GraphQL query. Returns the 'data' dict."""
+    payload = {"query": query}
+    if variables:
+        payload["variables"] = variables
+    resp = session.post(GITHUB_GRAPHQL, json=payload)
+    if resp.status_code != 200:
+        stderr(f"  GraphQL HTTP error: {resp.status_code} {resp.text}")
+        return None
+    body = resp.json()
+    if "errors" in body:
+        for err in body["errors"]:
+            stderr(f"  GraphQL error: {err.get('message', err)}")
+        return None
+    return body.get("data")
 
 
 def get_session(token):
     s = requests.Session()
-    s.headers["Accept"] = "application/vnd.github.v3+json"
     s.headers["Authorization"] = f"Bearer {token}"
+    s.headers["Content-Type"] = "application/json"
     return s
 
 
-def wait_for_rate_limit(session):
-    """Sleep until the rate limit resets if we're close to hitting it."""
-    resp = session.get(f"{GITHUB_API}/rate_limit")
-    if resp.status_code == 200:
-        data = resp.json()
-        core = data["resources"]["core"]
-        search = data["resources"]["search"]
-        if search["remaining"] < 2:
-            reset = search["reset"] - time.time() + 2
-            if reset > 0:
-                stderr(f"  search rate limit hit, sleeping {reset:.0f}s")
-                time.sleep(reset)
-        if core["remaining"] < 10:
-            reset = core["reset"] - time.time() + 2
-            if reset > 0:
-                stderr(f"  core rate limit hit, sleeping {reset:.0f}s")
-                time.sleep(reset)
-
-
 def search_github(session):
-    """Search for Python repos mentioning PROJECT in their README."""
-    results = []
+    """Search for Python repos mentioning PROJECT in README."""
     stars_q = f"stars:>={MIN_STARS}"
     if MAX_STARS:
         stars_q = f"stars:{MIN_STARS}..{MAX_STARS}"
+    search_q = f"{PROJECT} in:readme language:Python {stars_q}"
+    query = """
+    query($q: String!, $first: Int!, $after: String) {
+      search(query: $q, type: REPOSITORY,
+             first: $first, after: $after) {
+        repositoryCount
+        edges {
+          node {
+            ... on Repository {
+              nameWithOwner
+              owner { login }
+              name
+              url
+              description
+              stargazerCount
+              isArchived
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+    """
+    results = []
+    cursor = None
     for page in range(1, MAX_PAGES + 1):
-        wait_for_rate_limit(session)
-        url = (
-            f"{GITHUB_API}/search/repositories"
-            f"?q={PROJECT}+in:readme+language:Python"
-            f"+{stars_q}"
-            "&sort=stars&order=desc"
-            f"&per_page=100&page={page}"
-        )
-        resp = session.get(url)
-        if resp.status_code != 200:
-            stderr(f"  search API error: {resp.status_code} {resp.text}")
+        variables = {
+            "q": search_q,
+            "first": 100,
+            "after": cursor,
+        }
+        data = graphql(session, query, variables)
+        if data is None:
             break
-        data = resp.json()
-        items = data.get("items", [])
-        if not items:
+        search_data = data["search"]
+        edges = search_data["edges"]
+        if not edges:
             break
-        for item in items:
+        for edge in edges:
+            node = edge["node"]
+            if not node:
+                continue
             results.append({
-                "full_name": item["full_name"],
-                "owner": item["full_name"].split("/")[0],
-                "repo": item["full_name"].split("/")[1],
-                "stars": item["stargazers_count"],
-                "description": item["description"] or "",
-                "html_url": item["html_url"],
-                "archived": item.get("archived", False),
+                "full_name": node["nameWithOwner"],
+                "owner": node["owner"]["login"],
+                "repo": node["name"],
+                "stars": node["stargazerCount"],
+                "description": node.get("description") or "",
+                "html_url": node["url"],
+                "archived": node["isArchived"],
             })
         stderr(
-            f"  search page {page}: got {len(items)} results "
+            f"  search page {page}: got {len(edges)} results "
             f"(total so far: {len(results)})"
         )
-        if len(items) < 100:
+        page_info = search_data["pageInfo"]
+        if not page_info["hasNextPage"]:
             break
-        # GitHub search API requires a pause between requests.
-        time.sleep(2)
+        cursor = page_info["endCursor"]
+        time.sleep(1)
     return results
 
 
-def get_file_content(session, owner, repo, path):
-    """Fetch a file from a GitHub repo. Returns content or None."""
-    url = f"{GITHUB_API}/repos/{owner}/{repo}/contents/{path}"
-    resp = session.get(url)
-    if resp.status_code != 200:
-        return None
-    data = resp.json()
-    if data.get("encoding") == "base64":
-        return base64.b64decode(data["content"]).decode(
-            "utf-8", errors="replace"
+def _build_dep_files_fragment():
+    """Build GraphQL fields for fetching all dep files."""
+    fields = []
+    for dep_file, alias in _DEP_FILE_ALIASES.items():
+        fields.append(
+            f"    {alias}: object("
+            f'expression: "HEAD:{dep_file}") {{\n'
+            f"      ... on Blob {{ text }}\n"
+            f"    }}"
         )
-    return None
+    return "\n".join(fields)
 
 
-def check_dependency(session, owner, repo):
-    """Check if a repo actually depends on PROJECT.
+def fetch_dep_files(session, candidates):
+    """Batch-fetch dependency files for a list of candidates.
+
+    Returns a dict mapping full_name to a dict of
+    {dep_file: content_or_None}.
+    """
+    dep_fragment = _build_dep_files_fragment()
+    result = {}
+    for start in range(0, len(candidates), _BATCH_SIZE):
+        batch = candidates[start : start + _BATCH_SIZE]
+        repo_parts = []
+        for i, c in enumerate(batch):
+            repo_parts.append(
+                f"  repo{i}: repository("
+                f'owner: "{c["owner"]}", '
+                f'name: "{c["repo"]}") {{\n'
+                f"{dep_fragment}\n"
+                f"  }}"
+            )
+        query = "query {\n" + "\n".join(repo_parts) + "\n}"
+        data = graphql(session, query)
+        if data is None:
+            for c in batch:
+                result[c["full_name"]] = dict.fromkeys(DEP_FILES)
+            continue
+        for i, c in enumerate(batch):
+            repo_data = data.get(f"repo{i}")
+            files = {}
+            if repo_data:
+                for dep_file, alias in _DEP_FILE_ALIASES.items():
+                    obj = repo_data.get(alias)
+                    if obj and "text" in obj:
+                        files[dep_file] = obj["text"]
+                    else:
+                        files[dep_file] = None
+            else:
+                for dep_file in DEP_FILES:
+                    files[dep_file] = None
+            result[c["full_name"]] = files
+    return result
+
+
+def classify_dependency(file_contents):
+    """Classify the dependency type from fetched file contents.
 
     Returns a tuple (status, detail) where status is one of:
     - "direct"    : PROJECT in install/runtime dependencies
@@ -152,14 +233,12 @@ def check_dependency(session, owner, repo):
     - "optional"  : PROJECT in optional/extras dependencies
     - "no"        : not found in any dependency file
     """
-    found_in = []
     pat = re.escape(PROJECT)
+    found_in = []
     for dep_file in DEP_FILES:
-        wait_for_rate_limit(session)
-        content = get_file_content(session, owner, repo, dep_file)
+        content = file_contents.get(dep_file)
         if content is None:
             continue
-        # Check if PROJECT appears in this file.
         if not re.search(r"\b" + pat + r"\b", content):
             continue
         found_in.append(dep_file)
@@ -170,59 +249,45 @@ def check_dependency(session, owner, repo):
     # Classify the dependency type based on which files it was
     # found in.
     for f in found_in:
+        content = file_contents[f]
         if f == "pyproject.toml":
-            content = get_file_content(session, owner, repo, f)
-            if content and re.search(
+            if re.search(
                 r"\[project\].*?dependencies\s*=\s*\[.*?" + pat,
                 content,
                 re.DOTALL,
             ):
                 return "direct", f
-            if content and re.search(
+            if re.search(
                 r"\[tool\.poetry\.dependencies\].*?" + pat,
                 content,
                 re.DOTALL,
             ):
                 return "direct", f
-            if content and re.search(
+            if re.search(
                 r"\[build-system\].*?requires\s*=\s*\[.*?" + pat,
                 content,
                 re.DOTALL,
             ):
                 return "build", f
-            if content and r"optional-dependencies" in content:
+            if r"optional-dependencies" in content:
                 return "optional", f
-            if content and re.search(r"test|dev", content):
+            if re.search(r"test|dev", content):
                 return "test", f
-            return "direct", f  # default if found in pyproject.toml
+            return "direct", f
         elif f == "setup.py":
-            content = get_file_content(session, owner, repo, f)
-            if content and re.search(
-                r"install_requires.*?" + pat, content, re.DOTALL
-            ):
+            if re.search(r"install_requires.*?" + pat, content, re.DOTALL):
                 return "direct", f
-            if content and re.search(
-                r"setup_requires.*?" + pat, content, re.DOTALL
-            ):
+            if re.search(r"setup_requires.*?" + pat, content, re.DOTALL):
                 return "build", f
-            if content and re.search(
-                r"tests_require.*?" + pat, content, re.DOTALL
-            ):
+            if re.search(r"tests_require.*?" + pat, content, re.DOTALL):
                 return "test", f
-            if content and re.search(
-                r"extras_require.*?" + pat, content, re.DOTALL
-            ):
+            if re.search(r"extras_require.*?" + pat, content, re.DOTALL):
                 return "optional", f
             return "direct", f
         elif f == "setup.cfg":
-            content = get_file_content(session, owner, repo, f)
-            if content and re.search(
-                r"install_requires.*?" + pat, content, re.DOTALL
-            ):
+            if re.search(r"install_requires.*?" + pat, content, re.DOTALL):
                 return "direct", f
-            if content and re.search(
-                r"extras_require.*?" + pat, content, re.DOTALL
-            ):
+            if re.search(r"extras_require.*?" + pat, content, re.DOTALL):
                 return "optional", f
             return "direct", f
         elif "requirements" in f:
@@ -314,7 +379,8 @@ def generate_rst(projects):
             )
 
             logo_images.append(
-                f".. |{name}-logo| image:: https://github.com/{owner}.png?s=28"
+                f".. |{name}-logo| image:: "
+                f"https://github.com/{owner}.png?s=28"
                 " :height: 28"
             )
 
@@ -405,39 +471,44 @@ def main():
     candidates = search_github(session)
     stderr(f"Found {len(candidates)} candidates.")
 
-    # Filter out skipped repos.
-    candidates = [c for c in candidates if c["full_name"] not in SKIP]
+    # Filter out skipped and archived repos.
+    filtered = []
+    for c in candidates:
+        if c["full_name"] in SKIP:
+            continue
+        if c["archived"]:
+            stderr(f"  skipping {c['full_name']} (archived)")
+            continue
+        filtered.append(c)
+    candidates = filtered
     stderr(f"After filtering: {len(candidates)} candidates.")
+
+    # Batch-fetch dependency files for all candidates.
+    stderr("Fetching dependency files...")
+    all_dep_files = fetch_dep_files(session, candidates)
 
     # Verify each candidate.
     confirmed = []
     for i, c in enumerate(candidates, 1):
-        owner = c["owner"]
-        repo = c["repo"]
         stderr(
             f"  [{i}/{len(candidates)}] Checking"
-            f" https://github.com/{c['full_name']} ({c['stars']} stars)..."
+            f" https://github.com/{c['full_name']}"
+            f" ({c['stars']} stars)..."
         )
-        if c["archived"]:
-            print_color(
-                "    -> archived, skipping", color="yellow", file=sys.stderr
-            )
-            continue
-        status, detail = check_dependency(session, owner, repo)
+        file_contents = all_dep_files.get(c["full_name"], {})
+        status, detail = classify_dependency(file_contents)
         if status != "no":
             c["dep_type"] = status
             c["dep_detail"] = detail
             confirmed.append(c)
-            print_color(
+            stderr(
                 f"    -> {status} dependency (via {detail})",
                 color="green",
-                file=sys.stderr,
             )
         else:
-            print_color(
+            stderr(
                 "    -> not a dependency, skipping",
                 color="yellow",
-                file=sys.stderr,
             )
 
     stderr()
