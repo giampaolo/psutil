@@ -26,12 +26,15 @@ Works in two stages:
 Output is RsT formatted, ready to paste into docs/adoption.rst.
 
 Usage:
-    python3 find_adopters.py \
-        --project psutil --token ~/.github.api.key \
-        --search=readme --filter=dependency
+    python3 scripts/internal/find_adopters.py \
+        --project=psutil \
+        --token=~/.github.api.key \
+        --skip-file-urls=docs/adoption.rst \
+        --min-stars=10000 --search=readme
 """
 
 import argparse
+import os
 import re
 import sys
 import time
@@ -640,7 +643,12 @@ def parse_cli():
         "--skip",
         nargs="*",
         default=[],
-        help="Repos to skip (e.g. 'owner/repo').",
+        help="Repos URLs to skip (e.g. 'https://github.com/foo/bar').",
+    )
+    parser.add_argument(
+        "--skip-file-urls",
+        default=None,
+        help="Path to file with GitHub repo URLs to skip (found via regex)",
     )
     parser.add_argument(
         "--search",
@@ -668,12 +676,24 @@ def parse_cli():
     MIN_STARS = args.min_stars
     MAX_STARS = args.max_stars
     MAX_PAGES = args.max_pages
-    with open(args.token) as f:
+    with open(os.path.expanduser(args.token)) as f:
         TOKEN = f.read().strip()
-    SKIP = set(args.skip)
-    SKIP.add("vinta/awesome-python")
     SEARCH = args.search
     FILTER = args.filter
+
+    SKIP = set(args.skip)
+    SKIP.add("https://github.com/vinta/awesome-python")
+    if args.skip_file_urls:
+        path = args.skip_file_urls
+        with open(path) as f:
+            text = f.read()
+        urls = [
+            m.group(1)
+            for m in re.finditer(
+                r"(https://github\.com/[\w.-]+/[\w.-]+)", text
+            )
+        ]
+        SKIP.update(urls)
 
 
 def main():
@@ -695,10 +715,13 @@ def main():
         candidates = search_github_depfile(session)
     stderr(f"Found {len(candidates)} candidates.")
 
-    # Always filter out skipped and archived repos.
+    # Filter out skipped and archived repos.
     filtered = []
     for c in candidates:
-        if c["full_name"] in SKIP:
+        if c["html_url"] in SKIP:
+            stderr(
+                f"  skipping (from skip list) {yellow(c['html_url'])}",
+            )
             continue
         if c["archived"]:
             stderr(
@@ -720,7 +743,7 @@ def main():
         for i, c in enumerate(candidates, 1):
             stderr(
                 f"  [{i}/{len(candidates)}] Checking"
-                f" https://github.com/{blue(c['full_name'])}"
+                f" {blue(c['html_url'])}"
                 f" ({c['stars']} stars)..."
             )
             file_contents = all_dep_files.get(c["full_name"], {})
@@ -749,13 +772,14 @@ def main():
     stderr()
     stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency:")
     for c in confirmed:
-        stderr(f"  {c['stars']:,} stars: {c['html_url']}", "green")
+        stderr(f"  {c['stars']:,} stars: {green(c['html_url'])}")
 
     # Generate RST.
-    ans = input("\nGenerate RsT content? [y/N] ").strip().lower()
-    if ans in {"y", "yes", "Y"}:
-        rst = generate_rst(confirmed)
-        print(rst)
+    if confirmed:
+        ans = input("\nGenerate RsT content? [y/N] ").strip().lower()
+        if ans in {"y", "yes", "Y"}:
+            rst = generate_rst(confirmed)
+            print(rst)
 
 
 if __name__ == "__main__":
