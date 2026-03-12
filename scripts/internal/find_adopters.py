@@ -27,18 +27,18 @@ import re
 import sys
 import time
 
-try:
-    import requests
-except ImportError:
-    print(
-        "error: 'requests' package is required: pip install requests",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-
+import requests
 
 GITHUB_API = "https://api.github.com"
+
+# Set by parse_cli()
 PROJECT = ""
+MIN_STARS = 0
+MAX_STARS = 0
+MAX_PAGES = 0
+TOKEN = ""
+SKIP = set()
+
 # Files to check for dependency declarations.
 DEP_FILES = [
     "pyproject.toml",
@@ -84,15 +84,18 @@ def wait_for_rate_limit(session):
                 time.sleep(reset)
 
 
-def search_github(session, min_stars=1000, max_pages=5):
+def search_github(session):
     """Search for Python repos mentioning PROJECT in their README."""
     results = []
-    for page in range(1, max_pages + 1):
+    stars_q = f"stars:>={MIN_STARS}"
+    if MAX_STARS:
+        stars_q = f"stars:{MIN_STARS}..{MAX_STARS}"
+    for page in range(1, MAX_PAGES + 1):
         wait_for_rate_limit(session)
         url = (
             f"{GITHUB_API}/search/repositories"
             f"?q={PROJECT}+in:readme+language:Python"
-            f"+stars:>={min_stars}"
+            f"+{stars_q}"
             "&sort=stars&order=desc"
             f"&per_page=100&page={page}"
         )
@@ -340,8 +343,9 @@ def generate_rst(projects):
     return "\n".join(output)
 
 
-def main():
-    global PROJECT
+def parse_cli():
+    """Parse CLI arguments and set global constants."""
+    global PROJECT, MIN_STARS, MAX_STARS, MAX_PAGES, TOKEN, SKIP
 
     parser = argparse.ArgumentParser(
         description=(
@@ -359,6 +363,12 @@ def main():
         type=int,
         default=300,
         help="Minimum GitHub stars to consider (default: 300).",
+    )
+    parser.add_argument(
+        "--max-stars",
+        type=int,
+        default=0,
+        help="Maximum GitHub stars to consider (default: no limit).",
     )
     parser.add_argument(
         "--max-pages",
@@ -380,26 +390,29 @@ def main():
     args = parser.parse_args()
 
     PROJECT = args.project
+    MIN_STARS = args.min_stars
+    MAX_STARS = args.max_stars
+    MAX_PAGES = args.max_pages
     with open(args.token) as f:
-        token = f.read().strip()
-    session = get_session(token)
+        TOKEN = f.read().strip()
+    SKIP = set(args.skip)
+    SKIP.add("vinta/awesome-python")
 
-    # Always skip the project itself and meta-lists.
-    skip = set(args.skip)
-    skip.add("vinta/awesome-python")
+
+def main():
+    parse_cli()
+    session = get_session(TOKEN)
 
     print(
         f"Searching GitHub for Python repos mentioning {PROJECT} "
-        f"(>={args.min_stars} stars)...",
+        f"(>={MIN_STARS} stars)...",
         file=sys.stderr,
     )
-    candidates = search_github(
-        session, min_stars=args.min_stars, max_pages=args.max_pages
-    )
+    candidates = search_github(session)
     print(f"Found {len(candidates)} candidates.", file=sys.stderr)
 
     # Filter out skipped repos.
-    candidates = [c for c in candidates if c["full_name"] not in skip]
+    candidates = [c for c in candidates if c["full_name"] not in SKIP]
     print(
         f"After filtering: {len(candidates)} candidates.",
         file=sys.stderr,
