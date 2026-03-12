@@ -7,21 +7,19 @@
 r"""Search GitHub for notable projects that use a given project
 as a dependency.
 
-Works in two stages:
+How it works:
 
-1. Search (--search): discover candidate repos.
-   - "readme": find Python repos mentioning PROJECT in their
-     README via GitHub GraphQL API (fast, ~15 queries).
-   - "depfile": enumerate all popular Python repos, then
-     batch-check their dep files (pyproject.toml, setup.py,
-     setup.cfg, requirements.txt, requirements/*.txt) for
-     PROJECT via GraphQL (thorough, ~100 queries).
+1. Enumerate all popular Python repos on GitHub via GraphQL
+   (paginated, >=MIN_STARS).
+2. Batch-fetch data needed for the requested filters
+   (README content, dependency files).
+3. Apply filters. Only repos passing ALL specified filters
+   are confirmed. Available filters:
+   - --inreadme : PROJECT mentioned in the README
+   - --indeps   : PROJECT mentioned in dep files
+     (pyproject.toml, setup.py, setup.cfg, requirements*.txt)
 
-2. Filter (--filter): verify candidates.
-   - "dependency": batch-fetch dependency files and check
-     for an actual dependency declaration (skipped when
-     --search=depfile, since it already checks dep files).
-   - "null": no filtering; all candidates pass through.
+At least one filter must be specified.
 
 Output is RsT formatted, ready to paste into docs/adoption.rst.
 
@@ -30,11 +28,12 @@ Usage:
         --project=psutil \
         --token=~/.github.api.key \
         --skip-file-urls=docs/adoption.rst \
-        --min-stars=10000 --search=readme
+        --min-stars=10000 --indeps
 """
 
 import argparse
 import os
+import pickle
 import re
 import sys
 import time
@@ -45,16 +44,17 @@ from psutil._common import hilite
 from psutil._common import print_color
 
 GITHUB_GRAPHQL = "https://api.github.com/graphql"
+_CACHE_FILE = ".find_adopters.cache"
 
 # Set by parse_cli().
 PROJECT = ""
 MIN_STARS = 0
 MAX_STARS = 0
-MAX_PAGES = 0
 TOKEN = ""
 SKIP = set()
-SEARCH = ""
-FILTER = ""
+INREADME = False
+INDEPS = False
+NO_CACHE = False
 
 # Fixed files to check for dependency declarations.
 _FIXED_DEP_FILES = {
@@ -70,7 +70,6 @@ _BATCH_SIZE = 5
 
 green = lambda msg: hilite(msg, color="green")  # noqa: E731
 yellow = lambda msg: hilite(msg, color="yellow")  # noqa: E731
-blue = lambda msg: hilite(msg, color="blue")  # noqa: E731
 
 
 def stderr(msg="", color=None):
@@ -108,89 +107,11 @@ def get_session(token):
     return s
 
 
-def search_github(session):
-    """Search for Python repos mentioning PROJECT in README."""
-    stars_q = f"stars:>={MIN_STARS}"
-    if MAX_STARS:
-        stars_q = f"stars:{MIN_STARS}..{MAX_STARS}"
-    search_q = f"{PROJECT} in:readme language:Python {stars_q}"
-    query = """
-    query($q: String!, $first: Int!, $after: String) {
-      search(query: $q, type: REPOSITORY,
-             first: $first, after: $after) {
-        repositoryCount
-        edges {
-          node {
-            ... on Repository {
-              nameWithOwner
-              owner { login }
-              name
-              url
-              description
-              stargazerCount
-              isArchived
-            }
-          }
-        }
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-      }
-    }
-    """
-    results = []
-    cursor = None
-    for page in range(1, MAX_PAGES + 1):
-        variables = {
-            "q": search_q,
-            "first": 100,
-            "after": cursor,
-        }
-        data = graphql(session, query, variables)
-        if data is None:
-            break
-        search_data = data["search"]
-        edges = search_data["edges"]
-        if not edges:
-            break
-        for edge in edges:
-            node = edge["node"]
-            if not node:
-                continue
-            results.append({
-                "full_name": node["nameWithOwner"],
-                "owner": node["owner"]["login"],
-                "repo": node["name"],
-                "stars": node["stargazerCount"],
-                "description": node.get("description") or "",
-                "html_url": node["url"],
-                "archived": node["isArchived"],
-            })
-        stderr(
-            f"  search page {page}: got {len(edges)} results "
-            f"(total so far: {len(results)})"
-        )
-        page_info = search_data["pageInfo"]
-        if not page_info["hasNextPage"]:
-            break
-        cursor = page_info["endCursor"]
-        time.sleep(1)
-    return results
+# --- Enumerate repos ---
 
 
-def search_github_depfile(session):
-    """Enumerate popular Python repos and check their dep files
-    for PROJECT. Uses GraphQL for both repo enumeration and dep
-    file fetching (no REST rate limits).
-
-    Steps:
-    1. Fetch all Python repos with >=MIN_STARS via GraphQL
-       search (paginated, 100 per page).
-    2. Batch-fetch dep files (pyproject.toml, setup.py, etc.)
-       for all repos via GraphQL.
-    3. Return only repos where PROJECT appears in a dep file.
-    """
+def enumerate_repos(session):
+    """Enumerate all Python repos with >=MIN_STARS on GitHub."""
     stars_q = f"stars:>={MIN_STARS}"
     if MAX_STARS:
         stars_q = f"stars:{MIN_STARS}..{MAX_STARS}"
@@ -220,8 +141,7 @@ def search_github_depfile(session):
       }
     }
     """
-    # Step 1: enumerate all matching repos.
-    all_repos = []
+    results = []
     cursor = None
     page = 0
     while True:
@@ -242,7 +162,7 @@ def search_github_depfile(session):
             node = edge["node"]
             if not node:
                 continue
-            all_repos.append({
+            results.append({
                 "full_name": node["nameWithOwner"],
                 "owner": node["owner"]["login"],
                 "repo": node["name"],
@@ -252,34 +172,69 @@ def search_github_depfile(session):
                 "archived": node["isArchived"],
             })
         stderr(
-            f"  enum page {page}: got {len(edges)} repos "
-            f"(total so far: {len(all_repos)})"
+            f"  page {page}: got {len(edges)} repos "
+            f"(total so far: {len(results)})"
         )
         page_info = search_data["pageInfo"]
         if not page_info["hasNextPage"]:
             break
         cursor = page_info["endCursor"]
         time.sleep(1)
-
-    stderr(
-        f"  enumerated {len(all_repos)} Python repos, checking dep files..."
-    )
-
-    # Step 2: batch-fetch dep files.
-    all_dep_files = fetch_dep_files(session, all_repos)
-
-    # Step 3: filter to repos that declare PROJECT.
-    results = []
-    for repo in all_repos:
-        file_contents = all_dep_files.get(repo["full_name"], {})
-        status, detail = classify_dependency(file_contents)
-        if status != "no":
-            repo["dep_type"] = status
-            repo["dep_detail"] = detail
-            results.append(repo)
-
-    stderr(f"  found {len(results)} repos with {PROJECT} in dep files")
     return results
+
+
+# --- Fetch README ---
+
+
+def fetch_readmes(session, repos):
+    """Batch-fetch README content for a list of repos.
+
+    Returns a dict mapping full_name to README text
+    (or empty string if not found).
+    """
+    result = {}
+    total = len(repos)
+    stderr(f"  fetching READMEs ({total} repos)...")
+    for start in range(0, total, _BATCH_SIZE):
+        batch = repos[start : start + _BATCH_SIZE]
+        stderr(f"    batch {start + 1}-{start + len(batch)}/{total}...")
+        repo_parts = []
+        for i, c in enumerate(batch):
+            # Try both README.md and README.rst.
+            repo_parts.append(
+                f"  repo{i}: repository("
+                f'owner: "{c["owner"]}", '
+                f'name: "{c["repo"]}") {{\n'
+                f"    readmeMd: object("
+                f'expression: "HEAD:README.md") {{\n'
+                f"      ... on Blob {{ text }}\n"
+                f"    }}\n"
+                f"    readmeRst: object("
+                f'expression: "HEAD:README.rst") {{\n'
+                f"      ... on Blob {{ text }}\n"
+                f"    }}\n"
+                f"  }}"
+            )
+        query = "query {\n" + "\n".join(repo_parts) + "\n}"
+        data = graphql(session, query)
+        if data is None:
+            for c in batch:
+                result[c["full_name"]] = ""
+            continue
+        for i, c in enumerate(batch):
+            repo_data = data.get(f"repo{i}")
+            text = ""
+            if repo_data:
+                for key in ("readmeMd", "readmeRst"):
+                    obj = repo_data.get(key)
+                    if obj and "text" in obj:
+                        text = obj["text"]
+                        break
+            result[c["full_name"]] = text
+    return result
+
+
+# --- Fetch dep files ---
 
 
 def _build_fixed_dep_fragment():
@@ -311,15 +266,15 @@ def _make_req_alias(filename):
     return f"req_{base}"
 
 
-def fetch_dep_files(session, candidates):
-    """Batch-fetch dependency files for a list of candidates.
+def fetch_dep_files(session, repos):
+    """Batch-fetch dependency files for a list of repos.
 
     Phase 1: fetch fixed dep files + requirements/ dir listing.
     Phase 2: for repos with a requirements/ dir, fetch all *.txt
     files found there.
 
     Returns a dict mapping full_name to a dict of
-    {dep_file: content_or_None}.
+    {dep_file: content}.
     """
     fixed_fragment = _build_fixed_dep_fragment()
     result = {}
@@ -327,13 +282,13 @@ def fetch_dep_files(session, candidates):
     req_dir_entries = {}  # full_name -> [filename, ...]
 
     # --- Phase 1: fixed files + dir listing ---
-    total = len(candidates)
+    total = len(repos)
     stderr(
         "  phase 1: fixed files + requirements/ dir listing "
         f"({total} repos)..."
     )
     for start in range(0, total, _BATCH_SIZE):
-        batch = candidates[start : start + _BATCH_SIZE]
+        batch = repos[start : start + _BATCH_SIZE]
         stderr(f"    batch {start + 1}-{start + len(batch)}/{total}...")
         repo_parts = []
         for i, c in enumerate(batch):
@@ -372,10 +327,8 @@ def fetch_dep_files(session, candidates):
 
     # --- Phase 2: fetch discovered requirements/*.txt files ---
     if req_dir_entries:
-        # Collect candidates that need follow-up.
-        need_fetch = [
-            c for c in candidates if c["full_name"] in req_dir_entries
-        ]
+        # Collect repos that need follow-up.
+        need_fetch = [c for c in repos if c["full_name"] in req_dir_entries]
         stderr(
             "  phase 2: fetching requirements/*.txt from "
             f"{len(need_fetch)} repos..."
@@ -419,6 +372,9 @@ def fetch_dep_files(session, candidates):
                         result[c["full_name"]][path] = obj["text"]
 
     return result
+
+
+# --- Classify ---
 
 
 def classify_dependency(file_contents):
@@ -491,6 +447,9 @@ def classify_dependency(file_contents):
             return "direct", f
 
     return "direct", ", ".join(found_in)
+
+
+# --- Misc ---
 
 
 def make_subst_name(full_name):
@@ -578,7 +537,7 @@ def generate_rst(projects):
             logo_images.append(
                 f".. |{name}-logo| image:: "
                 f"https://github.com/{owner}.png?s=28"
-                " :height: 28"
+                "\n   :height: 28"
             )
 
         lines.append("")
@@ -601,9 +560,61 @@ def generate_rst(projects):
     return "\n".join(output)
 
 
+# --- Cache ---
+
+
+def load_cache():
+    """Load cached data from disk.
+
+    Returns a dict with keys: min_stars, repos, readmes, dep_files.
+    Returns None if cache is missing, stale, or --no-cache is set.
+    The cache is invalidated if the current MIN_STARS is lower
+    than the min_stars used to build the cache (we'd be missing
+    repos).
+    """
+    if NO_CACHE:
+        return None
+    if not os.path.exists(_CACHE_FILE):
+        return None
+    try:
+        with open(_CACHE_FILE, "rb") as f:
+            data = pickle.load(f)
+    except (OSError, pickle.UnpicklingError, EOFError) as err:
+        stderr(f"  cache load error: {err}")
+        return None
+    cached_min_stars = data.get("min_stars", 0)
+    if cached_min_stars > MIN_STARS:
+        stderr(
+            f"  cache built with min_stars={cached_min_stars}, "
+            f"but current min_stars={MIN_STARS}; ignoring cache"
+        )
+        return None
+    stderr(
+        f"  loaded cache ({len(data.get('repos', []))} repos, "
+        f"min_stars={cached_min_stars})"
+    )
+    return data
+
+
+def save_cache(repos, readmes, dep_files):
+    """Save fetched data to disk."""
+    data = {
+        "min_stars": MIN_STARS,
+        "repos": repos,
+        "readmes": readmes,
+        "dep_files": dep_files,
+    }
+    with open(_CACHE_FILE, "wb") as f:
+        pickle.dump(data, f)
+    stderr(f"  saved cache to {_CACHE_FILE}")
+
+
+# --- CLI ---
+
+
 def parse_cli():
     """Parse CLI arguments and set global constants."""
-    global PROJECT, MIN_STARS, MAX_STARS, MAX_PAGES, TOKEN, SKIP, SEARCH, FILTER  # noqa: E501
+    global PROJECT, MIN_STARS, MAX_STARS, TOKEN, SKIP, INREADME, INDEPS, NO_CACHE  # noqa: E501
 
     parser = argparse.ArgumentParser(
         description=(
@@ -626,13 +637,7 @@ def parse_cli():
         "--max-stars",
         type=int,
         default=0,
-        help="Maximum GitHub stars to consider (default: no limit).",
-    )
-    parser.add_argument(
-        "--max-pages",
-        type=int,
-        default=5,
-        help="Max search result pages to fetch (default: 5).",
+        help="Maximum GitHub stars (default: no limit).",
     )
     parser.add_argument(
         "--token",
@@ -643,46 +648,51 @@ def parse_cli():
         "--skip",
         nargs="*",
         default=[],
-        help="Repos URLs to skip (e.g. 'https://github.com/foo/bar').",
+        help="Repos URLs to skip.",
     )
     parser.add_argument(
         "--skip-file-urls",
         default=None,
-        help="Path to file with GitHub repo URLs to skip (found via regex)",
+        help="Path to file with GitHub repo URLs to skip (found via regex).",
     )
     parser.add_argument(
-        "--search",
-        required=True,
-        choices=["readme", "depfile"],
+        "--inreadme",
+        action="store_true",
+        default=False,
+        help="Filter: PROJECT must be mentioned in README.",
+    )
+    parser.add_argument(
+        "--indeps",
+        action="store_true",
+        default=False,
         help=(
-            "Search strategy: 'readme' searches for "
-            "PROJECT in README (fast), 'depfile' enumerates "
-            "all popular Python repos and checks their "
-            "dep files (thorough, slower)."
+            "Filter: PROJECT must be mentioned in dep files "
+            "(pyproject.toml, setup.py, setup.cfg, "
+            "requirements*.txt)."
         ),
     )
     parser.add_argument(
-        "--filter",
-        default="dependency",
-        choices=["dependency", "null"],
-        help=(
-            "Filter strategy: 'dependency' checks dep "
-            "files (default), 'null' accepts all candidates."
-        ),
+        "--no-cache",
+        action="store_true",
+        default=False,
+        help="Force fresh fetch, ignoring cached data.",
     )
     args = parser.parse_args()
+
+    if not args.inreadme and not args.indeps:
+        parser.error("at least one of --inreadme, --indeps is required")
 
     PROJECT = args.project
     MIN_STARS = args.min_stars
     MAX_STARS = args.max_stars
-    MAX_PAGES = args.max_pages
     with open(os.path.expanduser(args.token)) as f:
         TOKEN = f.read().strip()
-    SEARCH = args.search
-    FILTER = args.filter
+    INREADME = args.inreadme
+    INDEPS = args.indeps
 
     SKIP = set(args.skip)
     SKIP.add("https://github.com/vinta/awesome-python")
+    NO_CACHE = args.no_cache
     if args.skip_file_urls:
         path = args.skip_file_urls
         with open(path) as f:
@@ -696,88 +706,88 @@ def parse_cli():
         SKIP.update(urls)
 
 
+# --- Main ---
+
+
 def main():
     parse_cli()
     session = get_session(TOKEN)
 
-    # --- Step 1: Search ---
-    if SEARCH == "readme":
-        stderr(
-            "Searching GitHub for Python repos mentioning "
-            f"{PROJECT} (>={MIN_STARS} stars)..."
-        )
-        candidates = search_github(session)
-    elif SEARCH == "depfile":
-        stderr(
-            f"Enumerating Python repos (>={MIN_STARS} stars) "
-            f"and checking dep files for {PROJECT}..."
-        )
-        candidates = search_github_depfile(session)
-    stderr(f"Found {len(candidates)} candidates.")
+    cached = load_cache()
+    if cached is not None:
+        repos = cached["repos"]
+        readmes = cached.get("readmes", {})
+        dep_files = cached.get("dep_files", {})
+        need_save = False
+    else:
+        repos = None
+        readmes = {}
+        dep_files = {}
+        need_save = True
+
+    # Step 1: enumerate all popular Python repos.
+    if repos is None:
+        stderr(f"Enumerating Python repos (>={MIN_STARS} stars)...")
+        repos = enumerate_repos(session)
+        stderr(f"Found {len(repos)} repos.")
 
     # Filter out skipped and archived repos.
     filtered = []
-    for c in candidates:
-        if c["html_url"] in SKIP:
-            stderr(
-                f"  skipping (from skip list) {yellow(c['html_url'])}",
-            )
+    for repo in repos:
+        if repo["html_url"] in SKIP:
+            print(f"skipping {yellow(repo['html_url'])}")
             continue
-        if c["archived"]:
-            stderr(
-                f"  skipping {c['full_name']} (archived)",
-                color="yellow",
-            )
+        if repo["archived"]:
+            print(f"skipping {yellow(repo['html_url'])}")
             continue
-        filtered.append(c)
-    candidates = filtered
-    stderr(f"After filtering: {len(candidates)} candidates.")
+        filtered.append(repo)
+    active_repos = filtered
+    stderr(f"After skip/archive filtering: {len(active_repos)} repos.")
 
-    # --- Step 2: Filter ---
-    # depfile search already checked dep files, so skip
-    # redundant dep-file verification.
-    if FILTER == "dependency" and SEARCH != "depfile":
+    # Step 2: fetch data needed for the requested filters.
+    # Only fetch what's missing from cache.
+    if INREADME and not readmes:
+        stderr("Fetching READMEs...")
+        readmes = fetch_readmes(session, active_repos)
+        need_save = True
+    if INDEPS and not dep_files:
         stderr("Fetching dependency files...")
-        all_dep_files = fetch_dep_files(session, candidates)
-        confirmed = []
-        for i, c in enumerate(candidates, 1):
-            stderr(
-                f"  [{i}/{len(candidates)}] Checking"
-                f" {blue(c['html_url'])}"
-                f" ({c['stars']} stars)..."
-            )
-            file_contents = all_dep_files.get(c["full_name"], {})
-            status, detail = classify_dependency(file_contents)
-            if status != "no":
-                c["dep_type"] = status
-                c["dep_detail"] = detail
-                confirmed.append(c)
-                stderr(
-                    f"    -> {status} dependency (via {detail})",
-                    color="green",
-                )
-            else:
-                stderr(
-                    "    -> not a dependency, skipping",
-                    color="yellow",
-                )
-    else:
-        confirmed = []
-        for c in candidates:
-            if "dep_type" not in c:
-                c["dep_type"] = "direct"
-                c["dep_detail"] = ""
-            confirmed.append(c)
+        dep_files = fetch_dep_files(session, active_repos)
+        need_save = True
+
+    if need_save:
+        save_cache(repos, readmes, dep_files)
+
+    # Step 3: apply filters.
+    confirmed = []
+    for repo in active_repos:
+        name = repo["full_name"]
+        pat = re.escape(PROJECT)
+
+        if INREADME:
+            readme = readmes.get(name, "")
+            if not re.search(r"\b" + pat + r"\b", readme):
+                continue
+
+        if INDEPS:
+            files = dep_files.get(name, {})
+            status, detail = classify_dependency(files)
+            if status == "no":
+                continue
+            repo["dep_type"] = status
+            repo["dep_detail"] = detail
+
+        confirmed.append(repo)
 
     stderr()
-    stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency:")
+    stderr(f"Confirmed {len(confirmed)} projects:")
     for c in confirmed:
         stderr(f"  {c['stars']:,} stars: {green(c['html_url'])}")
 
     # Generate RST.
     if confirmed:
         ans = input("\nGenerate RsT content? [y/N] ").strip().lower()
-        if ans in {"y", "yes", "Y"}:
+        if ans in {"y", "yes"}:
             rst = generate_rst(confirmed)
             print(rst)
 

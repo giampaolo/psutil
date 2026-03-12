@@ -444,3 +444,10 @@ How this list was compiled
 .. |asitop-logo| image:: https://github.com/tlkh.png?s=28 :height: 28
 .. |loki-logo| image:: https://github.com/Neo23x0.png?s=28 :height: 28
 .. |tiptop-logo| image:: https://github.com/nschloe.png?s=28 :height: 28
+
+
+.. Ignored repos (used by find_adopters.py)
+.. ============================================================================
+.. https://github.com/yt-dlp/yt-dlp
+.. https://github.com/open-webui/open-webui
+.. https://github.com/fastapi/fastapi
