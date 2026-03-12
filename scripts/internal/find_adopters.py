@@ -52,6 +52,10 @@ DEP_FILES = [
 ]
 
 
+def stderr(msg=""):
+    print(msg, file=sys.stderr)
+
+
 def get_session(token):
     s = requests.Session()
     s.headers["Accept"] = "application/vnd.github.v3+json"
@@ -69,18 +73,12 @@ def wait_for_rate_limit(session):
         if search["remaining"] < 2:
             reset = search["reset"] - time.time() + 2
             if reset > 0:
-                print(
-                    f"  search rate limit hit, sleeping {reset:.0f}s",
-                    file=sys.stderr,
-                )
+                stderr(f"  search rate limit hit, sleeping {reset:.0f}s")
                 time.sleep(reset)
         if core["remaining"] < 10:
             reset = core["reset"] - time.time() + 2
             if reset > 0:
-                print(
-                    f"  core rate limit hit, sleeping {reset:.0f}s",
-                    file=sys.stderr,
-                )
+                stderr(f"  core rate limit hit, sleeping {reset:.0f}s")
                 time.sleep(reset)
 
 
@@ -101,17 +99,14 @@ def search_github(session):
         )
         resp = session.get(url)
         if resp.status_code != 200:
-            print(
-                f"  search API error: {resp.status_code} {resp.text}",
-                file=sys.stderr,
-            )
+            stderr(f"  search API error: {resp.status_code} {resp.text}")
             break
         data = resp.json()
         items = data.get("items", [])
         if not items:
             break
         for item in items:
-            results.append({  # noqa: PERF401
+            results.append({
                 "full_name": item["full_name"],
                 "owner": item["full_name"].split("/")[0],
                 "repo": item["full_name"].split("/")[1],
@@ -119,10 +114,9 @@ def search_github(session):
                 "description": item["description"] or "",
                 "html_url": item["html_url"],
             })
-        print(
+        stderr(
             f"  search page {page}: got {len(items)} results "
-            f"(total so far: {len(results)})",
-            file=sys.stderr,
+            f"(total so far: {len(results)})"
         )
         if len(items) < 100:
             break
@@ -403,48 +397,37 @@ def main():
     parse_cli()
     session = get_session(TOKEN)
 
-    print(
+    stderr(
         f"Searching GitHub for Python repos mentioning {PROJECT} "
-        f"(>={MIN_STARS} stars)...",
-        file=sys.stderr,
+        f"(>={MIN_STARS} stars)..."
     )
     candidates = search_github(session)
-    print(f"Found {len(candidates)} candidates.", file=sys.stderr)
+    stderr(f"Found {len(candidates)} candidates.")
 
     # Filter out skipped repos.
     candidates = [c for c in candidates if c["full_name"] not in SKIP]
-    print(
-        f"After filtering: {len(candidates)} candidates.",
-        file=sys.stderr,
-    )
+    stderr(f"After filtering: {len(candidates)} candidates.")
 
     # Verify each candidate.
     confirmed = []
     for i, c in enumerate(candidates, 1):
         owner = c["owner"]
         repo = c["repo"]
-        print(
-            f"  [{i}/{len(candidates)}] Checking {c['full_name']} "
-            f"({c['stars']} stars)...",
-            file=sys.stderr,
+        stderr(
+            f"  [{i}/{len(candidates)}] Checking"
+            f" https://github.com/{c['full_name']} ({c['stars']} stars)..."
         )
         status, detail = check_dependency(session, owner, repo)
         if status != "no":
             c["dep_type"] = status
             c["dep_detail"] = detail
             confirmed.append(c)
-            print(
-                f"    -> {status} dependency (via {detail})",
-                file=sys.stderr,
-            )
+            stderr(f"    -> {status} dependency (via {detail})")
         else:
-            print("    -> not a dependency, skipping", file=sys.stderr)
+            stderr("    -> not a dependency, skipping")
 
-    print(file=sys.stderr)
-    print(
-        f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.",
-        file=sys.stderr,
-    )
+    stderr()
+    stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.")
 
     # Generate RST.
     rst = generate_rst(confirmed)
