@@ -38,6 +38,7 @@ import time
 
 import requests
 
+from psutil._common import hilite
 from psutil._common import print_color
 
 GITHUB_GRAPHQL = "https://api.github.com/graphql"
@@ -62,6 +63,11 @@ _FIXED_DEP_FILES = {
 
 # Max repos to batch in a single GraphQL query.
 _BATCH_SIZE = 5
+
+
+green = lambda msg: hilite(msg, color="green")  # noqa: E731
+yellow = lambda msg: hilite(msg, color="yellow")  # noqa: E731
+blue = lambda msg: hilite(msg, color="blue")  # noqa: E731
 
 
 def stderr(msg="", color=None):
@@ -714,7 +720,7 @@ def main():
         for i, c in enumerate(candidates, 1):
             stderr(
                 f"  [{i}/{len(candidates)}] Checking"
-                f" https://github.com/{c['full_name']}"
+                f" https://github.com/{blue(c['full_name'])}"
                 f" ({c['stars']} stars)..."
             )
             file_contents = all_dep_files.get(c["full_name"], {})
@@ -741,11 +747,15 @@ def main():
             confirmed.append(c)
 
     stderr()
-    stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.")
+    stderr(f"Confirmed {len(confirmed)} projects with {PROJECT} dependency:")
+    for c in confirmed:
+        stderr(f"  {c['stars']:,} stars: {c['html_url']}", "green")
 
     # Generate RST.
-    rst = generate_rst(confirmed)
-    print(rst)
+    ans = input("\nGenerate RsT content? [y/N] ").strip().lower()
+    if ans in {"y", "yes", "Y"}:
+        rst = generate_rst(confirmed)
+        print(rst)
 
 
 if __name__ == "__main__":
