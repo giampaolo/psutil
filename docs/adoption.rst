@@ -451,3 +451,7 @@ How this list was compiled
 .. https://github.com/yt-dlp/yt-dlp
 .. https://github.com/open-webui/open-webui
 .. https://github.com/fastapi/fastapi
+.. https://github.com/hacksider/Deep-Live-Cam
+.. https://github.com/RVC-Boss/GPT-SoVITS
+.. https://github.com/jingyaogong/minimind
+.. https://github.com/Aider-AI/aider
