@@ -275,119 +275,119 @@ Tier 3 (1k-10k GitHub stars)
 
 .. Star badges
 
-.. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg
+.. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg?style=plastic
    :target: https://github.com/tensorflow/tensorflow
-.. |sd-webui-stars| image:: https://img.shields.io/github/stars/AUTOMATIC1111/stable-diffusion-webui.svg
+.. |sd-webui-stars| image:: https://img.shields.io/github/stars/AUTOMATIC1111/stable-diffusion-webui.svg?style=plastic
    :target: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-.. |transformers-stars| image:: https://img.shields.io/github/stars/huggingface/transformers.svg
+.. |transformers-stars| image:: https://img.shields.io/github/stars/huggingface/transformers.svg?style=plastic
    :target: https://github.com/huggingface/transformers
-.. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg
+.. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=plastic
    :target: https://github.com/pytorch/pytorch
-.. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg
+.. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=plastic
    :target: https://github.com/home-assistant/core
-.. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg
+.. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg?style=plastic
    :target: https://github.com/ansible/ansible
-.. |keras-stars| image:: https://img.shields.io/github/stars/keras-team/keras.svg
+.. |keras-stars| image:: https://img.shields.io/github/stars/keras-team/keras.svg?style=plastic
    :target: https://github.com/keras-team/keras
-.. |scrapy-stars| image:: https://img.shields.io/github/stars/scrapy/scrapy.svg
+.. |scrapy-stars| image:: https://img.shields.io/github/stars/scrapy/scrapy.svg?style=plastic
    :target: https://github.com/scrapy/scrapy
-.. |rich-stars| image:: https://img.shields.io/github/stars/Textualize/rich.svg
+.. |rich-stars| image:: https://img.shields.io/github/stars/Textualize/rich.svg?style=plastic
    :target: https://github.com/Textualize/rich
-.. |autogen-stars| image:: https://img.shields.io/github/stars/microsoft/autogen.svg
+.. |autogen-stars| image:: https://img.shields.io/github/stars/microsoft/autogen.svg?style=plastic
    :target: https://github.com/microsoft/autogen
-.. |faceswap-stars| image:: https://img.shields.io/github/stars/deepfakes/faceswap.svg
+.. |faceswap-stars| image:: https://img.shields.io/github/stars/deepfakes/faceswap.svg?style=plastic
    :target: https://github.com/deepfakes/faceswap
-.. |ultralytics-stars| image:: https://img.shields.io/github/stars/ultralytics/ultralytics.svg
+.. |ultralytics-stars| image:: https://img.shields.io/github/stars/ultralytics/ultralytics.svg?style=plastic
    :target: https://github.com/ultralytics/ultralytics
-.. |airflow-stars| image:: https://img.shields.io/github/stars/apache/airflow.svg
+.. |airflow-stars| image:: https://img.shields.io/github/stars/apache/airflow.svg?style=plastic
    :target: https://github.com/apache/airflow
-.. |streamlit-stars| image:: https://img.shields.io/github/stars/streamlit/streamlit.svg
+.. |streamlit-stars| image:: https://img.shields.io/github/stars/streamlit/streamlit.svg?style=plastic
    :target: https://github.com/streamlit/streamlit
-.. |sentry-stars| image:: https://img.shields.io/github/stars/getsentry/sentry.svg
+.. |sentry-stars| image:: https://img.shields.io/github/stars/getsentry/sentry.svg?style=plastic
    :target: https://github.com/getsentry/sentry
-.. |spark-stars| image:: https://img.shields.io/github/stars/apache/spark.svg
+.. |spark-stars| image:: https://img.shields.io/github/stars/apache/spark.svg?style=plastic
    :target: https://github.com/apache/spark
-.. |mitmproxy-stars| image:: https://img.shields.io/github/stars/mitmproxy/mitmproxy.svg
+.. |mitmproxy-stars| image:: https://img.shields.io/github/stars/mitmproxy/mitmproxy.svg?style=plastic
    :target: https://github.com/mitmproxy/mitmproxy
-.. |gradio-stars| image:: https://img.shields.io/github/stars/gradio-app/gradio.svg
+.. |gradio-stars| image:: https://img.shields.io/github/stars/gradio-app/gradio.svg?style=plastic
    :target: https://github.com/gradio-app/gradio
-.. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg
+.. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=plastic
    :target: https://github.com/ray-project/ray
 
-.. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg
+.. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=plastic
    :target: https://github.com/nicolargo/glances
-.. |detectron2-stars| image:: https://img.shields.io/github/stars/facebookresearch/detectron2.svg
+.. |detectron2-stars| image:: https://img.shields.io/github/stars/facebookresearch/detectron2.svg?style=plastic
    :target: https://github.com/facebookresearch/detectron2
-.. |mmdetection-stars| image:: https://img.shields.io/github/stars/open-mmlab/mmdetection.svg
+.. |mmdetection-stars| image:: https://img.shields.io/github/stars/open-mmlab/mmdetection.svg?style=plastic
    :target: https://github.com/open-mmlab/mmdetection
-.. |lightning-stars| image:: https://img.shields.io/github/stars/Lightning-AI/pytorch-lightning.svg
+.. |lightning-stars| image:: https://img.shields.io/github/stars/Lightning-AI/pytorch-lightning.svg?style=plastic
    :target: https://github.com/Lightning-AI/pytorch-lightning
-.. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg
+.. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg?style=plastic
    :target: https://github.com/celery/celery
-.. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg
+.. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg?style=plastic
    :target: https://github.com/locustio/locust
-.. |mlflow-stars| image:: https://img.shields.io/github/stars/mlflow/mlflow.svg
+.. |mlflow-stars| image:: https://img.shields.io/github/stars/mlflow/mlflow.svg?style=plastic
    :target: https://github.com/mlflow/mlflow
-.. |dash-stars| image:: https://img.shields.io/github/stars/plotly/dash.svg
+.. |dash-stars| image:: https://img.shields.io/github/stars/plotly/dash.svg?style=plastic
    :target: https://github.com/plotly/dash
-.. |bokeh-stars| image:: https://img.shields.io/github/stars/bokeh/bokeh.svg
+.. |bokeh-stars| image:: https://img.shields.io/github/stars/bokeh/bokeh.svg?style=plastic
    :target: https://github.com/bokeh/bokeh
-.. |luigi-stars| image:: https://img.shields.io/github/stars/spotify/luigi.svg
+.. |luigi-stars| image:: https://img.shields.io/github/stars/spotify/luigi.svg?style=plastic
    :target: https://github.com/spotify/luigi
-.. |awscli-stars| image:: https://img.shields.io/github/stars/aws/aws-cli.svg
+.. |awscli-stars| image:: https://img.shields.io/github/stars/aws/aws-cli.svg?style=plastic
    :target: https://github.com/aws/aws-cli
-.. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg
+.. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=plastic
    :target: https://github.com/saltstack/salt
-.. |nuitka-stars| image:: https://img.shields.io/github/stars/Nuitka/Nuitka.svg
+.. |nuitka-stars| image:: https://img.shields.io/github/stars/Nuitka/Nuitka.svg?style=plastic
    :target: https://github.com/Nuitka/Nuitka
-.. |pytest-stars| image:: https://img.shields.io/github/stars/pytest-dev/pytest.svg
+.. |pytest-stars| image:: https://img.shields.io/github/stars/pytest-dev/pytest.svg?style=plastic
    :target: https://github.com/pytest-dev/pytest
-.. |dask-stars| image:: https://img.shields.io/github/stars/dask/dask.svg
+.. |dask-stars| image:: https://img.shields.io/github/stars/dask/dask.svg?style=plastic
    :target: https://github.com/dask/dask
-.. |optuna-stars| image:: https://img.shields.io/github/stars/optuna/optuna.svg
+.. |optuna-stars| image:: https://img.shields.io/github/stars/optuna/optuna.svg?style=plastic
    :target: https://github.com/optuna/optuna
-.. |jupyter-stars| image:: https://img.shields.io/github/stars/jupyter/notebook.svg
+.. |jupyter-stars| image:: https://img.shields.io/github/stars/jupyter/notebook.svg?style=plastic
    :target: https://github.com/jupyter/notebook
-.. |pyinstaller-stars| image:: https://img.shields.io/github/stars/pyinstaller/pyinstaller.svg
+.. |pyinstaller-stars| image:: https://img.shields.io/github/stars/pyinstaller/pyinstaller.svg?style=plastic
    :target: https://github.com/pyinstaller/pyinstaller
-.. |numba-stars| image:: https://img.shields.io/github/stars/numba/numba.svg
+.. |numba-stars| image:: https://img.shields.io/github/stars/numba/numba.svg?style=plastic
    :target: https://github.com/numba/numba
-.. |wandb-stars| image:: https://img.shields.io/github/stars/wandb/wandb.svg
+.. |wandb-stars| image:: https://img.shields.io/github/stars/wandb/wandb.svg?style=plastic
    :target: https://github.com/wandb/wandb
-.. |cython-stars| image:: https://img.shields.io/github/stars/cython/cython.svg
+.. |cython-stars| image:: https://img.shields.io/github/stars/cython/cython.svg?style=plastic
    :target: https://github.com/cython/cython
-.. |modin-stars| image:: https://img.shields.io/github/stars/modin-project/modin.svg
+.. |modin-stars| image:: https://img.shields.io/github/stars/modin-project/modin.svg?style=plastic
    :target: https://github.com/modin-project/modin
-.. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg
+.. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg?style=plastic
    :target: https://github.com/aristocratos/bpytop
-.. |bashtop-stars| image:: https://img.shields.io/github/stars/aristocratos/bashtop.svg
+.. |bashtop-stars| image:: https://img.shields.io/github/stars/aristocratos/bashtop.svg?style=plastic
    :target: https://github.com/aristocratos/bashtop
 
-.. |conan-stars| image:: https://img.shields.io/github/stars/conan-io/conan.svg
+.. |conan-stars| image:: https://img.shields.io/github/stars/conan-io/conan.svg?style=plastic
    :target: https://github.com/conan-io/conan
-.. |spyder-stars| image:: https://img.shields.io/github/stars/spyder-ide/spyder.svg
+.. |spyder-stars| image:: https://img.shields.io/github/stars/spyder-ide/spyder.svg?style=plastic
    :target: https://github.com/spyder-ide/spyder
-.. |jupyterhub-stars| image:: https://img.shields.io/github/stars/jupyterhub/jupyterhub.svg
+.. |jupyterhub-stars| image:: https://img.shields.io/github/stars/jupyterhub/jupyterhub.svg?style=plastic
    :target: https://github.com/jupyterhub/jupyterhub
-.. |ajenti-stars| image:: https://img.shields.io/github/stars/ajenti/ajenti.svg
+.. |ajenti-stars| image:: https://img.shields.io/github/stars/ajenti/ajenti.svg?style=plastic
    :target: https://github.com/ajenti/ajenti
-.. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg
+.. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg?style=plastic
    :target: https://github.com/google/grr
-.. |buildbot-stars| image:: https://img.shields.io/github/stars/buildbot/buildbot.svg
+.. |buildbot-stars| image:: https://img.shields.io/github/stars/buildbot/buildbot.svg?style=plastic
    :target: https://github.com/buildbot/buildbot
-.. |stui-stars| image:: https://img.shields.io/github/stars/amanusk/s-tui.svg
+.. |stui-stars| image:: https://img.shields.io/github/stars/amanusk/s-tui.svg?style=plastic
    :target: https://github.com/amanusk/s-tui
-.. |joblib-stars| image:: https://img.shields.io/github/stars/joblib/joblib.svg
+.. |joblib-stars| image:: https://img.shields.io/github/stars/joblib/joblib.svg?style=plastic
    :target: https://github.com/joblib/joblib
-.. |xpra-stars| image:: https://img.shields.io/github/stars/Xpra-org/xpra.svg
+.. |xpra-stars| image:: https://img.shields.io/github/stars/Xpra-org/xpra.svg?style=plastic
    :target: https://github.com/Xpra-org/xpra
-.. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg
+.. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg?style=plastic
    :target: https://github.com/Jahaja/psdash
-.. |scons-stars| image:: https://img.shields.io/github/stars/SCons/scons.svg
+.. |scons-stars| image:: https://img.shields.io/github/stars/SCons/scons.svg?style=plastic
    :target: https://github.com/SCons/scons
-.. |diamond-stars| image:: https://img.shields.io/github/stars/python-diamond/Diamond.svg
+.. |diamond-stars| image:: https://img.shields.io/github/stars/python-diamond/Diamond.svg?style=plastic
    :target: https://github.com/python-diamond/Diamond
-.. |ptop-stars| image:: https://img.shields.io/github/stars/darxtrix/ptop.svg
+.. |ptop-stars| image:: https://img.shields.io/github/stars/darxtrix/ptop.svg?style=plastic
    :target: https://github.com/darxtrix/ptop
-.. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg
+.. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=plastic
    :target: https://github.com/giampaolo/psleak
