@@ -63,6 +63,7 @@
         <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://groups.google.com/g/psutil"><b>Forum</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/adoption"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.readthedocs.io/changelog"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
     </div>
@@ -473,16 +474,32 @@ Windows services
 Projects using psutil
 =====================
 
-Here's some I find particularly interesting:
+psutil is one of the `top 100
+<https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded packages
+on PyPI, with `760,000+ dependent GitHub repositories
+<https://github.com/giampaolo/psutil/network/dependents>`__ and 14,000+
+dependent packages. Some notable projects using psutil:
 
-- https://github.com/giampaolo/psleak
-- https://github.com/google/grr
-- https://github.com/facebook/osquery/
-- https://github.com/nicolargo/glances
-- https://github.com/aristocratos/bpytop
-- https://github.com/Jahaja/psdash
-- https://github.com/ajenti/ajenti
-- https://github.com/home-assistant/home-assistant/
+- `TensorFlow <https://github.com/tensorflow/tensorflow>`__,
+  `PyTorch <https://github.com/pytorch/pytorch>`__,
+  `HuggingFace Transformers <https://github.com/huggingface/transformers>`__,
+  `Keras <https://github.com/keras-team/keras>`__,
+  `Ultralytics (YOLO) <https://github.com/ultralytics/ultralytics>`__
+- `Home Assistant <https://github.com/home-assistant/core>`__,
+  `Ansible <https://github.com/ansible/ansible>`__,
+  `Apache Airflow <https://github.com/apache/airflow>`__,
+  `Sentry <https://github.com/getsentry/sentry>`__
+- `Celery <https://github.com/celery/celery>`__,
+  `Scrapy <https://github.com/scrapy/scrapy>`__,
+  `Streamlit <https://github.com/streamlit/streamlit>`__,
+  `Dask <https://github.com/dask/dask>`__
+- `Glances <https://github.com/nicolargo/glances>`__,
+  `bpytop <https://github.com/aristocratos/bpytop>`__,
+  `Ajenti <https://github.com/ajenti/ajenti>`__,
+  `GRR <https://github.com/google/grr>`__
+- `psleak <https://github.com/giampaolo/psleak>`__
+
+`Full list <https://psutil.readthedocs.io/adoption>`__.
 
 Portings
 ========
