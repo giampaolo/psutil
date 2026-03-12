@@ -62,7 +62,7 @@ Tier 1 (>40k GitHub stars)
    * - |ultralytics-logo| `Ultralytics (YOLO) <https://github.com/ultralytics/ultralytics>`__
      - Object detection and computer vision
      - |ultralytics-stars|
-     -
+     - benchmarks
    * - |airflow-logo| `Apache Airflow <https://github.com/apache/airflow>`__
      - Workflow orchestration platform
      - |airflow-stars|
@@ -114,7 +114,7 @@ Tier 2 (10k-40k GitHub stars)
    * - |mmdetection-logo| `mmdetection <https://github.com/open-mmlab/mmdetection>`__
      - OpenMMLab detection toolbox and benchmark
      - |mmdetection-stars|
-     -
+     - benchmark, memory profiling
    * - |lightning-logo| `PyTorch Lightning <https://github.com/Lightning-AI/pytorch-lightning>`__
      - Pretrain and finetune AI models
      - |lightning-stars|
@@ -122,7 +122,7 @@ Tier 2 (10k-40k GitHub stars)
    * - |celery-logo| `Celery <https://github.com/celery/celery>`__
      - Distributed task queue
      - |celery-stars|
-     - worker process monitoring
+     - worker process monitoring, memleak detection
    * - |locust-logo| `Locust <https://github.com/locustio/locust>`__
      - Scalable load testing in Python
      - |locust-stars|
@@ -130,7 +130,7 @@ Tier 2 (10k-40k GitHub stars)
    * - |mlflow-logo| `MLflow <https://github.com/mlflow/mlflow>`__
      - AI/ML engineering platform
      - |mlflow-stars|
-     -
+     - deep system monitoring integration
    * - |dash-logo| `Plotly Dash <https://github.com/plotly/dash>`__
      - Data apps and dashboards for Python
      - |dash-stars|
@@ -142,26 +142,18 @@ Tier 2 (10k-40k GitHub stars)
    * - |bokeh-logo| `Bokeh <https://github.com/bokeh/bokeh>`__
      - Interactive data visualization in the browser
      - |bokeh-stars|
-     -
+     - server memory logging
    * - |luigi-logo| `Spotify Luigi <https://github.com/spotify/luigi>`__
      - Complex batch job pipelines with dependency resolution
      - |luigi-stars|
-     -
-   * - |awscli-logo| `AWS CLI <https://github.com/aws/aws-cli>`__
-     - Universal CLI for Amazon Web Services
-     - |awscli-stars|
-     -
+     - process orchestration, unit tests
    * - |salt-logo| `Salt <https://github.com/saltstack/salt>`__
      - Infrastructure automation at scale
      - |salt-stars|
-     - system data collection (grains)
+     - deep system data collection (grains)
    * - |nuitka-logo| `Nuitka <https://github.com/Nuitka/Nuitka>`__
      - Python compiler (Python to C)
      - |nuitka-stars|
-     -
-   * - |pytest-logo| `pytest <https://github.com/pytest-dev/pytest>`__
-     - Python testing framework
-     - |pytest-stars|
      -
    * - |dask-logo| `Dask <https://github.com/dask/dask>`__
      - Parallel computing with task scheduling
@@ -226,7 +218,7 @@ Tier 3 (1k-10k GitHub stars)
    * - |spyder-logo| `Spyder <https://github.com/spyder-ide/spyder>`__
      - Scientific Python IDE
      - |spyder-stars|
-     -
+     - deep integration, UI stats, process management
    * - |jupyterhub-logo| `JupyterHub <https://github.com/jupyterhub/jupyterhub>`__
      - Multi-user Jupyter notebook server
      - |jupyterhub-stars|
@@ -234,11 +226,11 @@ Tier 3 (1k-10k GitHub stars)
    * - |ajenti-logo| `Ajenti <https://github.com/ajenti/ajenti>`__
      - Web-based server administration panel
      - |ajenti-stars|
-     - monitoring plugins
+     - monitoring plugins, deep integration
    * - |grr-logo| `GRR <https://github.com/google/grr>`__
      - Remote live forensics by Google
      - |grr-stars|
-     - endpoint system data collection
+     - endpoint system data collection, deep integration
    * - |buildbot-logo| `Buildbot <https://github.com/buildbot/buildbot>`__
      - Continuous integration framework
      - |buildbot-stars|
@@ -349,10 +341,8 @@ How this list was compiled
 .. |dash-stars| image:: https://img.shields.io/github/stars/plotly/dash.svg?style=plastic
 .. |bokeh-stars| image:: https://img.shields.io/github/stars/bokeh/bokeh.svg?style=plastic
 .. |luigi-stars| image:: https://img.shields.io/github/stars/spotify/luigi.svg?style=plastic
-.. |awscli-stars| image:: https://img.shields.io/github/stars/aws/aws-cli.svg?style=plastic
 .. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=plastic
 .. |nuitka-stars| image:: https://img.shields.io/github/stars/Nuitka/Nuitka.svg?style=plastic
-.. |pytest-stars| image:: https://img.shields.io/github/stars/pytest-dev/pytest.svg?style=plastic
 .. |dask-stars| image:: https://img.shields.io/github/stars/dask/dask.svg?style=plastic
 .. |optuna-stars| image:: https://img.shields.io/github/stars/optuna/optuna.svg?style=plastic
 .. |jupyter-stars| image:: https://img.shields.io/github/stars/jupyter/notebook.svg?style=plastic
@@ -419,10 +409,8 @@ How this list was compiled
 .. |dash-logo| image:: https://github.com/plotly.png?s=28 :height: 28
 .. |bokeh-logo| image:: https://github.com/bokeh.png?s=28 :height: 28
 .. |luigi-logo| image:: https://github.com/spotify.png?s=28 :height: 28
-.. |awscli-logo| image:: https://github.com/aws.png?s=28 :height: 28
 .. |salt-logo| image:: https://github.com/saltstack.png?s=28 :height: 28
 .. |nuitka-logo| image:: https://github.com/Nuitka.png?s=28 :height: 28
-.. |pytest-logo| image:: https://github.com/pytest-dev.png?s=28 :height: 28
 .. |dask-logo| image:: https://github.com/dask.png?s=28 :height: 28
 .. |optuna-logo| image:: https://github.com/optuna.png?s=28 :height: 28
 .. |jupyter-logo| image:: https://github.com/jupyter.png?s=28 :height: 28
