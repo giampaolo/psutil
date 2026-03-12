@@ -309,13 +309,11 @@ def generate_rst(projects):
                 "https://img.shields.io/github/stars/"
                 f"{full}.svg?style=plastic"
             )
-            star_badges.append(f"   :target: https://github.com/{full}")
 
             logo_images.append(
                 f".. |{name}-logo| image:: https://github.com/{owner}.png?s=28"
+                " :height: 28"
             )
-            logo_images.append("   :height: 28")
-            logo_images.append(f"   :target: https://github.com/{full}")
 
         lines.append("")
 
