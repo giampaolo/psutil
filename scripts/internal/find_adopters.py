@@ -37,29 +37,12 @@ MAX_PAGES = 0
 TOKEN = ""
 SKIP = set()
 
-# Files to check for dependency declarations.
-DEP_FILES = [
-    "pyproject.toml",
-    "setup.py",
-    "setup.cfg",
-    "requirements.txt",
-    "requirements/base.txt",
-    "requirements/main.txt",
-    "requirements/install.txt",
-    "requirements/production.txt",
-]
-
-# GraphQL alias names for each dep file (must be valid
-# identifiers).
-_DEP_FILE_ALIASES = {
+# Fixed files to check for dependency declarations.
+_FIXED_DEP_FILES = {
     "pyproject.toml": "pyprojectToml",
     "setup.py": "setupPy",
     "setup.cfg": "setupCfg",
     "requirements.txt": "requirementsTxt",
-    "requirements/base.txt": "requirementsBase",
-    "requirements/main.txt": "requirementsMain",
-    "requirements/install.txt": "requirementsInstall",
-    "requirements/production.txt": "requirementsProduction",
 }
 
 # Max repos to batch in a single GraphQL query.
@@ -168,27 +151,52 @@ def search_github(session):
     return results
 
 
-def _build_dep_files_fragment():
-    """Build GraphQL fields for fetching all dep files."""
+def _build_fixed_dep_fragment():
+    """Build GraphQL fields for fetching fixed dep files
+    + requirements/ dir listing.
+    """
     fields = []
-    for dep_file, alias in _DEP_FILE_ALIASES.items():
+    for dep_file, alias in _FIXED_DEP_FILES.items():
         fields.append(
             f"    {alias}: object("
             f'expression: "HEAD:{dep_file}") {{\n'
             f"      ... on Blob {{ text }}\n"
             f"    }}"
         )
+    # Also fetch the requirements/ directory listing.
+    fields.append(
+        "    requirementsDir: object("
+        "expression: \"HEAD:requirements\") {\n"  # noqa: Q003
+        "      ... on Tree { entries { name } }\n"
+        "    }"
+    )
     return "\n".join(fields)
+
+
+def _make_req_alias(filename):
+    """Turn a requirements/*.txt filename into a GraphQL alias."""
+    base = filename.replace(".txt", "")
+    base = re.sub(r"[^a-zA-Z0-9]", "_", base)
+    return f"req_{base}"
 
 
 def fetch_dep_files(session, candidates):
     """Batch-fetch dependency files for a list of candidates.
 
+    Phase 1: fetch fixed dep files + requirements/ dir listing.
+    Phase 2: for repos with a requirements/ dir, fetch all *.txt
+    files found there.
+
     Returns a dict mapping full_name to a dict of
     {dep_file: content_or_None}.
     """
-    dep_fragment = _build_dep_files_fragment()
+    fixed_fragment = _build_fixed_dep_fragment()
     result = {}
+    # Track which repos have requirements/ entries.
+    req_dir_entries = {}  # full_name -> [filename, ...]
+
+    # --- Phase 1: fixed files + dir listing ---
+    stderr("  phase 1: fixed files + requirements/ dir listing...")
     for start in range(0, len(candidates), _BATCH_SIZE):
         batch = candidates[start : start + _BATCH_SIZE]
         repo_parts = []
@@ -197,29 +205,83 @@ def fetch_dep_files(session, candidates):
                 f"  repo{i}: repository("
                 f'owner: "{c["owner"]}", '
                 f'name: "{c["repo"]}") {{\n'
-                f"{dep_fragment}\n"
+                f"{fixed_fragment}\n"
                 f"  }}"
             )
         query = "query {\n" + "\n".join(repo_parts) + "\n}"
         data = graphql(session, query)
         if data is None:
             for c in batch:
-                result[c["full_name"]] = dict.fromkeys(DEP_FILES)
+                result[c["full_name"]] = {}
             continue
         for i, c in enumerate(batch):
             repo_data = data.get(f"repo{i}")
             files = {}
             if repo_data:
-                for dep_file, alias in _DEP_FILE_ALIASES.items():
+                for dep_file, alias in _FIXED_DEP_FILES.items():
                     obj = repo_data.get(alias)
                     if obj and "text" in obj:
                         files[dep_file] = obj["text"]
-                    else:
-                        files[dep_file] = None
-            else:
-                for dep_file in DEP_FILES:
-                    files[dep_file] = None
+                # Check for requirements/ directory.
+                req_obj = repo_data.get("requirementsDir")
+                if req_obj and "entries" in req_obj:
+                    txt_files = [
+                        e["name"]
+                        for e in req_obj["entries"]
+                        if e["name"].endswith(".txt")
+                    ]
+                    if txt_files:
+                        req_dir_entries[c["full_name"]] = txt_files
             result[c["full_name"]] = files
+
+    # --- Phase 2: fetch discovered requirements/*.txt files ---
+    if req_dir_entries:
+        # Collect candidates that need follow-up.
+        need_fetch = [
+            c for c in candidates if c["full_name"] in req_dir_entries
+        ]
+        stderr(
+            "  phase 2: fetching requirements/*.txt from "
+            f"{len(need_fetch)} repos..."
+        )
+        for start in range(0, len(need_fetch), _BATCH_SIZE):
+            batch = need_fetch[start : start + _BATCH_SIZE]
+            repo_parts = []
+            for i, c in enumerate(batch):
+                txt_files = req_dir_entries[c["full_name"]]
+                file_fields = []
+                for fname in txt_files:
+                    alias = _make_req_alias(fname)
+                    path = f"requirements/{fname}"
+                    file_fields.append(
+                        f"      {alias}: object("
+                        f'expression: "HEAD:{path}") {{\n'
+                        f"        ... on Blob {{ text }}\n"
+                        f"      }}"
+                    )
+                repo_parts.append(
+                    f"  repo{i}: repository("
+                    f'owner: "{c["owner"]}", '
+                    f'name: "{c["repo"]}") {{\n'
+                    + "\n".join(file_fields)
+                    + "\n  }"
+                )
+            query = "query {\n" + "\n".join(repo_parts) + "\n}"
+            data = graphql(session, query)
+            if data is None:
+                continue
+            for i, c in enumerate(batch):
+                repo_data = data.get(f"repo{i}")
+                if not repo_data:
+                    continue
+                txt_files = req_dir_entries[c["full_name"]]
+                for fname in txt_files:
+                    alias = _make_req_alias(fname)
+                    obj = repo_data.get(alias)
+                    if obj and "text" in obj:
+                        path = f"requirements/{fname}"
+                        result[c["full_name"]][path] = obj["text"]
+
     return result
 
 
@@ -235,8 +297,7 @@ def classify_dependency(file_contents):
     """
     pat = re.escape(PROJECT)
     found_in = []
-    for dep_file in DEP_FILES:
-        content = file_contents.get(dep_file)
+    for dep_file, content in file_contents.items():
         if content is None:
             continue
         if not re.search(r"\b" + pat + r"\b", content):
