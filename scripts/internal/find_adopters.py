@@ -4,12 +4,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Search GitHub for notable projects that use psutil as a dependency.
+"""Search GitHub for notable projects that use a given project
+as a dependency.
 
 Uses the GitHub search API to find Python repositories that mention
-"psutil" in their README, then verifies each candidate by checking
-its dependency files (pyproject.toml, setup.py, setup.cfg,
-requirements.txt) for an actual psutil dependency declaration.
+the project in their README, then verifies each candidate by
+checking its dependency files (pyproject.toml, setup.py, setup.cfg,
+requirements.txt) for an actual dependency declaration.
 
 Output is RST formatted, ready to paste into docs/adoption.rst.
 
@@ -17,7 +18,7 @@ Requirements:
     pip install requests
 
 Usage:
-    python3 find_adopters.py --token /path/to/token/file
+    python3 find_adopters.py --project psutil --token ~/.github.api.key
 """
 
 import argparse
@@ -37,7 +38,8 @@ except ImportError:
 
 
 GITHUB_API = "https://api.github.com"
-# Files to check for psutil dependency declarations.
+PROJECT = ""
+# Files to check for dependency declarations.
 DEP_FILES = [
     "pyproject.toml",
     "setup.py",
@@ -47,14 +49,6 @@ DEP_FILES = [
     "requirements/main.txt",
     "requirements/install.txt",
     "requirements/production.txt",
-]
-# Patterns that indicate psutil is a real dependency (not just a
-# comment or a mention in a string).
-PSUTIL_PATTERNS = [
-    re.compile(r'^\s*["\']?psutil', re.MULTILINE),
-    re.compile(r"install_requires\s*=.*psutil", re.DOTALL),
-    re.compile(r"setup_requires\s*=.*psutil", re.DOTALL),
-    re.compile(r"dependencies\s*=\s*\[.*psutil", re.DOTALL),
 ]
 
 
@@ -91,13 +85,13 @@ def wait_for_rate_limit(session):
 
 
 def search_github(session, min_stars=1000, max_pages=5):
-    """Search for Python repos mentioning psutil in their README."""
+    """Search for Python repos mentioning PROJECT in their README."""
     results = []
     for page in range(1, max_pages + 1):
         wait_for_rate_limit(session)
         url = (
             f"{GITHUB_API}/search/repositories"
-            "?q=psutil+in:readme+language:Python"
+            f"?q={PROJECT}+in:readme+language:Python"
             f"+stars:>={min_stars}"
             "&sort=stars&order=desc"
             f"&per_page=100&page={page}"
@@ -149,23 +143,24 @@ def get_file_content(session, owner, repo, path):
 
 
 def check_dependency(session, owner, repo):
-    """Check if a repo actually depends on psutil.
+    """Check if a repo actually depends on PROJECT.
 
     Returns a tuple (status, detail) where status is one of:
-    - "direct"    : psutil in install/runtime dependencies
-    - "build"     : psutil in build/setup dependencies only
-    - "test"      : psutil in test/dev dependencies only
-    - "optional"  : psutil in optional/extras dependencies
+    - "direct"    : PROJECT in install/runtime dependencies
+    - "build"     : PROJECT in build/setup dependencies only
+    - "test"      : PROJECT in test/dev dependencies only
+    - "optional"  : PROJECT in optional/extras dependencies
     - "no"        : not found in any dependency file
     """
     found_in = []
+    pat = re.escape(PROJECT)
     for dep_file in DEP_FILES:
         wait_for_rate_limit(session)
         content = get_file_content(session, owner, repo, dep_file)
         if content is None:
             continue
-        # Check if psutil appears in this file.
-        if not re.search(r"\bpsutil\b", content):
+        # Check if PROJECT appears in this file.
+        if not re.search(r"\b" + pat + r"\b", content):
             continue
         found_in.append(dep_file)
 
@@ -178,17 +173,19 @@ def check_dependency(session, owner, repo):
         if f == "pyproject.toml":
             content = get_file_content(session, owner, repo, f)
             if content and re.search(
-                r"\[project\].*?dependencies\s*=\s*\[.*?psutil",
+                r"\[project\].*?dependencies\s*=\s*\[.*?" + pat,
                 content,
                 re.DOTALL,
             ):
                 return "direct", f
             if content and re.search(
-                r"\[tool\.poetry\.dependencies\].*?psutil", content, re.DOTALL
+                r"\[tool\.poetry\.dependencies\].*?" + pat,
+                content,
+                re.DOTALL,
             ):
                 return "direct", f
             if content and re.search(
-                r"\[build-system\].*?requires\s*=\s*\[.*?psutil",
+                r"\[build-system\].*?requires\s*=\s*\[.*?" + pat,
                 content,
                 re.DOTALL,
             ):
@@ -201,30 +198,30 @@ def check_dependency(session, owner, repo):
         elif f == "setup.py":
             content = get_file_content(session, owner, repo, f)
             if content and re.search(
-                r"install_requires.*?psutil", content, re.DOTALL
+                r"install_requires.*?" + pat, content, re.DOTALL
             ):
                 return "direct", f
             if content and re.search(
-                r"setup_requires.*?psutil", content, re.DOTALL
+                r"setup_requires.*?" + pat, content, re.DOTALL
             ):
                 return "build", f
             if content and re.search(
-                r"tests_require.*?psutil", content, re.DOTALL
+                r"tests_require.*?" + pat, content, re.DOTALL
             ):
                 return "test", f
             if content and re.search(
-                r"extras_require.*?psutil", content, re.DOTALL
+                r"extras_require.*?" + pat, content, re.DOTALL
             ):
                 return "optional", f
             return "direct", f
         elif f == "setup.cfg":
             content = get_file_content(session, owner, repo, f)
             if content and re.search(
-                r"install_requires.*?psutil", content, re.DOTALL
+                r"install_requires.*?" + pat, content, re.DOTALL
             ):
                 return "direct", f
             if content and re.search(
-                r"extras_require.*?psutil", content, re.DOTALL
+                r"extras_require.*?" + pat, content, re.DOTALL
             ):
                 return "optional", f
             return "direct", f
@@ -284,7 +281,7 @@ def generate_rst(projects):
         lines.append("   * - Project")
         lines.append("     - Description")
         lines.append("     - Stars")
-        lines.append("     - psutil usage")
+        lines.append("     - Usage")
 
         for p in tier_projects:
             name = make_subst_name(p["full_name"])
@@ -344,8 +341,18 @@ def generate_rst(projects):
 
 
 def main():
+    global PROJECT
+
     parser = argparse.ArgumentParser(
-        description="Find notable GitHub projects using psutil."
+        description=(
+            "Find notable GitHub projects using a given "
+            "project as a dependency."
+        )
+    )
+    parser.add_argument(
+        "--project",
+        required=True,
+        help="Project name to search for (e.g. 'psutil').",
     )
     parser.add_argument(
         "--min-stars",
@@ -368,21 +375,21 @@ def main():
         "--skip",
         nargs="*",
         default=[],
-        help="Repos to skip (e.g. 'giampaolo/psutil').",
+        help="Repos to skip (e.g. 'owner/repo').",
     )
     args = parser.parse_args()
 
+    PROJECT = args.project
     with open(args.token) as f:
         token = f.read().strip()
     session = get_session(token)
 
-    # Always skip psutil itself and meta-lists.
+    # Always skip the project itself and meta-lists.
     skip = set(args.skip)
-    skip.add("giampaolo/psutil")
     skip.add("vinta/awesome-python")
 
     print(
-        "Searching GitHub for Python repos mentioning psutil "
+        f"Searching GitHub for Python repos mentioning {PROJECT} "
         f"(>={args.min_stars} stars)...",
         file=sys.stderr,
     )
@@ -422,7 +429,7 @@ def main():
 
     print(file=sys.stderr)
     print(
-        f"Confirmed {len(confirmed)} projects with psutil dependency.",
+        f"Confirmed {len(confirmed)} projects with {PROJECT} dependency.",
         file=sys.stderr,
     )
 
