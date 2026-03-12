@@ -101,6 +101,7 @@ Table of Contents
    API Reference <api>
    Recipes <recipes>
    Platform support <platform>
+   Who uses psutil <adoption>
    Development guide <devguide>
    FAQs <faq>
    Timeline <timeline>
