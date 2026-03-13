@@ -99,7 +99,7 @@ The original CREDITS file is also available in the repository root.
    * - `Lawrence D'Anna`_
      - :gh:`2010`
    * - `Matthieu Darbois`_
-     - :gh:`2039`, :gh:`2142`, :gh:`2147`, :gh:`2153`, :gh:`2040`, :gh:`2102`, :gh:`2216`, :gh:`2246`, :gh:`2252`, :gh:`2581`
+     - :gh:`2039`, :gh:`2142`, :gh:`2147`, :gh:`2153`, :gh:`2040`, :gh:`2102`, :gh:`2216`, :gh:`2581`
    * - Torsten Blum
      - :gh:`2114`
 
