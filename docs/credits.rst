@@ -1,4 +1,5 @@
 .. currentmodule:: psutil
+.. include:: _links.rst
 
 Credits
 =======
@@ -612,3 +613,5 @@ The original CREDITS file is also available in the repository root.
 .. _`Yannick Gingras`: https://github.com/ygingras
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Étienne Servais`: https://github.com/vser1
+.. _`Xiaoling Bao`: https://github.com/xiaolingbao
+.. _`Sebastian-Gabriel Brestin`: https://github.com/bsebi
