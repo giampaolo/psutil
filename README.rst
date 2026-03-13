@@ -121,16 +121,16 @@ Funding
 =======
 
 While psutil is free software and will always be, the project would benefit
-immensely from some funding.
-psutil is among the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`_
-most-downloaded Python packages, and keeping up with bug reports, user support,
-and ongoing maintenance has become increasingly difficult to sustain as a
-one-person effort.
-If you're a company that's making significant use of psutil you can consider
-becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`_,
-`Open Collective <https://opencollective.com/psutil>`_ or
-`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
-Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`_.
+immensely from some funding. psutil is among the `top 100`_ most-downloaded
+Python packages, and keeping up with bug reports, user support, and ongoing
+maintenance has become increasingly difficult to sustain as a one-person
+effort. If you're a company that's making significant use of psutil you can
+consider becoming a sponsor via `GitHub
+<https://github.com/sponsors/giampaolo>`_, `Open Collective
+<https://opencollective.com/psutil>`_ or `PayPal
+<https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
+Sponsors can have their logo displayed here and in the psutil `documentation
+<https://psutil.readthedocs.io>`_.
 
 Example usages
 ==============
@@ -446,7 +446,7 @@ Heap info
     pheap(heap_used=5177792, mmap_used=819200)
     >>> psutil.heap_trim()
 
-See also `psleak <https://github.com/giampaolo/psleak>`_
+See also `psleak`_.
 
 Windows services
 ----------------
@@ -473,27 +473,29 @@ Windows services
 Projects using psutil
 =====================
 
-psutil is one of the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__
-most-downloaded packages on PyPI, with 280+ million downloads per month,
-`760,000+ GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__ using
-it, and 14,000+ packages depending on it. The projects below are a small
-sample of notable software that depends on it. Some notable projects using psutil:
+psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 280+
+million downloads per month, `760,000+ GitHub repositories
+<https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
+14,000+ packages depending on it. The projects below are a small sample of
+notable software that depends on it. Some notable projects using psutil:
 
-- `TensorFlow <https://github.com/tensorflow/tensorflow>`__,
-  `PyTorch <https://github.com/pytorch/pytorch>`__,
-- `Home Assistant <https://github.com/home-assistant/core>`__,
-  `Ansible <https://github.com/ansible/ansible>`__,
-  `Apache Airflow <https://github.com/apache/airflow>`__,
-  `Sentry <https://github.com/getsentry/sentry>`__
-- `Celery <https://github.com/celery/celery>`__,
-  `Dask <https://github.com/dask/dask>`__
-- `Glances <https://github.com/nicolargo/glances>`__,
-  `bpytop <https://github.com/aristocratos/bpytop>`__,
-  `Ajenti <https://github.com/ajenti/ajenti>`__,
-  `GRR <https://github.com/google/grr>`__
-- `psleak <https://github.com/giampaolo/psleak>`__
+- `TensorFlow <https://github.com/tensorflow/tensorflow>`_,
+  `PyTorch <https://github.com/pytorch/pytorch>`_,
+- `Home Assistant <https://github.com/home-assistant/core>`_,
+  `Ansible <https://github.com/ansible/ansible>`_,
+  `Apache Airflow <https://github.com/apache/airflow>`_,
+  `Sentry <https://github.com/getsentry/sentry>`_
+- `Celery <https://github.com/celery/celery>`_,
+  `Dask <https://github.com/dask/dask>`_
+- `Glances <https://github.com/nicolargo/glances>`_,
+  `bpytop <https://github.com/aristocratos/bpytop>`_,
+  `Ajenti <https://github.com/ajenti/ajenti>`_,
+  `GRR <https://github.com/google/grr>`_
+- `psleak`_
 
-`Full list <https://psutil.readthedocs.io/adoption>`__
+`Full list <https://psutil.readthedocs.io/adoption>`_
+
+
 
 Portings
 ========
@@ -549,3 +551,6 @@ People who donated money over the years:
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
 
 .. </PYPI-EXCLUDE>
+
+.. _`psleak`: https://github.com/giampaolo/psleak
+.. _`top 100`: https://clickpy.clickhouse.com/dashboard/psutil

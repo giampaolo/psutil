@@ -19,7 +19,7 @@ UNIX
 ^^^^
 
 On all UNIX systems you can use the `install-sysdeps.sh
-<https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh>`__
+<https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh>`_
 script. This will install the system dependencies necessary to compile psutil
 from sources. You can invoke this script from the Makefile as::
 
@@ -30,7 +30,7 @@ After system deps are installed, you can compile and install psutil with::
     make build
     make install
 
-...or this, which will fetch the latest source distribution from `PyPI <https://pypi.org/project/psutil/>`__::
+...or this, which will fetch the latest source distribution from `PyPI <https://pypi.org/project/psutil/>`_::
 
     pip install --no-binary :all: psutil
 
@@ -61,16 +61,16 @@ Windows
 ^^^^^^^
 
 - To build or install psutil from source on Windows, you need to have
-  `Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`__
+  `Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`_
   or later installed. For detailed instructions, see the
-  `CPython Developer Guide <https://devguide.python.org/getting-started/setup-building/#windows>`__.
+  `CPython Developer Guide <https://devguide.python.org/getting-started/setup-building/#windows>`_.
 - MinGW is not supported for building psutil on Windows.
 - To build directly from the source tarball (.tar.gz) on PYPI, run::
 
     pip install --no-binary :all: psutil
 
 - If you want to clone psutil's Git repository and build / develop locally,
-  first install: `Git for Windows <https://git-scm.com/install/windows>`__
+  first install: `Git for Windows <https://git-scm.com/install/windows>`_
   and launch a Git Bash shell. This provides a Unix-like environment where
   ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands::
@@ -143,7 +143,7 @@ If you don't have pip you can install it with wget::
 
     python3 < <(curl -s https://bootstrap.pypa.io/get-pip.py)
 
-On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`__, open
+On Windows, `download pip <https://pip.pypa.io/en/latest/installing/>`_, open
 cmd.exe and install it with::
 
     py get-pip.py

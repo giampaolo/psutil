@@ -3,9 +3,9 @@
 Who uses psutil
 ===============
 
-psutil is one of the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__
+psutil is one of the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`_
 most-downloaded packages on PyPI, with 280+ million downloads per month,
-`760,000+ GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__ using
+`760,000+ GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`_ using
 it, and 14,000+ packages depending on it. The projects below are a small
 sample of notable software that depends on it.
 
@@ -20,31 +20,31 @@ Infrastructure / automation
      - Description
      - Stars
      - psutil usage
-   * - |homeassistant-logo| `Home Assistant <https://github.com/home-assistant/core>`__
+   * - |homeassistant-logo| `Home Assistant <https://github.com/home-assistant/core>`_
      - Open source home automation platform
      - |homeassistant-stars|
      - system monitor integration
-   * - |ansible-logo| `Ansible <https://github.com/ansible/ansible>`__
+   * - |ansible-logo| `Ansible <https://github.com/ansible/ansible>`_
      - IT automation platform
      - |ansible-stars|
      - system fact gathering
-   * - |airflow-logo| `Apache Airflow <https://github.com/apache/airflow>`__
+   * - |airflow-logo| `Apache Airflow <https://github.com/apache/airflow>`_
      - Workflow orchestration platform
      - |airflow-stars|
      - process supervisor, unit testing
-   * - |celery-logo| `Celery <https://github.com/celery/celery>`__
+   * - |celery-logo| `Celery <https://github.com/celery/celery>`_
      - Distributed task queue
      - |celery-stars|
      - worker process monitoring, memleak detection
-   * - |salt-logo| `Salt <https://github.com/saltstack/salt>`__
+   * - |salt-logo| `Salt <https://github.com/saltstack/salt>`_
      - Infrastructure automation at scale
      - |salt-stars|
      - deep system data collection (grains)
-   * - |dask-logo| `Dask <https://github.com/dask/dask>`__
+   * - |dask-logo| `Dask <https://github.com/dask/dask>`_
      - Parallel computing with task scheduling
      - |dask-stars|
      - `metrics dashboard <https://github.com/dask/dask/blob/0d40a604284e021d098682b71c55d0387a414925/docs/source/dashboard.rst#L147>`_, profiling
-   * - |ajenti-logo| `Ajenti <https://github.com/ajenti/ajenti>`__
+   * - |ajenti-logo| `Ajenti <https://github.com/ajenti/ajenti>`_
      - Web-based server administration panel
      - |ajenti-stars|
      - monitoring plugins, deep integration
@@ -60,19 +60,19 @@ AI / Machine learning
      - Description
      - Stars
      - psutil usage
-   * - |tensorflow-logo| `TensorFlow <https://github.com/tensorflow/tensorflow>`__
+   * - |tensorflow-logo| `TensorFlow <https://github.com/tensorflow/tensorflow>`_
      - Open source machine learning framework by Google
      - |tensorflow-stars|
      - unit tests
-   * - |pytorch-logo| `PyTorch <https://github.com/pytorch/pytorch>`__
+   * - |pytorch-logo| `PyTorch <https://github.com/pytorch/pytorch>`_
      - Tensors and dynamic neural networks with GPU acceleration
      - |pytorch-stars|
      - benchmark scripts
-   * - |ray-logo| `Ray <https://github.com/ray-project/ray>`__
+   * - |ray-logo| `Ray <https://github.com/ray-project/ray>`_
      - AI compute engine with distributed runtime
      - |ray-stars|
      - metrics dashboard
-   * - |mlflow-logo| `MLflow <https://github.com/mlflow/mlflow>`__
+   * - |mlflow-logo| `MLflow <https://github.com/mlflow/mlflow>`_
      - AI/ML engineering platform
      - |mlflow-stars|
      - deep system monitoring integration
@@ -88,19 +88,19 @@ Developer tools
      - Description
      - Stars
      - psutil usage
-   * - |sentry-logo| `Sentry <https://github.com/getsentry/sentry>`__
+   * - |sentry-logo| `Sentry <https://github.com/getsentry/sentry>`_
      - Error tracking and performance monitoring
      - |sentry-stars|
      - send telemetry metrics
-   * - |locust-logo| `Locust <https://github.com/locustio/locust>`__
+   * - |locust-logo| `Locust <https://github.com/locustio/locust>`_
      - Scalable load testing in Python
      - |locust-stars|
      - monitoring of the Locust process
-   * - |spyder-logo| `Spyder <https://github.com/spyder-ide/spyder>`__
+   * - |spyder-logo| `Spyder <https://github.com/spyder-ide/spyder>`_
      - Scientific Python IDE
      - |spyder-stars|
      - deep integration, UI stats, process management
-   * - |psleak-logo| `psleak <https://github.com/giampaolo/psleak>`__
+   * - |psleak-logo| `psleak <https://github.com/giampaolo/psleak>`_
      - Test framework to detect memory in Python C extensions
      - |psleak-stars|
      - heap process memory (:func:`heap_info()`)
@@ -116,43 +116,43 @@ System monitoring
      - Description
      - Stars
      - psutil usage
-   * - |glances-logo| `Glances <https://github.com/nicolargo/glances>`__
+   * - |glances-logo| `Glances <https://github.com/nicolargo/glances>`_
      - System monitoring tool (top/htop alternative)
      - |glances-stars|
      - core dependency for all metrics
-   * - |osquery-logo| `OSQuery <https://github.com/osquery/osquery>`__
+   * - |osquery-logo| `OSQuery <https://github.com/osquery/osquery>`_
      - SQL powered OS monitoring and analytics
      - |osquery-stars|
      - unit tests
-   * - |bpytop-logo| `bpytop <https://github.com/aristocratos/bpytop>`__
+   * - |bpytop-logo| `bpytop <https://github.com/aristocratos/bpytop>`_
      - Terminal resource monitor
      - |bpytop-stars|
      - core dependency for all metrics
-   * - |auto-cpufreq-logo| `auto-cpufreq <https://github.com/AdnanHodzic/auto-cpufreq>`__
+   * - |auto-cpufreq-logo| `auto-cpufreq <https://github.com/AdnanHodzic/auto-cpufreq>`_
      - Automatic CPU speed and power optimizer for Linux
      - |auto-cpufreq-stars|
      - core dependency for CPU monitoring
-   * - |grr-logo| `GRR <https://github.com/google/grr>`__
+   * - |grr-logo| `GRR <https://github.com/google/grr>`_
      - Remote live forensics by Google
      - |grr-stars|
      - endpoint system data collection, deep integration
-   * - |stui-logo| `s-tui <https://github.com/amanusk/s-tui>`__
+   * - |stui-logo| `s-tui <https://github.com/amanusk/s-tui>`_
      - Terminal CPU stress and monitoring utility
      - |stui-stars|
      - core dependency for metrics
-   * - |asitop-logo| `asitop <https://github.com/tlkh/asitop>`__
+   * - |asitop-logo| `asitop <https://github.com/tlkh/asitop>`_
      - Apple Silicon performance monitoring CLI
      - |asitop-stars|
      - core dependency for system metrics
-   * - |psdash-logo| `psdash <https://github.com/Jahaja/psdash>`__
+   * - |psdash-logo| `psdash <https://github.com/Jahaja/psdash>`_
      - Web dashboard using psutil and Flask
      - |psdash-stars|
      - core dependency for all metrics
-   * - |dd-agent-logo| `dd-agent <https://github.com/DataDog/dd-agent>`__
+   * - |dd-agent-logo| `dd-agent <https://github.com/DataDog/dd-agent>`_
      - Original monitoring agent by Datadog
      - |dd-agent-stars|
      - system metrics collection
-   * - |ddtrace-logo| `dd-trace-py <https://github.com/DataDog/dd-trace-py>`__
+   * - |ddtrace-logo| `dd-trace-py <https://github.com/DataDog/dd-trace-py>`_
      - Python tracing and profiling library
      - |ddtrace-stars|
      - system metrics collection
