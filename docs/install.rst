@@ -4,16 +4,16 @@ Install psutil
 Linux, Windows, macOS (wheels)
 ------------------------------
 
-Pre-compiled wheels are distributed for these platforms, so you won't have to
-install a C compiler. All you have to do is::
+Pre-compiled wheels are distributed for these platforms, so you usually won't
+need a C compiler. All you have to do is::
 
     pip install psutil
 
 If wheels are not available for your platform or architecture, or you wish to
 build & install psutil from sources, keep reading.
 
-Compile psutil from sources
----------------------------
+Compile psutil from source
+--------------------------
 
 UNIX
 ^^^^
@@ -25,7 +25,7 @@ from sources. You can invoke this script from the Makefile as::
 
     make install-sysdeps
 
-After system deps are installed, you can compile & install psutil with::
+After system deps are installed, you can compile and install psutil with::
 
     make build
     make install
@@ -39,7 +39,7 @@ Linux
 
 Debian / Ubuntu::
 
-    sudo apt-get install gcc python3-dev
+    sudo apt install gcc python3-dev
     pip install --no-binary :all: psutil
 
 RedHat / CentOS::
@@ -49,7 +49,7 @@ RedHat / CentOS::
 
 Arch::
 
-    sudo pacman -S cmake gcc python
+    sudo pacman -S gcc python
     pip install --no-binary :all: psutil
 
 Alpine::
@@ -61,7 +61,7 @@ Windows
 ^^^^^^^
 
 - To build or install psutil from source on Windows, you need to have
-  `Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`_.
+  `Visual Studio 2017 <https://visualstudio.microsoft.com/vs/older-downloads/>`_
   or later installed. For detailed instructions, see the
   `CPython Developer Guide <https://devguide.python.org/getting-started/setup-building/#windows>`_.
 - MinGW is not supported for building psutil on Windows.
@@ -69,7 +69,7 @@ Windows
 
     pip install --no-binary :all: psutil
 
-- If you want to clone psutil's GIT repository and build / develop locally,
+- If you want to clone psutil's Git repository and build / develop locally,
   first install: `Git for Windows <https://git-scm.com/install/windows>`_
   and launch a Git Bash shell. This provides a Unix-like environment where
   ``make`` works.

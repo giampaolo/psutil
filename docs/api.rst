@@ -6,7 +6,7 @@ API reference
 
 .. contents::
    :local:
-   :depth: 3
+   :depth: 5
 
 System related functions
 ------------------------
