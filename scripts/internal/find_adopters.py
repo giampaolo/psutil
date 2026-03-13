@@ -252,7 +252,7 @@ def _build_fixed_dep_fragment():
     # Also fetch the requirements/ directory listing.
     fields.append(
         "    requirementsDir: object("
-        "expression: \"HEAD:requirements\") {\n"
+        "expression: \"HEAD:requirements\") {\n"  # noqa: Q003
         "      ... on Tree { entries { name } }\n"
         "    }"
     )
@@ -492,17 +492,19 @@ def generate_rst(projects):
             continue
 
         header = tier_headers[tier_num]
-        lines.append(header)
-        lines.append("-" * len(header))
-        lines.append("")
-        lines.append(".. list-table::")
-        lines.append("   :header-rows: 1")
-        lines.append("   :widths: 18 42 12 28")
-        lines.append("")
-        lines.append("   * - Project")
-        lines.append("     - Description")
-        lines.append("     - Stars")
-        lines.append("     - Usage")
+        lines.extend([
+            header,
+            "-" * len(header),
+            "",
+            ".. list-table::",
+            "   :header-rows: 1",
+            "   :widths: 18 42 12 28",
+            "",
+            "   * - Project",
+            "     - Description",
+            "     - Stars",
+            "     - Usage",
+        ])
 
         for p in tier_projects:
             name = make_subst_name(p["full_name"])
@@ -523,10 +525,12 @@ def generate_rst(projects):
                 usage = "optional dependency"
 
             proj_link = f"|{name}-logo| `{repo} <https://github.com/{full}>`__"
-            lines.append(f"   * - {proj_link}")
-            lines.append(f"     - {desc}")
-            lines.append(f"     - |{name}-stars|")
-            lines.append(f"     - {usage}")
+            lines.extend([
+                f"   * - {proj_link}",
+                f"     - {desc}",
+                f"     - |{name}-stars|",
+                f"     - {usage}",
+            ])
 
             star_badges.append(
                 f".. |{name}-stars| image:: "

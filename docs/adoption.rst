@@ -157,7 +157,6 @@ System monitoring
      - |ddtrace-stars|
      - system metrics collection
 
-
 How this list was compiled
 --------------------------
 
