@@ -16,6 +16,8 @@ The original CREDITS file is also available in the repository root.
 
    * - Name
      - Description
+   * - `Felix Yan`_
+     - :gh:`2732`
    * - `Sergey Fedorov`_
      - :gh:`2701`
 
@@ -29,27 +31,31 @@ The original CREDITS file is also available in the repository root.
    * - Name
      - Description
    * - `Ben Peddell`_
-     - :gh:`2494`
+     - :gh:`2495`, :gh:`2568`
    * - `Ben Raz`_
-     - :gh:`2357`
+     - :gh:`2643`
+   * - `Eli Wenig`_
+     - :gh:`2638`
    * - `Fabien Bousquet`_
-     - :gh:`2473`
+     - :gh:`2529`
+   * - `Irene Sheen`_
+     - :gh:`2606`
    * - `Isaac K. Ko`_
-     - :gh:`2604`
+     - :gh:`2612`
    * - `Jonathan Kohler`_
-     - :gh:`2526`, :gh:`2527`
-   * - `Julien Stephan`_
-     - :gh:`2560`
+     - :gh:`2527`
    * - `Lysandros Nikolaou`_
-     - :gh:`2565`
+     - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`, :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659`
    * - `Marcel Telka`_
-     - :gh:`2545`
+     - :gh:`2469`, :gh:`2545`, :gh:`2546`, :gh:`2592`, :gh:`2594`
    * - `Matthieu Darbois`_
-     - :gh:`2581`
+     - :gh:`2503`, :gh:`2581`
    * - `Sergey Fedorov`_
      - :gh:`2694`
    * - `Will Hawes`_
      - :gh:`2496`
+   * - Xianpeng Shen
+     - :gh:`2640`
 
 2024
 ----
@@ -61,21 +67,23 @@ The original CREDITS file is also available in the repository root.
    * - Name
      - Description
    * - `Aleksey Lobanov`_
-     - Various contributions
+     - :gh:`2457`
    * - `Ben Raz`_
      - :gh:`2425`
+   * - Cristian Vîjdea
+     - :gh:`2442`
    * - `Matthieu Darbois`_
-     - :gh:`2375`, :gh:`2425`
+     - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`, :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486`
+   * - Mayank Jha
+     - :gh:`2379`
    * - `Oliver Tomé`_
      - :gh:`2222`
    * - `Ryan Carsten Schmidt`_
-     - :gh:`2361`, :gh:`2365`
+     - :gh:`2361`, :gh:`2364`, :gh:`2365`
    * - `Sam Gross`_
-     - :gh:`2401`, :gh:`2427`
+     - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428`
    * - `Shade Gladden`_
      - :gh:`2376`
-   * - `Anthony Ryan`_
-     - :gh:`2272`
 
 2023
 ----
@@ -86,10 +94,10 @@ The original CREDITS file is also available in the repository root.
 
    * - Name
      - Description
-   * - `lgc2333`_
-     - :gh:`2245`
+   * - `Amir Rossert`_
+     - :gh:`2346`
    * - `Matthieu Darbois`_
-     - :gh:`2216`, :gh:`2246`, :gh:`2252`
+     - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
    * - `Po-Chuan Hsieh`_
      - :gh:`2186`
    * - `Thomas Klausner`_
@@ -116,16 +124,22 @@ The original CREDITS file is also available in the repository root.
      - :gh:`2150`
    * - `Daniel Widdis`_
      - :gh:`2077`, :gh:`2160`
+   * - `garrisoncarter`_
+     - :gh:`2096`
    * - `Hugo van Kemenade`_
      - :gh:`2099`
    * - `Lawrence D'Anna`_
      - :gh:`2010`
    * - `Matthieu Darbois`_
-     - :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2142`, :gh:`2147`, :gh:`2153`
-   * - `Peter Jeremy`_
-     - :gh:`2113`
+     - :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
+   * - myheroyuki
+     - :gh:`2086`
+   * - `Steve Dower`_
+     - :gh:`2080`
    * - `Thomas Klausner`_
-     - :gh:`2128`
+     - :gh:`2088`, :gh:`2128`
+   * - `Tim Gates`_
+     - :gh:`2123`
    * - Torsten Blum
      - :gh:`2114`
 
@@ -138,8 +152,6 @@ The original CREDITS file is also available in the repository root.
 
    * - Name
      - Description
-   * - Dmitry Gorbunov
-     - Documentation fixes
    * - `David Knaack`_
      - :gh:`1921`
    * - `guille`_
@@ -160,8 +172,10 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1980`
    * - `Saeed Rasooli`_
      - :gh:`1996`
+   * - Wilfried Goesgens
+     - :gh:`1990`
    * - `Xuehai Pan`_
-     - :gh:`1948`, :gh:`2264`
+     - :gh:`1949`
 
 2020
 ----
@@ -182,6 +196,10 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1830`
    * - `Étienne Servais`_
      - :gh:`1607`, :gh:`1637`
+   * - Grzegorz Bokota
+     - :gh:`1758`, :gh:`1762`
+   * - Jake Omann
+     - :gh:`1876`
    * - `Javad Karabi`_
      - :gh:`1648`
    * - `Julien Lebot`_
@@ -210,8 +228,12 @@ The original CREDITS file is also available in the repository root.
      - Description
    * - `agnewee`_
      - :gh:`1491`
+   * - `Alex Manuskin`_
+     - :gh:`1487`
    * - Ammar Askar
-     - :gh:`604`, :gh:`1484`, :gh:`1781`
+     - :gh:`1781`
+   * - `Arnon Yaari`_
+     - :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
    * - `Athos Ribeiro`_
      - :gh:`1585`
    * - `Benjamin Drung`_
@@ -222,6 +244,8 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1470`
    * - `Daniel Beer`_
      - :gh:`1471`
+   * - `David Brochart`_
+     - :gh:`1493`, :gh:`1496`
    * - `EccoTheFlintstone`_
      - :gh:`1368`, :gh:`1348`
    * - `Erwan Le Pape`_
@@ -250,16 +274,20 @@ The original CREDITS file is also available in the repository root.
 
    * - Name
      - Description
+   * - `Alex Manuskin`_
+     - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369`
+   * - `Arnon Yaari`_
+     - :gh:`1214`
    * - `Dan Vinakovsky`_
      - :gh:`1216`
    * - `Denis Krienbühl`_
      - :gh:`1260`
-   * - `Georg Sauthoff`_
-     - :gh:`1193`, :gh:`1194`
    * - `Ilya Yanok`_
      - :gh:`1332`
    * - `janderbrain`_
      - :gh:`1169`
+   * - `Jaime Fullaondo`_
+     - :gh:`1320`
    * - `Jean-Luc Migot`_
      - :gh:`1258`, :gh:`1289`
    * - `Koen Kooi`_
@@ -274,8 +302,6 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1243`
    * - `Sylvain Duchesne`_
      - :gh:`1294`
-   * - `Jaime Fullaondo`_
-     - :gh:`1320`
 
 2017
 ----
@@ -292,10 +318,16 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1150`
    * - `Alexander Hasselhuhn`_
      - Various contributions
+   * - `Antoine Pitrou`_
+     - :gh:`1186`
+   * - `Arnon Yaari`_
+     - :gh:`1123`, :gh:`1130`, :gh:`1131`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1158`, :gh:`1164`, :gh:`1170`, :gh:`1174`, :gh:`1177`
    * - `Baruch Siach`_
      - :gh:`872`
    * - `Danek Duvall`_
      - :gh:`1002`
+   * - `Gleb Smirnoff`_
+     - :gh:`1070`, :gh:`1079`
    * - `Himanshu Shekhar`_
      - :gh:`1036`
    * - `Jakub Bacic`_
@@ -305,7 +337,7 @@ The original CREDITS file is also available in the repository root.
    * - `Nicolas Hennion`_
      - :gh:`974`
    * - `Oleksii Shevchuk`_
-     - :gh:`1077`, :gh:`1093`, :gh:`1091`, :gh:`1220`, :gh:`1346`
+     - :gh:`1091`, :gh:`1093`, :gh:`1220`, :gh:`1346`
    * - Pierre Fersing
      - :gh:`950`
    * - `Prodesire`_
@@ -316,8 +348,6 @@ The original CREDITS file is also available in the repository root.
      - :gh:`959`
    * - `Yannick Gingras`_
      - :gh:`1057`
-   * - `Gleb Smirnoff`_
-     - :gh:`1042`, :gh:`1079`, :gh:`1070`
 
 2016
 ----
@@ -336,6 +366,8 @@ The original CREDITS file is also available in the repository root.
      - :gh:`823`
    * - `ewedlund`_
      - :gh:`874`
+   * - `Frank Benkstein`_
+     - :gh:`739`
    * - `Ilya Georgievsky`_
      - :gh:`870`
    * - `Jake Omann`_
@@ -346,6 +378,8 @@ The original CREDITS file is also available in the repository root.
      - :gh:`936`, :gh:`1133`
    * - `mpderbec`_
      - :gh:`660`
+   * - Patrick Welche
+     - :gh:`812`
    * - `Syohei YOSHIDA`_
      - :gh:`730`
    * - `Timmy Konick`_
@@ -552,8 +586,10 @@ The original CREDITS file is also available in the repository root.
      - Initial Windows development (Process.username())
 
 
+.. _`Aaron Shaw`: https://github.com/shawaj
 .. _`Adrian Page`: https://github.com/adpag
 .. _`agnewee`: https://github.com/Agnewee
+.. _`Alex Manuskin`: https://github.com/amanusk
 .. _`Akos Kiss`: https://github.com/akosthekiss
 .. _`Aleksey Lobanov`: https://github.com/AlekseyLobanov
 .. _`Alexander Grothe`: https://github.com/agrethe
@@ -562,12 +598,16 @@ The original CREDITS file is also available in the repository root.
 .. _`Anders Chrigström`: https://github.com/anders-chrigstrom
 .. _`Andre Caron`: https://github.com/AndreLouisCaron
 .. _`Anselm Kruis`: https://github.com/akruis
+.. _`Anthony Ramine`: https://github.com/nox
 .. _`Anthony Ryan`: https://github.com/anthonyryan1
+.. _`Antoine Pitrou`: https://github.com/pitrou
+.. _`Arnon Yaari`: https://github.com/wiggin15
 .. _`Arcadiy Ivanov`: https://github.com/arcivanov
 .. _`aristocratos`: https://github.com/aristocratos
 .. _`Armin Gruner`: https://github.com/ArminGruner
 .. _`Athos Ribeiro`: https://github.com/athos-ribeiro
 .. _`Bart van Kleef`: https://github.com/bkleef
+.. _`Caleb Bassi`: https://github.com/calebjbassi
 .. _`Baruch Siach`: https://github.com/baruchsiach
 .. _`Ben Peddell`: https://github.com/klightspeed
 .. _`Ben Raz`: https://github.com/ben9923
@@ -577,48 +617,70 @@ The original CREDITS file is also available in the repository root.
 .. _`Cedric Lamoriniere`: https://github.com/clamoriniere
 .. _`Chris Burger`: https://github.com/phobozad
 .. _`Chris Lalancette`: https://github.com/clalancette
+.. _`crusaderky`: https://github.com/crusaderky
+.. _`cui fliter`: https://github.com/cuishuang
 .. _`Dan Vinakovsky`: https://github.com/hexaclock
 .. _`Danek Duvall`: https://github.com/dhduvall
 .. _`Daniel Beer`: https://github.com/dbeer1
+.. _`Daniel Lockyer`: https://github.com/daniellockyer
 .. _`Daniel Widdis`: https://github.com/dbwiddis
 .. _`dasumin`: https://github.com/dasumin
+.. _`David Brochart`: https://github.com/davidbrochart
 .. _`David Knaack`: https://github.com/davidkna
 .. _`Denis Krienbühl`: https://github.com/href
 .. _`desbma`: https://github.com/desbma
 .. _`EccoTheFlintstone`: https://github.com/EccoTheFlintstone
+.. _`Eli Wenig`: https://github.com/elisw93
+.. _`Emmanuel Ferdman`: https://github.com/emmanuelferdman
 .. _`Erwan Le Pape`: https://github.com/erwan-le-pape
 .. _`ewedlund`: https://github.com/ewedlund
 .. _`Fabian Groffen`: https://github.com/fabian
 .. _`Fabien Bousquet`: https://github.com/fafanoulele
+.. _`Felix Yan`: https://github.com/felixonmars
 .. _`Frank Benkstein`: https://github.com/fbenkstein
 .. _`Gabi Davar`: https://github.com/mindw
+.. _`garrisoncarter`: https://github.com/garrisoncarter
 .. _`Georg Sauthoff`: https://github.com/gsauthof
 .. _`Ghislain Le Meur`: https://github.com/gigi206
+.. _`Gregory P. Smith`: https://github.com/gpshead
 .. _`Gleb Smirnoff`: https://github.com/glebius
 .. _`guille`: https://github.com/guille
+.. _`Hang`: https://github.com/bebound
 .. _`Himanshu Shekhar`: https://github.com/himanshub16
 .. _`Hugo van Kemenade`: https://github.com/hugovk
+.. _`iam-py-test`: https://github.com/iam-py-test
 .. _`Ilya Georgievsky`: https://github.com/xBeAsTx
 .. _`Ilya Yanok`: https://github.com/yanok
+.. _`Irene Sheen`: https://github.com/ceda-ei
 .. _`Isaac K. Ko`: https://github.com/kyet
 .. _`Jaime Fullaondo`: https://github.com/truthbk
 .. _`Jake Omann`: https://github.com/jomann09
+.. _`Jérome Perrin`: https://github.com/perrinjerome
+.. _`Jérôme Duval`: https://github.com/korli
 .. _`Jakub Bacic`: https://github.com/jakub-bacic
 .. _`janderbrain`: https://github.com/janderbrain
 .. _`Javad Karabi`: https://github.com/karabijavad
 .. _`Jean-Luc Migot`: https://github.com/jmigot-tehtris
 .. _`Jeremy Humble`: https://github.com/jhumble
+.. _`Jon Dufresne`: https://github.com/jdufresne
 .. _`Jonathan Kohler`: https://github.com/kohlerjl
 .. _`Julien Lebot`: https://github.com/julien-lebot
 .. _`Julien Stephan`: https://github.com/justeph
 .. _`Kamil Rytarowski`: https://github.com/krytarowski
+.. _`Kale Kundert`: https://github.com/kalekundert
+.. _`Karthikeyan Singaravelan`: https://github.com/tirkarthi
+.. _`Kian-Meng Ang`: https://github.com/kianmeng
 .. _`Koen Kooi`: https://github.com/koenkooi
+.. _`kuzmich321`: https://github.com/kuzmich321
+.. _`Landry Breuil`: https://github.com/landryb
 .. _`Lawrence D'Anna`: https://github.com/smoofra
 .. _`Lysandros Nikolaou`: https://github.com/lysnikolaou
 .. _`Lawrence Ye`: https://github.com/LEAFERx
 .. _`maozguttman`: https://github.com/maozguttman
 .. _`Marcel Telka`: https://github.com/mtelka
 .. _`marxin`: https://github.com/marxin
+.. _`Mickaël Schoentgen`: https://github.com/BoboTiG
+.. _`Miro Hrončok`: https://github.com/hroncok
 .. _`Matthew Long`: https://github.com/matray
 .. _`Matthieu Darbois`: https://github.com/mayeut
 .. _`MaWe2019`: https://github.com/MaWe2019
@@ -629,6 +691,7 @@ The original CREDITS file is also available in the repository root.
 .. _`Mike Sarahan`: https://github.com/msarahan
 .. _`mpderbec`: https://github.com/mpderbec
 .. _`Nathan Houghton`: https://github.com/n1000
+.. _`Ofek Lev`: https://github.com/ofek
 .. _`Nicolas Hennion`: https://github.com/nicolargo
 .. _`Nikhil Marathe`: https://github.com/nikhilm
 .. _`Nikita Radchenko`: https://github.com/nradchenko
@@ -641,12 +704,15 @@ The original CREDITS file is also available in the repository root.
 .. _`Po-Chuan Hsieh`: https://github.com/sunpoet
 .. _`Prodesire`: https://github.com/Prodesire
 .. _`Riccardo Schirone`: https://github.com/ret2libc
+.. _`ReenigneArcher`: https://github.com/ReenigneArcher
 .. _`Ryan Carsten Schmidt`: https://github.com/ryandesign
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury
 .. _`Samer Masterson`: https://github.com/samertm
 .. _`Sebastian Saip`: https://github.com/ssaip
 .. _`Sergey Fedorov`: https://github.com/barracuda156
+.. _`Shannon Pamperl`: https://github.com/shanman190
+.. _`Steve Dower`: https://github.com/zooba
 .. _`Shade Gladden`: https://github.com/shadeyg56
 .. _`sk6249`: https://github.com/sk6249
 .. _`spacewander`: https://github.com/spacewander
@@ -655,8 +721,10 @@ The original CREDITS file is also available in the repository root.
 .. _`Sylvain Duchesne`: https://github.com/sylvainduchesne
 .. _`Syohei YOSHIDA`: https://github.com/syohex
 .. _`Thiago Borges Abdnur`: https://github.com/bolaum
+.. _`Tim Gates`: https://github.com/timgates42
 .. _`Tim Schlueter`: https://github.com/modelrockettier
 .. _`Timmy Konick`: https://github.com/tijko
+.. _`Tomáš Chvátal`: https://github.com/scarabeusiv
 .. _`Vincent A. Arcila`: https://github.com/jandrovins
 .. _`Will Hawes`: https://github.com/wdh
 .. _`wxwright`: https://github.com/wxwright
