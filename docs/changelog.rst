@@ -11,8 +11,8 @@ Changelog
 
 Doc:
 
-- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`. Tons of doc improvements. In
-  order of importance:
+- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`. Tons of doc
+  improvements. In order of importance:
 
   - Split the documentation from a single-page HTML document into multiple
     sections. Sections now include separate pages for API reference,
@@ -23,6 +23,7 @@ Doc:
     locations.
   - Added a summary table of officially supported operating systems and
     architectures.
+  - Show a section of notable software that depends on psutil.
   - Added tons of new examples in ``docs/recipes.rst``.
   - Drastically improved :func:`virtual_memory()` doc, which is now more
     detailed, and includes a table with all the available metrics on each
