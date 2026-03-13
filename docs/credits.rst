@@ -7,6 +7,18 @@ Credits
 This page lists all contributors to psutil organized by year.
 The original CREDITS file is also available in the repository root.
 
+2026
+----
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Name
+     - Description
+   * - `Sergey Fedorov`_
+     - :gh:`2701`
+
 2025
 ----
 
@@ -22,12 +34,18 @@ The original CREDITS file is also available in the repository root.
      - :gh:`2357`
    * - `Fabien Bousquet`_
      - :gh:`2473`
+   * - `Isaac K. Ko`_
+     - :gh:`2604`
    * - `Jonathan Kohler`_
      - :gh:`2526`, :gh:`2527`
    * - `Julien Stephan`_
      - :gh:`2560`
+   * - `Lysandros Nikolaou`_
+     - :gh:`2565`
    * - `Marcel Telka`_
      - :gh:`2545`
+   * - `Matthieu Darbois`_
+     - :gh:`2581`
    * - `Sergey Fedorov`_
      - :gh:`2694`
    * - `Will Hawes`_
@@ -44,6 +62,10 @@ The original CREDITS file is also available in the repository root.
      - Description
    * - `Aleksey Lobanov`_
      - Various contributions
+   * - `Ben Raz`_
+     - :gh:`2425`
+   * - `Matthieu Darbois`_
+     - :gh:`2375`, :gh:`2425`
    * - `Oliver Tomé`_
      - :gh:`2222`
    * - `Ryan Carsten Schmidt`_
@@ -67,7 +89,7 @@ The original CREDITS file is also available in the repository root.
    * - `lgc2333`_
      - :gh:`2245`
    * - `Matthieu Darbois`_
-     - :gh:`2246`, :gh:`2252`
+     - :gh:`2216`, :gh:`2246`, :gh:`2252`
    * - `Po-Chuan Hsieh`_
      - :gh:`2186`
    * - `Thomas Klausner`_
@@ -99,7 +121,11 @@ The original CREDITS file is also available in the repository root.
    * - `Lawrence D'Anna`_
      - :gh:`2010`
    * - `Matthieu Darbois`_
-     - :gh:`2039`, :gh:`2142`, :gh:`2147`, :gh:`2153`, :gh:`2040`, :gh:`2102`, :gh:`2216`, :gh:`2581`
+     - :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2142`, :gh:`2147`, :gh:`2153`
+   * - `Peter Jeremy`_
+     - :gh:`2113`
+   * - `Thomas Klausner`_
+     - :gh:`2128`
    * - Torsten Blum
      - :gh:`2114`
 
@@ -118,10 +144,14 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1921`
    * - `guille`_
      - :gh:`1913`
+   * - `marxin`_
+     - :gh:`1851`
    * - `MaWe2019`_
      - :gh:`1953`
    * - `Nikita Radchenko`_
      - :gh:`1940`
+   * - `Oleksii Shevchuk`_
+     - :gh:`1904`
    * - `Olivier Dormond`_
      - :gh:`1956`
    * - `Pablo Baeyens`_
@@ -156,18 +186,16 @@ The original CREDITS file is also available in the repository root.
      - :gh:`1648`
    * - `Julien Lebot`_
      - :gh:`1768`
-   * - `Matthieu Darbois`_
-     - :gh:`2040`
    * - `Michał Górny`_
      - :gh:`1726`
    * - `Mike Hommey`_
      - :gh:`1665`
    * - `Po-Chuan Hsieh`_
-     - :gh:`1646`, :gh:`2186`
+     - :gh:`1646`
    * - `Riccardo Schirone`_
      - :gh:`1616`
    * - `Tim Schlueter`_
-     - :gh:`1822`
+     - :gh:`1708`
    * - `Vincent A. Arcila`_
      - :gh:`1620`, :gh:`1727`
 
@@ -277,7 +305,7 @@ The original CREDITS file is also available in the repository root.
    * - `Nicolas Hennion`_
      - :gh:`974`
    * - `Oleksii Shevchuk`_
-     - :gh:`1077`, :gh:`1093`, :gh:`1091`, :gh:`1220`, :gh:`1346`, :gh:`1904`
+     - :gh:`1077`, :gh:`1093`, :gh:`1091`, :gh:`1220`, :gh:`1346`
    * - Pierre Fersing
      - :gh:`950`
    * - `Prodesire`_
@@ -572,6 +600,7 @@ The original CREDITS file is also available in the repository root.
 .. _`Hugo van Kemenade`: https://github.com/hugovk
 .. _`Ilya Georgievsky`: https://github.com/xBeAsTx
 .. _`Ilya Yanok`: https://github.com/yanok
+.. _`Isaac K. Ko`: https://github.com/kyet
 .. _`Jaime Fullaondo`: https://github.com/truthbk
 .. _`Jake Omann`: https://github.com/jomann09
 .. _`Jakub Bacic`: https://github.com/jakub-bacic
@@ -585,9 +614,11 @@ The original CREDITS file is also available in the repository root.
 .. _`Kamil Rytarowski`: https://github.com/krytarowski
 .. _`Koen Kooi`: https://github.com/koenkooi
 .. _`Lawrence D'Anna`: https://github.com/smoofra
+.. _`Lysandros Nikolaou`: https://github.com/lysnikolaou
 .. _`Lawrence Ye`: https://github.com/LEAFERx
 .. _`maozguttman`: https://github.com/maozguttman
 .. _`Marcel Telka`: https://github.com/mtelka
+.. _`marxin`: https://github.com/marxin
 .. _`Matthew Long`: https://github.com/matray
 .. _`Matthieu Darbois`: https://github.com/mayeut
 .. _`MaWe2019`: https://github.com/MaWe2019
@@ -605,6 +636,7 @@ The original CREDITS file is also available in the repository root.
 .. _`Oliver Tomé`: https://github.com/snom3ad
 .. _`Olivier Dormond`: https://github.com/odormond
 .. _`Pablo Baeyens`: https://github.com/mx-psi
+.. _`Peter Jeremy`: https://github.com/peterjeremy
 .. _`PetrPospisil`: https://github.com/PetrPospisil
 .. _`Po-Chuan Hsieh`: https://github.com/sunpoet
 .. _`Prodesire`: https://github.com/Prodesire
