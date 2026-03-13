@@ -55,6 +55,26 @@ The original CREDITS file is also available in the repository root.
    * - `Anthony Ryan`_
      - :gh:`2272`
 
+2023
+----
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Name
+     - Description
+   * - `lgc2333`_
+     - :gh:`2245`
+   * - `Matthieu Darbois`_
+     - :gh:`2246`, :gh:`2252`
+   * - `Po-Chuan Hsieh`_
+     - :gh:`2186`
+   * - `Thomas Klausner`_
+     - :gh:`2241`
+   * - `Xuehai Pan`_
+     - :gh:`2266`
+
 2022
 ----
 
@@ -615,3 +635,5 @@ The original CREDITS file is also available in the repository root.
 .. _`Étienne Servais`: https://github.com/vser1
 .. _`Xiaoling Bao`: https://github.com/xiaolingbao
 .. _`Sebastian-Gabriel Brestin`: https://github.com/bsebi
+.. _`Thomas Klausner`: https://github.com/tklauser
+.. _`lgc2333`: https://github.com/lgc2333
