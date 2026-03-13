@@ -86,9 +86,9 @@ psutil currently supports the following platforms:
 - **Sun Solaris**
 - **AIX**
 
-Supported Python versions are cPython 3.7+ and `PyPy <https://pypy.org/>`__.
+Supported Python versions are cPython 3.7+ and `PyPy <https://pypy.org/>`_.
 Latest psutil version supporting Python 2.7 is
-`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`__.
+`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_.
 
 Sponsors
 ========
@@ -122,15 +122,15 @@ Funding
 
 While psutil is free software and will always be, the project would benefit
 immensely from some funding.
-psutil is among the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__
+psutil is among the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`_
 most-downloaded Python packages, and keeping up with bug reports, user support,
 and ongoing maintenance has become increasingly difficult to sustain as a
 one-person effort.
 If you're a company that's making significant use of psutil you can consider
-becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`__,
-`Open Collective <https://opencollective.com/psutil>`__ or
-`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`__.
-Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`__.
+becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`_,
+`Open Collective <https://opencollective.com/psutil>`_ or
+`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
+Sponsors can have their logo displayed here and in the psutil `documentation <https://psutil.readthedocs.io>`_.
 
 Example usages
 ==============
@@ -446,7 +446,7 @@ Heap info
     pheap(heap_used=5177792, mmap_used=819200)
     >>> psutil.heap_trim()
 
-See also `psleak <https://github.com/giampaolo/psleak>`__
+See also `psleak <https://github.com/giampaolo/psleak>`_
 
 Windows services
 ----------------
