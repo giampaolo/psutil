@@ -470,8 +470,6 @@ Windows services
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
 
-.. <PYPI-EXCLUDE>
-
 Projects using psutil
 =====================
 
@@ -481,28 +479,31 @@ most-downloaded packages on PyPI, with 280+ million downloads per month,
 it, and 14,000+ packages depending on it. The projects below are a small
 sample of notable software that depends on it. Some notable projects using psutil:
 
-- |rm-tensorflow| `TensorFlow <https://github.com/tensorflow/tensorflow>`__
-- |rm-pytorch| `PyTorch <https://github.com/pytorch/pytorch>`__
-- |rm-homeassistant| `Home Assistant <https://github.com/home-assistant/core>`__
-- |rm-ansible| `Ansible <https://github.com/ansible/ansible>`__
-- |rm-airflow| `Apache Airflow <https://github.com/apache/airflow>`__
-- |rm-sentry| `Sentry <https://github.com/getsentry/sentry>`__
-- |rm-celery| `Celery <https://github.com/celery/celery>`__
-- |rm-dask| `Dask <https://github.com/dask/dask>`__
-- |rm-glances| `Glances <https://github.com/nicolargo/glances>`__
-- |rm-bpytop| `bpytop <https://github.com/aristocratos/bpytop>`__
-- |rm-grr| `GRR <https://github.com/google/grr>`__
-- |rm-psleak| `psleak <https://github.com/giampaolo/psleak>`__
+- `TensorFlow <https://github.com/tensorflow/tensorflow>`__,
+  `PyTorch <https://github.com/pytorch/pytorch>`__,
+- `Home Assistant <https://github.com/home-assistant/core>`__,
+  `Ansible <https://github.com/ansible/ansible>`__,
+  `Apache Airflow <https://github.com/apache/airflow>`__,
+  `Sentry <https://github.com/getsentry/sentry>`__
+- `Celery <https://github.com/celery/celery>`__,
+  `Dask <https://github.com/dask/dask>`__
+- `Glances <https://github.com/nicolargo/glances>`__,
+  `bpytop <https://github.com/aristocratos/bpytop>`__,
+  `Ajenti <https://github.com/ajenti/ajenti>`__,
+  `GRR <https://github.com/google/grr>`__
+- `psleak <https://github.com/giampaolo/psleak>`__
 
 `Full list <https://psutil.readthedocs.io/adoption>`__
 
 Portings
 ========
 
-- |rm-gopsutil| `Go: gopsutil <https://github.com/shirou/gopsutil>`__
-- |rm-cpslib| `C: cpslib <https://github.com/hamon-in/cpslib>`__
-- |rm-rust-psutil| `Rust: rust-psutil <https://github.com/rust-psutil/rust-psutil>`__
-- |rm-psutil-nim| `Nim: psutil-nim <https://github.com/johnscillieri/psutil-nim>`__
+- Go: `gopsutil <https://github.com/shirou/gopsutil>`_
+- C: `cpslib <https://github.com/hamon-in/cpslib>`_
+- Rust: `rust-psutil <https://github.com/rust-psutil/rust-psutil>`_
+- Nim: `psutil-nim <https://github.com/johnscillieri/psutil-nim>`_
+
+.. <PYPI-EXCLUDE>
 
 Supporters
 ==========
@@ -546,54 +547,5 @@ People who donated money over the years:
     </div>
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
-
-.. |rm-tensorflow| image:: https://github.com/tensorflow.png?s=20
-   :height: 20
-   :target: https://github.com/tensorflow/tensorflow
-.. |rm-pytorch| image:: https://github.com/pytorch.png?s=20
-   :height: 20
-   :target: https://github.com/pytorch/pytorch
-.. |rm-homeassistant| image:: https://github.com/home-assistant.png?s=20
-   :height: 20
-   :target: https://github.com/home-assistant/core
-.. |rm-ansible| image:: https://github.com/ansible.png?s=20
-   :height: 20
-   :target: https://github.com/ansible/ansible
-.. |rm-airflow| image:: https://github.com/apache.png?s=20
-   :height: 20
-   :target: https://github.com/apache/airflow
-.. |rm-sentry| image:: https://github.com/getsentry.png?s=20
-   :height: 20
-   :target: https://github.com/getsentry/sentry
-.. |rm-celery| image:: https://github.com/celery.png?s=20
-   :height: 20
-   :target: https://github.com/celery/celery
-.. |rm-dask| image:: https://github.com/dask.png?s=20
-   :height: 20
-   :target: https://github.com/dask/dask
-.. |rm-glances| image:: https://github.com/nicolargo.png?s=20
-   :height: 20
-   :target: https://github.com/nicolargo/glances
-.. |rm-bpytop| image:: https://github.com/aristocratos.png?s=20
-   :height: 20
-   :target: https://github.com/aristocratos/bpytop
-.. |rm-grr| image:: https://github.com/google.png?s=20
-   :height: 20
-   :target: https://github.com/google/grr
-.. |rm-psleak| image:: https://github.com/giampaolo.png?s=20
-   :height: 20
-   :target: https://github.com/giampaolo/psleak
-.. |rm-gopsutil| image:: https://github.com/shirou.png?s=20
-   :height: 20
-   :target: https://github.com/shirou/gopsutil
-.. |rm-cpslib| image:: https://github.com/hamon-in.png?s=20
-   :height: 20
-   :target: https://github.com/hamon-in/cpslib
-.. |rm-rust-psutil| image:: https://github.com/rust-psutil.png?s=20
-   :height: 20
-   :target: https://github.com/rust-psutil/rust-psutil
-.. |rm-psutil-nim| image:: https://github.com/johnscillieri.png?s=20
-   :height: 20
-   :target: https://github.com/johnscillieri/psutil-nim
 
 .. </PYPI-EXCLUDE>
