@@ -4,8 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Remove raw HTML from README.rst to make it compatible with PyPI on
-dist upload.
+"""Strip raw HTML and other unsupported parts from README.rst
+so it renders correctly on PyPI when uploading a new release.
 """
 
 import argparse
@@ -16,10 +16,9 @@ Quick links
 ===========
 
 - `Home page <https://github.com/giampaolo/psutil>`_
-- `Documentation <http://psutil.readthedocs.io>`_
+- `Documentation <https://psutil.readthedocs.io>`_
+- `Who uses psutil <https://psutil.readthedocs.io/adoption>`_
 - `Download <https://pypi.org/project/psutil/#files>`_
-- `Forum <http://groups.google.com/group/psutil/topics>`_
-- `StackOverflow <https://stackoverflow.com/questions/tagged/psutil>`_
 - `Blog <https://gmpy.dev/tags/psutil>`_
 - `What's new <https://psutil.readthedocs.io/changelog>`_
 """
@@ -29,27 +28,27 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('file', type=str)
     args = parser.parse_args()
+
+    lines = []
+
     with open(args.file) as f:
-        text = f.read()
+        excluding = False
+        for line in f:
+            # Exclude sections which are not meant to be rendered on PYPI
+            if line.startswith(".. <PYPI-EXCLUDE>"):
+                excluding = True
+                continue
+            if line.startswith(".. </PYPI-EXCLUDE>"):
+                excluding = False
+                continue
+            if not excluding:
+                lines.append(line)
+
+    text = "".join(lines)
 
     # Rewrite summary
     text = re.sub(
         r".. raw:: html\n+\s+<div align[\s\S]*?/div>", quick_links, text
-    )
-
-    # Remove "Sponsors" section
-    pattern = re.compile(
-        r"^Sponsors\n=+\n.*?^Example usages\n=+",
-        re.DOTALL | re.MULTILINE,
-    )
-    text = pattern.sub("Example usages\n==============", text)
-
-    # Remove "Supporters" section
-    text = re.sub(
-        r"^Supporters\n=+\n[\s\S]*\Z",
-        "",
-        text,
-        flags=re.MULTILINE,
     )
 
     print(text)
