@@ -26,7 +26,7 @@
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
     :alt: Linux, macOS, Windows
 
-.. |github-actions-bsd| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=FreeBSD,%20NetBSD,%20OpenBSD
+.. |github-actions-bsd| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/bsd.yml.svg?label=BSD
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests
     :alt: FreeBSD, NetBSD, OpenBSD
 
@@ -132,10 +132,95 @@ consider becoming a sponsor via `GitHub
 Sponsors can have their logo displayed here and in the psutil `documentation
 <https://psutil.readthedocs.io>`_.
 
+Projects using psutil
+=====================
+
+psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 280+
+million downloads per month, `760,000+ GitHub repositories
+<https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
+14,000+ packages depending on it. The projects below are a small sample of
+notable software that depends on it. Some notable projects using psutil:
+
+- `TensorFlow <https://github.com/tensorflow/tensorflow>`_,
+  `PyTorch <https://github.com/pytorch/pytorch>`_,
+- `Home Assistant <https://github.com/home-assistant/core>`_,
+  `Ansible <https://github.com/ansible/ansible>`_,
+  `Apache Airflow <https://github.com/apache/airflow>`_,
+  `Sentry <https://github.com/getsentry/sentry>`_
+- `Celery <https://github.com/celery/celery>`_,
+  `Dask <https://github.com/dask/dask>`_
+- `Glances <https://github.com/nicolargo/glances>`_,
+  `bpytop <https://github.com/aristocratos/bpytop>`_,
+  `Ajenti <https://github.com/ajenti/ajenti>`_,
+  `GRR <https://github.com/google/grr>`_
+- `psleak`_
+
+`Full list <https://psutil.readthedocs.io/adoption>`_
+
+
+
+Portings
+========
+
+- Go: `gopsutil <https://github.com/shirou/gopsutil>`_
+- C: `cpslib <https://github.com/hamon-in/cpslib>`_
+- Rust: `rust-psutil <https://github.com/rust-psutil/rust-psutil>`_
+- Nim: `psutil-nim <https://github.com/johnscillieri/psutil-nim>`_
+
+.. <PYPI-EXCLUDE>
+
+Supporters
+==========
+
+People who donated money over the years:
+
+.. raw:: html
+
+    <div>
+      <a href="https://github.com/codingjoe"><img height="35" width="35" title="Johannes Maron" src="https://avatars.githubusercontent.com/u/1772890?v=4" /></a>
+      <a href="https://github.com/eallrich"><img height="35" width="35" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
+      <a href="https://github.com/ofek"><img height="35" width="35" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
+      <a href="https://github.com/roboflow"><img height="35" width="35" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
+      <a href="https://github.com/sansecio"><img height="35" width="35" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
+      <a href="https://github.com/Trash-Nothing"><img height="35" width="35" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
+
+      <a href="https://github.com/abramov-v"><img height="35" width="35" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
+      <a href="https://github.com/alexdlaird"><img height="35" width="35" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
+      <a href="https://github.com/aristocratos"><img height="35" width="35" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
+      <a href="https://github.com/ArtyomVancyan"><img height="35" width="35" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
+      <a href="https://github.com/c0m4r"><img height="35" width="35" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
+      <a href="https://github.com/coskundeniz"><img height="35" width="35" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
+      <a href="https://github.com/cybersecgeek"><img height="35" width="35" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
+      <a href="https://github.com/dbwiddis"><img height="35" width="35" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
+      <a href="https://github.com/getsentry"><img height="35" width="35" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
+      <a href="https://github.com/great-work-told-is"><img height="35" width="35" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
+      <a href="https://github.com/guilt"><img height="35" width="35" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
+      <a href="https://github.com/inarikami"><img height="35" width="35" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
+      <a href="https://github.com/indeedeng"><img height="35" width="35" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
+      <a href="https://github.com/JeremyGrosser"><img height="35" width="35" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
+      <a href="https://github.com/maxesisn"><img height="35" width="35" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
+      <a href="https://github.com/Mehver"><img height="35" width="35" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
+      <a href="https://github.com/mirbyte"><img height="35" width="35" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
+      <a href="https://github.com/PySimpleGUI"><img height="35" width="35" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
+      <a href="https://github.com/robusta-dev"><img height="35" width="35" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
+      <a href="https://github.com/sasozivanovic"><img height="35" width="35" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
+      <a href="https://github.com/scoutapm-sponsorships"><img height="35" width="35" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
+      <a href="https://github.com/u93"><img height="35" width="35" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
+      <a href="https://opencollective.com/alexey-vazhnov"><img height="35" width="35" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
+      <a href="https://opencollective.com/chenyoo-hao"><img height="35" width="35" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
+    </div>
+
+    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
+
+.. </PYPI-EXCLUDE>
+
+----
+
 Example usages
 ==============
 
-This represents pretty much the whole psutil API.
+Below are interactive examples demonstrating all parts of the psutil API,
+including CPU, memory, disks, network, sensors, and process management.
 
 CPU
 ---
@@ -470,87 +555,6 @@ Windows services
      'status': 'stopped',
      'username': 'NT AUTHORITY\\LocalService'}
 
-Projects using psutil
-=====================
-
-psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 280+
-million downloads per month, `760,000+ GitHub repositories
-<https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
-14,000+ packages depending on it. The projects below are a small sample of
-notable software that depends on it. Some notable projects using psutil:
-
-- `TensorFlow <https://github.com/tensorflow/tensorflow>`_,
-  `PyTorch <https://github.com/pytorch/pytorch>`_,
-- `Home Assistant <https://github.com/home-assistant/core>`_,
-  `Ansible <https://github.com/ansible/ansible>`_,
-  `Apache Airflow <https://github.com/apache/airflow>`_,
-  `Sentry <https://github.com/getsentry/sentry>`_
-- `Celery <https://github.com/celery/celery>`_,
-  `Dask <https://github.com/dask/dask>`_
-- `Glances <https://github.com/nicolargo/glances>`_,
-  `bpytop <https://github.com/aristocratos/bpytop>`_,
-  `Ajenti <https://github.com/ajenti/ajenti>`_,
-  `GRR <https://github.com/google/grr>`_
-- `psleak`_
-
-`Full list <https://psutil.readthedocs.io/adoption>`_
-
-
-
-Portings
-========
-
-- Go: `gopsutil <https://github.com/shirou/gopsutil>`_
-- C: `cpslib <https://github.com/hamon-in/cpslib>`_
-- Rust: `rust-psutil <https://github.com/rust-psutil/rust-psutil>`_
-- Nim: `psutil-nim <https://github.com/johnscillieri/psutil-nim>`_
-
-.. <PYPI-EXCLUDE>
-
-Supporters
-==========
-
-People who donated money over the years:
-
-.. raw:: html
-
-    <div>
-      <a href="https://github.com/codingjoe"><img height="35" width="35" title="Johannes Maron" src="https://avatars.githubusercontent.com/u/1772890?v=4" /></a>
-      <a href="https://github.com/eallrich"><img height="35" width="35" title="Evan Allrich" src="https://avatars.githubusercontent.com/u/17393?v=4" /></a>
-      <a href="https://github.com/ofek"><img height="35" width="35" title="Ofek Lev" src="https://avatars.githubusercontent.com/u/9677399?v=4" /></a>
-      <a href="https://github.com/roboflow"><img height="35" width="35" title="roboflow.com" src="https://avatars.githubusercontent.com/u/53104118?s=200&v=4" /></a>
-      <a href="https://github.com/sansecio"><img height="35" width="35" title="sansec.io" src="https://avatars.githubusercontent.com/u/60706188?s=200&v=4" /></a>
-      <a href="https://github.com/Trash-Nothing"><img height="35" width="35" title="trashnothing.com" src="https://avatars.githubusercontent.com/u/230028908?s=200&v=4" /></a>
-
-      <a href="https://github.com/abramov-v"><img height="35" width="35" title="Valeriy Abramov" src="https://avatars.githubusercontent.com/u/76448042?v=4" /></a>
-      <a href="https://github.com/alexdlaird"><img height="35" width="35" title="Alex Laird" src="https://avatars.githubusercontent.com/u/1660326?v=4" /></a>
-      <a href="https://github.com/aristocratos"><img height="35" width="35" title="aristocratos" src="https://avatars3.githubusercontent.com/u/59659483?s=96&amp;v=4" /></a>
-      <a href="https://github.com/ArtyomVancyan"><img height="35" width="35" title="Artyom Vancyan" src="https://avatars.githubusercontent.com/u/44609997?v=4" /></a>
-      <a href="https://github.com/c0m4r"><img height="35" width="35" title="c0m4r" src="https://avatars.githubusercontent.com/u/6292788?v=4" /></a>
-      <a href="https://github.com/coskundeniz"><img height="35" width="35" title="Coşkun Deniz" src="https://avatars.githubusercontent.com/u/4516210?v=4" /></a>
-      <a href="https://github.com/cybersecgeek"><img height="35" width="35" title="cybersecgeek" src="https://avatars.githubusercontent.com/u/12847926?v=4" /></a>
-      <a href="https://github.com/dbwiddis"><img height="35" width="35" title="Daniel Widdis" src="https://avatars1.githubusercontent.com/u/9291703?s=88&amp;v=4" /></a>
-      <a href="https://github.com/getsentry"><img height="35" width="35" title="getsentry" src="https://avatars.githubusercontent.com/u/1396951?s=200&v=4" /></a>
-      <a href="https://github.com/great-work-told-is"><img height="35" width="35" title="great-work-told-is" src="https://avatars.githubusercontent.com/u/113922084?v=4" /></a>
-      <a href="https://github.com/guilt"><img height="35" width="35" title="Karthik Kumar Viswanathan" src="https://avatars.githubusercontent.com/u/195178?v=4" /></a>
-      <a href="https://github.com/inarikami"><img height="35" width="35" title="inarikami" src="https://avatars.githubusercontent.com/u/22864465?v=4" /></a>
-      <a href="https://github.com/indeedeng"><img height="35" width="35" title="indeedeng" src="https://avatars.githubusercontent.com/u/2905043?s=200&v=4" /></a>
-      <a href="https://github.com/JeremyGrosser"><img height="35" width="35" title="JeremyGrosser" src="https://avatars.githubusercontent.com/u/2151?v=4" /></a>
-      <a href="https://github.com/maxesisn"><img height="35" width="35" title="Maximilian Wu" src="https://avatars.githubusercontent.com/u/20412597?v=4" /></a>
-      <a href="https://github.com/Mehver"><img height="35" width="35" title="Mehver" src="https://avatars.githubusercontent.com/u/75297777?v=4" /></a>
-      <a href="https://github.com/mirbyte"><img height="35" width="35" title="mirko" src="https://avatars.githubusercontent.com/u/83219244?v=4" /></a>
-      <a href="https://github.com/PySimpleGUI"><img height="35" width="35" title="PySimpleGUI" src="https://avatars.githubusercontent.com/u/46163555?v=4" /></a>
-      <a href="https://github.com/robusta-dev"><img height="35" width="35" title="Robusta" src="https://avatars.githubusercontent.com/u/82757710?s=200&v=4" /></a>
-      <a href="https://github.com/sasozivanovic"><img height="35" width="35" title="Sašo Živanović" src="https://avatars.githubusercontent.com/u/3317028?v=4" /></a>
-      <a href="https://github.com/scoutapm-sponsorships"><img height="35" width="35" title="scoutapm-sponsorships" src="https://avatars.githubusercontent.com/u/71095532?v=4" /></a>
-      <a href="https://github.com/u93"><img height="35" width="35" title="Eugenio E Breijo" src="https://avatars.githubusercontent.com/u/16807302?v=4" /></a>
-      <a href="https://opencollective.com/alexey-vazhnov"><img height="35" width="35" title="Alexey Vazhnov" src="https://images.opencollective.com/alexey-vazhnov/daed334/avatar/40.png" /></a>
-      <a href="https://opencollective.com/chenyoo-hao"><img height="35" width="35" title="Chenyoo Hao" src="https://images.opencollective.com/chenyoo-hao/avatar/40.png" /></a>
-    </div>
-
-    <sup><a href="https://github.com/sponsors/giampaolo">add your avatar</a></sup>
-
-.. </PYPI-EXCLUDE>
 
 .. _`psleak`: https://github.com/giampaolo/psleak
 .. _`top 100`: https://clickpy.clickhouse.com/dashboard/psutil
