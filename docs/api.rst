@@ -72,7 +72,7 @@ CPU
     CPU times are always supposed to increase over time, or at least remain the
     same, and that's because time cannot go backwards. Surprisingly sometimes
     this might not be the case (at least on Windows and Linux), see `#1210
-    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`__.
+    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -481,7 +481,7 @@ Disks
     *total* and *used* fields on UNIX refer to the overall total and used
     space, whereas *free* represents the space available for the **user** and
     *percent* represents the **user** utilization (see
-    `source code <https://github.com/giampaolo/psutil/blob/3dea30d583b8c1275057edb1b3b720813b4d0f60/psutil/_psposix.py#L123>`__).
+    `source code <https://github.com/giampaolo/psutil/blob/3dea30d583b8c1275057edb1b3b720813b4d0f60/psutil/_psposix.py#L123>`_).
     That is why *percent* value may look 5% bigger than what you would expect
     it to be.
     Also note that both 4 values match "df" cmdline utility.
@@ -727,7 +727,7 @@ Network
 
   .. note::
     if you're interested in others families (e.g. AF_BLUETOOTH) you can use
-    the more powerful `netifaces <https://pypi.org/project/netifaces/>`__
+    the more powerful `netifaces <https://pypi.org/project/netifaces/>`_
     extension.
 
   .. note::
@@ -1222,7 +1222,7 @@ Process class
 
     The process name.  On Windows the return value is cached after first
     call. Not on POSIX because the process name may change.
-    See also how to `find a process by name <#find-process-by-name>`__.
+    See also how to `find a process by name <#find-process-by-name>`_.
 
   .. method:: exe()
 
@@ -1256,7 +1256,7 @@ Process class
     .. note::
       on macOS Big Sur this function returns something meaningful only for the
       current process or in
-      `other specific circumstances <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321>`__).
+      `other specific circumstances <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321>`_).
 
     .. versionadded:: 4.0.0
     .. versionchanged:: 5.3.0 added SunOS support
@@ -1473,7 +1473,7 @@ Process class
 
     Return process I/O statistics as a named tuple.
     For Linux you can refer to
-    `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`__.
+    `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
 
     - **read_count**: the number of read operations performed (cumulative).
       This is supposed to count the number of read-related syscalls such as
@@ -1550,7 +1550,7 @@ Process class
 
     - **id**: the native thread ID assigned by the kernel. If :attr:`pid` refers
       to the current process, this matches the
-      `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`__
+      `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`_
       attribute of the `threading.Thread`_ class, and can be used to reference
       individual Python threads running within your own Python app.
     - **user_time**: time spent in user mode.
@@ -1559,7 +1559,7 @@ Process class
   .. method:: cpu_times()
 
     Return a named tuple representing the accumulated process times, in seconds
-    (see `explanation <http://stackoverflow.com/questions/556405/>`__).
+    (see `explanation <http://stackoverflow.com/questions/556405/>`_).
     This is similar to `os.times`_ but can be used for any process PID.
 
     - **user**: time spent in user mode.
@@ -1633,7 +1633,7 @@ Process class
   .. method:: cpu_affinity(cpus=None)
 
     Get or set process current
-    `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
+    `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`_.
     CPU affinity consists in telling the OS to run a process on a limited set
     of CPUs only (on Linux cmdline, ``taskset`` command is typically used).
     If no argument is passed it returns the current CPU affinity as a list
@@ -1852,7 +1852,7 @@ Process class
     Return a named tuple with USS, PSS and swap memory metrics. These give
     a more accurate picture of actual memory consumption than
     :meth:`memory_info`, as explained in this
-    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`__.
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_.
     It works by walking the full process address space, so it is
     considerably slower than :meth:`memory_info` and may require elevated
     privileges.
@@ -1974,7 +1974,7 @@ Process class
 
     .. versionchanged::
       5.6.0 removed macOS support because inherently broken (see
-      issue `#1291 <https://github.com/giampaolo/psutil/issues/1291>`__)
+      issue `#1291 <https://github.com/giampaolo/psutil/issues/1291>`_)
 
   .. method:: children(recursive=False)
 
@@ -2000,9 +2000,9 @@ Process class
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
     This concept is well summaried by this
-    `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`__.
-    See also how to `kill a process tree <#kill-process-tree>`__ and
-    `terminate my children <#terminate-my-children>`__.
+    `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
+    See also how to `kill a process tree <#kill-process-tree>`_ and
+    `terminate my children <#terminate-my-children>`_.
 
   .. method:: page_faults()
 
@@ -2200,8 +2200,8 @@ Process class
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
     are supported and *SIGTERM* is treated as an alias for :meth:`kill()`.
-    See also how to `kill a process tree <#kill-process-tree>`__ and
-    `terminate my children <#terminate-my-children>`__.
+    See also how to `kill a process tree <#kill-process-tree>`_ and
+    `terminate my children <#terminate-my-children>`_.
 
     .. versionchanged::
       3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows
@@ -2227,8 +2227,8 @@ Process class
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
-    See also how to `kill a process tree <#kill-process-tree>`__ and
-    `terminate my children <#terminate-my-children>`__.
+    See also how to `kill a process tree <#kill-process-tree>`_ and
+    `terminate my children <#terminate-my-children>`_.
 
   .. method:: kill()
 
@@ -2236,8 +2236,8 @@ Process class
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
-    See also how to `kill a process tree <#kill-process-tree>`__ and
-    `terminate my children <#terminate-my-children>`__.
+    See also how to `kill a process tree <#kill-process-tree>`_ and
+    `terminate my children <#terminate-my-children>`_.
 
   .. method:: wait(timeout=None)
 
@@ -2667,7 +2667,7 @@ Process priority constants
   *IOPRIO_CLASS_IDLE* means the process will get I/O time when no-one else
   needs the disk.
   For further information refer to manuals of
-  `ionice <http://linux.die.net/man/1/ionice>`__ command line utility or
+  `ionice <http://linux.die.net/man/1/ionice>`_ command line utility or
   `ioprio_get`_ system call.
 
   Availability: Linux
@@ -2811,7 +2811,7 @@ Other constants
   You may want to re-set this constant right after importing psutil in case
   your /proc filesystem is mounted elsewhere or if you want to retrieve
   information about Linux containers such as Docker, Heroku or LXC (see
-  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`__
+  `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
   for more info).
   It must be noted that this trick works only for APIs which rely on /proc
   filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
