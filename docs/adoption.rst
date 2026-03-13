@@ -9,8 +9,8 @@ most-downloaded packages on PyPI, with 280+ million downloads per month,
 it, and 14,000+ packages depending on it. The projects below are a small
 sample of notable software that depends on it.
 
-Infrastructure / orchestration
-------------------------------
+Infrastructure / automation
+---------------------------
 
 .. list-table::
    :header-rows: 1
@@ -40,14 +40,14 @@ Infrastructure / orchestration
      - Infrastructure automation at scale
      - |salt-stars|
      - deep system data collection (grains)
+   * - |dask-logo| `Dask <https://github.com/dask/dask>`__
+     - Parallel computing with task scheduling
+     - |dask-stars|
+     - `metrics dashboard <https://github.com/dask/dask/blob/0d40a604284e021d098682b71c55d0387a414925/docs/source/dashboard.rst#L147>`_, profiling
    * - |ajenti-logo| `Ajenti <https://github.com/ajenti/ajenti>`__
      - Web-based server administration panel
      - |ajenti-stars|
      - monitoring plugins, deep integration
-   * - |buildbot-logo| `Buildbot <https://github.com/buildbot/buildbot>`__
-     - Continuous integration framework
-     - |buildbot-stars|
-     -
 
 AI / Machine learning
 ---------------------
@@ -63,11 +63,11 @@ AI / Machine learning
    * - |tensorflow-logo| `TensorFlow <https://github.com/tensorflow/tensorflow>`__
      - Open source machine learning framework by Google
      - |tensorflow-stars|
-     -
+     - unit tests
    * - |pytorch-logo| `PyTorch <https://github.com/pytorch/pytorch>`__
      - Tensors and dynamic neural networks with GPU acceleration
      - |pytorch-stars|
-     - unit tests, benchmark scripts
+     - benchmark scripts
    * - |ray-logo| `Ray <https://github.com/ray-project/ray>`__
      - AI compute engine with distributed runtime
      - |ray-stars|
@@ -96,10 +96,6 @@ Developer tools
      - Scalable load testing in Python
      - |locust-stars|
      - monitoring of the Locust process
-   * - |pyinstaller-logo| `PyInstaller <https://github.com/pyinstaller/pyinstaller>`__
-     - Package Python programs into stand-alone executables
-     - |pyinstaller-stars|
-     -
    * - |spyder-logo| `Spyder <https://github.com/spyder-ide/spyder>`__
      - Scientific Python IDE
      - |spyder-stars|
@@ -136,6 +132,10 @@ System monitoring
      - Automatic CPU speed and power optimizer for Linux
      - |auto-cpufreq-stars|
      - core dependency for CPU monitoring
+   * - |grr-logo| `GRR <https://github.com/google/grr>`__
+     - Remote live forensics by Google
+     - |grr-stars|
+     - endpoint system data collection, deep integration
    * - |stui-logo| `s-tui <https://github.com/amanusk/s-tui>`__
      - Terminal CPU stress and monitoring utility
      - |stui-stars|
@@ -148,14 +148,15 @@ System monitoring
      - Web dashboard using psutil and Flask
      - |psdash-stars|
      - core dependency for all metrics
-   * - |grr-logo| `GRR <https://github.com/google/grr>`__
-     - Remote live forensics by Google
-     - |grr-stars|
-     - endpoint system data collection, deep integration
+   * - |dd-agent-logo| `dd-agent <https://github.com/DataDog/dd-agent>`__
+     - Original monitoring agent by Datadog
+     - |dd-agent-stars|
+     - system metrics collection
    * - |ddtrace-logo| `dd-trace-py <https://github.com/DataDog/dd-trace-py>`__
-     - Python tracing and profiling library by Datadog
+     - Python tracing and profiling library
      - |ddtrace-stars|
      - system metrics collection
+
 
 How this list was compiled
 --------------------------
@@ -188,9 +189,10 @@ How this list was compiled
 .. |asitop-stars| image:: https://img.shields.io/github/stars/tlkh/asitop.svg?style=social&label=%20
 .. |auto-cpufreq-stars| image:: https://img.shields.io/github/stars/AdnanHodzic/auto-cpufreq.svg?style=social&label=%20
 .. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg?style=social&label=%20
-.. |buildbot-stars| image:: https://img.shields.io/github/stars/buildbot/buildbot.svg?style=social&label=%20
 .. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg?style=social&label=%20
+.. |dask-stars| image:: https://img.shields.io/github/stars/dask/dask.svg?style=social&label=%20
 .. |ddtrace-stars| image:: https://img.shields.io/github/stars/DataDog/dd-trace-py.svg?style=social&label=%20
+.. |dd-agent-stars| image:: https://img.shields.io/github/stars/DataDog/dd-agent.svg?style=social&label=%20
 .. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=social&label=%20
 .. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg?style=social&label=%20
 .. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=social&label=%20
@@ -199,7 +201,6 @@ How this list was compiled
 .. |osquery-stars| image:: https://img.shields.io/github/stars/osquery/osquery.svg?style=social&label=%20
 .. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg?style=social&label=%20
 .. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=social&label=%20
-.. |pyinstaller-stars| image:: https://img.shields.io/github/stars/pyinstaller/pyinstaller.svg?style=social&label=%20
 .. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=social&label=%20
 .. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=social&label=%20
 .. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=social&label=%20
@@ -217,9 +218,10 @@ How this list was compiled
 .. |asitop-logo| image:: https://github.com/tlkh.png?s=28 :height: 28
 .. |auto-cpufreq-logo| image:: https://github.com/AdnanHodzic.png?s=28 :height: 28
 .. |bpytop-logo| image:: https://github.com/aristocratos.png?s=28 :height: 28
-.. |buildbot-logo| image:: https://github.com/buildbot.png?s=28 :height: 28
 .. |celery-logo| image:: https://github.com/celery.png?s=28 :height: 28
+.. |dask-logo| image:: https://github.com/dask.png?s=28 :height: 28
 .. |ddtrace-logo| image:: https://github.com/DataDog.png?s=28 :height: 28
+.. |dd-agent-logo| image:: https://github.com/DataDog.png?s=28 :height: 28
 .. |glances-logo| image:: https://github.com/nicolargo.png?s=28 :height: 28
 .. |grr-logo| image:: https://github.com/google.png?s=28 :height: 28
 .. |homeassistant-logo| image:: https://github.com/home-assistant.png?s=28 :height: 28
@@ -228,7 +230,6 @@ How this list was compiled
 .. |osquery-logo| image:: https://github.com/osquery.png?s=28 :height: 28
 .. |psdash-logo| image:: https://github.com/Jahaja.png?s=28 :height: 28
 .. |psleak-logo| image:: https://github.com/giampaolo.png?s=28 :height: 28
-.. |pyinstaller-logo| image:: https://github.com/pyinstaller.png?s=28 :height: 28
 .. |pytorch-logo| image:: https://github.com/pytorch.png?s=28 :height: 28
 .. |ray-logo| image:: https://github.com/ray-project.png?s=28 :height: 28
 .. |salt-logo| image:: https://github.com/saltstack.png?s=28 :height: 28
