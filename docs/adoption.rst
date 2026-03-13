@@ -161,70 +161,62 @@ System monitoring
      - |grr-stars|
      - endpoint system data collection, deep integration
 
-
 .. Star badges
 .. ============================================================================
 
-.. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg?style=plastic
-.. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=plastic
 .. |airflow-stars| image:: https://img.shields.io/github/stars/apache/airflow.svg?style=plastic
-.. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg?style=plastic
-.. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=plastic
-.. |buildbot-stars| image:: https://img.shields.io/github/stars/buildbot/buildbot.svg?style=plastic
 .. |ajenti-stars| image:: https://img.shields.io/github/stars/ajenti/ajenti.svg?style=plastic
-
-.. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg?style=plastic
-.. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=plastic
-.. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=plastic
+.. |ansible-stars| image:: https://img.shields.io/github/stars/ansible/ansible.svg?style=plastic
+.. |asitop-stars| image:: https://img.shields.io/github/stars/tlkh/asitop.svg?style=plastic
+.. |auto-cpufreq-stars| image:: https://img.shields.io/github/stars/AdnanHodzic/auto-cpufreq.svg?style=plastic
+.. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg?style=plastic
+.. |buildbot-stars| image:: https://img.shields.io/github/stars/buildbot/buildbot.svg?style=plastic
+.. |celery-stars| image:: https://img.shields.io/github/stars/celery/celery.svg?style=plastic
+.. |ddtrace-stars| image:: https://img.shields.io/github/stars/DataDog/dd-trace-py.svg?style=plastic
+.. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=plastic
+.. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg?style=plastic
+.. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=plastic
+.. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg?style=plastic
 .. |mlflow-stars| image:: https://img.shields.io/github/stars/mlflow/mlflow.svg?style=plastic
 .. |optuna-stars| image:: https://img.shields.io/github/stars/optuna/optuna.svg?style=plastic
-
-.. |sentry-stars| image:: https://img.shields.io/github/stars/getsentry/sentry.svg?style=plastic
-.. |pyinstaller-stars| image:: https://img.shields.io/github/stars/pyinstaller/pyinstaller.svg?style=plastic
-.. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg?style=plastic
-.. |spyder-stars| image:: https://img.shields.io/github/stars/spyder-ide/spyder.svg?style=plastic
-.. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=plastic
-
-.. |glances-stars| image:: https://img.shields.io/github/stars/nicolargo/glances.svg?style=plastic
 .. |osquery-stars| image:: https://img.shields.io/github/stars/osquery/osquery.svg?style=plastic
-.. |ddtrace-stars| image:: https://img.shields.io/github/stars/DataDog/dd-trace-py.svg?style=plastic
-.. |bpytop-stars| image:: https://img.shields.io/github/stars/aristocratos/bpytop.svg?style=plastic
-.. |asitop-stars| image:: https://img.shields.io/github/stars/tlkh/asitop.svg?style=plastic
-.. |stui-stars| image:: https://img.shields.io/github/stars/amanusk/s-tui.svg?style=plastic
-.. |auto-cpufreq-stars| image:: https://img.shields.io/github/stars/AdnanHodzic/auto-cpufreq.svg?style=plastic
 .. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg?style=plastic
-.. |grr-stars| image:: https://img.shields.io/github/stars/google/grr.svg?style=plastic
-
+.. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=plastic
+.. |pyinstaller-stars| image:: https://img.shields.io/github/stars/pyinstaller/pyinstaller.svg?style=plastic
+.. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=plastic
+.. |ray-stars| image:: https://img.shields.io/github/stars/ray-project/ray.svg?style=plastic
+.. |salt-stars| image:: https://img.shields.io/github/stars/saltstack/salt.svg?style=plastic
+.. |sentry-stars| image:: https://img.shields.io/github/stars/getsentry/sentry.svg?style=plastic
+.. |spyder-stars| image:: https://img.shields.io/github/stars/spyder-ide/spyder.svg?style=plastic
+.. |stui-stars| image:: https://img.shields.io/github/stars/amanusk/s-tui.svg?style=plastic
+.. |tensorflow-stars| image:: https://img.shields.io/github/stars/tensorflow/tensorflow.svg?style=plastic
 
 .. Logo images
 .. ============================================================================
 
-.. |ansible-logo| image:: https://github.com/ansible.png?s=28 :height: 28
-.. |homeassistant-logo| image:: https://github.com/home-assistant.png?s=28 :height: 28
 .. |airflow-logo| image:: https://github.com/apache.png?s=28 :height: 28
-.. |celery-logo| image:: https://github.com/celery.png?s=28 :height: 28
-.. |salt-logo| image:: https://github.com/saltstack.png?s=28 :height: 28
-.. |buildbot-logo| image:: https://github.com/buildbot.png?s=28 :height: 28
 .. |ajenti-logo| image:: https://github.com/ajenti.png?s=28 :height: 28
-
-.. |tensorflow-logo| image:: https://github.com/tensorflow.png?s=28 :height: 28
-.. |pytorch-logo| image:: https://github.com/pytorch.png?s=28 :height: 28
-.. |ray-logo| image:: https://github.com/ray-project.png?s=28 :height: 28
+.. |ansible-logo| image:: https://github.com/ansible.png?s=28 :height: 28
+.. |asitop-logo| image:: https://github.com/tlkh.png?s=28 :height: 28
+.. |auto-cpufreq-logo| image:: https://github.com/AdnanHodzic.png?s=28 :height: 28
+.. |bpytop-logo| image:: https://github.com/aristocratos.png?s=28 :height: 28
+.. |buildbot-logo| image:: https://github.com/buildbot.png?s=28 :height: 28
+.. |celery-logo| image:: https://github.com/celery.png?s=28 :height: 28
+.. |ddtrace-logo| image:: https://github.com/DataDog.png?s=28 :height: 28
+.. |glances-logo| image:: https://github.com/nicolargo.png?s=28 :height: 28
+.. |grr-logo| image:: https://github.com/google.png?s=28 :height: 28
+.. |homeassistant-logo| image:: https://github.com/home-assistant.png?s=28 :height: 28
+.. |locust-logo| image:: https://github.com/locustio.png?s=28 :height: 28
 .. |mlflow-logo| image:: https://github.com/mlflow.png?s=28 :height: 28
 .. |optuna-logo| image:: https://github.com/optuna.png?s=28 :height: 28
-
-.. |sentry-logo| image:: https://github.com/getsentry.png?s=28 :height: 28
-.. |pyinstaller-logo| image:: https://github.com/pyinstaller.png?s=28 :height: 28
-.. |locust-logo| image:: https://github.com/locustio.png?s=28 :height: 28
-.. |spyder-logo| image:: https://github.com/spyder-ide.png?s=28 :height: 28
-.. |psleak-logo| image:: https://github.com/giampaolo.png?s=28 :height: 28
-
-.. |glances-logo| image:: https://github.com/nicolargo.png?s=28 :height: 28
 .. |osquery-logo| image:: https://github.com/osquery.png?s=28 :height: 28
-.. |ddtrace-logo| image:: https://github.com/DataDog.png?s=28 :height: 28
-.. |bpytop-logo| image:: https://github.com/aristocratos.png?s=28 :height: 28
-.. |asitop-logo| image:: https://github.com/tlkh.png?s=28 :height: 28
-.. |stui-logo| image:: https://github.com/amanusk.png?s=28 :height: 28
-.. |auto-cpufreq-logo| image:: https://github.com/AdnanHodzic.png?s=28 :height: 28
 .. |psdash-logo| image:: https://github.com/Jahaja.png?s=28 :height: 28
-.. |grr-logo| image:: https://github.com/google.png?s=28 :height: 28
+.. |psleak-logo| image:: https://github.com/giampaolo.png?s=28 :height: 28
+.. |pyinstaller-logo| image:: https://github.com/pyinstaller.png?s=28 :height: 28
+.. |pytorch-logo| image:: https://github.com/pytorch.png?s=28 :height: 28
+.. |ray-logo| image:: https://github.com/ray-project.png?s=28 :height: 28
+.. |salt-logo| image:: https://github.com/saltstack.png?s=28 :height: 28
+.. |sentry-logo| image:: https://github.com/getsentry.png?s=28 :height: 28
+.. |spyder-logo| image:: https://github.com/spyder-ide.png?s=28 :height: 28
+.. |stui-logo| image:: https://github.com/amanusk.png?s=28 :height: 28
+.. |tensorflow-logo| image:: https://github.com/tensorflow.png?s=28 :height: 28
