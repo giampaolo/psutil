@@ -382,11 +382,11 @@ Code contributors by year
 * Dave Daeschler - :gh:`522`, :gh:`536`
 * Jeffery Kline - :gh:`130`
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
-* Yan Raber - :gh:`114`
 
 2009
 ~~~~
 
+* Yan Raber: `c861c08b <https://github.com/giampaolo/psutil/commit/c861c08b>`_ (Windows :func:`cpu_times()`), `15159111 <https://github.com/giampaolo/psutil/commit/15159111>`_ (Windows :meth:`Process.username()`)
 * `Jay Loden`_ - `79128baa <https://github.com/giampaolo/psutil/commit/79128baa>`_ (first commit of FreeBSD implementation)
 
 2008
