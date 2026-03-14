@@ -64,7 +64,6 @@
         <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/changelog"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 
 Summary

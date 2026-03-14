@@ -102,10 +102,10 @@ Table of Contents
    Recipes <recipes>
    Platform support <platform>
    Who uses psutil <adoption>
+   Credits <credits>
    Development guide <devguide>
    FAQs <faq>
-    Timeline <timeline>
-    Credits <credits>
+   Timeline <timeline>
 
 .. toctree::
    :titlesonly:
