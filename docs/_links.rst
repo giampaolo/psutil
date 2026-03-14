@@ -3,7 +3,6 @@
 .. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
 .. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
-.. _`Giampaolo Rodola`: https://gmpy.dev/about
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html

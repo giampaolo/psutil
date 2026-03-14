@@ -384,10 +384,18 @@ Code contributors by year
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
 * Yan Raber - :gh:`114`
 
+2009
+~~~~
+
+* `Jay Loden`_ - `79128baa <https://github.com/giampaolo/psutil/commit/79128baa>`_ (first commit of FreeBSD implementation)
+
 2008
 ~~~~
 
 * `Jay Loden`_ - `efe9236a <https://github.com/giampaolo/psutil/commit/efe9236a>`_ (first commit of macOS implementation)
+* Dave Daeschler - `71875761 <https://github.com/giampaolo/psutil/commit/71875761>`_ (first commit of Windows implementation)
+* `Giampaolo Rodola`_ - `6296c2ab <https://github.com/giampaolo/psutil/commit/6296c2ab>`_ (first commit of Linux implementation)
+* `Giampaolo Rodola`_ - `8472a17f <https://github.com/giampaolo/psutil/commit/8472a17f>`_ (inception / initial directory structure)
 
 .. People Donors
 .. ============================================================================
@@ -492,12 +500,13 @@ Code contributors by year
 .. _`Fabien Bousquet`: https://github.com/fafanoulele
 .. _`Farhan Khan`: https://github.com/khanzf
 .. _`Felix Yan`: https://github.com/felixonmars
-.. _`Frank Benkstein`: https://github.com/fbenkstein
 .. _`Florent Xicluna`: https://github.com/florentx
+.. _`Frank Benkstein`: https://github.com/fbenkstein
 .. _`Gabi Davar`: https://github.com/mindw
 .. _`Garrison Carter`: https://github.com/garrisoncarter
 .. _`Georg Sauthoff`: https://github.com/gsauthof
 .. _`Ghislain Le Meur`: https://github.com/gigi206
+.. _`Giampaolo Rodola`: https://github.com/giampaolo
 .. _`Gleb Smirnoff`: https://github.com/glebius
 .. _`Gregory P. Smith`: https://github.com/gpshead
 .. _`Gregory Szorc`: https://github.com/indygreg
@@ -520,8 +529,8 @@ Code contributors by year
 .. _`janderbrain`: https://github.com/janderbrain
 .. _`Javad Karabi`: https://github.com/karabijavad
 .. _`Jay Loden`: https://github.com/jloden
-.. _`Jeff Tang`: https://github.com/mrjefftang
 .. _`Jean-Luc Migot`: https://github.com/jmigot-tehtris
+.. _`Jeff Tang`: https://github.com/mrjefftang
 .. _`Jeremy Humble`: https://github.com/jhumble
 .. _`John Burnett`: https://github.com/johnburnett
 .. _`Jon Dufresne`: https://github.com/jdufresne
@@ -546,10 +555,10 @@ Code contributors by year
 .. _`Lysandros Nikolaou`: https://github.com/lysnikolaou
 .. _`maozguttman`: https://github.com/maozguttman
 .. _`Marc Abramowitz`: https://github.com/msabramo
-.. _`Matt Good`: https://github.com/mgood
 .. _`Marcel Telka`: https://github.com/mtelka
 .. _`Mark Derbecker`: https://github.com/mpderbec
 .. _`Martin Liška`: https://github.com/marxin
+.. _`Matt Good`: https://github.com/mgood
 .. _`Matthew Long`: https://github.com/matray
 .. _`Matthieu Darbois`: https://github.com/mayeut
 .. _`MaWe2019`: https://github.com/MaWe2019
@@ -577,9 +586,10 @@ Code contributors by year
 .. _`Po-Chuan Hsieh`: https://github.com/sunpoet
 .. _`Prodesire`: https://github.com/Prodesire
 .. _`ReenigneArcher`: https://github.com/ReenigneArcher
-.. _`Riccardo Schirone`: https://github.com/ret2libc
 .. _`Riccardo Murri`: https://github.com/riccardomurri
+.. _`Riccardo Schirone`: https://github.com/ret2libc
 .. _`Ryan Carsten Schmidt`: https://github.com/ryandesign
+.. _`Ryo Onodera`: https://github.com/ryoon
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury
 .. _`Samer Masterson`: https://github.com/samertm
@@ -618,4 +628,3 @@ Code contributors by year
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
-.. _`Ryo Onodera`: https://github.com/ryoon
