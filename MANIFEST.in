@@ -2,7 +2,6 @@ include .clang-format
 include .dprint.jsonc
 include .gitignore
 include CONTRIBUTING.md
-include CREDITS
 include HISTORY.rst
 include INSTALL.rst
 include LICENSE
@@ -28,6 +27,7 @@ include docs/api.rst
 include docs/auto-build.sh
 include docs/changelog.rst
 include docs/conf.py
+include docs/credits.rst
 include docs/devguide.rst
 include docs/faq.rst
 include docs/index.rst
