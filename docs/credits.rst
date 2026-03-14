@@ -369,18 +369,13 @@ Code contributors by year
 2011
 ~~~~
 
-* Gabriel Monnerat - :gh:`146`
-* `Jay Loden`_ - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
-* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260`
-* Philip Roberts - :gh:`168`
-* `Sandro Tosi`_ - :gh:`200`, :gh:`201`
+* `Jay Loden`_ - :gh:`206`, :gh:`230`, :gh:`232`, :gh:`240`
+* Jeremy Whitlock - :gh:`125`, :gh:`150` (:func:`net_io_counters()` macOS), :gh:`206` (:func:`disk_io_counters()` macOS), :gh:`217`, :gh:`260`
 
 2010
 ~~~~
 
 * cjgohlke - :gh:`107`
-* Dave Daeschler - :gh:`522`, :gh:`536`
-* Jeffery Kline - :gh:`130`
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
 
 2009
@@ -593,7 +588,6 @@ Code contributors by year
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury
 .. _`Samer Masterson`: https://github.com/samertm
-.. _`Sandro Tosi`: https://github.com/sandrotosi
 .. _`Sebastian Saip`: https://github.com/ssaip
 .. _`Sebastian-Gabriel Brestin`: https://github.com/bsebi
 .. _`Sergey Fedorov`: https://github.com/barracuda156
@@ -628,3 +622,4 @@ Code contributors by year
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
+.. _`David Daeschler`: https://github.com/ddaeschler
