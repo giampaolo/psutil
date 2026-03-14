@@ -15,12 +15,14 @@ A big thanks to all of you.
 Top contributors
 ----------------
 
-- `Jay Loden`_: original co-author, initial design / bootstrap.
+- `Jay Loden`_: original co-author, initial design / bootstrap
+- `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS, FreeBSD, Linux
 - `Arnon Yaari`_: AIX implementation, macOS :func:`sensors_battery()`
   implementation, SunOS work
-- `Ryo Onodera`_: NetBSD implementation.
-- `Landry Breuil`_: OpenBSD implementation.
-- `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS and FreeBSD
+- `Ryo Onodera`_: NetBSD implementation
+- `Thomas Klausner`_: NetBSD implementation (co-author)
+- `Landry Breuil`_: OpenBSD implementation
+- `Matthieu Darbois`_: CI infrastructure and wheel building
 
 2026
 ----
@@ -79,7 +81,7 @@ Top contributors
 * `Hiroyuki Tanaka`_ - :gh:`2086`
 * `Hugo van Kemenade`_ - :gh:`2099`
 * `Lawrence D'Anna`_ - :gh:`2010`
-* `Matthieu Darbois`_ - :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
+* `Matthieu Darbois`_ - :gh:`1954`, :gh:`2021`, :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
 * `Steve Dower`_ - :gh:`2080`
 * `Thomas Klausner`_ - :gh:`2088`, :gh:`2128`
 * `Tim Gates`_ - :gh:`2123`
