@@ -267,7 +267,7 @@ A big thanks to all of you.
 * Riccardo Murri - :gh:`318`
 * Rob Smith - :gh:`341`
 * Stanchev Emil - :gh:`314`
-* Tarek Ziade - :gh:`281`
+* `Tarek Ziade`_ - :gh:`281`
 * Youngsik Kim - :gh:`317`
 
 2011
@@ -277,7 +277,7 @@ A big thanks to all of you.
 * `Jay Loden`_ - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
 * Jeremy Whitlock - :gh:`150`, :gh:`206`, :gh:`125`
 * Philip Roberts - :gh:`168`
-* Sandro Tosi - :gh:`200`, :gh:`201`
+* `Sandro Tosi`_ - :gh:`200`, :gh:`201`
 
 2010
 ----
@@ -369,11 +369,13 @@ A big thanks to all of you.
 .. _`Jakub Bacic`: https://github.com/jakub-bacic
 .. _`janderbrain`: https://github.com/janderbrain
 .. _`Javad Karabi`: https://github.com/karabijavad
+.. _`Jay Loden`: https://github.com/jloden
 .. _`Jean-Luc Migot`: https://github.com/jmigot-tehtris
 .. _`Jeremy Humble`: https://github.com/jhumble
 .. _`John Burnett`: https://github.com/johnburnett
 .. _`Jon Dufresne`: https://github.com/jdufresne
 .. _`Jonathan Kohler`: https://github.com/kohlerjl
+.. _`Josiah Carlson`: https://github.com/josiahcarlson
 .. _`Julien Lebot`: https://github.com/julien-lebot
 .. _`Julien Stephan`: https://github.com/justeph
 .. _`Jérome Perrin`: https://github.com/perrinjerome
@@ -427,6 +429,7 @@ A big thanks to all of you.
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury
 .. _`Samer Masterson`: https://github.com/samertm
+.. _`Sandro Tosi`: https://github.com/sandrotosi
 .. _`Sebastian Saip`: https://github.com/ssaip
 .. _`Sebastian-Gabriel Brestin`: https://github.com/bsebi
 .. _`Sergey Fedorov`: https://github.com/barracuda156
@@ -440,6 +443,7 @@ A big thanks to all of you.
 .. _`Sylvain Duchesne`: https://github.com/sylvainduchesne
 .. _`Sylvain Mouquet`: https://github.com/sylvainmouquet
 .. _`Syohei YOSHIDA`: https://github.com/syohex
+.. _`Tarek Ziade`: https://github.com/tarekziade
 .. _`Thiago Borges Abdnur`: https://github.com/bolaum
 .. _`Thomas Klausner`: https://github.com/tklauser
 .. _`Tim Gates`: https://github.com/timgates42
@@ -449,6 +453,7 @@ A big thanks to all of you.
 .. _`Torsten Blum`: https://github.com/Torsten-B
 .. _`Vincent A. Arcila`: https://github.com/jandrovins
 .. _`Visa Hankala`: https://github.com/landryb
+.. _`Wen Jia Liu`: https://github.com/wj32
 .. _`Wilfried Goesgens`: https://github.com/dothebart
 .. _`Will Hawes`: https://github.com/wdh
 .. _`wxwright`: https://github.com/wxwright
@@ -461,5 +466,3 @@ A big thanks to all of you.
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
 .. _`罗泽轩`: https://github.com/spacewander
-.. _`Wen Jia Liu`: https://github.com/wj32
-.. _`Jay Loden`: https://github.com/jloden
