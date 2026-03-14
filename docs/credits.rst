@@ -275,7 +275,7 @@ A big thanks to all of you.
 
 * Grabriel Monnerat - :gh:`146`
 * `Jay Loden`_ - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
-* Jeremy Whitlock - :gh:`150`, :gh:`206`, :gh:`125`
+* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260`
 * Philip Roberts - :gh:`168`
 * `Sandro Tosi`_ - :gh:`200`, :gh:`201`
 
