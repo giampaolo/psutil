@@ -135,7 +135,6 @@ Top contributors
 * `David Brochart`_ - :gh:`1493`, :gh:`1496`
 * `EccoTheFlintstone`_ - :gh:`1368`, :gh:`1348`
 * `Erwan Le Pape`_ - :gh:`1570`
-* `Frank Benkstein`_ - :gh:`732`, :gh:`733`
 * `Ghislain Le Meur`_ - :gh:`1379`
 * `Kamil Rytarowski`_ - :gh:`1526`, :gh:`1530`
 * `Nathan Houghton`_ - :gh:`1619`
@@ -190,7 +189,7 @@ Top contributors
 * `Arcadiy Ivanov`_ - :gh:`919`
 * `ewedlund`_ - :gh:`874`
 * `Farhan Khan`_ - :gh:`823`
-* `Frank Benkstein`_ - :gh:`739`
+* `Frank Benkstein`_ - :gh:`732`, :gh:`733`, :gh:`736`, :gh:`738`, :gh:`739`, :gh:`740`
 * `Ilya Georgievsky`_ - :gh:`870`
 * `Jake Omann`_ - :gh:`816`, :gh:`775`, :gh:`1874`
 * `Jeremy Humble`_ - :gh:`863`
