@@ -26,7 +26,10 @@ Top contributors
 Donations
 ---------
 
-Companies:
+The following individuals and organizations have supported
+psutil development through donations.
+
+**Companies**:
 
 * `Apivoid`_ *(sponsor)*
 * `Canonical Juju`_
@@ -40,7 +43,7 @@ Companies:
 * `Sourcegraph`_
 * `Tidelift`_ *(sponsor)*
 
-People:
+**People**:
 
 * `Alex Laird`_
 * `Alexey Vazhnov`_
@@ -76,7 +79,6 @@ People:
 * Carver Koella
 * Florian Bruhin
 * Gyula Áfra
-* Heijdemann Morgan
 * HTB Industries
 * Kahntent
 * Kristjan Võrk
@@ -366,7 +368,7 @@ Code contributors by year
 2011
 ~~~~
 
-* Grabriel Monnerat - :gh:`146`
+* Gabriel Monnerat - :gh:`146`
 * `Jay Loden`_ - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
 * Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260`
 * Philip Roberts - :gh:`168`
@@ -600,7 +602,6 @@ Code contributors by year
 .. _`Tomáš Chvátal`: https://github.com/scarabeusiv
 .. _`Torsten Blum`: https://github.com/Torsten-B
 .. _`Vincent A. Arcila`: https://github.com/jandrovins
-.. _`Visa Hankala`: https://github.com/landryb
 .. _`Wen Jia Liu`: https://github.com/wj32
 .. _`Wilfried Goesgens`: https://github.com/dothebart
 .. _`Will Hawes`: https://github.com/wdh
@@ -613,5 +614,4 @@ Code contributors by year
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
-.. _`spacewander`: https://github.com/spacewander
 .. _`Ryo Onodera`: https://github.com/ryoon
