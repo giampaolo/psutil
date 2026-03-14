@@ -18,6 +18,7 @@ Top contributors
 - `Jay Loden`_: original co-author, initial design / bootstrap.
 - `Arnon Yaari`_: AIX implementation, macOS :func:`sensors_battery()`
   implementation
+- `Ryo Onodera`_: NetBSD implementation.
 - `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS and FreeBSD
 
 2026
@@ -204,25 +205,26 @@ Top contributors
 2015
 ----
 
-* `Árni Már Jónsson`_ - :gh:`634`
 * `Bart van Kleef`_ - :gh:`664`
 * `Bruno Binet`_ - :gh:`572`
 * `dasumin`_ - :gh:`541`
 * `desbma`_ - :gh:`628`
 * `Fabian Groffen`_ - :gh:`611`, :gh:`618`
 * `Gabi Davar`_ - :gh:`578`, :gh:`581`, :gh:`587`
-* `John Burnett`_ - :gh:`614`
 * `Jeff Tang`_ - :gh:`616`, :gh:`648`, :gh:`653`, :gh:`654`
+* `John Burnett`_ - :gh:`614`
 * `karthik`_ - :gh:`568`
 * `Landry Breuil`_ - :gh:`564`, :gh:`578`
 * `maozguttman`_ - :gh:`659`
 * `Mike Sarahan`_ - :gh:`688`
-* `罗泽轩`_ - :gh:`555`
 * `Sebastian-Gabriel Brestin`_ - :gh:`704`
 * `sk6249`_ - :gh:`670`
 * `spacewander`_ - :gh:`561`, :gh:`603`
 * `Steven Winfield`_ - :gh:`672`
 * `Sylvain Mouquet`_ - :gh:`565`
+* `Árni Már Jónsson`_ - :gh:`634`
+* `罗泽轩`_ - :gh:`555`
+- `Ryo Onodera`_: `e124acba <https://github.com/giampaolo/psutil/commit/e124acba>`_ (NetBSD implementation)
 
 2014
 ----
@@ -482,3 +484,4 @@ Top contributors
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
 .. _`罗泽轩`: https://github.com/spacewander
+.. _`Ryo Onodera`: https://github.com/ryoon
