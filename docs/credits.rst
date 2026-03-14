@@ -240,7 +240,7 @@ A big thanks to all of you.
 * Gisle Vanem - :gh:`411`
 * Jan Beich - :gh:`325`
 * Jason Kirtland - backward compatible implementation of collections.defaultdict
-* Jay Loden - :gh:`388`, :gh:`394`
+* `Jay Loden`_ - :gh:`388`, :gh:`394`
 * John Baldwin - :gh:`370`
 * John Pankov - :gh:`435`
 * Josiah Carlson - :gh:`451`, :gh:`452`
@@ -256,7 +256,7 @@ A big thanks to all of you.
 * Florent Xicluna - :gh:`319`
 * Gregory Szorc - :gh:`323`
 * James Pye - :gh:`305`, :gh:`306`
-* Jay Loden - :gh:`333`
+* `Jay Loden`_ - :gh:`333`
 * Jean Sebastien - :gh:`344`
 * Kim Gräsman - :gh:`316`
 * Luca Cipriani - :gh:`278`
@@ -274,7 +274,7 @@ A big thanks to all of you.
 ----
 
 * Grabriel Monnerat - :gh:`146`
-* Jay Loden - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
+* `Jay Loden`_ - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
 * Jeremy Whitlock - :gh:`150`, :gh:`206`, :gh:`125`
 * Philip Roberts - :gh:`168`
 * Sandro Tosi - :gh:`200`, :gh:`201`
@@ -283,7 +283,7 @@ A big thanks to all of you.
 ----
 
 * cjgohlke - :gh:`107`
-* Jay Loden - :gh:`61`, :gh:`86`, :gh:`88`, :gh:`95`, :gh:`104`, :gh:`108`, :gh:`120`, :gh:`121`, :gh:`124`, :gh:`135`, :gh:`159`, :gh:`164`
+* `Jay Loden`_ - :gh:`61`, :gh:`86`, :gh:`88`, :gh:`95`, :gh:`104`, :gh:`108`, :gh:`120`, :gh:`121`, :gh:`124`, :gh:`135`, :gh:`159`, :gh:`164`
 * Dave Daeschler - :gh:`522`, :gh:`536`
 * Jeffery Kline - :gh:`130`
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
@@ -462,3 +462,4 @@ A big thanks to all of you.
 .. _`Étienne Servais`: https://github.com/vser1
 .. _`罗泽轩`: https://github.com/spacewander
 .. _`Wen Jia Liu`: https://github.com/wj32
+.. _`Jay Loden`: https://github.com/jloden
