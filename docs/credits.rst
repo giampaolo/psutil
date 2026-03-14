@@ -258,6 +258,7 @@ Top contributors
 * `Josiah Carlson`_ - :gh:`451`, :gh:`452`
 * m.malycha - :gh:`351`
 * `Matt Good`_ - :gh:`438`
+* `Thomas Klausner`_ - :gh:`557`
 * thepyr0 - :gh:`414`
 * Ulrich Klank - :gh:`448`
 
