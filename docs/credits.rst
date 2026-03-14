@@ -19,6 +19,7 @@ Top contributors
 - `Arnon Yaari`_: AIX implementation, macOS :func:`sensors_battery()`
   implementation
 - `Ryo Onodera`_: NetBSD implementation.
+- `Landry Breuil`_: OpenBSD implementation.
 - `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS and FreeBSD
 
 2026
@@ -214,7 +215,7 @@ Top contributors
 * `Jeff Tang`_ - :gh:`616`, :gh:`648`, :gh:`653`, :gh:`654`
 * `John Burnett`_ - :gh:`614`
 * `karthik`_ - :gh:`568`
-* `Landry Breuil`_ - :gh:`564`, :gh:`578`
+* `Landry Breuil`_ - :gh:`713`, :gh:`709` (OpenBSD implementation)
 * `maozguttman`_ - :gh:`659`
 * `Mike Sarahan`_ - :gh:`688`
 * `Sebastian-Gabriel Brestin`_ - :gh:`704`
