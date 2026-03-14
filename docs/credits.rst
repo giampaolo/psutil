@@ -12,6 +12,14 @@ A big thanks to all of you.
 
 — Giampaolo
 
+Top contributors
+----------------
+
+- `Jay Loden`_: original co-author, initial design / bootstrap.
+- `Arnon Yaari`_: AIX implementation, macOS :func:`sensors_battery()`
+  implementation
+- `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS and FreeBSD
+
 2026
 ----
 
