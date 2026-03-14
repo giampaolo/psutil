@@ -260,7 +260,6 @@ Code contributors by year
 * `Nicolas Hennion`_ - :gh:`974`
 * `Oleksii Shevchuk`_ - :gh:`1091`, :gh:`1093`, :gh:`1220`, :gh:`1346`
 * `Pierre Fersing`_ - :gh:`950`
-* `Prodesire`_ - :gh:`1138`
 * `Sebastian Saip`_ - :gh:`1141`
 * `Thiago Borges Abdnur`_ - :gh:`959`
 * `Yannick Gingras`_ - :gh:`1057`
@@ -282,25 +281,21 @@ Code contributors by year
 * `Patrick Welche`_ - :gh:`812`
 * `Syohei YOSHIDA`_ - :gh:`730`
 * `Timmy Konick`_ - :gh:`751`
-* `wxwright`_ - :gh:`776`
 * `Yago Jesus`_ - :gh:`798`
 
 2015
 ~~~~
 
 * `Arnon Yaari`_ - :gh:`680`, :gh:`679`, :gh:`610` (AIX implementation)
-* `Bart van Kleef`_ - :gh:`664`
 * `Bruno Binet`_ - :gh:`572`
 * `dasumin`_ - :gh:`541`
-* `desbma`_ - :gh:`628`
 * `Fabian Groffen`_ - :gh:`611`, :gh:`618`
 * `Gabi Davar`_ - :gh:`578`, :gh:`581`, :gh:`587`
 * `Jeff Tang`_ - :gh:`616`, :gh:`648`, :gh:`653`, :gh:`654`
 * `John Burnett`_ - :gh:`614`
 * `karthik`_ - :gh:`568`
 * `Landry Breuil`_ - :gh:`713`, :gh:`709` (OpenBSD implementation)
-* `maozguttman`_ - :gh:`659`
-* `Mike Sarahan`_ - :gh:`688`
+* `Mike Sarahan`_ - :gh:`690`
 * `Sebastian-Gabriel Brestin`_ - :gh:`704`
 * `sk6249`_ - :gh:`670`
 * `spacewander`_ - :gh:`561`, :gh:`603`, :gh:`555`
@@ -313,36 +308,26 @@ Code contributors by year
 ~~~~
 
 * `Alexander Grothe`_ - :gh:`497`
-* `Anders Chrigström`_ - :gh:`496`
+* `Anders Chrigström`_ - :gh:`548`
 * Francois Charron - :gh:`474`
-* Gautam Singh - :gh:`466`
 * `Guido Imperiale`_ - :gh:`470`, :gh:`477`
-* `Jeff Tang`_ - :gh:`340`, :gh:`519`, :gh:`529`, :gh:`641`
+* `Jeff Tang`_ - :gh:`340`, :gh:`519`, :gh:`529`, :gh:`654`
 * `Marc Abramowitz`_ - :gh:`492`
 * Naveed Roudsari - :gh:`421`
-* Szigeti Gabor Niif - :gh:`446`
 * `Yaolong Huang`_ - :gh:`530`
 
 2013
 ~~~~
 
-* Adrien Fallou - :gh:`224`
-* André Oriani - :gh:`361`
-* Arfrever.FTA - :gh:`369`, :gh:`404`
-* clackwell - :gh:`356`
+* Arfrever.FTA - :gh:`404`
 * danudey - :gh:`386`
-* floppymaster - :gh:`380`
-* Gisle Vanem - :gh:`411`
-* Jan Beich - :gh:`325`
 * Jason Kirtland - backward compatible implementation of collections.defaultdict
-* `Jay Loden`_ - :gh:`388`, :gh:`394`
 * John Baldwin - :gh:`370`
 * John Pankov - :gh:`435`
 * `Josiah Carlson`_ - :gh:`451`, :gh:`452`
 * m.malycha - :gh:`351`
 * `Matt Good`_ - :gh:`438`
-* `Thomas Klausner`_ - :gh:`557`
-* thepyr0 - :gh:`414`
+* `Thomas Klausner`_ - :gh:`557` (NetBSD implementation)
 * Ulrich Klank - :gh:`448`
 
 2012
@@ -351,19 +336,7 @@ Code contributors by year
 * Amoser - :gh:`266`, :gh:`267`, :gh:`340`
 * `Florent Xicluna`_ - :gh:`319`
 * `Gregory Szorc`_ - :gh:`323`
-* James Pye - :gh:`305`, :gh:`306`
-* `Jay Loden`_ - :gh:`333`
-* Jean Sebastien - :gh:`344`
-* Kim Gräsman - :gh:`316`
-* `Luca Cipriani`_ - :gh:`278`
-* Maciej Lach - :gh:`294`
-* Matthew Grant - :gh:`271`
-* Michal Spondr - :gh:`313`
-* oweidner - :gh:`275`
-* `Riccardo Murri`_ - :gh:`318`
-* Rob Smith - :gh:`341`
-* Stanchev Emil - :gh:`314`
-* `Tarek Ziade`_ - :gh:`281`
+* Jan Beich - :gh:`344`
 * Youngsik Kim - :gh:`317`
 
 2011
@@ -461,7 +434,6 @@ Code contributors by year
 .. _`Armin Gruner`: https://github.com/ArminGruner
 .. _`Arnon Yaari`: https://github.com/wiggin15
 .. _`Athos Ribeiro`: https://github.com/athos-ribeiro
-.. _`Bart van Kleef`: https://github.com/bkleef
 .. _`Baruch Siach`: https://github.com/baruchsiach
 .. _`Ben Peddell`: https://github.com/klightspeed
 .. _`Ben Raz`: https://github.com/ben9923
@@ -546,7 +518,6 @@ Code contributors by year
 .. _`Lawrence D'Anna`: https://github.com/smoofra
 .. _`Lawrence Ye`: https://github.com/LEAFERx
 .. _`lgc2333`: https://github.com/lgc2333
-.. _`Luca Cipriani`: https://github.com/mastrolinux
 .. _`Lysandros Nikolaou`: https://github.com/lysnikolaou
 .. _`maozguttman`: https://github.com/maozguttman
 .. _`Marc Abramowitz`: https://github.com/msabramo
@@ -581,7 +552,6 @@ Code contributors by year
 .. _`Po-Chuan Hsieh`: https://github.com/sunpoet
 .. _`Prodesire`: https://github.com/Prodesire
 .. _`ReenigneArcher`: https://github.com/ReenigneArcher
-.. _`Riccardo Murri`: https://github.com/riccardomurri
 .. _`Riccardo Schirone`: https://github.com/ret2libc
 .. _`Ryan Carsten Schmidt`: https://github.com/ryandesign
 .. _`Ryo Onodera`: https://github.com/ryoon
@@ -601,7 +571,6 @@ Code contributors by year
 .. _`Sylvain Duchesne`: https://github.com/sylvainduchesne
 .. _`Sylvain Mouquet`: https://github.com/sylvainmouquet
 .. _`Syohei YOSHIDA`: https://github.com/syohex
-.. _`Tarek Ziade`: https://github.com/tarekziade
 .. _`Thiago Borges Abdnur`: https://github.com/bolaum
 .. _`Thomas Klausner`: https://github.com/tklauser
 .. _`Tim Gates`: https://github.com/timgates42
