@@ -212,6 +212,7 @@ Top contributors
 * `Fabian Groffen`_ - :gh:`611`, :gh:`618`
 * `Gabi Davar`_ - :gh:`578`, :gh:`581`, :gh:`587`
 * `John Burnett`_ - :gh:`614`
+* `Jeff Tang`_ - :gh:`616`, :gh:`648`, :gh:`653`, :gh:`654`
 * `karthik`_ - :gh:`568`
 * `Landry Breuil`_ - :gh:`564`, :gh:`578`
 * `maozguttman`_ - :gh:`659`
@@ -231,6 +232,7 @@ Top contributors
 * Francois Charron - :gh:`474`
 * Gautam Singh - :gh:`466`
 * `Guido Imperiale`_ - :gh:`470`, :gh:`477`
+* `Jeff Tang`_ - :gh:`340`, :gh:`529`, :gh:`641`
 * `Marc Abramowitz`_ - :gh:`492`
 * Naveed Roudsari - :gh:`421`
 * Szigeti Gabor Niif - :gh:`446`
@@ -380,6 +382,7 @@ Top contributors
 .. _`janderbrain`: https://github.com/janderbrain
 .. _`Javad Karabi`: https://github.com/karabijavad
 .. _`Jay Loden`: https://github.com/jloden
+.. _`Jeff Tang`: https://github.com/mrjefftang
 .. _`Jean-Luc Migot`: https://github.com/jmigot-tehtris
 .. _`Jeremy Humble`: https://github.com/jhumble
 .. _`John Burnett`: https://github.com/johnburnett
