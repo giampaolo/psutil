@@ -200,6 +200,7 @@ The original CREDITS file is also available in the repository root.
 * `Gabi Davar`_ - :gh:`578`, :gh:`581`, :gh:`587`
 * `John Burnett`_ - :gh:`614`
 * `karthik`_ - :gh:`568`
+* `Landry Breuil`_ - :gh:`564`, :gh:`578`
 * `maozguttman`_ - :gh:`659`
 * `Mike Sarahan`_ - :gh:`688`
 * `罗泽轩`_ - :gh:`555`
@@ -269,6 +270,7 @@ The original CREDITS file is also available in the repository root.
 
 * Grabriel Monnerat - :gh:`146`
 * Jay Loden - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
+* Jeremy Whitlock - :gh:`150`, :gh:`206`
 * jcscoobyrs - :gh:`125`
 * Philip Roberts - :gh:`168`
 * Sandro Tosi - :gh:`200`, :gh:`201`
