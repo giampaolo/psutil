@@ -103,6 +103,10 @@ People:
 Code contributors by year
 -------------------------
 
+.. image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg?label=Total%20contributors&style=flat
+    :target: https://github.com/giampaolo/psutil/graphs/contributors
+    :alt: contributors
+
 2026
 ~~~~
 
