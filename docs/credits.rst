@@ -22,67 +22,79 @@ Top contributors
 - `Thomas Klausner`_: original NetBSD implementation (co-author)
 - `Landry Breuil`_: original OpenBSD implementation
 - `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS, FreeBSD, Linux
-- `Matthieu Darbois`_: CI infrastructure and wheel building
 
 Donations
 ---------
 
-* Alexander Kaftan
+Companies:
+
+* `Apivoid`_ *(sponsor)*
+* `Canonical Juju`_
+* `Canonical Launchpad`_
+* `Canonical`_
+* `Codecov`_
+* `Kubernetes`_
+* `Robusta`_
+* `sansec.io`_ *(sponsor)*
+* `Sentry`_
+* `Sourcegraph`_
+* `Tidelift`_ *(sponsor)*
+
+People:
+
 * `Alex Laird`_
 * `Alexey Vazhnov`_
-* Amit Kulkarni
-* Andrew Bays
 * `aristocratos`_
 * `Artyom Vancyan`_
-* Brett Harris
 * `c0m4r`_
-* Carver Koella
 * `Chenyoo Hao`_
 * `Coşkun Deniz`_
 * `cybersecgeek`_
 * `Daniel Widdis`_
 * `Eugenio E Breijo`_
 * `Evan Allrich`_
-* Florian Bruhin
-* `getsentry`_
 * `great-work-told-is`_
-* Gyula Áfra
-* Heijdemann Morgan
-* HTB Industries
 * `inarikami`_
 * `indeedeng`_
 * `JeremyGrosser`_
 * `Johannes Maron`_
-* Kahntent
 * `Karthik Kumar`_
+* `Maximilian Wu`_
+* `Mehver`_
+* `mirko`_
+* `Ofek Lev`_
+* `PySimpleGUI`_
+* `roboflow.com`_
+* `Sašo Živanović`_
+* `scoutapm-sponsorships`_
+* `trashnothing.com`_
+* `Valeriy Abramov`_
+* Alexander Kaftan
+* Amit Kulkarni
+* Andrew Bays
+* Brett Harris
+* Carver Koella
+* Florian Bruhin
+* Gyula Áfra
+* Heijdemann Morgan
+* HTB Industries
+* Kahntent
 * Kristjan Võrk
 * Mahmut Dumlupinar
 * Marco Schrank
 * Matthew Callow
-* `Maximilian Wu`_
-* `Mehver`_
 * Mindview LLC
-* `mirko`_
 * Morgan Heijdemann
 * Oche Ejembi
-* `Ofek Lev`_
 * Olivier Grisel
 * Pavan Maddamsetti
 * Peter Friedland
 * Praveen Bhamidipati
-* `PySimpleGUI`_
 * Remi Chateauneu
-* `roboflow.com`_
-* `Robusta`_
 * Rodion Stratov
 * Russell Robinson
-* `sansec.io`_
-* `Sašo Živanović`_
-* `scoutapm-sponsorships`_
 * Sigmund Vik
 * Thomas Guettler
-* `trashnothing.com`_
-* `Valeriy Abramov`_
 * Willem de Groot
 * Wompasoft
 * Григорьев Андрей
@@ -371,7 +383,7 @@ Code contributors by year
 * Yan Raber - Initial Windows development (Process.username())
 
 
-.. Donors
+.. People Donors
 .. ============================================================================
 
 .. _`Alex Laird`: https://github.com/alexdlaird
@@ -403,6 +415,19 @@ Code contributors by year
 .. _`trashnothing.com`: https://github.com/Trash-Nothing
 .. _`Valeriy Abramov`: https://github.com/abramov-v
 
+.. Company donors
+.. ============================================================================
+
+.. _`Apivoid`: https://www.apivoid.com
+.. _`Canonical Juju`: https://github.com/juju
+.. _`Canonical Launchpad`: https://launchpad.net/
+.. _`Canonical`: https://github.com/canonical
+.. _`Codecov`: https://github.com/codecov
+.. _`Kubernetes`: https://github.com/kubernetes/kubernetes
+.. _`Robusta`: https://github.com/robusta-dev
+.. _`Sentry`: https://sentry.io/
+.. _`Sourcegraph`: https://sourcegraph.com/
+.. _`Tidelift`: https://tidelift.com
 
 .. Code contributors
 .. ============================================================================
