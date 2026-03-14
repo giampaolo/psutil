@@ -10,580 +10,274 @@ The original CREDITS file is also available in the repository root.
 2026
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Felix Yan`_
-     - :gh:`2732`
-   * - `Sergey Fedorov`_
-     - :gh:`2701`
+* `Felix Yan`_ - :gh:`2732`
+* `Sergey Fedorov`_ - :gh:`2701`
 
 2025
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Ben Peddell`_
-     - :gh:`2495`, :gh:`2568`
-   * - `Ben Raz`_
-     - :gh:`2643`
-   * - `Eli Wenig`_
-     - :gh:`2638`
-   * - `Fabien Bousquet`_
-     - :gh:`2529`
-   * - `Irene Sheen`_
-     - :gh:`2606`
-   * - `Isaac K. Ko`_
-     - :gh:`2612`
-   * - `Jonathan Kohler`_
-     - :gh:`2527`
-   * - `Lysandros Nikolaou`_
-     - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`, :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659`
-   * - `Marcel Telka`_
-     - :gh:`2469`, :gh:`2545`, :gh:`2546`, :gh:`2592`, :gh:`2594`
-   * - `Matthieu Darbois`_
-     - :gh:`2503`, :gh:`2581`
-   * - `Sergey Fedorov`_
-     - :gh:`2694`
-   * - `Will Hawes`_
-     - :gh:`2496`
-   * - `Xianpeng Shen`_
-     - :gh:`2640`
+* `Ben Peddell`_ - :gh:`2495`, :gh:`2568`
+* `Ben Raz`_ - :gh:`2643`
+* `Eli Wenig`_ - :gh:`2638`
+* `Fabien Bousquet`_ - :gh:`2529`
+* `Irene Sheen`_ - :gh:`2606`
+* `Isaac K. Ko`_ - :gh:`2612`
+* `Jonathan Kohler`_ - :gh:`2527`
+* `Lysandros Nikolaou`_ - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`, :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659`
+* `Marcel Telka`_ - :gh:`2469`, :gh:`2545`, :gh:`2546`, :gh:`2592`, :gh:`2594`
+* `Matthieu Darbois`_ - :gh:`2503`, :gh:`2581`
+* `Sergey Fedorov`_ - :gh:`2694`
+* `Will Hawes`_ - :gh:`2496`
+* `Xianpeng Shen`_ - :gh:`2640`
 
 2024
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Aleksey Lobanov`_
-     - :gh:`2457`
-   * - `Ben Raz`_
-     - :gh:`2425`
-   * - `Cristian Vîjdea`_
-     - :gh:`2442`
-   * - `Matthieu Darbois`_
-     - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`, :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486`
-   * - `Mayank Jha`_
-     - :gh:`2379`
-   * - `Oliver Tomé`_
-     - :gh:`2222`
-   * - `Ryan Carsten Schmidt`_
-     - :gh:`2361`, :gh:`2364`, :gh:`2365`
-   * - `Sam Gross`_
-     - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428`
-   * - `Shade Gladden`_
-     - :gh:`2376`
+* `Aleksey Lobanov`_ - :gh:`2457`
+* `Ben Raz`_ - :gh:`2425`
+* `Cristian Vîjdea`_ - :gh:`2442`
+* `Matthieu Darbois`_ - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`, :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486`
+* `Mayank Jha`_ - :gh:`2379`
+* `Oliver Tomé`_ - :gh:`2222`
+* `Ryan Carsten Schmidt`_ - :gh:`2361`, :gh:`2364`, :gh:`2365`
+* `Sam Gross`_ - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428`
+* `Shade Gladden`_ - :gh:`2376`
 
 2023
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Amir Rossert`_
-     - :gh:`2346`
-   * - `Matthieu Darbois`_
-     - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
-   * - `Po-Chuan Hsieh`_
-     - :gh:`2186`
-   * - `Thomas Klausner`_
-     - :gh:`2241`
-   * - `Xuehai Pan`_
-     - :gh:`2266`
+* `Amir Rossert`_ - :gh:`2346`
+* `Matthieu Darbois`_ - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
+* `Po-Chuan Hsieh`_ - :gh:`2186`
+* `Thomas Klausner`_ - :gh:`2241`
+* `Xuehai Pan`_ - :gh:`2266`
 
 2022
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Amir Rossert`_
-     - :gh:`2156`, :gh:`2345`
-   * - `Bernhard Urban-Forster`_
-     - :gh:`2135`
-   * - `Chris Lalancette`_
-     - :gh:`2037`
-   * - `Daniel Li`_
-     - :gh:`2150`
-   * - `Daniel Widdis`_
-     - :gh:`2077`, :gh:`2160`
-   * - `Garrison Carter`_
-     - :gh:`2096`
-   * - `Hugo van Kemenade`_
-     - :gh:`2099`
-   * - `Lawrence D'Anna`_
-     - :gh:`2010`
-   * - `Matthieu Darbois`_
-     - :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
-   * - `Hiroyuki Tanaka`_
-     - :gh:`2086`
-   * - `Steve Dower`_
-     - :gh:`2080`
-   * - `Thomas Klausner`_
-     - :gh:`2088`, :gh:`2128`
-   * - `Tim Gates`_
-     - :gh:`2123`
-   * - Torsten Blum
-     - :gh:`2114`
+* `Amir Rossert`_ - :gh:`2156`, :gh:`2345`
+* `Bernhard Urban-Forster`_ - :gh:`2135`
+* `Chris Lalancette`_ - :gh:`2037`
+* `Daniel Li`_ - :gh:`2150`
+* `Daniel Widdis`_ - :gh:`2077`, :gh:`2160`
+* `Garrison Carter`_ - :gh:`2096`
+* `Hiroyuki Tanaka`_ - :gh:`2086`
+* `Hugo van Kemenade`_ - :gh:`2099`
+* `Lawrence D'Anna`_ - :gh:`2010`
+* `Matthieu Darbois`_ - :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
+* `Steve Dower`_ - :gh:`2080`
+* `Thomas Klausner`_ - :gh:`2088`, :gh:`2128`
+* `Tim Gates`_ - :gh:`2123`
+* Torsten Blum - :gh:`2114`
 
 2021
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `David Knaack`_
-     - :gh:`1921`
-   * - `Guillermo`_
-     - :gh:`1913`
-   * - `Martin Liška`_
-     - :gh:`1851`
-   * - `MaWe2019`_
-     - :gh:`1953`
-   * - `Nikita Radchenko`_
-     - :gh:`1940`
-   * - `Oleksii Shevchuk`_
-     - :gh:`1904`
-   * - `Olivier Dormond`_
-     - :gh:`1956`
-   * - `Pablo Baeyens`_
-     - :gh:`1598`
-   * - `PetrPospisil`_
-     - :gh:`1980`
-   * - `Saeed Rasooli`_
-     - :gh:`1996`
-   * - `Wilfried Goesgens`_
-     - :gh:`1990`
-   * - `Xuehai Pan`_
-     - :gh:`1949`
+* `David Knaack`_ - :gh:`1921`
+* `Guillermo`_ - :gh:`1913`
+* `Martin Liška`_ - :gh:`1851`
+* `MaWe2019`_ - :gh:`1953`
+* `Nikita Radchenko`_ - :gh:`1940`
+* `Oleksii Shevchuk`_ - :gh:`1904`
+* `Olivier Dormond`_ - :gh:`1956`
+* `Pablo Baeyens`_ - :gh:`1598`
+* `PetrPospisil`_ - :gh:`1980`
+* `Saeed Rasooli`_ - :gh:`1996`
+* `Wilfried Goesgens`_ - :gh:`1990`
+* `Xuehai Pan`_ - :gh:`1949`
 
 2020
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Anselm Kruis`_
-     - :gh:`1695`
-   * - `Armin Gruner`_
-     - :gh:`1800`
-   * - `Jakob P. Liljenberg`_
-     - :gh:`1837`, :gh:`1838`
-   * - `Chris Burger`_
-     - :gh:`1830`
-   * - `Étienne Servais`_
-     - :gh:`1607`, :gh:`1637`
-   * - `Grzegorz Bokota`_
-     - :gh:`1758`, :gh:`1762`
-   * - `Jake Omann`_
-     - :gh:`1876`
-   * - `Javad Karabi`_
-     - :gh:`1648`
-   * - `Julien Lebot`_
-     - :gh:`1768`
-   * - `Michał Górny`_
-     - :gh:`1726`
-   * - `Mike Hommey`_
-     - :gh:`1665`
-   * - `Po-Chuan Hsieh`_
-     - :gh:`1646`
-   * - `Riccardo Schirone`_
-     - :gh:`1616`
-   * - `Tim Schlueter`_
-     - :gh:`1708`
-   * - `Vincent A. Arcila`_
-     - :gh:`1620`, :gh:`1727`
+* `Anselm Kruis`_ - :gh:`1695`
+* `Armin Gruner`_ - :gh:`1800`
+* `Chris Burger`_ - :gh:`1830`
+* `Étienne Servais`_ - :gh:`1607`, :gh:`1637`
+* `Grzegorz Bokota`_ - :gh:`1758`, :gh:`1762`
+* `Jake Omann`_ - :gh:`1876`
+* `Jakob P. Liljenberg`_ - :gh:`1837`, :gh:`1838`
+* `Javad Karabi`_ - :gh:`1648`
+* `Julien Lebot`_ - :gh:`1768`
+* `Michał Górny`_ - :gh:`1726`
+* `Mike Hommey`_ - :gh:`1665`
+* `Po-Chuan Hsieh`_ - :gh:`1646`
+* `Riccardo Schirone`_ - :gh:`1616`
+* `Tim Schlueter`_ - :gh:`1708`
+* `Vincent A. Arcila`_ - :gh:`1620`, :gh:`1727`
 
 2019
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `agnewee`_
-     - :gh:`1491`
-   * - `Alex Manuskin`_
-     - :gh:`1487`
-   * - `Ammar Askar`_
-     - :gh:`1781`
-   * - `Arnon Yaari`_
-     - :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
-   * - `Athos Ribeiro`_
-     - :gh:`1585`
-   * - `Benjamin Drung`_
-     - :gh:`1462`
-   * - `Bernát Gábor`_
-     - :gh:`1565`
-   * - `Cedric Lamoriniere`_
-     - :gh:`1470`
-   * - `Daniel Beer`_
-     - :gh:`1471`
-   * - `David Brochart`_
-     - :gh:`1493`, :gh:`1496`
-   * - `EccoTheFlintstone`_
-     - :gh:`1368`, :gh:`1348`
-   * - `Erwan Le Pape`_
-     - :gh:`1570`
-   * - `Frank Benkstein`_
-     - :gh:`732`, :gh:`733`
-   * - `Ghislain Le Meur`_
-     - :gh:`1379`
-   * - `Kamil Rytarowski`_
-     - :gh:`1526`, :gh:`1530`
-   * - `Nathan Houghton`_
-     - :gh:`1619`
-   * - `Samer Masterson`_
-     - :gh:`1480`
-   * - `Xiaoling Bao`_
-     - :gh:`1223`
-   * - Mozilla Foundation
-     - Sample code for process USS memory
+* `agnewee`_ - :gh:`1491`
+* `Alex Manuskin`_ - :gh:`1487`
+* `Ammar Askar`_ - :gh:`1781`
+* `Arnon Yaari`_ - :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
+* `Athos Ribeiro`_ - :gh:`1585`
+* `Benjamin Drung`_ - :gh:`1462`
+* `Bernát Gábor`_ - :gh:`1565`
+* `Cedric Lamoriniere`_ - :gh:`1470`
+* `Daniel Beer`_ - :gh:`1471`
+* `David Brochart`_ - :gh:`1493`, :gh:`1496`
+* `EccoTheFlintstone`_ - :gh:`1368`, :gh:`1348`
+* `Erwan Le Pape`_ - :gh:`1570`
+* `Frank Benkstein`_ - :gh:`732`, :gh:`733`
+* `Ghislain Le Meur`_ - :gh:`1379`
+* `Kamil Rytarowski`_ - :gh:`1526`, :gh:`1530`
+* `Nathan Houghton`_ - :gh:`1619`
+* `Samer Masterson`_ - :gh:`1480`
+* `Xiaoling Bao`_ - :gh:`1223`
+* Mozilla Foundation - Sample code for process USS memory
 
 2018
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Alex Manuskin`_
-     - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369`
-   * - `Arnon Yaari`_
-     - :gh:`1214`
-   * - `Dan Vinakovsky`_
-     - :gh:`1216`
-   * - `Denis Krienbühl`_
-     - :gh:`1260`
-   * - `Ilya Yanok`_
-     - :gh:`1332`
-   * - `janderbrain`_
-     - :gh:`1169`
-   * - `Jaime Fullaondo`_
-     - :gh:`1320`
-   * - `Jean-Luc Migot`_
-     - :gh:`1258`, :gh:`1289`
-   * - `Koen Kooi`_
-     - :gh:`1360`
-   * - `Lawrence Ye`_
-     - :gh:`1321`
-   * - `Maxime Mouial`_
-     - :gh:`1239`
-   * - `Nikhil Marathe`_
-     - :gh:`1278`
-   * - `stswandering`_
-     - :gh:`1243`
-   * - `Sylvain Duchesne`_
-     - :gh:`1294`
+* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369`
+* `Arnon Yaari`_ - :gh:`1214`
+* `Dan Vinakovsky`_ - :gh:`1216`
+* `Denis Krienbühl`_ - :gh:`1260`
+* `Ilya Yanok`_ - :gh:`1332`
+* `janderbrain`_ - :gh:`1169`
+* `Jaime Fullaondo`_ - :gh:`1320`
+* `Jean-Luc Migot`_ - :gh:`1258`, :gh:`1289`
+* `Koen Kooi`_ - :gh:`1360`
+* `Lawrence Ye`_ - :gh:`1321`
+* `Maxime Mouial`_ - :gh:`1239`
+* `Nikhil Marathe`_ - :gh:`1278`
+* `stswandering`_ - :gh:`1243`
+* `Sylvain Duchesne`_ - :gh:`1294`
 
 2017
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Adrian Page`_
-     - :gh:`1159`, :gh:`1160`, :gh:`1161`
-   * - `Akos Kiss`_
-     - :gh:`1150`
-   * - `Alexander Hasselhuhn`_
-     - Various contributions
-   * - `Antoine Pitrou`_
-     - :gh:`1186`
-   * - `Arnon Yaari`_
-     - :gh:`1123`, :gh:`1130`, :gh:`1131`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1158`, :gh:`1164`, :gh:`1170`, :gh:`1174`, :gh:`1177`
-   * - `Baruch Siach`_
-     - :gh:`872`
-   * - `Danek Duvall`_
-     - :gh:`1002`
-   * - `Gleb Smirnoff`_
-     - :gh:`1070`, :gh:`1079`
-   * - `Himanshu Shekhar`_
-     - :gh:`1036`
-   * - `Jakub Bacic`_
-     - :gh:`1127`
-   * - `Matthew Long`_
-     - :gh:`1167`
-   * - `Nicolas Hennion`_
-     - :gh:`974`
-   * - `Oleksii Shevchuk`_
-     - :gh:`1091`, :gh:`1093`, :gh:`1220`, :gh:`1346`
-   * - `Pierre Fersing`_
-     - :gh:`950`
-   * - `Prodesire`_
-     - :gh:`1138`
-   * - `Sebastian Saip`_
-     - :gh:`1141`
-   * - `Thiago Borges Abdnur`_
-     - :gh:`959`
-   * - `Yannick Gingras`_
-     - :gh:`1057`
+* `Adrian Page`_ - :gh:`1159`, :gh:`1160`, :gh:`1161`
+* `Akos Kiss`_ - :gh:`1150`
+* `Alexander Hasselhuhn`_ - Various contributions
+* `Antoine Pitrou`_ - :gh:`1186`
+* `Arnon Yaari`_ - :gh:`1123`, :gh:`1130`, :gh:`1131`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1158`, :gh:`1164`, :gh:`1170`, :gh:`1174`, :gh:`1177`
+* `Baruch Siach`_ - :gh:`872`
+* `Danek Duvall`_ - :gh:`1002`
+* `Gleb Smirnoff`_ - :gh:`1070`, :gh:`1079`
+* `Himanshu Shekhar`_ - :gh:`1036`
+* `Jakub Bacic`_ - :gh:`1127`
+* `Matthew Long`_ - :gh:`1167`
+* `Nicolas Hennion`_ - :gh:`974`
+* `Oleksii Shevchuk`_ - :gh:`1091`, :gh:`1093`, :gh:`1220`, :gh:`1346`
+* `Pierre Fersing`_ - :gh:`950`
+* `Prodesire`_ - :gh:`1138`
+* `Sebastian Saip`_ - :gh:`1141`
+* `Thiago Borges Abdnur`_ - :gh:`959`
+* `Yannick Gingras`_ - :gh:`1057`
 
 2016
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Andre Caron`_
-     - :gh:`880`
-   * - `Arcadiy Ivanov`_
-     - :gh:`919`
-   * - `Farhan Khan`_
-     - :gh:`823`
-   * - `ewedlund`_
-     - :gh:`874`
-   * - `Frank Benkstein`_
-     - :gh:`739`
-   * - `Ilya Georgievsky`_
-     - :gh:`870`
-   * - `Jake Omann`_
-     - :gh:`816`, :gh:`775`, :gh:`1874`
-   * - `Jeremy Humble`_
-     - :gh:`863`
-   * - `Max Bélanger`_
-     - :gh:`936`, :gh:`1133`
-   * - `Mark Derbecker`_
-     - :gh:`660`
-   * - `Patrick Welche`_
-     - :gh:`812`
-   * - `Syohei YOSHIDA`_
-     - :gh:`730`
-   * - `Timmy Konick`_
-     - :gh:`751`
-   * - `Visa Hankala`_
-     - :gh:`741`
-   * - `wxwright`_
-     - :gh:`776`
-   * - `Yago Jesus`_
-     - :gh:`798`
+* `Andre Caron`_ - :gh:`880`
+* `Arcadiy Ivanov`_ - :gh:`919`
+* `ewedlund`_ - :gh:`874`
+* `Farhan Khan`_ - :gh:`823`
+* `Frank Benkstein`_ - :gh:`739`
+* `Ilya Georgievsky`_ - :gh:`870`
+* `Jake Omann`_ - :gh:`816`, :gh:`775`, :gh:`1874`
+* `Jeremy Humble`_ - :gh:`863`
+* `Mark Derbecker`_ - :gh:`660`
+* `Max Bélanger`_ - :gh:`936`, :gh:`1133`
+* `Patrick Welche`_ - :gh:`812`
+* `Syohei YOSHIDA`_ - :gh:`730`
+* `Timmy Konick`_ - :gh:`751`
+* `Visa Hankala`_ - :gh:`741`
+* `wxwright`_ - :gh:`776`
+* `Yago Jesus`_ - :gh:`798`
 
 2015
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Árni Már Jónsson`_
-     - :gh:`634`
-   * - `Bart van Kleef`_
-     - :gh:`664`
-   * - `Bruno Binet`_
-     - :gh:`572`
-   * - `dasumin`_
-     - :gh:`541`
-   * - `desbma`_
-     - :gh:`628`
-   * - `Fabian Groffen`_
-     - :gh:`611`, :gh:`618`
-   * - `Gabi Davar`_
-     - :gh:`578`, :gh:`581`, :gh:`587`
-   * - `John Burnett`_
-     - :gh:`614`
-   * - `karthik`_
-     - :gh:`568`
-   * - `maozguttman`_
-     - :gh:`659`
-   * - `Mike Sarahan`_
-     - :gh:`688`
-   * - `Sebastian-Gabriel Brestin`_
-     - :gh:`704`
-   * - `sk6249`_
-     - :gh:`670`
-   * - `spacewander`_
-     - :gh:`561`, :gh:`603`
-   * - `罗泽轩`_
-     - :gh:`555`
-   * - `Steven Winfield`_
-     - :gh:`672`
-   * - `Sylvain Mouquet`_
-     - :gh:`565`
+* `Árni Már Jónsson`_ - :gh:`634`
+* `Bart van Kleef`_ - :gh:`664`
+* `Bruno Binet`_ - :gh:`572`
+* `dasumin`_ - :gh:`541`
+* `desbma`_ - :gh:`628`
+* `Fabian Groffen`_ - :gh:`611`, :gh:`618`
+* `Gabi Davar`_ - :gh:`578`, :gh:`581`, :gh:`587`
+* `John Burnett`_ - :gh:`614`
+* `karthik`_ - :gh:`568`
+* `maozguttman`_ - :gh:`659`
+* `Mike Sarahan`_ - :gh:`688`
+* `罗泽轩`_ - :gh:`555`
+* `Sebastian-Gabriel Brestin`_ - :gh:`704`
+* `sk6249`_ - :gh:`670`
+* `spacewander`_ - :gh:`561`, :gh:`603`
+* `Steven Winfield`_ - :gh:`672`
+* `Sylvain Mouquet`_ - :gh:`565`
 
 2014
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - `Alexander Grothe`_
-     - :gh:`497`
-   * - `Anders Chrigström`_
-     - :gh:`496`
-   * - `Guido Imperiale`_
-     - :gh:`470`, :gh:`477`
-   * - Francois Charron
-     - :gh:`474`
-   * - Gautam Singh
-     - :gh:`466`
-   * - `Marc Abramowitz`_
-     - :gh:`492`
-   * - Naveed Roudsari
-     - :gh:`421`
-   * - Szigeti Gabor Niif
-     - :gh:`446`
-   * - `Yaolong Huang`_
-     - :gh:`530`
+* `Alexander Grothe`_ - :gh:`497`
+* `Anders Chrigström`_ - :gh:`496`
+* Francois Charron - :gh:`474`
+* Gautam Singh - :gh:`466`
+* `Guido Imperiale`_ - :gh:`470`, :gh:`477`
+* `Marc Abramowitz`_ - :gh:`492`
+* Naveed Roudsari - :gh:`421`
+* Szigeti Gabor Niif - :gh:`446`
+* `Yaolong Huang`_ - :gh:`530`
 
 2013
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - Adrien Fallou
-     - :gh:`224`
-   * - André Oriani
-     - :gh:`361`
-   * - Arfrever.FTA
-     - :gh:`369`, :gh:`404`
-   * - clackwell
-     - :gh:`356`
-   * - danudey
-     - :gh:`386`
-   * - floppymaster
-     - :gh:`380`
-   * - Gisle Vanem
-     - :gh:`411`
-   * - Jan Beich
-     - :gh:`325`
-   * - Jason Kirtland
-     - backward compatible implementation of collections.defaultdict
-   * - John Baldwin
-     - :gh:`370`
-   * - John Pankov
-     - :gh:`435`
-   * - Josiah Carlson
-     - :gh:`451`, :gh:`452`
-   * - m.malycha
-     - :gh:`351`
-   * - Matt Good
-     - :gh:`438`
-   * - thepyr0
-     - :gh:`414`
-   * - Ulrich Klank
-     - :gh:`448`
+* Adrien Fallou - :gh:`224`
+* André Oriani - :gh:`361`
+* Arfrever.FTA - :gh:`369`, :gh:`404`
+* clackwell - :gh:`356`
+* danudey - :gh:`386`
+* floppymaster - :gh:`380`
+* Gisle Vanem - :gh:`411`
+* Jan Beich - :gh:`325`
+* Jason Kirtland - backward compatible implementation of collections.defaultdict
+* John Baldwin - :gh:`370`
+* John Pankov - :gh:`435`
+* Josiah Carlson - :gh:`451`, :gh:`452`
+* m.malycha - :gh:`351`
+* Matt Good - :gh:`438`
+* thepyr0 - :gh:`414`
+* Ulrich Klank - :gh:`448`
 
 2012
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - Amoser
-     - :gh:`266`, :gh:`267`, :gh:`340`
-   * - Florent Xicluna
-     - :gh:`319`
-   * - Gregory Szorc
-     - :gh:`323`
-   * - James Pye
-     - :gh:`305`, :gh:`306`
-   * - Jean Sebastien
-     - :gh:`344`
-   * - Kim Gräsman
-     - :gh:`316`
-   * - Luca Cipriani
-     - :gh:`278`
-   * - Maciej Lach
-     - :gh:`294`
-   * - Matthew Grant
-     - :gh:`271`
-   * - Michal Spondr
-     - :gh:`313`
-   * - oweidner
-     - :gh:`275`
-   * - Riccardo Murri
-     - :gh:`318`
-   * - Rob Smith
-     - :gh:`341`
-   * - Stanchev Emil
-     - :gh:`314`
-   * - Tarek Ziade
-     - :gh:`281`
-   * - Youngsik Kim
-     - :gh:`317`
+* Amoser - :gh:`266`, :gh:`267`, :gh:`340`
+* Florent Xicluna - :gh:`319`
+* Gregory Szorc - :gh:`323`
+* James Pye - :gh:`305`, :gh:`306`
+* Jean Sebastien - :gh:`344`
+* Kim Gräsman - :gh:`316`
+* Luca Cipriani - :gh:`278`
+* Maciej Lach - :gh:`294`
+* Matthew Grant - :gh:`271`
+* Michal Spondr - :gh:`313`
+* oweidner - :gh:`275`
+* Riccardo Murri - :gh:`318`
+* Rob Smith - :gh:`341`
+* Stanchev Emil - :gh:`314`
+* Tarek Ziade - :gh:`281`
+* Youngsik Kim - :gh:`317`
 
 2011
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - Grabriel Monnerat
-     - :gh:`146`
-   * - jcscoobyrs
-     - :gh:`125`
-   * - Philip Roberts
-     - :gh:`168`
-   * - Sandro Tosi
-     - :gh:`200`, :gh:`201`
+* Grabriel Monnerat - :gh:`146`
+* jcscoobyrs - :gh:`125`
+* Philip Roberts - :gh:`168`
+* Sandro Tosi - :gh:`200`, :gh:`201`
 
 2010
 ----
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 80
-
-   * - Name
-     - Description
-   * - cjgohlke
-     - :gh:`107`
-   * - Dave Daeschler
-     - :gh:`522`, :gh:`536`
-   * - Jeffery Kline
-     - :gh:`130`
-   * - wj32
-     - :gh:`114`, :gh:`115`
-   * - Yan Raber
-     - Initial Windows development (Process.username())
+* cjgohlke - :gh:`107`
+* Dave Daeschler - :gh:`522`, :gh:`536`
+* Jeffery Kline - :gh:`130`
+* wj32 - :gh:`114`, :gh:`115`
+* Yan Raber - Initial Windows development (Process.username())
 
 
 .. _`Aaron Shaw`: https://github.com/shawaj
@@ -603,7 +297,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Anthony Ryan`: https://github.com/anthonyryan1
 .. _`Antoine Pitrou`: https://github.com/pitrou
 .. _`Arcadiy Ivanov`: https://github.com/arcivanov
-.. _`aristocratos`: https://github.com/aristocratos
 .. _`Armin Gruner`: https://github.com/ArminGruner
 .. _`Arnon Yaari`: https://github.com/wiggin15
 .. _`Athos Ribeiro`: https://github.com/athos-ribeiro
@@ -620,8 +313,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Chris Burger`: https://github.com/phobozad
 .. _`Chris Lalancette`: https://github.com/clalancette
 .. _`Cristian Vîjdea`: https://github.com/cvijdea
-.. _`crusaderky`: https://github.com/crusaderky
-.. _`crusaderky`: https://github.com/crusaderky
 .. _`cui fliter`: https://github.com/cuishuang
 .. _`Dan Vinakovsky`: https://github.com/hexaclock
 .. _`Danek Duvall`: https://github.com/dhduvall
@@ -646,14 +337,12 @@ The original CREDITS file is also available in the repository root.
 .. _`Frank Benkstein`: https://github.com/fbenkstein
 .. _`Gabi Davar`: https://github.com/mindw
 .. _`Garrison Carter`: https://github.com/garrisoncarter
-.. _`garrisoncarter`: https://github.com/garrisoncarter
 .. _`Georg Sauthoff`: https://github.com/gsauthof
 .. _`Ghislain Le Meur`: https://github.com/gigi206
 .. _`Gleb Smirnoff`: https://github.com/glebius
 .. _`Gregory P. Smith`: https://github.com/gpshead
 .. _`Grzegorz Bokota`: https://github.com/Czaki
 .. _`Guido Imperiale`: https://github.com/crusaderky
-.. _`guille`: https://github.com/guille
 .. _`Guillermo`: https://github.com/guille
 .. _`Hang`: https://github.com/bebound
 .. _`Himanshu Shekhar`: https://github.com/himanshub16
@@ -665,7 +354,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Irene Sheen`: https://github.com/ceda-ei
 .. _`Isaac K. Ko`: https://github.com/kyet
 .. _`Jaime Fullaondo`: https://github.com/truthbk
-.. _`Jake Omann`: https://github.com/jomann09
 .. _`Jake Omann`: https://github.com/jomann09
 .. _`Jakob P. Liljenberg`: https://github.com/aristocratos
 .. _`Jakub Bacic`: https://github.com/jakub-bacic
@@ -684,7 +372,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Kamil Rytarowski`: https://github.com/krytarowski
 .. _`karthik`: https://github.com/karthikrev
 .. _`Karthikeyan Singaravelan`: https://github.com/tirkarthi
-.. _`karthikrev`: https://github.com/karthikrev
 .. _`Kian-Meng Ang`: https://github.com/kianmeng
 .. _`Koen Kooi`: https://github.com/koenkooi
 .. _`kuzmich321`: https://github.com/kuzmich321
@@ -698,7 +385,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Marcel Telka`: https://github.com/mtelka
 .. _`Mark Derbecker`: https://github.com/mpderbec
 .. _`Martin Liška`: https://github.com/marxin
-.. _`marxin`: https://github.com/marxin
 .. _`Matthew Long`: https://github.com/matray
 .. _`Matthieu Darbois`: https://github.com/mayeut
 .. _`MaWe2019`: https://github.com/MaWe2019
@@ -710,8 +396,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Mike Hommey`: https://github.com/glandium
 .. _`Mike Sarahan`: https://github.com/msarahan
 .. _`Miro Hrončok`: https://github.com/hroncok
-.. _`mpderbec`: https://github.com/mpderbec
-.. _`myheroyuki`: https://github.com/myheroyuki
 .. _`Nathan Houghton`: https://github.com/n1000
 .. _`Nicolas Hennion`: https://github.com/nicolargo
 .. _`Nikhil Marathe`: https://github.com/nikhilm
@@ -740,7 +424,6 @@ The original CREDITS file is also available in the repository root.
 .. _`Shannon Pamperl`: https://github.com/shanman190
 .. _`sk6249`: https://github.com/sk6249
 .. _`spacewander`: https://github.com/spacewander
-.. _`spacewanderlzx`: https://github.com/spacewander
 .. _`Steve Dower`: https://github.com/zooba
 .. _`Steven Winfield`: https://github.com/stevenwinfield
 .. _`stswandering`: https://github.com/stswandering
