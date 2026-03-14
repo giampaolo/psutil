@@ -15,7 +15,8 @@ A big thanks to all of you.
 Top contributors
 ----------------
 
-- `Jay Loden`_: original co-author, initial design / bootstrap
+- `Jay Loden`_: original co-author, initial design and bootstrap, original
+  macOS / Windows / FreeBSD implementations.
 - `Arnon Yaari`_: AIX implementation (only author), macOS
   :func:`sensors_battery()` implementation, SunOS work
 - `Ryo Onodera`_: original NetBSD implementation
@@ -29,13 +30,14 @@ Donations
 The following individuals and organizations have supported
 psutil development through donations.
 
-**Companies**:
+Companies:
 
 * `Apivoid`_ *(sponsor)*
 * `Canonical Juju`_
 * `Canonical Launchpad`_
 * `Canonical`_
 * `Codecov`_
+* `Indeed Engineering`_
 * `Kubernetes`_
 * `Robusta`_
 * `sansec.io`_ *(sponsor)*
@@ -43,11 +45,11 @@ psutil development through donations.
 * `Sourcegraph`_
 * `Tidelift`_ *(sponsor)*
 
-**People**:
+People:
 
 * `Alex Laird`_
 * `Alexey Vazhnov`_
-* `aristocratos`_
+* `Jakob P. Liljenberg`_
 * `Artyom Vancyan`_
 * `c0m4r`_
 * `Chenyoo Hao`_
@@ -58,7 +60,6 @@ psutil development through donations.
 * `Evan Allrich`_
 * `great-work-told-is`_
 * `inarikami`_
-* `indeedeng`_
 * `JeremyGrosser`_
 * `Johannes Maron`_
 * `Karthik Kumar`_
@@ -382,15 +383,14 @@ Code contributors by year
 * Dave Daeschler - :gh:`522`, :gh:`536`
 * Jeffery Kline - :gh:`130`
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
-* Yan Raber - Initial Windows development (Process.username())
-
+* Yan Raber - :gh:`114`
 
 .. People Donors
 .. ============================================================================
 
 .. _`Alex Laird`: https://github.com/alexdlaird
 .. _`Alexey Vazhnov`: https://opencollective.com/alexey-vazhnov
-.. _`aristocratos`: https://github.com/aristocratos
+.. _`Jakob P. Liljenberg`: https://github.com/aristocratos
 .. _`Artyom Vancyan`: https://github.com/ArtyomVancyan
 .. _`c0m4r`: https://github.com/c0m4r
 .. _`Chenyoo Hao`: https://opencollective.com/chenyoo-hao
@@ -401,7 +401,6 @@ Code contributors by year
 .. _`getsentry`: https://github.com/getsentry
 .. _`great-work-told-is`: https://github.com/great-work-told-is
 .. _`inarikami`: https://github.com/inarikami
-.. _`indeedeng`: https://github.com/indeedeng
 .. _`JeremyGrosser`: https://github.com/JeremyGrosser
 .. _`Johannes Maron`: https://github.com/codingjoe
 .. _`Karthik Kumar`: https://github.com/guilt
@@ -426,6 +425,7 @@ Code contributors by year
 .. _`Canonical`: https://github.com/canonical
 .. _`Codecov`: https://github.com/codecov
 .. _`Kubernetes`: https://github.com/kubernetes/kubernetes
+.. _`Indeed Engineering`: https://github.com/indeedeng
 .. _`Robusta`: https://github.com/robusta-dev
 .. _`Sentry`: https://sentry.io/
 .. _`Sourcegraph`: https://sourcegraph.com/
