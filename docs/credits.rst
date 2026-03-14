@@ -16,22 +16,88 @@ Top contributors
 ----------------
 
 - `Jay Loden`_: original co-author, initial design / bootstrap
+- `Arnon Yaari`_: AIX implementation (only author), macOS
+  :func:`sensors_battery()` implementation, SunOS work
+- `Ryo Onodera`_: original NetBSD implementation
+- `Thomas Klausner`_: original NetBSD implementation (co-author)
+- `Landry Breuil`_: original OpenBSD implementation
 - `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS, FreeBSD, Linux
-- `Arnon Yaari`_: AIX implementation, macOS :func:`sensors_battery()`
-  implementation, SunOS work
-- `Ryo Onodera`_: NetBSD implementation
-- `Thomas Klausner`_: NetBSD implementation (co-author)
-- `Landry Breuil`_: OpenBSD implementation
 - `Matthieu Darbois`_: CI infrastructure and wheel building
 
+Donations
+---------
+
+* Alexander Kaftan
+* `Alex Laird`_
+* `Alexey Vazhnov`_
+* Amit Kulkarni
+* Andrew Bays
+* `aristocratos`_
+* `Artyom Vancyan`_
+* Brett Harris
+* `c0m4r`_
+* Carver Koella
+* `Chenyoo Hao`_
+* `Coşkun Deniz`_
+* `cybersecgeek`_
+* `Daniel Widdis`_
+* `Eugenio E Breijo`_
+* `Evan Allrich`_
+* Florian Bruhin
+* `getsentry`_
+* `great-work-told-is`_
+* Gyula Áfra
+* Heijdemann Morgan
+* HTB Industries
+* `inarikami`_
+* `indeedeng`_
+* `JeremyGrosser`_
+* `Johannes Maron`_
+* Kahntent
+* `Karthik Kumar`_
+* Kristjan Võrk
+* Mahmut Dumlupinar
+* Marco Schrank
+* Matthew Callow
+* `Maximilian Wu`_
+* `Mehver`_
+* Mindview LLC
+* `mirko`_
+* Morgan Heijdemann
+* Oche Ejembi
+* `Ofek Lev`_
+* Olivier Grisel
+* Pavan Maddamsetti
+* Peter Friedland
+* Praveen Bhamidipati
+* `PySimpleGUI`_
+* Remi Chateauneu
+* `roboflow.com`_
+* `Robusta`_
+* Rodion Stratov
+* Russell Robinson
+* `sansec.io`_
+* `Sašo Živanović`_
+* `scoutapm-sponsorships`_
+* Sigmund Vik
+* Thomas Guettler
+* `trashnothing.com`_
+* `Valeriy Abramov`_
+* Willem de Groot
+* Wompasoft
+* Григорьев Андрей
+
+Code contributors by year
+-------------------------
+
 2026
-----
+~~~~
 
 * `Felix Yan`_ - :gh:`2732`
 * `Sergey Fedorov`_ - :gh:`2701`
 
 2025
-----
+~~~~
 
 * `Ben Peddell`_ - :gh:`2495`, :gh:`2568`
 * `Ben Raz`_ - :gh:`2643`
@@ -48,7 +114,7 @@ Top contributors
 * `Xianpeng Shen`_ - :gh:`2640`
 
 2024
-----
+~~~~
 
 * `Aleksey Lobanov`_ - :gh:`2457`
 * `Ben Raz`_ - :gh:`2425`
@@ -61,7 +127,7 @@ Top contributors
 * `Shade Gladden`_ - :gh:`2376`
 
 2023
-----
+~~~~
 
 * `Amir Rossert`_ - :gh:`2346`
 * `Matthieu Darbois`_ - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
@@ -70,7 +136,7 @@ Top contributors
 * `Xuehai Pan`_ - :gh:`2266`
 
 2022
-----
+~~~~
 
 * `Amir Rossert`_ - :gh:`2156`, :gh:`2345`
 * `Bernhard Urban-Forster`_ - :gh:`2135`
@@ -88,7 +154,7 @@ Top contributors
 * Torsten Blum - :gh:`2114`
 
 2021
-----
+~~~~
 
 * `David Knaack`_ - :gh:`1921`
 * `Guillermo`_ - :gh:`1913`
@@ -104,7 +170,7 @@ Top contributors
 * `Xuehai Pan`_ - :gh:`1949`
 
 2020
-----
+~~~~
 
 * `Anselm Kruis`_ - :gh:`1695`
 * `Armin Gruner`_ - :gh:`1800`
@@ -123,7 +189,7 @@ Top contributors
 * `Vincent A. Arcila`_ - :gh:`1620`, :gh:`1727`
 
 2019
-----
+~~~~
 
 * `agnewee`_ - :gh:`1491`
 * `Alex Manuskin`_ - :gh:`1487`
@@ -145,7 +211,7 @@ Top contributors
 * Mozilla Foundation - Sample code for process USS memory
 
 2018
-----
+~~~~
 
 * `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369`
 * `Arnon Yaari`_ - :gh:`1214`
@@ -163,7 +229,7 @@ Top contributors
 * `Sylvain Duchesne`_ - :gh:`1294`
 
 2017
-----
+~~~~
 
 * `Adrian Page`_ - :gh:`1159`, :gh:`1160`, :gh:`1161`
 * `Akos Kiss`_ - :gh:`1150`
@@ -185,7 +251,7 @@ Top contributors
 * `Yannick Gingras`_ - :gh:`1057`
 
 2016
-----
+~~~~
 
 * `Andre Caron`_ - :gh:`880`
 * `Arcadiy Ivanov`_ - :gh:`919`
@@ -195,17 +261,17 @@ Top contributors
 * `Ilya Georgievsky`_ - :gh:`870`
 * `Jake Omann`_ - :gh:`816`, :gh:`775`, :gh:`1874`
 * `Jeremy Humble`_ - :gh:`863`
+* `Landry Breuil`_ - :gh:`741`
 * `Mark Derbecker`_ - :gh:`660`
 * `Max Bélanger`_ - :gh:`936`, :gh:`1133`
 * `Patrick Welche`_ - :gh:`812`
 * `Syohei YOSHIDA`_ - :gh:`730`
 * `Timmy Konick`_ - :gh:`751`
-* `Visa Hankala`_ - :gh:`741`
 * `wxwright`_ - :gh:`776`
 * `Yago Jesus`_ - :gh:`798`
 
 2015
-----
+~~~~
 
 * `Arnon Yaari`_ - :gh:`680`, :gh:`679`, :gh:`610` (AIX implementation)
 * `Bart van Kleef`_ - :gh:`664`
@@ -222,15 +288,14 @@ Top contributors
 * `Mike Sarahan`_ - :gh:`688`
 * `Sebastian-Gabriel Brestin`_ - :gh:`704`
 * `sk6249`_ - :gh:`670`
-* `spacewander`_ - :gh:`561`, :gh:`603`
+* `spacewander`_ - :gh:`561`, :gh:`603`, :gh:`555`
 * `Steven Winfield`_ - :gh:`672`
 * `Sylvain Mouquet`_ - :gh:`565`
 * `Árni Már Jónsson`_ - :gh:`634`
-* `罗泽轩`_ - :gh:`555`
-- `Ryo Onodera`_: `e124acba <https://github.com/giampaolo/psutil/commit/e124acba>`_ (NetBSD implementation)
+* `Ryo Onodera`_: `e124acba <https://github.com/giampaolo/psutil/commit/e124acba>`_ (NetBSD implementation)
 
 2014
-----
+~~~~
 
 * `Alexander Grothe`_ - :gh:`497`
 * `Anders Chrigström`_ - :gh:`496`
@@ -244,7 +309,7 @@ Top contributors
 * `Yaolong Huang`_ - :gh:`530`
 
 2013
-----
+~~~~
 
 * Adrien Fallou - :gh:`224`
 * André Oriani - :gh:`361`
@@ -266,7 +331,7 @@ Top contributors
 * Ulrich Klank - :gh:`448`
 
 2012
-----
+~~~~
 
 * Amoser - :gh:`266`, :gh:`267`, :gh:`340`
 * `Florent Xicluna`_ - :gh:`319`
@@ -287,7 +352,7 @@ Top contributors
 * Youngsik Kim - :gh:`317`
 
 2011
-----
+~~~~
 
 * Grabriel Monnerat - :gh:`146`
 * `Jay Loden`_ - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
@@ -296,7 +361,7 @@ Top contributors
 * `Sandro Tosi`_ - :gh:`200`, :gh:`201`
 
 2010
-----
+~~~~
 
 * cjgohlke - :gh:`107`
 * `Jay Loden`_ - :gh:`61`, :gh:`86`, :gh:`88`, :gh:`95`, :gh:`104`, :gh:`108`, :gh:`120`, :gh:`121`, :gh:`124`, :gh:`135`, :gh:`159`, :gh:`164`
@@ -305,6 +370,42 @@ Top contributors
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
 * Yan Raber - Initial Windows development (Process.username())
 
+
+.. Donors
+.. ============================================================================
+
+.. _`Alex Laird`: https://github.com/alexdlaird
+.. _`Alexey Vazhnov`: https://opencollective.com/alexey-vazhnov
+.. _`aristocratos`: https://github.com/aristocratos
+.. _`Artyom Vancyan`: https://github.com/ArtyomVancyan
+.. _`c0m4r`: https://github.com/c0m4r
+.. _`Chenyoo Hao`: https://opencollective.com/chenyoo-hao
+.. _`Coşkun Deniz`: https://github.com/coskundeniz
+.. _`cybersecgeek`: https://github.com/cybersecgeek
+.. _`Eugenio E Breijo`: https://github.com/u93
+.. _`Evan Allrich`: https://github.com/eallrich
+.. _`getsentry`: https://github.com/getsentry
+.. _`great-work-told-is`: https://github.com/great-work-told-is
+.. _`inarikami`: https://github.com/inarikami
+.. _`indeedeng`: https://github.com/indeedeng
+.. _`JeremyGrosser`: https://github.com/JeremyGrosser
+.. _`Johannes Maron`: https://github.com/codingjoe
+.. _`Karthik Kumar`: https://github.com/guilt
+.. _`Maximilian Wu`: https://github.com/maxesisn
+.. _`Mehver`: https://github.com/Mehver
+.. _`mirko`: https://github.com/mirbyte
+.. _`PySimpleGUI`: https://github.com/PySimpleGUI
+.. _`roboflow.com`: https://github.com/roboflow
+.. _`Robusta`: https://github.com/robusta-dev
+.. _`sansec.io`: https://github.com/sansecio
+.. _`Sašo Živanović`: https://github.com/sasozivanovic
+.. _`scoutapm-sponsorships`: https://github.com/scoutapm-sponsorships
+.. _`trashnothing.com`: https://github.com/Trash-Nothing
+.. _`Valeriy Abramov`: https://github.com/abramov-v
+
+
+.. Code contributors
+.. ============================================================================
 
 .. _`Aaron Shaw`: https://github.com/shawaj
 .. _`Adrian Page`: https://github.com/adpag
@@ -487,5 +588,5 @@ Top contributors
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
-.. _`罗泽轩`: https://github.com/spacewander
+.. _`spacewander`: https://github.com/spacewander
 .. _`Ryo Onodera`: https://github.com/ryoon
