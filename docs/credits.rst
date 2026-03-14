@@ -243,9 +243,9 @@ A big thanks to all of you.
 * `Jay Loden`_ - :gh:`388`, :gh:`394`
 * John Baldwin - :gh:`370`
 * John Pankov - :gh:`435`
-* Josiah Carlson - :gh:`451`, :gh:`452`
+* `Josiah Carlson`_ - :gh:`451`, :gh:`452`
 * m.malycha - :gh:`351`
-* Matt Good - :gh:`438`
+* `Matt Good`_ - :gh:`438`
 * thepyr0 - :gh:`414`
 * Ulrich Klank - :gh:`448`
 
@@ -253,18 +253,18 @@ A big thanks to all of you.
 ----
 
 * Amoser - :gh:`266`, :gh:`267`, :gh:`340`
-* Florent Xicluna - :gh:`319`
-* Gregory Szorc - :gh:`323`
+* `Florent Xicluna`_ - :gh:`319`
+* `Gregory Szorc`_ - :gh:`323`
 * James Pye - :gh:`305`, :gh:`306`
 * `Jay Loden`_ - :gh:`333`
 * Jean Sebastien - :gh:`344`
 * Kim Gräsman - :gh:`316`
-* Luca Cipriani - :gh:`278`
+* `Luca Cipriani`_ - :gh:`278`
 * Maciej Lach - :gh:`294`
 * Matthew Grant - :gh:`271`
 * Michal Spondr - :gh:`313`
 * oweidner - :gh:`275`
-* Riccardo Murri - :gh:`318`
+* `Riccardo Murri`_ - :gh:`318`
 * Rob Smith - :gh:`341`
 * Stanchev Emil - :gh:`314`
 * `Tarek Ziade`_ - :gh:`281`
@@ -345,12 +345,14 @@ A big thanks to all of you.
 .. _`Farhan Khan`: https://github.com/khanzf
 .. _`Felix Yan`: https://github.com/felixonmars
 .. _`Frank Benkstein`: https://github.com/fbenkstein
+.. _`Florent Xicluna`: https://github.com/florentx
 .. _`Gabi Davar`: https://github.com/mindw
 .. _`Garrison Carter`: https://github.com/garrisoncarter
 .. _`Georg Sauthoff`: https://github.com/gsauthof
 .. _`Ghislain Le Meur`: https://github.com/gigi206
 .. _`Gleb Smirnoff`: https://github.com/glebius
 .. _`Gregory P. Smith`: https://github.com/gpshead
+.. _`Gregory Szorc`: https://github.com/indygreg
 .. _`Grzegorz Bokota`: https://github.com/Czaki
 .. _`Guido Imperiale`: https://github.com/crusaderky
 .. _`Guillermo`: https://github.com/guille
@@ -391,9 +393,11 @@ A big thanks to all of you.
 .. _`Lawrence D'Anna`: https://github.com/smoofra
 .. _`Lawrence Ye`: https://github.com/LEAFERx
 .. _`lgc2333`: https://github.com/lgc2333
+.. _`Luca Cipriani`: https://github.com/mastrolinux
 .. _`Lysandros Nikolaou`: https://github.com/lysnikolaou
 .. _`maozguttman`: https://github.com/maozguttman
 .. _`Marc Abramowitz`: https://github.com/msabramo
+.. _`Matt Good`: https://github.com/mgood
 .. _`Marcel Telka`: https://github.com/mtelka
 .. _`Mark Derbecker`: https://github.com/mpderbec
 .. _`Martin Liška`: https://github.com/marxin
@@ -425,6 +429,7 @@ A big thanks to all of you.
 .. _`Prodesire`: https://github.com/Prodesire
 .. _`ReenigneArcher`: https://github.com/ReenigneArcher
 .. _`Riccardo Schirone`: https://github.com/ret2libc
+.. _`Riccardo Murri`: https://github.com/riccardomurri
 .. _`Ryan Carsten Schmidt`: https://github.com/ryandesign
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury

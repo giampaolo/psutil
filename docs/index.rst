@@ -10,10 +10,6 @@ Psutil documentation
    :target: https://github.com/giampaolo/psutil
    :alt: GitHub repo
 
-.. image:: https://img.shields.io/badge/GitHub-issues-blue
-   :target: https://github.com/giampaolo/psutil/issues
-   :alt: GitHub issues
-
 .. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
    :target: https://app.readthedocs.org/projects/psutil/builds/
    :alt: ReadTheDocs
