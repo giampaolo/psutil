@@ -171,7 +171,7 @@ Top contributors
 * `Arnon Yaari`_ - :gh:`1123`, :gh:`1130`, :gh:`1131`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1158`, :gh:`1164`, :gh:`1170`, :gh:`1174`, :gh:`1177`
 * `Baruch Siach`_ - :gh:`872`
 * `Danek Duvall`_ - :gh:`1002`
-* `Gleb Smirnoff`_ - :gh:`1070`, :gh:`1079`
+* `Gleb Smirnoff`_ - :gh:`1070`, :gh:`1076`, :gh:`1079`
 * `Himanshu Shekhar`_ - :gh:`1036`
 * `Jakub Bacic`_ - :gh:`1127`
 * `Matthew Long`_ - :gh:`1167`
