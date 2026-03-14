@@ -18,9 +18,13 @@ Psutil documentation
    :target: https://app.readthedocs.org/projects/psutil/builds/
    :alt: ReadTheDocs
 
-.. image:: https://img.shields.io/pypi/v/psutil.svg?label=Latest%20version&color=red
-   :target: https://pypi.org/project/psutil
-   :alt: Latest version
+.. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=red
+    :target: https://pypi.org/project/psutil
+    :alt: Latest version
+
+.. image:: https://img.shields.io/pypi/dm/psutil.svg
+    :target: https://clickpy.clickhouse.com/dashboard/psutil
+    :alt: Downloads
 
 psutil (python system and process utilities) is a cross-platform library for
 retrieving information on running
