@@ -234,6 +234,7 @@ The original CREDITS file is also available in the repository root.
 * Gisle Vanem - :gh:`411`
 * Jan Beich - :gh:`325`
 * Jason Kirtland - backward compatible implementation of collections.defaultdict
+* Jay Loden - :gh:`388`, :gh:`394`
 * John Baldwin - :gh:`370`
 * John Pankov - :gh:`435`
 * Josiah Carlson - :gh:`451`, :gh:`452`
@@ -249,6 +250,7 @@ The original CREDITS file is also available in the repository root.
 * Florent Xicluna - :gh:`319`
 * Gregory Szorc - :gh:`323`
 * James Pye - :gh:`305`, :gh:`306`
+* Jay Loden - :gh:`333`
 * Jean Sebastien - :gh:`344`
 * Kim Gräsman - :gh:`316`
 * Luca Cipriani - :gh:`278`
@@ -266,6 +268,7 @@ The original CREDITS file is also available in the repository root.
 ----
 
 * Grabriel Monnerat - :gh:`146`
+* Jay Loden - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
 * jcscoobyrs - :gh:`125`
 * Philip Roberts - :gh:`168`
 * Sandro Tosi - :gh:`200`, :gh:`201`
@@ -274,6 +277,7 @@ The original CREDITS file is also available in the repository root.
 ----
 
 * cjgohlke - :gh:`107`
+* Jay Loden - :gh:`61`, :gh:`86`, :gh:`88`, :gh:`95`, :gh:`104`, :gh:`108`, :gh:`120`, :gh:`121`, :gh:`124`, :gh:`135`, :gh:`159`, :gh:`164`
 * Dave Daeschler - :gh:`522`, :gh:`536`
 * Jeffery Kline - :gh:`130`
 * wj32 - :gh:`114`, :gh:`115`
