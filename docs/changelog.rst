@@ -16,7 +16,7 @@ Doc:
 
   - Split the documentation from a single-page HTML document into multiple
     sections. Sections now include separate pages for API reference,
-    installation, release timeline, FAQs, and more.
+    installation, release timeline and more.
   - Moved 18 years old ``HISTORY.rst`` and ``INSTALL.rst`` files into
     ``docs/changelog.rst`` and ``docs/install.rst`` for better integration.
     Original files remain in the project root with a note pointing to the new

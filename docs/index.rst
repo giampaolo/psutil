@@ -104,7 +104,6 @@ Table of Contents
    Who uses psutil <adoption>
    Credits <credits>
    Development guide <devguide>
-   FAQs <faq>
    Timeline <timeline>
 
 .. toctree::
