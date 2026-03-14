@@ -46,58 +46,58 @@ Companies:
 People:
 
 * `Alex Laird`_
+* Alexander Kaftan
 * `Alexey Vazhnov`_
-* `Jakob P. Liljenberg`_
+* Amit Kulkarni
+* Andrew Bays
 * `Artyom Vancyan`_
+* Brett Harris
 * `c0m4r`_
+* Carver Koella
 * `Chenyoo Hao`_
 * `Coşkun Deniz`_
 * `cybersecgeek`_
 * `Daniel Widdis`_
 * `Eugenio E Breijo`_
 * `Evan Allrich`_
+* Florian Bruhin
 * `great-work-told-is`_
+* Gyula Áfra
+* HTB Industries
 * `inarikami`_
 * `JeremyGrosser`_
 * `Johannes Maron`_
+* `Jakob P. Liljenberg`_
 * `Karthik Kumar`_
-* `Maximilian Wu`_
-* `Mehver`_
-* `mirko`_
-* `Ofek Lev`_
-* `PySimpleGUI`_
-* `roboflow.com`_
-* `Sašo Živanović`_
-* `scoutapm-sponsorships`_
-* `trashnothing.com`_
-* `Valeriy Abramov`_
-* Alexander Kaftan
-* Amit Kulkarni
-* Andrew Bays
-* Brett Harris
-* Carver Koella
-* Florian Bruhin
-* Gyula Áfra
-* HTB Industries
 * Kahntent
 * Kristjan Võrk
 * Mahmut Dumlupinar
 * Marco Schrank
 * Matthew Callow
 * Mindview LLC
+* `Maximilian Wu`_
+* Mehver
+* mirko
 * Morgan Heijdemann
 * Oche Ejembi
+* `Ofek Lev`_
 * Olivier Grisel
 * Pavan Maddamsetti
+* `PySimpleGUI`_
 * Peter Friedland
 * Praveen Bhamidipati
 * Remi Chateauneu
+* `roboflow.com`_
 * Rodion Stratov
 * Russell Robinson
+* `Sašo Živanović`_
+* `scoutapm-sponsorships`_
 * Sigmund Vik
+* `trashnothing.com`_
 * Thomas Guettler
 * Willem de Groot
 * Wompasoft
+* `Valeriy Abramov`_
 * Григорьев Андрей
 
 Code contributors by year
