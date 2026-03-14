@@ -63,7 +63,7 @@ Top contributors
 
 * `Amir Rossert`_ - :gh:`2346`
 * `Matthieu Darbois`_ - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
-* `Po-Chuan Hsieh`_ - :gh:`2186`
+* `Po-Chuan Hsieh`_ - :gh:`2186`, :gh:`1646`
 * `Thomas Klausner`_ - :gh:`2241`
 * `Xuehai Pan`_ - :gh:`2266`
 
