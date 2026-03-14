@@ -235,7 +235,7 @@ Top contributors
 * Francois Charron - :gh:`474`
 * Gautam Singh - :gh:`466`
 * `Guido Imperiale`_ - :gh:`470`, :gh:`477`
-* `Jeff Tang`_ - :gh:`340`, :gh:`529`, :gh:`641`
+* `Jeff Tang`_ - :gh:`340`, :gh:`519`, :gh:`529`, :gh:`641`
 * `Marc Abramowitz`_ - :gh:`492`
 * Naveed Roudsari - :gh:`421`
 * Szigeti Gabor Niif - :gh:`446`
