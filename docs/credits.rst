@@ -4,8 +4,13 @@
 Credits
 =======
 
-This page lists all contributors to psutil organized by year.
-The original CREDITS file is also available in the repository root.
+I would like to recognize some of the people who have been instrumental in the
+development of psutil. I'm sure I'm forgetting somebody (feel free to email me)
+but here is a short list.
+
+A big thanks to all of you.
+
+— Giampaolo
 
 2026
 ----
@@ -270,8 +275,7 @@ The original CREDITS file is also available in the repository root.
 
 * Grabriel Monnerat - :gh:`146`
 * Jay Loden - :gh:`206`, :gh:`226`, :gh:`230`, :gh:`232`, :gh:`240`
-* Jeremy Whitlock - :gh:`150`, :gh:`206`
-* jcscoobyrs - :gh:`125`
+* Jeremy Whitlock - :gh:`150`, :gh:`206`, :gh:`125`
 * Philip Roberts - :gh:`168`
 * Sandro Tosi - :gh:`200`, :gh:`201`
 
@@ -282,7 +286,7 @@ The original CREDITS file is also available in the repository root.
 * Jay Loden - :gh:`61`, :gh:`86`, :gh:`88`, :gh:`95`, :gh:`104`, :gh:`108`, :gh:`120`, :gh:`121`, :gh:`124`, :gh:`135`, :gh:`159`, :gh:`164`
 * Dave Daeschler - :gh:`522`, :gh:`536`
 * Jeffery Kline - :gh:`130`
-* wj32 - :gh:`114`, :gh:`115`
+* `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
 * Yan Raber - Initial Windows development (Process.username())
 
 
@@ -457,3 +461,4 @@ The original CREDITS file is also available in the repository root.
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
 .. _`Étienne Servais`: https://github.com/vser1
 .. _`罗泽轩`: https://github.com/spacewander
+.. _`Wen Jia Liu`: https://github.com/wj32
