@@ -17,7 +17,7 @@ Top contributors
 
 - `Jay Loden`_: original co-author, initial design / bootstrap.
 - `Arnon Yaari`_: AIX implementation, macOS :func:`sensors_battery()`
-  implementation
+  implementation, SunOS work
 - `Ryo Onodera`_: NetBSD implementation.
 - `Landry Breuil`_: OpenBSD implementation.
 - `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS and FreeBSD
@@ -126,7 +126,7 @@ Top contributors
 * `agnewee`_ - :gh:`1491`
 * `Alex Manuskin`_ - :gh:`1487`
 * `Ammar Askar`_ - :gh:`1781`
-* `Arnon Yaari`_ - :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
+* `Arnon Yaari`_ - :gh:`607`, :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
 * `Athos Ribeiro`_ - :gh:`1585`
 * `Benjamin Drung`_ - :gh:`1462`
 * `Bernát Gábor`_ - :gh:`1565`
@@ -167,7 +167,7 @@ Top contributors
 * `Akos Kiss`_ - :gh:`1150`
 * `Alexander Hasselhuhn`_ - Various contributions
 * `Antoine Pitrou`_ - :gh:`1186`
-* `Arnon Yaari`_ - :gh:`1123`, :gh:`1130`, :gh:`1131`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1158`, :gh:`1164`, :gh:`1170`, :gh:`1174`, :gh:`1177`
+* `Arnon Yaari`_ - :gh:`1123`, :gh:`1130`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1164`, :gh:`1174`, :gh:`1177`
 * `Baruch Siach`_ - :gh:`872`
 * `Danek Duvall`_ - :gh:`1002`
 * `Gleb Smirnoff`_ - :gh:`1070`, :gh:`1076`, :gh:`1079`
@@ -205,6 +205,7 @@ Top contributors
 2015
 ----
 
+* `Arnon Yaari`_ - :gh:`680`, :gh:`679`, :gh:`610` (AIX implementation)
 * `Bart van Kleef`_ - :gh:`664`
 * `Bruno Binet`_ - :gh:`572`
 * `dasumin`_ - :gh:`541`
