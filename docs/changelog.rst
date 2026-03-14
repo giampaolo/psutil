@@ -11,19 +11,21 @@ Changelog
 
 Doc:
 
-- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`. Tons of doc
-  improvements. In order of importance:
+- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`.
+  Tons of doc improvements. In order of importance:
 
   - Split the documentation from a single-page HTML document into multiple
     sections. Sections now include separate pages for API reference,
-    installation, release timeline, FAQs, and more.
+    installation, release timeline and more.
   - Moved 18 years old ``HISTORY.rst`` and ``INSTALL.rst`` files into
     ``docs/changelog.rst`` and ``docs/install.rst`` for better integration.
     Original files remain in the project root with a note pointing to the new
     locations.
+  - Show a section of notable software that depends on psutil (``/adoption``).
+  - Show a section of people who contributed or donated to psutil over the
+    years (``/credits``).
   - Added a summary table of officially supported operating systems and
     architectures.
-  - Show a section of notable software that depends on psutil.
   - Added tons of new examples in ``docs/recipes.rst``.
   - Drastically improved :func:`virtual_memory()` doc, which is now more
     detailed, and includes a table with all the available metrics on each

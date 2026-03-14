@@ -64,7 +64,6 @@
         <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/changelog"><b>What's new</b></a>&nbsp;&nbsp;&nbsp;
     </div>
 
 Summary
@@ -89,6 +88,8 @@ psutil currently supports the following platforms:
 Supported Python versions are cPython 3.7+ and `PyPy <https://pypy.org/>`_.
 Latest psutil version supporting Python 2.7 is
 `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_.
+
+.. <PYPI-EXCLUDE>
 
 Sponsors
 ========
@@ -116,6 +117,8 @@ Sponsors
     </table>
 
     <sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup>
+
+.. </PYPI-EXCLUDE>
 
 Funding
 =======

@@ -180,7 +180,7 @@ dprint:
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml
+	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml --log-level ERROR
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@git ls-files '*.toml' | xargs toml-sort --check

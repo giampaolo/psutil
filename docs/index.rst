@@ -10,17 +10,17 @@ Psutil documentation
    :target: https://github.com/giampaolo/psutil
    :alt: GitHub repo
 
-.. image:: https://img.shields.io/badge/GitHub-issues-blue
-   :target: https://github.com/giampaolo/psutil/issues
-   :alt: GitHub issues
-
 .. image:: https://readthedocs.org/projects/psutil/badge/?version=latest
    :target: https://app.readthedocs.org/projects/psutil/builds/
    :alt: ReadTheDocs
 
-.. image:: https://img.shields.io/pypi/v/psutil.svg?label=Latest%20version&color=red
-   :target: https://pypi.org/project/psutil
-   :alt: Latest version
+.. image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=red
+    :target: https://pypi.org/project/psutil
+    :alt: Latest version
+
+.. image:: https://img.shields.io/pypi/dm/psutil.svg
+    :target: https://clickpy.clickhouse.com/dashboard/psutil
+    :alt: Downloads
 
 psutil (python system and process utilities) is a cross-platform library for
 retrieving information on running
@@ -102,8 +102,8 @@ Table of Contents
    Recipes <recipes>
    Platform support <platform>
    Who uses psutil <adoption>
+   Credits <credits>
    Development guide <devguide>
-   FAQs <faq>
    Timeline <timeline>
 
 .. toctree::
