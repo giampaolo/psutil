@@ -5,7 +5,7 @@ Credits
 =======
 
 I would like to recognize some of the people who have been instrumental in the
-development of psutil. I'm sure I'm forgetting somebody (feel free to email me)
+development of psutil. I'm sure I'm forgetting someone (feel free to email me)
 but here is a short list.
 
 A big thanks to all of you.
@@ -15,14 +15,12 @@ A big thanks to all of you.
 Top contributors
 ----------------
 
-- `Jay Loden`_: original co-author, initial design and bootstrap, original
-  macOS / Windows / FreeBSD implementations.
-- `Arnon Yaari`_: AIX implementation (only author), macOS
-  :func:`sensors_battery()` implementation, SunOS work
-- `Ryo Onodera`_: original NetBSD implementation
-- `Thomas Klausner`_: original NetBSD implementation (co-author)
-- `Landry Breuil`_: original OpenBSD implementation
-- `Alex Manuskin`_: :func:`sensors_temperatures()` for macOS, FreeBSD, Linux
+* `Giampaolo Rodola`_: creator, primary author and long-time maintainer
+* `Jay Loden`_: original co-author, initial design and bootstrap, original
+  macOS / Windows / FreeBSD implementations
+* `Arnon Yaari`_: AIX implementation
+* `Landry Breuil`_: original OpenBSD implementation
+* `Ryo Onodera`_ and `Thomas Klausner`_: original NetBSD implementation
 
 Donations
 ---------
@@ -121,9 +119,9 @@ Code contributors by year
 * `Irene Sheen`_ - :gh:`2606`
 * `Isaac K. Ko`_ - :gh:`2612`
 * `Jonathan Kohler`_ - :gh:`2527`
-* `Lysandros Nikolaou`_ - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`, :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659`
+* `Lysandros Nikolaou`_ - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`, :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659` (wheels for free-threaded Python)
 * `Marcel Telka`_ - :gh:`2469`, :gh:`2545`, :gh:`2546`, :gh:`2592`, :gh:`2594`
-* `Matthieu Darbois`_ - :gh:`2503`, :gh:`2581`
+* `Matthieu Darbois`_ - :gh:`2503`, :gh:`2581` (Windows ARM64 wheels)
 * `Sergey Fedorov`_ - :gh:`2694`
 * `Will Hawes`_ - :gh:`2496`
 * `Xianpeng Shen`_ - :gh:`2640`
@@ -132,13 +130,12 @@ Code contributors by year
 ~~~~
 
 * `Aleksey Lobanov`_ - :gh:`2457`
-* `Ben Raz`_ - :gh:`2425`
 * `Cristian Vîjdea`_ - :gh:`2442`
-* `Matthieu Darbois`_ - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`, :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486`
+* `Matthieu Darbois`_ - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`, :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486` (macOS and Linux ARM64 wheels)
 * `Mayank Jha`_ - :gh:`2379`
 * `Oliver Tomé`_ - :gh:`2222`
 * `Ryan Carsten Schmidt`_ - :gh:`2361`, :gh:`2364`, :gh:`2365`
-* `Sam Gross`_ - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428`
+* `Sam Gross`_ - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428` (free-threading Python)
 * `Shade Gladden`_ - :gh:`2376`
 
 2023
@@ -155,17 +152,16 @@ Code contributors by year
 
 * `Amir Rossert`_ - :gh:`2156`, :gh:`2345`
 * `Bernhard Urban-Forster`_ - :gh:`2135`
-* `Chris Lalancette`_ - :gh:`2037`
+* `Chris Lalancette`_ - :gh:`2037` (:func:`net_if_stats()` flags arg on POSIX)
 * `Daniel Li`_ - :gh:`2150`
 * `Daniel Widdis`_ - :gh:`2077`, :gh:`2160`
 * `Garrison Carter`_ - :gh:`2096`
 * `Hiroyuki Tanaka`_ - :gh:`2086`
-* `Hugo van Kemenade`_ - :gh:`2099`
+* `Hugo van Kemenade`_ - :gh:`2099` (Drop Python 2.6 support)
 * `Lawrence D'Anna`_ - :gh:`2010`
 * `Matthieu Darbois`_ - :gh:`1954`, :gh:`2021`, :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
 * `Steve Dower`_ - :gh:`2080`
 * `Thomas Klausner`_ - :gh:`2088`, :gh:`2128`
-* `Tim Gates`_ - :gh:`2123`
 * Torsten Blum - :gh:`2114`
 
 2021
@@ -188,14 +184,14 @@ Code contributors by year
 ~~~~
 
 * `Anselm Kruis`_ - :gh:`1695`
-* `Armin Gruner`_ - :gh:`1800`
+* `Armin Gruner`_ - :gh:`1800` (:meth:`Process.environ()` on BSD)
 * `Chris Burger`_ - :gh:`1830`
-* `Étienne Servais`_ - :gh:`1607`, :gh:`1637`
+* `vser1`_ - :gh:`1637`
 * `Grzegorz Bokota`_ - :gh:`1758`, :gh:`1762`
 * `Jake Omann`_ - :gh:`1876`
 * `Jakob P. Liljenberg`_ - :gh:`1837`, :gh:`1838`
 * `Javad Karabi`_ - :gh:`1648`
-* `Julien Lebot`_ - :gh:`1768`
+* `Julien Lebot`_ - :gh:`1768` (Windows Nano server support)
 * `Michał Górny`_ - :gh:`1726`
 * `Mike Hommey`_ - :gh:`1665`
 * `Po-Chuan Hsieh`_ - :gh:`1646`
@@ -206,9 +202,9 @@ Code contributors by year
 2019
 ~~~~
 
-* `agnewee`_ - :gh:`1491`
+* `qcha0`_ - :gh:`1491`
 * `Alex Manuskin`_ - :gh:`1487`
-* `Ammar Askar`_ - :gh:`1781`
+* `Ammar Askar`_ - :gh:`1485` (:func:`getloadavg()` on Windows)
 * `Arnon Yaari`_ - :gh:`607`, :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
 * `Athos Ribeiro`_ - :gh:`1585`
 * `Benjamin Drung`_ - :gh:`1462`
@@ -219,7 +215,7 @@ Code contributors by year
 * `EccoTheFlintstone`_ - :gh:`1368`, :gh:`1348`
 * `Erwan Le Pape`_ - :gh:`1570`
 * `Ghislain Le Meur`_ - :gh:`1379`
-* `Kamil Rytarowski`_ - :gh:`1526`, :gh:`1530`
+* `Kamil Rytarowski`_ - :gh:`1526`, :gh:`1530` (:meth:`Process.cwd()` for NetBSD)
 * `Nathan Houghton`_ - :gh:`1619`
 * `Samer Masterson`_ - :gh:`1480`
 * `Xiaoling Bao`_ - :gh:`1223`
@@ -228,7 +224,7 @@ Code contributors by year
 2018
 ~~~~
 
-* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369`
+* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369` (:func:`sensors_temperatures()` for macOS, FreeBSD, Linux)
 * `Arnon Yaari`_ - :gh:`1214`
 * `Dan Vinakovsky`_ - :gh:`1216`
 * `Denis Krienbühl`_ - :gh:`1260`
@@ -246,11 +242,11 @@ Code contributors by year
 2017
 ~~~~
 
-* `Adrian Page`_ - :gh:`1159`, :gh:`1160`, :gh:`1161`
+* `Adrian Page`_ - :gh:`1160`
 * `Akos Kiss`_ - :gh:`1150`
-* `Alexander Hasselhuhn`_ - Various contributions
+* `Alexander Hasselhuhn`_ - :gh:`1022`
 * `Antoine Pitrou`_ - :gh:`1186`
-* `Arnon Yaari`_ - :gh:`1123`, :gh:`1130`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1164`, :gh:`1174`, :gh:`1177`
+* `Arnon Yaari`_ - :gh:`1130`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1164`, :gh:`1174`, :gh:`1177`, :gh:`1123` (AIX implementation)
 * `Baruch Siach`_ - :gh:`872`
 * `Danek Duvall`_ - :gh:`1002`
 * `Gleb Smirnoff`_ - :gh:`1070`, :gh:`1076`, :gh:`1079`
@@ -286,7 +282,7 @@ Code contributors by year
 2015
 ~~~~
 
-* `Arnon Yaari`_ - :gh:`680`, :gh:`679`, :gh:`610` (AIX implementation)
+* `Arnon Yaari`_ - :gh:`680`, :gh:`679`, :gh:`610`
 * `Bruno Binet`_ - :gh:`572`
 * `dasumin`_ - :gh:`541`
 * `Fabian Groffen`_ - :gh:`611`, :gh:`618`
@@ -342,14 +338,13 @@ Code contributors by year
 2011
 ~~~~
 
-* `Jay Loden`_ - :gh:`206`, :gh:`230`, :gh:`232`, :gh:`240`
-* Jeremy Whitlock - :gh:`125`, :gh:`150` (:func:`net_io_counters()` macOS), :gh:`206` (:func:`disk_io_counters()` macOS), :gh:`217`, :gh:`260`
+* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260` (:func:`net_io_counters()` and :func:`disk_io_counters()` on macOS)
 
 2010
 ~~~~
 
 * cjgohlke - :gh:`107`
-* `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
+* `Wen Jia Liu (wj32)`_ - :gh:`114`, :gh:`115`
 
 2009
 ~~~~
@@ -378,7 +373,6 @@ Code contributors by year
 .. _`cybersecgeek`: https://github.com/cybersecgeek
 .. _`Eugenio E Breijo`: https://github.com/u93
 .. _`Evan Allrich`: https://github.com/eallrich
-.. _`getsentry`: https://github.com/getsentry
 .. _`great-work-told-is`: https://github.com/great-work-told-is
 .. _`inarikami`: https://github.com/inarikami
 .. _`JeremyGrosser`: https://github.com/JeremyGrosser
@@ -389,7 +383,6 @@ Code contributors by year
 .. _`mirko`: https://github.com/mirbyte
 .. _`PySimpleGUI`: https://github.com/PySimpleGUI
 .. _`roboflow.com`: https://github.com/roboflow
-.. _`Robusta`: https://github.com/robusta-dev
 .. _`sansec.io`: https://github.com/sansecio
 .. _`Sašo Živanović`: https://github.com/sasozivanovic
 .. _`scoutapm-sponsorships`: https://github.com/scoutapm-sponsorships
@@ -416,7 +409,7 @@ Code contributors by year
 
 .. _`Aaron Shaw`: https://github.com/shawaj
 .. _`Adrian Page`: https://github.com/adpag
-.. _`agnewee`: https://github.com/Agnewee
+.. _`qcha0`: https://github.com/qcha0
 .. _`Akos Kiss`: https://github.com/akosthekiss
 .. _`Aleksey Lobanov`: https://github.com/AlekseyLobanov
 .. _`Alex Manuskin`: https://github.com/amanusk
@@ -579,7 +572,7 @@ Code contributors by year
 .. _`Tomáš Chvátal`: https://github.com/scarabeusiv
 .. _`Torsten Blum`: https://github.com/Torsten-B
 .. _`Vincent A. Arcila`: https://github.com/jandrovins
-.. _`Wen Jia Liu`: https://github.com/wj32
+.. _`Wen Jia Liu (wj32)`: https://github.com/wj32
 .. _`Wilfried Goesgens`: https://github.com/dothebart
 .. _`Will Hawes`: https://github.com/wdh
 .. _`wxwright`: https://github.com/wxwright
@@ -590,5 +583,5 @@ Code contributors by year
 .. _`Yannick Gingras`: https://github.com/ygingras
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
-.. _`Étienne Servais`: https://github.com/vser1
+.. _`vser1`: https://github.com/vser1
 .. _`David Daeschler`: https://github.com/ddaeschler
