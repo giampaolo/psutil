@@ -379,11 +379,15 @@ Code contributors by year
 ~~~~
 
 * cjgohlke - :gh:`107`
-* `Jay Loden`_ - :gh:`61`, :gh:`86`, :gh:`88`, :gh:`95`, :gh:`104`, :gh:`108`, :gh:`120`, :gh:`121`, :gh:`124`, :gh:`135`, :gh:`159`, :gh:`164`
 * Dave Daeschler - :gh:`522`, :gh:`536`
 * Jeffery Kline - :gh:`130`
 * `Wen Jia Liu`_ - :gh:`114`, :gh:`115`
 * Yan Raber - :gh:`114`
+
+2008
+~~~~
+
+* `Jay Loden`_ - `efe9236a <https://github.com/giampaolo/psutil/commit/efe9236a>`_ (first commit of macOS implementation)
 
 .. People Donors
 .. ============================================================================
