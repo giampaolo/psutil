@@ -126,7 +126,7 @@ Typically, this is what you do:
 - Write the platform specific implementation in ``psutil/_ps{platform}.py``
   (e.g. `psutil/_pslinux.py`_).
 - If the change requires C code, write the C implementation in
-  ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/cpu.c`).
+  ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/disk.c`_).
 - Write a generic test in `tests/test_system.py`_ or
   `tests/test_process.py`_.
 - If possible, write a platform-specific test in
@@ -171,8 +171,7 @@ Documentation
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`psutil/__init__.py`: https://github.com/giampaolo/psutil/blob/master/psutil/__init__.py
 .. _`psutil/_pslinux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
-.. _`psutil/_psutil_linux.c`: https://github.com/giampaolo/psutil/blob/master/psutil/_psutil_linux.c
+.. _`psutil/arch/linux/disk.c`: https://github.com/giampaolo/psutil/blob/master/psutil/arch/linux/disk.c
 .. _`tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_linux.py
 .. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
 .. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
-.. _`winmake.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/winmake.py

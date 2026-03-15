@@ -87,8 +87,8 @@ Sponsors can have their logo displayed here and in the psutil `documentation <ht
 Security
 --------
 
-To report a security vulnerability, please use the `Tidelift security
-contact`_.  Tidelift will coordinate the fix and disclosure.
+To report a security vulnerability, please use the `Tidelift security contact`_.
+Tidelift will coordinate the fix and disclosure.
 
 Table of Contents
 -----------------

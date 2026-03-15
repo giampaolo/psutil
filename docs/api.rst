@@ -2865,7 +2865,8 @@ Other constants
   `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
   for more info).
   It must be noted that this trick works only for APIs which rely on /proc
-  filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
+  filesystem (e.g. memory-related APIs and many (but not all)
+  :class:`Process` class methods).
 
   .. availability:: Linux, SunOS, AIX
 
@@ -2889,8 +2890,6 @@ Other constants
 .. _`BPO-10784`: https://bugs.python.org/issue10784
 .. _`BPO-12442`: https://bugs.python.org/issue12442
 .. _`BPO-6973`: https://bugs.python.org/issue6973
-.. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
-.. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
@@ -2930,7 +2929,6 @@ Other constants
 .. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
 .. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
 .. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
-.. _`subprocess.Popen.wait`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
 .. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
 .. _`threading.get_ident`: https://docs.python.org/3/library/threading.html#threading.get_ident
 .. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
@@ -2954,7 +2952,6 @@ Other constants
 
 .. === Windows API
 
-.. _`GetDriveType`: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea
 .. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`GetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex

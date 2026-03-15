@@ -56,7 +56,11 @@ def main():
             all_targets.add(m.group(1).strip().lower())
         for m in RE_URL_TARGET.finditer(text):
             name = m.group(1).strip()
-            url_targets[name.lower()] = (name, path)
+            url_targets[name.lower()] = (
+                name,
+                path,
+                line_number(text, m.start()),
+            )
 
     # Pass 2: collect all backtick references (with file + line).
     all_refs = []  # list of (lower-case name, original, file, lineno)
@@ -78,10 +82,10 @@ def main():
     errors = []
 
     # Check 1: URL targets that are never referenced.
-    for key, (name, path) in url_targets.items():
+    for key, (name, path, lineno) in url_targets.items():
         if key not in referenced:
             errors.append(
-                (path, 0, f"unreferenced hyperlink target: {name!r}")
+                (path, lineno, f"unreferenced hyperlink target: {name!r}")
             )
 
     # Check 2: backtick references with no matching target.
@@ -91,8 +95,7 @@ def main():
 
     errors.sort()
     for path, lineno, msg in errors:
-        loc = f"{path}:{lineno}" if lineno else path
-        print(f"{loc}: {msg}")
+        print(f"{path}:{lineno}: {msg}")
 
     if errors:
         sys.exit(1)
