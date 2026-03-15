@@ -198,12 +198,12 @@ ignore_decorators = [
 ]
 
 [tool.rstcheck]
+ignore_directives = ["availability"]
+ignore_roles = ["gh"]
 ignore_messages = [
-    "Duplicate explicit target name",
+    "Document or section may not begin with a transition",
     "Duplicate implicit target name",
-    "Duplicate name \"development guide\" for external target",
     "Hyperlink target \".*?\" is not referenced",
-    "Target name overrides implicit target name \"development guide\"",
 ]
 
 [tool.tomlsort]

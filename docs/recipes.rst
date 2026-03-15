@@ -1,5 +1,3 @@
-.. include:: _links.rst
-
 Recipes
 =======
 
@@ -34,8 +32,8 @@ Find process by name:
 
 ----
 
-A bit more advanced, check string against :meth:`Process.name()`,
-:meth:`Process.exe()` and :meth:`Process.cmdline()`:
+A bit more advanced, check string against :meth:`Process.name`,
+:meth:`Process.exe` and :meth:`Process.cmdline`:
 
 .. code-block:: python
 

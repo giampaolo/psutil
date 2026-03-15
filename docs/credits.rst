@@ -1,5 +1,4 @@
 .. currentmodule:: psutil
-.. include:: _links.rst
 
 Credits
 =======
@@ -156,7 +155,7 @@ Code contributors by year
 
 * `Amir Rossert`_ - :gh:`2156`, :gh:`2345`
 * `Bernhard Urban-Forster`_ - :gh:`2135`
-* `Chris Lalancette`_ - :gh:`2037` (:func:`net_if_stats()` flags arg on POSIX)
+* `Chris Lalancette`_ - :gh:`2037` (:func:`net_if_stats` flags arg on POSIX)
 * `Daniel Li`_ - :gh:`2150`
 * `Daniel Widdis`_ - :gh:`2077`, :gh:`2160`
 * `Garrison Carter`_ - :gh:`2096`
@@ -188,7 +187,7 @@ Code contributors by year
 ~~~~
 
 * `Anselm Kruis`_ - :gh:`1695`
-* `Armin Gruner`_ - :gh:`1800` (:meth:`Process.environ()` on BSD)
+* `Armin Gruner`_ - :gh:`1800` (:meth:`Process.environ` on BSD)
 * `Chris Burger`_ - :gh:`1830`
 * `vser1`_ - :gh:`1637`
 * `Grzegorz Bokota`_ - :gh:`1758`, :gh:`1762`
@@ -208,7 +207,7 @@ Code contributors by year
 
 * `qcha0`_ - :gh:`1491`
 * `Alex Manuskin`_ - :gh:`1487`
-* `Ammar Askar`_ - :gh:`1485` (:func:`getloadavg()` on Windows)
+* `Ammar Askar`_ - :gh:`1485` (:func:`getloadavg` on Windows)
 * `Arnon Yaari`_ - :gh:`607`, :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
 * `Athos Ribeiro`_ - :gh:`1585`
 * `Benjamin Drung`_ - :gh:`1462`
@@ -219,7 +218,7 @@ Code contributors by year
 * `EccoTheFlintstone`_ - :gh:`1368`, :gh:`1348`
 * `Erwan Le Pape`_ - :gh:`1570`
 * `Ghislain Le Meur`_ - :gh:`1379`
-* `Kamil Rytarowski`_ - :gh:`1526`, :gh:`1530` (:meth:`Process.cwd()` for NetBSD)
+* `Kamil Rytarowski`_ - :gh:`1526`, :gh:`1530` (:meth:`Process.cwd` for NetBSD)
 * `Nathan Houghton`_ - :gh:`1619`
 * `Samer Masterson`_ - :gh:`1480`
 * `Xiaoling Bao`_ - :gh:`1223`
@@ -228,7 +227,7 @@ Code contributors by year
 2018
 ~~~~
 
-* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369` (:func:`sensors_temperatures()` for macOS, FreeBSD, Linux)
+* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369` (:func:`sensors_temperatures` for macOS, FreeBSD, Linux)
 * `Arnon Yaari`_ - :gh:`1214`
 * `Dan Vinakovsky`_ - :gh:`1216`
 * `Denis Krienbühl`_ - :gh:`1260`
@@ -342,7 +341,7 @@ Code contributors by year
 2011
 ~~~~
 
-* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260` (:func:`net_io_counters()` and :func:`disk_io_counters()` on macOS)
+* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260` (:func:`net_io_counters` and :func:`disk_io_counters` on macOS)
 
 2010
 ~~~~
@@ -353,7 +352,7 @@ Code contributors by year
 2009
 ~~~~
 
-* Yan Raber: `c861c08b <https://github.com/giampaolo/psutil/commit/c861c08b>`_ (Windows :func:`cpu_times()`), `15159111 <https://github.com/giampaolo/psutil/commit/15159111>`_ (Windows :meth:`Process.username()`)
+* Yan Raber: `c861c08b <https://github.com/giampaolo/psutil/commit/c861c08b>`_ (Windows :func:`cpu_times`), `15159111 <https://github.com/giampaolo/psutil/commit/15159111>`_ (Windows :meth:`Process.username`)
 * `Jay Loden`_ - `79128baa <https://github.com/giampaolo/psutil/commit/79128baa>`_ (first commit of FreeBSD implementation)
 
 2008
@@ -369,7 +368,6 @@ Code contributors by year
 
 .. _`Alex Laird`: https://github.com/alexdlaird
 .. _`Alexey Vazhnov`: https://opencollective.com/alexey-vazhnov
-.. _`Jakob P. Liljenberg`: https://github.com/aristocratos
 .. _`Artyom Vancyan`: https://github.com/ArtyomVancyan
 .. _`c0m4r`: https://github.com/c0m4r
 .. _`Chenyoo Hao`: https://opencollective.com/chenyoo-hao

@@ -1,5 +1,5 @@
-.. include:: _links.rst
 .. currentmodule:: psutil
+.. _availability:
 
 API reference
 =============
@@ -116,11 +116,11 @@ CPU
 
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
-  Same as :func:`cpu_percent()` but provides utilization percentages for each
+  Same as :func:`cpu_percent` but provides utilization percentages for each
   specific CPU time as is returned by
   :func:`psutil.cpu_times(percpu=True)<cpu_times()>`.
   *interval* and
-  *percpu* arguments have the same meaning as in :func:`cpu_percent()`.
+  *percpu* arguments have the same meaning as in :func:`cpu_percent`.
   On Linux "guest" and "guest_nice" percentages are not accounted in "user"
   and "user_nice" percentages.
 
@@ -957,7 +957,7 @@ Functions
 .. function:: pids()
 
   Return a sorted list of current running PIDs.
-  To iterate over all processes and avoid race conditions :func:`process_iter()`
+  To iterate over all processes and avoid race conditions :func:`process_iter`
   should be preferred.
 
   >>> import psutil
@@ -971,15 +971,15 @@ Functions
 
   Return an iterator yielding a :class:`Process` class instance for all running
   processes on the local machine.
-  This should be preferred over :func:`psutil.pids()` to iterate over
+  This should be preferred over :func:`psutil.pids` to iterate over
   processes, as retrieving info is safe from race conditions.
 
   Every :class:`Process` instance is only created once, and then cached for the
-  next time :func:`psutil.process_iter()` is called (if PID is still alive).
+  next time :func:`psutil.process_iter` is called (if PID is still alive).
   Cache can optionally be cleared via ``process_iter.cache_clear()``.
 
-  *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict()`.
-  If *attrs* is specified :meth:`Process.as_dict()` result will be stored as a
+  *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
+  If *attrs* is specified :meth:`Process.as_dict` result will be stored as a
   ``info`` attribute attached to the returned :class:`Process` instances.
   If *attrs* is an empty list it will retrieve all process info (slow).
 
@@ -1070,20 +1070,20 @@ Exceptions
   Raised by :class:`Process` class methods when no process with the given
   *pid* is found in the current process list, or when a process no longer
   exists. *name* is the name the process had before disappearing
-  and gets set only if :meth:`Process.name()` was previously called.
+  and gets set only if :meth:`Process.name` was previously called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
   This may be raised by :class:`Process` class methods when querying a zombie
   process on UNIX (Windows doesn't have zombie processes).
-  *name* and *ppid* attributes are available if :meth:`Process.name()` or
-  :meth:`Process.ppid()` methods were called before the process turned into a
+  *name* and *ppid* attributes are available if :meth:`Process.name` or
+  :meth:`Process.ppid` methods were called before the process turned into a
   zombie.
 
   .. note::
 
     this is a subclass of :class:`NoSuchProcess` so if you're not interested
-    in retrieving zombies (e.g. when using :func:`process_iter()`) you can
+    in retrieving zombies (e.g. when using :func:`process_iter`) you can
     ignore this exception and just catch :class:`NoSuchProcess`.
 
   .. versionadded:: 3.0.0
@@ -1092,13 +1092,13 @@ Exceptions
 
   Raised by :class:`Process` class methods when permission to perform an
   action is denied due to insufficient privileges.
-  *name* attribute is available if :meth:`Process.name()` was previously called.
+  *name* attribute is available if :meth:`Process.name` was previously called.
 
 .. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive.
-  *name* attribute is available if :meth:`Process.name()` was previously called.
+  *name* attribute is available if :meth:`Process.name` was previously called.
 
 Process class
 ^^^^^^^^^^^^^
@@ -1127,7 +1127,7 @@ Process class
     the way this class is bound to a process is via its **PID**.
     That means that if the process terminates and the OS reuses its PID you may
     inadvertently end up querying another process. To prevent this problem
-    you can use :meth:`is_running()` first.
+    you can use :meth:`is_running` first.
     The only methods which preemptively check whether PID has been reused
     (via PID + creation time) are:
     :meth:`nice` (set),
@@ -1152,7 +1152,7 @@ Process class
     :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
     routine, but only one value is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
-    the example below on :meth:`name()`) the value of interest is returned and
+    the example below on :meth:`name`) the value of interest is returned and
     the others are cached.
     The subsequent calls sharing the same internal routine will return the
     cached value.
@@ -1187,7 +1187,7 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`~Process.cpu_percent` | :meth:`cpu_times`             | :meth:`cpu_times`            | :meth:`~Process.cpu_percent` | :meth:`cmdline`          | :meth:`cmdline`          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`cpu_times`            | :meth:`io_counters()`         | :meth:`memory_info`          | :meth:`cpu_times`            | :meth:`create_time`      | :meth:`create_time`      |
+    | :meth:`cpu_times`            | :meth:`io_counters`           | :meth:`memory_info`          | :meth:`cpu_times`            | :meth:`create_time`      | :meth:`create_time`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`create_time`          | :meth:`memory_info`           | :meth:`memory_percent`       | :meth:`create_time`          |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
@@ -1645,7 +1645,7 @@ Process class
 
     .. note::
       the returned value is explicitly *not* split evenly between all available
-      CPUs (differently from :func:`psutil.cpu_percent()`).
+      CPUs (differently from :func:`psutil.cpu_percent`).
       This means that a busy loop process running on a system with 2 logical
       CPUs will be reported as having 100% CPU utilization instead of 50%.
       This was done in order to be consistent with ``top`` UNIX utility
@@ -1699,7 +1699,7 @@ Process class
   .. method:: cpu_num()
 
     Return what CPU this process is currently running on.
-    The returned number should be ``<=`` :func:`psutil.cpu_count()`.
+    The returned number should be ``<=`` :func:`psutil.cpu_count`.
     On FreeBSD certain kernel process may return ``-1``.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
     observe the system workload distributed across multiple CPUs as shown by
@@ -2110,7 +2110,7 @@ Process class
   .. method:: net_connections(kind="inet")
 
     Return socket connections opened by process as a list of named tuples.
-    To get system-wide connections use :func:`psutil.net_connections()`.
+    To get system-wide connections use :func:`psutil.net_connections`.
     Every named tuple provides 6 attributes:
 
     - **fd**: the socket file descriptor. If the connection refers to the
@@ -2218,14 +2218,14 @@ Process class
     another process, therefore it must be preferred over doing
     ``psutil.pid_exists(p.pid)``.
     If PID has been reused this method will also remove the process from
-    :func:`process_iter()` internal cache.
+    :func:`process_iter` internal cache.
 
     .. note::
       this will return ``True`` also if the process is a zombie
       (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. versionchanged:: 6.0.0
-       automatically remove process from :func:`process_iter()` internal cache
+       automatically remove process from :func:`process_iter` internal cache
        if PID has been reused by another process.
 
   .. method:: send_signal(signal)
@@ -2234,7 +2234,7 @@ Process class
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
-    are supported and *SIGTERM* is treated as an alias for :meth:`kill()`.
+    are supported and *SIGTERM* is treated as an alias for :meth:`kill`.
     See also how to `kill a process tree <#kill-process-tree>`_ and
     `terminate my children <#terminate-my-children>`_.
 
@@ -2296,7 +2296,7 @@ Process class
     immediately or raise :class:`TimeoutExpired`.
 
     The return value is cached.
-    To wait for multiple processes use :func:`psutil.wait_procs()`.
+    To wait for multiple processes use :func:`psutil.wait_procs`.
 
     >>> import psutil
     >>> p = psutil.Process(9891)
@@ -2558,7 +2558,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 .. class:: psutil.ProcessStatus
 
   `enum.StrEnum`_ collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
-  constants. Returned by :meth:`Process.status()`.
+  constants. Returned by :meth:`Process.status`.
 
   .. versionadded:: 8.0.0
 
@@ -2662,7 +2662,7 @@ Process status constants
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
 
-  Represent a process status. Returned by :meth:`Process.status()`.
+  Represent a process status. Returned by :meth:`Process.status`.
   These constants are members of the :class:`psutil.ProcessStatus` enum.
 
   .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
@@ -2685,7 +2685,7 @@ Process priority constants
 .. data:: BELOW_NORMAL_PRIORITY_CLASS
 
   Represent the priority of a process on Windows (see `SetPriorityClass`_).
-  They can be used in conjunction with :meth:`Process.nice()` to get or
+  They can be used in conjunction with :meth:`Process.nice` to get or
   set process priority.
   These constants are members of the :class:`psutil.ProcessPriority` enum.
 
@@ -2702,7 +2702,7 @@ Process priority constants
 .. data:: IOPRIO_CLASS_IDLE
 
   A set of integers representing the I/O priority of a process on Linux. They
-  can be used in conjunction with :meth:`Process.ionice()` to get or set
+  can be used in conjunction with :meth:`Process.ionice` to get or set
   process I/O priority.
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
@@ -2728,7 +2728,7 @@ Process priority constants
 .. data:: IOPRIO_HIGH
 
   A set of integers representing the I/O priority of a process on Windows.
-  They can be used in conjunction with :meth:`Process.ionice()` to get
+  They can be used in conjunction with :meth:`Process.ionice` to get
   or set process I/O priority.
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
@@ -2774,7 +2774,7 @@ FreeBSD specific:
   .. data:: RLIMIT_NPTS
 
 Constants used for getting and setting process resource limits to be used in
-conjunction with :meth:`Process.rlimit()`. See `resource.getrlimit`_
+conjunction with :meth:`Process.rlimit`. See `resource.getrlimit`_
 for further information.
 These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
@@ -2809,7 +2809,7 @@ Connections constants
 .. data:: CONN_BOUND (Solaris)
 
   A set of strings representing the status of a TCP connection.
-  Returned by :meth:`Process.net_connections()` and
+  Returned by :meth:`Process.net_connections` and
   :func:`psutil.net_connections` (`status` field).
   These constants are members of the :class:`psutil.ConnectionStatus` enum.
 
@@ -2824,7 +2824,7 @@ Hardware constants
 .. data:: AF_LINK
 
   Constant which identifies a MAC address associated with a network interface.
-  To be used in conjunction with :func:`psutil.net_if_addrs()`.
+  To be used in conjunction with :func:`psutil.net_if_addrs`.
 
   .. versionadded:: 3.0.0
 
@@ -2837,7 +2837,7 @@ Hardware constants
   half mode speed.  NIC_DUPLEX_FULL means the NIC is able to send and receive
   data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either send or
   receive data at a time.
-  To be used in conjunction with :func:`psutil.net_if_stats()`.
+  To be used in conjunction with :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
 
@@ -2847,7 +2847,7 @@ Hardware constants
 
   Whether the remaining time of the battery cannot be determined or is
   unlimited.
-  May be assigned to :func:`psutil.sensors_battery()`'s *secsleft* field.
+  May be assigned to :func:`psutil.sensors_battery`'s *secsleft* field.
 
   .. versionadded:: 5.1.0
 
@@ -2885,3 +2885,78 @@ Other constants
       >>> import psutil
       >>> if psutil.version_info >= (4, 5):
       ...    pass
+
+.. _`BPO-10784`: https://bugs.python.org/issue10784
+.. _`BPO-12442`: https://bugs.python.org/issue12442
+.. _`BPO-6973`: https://bugs.python.org/issue6973
+.. _`CPU affinity`: https://www.linuxjournal.com/article/6799?page=0,0
+.. _`getfsstat`: http://www.manpagez.com/man/2/getfsstat/
+.. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
+.. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
+.. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
+.. _`man prlimit`: https://linux.die.net/man/2/prlimit
+.. _`psleak`: https://github.com/giampaolo/psleak
+
+.. === docs.python.org
+
+.. _`AF_INET6`: https://docs.python.org/3/library/socket.html#socket.AF_INET6
+.. _`AF_INET`: https://docs.python.org/3/library/socket.html#socket.AF_INET
+.. _`AF_UNIX`: https://docs.python.org/3/library/socket.html#socket.AF_UNIX
+.. _`enum.IntEnum`: https://docs.python.org/3/library/enum.html#enum.IntEnum
+.. _`enum.StrEnum`: https://docs.python.org/3/library/enum.html#enum.StrEnum
+.. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
+.. _`hash`: https://docs.python.org/3/library/functions.html#hash
+.. _`open`: https://docs.python.org/3/library/functions.html#open
+.. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
+.. _`os.getloadavg`: https://docs.python.org//library/os.html#os.getloadavg
+.. _`os.getpid`: https://docs.python.org/3/library/os.html#os.getpid
+.. _`os.getpriority`: https://docs.python.org/3/library/os.html#os.getpriority
+.. _`os.getresgid`: https://docs.python.org//library/os.html#os.getresgid
+.. _`os.getresuid`: https://docs.python.org//library/os.html#os.getresuid
+.. _`os.O_RDONLY`: https://docs.python.org/3/library/os.html#os.O_RDONLY
+.. _`os.O_TRUNC`: https://docs.python.org/3/library/os.html#os.O_TRUNC
+.. _`os.open`: https://docs.python.org/3/library/os.html#os.open
+.. _`os.pidfd_open`: https://docs.python.org//library/os.html#os.pidfd_open
+.. _`os.setpriority`: https://docs.python.org/3/library/os.html#os.setpriority
+.. _`os.times`: https://docs.python.org//library/os.html#os.times
+.. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
+.. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
+.. _`select.kqueue`: https://docs.python.org//library/select.html#select.kqueue
+.. _`select.poll`: https://docs.python.org//library/select.html#select.poll
+.. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set.
+.. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage.
+.. _`signal module`: https://docs.python.org//library/signal.html
+.. _`SOCK_DGRAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_DGRAM
+.. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
+.. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
+.. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
+.. _`subprocess.Popen.wait`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+.. _`threading.get_ident`: https://docs.python.org/3/library/threading.html#threading.get_ident
+.. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
+
+.. === scripts
+
+.. _`battery.py`: https://github.com/giampaolo/psutil/blob/master/scripts/battery.py
+.. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
+.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
+.. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+.. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
+.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
+.. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
+.. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
+.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
+.. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
+.. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
+
+.. === Windows API
+
+.. _`GetDriveType`: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypea
+.. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
+.. _`GetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
+.. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
+.. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
+.. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess

@@ -167,7 +167,7 @@ Documentation
 
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
-.. _`Git for Windows`: <https://git-scm.com/install/windows>`
+.. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/

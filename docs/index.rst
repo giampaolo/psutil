@@ -1,8 +1,6 @@
 .. module:: psutil
    :synopsis: psutil module
-.. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
-.. include:: _links.rst
-.. _availability:
+.. moduleauthor:: Giampaolo Rodola <grodola@gmail.com>
 
 Psutil documentation
 ====================
@@ -111,3 +109,5 @@ Table of Contents
    :titlesonly:
 
    Changelog <changelog>
+
+.. _`Tidelift security contact`: https://tidelift.com/security
