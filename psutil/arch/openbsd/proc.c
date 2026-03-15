@@ -185,7 +185,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
         if (errno == ENOENT) {
             psutil_debug("sysctl(KERN_PROC_CWD) -> ENOENT converted to ''");
-            return Py_BuildValue("s", "");
+            return PyUnicode_FromString("");
         }
         else {
             psutil_oserror();

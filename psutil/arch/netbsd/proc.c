@@ -69,7 +69,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
     if (pid == 0) {
         // else returns ENOENT
-        return Py_BuildValue("s", "");
+        return PyUnicode_FromString("");
     }
 
     mib[0] = CTL_KERN;

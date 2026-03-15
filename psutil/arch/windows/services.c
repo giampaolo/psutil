@@ -341,7 +341,7 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
         // empty string.
         CloseServiceHandle(hService);
         PyMem_Free(service_name);
-        return Py_BuildValue("s", "");
+        return PyUnicode_FromString("");
     }
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         psutil_oserror_wsyscall("QueryServiceStatusEx");
@@ -418,7 +418,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         psutil_debug("set empty string for NOT_FOUND service description");
         CloseServiceHandle(hService);
         PyMem_Free(service_name);
-        return Py_BuildValue("s", "");
+        return PyUnicode_FromString("");
     }
 
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
@@ -445,7 +445,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     }
 
     if (scd->lpDescription == NULL) {
-        py_retstr = Py_BuildValue("s", "");
+        py_retstr = PyUnicode_FromString("");
     }
     else {
         py_retstr = PyUnicode_FromWideChar(

@@ -391,10 +391,10 @@ psutil_QueryDosDevice(PyObject *self, PyObject *args) {
         if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
             if (_tcscmp(lpDevicePath, szTarget) == 0) {
                 _stprintf_s(szBuff, _countof(szBuff), TEXT("%c:"), d);
-                return Py_BuildValue("s", szBuff);
+                return PyUnicode_FromString(szBuff);
             }
         }
         d++;
     }
-    return Py_BuildValue("s", "");
+    return PyUnicode_FromString("");
 }

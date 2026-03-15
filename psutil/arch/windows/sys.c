@@ -134,7 +134,7 @@ psutil_users(PyObject *self, PyObject *args) {
                 address->Address[4],
                 address->Address[5]
             );
-            py_address = Py_BuildValue("s", address_str);
+            py_address = PyUnicode_FromString(address_str);
             if (!py_address)
                 goto error;
         }

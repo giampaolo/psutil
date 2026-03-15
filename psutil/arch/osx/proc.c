@@ -238,7 +238,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             // still alive but the executable which launched it got
             // deleted, see:
             // https://github.com/giampaolo/psutil/issues/1738
-            return Py_BuildValue("s", "");
+            return PyUnicode_FromString("");
         }
         else {
             psutil_raise_for_pid(pid, "proc_pidpath()");
@@ -1101,7 +1101,7 @@ empty:
     psutil_debug("set environ to empty");
     if (procargs != NULL)
         free(procargs);
-    return Py_BuildValue("s", "");
+    return PyUnicode_FromString("");
 
 error:
     Py_XDECREF(py_ret);

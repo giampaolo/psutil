@@ -307,7 +307,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (processIdInfo.ImageName.Buffer == NULL) {
         // Happens for PID 4.
-        py_exe = Py_BuildValue("s", "");
+        py_exe = PyUnicode_FromString("");
     }
     else {
         py_exe = PyUnicode_FromWideChar(

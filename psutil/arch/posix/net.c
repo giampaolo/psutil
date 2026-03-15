@@ -61,8 +61,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char *ptr;
 
     if (addr == NULL) {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else if (family == AF_INET || family == AF_INET6) {
         if (family == AF_INET)
@@ -78,11 +77,10 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             // ifconfig does not show anything BTW.
             // psutil_runtime_error(gai_strerror(err));
             // return NULL;
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         else {
-            return Py_BuildValue("s", buf);
+            return PyUnicode_FromString(buf);
         }
     }
 #ifdef PSUTIL_LINUX
@@ -102,8 +100,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
 #endif
     else {
         // unknown family
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     // AF_PACKET or AF_LINK
@@ -114,11 +111,10 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
             ptr += 3;
         }
         *--ptr = '\0';
-        return Py_BuildValue("s", buf);
+        return PyUnicode_FromString(buf);
     }
     else {
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 }
 

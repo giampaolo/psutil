@@ -679,7 +679,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if ((pid == 0) || (pid == 4))
-        return Py_BuildValue("s", "");
+        return PyUnicode_FromString("");
 
     pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0)

@@ -95,7 +95,7 @@ psutil_cpu_topology(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;
     }
 
-    py_str = Py_BuildValue("s", topology);
+    py_str = PyUnicode_FromString(topology);
     free(topology);
     return py_str;
 }

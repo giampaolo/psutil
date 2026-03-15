@@ -208,7 +208,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 remaining -= n;
             }
 
-            py_mac_address = Py_BuildValue("s", buff_macaddr);
+            py_mac_address = PyUnicode_FromString(buff_macaddr);
             if (py_mac_address == NULL)
                 goto error;
 
