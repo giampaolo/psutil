@@ -9,8 +9,9 @@ being installed.
 import ast
 import importlib.util
 import os
+import pathlib
 
-HERE = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent
 
 
 def load_module(path):
@@ -28,7 +29,7 @@ def get_version():
     """Extract __version__ from psutil/__init__.py using AST
     (no imports needed).
     """
-    path = os.path.join(HERE, "psutil", "__init__.py")
+    path = ROOT_DIR / "psutil" / "__init__.py"
     with open(path) as f:
         mod = ast.parse(f.read())
     for node in mod.body:

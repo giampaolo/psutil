@@ -13,6 +13,7 @@ import functools
 import importlib
 import ipaddress
 import os
+import pathlib
 import platform
 import random
 import re
@@ -65,7 +66,7 @@ if POSIX:
 __all__ = [
     # constants
     'DEVNULL', 'GLOBAL_TIMEOUT', 'TOLERANCE_SYS_MEM', 'NO_RETRIES',
-    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'PYPY', 'PYTHON_EXE', 'PYTHON_EXE_ENV', 'ROOT_DIR',
     'TESTFN_PREFIX', 'UNICODE_SUFFIX', 'INVALID_UNICODE_SUFFIX',
     'CI_TESTING', 'VALID_PROC_STATUSES', 'TOLERANCE_DISK_USAGE', 'IS_64BIT',
     "HAS_PROC_CPU_AFFINITY", "HAS_CPU_FREQ", "HAS_PROC_ENVIRON",
@@ -179,11 +180,9 @@ ASCII_FS = sys.getfilesystemencoding().lower() in {"ascii", "us-ascii"}
 
 # --- paths
 
-ROOT_DIR = os.environ.get("PSUTIL_ROOT_DIR") or os.path.realpath(
-    os.path.join(os.path.dirname(__file__), "..")
+ROOT_DIR = os.environ.get("PSUTIL_ROOT") or str(
+    pathlib.Path(__file__).resolve().parent.parent
 )
-SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
-HERE = os.path.realpath(os.path.dirname(__file__))
 
 # --- support
 

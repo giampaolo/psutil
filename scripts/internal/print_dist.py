@@ -12,11 +12,11 @@ import os
 import pathlib
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(ROOT))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 from _bootstrap import load_module  # noqa: E402
 
-_common = load_module(ROOT / "psutil" / "_common.py")
+_common = load_module(ROOT_DIR / "psutil" / "_common.py")
 bytes2human = _common.bytes2human
 print_color = _common.print_color
 

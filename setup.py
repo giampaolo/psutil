@@ -15,6 +15,7 @@ import contextlib
 import glob
 import io
 import os
+import pathlib
 import shutil
 import struct
 import subprocess
@@ -49,12 +50,13 @@ with warnings.catch_warnings():
         from distutils.core import setup
 
 
-HERE = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from _bootstrap import get_version  # noqa: E402
 from _bootstrap import load_module  # noqa: E402
 
-_common = load_module(os.path.join(HERE, "psutil", "_common.py"))
+_common = load_module(ROOT_DIR / "psutil" / "_common.py")
 
 AIX = _common.AIX
 BSD = _common.BSD
@@ -159,8 +161,8 @@ else:
 
 
 def get_long_description():
-    script = os.path.join(HERE, "scripts", "internal", "convert_readme.py")
-    readme = os.path.join(HERE, 'README.rst')
+    script = ROOT_DIR / "scripts" / "internal" / "convert_readme.py"
+    readme = ROOT_DIR / 'README.rst'
     p = subprocess.Popen(
         [sys.executable, script, readme],
         stdout=subprocess.PIPE,

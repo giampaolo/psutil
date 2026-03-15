@@ -10,21 +10,22 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 import datetime
-import os
+import pathlib
 import sys
 
 PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)
-HERE = os.path.abspath(os.path.dirname(__file__))
+HERE = pathlib.Path(__file__).resolve().parent
+ROOT_DIR = HERE.parent
 
-sys.path.insert(0, os.path.join(HERE, ".."))
+sys.path.insert(0, str(ROOT_DIR))
 from _bootstrap import get_version  # noqa: E402
 
 VERSION = get_version()
 
 
-sys.path.insert(0, os.path.join(HERE, '_ext'))
+sys.path.insert(0, str(HERE / '_ext'))
 
 extensions = [
     "sphinx.ext.autodoc",

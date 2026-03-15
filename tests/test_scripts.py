@@ -8,6 +8,7 @@
 
 import ast
 import os
+import pathlib
 import shutil
 import stat
 import subprocess
@@ -28,14 +29,14 @@ from . import HAS_SENSORS_TEMPERATURES
 from . import PYTHON_EXE
 from . import PYTHON_EXE_ENV
 from . import ROOT_DIR
-from . import SCRIPTS_DIR
 from . import PsutilTestCase
 from . import import_module_by_path
 from . import psutil
 from . import sh
 
-INTERNAL_SCRIPTS_DIR = os.path.join(SCRIPTS_DIR, "internal")
-SETUP_PY = os.path.join(ROOT_DIR, 'setup.py')
+SCRIPTS_DIR = pathlib.Path(ROOT_DIR) / "scripts"
+INTERNAL_SCRIPTS_DIR = SCRIPTS_DIR / "internal"
+SETUP_PY = pathlib.Path(ROOT_DIR) / 'setup.py'
 
 
 # ===================================================================

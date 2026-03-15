@@ -50,7 +50,6 @@ if LINUX:
     from psutil._pslinux import open_binary
 
 
-HERE = os.path.abspath(os.path.dirname(__file__))
 SIOCGIFADDR = 0x8915
 SIOCGIFHWADDR = 0x8927
 SIOCGIFNETMASK = 0x891B

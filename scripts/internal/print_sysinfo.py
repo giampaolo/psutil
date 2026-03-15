@@ -31,9 +31,8 @@ except ImportError:
     wheel = None
 
 
-HERE = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
-ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(ROOT))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 from _bootstrap import load_module  # noqa: E402
 
 
@@ -43,9 +42,7 @@ def sh(cmd):
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
-tests_init = os.path.realpath(
-    os.path.join(HERE, "..", "..", "tests", "__init__.py")
-)
+tests_init = ROOT_DIR / "tests" / "__init__.py"
 
 tests_init_mod = load_module(tests_init)
 

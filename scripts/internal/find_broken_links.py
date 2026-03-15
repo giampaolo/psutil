@@ -48,7 +48,6 @@ import traceback
 
 import requests
 
-HERE = os.path.abspath(os.path.dirname(__file__))
 REGEX = re.compile(
     r'(?:http|ftp|https)?://'
     r'(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
