@@ -99,6 +99,8 @@ Others:
   returns a `float` instead of `int` on all systems, not only Linux.
 - :gh:`2765`: add a PR bot that uses Claude to summarize PR changes and update
   changelog.rst and credits.rst when commenting with /changelog.
+- :gh:`2766`: remove remaining Python 2.7 compatibility shims from
+  ``setup.py``, simplifying the build infrastructure.
 
 **Bug fixes**
 

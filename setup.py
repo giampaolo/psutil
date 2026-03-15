@@ -4,12 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Cross-platform lib for process and system monitoring in Python.
-
-NOTE: the syntax of this script MUST be kept compatible with Python 2.7.
-"""
-
-from __future__ import print_function
+"""Cross-platform lib for process and system monitoring in Python."""
 
 import contextlib
 import glob
@@ -22,19 +17,7 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
-import textwrap
 import warnings
-
-if sys.version_info[0] == 2:
-    sys.exit(textwrap.dedent("""\
-        As of version 7.0.0 psutil no longer supports Python 2.7, see:
-        https://github.com/giampaolo/psutil/issues/2480
-        Latest version supporting Python 2.7 is psutil 6.1.X.
-        Install it with:
-
-            python2 -m pip install psutil==6.1.*\
-        """))
-
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -304,10 +287,7 @@ if WINDOWS:
         ],
         # extra_compile_args=["/W 4"],
         # extra_link_args=["/DEBUG"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif MACOS:
@@ -326,10 +306,7 @@ elif MACOS:
             '-framework',
             'IOKit',
         ],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif FREEBSD:
@@ -345,10 +322,7 @@ elif FREEBSD:
         ),
         define_macros=macros,
         libraries=["devstat"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif OPENBSD:
@@ -364,10 +338,7 @@ elif OPENBSD:
         ),
         define_macros=macros,
         libraries=["kvm"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif NETBSD:
@@ -383,10 +354,7 @@ elif NETBSD:
         ),
         define_macros=macros,
         libraries=["kvm", "jemalloc"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif LINUX:
@@ -403,10 +371,7 @@ elif LINUX:
             + glob.glob("psutil/arch/linux/*.c")
         ),
         define_macros=macros,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif SUNOS:
@@ -421,10 +386,7 @@ elif SUNOS:
         ),
         define_macros=macros,
         libraries=["kstat", "nsl", "socket"],
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 elif AIX:
@@ -439,10 +401,7 @@ elif AIX:
         ),
         libraries=["perfstat"],
         define_macros=macros,
-        # fmt: off
-        # python 2.7 compatibility requires no comma
-        **py_limited_api
-        # fmt: on
+        **py_limited_api,
     )
 
 else:
