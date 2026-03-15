@@ -261,7 +261,8 @@ def ask_claude(pr, diff):
         body=pr["body"],
         diff=diff[:MAX_DIFF_CHARS],
     )
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=MAX_TOKENS,
