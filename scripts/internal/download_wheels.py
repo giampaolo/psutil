@@ -17,13 +17,19 @@ https://developer.github.com/v3/actions/artifacts/.
 import argparse
 import json
 import os
+import pathlib
 import shutil
 import sys
 import zipfile
 
 import requests
 
-from scripts.internal._mirror import bytes2human
+ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT))
+from _bootstrap import load_module  # noqa: E402
+
+_common = load_module(ROOT / "psutil" / "_common.py")
+bytes2human = _common.bytes2human
 
 USER = "giampaolo"
 PROJECT = "psutil"

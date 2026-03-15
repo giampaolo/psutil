@@ -11,44 +11,25 @@ against the files which were modified in the commit. Install this with
 """
 
 import os
+import pathlib
 import shlex
 import shutil
 import subprocess
 import sys
 
+ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT))
+from _bootstrap import load_module  # noqa: E402
+
+_common = load_module(ROOT / "psutil" / "_common.py")
+hilite = _common.hilite
+
 PYTHON = sys.executable
 LINUX = sys.platform.startswith("linux")
 
 
-def term_supports_colors():
-    try:
-        import curses
-
-        assert sys.stderr.isatty()
-        curses.setupterm()
-        return curses.tigetnum("colors") > 0
-    except Exception:  # noqa: BLE001
-        return False
-
-
-def hilite(s, ok=True, bold=False):
-    """Return an highlighted version of 'string'."""
-    if not term_supports_colors():
-        return s
-    attr = []
-    if ok is None:  # no color
-        pass
-    elif ok:  # green
-        attr.append("32")
-    else:  # red
-        attr.append("31")
-    if bold:
-        attr.append("1")
-    return f"\x1b[{';'.join(attr)}m{s}\x1b[0m"
-
-
 def exit_with(msg):
-    print(hilite("Commit aborted. " + msg, ok=False), file=sys.stderr)
+    print(hilite("Commit aborted. " + msg, color="red"), file=sys.stderr)
     sys.exit(1)
 
 

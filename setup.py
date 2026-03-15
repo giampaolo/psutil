@@ -11,7 +11,6 @@ NOTE: the syntax of this script MUST be kept compatible with Python 2.7.
 
 from __future__ import print_function
 
-import ast
 import contextlib
 import glob
 import io
@@ -52,20 +51,22 @@ with warnings.catch_warnings():
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-# ...so we can import _common.py
-sys.path.insert(0, os.path.join(HERE, "psutil"))
+from _bootstrap import get_version  # noqa: E402
+from _bootstrap import load_module  # noqa: E402
 
-from _common import AIX  # noqa: E402
-from _common import BSD  # noqa: E402
-from _common import FREEBSD  # noqa: E402
-from _common import LINUX  # noqa: E402
-from _common import MACOS  # noqa: E402
-from _common import NETBSD  # noqa: E402
-from _common import OPENBSD  # noqa: E402
-from _common import POSIX  # noqa: E402
-from _common import SUNOS  # noqa: E402
-from _common import WINDOWS  # noqa: E402
-from _common import hilite  # noqa: E402
+_common = load_module(os.path.join(HERE, "psutil", "_common.py"))
+
+AIX = _common.AIX
+BSD = _common.BSD
+FREEBSD = _common.FREEBSD
+LINUX = _common.LINUX
+MACOS = _common.MACOS
+NETBSD = _common.NETBSD
+OPENBSD = _common.OPENBSD
+POSIX = _common.POSIX
+SUNOS = _common.SUNOS
+WINDOWS = _common.WINDOWS
+hilite = _common.hilite
 
 PYPY = '__pypy__' in sys.builtin_module_names
 PY36_PLUS = sys.version_info[:2] >= (3, 6)
@@ -135,19 +136,6 @@ else:
 sources = glob.glob("psutil/arch/all/*.c")
 if POSIX:
     sources.extend(glob.glob("psutil/arch/posix/*.c"))
-
-
-def get_version():
-    path = os.path.join(HERE, "psutil", "__init__.py")
-    with open(path) as f:
-        mod = ast.parse(f.read())
-    for node in mod.body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if getattr(target, "id", None) == "__version__":
-                    return ast.literal_eval(node.value)
-    msg = "could not find __version__"
-    raise RuntimeError(msg)
 
 
 VERSION = get_version()

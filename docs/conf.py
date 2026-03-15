@@ -9,7 +9,6 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-import ast
 import datetime
 import os
 import sys
@@ -19,19 +18,8 @@ AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-
-def get_version():
-    path = os.path.join(HERE, "..", "psutil", "__init__.py")
-    with open(path) as f:
-        mod = ast.parse(f.read())
-    for node in mod.body:
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if getattr(target, "id", None) == "__version__":
-                    return ast.literal_eval(node.value)
-    msg = "could not find __version__"
-    raise RuntimeError(msg)
-
+sys.path.insert(0, os.path.join(HERE, ".."))
+from _bootstrap import get_version  # noqa: E402
 
 VERSION = get_version()
 

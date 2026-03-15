@@ -9,9 +9,16 @@
 import argparse
 import collections
 import os
+import pathlib
+import sys
 
-from scripts.internal._mirror import bytes2human
-from scripts.internal._mirror import print_color
+ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT))
+from _bootstrap import load_module  # noqa: E402
+
+_common = load_module(ROOT / "psutil" / "_common.py")
+bytes2human = _common.bytes2human
+print_color = _common.print_color
 
 
 class Wheel:

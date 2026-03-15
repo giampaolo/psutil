@@ -9,9 +9,9 @@
 import collections
 import datetime
 import getpass
-import importlib.util
 import locale
 import os
+import pathlib
 import platform
 import shlex
 import shutil
@@ -32,6 +32,9 @@ except ImportError:
 
 
 HERE = os.path.realpath(os.path.abspath(os.path.dirname(__file__)))
+ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(ROOT))
+from _bootstrap import load_module  # noqa: E402
 
 
 def sh(cmd):
@@ -40,19 +43,11 @@ def sh(cmd):
     return subprocess.check_output(cmd, universal_newlines=True).strip()
 
 
-def import_module_by_path(path):
-    name = os.path.splitext(os.path.basename(path))[0]
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
 tests_init = os.path.realpath(
     os.path.join(HERE, "..", "..", "tests", "__init__.py")
 )
 
-tests_init_mod = import_module_by_path(tests_init)
+tests_init_mod = load_module(tests_init)
 
 
 def main():

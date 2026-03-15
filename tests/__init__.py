@@ -1806,11 +1806,9 @@ def reload_module(module):
 
 
 def import_module_by_path(path):
-    name = os.path.splitext(os.path.basename(path))[0]
-    spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    from _bootstrap import load_module
+
+    return load_module(path)
 
 
 # ===================================================================
