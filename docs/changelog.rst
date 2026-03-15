@@ -9,6 +9,8 @@ Changelog
 
 **Enhancements**
 
+- :gh:`2766`: remove remaining Python 2.7 compatibility shims from
+  ``setup.py``, simplifying the build infrastructure.
 Doc:
 
 - :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`.
