@@ -182,6 +182,7 @@ dprint:
 
 lint-rst:  ## Run linter for .rst files.
 	@git ls-files '*.rst' | xargs sphinx-lint
+	@git ls-files '*.rst' | xargs python3 scripts/internal/rst_check_dead_refs.py
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@git ls-files '*.toml' | xargs toml-sort --check
