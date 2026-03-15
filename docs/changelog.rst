@@ -8,6 +8,9 @@ Changelog
 
 **Enhancements**
 
+- :gh:`2767`: replace ``rstcheck`` with ``sphinx-lint`` for RST linting, and
+  add a custom script to detect dead reference links in ``.rst`` files.
+
 Doc:
 
 - :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`.
