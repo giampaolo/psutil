@@ -24,7 +24,7 @@ Build, setup and running tests
   .. code-block:: bash
 
       make clean                # remove build files
-      make install-pydeps-dev   # install dev deps (ruff, black, ...)
+      make install-pydeps-dev   # install all development deps (ruff, black, coverage, ...)
       make test                 # run tests
       make test-parallel        # run tests in parallel (faster)
       make test-memleaks        # run memory leak tests

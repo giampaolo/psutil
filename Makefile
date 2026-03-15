@@ -82,9 +82,15 @@ install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[test]
 
+install-pydeps-lint:  ## Install python deps necessary to run linters.
+	$(MAKE) install-pip
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[lint]
+
 install-pydeps-dev:  ## Install python deps meant for local development.
 	$(MAKE) install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
 
 # ===================================================================
 # Tests
@@ -226,7 +232,7 @@ fix-all:  ## Run all code fixers.
 # ===================================================================
 
 ci-lint:  ## Run all linters on GitHub CI.
-	$(PYTHON) -m pip install -U black ruff sphinx-lint toml-sort sphinx
+	$(MAKE) install-pydeps-lint
 	curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
