@@ -30,7 +30,7 @@ def get_version():
     (no imports needed).
     """
     path = ROOT_DIR / "psutil" / "__init__.py"
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         mod = ast.parse(f.read())
     for node in mod.body:
         if isinstance(node, ast.Assign):
