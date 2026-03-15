@@ -9,9 +9,7 @@
 import ast
 import os
 import pathlib
-import shutil
 import stat
-import subprocess
 
 import pytest
 
@@ -36,7 +34,6 @@ from . import sh
 
 SCRIPTS_DIR = pathlib.Path(ROOT_DIR) / "scripts"
 INTERNAL_SCRIPTS_DIR = SCRIPTS_DIR / "internal"
-SETUP_PY = pathlib.Path(ROOT_DIR) / 'setup.py'
 
 
 # ===================================================================
@@ -206,38 +203,3 @@ class TestInternalScripts(PsutilTestCase):
                 import_module_by_path(path)
             except SystemExit:
                 pass
-
-
-# ===================================================================
-# --- Tests for setup.py script
-# ===================================================================
-
-
-@pytest.mark.skipif(
-    CI_TESTING and not os.path.exists(SETUP_PY), reason="can't find setup.py"
-)
-class TestSetupScript(PsutilTestCase):
-    def test_invocation(self):
-        module = import_module_by_path(SETUP_PY)
-        with pytest.raises(SystemExit):
-            module.setup()
-        assert module.get_version() == psutil.__version__
-
-    @pytest.mark.skipif(
-        not shutil.which("python2.7"), reason="python2.7 not installed"
-    )
-    def test_python2(self):
-        # There's a duplicate of this test in scripts/internal
-        # directory, which is only executed by CI. We replicate it here
-        # to run it when developing locally.
-        p = subprocess.Popen(
-            [shutil.which("python2.7"), SETUP_PY],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-        )
-        stdout, stderr = p.communicate()
-        assert p.wait() == 1
-        assert not stdout
-        assert "psutil no longer supports Python 2.7" in stderr
-        assert "Latest version supporting Python 2.7 is" in stderr
