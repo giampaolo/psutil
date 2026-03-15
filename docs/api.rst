@@ -215,8 +215,7 @@ CPU
         scpufreq(current=1703.609, min=800.0, max=3500.0),
         scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    Availability: Linux, macOS, Windows, FreeBSD, OpenBSD. *percpu* only
-    supported on Linux and FreeBSD.
+    .. availability:: Linux, macOS, Windows, FreeBSD, OpenBSD.
 
     .. versionadded:: 5.1.0
 
@@ -781,7 +780,7 @@ Network
     ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
     and ``d2`` (some flags are only available on certain platforms).
 
-    Availability: UNIX
+    .. availability:: UNIX
 
   Example:
 
@@ -834,7 +833,7 @@ Sensors
 
   See also `temperatures.py`_ and `sensors.py`_ for an example application.
 
-  Availability: Linux, FreeBSD
+  .. availability:: Linux, FreeBSD
 
   .. versionadded:: 5.1.0
 
@@ -855,7 +854,7 @@ Sensors
 
   See also `fans.py`_  and `sensors.py`_ for an example application.
 
-  Availability: Linux
+  .. availability:: Linux
 
   .. versionadded:: 5.2.0
 
@@ -892,7 +891,7 @@ Sensors
 
   See also `battery.py`_  and `sensors.py`_ for an example application.
 
-  Availability: Linux, Windows, macOS, FreeBSD
+  .. availability:: Linux, Windows, macOS, FreeBSD
 
   .. versionadded:: 5.1.0
 
@@ -1378,21 +1377,21 @@ Process class
     The real, effective and saved user ids of this process as a named tuple.
     This is the same as `os.getresuid`_ but can be used for any process PID.
 
-    Availability: UNIX
+    .. availability:: UNIX
 
   .. method:: gids()
 
     The real, effective and saved group ids of this process as a named tuple.
     This is the same as `os.getresgid`_ but can be used for any process PID.
 
-    Availability: UNIX
+    .. availability:: UNIX
 
   .. method:: terminal()
 
     The terminal associated with this process, if any, else ``None``. This is
     similar to "tty" command but can be used for any process PID.
 
-    Availability: UNIX
+    .. availability:: UNIX
 
   .. method:: nice(value=None)
 
@@ -1465,7 +1464,7 @@ Process class
       >>> p.ionice()  # get
       pionice(ioclass=<ProcessIOPriority.IOPRIO_CLASS_RT: 1>, value=7)
 
-    Availability: Linux, Windows Vista+
+    .. availability:: Linux, Windows
 
     .. versionchanged:: 5.6.2
        Windows accepts new ``IOPRIO_*`` constants.
@@ -1494,7 +1493,7 @@ Process class
 
     Also see `procinfo.py`_ script.
 
-    Availability: Linux, FreeBSD
+    .. availability:: Linux, FreeBSD
 
     .. versionchanged:: 5.7.3
        added FreeBSD support.
@@ -1539,7 +1538,7 @@ Process class
     >>> p.io_counters()
     pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
 
-    Availability: Linux, BSD, Windows, AIX
+    .. availability:: Linux, BSD, Windows, AIX
 
     .. versionchanged:: 5.2.0
        added *read_chars* + *write_chars* on Linux and  *other_count* +
@@ -1563,13 +1562,13 @@ Process class
     The number of file descriptors currently opened by this process
     (non cumulative).
 
-    Availability: UNIX
+    .. availability:: UNIX
 
   .. method:: num_handles()
 
     The number of handles currently used by this process (non cumulative).
 
-    Availability: Windows
+    .. availability:: Windows
 
   .. method:: num_threads()
 
@@ -1689,7 +1688,7 @@ Process class
       >>> # reset affinity against all eligible CPUs
       >>> p.cpu_affinity([])
 
-    Availability: Linux, Windows, FreeBSD
+    .. availability:: Linux, Windows, FreeBSD
 
     .. versionchanged:: 2.2.0
        added support for FreeBSD.
@@ -1706,7 +1705,7 @@ Process class
     observe the system workload distributed across multiple CPUs as shown by
     `cpu_distribution.py`_ example script.
 
-    Availability: Linux, FreeBSD, SunOS
+    .. availability:: Linux, FreeBSD, SunOS
 
     .. versionadded:: 5.1.0
 
@@ -1915,7 +1914,7 @@ Process class
 
     .. versionadded:: 8.0.0
 
-    Availability: Linux, macOS, Windows
+    .. availability:: Linux, macOS, Windows
 
   .. method:: memory_full_info()
 
@@ -2004,7 +2003,7 @@ Process class
        pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
        ...]
 
-    Availability: Linux, Windows, FreeBSD, SunOS
+    .. availability:: Linux, Windows, FreeBSD, SunOS
 
     .. versionchanged:: 5.6.0
        removed macOS support because inherently broken (see issue `#1291
@@ -2425,9 +2424,9 @@ Python's memory tracking misses.
   | Windows       | ``HeapCreate()`` without ``HeapDestroy()``                                         | ``heap_count``  |
   +---------------+------------------------------------------------------------------------------------+-----------------+
 
-  .. versionadded:: 7.2.0
+  .. availability:: Linux with glibc, Windows, macOS, FreeBSD, NetBSD
 
-  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
+  .. versionadded:: 7.2.0
 
 .. function:: heap_trim()
 
@@ -2444,9 +2443,9 @@ Python's memory tracking misses.
   fragmentation. Its effectiveness depends on allocator behavior and
   fragmentation patterns.
 
-  .. versionadded:: 7.2.0
+  .. availability:: Linux with glibc, Windows, macOS, FreeBSD, NetBSD
 
-  Availability: Linux + glibc (e.g. not MUSL), Windows, macOS, FreeBSD, NetBSD
+  .. versionadded:: 7.2.0
 
 ----
 
@@ -2460,7 +2459,7 @@ Windows services
 
   .. versionadded:: 4.2.0
 
-  Availability: Windows
+  .. availability:: Windows
 
 .. function:: win_service_get(name)
 
@@ -2469,7 +2468,7 @@ Windows services
 
   .. versionadded:: 4.2.0
 
-  Availability: Windows
+  .. availability:: Windows
 
 .. class:: WindowsService
 
@@ -2522,7 +2521,7 @@ Windows services
 
   .. versionadded:: 4.2.0
 
-  Availability: Windows
+  .. availability:: Windows
 
 Example code:
 
@@ -2569,7 +2568,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
   :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
   :meth:`Process.nice` on Windows.
 
-  Availability: Windows
+  .. availability:: Windows
 
   .. versionadded:: 8.0.0
 
@@ -2579,7 +2578,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
   :meth:`Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
   On Windows: ``IOPRIO_*`` constants.
 
-  Availability: Linux, Windows
+  .. availability:: Linux, Windows
 
   .. versionadded:: 8.0.0
 
@@ -2588,7 +2587,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
   `enum.IntEnum`_ collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
   constants for :meth:`Process.rlimit`.
 
-  Availability: Linux, FreeBSD
+  .. availability:: Linux, FreeBSD
 
   .. versionadded:: 8.0.0
 
@@ -2690,7 +2689,7 @@ Process priority constants
   set process priority.
   These constants are members of the :class:`psutil.ProcessPriority` enum.
 
-  Availability: Windows
+  .. availability:: Windows
 
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessPriority` enum members (were plain
@@ -2717,7 +2716,7 @@ Process priority constants
   `ionice <http://linux.die.net/man/1/ionice>`_ command line utility or
   `ioprio_get`_ system call.
 
-  Availability: Linux
+  .. availability:: Linux
 
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessIOPriority` enum members
@@ -2734,7 +2733,7 @@ Process priority constants
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
 
-  Availability: Windows
+  .. availability:: Windows
 
   .. versionadded:: 5.6.2
 
@@ -2779,7 +2778,7 @@ conjunction with :meth:`Process.rlimit()`. See `resource.getrlimit`_
 for further information.
 These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
-Availability: Linux, FreeBSD
+.. availability:: Linux, FreeBSD
 
 .. versionchanged:: 5.7.3
    added FreeBSD support, added ``RLIMIT_SWAP``, ``RLIMIT_SBSIZE``,
@@ -2868,7 +2867,7 @@ Other constants
   It must be noted that this trick works only for APIs which rely on /proc
   filesystem (e.g. `memory`_ APIs and most :class:`Process` class methods).
 
-  Availability: Linux, Solaris, AIX
+  .. availability:: Linux, SunOS, AIX
 
   .. versionadded:: 3.2.3
 

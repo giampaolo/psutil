@@ -14,6 +14,7 @@ include docs/DEVNOTES
 include docs/Makefile
 include docs/README
 include docs/_ext/add_home_link.py
+include docs/_ext/availability.py
 include docs/_ext/changelog_anchors.py
 include docs/_ext/check_python_syntax.py
 include docs/_links.rst
@@ -24,7 +25,6 @@ include docs/_static/sidebar.js
 include docs/_templates/layout.html
 include docs/adoption.rst
 include docs/api.rst
-include docs/auto-build.sh
 include docs/changelog.rst
 include docs/conf.py
 include docs/credits.rst

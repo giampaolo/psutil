@@ -113,6 +113,7 @@ ignore = [
 "tests/test_sudo.py" = ["PT009"]
 "scripts/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
 "scripts/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
+"doc/internal/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203", "TRY003"]
 "setup.py" = [
     "B904",  # Use ` raise from` to specify exception cause (PYTHON2.7 COMPAT)
     "C4",  # flake8-comprehensions (PYTHON2.7 COMPAT)

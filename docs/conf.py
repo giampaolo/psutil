@@ -48,6 +48,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
     # our own custom extensions in _ext/ dir
+    "availability",
     "add_home_link",
     "changelog_anchors",
     "check_python_syntax",

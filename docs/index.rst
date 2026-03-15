@@ -2,6 +2,7 @@
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
 .. include:: _links.rst
+.. _availability:
 
 Psutil documentation
 ====================
