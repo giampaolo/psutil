@@ -200,3 +200,44 @@ div.body div.admonition, div.body div.impl-detail {
     width: 20px !important;
     vertical-align: middle;
 }
+
+/* ================================================================== */
+/* versionadded / versionchanged / deprecated - like python doc */
+/* ================================================================== */
+
+div.versionadded,
+div.versionchanged,
+div.deprecated {
+    border-left: 3px solid;
+    padding: 0 1rem;
+}
+
+div.versionadded {
+    border-left-color: rgb(79, 196, 100);
+}
+
+div.versionchanged {
+    border-left-color: rgb(244, 227, 76);
+}
+
+div.deprecated {
+    border-left-color: rgb(244, 76, 78);
+}
+
+div.versionadded .versionmodified {
+    color: rgb(41, 100, 51);
+}
+
+div.versionchanged .versionmodified {
+    color: rgb(133, 72, 38);
+}
+
+div.deprecated .versionmodified {
+    color: rgb(159, 49, 51);
+}
+
+div.tip {
+    background-color: #dfd !important;
+    border: 1px solid green !important;
+    border-radius: 3px !important;
+}

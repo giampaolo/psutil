@@ -41,15 +41,14 @@ CPU
   - **guest_nice** *(Linux)*: time spent running a niced guest
     (virtual CPU for guest operating systems under the control of the Linux
     kernel)
-  - **interrupt** *(Windows)*: time spent for servicing hardware interrupts (
-    similar to "irq" on UNIX)
+  - **interrupt** *(Windows)*: time spent for servicing hardware interrupts
+    (similar to "irq" on UNIX)
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
   When *percpu* is ``True`` return a list of named tuples for each logical CPU
   on the system.
-  First element of the list refers to first CPU, second element to second CPU
-  and so on.
+  The list is ordered by CPU index.
   The order of the list is consistent across calls.
   Example output on Linux:
 
@@ -57,7 +56,8 @@ CPU
     >>> psutil.cpu_times()
     scputimes(user=17411.7, system=3797.02, idle=51266.57, nice=77.99, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
-  .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
+  .. versionchanged:: 4.1.0
+     added *interrupt* and *dpc* fields on Windows.
 
   .. versionchanged:: 8.0.0
      ``cpu_times()`` field order was standardized: ``user``, ``system``,
@@ -87,8 +87,8 @@ CPU
   at least ``0.1`` seconds between calls.
   When *percpu* is ``True`` returns a list of floats representing the
   utilization as a percentage for each CPU.
-  First element of the list refers to first CPU, second element to second CPU
-  and so on. The order of the list is consistent across calls.
+  The list is ordered by CPU index. The order of the list is consistent across
+  calls.
   Internally this function maintains a global map (a dict) where each key is
   the ID of the calling thread (`threading.get_ident`_). This means it can be
   called from different threads, at different intervals, and still return
@@ -111,7 +111,8 @@ CPU
     it will return a meaningless ``0.0`` value which you are supposed to
     ignore.
 
-  .. versionchanged:: 5.9.6 function is now thread safe.
+  .. versionchanged:: 5.9.6
+     the function is now thread safe.
 
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
@@ -128,10 +129,11 @@ CPU
     ``None`` it will return a meaningless ``0.0`` value which you are supposed
     to ignore.
 
-  .. versionchanged::
-    4.1.0 two new *interrupt* and *dpc* fields are returned on Windows.
+  .. versionchanged:: 4.1.0
+     two new *interrupt* and *dpc* fields are returned on Windows.
 
-  .. versionchanged:: 5.9.6 function is now thread safe.
+  .. versionchanged:: 5.9.6
+     function is now thread safe.
 
 .. function:: cpu_count(logical=True)
 
@@ -218,9 +220,11 @@ CPU
 
     .. versionadded:: 5.1.0
 
-    .. versionchanged:: 5.5.1 added FreeBSD support.
+    .. versionchanged:: 5.5.1
+       added FreeBSD support.
 
-    .. versionchanged:: 5.9.1 added OpenBSD support.
+    .. versionchanged:: 5.9.1
+       added OpenBSD support.
 
 .. function:: getloadavg()
 
@@ -232,7 +236,7 @@ CPU
     background and updates results every 5 seconds, mimicking the UNIX behavior.
     Thus, on Windows, the first time this is called and for the next 5 seconds
     it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
-    The numbers returned only make sense if related to the number of CPU cores
+    The numbers returned only make sense when compared to the number of CPU cores
     installed on the system. So, for instance, a value of `3.14` on a system
     with 10 logical CPUs means that the system load was 31.4% percent over the
     last N minutes.
@@ -306,7 +310,7 @@ Memory
      - On Windows, **total**, **used** ("In use"), and **available** match
        the Task Manager (Performance > Memory tab).
 
-  Follows a table showing implementation details. All info on Linux are retrieved from `/proc/meminfo`.
+  Below is a table showing implementation details. All info on Linux is retrieved from `/proc/meminfo`.
 
   .. list-table::
      :header-rows: 1
@@ -386,15 +390,17 @@ Memory
   >>>
 
   .. note:: if you just want to know how much physical memory is left in a
-    cross platform fashion simply rely on **available** and **percent**
+    cross-platform manner, simply rely on **available** and **percent**
     fields.
 
   .. note::  see `meminfo.py`_ script providing an example on how to convert
     bytes in a human readable form.
 
-  .. versionchanged:: 4.2.0 added *shared* metric on Linux.
+  .. versionchanged:: 4.2.0
+     added *shared* metric on Linux.
 
-  .. versionchanged:: 5.4.4 added *slab* metric on Linux.
+  .. versionchanged:: 5.4.4
+     added *slab* metric on Linux.
 
 .. function:: swap_memory()
 
@@ -424,8 +430,9 @@ Memory
     >>> psutil.swap_memory()
     sswap(total=2097147904L, used=886620160L, free=1210527744L, percent=42.3, sin=1050411008, sout=1906720768)
 
-  .. versionchanged:: 5.2.3 on Linux this function relies on /proc fs instead
-     of sysinfo() syscall so that it can be used in conjunction with
+  .. versionchanged:: 5.2.3
+     on Linux this function relies on /proc fs instead of sysinfo() syscall so
+     that it can be used in conjunction with
      :const:`psutil.PROCFS_PATH` in order to retrieve memory info about
      Linux containers such as Docker and Heroku.
 
@@ -458,9 +465,11 @@ Disks
   [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
    sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
-  .. versionchanged:: 5.7.4 added *maxfile* and *maxpath* fields
+  .. versionchanged:: 5.7.4
+     added *maxfile* and *maxpath* fields.
 
-  .. versionchanged:: 6.0.0 removed *maxfile* and *maxpath* fields
+  .. versionchanged:: 6.0.0
+     removed *maxfile* and *maxpath* fields.
 
 .. function:: disk_usage(path)
 
@@ -486,8 +495,8 @@ Disks
     it to be.
     Also note that both 4 values match "df" cmdline utility.
 
-  .. versionchanged::
-    4.3.0 *percent* value takes root reserved space into account.
+  .. versionchanged:: 4.3.0
+     *percent* value takes root reserved space into account.
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
@@ -539,16 +548,16 @@ Disks
     on Windows ``"diskperf -y"`` command may need to be executed first
     otherwise this function won't find any disk.
 
-  .. versionchanged::
-    5.3.0 numbers no longer wrap (restart from zero) across calls thanks to new
+  .. versionchanged:: 5.3.0
+     numbers no longer wrap (restart from zero) across calls thanks to new
     *nowrap* argument.
 
-  .. versionchanged::
-    4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
+  .. versionchanged:: 4.0.0
+     added *busy_time* (Linux, FreeBSD), *read_merged_count* and
     *write_merged_count* (Linux) fields.
 
-  .. versionchanged::
-    4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
+  .. versionchanged:: 4.0.0
+     NetBSD no longer has *read_time* and *write_time* fields.
 
 Network
 ^^^^^^^
@@ -591,9 +600,9 @@ Network
 
   Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
 
-  .. versionchanged::
-    5.3.0 numbers no longer wrap (restart from zero) across calls thanks to new
-    *nowrap* argument.
+  .. versionchanged:: 5.3.0
+     numbers no longer wrap (restart from zero) across calls thanks to new
+     *nowrap* argument.
 
 .. function:: net_connections(kind='inet')
 
@@ -684,16 +693,19 @@ Network
 
   .. versionadded:: 2.1.0
 
-  .. versionchanged:: 5.3.0 : socket "fd" is now set for real instead of being
-     ``-1``.
+  .. versionchanged:: 5.3.0
+     socket "fd" is now set for real instead of being ``-1``.
 
-  .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
+  .. versionchanged:: 5.3.0
+    *laddr* and *raddr* are named tuples.
 
-  .. versionchanged:: 5.9.5 : OpenBSD: retrieve *laddr* path for AF_UNIX
-    sockets (before it was an empty string).
+  .. versionchanged:: 5.9.5
+     OpenBSD: retrieve *laddr* path for AF_UNIX sockets (before it was an empty
+     string).
 
-  .. versionchanged:: 8.0.0 *status* field is now a
-    :class:`psutil.ConnectionStatus` enum member instead of a plain ``str``.
+  .. versionchanged:: 8.0.0
+     *status* field is now a :class:`psutil.ConnectionStatus` enum member
+     instead of a plain ``str``.
 
 .. function:: net_if_addrs()
 
@@ -739,13 +751,14 @@ Network
 
   .. versionadded:: 3.0.0
 
-  .. versionchanged:: 3.2.0 *ptp* field was added.
+  .. versionchanged:: 3.2.0
+     *ptp* field was added.
 
-  .. versionchanged:: 4.4.0 added support for *netmask* field on Windows which
-    is no longer ``None``.
+  .. versionchanged:: 4.4.0
+     added support for *netmask* field on Windows which is no longer ``None``.
 
-  .. versionchanged:: 7.0.0 added support for *broadcast* field on Windows
-    which is no longer ``None``.
+  .. versionchanged:: 7.0.0
+     added support for *broadcast* field on Windows which is no longer ``None``.
 
 .. function:: net_if_stats()
 
@@ -758,7 +771,7 @@ Network
   - **duplex**: the duplex communication type;
     it can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
     :const:`NIC_DUPLEX_UNKNOWN`.
-  - **speed**: the NIC speed expressed in mega bits (MB), if it can't be
+  - **speed**: the NIC speed expressed in megabits (Mbps), if it can't be
     determined (e.g. 'localhost') it will be set to ``0``.
   - **mtu**: NIC's maximum transmission unit expressed in bytes.
   - **flags**: a string of comma-separated flags on the interface (may be an empty string).
@@ -781,9 +794,11 @@ Network
 
   .. versionadded:: 3.0.0
 
-  .. versionchanged:: 5.7.3 `isup` on UNIX also checks whether the NIC is running.
+  .. versionchanged:: 5.7.3
+     `isup` on UNIX also checks whether the NIC is running.
 
-  .. versionchanged:: 5.9.3 *flags* field was added on POSIX.
+  .. versionchanged:: 5.9.3
+     *flags* field was added on POSIX.
 
 Sensors
 ^^^^^^^
@@ -823,7 +838,8 @@ Sensors
 
   .. versionadded:: 5.1.0
 
-  .. versionchanged:: 5.5.0 added FreeBSD support
+  .. versionchanged:: 5.5.0
+     added FreeBSD support.
 
 .. function:: sensors_fans()
 
@@ -876,11 +892,12 @@ Sensors
 
   See also `battery.py`_  and `sensors.py`_ for an example application.
 
-  Availability: Linux, Windows, FreeBSD
+  Availability: Linux, Windows, macOS, FreeBSD
 
   .. versionadded:: 5.1.0
 
-  .. versionchanged:: 5.4.2 added macOS support
+  .. versionchanged:: 5.4.2
+     added macOS support.
 
 ----
 
@@ -927,8 +944,8 @@ Other system info
     [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
      suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
 
-  .. versionchanged::
-    5.3.0 added "pid" field
+  .. versionchanged:: 5.3.0
+     added "pid" field.
 
 ----
 
@@ -948,8 +965,8 @@ Functions
   >>> psutil.pids()
   [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
 
-  .. versionchanged::
-    5.6.0 PIDs are returned in sorted order
+  .. versionchanged:: 5.6.0
+     PIDs are returned in sorted order.
 
 .. function:: process_iter(attrs=None, ad_value=None)
 
@@ -994,14 +1011,14 @@ Functions
 
     >>> psutil.process_iter.cache_clear()
 
-  .. versionchanged::
-    5.3.0 added "attrs" and "ad_value" parameters.
+  .. versionchanged:: 5.3.0
+     added "attrs" and "ad_value" parameters.
 
-  .. versionchanged::
-    6.0.0 no longer checks whether each yielded process PID has been reused.
+  .. versionchanged:: 6.0.0
+     no longer checks whether each yielded process PID has been reused.
 
-  .. versionchanged::
-    6.0.0 added ``psutil.process_iter.cache_clear()`` API.
+  .. versionchanged:: 6.0.0
+     added ``psutil.process_iter.cache_clear()`` API.
 
 .. function:: pid_exists(pid)
 
@@ -1094,7 +1111,7 @@ Process class
   Raise :class:`NoSuchProcess` if *pid* does not exist.
   On Linux *pid* can also refer to a thread ID (the *id* field returned by
   :meth:`threads` method).
-  When accessing methods of this class always be  prepared to catch
+  When calling methods of this class, always be prepared to catch
   :class:`NoSuchProcess` and :class:`AccessDenied` exceptions.
   `hash`_ builtin can be used against instances of this class in order to
   identify a process univocally over time (the hash is determined by mixing
@@ -1214,8 +1231,9 @@ Process class
 
   .. method:: ppid()
 
-    The process parent PID.  On Windows the return value is cached after first
-    call. Not on POSIX because ppid may change if process becomes a zombie
+    The process parent PID. On Windows the return value is cached after the
+    first call. On POSIX it is not cached because the ppid may change if the
+    process becomes a zombie.
     See also :meth:`parent` and :meth:`parents` methods.
 
   .. method:: name()
@@ -1237,7 +1255,7 @@ Process class
 
   .. method:: cmdline()
 
-    The command line this process has been called with as a list of strings.
+    The command line used to start this process, as a list of strings.
     The return value is not cached because the cmdline of a process may change.
 
     >>> import psutil
@@ -1259,9 +1277,15 @@ Process class
       `other specific circumstances <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321>`_).
 
     .. versionadded:: 4.0.0
-    .. versionchanged:: 5.3.0 added SunOS support
-    .. versionchanged:: 5.6.3 added AIX support
-    .. versionchanged:: 5.7.3 added BSD support
+
+    .. versionchanged:: 5.3.0
+       added SunOS support.
+
+    .. versionchanged:: 5.6.3
+       added AIX support.
+
+    .. versionchanged:: 5.7.3
+       added BSD support.
 
   .. method:: create_time()
 
@@ -1302,12 +1326,13 @@ Process class
       >>> list(psutil.Process().as_dict().keys())
       ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
-    .. versionchanged::
-      3.0.0 *ad_value* is used also when incurring into
-      :class:`ZombieProcess` exception, not only :class:`AccessDenied`
+    .. versionchanged:: 3.0.0
+       *ad_value* is used also when incurring into :class:`ZombieProcess`
+       exception, not only :class:`AccessDenied`.
 
-     .. versionchanged:: 4.5.0 :meth:`as_dict` is considerably faster thanks
-        to :meth:`oneshot` context manager.
+    .. versionchanged:: 4.5.0
+       :meth:`as_dict` is considerably faster thanks to :meth:`oneshot`
+       context manager.
 
   .. method:: parent()
 
@@ -1330,8 +1355,9 @@ Process class
     The returned value is one of the
     `psutil.STATUS_* <#process-status-constants>`_ constants.
 
-    .. versionchanged:: 8.0.0 return value is now a :class:`psutil.ProcessStatus`
-      enum member instead of a plain ``str``.
+    .. versionchanged:: 8.0.0
+       return value is now a :class:`psutil.ProcessStatus` enum member instead
+       of a plain ``str``.
 
   .. method:: cwd()
 
@@ -1339,7 +1365,8 @@ Process class
     determined for some internal reason (e.g. system process or directory no
     longer exists) it may return an empty string.
 
-    .. versionchanged:: 5.6.4 added support for NetBSD
+    .. versionchanged:: 5.6.4
+       added support for NetBSD.
 
   .. method:: username()
 
@@ -1391,8 +1418,9 @@ Process class
 
       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
-    .. versionchanged:: 8.0.0 on Windows, return value is now a
-      :class:`psutil.ProcessPriority` enum member.
+    .. versionchanged:: 8.0.0
+       on Windows, return value is now a :class:`psutil.ProcessPriority` enum
+       member.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1439,10 +1467,11 @@ Process class
 
     Availability: Linux, Windows Vista+
 
-    .. versionchanged:: 5.6.2 Windows accepts new ``IOPRIO_*`` constants.
+    .. versionchanged:: 5.6.2
+       Windows accepts new ``IOPRIO_*`` constants.
 
-    .. versionchanged:: 8.0.0 *ioclass* is now a
-      :class:`psutil.ProcessIOPriority` enum member.
+    .. versionchanged:: 8.0.0
+       *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -1467,7 +1496,8 @@ Process class
 
     Availability: Linux, FreeBSD
 
-    .. versionchanged:: 5.7.3 added FreeBSD support
+    .. versionchanged:: 5.7.3
+       added FreeBSD support.
 
   .. method:: io_counters()
 
@@ -1511,12 +1541,13 @@ Process class
 
     Availability: Linux, BSD, Windows, AIX
 
-    .. versionchanged:: 5.2.0 added *read_chars* and *write_chars* on Linux;
-      added *other_count* and *other_bytes* on Windows.
+    .. versionchanged:: 5.2.0
+       added *read_chars* + *write_chars* on Linux and  *other_count* +
+       *other_bytes* on Windows.
 
   .. method:: num_ctx_switches()
 
-    The number voluntary and involuntary context switches performed by
+    The number of voluntary and involuntary context switches performed by
     this process (cumulative).
 
     .. note::
@@ -1524,7 +1555,8 @@ Process class
       *voluntary* value reflect the total number of context switches (voluntary
       + involuntary). This is a limitation of the OS.
 
-    .. versionchanged:: 5.4.1 added AIX support
+    .. versionchanged:: 5.4.1
+       added AIX support.
 
   .. method:: num_fds()
 
@@ -1579,11 +1611,11 @@ Process class
     >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
     0.70
 
-    .. versionchanged::
-      4.1.0 return two extra fields: *children_user* and *children_system*.
+    .. versionchanged:: 4.1.0
+       return two extra fields: *children_user* and *children_system*.
 
-    .. versionchanged::
-      5.6.4 added *iowait* on Linux.
+    .. versionchanged:: 5.6.4
+       added *iowait* on Linux.
 
   .. method:: cpu_percent(interval=None)
 
@@ -1595,8 +1627,8 @@ Process class
     or ``None`` compares process times to system CPU times elapsed since last
     call, returning immediately. That means the first time this is called it
     will return a meaningless ``0.0`` value which you are supposed to ignore.
-    In this case is recommended for accuracy that this function be called a
-    second time with at least ``0.1`` seconds between calls.
+    For accuracy, it is recommended to call this function a second time with
+    at least ``0.1`` seconds between calls.
     Example:
 
       >>> import psutil
@@ -1659,9 +1691,11 @@ Process class
 
     Availability: Linux, Windows, FreeBSD
 
-    .. versionchanged:: 2.2.0 added support for FreeBSD
-    .. versionchanged:: 5.1.0 an empty list can be passed to set affinity
-      against all eligible CPUs.
+    .. versionchanged:: 2.2.0
+       added support for FreeBSD.
+
+    .. versionchanged:: 5.1.0
+       an empty list can be passed to set affinity against all eligible CPUs.
 
   .. method:: cpu_num()
 
@@ -1749,28 +1783,27 @@ Process class
       >>> p.memory_info()
       pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, data=9891840)
 
-    .. versionchanged::
-      4.0.0 multiple fields are returned, not only *rss* and *vms*.
+    .. versionchanged:: 4.0.0
+       multiple fields are returned, not only *rss* and *vms*.
 
-    .. versionchanged::
-      8.0.0 Linux: *lib* and *dirty* removed (always 0 since Linux 2.6).
-      Deprecated aliases returning 0 and emitting `DeprecationWarning` are
-      kept.
+    .. versionchanged:: 8.0.0
+       Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
+       aliases returning 0 and emitting `DeprecationWarning` are kept.
 
-    .. versionchanged::
-      8.0.0 macOS: *pfaults* and *pageins* removed with **no backward-compat
-      aliases**. Use :meth:`page_faults` instead.
+    .. versionchanged:: 8.0.0
+       macOS: *pfaults* and *pageins* removed with **no backward-compat
+       aliases**. Use :meth:`page_faults` instead.
 
-    .. versionchanged::
-      8.0.0 Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
-      *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*,
-      *num_page_faults* → :meth:`page_faults` method. At the same time
-      *paged_pool*, *nonpaged_pool*, *peak_paged_pool*, *peak_nonpaged_pool*
-      were moved to :meth:`memory_info_ex`. All these old names still work but
-      raise `DeprecationWarning`.
+    .. versionchanged:: 8.0.0
+       Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
+       *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* →
+       *peak_vms*, *num_page_faults* → :meth:`page_faults` method. At the same
+       time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
+       *peak_nonpaged_pool* were moved to :meth:`memory_info_ex`. All these old
+       names still work but raise `DeprecationWarning`.
 
-    .. versionchanged::
-      8.0.0 BSD: added *peak_rss*.
+    .. versionchanged:: 8.0.0
+       BSD: added *peak_rss*.
 
     .. warning::
       in version 8.0.0 the named tuple changed size and field order. Positional
@@ -1886,13 +1919,13 @@ Process class
 
   .. method:: memory_full_info()
 
-    This method returns the same information as :meth:`memory_info` plus
-    :meth:`memory_footprint` in a single named tuple.
+    This deprecated method returns the same information as :meth:`memory_info`
+    plus :meth:`memory_footprint` in a single named tuple.
 
     .. versionadded:: 4.0.0
 
-    .. warning::
-      deprecated in version 8.0.0; use :meth:`memory_footprint` instead.
+    .. deprecated:: 8.0.0
+       use :meth:`memory_footprint` instead.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -1902,7 +1935,8 @@ Process class
     :meth:`memory_info_ex`, or :meth:`memory_footprint` and controls which
     memory value is used in the calculation (defaults to ``"rss"``).
 
-    .. versionchanged:: 4.0.0 added `memtype` parameter.
+    .. versionchanged:: 4.0.0
+       added `memtype` parameter.
 
   .. method:: memory_maps(grouped=True)
 
@@ -1972,9 +2006,9 @@ Process class
 
     Availability: Linux, Windows, FreeBSD, SunOS
 
-    .. versionchanged::
-      5.6.0 removed macOS support because inherently broken (see
-      issue `#1291 <https://github.com/giampaolo/psutil/issues/1291>`_)
+    .. versionchanged:: 5.6.0
+       removed macOS support because inherently broken (see issue `#1291
+       <https://github.com/giampaolo/psutil/issues/1291>`_)
 
   .. method:: children(recursive=False)
 
@@ -1999,7 +2033,7 @@ Process class
 
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
-    This concept is well summaried by this
+    This concept is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
     See also how to `kill a process tree <#kill-process-tree>`_ and
     `terminate my children <#terminate-my-children>`_.
@@ -2068,11 +2102,11 @@ Process class
       kernel bug, hence it's not reliable
       (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
-    .. versionchanged::
-      3.1.0 no longer hangs on Windows.
+    .. versionchanged:: 3.1.0
+       no longer hangs on Windows.
 
-    .. versionchanged::
-      4.1.0 new *position*, *mode* and *flags* fields on Linux.
+    .. versionchanged:: 4.1.0
+       new *position*, *mode* and *flags* fields on Linux.
 
   .. method:: net_connections(kind="inet")
 
@@ -2161,20 +2195,22 @@ Process class
       (AIX) :class:`psutil.AccessDenied` is always raised unless running
       as root (lsof does the same).
 
-    .. versionchanged:: 5.3.0 : *laddr* and *raddr* are named tuples.
+    .. versionchanged:: 5.3.0
+       *laddr* and *raddr* are named tuples.
 
-    .. versionchanged:: 6.0.0 : method renamed from `connections` to
-      `net_connections`.
+    .. versionchanged:: 6.0.0
+       method renamed from `connections` to `net_connections`.
 
-    .. versionchanged:: 8.0.0 *status* field is now a
-      :class:`psutil.ConnectionStatus` enum member instead of a plain ``str``.
+    .. versionchanged:: 8.0.0
+       *status* field is now a :class:`psutil.ConnectionStatus` enum member
+       instead of a plain ``str``.
 
   .. method:: connections()
 
     Same as :meth:`net_connections` (deprecated).
 
-    .. warning::
-      deprecated in version 6.0.0; use :meth:`net_connections` instead.
+    .. deprecated:: 6.0.0
+       use :meth:`net_connections` instead.
 
   .. method:: is_running()
 
@@ -2189,9 +2225,9 @@ Process class
       this will return ``True`` also if the process is a zombie
       (``p.status() == psutil.STATUS_ZOMBIE``).
 
-    .. versionchanged:: 6.0.0 : automatically remove process from
-      :func:`process_iter()` internal cache if PID has been reused by another
-      process.
+    .. versionchanged:: 6.0.0
+       automatically remove process from :func:`process_iter()` internal cache
+       if PID has been reused by another process.
 
   .. method:: send_signal(signal)
 
@@ -2203,9 +2239,9 @@ Process class
     See also how to `kill a process tree <#kill-process-tree>`_ and
     `terminate my children <#terminate-my-children>`_.
 
-    .. versionchanged::
-      3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows
-      was added.
+    .. versionchanged:: 3.2.0
+       support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows was
+       added.
 
   .. method:: suspend()
 
@@ -2283,18 +2319,20 @@ Process class
       busy loop (non-blocking call and short sleeps).
 
     .. versionchanged:: 5.7.2
-      if *timeout* is not ``None``, use efficient event-driven implementation
-      on Linux >= 5.3 and macOS / BSD.
+       if *timeout* is not ``None``, use efficient event-driven implementation
+       on Linux >= 5.3 and macOS / BSD.
 
-    .. versionchanged:: 5.7.1 return value is cached (instead of returning
-      ``None``).
+    .. versionchanged:: 5.7.1
+       return value is cached (instead of returning ``None``).
 
-    .. versionchanged:: 5.7.1 on POSIX, in case of negative signal, return it
-      as a human readable `enum`_.
+    .. versionchanged:: 5.7.1
+       on POSIX, in case of negative signal, return it as a human readable
+       `enum`_.
 
-    .. versionchanged:: 7.2.2 on Linux >= 5.3 + Python >= 3.9 and macOS/BSD,
-      use `os.pidfd_open`_ and `select.kqueue`_ respectively, instead of less
-      efficient busy-loop polling.
+    .. versionchanged:: 7.2.2
+       on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use `os.pidfd_open`_ and
+       `select.kqueue`_ respectively, instead of less efficient busy-loop
+       polling.
 
 ----
 
@@ -2327,7 +2365,8 @@ Popen class
   0
   >>>
 
-  .. versionchanged:: 4.4.0 added context manager support
+  .. versionchanged:: 4.4.0
+     added context manager support.
 
 ----
 
@@ -2348,8 +2387,10 @@ steadily across iterations, the C code is likely retaining memory it should be
 releasing. This provides an allocator-level way to spot native leaks that
 Python's memory tracking misses.
 
-Check out `psleak`_ project to see a practical example of how these APIs can be
-used to detect memory leaks in C extensions.
+.. tip::
+
+  Check out `psleak`_ project to see a practical example of how these APIs can be
+  used to detect memory leaks in C extensions.
 
 .. function:: heap_info()
 
@@ -2592,14 +2633,16 @@ Operating system constants
   :const:`WINDOWS` constant will be ``True``, all others will be ``False``.
 
   .. versionadded:: 4.0.0
-  .. versionchanged:: 5.4.0 added AIX
+
+  .. versionchanged:: 5.4.0
+     added AIX.
 
 .. data:: OSX
 
   Alias for :const:`MACOS`.
 
-  .. warning::
-    deprecated in version 5.4.7; use :const:`MACOS` instead.
+  .. deprecated:: 5.4.7
+     use :const:`MACOS` instead.
 
 Process status constants
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2624,9 +2667,12 @@ Process status constants
   These constants are members of the :class:`psutil.ProcessStatus` enum.
 
   .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
+
   .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
-  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessStatus`
-    enum members (were plain strings).
+
+  .. versionchanged:: 8.0.0
+     constants are now :class:`psutil.ProcessStatus` enum members (were plain
+     strings).
 
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2646,8 +2692,9 @@ Process priority constants
 
   Availability: Windows
 
-  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessPriority`
-    enum members (were plain integers).
+  .. versionchanged:: 8.0.0
+     constants are now :class:`psutil.ProcessPriority` enum members (were plain
+     integers).
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2672,9 +2719,9 @@ Process priority constants
 
   Availability: Linux
 
-  .. versionchanged:: 8.0.0 constants are now
-    :class:`psutil.ProcessIOPriority` enum members (previously
-    ``IOPriority`` enum).
+  .. versionchanged:: 8.0.0
+     constants are now :class:`psutil.ProcessIOPriority` enum members
+     (previously ``IOPriority`` enum).
 
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
@@ -2690,9 +2737,10 @@ Process priority constants
   Availability: Windows
 
   .. versionadded:: 5.6.2
-  .. versionchanged:: 8.0.0 constants are now
-    :class:`psutil.ProcessIOPriority` enum members (previously
-    ``IOPriority`` enum).
+
+  .. versionchanged:: 8.0.0
+     constants are now :class:`psutil.ProcessIOPriority` enum members
+     (previously ``IOPriority`` enum).
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2733,10 +2781,13 @@ These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
 Availability: Linux, FreeBSD
 
-.. versionchanged:: 5.7.3 added FreeBSD support, added ``RLIMIT_SWAP``,
-  ``RLIMIT_SBSIZE``, ``RLIMIT_NPTS``.
-.. versionchanged:: 8.0.0 constants are now :class:`psutil.ProcessRlimit`
-  enum members (were plain integers).
+.. versionchanged:: 5.7.3
+   added FreeBSD support, added ``RLIMIT_SWAP``, ``RLIMIT_SBSIZE``,
+   ``RLIMIT_NPTS``.
+
+.. versionchanged:: 8.0.0
+   constants are now :class:`psutil.ProcessRlimit` enum members (were plain
+   integers).
 
 Connections constants
 ^^^^^^^^^^^^^^^^^^^^^
@@ -2763,8 +2814,9 @@ Connections constants
   :func:`psutil.net_connections` (`status` field).
   These constants are members of the :class:`psutil.ConnectionStatus` enum.
 
-  .. versionchanged:: 8.0.0 constants are now :class:`psutil.ConnectionStatus`
-    enum members (were plain strings).
+  .. versionchanged:: 8.0.0
+     constants are now :class:`psutil.ConnectionStatus` enum members (were
+     plain strings).
 
 Hardware constants
 ^^^^^^^^^^^^^^^^^^
@@ -2819,8 +2871,12 @@ Other constants
   Availability: Linux, Solaris, AIX
 
   .. versionadded:: 3.2.3
-  .. versionchanged:: 3.4.2 also available on Solaris.
-  .. versionchanged:: 5.4.0 also available on AIX.
+
+  .. versionchanged:: 3.4.2
+     also available on Solaris.
+
+  .. versionchanged:: 5.4.0
+     also available on AIX.
 
 .. _const-version-info:
 .. data:: version_info

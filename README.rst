@@ -70,10 +70,10 @@ Summary
 =======
 
 psutil (process and system utilities) is a cross-platform library for
-retrieving information on **running processes** and **system utilization**
+retrieving information about **running processes** and **system utilization**
 (CPU, memory, disks, network, sensors) in Python.
-It is useful mainly for **system monitoring**, **profiling and limiting process
-resources** and **management of running processes**.
+It is useful mainly for **system monitoring**, **profiling**, **limiting
+process resources**, and **managing running processes**.
 It implements many functionalities offered by classic UNIX command line tools
 such as *ps, top, iotop, lsof, netstat, ifconfig, free* and others.
 psutil currently supports the following platforms:
@@ -84,10 +84,6 @@ psutil currently supports the following platforms:
 - **FreeBSD, OpenBSD**, **NetBSD**
 - **Sun Solaris**
 - **AIX**
-
-Supported Python versions are cPython 3.7+ and `PyPy <https://pypy.org/>`_.
-Latest psutil version supporting Python 2.7 is
-`psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_.
 
 .. <PYPI-EXCLUDE>
 
@@ -123,7 +119,7 @@ Sponsors
 Funding
 =======
 
-While psutil is free software and will always be, the project would benefit
+While psutil is free software and will always remain so, the project would benefit
 immensely from some funding. psutil is among the `top 100`_ most-downloaded
 Python packages, and keeping up with bug reports, user support, and ongoing
 maintenance has become increasingly difficult to sustain as a one-person
@@ -141,8 +137,7 @@ Projects using psutil
 psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 280+
 million downloads per month, `760,000+ GitHub repositories
 <https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
-14,000+ packages depending on it. The projects below are a small sample of
-notable software that depends on it. Some notable projects using psutil:
+14,000+ packages depending on it. Some notable projects using psutil:
 
 - `TensorFlow <https://github.com/tensorflow/tensorflow>`_,
   `PyTorch <https://github.com/pytorch/pytorch>`_,
@@ -162,8 +157,8 @@ notable software that depends on it. Some notable projects using psutil:
 
 
 
-Portings
-========
+Ports
+=====
 
 - Go: `gopsutil <https://github.com/shirou/gopsutil>`_
 - C: `cpslib <https://github.com/hamon-in/cpslib>`_

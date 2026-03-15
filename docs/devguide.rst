@@ -69,9 +69,9 @@ Debug mode
 
 If you want to debug unusual situations or want to report a bug, it may be
 useful to enable debug mode via ``PSUTIL_DEBUG`` environment variable. In this
-mode, psutil may (or may not) print additional information to stderr. Usually
-these are error conditions which are not severe, and hence are ignored (instead
-of crashing). Unit tests automatically run with debug mode enabled. On UNIX:
+mode, psutil may print additional information to stderr. Usually these are
+non-severe error conditions that are ignored instead of causing a crash.
+Unit tests automatically run with debug mode enabled. On UNIX:
 
 ::
 
@@ -155,7 +155,7 @@ Continuous integration
 ----------------------
 
 Unit tests are automatically run on every ``git push`` on all platforms except
-AIX. See config files in  `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_
+AIX. See config files in the `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_
 directory.
 
 Documentation

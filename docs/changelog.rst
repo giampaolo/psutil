@@ -97,7 +97,7 @@ Others:
   ``user, system, idle``. See compatibility notes below.
 - :gh:`2754`: standardize :func:`sensors_battery()`'s `percent` so that it
   returns a `float` instead of `int` on all systems, not only Linux.
-- :gh:2765: add a PR bot that uses Claude to summarize PR changes and update
+- :gh:`2765`: add a PR bot that uses Claude to summarize PR changes and update
   changelog.rst and credits.rst when commenting with /changelog.
 
 **Bug fixes**
