@@ -6,8 +6,7 @@
 
 """This gets executed on 'git commit' and rejects the commit in case
 the submitted code does not pass validation. Validation is run only
-against the files which were modified in the commit. Install this with
-"make install-git-hooks".
+against the files which were modified in the commit.
 """
 
 import os

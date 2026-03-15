@@ -92,9 +92,6 @@ Coding style
 All style and formatting checks are automatically enforced both **locally on
 each `git commit`** and **remotely via a GitHub Actions pipeline**.
 
-- A **Git commit hook**, installed with `make install-git-hooks`, runs all
-  formatters and linters before each commit. The commit is rejected if any
-  check fails.
 - **Python** code follows the `PEP-8`_ style guide. We use `black` and `ruff`
   for formatting and linting.
 - **C** code generally follows the `PEP-7`_ style guide, with formatting
