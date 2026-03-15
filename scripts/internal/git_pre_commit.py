@@ -115,12 +115,12 @@ def clang_format(files):
     )
 
 
-def toml_sort(files):
+def lint_toml(files):
     run_cmd(["toml-sort", "--check"], files, "toml-sort", fixer="fix-toml")
 
 
-def rstcheck(files):
-    run_cmd(["rstcheck", "--config=pyproject.toml"], files, "rstcheck")
+def lint_rst(files):
+    run_cmd(["sphinx-lint"], files, "sphinx-lint")
 
 
 def dprint():
@@ -148,8 +148,8 @@ def main():
     black(py)
     ruff(py)
     clang_format(c)
-    rstcheck(rst)
-    toml_sort(toml)
+    lint_rst(rst)
+    lint_toml(toml)
     dprint()
 
     if new_rm_mv:

@@ -180,7 +180,7 @@ dprint:
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml --log-level ERROR
+	@git ls-files '*.rst' | xargs sphinx-lint
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@git ls-files '*.toml' | xargs toml-sort --check
@@ -231,7 +231,7 @@ fix-all:  ## Run all code fixers.
 # ===================================================================
 
 ci-lint:  ## Run all linters on GitHub CI.
-	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
+	$(PYTHON) -m pip install -U black ruff sphinx-lint toml-sort sphinx
 	curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version
