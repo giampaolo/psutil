@@ -1,4 +1,4 @@
-# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Copyright (c) 2009, Giampaolo Rodola. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -21,17 +21,16 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 def get_version():
-    INIT = os.path.abspath(os.path.join(HERE, '../psutil/__init__.py'))
-    with open(INIT) as f:
-        for line in f:
-            if line.startswith('__version__'):
-                ret = ast.literal_eval(line.strip().split(' = ')[1])
-                assert ret.count('.') == 2, ret
-                for num in ret.split('.'):
-                    assert num.isdigit(), ret
-                return ret
-        msg = "couldn't find version string"
-        raise ValueError(msg)
+    path = os.path.join(HERE, "..", "psutil", "__init__.py")
+    with open(path) as f:
+        mod = ast.parse(f.read())
+    for node in mod.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if getattr(target, "id", None) == "__version__":
+                    return ast.literal_eval(node.value)
+    msg = "could not find __version__"
+    raise RuntimeError(msg)
 
 
 VERSION = get_version()
@@ -69,7 +68,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 master_doc = 'index'
 
-language = "eng"
+language = "en"
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 pygments_style = 'sphinx'
 
