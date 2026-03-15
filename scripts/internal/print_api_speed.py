@@ -102,7 +102,7 @@ def print_timings():
 
 
 def timecall(title, fun, *args, **kw):
-    print("{:<50}".format(title), end="")
+    print(f"{title:<50}", end="")
     sys.stdout.flush()
     t = timer()
     for n in range(TIMES):

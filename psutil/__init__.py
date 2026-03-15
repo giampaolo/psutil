@@ -402,7 +402,7 @@ class Process:
             return (self.pid, self.create_time())
 
     def __str__(self):
-        info = collections.OrderedDict()
+        info = {}
         info["pid"] = self.pid
         if self._name:
             info['name'] = self._name
@@ -1624,7 +1624,7 @@ def process_iter(
 
     pmap = _pmap.copy()
     a = set(pids())
-    b = set(pmap.keys())
+    b = set(pmap)
     new_pids = a - b
     gone_pids = b - a
     for pid in gone_pids:

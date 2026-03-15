@@ -70,13 +70,13 @@ def main():
         clean_screen()
         cpus_percent = psutil.cpu_percent(percpu=True)
         for i in range(num_cpus):
-            print("CPU {:<6}".format(i), end="")
+            print(f"CPU {i:<6}", end="")
         if cpus_hidden:
             print(" (+ hidden)", end="")
 
         print()
         for _ in range(num_cpus):
-            print("{:<10}".format(cpus_percent.pop(0)), end="")
+            print(f"{cpus_percent.pop(0):<10}", end="")
         print()
 
         # processes
@@ -91,7 +91,7 @@ def main():
                     pname = procs[num].pop()
                 except IndexError:
                     pname = ""
-                print("{:<10}".format(pname[:10]), end="")
+                print(f"{pname[:10]:<10}", end="")
             print()
             curr_line += 1
             if curr_line >= shutil.get_terminal_size()[1]:

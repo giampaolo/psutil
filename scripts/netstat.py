@@ -50,10 +50,10 @@ def main():
     for p in psutil.process_iter(['pid', 'name']):
         proc_names[p.info['pid']] = p.info['name']
     for c in psutil.net_connections(kind='inet'):
-        laddr = "{}:{}".format(*c.laddr)
+        laddr = f"{c.laddr[0]}:{c.laddr[1]}"
         raddr = ""
         if c.raddr:
-            raddr = "{}:{}".format(*c.raddr)
+            raddr = f"{c.raddr[0]}:{c.raddr[1]}"
         name = proc_names.get(c.pid, '?') or ''
         line = templ.format(
             proto_map[(c.family, c.type)],

@@ -112,7 +112,7 @@ class Error(Exception):
     __module__ = 'psutil'
 
     def _infodict(self, attrs):
-        info = collections.OrderedDict()
+        info = {}
         for name in attrs:
             value = getattr(self, name, None)
             if value or (name == "pid" and value == 0):
@@ -500,7 +500,7 @@ class _WrapNumbers:
         disk disappears) this removes the entry from self.reminders.
         """
         old_dict = self.cache[name]
-        gone_keys = set(old_dict.keys()) - set(input_dict.keys())
+        gone_keys = set(old_dict) - set(input_dict)
         for gone_key in gone_keys:
             for remkey in self.reminder_keys[name][gone_key]:
                 del self.reminders[name][remkey]
@@ -706,7 +706,7 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
     try:
         color = colors[color]
     except KeyError:
-        msg = f"invalid color {color!r}; choose amongst {list(colors.keys())}"
+        msg = f"invalid color {color!r}; choose amongst {list(colors)}"
         raise ValueError(msg) from None
     attr.append(color)
     if bold:
@@ -736,10 +736,7 @@ def print_color(
         try:
             color = colors[color]
         except KeyError:
-            msg = (
-                f"invalid color {color!r}; choose between"
-                f" {list(colors.keys())!r}"
-            )
+            msg = f"invalid color {color!r}; choose between {list(colors)!r}"
             raise ValueError(msg) from None
         if bold and color <= 7:
             color += 8

@@ -6,7 +6,6 @@
 
 """Print system information. Run before CI test run."""
 
-import collections
 import datetime
 import getpass
 import locale
@@ -48,7 +47,7 @@ tests_init_mod = load_module(tests_init)
 
 
 def main():
-    info = collections.OrderedDict()
+    info = {}
 
     # python
     info['python'] = ', '.join([
@@ -107,8 +106,9 @@ def main():
 
     # metrics
     info['cpus'] = psutil.cpu_count()
-    info['loadavg'] = "{:.1f}%, {:.1f}%, {:.1f}%".format(
-        *tuple(x / psutil.cpu_count() * 100 for x in psutil.getloadavg())
+    loadavg = tuple(x / psutil.cpu_count() * 100 for x in psutil.getloadavg())
+    info['loadavg'] = (
+        f"{loadavg[0]:.1f}%, {loadavg[1]:.1f}%, {loadavg[2]:.1f}%"
     )
     mem = psutil.virtual_memory()
     info['memory'] = "{}%%, used={}, total={}".format(
