@@ -52,9 +52,11 @@ CPU
   The order of the list is consistent across calls.
   Example output on Linux:
 
-    >>> import psutil
-    >>> psutil.cpu_times()
-    scputimes(user=17411.7, system=3797.02, idle=51266.57, nice=77.99, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.cpu_times()
+     scputimes(user=17411.7, system=3797.02, idle=51266.57, nice=77.99, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
   .. versionchanged:: 4.1.0
      added *interrupt* and *dpc* fields on Windows.
@@ -94,17 +96,19 @@ CPU
   called from different threads, at different intervals, and still return
   meaningful and independent results.
 
-    >>> import psutil
-    >>> # blocking
-    >>> psutil.cpu_percent(interval=1)
-    2.0
-    >>> # non-blocking (percentage since last call)
-    >>> psutil.cpu_percent(interval=None)
-    2.9
-    >>> # blocking, per-cpu
-    >>> psutil.cpu_percent(interval=1, percpu=True)
-    [2.0, 1.0]
-    >>>
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> # blocking
+     >>> psutil.cpu_percent(interval=1)
+     2.0
+     >>> # non-blocking (percentage since last call)
+     >>> psutil.cpu_percent(interval=None)
+     2.9
+     >>> # blocking, per-cpu
+     >>> psutil.cpu_percent(interval=1, percpu=True)
+     [2.0, 1.0]
+     >>>
 
   .. warning::
     the first time this function is called with *interval* = ``0.0`` or ``None``
@@ -150,11 +154,13 @@ CPU
   ``None``.
   Example on a system having 2 cores + Hyper Threading:
 
-    >>> import psutil
-    >>> psutil.cpu_count()
-    4
-    >>> psutil.cpu_count(logical=False)
-    2
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.cpu_count()
+     4
+     >>> psutil.cpu_count(logical=False)
+     2
 
   Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
   actual number of CPUs the current process can use.
@@ -163,8 +169,10 @@ CPU
   having more than 64 CPUs.
   The number of usable CPUs can be obtained with:
 
-    >>> len(psutil.Process().cpu_affinity())
-    1
+  .. code-block:: pycon
+
+     >>> len(psutil.Process().cpu_affinity())
+     1
 
 .. function:: cpu_stats()
 
@@ -377,16 +385,18 @@ Memory
 
   Example on Linux:
 
-  >>> import psutil
-  >>> mem = psutil.virtual_memory()
-  >>> mem
-  svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
-  >>>
-  >>> THRESHOLD = 500 * 1024 * 1024  # 500MB
-  >>> if mem.available <= THRESHOLD:
-  ...     print("warning")
-  ...
-  >>>
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> mem = psutil.virtual_memory()
+     >>> mem
+     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304, slab=199348224)
+     >>>
+     >>> THRESHOLD = 500 * 1024 * 1024  # 500MB
+     >>> if mem.available <= THRESHOLD:
+     ...     print("warning")
+     ...
+     >>>
 
   .. note:: if you just want to know how much physical memory is left in a
     cross-platform manner, simply rely on **available** and **percent**
@@ -425,9 +435,11 @@ Memory
   See `meminfo.py`_ script providing an example on how to convert bytes in a
   human readable form.
 
-    >>> import psutil
-    >>> psutil.swap_memory()
-    sswap(total=2097147904L, used=886620160L, free=1210527744L, percent=42.3, sin=1050411008, sout=1906720768)
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.swap_memory()
+     sswap(total=2097147904L, used=886620160L, free=1210527744L, percent=42.3, sin=1050411008, sout=1906720768)
 
   .. versionchanged:: 5.2.3
      on Linux this function relies on /proc fs instead of sysinfo() syscall so
@@ -459,10 +471,12 @@ Disks
   * **opts**: a comma-separated string indicating different mount options for
     the drive/partition. Platform-dependent.
 
-  >>> import psutil
-  >>> psutil.disk_partitions()
-  [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
-   sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.disk_partitions()
+     [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
+      sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
   .. versionchanged:: 5.7.4
      added *maxfile* and *maxpath* fields.
@@ -480,9 +494,11 @@ Disks
   (see `BPO-12442`_).
   See `disk_usage.py`_ script providing an example usage.
 
-    >>> import psutil
-    >>> psutil.disk_usage('/')
-    sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.disk_usage('/')
+     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
 
   .. note::
     UNIX usually reserves 5% of the total disk space for the root user.
@@ -534,14 +550,16 @@ Disks
   On diskless machines this function will return ``None`` or ``{}`` if
   *perdisk* is ``True``.
 
-    >>> import psutil
-    >>> psutil.disk_io_counters()
-    sdiskio(read_count=8141, write_count=2431, read_bytes=290203, write_bytes=537676, read_time=5868, write_time=94922)
-    >>>
-    >>> psutil.disk_io_counters(perdisk=True)
-    {'sda1': sdiskio(read_count=920, write_count=1, read_bytes=2933248, write_bytes=512, read_time=6016, write_time=4),
-     'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
-     'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.disk_io_counters()
+     sdiskio(read_count=8141, write_count=2431, read_bytes=290203, write_bytes=537676, read_time=5868, write_time=94922)
+     >>>
+     >>> psutil.disk_io_counters(perdisk=True)
+     {'sda1': sdiskio(read_count=920, write_count=1, read_bytes=2933248, write_bytes=512, read_time=6016, write_time=4),
+      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
+      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
   .. note::
     on Windows ``"diskperf -y"`` command may need to be executed first
@@ -589,13 +607,15 @@ Network
   On machines with no network interfaces this function will return ``None`` or
   ``{}`` if *pernic* is ``True``.
 
-    >>> import psutil
-    >>> psutil.net_io_counters()
-    snetio(bytes_sent=14508483, bytes_recv=62749361, packets_sent=84311, packets_recv=94888, errin=0, errout=0, dropin=0, dropout=0)
-    >>>
-    >>> psutil.net_io_counters(pernic=True)
-    {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
-    'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.net_io_counters()
+     snetio(bytes_sent=14508483, bytes_recv=62749361, packets_sent=84311, packets_recv=94888, errin=0, errout=0, dropin=0, dropout=0)
+     >>>
+     >>> psutil.net_io_counters(pernic=True)
+     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
+     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
   Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
 
@@ -666,13 +686,15 @@ Network
   Also, see `netstat.py`_ example script.
   Example:
 
-    >>> import psutil
-    >>> psutil.net_connections()
-    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
-     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
-     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
-     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
-     ...]
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.net_connections()
+     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=1254),
+      pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>, pid=2987),
+      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>, pid=None),
+      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>, pid=None)
+      ...]
 
   .. warning::
     On Linux, retrieving some connections requires root privileges. If psutil is
@@ -722,17 +744,17 @@ Network
     point to point interface (typically a VPN). *broadcast* and *ptp* are
     mutually exclusive. May be ``None``.
 
-  Example::
+  .. code-block:: pycon
 
-    >>> import psutil
-    >>> psutil.net_if_addrs()
-    {'lo': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
-            snicaddr(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
-            snicaddr(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
-     'wlan0': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
-               snicaddr(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
-               snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
-    >>>
+     >>> import psutil
+     >>> psutil.net_if_addrs()
+     {'lo': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
+             snicaddr(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
+             snicaddr(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
+      'wlan0': [snicaddr(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
+                snicaddr(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
+                snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
+     >>>
 
   See also `nettop.py`_ and `ifconfig.py`_ for an example application.
 
@@ -780,16 +802,16 @@ Network
     ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
     and ``d2`` (some flags are only available on certain platforms).
 
-    .. availability:: UNIX
-
-  Example:
-
-    >>> import psutil
-    >>> psutil.net_if_stats()
-    {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast'),
-     'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
-
   Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.net_if_stats()
+     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast'),
+      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
+
+  .. availability:: UNIX
 
   .. versionadded:: 3.0.0
 
@@ -819,19 +841,19 @@ Sensors
   - **critical**: temperature at which the system will shut down, or
     ``None`` if not available.
 
-  Example::
-
-    >>> import psutil
-    >>> psutil.sensors_temperatures()
-    {'acpitz': [shwtemp(label='', current=47.0, high=103.0, critical=103.0)],
-     'asus': [shwtemp(label='', current=47.0, high=None, critical=None)],
-     'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
-                  shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
-
   See also `temperatures.py`_ and `sensors.py`_ for an example application.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.sensors_temperatures()
+     {'acpitz': [shwtemp(label='', current=47.0, high=103.0, critical=103.0)],
+      'asus': [shwtemp(label='', current=47.0, high=None, critical=None)],
+      'coretemp': [shwtemp(label='Physical id 0', current=52.0, high=100.0, critical=100.0),
+                   shwtemp(label='Core 0', current=45.0, high=100.0, critical=100.0),
+                   shwtemp(label='Core 1', current=52.0, high=100.0, critical=100.0),
+                   shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
+                   shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
   .. availability:: Linux, FreeBSD
 
@@ -846,11 +868,12 @@ Sensors
   certain hardware sensor fan.
   Fan speed is expressed in RPM (revolutions per minute).
   If sensors are not supported by the OS an empty dict is returned.
-  Example::
 
-    >>> import psutil
-    >>> psutil.sensors_fans()
-    {'asus': [sfan(label='cpu_fan', current=3200)]}
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.sensors_fans()
+     {'asus': [sfan(label='cpu_fan', current=3200)]}
 
   See also `fans.py`_  and `sensors.py`_ for an example application.
 
@@ -874,20 +897,20 @@ Sensors
   - **power_plugged**: ``True`` if the AC power cable is connected, ``False``
     if not or ``None`` if it can't be determined.
 
-  Example::
+  .. code-block:: pycon
 
-    >>> import psutil
-    >>>
-    >>> def secs2hours(secs):
-    ...     mm, ss = divmod(secs, 60)
-    ...     hh, mm = divmod(mm, 60)
-    ...     return "%d:%02d:%02d" % (hh, mm, ss)
-    ...
-    >>> battery = psutil.sensors_battery()
-    >>> battery
-    sbattery(percent=93, secsleft=16628, power_plugged=False)
-    >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
-    charge = 93%, time left = 4:37:08
+     >>> import psutil
+     >>>
+     >>> def secs2hours(secs):
+     ...     mm, ss = divmod(secs, 60)
+     ...     hh, mm = divmod(mm, 60)
+     ...     return "%d:%02d:%02d" % (hh, mm, ss)
+     ...
+     >>> battery = psutil.sensors_battery()
+     >>> battery
+     sbattery(percent=93, secsleft=16628, power_plugged=False)
+     >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
+     charge = 93%, time left = 4:37:08
 
   See also `battery.py`_  and `sensors.py`_ for an example application.
 
@@ -936,12 +959,12 @@ Other system info
   - **pid**: the PID of the login process (like sshd, tmux, gdm-session-worker,
     ...). On Windows and OpenBSD this is always set to ``None``.
 
-  Example::
+  .. code-block:: pycon
 
-    >>> import psutil
-    >>> psutil.users()
-    [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
-     suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
+     >>> import psutil
+     >>> psutil.users()
+     [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0, pid=1352),
+      suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
 
   .. versionchanged:: 5.3.0
      added "pid" field.
@@ -960,9 +983,12 @@ Functions
   To iterate over all processes and avoid race conditions :func:`process_iter`
   should be preferred.
 
-  >>> import psutil
-  >>> psutil.pids()
-  [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.pids()
+     [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
+
 
   .. versionchanged:: 5.6.0
      PIDs are returned in sorted order.
@@ -985,30 +1011,34 @@ Functions
 
   Sorting order in which processes are returned is based on their PID.
 
-  Example::
+  .. code-block:: pycon
 
-    >>> import psutil
-    >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-    ...     print(proc.info)
-    ...
-    {'name': 'systemd', 'pid': 1, 'username': 'root'}
-    {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
-    {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
-    ...
+     >>> import psutil
+     >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
+     ...     print(proc.info)
+     ...
+     {'name': 'systemd', 'pid': 1, 'username': 'root'}
+     {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
+     {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
+     ...
 
-  A dict comprehensions to create a ``{pid: info, ...}`` data structure::
+  A dict comprehensions to create a ``{pid: info, ...}`` data structure:
 
-    >>> import psutil
-    >>> procs = {p.pid: p.info for p in psutil.process_iter(['name', 'username'])}
-    >>> procs
-    {1: {'name': 'systemd', 'username': 'root'},
-     2: {'name': 'kthreadd', 'username': 'root'},
-     3: {'name': 'ksoftirqd/0', 'username': 'root'},
-     ...}
+  .. code-block:: pycon
 
-  Clear internal cache::
+     >>> import psutil
+     >>> procs = {p.pid: p.info for p in psutil.process_iter(['name', 'username'])}
+     >>> procs
+     {1: {'name': 'systemd', 'username': 'root'},
+      2: {'name': 'kthreadd', 'username': 'root'},
+      3: {'name': 'ksoftirqd/0', 'username': 'root'},
+      ...}
 
-    >>> psutil.process_iter.cache_clear()
+  Clear internal cache:
+
+  .. code-block:: pycon
+
+     >>> psutil.process_iter.cache_clear()
 
   .. versionchanged:: 5.3.0
      added "attrs" and "ad_value" parameters.
@@ -1159,19 +1189,20 @@ Process class
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
     about the process. If you're lucky, you'll get a hell of a speedup.
-    Example:
 
-    >>> import psutil
-    >>> p = psutil.Process()
-    >>> with p.oneshot():
-    ...     p.name()  # execute internal routine once collecting multiple info
-    ...     p.cpu_times()  # return cached value
-    ...     p.cpu_percent()  # return cached value
-    ...     p.create_time()  # return cached value
-    ...     p.ppid()  # return cached value
-    ...     p.status()  # return cached value
-    ...
-    >>>
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> with p.oneshot():
+       ...     p.name()  # execute internal routine once collecting multiple info
+       ...     p.cpu_times()  # return cached value
+       ...     p.cpu_percent()  # return cached value
+       ...     p.create_time()  # return cached value
+       ...     p.ppid()  # return cached value
+       ...     p.status()  # return cached value
+       ...
+       >>>
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
@@ -1248,27 +1279,34 @@ Process class
     longer exists), this may be an empty string. The return value is cached
     after first call.
 
-    >>> import psutil
-    >>> psutil.Process().exe()
-    '/usr/bin/python3'
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> psutil.Process().exe()
+       '/usr/bin/python3'
 
   .. method:: cmdline()
 
     The command line used to start this process, as a list of strings.
     The return value is not cached because the cmdline of a process may change.
 
-    >>> import psutil
-    >>> psutil.Process().cmdline()
-    ['python', 'manage.py', 'runserver']
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> psutil.Process().cmdline()
+       ['python', 'manage.py', 'runserver']
 
   .. method:: environ()
 
     The environment variables of the process as a dict.  Note: this might not
     reflect changes made after the process started.
 
-    >>> import psutil
-    >>> psutil.Process().environ()
-    {'LC_NUMERIC': 'it_IT.UTF-8', 'QT_QPA_PLATFORMTHEME': 'appmenu-qt5', 'IM_CONFIG_PHASE': '1', 'XDG_GREETER_DATA_DIR': '/var/lib/lightdm-data/giampaolo', 'XDG_CURRENT_DESKTOP': 'Unity', 'UPSTART_EVENTS': 'started starting', 'GNOME_KEYRING_PID': '', 'XDG_VTNR': '7', 'QT_IM_MODULE': 'ibus', 'LOGNAME': 'giampaolo', 'USER': 'giampaolo', 'PATH': '/home/giampaolo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/giampaolo/svn/sysconf/bin', 'LC_PAPER': 'it_IT.UTF-8', 'GNOME_KEYRING_CONTROL': '', 'GTK_IM_MODULE': 'ibus', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'LESS_TERMCAP_se': '\x1b[0m', 'TERM': 'xterm-256color', 'SHELL': '/bin/bash', 'XDG_SESSION_PATH': '/org/freedesktop/DisplayManager/Session0', 'XAUTHORITY': '/home/giampaolo/.Xauthority', 'LANGUAGE': 'en_US', 'COMPIZ_CONFIG_PROFILE': 'ubuntu', 'LC_MONETARY': 'it_IT.UTF-8', 'QT_LINUX_ACCESSIBILITY_ALWAYS_ON': '1', 'LESS_TERMCAP_me': '\x1b[0m', 'LESS_TERMCAP_md': '\x1b[01;38;5;74m', 'LESS_TERMCAP_mb': '\x1b[01;31m', 'HISTSIZE': '100000', 'UPSTART_INSTANCE': '', 'CLUTTER_IM_MODULE': 'xim', 'WINDOWID': '58786407', 'EDITOR': 'vim', 'SESSIONTYPE': 'gnome-session', 'XMODIFIERS': '@im=ibus', 'GPG_AGENT_INFO': '/home/giampaolo/.gnupg/S.gpg-agent:0:1', 'HOME': '/home/giampaolo', 'HISTFILESIZE': '100000', 'QT4_IM_MODULE': 'xim', 'GTK2_MODULES': 'overlay-scrollbar', 'XDG_SESSION_DESKTOP': 'ubuntu', 'SHLVL': '1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'INSTANCE': 'Unity', 'LC_ADDRESS': 'it_IT.UTF-8', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'VTE_VERSION': '4205', 'GDMSESSION': 'ubuntu', 'MANDATORY_PATH': '/usr/share/gconf/ubuntu.mandatory.path', 'VISUAL': 'vim', 'DESKTOP_SESSION': 'ubuntu', 'QT_ACCESSIBILITY': '1', 'XDG_SEAT_PATH': '/org/freedesktop/DisplayManager/Seat0', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'XDG_SESSION_ID': 'c2', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-9GAJpvnt8r', '_': '/usr/bin/python', 'DEFAULTS_PATH': '/usr/share/gconf/ubuntu.default.path', 'LC_IDENTIFICATION': 'it_IT.UTF-8', 'LESS_TERMCAP_ue': '\x1b[0m', 'UPSTART_SESSION': 'unix:abstract=/com/ubuntu/upstart-session/1000/1294', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'GTK_MODULES': 'gail:atk-bridge:unity-gtk-module', 'XDG_SESSION_TYPE': 'x11', 'PYTHONSTARTUP': '/home/giampaolo/.pythonstart', 'LC_NAME': 'it_IT.UTF-8', 'OLDPWD': '/home/giampaolo/svn/curio_giampaolo/tests', 'GDM_LANG': 'en_US', 'LC_TELEPHONE': 'it_IT.UTF-8', 'HISTCONTROL': 'ignoredups:erasedups', 'LC_MEASUREMENT': 'it_IT.UTF-8', 'PWD': '/home/giampaolo/svn/curio_giampaolo', 'JOB': 'gnome-session', 'LESS_TERMCAP_us': '\x1b[04;38;5;146m', 'UPSTART_JOB': 'unity-settings-daemon', 'LC_TIME': 'it_IT.UTF-8', 'LESS_TERMCAP_so': '\x1b[38;5;246m', 'PAGER': 'less', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'XDG_SEAT': 'seat0'}
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> psutil.Process().environ()
+       {'LC_NUMERIC': 'it_IT.UTF-8', 'QT_QPA_PLATFORMTHEME': 'appmenu-qt5', 'IM_CONFIG_PHASE': '1', 'XDG_GREETER_DATA_DIR': '/var/lib/lightdm-data/giampaolo', 'XDG_CURRENT_DESKTOP': 'Unity', 'UPSTART_EVENTS': 'started starting', 'GNOME_KEYRING_PID': '', 'XDG_VTNR': '7', 'QT_IM_MODULE': 'ibus', 'LOGNAME': 'giampaolo', 'USER': 'giampaolo', 'PATH': '/home/giampaolo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/giampaolo/svn/sysconf/bin', 'LC_PAPER': 'it_IT.UTF-8', 'GNOME_KEYRING_CONTROL': '', 'GTK_IM_MODULE': 'ibus', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'LESS_TERMCAP_se': '\x1b[0m', 'TERM': 'xterm-256color', 'SHELL': '/bin/bash', 'XDG_SESSION_PATH': '/org/freedesktop/DisplayManager/Session0', 'XAUTHORITY': '/home/giampaolo/.Xauthority', 'LANGUAGE': 'en_US', 'COMPIZ_CONFIG_PROFILE': 'ubuntu', 'LC_MONETARY': 'it_IT.UTF-8', 'QT_LINUX_ACCESSIBILITY_ALWAYS_ON': '1', 'LESS_TERMCAP_me': '\x1b[0m', 'LESS_TERMCAP_md': '\x1b[01;38;5;74m', 'LESS_TERMCAP_mb': '\x1b[01;31m', 'HISTSIZE': '100000', 'UPSTART_INSTANCE': '', 'CLUTTER_IM_MODULE': 'xim', 'WINDOWID': '58786407', 'EDITOR': 'vim', 'SESSIONTYPE': 'gnome-session', 'XMODIFIERS': '@im=ibus', 'GPG_AGENT_INFO': '/home/giampaolo/.gnupg/S.gpg-agent:0:1', 'HOME': '/home/giampaolo', 'HISTFILESIZE': '100000', 'QT4_IM_MODULE': 'xim', 'GTK2_MODULES': 'overlay-scrollbar', 'XDG_SESSION_DESKTOP': 'ubuntu', 'SHLVL': '1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'INSTANCE': 'Unity', 'LC_ADDRESS': 'it_IT.UTF-8', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'VTE_VERSION': '4205', 'GDMSESSION': 'ubuntu', 'MANDATORY_PATH': '/usr/share/gconf/ubuntu.mandatory.path', 'VISUAL': 'vim', 'DESKTOP_SESSION': 'ubuntu', 'QT_ACCESSIBILITY': '1', 'XDG_SEAT_PATH': '/org/freedesktop/DisplayManager/Seat0', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'XDG_SESSION_ID': 'c2', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-9GAJpvnt8r', '_': '/usr/bin/python', 'DEFAULTS_PATH': '/usr/share/gconf/ubuntu.default.path', 'LC_IDENTIFICATION': 'it_IT.UTF-8', 'LESS_TERMCAP_ue': '\x1b[0m', 'UPSTART_SESSION': 'unix:abstract=/com/ubuntu/upstart-session/1000/1294', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'GTK_MODULES': 'gail:atk-bridge:unity-gtk-module', 'XDG_SESSION_TYPE': 'x11', 'PYTHONSTARTUP': '/home/giampaolo/.pythonstart', 'LC_NAME': 'it_IT.UTF-8', 'OLDPWD': '/home/giampaolo/svn/curio_giampaolo/tests', 'GDM_LANG': 'en_US', 'LC_TELEPHONE': 'it_IT.UTF-8', 'HISTCONTROL': 'ignoredups:erasedups', 'LC_MEASUREMENT': 'it_IT.UTF-8', 'PWD': '/home/giampaolo/svn/curio_giampaolo', 'JOB': 'gnome-session', 'LESS_TERMCAP_us': '\x1b[04;38;5;146m', 'UPSTART_JOB': 'unity-settings-daemon', 'LC_TIME': 'it_IT.UTF-8', 'LESS_TERMCAP_so': '\x1b[38;5;246m', 'PAGER': 'less', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'XDG_SEAT': 'seat0'}
+
 
     .. note::
       on macOS Big Sur this function returns something meaningful only for the
@@ -1294,12 +1332,14 @@ Process class
     clock, which means it may be affected by changes such as manual adjustments
     or time synchronization (e.g. NTP).
 
-      >>> import psutil, datetime
-      >>> p = psutil.Process()
-      >>> p.create_time()
-      1307289803.47
-      >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
-      '2011-03-05 18:03:52'
+    .. code-block:: pycon
+
+       >>> import psutil, datetime
+       >>> p = psutil.Process()
+       >>> p.create_time()
+       1307289803.47
+       >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
+       '2011-03-05 18:03:52'
 
   .. method:: as_dict(attrs=None, ad_value=None)
 
@@ -1316,14 +1356,16 @@ Process class
     Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
     there's no need you use it also.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.as_dict(attrs=['pid', 'name', 'username'])
-      {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
-      >>>
-      >>> # get a list of valid attrs names
-      >>> list(psutil.Process().as_dict().keys())
-      ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.as_dict(attrs=['pid', 'name', 'username'])
+       {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
+       >>>
+       >>> # get a list of valid attrs names
+       >>> list(psutil.Process().as_dict().keys())
+       ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
     .. versionchanged:: 3.0.0
        *ad_value* is used also when incurring into :class:`ZombieProcess`
@@ -1399,12 +1441,14 @@ Process class
     On UNIX this is a number which usually goes from ``-20`` to ``20``.
     The higher the nice value, the lower the priority of the process.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.nice(10)  # set
-      >>> p.nice()  # get
-      10
-      >>>
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.nice(10)  # set
+       >>> p.nice()  # get
+       10
+       >>>
 
     Starting from Python 3.3 this functionality is also available as
     `os.getpriority`_ and `os.setpriority`_ (see `BPO-10784`_).
@@ -1415,7 +1459,9 @@ Process class
     The return value on Windows is a :class:`psutil.ProcessPriority` enum member.
     Example which increases process priority on Windows:
 
-      >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
+    .. code-block:: pycon
+
+       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
     .. versionchanged:: 8.0.0
        on Windows, return value is now a :class:`psutil.ProcessPriority` enum
@@ -1452,17 +1498,19 @@ Process class
     * ``IOPRIO_VERYLOW``: lowest priority.
 
     Here's an example on how to set the highest I/O priority depending on what
-    platform you're on::
+    platform you're on:
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> if psutil.LINUX:
-      ...     p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
-      ... else:
-      ...     p.ionice(psutil.IOPRIO_HIGH)
-      ...
-      >>> p.ionice()  # get
-      pionice(ioclass=<ProcessIOPriority.IOPRIO_CLASS_RT: 1>, value=7)
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> if psutil.LINUX:
+       ...     p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+       ... else:
+       ...     p.ionice(psutil.IOPRIO_HIGH)
+       ...
+       >>> p.ionice()  # get
+       pionice(ioclass=<ProcessIOPriority.IOPRIO_CLASS_RT: 1>, value=7)
 
     .. availability:: Linux, Windows
 
@@ -1481,17 +1529,17 @@ Process class
     but can be used for any process PID, not only `os.getpid`_.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
     and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
-    Example:
-
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
-      >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
-      >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
-      (1024, 1024)
-      >>>
-
     Also see `procinfo.py`_ script.
+
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
+       >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
+       >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
+       (1024, 1024)
+       >>>
 
     .. availability:: Linux, FreeBSD
 
@@ -1533,10 +1581,13 @@ Process class
     - **other_bytes** *(Windows)*: the number of bytes transferred during
       operations other than read and write operations.
 
-    >>> import psutil
-    >>> p = psutil.Process()
-    >>> p.io_counters()
-    pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.io_counters()
+       pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
+
 
     .. availability:: Linux, BSD, Windows, AIX
 
@@ -1603,12 +1654,15 @@ Process class
       This value is excluded from `user` and `system` times count (because the
       CPU is not doing any work).
 
-    >>> import psutil
-    >>> p = psutil.Process()
-    >>> p.cpu_times()
-    pcputimes(user=0.03, system=0.67, children_user=0.0, children_system=0.0, iowait=0.08)
-    >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
-    0.70
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.cpu_times()
+       pcputimes(user=0.03, system=0.67, children_user=0.0, children_system=0.0, iowait=0.08)
+       >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
+       0.70
+
 
     .. versionchanged:: 4.1.0
        return two extra fields: *children_user* and *children_system*.
@@ -1628,16 +1682,17 @@ Process class
     will return a meaningless ``0.0`` value which you are supposed to ignore.
     For accuracy, it is recommended to call this function a second time with
     at least ``0.1`` seconds between calls.
-    Example:
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> # blocking
-      >>> p.cpu_percent(interval=1)
-      2.0
-      >>> # non-blocking (percentage since last call)
-      >>> p.cpu_percent(interval=None)
-      2.9
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> # blocking
+       >>> p.cpu_percent(interval=1)
+       2.0
+       >>> # non-blocking (percentage since last call)
+       >>> p.cpu_percent(interval=None)
+       2.9
 
     .. note::
       the returned value can be > 100.0 in case of a process running multiple
@@ -1674,19 +1729,21 @@ Process class
     On some systems such as Linux this may not necessarily mean all available
     logical CPUs as in ``list(range(psutil.cpu_count()))``).
 
-      >>> import psutil
-      >>> psutil.cpu_count()
-      4
-      >>> p = psutil.Process()
-      >>> # get
-      >>> p.cpu_affinity()
-      [0, 1, 2, 3]
-      >>> # set; from now on, process will run on CPU #0 and #1 only
-      >>> p.cpu_affinity([0, 1])
-      >>> p.cpu_affinity()
-      [0, 1]
-      >>> # reset affinity against all eligible CPUs
-      >>> p.cpu_affinity([])
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> psutil.cpu_count()
+       4
+       >>> p = psutil.Process()
+       >>> # get
+       >>> p.cpu_affinity()
+       [0, 1, 2, 3]
+       >>> # set; from now on, process will run on CPU #0 and #1 only
+       >>> p.cpu_affinity([0, 1])
+       >>> p.cpu_affinity()
+       [0, 1]
+       >>> # reset affinity against all eligible CPUs
+       >>> p.cpu_affinity([])
 
     .. availability:: Linux, Windows, FreeBSD
 
@@ -1777,10 +1834,12 @@ Process class
 
     Example on Linux:
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.memory_info()
-      pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, data=9891840)
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.memory_info()
+       pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, data=9891840)
 
     .. versionchanged:: 4.0.0
        multiple fields are returned, not only *rss* and *vms*.
@@ -1905,10 +1964,12 @@ Process class
 
     Example on Linux:
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.memory_footprint()
-      pfootprint(uss=6545408, pss=6872064, swap=0)
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.memory_footprint()
+       pfootprint(uss=6545408, pss=6872064, swap=0)
 
     See also `procsmem.py`_ for an example application.
 
@@ -1996,12 +2057,14 @@ Process class
     - **ref_count**: reference count on the VM object backing this mapping.
     - **shadow_count**: depth of the copy-on-write shadow object chain.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.memory_maps()
-      [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
-       pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
-       ...]
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.memory_maps()
+       [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
+        pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
+        ...]
 
     .. availability:: Linux, Windows, FreeBSD, SunOS
 
@@ -2015,6 +2078,7 @@ Process class
     instances.
     If recursive is `True` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
+
     ::
 
       A ─┐
@@ -2025,10 +2089,12 @@ Process class
          ├─ C (child)
          └─ D (child)
 
-      >>> p.children()
-      B, C, D
-      >>> p.children(recursive=True)
-      B, X, Y, C, D
+      .. code-block:: pycon
+
+         >>> p.children()
+         B, C, D
+         >>> p.children(recursive=True)
+         B, X, Y, C, D
 
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
@@ -2050,12 +2116,14 @@ Process class
       from disk. These are expensive because they stall the process until I/O
       completes.
 
-    Both counters are cumulative since process creation. Example::
+    Both counters are cumulative since process creation.
 
-      >>> import psutil
-      >>> p = psutil.Process()
-      >>> p.page_faults()
-      ppagefaults(minor=5905, major=3)
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.page_faults()
+       ppagefaults(minor=5905, major=3)
 
     .. versionadded:: 8.0.0
 
@@ -2079,11 +2147,14 @@ Process class
       `os.open`_ C call when the file was opened (e.g. `os.O_RDONLY`_,
       `os.O_TRUNC`_, etc).
 
-    >>> import psutil
-    >>> f = open('file.ext', 'w')
-    >>> p = psutil.Process()
-    >>> p.open_files()
-    [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3, position=0, mode='w', flags=32769)]
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> f = open('file.ext', 'w')
+       >>> p = psutil.Process()
+       >>> p.open_files()
+       [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3, position=0, mode='w', flags=32769)]
+
 
     .. warning::
       on Windows this method is not reliable due to some limitations of the
@@ -2161,17 +2232,17 @@ Process class
     | ``"all"``      | the sum of all the possible families and protocols  |
     +----------------+-----------------------------------------------------+
 
-    Example:
+    .. code-block:: pycon
 
-      >>> import psutil
-      >>> p = psutil.Process(1694)
-      >>> p.name()
-      'firefox'
-      >>> p.net_connections()
-      [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
-       pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>),
-       pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
-       pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>)]
+       >>> import psutil
+       >>> p = psutil.Process(1694)
+       >>> p.name()
+       'firefox'
+       >>> p.net_connections()
+       [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=48776), raddr=addr(ip='93.186.135.91', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
+        pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>),
+        pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
+        pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>)]
 
     .. warning::
       On Linux, retrieving connections for certain processes requires root
@@ -2298,11 +2369,13 @@ Process class
     The return value is cached.
     To wait for multiple processes use :func:`psutil.wait_procs`.
 
-    >>> import psutil
-    >>> p = psutil.Process(9891)
-    >>> p.terminate()
-    >>> p.wait()
-    <Negsignal.SIGTERM: -15>
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> p = psutil.Process(9891)
+       >>> p.terminate()
+       >>> p.wait()
+       <Negsignal.SIGTERM: -15>
 
     .. note::
 
@@ -2350,19 +2423,22 @@ Popen class
   This is done in order to avoid killing another process in case its PID has
   been reused, fixing  `BPO-6973`_.
 
-  >>> import psutil
-  >>> from subprocess import PIPE
-  >>>
-  >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
-  >>> p.name()
-  'python'
-  >>> p.username()
-  'giampaolo'
-  >>> p.communicate()
-  ('hello\n', None)
-  >>> p.wait(timeout=2)
-  0
-  >>>
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> from subprocess import PIPE
+     >>>
+     >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
+     >>> p.name()
+     'python'
+     >>> p.username()
+     'giampaolo'
+     >>> p.communicate()
+     ('hello\n', None)
+     >>> p.wait(timeout=2)
+     0
+     >>>
+
 
   .. versionchanged:: 4.4.0
      added context manager support.
@@ -2404,9 +2480,11 @@ Python's memory tracking misses.
   - ``heap_count``: (Windows only) number of private heaps created via
     ``HeapCreate()``.
 
-   >>> import psutil
-   >>> psutil.heap_info()
-   pheap(heap_used=5177792, mmap_used=819200)
+   .. code-block:: pycon
+
+      >>> import psutil
+      >>> psutil.heap_info()
+      pheap(heap_used=5177792, mmap_used=819200)
 
   These fields reflect how unreleased C allocations affect the heap:
 
@@ -2519,29 +2597,31 @@ Windows services
 
     Utility method retrieving all the information above as a dictionary.
 
-  .. versionadded:: 4.2.0
+  Example code:
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> list(psutil.win_service_iter())
+     [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,
+      <WindowsService(name='ALG', display_name='Application Layer Gateway Service') at 38850128>,
+      <WindowsService(name='APNMCP', display_name='Ask Update Service') at 38850160>,
+      <WindowsService(name='AppIDSvc', display_name='Application Identity') at 38850192>,
+      ...]
+     >>> s = psutil.win_service_get('alg')
+     >>> s.as_dict()
+     {'binpath': 'C:\\Windows\\System32\\alg.exe',
+      'description': 'Provides support for 3rd party protocol plug-ins for Internet Connection Sharing',
+      'display_name': 'Application Layer Gateway Service',
+      'name': 'alg',
+      'pid': None,
+      'start_type': 'manual',
+      'status': 'stopped',
+      'username': 'NT AUTHORITY\\LocalService'}
 
   .. availability:: Windows
 
-Example code:
-
-  >>> import psutil
-  >>> list(psutil.win_service_iter())
-  [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,
-   <WindowsService(name='ALG', display_name='Application Layer Gateway Service') at 38850128>,
-   <WindowsService(name='APNMCP', display_name='Ask Update Service') at 38850160>,
-   <WindowsService(name='AppIDSvc', display_name='Application Identity') at 38850192>,
-   ...]
-  >>> s = psutil.win_service_get('alg')
-  >>> s.as_dict()
-  {'binpath': 'C:\\Windows\\System32\\alg.exe',
-   'description': 'Provides support for 3rd party protocol plug-ins for Internet Connection Sharing',
-   'display_name': 'Application Layer Gateway Service',
-   'name': 'alg',
-   'pid': None,
-   'start_type': 'manual',
-   'status': 'stopped',
-   'username': 'NT AUTHORITY\\LocalService'}
+  .. versionadded:: 4.2.0
 
 ----
 
@@ -2883,9 +2963,11 @@ Other constants
 
   A tuple to check psutil installed version. Example:
 
-      >>> import psutil
-      >>> if psutil.version_info >= (4, 5):
-      ...    pass
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> if psutil.version_info >= (4, 5):
+     ...    pass
 
 .. _`BPO-10784`: https://bugs.python.org/issue10784
 .. _`BPO-12442`: https://bugs.python.org/issue12442
