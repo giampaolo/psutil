@@ -21,10 +21,15 @@ CPU
      - macOS
      - BSD
      - Windows
-   * - :func:`cpu_count`
+   * - :func:`cpu_count(logical=True) <cpu_count>`
      - ``nproc``, ``lscpu``
      - ``sysctl hw.logicalcpu``
      - ``sysctl hw.ncpu``
+     - WMIC
+   * - :func:`cpu_count(logical=False) <cpu_count>`
+     - ``lscpu``
+     - ``sysctl hw.physicalcpu``
+     - —
      - WMIC
    * - :func:`cpu_times`
      - ``/proc/stat``
@@ -47,7 +52,7 @@ CPU
      - ``sysctl vm.stats.sys``
      - —
    * - :func:`getloadavg`
-     - ``uptime``, ``/proc/loadavg``
+     - ``uptime``, ``cat /proc/loadavg``
      - ``uptime``
      - ``uptime``
      - —
