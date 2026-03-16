@@ -122,26 +122,26 @@ Network
      - macOS
      - BSD
      - Windows
+   * - :func:`net_connections`
+     - ``netstat -antp``, ``ss``
+     - ``netstat``
+     - ``netstat``
+     - ``netstat``
+   * - :func:`net_if_addrs`
+     - ``ifconfig``, ``ip addr``
+     - ``ifconfig``
+     - ``ifconfig``
+     - ``ipconfig``
    * - :func:`net_io_counters`
      - ``ifconfig``, ``ip -s link``
      - ``netstat -i``
      - ``netstat -i``
      - ``ipconfig``
-   * - :func:`net_if_addrs`
-     - ``ip addr``, ``ifconfig``
-     - ``ifconfig``
-     - ``ifconfig``
-     - ``ipconfig``
    * - :func:`net_if_stats`
-     - ``ifconfig``, ``ip link``
+     - ``ifconfig``, ``ip -br link``, ``ip link``
      - ``ifconfig``
      - ``ifconfig``
      - ``ipconfig``
-   * - :func:`net_connections`
-     - ``ss``, ``netstat -antp``
-     - ``netstat``
-     - ``netstat``
-     - ``netstat``
 
 Sensors
 ~~~~~~~
@@ -217,7 +217,7 @@ Identity
      - ``procstat -b PID``
      - ``tasklist``
    * - :meth:`Process.exe`
-     - ``ls -la /proc/PID/exe``
+     - ``readlink /proc/PID/exe``
      - ``lsof -p PID``
      - ``procstat -b PID``
      - —
@@ -364,6 +364,11 @@ Files and connections
      - macOS
      - BSD
      - Windows
+   * - :meth:`Process.net_connections`
+     - ``ss -p``, ``lsof -p PID -i``
+     - ``lsof -p PID -i``
+     - —
+     - —
    * - :meth:`Process.open_files`
      - ``lsof -p PID``
      - ``lsof -p PID``
@@ -372,11 +377,6 @@ Files and connections
    * - :meth:`Process.num_fds`
      - ``ls /proc/PID/fd | wc -l``
      - —
-     - —
-     - —
-   * - :meth:`Process.net_connections`
-     - ``ss -p``, ``lsof -p PID -i``
-     - ``lsof -p PID -i``
      - —
      - —
    * - :meth:`Process.io_counters`
