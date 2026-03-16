@@ -1,3 +1,4 @@
+
 .. currentmodule:: psutil
 
 Shell equivalents
@@ -32,9 +33,9 @@ CPU
      - —
      - WMIC
    * - :func:`cpu_times(percpu=False) <cpu_times>`
-     - ``/proc/stat``
-     - —
-     - —
+     - ``cat /proc/stat``
+     - ``top -l 1``
+     - ``systat -vmstat``
      - —
    * - :func:`cpu_times(percpu=True) <cpu_times>`
      - ``mpstat -P ALL``
@@ -332,8 +333,6 @@ Identity
      - —
      - —
 
-(Get-Process -Id PID).HandleCount
-
 CPU
 ~~~
 
@@ -440,7 +439,7 @@ Threads
      - same
      - —
    * - :meth:`Process.num_ctx_switches`
-     - ``grep ctxt /proc/self/status``, ``pidstat -w -p PID``
+     - ``grep ctxt /proc/PID/status``, ``pidstat -w -p PID``
      - —
      - ``procstat -r PID``
      - —
