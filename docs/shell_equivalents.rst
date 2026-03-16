@@ -85,12 +85,12 @@ Memory
      - BSD
      - Windows
    * - :func:`virtual_memory`
-     - ``free``, ``vmstat``
+     - ``free``, ``vmstat``, ``cat /proc/meminfo``
      - ``vm_stat``
      - ``sysctl vm.stats``
      - WMI
    * - :func:`swap_memory`
-     - ``free``
+     - ``free``, ``vmstat``, ``swapon``
      - ``vm_stat``
      - ``swapinfo``
      - WMI
@@ -208,7 +208,7 @@ Other
      - ``sysctl kern.boottime``
      - ``systeminfo``
    * - :func:`users`
-     - ``who -a``, ``w``
+     - ``who -a``, ``w -p``
      - same
      - same
      - ``query user``
@@ -406,6 +406,11 @@ Memory
      - same
      - same
      - —
+   * - :meth:`Process.memory_info_ex`
+     - ``cat /proc/PID/status``
+     - —
+     - —
+     - —
    * - :meth:`Process.memory_percent`
      - ``ps -o %mem -p PID``
      - same
@@ -418,11 +423,6 @@ Memory
      - —
    * - :meth:`Process.memory_footprint`
      - ``smem``, ``smemstat``
-     - —
-     - —
-     - —
-   * - :meth:`Process.memory_info_ex`
-     - ``cat /proc/PID/status``
      - —
      - —
      - —
@@ -477,7 +477,7 @@ Files and connections
      - —
    * - :meth:`Process.open_files`
      - ``lsof -p PID``
-     - ``lsof -p PID``
+     - same
      - ``procstat -f PID``
      - —
    * - :meth:`Process.io_counters`
