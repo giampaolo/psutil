@@ -373,6 +373,11 @@ CPU / scheduling
      -
      -
      -
+   * - :meth:`Process.num_ctx_switches`
+     - ``pidstat -w -p PID``
+     -
+     - ``procstat -r PID``
+     -
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - ``taskset -p PID``
      -
@@ -472,11 +477,6 @@ Threads
      - same
      - same
      - ``(Get-Process -Id PID).Threads.Count``
-   * - :meth:`Process.num_ctx_switches`
-     - ``pidstat -w -p PID``
-     -
-     - ``procstat -r PID``
-     -
    * - :meth:`Process.threads`
      - ``ps -T -p PID``
      -
