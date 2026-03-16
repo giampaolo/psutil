@@ -931,10 +931,10 @@ class TestSystemNetIfAddrs(LinuxTestCase):
                     assert address in get_ipv6_addresses(name)
 
     @pytest.mark.skipif(
-        not shutil.which("ip"), reason="'ip' utility not available"
+        not shutil.which("ip"), reason="'ip' command not available"
     )
     @retry_on_failure()
-    def test_against_ip_addr(self):
+    def test_against_ip_addr_v4(self):
         # Parse IPv4 addresses per interface from `ip addr` output and
         # compare against psutil. Use the label at the end of each inet
         # line as the interface name, since it reflects aliases like
@@ -959,6 +959,38 @@ class TestSystemNetIfAddrs(LinuxTestCase):
             }
             for addr in addrs:
                 assert addr in psutil_ipv4
+
+    @pytest.mark.skipif(
+        not shutil.which("ip"), reason="'ip' command not available"
+    )
+    @retry_on_failure()
+    def test_against_ip_addr_v6(self):
+        # Parse IPv6 addresses per interface from `ip addr` output and
+        # compare against psutil. Unlike inet, inet6 lines have no label,
+        # so the interface name comes from the header line.
+        out = sh("ip addr")
+        ip_addrs = {}  # {ifname: [addr, ...]}
+        current_if = None
+        for line in out.splitlines():
+            m = re.match(r'^\d+:\s+(\S+):', line)
+            if m:
+                current_if = m.group(1).rstrip(':')
+            m = re.match(r'^\s+inet6\s+(\S+)', line)
+            if m and current_if:
+                addr = m.group(1).split('/')[0]
+                ip_addrs.setdefault(current_if, []).append(addr)
+        psutil_addrs = psutil.net_if_addrs()
+        for ifname, addrs in ip_addrs.items():
+            if ifname not in psutil_addrs:
+                continue
+            # psutil may append %ifname zone ID to link-local addresses.
+            psutil_ipv6 = {
+                a.address.split('%')[0]
+                for a in psutil_addrs[ifname]
+                if a.family == socket.AF_INET6
+            }
+            for addr in addrs:
+                assert addr in psutil_ipv6
 
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @pytest.mark.skipif(not shutil.which("ip"),
