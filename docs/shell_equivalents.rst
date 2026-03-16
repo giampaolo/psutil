@@ -28,9 +28,9 @@ CPU
      - ``sysctl hw.ncpu``
      - WMIC
    * - :func:`cpu_count(logical=False) <cpu_count>`
-     - ``lscpu``
+     - ``lscpu | grep '^Core(s)'``
      - ``sysctl hw.physicalcpu``
-     - —
+     - ``sysctl hw.ncpu``
      - WMIC
    * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``cat /proc/stat``
@@ -39,8 +39,8 @@ CPU
      - —
    * - :func:`cpu_times(percpu=True) <cpu_times>`
      - ``mpstat -P ALL``
-     - —
-     - —
+     - ``iostat -w 1``
+     - ``systat -vmstat``
      - —
    * - :func:`cpu_percent`
      - ``top``
@@ -54,7 +54,7 @@ CPU
      - WMIC
    * - :func:`cpu_stats`
      - ``vmstat``
-     - —
+     - ``sysctl vm``
      - ``sysctl vm.stats.sys``
      - —
    * - :func:`getloadavg`
@@ -117,9 +117,9 @@ Disks
      - ``mount``
      - ``wmic logicaldisk``
    * - :func:`disk_io_counters`
+     - ``iostat -dx``
      - ``iostat``
-     - ``iostat``
-     - ``iostat``
+     - ``iostat -x``
      - —
 
 Network
@@ -135,8 +135,8 @@ Network
      - Windows
    * - :func:`net_connections`
      - ``netstat -antp``, ``ss``, ``lsof -nP -i -U``
-     - ``netstat``
-     - ``netstat``
+     - ``netstat -an``
+     - ``netstat -an``
      - ``netstat``
    * - :func:`net_if_addrs`
      - ``ifconfig``, ``ip addr``
@@ -173,12 +173,12 @@ Sensors
    * - :func:`sensors_fans`
      - ``sensors``
      - —
-     - —
+     - ``sysctl dev.cpu.*.fan``
      - —
    * - :func:`sensors_battery`
      - ``acpi -b``
      - ``pmset -g batt``
-     - ``acpiconf -i 0``
+     - ``apm -b``
      - —
 
 Other
