@@ -325,6 +325,11 @@ Memory
      - ``vmmap PID``
      - ``procstat -v PID``
      - —
+   * - :meth:`Process.memory_footprint`
+     - ``smem``, ``smemstat``
+     - —
+     - —
+     - —
 
 Threads
 ~~~~~~~
