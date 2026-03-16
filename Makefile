@@ -137,9 +137,6 @@ test-type-hints:  ## Test type hints
 test-connections:  ## Test psutil.net_connections() and Process.net_connections().
 	$(RUN_TEST) -k "test_connections.py or net_" $(ARGS)
 
-test-docs:  ## Test psutil.heap_*() APIs.
-	$(RUN_TEST) tests/test_docs.py $(ARGS)
-
 test-heap:  ## Test psutil.heap_*() APIs.
 	$(RUN_TEST) -k "test_heap.py or heap_" $(ARGS)
 
