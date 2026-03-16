@@ -28,51 +28,30 @@ VERSION = get_version()
 sys.path.insert(0, str(HERE / '_ext'))
 
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.coverage",
     "sphinx.ext.extlinks",
-    "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
-    "sphinx.ext.intersphinx",
     "sphinx_copybutton",
-    # our own custom extensions in _ext/ dir
+    # custom extensions in _ext/ dir
     "availability",
     "add_home_link",
     "changelog_anchors",
     "check_python_syntax",
 ]
 
-# project info
 project = PROJECT_NAME
 copyright = f"2009-{THIS_YEAR}, {AUTHOR}"
 author = AUTHOR
 version = VERSION
 release = VERSION
-
 extlinks = {
     'gh': ('https://github.com/giampaolo/psutil/issues/%s', '#%s'),
 }
-
 templates_path = ['_templates']
-source_suffix = '.rst'
-master_doc = 'index'
-
-language = "en"
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-pygments_style = 'sphinx'
-
-todo_include_todos = False
-
-html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+html_theme = 'sphinx_rtd_theme'
 htmlhelp_basename = f"{PROJECT_NAME}-doc"
-
 copybutton_exclude = '.linenos, .gp'
-
-latex_documents = [
-    (master_doc, 'psutil.tex', 'psutil Documentation', AUTHOR, 'manual')
-]
-
 html_css_files = [
     'https://media.readthedocs.org/css/sphinx_rtd_theme.css',
     'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
