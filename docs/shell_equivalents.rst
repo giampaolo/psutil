@@ -24,9 +24,9 @@ CPU
      - Windows
    * - :func:`cpu_percent`
      - ``top``
-     - ``top``, ``iostat``
-     - ``top``
-     - Task Manager
+     - same
+     - same
+     -
    * - :func:`cpu_count(logical=True) <cpu_count>`
      - ``nproc``
      - ``sysctl hw.logicalcpu``
@@ -68,9 +68,9 @@ CPU
      - ``sysctl vm.stats.sys``
      -
    * - :func:`getloadavg`
-     - ``uptime``, ``cat /proc/loadavg``
      - ``uptime``
-     - ``uptime``
+     - same
+     - same
      -
 
 Memory
