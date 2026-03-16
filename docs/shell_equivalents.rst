@@ -23,7 +23,7 @@ CPU
      - BSD
      - Windows
    * - :func:`cpu_count(logical=True) <cpu_count>`
-     - ``nproc``, ``lscpu``
+     - ``nproc``
      - ``sysctl hw.logicalcpu``
      - ``sysctl hw.ncpu``
      - WMIC
@@ -38,7 +38,7 @@ CPU
      - ``systat -vmstat``
      - —
    * - :func:`cpu_times(percpu=True) <cpu_times>`
-     - ``mpstat -P ALL``
+     - ``cat /proc/stat | grep ^cpu``
      - ``iostat -w 1``
      - ``systat -vmstat``
      - —
@@ -47,6 +47,11 @@ CPU
      - ``top``
      - ``top``
      - Task Manager
+   * - :func:`cpu_times_percent`
+     - ``mpstat -P ALL``
+     - —
+     - —
+     - —
    * - :func:`cpu_freq`
      - ``cpufreq-info``
      - ``sysctl hw.cpufrequency``
