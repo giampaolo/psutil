@@ -20,7 +20,7 @@ CPU
    * - psutil function
      - Linux
      - macOS
-     - BSD
+     - FreeBSD
      - Windows
    * - :func:`cpu_percent`
      - ``top``
@@ -35,7 +35,7 @@ CPU
    * - :func:`cpu_count(logical=False) <cpu_count>`
      - ``lscpu | grep '^Core(s)'``
      - ``sysctl hw.physicalcpu``
-     - ``sysctl hw.ncpu``
+     - —
      - WMIC
    * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``cat /proc/stat | grep '^cpu '``
@@ -82,7 +82,7 @@ Memory
    * - psutil function
      - Linux
      - macOS
-     - BSD
+     - FreeBSD
      - Windows
    * - :func:`virtual_memory`
      - ``free``, ``vmstat``, ``cat /proc/meminfo``
@@ -208,7 +208,7 @@ Other
      - ``sysctl kern.boottime``
      - ``systeminfo``
    * - :func:`users`
-     - ``who -a``, ``w -p``
+     - ``who -a``, ``w``
      - same
      - same
      - ``query user``
@@ -269,9 +269,9 @@ Identity
      - ``wmic process where processid=PID get parentprocessid``
    * - :meth:`Process.parents`
      - ``pstree -s PID``
-     - —
-     - —
-     - —
+     - same
+     - same
+     - same
    * - :meth:`Process.children(recursive=False) <Process.children>`
      - ``pgrep -P PID``
      - same
@@ -279,8 +279,8 @@ Identity
      - ``wmic process where parentprocessid=PID get processid``
    * - :meth:`Process.children(recursive=True) <Process.children>`
      - ``pstree -p PID``
-     - ``pstree PID``
-     - ``pstree PID``
+     - same
+     - same
      - —
    * - :meth:`Process.is_running`
      - ``kill -0 PID``
@@ -335,7 +335,7 @@ Identity
    * - :meth:`Process.rlimit(RES) <Process.rlimit>` (get)
      - ``prlimit --pid PID``
      - —
-     - —
+     - ``procstat rlimit PID``
      - —
    * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>` (set)
      - ``prlimit --pid PID --RES=SOFT:HARD``
@@ -429,7 +429,7 @@ Memory
    * - :meth:`Process.page_faults`
      - ``ps -o maj_flt,min_flt -p PID``
      - ``ps -o faults -p PID``
-     - ``ps -o faults -p PID``
+     - ``procstat -r PID``
      - —
 
 Threads
