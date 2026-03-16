@@ -31,8 +31,13 @@ CPU
      - ``sysctl hw.physicalcpu``
      - —
      - WMIC
-   * - :func:`cpu_times`
+   * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``/proc/stat``
+     - —
+     - —
+     - —
+   * - :func:`cpu_times(percpu=True) <cpu_times>`
+     - ``mpstat -P ALL``
      - —
      - —
      - —
@@ -133,7 +138,7 @@ Network
      - ``ifconfig``
      - ``ipconfig``
    * - :func:`net_connections`
-     - ``ss``, ``netstat``
+     - ``ss``, ``netstat -antp``
      - ``netstat``
      - ``netstat``
      - ``netstat``
@@ -182,14 +187,14 @@ Other
      - ``sysctl kern.boottime``
      - ``systeminfo``
    * - :func:`users`
-     - ``who``, ``w``
-     - ``who``, ``w``
-     - ``who``, ``w``
+     - ``who -a``, ``w``
+     - same
+     - same
      - ``query user``
    * - :func:`pids`
-     - ``ps -e``
-     - ``ps -e``
-     - ``ps -e``
+     - ``ps -eo pid``
+     - same
+     - same
      - ``tasklist``
 
 Process methods
