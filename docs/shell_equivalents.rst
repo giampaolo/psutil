@@ -31,12 +31,12 @@ CPU
      - ``nproc``
      - ``sysctl hw.logicalcpu``
      - ``sysctl hw.ncpu``
-     -
+     - ``$env:NUMBER_OF_PROCESSORS``
    * - :func:`cpu_count(logical=False) <cpu_count>`
      - ``lscpu | grep '^Core(s)'``
      - ``sysctl hw.physicalcpu``
      -
-     -
+     - ``(Get-CimInstance Win32_Processor).NumberOfCores``
    * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``cat /proc/stat | grep '^cpu\s'``
      -
@@ -120,17 +120,17 @@ Disks
      - ``df``
      - same
      - same
-     -
+     - ``Get-PSDrive``
    * - :func:`disk_partitions`
      - ``findmnt``, ``mount``
      - ``mount``
      - ``mount``
-     -
+     - ``Get-CimInstance Win32_LogicalDisk``
    * - :func:`disk_io_counters`
      - ``iostat -dx``
      - ``iostat``
      - ``iostat -x``
-     -
+     - ``Get-Counter '\PhysicalDisk(*)\*'``
 
 Network
 ~~~~~~~
@@ -157,12 +157,12 @@ Network
      - ``netstat -i``, ``ifconfig``, ``ip -s link``
      - ``netstat -i``
      - ``netstat -i``
-     -
+     - ``netstat -e``
    * - :func:`net_if_stats`
      - ``ifconfig``, ``ip -br link``, ``ip link``
      - ``ifconfig``
      - ``ifconfig``
-     -
+     - ``netsh interface show interface``
 
 Sensors
 ~~~~~~~
@@ -189,7 +189,7 @@ Sensors
      - ``acpi -b``
      - ``pmset -g batt``
      - ``apm -b``
-     -
+     - ``Get-CimInstance Win32_Battery``
 
 Other
 ~~~~~
@@ -211,7 +211,7 @@ Other
      - ``who -a``, ``w``
      - same
      - same
-     -
+     - ``query user``
    * - :func:`pids`
      - ``ps -eo pid``
      - same
@@ -246,12 +246,12 @@ Identity
      - ``readlink /proc/PID/exe``
      - ``lsof -p PID``
      - ``procstat -b PID``
-     -
+     - ``(Get-Process -Id PID).Path``
    * - :meth:`Process.cmdline`
      - ``ps -o args -p PID``
      - same
      - ``procstat -c PID``
-     -
+     - ``(Get-CimInstance Win32_Process -Filter "ProcessId=PID").CommandLine``
    * - :meth:`Process.status`
      - ``ps -o stat -p PID``
      - same
@@ -261,12 +261,12 @@ Identity
      - ``ps -o ppid= -p PID``
      - same
      - same
-     -
+     - ``(Get-CimInstance Win32_Process -Filter "ProcessId=PID").ParentProcessId``
    * - :meth:`Process.parent`
      - ``ps -p $(ps -o ppid= -p PID)``
      - same
      - same
-     -
+     - ``(Get-CimInstance Win32_Process -Filter "ProcessId=PID").ParentProcessId``
    * - :meth:`Process.parents`
      - ``pstree -s PID``
      - same
@@ -276,7 +276,7 @@ Identity
      - ``pgrep -P PID``
      - same
      - same
-     -
+     - ``(Get-CimInstance Win32_Process -Filter "ParentProcessId=PID").ProcessId``
    * - :meth:`Process.children(recursive=True) <Process.children>`
      - ``pstree -p PID``
      - same
@@ -291,7 +291,7 @@ Identity
      - ``ps -o lstart -p PID``
      - same
      - same
-     -
+     - ``(Get-Process -Id PID).StartTime``
    * - :meth:`Process.uids`
      - ``ps -o uid,ruid,suid -p PID``
      - same
@@ -306,7 +306,7 @@ Identity
      - ``ps -o user -p PID``
      - same
      - same
-     -
+     - ``tasklist /V /FI "PID eq PID"``
    * - :meth:`Process.environ`
      - ``xargs -0 -a /proc/PID/environ``
      -
@@ -358,12 +358,12 @@ CPU
      - ``ps -o %cpu -p PID``
      - same
      - same
-     -
+     - ``(Get-Process -Id PID).CPU``
    * - :meth:`Process.cpu_times`
      - ``ps -o cputime -p PID``
      - same
      - ``procstat -r PID``
-     -
+     - ``(Get-Process -Id PID) | select CPU``
    * - :meth:`Process.cpu_num`
      - ``ps -o psr -p PID``
      -
@@ -405,7 +405,7 @@ Memory
      - ``ps -o rss,vsz -p PID``
      - same
      - same
-     -
+     - ``tasklist /FI "PID eq PID"``
    * - :meth:`Process.memory_info_ex`
      - ``cat /proc/PID/status``
      -
@@ -415,7 +415,7 @@ Memory
      - ``ps -o %mem -p PID``
      - same
      - same
-     -
+     - ``tasklist /FI "PID eq PID"``
    * - :meth:`Process.memory_maps`
      - ``pmap PID``
      - ``vmmap PID``
@@ -447,7 +447,7 @@ Threads
      - ``ps -o nlwp -p PID``
      - same
      - same
-     -
+     - ``(Get-Process -Id PID).Threads.Count``
    * - :meth:`Process.num_ctx_switches`
      - ``pidstat -w -p PID``
      -
@@ -474,17 +474,17 @@ Files and connections
      - ``ss -p``, ``lsof -p PID -i``
      - ``lsof -p PID -i``
      -
-     -
+     - ``netstat -ano | findstr PID``
    * - :meth:`Process.open_files`
      - ``lsof -p PID``
      - same
      - ``procstat -f PID``
-     -
+     - ``handle.exe -p PID``
    * - :meth:`Process.io_counters`
      - ``cat /proc/PID/io``
      -
      -
-     -
+     - ``(Get-Process -Id PID) | select *IO*``
    * - :meth:`Process.num_fds`
      - ``ls /proc/PID/fd | wc -l``
      -
