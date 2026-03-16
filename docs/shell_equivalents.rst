@@ -247,10 +247,15 @@ Identity
      - same
      - —
    * - :meth:`Process.ppid`
-     - ``ps -o ppid -p PID``
+     - ``ps -o ppid= -p PID``
      - same
      - same
      - —
+   * - :meth:`Process.parent`
+     - ``ps -p $(ps -o ppid= -p PID)``
+     - same
+     - same
+     - ``wmic process where processid=PID get parentprocessid``
    * - :meth:`Process.create_time`
      - ``ps -o lstart -p PID``
      - same
