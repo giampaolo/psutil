@@ -930,6 +930,36 @@ class TestSystemNetIfAddrs(LinuxTestCase):
                     address = addr.address.split('%')[0]
                     assert address in get_ipv6_addresses(name)
 
+    @pytest.mark.skipif(
+        not shutil.which("ip"), reason="'ip' utility not available"
+    )
+    @retry_on_failure()
+    def test_against_ip_addr(self):
+        # Parse IPv4 addresses per interface from `ip addr` output and
+        # compare against psutil. Use the label at the end of each inet
+        # line as the interface name, since it reflects aliases like
+        # "vboxnet0:avahi" that psutil also uses as keys.
+        out = sh("ip addr")
+        ip_addrs = {}  # {ifname: [addr, ...]}
+        for line in out.splitlines():
+            # "    inet 1.2.3.4/24 brd ... scope global eth0"
+            m = re.match(r'^\s+inet\s+(\S+).*\s+(\S+)$', line)
+            if m:
+                addr = m.group(1).split('/')[0]
+                ifname = m.group(2)
+                ip_addrs.setdefault(ifname, []).append(addr)
+        psutil_addrs = psutil.net_if_addrs()
+        for ifname, addrs in ip_addrs.items():
+            if ifname not in psutil_addrs:
+                continue
+            psutil_ipv4 = {
+                a.address
+                for a in psutil_addrs[ifname]
+                if a.family == socket.AF_INET
+            }
+            for addr in addrs:
+                assert addr in psutil_ipv4
+
     # XXX - not reliable when having virtual NICs installed by Docker.
     # @pytest.mark.skipif(not shutil.which("ip"),
     #                     reason="'ip' utility not available")
