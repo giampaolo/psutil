@@ -368,6 +368,29 @@ class TestSensorsBattery(WindowsTestCase):
         # https://msdn.microsoft.com/en-us/library/aa394074(v=vs.85).aspx
         assert battery_psutil.power_plugged == (battery_wmi.BatteryStatus == 2)
 
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    def test_secsleft(self):
+        class SYSTEM_POWER_STATUS(ctypes.Structure):
+            _fields_ = [
+                ('ACLineStatus', ctypes.c_byte),
+                ('BatteryFlag', ctypes.c_byte),
+                ('BatteryLifePercent', ctypes.c_byte),
+                ('SystemStatusFlag', ctypes.c_byte),
+                ('BatteryLifeTime', ctypes.c_ulong),
+                ('BatteryFullLifeTime', ctypes.c_ulong),
+            ]
+
+        status = SYSTEM_POWER_STATUS()
+        ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status))
+        bat = psutil.sensors_battery()
+        if status.ACLineStatus == 1 or status.BatteryFlag & 8:
+            # plugged/charging
+            assert bat.secsleft == psutil.POWER_TIME_UNLIMITED
+        elif status.BatteryLifeTime == 0xFFFFFFFF:
+            assert bat.secsleft == psutil.POWER_TIME_UNKNOWN
+        else:
+            assert bat.secsleft == status.BatteryLifeTime
+
     def test_emulate_no_battery(self):
         with mock.patch(
             "psutil._pswindows.cext.sensors_battery",
