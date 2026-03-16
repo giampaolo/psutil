@@ -256,6 +256,16 @@ Identity
      - same
      - same
      - ``wmic process where processid=PID get parentprocessid``
+   * - :meth:`Process.children(recursive=False) <Process.children>`
+     - ``pgrep -P PID``
+     - same
+     - same
+     - ``wmic process where parentprocessid=PID get processid``
+   * - :meth:`Process.children(recursive=True) <Process.children>`
+     - ``pstree -p PID``
+     - ``pstree PID``
+     - ``pstree PID``
+     - —
    * - :meth:`Process.create_time`
      - ``ps -o lstart -p PID``
      - same
