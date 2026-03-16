@@ -211,7 +211,7 @@ Other
      - ``who -a``, ``w``
      - same
      - same
-     - ``query user``
+     -
    * - :func:`pids`
      - ``ps -eo pid``
      - same
@@ -362,12 +362,12 @@ CPU / scheduling
      - ``ps -o %cpu -p PID``
      - same
      - same
-     - ``(Get-Process -Id PID).CPU``
+     -
    * - :meth:`Process.cpu_times`
      - ``ps -o cputime -p PID``
      - same
      - ``procstat -r PID``
-     - ``(Get-Process -Id PID) | select CPU``
+     -
    * - :meth:`Process.cpu_num`
      - ``ps -o psr -p PID``
      -
