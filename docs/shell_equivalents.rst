@@ -296,8 +296,13 @@ Identity
      - same
      - same
      - —
-   * - :meth:`Process.rlimit`
+   * - :meth:`Process.rlimit(RES) <Process.rlimit>` (get)
      - ``prlimit --pid PID``
+     - —
+     - —
+     - —
+   * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>` (set)
+     - ``prlimit --pid PID --RES=SOFT:HARD``
      - —
      - —
      - —
