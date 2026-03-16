@@ -24,8 +24,8 @@ CPU
      - Windows
    * - :func:`cpu_percent`
      - ``top``
-     - same
-     - same
+     - ``top``, ``iostat``
+     - ``top``
      - Task Manager
    * - :func:`cpu_count(logical=True) <cpu_count>`
      - ``nproc``
@@ -38,13 +38,13 @@ CPU
      - —
      - WMIC
    * - :func:`cpu_times(percpu=False) <cpu_times>`
-     - ``cat /proc/stat | grep '^cpu '``
-     - ``top -l 1``
+     - ``cat /proc/stat | grep '^cpu\s'``
+     - —
      - ``systat -vmstat``
      - —
    * - :func:`cpu_times(percpu=True) <cpu_times>`
-     - ``cat /proc/stat | grep ^cpu``
-     - ``iostat -w 1``
+     - ``cat /proc/stat | grep '^cpu'``
+     - —
      - ``systat -vmstat``
      - —
    * - :func:`cpu_times_percent(percpu=False) <cpu_times_percent>`
@@ -64,7 +64,7 @@ CPU
      - WMIC
    * - :func:`cpu_stats`
      - —
-     - ``sysctl vm``
+     - —
      - ``sysctl vm.stats.sys``
      - —
    * - :func:`getloadavg`
@@ -91,7 +91,7 @@ Memory
      - WMI
    * - :func:`swap_memory`
      - ``free``, ``vmstat``, ``swapon``
-     - ``vm_stat``
+     - ``sysctl vm.swapusage``
      - ``swapinfo``
      - WMI
    * - :func:`heap_info`
@@ -144,8 +144,8 @@ Network
      - BSD
      - Windows
    * - :func:`net_connections`
-     - ``netstat -antp``, ``ss``, ``lsof -nP -i -U``
-     - ``netstat -an``
+     - ``netstat -anp``, ``ss``, ``lsof -nP -i -U``
+     - ``netstat -anp``
      - ``netstat -an``
      - ``netstat``
    * - :func:`net_if_addrs`
@@ -154,7 +154,7 @@ Network
      - ``ifconfig``
      - ``ipconfig``
    * - :func:`net_io_counters`
-     - ``ifconfig``, ``ip -s link``
+     - ``netstat -i``, ``ifconfig``, ``ip -s link``
      - ``netstat -i``
      - ``netstat -i``
      - ``ipconfig``
