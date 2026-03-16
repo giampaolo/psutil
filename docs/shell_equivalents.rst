@@ -333,10 +333,15 @@ CPU
      - —
      - —
      - —
-   * - :meth:`Process.cpu_affinity`
+   * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>` (get)
      - ``taskset -p PID``
      - —
      - ``cpuset -g -p PID``
+     - —
+   * - :meth:`Process.cpu_affinity(CPUS) <Process.cpu_affinity>` (set)
+     - ``taskset -p MASK PID``
+     - —
+     - ``cpuset -s -p PID -l CPUS``
      - —
    * - :meth:`Process.ionice() <Process.ionice>` (get)
      - ``ionice -p PID``
