@@ -83,6 +83,16 @@ Memory
      - ``vm_stat``
      - ``swapinfo``
      - WMI
+   * - :func:`heap_info`
+     - —
+     - —
+     - —
+     - —
+   * - :func:`heap_trim`
+     - —
+     - —
+     - —
+     - —
 
 Disks
 ~~~~~
@@ -196,6 +206,11 @@ Other
      - same
      - same
      - ``tasklist``
+   * - :func:`pid_exists`
+     - ``kill -0 PID``
+     - same
+     - same
+     - ``tasklist /FI "PID eq PID"``
 
 Process methods
 ---------------
@@ -271,6 +286,16 @@ Identity
      - same
      - same
      - —
+   * - :meth:`Process.terminal`
+     - ``ps -o tty -p PID``
+     - same
+     - same
+     - —
+   * - :meth:`Process.rlimit`
+     - ``prlimit --pid PID``
+     - —
+     - —
+     - —
 
 CPU
 ~~~
@@ -295,6 +320,16 @@ CPU
      - —
    * - :meth:`Process.cpu_num`
      - ``ps -o psr -p PID``
+     - —
+     - —
+     - —
+   * - :meth:`Process.cpu_affinity`
+     - ``taskset -p PID``
+     - —
+     - ``cpuset -g -p PID``
+     - —
+   * - :meth:`Process.ionice`
+     - ``ionice -p PID``
      - —
      - —
      - —
@@ -329,6 +364,16 @@ Memory
      - ``smem``, ``smemstat``
      - —
      - —
+     - —
+   * - :meth:`Process.memory_info_ex`
+     - ``ps -o rss,vsz -p PID``
+     - same
+     - same
+     - —
+   * - :meth:`Process.page_faults`
+     - ``ps -o maj_flt,min_flt -p PID``
+     - ``ps -o faults -p PID``
+     - ``ps -o faults -p PID``
      - —
 
 Threads
