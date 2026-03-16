@@ -14,6 +14,7 @@ import platform
 import re
 import shutil
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -154,6 +155,18 @@ class TestSystemAPIs(WindowsTestCase):
                 return pytest.fail(
                     f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
+
+    def test_net_if_addrs(self):
+        ps_addrs = set()
+        for addrs in psutil.net_if_addrs().values():
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    ps_addrs.add(addr.address)
+        out = powershell(
+            "(Get-NetIPAddress -AddressFamily IPv4).IPAddress -join ','"
+        )
+        win_addrs = set(out.strip().split(','))
+        assert win_addrs == ps_addrs
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
@@ -566,6 +579,11 @@ class TestProcess(WindowsTestCase):
         win = win32process.GetExitCodeProcess(self.OpenProcess(self.pid))
         assert ps == win
 
+    def test_num_threads(self):
+        ps = psutil.Process(self.pid).num_threads()
+        win = int(powershell(f"(Get-Process -Id {self.pid}).Threads.Count"))
+        assert ps == win
+
     def test_cpu_affinity(self):
         def from_bitmask(x):
             return [i for i in range(64) if (1 << i) & x]
@@ -690,6 +708,18 @@ class TestProcessWMI(WindowsTestCase):
         wmi_usage = int(w.PageFileUsage)
         if vms not in {wmi_usage, wmi_usage * 1024}:
             return pytest.fail(f"wmi={wmi_usage}, psutil={vms}")
+
+    def test_cpu_times(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        ps = p.cpu_times()
+        assert abs(ps.user - int(w.UserModeTime) / 1e7) < 0.1
+        assert abs(ps.system - int(w.KernelModeTime) / 1e7) < 0.1
+
+    def test_ppid(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        assert p.ppid() == int(w.ParentProcessId)
 
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
