@@ -373,42 +373,42 @@ CPU / scheduling
      -
      -
      -
-   * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>` (get)
+   * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - ``taskset -p PID``
      -
      - ``cpuset -g -p PID``
      -
-   * - :meth:`Process.cpu_affinity(CPUS) <Process.cpu_affinity>` (set)
+   * - :meth:`Process.cpu_affinity(CPUS) <Process.cpu_affinity>`
      - ``taskset -p MASK PID``
      -
      - ``cpuset -s -p PID -l CPUS``
      -
-   * - :meth:`Process.ionice() <Process.ionice>` (get)
+   * - :meth:`Process.ionice() <Process.ionice>`
      - ``ionice -p PID``
      -
      -
      -
-   * - :meth:`Process.ionice(CLASS) <Process.ionice>` (set)
+   * - :meth:`Process.ionice(CLASS) <Process.ionice>`
      - ``ionice -c CLASS -p PID``
      -
      -
      -
-   * - :meth:`Process.nice() <Process.nice>` (get)
+   * - :meth:`Process.nice() <Process.nice>`
      - ``ps -o nice -p PID``
      - same
      - same
      -
-   * - :meth:`Process.nice(VALUE) <Process.nice>` (set)
+   * - :meth:`Process.nice(VALUE) <Process.nice>`
      - ``renice -n VALUE -p PID``
      - same
      - same
      -
-   * - :meth:`Process.rlimit(RES) <Process.rlimit>` (get)
+   * - :meth:`Process.rlimit(RES) <Process.rlimit>`
      - ``prlimit --pid PID``
      -
      - ``procstat rlimit PID``
      -
-   * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>` (set)
+   * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>`
      - ``prlimit --pid PID --RES=SOFT:HARD``
      -
      -
