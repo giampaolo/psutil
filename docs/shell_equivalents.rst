@@ -31,12 +31,12 @@ CPU
      - ``nproc``
      - ``sysctl hw.logicalcpu``
      - ``sysctl hw.ncpu``
-     - WMIC
+     - —
    * - :func:`cpu_count(logical=False) <cpu_count>`
      - ``lscpu | grep '^Core(s)'``
      - ``sysctl hw.physicalcpu``
      - —
-     - WMIC
+     - —
    * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``cat /proc/stat | grep '^cpu\s'``
      - —
@@ -61,7 +61,7 @@ CPU
      - ``cpufreq-info``, ``lscpu | grep "MHz"``
      - ``sysctl hw.cpufrequency``
      - ``sysctl dev.cpu.0.freq``
-     - WMIC
+     - ``systeminfo``
    * - :func:`cpu_stats`
      - —
      - —
@@ -88,12 +88,12 @@ Memory
      - ``free``, ``vmstat``, ``cat /proc/meminfo``
      - ``vm_stat``
      - ``sysctl vm.stats``
-     - WMI
+     - ``systeminfo``
    * - :func:`swap_memory`
      - ``free``, ``vmstat``, ``swapon``
      - ``sysctl vm.swapusage``
      - ``swapinfo``
-     - WMI
+     - —
    * - :func:`heap_info`
      - —
      - —
@@ -125,7 +125,7 @@ Disks
      - ``findmnt``, ``mount``
      - ``mount``
      - ``mount``
-     - ``wmic logicaldisk``
+     - —
    * - :func:`disk_io_counters`
      - ``iostat -dx``
      - ``iostat``
@@ -147,22 +147,22 @@ Network
      - ``netstat -anp``, ``ss``, ``lsof -nP -i -U``
      - ``netstat -anp``
      - ``netstat -an``
-     - ``netstat``
+     - ``netstat -an``
    * - :func:`net_if_addrs`
      - ``ifconfig``, ``ip addr``
      - ``ifconfig``
      - ``ifconfig``
-     - ``ipconfig``
+     - ``ipconfig``, ``systeminfo``
    * - :func:`net_io_counters`
      - ``netstat -i``, ``ifconfig``, ``ip -s link``
      - ``netstat -i``
      - ``netstat -i``
-     - ``ipconfig``
+     - —
    * - :func:`net_if_stats`
      - ``ifconfig``, ``ip -br link``, ``ip link``
      - ``ifconfig``
      - ``ifconfig``
-     - ``ipconfig``
+     - —
 
 Sensors
 ~~~~~~~
@@ -211,7 +211,7 @@ Other
      - ``who -a``, ``w``
      - same
      - same
-     - ``query user``
+     - —
    * - :func:`pids`
      - ``ps -eo pid``
      - same
@@ -251,7 +251,7 @@ Identity
      - ``ps -o args -p PID``
      - same
      - ``procstat -c PID``
-     - ``wmic process get commandline``
+     - —
    * - :meth:`Process.status`
      - ``ps -o stat -p PID``
      - same
@@ -266,17 +266,17 @@ Identity
      - ``ps -p $(ps -o ppid= -p PID)``
      - same
      - same
-     - ``wmic process where processid=PID get parentprocessid``
+     - —
    * - :meth:`Process.parents`
      - ``pstree -s PID``
      - same
      - same
-     - same
+     - —
    * - :meth:`Process.children(recursive=False) <Process.children>`
      - ``pgrep -P PID``
      - same
      - same
-     - ``wmic process where parentprocessid=PID get processid``
+     - —
    * - :meth:`Process.children(recursive=True) <Process.children>`
      - ``pstree -p PID``
      - same
