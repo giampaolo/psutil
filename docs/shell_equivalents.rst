@@ -123,7 +123,7 @@ Network
      - BSD
      - Windows
    * - :func:`net_connections`
-     - ``netstat -antp``, ``ss``
+     - ``netstat -antp``, ``ss``, ``lsof -nP -i -U``
      - ``netstat``
      - ``netstat``
      - ``netstat``
