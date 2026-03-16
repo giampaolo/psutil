@@ -1,7 +1,7 @@
 .. currentmodule:: psutil
 
-CLI equivalents
-===============
+Shell equivalents
+=================
 
 This page maps psutil's Python API to the equivalent native terminal commands
 on each platform. This is useful for understanding what psutil replaces and for

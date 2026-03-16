@@ -26,7 +26,6 @@ include docs/_templates/layout.html
 include docs/adoption.rst
 include docs/api.rst
 include docs/changelog.rst
-include docs/cli_equivalents.rst
 include docs/conf.py
 include docs/credits.rst
 include docs/devguide.rst
@@ -35,6 +34,7 @@ include docs/install.rst
 include docs/platform.rst
 include docs/recipes.rst
 include docs/requirements.txt
+include docs/shell_equivalents.rst
 include docs/timeline.rst
 include psutil/__init__.py
 include psutil/_common.py

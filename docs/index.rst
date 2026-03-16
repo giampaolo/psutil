@@ -30,6 +30,7 @@ process resources**, and **managing running processes**.
 It implements many functionalities offered by UNIX command line tools
 such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap* and others.
+See :doc:`shell_equivalents` for a full mapping.
 psutil currently supports the following platforms, from **Python 3.7** onwards:
 
 - **Linux**
@@ -99,7 +100,7 @@ Table of Contents
    Install <install>
    API Reference <api>
    Recipes <recipes>
-   CLI equivalents <cli_equivalents>
+   Shell equivalents <shell_equivalents>
    Platform support <platform>
    Who uses psutil <adoption>
    Credits <credits>
