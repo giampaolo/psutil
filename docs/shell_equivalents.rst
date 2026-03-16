@@ -257,6 +257,38 @@ Identity
      - same
      - same
      -
+   * - :meth:`Process.create_time`
+     - ``ps -o lstart -p PID``
+     - same
+     - same
+     - ``(Get-Process -Id PID).StartTime``
+   * - :meth:`Process.is_running`
+     - ``kill -0 PID``
+     - same
+     - same
+     - ``tasklist /FI "PID eq PID"``
+   * - :meth:`Process.environ`
+     - ``xargs -0 -a /proc/PID/environ``
+     -
+     - ``procstat -e PID``
+     -
+   * - :meth:`Process.cwd`
+     - ``pwdx PID``
+     - ``lsof -p PID -a -d cwd``
+     -
+     -
+
+Process tree
+~~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+
+   * - psutil method
+     - Linux
+     - macOS
+     - BSD
+     - Windows
    * - :meth:`Process.ppid`
      - ``ps -o ppid= -p PID``
      - same
@@ -282,16 +314,18 @@ Identity
      - same
      - same
      -
-   * - :meth:`Process.is_running`
-     - ``kill -0 PID``
-     - same
-     - same
-     - ``tasklist /FI "PID eq PID"``
-   * - :meth:`Process.create_time`
-     - ``ps -o lstart -p PID``
-     - same
-     - same
-     - ``(Get-Process -Id PID).StartTime``
+
+Credentials
+~~~~~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+
+   * - psutil method
+     - Linux
+     - macOS
+     - BSD
+     - Windows
    * - :meth:`Process.uids`
      - ``ps -o uid,ruid,suid -p PID``
      - same
@@ -307,44 +341,14 @@ Identity
      - same
      - same
      - ``tasklist /V /FI "PID eq PID"``
-   * - :meth:`Process.environ`
-     - ``xargs -0 -a /proc/PID/environ``
-     -
-     - ``procstat -e PID``
-     -
-   * - :meth:`Process.cwd`
-     - ``pwdx PID``
-     - ``lsof -p PID -a -d cwd``
-     -
-     -
-   * - :meth:`Process.nice() <Process.nice>` (get)
-     - ``ps -o nice -p PID``
-     - same
-     - same
-     -
-   * - :meth:`Process.nice(VALUE) <Process.nice>` (set)
-     - ``renice -n VALUE -p PID``
-     - same
-     - same
-     -
    * - :meth:`Process.terminal`
      - ``ps -o tty -p PID``
      - same
      - same
      -
-   * - :meth:`Process.rlimit(RES) <Process.rlimit>` (get)
-     - ``prlimit --pid PID``
-     -
-     - ``procstat rlimit PID``
-     -
-   * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>` (set)
-     - ``prlimit --pid PID --RES=SOFT:HARD``
-     -
-     -
-     -
 
-CPU
-~~~
+CPU / scheduling
+~~~~~~~~~~~~~~~~
 
 .. list-table::
    :header-rows: 1
@@ -386,6 +390,26 @@ CPU
      -
    * - :meth:`Process.ionice(CLASS) <Process.ionice>` (set)
      - ``ionice -c CLASS -p PID``
+     -
+     -
+     -
+   * - :meth:`Process.nice() <Process.nice>` (get)
+     - ``ps -o nice -p PID``
+     - same
+     - same
+     -
+   * - :meth:`Process.nice(VALUE) <Process.nice>` (set)
+     - ``renice -n VALUE -p PID``
+     - same
+     - same
+     -
+   * - :meth:`Process.rlimit(RES) <Process.rlimit>` (get)
+     - ``prlimit --pid PID``
+     -
+     - ``procstat rlimit PID``
+     -
+   * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>` (set)
+     - ``prlimit --pid PID --RES=SOFT:HARD``
      -
      -
      -
