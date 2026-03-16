@@ -22,6 +22,11 @@ CPU
      - macOS
      - BSD
      - Windows
+   * - :func:`cpu_percent`
+     - ``top``
+     - same
+     - same
+     - Task Manager
    * - :func:`cpu_count(logical=True) <cpu_count>`
      - ``nproc``
      - ``sysctl hw.logicalcpu``
@@ -33,7 +38,7 @@ CPU
      - ``sysctl hw.ncpu``
      - WMIC
    * - :func:`cpu_times(percpu=False) <cpu_times>`
-     - ``cat /proc/stat``
+     - ``cat /proc/stat | grep '^cpu '``
      - ``top -l 1``
      - ``systat -vmstat``
      - —
@@ -42,12 +47,12 @@ CPU
      - ``iostat -w 1``
      - ``systat -vmstat``
      - —
-   * - :func:`cpu_percent`
-     - ``top``
-     - ``top``
-     - ``top``
-     - Task Manager
-   * - :func:`cpu_times_percent`
+   * - :func:`cpu_times_percent(percpu=False) <cpu_times_percent>`
+     - ``mpstat``
+     - —
+     - —
+     - —
+   * - :func:`cpu_times_percent(percpu=True) <cpu_times_percent>`
      - ``mpstat -P ALL``
      - —
      - —
