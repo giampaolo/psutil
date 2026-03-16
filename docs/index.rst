@@ -99,6 +99,7 @@ Table of Contents
    Install <install>
    API Reference <api>
    Recipes <recipes>
+   CLI equivalents <cli_equivalents>
    Platform support <platform>
    Who uses psutil <adoption>
    Credits <credits>

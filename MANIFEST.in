@@ -26,6 +26,7 @@ include docs/_templates/layout.html
 include docs/adoption.rst
 include docs/api.rst
 include docs/changelog.rst
+include docs/cli_equivalents.rst
 include docs/conf.py
 include docs/credits.rst
 include docs/devguide.rst
