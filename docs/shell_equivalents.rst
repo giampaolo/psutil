@@ -486,3 +486,45 @@ Files and connections
      - —
      - —
      - ``(Get-Process -Id PID).HandleCount``
+
+Signals
+~~~~~~~
+
+.. list-table::
+   :header-rows: 1
+
+   * - psutil method
+     - Linux
+     - macOS
+     - BSD
+     - Windows
+   * - :meth:`Process.send_signal`
+     - ``kill -SIG PID``
+     - same
+     - same
+     - —
+   * - :meth:`Process.suspend`
+     - ``kill -STOP PID``
+     - same
+     - same
+     - —
+   * - :meth:`Process.resume`
+     - ``kill -CONT PID``
+     - same
+     - same
+     - —
+   * - :meth:`Process.terminate`
+     - ``kill -TERM PID``
+     - same
+     - same
+     - ``taskkill /PID PID``
+   * - :meth:`Process.kill`
+     - ``kill -KILL PID``
+     - same
+     - same
+     - ``taskkill /F /PID PID``
+   * - :meth:`Process.wait`
+     - ``tail --pid=PID -f /dev/null``
+     - ``lsof -p PID +r 1``
+     - ``pwait PID``
+     - ``(Get-Process -Id PID).WaitForExit()``
