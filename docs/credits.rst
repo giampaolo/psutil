@@ -287,7 +287,7 @@ Code contributors by year
 
 * `Arnon Yaari`_ - :gh:`680`, :gh:`679`, :gh:`610`
 * `Bruno Binet`_ - :gh:`572`
-* `dasumin`_ - :gh:`541`
+* `Denis`_ - :gh:`541`
 * `Fabian Groffen`_ - :gh:`611`, :gh:`618`
 * `Gabi Davar`_ - :gh:`578`, :gh:`581`, :gh:`587`
 * `Jeff Tang`_ - :gh:`616`, :gh:`648`, :gh:`653`, :gh:`654`
@@ -434,13 +434,13 @@ Code contributors by year
 .. _`Cedric Lamoriniere`: https://github.com/clamoriniere
 .. _`Chris Burger`: https://github.com/phobozad
 .. _`Chris Lalancette`: https://github.com/clalancette
-.. _`Cristian Vîjdea`: https://github.com/cvijdea
+.. _`Cristian Vîjdea`: https://github.com/cvijdea-bd
 .. _`Dan Vinakovsky`: https://github.com/hexaclock
 .. _`Danek Duvall`: https://github.com/dhduvall
 .. _`Daniel Beer`: https://github.com/dbeer1
 .. _`Daniel Li`: https://github.com/li-dan
 .. _`Daniel Widdis`: https://github.com/dbwiddis
-.. _`dasumin`: https://github.com/dasumin
+.. _`Denis`: https://github.com/denis-sumin
 .. _`David Brochart`: https://github.com/davidbrochart
 .. _`David Knaack`: https://github.com/davidkna
 .. _`Denis Krienbühl`: https://github.com/href
@@ -469,7 +469,7 @@ Code contributors by year
 .. _`Ilya Georgievsky`: https://github.com/xBeAsTx
 .. _`Ilya Yanok`: https://github.com/yanok
 .. _`Irene Sheen`: https://github.com/ceda-ei
-.. _`Isaac K. Ko`: https://github.com/kyet
+.. _`Isaac K. Ko`: https://github.com/1saac-k
 .. _`Jaime Fullaondo`: https://github.com/truthbk
 .. _`Jake Omann`: https://github.com/jomann09
 .. _`Jakob P. Liljenberg`: https://github.com/aristocratos

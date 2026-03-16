@@ -9,8 +9,6 @@ Python
 **Python 2.7**: latest psutil version supporting it is
 `psutil 6.1.1 <https://pypi.org/project/psutil/6.1.1/>`_ (Dec 2024).
 The 6.1.X series may still receive critical bug-fixes but no new features.
-It will be maintained in the dedicated
-`python2 <https://github.com/giampaolo/psutil/tree/python2>`_ branch.
 To install psutil on Python 2.7 run:
 
 ::

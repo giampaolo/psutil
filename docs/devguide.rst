@@ -134,7 +134,7 @@ Typically, this is what you do:
   This usually means testing the return value of the new API against
   a system CLI tool.
 - Update the doc in ``docs/api.rst``.
-- Update `changelog.rst`_ and `CREDITS`_ files.
+- Update `changelog.rst`_ and `credits.rst`_ files.
 - Make a pull request.
 
 Make a pull request
@@ -162,10 +162,10 @@ Documentation
 - doc can be built with ``make install-pydeps-dev; cd docs; make html``.
 - public doc is hosted at https://psutil.readthedocs.io.
 
-.. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
-.. _`CREDITS`: https://github.com/giampaolo/psutil/blob/master/CREDITS
-.. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
+.. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
+.. _`credits.rst`: https://github.com/giampaolo/psutil/blob/master/docs/credits.rst
+.. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/

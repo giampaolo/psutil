@@ -411,5 +411,4 @@ Timeline
   `diff <https://github.com/giampaolo/psutil/compare/release-0.1.0...release-0.1.1#files_bucket>`_
 - 2009-01-27:
   `0.1.0 <https://pypi.org/project/psutil/0.1.0/#files>`_ -
-  `what's new <changelog.html#010>`_ -
   `diff <https://github.com/giampaolo/psutil/compare/d84cc9a783d977368a64016cdb3568d2c9bceacc...release-0.1.0#files_bucket>`_

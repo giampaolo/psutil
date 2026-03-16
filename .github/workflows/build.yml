@@ -54,8 +54,8 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: wheelhouse
 
-  # Run linters.
-  linters:
+  # Run linters and build doc.
+  linters-and-doc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -65,28 +65,26 @@ jobs:
       - name: "Run linters"
         run: |
           make ci-lint
+      - name: "Build doc"
+        run: |
+          pip install -r docs/requirements.txt
+          cd docs && make html
 
-  # Produce wheels as artifacts.
-  upload-wheels:
+  # Merge wheels and check sanity of the package distribution.
+  merge-and-check-dist:
     needs: [tests]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/upload-artifact/merge@v4
-        with:
-          name: wheels
-          pattern: wheels-*
-          separate-directories: false
-          delete-merged: true
-
-  # Check sanity of the package distribution (.tar.gz and *.whl files)
-  check-dist:
-    needs: [upload-wheels]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
+      - uses: actions/upload-artifact/merge@v4
+        with:
+          name: wheels
+          pattern: wheels-*
+          separate-directories: false
+          delete-merged: true
       - uses: actions/download-artifact@v4
         with:
           name: wheels

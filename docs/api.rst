@@ -2922,8 +2922,8 @@ Other constants
 .. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
 .. _`select.kqueue`: https://docs.python.org//library/select.html#select.kqueue
 .. _`select.poll`: https://docs.python.org//library/select.html#select.poll
-.. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set.
-.. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage.
+.. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set
+.. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage
 .. _`signal module`: https://docs.python.org//library/signal.html
 .. _`SOCK_DGRAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_DGRAM
 .. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
