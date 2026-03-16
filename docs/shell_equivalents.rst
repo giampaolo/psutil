@@ -31,47 +31,47 @@ CPU
      - ``nproc``
      - ``sysctl hw.logicalcpu``
      - ``sysctl hw.ncpu``
-     - —
+     -
    * - :func:`cpu_count(logical=False) <cpu_count>`
      - ``lscpu | grep '^Core(s)'``
      - ``sysctl hw.physicalcpu``
-     - —
-     - —
+     -
+     -
    * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``cat /proc/stat | grep '^cpu\s'``
-     - —
+     -
      - ``systat -vmstat``
-     - —
+     -
    * - :func:`cpu_times(percpu=True) <cpu_times>`
      - ``cat /proc/stat | grep '^cpu'``
-     - —
+     -
      - ``systat -vmstat``
-     - —
+     -
    * - :func:`cpu_times_percent(percpu=False) <cpu_times_percent>`
      - ``mpstat``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :func:`cpu_times_percent(percpu=True) <cpu_times_percent>`
      - ``mpstat -P ALL``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :func:`cpu_freq`
      - ``cpufreq-info``, ``lscpu | grep "MHz"``
      - ``sysctl hw.cpufrequency``
      - ``sysctl dev.cpu.0.freq``
      - ``systeminfo``
    * - :func:`cpu_stats`
-     - —
-     - —
+     -
+     -
      - ``sysctl vm.stats.sys``
-     - —
+     -
    * - :func:`getloadavg`
      - ``uptime``, ``cat /proc/loadavg``
      - ``uptime``
      - ``uptime``
-     - —
+     -
 
 Memory
 ~~~~~~
@@ -93,17 +93,17 @@ Memory
      - ``free``, ``vmstat``, ``swapon``
      - ``sysctl vm.swapusage``
      - ``swapinfo``
-     - —
+     -
    * - :func:`heap_info`
-     - —
-     - —
-     - —
-     - —
+     -
+     -
+     -
+     -
    * - :func:`heap_trim`
-     - —
-     - —
-     - —
-     - —
+     -
+     -
+     -
+     -
 
 Disks
 ~~~~~
@@ -120,17 +120,17 @@ Disks
      - ``df``
      - same
      - same
-     - —
+     -
    * - :func:`disk_partitions`
      - ``findmnt``, ``mount``
      - ``mount``
      - ``mount``
-     - —
+     -
    * - :func:`disk_io_counters`
      - ``iostat -dx``
      - ``iostat``
      - ``iostat -x``
-     - —
+     -
 
 Network
 ~~~~~~~
@@ -157,12 +157,12 @@ Network
      - ``netstat -i``, ``ifconfig``, ``ip -s link``
      - ``netstat -i``
      - ``netstat -i``
-     - —
+     -
    * - :func:`net_if_stats`
      - ``ifconfig``, ``ip -br link``, ``ip link``
      - ``ifconfig``
      - ``ifconfig``
-     - —
+     -
 
 Sensors
 ~~~~~~~
@@ -177,19 +177,19 @@ Sensors
      - Windows
    * - :func:`sensors_temperatures`
      - ``sensors``
-     - —
+     -
      - ``sysctl dev.cpu.*.temperature``
-     - —
+     -
    * - :func:`sensors_fans`
      - ``sensors``
-     - —
+     -
      - ``sysctl dev.cpu.*.fan``
-     - —
+     -
    * - :func:`sensors_battery`
      - ``acpi -b``
      - ``pmset -g batt``
      - ``apm -b``
-     - —
+     -
 
 Other
 ~~~~~
@@ -211,7 +211,7 @@ Other
      - ``who -a``, ``w``
      - same
      - same
-     - —
+     -
    * - :func:`pids`
      - ``ps -eo pid``
      - same
@@ -246,42 +246,42 @@ Identity
      - ``readlink /proc/PID/exe``
      - ``lsof -p PID``
      - ``procstat -b PID``
-     - —
+     -
    * - :meth:`Process.cmdline`
      - ``ps -o args -p PID``
      - same
      - ``procstat -c PID``
-     - —
+     -
    * - :meth:`Process.status`
      - ``ps -o stat -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.ppid`
      - ``ps -o ppid= -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.parent`
      - ``ps -p $(ps -o ppid= -p PID)``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.parents`
      - ``pstree -s PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.children(recursive=False) <Process.children>`
      - ``pgrep -P PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.children(recursive=True) <Process.children>`
      - ``pstree -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.is_running`
      - ``kill -0 PID``
      - same
@@ -291,57 +291,57 @@ Identity
      - ``ps -o lstart -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.uids`
      - ``ps -o uid,ruid,suid -p PID``
      - same
      - ``procstat -s PID``
-     - —
+     -
    * - :meth:`Process.gids`
      - ``ps -o gid,rgid,sgid -p PID``
      - same
      - ``procstat -s PID``
-     - —
+     -
    * - :meth:`Process.username`
      - ``ps -o user -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.environ`
      - ``xargs -0 -a /proc/PID/environ``
-     - —
+     -
      - ``procstat -e PID``
-     - —
+     -
    * - :meth:`Process.cwd`
      - ``pwdx PID``
      - ``lsof -p PID -a -d cwd``
-     - —
-     - —
+     -
+     -
    * - :meth:`Process.nice() <Process.nice>` (get)
      - ``ps -o nice -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.nice(VALUE) <Process.nice>` (set)
      - ``renice -n VALUE -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.terminal`
      - ``ps -o tty -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.rlimit(RES) <Process.rlimit>` (get)
      - ``prlimit --pid PID``
-     - —
+     -
      - ``procstat rlimit PID``
-     - —
+     -
    * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>` (set)
      - ``prlimit --pid PID --RES=SOFT:HARD``
-     - —
-     - —
-     - —
+     -
+     -
+     -
 
 CPU
 ~~~
@@ -358,37 +358,37 @@ CPU
      - ``ps -o %cpu -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.cpu_times`
      - ``ps -o cputime -p PID``
      - same
      - ``procstat -r PID``
-     - —
+     -
    * - :meth:`Process.cpu_num`
      - ``ps -o psr -p PID``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>` (get)
      - ``taskset -p PID``
-     - —
+     -
      - ``cpuset -g -p PID``
-     - —
+     -
    * - :meth:`Process.cpu_affinity(CPUS) <Process.cpu_affinity>` (set)
      - ``taskset -p MASK PID``
-     - —
+     -
      - ``cpuset -s -p PID -l CPUS``
-     - —
+     -
    * - :meth:`Process.ionice() <Process.ionice>` (get)
      - ``ionice -p PID``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :meth:`Process.ionice(CLASS) <Process.ionice>` (set)
      - ``ionice -c CLASS -p PID``
-     - —
-     - —
-     - —
+     -
+     -
+     -
 
 Memory
 ~~~~~~
@@ -405,32 +405,32 @@ Memory
      - ``ps -o rss,vsz -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.memory_info_ex`
      - ``cat /proc/PID/status``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :meth:`Process.memory_percent`
      - ``ps -o %mem -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.memory_maps`
      - ``pmap PID``
      - ``vmmap PID``
      - ``procstat -v PID``
-     - —
+     -
    * - :meth:`Process.memory_footprint`
      - ``smem``, ``smemstat``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :meth:`Process.page_faults`
      - ``ps -o maj_flt,min_flt -p PID``
      - ``ps -o faults -p PID``
      - ``procstat -r PID``
-     - —
+     -
 
 Threads
 ~~~~~~~
@@ -447,17 +447,17 @@ Threads
      - ``ps -o nlwp -p PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.num_ctx_switches`
-     - ``grep ctxt /proc/PID/status``, ``pidstat -w -p PID``
-     - —
+     - ``pidstat -w -p PID``
+     -
      - ``procstat -r PID``
-     - —
+     -
    * - :meth:`Process.threads`
      - ``ps -T -p PID``
-     - —
-     - —
-     - —
+     -
+     -
+     -
 
 Files and connections
 ~~~~~~~~~~~~~~~~~~~~~
@@ -473,27 +473,27 @@ Files and connections
    * - :meth:`Process.net_connections`
      - ``ss -p``, ``lsof -p PID -i``
      - ``lsof -p PID -i``
-     - —
-     - —
+     -
+     -
    * - :meth:`Process.open_files`
      - ``lsof -p PID``
      - same
      - ``procstat -f PID``
-     - —
+     -
    * - :meth:`Process.io_counters`
      - ``cat /proc/PID/io``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :meth:`Process.num_fds`
      - ``ls /proc/PID/fd | wc -l``
-     - —
-     - —
-     - —
+     -
+     -
+     -
    * - :meth:`Process.num_handles`
-     - —
-     - —
-     - —
+     -
+     -
+     -
      - ``(Get-Process -Id PID).HandleCount``
 
 Signals
@@ -511,17 +511,17 @@ Signals
      - ``kill -SIG PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.suspend`
      - ``kill -STOP PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.resume`
      - ``kill -CONT PID``
      - same
      - same
-     - —
+     -
    * - :meth:`Process.terminate`
      - ``kill -TERM PID``
      - same
