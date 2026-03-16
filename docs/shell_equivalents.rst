@@ -413,9 +413,9 @@ Memory
      - —
      - —
    * - :meth:`Process.memory_info_ex`
-     - ``ps -o rss,vsz -p PID``
-     - same
-     - same
+     - ``cat /proc/PID/status``
+     - —
+     - —
      - —
    * - :meth:`Process.page_faults`
      - ``ps -o maj_flt,min_flt -p PID``
