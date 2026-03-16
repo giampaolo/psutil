@@ -73,24 +73,31 @@ TEST_DEPS = [
     'wmi ; os_name == "nt" and implementation_name != "pypy"',
 ]
 
+# Linter deps, installable via `pip install .[lint]` or
+# `make install-pydeps-lint`.
+LINT_DEPS = [
+    "black",
+    "ruff",
+    "sphinx-lint",
+    "toml-sort",
+]
+
 # Development deps, installable via `pip install .[dev]` or
 # `make install-pydeps-dev`.
-DEV_DEPS = TEST_DEPS + [
+DEV_DEPS = [
+    *TEST_DEPS,
+    *LINT_DEPS,
     "abi3audit",
-    "black",
     "check-manifest",
     "coverage",
     "packaging",
-    "pylint",
+    "pylint",  # not enforced
     "pyperf",
     "pypinfo",
     "pytest-cov",
     "requests",
-    "rstcheck",
-    "ruff",
     "sphinx",
     "sphinx_rtd_theme",
-    "toml-sort",
     "twine",
     "validate-pyproject[all]",
     "virtualenv",
@@ -478,8 +485,9 @@ def main():
     )
     if setuptools is not None:
         extras_require = {
-            "dev": DEV_DEPS,
             "test": TEST_DEPS,
+            "lint": LINT_DEPS,
+            "dev": DEV_DEPS,
         }
         kwargs.update(
             python_requires=">=3.7",

@@ -24,7 +24,7 @@ Build, setup and running tests
   .. code-block:: bash
 
       make clean                # remove build files
-      make install-pydeps-dev   # install dev deps (ruff, black, ...)
+      make install-pydeps-dev   # install all development deps (ruff, black, coverage, ...)
       make test                 # run tests
       make test-parallel        # run tests in parallel (faster)
       make test-memleaks        # run memory leak tests
@@ -92,9 +92,6 @@ Coding style
 All style and formatting checks are automatically enforced both **locally on
 each `git commit`** and **remotely via a GitHub Actions pipeline**.
 
-- A **Git commit hook**, installed with `make install-git-hooks`, runs all
-  formatters and linters before each commit. The commit is rejected if any
-  check fails.
 - **Python** code follows the `PEP-8`_ style guide. We use `black` and `ruff`
   for formatting and linting.
 - **C** code generally follows the `PEP-7`_ style guide, with formatting
@@ -129,7 +126,7 @@ Typically, this is what you do:
 - Write the platform specific implementation in ``psutil/_ps{platform}.py``
   (e.g. `psutil/_pslinux.py`_).
 - If the change requires C code, write the C implementation in
-  ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/cpu.c`).
+  ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/disk.c`_).
 - Write a generic test in `tests/test_system.py`_ or
   `tests/test_process.py`_.
 - If possible, write a platform-specific test in
@@ -174,8 +171,7 @@ Documentation
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`psutil/__init__.py`: https://github.com/giampaolo/psutil/blob/master/psutil/__init__.py
 .. _`psutil/_pslinux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
-.. _`psutil/_psutil_linux.c`: https://github.com/giampaolo/psutil/blob/master/psutil/_psutil_linux.c
+.. _`psutil/arch/linux/disk.c`: https://github.com/giampaolo/psutil/blob/master/psutil/arch/linux/disk.c
 .. _`tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_linux.py
 .. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
 .. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
-.. _`winmake.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/winmake.py

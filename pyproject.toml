@@ -197,15 +197,6 @@ ignore_decorators = [
     "@pytest.fixture",
 ]
 
-[tool.rstcheck]
-ignore_directives = ["availability"]
-ignore_roles = ["gh"]
-ignore_messages = [
-    "Document or section may not begin with a transition",
-    "Duplicate implicit target name",
-    "Hyperlink target \".*?\" is not referenced",
-]
-
 [tool.tomlsort]
 in_place = true
 no_sort_tables = true

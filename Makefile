@@ -82,14 +82,15 @@ install-pydeps-test:  ## Install python deps necessary to run unit tests.
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
 	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[test]
 
-install-pydeps-dev:  ## Install python deps meant for local development.
-	$(MAKE) install-git-hooks
+install-pydeps-lint:  ## Install python deps necessary to run linters.
 	$(MAKE) install-pip
-	$(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[lint]
 
-install-git-hooks:  ## Install GIT pre-commit hook.
-	ln -sf ../../scripts/internal/git_pre_commit.py .git/hooks/pre-commit
-	chmod +x .git/hooks/pre-commit
+install-pydeps-dev:  ## Install python deps meant for local development.
+	$(MAKE) install-pip
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) setuptools
+	PIP_BREAK_SYSTEM_PACKAGES=1 $(PYTHON) -m pip install $(PIP_INSTALL_ARGS) .[dev]
 
 # ===================================================================
 # Tests
@@ -180,7 +181,8 @@ dprint:
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@git ls-files '*.rst' | xargs rstcheck --config=pyproject.toml --log-level ERROR
+	@git ls-files '*.rst' | xargs python3 scripts/internal/rst_check_dead_refs.py
+	@git ls-files '*.rst' | xargs sphinx-lint
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@git ls-files '*.toml' | xargs toml-sort --check
@@ -231,7 +233,7 @@ fix-all:  ## Run all code fixers.
 # ===================================================================
 
 ci-lint:  ## Run all linters on GitHub CI.
-	$(PYTHON) -m pip install -U black ruff rstcheck toml-sort sphinx
+	$(MAKE) install-pydeps-lint
 	curl -fsSL https://dprint.dev/install.sh | sh
 	$(DPRINT) --version
 	clang-format --version

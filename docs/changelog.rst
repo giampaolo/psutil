@@ -10,8 +10,8 @@ Changelog
 
 Doc:
 
-- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`.
-  Tons of doc improvements. In order of importance:
+- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`,
+  :gh:`2767`. Tons of doc improvements. In order of importance:
 
   - Split the documentation from a single-page HTML document into multiple
     sections. Sections now include separate pages for API reference,
@@ -32,6 +32,8 @@ Doc:
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
   - Use sphinx extension to validate Python code snippets syntax at build-time.
+  - Replace ``rstcheck`` with ``sphinx-lint`` for RST linting, and add a custom
+    script to detect dead reference links in ``.rst`` files.
 
 Type hints / enums:
 
