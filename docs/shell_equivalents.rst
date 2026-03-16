@@ -332,6 +332,8 @@ Identity
      - —
      - —
 
+(Get-Process -Id PID).HandleCount
+
 CPU
 ~~~
 
@@ -438,7 +440,7 @@ Threads
      - same
      - —
    * - :meth:`Process.num_ctx_switches`
-     - ``/proc/PID/status``
+     - ``grep ctxt /proc/self/status``, ``pidstat -w -p PID``
      - —
      - ``procstat -r PID``
      - —
@@ -469,13 +471,18 @@ Files and connections
      - ``lsof -p PID``
      - ``procstat -f PID``
      - —
-   * - :meth:`Process.num_fds`
-     - ``ls /proc/PID/fd | wc -l``
-     - —
-     - —
-     - —
    * - :meth:`Process.io_counters`
      - ``cat /proc/PID/io``
      - —
      - —
      - —
+   * - :meth:`Process.num_fds`
+     - ``ls /proc/PID/fd | wc -l``
+     - —
+     - —
+     - —
+   * - :meth:`Process.num_handles`
+     - —
+     - —
+     - —
+     - ``(Get-Process -Id PID).HandleCount``
