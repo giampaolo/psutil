@@ -277,12 +277,17 @@ Identity
      - ``procstat -e PID``
      - —
    * - :meth:`Process.cwd`
-     - ``ls -la /proc/PID/cwd``
+     - ``pwdx PID``
      - ``lsof -p PID -a -d cwd``
      - —
      - —
-   * - :meth:`Process.nice`
+   * - :meth:`Process.nice() <Process.nice>` (get)
      - ``ps -o nice -p PID``
+     - same
+     - same
+     - —
+   * - :meth:`Process.nice(VALUE) <Process.nice>` (set)
+     - ``renice -n VALUE -p PID``
      - same
      - same
      - —
@@ -328,8 +333,13 @@ CPU
      - —
      - ``cpuset -g -p PID``
      - —
-   * - :meth:`Process.ionice`
+   * - :meth:`Process.ionice() <Process.ionice>` (get)
      - ``ionice -p PID``
+     - —
+     - —
+     - —
+   * - :meth:`Process.ionice(CLASS) <Process.ionice>` (set)
+     - ``ionice -c CLASS -p PID``
      - —
      - —
      - —
