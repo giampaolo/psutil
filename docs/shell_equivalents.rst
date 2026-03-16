@@ -58,12 +58,12 @@ CPU
      - —
      - —
    * - :func:`cpu_freq`
-     - ``cpufreq-info``
+     - ``cpufreq-info``, ``lscpu | grep "MHz"``
      - ``sysctl hw.cpufrequency``
      - ``sysctl dev.cpu.0.freq``
      - WMIC
    * - :func:`cpu_stats`
-     - ``vmstat``
+     - —
      - ``sysctl vm``
      - ``sysctl vm.stats.sys``
      - —
@@ -118,9 +118,9 @@ Disks
      - Windows
    * - :func:`disk_usage`
      - ``df``
-     - ``df``
-     - ``df``
-     - ``dir``
+     - same
+     - same
+     - —
    * - :func:`disk_partitions`
      - ``findmnt``, ``mount``
      - ``mount``
