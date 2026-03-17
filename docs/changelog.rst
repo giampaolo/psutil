@@ -3110,5 +3110,3 @@ cases accessing the old names will work but it will cause a
 .. _`ps.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ps.py
 .. _`pstree.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pstree.py
 .. _`top.py`: https://github.com/giampaolo/psutil/blob/master/scripts/top.py
-
-.. _`psutil/_ntuples.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_ntuples.py
