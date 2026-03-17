@@ -31,12 +31,12 @@ CPU
      - ``nproc``
      - ``sysctl hw.logicalcpu``
      - ``sysctl hw.ncpu``
-     - ``$env:NUMBER_OF_PROCESSORS``
+     -
    * - :func:`cpu_count(logical=False) <cpu_count>`
      - ``lscpu | grep '^Core(s)'``
      - ``sysctl hw.physicalcpu``
      -
-     - ``(Get-CimInstance Win32_Processor).NumberOfCores``
+     -
    * - :func:`cpu_times(percpu=False) <cpu_times>`
      - ``cat /proc/stat | grep '^cpu\s'``
      -
@@ -120,17 +120,17 @@ Disks
      - ``df``
      - same
      - same
-     - ``Get-PSDrive``
+     - ``fsutil volume diskfree C:\``
    * - :func:`disk_partitions`
      - ``findmnt``, ``mount``
      - ``mount``
      - ``mount``
-     - ``Get-CimInstance Win32_LogicalDisk``
+     -
    * - :func:`disk_io_counters`
      - ``iostat -dx``
      - ``iostat``
      - ``iostat -x``
-     - ``Get-Counter '\PhysicalDisk(*)\*'``
+     -
 
 Network
 ~~~~~~~
@@ -189,7 +189,7 @@ Sensors
      - ``acpi -b``
      - ``pmset -g batt``
      - ``apm -b``
-     - ``Get-CimInstance Win32_Battery``
+     -
 
 Other
 ~~~~~
@@ -221,7 +221,7 @@ Other
      - ``kill -0 PID``
      - same
      - same
-     - ``tasklist /FI "PID eq PID"``
+     -
 
 Process methods
 ---------------
@@ -241,17 +241,17 @@ Identity
      - ``ps -o comm -p PID``
      - same
      - ``procstat -b PID``
-     - ``tasklist``
+     -
    * - :meth:`Process.exe`
      - ``readlink /proc/PID/exe``
      - ``lsof -p PID``
      - ``procstat -b PID``
-     - ``(Get-Process -Id PID).Path``
+     -
    * - :meth:`Process.cmdline`
      - ``ps -o args -p PID``
      - same
      - ``procstat -c PID``
-     - ``(Get-CimInstance Win32_Process -Filter "ProcessId=PID").CommandLine``
+     -
    * - :meth:`Process.status`
      - ``ps -o stat -p PID``
      - same
@@ -261,12 +261,12 @@ Identity
      - ``ps -o lstart -p PID``
      - same
      - same
-     - ``(Get-Process -Id PID).StartTime``
+     -
    * - :meth:`Process.is_running`
      - ``kill -0 PID``
      - same
      - same
-     - ``tasklist /FI "PID eq PID"``
+     -
    * - :meth:`Process.environ`
      - ``xargs -0 -a /proc/PID/environ``
      -
@@ -293,7 +293,7 @@ Process tree
      - ``ps -o ppid= -p PID``
      - same
      - same
-     - ``(Get-CimInstance Win32_Process -Filter "ProcessId=PID").ParentProcessId``
+     -
    * - :meth:`Process.parent`
      - ``ps -p $(ps -o ppid= -p PID)``
      - same
@@ -340,7 +340,7 @@ Credentials
      - ``ps -o user -p PID``
      - same
      - same
-     - ``tasklist /V /FI "PID eq PID"``
+     -
    * - :meth:`Process.terminal`
      - ``ps -o tty -p PID``
      - same
@@ -434,7 +434,7 @@ Memory
      - ``ps -o rss,vsz -p PID``
      - same
      - same
-     - ``tasklist /FI "PID eq PID"``
+     -
    * - :meth:`Process.memory_info_ex`
      - ``cat /proc/PID/status``
      -
@@ -444,7 +444,7 @@ Memory
      - ``ps -o %mem -p PID``
      - same
      - same
-     - ``tasklist /FI "PID eq PID"``
+     -
    * - :meth:`Process.memory_maps`
      - ``pmap PID``
      - ``vmmap PID``
@@ -476,7 +476,7 @@ Threads
      - ``ps -o nlwp -p PID``
      - same
      - same
-     - ``(Get-Process -Id PID).Threads.Count``
+     -
    * - :meth:`Process.threads`
      - ``ps -T -p PID``
      -
@@ -508,7 +508,7 @@ Files and connections
      - ``cat /proc/PID/io``
      -
      -
-     - ``(Get-Process -Id PID) | select *IO*``
+     -
    * - :meth:`Process.num_fds`
      - ``ls /proc/PID/fd | wc -l``
      -
@@ -518,7 +518,7 @@ Files and connections
      -
      -
      -
-     - ``(Get-Process -Id PID).HandleCount``
+     -
 
 Signals
 ~~~~~~~
@@ -560,4 +560,4 @@ Signals
      - ``tail --pid=PID -f /dev/null``
      - ``lsof -p PID +r 1``
      - ``pwait PID``
-     - ``(Get-Process -Id PID).WaitForExit()``
+     -
