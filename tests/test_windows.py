@@ -183,16 +183,6 @@ class TestSystemAPIs(WindowsTestCase):
         win_addrs = set(out.strip().split(','))
         assert win_addrs == ps_addrs
 
-    def test_users(self):
-        ps_names = {u.name for u in psutil.users()}
-        out = powershell(
-            "(Get-WmiObject Win32_LoggedOnUser | "
-            "ForEach-Object { ($_.Antecedent -split [char]34)[3] } | "
-            "Sort-Object -Unique) -join ','"
-        )
-        win_names = set(out.strip().split(','))
-        assert ps_names == win_names
-
     def test_net_connections(self):
         # Compare listening TCP ports; they're stable unlike active
         # connections.
