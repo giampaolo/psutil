@@ -12,8 +12,8 @@ import glob
 import os
 import platform
 import re
-import shutil
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -68,18 +68,34 @@ class WindowsTestCase(PsutilTestCase):
         return handle
 
 
-def powershell(cmd):
-    """Currently not used, but available just in case. Usage:
+# Note used but could be useful in the future
+def is_bash_env():
+    env = os.environ
+    if "MSYSTEM" in env or "MINGW_PREFIX" in env or "MINGW_CHOST" in env:
+        return True
+    return "bash" in env.get("SHELL", "")
 
+
+def powershell(cmd):
+    """Run a powershell command and return its output.
+    Example usage:
     >>> powershell(
-        "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
-    """
-    if not shutil.which("powershell.exe"):
-        return pytest.skip("powershell.exe not available")
-    cmdline = (
-        "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive "
-        f"-NoProfile -WindowStyle Hidden -Command \"{cmd}\""  # noqa: Q003
+        "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize"
     )
+    """
+    exe = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    cmdline = [
+        exe,
+        "-ExecutionPolicy",
+        "Bypass",
+        "-NoLogo",
+        "-NonInteractive",
+        "-NoProfile",
+        "-WindowStyle",
+        "Hidden",
+        "-Command",
+        cmd,
+    ]
     return sh(cmdline)
 
 
@@ -154,6 +170,32 @@ class TestSystemAPIs(WindowsTestCase):
                 return pytest.fail(
                     f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
+
+    def test_net_if_addrs(self):
+        ps_addrs = set()
+        for addrs in psutil.net_if_addrs().values():
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    ps_addrs.add(addr.address)
+        out = powershell(
+            "(Get-NetIPAddress -AddressFamily IPv4).IPAddress -join ','"
+        )
+        win_addrs = set(out.strip().split(','))
+        assert win_addrs == ps_addrs
+
+    def test_net_connections(self):
+        # Compare listening TCP ports; they're stable unlike active
+        # connections.
+        ps_ports = {
+            c.laddr.port
+            for c in psutil.net_connections(kind='tcp')
+            if c.status == psutil.CONN_LISTEN
+        }
+        out = powershell(
+            "(Get-NetTCPConnection -State Listen).LocalPort -join ','"
+        )
+        win_ports = {int(p) for p in out.strip().split(',') if p.strip()}
+        assert ps_ports == win_ports
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
@@ -354,6 +396,29 @@ class TestSensorsBattery(WindowsTestCase):
         # Status codes:
         # https://msdn.microsoft.com/en-us/library/aa394074(v=vs.85).aspx
         assert battery_psutil.power_plugged == (battery_wmi.BatteryStatus == 2)
+
+    @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
+    def test_secsleft(self):
+        class SYSTEM_POWER_STATUS(ctypes.Structure):
+            _fields_ = [
+                ('ACLineStatus', ctypes.c_byte),
+                ('BatteryFlag', ctypes.c_byte),
+                ('BatteryLifePercent', ctypes.c_byte),
+                ('SystemStatusFlag', ctypes.c_byte),
+                ('BatteryLifeTime', ctypes.c_ulong),
+                ('BatteryFullLifeTime', ctypes.c_ulong),
+            ]
+
+        status = SYSTEM_POWER_STATUS()
+        ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status))
+        bat = psutil.sensors_battery()
+        if status.ACLineStatus == 1 or status.BatteryFlag & 8:
+            # plugged/charging
+            assert bat.secsleft == psutil.POWER_TIME_UNLIMITED
+        elif status.BatteryLifeTime == 0xFFFFFFFF:
+            assert bat.secsleft == psutil.POWER_TIME_UNKNOWN
+        else:
+            assert bat.secsleft == status.BatteryLifeTime
 
     def test_emulate_no_battery(self):
         with mock.patch(
@@ -566,6 +631,11 @@ class TestProcess(WindowsTestCase):
         win = win32process.GetExitCodeProcess(self.OpenProcess(self.pid))
         assert ps == win
 
+    def test_num_threads(self):
+        ps = psutil.Process(self.pid).num_threads()
+        win = int(powershell(f"(Get-Process -Id {self.pid}).Threads.Count"))
+        assert ps == win
+
     def test_cpu_affinity(self):
         def from_bitmask(x):
             return [i for i in range(64) if (1 << i) & x]
@@ -690,6 +760,18 @@ class TestProcessWMI(WindowsTestCase):
         wmi_usage = int(w.PageFileUsage)
         if vms not in {wmi_usage, wmi_usage * 1024}:
             return pytest.fail(f"wmi={wmi_usage}, psutil={vms}")
+
+    def test_cpu_times(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        ps = p.cpu_times()
+        assert abs(ps.user - int(w.UserModeTime) / 1e7) < 0.1
+        assert abs(ps.system - int(w.KernelModeTime) / 1e7) < 0.1
+
+    def test_ppid(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        assert p.ppid() == int(w.ParentProcessId)
 
     def test_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
