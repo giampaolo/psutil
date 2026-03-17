@@ -676,19 +676,23 @@ def decode(s):
 
 
 @functools.lru_cache
-def term_supports_colors(file=sys.stdout):  # pragma: no cover
-    if not hasattr(file, "isatty") or not file.isatty():
+def term_supports_colors(force_color=False):
+    if WINDOWS:
+        return False
+    if force_color:
+        return True
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
         return False
     try:
-        file.fileno()
+        sys.stdout.fileno()
     except Exception:  # noqa: BLE001
         return False
     return True
 
 
-def hilite(s, color=None, bold=False):  # pragma: no cover
+def hilite(s, color=None, bold=False, force_color=False):
     """Return an highlighted version of 'string'."""
-    if not term_supports_colors():
+    if not term_supports_colors(force_color=force_color):
         return s
     attr = []
     colors = dict(
@@ -698,7 +702,7 @@ def hilite(s, color=None, bold=False):  # pragma: no cover
         green='32',
         grey='37',
         lightblue='36',
-        red='91',
+        red='31',
         violet='35',
         yellow='93',
     )
@@ -718,37 +722,9 @@ def print_color(
     s, color=None, bold=False, file=sys.stdout
 ):  # pragma: no cover
     """Print a colorized version of string."""
-    if not term_supports_colors():
-        print(s, file=file)
-    elif POSIX:
-        print(hilite(s, color, bold), file=file)
-    else:
-        import ctypes
-
-        DEFAULT_COLOR = 7
-        GetStdHandle = ctypes.windll.Kernel32.GetStdHandle
-        SetConsoleTextAttribute = (
-            ctypes.windll.Kernel32.SetConsoleTextAttribute
-        )
-
-        colors = dict(green=2, red=4, brown=6, yellow=6)
-        colors[None] = DEFAULT_COLOR
-        try:
-            color = colors[color]
-        except KeyError:
-            msg = f"invalid color {color!r}; choose between {list(colors)!r}"
-            raise ValueError(msg) from None
-        if bold and color <= 7:
-            color += 8
-
-        handle_id = -12 if file is sys.stderr else -11
-        GetStdHandle.restype = ctypes.c_ulong
-        handle = GetStdHandle(handle_id)
-        SetConsoleTextAttribute(handle, color)
-        try:
-            print(s, file=file)
-        finally:
-            SetConsoleTextAttribute(handle, DEFAULT_COLOR)
+    if term_supports_colors():
+        s = hilite(s, color=color, bold=bold)
+    print(s, file=file, flush=True)
 
 
 def debug(msg):

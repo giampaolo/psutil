@@ -12,7 +12,6 @@ against the files which were modified in the commit.
 import os
 import pathlib
 import shlex
-import shutil
 import subprocess
 import sys
 
@@ -24,11 +23,17 @@ _common = load_module(ROOT_DIR / "psutil" / "_common.py")
 hilite = _common.hilite
 
 PYTHON = sys.executable
-LINUX = sys.platform.startswith("linux")
+
+
+def log(msg="", color=None, bold=None):
+    msg = "Git pre-commit > " + msg
+    if msg:
+        msg = hilite(msg, color=color, bold=bold, force_color=True)
+    print(msg, flush=True)
 
 
 def exit_with(msg):
-    print(hilite("Commit aborted. " + msg, color="red"), file=sys.stderr)
+    log(msg + " Commit aborted.", color="red")
     sys.exit(1)
 
 
@@ -45,7 +50,7 @@ def sh(cmd):
     if p.returncode != 0:
         raise RuntimeError(stderr)
     if stderr:
-        print(stderr, file=sys.stderr)
+        log(stderr)
     return stdout.rstrip()
 
 
@@ -60,75 +65,10 @@ def git_commit_files():
     c = [f for f in out if f.endswith((".c", ".h"))]
     rst = [f for f in out if f.endswith(".rst")]
     toml = [f for f in out if f.endswith(".toml")]
-    # XXX: we should escape spaces and possibly other amenities here
     new_rm_mv = sh(
         ["git", "diff", "--name-only", "--diff-filter=ADR", "--cached"]
     ).split()
     return py, c, rst, toml, new_rm_mv
-
-
-def run_cmd(base_cmd, files, tool, fixer=""):
-    if not files:
-        return
-    cmd = base_cmd + files
-    if subprocess.call(cmd) != 0:
-        msg = f"'{tool}' failed."
-        if fixer:
-            msg += f" Try running '{fixer}'."
-        exit_with(msg)
-
-
-def black(files):
-    run_cmd(
-        [PYTHON, "-m", "black", "--check", "--safe"],
-        files,
-        "black",
-        fixer="fix-black",
-    )
-
-
-def ruff(files):
-    run_cmd(
-        [
-            PYTHON,
-            "-m",
-            "ruff",
-            "check",
-            "--no-cache",
-            "--output-format=concise",
-        ],
-        files,
-        "ruff",
-        fixer="fix-ruff",
-    )
-
-
-def clang_format(files):
-    if not LINUX and not shutil.which("clang-format"):
-        return print("clang-format not installed; skip lint check")
-    run_cmd(
-        ["clang-format", "--dry-run", "--Werror"],
-        files,
-        "clang-format",
-        fixer="fix-c",
-    )
-
-
-def lint_toml(files):
-    run_cmd(["toml-sort", "--check"], files, "toml-sort", fixer="fix-toml")
-
-
-def lint_rst(files):
-    run_cmd(["sphinx-lint"], files, "sphinx-lint")
-
-
-def dprint():
-    run_cmd(
-        ["dprint", "check", "--list-different"],
-        [],
-        "dprint",
-        fixer="fix-dprint",
-    )
 
 
 def lint_manifest():
@@ -141,16 +81,27 @@ def lint_manifest():
             )
 
 
+def run_make(target, files):
+    ls = ", ".join([os.path.basename(x) for x in files])
+    plural = "s" if len(files) > 1 else ""
+    msg = f"Running 'make {target}' against {len(files)} file{plural}: {ls}"
+    log(msg, color="lightblue")
+    files = "FILES=" + " ".join(shlex.quote(f) for f in files)
+    if subprocess.call(["make", target, files]) != 0:
+        exit_with(f"'make {target}' failed.")
+
+
 def main():
     py, c, rst, toml, new_rm_mv = git_commit_files()
-
-    black(py)
-    ruff(py)
-    clang_format(c)
-    lint_rst(rst)
-    lint_toml(toml)
-    dprint()
-
+    if py:
+        run_make("black", py)
+        run_make("ruff", py)
+    if c:
+        run_make("lint-c", c)
+    if rst:
+        run_make("lint-rst", rst)
+    if toml:
+        run_make("lint-toml", toml)
     if new_rm_mv:
         lint_manifest()
 

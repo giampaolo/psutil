@@ -9,6 +9,7 @@
 # Configurable
 PYTHON = python3
 ARGS =
+FILES =
 
 PIP_INSTALL_ARGS = --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade --upgrade-strategy eager
 PYTHON_ENV_VARS = PYTHONWARNINGS=always PYTHONUNBUFFERED=1 PSUTIL_DEBUG=1 PSUTIL_TESTING=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
@@ -168,24 +169,28 @@ coverage:  ## Run test coverage.
 # Linters
 # ===================================================================
 
+# Return a shell pipeline that outputs one file per line. Uses
+# $(FILES) if set, else "git ls-files" with given pattern(s).
+_ls = $(if $(FILES), printf '%s\n' $(FILES), git ls-files $(1))
+
 ruff:  ## Run ruff linter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m ruff check --output-format=concise
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m ruff check --output-format=concise
 
 black:  ## Run black formatter.
-	@git ls-files '*.py' | xargs $(PYTHON) -m black --check --safe
+	@$(call _ls,'*.py') | xargs $(PYTHON) -m black --check --safe
 
 lint-c:  ## Run C linter.
-	@git ls-files '*.c' '*.h' | xargs -P0 -I{} clang-format --dry-run --Werror {}
+	@$(call _ls,'*.c' '*.h') | xargs -P0 -I{} clang-format --dry-run --Werror {}
 
 dprint:
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@git ls-files '*.rst' | xargs python3 scripts/internal/rst_check_dead_refs.py
-	@git ls-files '*.rst' | xargs sphinx-lint
+	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_check_dead_refs.py
+	@$(call _ls,'*.rst') | xargs sphinx-lint
 
 lint-toml:  ## Run linter for pyproject.toml.
-	@git ls-files '*.toml' | xargs toml-sort --check
+	@$(call _ls,'*.toml') | xargs toml-sort --check
 
 lint-all:  ## Run all linters
 	$(MAKE) black
