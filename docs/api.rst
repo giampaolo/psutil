@@ -1158,21 +1158,10 @@ Process class
     That means that if the process terminates and the OS reuses its PID you may
     inadvertently end up interacting with another process. To prevent this
     problem you can use :meth:`is_running` first.
-    The only methods which preemptively check whether PID has been reused
-    (via PID + creation time) are:
-    :meth:`nice` (set),
-    :meth:`ionice`  (set),
-    :meth:`cpu_affinity` (set),
-    :meth:`rlimit` (set),
-    :meth:`children`,
-    :meth:`ppid`,
-    :meth:`parent`,
-    :meth:`parents`,
-    :meth:`suspend`
-    :meth:`resume`,
-    :meth:`send_signal`,
-    :meth:`terminate` and
-    :meth:`kill`.
+    Some methods (e.g. setters and signal-related methods) perform an
+    additional check based on PID + creation time and will raise
+    :exc:`NoSuchProcess` if the PID has been reused. See :ref:`pid_reuse` FAQ
+    for details.
 
   .. method:: oneshot()
 

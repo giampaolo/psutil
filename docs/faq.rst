@@ -185,6 +185,8 @@ The same applies to :meth:`Process.cpu_percent`:
 Processes
 ---------
 
+.. _pid_reuse:
+
 PID reuse
 ^^^^^^^^^
 
