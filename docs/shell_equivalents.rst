@@ -298,7 +298,7 @@ Process tree
      - ``ps -p $(ps -o ppid= -p PID)``
      - same
      - same
-     - ``(Get-CimInstance Win32_Process -Filter "ProcessId=PID").ParentProcessId``
+     -
    * - :meth:`Process.parents`
      - ``pstree -s PID``
      - same
@@ -308,7 +308,7 @@ Process tree
      - ``pgrep -P PID``
      - same
      - same
-     - ``(Get-CimInstance Win32_Process -Filter "ParentProcessId=PID").ProcessId``
+     -
    * - :meth:`Process.children(recursive=True) <Process.children>`
      - ``pstree -p PID``
      - same
