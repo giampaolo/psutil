@@ -12,7 +12,6 @@ import glob
 import os
 import platform
 import re
-import shutil
 import signal
 import socket
 import subprocess
@@ -69,19 +68,34 @@ class WindowsTestCase(PsutilTestCase):
         return handle
 
 
-def powershell(cmd):
-    """Example usage:
+# Note used but could be useful in the future
+def is_bash_env():
+    env = os.environ
+    if "MSYSTEM" in env or "MINGW_PREFIX" in env or "MINGW_CHOST" in env:
+        return True
+    return "bash" in env.get("SHELL", "")
 
+
+def powershell(cmd):
+    """Run a powershell command and return its output.
+    Example usage:
     >>> powershell(
         "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize"
     )
     """
-    if not shutil.which("powershell.exe"):
-        return pytest.skip("powershell.exe not available")
-    cmdline = (
-        "powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive "
-        f"-NoProfile -WindowStyle Hidden -Command \"{cmd}\""  # noqa: Q003
-    )
+    exe = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    cmdline = [
+        exe,
+        "-ExecutionPolicy",
+        "Bypass",
+        "-NoLogo",
+        "-NonInteractive",
+        "-NoProfile",
+        "-WindowStyle",
+        "Hidden",
+        "-Command",
+        cmd,
+    ]
     return sh(cmdline)
 
 
@@ -178,6 +192,20 @@ class TestSystemAPIs(WindowsTestCase):
         )
         win_names = set(out.strip().split(','))
         assert ps_names == win_names
+
+    def test_net_connections(self):
+        # Compare listening TCP ports; they're stable unlike active
+        # connections.
+        ps_ports = {
+            c.laddr.port
+            for c in psutil.net_connections(kind='tcp')
+            if c.status == psutil.CONN_LISTEN
+        }
+        out = powershell(
+            "(Get-NetTCPConnection -State Listen).LocalPort -join ','"
+        )
+        win_ports = {int(p) for p in out.strip().split(',') if p.strip()}
+        assert ps_ports == win_ports
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
