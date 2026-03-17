@@ -580,7 +580,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   :meth:`Process.ionice`, (set), :meth:`Process.cpu_affinity` (set),
   :meth:`Process.rlimit` (set), :meth:`Process.parent`.
 - :gh:`2308`, [OpenBSD]: :meth:`Process.threads` always fail with
-  AccessDenied (also as root).
+  :exc:`AccessDenied` (also as root).
 
 5.9.5 — 2023-04-17
 ^^^^^^^^^^^^^^^^^^

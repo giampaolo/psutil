@@ -702,7 +702,7 @@ Network
     ``PermissionError``. That means the returned list may be incomplete.
 
   .. note::
-    (macOS and AIX) :class:`psutil.AccessDenied` is always raised unless running
+    (macOS and AIX) :exc:`psutil.AccessDenied` is always raised unless running
     as root. This is a limitation of the OS and ``lsof`` does the same.
 
   .. note::
@@ -1067,7 +1067,7 @@ Functions
   This function will return as soon as all processes terminate or when
   *timeout* (seconds) occurs.
   Differently from :meth:`Process.wait` it will not raise
-  :class:`TimeoutExpired` if timeout occurs.
+  :exc:`TimeoutExpired` if timeout occurs.
   A typical use case may be:
 
   - send SIGTERM to a list of processes
@@ -1091,18 +1091,18 @@ Functions
 Exceptions
 ^^^^^^^^^^
 
-.. class:: Error()
+.. exception:: Error()
 
   Base exception class. All other exceptions inherit from this one.
 
-.. class:: NoSuchProcess(pid, name=None, msg=None)
+.. exception:: NoSuchProcess(pid, name=None, msg=None)
 
   Raised by :class:`Process` class methods when no process with the given
   *pid* is found in the current process list, or when a process no longer
   exists. *name* is the name the process had before disappearing
   and gets set only if :meth:`Process.name` was previously called.
 
-.. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
+.. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
   This may be raised by :class:`Process` class methods when querying a zombie
   process on UNIX (Windows doesn't have zombie processes).
@@ -1112,19 +1112,19 @@ Exceptions
 
   .. note::
 
-    this is a subclass of :class:`NoSuchProcess` so if you're not interested
+    this is a subclass of :exc:`NoSuchProcess` so if you're not interested
     in retrieving zombies (e.g. when using :func:`process_iter`) you can
-    ignore this exception and just catch :class:`NoSuchProcess`.
+    ignore this exception and just catch :exc:`NoSuchProcess`.
 
   .. versionadded:: 3.0.0
 
-.. class:: AccessDenied(pid=None, name=None, msg=None)
+.. exception:: AccessDenied(pid=None, name=None, msg=None)
 
   Raised by :class:`Process` class methods when permission to perform an
   action is denied due to insufficient privileges.
   *name* attribute is available if :meth:`Process.name` was previously called.
 
-.. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
+.. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive.
@@ -1137,11 +1137,11 @@ Process class
 
   Represents an OS process with the given *pid*.
   If *pid* is omitted current process *pid* (`os.getpid`_) is used.
-  Raise :class:`NoSuchProcess` if *pid* does not exist.
+  Raise :exc:`NoSuchProcess` if *pid* does not exist.
   On Linux *pid* can also refer to a thread ID (the *id* field returned by
   :meth:`threads` method).
   When calling methods of this class, always be prepared to catch
-  :class:`NoSuchProcess` and :class:`AccessDenied` exceptions.
+  :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
   `hash`_ builtin can be used against instances of this class in order to
   identify a process univocally over time (the hash is determined by mixing
   process PID + creation time). As such it can also be used with `set`_.
@@ -1351,7 +1351,7 @@ Process class
     If *attrs* argument is not passed all public read only attributes are
     assumed.
     *ad_value* is the value which gets assigned to a dict key in case
-    :class:`AccessDenied` or :class:`ZombieProcess` exception is raised when
+    :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
     retrieving that particular process information.
     Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
     there's no need you use it also.
@@ -1368,8 +1368,8 @@ Process class
        ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
     .. versionchanged:: 3.0.0
-       *ad_value* is used also when incurring into :class:`ZombieProcess`
-       exception, not only :class:`AccessDenied`.
+       *ad_value* is used also when incurring into :exc:`ZombieProcess`
+       exception, not only :exc:`AccessDenied`.
 
     .. versionchanged:: 4.5.0
        :meth:`as_dict` is considerably faster thanks to :meth:`oneshot`
@@ -2247,7 +2247,7 @@ Process class
     .. warning::
       On Linux, retrieving connections for certain processes requires root
       privileges. If psutil is not run as root, those connections are silently
-      skipped instead of raising :class:`psutil.AccessDenied`. That means
+      skipped instead of raising :exc:`psutil.AccessDenied`. That means
       the returned list may be incomplete.
 
     .. note::
@@ -2262,7 +2262,7 @@ Process class
        "". This is a limitation of the OS.
 
     .. note::
-      (AIX) :class:`psutil.AccessDenied` is always raised unless running
+      (AIX) :exc:`psutil.AccessDenied` is always raised unless running
       as root (lsof does the same).
 
     .. versionchanged:: 5.3.0
@@ -2362,9 +2362,9 @@ Process class
     returned by `GetExitCodeProcess`_.
 
     *timeout* is expressed in seconds. If specified and the process is still
-    alive raise :class:`TimeoutExpired` exception.
+    alive raise :exc:`TimeoutExpired` exception.
     ``timeout=0`` can be used in non-blocking apps: it will either return
-    immediately or raise :class:`TimeoutExpired`.
+    immediately or raise :exc:`TimeoutExpired`.
 
     The return value is cached.
     To wait for multiple processes use :func:`psutil.wait_procs`.
@@ -2542,7 +2542,7 @@ Windows services
 .. function:: win_service_get(name)
 
   Get a Windows service by name, returning a :class:`WindowsService` instance.
-  Raise :class:`psutil.NoSuchProcess` if no service with such name exists.
+  Raise :exc:`psutil.NoSuchProcess` if no service with such name exists.
 
   .. versionadded:: 4.2.0
 
