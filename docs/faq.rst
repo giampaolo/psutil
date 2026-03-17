@@ -217,3 +217,14 @@ original process terminated and a new one was assigned the same PID.
 :class:`Process` instance still refers to the same process. It compares
 PID and creation time, and returns ``False`` if the PID was reused.
 Prefer it over :func:`pid_exists`.
+
+What is the difference between pid_exists() and Process.is_running()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`pid_exists` checks whether a PID is present in the process list.
+:meth:`Process.is_running` does the same, but also detects :ref:`PID
+reuse <pid_reuse>` by comparing the process creation time. Use
+:func:`pid_exists` when you have a bare PID and don't need to guard
+against reuse (it's faster). Use :meth:`Process.is_running` when you
+hold a :class:`Process` object and want to confirm it still refers to
+the same process.
