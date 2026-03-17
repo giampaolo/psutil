@@ -8,6 +8,11 @@ Changelog
 
 **Enhancements**
 
+- :gh:`2768`: add a new `shell equivalents
+  <https://psutil.readthedocs.io/en/latest/shell_equivalents.html>`__ documentation
+  page mapping each psutil API to the equivalent native terminal command on
+  Linux, macOS, BSD, and Windows.
+
 Doc:
 
 - :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`,
