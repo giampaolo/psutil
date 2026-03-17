@@ -1156,8 +1156,8 @@ Process class
 
     the way this class is bound to a process is via its **PID**.
     That means that if the process terminates and the OS reuses its PID you may
-    inadvertently end up querying another process. To prevent this problem
-    you can use :meth:`is_running` first.
+    inadvertently end up interacting with another process. To prevent this
+    problem you can use :meth:`is_running` first.
     The only methods which preemptively check whether PID has been reused
     (via PID + creation time) are:
     :meth:`nice` (set),

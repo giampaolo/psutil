@@ -181,3 +181,37 @@ The same applies to :meth:`Process.cpu_percent`:
   p.cpu_percent()               # discard
   time.sleep(0.5)
   print(p.cpu_percent())        # meaningful value
+
+Processes
+---------
+
+PID reuse
+^^^^^^^^^
+
+Operating systems recycle PIDs. A :class:`Process` object obtained at time
+*T* may refer to a completely different process at time *T+N* if the
+original process terminated and a new one was assigned the same PID.
+
+**How psutil handles this:**
+
+- *Most read-only methods* (e.g. :meth:`Process.name`,
+  :meth:`Process.cpu_percent`) do **not** check for PID reuse and instead
+  query whatever process currently holds that PID.
+
+- *Signal methods* (e.g. :meth:`Process.send_signal`,
+  :meth:`Process.suspend`, :meth:`Process.resume`,
+  :meth:`Process.terminate`, :meth:`Process.kill`) **do** check for PID
+  reuse (via PID + creation time) before acting, raising
+  :exc:`NoSuchProcess` if the PID was recycled. This prevents accidentally
+  killing the wrong process (`BPO-6973
+  <https://bugs.python.org/issue6973>`_).
+
+- *Set methods* :meth:`Process.nice` (set), :meth:`Process.ionice` (set),
+  :meth:`Process.cpu_affinity` (set), and
+  :meth:`Process.rlimit` (set) also perform this check before applying
+  changes.
+
+:meth:`Process.is_running` is the recommended way to verify whether a
+:class:`Process` instance still refers to the same process. It compares
+PID and creation time, and returns ``False`` if the PID was reused.
+Prefer it over :func:`pid_exists`.
