@@ -182,6 +182,15 @@ The same applies to :meth:`Process.cpu_percent`:
   time.sleep(0.5)
   print(p.cpu_percent())        # meaningful value
 
+Can Process.cpu_percent() return a value higher than 100%?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Yes. On a multi-core system a process can run threads on several CPUs at
+the same time. The maximum value is ``psutil.cpu_count() * 100``. For
+example, on a 4-core machine a fully-loaded process can reach 400%.
+The system-wide :func:`cpu_percent` (without a :class:`Process`) always
+stays in the 0–100% range because it averages across all cores.
+
 Processes
 ---------
 
