@@ -70,10 +70,11 @@ class WindowsTestCase(PsutilTestCase):
 
 
 def powershell(cmd):
-    """Currently not used, but available just in case. Usage:
+    """Example usage:
 
     >>> powershell(
-        "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize")
+        "Get-CIMInstance Win32_PageFileUsage | Select AllocatedBaseSize"
+    )
     """
     if not shutil.which("powershell.exe"):
         return pytest.skip("powershell.exe not available")
@@ -167,6 +168,16 @@ class TestSystemAPIs(WindowsTestCase):
         )
         win_addrs = set(out.strip().split(','))
         assert win_addrs == ps_addrs
+
+    def test_users(self):
+        ps_names = {u.name for u in psutil.users()}
+        out = powershell(
+            "(Get-WmiObject Win32_LoggedOnUser | "
+            "ForEach-Object { ($_.Antecedent -split [char]34)[3] } | "
+            "Sort-Object -Unique) -join ','"
+        )
+        win_names = set(out.strip().split(','))
+        assert ps_names == win_names
 
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
