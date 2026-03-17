@@ -28,9 +28,8 @@ in **Python**.
 It is useful mainly for **system monitoring**, **profiling**, **limiting
 process resources**, and **managing running processes**.
 It implements many functionalities offered by UNIX command line tools
-such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
-ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap* and others.
-See :doc:`shell_equivalents` for a full mapping.
+such as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
+(see :doc:`shell equivalents <shell_equivalents>`).
 psutil currently supports the following platforms, from **Python 3.7** onwards:
 
 - **Linux**
@@ -113,3 +112,4 @@ Table of Contents
    Changelog <changelog>
 
 .. _`Tidelift security contact`: https://tidelift.com/security
+..

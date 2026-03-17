@@ -20,7 +20,7 @@ CPU
    * - psutil function
      - Linux
      - macOS
-     - FreeBSD
+     - BSD
      - Windows
    * - :func:`cpu_percent`
      - ``top``
@@ -82,7 +82,7 @@ Memory
    * - psutil function
      - Linux
      - macOS
-     - FreeBSD
+     - BSD
      - Windows
    * - :func:`virtual_memory`
      - ``free``, ``vmstat``, ``cat /proc/meminfo``
