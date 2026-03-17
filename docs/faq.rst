@@ -1,0 +1,183 @@
+.. currentmodule:: psutil
+
+FAQ
+===
+
+.. contents::
+   :local:
+   :depth: 3
+
+Exceptions
+----------
+
+Why do I get AccessDenied?
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:exc:`AccessDenied` is raised when the OS refuses to return information about
+a process because the calling user does not have sufficient privileges.
+This is expected behavior and is not a bug. It typically happens when:
+
+- querying processes owned by other users (e.g. *root*)
+- calling certain methods like :meth:`Process.memory_maps`,
+  :meth:`Process.open_files` or :meth:`Process.net_connections` for privileged
+  processes
+
+You have two options to deal with it.
+
+- Option 1: call the method directly and catch the exception:
+
+  .. code-block:: python
+
+    import psutil
+
+    p = psutil.Process(pid)
+    try:
+        print(p.memory_maps())
+    except (psutil.AccessDenied, psutil.NoSuchProcess):
+        pass
+
+- Option 2: use :func:`process_iter` with a list of attribute names to pre-fetch. If
+  fetching an attribute raises :exc:`AccessDenied` internally, its value in
+  ``p.info`` is set to ``None`` (or to the ``ad_value`` argument, if specified):
+
+  .. code-block:: python
+
+    import psutil
+
+    for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
+        print(p.info["username"])  # may print "N/A"
+
+Why do I get NoSuchProcess?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:exc:`NoSuchProcess` is raised when a process no longer exists.
+The most common cause is a TOCTOU (time-of-check / time-of-use) race
+condition: a process can die between the moment its PID is obtained and
+the moment it is queried. The following 2 naive patterns are racy:
+
+.. code-block:: python
+
+  import psutil
+
+  for pid in psutil.pids():
+      p = psutil.Process(pid)  # may raise NoSuchProcess
+      print(p.name())  # may raise NoSuchProcess
+
+.. code-block:: python
+
+  import psutil
+
+  if psutil.pid_exists(pid):
+      p = psutil.Process(pid)  # may raise NoSuchProcess
+      print(p.name())  # may raise NoSuchProcess
+
+The correct approach is to use :func:`process_iter`, which handles
+:exc:`NoSuchProcess` internally and skips processes that disappear
+during iteration:
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(["name"]):
+      print(p.info["name"])
+
+If you have a specific PID (e.g. a known child process), wrap the
+call in a try/except:
+
+.. code-block:: python
+
+  import psutil
+
+  try:
+      p = psutil.Process(pid)
+      print(p.name(), p.status())
+  except (psutil.NoSuchProcess, psutil.AccessDenied):
+      pass
+
+An even simpler pattern is to catch :exc:`Error`, which implies both
+:exc:`AccessDenied` and :exc:`NoSuchProcess`:
+
+.. code-block:: python
+
+  import psutil
+
+  try:
+      p = psutil.Process(pid)
+      print(p.name(), p.status())
+  except psutil.Error:
+      pass
+
+What is ZombieProcess?
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:exc:`ZombieProcess` is a subclass of :exc:`NoSuchProcess` that is raised
+on UNIX when a process has terminated but has not yet been reaped by its
+parent. The process has finished executing but its entry remains in the
+process table until the parent calls ``wait()`` (or the parent itself
+exits).
+
+**What you can and cannot do with a zombie:**
+
+- A zombie can be instantiated via :class:`Process` (pid) without error.
+- :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
+- :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
+- The zombie appears in :func:`process_iter` and :func:`pids`.
+- Sending signals (:meth:`Process.terminate`, :meth:`Process.kill`,
+  etc.) has no effect.
+- Most other methods (:meth:`Process.cmdline`, :meth:`Process.exe`,
+  :meth:`Process.memory_maps`, etc.) may raise :exc:`ZombieProcess`,
+  return a meaningful value, or return a null/empty value depending on
+  the platform.
+- :meth:`Process.as_dict` will not crash.
+
+**How to detect zombies:**
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(["status"]):
+      if p.info["status"] == psutil.STATUS_ZOMBIE:
+          print(f"zombie: pid={p.pid}")
+
+**How to get rid of a zombie:** the only way is to have its parent
+process call ``wait()`` (or ``waitpid()``). If the parent never does
+this, killing the parent will cause the zombie to be re-parented to
+``init`` / ``systemd``, which will reap it automatically.
+
+CPU
+---
+
+Why does cpu_percent() return 0.0 on first call?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
+*between two calls*. The very first call has no prior sample to compare
+against, so it always returns ``0.0``. The fix is to call it once to
+initialize the baseline, discard the result, then call it again after a
+short sleep:
+
+.. code-block:: python
+
+  import time
+  import psutil
+
+  psutil.cpu_percent()          # discard first call
+  time.sleep(0.5)
+  print(psutil.cpu_percent())   # meaningful value
+
+Alternatively, pass ``interval`` to make it block internally:
+
+.. code-block:: python
+
+  print(psutil.cpu_percent(interval=0.5))
+
+The same applies to :meth:`Process.cpu_percent`:
+
+.. code-block:: python
+
+  p = psutil.Process()
+  p.cpu_percent()               # discard
+  time.sleep(0.5)
+  print(p.cpu_percent())        # meaningful value

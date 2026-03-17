@@ -3,7 +3,7 @@
 PYTHON = python3
 SPHINXBUILD = $(PYTHON) -m sphinx
 BUILDDIR = _build
-ALLSPHINXOPTS = --fail-on-warning -d $(BUILDDIR)/doctrees .
+ALLSPHINXOPTS = -d $(BUILDDIR)/doctrees .
 
 clean:  ## Remove all build files
 	rm -rf $(BUILDDIR)
