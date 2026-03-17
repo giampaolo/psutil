@@ -8,105 +8,108 @@ Changelog
 
 **Enhancements**
 
-- :gh:`2768`: add a new `shell equivalents
-  <https://psutil.readthedocs.io/en/latest/shell_equivalents.html>`__ documentation
-  page mapping each psutil API to the equivalent native terminal command on
-  Linux, macOS, BSD, and Windows.
+- Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
+  :gh:`2764`, :gh:`2767`, :gh:`2768`):
 
-Doc:
+  - Split docs from a single HTML file into multiple sections (API reference,
+    install, etc.).
 
-- :gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`, :gh:`2764`,
-  :gh:`2767`. Tons of doc improvements. In order of importance:
+  - Added new sections:
 
-  - Split the documentation from a single-page HTML document into multiple
-    sections. Sections now include separate pages for API reference,
-    installation, release timeline and more.
-  - Moved 18 years old ``HISTORY.rst`` and ``INSTALL.rst`` files into
-    ``docs/changelog.rst`` and ``docs/install.rst`` for better integration.
-    Original files remain in the project root with a note pointing to the new
-    locations.
-  - Show a section of notable software that depends on psutil (``/adoption``).
-  - Show a section of people who contributed or donated to psutil over the
-    years (``/credits``).
-  - Added a summary table of officially supported operating systems and
-    architectures.
-  - Added tons of new examples in ``docs/recipes.rst``.
-  - Drastically improved :func:`virtual_memory` doc, which is now more
-    detailed, and includes a table with all the available metrics on each
-    platform.
-  - Show a clickable COPY button to copy code snippets.
-  - Show ``psutil.`` prefix for all APIs.
-  - Use sphinx extension to validate Python code snippets syntax at build-time.
-  - Replace ``rstcheck`` with ``sphinx-lint`` for RST linting, and add a custom
-    script to detect dead reference links in ``.rst`` files.
+    - `/recipes <https://psutil.readthedocs.io/en/latest/credits.html>`__:
+      show code samples
+    - `/adoption <https://psutil.readthedocs.io/en/latest/adoption.html>`__:
+      notable software using psutil
+    - `/shell_equivalents <https://psutil.readthedocs.io/en/latest/shell_equivalents.html>`__:
+      maps each psutil API to native CLI commands
+    - `/install <https://psutil.readthedocs.io/en/latest/install.html>`__
+      (was old ``INSTALL.rst`` in root dir)
+    - `/credits <https://psutil.readthedocs.io/en/latest/credits.html>`__:
+      list contributors and donors (was old ``CREDITS`` in root dir)
+    - `/platform <https://psutil.readthedocs.io/en/latest/credits.html>`__:
+      summary of OSes and architectures support
 
-Type hints / enums:
+  - Usability:
 
-- :gh:`1946`: Add inline type hints to all public APIs in `psutil/__init__.py`.
-  Type checkers (mypy, pyright, etc.) can now statically verify code that uses
-  psutil. No runtime behavior is changed; the annotations are purely
-  informational.
-- :gh:`2751`: Convert all named tuples in `psutil/_ntuples.py`_ from
-  ``collections.namedtuple`` to ``typing.NamedTuple`` classes with **type
-  annotations**. This makes the classes self-documenting, effectively turning
-  this module into a readable API reference.
-- :gh:`2753`: Introduce enum classes (:class:`ProcessStatus`,
-  :class:`ConnectionStatus`,
-  :class:`ProcessIOPriority`, :class:`ProcessPriority`, :class:`ProcessRlimit`)
-  grouping related constants. The individual top-level constants (e.g.
-  ``psutil.STATUS_RUNNING``) remain the primary API, and are now aliases
-  for the corresponding enum members.
+    - Show a clickable COPY button to copy code snippets.
+    - Show ``psutil.`` prefix for all APIs.
+    - Use sphinx extension to validate Python code snippets syntax at build-time.
 
-New APIs:
+  - Testing:
 
-- :gh:`2729`: New :meth:`Process.page_faults` method, returning a ``(minor,
-  major)`` namedtuple.
-- :gh:`2731`, :gh:`2736`, :gh:`2723`, :gh:`2733`: Reorganization of process
-  memory APIs.
+    - Replace ``rstcheck`` with ``sphinx-lint`` for RST linting.
+    - Add custom script to detect dead reference links in ``.rst`` files.
+    - Build doc as part of CI process.
 
-  - Add new :meth:`Process.memory_info_ex` method, which extends
-    :meth:`Process.memory_info` with platform-specific metrics:
+  - Greatly improved :func:`virtual_memory` doc.
 
-    - Linux: *peak_rss*, *peak_vms*, *rss_anon*, *rss_file*, *rss_shmem*,
-      *swap*, *hugetlb*
-    - macOS: *peak_rss*, *rss_anon*, *rss_file*, *wired*, *compressed*,
-      *phys_footprint*
-    - Windows: *virtual*, *peak_virtual*
+- Type hints / enums:
 
-  - Add new :meth:`Process.memory_footprint` method, which returns *uss*,
-    *pss* and *swap* metrics (what :meth:`Process.memory_full_info` used to
-    return, which is now **deprecated**).
+  - :gh:`1946`: Add inline type hints to all public APIs in `psutil/__init__.py`.
+    Type checkers (mypy, pyright, etc.) can now statically verify code that uses
+    psutil. No runtime behavior is changed; the annotations are purely
+    informational.
+  - :gh:`2751`: Convert all named tuples from ``collections.namedtuple`` to
+    ``typing.NamedTuple`` classes with **type annotations**. This makes the
+    classes self-documenting, effectively turning this module into a readable
+    API reference.
+  - :gh:`2753`: Introduce enum classes (:class:`ProcessStatus`,
+    :class:`ConnectionStatus`,
+    :class:`ProcessIOPriority`, :class:`ProcessPriority`, :class:`ProcessRlimit`)
+    grouping related constants. The individual top-level constants (e.g.
+    ``psutil.STATUS_RUNNING``) remain the primary API, and are now aliases
+    for the corresponding enum members.
 
-  - :meth:`Process.memory_info` named tuple changed:
+- New APIs:
 
-    - BSD: added *peak_rss*.
+  - :gh:`2729`: New :meth:`Process.page_faults` method, returning a ``(minor,
+    major)`` namedtuple.
+  - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
+    :gh:`2733`).
 
-    - Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
-      aliases returning 0 and emitting `DeprecationWarning` are kept.
+    - Add new :meth:`Process.memory_info_ex` method, which extends
+      :meth:`Process.memory_info` with platform-specific metrics:
 
-    - macOS: *pfaults* and *pageins* removed with **no
-      backward-compataliases**. Use :meth:`Process.page_faults` instead.
+      - Linux: *peak_rss*, *peak_vms*, *rss_anon*, *rss_file*, *rss_shmem*,
+        *swap*, *hugetlb*
+      - macOS: *peak_rss*, *rss_anon*, *rss_file*, *wired*, *compressed*,
+        *phys_footprint*
+      - Windows: *virtual*, *peak_virtual*
 
-    - Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
-      *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*.
-      At the same time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
-      *peak_nonpaged_pool* were moved to :meth:`Process.memory_info_ex`. All
-      these old names still work but raise `DeprecationWarning`.
+    - Add new :meth:`Process.memory_footprint` method, which returns *uss*,
+      *pss* and *swap* metrics (what :meth:`Process.memory_full_info` used to
+      return, which is now **deprecated**).
 
-  - :meth:`Process.memory_full_info` is **deprecated**. Use the new
-    :meth:`Process.memory_footprint` instead.
+    - :meth:`Process.memory_info` named tuple changed:
 
-Others:
+      - BSD: added *peak_rss*.
 
-- :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
-  has been normalized on all platforms, and the first 3 fields are now always
-  ``user, system, idle``. See compatibility notes below.
-- :gh:`2754`: standardize :func:`sensors_battery`'s `percent` so that it
-  returns a `float` instead of `int` on all systems, not only Linux.
-- :gh:`2765`: add a PR bot that uses Claude to summarize PR changes and update
-  changelog.rst and credits.rst when commenting with /changelog.
-- :gh:`2766`: remove remaining Python 2.7 compatibility shims from
-  ``setup.py``, simplifying the build infrastructure.
+      - Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
+        aliases returning 0 and emitting `DeprecationWarning` are kept.
+
+      - macOS: *pfaults* and *pageins* removed with **no
+        backward-compataliases**. Use :meth:`Process.page_faults` instead.
+
+      - Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
+        *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*.
+        At the same time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
+        *peak_nonpaged_pool* were moved to :meth:`Process.memory_info_ex`. All
+        these old names still work but raise `DeprecationWarning`.
+
+    - :meth:`Process.memory_full_info` is **deprecated**. Use the new
+      :meth:`Process.memory_footprint` instead.
+
+- Others:
+
+  - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
+    has been normalized on all platforms, and the first 3 fields are now always
+    ``user, system, idle``. See compatibility notes below.
+  - :gh:`2754`: standardize :func:`sensors_battery`'s `percent` so that it
+    returns a `float` instead of `int` on all systems, not only Linux.
+  - :gh:`2765`: add a PR bot that uses Claude to summarize PR changes and update
+    changelog.rst and credits.rst when commenting with /changelog.
+  - :gh:`2766`: remove remaining Python 2.7 compatibility shims from
+    ``setup.py``, simplifying the build infrastructure.
 
 **Bug fixes**
 
