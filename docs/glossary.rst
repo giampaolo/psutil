@@ -149,6 +149,19 @@ Glossary
 
       See :meth:`Process.status` and the ``STATUS_*`` constants.
 
+   swap-in
+      The act of moving a memory page from swap space on disk back into
+      physical RAM, making it accessible to the process again. Reported
+      as the ``sin`` field of :func:`swap_memory` (cumulative bytes since
+      boot). See also :term:`swap-out`.
+
+   swap-out
+      The act of moving a memory page from physical RAM to swap space on
+      disk to free up RAM for other processes. Reported as the ``sout``
+      field of :func:`swap_memory` (cumulative bytes since boot). A
+      sustained non-zero rate is a sign of excessive swapping.
+      See also :term:`swap-in`.
+
    swap memory
       Disk space used as an overflow extension of physical RAM. When the
       OS runs low on RAM it *swaps out* memory pages to disk and restores
