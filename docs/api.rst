@@ -310,14 +310,6 @@ Memory
   - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
     code and critical data structures). It can never be moved to disk.
 
-  .. note::
-     - On Linux, **total**, **free**, **used**,  **shared**, and **available**
-       match the output of the ``free`` command.
-     - On macOS, **free**, **active**, **inactive**, and **wired** match
-       ``vm_stat`` output.
-     - On Windows, **total**, **used** ("In use"), and **available** match
-       the Task Manager (Performance > Memory tab).
-
   Below is a table showing implementation details. All info on Linux is retrieved from `/proc/meminfo`.
 
   .. list-table::
@@ -402,6 +394,14 @@ Memory
   .. note:: if you just want to know how much physical memory is left in a
     cross-platform manner, simply rely on **available** and **percent**
     fields.
+
+  .. note::
+     - On Linux, **total**, **free**, **used**,  **shared**, and **available**
+       match the output of the ``free`` command.
+     - On macOS, **free**, **active**, **inactive**, and **wired** match
+       ``vm_stat`` output.
+     - On Windows, **total**, **used** ("In use"), and **available** match
+       the Task Manager (Performance > Memory tab).
 
   .. note::  see `meminfo.py`_ script providing an example on how to convert
     bytes in a human readable form.
