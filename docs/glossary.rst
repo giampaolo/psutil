@@ -6,6 +6,24 @@ Glossary
 .. glossary::
    :sorted:
 
+   available memory
+      The amount of RAM that can be given to processes without the system
+      going into swap. This is the right field to watch for memory
+      pressure, not ``free``. ``free`` is often deceptively low because
+      the OS keeps recently freed pages as reclaimable cache; those pages
+      are counted in ``available`` but not in ``free``. A monitoring
+      alert should fire on ``available`` (or ``percent``) falling below a
+      threshold, not on ``free``. See :func:`virtual_memory`.
+
+   busy_time
+      The cumulative time (in milliseconds) a disk device spent actually
+      performing I/O, as reported in the ``busy_time`` field of
+      :func:`disk_io_counters` (Linux and FreeBSD only). Analogous to
+      CPU percent but for disks: a sustained rate close to 1000 ms/s
+      means the disk is saturated and requests are queuing up. Compute
+      the rate of change over an interval rather than using the absolute
+      value.
+
    CPU affinity
       A property of a process (or thread) that restricts which logical CPUs
       it is allowed to run on. For example, pinning a process to CPU 0 and
@@ -33,6 +51,22 @@ Glossary
       context switching can indicate high system load or excessive thread
       contention. See :func:`cpu_stats` and :meth:`Process.num_ctx_switches`.
 
+   cumulative counter
+      A field whose value only increases over time (since boot or process
+      creation) and never resets. Examples include :func:`cpu_times`,
+      :func:`disk_io_counters`, :func:`net_io_counters`,
+      :meth:`Process.io_counters`, and :meth:`Process.num_ctx_switches`.
+      The raw value is rarely useful on its own; divide the delta between
+      two samples by the elapsed time to get a meaningful rate (e.g.
+      bytes per second, context switches per second).
+
+   dropin / dropout
+      Fields in :func:`net_io_counters` counting packets dropped at the
+      NIC level before they could be processed (``dropin``) or sent
+      (``dropout``). Unlike transmission errors, drops indicate the
+      interface or kernel buffer was overwhelmed. A non-zero and growing
+      count is a sign of network saturation or misconfiguration.
+
    file descriptor
       An integer handle used by UNIX processes to reference open files,
       sockets, pipes, and other I/O resources. On Windows the equivalent
@@ -48,6 +82,14 @@ Glossary
       handle consumes a small amount of kernel memory; leaking handles
       eventually causes ``ERROR_NO_MORE_FILES`` or similar errors. See
       :meth:`Process.num_handles`.
+
+   involuntary context switch
+      A :term:`context switch` triggered by the OS because the process
+      used up its CPU time slice or a higher-priority process became
+      runnable. A high involuntary rate means the process is CPU-bound
+      and competing for CPU time. Compare with
+      :term:`voluntary context switch`. See
+      :meth:`Process.num_ctx_switches`.
 
    iowait
       A CPU time field (Linux, SunOS, AIX) measuring time spent by the CPU
@@ -92,6 +134,14 @@ Glossary
       *Network Interface Card*, a hardware or virtual network interface.
       psutil uses this term when referring to per-interface network
       statistics. See :func:`net_if_addrs` and :func:`net_if_stats`.
+
+   peak_rss
+      The highest :term:`RSS` value a process has ever reached since it
+      started (memory high-water mark). Available via
+      :meth:`Process.memory_info` (BSD, Windows) and
+      :meth:`Process.memory_info_ex` (Linux, macOS). Useful for capacity
+      planning and leak detection: if ``peak_rss`` keeps growing across
+      successive runs or over time, the process is likely leaking memory.
 
    page fault
       An event that occurs when a process accesses a virtual memory page
@@ -174,6 +224,13 @@ Glossary
       entirely, making it the most accurate single-process memory metric.
       Available on Linux, macOS, and Windows via
       :meth:`Process.memory_full_info`.
+
+   voluntary context switch
+      A :term:`context switch` initiated by the process itself, typically
+      because it is waiting for I/O, a lock, a timer, or a system call.
+      A high voluntary rate is normal for I/O-bound processes. Compare
+      with :term:`involuntary context switch`. See
+      :meth:`Process.num_ctx_switches`.
 
    VMS
       *Virtual Memory Size*, the total virtual address space reserved by a
