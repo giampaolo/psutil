@@ -16,13 +16,15 @@ Glossary
       threshold, not on ``free``. See :func:`virtual_memory`.
 
    busy_time
-      The cumulative time (in milliseconds) a disk device spent actually
-      performing I/O, as reported in the ``busy_time`` field of
-      :func:`disk_io_counters` (Linux and FreeBSD only). Analogous to
-      CPU percent but for disks: a sustained rate close to 1000 ms/s
-      means the disk is saturated and requests are queuing up. Compute
-      the rate of change over an interval rather than using the absolute
-      value.
+      A :term:`cumulative counter` (milliseconds) tracking the time a
+      disk device spent actually performing I/O, as reported in the
+      ``busy_time`` field of :func:`disk_io_counters` (Linux and FreeBSD
+      only). To use it, sample twice and divide the delta by elapsed
+      time to get a utilisation percentage (analogous to CPU percent but
+      for disks). When it approaches 100% the disk queue is growing and
+      I/O latency will spike. Unlike ``read_bytes``/``write_bytes``,
+      ``busy_time`` reveals saturation even when throughput looks modest
+      (e.g. many small random I/Os).
 
    CPU affinity
       A property of a process (or thread) that restricts which logical CPUs
