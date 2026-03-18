@@ -83,6 +83,7 @@ Status and connection fields are now enums
 - :meth:`Process.net_connections` and :func:`net_connections` ``status`` field
   now returns a :class:`psutil.ConnectionStatus` member instead of a plain
   ``str``.
+
 Because both are `enum.StrEnum`_ subclasses they compare equal to their
 string values, so existing comparisons continue to work unchanged:
 
