@@ -212,3 +212,97 @@ that a process object is still alive and refers to the same process, use
   for p in psutil.process_iter(["name"]):
       if p.is_running():
           print(p.pid, p.info["name"])
+
+.. _migration-5.0:
+
+Migrating to 5.0
+-----------------
+
+5.0.0 was the largest renaming in psutil history. All ``get_*`` and
+``set_*`` :class:`Process` methods lost their prefix, and several
+module-level names were changed.
+
+Old :class:`Process` method names still worked but raised
+``DeprecationWarning``. They were fully removed in 6.0.
+
+Process methods
+^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 40
+
+   * - Old (< 5.0)
+     - New (>= 5.0)
+   * - ``p.get_children()``
+     - ``p.children()``
+   * - ``p.get_connections()``
+     - ``p.connections()`` → ``p.net_connections()`` in 6.0
+   * - ``p.get_cpu_affinity()``
+     - ``p.cpu_affinity()``
+   * - ``p.get_cpu_percent()``
+     - ``p.cpu_percent()``
+   * - ``p.get_cpu_times()``
+     - ``p.cpu_times()``
+   * - ``p.get_ext_memory_info()``
+     - ``p.memory_info_ex()`` → ``p.memory_full_info()`` in 4.0
+   * - ``p.get_io_counters()``
+     - ``p.io_counters()``
+   * - ``p.get_ionice()``
+     - ``p.ionice()``
+   * - ``p.get_memory_info()``
+     - ``p.memory_info()``
+   * - ``p.get_memory_maps()``
+     - ``p.memory_maps()``
+   * - ``p.get_memory_percent()``
+     - ``p.memory_percent()``
+   * - ``p.get_nice()``
+     - ``p.nice()``
+   * - ``p.get_num_ctx_switches()``
+     - ``p.num_ctx_switches()``
+   * - ``p.get_num_fds()``
+     - ``p.num_fds()``
+   * - ``p.get_num_threads()``
+     - ``p.num_threads()``
+   * - ``p.get_open_files()``
+     - ``p.open_files()``
+   * - ``p.get_rlimit()``
+     - ``p.rlimit()``
+   * - ``p.get_threads()``
+     - ``p.threads()``
+   * - ``p.getcwd()``
+     - ``p.cwd()``
+   * - ``p.set_nice(v)``
+     - ``p.nice(v)``
+   * - ``p.set_ionice(cls)``
+     - ``p.ionice(cls)``
+   * - ``p.set_cpu_affinity(cpus)``
+     - ``p.cpu_affinity(cpus)``
+
+Module-level renames
+^^^^^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 40
+
+   * - Old (< 5.0)
+     - New (>= 5.0)
+   * - ``psutil.NUM_CPUS``
+     - ``psutil.cpu_count()``
+   * - ``psutil.BOOT_TIME``
+     - ``psutil.boot_time()``
+   * - ``psutil.TOTAL_PHYMEM``
+     - ``psutil.virtual_memory().total``
+   * - ``psutil.get_pid_list()``
+     - ``psutil.pids()``
+   * - ``psutil.get_users()``
+     - ``psutil.users()``
+   * - ``psutil.get_boot_time()``
+     - ``psutil.boot_time()``
+   * - ``psutil.network_io_counters()``
+     - ``psutil.net_io_counters()``
+   * - ``psutil.phymem_usage()``
+     - ``psutil.virtual_memory()``
+   * - ``psutil.virtmem_usage()``
+     - ``psutil.swap_memory()``
