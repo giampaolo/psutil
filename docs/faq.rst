@@ -199,7 +199,7 @@ What is the difference between pid_exists() and Process.is_running()?
 
 :func:`pid_exists` checks whether a PID is present in the process list.
 :meth:`Process.is_running` does the same, but also detects :ref:`PID
-reuse <pid_reuse>` by comparing the process creation time. Use
+reuse <faq_pid_reuse>` by comparing the process creation time. Use
 :func:`pid_exists` when you have a bare PID and don't need to guard
 against reuse (it's faster). Use :meth:`Process.is_running` when you
 hold a :class:`Process` object and want to confirm it still refers to
