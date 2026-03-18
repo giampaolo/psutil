@@ -129,46 +129,8 @@ Changelog
 
 **Compatibility notes**
 
-Changes that break backwards compatibility. See also the
-:ref:`migration guide <migration-8.0>`.
-
-- Dropped support for Python 3.6.
-
-Named tuples:
-
-- :func:`cpu_times`:
-
-  - On Linux, macOS and BSD the field order of the returned named tuple
-    changed: ``user, system, idle`` are now always the first 3 fields on all
-    platforms, with platform-specific fields (e.g. ``nice``) following.
-    Positional access (e.g. ``cpu_times()[3]``) may silently return the wrong
-    field. Always use attribute access instead (e.g. ``cpu_times().idle``).
-
-- :meth:`Process.memory_info`:
-
-  - The returned named tuple changed size and field order. Positional access
-    (e.g. ``p.memory_info()[3]`` or ``a, b, c = p.memory_info()``) may break or
-    silently return the wrong field. Always use attribute access instead (e.g.
-    ``p.memory_info().rss``).
-
-Enums:
-
-- :meth:`Process.status` now returns a :class:`psutil.ProcessStatus` enum
-  member instead of a plain ``str``. Since :class:`psutil.ProcessStatus` is a
-  ``StrEnum``, it compares equal to its string value (e.g. ``p.status() ==
-  "running"`` still works), but ``repr()`` and ``type()`` differ. Use
-  :data:`psutil.STATUS_RUNNING` and friends as before;
-  ``psutil.STATUS_RUNNING`` is now an alias for the enum member.
-
-- :func:`net_connections` and :meth:`Process.net_connections`: the
-  ``status`` field now returns a :class:`psutil.ConnectionStatus` enum member
-  instead of a plain ``str``. Same ``StrEnum`` compatibility rules as above
-  apply.
-
-- ``RLIMIT_*`` / ``RLIM_*`` constants (Linux, FreeBSD): these are now members
-  of the :class:`psutil.ProcessRlimit` ``IntEnum`` instead of plain integers.
-  Since ``IntEnum`` compares equal to integers, existing code using them as
-  arguments to :meth:`Process.rlimit` is unaffected.
+ psutil 8.0 introduces breaking API changes and drops support for Python 3.6.
+ See the :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^

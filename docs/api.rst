@@ -69,11 +69,6 @@ CPU
     this might not be the case (at least on Windows and Linux), see `#1210
     <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
-  .. warning::
-    in version 8.0.0 the named tuple changed field order. Positional access
-    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
-    attribute access instead (e.g. ``cpu_times().idle``).
-
   .. versionchanged:: 4.1.0
      added *interrupt* and *dpc* fields on Windows.
 
