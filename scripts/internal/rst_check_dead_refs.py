@@ -18,6 +18,7 @@ Usage::
 """
 
 import argparse
+import os
 import re
 import sys
 
@@ -33,10 +34,32 @@ RE_ANY_TARGET = re.compile(
 )
 # `Foo Bar`_  but NOT  `text <url>`_  and NOT  `text`__
 RE_REF = re.compile(r'`([^`<\n]+)`_(?!_)')
+# .. include:: somefile.rst
+RE_INCLUDE = re.compile(r'^\.\. include::\s*(\S+)', re.MULTILINE)
 
 
 def line_number(text, pos):
     return text.count('\n', 0, pos) + 1
+
+
+def read_with_includes(path, _seen=None):
+    """Return file text plus the text of any ``.. include::`` files."""
+    if _seen is None:
+        _seen = set()
+    path = os.path.normpath(path)
+    if path in _seen:
+        return ""
+    _seen.add(path)
+    try:
+        with open(path) as f:
+            text = f.read()
+    except OSError:
+        return ""
+    base = os.path.dirname(path)
+    for m in RE_INCLUDE.finditer(text):
+        inc = os.path.join(base, m.group(1))
+        text += read_with_includes(inc, _seen)
+    return text
 
 
 def main():
@@ -45,21 +68,28 @@ def main():
     args = parser.parse_args()
 
     # Pass 1: collect all defined targets across all files.
-    all_targets = set()  # lower-case names
-    # URL-only targets: lower-case name -> (original name, file)
+    # Targets from ".. include::" files are also collected so that
+    # cross-file references resolve correctly.
+    all_targets = set()
+    # URL-only targets defined directly in a file (not via include), used
+    # to detect targets that are defined but never referenced.
     url_targets = {}
 
     for path in args.files:
-        with open(path) as f:
-            text = f.read()
-        for m in RE_ANY_TARGET.finditer(text):  # noqa: FURB142
+        # Use expanded text (with includes) so cross-file references resolve.
+        expanded = read_with_includes(path)
+        for m in RE_ANY_TARGET.finditer(expanded):  # noqa: FURB142
             all_targets.add(m.group(1).strip().lower())
-        for m in RE_URL_TARGET.finditer(text):
+        # Only record URL targets from the file itself, not from includes,
+        # so we don't falsely report included targets as unreferenced.
+        with open(path) as f:
+            own_text = f.read()
+        for m in RE_URL_TARGET.finditer(own_text):
             name = m.group(1).strip()
             url_targets[name.lower()] = (
                 name,
                 path,
-                line_number(text, m.start()),
+                line_number(own_text, m.start()),
             )
 
     # Pass 2: collect all backtick references (with file + line).
@@ -69,7 +99,7 @@ def main():
     for path in args.files:
         with open(path) as f:
             text = f.read()
-        for m in RE_REF.finditer(text):
+        for m in RE_REF.finditer(text):  # references from the file itself only
             name = m.group(1).strip()
             all_refs.append((
                 name.lower(),

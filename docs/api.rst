@@ -1,8 +1,13 @@
 .. currentmodule:: psutil
+.. include:: _links.rst
 .. _availability:
 
 API reference
 =============
+
+.. note::
+   psutil 8.0 introduces breaking API changes. See the
+   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 .. contents::
    :local:
@@ -64,11 +69,6 @@ CPU
     this might not be the case (at least on Windows and Linux), see `#1210
     <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
-  .. warning::
-    in version 8.0.0 the named tuple changed field order. Positional access
-    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
-    attribute access instead (e.g. ``cpu_times().idle``).
-
   .. versionchanged:: 4.1.0
      added *interrupt* and *dpc* fields on Windows.
 
@@ -76,6 +76,7 @@ CPU
      ``cpu_times()`` field order was standardized: ``user``, ``system``,
      ``idle`` are now always the first three fields. Previously on Linux,
      macOS, and BSD the first three were ``user``, ``nice``, ``system``.
+     See :ref:`migration guide <migration-8.0>`.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -728,6 +729,7 @@ Network
   .. versionchanged:: 8.0.0
      *status* field is now a :class:`psutil.ConnectionStatus` enum member
      instead of a plain ``str``.
+     See :ref:`migration guide <migration-8.0>`.
 
 .. function:: net_if_addrs()
 
@@ -1395,6 +1397,7 @@ Process class
     .. versionchanged:: 8.0.0
        return value is now a :class:`psutil.ProcessStatus` enum member instead
        of a plain ``str``.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: cwd()
 
@@ -1462,6 +1465,7 @@ Process class
     .. versionchanged:: 8.0.0
        on Windows, return value is now a :class:`psutil.ProcessPriority` enum
        member.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1515,6 +1519,7 @@ Process class
 
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -1789,7 +1794,7 @@ Process class
 
     - **rss**: aka "Resident Set Size". The portion of physical memory
       currently held by this process (code, data, stack, and mapped files that
-      are resident). Pages swapped out to disk are **not** counted. On UNIX it
+      are resident). Pages swapped out to disk are not counted. On UNIX it
       matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
       See also :ref:`faq_memory_rss_vs_vms` FAQ.
 
@@ -1844,10 +1849,12 @@ Process class
     .. versionchanged:: 8.0.0
        Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
        aliases returning 0 and emitting `DeprecationWarning` are kept.
+       See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       macOS: *pfaults* and *pageins* removed with **no backward-compat
+       macOS: *pfaults* and *pageins* removed with **no backward-compatible
        aliases**. Use :meth:`page_faults` instead.
+       See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
        Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
@@ -1856,15 +1863,10 @@ Process class
        time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
        *peak_nonpaged_pool* were moved to :meth:`memory_info_ex`. All these old
        names still work but raise `DeprecationWarning`.
+       See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
        BSD: added *peak_rss*.
-
-    .. warning::
-      in version 8.0.0 the named tuple changed size and field order. Positional
-      access (e.g. ``p.memory_info()[3]`` or ``a, b, c = p.memory_info()``) may
-      break or silently return the wrong field. Always use attribute access
-      instead (e.g. ``p.memory_info().rss``).
 
   .. method:: memory_info_ex()
 
@@ -1983,6 +1985,7 @@ Process class
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -2271,6 +2274,7 @@ Process class
     .. versionchanged:: 8.0.0
        *status* field is now a :class:`psutil.ConnectionStatus` enum member
        instead of a plain ``str``.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: connections()
 
@@ -2749,6 +2753,7 @@ Process status constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessStatus` enum members (were plain
      strings).
+     See :ref:`migration guide <migration-8.0>`.
 
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2771,6 +2776,7 @@ Process priority constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessPriority` enum members (were plain
      integers).
+     See :ref:`migration guide <migration-8.0>`.
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2798,6 +2804,7 @@ Process priority constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessIOPriority` enum members
      (previously ``IOPriority`` enum).
+     See :ref:`migration guide <migration-8.0>`.
 
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
@@ -2817,6 +2824,7 @@ Process priority constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessIOPriority` enum members
      (previously ``IOPriority`` enum).
+     See :ref:`migration guide <migration-8.0>`.
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2864,6 +2872,7 @@ These constants are members of the :class:`psutil.ProcessRlimit` enum.
 .. versionchanged:: 8.0.0
    constants are now :class:`psutil.ProcessRlimit` enum members (were plain
    integers).
+   See :ref:`migration guide <migration-8.0>`.
 
 Connections constants
 ^^^^^^^^^^^^^^^^^^^^^
@@ -2893,6 +2902,7 @@ Connections constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ConnectionStatus` enum members (were
      plain strings).
+     See :ref:`migration guide <migration-8.0>`.
 
 Hardware constants
 ^^^^^^^^^^^^^^^^^^
@@ -2974,43 +2984,6 @@ Other constants
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
 .. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`psleak`: https://github.com/giampaolo/psleak
-
-.. === docs.python.org
-
-.. _`AF_INET6`: https://docs.python.org/3/library/socket.html#socket.AF_INET6
-.. _`AF_INET`: https://docs.python.org/3/library/socket.html#socket.AF_INET
-.. _`AF_UNIX`: https://docs.python.org/3/library/socket.html#socket.AF_UNIX
-.. _`enum.IntEnum`: https://docs.python.org/3/library/enum.html#enum.IntEnum
-.. _`enum.StrEnum`: https://docs.python.org/3/library/enum.html#enum.StrEnum
-.. _`enum`: https://docs.python.org/3/library/enum.html#module-enum
-.. _`hash`: https://docs.python.org/3/library/functions.html#hash
-.. _`open`: https://docs.python.org/3/library/functions.html#open
-.. _`os.cpu_count`: https://docs.python.org/3/library/os.html#os.cpu_count
-.. _`os.getloadavg`: https://docs.python.org//library/os.html#os.getloadavg
-.. _`os.getpid`: https://docs.python.org/3/library/os.html#os.getpid
-.. _`os.getpriority`: https://docs.python.org/3/library/os.html#os.getpriority
-.. _`os.getresgid`: https://docs.python.org//library/os.html#os.getresgid
-.. _`os.getresuid`: https://docs.python.org//library/os.html#os.getresuid
-.. _`os.O_RDONLY`: https://docs.python.org/3/library/os.html#os.O_RDONLY
-.. _`os.O_TRUNC`: https://docs.python.org/3/library/os.html#os.O_TRUNC
-.. _`os.open`: https://docs.python.org/3/library/os.html#os.open
-.. _`os.pidfd_open`: https://docs.python.org//library/os.html#os.pidfd_open
-.. _`os.setpriority`: https://docs.python.org/3/library/os.html#os.setpriority
-.. _`os.times`: https://docs.python.org//library/os.html#os.times
-.. _`resource.getrlimit`: https://docs.python.org/3/library/resource.html#resource.getrlimit
-.. _`resource.setrlimit`: https://docs.python.org/3/library/resource.html#resource.setrlimit
-.. _`select.kqueue`: https://docs.python.org//library/select.html#select.kqueue
-.. _`select.poll`: https://docs.python.org//library/select.html#select.poll
-.. _`set`: https://docs.python.org/3/library/stdtypes.html#types-set
-.. _`shutil.disk_usage`: https://docs.python.org/3/library/shutil.html#shutil.disk_usage
-.. _`signal module`: https://docs.python.org//library/signal.html
-.. _`SOCK_DGRAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_DGRAM
-.. _`SOCK_SEQPACKET`: https://docs.python.org/3/library/socket.html#socket.SOCK_SEQPACKET
-.. _`SOCK_STREAM`: https://docs.python.org/3/library/socket.html#socket.SOCK_STREAM
-.. _`socket.fromfd`: https://docs.python.org/3/library/socket.html#socket.fromfd
-.. _`subprocess.Popen`: https://docs.python.org/3/library/subprocess.html#subprocess.Popen
-.. _`threading.get_ident`: https://docs.python.org/3/library/threading.html#threading.get_ident
-.. _`threading.Thread`: https://docs.python.org/3/library/threading.html#threading.Thread
 
 .. === scripts
 

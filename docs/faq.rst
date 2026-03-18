@@ -263,8 +263,8 @@ Memory
 
 .. _faq_virtual_memory_available:
 
-What is the difference between virtual_memory().available and virtual_memory().free?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between virtual_memory() available and free?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`virtual_memory` returns both ``free`` and ``available``, but they
 measure different things:
@@ -311,6 +311,6 @@ libraries counted in every process that uses them. For example, if
 
 :meth:`Process.memory_footprint` returns USS (Unique Set Size), i.e.
 memory private to the process. It represents the amount of memory that
-would be freed if the process were terminated.
+would be freed if the process were terminated right now.
 It is more accurate than RSS, but substantially slower and requires higher
 privileges. On Linux it also returns PSS (Proportional Set Size) and swap.
