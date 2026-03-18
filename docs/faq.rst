@@ -52,7 +52,7 @@ You have two options to deal with it.
 .. _faq_no_such_process:
 
 Why do I get NoSuchProcess?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :exc:`NoSuchProcess` is raised when a process no longer exists.
 The most common cause is a TOCTOU (time-of-check / time-of-use) race
@@ -157,8 +157,10 @@ this, killing the parent will cause the zombie to be re-parented to
 CPU
 ---
 
+.. _faq_cpu_percent:
+
 Why does cpu_percent() return 0.0 on first call?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
 *between two calls*. The very first call has no prior sample to compare

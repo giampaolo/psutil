@@ -58,6 +58,17 @@ CPU
      >>> psutil.cpu_times()
      scputimes(user=17411.7, system=3797.02, idle=51266.57, nice=77.99, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
+  .. note::
+    CPU times are always supposed to increase over time, or at least remain the
+    same, and that's because time cannot go backwards. Surprisingly sometimes
+    this might not be the case (at least on Windows and Linux), see `#1210
+    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
+
+  .. warning::
+    in version 8.0.0 the named tuple changed field order. Positional access
+    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
+    attribute access instead (e.g. ``cpu_times().idle``).
+
   .. versionchanged:: 4.1.0
      added *interrupt* and *dpc* fields on Windows.
 
@@ -65,16 +76,6 @@ CPU
      ``cpu_times()`` field order was standardized: ``user``, ``system``,
      ``idle`` are now always the first three fields. Previously on Linux,
      macOS, and BSD the first three were ``user``, ``nice``, ``system``.
-  .. warning::
-    in version 8.0.0 the named tuple changed field order. Positional access
-    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
-    attribute access instead (e.g. ``cpu_times().idle``).
-
-  .. warning::
-    CPU times are always supposed to increase over time, or at least remain the
-    same, and that's because time cannot go backwards. Surprisingly sometimes
-    this might not be the case (at least on Windows and Linux), see `#1210
-    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -110,10 +111,10 @@ CPU
      [2.0, 1.0]
      >>>
 
-  .. warning::
+  .. note::
     the first time this function is called with *interval* = ``0.0`` or ``None``
     it will return a meaningless ``0.0`` value which you are supposed to
-    ignore.
+    ignore. See also :ref:`faq_cpu_percent` FAQ.
 
   .. versionchanged:: 5.9.6
      the function is now thread safe.
@@ -128,10 +129,10 @@ CPU
   On Linux "guest" and "guest_nice" percentages are not accounted in "user"
   and "user_nice" percentages.
 
-  .. warning::
+  .. note::
     the first time this function is called with *interval* = ``0.0`` or
     ``None`` it will return a meaningless ``0.0`` value which you are supposed
-    to ignore.
+    to ignore. See also :ref:`faq_cpu_percent` FAQ.
 
   .. versionchanged:: 4.1.0
      two new *interrupt* and *dpc* fields are returned on Windows.
@@ -1690,6 +1691,11 @@ Process class
        2.9
 
     .. note::
+      the first time this method is called with interval = ``0.0`` or
+      ``None`` it will return a meaningless ``0.0`` value which you are
+      supposed to ignore. See also :ref:`faq_cpu_percent` FAQ.
+
+    .. note::
       the returned value can be > 100.0 in case of a process running multiple
       threads on different CPU cores.
 
@@ -1698,18 +1704,13 @@ Process class
       CPUs (differently from :func:`psutil.cpu_percent`).
       This means that a busy loop process running on a system with 2 logical
       CPUs will be reported as having 100% CPU utilization instead of 50%.
-      This was done in order to be consistent with ``top`` UNIX utility
+      This was done in order to be consistent with ``top`` UNIX utility,
       and also to make it easier to identify processes hogging CPU resources
       independently from the number of CPUs.
       It must be noted that ``taskmgr.exe`` on Windows does not behave like
       this (it would report 50% usage instead).
       To emulate Windows ``taskmgr.exe`` behavior you can do:
       ``p.cpu_percent() / psutil.cpu_count()``.
-
-    .. warning::
-      the first time this method is called with interval = ``0.0`` or
-      ``None`` it will return a meaningless ``0.0`` value which you are
-      supposed to ignore.
 
   .. method:: cpu_affinity(cpus=None)
 
