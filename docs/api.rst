@@ -1160,8 +1160,8 @@ Process class
     problem you can use :meth:`is_running` first.
     Some methods (e.g. setters and signal-related methods) perform an
     additional check based on PID + creation time and will raise
-    :exc:`NoSuchProcess` if the PID has been reused. See :ref:`pid_reuse` FAQ
-    for details.
+    :exc:`NoSuchProcess` if the PID has been reused. See :ref:`faq_pid_reuse`
+    FAQ for details.
 
   .. method:: oneshot()
 
@@ -2274,10 +2274,10 @@ Process class
   .. method:: is_running()
 
     Return whether the current process is running in the current process list.
-    This is reliable also in case the process is gone and its PID reused by
-    another process, therefore it must be preferred over doing
-    ``psutil.pid_exists(p.pid)``.
-    If PID has been reused this method will also remove the process from
+    Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
+    case the process is gone and its PID reused by another process.
+
+    If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
 
     .. note::

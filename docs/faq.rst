@@ -247,7 +247,7 @@ On Linux it also returns PSS (Proportional Set Size) and swap.
 Processes
 ---------
 
-.. _pid_reuse:
+.. _faq_pid_reuse:
 
 PID reuse
 ^^^^^^^^^
