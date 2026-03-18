@@ -192,6 +192,8 @@ The same applies to :meth:`Process.cpu_percent`:
   time.sleep(0.5)
   print(p.cpu_percent())        # meaningful value
 
+.. _faq_cpu_percent_gt_100:
+
 Can Process.cpu_percent() return a value higher than 100%?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -205,6 +207,8 @@ stays in the 0–100% range because it averages across all cores.
 
 Memory
 ------
+
+.. _faq_virtual_memory_available:
 
 What is the difference between virtual_memory().available and virtual_memory().free?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -222,6 +226,8 @@ memory. ``free`` can be misleadingly low on systems where the OS aggressively
 uses RAM for caches (which is normal and healthy). On Windows, ``free`` and
 ``available`` are the same value.
 
+.. _faq_memory_rss_vs_vms:
+
 What is the difference between memory_info().rss and memory_info().vms?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -235,6 +241,8 @@ What is the difference between memory_info().rss and memory_info().vms?
 using?". ``vms`` is generally larger, and can be misleadingly high because it
 counts memory that may not be resident in physical RAM. Both values are
 portable across all platforms.
+
+.. _faq_memory_footprint:
 
 When should I use memory_footprint() vs memory_info()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -288,8 +296,10 @@ original process terminated and a new one was assigned the same PID.
 PID and creation time, and returns ``False`` if the PID was reused.
 Prefer it over :func:`pid_exists`.
 
+.. _faq_pid_exists_vs_isrunning:
+
 What is the difference between pid_exists() and Process.is_running()?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`pid_exists` checks whether a PID is present in the process list.
 :meth:`Process.is_running` does the same, but also detects :ref:`PID
