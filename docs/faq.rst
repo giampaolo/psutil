@@ -146,6 +146,53 @@ process call ``wait()`` (or ``waitpid()``). If the parent never does
 this, killing the parent will cause the zombie to be re-parented to
 ``init`` / ``systemd``, which will reap it automatically.
 
+Memory
+------
+
+What is the difference between virtual_memory().available and virtual_memory().free?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`virtual_memory` returns both ``free`` and ``available``, but they
+measure different things:
+
+- ``free``: memory that is not being used at all.
+- ``available``: how much memory can be given to processes without swapping.
+  This includes reclaimable caches and buffers that the OS can reclaim under
+  pressure.
+
+In practice, ``available`` is almost always the metric you want when monitoring
+memory. ``free`` can be misleadingly low on systems where the OS aggressively
+uses RAM for caches (which is normal and healthy). On Windows, ``free`` and
+``available`` are the same value.
+
+What is the difference between memory_info().rss and memory_info().vms?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``rss`` (Resident Set Size): the amount of physical memory (RAM) the
+  process is actually using right now.
+- ``vms`` (Virtual Memory Size): the total virtual address space of the
+  process, including memory that has been swapped out, shared libraries,
+  and memory-mapped files.
+
+``rss`` is the go-to metric for answering "how much RAM is this process
+using?". ``vms`` is generally larger, and can be misleadingly high because it
+counts memory that may not be resident in physical RAM. Both values are
+portable across all platforms.
+
+When should I use memory_footprint() vs memory_info()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.memory_info` returns ``rss``, which includes shared
+libraries counted in every process that uses them. For example, if
+``libc`` uses 2 MB and 100 processes map it, each process includes those
+2 MB in its ``rss``.
+
+:meth:`Process.memory_footprint` returns USS (Unique Set Size), memory
+that is private to the process. It's the amount of memory that would be freed
+if the process were terminated right now.
+This is more accurate than RSS, but it is slower and requires higher privileges.
+On Linux it also returns PSS (Proportional Set Size) and swap.
+
 CPU
 ---
 
