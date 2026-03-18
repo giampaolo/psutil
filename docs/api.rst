@@ -1102,6 +1102,8 @@ Exceptions
   exists. *name* is the name the process had before disappearing
   and gets set only if :meth:`Process.name` was previously called.
 
+  See also :ref:`faq_no_such_process` FAQ.
+
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
   This may be raised by :class:`Process` class methods when querying a zombie
@@ -1109,6 +1111,8 @@ Exceptions
   *name* and *ppid* attributes are available if :meth:`Process.name` or
   :meth:`Process.ppid` methods were called before the process turned into a
   zombie.
+
+  See also :ref:`faq_zombie_process` FAQ.
 
   .. note::
 
@@ -1123,6 +1127,8 @@ Exceptions
   Raised by :class:`Process` class methods when permission to perform an
   action is denied due to insufficient privileges.
   *name* attribute is available if :meth:`Process.name` was previously called.
+
+  See also :ref:`faq_access_denied` FAQ.
 
 .. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 

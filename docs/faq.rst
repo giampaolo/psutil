@@ -10,6 +10,8 @@ FAQ
 Exceptions
 ----------
 
+.. _faq_access_denied:
+
 Why do I get AccessDenied?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -46,6 +48,8 @@ You have two options to deal with it.
 
     for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
         print(p.info["username"])  # may print "N/A"
+
+.. _faq_no_such_process:
 
 Why do I get NoSuchProcess?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -107,6 +111,8 @@ An even simpler pattern is to catch :exc:`Error`, which implies both
       print(p.name(), p.status())
   except psutil.Error:
       pass
+
+.. _faq_zombie_process:
 
 What is ZombieProcess?
 ^^^^^^^^^^^^^^^^^^^^^^^
