@@ -252,11 +252,12 @@ libraries counted in every process that uses them. For example, if
 ``libc`` uses 2 MB and 100 processes map it, each process includes those
 2 MB in its ``rss``.
 
-:meth:`Process.memory_footprint` returns USS (Unique Set Size), memory
-that is private to the process. It's the amount of memory that would be freed
-if the process were terminated right now.
-This is more accurate than RSS, but it is slower and requires higher privileges.
-On Linux it also returns PSS (Proportional Set Size) and swap.
+:meth:`Process.memory_footprint` returns USS (Unique Set Size), i.e.
+memory private to the process. It represents the amount of memory that
+would be freed if the process were terminated.
+It is more accurate than RSS, but substantially slower and requires higher
+privileges. On Linux it also returns PSS (Proportional Set Size) and swap.
+
 
 ----
 
