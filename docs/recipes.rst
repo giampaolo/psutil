@@ -278,21 +278,16 @@ Kill a process tree (including grandchildren):
 
 ----
 
-Kill / reap zombie (defunct) processes:
+Find zombie (defunct) processes:
 
 
 .. code-block:: python
 
   import psutil
 
-  def kill_zombies():
-      for p in psutil.process_iter(["status"]):
-          if p.info["status"] == psutil.STATUS_ZOMBIE:
-              parent = p.parent()
-              if parent:
-                  parent.terminate()
-                  parent.wait()
-                  p.wait()
+  for p in psutil.process_iter(["status"]):
+      if p.info["status"] == psutil.STATUS_ZOMBIE:
+          print(f"zombie: pid={p.pid}")
 
 ----
 

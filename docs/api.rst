@@ -58,6 +58,17 @@ CPU
      >>> psutil.cpu_times()
      scputimes(user=17411.7, system=3797.02, idle=51266.57, nice=77.99, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
 
+  .. note::
+    CPU times are always supposed to increase over time, or at least remain the
+    same, and that's because time cannot go backwards. Surprisingly sometimes
+    this might not be the case (at least on Windows and Linux), see `#1210
+    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
+
+  .. warning::
+    in version 8.0.0 the named tuple changed field order. Positional access
+    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
+    attribute access instead (e.g. ``cpu_times().idle``).
+
   .. versionchanged:: 4.1.0
      added *interrupt* and *dpc* fields on Windows.
 
@@ -65,16 +76,6 @@ CPU
      ``cpu_times()`` field order was standardized: ``user``, ``system``,
      ``idle`` are now always the first three fields. Previously on Linux,
      macOS, and BSD the first three were ``user``, ``nice``, ``system``.
-  .. warning::
-    in version 8.0.0 the named tuple changed field order. Positional access
-    (e.g. ``cpu_times()[3]``) may silently return the wrong field. Always use
-    attribute access instead (e.g. ``cpu_times().idle``).
-
-  .. warning::
-    CPU times are always supposed to increase over time, or at least remain the
-    same, and that's because time cannot go backwards. Surprisingly sometimes
-    this might not be the case (at least on Windows and Linux), see `#1210
-    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -110,10 +111,10 @@ CPU
      [2.0, 1.0]
      >>>
 
-  .. warning::
+  .. note::
     the first time this function is called with *interval* = ``0.0`` or ``None``
     it will return a meaningless ``0.0`` value which you are supposed to
-    ignore.
+    ignore. See also :ref:`faq_cpu_percent` FAQ.
 
   .. versionchanged:: 5.9.6
      the function is now thread safe.
@@ -128,10 +129,10 @@ CPU
   On Linux "guest" and "guest_nice" percentages are not accounted in "user"
   and "user_nice" percentages.
 
-  .. warning::
+  .. note::
     the first time this function is called with *interval* = ``0.0`` or
     ``None`` it will return a meaningless ``0.0`` value which you are supposed
-    to ignore.
+    to ignore. See also :ref:`faq_cpu_percent` FAQ.
 
   .. versionchanged:: 4.1.0
      two new *interrupt* and *dpc* fields are returned on Windows.
@@ -309,14 +310,6 @@ Memory
   - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
     code and critical data structures). It can never be moved to disk.
 
-  .. note::
-     - On Linux, **total**, **free**, **used**,  **shared**, and **available**
-       match the output of the ``free`` command.
-     - On macOS, **free**, **active**, **inactive**, and **wired** match
-       ``vm_stat`` output.
-     - On Windows, **total**, **used** ("In use"), and **available** match
-       the Task Manager (Performance > Memory tab).
-
   Below is a table showing implementation details. All info on Linux is retrieved from `/proc/meminfo`.
 
   .. list-table::
@@ -401,6 +394,14 @@ Memory
   .. note:: if you just want to know how much physical memory is left in a
     cross-platform manner, simply rely on **available** and **percent**
     fields.
+
+  .. note::
+     - On Linux, **total**, **free**, **used**,  **shared**, and **available**
+       match the output of the ``free`` command.
+     - On macOS, **free**, **active**, **inactive**, and **wired** match
+       ``vm_stat`` output.
+     - On Windows, **total**, **used** ("In use"), and **available** match
+       the Task Manager (Performance > Memory tab).
 
   .. note::  see `meminfo.py`_ script providing an example on how to convert
     bytes in a human readable form.
@@ -1102,6 +1103,8 @@ Exceptions
   exists. *name* is the name the process had before disappearing
   and gets set only if :meth:`Process.name` was previously called.
 
+  See also :ref:`faq_no_such_process` FAQ.
+
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
   This may be raised by :class:`Process` class methods when querying a zombie
@@ -1109,6 +1112,8 @@ Exceptions
   *name* and *ppid* attributes are available if :meth:`Process.name` or
   :meth:`Process.ppid` methods were called before the process turned into a
   zombie.
+
+  See also :ref:`faq_zombie_process` FAQ.
 
   .. note::
 
@@ -1123,6 +1128,8 @@ Exceptions
   Raised by :class:`Process` class methods when permission to perform an
   action is denied due to insufficient privileges.
   *name* attribute is available if :meth:`Process.name` was previously called.
+
+  See also :ref:`faq_access_denied` FAQ.
 
 .. exception:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
@@ -1156,23 +1163,12 @@ Process class
 
     the way this class is bound to a process is via its **PID**.
     That means that if the process terminates and the OS reuses its PID you may
-    inadvertently end up querying another process. To prevent this problem
-    you can use :meth:`is_running` first.
-    The only methods which preemptively check whether PID has been reused
-    (via PID + creation time) are:
-    :meth:`nice` (set),
-    :meth:`ionice`  (set),
-    :meth:`cpu_affinity` (set),
-    :meth:`rlimit` (set),
-    :meth:`children`,
-    :meth:`ppid`,
-    :meth:`parent`,
-    :meth:`parents`,
-    :meth:`suspend`
-    :meth:`resume`,
-    :meth:`send_signal`,
-    :meth:`terminate` and
-    :meth:`kill`.
+    inadvertently end up interacting with another process. To prevent this
+    problem you can use :meth:`is_running` first.
+    Some methods (e.g. setters and signal-related methods) perform an
+    additional check based on PID + creation time and will raise
+    :exc:`NoSuchProcess` if the PID has been reused. See :ref:`faq_pid_reuse`
+    FAQ for details.
 
   .. method:: oneshot()
 
@@ -1695,6 +1691,11 @@ Process class
        2.9
 
     .. note::
+      the first time this method is called with interval = ``0.0`` or
+      ``None`` it will return a meaningless ``0.0`` value which you are
+      supposed to ignore. See also :ref:`faq_cpu_percent` FAQ.
+
+    .. note::
       the returned value can be > 100.0 in case of a process running multiple
       threads on different CPU cores.
 
@@ -1703,18 +1704,13 @@ Process class
       CPUs (differently from :func:`psutil.cpu_percent`).
       This means that a busy loop process running on a system with 2 logical
       CPUs will be reported as having 100% CPU utilization instead of 50%.
-      This was done in order to be consistent with ``top`` UNIX utility
+      This was done in order to be consistent with ``top`` UNIX utility,
       and also to make it easier to identify processes hogging CPU resources
       independently from the number of CPUs.
       It must be noted that ``taskmgr.exe`` on Windows does not behave like
       this (it would report 50% usage instead).
       To emulate Windows ``taskmgr.exe`` behavior you can do:
       ``p.cpu_percent() / psutil.cpu_count()``.
-
-    .. warning::
-      the first time this method is called with interval = ``0.0`` or
-      ``None`` it will return a meaningless ``0.0`` value which you are
-      supposed to ignore.
 
   .. method:: cpu_affinity(cpus=None)
 
@@ -1795,6 +1791,7 @@ Process class
       currently held by this process (code, data, stack, and mapped files that
       are resident). Pages swapped out to disk are **not** counted. On UNIX it
       matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
+      See also :ref:`faq_memory_rss_vs_vms` FAQ.
 
     - **vms**: aka "Virtual Memory Size". The total address space reserved by
       the process, including pages not yet touched, pages in swap, and
@@ -2285,10 +2282,10 @@ Process class
   .. method:: is_running()
 
     Return whether the current process is running in the current process list.
-    This is reliable also in case the process is gone and its PID reused by
-    another process, therefore it must be preferred over doing
-    ``psutil.pid_exists(p.pid)``.
-    If PID has been reused this method will also remove the process from
+    Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
+    case the process is gone and its PID reused by another process.
+
+    If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
 
     .. note::
