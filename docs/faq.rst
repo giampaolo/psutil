@@ -164,9 +164,9 @@ Processes
 PID reuse
 ^^^^^^^^^
 
-Operating systems recycle PIDs. A :class:`Process` object obtained at time
-*T* may refer to a completely different process at time *T+N* if the
-original process terminated and a new one was assigned the same PID.
+Operating systems recycle PIDs. A :class:`Process` object obtained now may
+later refer to a different process if the original one terminated and a new one
+was assigned the same PID.
 
 **How psutil handles this:**
 
