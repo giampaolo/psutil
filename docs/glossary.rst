@@ -201,16 +201,21 @@ Glossary
       See :meth:`Process.status` and the ``STATUS_*`` constants.
 
    swap-in
-      The act of moving a memory page from swap space on disk back into
-      physical RAM, making it accessible to the process again. Reported
-      as the ``sin`` field of :func:`swap_memory` (cumulative bytes since
-      boot). See also :term:`swap-out`.
+      A page moved from swap space on disk back into RAM. Reported as the
+      ``sin`` :term:`cumulative counter` of :func:`swap_memory`. On its
+      own a non-zero ``sin`` rate is not alarming — it may just mean the
+      system is reloading pages that were quietly evicted during idle
+      time. It becomes a concern when it coincides with a high
+      :term:`swap-out` rate, meaning the system is continuously trading
+      pages in and out. See also :term:`swap-out`.
 
    swap-out
-      The act of moving a memory page from physical RAM to swap space on
-      disk to free up RAM for other processes. Reported as the ``sout``
-      field of :func:`swap_memory` (cumulative bytes since boot). A
-      sustained non-zero rate is a sign of excessive swapping.
+      A page evicted from RAM to swap space on disk to free memory.
+      Reported as the ``sout`` :term:`cumulative counter` of
+      :func:`swap_memory`. A sustained non-zero rate is the clearest
+      sign of memory pressure: the system is running out of RAM and
+      actively offloading pages to disk. Compute the rate of change
+      over an interval rather than reading the absolute value.
       See also :term:`swap-in`.
 
    swap memory
