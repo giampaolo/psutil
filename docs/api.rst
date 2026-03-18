@@ -1789,7 +1789,7 @@ Process class
 
     - **rss**: aka "Resident Set Size". The portion of physical memory
       currently held by this process (code, data, stack, and mapped files that
-      are resident). Pages swapped out to disk are **not** counted. On UNIX it
+      are resident). Pages swapped out to disk are not counted. On UNIX it
       matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
       See also :ref:`faq_memory_rss_vs_vms` FAQ.
 
