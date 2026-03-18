@@ -231,16 +231,17 @@ uses RAM for caches (which is normal and healthy). On Windows, ``free`` and
 What is the difference between memory_info().rss and memory_info().vms?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``rss`` (Resident Set Size): the amount of physical memory (RAM) the
-  process is actually using right now.
+- ``rss`` (Resident Set Size): the amount of physical memory (RAM)
+  currently mapped into the process.
 - ``vms`` (Virtual Memory Size): the total virtual address space of the
   process, including memory that has been swapped out, shared libraries,
   and memory-mapped files.
 
 ``rss`` is the go-to metric for answering "how much RAM is this process
-using?". ``vms`` is generally larger, and can be misleadingly high because it
-counts memory that may not be resident in physical RAM. Both values are
-portable across all platforms.
+using?". Note that it includes shared memory, so it may overestimate
+actual usage when compared across processes. ``vms`` is generally larger
+and can be misleadingly high, as it includes memory that is not resident
+in physical RAM. Both values are portable across platforms.
 
 .. _faq_memory_footprint:
 
