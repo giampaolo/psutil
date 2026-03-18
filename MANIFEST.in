@@ -33,6 +33,7 @@ include docs/devguide.rst
 include docs/faq.rst
 include docs/index.rst
 include docs/install.rst
+include docs/migration.rst
 include docs/platform.rst
 include docs/recipes.rst
 include docs/requirements.txt
