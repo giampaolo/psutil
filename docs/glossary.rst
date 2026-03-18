@@ -85,12 +85,7 @@ Glossary
       :meth:`Process.num_handles`.
 
    involuntary context switch
-      A :term:`context switch` triggered by the OS because the process
-      used up its CPU time slice or a higher-priority process became
-      runnable. A high involuntary rate means the process is CPU-bound
-      and competing for CPU time. Compare with
-      :term:`voluntary context switch`. See
-      :meth:`Process.num_ctx_switches`.
+      See :term:`voluntary / involuntary context switch`.
 
    iowait
       A CPU time field (Linux, SunOS, AIX) measuring time spent by the CPU
@@ -231,12 +226,19 @@ Glossary
       Available on Linux, macOS, and Windows via
       :meth:`Process.memory_full_info`.
 
-   voluntary context switch
-      A :term:`context switch` initiated by the process itself, typically
-      because it is waiting for I/O, a lock, a timer, or a system call.
-      A high voluntary rate is normal for I/O-bound processes. Compare
-      with :term:`involuntary context switch`. See
-      :meth:`Process.num_ctx_switches`.
+   voluntary / involuntary context switch
+      The ``voluntary`` and ``involuntary`` fields of
+      :meth:`Process.num_ctx_switches` tell you *why* the process is
+      being switched out. A **voluntary** switch means the process gave
+      up the CPU itself (waiting for I/O, a lock, a timer); a high
+      rate is normal for I/O-bound processes. An **involuntary** switch
+      means the OS forcibly took the CPU away (time slice expired,
+      higher-priority process woke up); a high rate means the process
+      wants to run but keeps getting interrupted, and is a sign it is
+      competing for CPU. If involuntary switches dominate, adding CPU
+      capacity or reducing other load will directly speed up the
+      process; if voluntary switches dominate, the bottleneck is I/O or
+      locking, not CPU.
 
    VMS
       *Virtual Memory Size*, the total virtual address space reserved by a
