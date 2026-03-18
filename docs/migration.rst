@@ -128,3 +128,33 @@ Python 3.6 dropped
 ^^^^^^^^^^^^^^^^^^^^
 
 Python 3.6 is no longer supported. Minimum version is Python 3.7.
+
+.. _migration-8.0:
+
+Migrating to 7.0
+-----------------
+
+Process.memory_info_ex() removed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The long-deprecated :meth:`Process.memory_info_ex` was removed (it was
+deprecated since 4.0.0 in 2016). Use :meth:`Process.memory_full_info`
+instead:
+
+.. code-block:: python
+
+  # before
+  p.memory_info_ex()
+
+  # after
+  p.memory_full_info()
+
+Python 2.7 dropped
+^^^^^^^^^^^^^^^^^^^^
+
+Python 2.7 is no longer supported. The last release to support Python
+2.7 is psutil 6.1.x:
+
+.. code-block:: bash
+
+  pip2 install "psutil==6.1.*"
