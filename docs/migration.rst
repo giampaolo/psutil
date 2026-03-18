@@ -129,7 +129,7 @@ Python 3.6 dropped
 
 Python 3.6 is no longer supported. Minimum version is Python 3.7.
 
-.. _migration-8.0:
+.. _migration-7.0:
 
 Migrating to 7.0
 -----------------
