@@ -294,7 +294,10 @@ What is the difference between RSS and VMS?
 using?". Note that it includes shared memory, so it may overestimate
 actual usage when compared across processes. ``vms`` is generally larger
 and can be misleadingly high, as it includes memory that is not resident
-in physical RAM. Both values are portable across platforms.
+in physical RAM.
+
+Both values are portable across platforms and are returned by
+:meth:`Process.memory_info`.
 
 .. _faq_memory_footprint:
 
