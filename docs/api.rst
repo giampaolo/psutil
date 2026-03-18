@@ -1791,6 +1791,7 @@ Process class
       currently held by this process (code, data, stack, and mapped files that
       are resident). Pages swapped out to disk are **not** counted. On UNIX it
       matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
+      See also :ref:`faq_memory_rss_vs_vms` FAQ.
 
     - **vms**: aka "Virtual Memory Size". The total address space reserved by
       the process, including pages not yet touched, pages in swap, and

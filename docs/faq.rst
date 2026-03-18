@@ -228,8 +228,8 @@ uses RAM for caches (which is normal and healthy). On Windows, ``free`` and
 
 .. _faq_memory_rss_vs_vms:
 
-What is the difference between memory_info().rss and memory_info().vms?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between RSS and VMS?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - ``rss`` (Resident Set Size): the amount of physical memory (RAM)
   currently mapped into the process.
