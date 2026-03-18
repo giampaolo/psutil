@@ -146,6 +146,55 @@ process call ``wait()`` (or ``waitpid()``). If the parent never does
 this, killing the parent will cause the zombie to be re-parented to
 ``init`` / ``systemd``, which will reap it automatically.
 
+----
+
+CPU
+---
+
+Why does cpu_percent() return 0.0 on first call?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
+*between two calls*. The very first call has no prior sample to compare
+against, so it always returns ``0.0``. The fix is to call it once to
+initialize the baseline, discard the result, then call it again after a
+short sleep:
+
+.. code-block:: python
+
+  import time
+  import psutil
+
+  psutil.cpu_percent()          # discard first call
+  time.sleep(0.5)
+  print(psutil.cpu_percent())   # meaningful value
+
+Alternatively, pass ``interval`` to make it block internally:
+
+.. code-block:: python
+
+  print(psutil.cpu_percent(interval=0.5))
+
+The same applies to :meth:`Process.cpu_percent`:
+
+.. code-block:: python
+
+  p = psutil.Process()
+  p.cpu_percent()               # discard
+  time.sleep(0.5)
+  print(p.cpu_percent())        # meaningful value
+
+Can Process.cpu_percent() return a value higher than 100%?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Yes. On a multi-core system a process can run threads on several CPUs at
+the same time. The maximum value is ``psutil.cpu_count() * 100``. For
+example, on a 4-core machine a fully-loaded process can reach 400%.
+The system-wide :func:`cpu_percent` (without a :class:`Process`) always
+stays in the 0–100% range because it averages across all cores.
+
+----
+
 Memory
 ------
 
@@ -193,50 +242,7 @@ if the process were terminated right now.
 This is more accurate than RSS, but it is slower and requires higher privileges.
 On Linux it also returns PSS (Proportional Set Size) and swap.
 
-CPU
----
-
-Why does cpu_percent() return 0.0 on first call?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-:func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
-*between two calls*. The very first call has no prior sample to compare
-against, so it always returns ``0.0``. The fix is to call it once to
-initialize the baseline, discard the result, then call it again after a
-short sleep:
-
-.. code-block:: python
-
-  import time
-  import psutil
-
-  psutil.cpu_percent()          # discard first call
-  time.sleep(0.5)
-  print(psutil.cpu_percent())   # meaningful value
-
-Alternatively, pass ``interval`` to make it block internally:
-
-.. code-block:: python
-
-  print(psutil.cpu_percent(interval=0.5))
-
-The same applies to :meth:`Process.cpu_percent`:
-
-.. code-block:: python
-
-  p = psutil.Process()
-  p.cpu_percent()               # discard
-  time.sleep(0.5)
-  print(p.cpu_percent())        # meaningful value
-
-Can Process.cpu_percent() return a value higher than 100%?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Yes. On a multi-core system a process can run threads on several CPUs at
-the same time. The maximum value is ``psutil.cpu_count() * 100``. For
-example, on a 4-core machine a fully-loaded process can reach 400%.
-The system-wide :func:`cpu_percent` (without a :class:`Process`) always
-stays in the 0–100% range because it averages across all cores.
+----
 
 Processes
 ---------
