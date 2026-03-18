@@ -31,14 +31,15 @@ Glossary
       A context switch occurs when the OS saves the state of a running
       process (or thread) and restores the state of another. Frequent
       context switching can indicate high system load or excessive thread
-      contention. See :func:`cpu_stats`, :meth:`Process.num_ctx_switches`.
+      contention. See :func:`cpu_stats` and :meth:`Process.num_ctx_switches`.
 
    file descriptor
       An integer handle used by UNIX processes to reference open files,
       sockets, pipes, and other I/O resources. On Windows the equivalent
       are *handles*. Leaking file descriptors (opening without closing)
       eventually causes ``EMFILE`` / ``Too many open files`` errors. See
-      :meth:`Process.num_fds` and :meth:`Process.open_files`.
+      :meth:`Process.num_fds`, :meth:`Process.open_files`,
+      :meth:`Process.num_handles`.
 
    iowait
       A CPU time field (Linux, SunOS, AIX) measuring time spent by the CPU
@@ -52,6 +53,14 @@ Glossary
       ``IOPRIO_CLASS_RT`` (real-time), ``IOPRIO_CLASS_BE`` (best-effort,
       the default), and ``IOPRIO_CLASS_IDLE``. See
       :meth:`Process.ionice`.
+
+   logical CPU
+      A CPU as seen by the operating system scheduler. On systems with
+      *hyper-threading* each physical core exposes two logical CPUs, so a
+      4-core hyper-threaded chip has 8 logical CPUs. This is the count
+      returned by :func:`cpu_count` (the default) and the number of
+      entries returned by ``cpu_percent(percpu=True)``. See also
+      :term:`physical CPU`.
 
    load average
       Three floating-point values representing the average number of
@@ -76,11 +85,11 @@ Glossary
       psutil uses this term when referring to per-interface network
       statistics. See :func:`net_if_addrs` and :func:`net_if_stats`.
 
-   orphan process
-      A process whose parent has exited before it. On UNIX, orphaned
-      processes are adopted by ``init`` (PID 1) or a subreaper process.
-      Unlike :term:`zombie processes <zombie process>`, orphans are alive
-      and consume real resources.
+   physical CPU
+      An actual hardware CPU core on the motherboard, as opposed to a
+      :term:`logical CPU`. A single physical core may appear as multiple
+      logical CPUs when hyper-threading is enabled. The physical count is
+      returned by ``cpu_count(logical=False)``.
 
    PID
       *Process identifier*, a non-negative integer assigned by the OS to
@@ -100,7 +109,7 @@ Glossary
       where shared pages are divided proportionally among all processes
       that map them. PSS gives a fairer per-process memory estimate than
       :term:`RSS` when shared libraries are involved. Available on Linux
-      and macOS via :meth:`Process.memory_full_info`.
+      and via :meth:`Process.memory_full_info`.
 
    RSS
       *Resident Set Size*, the amount of physical RAM currently occupied
