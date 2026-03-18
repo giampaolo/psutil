@@ -74,15 +74,14 @@ Glossary
       sockets, pipes, and other I/O resources. On Windows the equivalent
       are *handles*. Leaking file descriptors (opening without closing)
       eventually causes ``EMFILE`` / ``Too many open files`` errors. See
-      :meth:`Process.num_fds`, :meth:`Process.open_files`,
-      :meth:`Process.num_handles`.
+      :meth:`Process.num_fds` and :meth:`Process.open_files`.
 
    handle
       On Windows, an opaque reference to a kernel object such as a file,
       thread, process, event, mutex, or registry key. Handles are the
       Windows equivalent of UNIX :term:`file descriptor`\s. Each open
-      handle consumes a small amount of kernel memory; leaking handles
-      eventually causes ``ERROR_NO_MORE_FILES`` or similar errors. See
+      handle consumes a small amount of kernel memory. Leaking / unclosed
+      handles eventually causes ``ERROR_NO_MORE_FILES`` or similar errors. See
       :meth:`Process.num_handles`.
 
    involuntary context switch
