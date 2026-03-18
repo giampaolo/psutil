@@ -9,7 +9,7 @@ Changelog
 **Enhancements**
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
-:gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`)
+:gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`)
 
 - Split docs from a single HTML file into multiple sections (API reference,
   install, etc.).
@@ -30,6 +30,9 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     summary of OSes and architectures support
   - `/faq <https://psutil.readthedocs.io/en/latest/credits.html>`__:
     extended FAQ section.
+  - `/migration <https://psutil.readthedocs.io/en/latest/migration.html>`__: a
+    section explaining how to migrate to newer psutil versions that break
+    backward compatibility.
 
 - Usability:
 
