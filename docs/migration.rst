@@ -158,3 +158,57 @@ Python 2.7 is no longer supported. The last release to support Python
 .. code-block:: bash
 
   pip2 install "psutil==6.1.*"
+
+.. _migration-6.0:
+
+Migrating to 6.0
+-----------------
+
+Process.connections() renamed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.connections` was renamed to
+:meth:`Process.net_connections` for consistency with the system-level
+:func:`net_connections`. The old name triggers a ``DeprecationWarning``
+and will be removed in a future release:
+
+.. code-block:: python
+
+  # before
+  p.connections()
+  p.connections(kind="tcp")
+
+  # after
+  p.net_connections()
+  p.net_connections(kind="tcp")
+
+disk_partitions() lost two fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``maxfile`` and ``maxpath`` fields were removed from the named tuple
+returned by :func:`disk_partitions`. Code unpacking the tuple
+positionally will break:
+
+.. code-block:: python
+
+  # before (broken)
+  device, mountpoint, fstype, opts, maxfile, maxpath = part
+
+  # after
+  device, mountpoint, fstype, opts = (
+      part.device, part.mountpoint, part.fstype, part.opts
+  )
+
+process_iter() no longer checks for PID reuse
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`process_iter` no longer pre-emptively checks whether yielded
+PIDs have been reused (this made it ~20× faster). If you need to verify
+that a process object is still alive and refers to the same process, use
+:meth:`Process.is_running` explicitly:
+
+.. code-block:: python
+
+  for p in psutil.process_iter(["name"]):
+      if p.is_running():
+          print(p.pid, p.info["name"])
