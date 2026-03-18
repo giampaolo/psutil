@@ -129,7 +129,8 @@ Changelog
 
 **Compatibility notes**
 
-Changes that break backwards compatibility.
+Changes that break backwards compatibility. See also the
+:ref:`migration guide <migration-8.0>`.
 
 - Dropped support for Python 3.6.
 

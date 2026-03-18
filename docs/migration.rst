@@ -12,8 +12,10 @@ This page summarises the breaking changes introduced in each major
 release and shows the code changes required to upgrade.
 
 .. note::
-  Minor and patch releases (e.g. 6.1.x, 7.1.x) do not contain
+  Minor and patch releases (e.g. 6.1.x, 7.1.x) never contain
   breaking changes. Only major releases are listed here.
+
+.. _migration-8.0:
 
 Migrating to 8.0
 -----------------

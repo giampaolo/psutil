@@ -5,6 +5,10 @@
 API reference
 =============
 
+.. note::
+   psutil 8.0 introduces breaking API changes. See the
+   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
+
 .. contents::
    :local:
    :depth: 5
@@ -77,6 +81,7 @@ CPU
      ``cpu_times()`` field order was standardized: ``user``, ``system``,
      ``idle`` are now always the first three fields. Previously on Linux,
      macOS, and BSD the first three were ``user``, ``nice``, ``system``.
+     See :ref:`migration guide <migration-8.0>`.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -729,6 +734,7 @@ Network
   .. versionchanged:: 8.0.0
      *status* field is now a :class:`psutil.ConnectionStatus` enum member
      instead of a plain ``str``.
+     See :ref:`migration guide <migration-8.0>`.
 
 .. function:: net_if_addrs()
 
@@ -1396,6 +1402,7 @@ Process class
     .. versionchanged:: 8.0.0
        return value is now a :class:`psutil.ProcessStatus` enum member instead
        of a plain ``str``.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: cwd()
 
@@ -1463,6 +1470,7 @@ Process class
     .. versionchanged:: 8.0.0
        on Windows, return value is now a :class:`psutil.ProcessPriority` enum
        member.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1516,6 +1524,7 @@ Process class
 
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -1845,10 +1854,12 @@ Process class
     .. versionchanged:: 8.0.0
        Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
        aliases returning 0 and emitting `DeprecationWarning` are kept.
+       See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
        macOS: *pfaults* and *pageins* removed with **no backward-compatible
        aliases**. Use :meth:`page_faults` instead.
+       See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
        Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
@@ -1857,15 +1868,10 @@ Process class
        time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
        *peak_nonpaged_pool* were moved to :meth:`memory_info_ex`. All these old
        names still work but raise `DeprecationWarning`.
+       See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
        BSD: added *peak_rss*.
-
-    .. warning::
-      in version 8.0.0 the named tuple changed size and field order. Positional
-      access (e.g. ``p.memory_info()[3]`` or ``a, b, c = p.memory_info()``) may
-      break or silently return the wrong field. Always use attribute access
-      instead (e.g. ``p.memory_info().rss``).
 
   .. method:: memory_info_ex()
 
@@ -1984,6 +1990,7 @@ Process class
 
     .. deprecated:: 8.0.0
        use :meth:`memory_footprint` instead.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: memory_percent(memtype="rss")
 
@@ -2272,6 +2279,7 @@ Process class
     .. versionchanged:: 8.0.0
        *status* field is now a :class:`psutil.ConnectionStatus` enum member
        instead of a plain ``str``.
+       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: connections()
 
@@ -2750,6 +2758,7 @@ Process status constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessStatus` enum members (were plain
      strings).
+     See :ref:`migration guide <migration-8.0>`.
 
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2772,6 +2781,7 @@ Process priority constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessPriority` enum members (were plain
      integers).
+     See :ref:`migration guide <migration-8.0>`.
 
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
@@ -2799,6 +2809,7 @@ Process priority constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessIOPriority` enum members
      (previously ``IOPriority`` enum).
+     See :ref:`migration guide <migration-8.0>`.
 
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
@@ -2818,6 +2829,7 @@ Process priority constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ProcessIOPriority` enum members
      (previously ``IOPriority`` enum).
+     See :ref:`migration guide <migration-8.0>`.
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2865,6 +2877,7 @@ These constants are members of the :class:`psutil.ProcessRlimit` enum.
 .. versionchanged:: 8.0.0
    constants are now :class:`psutil.ProcessRlimit` enum members (were plain
    integers).
+   See :ref:`migration guide <migration-8.0>`.
 
 Connections constants
 ^^^^^^^^^^^^^^^^^^^^^
@@ -2894,6 +2907,7 @@ Connections constants
   .. versionchanged:: 8.0.0
      constants are now :class:`psutil.ConnectionStatus` enum members (were
      plain strings).
+     See :ref:`migration guide <migration-8.0>`.
 
 Hardware constants
 ^^^^^^^^^^^^^^^^^^
