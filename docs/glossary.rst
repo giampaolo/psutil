@@ -85,6 +85,16 @@ Glossary
       psutil uses this term when referring to per-interface network
       statistics. See :func:`net_if_addrs` and :func:`net_if_stats`.
 
+   page fault
+      An event that occurs when a process accesses a virtual memory page
+      that is not currently mapped in physical RAM. A **minor** fault is
+      resolved without disk I/O (e.g. the page is already in RAM but not
+      yet mapped, or it is copy-on-write). A **major** fault requires
+      reading the page from disk (e.g. from a memory-mapped file or the
+      swap area) and is significantly more expensive. Many major faults
+      may indicate memory pressure or excessive swapping. See
+      :meth:`Process.page_faults`.
+
    physical CPU
       An actual hardware CPU core on the motherboard, as opposed to a
       :term:`logical CPU`. A single physical core may appear as multiple
