@@ -80,7 +80,8 @@ Changelog
 
     - Add new :meth:`Process.memory_footprint` method, which returns *uss*,
       *pss* and *swap* metrics (what :meth:`Process.memory_full_info` used to
-      return, which is now **deprecated**).
+      return, which is now **deprecated**, see
+      :ref:`migration guide <migration-8.0>`).
 
     - :meth:`Process.memory_info` named tuple changed:
 
@@ -97,9 +98,11 @@ Changelog
         At the same time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
         *peak_nonpaged_pool* were moved to :meth:`Process.memory_info_ex`. All
         these old names still work but raise `DeprecationWarning`.
+        See :ref:`migration guide <migration-8.0>`.
 
     - :meth:`Process.memory_full_info` is **deprecated**. Use the new
       :meth:`Process.memory_footprint` instead.
+      See :ref:`migration guide <migration-8.0>`.
 
 - Others:
 
