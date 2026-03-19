@@ -21,9 +21,10 @@ CPU
 
 .. function:: cpu_times(percpu=False)
 
-  Return system CPU times as a :term:`named tuple`.
-  Every attribute represents the seconds the CPU has spent in the given mode.
-  The attributes availability varies depending on the platform.
+  Return system CPU times as a :term:`named tuple`. All fields are
+  :term:`cumulative counter`\s (seconds) representing time the CPU has spent
+  in each mode since boot. The attributes availability varies depending on
+  the platform.
   Cross-platform fields:
 
   - **user**: time spent by normal processes executing in user mode; on Linux
@@ -1640,7 +1641,8 @@ Process class
 
   .. method:: cpu_times()
 
-    Return a named tuple representing the accumulated process times, in seconds
+    Return a :term:`named tuple` of :term:`cumulative counter`\s (seconds)
+    representing the accumulated process CPU times
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
     This is similar to `os.times`_ but can be used for any process PID.
 
