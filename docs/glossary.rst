@@ -173,7 +173,7 @@ Glossary
       where shared pages are divided proportionally among all processes
       that map them. PSS gives a fairer per-process memory estimate than
       :term:`RSS` when shared libraries are involved. Available on Linux
-      and via :meth:`Process.memory_full_info`.
+      via :meth:`Process.memory_footprint`.
 
    RSS
       *Resident Set Size*, the amount of physical RAM currently occupied
@@ -191,7 +191,7 @@ Glossary
       - ``disk-sleep``: waiting for I/O (uninterruptible sleep).
       - ``stopped``: suspended via ``SIGSTOP`` or a debugger.
       - ``zombie``: exited but not yet reaped by its parent.
-      - ``idle``: no work to do (common on BSD/macOS for kernel threads).
+      - ``idle``: doing nothing.
 
       See :meth:`Process.status` and the ``STATUS_*`` constants.
 
