@@ -207,15 +207,15 @@ def cpu_times():
         *[sum(n) for n in zip(*cext.per_cpu_times())]
     )
     return ntp.scputimes(
-        user, system, idle, percpu_summed.interrupt, percpu_summed.dpc
+        user, system, idle, percpu_summed.irq, percpu_summed.dpc
     )
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for user, system, idle, interrupt, dpc in cext.per_cpu_times():
-        item = ntp.scputimes(user, system, idle, interrupt, dpc)
+    for user, system, idle, irq, dpc in cext.per_cpu_times():
+        item = ntp.scputimes(user, system, idle, irq, dpc)
         ret.append(item)
     return ret
 

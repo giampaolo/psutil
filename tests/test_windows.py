@@ -152,6 +152,12 @@ class TestCpuAPIs(WindowsTestCase):
     def test_cpu_count_vs_cpu_times(self):
         assert psutil.cpu_count() == len(psutil.cpu_times(percpu=True))
 
+    def test_cpu_times_irq_field(self):
+        t = psutil.cpu_times()
+        assert t.irq >= 0
+        with pytest.warns(DeprecationWarning, match="interrupt"):
+            assert t.interrupt == t.irq
+
     def test_cpu_freq(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
