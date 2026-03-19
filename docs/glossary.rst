@@ -342,9 +342,7 @@ Glossary
 
    zombie process
 
-      A process that has finished executing but whose exit status has not
-      yet been collected by its parent (via ``wait()``). The OS keeps a
-      minimal entry in the process table so the parent can retrieve the
-      exit code. Zombies consume no CPU or memory but do occupy a PID and
-      a process-table slot. On UNIX, long-lived zombies indicate a bug in
-      the parent. See :attr:`STATUS_ZOMBIE` and :exc:`ZombieProcess`.
+      A process that has exited but whose entry remains in the process
+      table until its parent calls ``wait()``. Zombies hold a PID but consume
+      no CPU or memory.
+      See :ref:`faq_zombie_process`.

@@ -119,11 +119,8 @@ An even simpler pattern is to catch :exc:`Error`, which implies both
 What is ZombieProcess?
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-:exc:`ZombieProcess` is a subclass of :exc:`NoSuchProcess` that is raised
-on UNIX when a process has terminated but has not yet been reaped by its
-parent. The process has finished executing but its entry remains in the
-process table until the parent calls ``wait()`` (or the parent itself
-exits).
+:exc:`ZombieProcess` is a subclass of :exc:`NoSuchProcess` raised on UNIX
+for a :term:`zombie process`.
 
 **What you can and cannot do with a zombie:**
 

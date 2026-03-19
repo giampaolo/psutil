@@ -1128,8 +1128,8 @@ Exceptions
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-  This may be raised by :class:`Process` class methods when querying a zombie
-  process on UNIX (Windows doesn't have zombie processes).
+  This may be raised by :class:`Process` class methods when querying a
+  :term:`zombie process` on UNIX (Windows doesn't have zombie processes).
   *name* and *ppid* attributes are available if :meth:`Process.name` or
   :meth:`Process.ppid` methods were called before the process turned into a
   zombie.
@@ -1280,7 +1280,7 @@ Process class
 
     The process parent PID. On Windows the return value is cached after the
     first call. On POSIX it is not cached because the ppid may change if the
-    process becomes a zombie.
+    process becomes a :term:`zombie process`.
     See also :meth:`parent` and :meth:`parents` methods.
 
   .. method:: name()
@@ -1412,6 +1412,8 @@ Process class
     The current process status as a :class:`psutil.ProcessStatus` enum member.
     The returned value is one of the
     `psutil.STATUS_* <#process-status-constants>`_ constants.
+    A common use case is detecting :term:`zombie processes <zombie process>`
+    (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. versionchanged:: 8.0.0
        return value is now a :class:`psutil.ProcessStatus` enum member instead
