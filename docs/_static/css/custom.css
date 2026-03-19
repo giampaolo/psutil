@@ -148,6 +148,22 @@ pre {
     padding: 5px !important;
 }
 
+/* Show external links with a slightly different style (dotted underline) */
+
+a.reference.external {
+    text-decoration: underline dotted;
+    /*color: #0366d6; /* subtle external link color */*/
+}
+
+a.reference.external:hover {
+    text-decoration: underline solid;
+}
+
+a.external[href^="#"] {
+    text-decoration: none; /* keep same-page anchors normal */
+    color: inherit;
+}
+
 /* ================================================================== */
 /* Warnings and info boxes like python doc */
 /* ================================================================== */
