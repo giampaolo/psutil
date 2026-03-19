@@ -550,8 +550,8 @@ def cpu_count_cores():
                 current_info = {}
             elif line.startswith((b'physical id', b'cpu cores')):
                 # ongoing section
-                key, value = line.split(b'\t:', 1)
-                current_info[key] = int(value)
+                key, value = line.split(b':', 1)
+                current_info[key.strip()] = int(value)
 
     result = sum(mapping.values())
     return result or None  # mimic os.cpu_count()
