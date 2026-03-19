@@ -1602,8 +1602,8 @@ Process class
 
   .. method:: num_ctx_switches()
 
-    The number of :term:`voluntary / involuntary context switch`\es performed
-    by this process (:term:`cumulative counter`).
+    The number of :term:`context switch`\es performed by this process
+    (:term:`cumulative counter`).
 
     .. note::
       (Windows, macOS) *involuntary* value is always set to 0, while
@@ -2703,6 +2703,7 @@ Operating system constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-oses:
+
 .. data:: POSIX
 .. data:: LINUX
 .. data:: WINDOWS
@@ -2733,6 +2734,7 @@ Process status constants
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-pstatus:
+
 .. data:: STATUS_RUNNING
 .. data:: STATUS_SLEEPING
 .. data:: STATUS_DISK_SLEEP
@@ -2764,6 +2766,7 @@ Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-prio:
+
 .. data:: REALTIME_PRIORITY_CLASS
 .. data:: HIGH_PRIORITY_CLASS
 .. data:: ABOVE_NORMAL_PRIORITY_CLASS
@@ -2784,6 +2787,7 @@ Process priority constants
      See :ref:`migration guide <migration-8.0>`.
 
 .. _const-ioprio:
+
 .. data:: IOPRIO_CLASS_NONE
 .. data:: IOPRIO_CLASS_RT
 .. data:: IOPRIO_CLASS_BE
@@ -2883,6 +2887,7 @@ Connections constants
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-conn:
+
 .. data:: CONN_ESTABLISHED
 .. data:: CONN_SYN_SENT
 .. data:: CONN_SYN_RECV
@@ -2913,6 +2918,7 @@ Hardware constants
 ^^^^^^^^^^^^^^^^^^
 
 .. _const-aflink:
+
 .. data:: AF_LINK
 
   Constant which identifies a MAC address associated with a network interface.
@@ -2921,6 +2927,7 @@ Hardware constants
   .. versionadded:: 3.0.0
 
 .. _const-duplex:
+
 .. data:: NIC_DUPLEX_FULL
 .. data:: NIC_DUPLEX_HALF
 .. data:: NIC_DUPLEX_UNKNOWN
@@ -2934,6 +2941,7 @@ Hardware constants
   .. versionadded:: 3.0.0
 
 .. _const-power:
+
 .. data:: POWER_TIME_UNKNOWN
 .. data:: POWER_TIME_UNLIMITED
 
@@ -2947,6 +2955,7 @@ Other constants
 ^^^^^^^^^^^^^^^
 
 .. _const-procfs_path:
+
 .. data:: PROCFS_PATH
 
   The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
@@ -2971,6 +2980,7 @@ Other constants
      also available on AIX.
 
 .. _const-version-info:
+
 .. data:: version_info
 
   A tuple to check psutil installed version. Example:

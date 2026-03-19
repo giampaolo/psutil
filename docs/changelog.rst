@@ -6,6 +6,11 @@ Changelog
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
 
+**Compatibility notes**
+
+ psutil 8.0 introduces breaking API changes and drops support for Python 3.6.
+ See the :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
+
 **Enhancements**
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
@@ -125,7 +130,7 @@ Others
 
 **Bug fixes**
 
-- :gh:`2770`, [Linux]: fix :func:`cpu_count_cores()` raising ``ValueError``
+- :gh:`2770`, [Linux]: fix :func:`cpu_count_cores` raising ``ValueError``
   on s390x architecture, where ``/proc/cpuinfo`` uses spaces before the
   colon separator instead of a tab.
 - :gh:`2726`, [macOS]: :meth:`Process.num_ctx_switches` return an unusual
@@ -139,11 +144,6 @@ Others
 - :gh:`2746`, [FreeBSD]: :meth:`Process.memory_maps`, `rss` and `private`
   fields, are erroneously reported in memory pages instead of bytes. Other
   platforms (Linux, macOS, Windows) return bytes.
-
-**Compatibility notes**
-
- psutil 8.0 introduces breaking API changes and drops support for Python 3.6.
- See the :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^

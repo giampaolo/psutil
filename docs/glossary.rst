@@ -48,10 +48,22 @@ Glossary
       :meth:`Process.cpu_times`.
 
    context switch
-      A context switch occurs when the OS saves the state of a running
-      process (or thread) and restores the state of another. Frequent
-      context switching can indicate high system load or excessive thread
-      contention. See :func:`cpu_stats` and :meth:`Process.num_ctx_switches`.
+      Occurs when the OS saves the state of a running process (or thread) and
+      restores the state of another. Frequent context switching can indicate
+      high system load or excessive thread contention. See :func:`cpu_stats`
+      and :meth:`Process.num_ctx_switches`.
+
+      The ``voluntary`` and ``involuntary`` fields of
+      :meth:`Process.num_ctx_switches` tell you *why* the process was switched
+      out. A **voluntary** switch means the process gave up the CPU itself
+      (waiting for I/O, a lock, or a timer); a high rate is normal for
+      I/O-bound processes. An **involuntary** switch means the OS forcibly took
+      the CPU away (time slice expired, higher-priority process woke up); a
+      high rate means the process wants to run but keeps getting interrupted —
+      a sign it is competing for CPU. If involuntary switches dominate, adding
+      CPU capacity or reducing other load will directly speed up the process;
+      if voluntary switches dominate, the bottleneck is I/O or locking, not
+      CPU.
 
    cumulative counter
       A field whose value only increases over time (since boot or process
@@ -90,9 +102,6 @@ Glossary
       whatever the CPU was doing. Reported as the ``interrupts`` field of
       :func:`cpu_stats`. A very high rate may indicate a misbehaving
       device driver or a heavily loaded NIC.
-
-   involuntary context switch
-      See :term:`voluntary / involuntary context switch`.
 
    iowait
       A CPU time field (Linux, SunOS, AIX) measuring time spent by the CPU
@@ -242,19 +251,11 @@ Glossary
       Available on Linux, macOS, and Windows via
       :meth:`Process.memory_full_info`.
 
-   voluntary / involuntary context switch
-      The ``voluntary`` and ``involuntary`` fields of
-      :meth:`Process.num_ctx_switches` tell you *why* the process is
-      being switched out. A **voluntary** switch means the process gave
-      up the CPU itself (waiting for I/O, a lock, a timer); a high
-      rate is normal for I/O-bound processes. An **involuntary** switch
-      means the OS forcibly took the CPU away (time slice expired,
-      higher-priority process woke up); a high rate means the process
-      wants to run but keeps getting interrupted, and is a sign it is
-      competing for CPU. If involuntary switches dominate, adding CPU
-      capacity or reducing other load will directly speed up the
-      process; if voluntary switches dominate, the bottleneck is I/O or
-      locking, not CPU.
+   voluntary context switch
+      See :term:`context switch`.
+
+   involuntary context switch
+      See :term:`context switch`.
 
    VMS
       *Virtual Memory Size*, the total virtual address space reserved by a
