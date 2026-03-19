@@ -118,6 +118,10 @@ Others
   ``changelog.rst`` and ``credits.rst`` when commenting with /changelog.
 - :gh:`2766`: remove remaining Python 2.7 compatibility shims from
   ``setup.py``, simplifying the build infrastructure.
+- :gh:`2772`, [Windows]: :func:`cpu_times` ``interrupt`` field renamed to
+  ``irq`` to match the field name used on Linux and BSD. ``interrupt`` still
+  works but raises :exc:`DeprecationWarning`.
+  See :ref:`migration guide <migration-8.0>`.
 
 **Bug fixes**
 

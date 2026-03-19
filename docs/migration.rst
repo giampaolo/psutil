@@ -75,6 +75,23 @@ Named tuple field order changed
 
   - BSD: a new ``peak_rss`` field was added.
 
+cpu_times() interrupt renamed to irq on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``interrupt`` field of :func:`cpu_times` on Windows was renamed to ``irq``
+to match the name used on Linux and BSD. The old name still works but raises
+:exc:`DeprecationWarning`:
+
+.. code-block:: python
+
+  # before
+  t = psutil.cpu_times()
+  print(t.interrupt)
+
+  # after
+  t = psutil.cpu_times()
+  print(t.irq)
+
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

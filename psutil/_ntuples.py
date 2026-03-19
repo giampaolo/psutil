@@ -150,8 +150,14 @@ class scputimes(NamedTuple):
     if SUNOS or AIX:
         iowait: float
     if WINDOWS:
-        interrupt: float
+        irq: float
         dpc: float
+
+        @property
+        def interrupt(self):
+            msg = "scputimes.interrupt is deprecated; use .irq instead"
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return self.irq
 
 
 # psutil.cpu_stats()
