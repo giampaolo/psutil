@@ -422,7 +422,7 @@ Memory
      - On Windows, **total**, **used** ("In use"), and **available** match
        the Task Manager (Performance > Memory tab).
 
-  .. note::  see `meminfo.py`_ script providing an example on how to convert
+  .. note::  see `scripts/meminfo.py`_ script providing an example on how to convert
     bytes in a human readable form.
 
   .. versionchanged:: 4.2.0
@@ -453,7 +453,7 @@ Memory
   their rate of change rather than the absolute value to detect active
   swapping. See :term:`swap-in` and :term:`swap-out`.
   On Windows both are always ``0``.
-  See `meminfo.py`_ script providing an example on how to convert bytes in a
+  See `scripts/meminfo.py`_ script providing an example on how to convert bytes in a
   human readable form.
 
   .. code-block:: pycon
@@ -480,7 +480,7 @@ Disks
   (e.g. pseudo, memory, duplicate, inaccessible filesystems).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
-  See `disk_usage.py`_ script providing an example usage.
+  See `scripts/disk_usage.py`_ script providing an example usage.
   Returns a list of named tuples with the following fields:
 
   * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
@@ -513,7 +513,7 @@ Disks
   ``OSError`` is raised if *path* does not exist.
   Starting from Python 3.3 this is also available as :func:`shutil.disk_usage`
   (see `BPO-12442`_).
-  See `disk_usage.py`_ script providing an example usage.
+  See `scripts/disk_usage.py`_ script providing an example usage.
 
   .. code-block:: pycon
 
@@ -558,7 +558,7 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the named tuple described above as the values.
-  See `iotop.py`_ for an example application.
+  See `scripts/iotop.py`_ for an example application.
   On some systems such as Linux, on a very busy or long-lived system, the
   numbers returned by the kernel may overflow and wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
@@ -638,7 +638,7 @@ Network
      {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
      'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
-  Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
+  Also see `scripts/nettop.py`_ and `scripts/ifconfig.py`_ for an example application.
 
   .. versionchanged:: 5.3.0
      numbers no longer wrap (restart from zero) across calls thanks to new
@@ -704,7 +704,7 @@ Network
 
   On macOS and AIX this function requires root privileges.
   To get per-process connections use :meth:`Process.net_connections`.
-  Also, see `netstat.py`_ example script.
+  Also, see `scripts/netstat.py`_ example script.
   Example:
 
   .. code-block:: pycon
@@ -778,7 +778,7 @@ Network
                 snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
      >>>
 
-  See also `nettop.py`_ and `ifconfig.py`_ for an example application.
+  See also `scripts/nettop.py`_ and `scripts/ifconfig.py`_ for an example application.
 
   .. note::
     if you're interested in others families (e.g. AF_BLUETOOTH) you can use
@@ -824,7 +824,7 @@ Network
     ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
     and ``d2`` (some flags are only available on certain platforms).
 
-  Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
+  Also see `scripts/nettop.py`_ and `scripts/ifconfig.py`_ for an example application.
 
   .. code-block:: pycon
 
@@ -863,7 +863,7 @@ Sensors
   - **critical**: temperature at which the system will shut down, or
     ``None`` if not available.
 
-  See also `temperatures.py`_ and `sensors.py`_ for an example application.
+  See also `scripts/temperatures.py`_ and `scripts/sensors.py`_ for an example application.
 
   .. code-block:: pycon
 
@@ -897,7 +897,7 @@ Sensors
      >>> psutil.sensors_fans()
      {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  See also `fans.py`_  and `sensors.py`_ for an example application.
+  See also `scripts/fans.py`_  and `scripts/sensors.py`_ for an example application.
 
   .. availability:: Linux
 
@@ -934,7 +934,7 @@ Sensors
      >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
      charge = 93%, time left = 4:37:08
 
-  See also `battery.py`_  and `sensors.py`_ for an example application.
+  See also `scripts/battery.py`_  and `scripts/sensors.py`_ for an example application.
 
   .. availability:: Linux, Windows, macOS, FreeBSD
 
@@ -1549,7 +1549,7 @@ Process class
     but can be used for any process PID, not only :func:`os.getpid`.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
     and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
-    Also see `procinfo.py`_ script.
+    Also see `scripts/procinfo.py`_ script.
 
     .. code-block:: pycon
 
@@ -1779,7 +1779,7 @@ Process class
     On FreeBSD certain kernel process may return ``-1``.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
     observe the system workload distributed across multiple CPUs as shown by
-    `cpu_distribution.py`_ example script.
+    `scripts/cpu_distribution.py`_ example script.
 
     .. availability:: Linux, FreeBSD, SunOS
 
@@ -1989,7 +1989,7 @@ Process class
        >>> p.memory_footprint()
        pfootprint(uss=6545408, pss=6872064, swap=0)
 
-    See also `procsmem.py`_ for an example application.
+    See also `scripts/procsmem.py`_ for an example application.
 
     .. versionadded:: 8.0.0
 
@@ -2025,7 +2025,7 @@ Process class
     If *grouped* is ``False`` each region is listed individually and the
     tuple also includes *addr* (address range) and *perms* (permission
     string e.g. ``"r-xp"``).
-    See `pmap.py`_ for an example application.
+    See `scripts/pmap.py`_ for an example application.
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |
@@ -3016,20 +3016,20 @@ Other constants
 
 .. === scripts
 
-.. _`battery.py`: https://github.com/giampaolo/psutil/blob/master/scripts/battery.py
-.. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
-.. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
-.. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
-.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
-.. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
-.. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
-.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
-.. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
-.. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
-.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
-.. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
-.. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
-.. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
+.. _`scripts/battery.py`: https://github.com/giampaolo/psutil/blob/master/scripts/battery.py
+.. _`scripts/cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`scripts/disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`scripts/fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
+.. _`scripts/ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
+.. _`scripts/iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+.. _`scripts/meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
+.. _`scripts/netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
+.. _`scripts/nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
+.. _`scripts/pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
+.. _`scripts/procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
+.. _`scripts/procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`scripts/sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
+.. _`scripts/temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 
 .. === Windows API
 
