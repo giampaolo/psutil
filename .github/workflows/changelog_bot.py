@@ -439,9 +439,11 @@ def update_credits(credits_entry, author, author_name):
                     insert_idx = i
                     break
         if not skip:
-            while (
-                insert_idx > year_idx + 2 and not lines[insert_idx - 1].strip()
-            ):
+            # Don't back up past the blank line after the year
+            # underline (year_idx + 2 = "~~~~\n", + 3 = first
+            # content line).
+            min_idx = year_idx + 3
+            while insert_idx > min_idx and not lines[insert_idx - 1].strip():
                 insert_idx -= 1
             lines.insert(insert_idx, f"{credits_entry}\n")
 
