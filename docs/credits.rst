@@ -108,6 +108,7 @@ Code contributors by year
 
 2026
 ~~~~
+* `amaanq`_ - :gh:`2770`
 
 * `Felix Yan`_ - :gh:`2732`
 * `Sergey Fedorov`_ - :gh:`2701`
@@ -408,6 +409,7 @@ Code contributors by year
 .. ============================================================================
 
 .. _`Adrian Page`: https://github.com/adpag
+.. _`amaanq`: https://github.com/amaanq
 .. _`qcha0`: https://github.com/qcha0
 .. _`Akos Kiss`: https://github.com/akosthekiss
 .. _`Aleksey Lobanov`: https://github.com/AlekseyLobanov
