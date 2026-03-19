@@ -236,12 +236,15 @@ def gh_request(path, accept="application/vnd.github+json"):
 def fetch_pr_metadata():
     pr = json.loads(gh_request(f"/repos/{REPO}/pulls/{PR_NUMBER}"))
     author = pr["user"]["login"]
+    # Fetch the user profile to get the full name.
+    user = json.loads(gh_request(f"/users/{author}"))
+    author_name = user.get("name") or author
     return {
         "number": pr["number"],
         "title": pr["title"],
         "body": pr.get("body") or "",
         "author": author,
-        "author_name": pr["user"].get("name") or author,
+        "author_name": author_name,
     }
 
 
@@ -307,6 +310,14 @@ def insert_changelog_entry(section, entry):
     header_idx = next(
         (i for i, ln in enumerate(block) if ln.rstrip() == header), None
     )
+
+    def _entry_gh_number(line):
+        """Extract the ticket number from a :gh:`N` reference."""
+        m = re.search(r":gh:`(\d+)`", line)
+        return int(m.group(1)) if m else None
+
+    new_entry_num = _entry_gh_number(entry)
+
     if header_idx is None:
         insert_at = next(
             (
@@ -322,9 +333,29 @@ def insert_changelog_entry(section, entry):
             + block[insert_at:]
         )
     else:
-        insert_at = header_idx + 1
-        if insert_at < len(block) and not block[insert_at].strip():
-            insert_at += 1
+        # Find the end of this section (next ** header or end of block).
+        section_end = next(
+            (
+                i
+                for i in range(header_idx + 1, len(block))
+                if block[i].startswith("**")
+            ),
+            len(block),
+        )
+        # Skip the blank line after the header.
+        first_entry = header_idx + 1
+        if first_entry < len(block) and not block[first_entry].strip():
+            first_entry += 1
+        # Find the right position sorted by ticket number.
+        insert_at = section_end
+        if new_entry_num is not None:
+            for i in range(first_entry, section_end):
+                num = _entry_gh_number(block[i])
+                if num is not None and num > new_entry_num:
+                    insert_at = i
+                    break
+        else:
+            insert_at = first_entry
         new_block = block[:insert_at] + [f"{entry}\n"] + block[insert_at:]
 
     lines[version_idx:next_version_idx] = new_block
