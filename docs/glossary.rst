@@ -147,7 +147,7 @@ Glossary
 
    named tuple
 
-      A :class:`collections.namedtuple` subclass, a tuple whose fields
+      A :func:`collections.namedtuple` subclass, a tuple whose fields
       can be accessed by name as well as by index. Most psutil functions
       return named tuples (e.g. ``sswap``, ``pmem``, ``scputimes``).
 

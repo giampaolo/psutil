@@ -29,6 +29,7 @@ sys.path.insert(0, str(HERE / '_ext'))
 
 extensions = [
     "sphinx.ext.extlinks",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx_copybutton",
     # custom extensions in _ext/ dir
@@ -43,6 +44,9 @@ copyright = f"2009-{THIS_YEAR}, {AUTHOR}"
 author = AUTHOR
 version = VERSION
 release = VERSION
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+}
 extlinks = {
     'gh': ('https://github.com/giampaolo/psutil/issues/%s', '#%s'),
 }

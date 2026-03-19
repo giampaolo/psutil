@@ -101,7 +101,7 @@ CPU
   The list is ordered by CPU index. The order of the list is consistent across
   calls.
   Internally this function maintains a global map (a dict) where each key is
-  the ID of the calling thread (`threading.get_ident`_). This means it can be
+  the ID of the calling thread (:func:`threading.get_ident`). This means it can be
   called from different threads, at different intervals, and still return
   meaningful and independent results.
 
@@ -152,8 +152,8 @@ CPU
 .. function:: cpu_count(logical=True)
 
   Return the number of :term:`logical CPUs <logical CPU>` in the system
-  (similar to `os.cpu_count`_) or ``None`` if undetermined.
-  Unlike `os.cpu_count`_, this is not influenced by the ``PYTHON_CPU_COUNT``
+  (similar to :func:`os.cpu_count`) or ``None`` if undetermined.
+  Unlike :func:`os.cpu_count`, this is not influenced by the ``PYTHON_CPU_COUNT``
   environment variable introduced in Python 3.13.
   "logical CPUs" means the number of physical cores multiplied by the number
   of threads that can run on each core (this is known as Hyper Threading).
@@ -248,7 +248,7 @@ CPU
     Return the average system load over the last 1, 5 and 15 minutes as a tuple.
     The "load" represents the processes which are in a runnable state, either
     using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-    On UNIX systems this relies on `os.getloadavg`_. On Windows this is emulated
+    On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
     by using a Windows API that spawns a thread which keeps running in
     background and updates results every 5 seconds, mimicking the UNIX behavior.
     Thus, on Windows, the first time this is called and for the next 5 seconds
@@ -502,7 +502,7 @@ Disks
   *path* as a named tuple including **total**, **used** and **free** space
   expressed in bytes, plus the **percentage** usage.
   ``OSError`` is raised if *path* does not exist.
-  Starting from Python 3.3 this is also available as `shutil.disk_usage`_
+  Starting from Python 3.3 this is also available as :func:`shutil.disk_usage`
   (see `BPO-12442`_).
   See `disk_usage.py`_ script providing an example usage.
 
@@ -641,12 +641,12 @@ Network
   Every named tuple provides 7 attributes:
 
   - **fd**: the socket file descriptor. If the connection refers to the current
-    process this may be passed to `socket.fromfd`_
+    process this may be passed to :func:`socket.fromfd`
     to obtain a usable socket object.
     On Windows and SunOS this is always set to ``-1``.
-  - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or `AF_UNIX`_.
-  - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
-    `SOCK_SEQPACKET`_.
+  - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
+  - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
+    :data:`socket.SOCK_SEQPACKET`.
   - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
     in case of AF_UNIX sockets. For UNIX sockets see notes below.
   - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -748,7 +748,7 @@ Network
   value is a list of named tuples for each address assigned to the NIC.
   Each named tuple includes 5 fields:
 
-  - **family**: the address family, either `AF_INET`_ or `AF_INET6`_
+  - **family**: the address family, either :data:`socket.AF_INET` or :data:`socket.AF_INET6`
     or :const:`psutil.AF_LINK`, which refers to a MAC address.
   - **address**: the primary NIC address (always set).
   - **netmask**: the netmask address (may be ``None``).
@@ -1155,15 +1155,15 @@ Process class
 .. class:: Process(pid=None)
 
   Represents an OS process with the given *pid*.
-  If *pid* is omitted current process *pid* (`os.getpid`_) is used.
+  If *pid* is omitted current process *pid* (:func:`os.getpid`) is used.
   Raise :exc:`NoSuchProcess` if *pid* does not exist.
   On Linux *pid* can also refer to a thread ID (the *id* field returned by
   :meth:`threads` method).
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
-  `hash`_ builtin can be used against instances of this class in order to
+  :func:`hash` builtin can be used against instances of this class in order to
   identify a process univocally over time (the hash is determined by mixing
-  process PID + creation time). As such it can also be used with `set`_.
+  process PID + creation time). As such it can also be used with :class:`set`.
 
   .. note::
 
@@ -1426,14 +1426,14 @@ Process class
   .. method:: uids()
 
     The real, effective and saved user ids of this process as a named tuple.
-    This is the same as `os.getresuid`_ but can be used for any process PID.
+    This is the same as :func:`os.getresuid` but can be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: gids()
 
     The real, effective and saved group ids of this process as a named tuple.
-    This is the same as `os.getresgid`_ but can be used for any process PID.
+    This is the same as :func:`os.getresgid` but can be used for any process PID.
 
     .. availability:: UNIX
 
@@ -1460,7 +1460,7 @@ Process class
        >>>
 
     Starting from Python 3.3 this functionality is also available as
-    `os.getpriority`_ and `os.setpriority`_ (see `BPO-10784`_).
+    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
     On Windows this is implemented via `GetPriorityClass`_ and
     `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
@@ -1536,8 +1536,8 @@ Process class
     Get or set process resource limits (see `man prlimit`_). *resource* is one
     of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
     *limits* is a ``(soft, hard)`` tuple.
-    This is the same as `resource.getrlimit`_ and `resource.setrlimit`_
-    but can be used for any process PID, not only `os.getpid`_.
+    This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
+    but can be used for any process PID, not only :func:`os.getpid`.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
     and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
     Also see `procinfo.py`_ script.
@@ -1642,7 +1642,7 @@ Process class
     - **id**: the native thread ID assigned by the kernel. If :attr:`pid` refers
       to the current process, this matches the
       `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`_
-      attribute of the `threading.Thread`_ class, and can be used to reference
+      attribute of the :class:`threading.Thread` class, and can be used to reference
       individual Python threads running within your own Python app.
     - **user_time**: time spent in user mode.
     - **system_time**: time spent in kernel mode.
@@ -1652,7 +1652,7 @@ Process class
     Return a :term:`named tuple` of :term:`cumulative counters <cumulative counter>` (seconds)
     representing the accumulated process CPU times
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
-    This is similar to `os.times`_ but can be used for any process PID.
+    This is similar to :func:`os.times` but can be used for any process PID.
 
     - **user**: time spent in user mode.
     - **system**: time spent in kernel mode.
@@ -2149,13 +2149,13 @@ Process class
 
     - **position** (*Linux*): the file (offset) position.
     - **mode** (*Linux*): a string indicating how the file was opened, similarly
-      to `open`_ builtin ``mode`` argument.
+      to :func:`open` builtin ``mode`` argument.
       Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
       There's no distinction between files opened in binary or text mode
       (``"b"`` or ``"t"``).
     - **flags** (*Linux*): the flags which were passed to the underlying
-      `os.open`_ C call when the file was opened (e.g. `os.O_RDONLY`_,
-      `os.O_TRUNC`_, etc).
+      :func:`os.open` C call when the file was opened (e.g. :data:`os.O_RDONLY`,
+      :data:`os.O_TRUNC`, etc).
 
     .. code-block:: pycon
 
@@ -2195,13 +2195,13 @@ Process class
     Every named tuple provides 6 attributes:
 
     - **fd**: the socket file descriptor. If the connection refers to the
-      current process this may be passed to `socket.fromfd`_ to obtain a usable
+      current process this may be passed to :func:`socket.fromfd` to obtain a usable
       socket object.
       On Windows, FreeBSD and SunOS this is always set to ``-1``.
-    - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or
-      `AF_UNIX`_.
-    - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
-      `SOCK_SEQPACKET`_.  .
+    - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or
+      :data:`socket.AF_UNIX`.
+    - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
+      :data:`socket.SOCK_SEQPACKET`.  .
     - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
       in case of AF_UNIX sockets. For UNIX sockets see notes below.
     - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -2312,7 +2312,7 @@ Process class
 
   .. method:: send_signal(signal)
 
-    Send a signal to process (see `signal module`_ constants) preemptively
+    Send a signal to process (see :mod:`signal` constants) preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
@@ -2365,7 +2365,7 @@ Process class
     positive integer >= 0 indicating the exit code.
     If the process was terminated by a signal return the negated value of the
     signal which caused the termination (e.g. ``-SIGTERM``).
-    If PID is not a child of `os.getpid`_ (current process) just wait until
+    If PID is not a child of :func:`os.getpid` (current process) just wait until
     the process disappears and return ``None``.
     If PID does not exist return ``None`` immediately.
 
@@ -2393,8 +2393,8 @@ Process class
       When ``timeout`` is not ``None`` and the platform supports it, an
       efficient event-driven mechanism is used to wait for process termination:
 
-      - Linux >= 5.3 with Python >= 3.9 uses `os.pidfd_open`_ + `select.poll`_
-      - macOS and other BSD variants use `select.kqueue`_ + ``KQ_FILTER_PROC``
+      - Linux >= 5.3 with Python >= 3.9 uses :func:`os.pidfd_open` + :func:`select.poll`
+      - macOS and other BSD variants use :func:`select.kqueue` + ``KQ_FILTER_PROC``
         + ``KQ_NOTE_EXIT``
       - Windows uses ``WaitForSingleObject``
 
@@ -2410,11 +2410,11 @@ Process class
 
     .. versionchanged:: 5.7.1
        on POSIX, in case of negative signal, return it as a human readable
-       `enum`_.
+       :mod:`enum`.
 
     .. versionchanged:: 7.2.2
-       on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use `os.pidfd_open`_ and
-       `select.kqueue`_ respectively, instead of less efficient busy-loop
+       on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use :func:`os.pidfd_open` and
+       :func:`select.kqueue` respectively, instead of less efficient busy-loop
        polling.
 
 ----
@@ -2424,7 +2424,7 @@ Popen class
 
 .. class:: Popen(*args, **kwargs)
 
-  Same as `subprocess.Popen`_ but in addition it provides all
+  Same as :class:`subprocess.Popen` but in addition it provides all
   :class:`psutil.Process` methods in a single class.
   For the following methods which are common to both classes, psutil
   implementation takes precedence:
@@ -2648,14 +2648,14 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ProcessStatus
 
-  `enum.StrEnum`_ collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
+  :class:`enum.StrEnum` collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
   constants. Returned by :meth:`Process.status`.
 
   .. versionadded:: 8.0.0
 
 .. class:: psutil.ProcessPriority
 
-  `enum.IntEnum`_ collection of
+  :class:`enum.IntEnum` collection of
   :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
   :meth:`Process.nice` on Windows.
 
@@ -2665,7 +2665,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ProcessIOPriority
 
-  `enum.IntEnum`_ collection of I/O priority constants for
+  :class:`enum.IntEnum` collection of I/O priority constants for
   :meth:`Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
   On Windows: ``IOPRIO_*`` constants.
 
@@ -2675,7 +2675,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ProcessRlimit
 
-  `enum.IntEnum`_ collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
+  :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
   constants for :meth:`Process.rlimit`.
 
   .. availability:: Linux, FreeBSD
@@ -2684,7 +2684,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ConnectionStatus
 
-  `enum.StrEnum`_ collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
+  :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
   constants. Returned in the *status* field of
   :func:`psutil.net_connections` and :meth:`Process.net_connections`.
 
@@ -2692,14 +2692,14 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.NicDuplex
 
-  `enum.IntEnum`_ collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
+  :class:`enum.IntEnum` collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
   constants. Returned in the *duplex* field of :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
 
 .. class:: psutil.BatteryTime
 
-  `enum.IntEnum`_ collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
+  :class:`enum.IntEnum` collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
   constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
 
   .. versionadded:: 5.1.0
@@ -2873,7 +2873,7 @@ FreeBSD specific:
   .. data:: RLIMIT_NPTS
 
 Constants used for getting and setting process resource limits to be used in
-conjunction with :meth:`Process.rlimit`. See `resource.getrlimit`_
+conjunction with :meth:`Process.rlimit`. See :func:`resource.getrlimit`
 for further information.
 These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
