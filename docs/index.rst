@@ -103,6 +103,7 @@ Table of Contents
    Shell equivalents <shell_equivalents>
    Platform support <platform>
    Who uses psutil <adoption>
+   Alternatives <alternatives>
    Glossary <glossary>
    Credits <credits>
    Development guide <devguide>

@@ -113,3 +113,19 @@ specific platform or subsystem.
        connections. Overlaps with :func:`net_if_addrs`,
        :func:`net_if_stats`, and :func:`net_connections` but is
        Linux-only and more powerful for network management tasks.
+
+   * - `distro <https://github.com/python-distro/distro>`_
+     - Linux distribution info (name, version, codename) from
+       ``/etc/os-release``. Replaces the removed
+       :func:`platform.linux_distribution`. psutil does not expose OS
+       distribution details.
+
+   * - `setproctitle <https://github.com/dvarrazzo/py-setproctitle>`_
+     - Set the process title displayed by ``ps`` and ``top``.
+       Complements psutil: psutil reads process names
+       (:meth:`Process.name`), setproctitle writes them.
+
+   * - `pySMART <https://github.com/truenas/py-SMART>`_
+     - S.M.A.R.T. disk health data (temperature, power-on hours, error
+       counts). Complements :func:`disk_io_counters`, which covers I/O
+       throughput but not disk health.
