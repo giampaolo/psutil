@@ -155,7 +155,7 @@ class scputimes(NamedTuple):
 
         @property
         def interrupt(self):
-            msg = "scputimes.interrupt is deprecated; use .irq instead"
+            msg = "'interrupt' field is deprecated, use 'irq' instead"
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return self.irq
 
