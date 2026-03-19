@@ -1,3 +1,5 @@
+.. currentmodule:: psutil
+
 Alternatives
 ============
 
@@ -91,6 +93,10 @@ specific platform or subsystem.
      - Network interface address enumeration.
        Overlaps with :func:`net_if_addrs`.
 
+   * - `libvirt-python <https://github.com/libvirt/libvirt-python>`_
+     - Manage KVM/QEMU/Xen VMs: enumerate guests, query
+       CPU/memory allocation. Complements psutil's host-level view.
+
    * - `prometheus_client <https://github.com/prometheus/client_python>`_
      - Export metrics to Prometheus. Use *alongside* psutil.
 
@@ -101,6 +107,10 @@ specific platform or subsystem.
      - Linux netlink (interfaces, routes, connections).
        Overlaps with :func:`net_if_addrs`, :func:`net_if_stats`,
        :func:`net_connections`.
+
+   * - `pywifi <https://github.com/awkman/pywifi>`_
+     - WiFi scanning, signal strength, SSID. Exposes wireless
+       details that :func:`net_if_addrs` does not.
 
    * - `pySMART <https://github.com/truenas/py-SMART>`_
      - S.M.A.R.T. disk health data. Complements

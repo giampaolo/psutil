@@ -74,7 +74,7 @@ Type hints / enums:
 
 - New APIs:
 
-- :gh:`2729`: New :meth:`Process.page_faults` method, returning a ``(minor,
+- :gh:`1541`: New :meth:`Process.page_faults` method, returning a ``(minor,
   major)`` namedtuple.
 - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   :gh:`2733`).
