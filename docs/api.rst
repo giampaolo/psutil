@@ -57,9 +57,8 @@ CPU
   - **guest** *(Linux)*: time the host CPU spent running a guest operating
     system (virtual machine). Already included in **user** time.
 
-  - **guest_nice** *(Linux)*: time the host CPU spent running a
-    :term:`niced <nice>` (lower-priority) guest operating system. Already
-    included in **nice** time.
+  - **guest_nice** *(Linux)*: like **guest**, but for virtual CPUs running at a
+    lower :term:`nice` priority. Already included in **nice** time.
 
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
