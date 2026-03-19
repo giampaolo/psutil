@@ -111,8 +111,9 @@ Glossary
       A signal sent by a hardware device (disk controller, NIC, keyboard)
       to the CPU to request attention. Each interrupt briefly preempts
       whatever the CPU was doing. Reported as the ``interrupts`` field of
-      :func:`cpu_stats`. A very high rate may indicate a misbehaving
-      device driver or a heavily loaded NIC.
+      :func:`cpu_stats` and ``irq`` field of :func:`cpu_times`.
+      A very high rate may indicate a misbehaving device driver or a heavily
+      loaded NIC.
 
    iowait
 
