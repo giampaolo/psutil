@@ -25,6 +25,7 @@ include docs/_static/favicon.ico
 include docs/_static/sidebar.js
 include docs/_templates/layout.html
 include docs/adoption.rst
+include docs/alternatives.rst
 include docs/api.rst
 include docs/changelog.rst
 include docs/conf.py
