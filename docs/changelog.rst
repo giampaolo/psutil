@@ -14,7 +14,7 @@ Changelog
 **Enhancements**
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
-:gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`)
+:gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`)
 
 - Split docs from a single HTML file into multiple sections (API reference,
   install, etc.).
@@ -25,6 +25,8 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     show code samples
   - `/adoption <https://psutil.readthedocs.io/en/latest/adoption.html>`__:
     notable software using psutil
+  - `/glossary <https://psutil.readthedocs.io/en/latest/glossary.html>`__:
+    a section explaining the core concepts
   - `/shell_equivalents <https://psutil.readthedocs.io/en/latest/shell_equivalents.html>`__:
     maps each psutil API to native CLI commands
   - `/install <https://psutil.readthedocs.io/en/latest/install.html>`__
