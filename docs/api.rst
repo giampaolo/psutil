@@ -299,7 +299,7 @@ Memory
   - **used**: memory in use, calculated differently depending on the platform
     (see the table below). It is meant for informational purposes. Neither
     ``total - free`` nor ``total - available`` necessarily equals ``used``.
-  - **free**: memory that is not in use at all (zeroed pages). This is
+  - **free**: memory not currently allocated to anything. This is
     typically much lower than **available** because the OS keeps recently
     freed memory as reclaimable cache (see **cached** and **buffers**)
     rather than zeroing it immediately. Do not use this to check for
