@@ -29,27 +29,38 @@ CPU
 
   - **user**: time spent by normal processes executing in user mode; on Linux
     this also includes **guest** time
+
   - **system**: time spent by processes executing in kernel mode
+
   - **idle**: time spent doing nothing
 
   Platform-specific fields:
 
-  - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
-    executing in user mode; on Linux this also includes **guest_nice** time.
+  - **nice** *(Linux, macOS, BSD)*: time spent by :term:`niced <nice>`
+    (prioritized) processes executing in user mode; on Linux this also includes
+    **guest_nice** time.
+
   - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete
-    (:term:`iowait`).
-    This is *not* accounted in **idle** time counter.
+    (:term:`iowait`). This is *not* accounted in **idle** time counter.
+
   - **irq** *(Linux, Windows, BSD)*: time spent for servicing
     :term:`hardware interrupts <hardware interrupt>`
+
   - **softirq** *(Linux)*: time spent for servicing
     :term:`soft interrupts <soft interrupt>`
-  - **steal** *(Linux)*: time spent by other operating systems running
-    in a virtualized environment
-  - **guest** *(Linux)*: time spent running a virtual CPU for guest
-    operating systems under the control of the Linux kernel
-  - **guest_nice** *(Linux)*: time spent running a niced guest
-    (virtual CPU for guest operating systems under the control of the Linux
-    kernel)
+
+  - **steal** *(Linux)*: time the virtual CPU wanted to run but the hypervisor
+    gave the physical CPU to something else (another VM or the host). A
+    sustained non-zero steal rate means this VM is being CPU-starved by the
+    hypervisor.
+
+  - **guest** *(Linux)*: time the host CPU spent running a guest operating
+    system (virtual machine). Already included in **user** time.
+
+  - **guest_nice** *(Linux)*: time the host CPU spent running a
+    :term:`niced <nice>` (lower-priority) guest operating system. Already
+    included in **nice** time.
+
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
