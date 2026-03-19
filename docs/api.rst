@@ -308,13 +308,13 @@ Memory
     or recently accessed, held in RAM. It is unlikely to be reclaimed unless
     the system is under significant memory pressure.
   - **inactive** *(Linux, macOS, BSD)*: memory not recently accessed. It
-    still holds valid data (file cache, old allocations) but is a candidate
-    for reclamation or swapping. On BSD systems it is counted in
+    still holds valid data (:term:`page cache`, old allocations) but is a
+    candidate for reclamation or swapping. On BSD systems it is counted in
     **available**.
   - **buffers** *(Linux, BSD)*: kernel buffer cache for raw block-device I/O
     (e.g. disk blocks read before the filesystem processes them). Can be
     reclaimed by the OS when needed.
-  - **cached** *(Linux, BSD)*: in-memory page cache for files read from disk.
+  - **cached** *(Linux, BSD)*: in-memory :term:`page cache` for files read from disk.
     The OS reclaims this memory automatically when processes need it, so a
     large **cached** value is healthy and does not indicate memory pressure.
     On Linux this includes ``SReclaimable`` (reclaimable slab memory).
@@ -720,7 +720,7 @@ Network
   .. warning::
     On Linux, retrieving some connections requires root privileges. If psutil is
     not run as root, those connections are silently skipped instead of raising
-    ``PermissionError``. That means the returned list may be incomplete.
+    :exc:`PermissionError`. That means the returned list may be incomplete.
 
   .. note::
     (macOS and AIX) :exc:`psutil.AccessDenied` is always raised unless running
@@ -1498,23 +1498,23 @@ Process class
 
     Linux (see `ioprio_get`_ manual):
 
-    * ``IOPRIO_CLASS_RT``: (high) the process gets first access to the disk
+    * :const:`IOPRIO_CLASS_RT`: (high) the process gets first access to the disk
       every time. Use it with care as it can starve the entire
       system. Additional priority *level* can be specified and ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * ``IOPRIO_CLASS_BE``: (normal) the default for any process that hasn't set
+    * :const:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't set
       a specific I/O priority. Additional priority *level* ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * ``IOPRIO_CLASS_IDLE``: (low) get I/O time when no-one else needs the disk.
+    * :const:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the disk.
       No additional *value* is accepted.
-    * ``IOPRIO_CLASS_NONE``: returned when no priority was previously set.
+    * :const:`IOPRIO_CLASS_NONE`: returned when no priority was previously set.
 
     Windows:
 
-    * ``IOPRIO_HIGH``: highest priority.
-    * ``IOPRIO_NORMAL``: default priority.
-    * ``IOPRIO_LOW``: low priority.
-    * ``IOPRIO_VERYLOW``: lowest priority.
+    * :const:`IOPRIO_HIGH`: highest priority.
+    * :const:`IOPRIO_NORMAL`: default priority.
+    * :const:`IOPRIO_LOW`: low priority.
+    * :const:`IOPRIO_VERYLOW`: lowest priority.
 
     Here's an example on how to set the highest I/O priority depending on what
     platform you're on:
@@ -1534,7 +1534,7 @@ Process class
     .. availability:: Linux, Windows
 
     .. versionchanged:: 5.6.2
-       Windows accepts new ``IOPRIO_*`` constants.
+       Windows accepts new :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` constants.
 
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
@@ -1542,7 +1542,7 @@ Process class
 
   .. method:: rlimit(resource, limits=None)
 
-    Get or set process resource limits (see `man prlimit`_). *resource* is one
+    Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_). *resource* is one
     of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
@@ -1916,9 +1916,8 @@ Process class
       mark) the process has reached since it started. See :term:`peak_rss`.
     - **peak_vms** *(Linux)*: the highest VMS value the process has reached
       since it started.
-    - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap,
-      stack, private mappings) not backed by any file, such as heap
-      allocations, stack, and private ``mmap(MAP_ANONYMOUS)`` regions. Set to 0
+    - **rss_anon** *(Linux, macOS)*: resident :term:`anonymous memory` pages
+      (heap, stack, private mappings) not backed by any file. Set to 0
       on Linux < 4.5.
     - **rss_file** *(Linux, macOS)*: resident file-backed memory; pages mapped
       from files (shared libraries, mmap'd files). Set to 0 on Linux < 4.5.
@@ -2019,7 +2018,7 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-    Return process's mapped memory regions as a list of named tuples whose
+    Return process's memory-mapped file regions as a list of named tuples whose
     fields vary by platform (all values in bytes). If *grouped* is ``True``
     regions with the same *path* are merged and their numeric fields summed.
     If *grouped* is ``False`` each region is listed individually and the
@@ -2067,7 +2066,7 @@ Process class
       before they can be reclaimed. The key indicator of a mapping's real
       memory cost.
     - **referenced**: pages recently accessed.
-    - **anonymous**: pages not backed by a file (heap, stack allocations).
+    - **anonymous**: :term:`anonymous memory` pages not backed by a file (heap, stack allocations).
     - **swap**: pages from this mapping currently in swap.
 
     FreeBSD fields:
@@ -2119,8 +2118,7 @@ Process class
     returned either as the reference to process A is lost.
     This concept is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
   .. method:: page_faults()
 
@@ -2321,13 +2319,12 @@ Process class
 
   .. method:: send_signal(signal)
 
-    Send a signal to process (see :mod:`signal` constants) preemptively
-    checking whether PID has been reused.
+    Send a :term:`signal` to process (see :mod:`signal` module constants)
+    preemptively checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
     are supported and *SIGTERM* is treated as an alias for :meth:`kill`.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
     .. versionchanged:: 3.2.0
        support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows was
@@ -2335,35 +2332,33 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with *SIGSTOP* signal preemptively checking
-    whether PID has been reused.
+    Suspend process execution with *SIGSTOP* :term:`signal` preemptively
+    checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
     On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-    Resume process execution with *SIGCONT* signal preemptively checking
-    whether PID has been reused.
+    Resume process execution with *SIGCONT* :term:`signal` preemptively
+    checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
     On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-    Terminate the process with *SIGTERM* signal preemptively checking
+    Terminate the process with *SIGTERM* :term:`signal` preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
   .. method:: kill()
 
-    Kill the current process by using *SIGKILL* signal preemptively
+    Kill the current process by using *SIGKILL* :term:`signal` preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
   .. method:: wait(timeout=None)
 
@@ -2405,7 +2400,7 @@ Process class
       - Linux >= 5.3 with Python >= 3.9 uses :func:`os.pidfd_open` + :func:`select.poll`
       - macOS and other BSD variants use :func:`select.kqueue` + ``KQ_FILTER_PROC``
         + ``KQ_NOTE_EXIT``
-      - Windows uses ``WaitForSingleObject``
+      - Windows uses `WaitForSingleObject`_
 
       If none of these mechanisms are available, the function falls back to a
       busy loop (non-blocking call and short sleeps).
@@ -2675,8 +2670,10 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 .. class:: psutil.ProcessIOPriority
 
   :class:`enum.IntEnum` collection of I/O priority constants for
-  :meth:`Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
-  On Windows: ``IOPRIO_*`` constants.
+  :meth:`Process.ionice`.
+
+  :data:`IOPRIO_CLASS_* <psutil.IOPRIO_CLASS_NONE>` on Linux,
+  :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` on Windows.
 
   .. availability:: Linux, Windows
 
@@ -2800,7 +2797,7 @@ Process priority constants
      integers).
      See :ref:`migration guide <migration-8.0>`.
 
-.. _const-ioprio:
+.. _const-ioprio-linux:
 
 .. data:: IOPRIO_CLASS_NONE
 .. data:: IOPRIO_CLASS_RT
@@ -2812,11 +2809,11 @@ Process priority constants
   process I/O priority.
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
-  *IOPRIO_CLASS_NONE* and *IOPRIO_CLASS_BE* (best effort) is the default for
-  any process that hasn't set a specific I/O priority.
-  *IOPRIO_CLASS_RT* (real time) means the process is given first access to the
-  disk, regardless of what else is going on in the system.
-  *IOPRIO_CLASS_IDLE* means the process will get I/O time when no-one else
+  :const:`IOPRIO_CLASS_NONE` and :const:`IOPRIO_CLASS_BE` (best effort) is the
+  default for any process that hasn't set a specific I/O priority.
+  :const:`IOPRIO_CLASS_RT` (real time) means the process is given first access
+  to the disk, regardless of what else is going on in the system.
+  :const:`IOPRIO_CLASS_IDLE` means the process will get I/O time when no-one else
   needs the disk.
   For further information refer to manuals of
   `ionice <http://linux.die.net/man/1/ionice>`_ command line utility or
@@ -2828,6 +2825,8 @@ Process priority constants
      constants are now :class:`psutil.ProcessIOPriority` enum members
      (previously ``IOPriority`` enum).
      See :ref:`migration guide <migration-8.0>`.
+
+.. _const-ioprio-windows:
 
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
@@ -2851,6 +2850,8 @@ Process priority constants
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _const-rlimit:
 
 Linux / FreeBSD:
 
@@ -2946,10 +2947,10 @@ Hardware constants
 .. data:: NIC_DUPLEX_HALF
 .. data:: NIC_DUPLEX_UNKNOWN
 
-  Constants which identifies whether a NIC (network interface card) has full or
-  half mode speed.  NIC_DUPLEX_FULL means the NIC is able to send and receive
-  data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either send or
-  receive data at a time.
+  Constants which identifies whether a :term:`NIC` (network interface card) has
+  full or half mode speed. NIC_DUPLEX_FULL means the NIC is able to send and
+  receive data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either
+  send or receive data at a time.
   To be used in conjunction with :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
@@ -3038,3 +3039,4 @@ Other constants
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
 .. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`WaitForSingleObject`: https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject

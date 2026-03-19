@@ -6,6 +6,15 @@ Glossary
 .. glossary::
    :sorted:
 
+   anonymous memory
+
+      RAM used by the program that is not associated with any file (unlike the
+      :term:`page cache`), such as the heap, the stack, and other memory
+      allocated directly by the program (e.g. via ``malloc()``).
+      Anonymous pages have no on-disk counterpart and must be written to swap
+      if evicted. Visible in the ``path`` column of :meth:`Process.memory_maps`
+      as ``"[heap]"``, ``"[stack]"``, or an empty string.
+
    available memory
 
       The amount of RAM that can be given to processes without the system
@@ -46,9 +55,10 @@ Glossary
 
    CPU times
 
-      Cumulative counters (in seconds) recording how much time a CPU or
-      process spent in different modes: **user** (normal code), **system**
-      (kernel code on behalf of the process), **idle**, **iowait**, etc.
+      :term:`Cumulative counters <cumulative counter>` (in seconds) recording
+      how much time a CPU or process spent in different modes:
+      **user** (normal code), **system** (kernel code on behalf of the process),
+      **idle**, **iowait**, etc.
       These always increase monotonically. See :func:`cpu_times` and
       :meth:`Process.cpu_times`.
 
@@ -115,6 +125,10 @@ Glossary
       A very high rate may indicate a misbehaving device driver or a heavily
       loaded NIC.
 
+   involuntary context switch
+
+      See :term:`context switch`.
+
    iowait
 
       A CPU time field (Linux, SunOS, AIX) measuring time spent by the CPU
@@ -160,11 +174,14 @@ Glossary
       Windows the concept maps to priority classes. See
       :meth:`Process.nice`.
 
-   NIC
+   page cache
 
-      *Network Interface Card*, a hardware or virtual network interface.
-      psutil uses this term when referring to per-interface network
-      statistics. See :func:`net_if_addrs` and :func:`net_if_stats`.
+      RAM used by the kernel to cache file data read from or written to disk.
+      When a process reads a file, the data stays in the page cache. Subsequent
+      reads are served from RAM without any disk I/O. The OS reclaims page
+      cache memory automatically under pressure, so a large cache is healthy.
+      Shown as the ``cached`` field of :func:`virtual_memory` on Linux/BSD.
+      See also :term:`available memory`.
 
    peak_rss
 
@@ -275,6 +292,34 @@ Glossary
       them on demand. Heavy swapping significantly degrades performance.
       See :func:`swap_memory`.
 
+   NIC
+
+      *Network Interface Card*, a hardware or virtual network interface.
+      psutil uses this term when referring to per-interface network
+      statistics. See :func:`net_if_addrs` and :func:`net_if_stats`.
+
+   resource limit
+
+      A per-process cap on a system resource enforced by the kernel (POSIX
+      :data:`RLIMIT_* <psutil.RLIM_INFINITY>` constants).
+      Each limit has a *soft* value (the current enforcement threshold, which
+      the process may raise up to the hard limit) and a *hard* value
+      (the ceiling, settable only by root).
+      Common limits include :data:`RLIM_INFINITY` (open file descriptors),
+      :data:`RLIMIT_AS` (virtual address space), and :data:`RLIMIT_CPU`
+      (CPU time in seconds). See :meth:`Process.rlimit`.
+
+   signal
+
+      An asynchronous notification delivered by the OS to a process to
+      indicate an event. The process can catch it (run a handler), ignore it,
+      or let the default action happen (often termination). Common signals on
+      UNIX: ``SIGTERM`` (request graceful shutdown), ``SIGKILL`` (force
+      immediate termination, cannot be caught), ``SIGSTOP`` / ``SIGCONT``
+      (pause and resume). psutil exposes signals via :meth:`Process.send_signal`,
+      :meth:`Process.terminate`, :meth:`Process.suspend`,
+      :meth:`Process.resume` and :meth:`Process.kill`. See also :mod:`signal` module.
+
    USS
 
       *Unique Set Size*, the amount of RAM that belongs exclusively to a
@@ -284,10 +329,6 @@ Glossary
       :meth:`Process.memory_full_info`.
 
    voluntary context switch
-
-      See :term:`context switch`.
-
-   involuntary context switch
 
       See :term:`context switch`.
 
