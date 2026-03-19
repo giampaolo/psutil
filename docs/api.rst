@@ -49,10 +49,9 @@ CPU
   - **softirq** *(Linux)*: time spent for servicing
     :term:`soft interrupts <soft interrupt>`
 
-  - **steal** *(Linux)*: time the virtual CPU wanted to run but the hypervisor
-    gave the physical CPU to something else (another VM or the host). A
-    sustained non-zero steal rate means this VM is being CPU-starved by the
-    hypervisor.
+  - **steal** *(Linux)*: CPU time the virtual machine wanted to run but was
+    used by other virtual machines or the host. A sustained non-zero steal rate
+    indicates CPU contention.
 
   - **guest** *(Linux)*: time the host CPU spent running a guest operating
     system (virtual machine). Already included in **user** time.
