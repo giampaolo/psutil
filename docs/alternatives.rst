@@ -81,51 +81,37 @@ specific platform or subsystem.
      - Focus
 
    * - `distro <https://github.com/python-distro/distro>`_
-     - Linux distribution info (name, version, codename) from
-       ``/etc/os-release``. Replaces the removed
-       :func:`platform.linux_distribution`. psutil does not expose OS
-       distribution details.
+     - Linux distro info (name, version, codename).
 
    * - `GPUtil <https://github.com/anderskm/gputil>`_ /
        `pynvml <https://github.com/gpuopenanalytics/pynvml>`_
-     - NVIDIA GPU utilization and VRAM usage. psutil does not cover GPU
-       hardware.
+     - NVIDIA GPU utilization and VRAM usage.
 
    * - `ifaddr <https://github.com/ifaddr/ifaddr>`_
-     - Enumerate network interfaces and their IPv4/IPv6 addresses.
+     - Network interface address enumeration.
        Overlaps with :func:`net_if_addrs`.
 
    * - `prometheus_client <https://github.com/prometheus/client_python>`_
-     - Exports metrics in Prometheus format.
-       Use it *alongside* psutil to expose collected values to a
-       Prometheus scraper.
+     - Export metrics to Prometheus. Use *alongside* psutil.
 
    * - `py-cpuinfo <https://github.com/workhorsy/py-cpuinfo>`_
-     - CPU brand string, microarchitecture, CPU feature flags, etc.
-       psutil does not expose CPU hardware details.
-       The closest it gets is :func:`cpu_count` and :func:`cpu_freq`.
+     - CPU brand string, microarchitecture, feature flags.
 
    * - `pyroute2 <https://github.com/svinota/pyroute2>`_
-     - Linux netlink library for network interfaces, routing tables, and
-       connections. Overlaps with :func:`net_if_addrs`,
-       :func:`net_if_stats`, and :func:`net_connections` but is
-       Linux-only and more powerful for network management tasks.
+     - Linux netlink (interfaces, routes, connections).
+       Overlaps with :func:`net_if_addrs`, :func:`net_if_stats`,
+       :func:`net_connections`.
 
    * - `pySMART <https://github.com/truenas/py-SMART>`_
-     - S.M.A.R.T. disk health data (temperature, power-on hours, error
-       counts). Complements :func:`disk_io_counters`, which covers I/O
-       throughput but not disk health.
+     - S.M.A.R.T. disk health data. Complements
+       :func:`disk_io_counters`.
 
    * - `pywin32 <https://github.com/mhammond/pywin32>`_
-     - Win32 API bindings (Windows only). psutil uses these APIs internally and
-       on Windows.
+     - Win32 API bindings (Windows only).
 
    * - `setproctitle <https://github.com/dvarrazzo/py-setproctitle>`_
-     - Set the process title displayed by ``ps`` and ``top``.
-       Complements psutil: psutil reads process names
-       (:meth:`Process.name`), setproctitle writes them.
+     - Set process title shown by ``ps``/``top``. Writes what
+       :meth:`Process.name` reads.
 
    * - `wmi <https://github.com/tjguk/wmi>`_
-     - Interface to WMI (Windows only).
-       Can provide lots of system-related info. Used in psutil for
-       Windows-specific test.
+     - WMI interface (Windows only).
