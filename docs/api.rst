@@ -37,8 +37,8 @@ CPU
     executing in user mode; on Linux this also includes **guest_nice** time
   - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete (:term:`iowait`).
     This is *not* accounted in **idle** time counter.
-  - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
-  - **softirq** *(Linux)*: time spent for servicing software interrupts
+  - **irq** *(Linux, BSD)*: time spent for servicing :term:`hardware interrupt`\s
+  - **softirq** *(Linux)*: time spent for servicing :term:`soft interrupt`\s
   - **steal** *(Linux)*: time spent by other operating systems running
     in a virtualized environment
   - **guest** *(Linux)*: time spent running a virtual CPU for guest
