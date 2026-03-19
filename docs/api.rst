@@ -21,7 +21,7 @@ CPU
 
 .. function:: cpu_times(percpu=False)
 
-  Return system CPU times as a named tuple.
+  Return system CPU times as a :term:`named tuple`.
   Every attribute represents the seconds the CPU has spent in the given mode.
   The attributes availability varies depending on the platform.
   Cross-platform fields:
@@ -35,7 +35,7 @@ CPU
 
   - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
     executing in user mode; on Linux this also includes **guest_nice** time
-  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete.
+  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete (:term:`iowait`).
     This is *not* accounted in **idle** time counter.
   - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
@@ -143,7 +143,7 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of logical CPUs in the system (similar to `os.cpu_count`_)
+  Return the number of :term:`logical CPU`\s in the system (similar to `os.cpu_count`_)
   or ``None`` if undetermined.
   Unlike `os.cpu_count`_, this is not influenced by the ``PYTHON_CPU_COUNT``
   environment variable introduced in Python 3.13.
@@ -181,7 +181,7 @@ CPU
   Return various CPU statistics as a named tuple:
 
   - **ctx_switches**:
-    number of context switches (voluntary + involuntary) since boot.
+    number of :term:`context switch`\es (voluntary + involuntary) since boot.
   - **interrupts**:
     number of interrupts since boot.
   - **soft_interrupts**:
@@ -276,7 +276,7 @@ Memory
     system going into swap. On Linux it uses the ``MemAvailable`` field from
     ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back to an
     estimate. This is the recommended field for monitoring actual memory usage
-    in a cross-platform fashion.
+    in a cross-platform fashion. See :term:`available memory`.
   - **percent**: the percentage usage calculated as
     ``(total - available) / total * 100``.
   - **used**: memory in use, calculated differently depending on the platform
@@ -431,8 +431,9 @@ Memory
     from RAM into swap space) since boot (cumulative). A continuously
     increasing **sout** is a sign of memory pressure.
 
-  **sin** and **sout** are cumulative counters since boot; monitor their rate
-  of change rather than the absolute value to detect active swapping.
+  **sin** and **sout** are :term:`cumulative counter`\s since boot; monitor
+  their rate of change rather than the absolute value to detect active
+  swapping. See :term:`swap-in` and :term:`swap-out`.
   On Windows both are always ``0``.
   See `meminfo.py`_ script providing an example on how to convert bytes in a
   human readable form.
@@ -532,7 +533,7 @@ Disks
   - **write_time**: (all except *NetBSD* and *OpenBSD*) time spent writing to disk
     (in milliseconds)
   - **busy_time**: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
-    milliseconds)
+    milliseconds). See :term:`busy_time`.
   - **read_merged_count** (*Linux*): number of merged reads (see `iostats doc`_)
   - **write_merged_count** (*Linux*): number of merged writes (see `iostats doc`_)
 
@@ -594,7 +595,7 @@ Network
   - **errout**: total number of errors while sending
   - **dropin**: total number of incoming packets which were dropped
   - **dropout**: total number of outgoing packets which were dropped (always 0
-    on macOS and BSD)
+    on macOS and BSD). See :term:`dropin / dropout`.
 
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
@@ -733,7 +734,7 @@ Network
 
 .. function:: net_if_addrs()
 
-  Return the addresses associated to each NIC (network interface card)
+  Return the addresses associated to each :term:`NIC` (network interface card)
   installed on the system as a dictionary whose keys are the NIC names and
   value is a list of named tuples for each address assigned to the NIC.
   Each named tuple includes 5 fields:
@@ -786,7 +787,7 @@ Network
 
 .. function:: net_if_stats()
 
-  Return information about each NIC (network interface card) installed on the
+  Return information about each :term:`NIC` (network interface card) installed on the
   system as a dictionary whose keys are the NIC names and value is a named tuple
   with the following fields:
 
@@ -1598,8 +1599,8 @@ Process class
 
   .. method:: num_ctx_switches()
 
-    The number of voluntary and involuntary context switches performed by
-    this process (cumulative).
+    The number of :term:`voluntary / involuntary context switch`\es performed
+    by this process (:term:`cumulative counter`).
 
     .. note::
       (Windows, macOS) *involuntary* value is always set to 0, while
@@ -1611,14 +1612,14 @@ Process class
 
   .. method:: num_fds()
 
-    The number of file descriptors currently opened by this process
+    The number of :term:`file descriptor`\s currently opened by this process
     (non cumulative).
 
     .. availability:: UNIX
 
   .. method:: num_handles()
 
-    The number of handles currently used by this process (non cumulative).
+    The number of :term:`handle`\s currently used by this process (non cumulative).
 
     .. availability:: Windows
 
@@ -1651,7 +1652,7 @@ Process class
       Windows and macOS).
     - **children_system**: system time of all child processes (always ``0`` on
       Windows and macOS).
-    - **iowait**: (Linux) time spent waiting for blocking I/O to complete.
+    - **iowait**: (Linux) time spent waiting for blocking I/O to complete (:term:`iowait`).
       This value is excluded from `user` and `system` times count (because the
       CPU is not doing any work).
 
@@ -1792,13 +1793,13 @@ Process class
     |         |         |          |         |     | peak_vms        |
     +---------+---------+----------+---------+-----+-----------------+
 
-    - **rss**: aka "Resident Set Size". The portion of physical memory
+    - **rss**: aka :term:`RSS`. The portion of physical memory
       currently held by this process (code, data, stack, and mapped files that
       are resident). Pages swapped out to disk are not counted. On UNIX it
       matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
       See also :ref:`faq_memory_rss_vs_vms` FAQ.
 
-    - **vms**: aka "Virtual Memory Size". The total address space reserved by
+    - **vms**: aka :term:`VMS`. The total address space reserved by
       the process, including pages not yet touched, pages in swap, and
       memory-mapped files not yet accessed. Typically much larger than
       **rss**. On UNIX it matches the ``top`` VIRT column. On Windows this
@@ -1824,8 +1825,8 @@ Process class
     - **stack** *(BSD)*: size of the process stack segment. Reported
       separately from **data** (unlike Linux where both are combined).
 
-    - **peak_rss** *(BSD, Windows)*: the highest RSS value (high water mark)
-      the process has ever reached. On BSD this may be ``0`` for kernel PIDs.
+    - **peak_rss** *(BSD, Windows)*: the highest :term:`RSS` value (high water mark)
+      the process has ever reached. See :term:`peak_rss`. On BSD this may be ``0`` for kernel PIDs.
       On Windows it maps to ``PeakWorkingSetSize``.
 
     - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
@@ -1893,8 +1894,8 @@ Process class
     | hugetlb     | phys_footprint |                    |
     +-------------+----------------+--------------------+
 
-    - **peak_rss** *(Linux, macOS)*: the highest RSS value (high water mark)
-      the process has reached since it started.
+    - **peak_rss** *(Linux, macOS)*: the highest :term:`RSS` value (high water mark)
+      the process has reached since it started. See :term:`peak_rss`.
     - **peak_vms** *(Linux)*: the highest VMS value the process has reached
       since it started.
     - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap,
@@ -1947,12 +1948,12 @@ Process class
     considerably slower than :meth:`memory_info` and may require elevated
     privileges.
 
-    - **uss** *(Linux, macOS, Windows)*: aka "Unique Set Size". This is the
+    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`. This is the
       memory which is unique to a process and which would be freed if the
       process were terminated right now. The most representative metric for
       actual memory usage.
 
-    - **pss** *(Linux)*: aka "Proportional Set Size", is the amount of memory
+    - **pss** *(Linux)*: aka :term:`PSS`, is the amount of memory
       shared with other processes, accounted in a way that the amount is
       divided evenly between the processes that share it. I.e. if a process has
       10 MBs all to itself, and 10 MBs shared with another process, its PSS
@@ -2105,8 +2106,8 @@ Process class
 
   .. method:: page_faults()
 
-    Return the number of page faults for this process as a ``(minor, major)``
-    named tuple.
+    Return the number of :term:`page fault`\s for this process as a
+    ``(minor, major)`` :term:`named tuple`.
 
     - **minor** (a.k.a. *soft* faults): occur when a memory page is not
       currently mapped into the process address space, but is already present
@@ -2287,13 +2288,13 @@ Process class
 
     Return whether the current process is running in the current process list.
     Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
-    case the process is gone and its PID reused by another process.
+    case the process is gone and its PID reused by another process (:term:`PID reuse`).
 
     If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
 
     .. note::
-      this will return ``True`` also if the process is a zombie
+      this will return ``True`` also if the process is a :term:`zombie process`
       (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. versionchanged:: 6.0.0
