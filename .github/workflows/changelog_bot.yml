@@ -30,22 +30,25 @@ jobs:
             exit 1
           fi
 
-      - name: Get PR head branch
-        id: get-branch
+      - name: Get PR info
+        id: pr-info
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=${{ github.event.issue.number }}
-          HEAD_BRANCH=$(gh pr view $PR_NUMBER \
+          PR_JSON=$(gh pr view $PR_NUMBER \
             --repo ${{ github.repository }} \
-            --json headRefName \
-            --jq '.headRefName')
+            --json headRefName,headRepository,headRepositoryOwner)
+          HEAD_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
+          HEAD_OWNER=$(echo "$PR_JSON" | jq -r '.headRepositoryOwner.login')
+          HEAD_REPO=$(echo "$PR_JSON" | jq -r '.headRepository.name')
           echo "branch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "head_repo=$HEAD_OWNER/$HEAD_REPO" >> "$GITHUB_OUTPUT"
 
       - name: Checkout PR branch
         uses: actions/checkout@v5
         with:
-          ref: ${{ steps.get-branch.outputs.branch }}
+          ref: refs/pull/${{ github.event.issue.number }}/head
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
@@ -61,6 +64,8 @@ jobs:
             --token ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push if changelog changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -69,5 +74,8 @@ jobs:
             echo "No changes, skipping commit"
           else
             git commit -m "Update changelog for PR #${{ github.event.issue.number }}"
-            git push
+            HEAD_REPO="${{ steps.pr-info.outputs.head_repo }}"
+            HEAD_BRANCH="${{ steps.pr-info.outputs.branch }}"
+            PUSH_URL="https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git"
+            git push "$PUSH_URL" "HEAD:refs/heads/${HEAD_BRANCH}"
           fi
