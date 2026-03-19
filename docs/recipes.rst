@@ -239,6 +239,8 @@ Periodically monitor CPU and memory usage of a process using
 Controlling processes
 ^^^^^^^^^^^^^^^^^^^^^
 
+.. _recipe_kill_proc_tree:
+
 Kill a process tree (including grandchildren):
 
 .. code-block:: python

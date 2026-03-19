@@ -31,6 +31,7 @@ include docs/conf.py
 include docs/credits.rst
 include docs/devguide.rst
 include docs/faq.rst
+include docs/glossary.rst
 include docs/index.rst
 include docs/install.rst
 include docs/migration.rst

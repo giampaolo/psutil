@@ -101,7 +101,7 @@ Status and connection fields are now enums
   now returns a :class:`psutil.ConnectionStatus` member instead of a plain
   ``str``.
 
-Because both are `enum.StrEnum`_ subclasses they compare equal to their
+Because both are :class:`enum.StrEnum` subclasses they compare equal to their
 string values, so existing comparisons continue to work unchanged:
 
 .. code-block:: python

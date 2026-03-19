@@ -21,32 +21,44 @@ CPU
 
 .. function:: cpu_times(percpu=False)
 
-  Return system CPU times as a named tuple.
-  Every attribute represents the seconds the CPU has spent in the given mode.
+  Return system CPU times as a :term:`named tuple`. All fields are
+  :term:`cumulative counters <cumulative counter>` (seconds) representing time
+  the CPU has spent in each mode since boot.
   The attributes availability varies depending on the platform.
   Cross-platform fields:
 
   - **user**: time spent by normal processes executing in user mode; on Linux
     this also includes **guest** time
+
   - **system**: time spent by processes executing in kernel mode
+
   - **idle**: time spent doing nothing
 
   Platform-specific fields:
 
-  - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
-    executing in user mode; on Linux this also includes **guest_nice** time.
-  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete.
-    This is *not* accounted in **idle** time counter.
-  - **irq** *(Linux, Windows, BSD)*: time spent for servicing hardware
-    interrupts
-  - **softirq** *(Linux)*: time spent for servicing software interrupts
-  - **steal** *(Linux)*: time spent by other operating systems running
-    in a virtualized environment
-  - **guest** *(Linux)*: time spent running a virtual CPU for guest
-    operating systems under the control of the Linux kernel
-  - **guest_nice** *(Linux)*: time spent running a niced guest
-    (virtual CPU for guest operating systems under the control of the Linux
-    kernel)
+  - **nice** *(Linux, macOS, BSD)*: time spent by :term:`niced <nice>`
+    (lower-priority) processes executing in user mode; on Linux this also
+    includes **guest_nice** time.
+
+  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete
+    (:term:`iowait`). This is *not* accounted in **idle** time counter.
+
+  - **irq** *(Linux, Windows, BSD)*: time spent for servicing
+    :term:`hardware interrupts <hardware interrupt>`
+
+  - **softirq** *(Linux)*: time spent for servicing
+    :term:`soft interrupts <soft interrupt>`
+
+  - **steal** *(Linux)*: CPU time the virtual machine wanted to run but was
+    used by other virtual machines or the host. A sustained non-zero steal rate
+    indicates CPU contention.
+
+  - **guest** *(Linux)*: time the host CPU spent running a guest operating
+    system (virtual machine). Already included in **user** time.
+
+  - **guest_nice** *(Linux)*: like **guest**, but for virtual CPUs running at a
+    lower :term:`nice` priority. Already included in **nice** time.
+
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
@@ -98,7 +110,7 @@ CPU
   The list is ordered by CPU index. The order of the list is consistent across
   calls.
   Internally this function maintains a global map (a dict) where each key is
-  the ID of the calling thread (`threading.get_ident`_). This means it can be
+  the ID of the calling thread (:func:`threading.get_ident`). This means it can be
   called from different threads, at different intervals, and still return
   meaningful and independent results.
 
@@ -148,9 +160,9 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of logical CPUs in the system (similar to `os.cpu_count`_)
-  or ``None`` if undetermined.
-  Unlike `os.cpu_count`_, this is not influenced by the ``PYTHON_CPU_COUNT``
+  Return the number of :term:`logical CPUs <logical CPU>` in the system
+  (similar to :func:`os.cpu_count`) or ``None`` if undetermined.
+  Unlike :func:`os.cpu_count`, this is not influenced by the ``PYTHON_CPU_COUNT``
   environment variable introduced in Python 3.13.
   "logical CPUs" means the number of physical cores multiplied by the number
   of threads that can run on each core (this is known as Hyper Threading).
@@ -183,17 +195,17 @@ CPU
 
 .. function:: cpu_stats()
 
-  Return various CPU statistics as a named tuple:
+  Return various CPU statistics as a named tuple. All fields are
+  :term:`cumulative counters <cumulative counter>` since boot.
 
-  - **ctx_switches**:
-    number of context switches (voluntary + involuntary) since boot.
+  - **ctx_switches**: number of :term:`context switches <context switch>`
+    (voluntary + involuntary).
   - **interrupts**:
-    number of interrupts since boot.
+    number of :term:`hardware interrupts <hardware interrupt>`.
   - **soft_interrupts**:
-    number of software interrupts since boot. Always set to ``0`` on Windows
-    and SunOS.
-  - **syscalls**: number of system calls since boot. Always set to ``0`` on
-    Linux.
+    number of :term:`soft interrupts <soft interrupt>`. Always set to ``0`` on
+    Windows and SunOS.
+  - **syscalls**: number of system calls. Always set to ``0`` on Linux.
 
   Example (Linux):
 
@@ -245,7 +257,7 @@ CPU
     Return the average system load over the last 1, 5 and 15 minutes as a tuple.
     The "load" represents the processes which are in a runnable state, either
     using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-    On UNIX systems this relies on `os.getloadavg`_. On Windows this is emulated
+    On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
     by using a Windows API that spawns a thread which keeps running in
     background and updates results every 5 seconds, mimicking the UNIX behavior.
     Thus, on Windows, the first time this is called and for the next 5 seconds
@@ -281,13 +293,13 @@ Memory
     system going into swap. On Linux it uses the ``MemAvailable`` field from
     ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back to an
     estimate. This is the recommended field for monitoring actual memory usage
-    in a cross-platform fashion.
+    in a cross-platform fashion. See :term:`available memory`.
   - **percent**: the percentage usage calculated as
     ``(total - available) / total * 100``.
   - **used**: memory in use, calculated differently depending on the platform
     (see the table below). It is meant for informational purposes. Neither
     ``total - free`` nor ``total - available`` necessarily equals ``used``.
-  - **free**: memory that is not in use at all (zeroed pages). This is
+  - **free**: memory not currently allocated to anything. This is
     typically much lower than **available** because the OS keeps recently
     freed memory as reclaimable cache (see **cached** and **buffers**)
     rather than zeroing it immediately. Do not use this to check for
@@ -296,13 +308,13 @@ Memory
     or recently accessed, held in RAM. It is unlikely to be reclaimed unless
     the system is under significant memory pressure.
   - **inactive** *(Linux, macOS, BSD)*: memory not recently accessed. It
-    still holds valid data (file cache, old allocations) but is a candidate
-    for reclamation or swapping. On BSD systems it is counted in
+    still holds valid data (:term:`page cache`, old allocations) but is a
+    candidate for reclamation or swapping. On BSD systems it is counted in
     **available**.
   - **buffers** *(Linux, BSD)*: kernel buffer cache for raw block-device I/O
     (e.g. disk blocks read before the filesystem processes them). Can be
     reclaimed by the OS when needed.
-  - **cached** *(Linux, BSD)*: in-memory page cache for files read from disk.
+  - **cached** *(Linux, BSD)*: in-memory :term:`page cache` for files read from disk.
     The OS reclaims this memory automatically when processes need it, so a
     large **cached** value is healthy and does not indicate memory pressure.
     On Linux this includes ``SReclaimable`` (reclaimable slab memory).
@@ -316,7 +328,8 @@ Memory
   - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
     code and critical data structures). It can never be moved to disk.
 
-  Below is a table showing implementation details. All info on Linux is retrieved from `/proc/meminfo`.
+  Below is a table showing implementation details. All info on Linux is
+  retrieved from `/proc/meminfo`.
 
   .. list-table::
      :header-rows: 1
@@ -409,7 +422,7 @@ Memory
      - On Windows, **total**, **used** ("In use"), and **available** match
        the Task Manager (Performance > Memory tab).
 
-  .. note::  see `meminfo.py`_ script providing an example on how to convert
+  .. note::  see `scripts/meminfo.py`_ script providing an example on how to convert
     bytes in a human readable form.
 
   .. versionchanged:: 4.2.0
@@ -431,15 +444,16 @@ Memory
   * **percent**: swap usage as a percentage, calculated as
     ``used / total * 100``.
   * **sin**: number of bytes the system has paged *in* from disk (pages moved
-    from swap space back into RAM) since boot (cumulative).
+    from swap space back into RAM) since boot. See :term:`swap-in`.
   * **sout**: number of bytes the system has paged *out* to disk (pages moved
-    from RAM into swap space) since boot (cumulative). A continuously
-    increasing **sout** is a sign of memory pressure.
+    from RAM into swap space) since boot. A continuously increasing **sout**
+    is a sign of memory pressure. See :term:`swap-out`.
 
-  **sin** and **sout** are cumulative counters since boot; monitor their rate
-  of change rather than the absolute value to detect active swapping.
+  **sin** and **sout** are :term:`cumulative counters <cumulative counter>` since boot; monitor
+  their rate of change rather than the absolute value to detect active
+  swapping. See :term:`swap-in` and :term:`swap-out`.
   On Windows both are always ``0``.
-  See `meminfo.py`_ script providing an example on how to convert bytes in a
+  See `scripts/meminfo.py`_ script providing an example on how to convert bytes in a
   human readable form.
 
   .. code-block:: pycon
@@ -466,7 +480,7 @@ Disks
   (e.g. pseudo, memory, duplicate, inaccessible filesystems).
   Note that this may not be fully reliable on all systems (e.g. on BSD this
   parameter is ignored).
-  See `disk_usage.py`_ script providing an example usage.
+  See `scripts/disk_usage.py`_ script providing an example usage.
   Returns a list of named tuples with the following fields:
 
   * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
@@ -497,9 +511,9 @@ Disks
   *path* as a named tuple including **total**, **used** and **free** space
   expressed in bytes, plus the **percentage** usage.
   ``OSError`` is raised if *path* does not exist.
-  Starting from Python 3.3 this is also available as `shutil.disk_usage`_
+  Starting from Python 3.3 this is also available as :func:`shutil.disk_usage`
   (see `BPO-12442`_).
-  See `disk_usage.py`_ script providing an example usage.
+  See `scripts/disk_usage.py`_ script providing an example usage.
 
   .. code-block:: pycon
 
@@ -537,14 +551,14 @@ Disks
   - **write_time**: (all except *NetBSD* and *OpenBSD*) time spent writing to disk
     (in milliseconds)
   - **busy_time**: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
-    milliseconds)
+    milliseconds). See :term:`busy_time`.
   - **read_merged_count** (*Linux*): number of merged reads (see `iostats doc`_)
   - **write_merged_count** (*Linux*): number of merged writes (see `iostats doc`_)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the named tuple described above as the values.
-  See `iotop.py`_ for an example application.
+  See `scripts/iotop.py`_ for an example application.
   On some systems such as Linux, on a very busy or long-lived system, the
   numbers returned by the kernel may overflow and wrap (restart from zero).
   If *nowrap* is ``True`` psutil will detect and adjust those numbers across
@@ -599,7 +613,7 @@ Network
   - **errout**: total number of errors while sending
   - **dropin**: total number of incoming packets which were dropped
   - **dropout**: total number of outgoing packets which were dropped (always 0
-    on macOS and BSD)
+    on macOS and BSD). See :term:`dropin / dropout`.
 
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
@@ -624,7 +638,7 @@ Network
      {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
      'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
-  Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
+  Also see `scripts/nettop.py`_ and `scripts/ifconfig.py`_ for an example application.
 
   .. versionchanged:: 5.3.0
      numbers no longer wrap (restart from zero) across calls thanks to new
@@ -636,12 +650,12 @@ Network
   Every named tuple provides 7 attributes:
 
   - **fd**: the socket file descriptor. If the connection refers to the current
-    process this may be passed to `socket.fromfd`_
+    process this may be passed to :func:`socket.fromfd`
     to obtain a usable socket object.
     On Windows and SunOS this is always set to ``-1``.
-  - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or `AF_UNIX`_.
-  - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
-    `SOCK_SEQPACKET`_.
+  - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
+  - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
+    :data:`socket.SOCK_SEQPACKET`.
   - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
     in case of AF_UNIX sockets. For UNIX sockets see notes below.
   - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -690,7 +704,7 @@ Network
 
   On macOS and AIX this function requires root privileges.
   To get per-process connections use :meth:`Process.net_connections`.
-  Also, see `netstat.py`_ example script.
+  Also, see `scripts/netstat.py`_ example script.
   Example:
 
   .. code-block:: pycon
@@ -706,7 +720,7 @@ Network
   .. warning::
     On Linux, retrieving some connections requires root privileges. If psutil is
     not run as root, those connections are silently skipped instead of raising
-    ``PermissionError``. That means the returned list may be incomplete.
+    :exc:`PermissionError`. That means the returned list may be incomplete.
 
   .. note::
     (macOS and AIX) :exc:`psutil.AccessDenied` is always raised unless running
@@ -738,12 +752,12 @@ Network
 
 .. function:: net_if_addrs()
 
-  Return the addresses associated to each NIC (network interface card)
+  Return the addresses associated to each :term:`NIC` (network interface card)
   installed on the system as a dictionary whose keys are the NIC names and
   value is a list of named tuples for each address assigned to the NIC.
   Each named tuple includes 5 fields:
 
-  - **family**: the address family, either `AF_INET`_ or `AF_INET6`_
+  - **family**: the address family, either :data:`socket.AF_INET` or :data:`socket.AF_INET6`
     or :const:`psutil.AF_LINK`, which refers to a MAC address.
   - **address**: the primary NIC address (always set).
   - **netmask**: the netmask address (may be ``None``).
@@ -764,7 +778,7 @@ Network
                 snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
      >>>
 
-  See also `nettop.py`_ and `ifconfig.py`_ for an example application.
+  See also `scripts/nettop.py`_ and `scripts/ifconfig.py`_ for an example application.
 
   .. note::
     if you're interested in others families (e.g. AF_BLUETOOTH) you can use
@@ -791,7 +805,7 @@ Network
 
 .. function:: net_if_stats()
 
-  Return information about each NIC (network interface card) installed on the
+  Return information about each :term:`NIC` (network interface card) installed on the
   system as a dictionary whose keys are the NIC names and value is a named tuple
   with the following fields:
 
@@ -810,7 +824,7 @@ Network
     ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
     and ``d2`` (some flags are only available on certain platforms).
 
-  Also see `nettop.py`_ and `ifconfig.py`_ for an example application.
+  Also see `scripts/nettop.py`_ and `scripts/ifconfig.py`_ for an example application.
 
   .. code-block:: pycon
 
@@ -849,7 +863,7 @@ Sensors
   - **critical**: temperature at which the system will shut down, or
     ``None`` if not available.
 
-  See also `temperatures.py`_ and `sensors.py`_ for an example application.
+  See also `scripts/temperatures.py`_ and `scripts/sensors.py`_ for an example application.
 
   .. code-block:: pycon
 
@@ -883,7 +897,7 @@ Sensors
      >>> psutil.sensors_fans()
      {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  See also `fans.py`_  and `sensors.py`_ for an example application.
+  See also `scripts/fans.py`_  and `scripts/sensors.py`_ for an example application.
 
   .. availability:: Linux
 
@@ -920,7 +934,7 @@ Sensors
      >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
      charge = 93%, time left = 4:37:08
 
-  See also `battery.py`_  and `sensors.py`_ for an example application.
+  See also `scripts/battery.py`_  and `scripts/sensors.py`_ for an example application.
 
   .. availability:: Linux, Windows, macOS, FreeBSD
 
@@ -1114,8 +1128,8 @@ Exceptions
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-  This may be raised by :class:`Process` class methods when querying a zombie
-  process on UNIX (Windows doesn't have zombie processes).
+  This may be raised by :class:`Process` class methods when querying a
+  :term:`zombie process` on UNIX (Windows doesn't have zombie processes).
   *name* and *ppid* attributes are available if :meth:`Process.name` or
   :meth:`Process.ppid` methods were called before the process turned into a
   zombie.
@@ -1150,15 +1164,15 @@ Process class
 .. class:: Process(pid=None)
 
   Represents an OS process with the given *pid*.
-  If *pid* is omitted current process *pid* (`os.getpid`_) is used.
+  If *pid* is omitted current process *pid* (:func:`os.getpid`) is used.
   Raise :exc:`NoSuchProcess` if *pid* does not exist.
   On Linux *pid* can also refer to a thread ID (the *id* field returned by
   :meth:`threads` method).
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
-  `hash`_ builtin can be used against instances of this class in order to
+  :func:`hash` builtin can be used against instances of this class in order to
   identify a process univocally over time (the hash is determined by mixing
-  process PID + creation time). As such it can also be used with `set`_.
+  process PID + creation time). As such it can also be used with :class:`set`.
 
   .. note::
 
@@ -1266,7 +1280,7 @@ Process class
 
     The process parent PID. On Windows the return value is cached after the
     first call. On POSIX it is not cached because the ppid may change if the
-    process becomes a zombie.
+    process becomes a :term:`zombie process`.
     See also :meth:`parent` and :meth:`parents` methods.
 
   .. method:: name()
@@ -1398,6 +1412,8 @@ Process class
     The current process status as a :class:`psutil.ProcessStatus` enum member.
     The returned value is one of the
     `psutil.STATUS_* <#process-status-constants>`_ constants.
+    A common use case is detecting :term:`zombie processes <zombie process>`
+    (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. versionchanged:: 8.0.0
        return value is now a :class:`psutil.ProcessStatus` enum member instead
@@ -1421,14 +1437,14 @@ Process class
   .. method:: uids()
 
     The real, effective and saved user ids of this process as a named tuple.
-    This is the same as `os.getresuid`_ but can be used for any process PID.
+    This is the same as :func:`os.getresuid` but can be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: gids()
 
     The real, effective and saved group ids of this process as a named tuple.
-    This is the same as `os.getresgid`_ but can be used for any process PID.
+    This is the same as :func:`os.getresgid` but can be used for any process PID.
 
     .. availability:: UNIX
 
@@ -1455,7 +1471,7 @@ Process class
        >>>
 
     Starting from Python 3.3 this functionality is also available as
-    `os.getpriority`_ and `os.setpriority`_ (see `BPO-10784`_).
+    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
     On Windows this is implemented via `GetPriorityClass`_ and
     `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
@@ -1484,23 +1500,23 @@ Process class
 
     Linux (see `ioprio_get`_ manual):
 
-    * ``IOPRIO_CLASS_RT``: (high) the process gets first access to the disk
+    * :const:`IOPRIO_CLASS_RT`: (high) the process gets first access to the disk
       every time. Use it with care as it can starve the entire
       system. Additional priority *level* can be specified and ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * ``IOPRIO_CLASS_BE``: (normal) the default for any process that hasn't set
+    * :const:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't set
       a specific I/O priority. Additional priority *level* ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * ``IOPRIO_CLASS_IDLE``: (low) get I/O time when no-one else needs the disk.
+    * :const:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the disk.
       No additional *value* is accepted.
-    * ``IOPRIO_CLASS_NONE``: returned when no priority was previously set.
+    * :const:`IOPRIO_CLASS_NONE`: returned when no priority was previously set.
 
     Windows:
 
-    * ``IOPRIO_HIGH``: highest priority.
-    * ``IOPRIO_NORMAL``: default priority.
-    * ``IOPRIO_LOW``: low priority.
-    * ``IOPRIO_VERYLOW``: lowest priority.
+    * :const:`IOPRIO_HIGH`: highest priority.
+    * :const:`IOPRIO_NORMAL`: default priority.
+    * :const:`IOPRIO_LOW`: low priority.
+    * :const:`IOPRIO_VERYLOW`: lowest priority.
 
     Here's an example on how to set the highest I/O priority depending on what
     platform you're on:
@@ -1520,7 +1536,7 @@ Process class
     .. availability:: Linux, Windows
 
     .. versionchanged:: 5.6.2
-       Windows accepts new ``IOPRIO_*`` constants.
+       Windows accepts new :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` constants.
 
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
@@ -1528,14 +1544,14 @@ Process class
 
   .. method:: rlimit(resource, limits=None)
 
-    Get or set process resource limits (see `man prlimit`_). *resource* is one
+    Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_). *resource* is one
     of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
     *limits* is a ``(soft, hard)`` tuple.
-    This is the same as `resource.getrlimit`_ and `resource.setrlimit`_
-    but can be used for any process PID, not only `os.getpid`_.
+    This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
+    but can be used for any process PID, not only :func:`os.getpid`.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
     and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
-    Also see `procinfo.py`_ script.
+    Also see `scripts/procinfo.py`_ script.
 
     .. code-block:: pycon
 
@@ -1558,27 +1574,25 @@ Process class
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
 
-    - **read_count**: the number of read operations performed (cumulative).
+    All fields are :term:`cumulative counters <cumulative counter>` since process creation.
+
+    - **read_count**: the number of read operations performed.
       This is supposed to count the number of read-related syscalls such as
       ``read()`` and ``pread()`` on UNIX.
-    - **write_count**: the number of write operations performed (cumulative).
+    - **write_count**: the number of write operations performed.
       This is supposed to count the number of write-related syscalls such as
       ``write()`` and ``pwrite()`` on UNIX.
-    - **read_bytes**: the number of bytes read (cumulative).
-      Always ``-1`` on  BSD.
-    - **write_bytes**: the number of bytes written (cumulative).
-      Always ``-1`` on  BSD.
+    - **read_bytes**: the number of bytes read. Always ``-1`` on BSD.
+    - **write_bytes**: the number of bytes written. Always ``-1`` on BSD.
 
     Linux specific:
 
     - **read_chars** *(Linux)*: the amount of bytes which this process passed
-      to ``read()`` and ``pread()`` syscalls (cumulative).
-      Differently from *read_bytes* it doesn't care whether or not actual
-      physical disk I/O occurred.
+      to ``read()`` and ``pread()`` syscalls. Differently from *read_bytes*
+      it doesn't care whether or not actual physical disk I/O occurred.
     - **write_chars** *(Linux)*: the amount of bytes which this process passed
-      to ``write()`` and ``pwrite()`` syscalls (cumulative).
-      Differently from *write_bytes* it doesn't care whether or not actual
-      physical disk I/O occurred.
+      to ``write()`` and ``pwrite()`` syscalls. Differently from *write_bytes*
+      it doesn't care whether or not actual physical disk I/O occurred.
 
     Windows specific:
 
@@ -1603,8 +1617,8 @@ Process class
 
   .. method:: num_ctx_switches()
 
-    The number of voluntary and involuntary context switches performed by
-    this process (cumulative).
+    The number of :term:`context switches <context switch>` performed by this process
+    (:term:`cumulative counter`).
 
     .. note::
       (Windows, macOS) *involuntary* value is always set to 0, while
@@ -1616,14 +1630,14 @@ Process class
 
   .. method:: num_fds()
 
-    The number of file descriptors currently opened by this process
+    The number of :term:`file descriptors <file descriptor>` currently opened by this process
     (non cumulative).
 
     .. availability:: UNIX
 
   .. method:: num_handles()
 
-    The number of handles currently used by this process (non cumulative).
+    The number of :term:`handles <handle>` currently used by this process (non cumulative).
 
     .. availability:: Windows
 
@@ -1639,16 +1653,17 @@ Process class
     - **id**: the native thread ID assigned by the kernel. If :attr:`pid` refers
       to the current process, this matches the
       `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`_
-      attribute of the `threading.Thread`_ class, and can be used to reference
+      attribute of the :class:`threading.Thread` class, and can be used to reference
       individual Python threads running within your own Python app.
     - **user_time**: time spent in user mode.
     - **system_time**: time spent in kernel mode.
 
   .. method:: cpu_times()
 
-    Return a named tuple representing the accumulated process times, in seconds
+    Return a :term:`named tuple` of :term:`cumulative counters <cumulative counter>` (seconds)
+    representing the accumulated process CPU times
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
-    This is similar to `os.times`_ but can be used for any process PID.
+    This is similar to :func:`os.times` but can be used for any process PID.
 
     - **user**: time spent in user mode.
     - **system**: time spent in kernel mode.
@@ -1656,7 +1671,7 @@ Process class
       Windows and macOS).
     - **children_system**: system time of all child processes (always ``0`` on
       Windows and macOS).
-    - **iowait**: (Linux) time spent waiting for blocking I/O to complete.
+    - **iowait**: (Linux) time spent waiting for blocking I/O to complete (:term:`iowait`).
       This value is excluded from `user` and `system` times count (because the
       CPU is not doing any work).
 
@@ -1766,7 +1781,7 @@ Process class
     On FreeBSD certain kernel process may return ``-1``.
     It may be used in conjunction with ``psutil.cpu_percent(percpu=True)`` to
     observe the system workload distributed across multiple CPUs as shown by
-    `cpu_distribution.py`_ example script.
+    `scripts/cpu_distribution.py`_ example script.
 
     .. availability:: Linux, FreeBSD, SunOS
 
@@ -1797,13 +1812,13 @@ Process class
     |         |         |          |         |     | peak_vms        |
     +---------+---------+----------+---------+-----+-----------------+
 
-    - **rss**: aka "Resident Set Size". The portion of physical memory
+    - **rss**: aka :term:`RSS`. The portion of physical memory
       currently held by this process (code, data, stack, and mapped files that
       are resident). Pages swapped out to disk are not counted. On UNIX it
       matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
       See also :ref:`faq_memory_rss_vs_vms` FAQ.
 
-    - **vms**: aka "Virtual Memory Size". The total address space reserved by
+    - **vms**: aka :term:`VMS`. The total address space reserved by
       the process, including pages not yet touched, pages in swap, and
       memory-mapped files not yet accessed. Typically much larger than
       **rss**. On UNIX it matches the ``top`` VIRT column. On Windows this
@@ -1829,8 +1844,9 @@ Process class
     - **stack** *(BSD)*: size of the process stack segment. Reported
       separately from **data** (unlike Linux where both are combined).
 
-    - **peak_rss** *(BSD, Windows)*: the highest RSS value (high water mark)
-      the process has ever reached. On BSD this may be ``0`` for kernel PIDs.
+    - **peak_rss** *(BSD, Windows)*: the highest :term:`RSS` value (high water mark)
+      the process has ever reached. See :term:`peak_rss`. On BSD this may be
+      ``0`` for kernel PIDs.
       On Windows it maps to ``PeakWorkingSetSize``.
 
     - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
@@ -1898,13 +1914,12 @@ Process class
     | hugetlb     | phys_footprint |                    |
     +-------------+----------------+--------------------+
 
-    - **peak_rss** *(Linux, macOS)*: the highest RSS value (high water mark)
-      the process has reached since it started.
+    - **peak_rss** *(Linux, macOS)*: the highest :term:`RSS` value (high water
+      mark) the process has reached since it started. See :term:`peak_rss`.
     - **peak_vms** *(Linux)*: the highest VMS value the process has reached
       since it started.
-    - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap,
-      stack, private mappings) not backed by any file, such as heap
-      allocations, stack, and private ``mmap(MAP_ANONYMOUS)`` regions. Set to 0
+    - **rss_anon** *(Linux, macOS)*: resident :term:`anonymous memory` pages
+      (heap, stack, private mappings) not backed by any file. Set to 0
       on Linux < 4.5.
     - **rss_file** *(Linux, macOS)*: resident file-backed memory; pages mapped
       from files (shared libraries, mmap'd files). Set to 0 on Linux < 4.5.
@@ -1952,12 +1967,12 @@ Process class
     considerably slower than :meth:`memory_info` and may require elevated
     privileges.
 
-    - **uss** *(Linux, macOS, Windows)*: aka "Unique Set Size". This is the
+    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`. This is the
       memory which is unique to a process and which would be freed if the
       process were terminated right now. The most representative metric for
       actual memory usage.
 
-    - **pss** *(Linux)*: aka "Proportional Set Size", is the amount of memory
+    - **pss** *(Linux)*: aka :term:`PSS`, is the amount of memory
       shared with other processes, accounted in a way that the amount is
       divided evenly between the processes that share it. I.e. if a process has
       10 MBs all to itself, and 10 MBs shared with another process, its PSS
@@ -1975,7 +1990,7 @@ Process class
        >>> p.memory_footprint()
        pfootprint(uss=6545408, pss=6872064, swap=0)
 
-    See also `procsmem.py`_ for an example application.
+    See also `scripts/procsmem.py`_ for an example application.
 
     .. versionadded:: 8.0.0
 
@@ -2005,13 +2020,13 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-    Return process's mapped memory regions as a list of named tuples whose
+    Return process's memory-mapped file regions as a list of named tuples whose
     fields vary by platform (all values in bytes). If *grouped* is ``True``
     regions with the same *path* are merged and their numeric fields summed.
     If *grouped* is ``False`` each region is listed individually and the
     tuple also includes *addr* (address range) and *perms* (permission
     string e.g. ``"r-xp"``).
-    See `pmap.py`_ for an example application.
+    See `scripts/pmap.py`_ for an example application.
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |
@@ -2053,7 +2068,7 @@ Process class
       before they can be reclaimed. The key indicator of a mapping's real
       memory cost.
     - **referenced**: pages recently accessed.
-    - **anonymous**: pages not backed by a file (heap, stack allocations).
+    - **anonymous**: :term:`anonymous memory` pages not backed by a file (heap, stack allocations).
     - **swap**: pages from this mapping currently in swap.
 
     FreeBSD fields:
@@ -2105,13 +2120,12 @@ Process class
     returned either as the reference to process A is lost.
     This concept is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
   .. method:: page_faults()
 
-    Return the number of page faults for this process as a ``(minor, major)``
-    named tuple.
+    Return the number of :term:`page faults <page fault>` for this process as a
+    ``(minor, major)`` :term:`named tuple`.
 
     - **minor** (a.k.a. *soft* faults): occur when a memory page is not
       currently mapped into the process address space, but is already present
@@ -2121,7 +2135,7 @@ Process class
       from disk. These are expensive because they stall the process until I/O
       completes.
 
-    Both counters are cumulative since process creation.
+    Both counters are :term:`cumulative counters <cumulative counter>` since process creation.
 
     .. code-block:: pycon
 
@@ -2144,13 +2158,13 @@ Process class
 
     - **position** (*Linux*): the file (offset) position.
     - **mode** (*Linux*): a string indicating how the file was opened, similarly
-      to `open`_ builtin ``mode`` argument.
+      to :func:`open` builtin ``mode`` argument.
       Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
       There's no distinction between files opened in binary or text mode
       (``"b"`` or ``"t"``).
     - **flags** (*Linux*): the flags which were passed to the underlying
-      `os.open`_ C call when the file was opened (e.g. `os.O_RDONLY`_,
-      `os.O_TRUNC`_, etc).
+      :func:`os.open` C call when the file was opened (e.g. :data:`os.O_RDONLY`,
+      :data:`os.O_TRUNC`, etc).
 
     .. code-block:: pycon
 
@@ -2190,13 +2204,13 @@ Process class
     Every named tuple provides 6 attributes:
 
     - **fd**: the socket file descriptor. If the connection refers to the
-      current process this may be passed to `socket.fromfd`_ to obtain a usable
+      current process this may be passed to :func:`socket.fromfd` to obtain a usable
       socket object.
       On Windows, FreeBSD and SunOS this is always set to ``-1``.
-    - **family**: the address family, either `AF_INET`_, `AF_INET6`_ or
-      `AF_UNIX`_.
-    - **type**: the address type, either `SOCK_STREAM`_, `SOCK_DGRAM`_ or
-      `SOCK_SEQPACKET`_.  .
+    - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or
+      :data:`socket.AF_UNIX`.
+    - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
+      :data:`socket.SOCK_SEQPACKET`.  .
     - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
       in case of AF_UNIX sockets. For UNIX sockets see notes below.
     - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -2292,13 +2306,13 @@ Process class
 
     Return whether the current process is running in the current process list.
     Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
-    case the process is gone and its PID reused by another process.
+    case the process is gone and its PID reused by another process (:term:`PID reuse`).
 
     If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
 
     .. note::
-      this will return ``True`` also if the process is a zombie
+      this will return ``True`` also if the process is a :term:`zombie process`
       (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. versionchanged:: 6.0.0
@@ -2307,13 +2321,12 @@ Process class
 
   .. method:: send_signal(signal)
 
-    Send a signal to process (see `signal module`_ constants) preemptively
-    checking whether PID has been reused.
+    Send a :term:`signal` to process (see :mod:`signal` module constants)
+    preemptively checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
     are supported and *SIGTERM* is treated as an alias for :meth:`kill`.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
     .. versionchanged:: 3.2.0
        support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows was
@@ -2321,35 +2334,33 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with *SIGSTOP* signal preemptively checking
-    whether PID has been reused.
+    Suspend process execution with *SIGSTOP* :term:`signal` preemptively
+    checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
     On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-    Resume process execution with *SIGCONT* signal preemptively checking
-    whether PID has been reused.
+    Resume process execution with *SIGCONT* :term:`signal` preemptively
+    checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
     On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-    Terminate the process with *SIGTERM* signal preemptively checking
+    Terminate the process with *SIGTERM* :term:`signal` preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
   .. method:: kill()
 
-    Kill the current process by using *SIGKILL* signal preemptively
+    Kill the current process by using *SIGKILL* :term:`signal` preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
-    See also how to `kill a process tree <#kill-process-tree>`_ and
-    `terminate my children <#terminate-my-children>`_.
+    See also how to :ref:`kill a process tree <recipe_kill_proc_tree>`.
 
   .. method:: wait(timeout=None)
 
@@ -2360,7 +2371,7 @@ Process class
     positive integer >= 0 indicating the exit code.
     If the process was terminated by a signal return the negated value of the
     signal which caused the termination (e.g. ``-SIGTERM``).
-    If PID is not a child of `os.getpid`_ (current process) just wait until
+    If PID is not a child of :func:`os.getpid` (current process) just wait until
     the process disappears and return ``None``.
     If PID does not exist return ``None`` immediately.
 
@@ -2388,10 +2399,10 @@ Process class
       When ``timeout`` is not ``None`` and the platform supports it, an
       efficient event-driven mechanism is used to wait for process termination:
 
-      - Linux >= 5.3 with Python >= 3.9 uses `os.pidfd_open`_ + `select.poll`_
-      - macOS and other BSD variants use `select.kqueue`_ + ``KQ_FILTER_PROC``
+      - Linux >= 5.3 with Python >= 3.9 uses :func:`os.pidfd_open` + :func:`select.poll`
+      - macOS and other BSD variants use :func:`select.kqueue` + ``KQ_FILTER_PROC``
         + ``KQ_NOTE_EXIT``
-      - Windows uses ``WaitForSingleObject``
+      - Windows uses `WaitForSingleObject`_
 
       If none of these mechanisms are available, the function falls back to a
       busy loop (non-blocking call and short sleeps).
@@ -2405,11 +2416,11 @@ Process class
 
     .. versionchanged:: 5.7.1
        on POSIX, in case of negative signal, return it as a human readable
-       `enum`_.
+       :mod:`enum`.
 
     .. versionchanged:: 7.2.2
-       on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use `os.pidfd_open`_ and
-       `select.kqueue`_ respectively, instead of less efficient busy-loop
+       on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use :func:`os.pidfd_open` and
+       :func:`select.kqueue` respectively, instead of less efficient busy-loop
        polling.
 
 ----
@@ -2419,7 +2430,7 @@ Popen class
 
 .. class:: Popen(*args, **kwargs)
 
-  Same as `subprocess.Popen`_ but in addition it provides all
+  Same as :class:`subprocess.Popen` but in addition it provides all
   :class:`psutil.Process` methods in a single class.
   For the following methods which are common to both classes, psutil
   implementation takes precedence:
@@ -2643,14 +2654,14 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ProcessStatus
 
-  `enum.StrEnum`_ collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
+  :class:`enum.StrEnum` collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
   constants. Returned by :meth:`Process.status`.
 
   .. versionadded:: 8.0.0
 
 .. class:: psutil.ProcessPriority
 
-  `enum.IntEnum`_ collection of
+  :class:`enum.IntEnum` collection of
   :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
   :meth:`Process.nice` on Windows.
 
@@ -2660,9 +2671,11 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ProcessIOPriority
 
-  `enum.IntEnum`_ collection of I/O priority constants for
-  :meth:`Process.ionice`. On Linux: ``IOPRIO_CLASS_*`` constants.
-  On Windows: ``IOPRIO_*`` constants.
+  :class:`enum.IntEnum` collection of I/O priority constants for
+  :meth:`Process.ionice`.
+
+  :data:`IOPRIO_CLASS_* <psutil.IOPRIO_CLASS_NONE>` on Linux,
+  :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` on Windows.
 
   .. availability:: Linux, Windows
 
@@ -2670,7 +2683,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ProcessRlimit
 
-  `enum.IntEnum`_ collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
+  :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
   constants for :meth:`Process.rlimit`.
 
   .. availability:: Linux, FreeBSD
@@ -2679,7 +2692,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.ConnectionStatus
 
-  `enum.StrEnum`_ collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
+  :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
   constants. Returned in the *status* field of
   :func:`psutil.net_connections` and :meth:`Process.net_connections`.
 
@@ -2687,14 +2700,14 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
 .. class:: psutil.NicDuplex
 
-  `enum.IntEnum`_ collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
+  :class:`enum.IntEnum` collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
   constants. Returned in the *duplex* field of :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
 
 .. class:: psutil.BatteryTime
 
-  `enum.IntEnum`_ collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
+  :class:`enum.IntEnum` collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
   constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
 
   .. versionadded:: 5.1.0
@@ -2703,6 +2716,7 @@ Operating system constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-oses:
+
 .. data:: POSIX
 .. data:: LINUX
 .. data:: WINDOWS
@@ -2733,6 +2747,7 @@ Process status constants
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-pstatus:
+
 .. data:: STATUS_RUNNING
 .. data:: STATUS_SLEEPING
 .. data:: STATUS_DISK_SLEEP
@@ -2764,6 +2779,7 @@ Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-prio:
+
 .. data:: REALTIME_PRIORITY_CLASS
 .. data:: HIGH_PRIORITY_CLASS
 .. data:: ABOVE_NORMAL_PRIORITY_CLASS
@@ -2783,7 +2799,8 @@ Process priority constants
      integers).
      See :ref:`migration guide <migration-8.0>`.
 
-.. _const-ioprio:
+.. _const-ioprio-linux:
+
 .. data:: IOPRIO_CLASS_NONE
 .. data:: IOPRIO_CLASS_RT
 .. data:: IOPRIO_CLASS_BE
@@ -2794,11 +2811,11 @@ Process priority constants
   process I/O priority.
   These constants are members of the :class:`psutil.ProcessIOPriority`
   enum.
-  *IOPRIO_CLASS_NONE* and *IOPRIO_CLASS_BE* (best effort) is the default for
-  any process that hasn't set a specific I/O priority.
-  *IOPRIO_CLASS_RT* (real time) means the process is given first access to the
-  disk, regardless of what else is going on in the system.
-  *IOPRIO_CLASS_IDLE* means the process will get I/O time when no-one else
+  :const:`IOPRIO_CLASS_NONE` and :const:`IOPRIO_CLASS_BE` (best effort) is the
+  default for any process that hasn't set a specific I/O priority.
+  :const:`IOPRIO_CLASS_RT` (real time) means the process is given first access
+  to the disk, regardless of what else is going on in the system.
+  :const:`IOPRIO_CLASS_IDLE` means the process will get I/O time when no-one else
   needs the disk.
   For further information refer to manuals of
   `ionice <http://linux.die.net/man/1/ionice>`_ command line utility or
@@ -2810,6 +2827,8 @@ Process priority constants
      constants are now :class:`psutil.ProcessIOPriority` enum members
      (previously ``IOPriority`` enum).
      See :ref:`migration guide <migration-8.0>`.
+
+.. _const-ioprio-windows:
 
 .. data:: IOPRIO_VERYLOW
 .. data:: IOPRIO_LOW
@@ -2833,6 +2852,8 @@ Process priority constants
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. _const-rlimit:
 
 Linux / FreeBSD:
 
@@ -2864,7 +2885,7 @@ FreeBSD specific:
   .. data:: RLIMIT_NPTS
 
 Constants used for getting and setting process resource limits to be used in
-conjunction with :meth:`Process.rlimit`. See `resource.getrlimit`_
+conjunction with :meth:`Process.rlimit`. See :func:`resource.getrlimit`
 for further information.
 These constants are members of the :class:`psutil.ProcessRlimit` enum.
 
@@ -2883,6 +2904,7 @@ Connections constants
 ^^^^^^^^^^^^^^^^^^^^^
 
 .. _const-conn:
+
 .. data:: CONN_ESTABLISHED
 .. data:: CONN_SYN_SENT
 .. data:: CONN_SYN_RECV
@@ -2913,6 +2935,7 @@ Hardware constants
 ^^^^^^^^^^^^^^^^^^
 
 .. _const-aflink:
+
 .. data:: AF_LINK
 
   Constant which identifies a MAC address associated with a network interface.
@@ -2921,19 +2944,21 @@ Hardware constants
   .. versionadded:: 3.0.0
 
 .. _const-duplex:
+
 .. data:: NIC_DUPLEX_FULL
 .. data:: NIC_DUPLEX_HALF
 .. data:: NIC_DUPLEX_UNKNOWN
 
-  Constants which identifies whether a NIC (network interface card) has full or
-  half mode speed.  NIC_DUPLEX_FULL means the NIC is able to send and receive
-  data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either send or
-  receive data at a time.
+  Constants which identifies whether a :term:`NIC` (network interface card) has
+  full or half mode speed. NIC_DUPLEX_FULL means the NIC is able to send and
+  receive data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either
+  send or receive data at a time.
   To be used in conjunction with :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
 
 .. _const-power:
+
 .. data:: POWER_TIME_UNKNOWN
 .. data:: POWER_TIME_UNLIMITED
 
@@ -2947,6 +2972,7 @@ Other constants
 ^^^^^^^^^^^^^^^
 
 .. _const-procfs_path:
+
 .. data:: PROCFS_PATH
 
   The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
@@ -2971,6 +2997,7 @@ Other constants
      also available on AIX.
 
 .. _const-version-info:
+
 .. data:: version_info
 
   A tuple to check psutil installed version. Example:
@@ -2992,20 +3019,20 @@ Other constants
 
 .. === scripts
 
-.. _`battery.py`: https://github.com/giampaolo/psutil/blob/master/scripts/battery.py
-.. _`cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
-.. _`disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
-.. _`fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
-.. _`ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
-.. _`iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
-.. _`meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
-.. _`netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
-.. _`nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
-.. _`pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
-.. _`procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
-.. _`procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
-.. _`sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
-.. _`temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
+.. _`scripts/battery.py`: https://github.com/giampaolo/psutil/blob/master/scripts/battery.py
+.. _`scripts/cpu_distribution.py`: https://github.com/giampaolo/psutil/blob/master/scripts/cpu_distribution.py
+.. _`scripts/disk_usage.py`: https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py
+.. _`scripts/fans.py`: https://github.com/giampaolo/psutil/blob/master/scripts/fans.py
+.. _`scripts/ifconfig.py`: https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py
+.. _`scripts/iotop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py
+.. _`scripts/meminfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py
+.. _`scripts/netstat.py`: https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py
+.. _`scripts/nettop.py`: https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py
+.. _`scripts/pmap.py`: https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py
+.. _`scripts/procinfo.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procinfo.py
+.. _`scripts/procsmem.py`: https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py
+.. _`scripts/sensors.py`: https://github.com/giampaolo/psutil/blob/master/scripts/sensors.py
+.. _`scripts/temperatures.py`: https://github.com/giampaolo/psutil/blob/master/scripts/temperatures.py
 
 .. === Windows API
 
@@ -3014,3 +3041,4 @@ Other constants
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
 .. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess
+.. _`WaitForSingleObject`: https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject

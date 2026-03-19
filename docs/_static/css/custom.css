@@ -148,6 +148,22 @@ pre {
     padding: 5px !important;
 }
 
+/* Show external links with a slightly different style (dotted underline).
+   Excludes Python API cross-references (intersphinx -> docs.python.org). */
+
+a.reference.external:not([href*="docs.python.org"]) {
+    text-decoration: underline dotted;
+}
+
+a.reference.external:not([href*="docs.python.org"]):hover {
+    text-decoration: underline solid;
+}
+
+a.external[href^="#"] {
+    text-decoration: none; /* keep same-page anchors normal */
+    color: inherit;
+}
+
 /* ================================================================== */
 /* Warnings and info boxes like python doc */
 /* ================================================================== */
