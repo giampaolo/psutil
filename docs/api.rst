@@ -37,8 +37,8 @@ CPU
   Platform-specific fields:
 
   - **nice** *(Linux, macOS, BSD)*: time spent by :term:`niced <nice>`
-    (prioritized) processes executing in user mode; on Linux this also includes
-    **guest_nice** time.
+    (lower-priority) processes executing in user mode; on Linux this also
+    includes **guest_nice** time.
 
   - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete
     (:term:`iowait`). This is *not* accounted in **idle** time counter.
