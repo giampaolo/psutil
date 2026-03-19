@@ -180,15 +180,15 @@ CPU
 
   Return various CPU statistics as a named tuple:
 
+  All fields are :term:`cumulative counter`\s since boot.
+
   - **ctx_switches**:
-    number of :term:`context switch`\es (voluntary + involuntary) since boot.
+    number of :term:`context switch`\es (voluntary + involuntary).
   - **interrupts**:
-    number of interrupts since boot.
+    number of interrupts.
   - **soft_interrupts**:
-    number of software interrupts since boot. Always set to ``0`` on Windows
-    and SunOS.
-  - **syscalls**: number of system calls since boot. Always set to ``0`` on
-    Linux.
+    number of software interrupts. Always set to ``0`` on Windows and SunOS.
+  - **syscalls**: number of system calls. Always set to ``0`` on Linux.
 
   Example (Linux):
 
@@ -426,10 +426,10 @@ Memory
   * **percent**: swap usage as a percentage, calculated as
     ``used / total * 100``.
   * **sin**: number of bytes the system has paged *in* from disk (pages moved
-    from swap space back into RAM) since boot (cumulative).
+    from swap space back into RAM) since boot. See :term:`swap-in`.
   * **sout**: number of bytes the system has paged *out* to disk (pages moved
-    from RAM into swap space) since boot (cumulative). A continuously
-    increasing **sout** is a sign of memory pressure.
+    from RAM into swap space) since boot. A continuously increasing **sout**
+    is a sign of memory pressure. See :term:`swap-out`.
 
   **sin** and **sout** are :term:`cumulative counter`\s since boot; monitor
   their rate of change rather than the absolute value to detect active
@@ -1554,27 +1554,25 @@ Process class
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
 
-    - **read_count**: the number of read operations performed (cumulative).
+    All fields are :term:`cumulative counter`\s since process creation.
+
+    - **read_count**: the number of read operations performed.
       This is supposed to count the number of read-related syscalls such as
       ``read()`` and ``pread()`` on UNIX.
-    - **write_count**: the number of write operations performed (cumulative).
+    - **write_count**: the number of write operations performed.
       This is supposed to count the number of write-related syscalls such as
       ``write()`` and ``pwrite()`` on UNIX.
-    - **read_bytes**: the number of bytes read (cumulative).
-      Always ``-1`` on  BSD.
-    - **write_bytes**: the number of bytes written (cumulative).
-      Always ``-1`` on  BSD.
+    - **read_bytes**: the number of bytes read. Always ``-1`` on BSD.
+    - **write_bytes**: the number of bytes written. Always ``-1`` on BSD.
 
     Linux specific:
 
     - **read_chars** *(Linux)*: the amount of bytes which this process passed
-      to ``read()`` and ``pread()`` syscalls (cumulative).
-      Differently from *read_bytes* it doesn't care whether or not actual
-      physical disk I/O occurred.
+      to ``read()`` and ``pread()`` syscalls. Differently from *read_bytes*
+      it doesn't care whether or not actual physical disk I/O occurred.
     - **write_chars** *(Linux)*: the amount of bytes which this process passed
-      to ``write()`` and ``pwrite()`` syscalls (cumulative).
-      Differently from *write_bytes* it doesn't care whether or not actual
-      physical disk I/O occurred.
+      to ``write()`` and ``pwrite()`` syscalls. Differently from *write_bytes*
+      it doesn't care whether or not actual physical disk I/O occurred.
 
     Windows specific:
 
@@ -2117,7 +2115,7 @@ Process class
       from disk. These are expensive because they stall the process until I/O
       completes.
 
-    Both counters are cumulative since process creation.
+    Both counters are :term:`cumulative counter`\s since process creation.
 
     .. code-block:: pycon
 
