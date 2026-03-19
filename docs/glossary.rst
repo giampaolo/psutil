@@ -84,6 +84,13 @@ Glossary
       handles eventually causes ``ERROR_NO_MORE_FILES`` or similar errors. See
       :meth:`Process.num_handles`.
 
+   hardware interrupt
+      A signal sent by a hardware device (disk controller, NIC, keyboard)
+      to the CPU to request attention. Each interrupt briefly preempts
+      whatever the CPU was doing. Reported as the ``interrupts`` field of
+      :func:`cpu_stats`. A very high rate may indicate a misbehaving
+      device driver or a heavily loaded NIC.
+
    involuntary context switch
       See :term:`voluntary / involuntary context switch`.
 
@@ -194,6 +201,15 @@ Glossary
       - ``idle``: doing nothing.
 
       See :meth:`Process.status` and the ``STATUS_*`` constants.
+
+   soft interrupt
+      Deferred work scheduled by a :term:`hardware interrupt` handler to
+      run later in a less time-critical context (e.g. network packet
+      processing, block I/O completion). Using soft interrupts lets the
+      hardware interrupt return quickly while the heavier processing
+      happens shortly after. Reported as the ``soft_interrupts`` field of
+      :func:`cpu_stats`. A high rate usually points to heavy network or
+      disk I/O throughput rather than a hardware problem.
 
    swap-in
       A page moved from swap space on disk back into RAM. Reported as the

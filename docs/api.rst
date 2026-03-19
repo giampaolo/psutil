@@ -178,16 +178,16 @@ CPU
 
 .. function:: cpu_stats()
 
-  Return various CPU statistics as a named tuple:
-
-  All fields are :term:`cumulative counter`\s since boot.
+  Return various CPU statistics as a named tuple. All fields are
+  :term:`cumulative counter`\s since boot.
 
   - **ctx_switches**:
     number of :term:`context switch`\es (voluntary + involuntary).
   - **interrupts**:
-    number of interrupts.
+    number of :term:`hardware interrupt`\s.
   - **soft_interrupts**:
-    number of software interrupts. Always set to ``0`` on Windows and SunOS.
+    number of :term:`soft interrupt`\s. Always set to ``0`` on Windows and
+    SunOS.
   - **syscalls**: number of system calls. Always set to ``0`` on Linux.
 
   Example (Linux):
