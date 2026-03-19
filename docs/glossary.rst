@@ -91,7 +91,7 @@ Glossary
    handle
       On Windows, an opaque reference to a kernel object such as a file,
       thread, process, event, mutex, or registry key. Handles are the
-      Windows equivalent of UNIX :term:`file descriptor`\s. Each open
+      Windows equivalent of UNIX :term:`file descriptors <file descriptor>`. Each open
       handle consumes a small amount of kernel memory. Leaking / unclosed
       handles eventually causes ``ERROR_NO_MORE_FILES`` or similar errors. See
       :meth:`Process.num_handles`.

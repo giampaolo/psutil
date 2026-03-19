@@ -22,9 +22,9 @@ CPU
 .. function:: cpu_times(percpu=False)
 
   Return system CPU times as a :term:`named tuple`. All fields are
-  :term:`cumulative counter`\s (seconds) representing time the CPU has spent
-  in each mode since boot. The attributes availability varies depending on
-  the platform.
+  :term:`cumulative counters <cumulative counter>` (seconds) representing time
+  the CPU has spent in each mode since boot.
+  The attributes availability varies depending on the platform.
   Cross-platform fields:
 
   - **user**: time spent by normal processes executing in user mode; on Linux
@@ -36,10 +36,13 @@ CPU
 
   - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
     executing in user mode; on Linux this also includes **guest_nice** time.
-  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete (:term:`iowait`).
+  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete
+    (:term:`iowait`).
     This is *not* accounted in **idle** time counter.
-  - **irq** *(Linux, Windows, BSD)*: time spent for servicing :term:`hardware interrupt`\s
-  - **softirq** *(Linux)*: time spent for servicing :term:`soft interrupt`\s
+  - **irq** *(Linux, Windows, BSD)*: time spent for servicing
+    :term:`hardware interrupts <hardware interrupt>`
+  - **softirq** *(Linux)*: time spent for servicing
+    :term:`soft interrupts <soft interrupt>`
   - **steal** *(Linux)*: time spent by other operating systems running
     in a virtualized environment
   - **guest** *(Linux)*: time spent running a virtual CPU for guest
@@ -148,8 +151,8 @@ CPU
 
 .. function:: cpu_count(logical=True)
 
-  Return the number of :term:`logical CPU`\s in the system (similar to `os.cpu_count`_)
-  or ``None`` if undetermined.
+  Return the number of :term:`logical CPUs <logical CPU>` in the system
+  (similar to `os.cpu_count`_) or ``None`` if undetermined.
   Unlike `os.cpu_count`_, this is not influenced by the ``PYTHON_CPU_COUNT``
   environment variable introduced in Python 3.13.
   "logical CPUs" means the number of physical cores multiplied by the number
@@ -184,15 +187,15 @@ CPU
 .. function:: cpu_stats()
 
   Return various CPU statistics as a named tuple. All fields are
-  :term:`cumulative counter`\s since boot.
+  :term:`cumulative counters <cumulative counter>` since boot.
 
-  - **ctx_switches**:
-    number of :term:`context switch`\es (voluntary + involuntary).
+  - **ctx_switches**: number of :term:`context switches <context switch>`
+    (voluntary + involuntary).
   - **interrupts**:
-    number of :term:`hardware interrupt`\s.
+    number of :term:`hardware interrupts <hardware interrupt>`.
   - **soft_interrupts**:
-    number of :term:`soft interrupt`\s. Always set to ``0`` on Windows and
-    SunOS.
+    number of :term:`soft interrupts <soft interrupt>`. Always set to ``0`` on
+    Windows and SunOS.
   - **syscalls**: number of system calls. Always set to ``0`` on Linux.
 
   Example (Linux):
@@ -316,7 +319,8 @@ Memory
   - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
     code and critical data structures). It can never be moved to disk.
 
-  Below is a table showing implementation details. All info on Linux is retrieved from `/proc/meminfo`.
+  Below is a table showing implementation details. All info on Linux is
+  retrieved from `/proc/meminfo`.
 
   .. list-table::
      :header-rows: 1
@@ -436,7 +440,7 @@ Memory
     from RAM into swap space) since boot. A continuously increasing **sout**
     is a sign of memory pressure. See :term:`swap-out`.
 
-  **sin** and **sout** are :term:`cumulative counter`\s since boot; monitor
+  **sin** and **sout** are :term:`cumulative counters <cumulative counter>` since boot; monitor
   their rate of change rather than the absolute value to detect active
   swapping. See :term:`swap-in` and :term:`swap-out`.
   On Windows both are always ``0``.
@@ -1559,7 +1563,7 @@ Process class
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
 
-    All fields are :term:`cumulative counter`\s since process creation.
+    All fields are :term:`cumulative counters <cumulative counter>` since process creation.
 
     - **read_count**: the number of read operations performed.
       This is supposed to count the number of read-related syscalls such as
@@ -1602,7 +1606,7 @@ Process class
 
   .. method:: num_ctx_switches()
 
-    The number of :term:`context switch`\es performed by this process
+    The number of :term:`context switches <context switch>` performed by this process
     (:term:`cumulative counter`).
 
     .. note::
@@ -1615,14 +1619,14 @@ Process class
 
   .. method:: num_fds()
 
-    The number of :term:`file descriptor`\s currently opened by this process
+    The number of :term:`file descriptors <file descriptor>` currently opened by this process
     (non cumulative).
 
     .. availability:: UNIX
 
   .. method:: num_handles()
 
-    The number of :term:`handle`\s currently used by this process (non cumulative).
+    The number of :term:`handles <handle>` currently used by this process (non cumulative).
 
     .. availability:: Windows
 
@@ -1645,7 +1649,7 @@ Process class
 
   .. method:: cpu_times()
 
-    Return a :term:`named tuple` of :term:`cumulative counter`\s (seconds)
+    Return a :term:`named tuple` of :term:`cumulative counters <cumulative counter>` (seconds)
     representing the accumulated process CPU times
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
     This is similar to `os.times`_ but can be used for any process PID.
@@ -1830,7 +1834,8 @@ Process class
       separately from **data** (unlike Linux where both are combined).
 
     - **peak_rss** *(BSD, Windows)*: the highest :term:`RSS` value (high water mark)
-      the process has ever reached. See :term:`peak_rss`. On BSD this may be ``0`` for kernel PIDs.
+      the process has ever reached. See :term:`peak_rss`. On BSD this may be
+      ``0`` for kernel PIDs.
       On Windows it maps to ``PeakWorkingSetSize``.
 
     - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
@@ -1898,8 +1903,8 @@ Process class
     | hugetlb     | phys_footprint |                    |
     +-------------+----------------+--------------------+
 
-    - **peak_rss** *(Linux, macOS)*: the highest :term:`RSS` value (high water mark)
-      the process has reached since it started. See :term:`peak_rss`.
+    - **peak_rss** *(Linux, macOS)*: the highest :term:`RSS` value (high water
+      mark) the process has reached since it started. See :term:`peak_rss`.
     - **peak_vms** *(Linux)*: the highest VMS value the process has reached
       since it started.
     - **rss_anon** *(Linux, macOS)*: resident anonymous pages (heap,
@@ -2110,7 +2115,7 @@ Process class
 
   .. method:: page_faults()
 
-    Return the number of :term:`page fault`\s for this process as a
+    Return the number of :term:`page faults <page fault>` for this process as a
     ``(minor, major)`` :term:`named tuple`.
 
     - **minor** (a.k.a. *soft* faults): occur when a memory page is not
@@ -2121,7 +2126,7 @@ Process class
       from disk. These are expensive because they stall the process until I/O
       completes.
 
-    Both counters are :term:`cumulative counter`\s since process creation.
+    Both counters are :term:`cumulative counters <cumulative counter>` since process creation.
 
     .. code-block:: pycon
 
