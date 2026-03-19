@@ -56,6 +56,16 @@ formats differ across OS versions and locales, parsing is error-prone,
 and spawning a subprocess per sample is slow. psutil reads the same
 kernel data sources directly without spawning any external processes.
 
+platform module
+^^^^^^^^^^^^^^^
+
+:mod:`platform` provides information about the OS and Python runtime,
+such as OS name, kernel version, architecture, and machine type.
+It is useful for identifying the environment, but does not expose
+runtime metrics or process information like psutil. Overlaps with
+psutil's OS constants (:data:`LINUX`, :data:`WINDOWS`, :data:`MACOS`,
+etc.).
+
 /proc filesystem
 ^^^^^^^^^^^^^^^^
 

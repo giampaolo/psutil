@@ -101,13 +101,13 @@ Table of Contents
    FAQ <faq>
    Recipes <recipes>
    Shell equivalents <shell_equivalents>
+   Glossary <glossary>
    Platform support <platform>
    Who uses psutil <adoption>
    Alternatives <alternatives>
-   Glossary <glossary>
-   Credits <credits>
-   Development guide <devguide>
    Migration <migration>
+   Development guide <devguide>
+   Credits <credits>
    Timeline <timeline>
 
 .. toctree::
