@@ -75,6 +75,23 @@ Named tuple field order changed
 
   - BSD: a new ``peak_rss`` field was added.
 
+cpu_times() interrupt renamed to irq on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``interrupt`` field of :func:`cpu_times` on Windows was renamed to ``irq``
+to match the name used on Linux and BSD. The old name still works but raises
+:exc:`DeprecationWarning`:
+
+.. code-block:: python
+
+  # before
+  t = psutil.cpu_times()
+  print(t.interrupt)
+
+  # after
+  t = psutil.cpu_times()
+  print(t.irq)
+
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -129,6 +146,8 @@ Python 3.6 dropped
 
 Python 3.6 is no longer supported. Minimum version is Python 3.7.
 
+----
+
 .. _migration-7.0:
 
 Migrating to 7.0
@@ -158,6 +177,8 @@ Python 2.7 is no longer supported. The last release to support Python
 .. code-block:: bash
 
   pip2 install "psutil==6.1.*"
+
+----
 
 .. _migration-6.0:
 
@@ -212,6 +233,8 @@ that a process object is still alive and refers to the same process, use
   for p in psutil.process_iter(["name"]):
       if p.is_running():
           print(p.pid, p.info["name"])
+
+----
 
 .. _migration-5.0:
 

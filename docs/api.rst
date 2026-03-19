@@ -34,10 +34,11 @@ CPU
   Platform-specific fields:
 
   - **nice** *(Linux, macOS, BSD)*: time spent by niced (prioritized) processes
-    executing in user mode; on Linux this also includes **guest_nice** time
+    executing in user mode; on Linux this also includes **guest_nice** time.
   - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete.
     This is *not* accounted in **idle** time counter.
-  - **irq** *(Linux, BSD)*: time spent for servicing hardware interrupts
+  - **irq** *(Linux, Windows, BSD)*: time spent for servicing hardware
+    interrupts
   - **softirq** *(Linux)*: time spent for servicing software interrupts
   - **steal** *(Linux)*: time spent by other operating systems running
     in a virtualized environment
@@ -46,8 +47,6 @@ CPU
   - **guest_nice** *(Linux)*: time spent running a niced guest
     (virtual CPU for guest operating systems under the control of the Linux
     kernel)
-  - **interrupt** *(Windows)*: time spent for servicing hardware interrupts
-    (similar to "irq" on UNIX)
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
@@ -70,7 +69,12 @@ CPU
     <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
   .. versionchanged:: 4.1.0
-     added *interrupt* and *dpc* fields on Windows.
+     added *irq* and *dpc* fields on Windows (*irq* was called *interrupt*
+     before 8.0.0).
+
+  .. versionchanged:: 8.0.0
+     *interrupt* field on Windows was renamed to *irq*; *interrupt* still
+     works but raises :exc:`DeprecationWarning`.
 
   .. versionchanged:: 8.0.0
      ``cpu_times()`` field order was standardized: ``user``, ``system``,
@@ -136,7 +140,8 @@ CPU
     to ignore. See also :ref:`faq_cpu_percent` FAQ.
 
   .. versionchanged:: 4.1.0
-     two new *interrupt* and *dpc* fields are returned on Windows.
+     two new *irq* and *dpc* fields are returned on Windows (*irq* was
+     called *interrupt* before 8.0.0).
 
   .. versionchanged:: 5.9.6
      function is now thread safe.
