@@ -125,6 +125,9 @@ Others
 
 **Bug fixes**
 
+- :gh:`2770`, [Linux]: fix :func:`cpu_count_cores()` raising ``ValueError``
+  on s390x architecture, where ``/proc/cpuinfo`` uses spaces before the
+  colon separator instead of a tab.
 - :gh:`2726`, [macOS]: :meth:`Process.num_ctx_switches` return an unusual
   high number due to a C type precision issue.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and
