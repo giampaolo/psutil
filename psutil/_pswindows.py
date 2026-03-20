@@ -125,27 +125,27 @@ def getpagesize():
 def virtual_memory():
     """System virtual memory as a named tuple."""
     info = cext.GetPerformanceInfo()
-    page = info["PageSize"]
-    total = info["PhysicalTotal"] * page
-    avail = info["PhysicalAvailable"] * page
+    pagesize = info["PageSize"]
+    total = info["PhysicalTotal"] * pagesize
+    avail = info["PhysicalAvailable"] * pagesize
+    cached = info["SystemCache"] * pagesize
+    wired = info["KernelNonpaged"] * pagesize
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    cached = info["SystemCache"]
-    wired = info["KernelNonpaged"]
     return ntp.svmem(total, avail, percent, used, free, cached, wired)
 
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     info = cext.GetPerformanceInfo()
-    page = info["PageSize"]
-    total_phys = info["PhysicalTotal"] * page
+    pagesize = info["PageSize"]
+    total_phys = info["PhysicalTotal"] * pagesize
     # CommitLimit == Maximum pages that can be committed into RAM +
     # page file (swap). In the context of swap, it's the total "system
     # memory" (physical + virtual), thus substract the physical part
     # from it to get the "total swap".
-    total_system = info["CommitLimit"] * page  # physical + swap
+    total_system = info["CommitLimit"] * pagesize  # physical + swap
     total = total_system - total_phys
 
     # commit total is incremented immediately (decrementing free_system)
