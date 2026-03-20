@@ -961,6 +961,13 @@ class TestNetAPIs(PsutilTestCase):
             assert ret == {}
             assert m.called
 
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_nic_names(self):
+        stdlib_names = {name for _, name in socket.if_nameindex()}
+        assert stdlib_names == set(psutil.net_io_counters(pernic=True).keys())
+        assert stdlib_names == set(psutil.net_if_addrs().keys())
+        assert stdlib_names == set(psutil.net_if_stats().keys())
+
 
 class TestSensorsAPIs(PsutilTestCase):
     @pytest.mark.skipif(not HAS_SENSORS_TEMPERATURES, reason="not supported")
