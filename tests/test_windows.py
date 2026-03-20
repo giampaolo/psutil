@@ -181,8 +181,14 @@ class TestVirtualMemory(WindowsTestCase):
     @retry_on_failure()
     def test_cached(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        wmi_cached = (
+            int(w.CacheBytes)
+            + int(w.StandbyCacheCoreBytes)
+            + int(w.StandbyCacheNormalPriorityBytes)
+            + int(w.StandbyCacheReserveBytes)
+        )
         assert (
-            abs(int(w.CacheBytes) - psutil.virtual_memory().cached)
+            abs(wmi_cached - psutil.virtual_memory().cached)
             < TOLERANCE_SYS_MEM
         )
 
