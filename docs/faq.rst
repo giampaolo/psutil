@@ -253,6 +253,20 @@ example, on a 4-core machine a fully-loaded process can reach 400%.
 The system-wide :func:`cpu_percent` (without a :class:`Process`) always
 stays in the 0–100% range because it averages across all cores.
 
+.. _faq_cpu_count:
+
+What is the difference between psutil, os, and multiprocessing cpu_count?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- :func:`os.cpu_count` returns the number of **logical** CPUs (including
+  hyperthreads). It is exactly the same as ``psutil.cpu_count(logical=True)``.
+- :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
+  calling process is **allowed to use** (respects CPU affinity and cgroups).
+  The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
+- :func:`multiprocessing.cpu_count` is an alias for :func:`os.process_cpu_count`.
+- :func:`psutil.cpu_count` with ``logical=False`` returns the number of
+  **physical** cores, which has no stdlib equivalent.
+
 ----
 
 Memory
