@@ -135,3 +135,36 @@ specific platform or subsystem.
 
    * - `wmi <https://github.com/tjguk/wmi>`_
      - WMI interface (Windows only).
+
+Other languages
+---------------
+
+Equivalent libraries in other languages providing cross-platform system and
+process information.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 5 5 20
+   :class: longtable
+
+   * - Library
+     - Language
+     - Focus
+
+   * - `gopsutil <https://github.com/shirou/gopsutil>`_
+     - Go
+     - CPU, memory, disk, network, processes. Directly inspired
+       by psutil and follows a similar API.
+
+   * - `OSHI <https://github.com/oshi/oshi>`_
+     - Java
+     - OS and hardware information: CPU, memory, disk, network,
+       processes, sensors, USB devices.
+
+   * - `sysinfo <https://github.com/GuillaumeGomez/sysinfo>`_
+     - Rust
+     - CPU, memory, disk, network, processes, components.
+
+   * - `systeminformation <https://github.com/sebhildebrandt/systeminformation>`_
+     - Node.js
+     - CPU, memory, disk, network, processes, battery, Docker.
