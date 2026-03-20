@@ -514,7 +514,7 @@ Disks
   expressed in bytes, plus the **percentage** usage.
   ``OSError`` is raised if *path* does not exist.
   Starting from Python 3.3 this is also available as :func:`shutil.disk_usage`
-  (see `BPO-12442`_).
+  (added to standard as part of `BPO-12442`_).
   See `scripts/disk_usage.py`_ script providing an example usage.
 
   .. code-block:: pycon
@@ -1473,7 +1473,8 @@ Process class
        >>>
 
     Starting from Python 3.3 this functionality is also available as
-    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
+    :func:`os.getpriority` and :func:`os.setpriority` (added to standard
+    library as part of `BPO-10784`_).
     On Windows this is implemented via `GetPriorityClass`_ and
     `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
@@ -3011,9 +3012,6 @@ Other constants
      >>> if psutil.version_info >= (4, 5):
      ...    pass
 
-.. _`BPO-10784`: https://bugs.python.org/issue10784
-.. _`BPO-12442`: https://bugs.python.org/issue12442
-.. _`BPO-6973`: https://bugs.python.org/issue6973
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html

@@ -1,5 +1,5 @@
-
 .. currentmodule:: psutil
+.. include:: _links.rst
 
 Stdlib equivalents
 ==================
@@ -107,8 +107,8 @@ Credentials
        :func:`os.getresgid`
      -
    * - :meth:`Process.username`
-     - :func:`pwd.getpwuid`, :func:`os.getuid`
-     - No direct equivalent.
+     - :func:`os.getlogin`, :func:`getpass.getuser`
+     - Rough equivalents (just not per-process).
 
 CPU / scheduling
 ~~~~~~~~~~~~~~~~
@@ -222,5 +222,3 @@ Signals
        :meth:`subprocess.Popen.wait`
      - :func:`os.waitpid` works for child processes only. psutil waits for
        any PID. Prefer :meth:`subprocess.Popen.wait` for subprocesses.
-
-.. _BPO-12442: https://bugs.python.org/issue12442
