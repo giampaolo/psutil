@@ -36,8 +36,8 @@ CPU
        See :ref:`FAQ <faq_cpu_count>`.
    * - :func:`getloadavg`
      - :func:`os.getloadavg`
-     - Same as :func:`os.getloadavg` on POSIX but psutil offers Windows support
-       (emulated).
+     - Same as :func:`os.getloadavg` on POSIX, but psutil also offers
+       Windows support (emulated).
 
 Disk
 ~~~~
@@ -52,17 +52,18 @@ Disk
      - notes
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
-     - Backported to CPython 3.3 in BPO-12442_.
-       Identical except psutil adds a ``percent`` field.
+     - Identical except psutil adds a ``percent`` field.
+       Backported to CPython 3.3 in BPO-12442_.
    * - :func:`disk_partitions`
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
        :func:`os.listvolumes`
      - Windows only (Python 3.12+). These are low-level volume
        enumeration APIs: :func:`os.listdrives` returns drive
-       letters, :func:`os.listvolumes` volume GUID paths,
-       :func:`os.listmounts` mount points. psutil combines device, mountpoint,
-       fstype and opts in a single call.
+       letters, :func:`os.listvolumes` returns volume GUID
+       paths, :func:`os.listmounts` returns mount points.
+       psutil combines device, mountpoint, fstype and opts in a
+       single cross-platform call.
 
 Network
 ~~~~~~~
@@ -77,9 +78,9 @@ Network
      - notes
    * - :func:`net_if_addrs`
      - :func:`socket.if_nameindex`
-     - Returns interface names only (no addresses). psutil
-       returns addresses, netmasks, broadcast and PTP for each
-       NIC.
+     - Stdlib returns interface names only (no addresses).
+       psutil returns addresses, netmasks, broadcast, and PTP
+       for each NIC.
 
 Process
 ~~~~~~~
@@ -121,8 +122,8 @@ Identity
      -
    * - :meth:`Process.environ`
      - :data:`os.environ`
-     - Another process's environ may differ from its launch environment if it
-       modified it at runtime.
+     - Another process's environ may differ from its launch
+       environment if the process modified it at runtime.
    * - :meth:`Process.exe`
      - :data:`sys.executable`
      - Python interpreter path only.
@@ -168,12 +169,13 @@ CPU / scheduling
      - notes
    * - :meth:`Process.cpu_times`
      - :func:`os.times`
-     - :func:`os.times` also returns an ``elapsed`` field not present in
-       psutil. psutil adds platform-specific fields (``iowait``, ``irq``,
-       ``steal``, etc.).
+     - :func:`os.times` also returns an ``elapsed`` field not
+       present in psutil, which in turn adds platform-specific
+       fields (``iowait``, ``irq``, ``steal``, etc.).
    * - :meth:`Process.cpu_times`
      - :func:`resource.getrusage`
-     - ``ru_utime`` / ``ru_stime`` are the same but more precise
+     - ``ru_utime`` / ``ru_stime`` are the same, but with
+       higher precision.
    * - :meth:`Process.num_ctx_switches`
      - :func:`resource.getrusage`
      - :func:`resource.getrusage` returns ``ru_nvcsw`` / ``ru_nivcsw``
@@ -181,15 +183,15 @@ CPU / scheduling
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
-     - Backported to CPython 3.3 in `BPO-10784`_. Stdlib is POSIX only. psutil
-       also supports Windows.
+     - Backported to CPython 3.3 in `BPO-10784`_. POSIX only; psutil also supports
+       Windows.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.nice`
      - Stdlib is POSIX only. psutil also supports Windows.
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
-     - Nearly equivalent. Both accept a PID. Linux only.
+     - Nearly equivalent; both accept a PID. Linux only.
    * - :meth:`Process.rlimit() <Process.rlimit>`
      - :func:`resource.getrlimit`,
        :func:`resource.setrlimit`
@@ -230,7 +232,8 @@ I/O
      - :func:`resource.getrusage`
      - :func:`resource.getrusage` returns ``ru_inblock`` /
        ``ru_oublock`` (block I/O operations only, current
-       process). psutil returns read/write bytes and counts.
+       process only). psutil returns read/write bytes and
+       counts for any PID.
 
 Threads
 ~~~~~~~
@@ -249,7 +252,7 @@ Threads
        OS-level threads.
    * - :meth:`Process.threads`
      - :func:`threading.enumerate`
-     - Returns :class:`threading.Thread` objects; psutil returns OS-level
+     - Returns :class:`threading.Thread` objects; psutil returns raw OS-level
        thread IDs with CPU-time stats.
 
 Signals
@@ -266,8 +269,9 @@ Signals
    * - :meth:`Process.send_signal`
      - :func:`os.kill`,
        :func:`signal.raise_signal`
-     - Direct equivalent on POSIX. psutil adds :exc:`NoSuchProcess` and
-       :exc:`AccessDenied` handling + it prevents killing a reused PID.
+     - Direct equivalent on POSIX (no Windows support).
+       psutil adds :exc:`NoSuchProcess` and :exc:`AccessDenied` handling + it
+       prevents killing a reused PID.
    * - :meth:`Process.suspend`
      - :func:`os.kill` + :data:`signal.SIGSTOP`
      - Same as above.
@@ -276,15 +280,17 @@ Signals
      - Same as above.
    * - :meth:`Process.terminate`
      - :func:`os.kill` + :data:`signal.SIGTERM`
-     - On Windows, psutil calls ``TerminateProcess()`` (no ``SIGTERM``).
+     - Same as above. On Windows, psutil calls ``TerminateProcess()``
+       (no ``SIGTERM``).
    * - :meth:`Process.kill`
      - :func:`os.kill` + :data:`signal.SIGKILL`
-     - On Windows, psutil calls ``TerminateProcess()`` unconditionally.
+     - Same as above. On Windows, psutil calls ``TerminateProcess()``
+       (no ``SIGKILL``).
    * - :meth:`Process.wait`
      - :func:`os.waitpid`
      - Works for child processes only. psutil waits for any PID.
    * - :meth:`Process.wait`
      - :meth:`subprocess.Popen.wait`
-     - Equivalent but psutil uses efficient OS-level waiting instead of
-       polling on Linux and BSD. Functionality backported to Python 3.15 in
-       `BPO-144047`_.
+     - Equivalent, but on Linux and BSD psutil uses efficient OS-level
+       waiting instead of busy polling. Backported to CPython 3.15
+       in `BPO-144047`_.
