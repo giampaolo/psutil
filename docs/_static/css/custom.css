@@ -1,3 +1,7 @@
+/* ================================================================== */
+/* Layout                                                             */
+/* ================================================================== */
+
 @media (min-width: 1200px) {
     .wy-nav-content {
         max-width: 1000px;
@@ -5,101 +9,30 @@
     }
 }
 
-/* hide top navigation */
+/* ================================================================== */
+/* Navigation                                                         */
+/* ================================================================== */
+
+/* hide top navigation, keep footer navigation */
 .rst-content > div[role="navigation"] {
     display: none;
 }
 
-/* leave footer navigation visible */
 footer div[role="navigation"][aria-label="Footer"] {
     display: block;
 }
 
-/* HTML tables */
-.wy-table-responsive table th,
-.wy-table-responsive table td {
-    padding: 10px !important;
-    white-space: normal !important;
-    word-wrap: break-word;
+/* ================================================================== */
+/* Sidebar                                                            */
+/* ================================================================== */
+
+.wy-side-nav-search {
+    background-color: grey !important
 }
 
-.wy-table-responsive table {
-    table-layout: fixed;
-    width: 100%;
-}
-
-/* HTML tables */
-.wy-table-responsive table thead {
-    background-color: #eeeeee;
-}
-
-.rst-content dl:not(.docutils) {
-    margin: 0px 0px 0px 0px !important;
-}
-
-.data dd {
-    margin-bottom: 0px !important;
-}
-
-.data .descname {
-    border-right:10px !important;
-}
-
-.rst-content ul p {
-    margin-bottom: 0px !important;
-}
-
-.rst-content ul {
-    margin-top: 0px !important;
-}
-
-.rst-content li {
-    list-style: outside;
-    margin-left: 15px;
-}
-
-.document td {
-    padding-bottom: 0px !important;
-}
-
-.document th {
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-}
-
-.document th p {
-    margin-bottom: 0px !important;
-}
-
-.document th p {
-}
-
-.function .descclassname {
-    font-weight: normal !important;
-}
-
-.class .descclassname {
-    font-weight: normal !important;
-}
-
-.admonition.warning {
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-}
-
-.admonition.note {
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-}
-
-.rst-content dl:not(.docutils) dt {
-    color: #555;
-}
-
-.sig-paren {
-    padding-left: 2px;
-    padding-right: 2px;
-}
+/* ================================================================== */
+/* Headings                                                           */
+/* ================================================================== */
 
 h1, h2, h3 {
     background: #eee;
@@ -111,35 +44,113 @@ h1 {
     font-size: 35px;
 }
 
-.admonition.warning {
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
+/* ================================================================== */
+/* Tables                                                             */
+/* ================================================================== */
+
+.wy-table-responsive table thead {
+    background-color: #eeeeee;
 }
 
-.admonition.warning p {
-    margin-bottom: 5px !important;
+.document th {
+    padding: 4px 8px !important;
+    font-weight: 600;
 }
 
-.admonition.note {
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
+.document th p {
+    margin-bottom: 0px !important;
 }
 
-.admonition.note p {
-    margin-bottom: 5px !important;
-    backround-color: rgb(238, 255, 204) !important;
+.document td {
+    padding: 4px 8px !important;
 }
 
-.codeblock div[class^='highlight'], pre.literal-block div[class^='highlight'], .rst-content .literal-block div[class^='highlight'], div[class^='highlight'] div[class^='highlight'] {
-    background-color: #eeffcc !important;
+.document td p {
+    margin-bottom: 0px !important;
 }
 
-.highlight .hll {
-    background-color: #ffffcc
+/* "longtable" class (used by alternatives.rst): fixed layout
+   with extra padding for multi-line cells */
+.wy-table-responsive table.longtable {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.wy-table-responsive table.longtable th,
+.wy-table-responsive table.longtable td {
+    padding: 10px !important;
+    white-space: normal !important;
+    word-wrap: break-word;
+}
+
+/* adoption page logos */
+.document td img[alt$="-logo"] {
+    height: 20px !important;
+    width: 20px !important;
+    vertical-align: middle;
+}
+
+/* ================================================================== */
+/* Lists                                                              */
+/* ================================================================== */
+
+.rst-content ul {
+    margin-top: 0px !important;
+}
+
+.rst-content ul p {
+    margin-bottom: 0px !important;
+}
+
+.rst-content li {
+    list-style: outside;
+    margin-left: 15px;
+}
+
+/* ================================================================== */
+/* API signatures                                                     */
+/* ================================================================== */
+
+.rst-content dl:not(.docutils) {
+    margin: 0px 0px 0px 0px !important;
+}
+
+.rst-content dl:not(.docutils) dt {
+    color: #555;
+}
+
+.data dd {
+    margin-bottom: 0px !important;
+}
+
+.data .descname {
+    border-right:10px !important;
+}
+
+.function .descclassname,
+.class .descclassname {
+    font-weight: normal !important;
+}
+
+.sig-paren {
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+/* ================================================================== */
+/* Code blocks                                                        */
+/* ================================================================== */
+
+pre {
+    padding: 5px !important;
 }
 
 .highlight {
     background: #eeffcc;
+}
+
+.highlight .hll {
+    background-color: #ffffcc
 }
 
 .highlight .c {
@@ -147,17 +158,18 @@ h1 {
     font-style: italic
 }
 
-.wy-side-nav-search {
-    background-color: grey !important
+.codeblock div[class^='highlight'],
+pre.literal-block div[class^='highlight'],
+.rst-content .literal-block div[class^='highlight'],
+div[class^='highlight'] div[class^='highlight'] {
+    background-color: #eeffcc !important;
 }
 
-pre {
-    padding: 5px !important;
-}
+/* ================================================================== */
+/* Links                                                              */
+/* ================================================================== */
 
-/* Show external links with a slightly different style (dotted underline).
-   Excludes Python API cross-references (intersphinx -> docs.python.org). */
-
+/* external links: dotted underline (except intersphinx) */
 a.reference.external:not([href*="docs.python.org"]) {
     text-decoration: underline dotted;
 }
@@ -167,12 +179,12 @@ a.reference.external:not([href*="docs.python.org"]):hover {
 }
 
 a.external[href^="#"] {
-    text-decoration: none; /* keep same-page anchors normal */
+    text-decoration: none;
     color: inherit;
 }
 
 /* ================================================================== */
-/* Warnings and info boxes like python doc */
+/* Admonitions (note, warning, tip) - styled like python doc          */
 /* ================================================================== */
 
 div.admonition {
@@ -192,6 +204,12 @@ div.note {
     border-radius: 3px !important;
 }
 
+div.tip {
+    background-color: #dfd !important;
+    border: 1px solid green !important;
+    border-radius: 3px !important;
+}
+
 div.admonition p.admonition-title + p {
     display: inline !important;
 }
@@ -206,26 +224,38 @@ p.admonition-title:after {
     content: ":" !important;
 }
 
-div.body div.admonition, div.body div.impl-detail {
+/* hide admonition icons */
+.fa-exclamation-circle:before,
+.wy-inline-validate.wy-inline-validate-warning .wy-input-context:before,
+.wy-inline-validate.wy-inline-validate-info .wy-input-context:before,
+.rst-content .admonition-title:before {
+    display: none !important;
 }
 
-.fa-exclamation-circle:before, .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before, .wy-inline-validate.wy-inline-validate-info .wy-input-context:before, .rst-content .admonition-title:before {
-    display: none !important;
+.admonition.warning {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+.admonition.warning p {
+    margin-bottom: 5px !important;
+}
+
+.admonition.note {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+.admonition.note p {
+    margin-bottom: 5px !important;
 }
 
 .note code {
     background: #d6d6d6 !important;
 }
 
-/* Project logos in adoption page tables */
-.document td img[alt$="-logo"] {
-    height: 20px !important;
-    width: 20px !important;
-    vertical-align: middle;
-}
-
 /* ================================================================== */
-/* versionadded / versionchanged / deprecated - like python doc */
+/* Version directives (versionadded / versionchanged / deprecated)    */
 /* ================================================================== */
 
 div.versionadded,
@@ -257,10 +287,4 @@ div.versionchanged .versionmodified {
 
 div.deprecated .versionmodified {
     color: rgb(159, 49, 51);
-}
-
-div.tip {
-    background-color: #dfd !important;
-    border: 1px solid green !important;
-    border-radius: 3px !important;
 }

@@ -327,7 +327,7 @@ Memory
     kernel code and critical data structures). It can never be moved to disk.
 
   Below is a table showing implementation details. All info on Linux is
-  retrieved from `/proc/meminfo`. On macOS via ``host_statistics64()``. On
+  retrieved from `/proc/meminfo`_. On macOS via ``host_statistics64()``. On
   Windows via `GetPerformanceInfo`_.
 
   .. list-table::
@@ -422,8 +422,7 @@ Memory
      - On Windows, **total**, **used** ("In use"), and **available** match
        the Task Manager (Performance > Memory tab).
 
-  .. note::  see `scripts/meminfo.py`_ script providing an example on how to convert
-    bytes in a human readable form.
+  .. note::  see also `scripts/meminfo.py`_.
 
   .. versionchanged:: 4.2.0
      added *shared* metric on Linux.
@@ -680,7 +679,7 @@ Network
   .. table::
 
    +----------------+-----------------------------------------------------+
-   | **Kind value** | **Connections using**                               |
+   | Kind value     | Connections using                                   |
    +================+=====================================================+
    | ``"inet"``     | IPv4 and IPv6                                       |
    +----------------+-----------------------------------------------------+
@@ -1547,8 +1546,9 @@ Process class
 
   .. method:: rlimit(resource, limits=None)
 
-    Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_). *resource* is one
-    of the `psutil.RLIMIT_* <#process-resources-constants>`_ constants.
+    Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_).
+    *resource* is one of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`
+    constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
     but can be used for any process PID, not only :func:`os.getpid`.
@@ -2229,7 +2229,7 @@ Process class
     following criteria:
 
     +----------------+-----------------------------------------------------+
-    | **Kind value** | **Connections using**                               |
+    | Kind value     | Connections using                                   |
     +================+=====================================================+
     | ``"inet"``     | IPv4 and IPv6                                       |
     +----------------+-----------------------------------------------------+
@@ -3019,6 +3019,7 @@ Other constants
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
 .. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`psleak`: https://github.com/giampaolo/psleak
+.. _`/proc/meminfo`: https://man7.org/linux/man-pages/man5/proc_meminfo.5.html
 
 .. === scripts
 
