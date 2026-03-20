@@ -232,7 +232,10 @@ Signals
      - :func:`os.kill` + :data:`signal.SIGKILL`
      - On Windows, psutil calls ``TerminateProcess()`` unconditionally.
    * - :meth:`Process.wait`
-     - :func:`os.waitpid`,
-       :meth:`subprocess.Popen.wait`
-     - :func:`os.waitpid` works for child processes only. psutil waits for
-       any PID. Prefer :meth:`subprocess.Popen.wait` for subprocesses.
+     - :func:`os.waitpid`
+     - Works for child processes only. psutil waits for any PID.
+   * - :meth:`Process.wait`
+     - :meth:`subprocess.Popen.wait`
+     - Equivalent but psutil uses efficient OS-level waiting instead of
+       polling on Linux and BSD. Functionality backported to Python 3.15 in
+       `BPO-144047`_.
