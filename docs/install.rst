@@ -108,7 +108,7 @@ OpenBSD
 NetBSD
 ^^^^^^
 
-Assuming Python 3.11 (the most recent at the time of writing):
+Assuming Python 3.11:
 
 ::
 

@@ -52,7 +52,7 @@ Infrastructure / automation
      - |ajenti-stars|
      - monitoring plugins, deep integration
 
-AI / Machine learning
+AI / machine learning
 ---------------------
 
 .. list-table::
@@ -104,7 +104,7 @@ Developer tools
      - |spyder-stars|
      - deep integration, UI stats, process management
    * - |psleak-logo| `psleak <https://github.com/giampaolo/psleak>`__
-     - Test framework to detect memory in Python C extensions
+     - Test framework to detect memory leaks in Python C extensions
      - |psleak-stars|
      - heap process memory (:func:`heap_info()`)
 

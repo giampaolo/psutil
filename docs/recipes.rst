@@ -103,7 +103,7 @@ Find all processes that have a given file open (useful on Windows):
   def find_procs_using_file(path):
       ls = []
       for p in psutil.process_iter(["open_files"]):
-          for f in p.info["open_files"]:
+          for f in p.info["open_files"] or []:
               if f.path == path:
                   ls.append(p)
                   break

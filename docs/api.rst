@@ -21,7 +21,7 @@ CPU
 
 .. function:: cpu_times(percpu=False)
 
-  Return system CPU times as a :term:`named tuple`. All fields are
+  Return system CPU times as a named tuple. All fields are
   :term:`cumulative counters <cumulative counter>` (seconds) representing time
   the CPU has spent in each mode since boot.
   The attributes availability varies depending on the platform.
@@ -311,17 +311,15 @@ Memory
     still holds valid data (:term:`page cache`, old allocations) but is a
     candidate for reclamation or swapping. On BSD systems it is counted in
     **available**.
-  - **buffers** *(Linux, BSD)*: kernel buffer cache for raw block-device I/O
-    (e.g. disk blocks read before the filesystem processes them). Can be
-    reclaimed by the OS when needed.
-  - **cached** *(Linux, BSD)*: in-memory :term:`page cache` for files read from disk.
-    The OS reclaims this memory automatically when processes need it, so a
-    large **cached** value is healthy and does not indicate memory pressure.
-    On Linux this includes ``SReclaimable`` (reclaimable slab memory).
+  - **buffers** *(Linux, BSD)*: memory used by the kernel to cache disk
+    metadata (e.g. filesystem structures). Reclaimable by the OS when needed.
+  - **cached** *(Linux, BSD)*: RAM used by the kernel to cache file
+    contents (data read from or written to disk). Reclaimable by the OS when
+    needed. See :term:`page cache`.
   - **shared** *(Linux, BSD)*: memory accessible by multiple processes
-    simultaneously, such as POSIX shared memory (``shm_open``) and
-    ``tmpfs``-backed files. On Linux this corresponds to ``Shmem`` in
-    ``/proc/meminfo`` and is already counted within **active** / **inactive**.
+    simultaneously, such as in-memory ``tmpfs`` and POSIX shared memory objects
+    (``shm_open``). On Linux this corresponds to ``Shmem`` in ``/proc/meminfo``
+    and is already counted within **active** / **inactive**.
   - **slab** *(Linux)*: memory used by the kernel's internal object caches
     (e.g. inode and dentry caches). The reclaimable portion
     (``SReclaimable``) is already included in **cached**.
@@ -329,10 +327,12 @@ Memory
     code and critical data structures). It can never be moved to disk.
 
   Below is a table showing implementation details. All info on Linux is
-  retrieved from `/proc/meminfo`.
+  retrieved from `/proc/meminfo`. On macOS via ``host_statistics64()``. On
+  Windows via `GetPerformanceInfo`_.
 
   .. list-table::
      :header-rows: 1
+     :widths: 9 15 14 14 26
 
      * - Field
        - Linux
@@ -342,31 +342,31 @@ Memory
      * - total
        - ``MemTotal``
        - ``sysctl() hw.memsize``
-       - ``GetPerformanceInfo() PhysicalTotal``
+       - ``PhysicalTotal``
        - ``sysctl() hw.physmem``
      * - available
        - ``MemAvailable``
-       - ``host_statistics64() inactive + free``
-       - ``GetPerformanceInfo() PhysicalAvailable``
+       - ``inactive + free``
+       - ``PhysicalAvailable``
        - ``inactive + cached + free``
      * - used
        - ``total - available``
-       - ``host_statistics64() active + wired``
+       - ``active + wired``
        - ``total - available``
        - ``active + wired + cached``
      * - free
        - ``MemFree``
-       - ``host_statistics64() free - speculative``
+       - ``free - speculative``
        - same as ``available``
        - ``sysctl() vm.stats.vm.v_free_count``
      * - active
        - ``Active``
-       - ``host_statistics64() active``
+       - ``active``
        -
        - ``sysctl() vm.stats.vm.v_active_count``
      * - inactive
        - ``Inactive``
-       - ``host_statistics64() inactive``
+       - ``inactive``
        -
        - ``sysctl() vm.stats.vm.v_inactive_count``
      * - buffers
@@ -391,7 +391,7 @@ Memory
        -
      * - wired
        -
-       - ``host_statistics64() wired``
+       - ``wired``
        -
        - ``sysctl() vm.stats.vm.v_wire_count``
 
@@ -415,7 +415,7 @@ Memory
     fields.
 
   .. note::
-     - On Linux, **total**, **free**, **used**,  **shared**, and **available**
+     - On Linux, **total**, **free**, **used**, **shared**, and **available**
        match the output of the ``free`` command.
      - On macOS, **free**, **active**, **inactive**, and **wired** match
        ``vm_stat`` output.
@@ -1328,7 +1328,7 @@ Process class
     .. note::
       on macOS Big Sur this function returns something meaningful only for the
       current process or in
-      `other specific circumstances <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321>`_).
+      `other specific circumstances <https://github.com/apple/darwin-xnu/blob/2ff845c2e033bd0ff64b5b6aa6063a1f8f65aa32/bsd/kern/kern_sysctl.c#L1315-L1321>`_.
 
     .. versionadded:: 4.0.0
 
@@ -1401,7 +1401,7 @@ Process class
 
   .. method:: parents()
 
-    Utility method which return the parents of this process as a list of
+    Utility method which returns the parents of this process as a list of
     :class:`Process` instances. If no parents are known return an empty list.
     See also :meth:`ppid` and :meth:`parent` methods.
 
@@ -1550,7 +1550,7 @@ Process class
     This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
     but can be used for any process PID, not only :func:`os.getpid`.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
-    and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
+    an integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
     Also see `scripts/procinfo.py`_ script.
 
     .. code-block:: pycon
@@ -1612,7 +1612,7 @@ Process class
     .. availability:: Linux, BSD, Windows, AIX
 
     .. versionchanged:: 5.2.0
-       added *read_chars* + *write_chars* on Linux and  *other_count* +
+       added *read_chars* + *write_chars* on Linux and *other_count* +
        *other_bytes* on Windows.
 
   .. method:: num_ctx_switches()
@@ -1660,7 +1660,7 @@ Process class
 
   .. method:: cpu_times()
 
-    Return a :term:`named tuple` of :term:`cumulative counters <cumulative counter>` (seconds)
+    Return a named tuple of :term:`cumulative counters <cumulative counter>` (seconds)
     representing the accumulated process CPU times
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
     This is similar to :func:`os.times` but can be used for any process PID.
@@ -2096,7 +2096,7 @@ Process class
 
     Return the children of this process as a list of :class:`Process`
     instances.
-    If recursive is `True` return all the parent descendants.
+    If recursive is ``True`` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
 
     ::
@@ -2125,7 +2125,7 @@ Process class
   .. method:: page_faults()
 
     Return the number of :term:`page faults <page fault>` for this process as a
-    ``(minor, major)`` :term:`named tuple`.
+    ``(minor, major)`` named tuple.
 
     - **minor** (a.k.a. *soft* faults): occur when a memory page is not
       currently mapped into the process address space, but is already present
@@ -2184,7 +2184,7 @@ Process class
       That implies that this method on Windows is not guaranteed to enumerate
       all regular file handles (see
       `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
-      Tools like ProcessHacker has the same limitation.
+      Tools like ProcessHacker have the same limitation.
 
     .. warning::
       on BSD this method can return files with a null path ("") due to a
@@ -2210,7 +2210,7 @@ Process class
     - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or
       :data:`socket.AF_UNIX`.
     - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
-      :data:`socket.SOCK_SEQPACKET`.  .
+      :data:`socket.SOCK_SEQPACKET`.
     - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
       in case of AF_UNIX sockets. For UNIX sockets see notes below.
     - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
@@ -2306,7 +2306,7 @@ Process class
 
     Return whether the current process is running in the current process list.
     Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
-    case the process is gone and its PID reused by another process (:term:`PID reuse`).
+    case the process is gone and its PID reused by another process (:ref:`PID reuse <faq_pid_reuse>`).
 
     If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
@@ -2321,7 +2321,7 @@ Process class
 
   .. method:: send_signal(signal)
 
-    Send a :term:`signal` to process (see :mod:`signal` module constants)
+    Send a signal to process (see :mod:`signal` module constants)
     preemptively checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
@@ -2334,21 +2334,21 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with *SIGSTOP* :term:`signal` preemptively
+    Suspend process execution with *SIGSTOP* signal preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
     On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-    Resume process execution with *SIGCONT* :term:`signal` preemptively
+    Resume process execution with *SIGCONT* signal preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
     On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-    Terminate the process with *SIGTERM* :term:`signal` preemptively checking
+    Terminate the process with *SIGTERM* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
@@ -2356,7 +2356,7 @@ Process class
 
   .. method:: kill()
 
-    Kill the current process by using *SIGKILL* :term:`signal` preemptively
+    Kill the current process by using *SIGKILL* signal preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
@@ -2438,7 +2438,7 @@ Popen class
   :meth:`terminate() <psutil.Process.terminate()>`,
   :meth:`kill() <psutil.Process.kill()>`.
   This is done in order to avoid killing another process in case its PID has
-  been reused, fixing  `BPO-6973`_.
+  been reused, fixing `BPO-6973`_.
 
   .. code-block:: pycon
 
@@ -2951,7 +2951,7 @@ Hardware constants
 
   Constants which identifies whether a :term:`NIC` (network interface card) has
   full or half mode speed. NIC_DUPLEX_FULL means the NIC is able to send and
-  receive data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either
+  receive data (files) simultaneously, NIC_DUPLEX_HALF means the NIC can either
   send or receive data at a time.
   To be used in conjunction with :func:`psutil.net_if_stats`.
 
@@ -3037,6 +3037,7 @@ Other constants
 .. === Windows API
 
 .. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
+.. _`GetPerformanceInfo`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
 .. _`GetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass

@@ -32,7 +32,7 @@ Timeline
 - 2025-09-17:
   `7.1.0 <https://pypi.org/project/psutil/7.1.0/#files>`_ -
   `what's new <changelog.html#710>`_ -
-  `diff <https://github.com/giampaolo/psutil/compare/release-7.0.0...release-7.1.1#files_bucket>`_
+  `diff <https://github.com/giampaolo/psutil/compare/release-7.0.0...release-7.1.0#files_bucket>`_
 - 2025-02-13:
   `7.0.0 <https://pypi.org/project/psutil/7.0.0/#files>`_ -
   `what's new <changelog.html#700>`_ -
@@ -225,15 +225,15 @@ Timeline
   `5.0.0 <https://pypi.org/project/psutil/5.0.0/#files>`_ -
   `what's new <changelog.html#500>`_ -
   `diff <https://github.com/giampaolo/psutil/compare/release-4.4.2...release-5.0.0#files_bucket>`_
-- 2016-10-05:
+- 2016-10-25:
   `4.4.2 <https://pypi.org/project/psutil/4.4.2/#files>`_ -
   `what's new <changelog.html#442>`_ -
   `diff <https://github.com/giampaolo/psutil/compare/release-4.4.1...release-4.4.2#files_bucket>`_
-- 2016-10-25:
+- 2016-10-23:
   `4.4.1 <https://pypi.org/project/psutil/4.4.1/#files>`_ -
   `what's new <changelog.html#441>`_ -
   `diff <https://github.com/giampaolo/psutil/compare/release-4.4.0...release-4.4.1#files_bucket>`_
-- 2016-10-23:
+- 2016-10-05:
   `4.4.0 <https://pypi.org/project/psutil/4.4.0/#files>`_ -
   `what's new <changelog.html#440>`_ -
   `diff <https://github.com/giampaolo/psutil/compare/release-4.3.1...release-4.4.0#files_bucket>`_

@@ -2,7 +2,7 @@
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola <grodola@gmail.com>
 
-Psutil documentation
+psutil documentation
 ====================
 
 .. image:: https://img.shields.io/badge/GitHub-repo-blue
@@ -90,7 +90,7 @@ Security
 To report a security vulnerability, please use the `Tidelift security contact`_.
 Tidelift will coordinate the fix and disclosure.
 
-Table of Contents
+Table of contents
 -----------------
 
 .. toctree::

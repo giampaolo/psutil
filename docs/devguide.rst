@@ -82,7 +82,7 @@ On Windows:
 
 ::
 
-  set PSUTIL_DEBUG=1 python.exe script.py
+  set PSUTIL_DEBUG=1 && python.exe script.py
   psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
 
 

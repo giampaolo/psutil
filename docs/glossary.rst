@@ -123,7 +123,7 @@ Glossary
       whatever the CPU was doing. Reported as the ``interrupts`` field of
       :func:`cpu_stats` and ``irq`` field of :func:`cpu_times`.
       A very high rate may indicate a misbehaving device driver or a heavily
-      loaded NIC.
+      loaded NIC. Also see :term:`soft interrupt`.
 
    involuntary context switch
 
@@ -159,12 +159,6 @@ Glossary
       processes in a *runnable* or *uninterruptible* state over the last
       1, 5, and 15 minutes. A load average equal to the number of logical
       CPUs means the system is fully saturated. See :func:`getloadavg`.
-
-   named tuple
-
-      A :func:`collections.namedtuple` subclass, a tuple whose fields
-      can be accessed by name as well as by index. Most psutil functions
-      return named tuples (e.g. ``sswap``, ``pmem``, ``scputimes``).
 
    nice
 
@@ -209,21 +203,6 @@ Glossary
       :term:`logical CPU`. A single physical core may appear as multiple
       logical CPUs when hyper-threading is enabled. The physical count is
       returned by ``cpu_count(logical=False)``.
-
-   PID
-
-      *Process identifier*, a non-negative integer assigned by the OS to
-      every running process. PIDs are unique at any instant but are
-      recycled over time (:term:`PID reuse`). PID 0 is typically the
-      idle/swapper process; PID 1 is ``init`` / ``systemd`` on UNIX.
-
-   PID reuse
-
-      When a process exits its PID is eventually recycled and assigned to
-      a new process. A :class:`Process` object held across this boundary
-      would silently refer to the wrong process. psutil detects reuse by
-      comparing the recorded creation time against the live value, and
-      raises :exc:`NoSuchProcess` if they differ.
 
    PSS
 
@@ -309,24 +288,13 @@ Glossary
       :data:`RLIMIT_AS` (virtual address space), and :data:`RLIMIT_CPU`
       (CPU time in seconds). See :meth:`Process.rlimit`.
 
-   signal
-
-      An asynchronous notification delivered by the OS to a process to
-      indicate an event. The process can catch it (run a handler), ignore it,
-      or let the default action happen (often termination). Common signals on
-      UNIX: ``SIGTERM`` (request graceful shutdown), ``SIGKILL`` (force
-      immediate termination, cannot be caught), ``SIGSTOP`` / ``SIGCONT``
-      (pause and resume). psutil exposes signals via :meth:`Process.send_signal`,
-      :meth:`Process.terminate`, :meth:`Process.suspend`,
-      :meth:`Process.resume` and :meth:`Process.kill`. See also :mod:`signal` module.
-
    USS
 
       *Unique Set Size*, the amount of RAM that belongs exclusively to a
       process and would be freed if it exited. It excludes shared pages
       entirely, making it the most accurate single-process memory metric.
       Available on Linux, macOS, and Windows via
-      :meth:`Process.memory_full_info`.
+      :meth:`Process.memory_footprint`.
 
    voluntary context switch
 

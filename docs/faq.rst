@@ -311,3 +311,21 @@ memory private to the process. It represents the amount of memory that
 would be freed if the process were terminated right now.
 It is more accurate than RSS, but substantially slower and requires higher
 privileges. On Linux it also returns PSS (Proportional Set Size) and swap.
+
+.. _faq_used_plus_free:
+
+Why does virtual_memory().used + free != total?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Because some memory (like cache and buffers) is reclaimable and accounted
+separately:
+
+.. code-block:: pycon
+
+  >>> import psutil
+  >>> m = psutil.virtual_memory()
+  >>> m.used + m.free == m.total
+  False
+
+The ``available`` field already includes this reclaimable memory and is the
+best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
