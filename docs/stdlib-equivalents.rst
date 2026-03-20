@@ -41,7 +41,7 @@ Disk
 .. list-table::
    :class: longtable
    :header-rows: 1
-   :widths: 17 24 100
+   :widths: 25 24 100
 
    * - psutil
      - stdlib
@@ -50,6 +50,15 @@ Disk
      - :func:`shutil.disk_usage`
      - Backported to CPython 3.3 in BPO-12442_.
        Identical except psutil adds a ``percent`` field.
+   * - :func:`disk_partitions`
+     - :func:`os.listdrives`,
+       :func:`os.listmounts`,
+       :func:`os.listvolumes`
+     - Windows only (Python 3.12+). These are low-level volume
+       enumeration APIs: :func:`os.listdrives` returns drive
+       letters, :func:`os.listvolumes` volume GUID paths,
+       :func:`os.listmounts` mount points. psutil combines device, mountpoint,
+       fstype and opts in a single call.
 
 Process methods
 ---------------
