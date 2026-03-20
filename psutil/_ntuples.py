@@ -227,6 +227,9 @@ class svmem(NamedTuple):
         cached: int
         shared: int
         wired: int
+    elif WINDOWS:
+        cached: int
+        wired: int
     elif MACOS:
         active: int
         inactive: int

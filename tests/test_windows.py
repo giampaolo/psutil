@@ -165,6 +165,28 @@ class TestCpuAPIs(WindowsTestCase):
         assert proc.MaxClockSpeed == psutil.cpu_freq().max
 
 
+class TestVirtualMemory(WindowsTestCase):
+
+    def test_total(self):
+        w = wmi.WMI().Win32_ComputerSystem()[0]
+        assert int(w.TotalPhysicalMemory) == psutil.virtual_memory().total
+
+    def test_free(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        assert (
+            abs(int(w.AvailableBytes) - psutil.virtual_memory().free)
+            < TOLERANCE_SYS_MEM
+        )
+
+    @retry_on_failure()
+    def test_wired(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        assert (
+            abs(int(w.PoolNonpagedBytes) - psutil.virtual_memory().wired)
+            < TOLERANCE_SYS_MEM
+        )
+
+
 class TestSystemAPIs(WindowsTestCase):
     def test_nic_names(self):
         out = sh('ipconfig /all')
@@ -202,17 +224,6 @@ class TestSystemAPIs(WindowsTestCase):
         )
         win_ports = {int(p) for p in out.strip().split(',') if p.strip()}
         assert ps_ports == win_ports
-
-    def test_total_phymem(self):
-        w = wmi.WMI().Win32_ComputerSystem()[0]
-        assert int(w.TotalPhysicalMemory) == psutil.virtual_memory().total
-
-    def test_free_phymem(self):
-        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
-        assert (
-            abs(int(w.AvailableBytes) - psutil.virtual_memory().free)
-            < TOLERANCE_SYS_MEM
-        )
 
     def test_total_swapmem(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]

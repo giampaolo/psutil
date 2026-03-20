@@ -313,7 +313,7 @@ Memory
     **available**.
   - **buffers** *(Linux, BSD)*: memory used by the kernel to cache disk
     metadata (e.g. filesystem structures). Reclaimable by the OS when needed.
-  - **cached** *(Linux, BSD)*: RAM used by the kernel to cache file
+  - **cached** *(Linux, BSD, Windows)*: RAM used by the kernel to cache file
     contents (data read from or written to disk). Reclaimable by the OS when
     needed. See :term:`page cache`.
   - **shared** *(Linux, BSD)*: memory accessible by multiple processes
@@ -323,8 +323,8 @@ Memory
   - **slab** *(Linux)*: memory used by the kernel's internal object caches
     (e.g. inode and dentry caches). The reclaimable portion
     (``SReclaimable``) is already included in **cached**.
-  - **wired** *(macOS, BSD)*: memory pinned in RAM by the kernel (e.g. kernel
-    code and critical data structures). It can never be moved to disk.
+  - **wired** *(macOS, BSD, Windows)*: memory pinned in RAM by the kernel (e.g.
+    kernel code and critical data structures). It can never be moved to disk.
 
   Below is a table showing implementation details. All info on Linux is
   retrieved from `/proc/meminfo`. On macOS via ``host_statistics64()``. On
@@ -377,7 +377,7 @@ Memory
      * - cached
        - ``Cached + SReclaimable``
        -
-       -
+       - ``SystemCache``
        - ``sysctl() vm.stats.vm.v_cache_count``
      * - shared
        - ``Shmem``
@@ -392,7 +392,7 @@ Memory
      * - wired
        -
        - ``wired``
-       -
+       - ``KernelNonpaged``
        - ``sysctl() vm.stats.vm.v_wire_count``
 
   Example on Linux:
@@ -430,6 +430,9 @@ Memory
 
   .. versionchanged:: 5.4.4
      added *slab* metric on Linux.
+
+  .. versionchanged:: 8.0.0
+     added *cached* and *wired* metric on Windows.
 
 .. function:: swap_memory()
 
