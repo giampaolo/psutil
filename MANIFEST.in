@@ -40,6 +40,7 @@ include docs/platform.rst
 include docs/recipes.rst
 include docs/requirements.txt
 include docs/shell_equivalents.rst
+include docs/stdlib_equivalents.rst
 include docs/timeline.rst
 include psutil/__init__.py
 include psutil/_common.py

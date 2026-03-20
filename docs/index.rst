@@ -101,6 +101,7 @@ Table of contents
    FAQ <faq>
    Recipes <recipes>
    Shell equivalents <shell_equivalents>
+   Stdlib equivalents <stdlib_equivalents>
    Glossary <glossary>
    Platform support <platform>
    Who uses psutil <adoption>
