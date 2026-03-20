@@ -132,7 +132,7 @@ Others
   ``irq`` to match the field name used on Linux and BSD. ``interrupt`` still
   works but raises :exc:`DeprecationWarning`.
   See :ref:`migration guide <migration-8.0>`.
-- :gh:`XXXX`: Windows: :func:`virtual_memory` now includes ``cached`` and
+- :gh:`2776`: Windows: :func:`virtual_memory` now includes ``cached`` and
   ``wired`` fields.
 
 **Bug fixes**
