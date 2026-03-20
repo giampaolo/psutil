@@ -19,6 +19,13 @@ footer div[role="navigation"][aria-label="Footer"] {
 .wy-table-responsive table th,
 .wy-table-responsive table td {
     padding: 10px !important;
+    white-space: normal !important;
+    word-wrap: break-word;
+}
+
+.wy-table-responsive table {
+    table-layout: fixed;
+    width: 100%;
 }
 
 /* HTML tables */

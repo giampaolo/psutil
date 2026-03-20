@@ -4,16 +4,16 @@
 Migration guide
 ===============
 
-.. contents::
-   :local:
-   :depth: 2
-
 This page summarises the breaking changes introduced in each major
 release and shows the code changes required to upgrade.
 
 .. note::
   Minor and patch releases (e.g. 6.1.x, 7.1.x) never contain
   breaking changes. Only major releases are listed here.
+
+.. contents::
+   :local:
+   :depth: 2
 
 .. _migration-8.0:
 
