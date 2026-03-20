@@ -20,7 +20,7 @@ cheap wrappers around POSIX syscalls and are perfectly fine when you
 only need information about the *current* process and don't need
 cross-platform code.
 
-psutil goes further in every direction. Its primary goal is to provide a
+psutil goes further in several directions. Its primary goal is to provide a
 **single portable interface** for concepts that are natively UNIX-only. Things
 like process CPU and memory usage, open file descriptors, network connections,
 signals, nice levels, and I/O counters exist as first-class OS primitives on
@@ -40,9 +40,8 @@ faults, I/O ops) for the *current* process or its children via
 :func:`resource.getrusage`. It is the right tool when you specifically
 want to enforce or inspect ``ulimit``-style limits.
 
-psutil's :meth:`Process.rlimit` exposes the same limit interface in a
-cross-platform way and extends it to arbitrary processes, not just the
-caller.
+psutil's :meth:`Process.rlimit` exposes the same interface but extends it
+to all processes, not just the caller.
 
 subprocess module
 ^^^^^^^^^^^^^^^^^
@@ -69,11 +68,11 @@ etc.).
 On Linux, ``/proc`` exposes process and system information as virtual files.
 Reading ``/proc/pid/status`` or ``/proc/meminfo`` directly is fast and has no
 dependencies, which is why some minimal containers or scripts do this. The
-downsides are that it is Linux-only, the format may varies across kernel
+downsides are that it is Linux-only, the format may vary across kernel
 versions, and you have to parse raw text yourself. psutil parses ``/proc``
-internally on Linux, adds a consistent cross-platform API on top, and handles
-edge cases (numeric overflow, compatibility with old kernels, graceful
-fallbacks, etc.) transparently.
+internally, exposes the same information through a consistent
+cross-platform API and handles edge cases (numeric overflow, compatibility
+with old kernels, graceful fallbacks, etc.) transparently.
 
 Third-party libraries
 ---------------------
@@ -90,7 +89,8 @@ specific platform or subsystem.
      - Focus
 
    * - `distro <https://github.com/python-distro/distro>`_
-     - Linux distro info (name, version, codename).
+     - Linux distro info (name, version, codename). psutil does not
+       expose OS details.
 
    * - `GPUtil <https://github.com/anderskm/gputil>`_ /
        `pynvml <https://github.com/gpuopenanalytics/pynvml>`_
@@ -152,6 +152,14 @@ process information.
      - Go
      - CPU, memory, disk, network, processes. Directly inspired
        by psutil and follows a similar API.
+
+   * - `Hardware.Info <https://github.com/Jinjinov/Hardware.Info>`_
+     - C# / .NET
+     - CPU, RAM, GPU, disk, network, battery.
+
+   * - `hwinfo <https://github.com/lfreist/hwinfo>`_
+     - C++
+     - CPU, RAM, GPU, disks, mainboard. More hardware-focused.
 
    * - `OSHI <https://github.com/oshi/oshi>`_
      - Java

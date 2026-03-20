@@ -123,10 +123,6 @@ System monitoring
      - System monitoring tool (top/htop alternative)
      - |glances-stars|
      - core dependency for all metrics
-   * - |osquery-logo| `OSQuery <https://github.com/osquery/osquery>`__
-     - SQL powered OS monitoring and analytics
-     - |osquery-stars|
-     - unit tests
    * - |bpytop-logo| `bpytop <https://github.com/aristocratos/bpytop>`__
      - Terminal resource monitor
      - |bpytop-stars|
@@ -200,7 +196,6 @@ How this list was compiled
 .. |homeassistant-stars| image:: https://img.shields.io/github/stars/home-assistant/core.svg?style=social&label=%20
 .. |locust-stars| image:: https://img.shields.io/github/stars/locustio/locust.svg?style=social&label=%20
 .. |mlflow-stars| image:: https://img.shields.io/github/stars/mlflow/mlflow.svg?style=social&label=%20
-.. |osquery-stars| image:: https://img.shields.io/github/stars/osquery/osquery.svg?style=social&label=%20
 .. |psdash-stars| image:: https://img.shields.io/github/stars/Jahaja/psdash.svg?style=social&label=%20
 .. |psleak-stars| image:: https://img.shields.io/github/stars/giampaolo/psleak.svg?style=social&label=%20
 .. |pytorch-stars| image:: https://img.shields.io/github/stars/pytorch/pytorch.svg?style=social&label=%20
