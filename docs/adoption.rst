@@ -9,6 +9,9 @@ most-downloaded packages on PyPI, with 280+ million downloads per month,
 it, and 14,000+ packages depending on it. The projects below are a small
 sample of notable software that depends on it.
 
+See also :doc:`alternatives` for related Python libraries and equivalents in
+other languages.
+
 Infrastructure / automation
 ---------------------------
 

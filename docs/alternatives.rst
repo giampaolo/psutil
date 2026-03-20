@@ -3,12 +3,9 @@
 Alternatives
 ============
 
-.. contents::
-   :local:
-   :depth: 2
-
 This page describes Python tools and modules that overlap with psutil,
 to help you pick the right tool for the job.
+See also :doc:`adoption` for notable projects that use psutil.
 
 Python standard library
 -----------------------
