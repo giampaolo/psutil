@@ -809,13 +809,13 @@ class Process:
         @memoize_when_activated
         def uids(self) -> puids:
             """Return process UIDs as a (real, effective, saved)
-            namedtuple.
+            named tuple.
             """
             return self._proc.uids()
 
         def gids(self) -> pgids:
             """Return process GIDs as a (real, effective, saved)
-            namedtuple.
+            named tuple.
             """
             return self._proc.gids()
 
@@ -837,7 +837,7 @@ class Process:
         def io_counters(self) -> pio:
             """Return process I/O statistics as a
             (read_count, write_count, read_bytes, write_bytes)
-            namedtuple.
+            named tuple.
             Those are the number of read/write calls performed and the
             amount of bytes read and written by the process.
             """
@@ -958,7 +958,7 @@ class Process:
 
         def threads(self) -> list[pthread]:
             """Return threads opened by process as a list of
-            (id, user_time, system_time) namedtuples representing
+            (id, user_time, system_time) named tuples representing
             thread id and thread CPU times (user/system).
             On OpenBSD this method requires root access.
             """
@@ -1134,7 +1134,7 @@ class Process:
     @memoize_when_activated
     def cpu_times(self) -> pcputimes:
         """Return a (user, system, children_user, children_system)
-        namedtuple representing the accumulated process time, in
+        named tuple representing the accumulated process time, in
         seconds.
         This is similar to os.times() but per-process.
         On macOS and Windows children_user and children_system are
@@ -1144,7 +1144,7 @@ class Process:
 
     @memoize_when_activated
     def memory_info(self) -> pmem:
-        """Return a namedtuple with variable fields depending on the
+        """Return a named tuple with variable fields depending on the
         platform, representing memory information about the process.
 
         The "portable" fields available on all platforms are `rss` and `vms`.
@@ -1155,7 +1155,7 @@ class Process:
 
     @memoize_when_activated
     def memory_info_ex(self) -> pmem_ex:
-        """Return a namedtuple extending memory_info() with extra
+        """Return a named tuple extending memory_info() with extra
         metrics.
 
         All numbers are expressed in bytes.
@@ -1253,14 +1253,14 @@ class Process:
         def memory_maps(
             self, grouped: bool = True
         ) -> list[pmmap_grouped] | list[pmmap_ext]:
-            """Return process' mapped memory regions as a list of namedtuples
+            """Return process' mapped memory regions as a list of named tuples
             whose fields are variable depending on the platform.
 
             If *grouped* is True the mapped regions with the same 'path'
             are grouped together and the different memory fields are summed.
 
             If *grouped* is False every mapped region is shown as a single
-            entity and the namedtuple will also include the mapped region's
+            entity and the named tuple will also include the mapped region's
             address space ('addr') and permission set ('perms').
             """
             it = self._proc.memory_maps()
@@ -1279,7 +1279,7 @@ class Process:
 
     def page_faults(self) -> ppagefaults:
         """Return the number of page faults for this process as a
-        (minor, major) namedtuple.
+        (minor, major) named tuple.
 
         - *minor* (a.k.a. *soft* faults): occur when a memory page is
           not currently mapped into the process address space, but is
@@ -1297,14 +1297,14 @@ class Process:
 
     def open_files(self) -> list[popenfile]:
         """Return files opened by process as a list of
-        (path, fd) namedtuples including the absolute file name
+        (path, fd) named tuples including the absolute file name
         and file descriptor number.
         """
         return self._proc.open_files()
 
     def net_connections(self, kind: str = "inet") -> list[pconn]:
         """Return socket connections opened by process as a list of
-        (fd, family, type, laddr, raddr, status) namedtuples.
+        (fd, family, type, laddr, raddr, status) named tuples.
         The *kind* parameter filters for connections that match the
         following criteria:
 
@@ -1777,9 +1777,9 @@ def cpu_count(logical: bool = True) -> int | None:
 
 
 def cpu_times(percpu: bool = False) -> scputimes | list[scputimes]:
-    """Return system-wide CPU times as a namedtuple.
+    """Return system-wide CPU times as a named tuple.
     Every CPU time represents the seconds the CPU has spent in the
-    given mode. The namedtuple's fields availability varies depending on the
+    given mode. The named tuple's fields availability varies depending on the
     platform:
 
      - user
@@ -1793,7 +1793,7 @@ def cpu_times(percpu: bool = False) -> scputimes | list[scputimes]:
      - guest (Linux)
      - guest_nice (Linux)
 
-    When *percpu* is True return a list of namedtuples for each CPU.
+    When *percpu* is True return a list of named tuples for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
     The order of the list is consistent across calls.
@@ -2025,7 +2025,7 @@ def cpu_stats() -> scpustats:
 if hasattr(_psplatform, "cpu_freq"):
 
     def cpu_freq(percpu: bool = False) -> scpufreq | list[scpufreq] | None:
-        """Return CPU frequency as a namedtuple including current,
+        """Return CPU frequency as a named tuple including current,
         min and max frequency expressed in Mhz.
 
         If *percpu* is True and the system supports per-cpu frequency
@@ -2085,7 +2085,7 @@ def getloadavg() -> tuple[float, float, float]:
 
 
 def virtual_memory() -> svmem:
-    """Return statistics about system memory usage as a namedtuple
+    """Return statistics about system memory usage as a named tuple
     including the following fields, expressed in bytes:
 
      - total:
@@ -2144,7 +2144,7 @@ def virtual_memory() -> svmem:
 
 
 def swap_memory() -> sswap:
-    """Return system swap memory statistics as a namedtuple including
+    """Return system swap memory statistics as a named tuple including
     the following fields:
 
      - total:   total swap memory in bytes
@@ -2166,7 +2166,7 @@ def swap_memory() -> sswap:
 
 def disk_usage(path: str) -> sdiskusage:
     """Return disk usage statistics about the given *path* as a
-    namedtuple including total, used and free space expressed in bytes
+    named tuple including total, used and free space expressed in bytes
     plus the percentage usage.
     """
     return _psplatform.disk_usage(path)
@@ -2174,7 +2174,7 @@ def disk_usage(path: str) -> sdiskusage:
 
 def disk_partitions(all: bool = False) -> list[sdiskpart]:
     """Return mounted partitions as a list of
-    (device, mountpoint, fstype, opts) namedtuple.
+    (device, mountpoint, fstype, opts) named tuple.
     'opts' field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
@@ -2187,7 +2187,7 @@ def disk_partitions(all: bool = False) -> list[sdiskpart]:
 def disk_io_counters(
     perdisk: bool = False, nowrap: bool = True
 ) -> sdiskio | dict[str, sdiskio]:
-    """Return system disk I/O statistics as a namedtuple including
+    """Return system disk I/O statistics as a named tuple including
     the following fields:
 
      - read_count:  number of reads
@@ -2205,7 +2205,7 @@ def disk_io_counters(
 
     If *perdisk* is True return the same information for every
     physical disk installed on the system as a dictionary
-    with partition names as the keys and the namedtuple
+    with partition names as the keys and the named tuple
     described above as the values.
 
     If *nowrap* is True it detects and adjust the numbers which overflow
@@ -2246,7 +2246,7 @@ disk_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 def net_io_counters(
     pernic: bool = False, nowrap: bool = True
 ) -> snetio | dict[str, snetio] | None:
-    """Return network I/O statistics as a namedtuple including
+    """Return network I/O statistics as a named tuple including
     the following fields:
 
      - bytes_sent:   number of bytes sent
@@ -2261,7 +2261,7 @@ def net_io_counters(
 
     If *pernic* is True return the same information for every
     network interface installed on the system as a dictionary
-    with network interface names as the keys and the namedtuple
+    with network interface names as the keys and the named tuple
     described above as the values.
 
     If *nowrap* is True it detects and adjust the numbers which overflow
@@ -2292,7 +2292,7 @@ net_io_counters.cache_clear.__doc__ = "Clears nowrap argument cache"
 
 def net_connections(kind: str = 'inet') -> list[sconn]:
     """Return system-wide socket connections as a list of
-    (fd, family, type, laddr, raddr, status, pid) namedtuples.
+    (fd, family, type, laddr, raddr, status, pid) named tuples.
     In case of limited privileges 'fd' and 'pid' may be set to -1
     and None respectively.
     The *kind* parameter filters for connections that fit the
@@ -2323,8 +2323,8 @@ def net_connections(kind: str = 'inet') -> list[sconn]:
 def net_if_addrs() -> dict[str, list[snicaddr]]:
     """Return the addresses associated to each NIC (network interface
     card) installed on the system as a dictionary whose keys are the
-    NIC names and value is a list of namedtuples for each address
-    assigned to the NIC. Each namedtuple includes 5 fields:
+    NIC names and value is a list of named tuples for each address
+    assigned to the NIC. Each named tuple includes 5 fields:
 
      - family: can be either socket.AF_INET, socket.AF_INET6 or
                psutil.AF_LINK, which refers to a MAC address.
@@ -2384,7 +2384,7 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
 def net_if_stats() -> dict[str, snicstats]:
     """Return information about each NIC (network interface card)
     installed on the system as a dictionary whose keys are the
-    NIC names and value is a namedtuple with the following fields:
+    NIC names and value is a named tuple with the following fields:
 
      - isup: whether the interface is up (bool)
      - duplex: can be either NIC_DUPLEX_FULL, NIC_DUPLEX_HALF or
@@ -2407,7 +2407,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
     def sensors_temperatures(
         fahrenheit: bool = False,
     ) -> dict[str, list[shwtemp]]:
-        """Return hardware temperatures. Each entry is a namedtuple
+        """Return hardware temperatures. Each entry is a named tuple
         representing a certain hardware sensor (it may be a CPU, an
         hard disk or something else, depending on the OS and its
         configuration).
@@ -2445,7 +2445,7 @@ if hasattr(_psplatform, "sensors_temperatures"):
 if hasattr(_psplatform, "sensors_fans"):
 
     def sensors_fans() -> dict[str, list[sfan]]:
-        """Return fans speed. Each entry is a namedtuple
+        """Return fans speed. Each entry is a named tuple
         representing a certain hardware sensor.
         All speed are expressed in RPM (rounds per minute).
         """
@@ -2489,7 +2489,7 @@ def boot_time() -> float:
 
 def users() -> list[suser]:
     """Return users currently connected on the system as a list of
-    namedtuples including the following fields.
+    named tuples including the following fields.
 
      - user: the name of the user
      - terminal: the tty or pseudo-tty associated with the user, if any.

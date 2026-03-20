@@ -123,7 +123,7 @@ def getpagesize():
 
 
 def virtual_memory():
-    """System virtual memory as a namedtuple."""
+    """System virtual memory as a named tuple."""
     info = cext.GetPerformanceInfo()
     page = info["PageSize"]
     total = info["PhysicalTotal"] * page
@@ -373,7 +373,7 @@ def boot_time():
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:

@@ -467,7 +467,7 @@ def cpu_times():
 
 
 def per_cpu_times():
-    """Return a list of namedtuple representing the CPU times
+    """Return a list of named tuples representing the CPU times
     for every CPU available on the system.
     """
     procfs_path = get_procfs_path()
@@ -1160,7 +1160,7 @@ class RootFsDeviceFinder:
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples."""
+    """Return mounted disk partitions as a list of named tuples."""
     fstypes = set()
     procfs_path = get_procfs_path()
     if not all:
@@ -1445,7 +1445,7 @@ def sensors_battery():
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:

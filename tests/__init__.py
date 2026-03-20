@@ -1545,7 +1545,7 @@ def check_net_address(addr, family):
 
 
 def check_connection_ntuple(conn):
-    """Check validity of a connection namedtuple."""
+    """Check validity of a connection named tuple."""
 
     def check_ntuple(conn):
         has_pid = len(conn) == 7
@@ -1821,7 +1821,7 @@ def warn(msg):
 
 
 def is_namedtuple(x):
-    """Check if object is an instance of namedtuple."""
+    """Check if object is an instance of named tuple."""
     t = type(x)
     if tuple not in t.__mro__:
         return False

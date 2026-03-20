@@ -35,7 +35,7 @@ class TypeHintTestCase(PsutilTestCase):
 
 
 class TestTypeHintsNtuples(TypeHintTestCase):
-    """Check that namedtuple field values match the type annotations
+    """Check that named tuple field values match the type annotations
     defined in psutil/_ntuples.py.
     """
 

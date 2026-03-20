@@ -131,13 +131,13 @@ if hasattr(cext, "heap_info"):
 
 
 def cpu_times():
-    """Return system per-CPU times as a namedtuple."""
+    """Return system per-CPU times as a named tuple."""
     user, nice, system, idle, irq = cext.cpu_times()
     return ntp.scputimes(user, system, idle, nice, irq)
 
 
 def per_cpu_times():
-    """Return system CPU times as a namedtuple."""
+    """Return system CPU times as a named tuple."""
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle, irq = cpu_t
@@ -257,7 +257,7 @@ elif OPENBSD:
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of namedtuples.
+    """Return mounted disk partitions as a list of named tuples.
     'all' argument is ignored, see:
     https://github.com/giampaolo/psutil/issues/906.
     """
@@ -399,7 +399,7 @@ if NETBSD:
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     for item in rawlist:
@@ -751,7 +751,7 @@ class Process:
 
     @wrap_exceptions
     def open_files(self):
-        """Return files opened by process as a list of namedtuples."""
+        """Return files opened by process as a list of named tuples."""
         rawlist = cext.proc_open_files(self.pid)
         return [ntp.popenfile(path, fd) for path, fd in rawlist]
 

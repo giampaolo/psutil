@@ -22,7 +22,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 - Added new sections:
 
-  - `/recipes <https://psutil.readthedocs.io/en/latest/credits.html>`__:
+  - `/recipes <https://psutil.readthedocs.io/en/latest/recipes.html>`__:
     show code samples
   - `/adoption <https://psutil.readthedocs.io/en/latest/adoption.html>`__:
     notable software using psutil
@@ -34,9 +34,9 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     (was old ``INSTALL.rst`` in root dir)
   - `/credits <https://psutil.readthedocs.io/en/latest/credits.html>`__:
     list contributors and donors (was old ``CREDITS`` in root dir)
-  - `/platform <https://psutil.readthedocs.io/en/latest/credits.html>`__:
+  - `/platform <https://psutil.readthedocs.io/en/latest/platform.html>`__:
     summary of OSes and architectures support
-  - `/faq <https://psutil.readthedocs.io/en/latest/credits.html>`__:
+  - `/faq <https://psutil.readthedocs.io/en/latest/faq.html>`__:
     extended FAQ section.
   - `/alternatives <https://psutil.readthedocs.io/en/latest/alternatives.html>`__:
     list of alternative Python libraries and tools that overlap with psutil.
@@ -78,7 +78,7 @@ Type hints / enums:
 - New APIs:
 
 - :gh:`1541`: New :meth:`Process.page_faults` method, returning a ``(minor,
-  major)`` namedtuple.
+  major)`` named tuple.
 - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   :gh:`2733`).
 
@@ -104,7 +104,7 @@ Type hints / enums:
       aliases returning 0 and emitting `DeprecationWarning` are kept.
 
     - macOS: *pfaults* and *pageins* removed with **no
-      backward-compataliases**. Use :meth:`Process.page_faults` instead.
+      backward-compatible aliases**. Use :meth:`Process.page_faults` instead.
 
     - Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
       *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*.
@@ -424,7 +424,7 @@ Others
 **Enhancements**
 
 - :gh:`2109`: ``maxfile`` and ``maxpath`` fields were removed from the
-  namedtuple returned by :func:`disk_partitions`. Reason: on network
+  named tuple returned by :func:`disk_partitions`. Reason: on network
   filesystems (NFS) this can potentially take a very long time to complete.
 - :gh:`2366`, [Windows]: log debug message when using slower process APIs.
 - :gh:`2375`, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
@@ -466,7 +466,7 @@ Others
 
 Version 6.0.0 introduces some changes which affect backward compatibility:
 
-- :gh:`2109`: the namedtuple returned by :func:`disk_partitions`' no longer
+- :gh:`2109`: the named tuple returned by :func:`disk_partitions`' no longer
   has ``maxfile`` and ``maxpath`` fields.
 - :gh:`2396`: :func:`process_iter` no longer pre-emptively checks whether
   PIDs have been reused. If you want to check for PID reusage you are supposed
@@ -1249,7 +1249,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`1258`, [Windows], **[critical]**: :meth:`Process.username` may cause a
   segfault (Python interpreter crash).  (patch by Jean-Luc Migot)
-- :gh:`1273`: :func:`net_if_addrs` namedtuple's name has been renamed from
+- :gh:`1273`: :func:`net_if_addrs` named tuple's name has been renamed from
   ``snic`` to ``snicaddr``.
 - :gh:`1274`, [Linux]: there was a small chance :meth:`Process.children` may
   swallow
@@ -2240,7 +2240,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`448`, [Windows]: :meth:`Process.children` and :meth:`Process.ppid`
   memory leak (patch by Ulrich Klank).
 - :gh:`457`, [POSIX]: :func:`pid_exists` always returns ``True`` for PID 0.
-- :gh:`461`: namedtuples are not pickle-able.
+- :gh:`461`: named tuples are not pickle-able.
 - :gh:`466`, [Linux]: :meth:`Process.exe` improper null bytes handling.
   (patch by Gautam Singh)
 - :gh:`470`: :func:`wait_procs` might not wait.  (patch by crusaderky)
@@ -2648,7 +2648,7 @@ cases accessing the old names will work but it will cause a
   memory. Added new :func:`virtual_memory` and :func:`swap_memory`
   functions. All old memory-related functions are deprecated. Also two new
   example scripts were added:  `free.py`_ and `meminfo.py`_.
-- :gh:`312`: ``net_io_counters()`` namedtuple includes 4 new fields: ``errin``,
+- :gh:`312`: ``net_io_counters()`` named tuple includes 4 new fields: ``errin``,
   ``errout``, ``dropin`` and ``dropout``, reflecting the number of packets
   dropped and with errors.
 
@@ -2925,7 +2925,7 @@ cases accessing the old names will work but it will cause a
   provide ``pid``, ``name`` and ``msg`` attributes.
 - :gh:`97`: per-process children (:meth:`Process.children`).
 - :gh:`98`: :meth:`Process.cpu_times` and :meth:`Process.memory_info` now
-  return a namedtuple instead of a tuple.
+  return a named tuple instead of a tuple.
 - :gh:`103`: per-process opened TCP and UDP connections
   (:meth:`Process.connections`).
 - :gh:`107`, [Windows]: add support for Windows 64 bit. (patch by cjgohlke)

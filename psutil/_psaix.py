@@ -261,7 +261,7 @@ def boot_time():
 
 
 def users():
-    """Return currently connected users as a list of namedtuples."""
+    """Return currently connected users as a list of named tuples."""
     retlist = []
     rawlist = cext.users()
     localhost = (':0.0', ':0')
