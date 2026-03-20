@@ -48,8 +48,8 @@ Disk
      - notes
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
-     - Identical except psutil adds a ``percent`` field. Backported to
-       CPython 3.3 in BPO-12442_.
+     - Backported to CPython 3.3 in BPO-12442_.
+       Identical except psutil adds a ``percent`` field.
 
 Process methods
 ---------------
@@ -136,7 +136,8 @@ CPU / scheduling
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
-     - POSIX only. psutil also supports Windows.
+     - Backported to CPython 3.3 in `BPO-10784`_. POSIX only. psutil
+       also supports Windows.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.nice`
      - Adjusts by a relative delta only (current process).
