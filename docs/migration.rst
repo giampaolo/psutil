@@ -75,6 +75,18 @@ Named tuple field order changed
 
   - BSD: a new ``peak_rss`` field was added.
 
+- :func:`virtual_memory`: on Windows, new ``cached`` and ``wired`` fields were
+  added. Code using positional unpacking will break:
+
+  .. code-block:: python
+
+    # before
+    total, avail, percent, used, free = psutil.virtual_memory()
+
+    # after
+    m = psutil.virtual_memory()
+    total, avail, percent, used, free = m.total, m.available, m.percent, m.used, m.free
+
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

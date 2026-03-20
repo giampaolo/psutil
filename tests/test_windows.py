@@ -214,6 +214,22 @@ class TestSystemAPIs(WindowsTestCase):
             < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
+    def test_cached_phymem(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        assert (
+            abs(int(w.CacheBytes) - psutil.virtual_memory().cached)
+            < TOLERANCE_SYS_MEM
+        )
+
+    @retry_on_failure()
+    def test_wired_phymem(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        assert (
+            abs(int(w.PoolNonpagedBytes) - psutil.virtual_memory().wired)
+            < TOLERANCE_SYS_MEM
+        )
+
     def test_total_swapmem(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (

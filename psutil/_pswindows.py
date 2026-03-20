@@ -131,7 +131,9 @@ def virtual_memory():
     free = avail
     used = total - avail
     percent = usage_percent((total - avail), total, round_=1)
-    return ntp.svmem(total, avail, percent, used, free)
+    cached = info["SystemCache"]
+    wired = info["KernelNonpaged"]
+    return ntp.svmem(total, avail, percent, used, free, cached, wired)
 
 
 def swap_memory():

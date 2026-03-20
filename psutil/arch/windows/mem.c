@@ -40,8 +40,8 @@ psutil_GetPerformanceInfo(PyObject *self, PyObject *args) {
     if (!pydict_add(dict, "PhysicalAvailable", "K", (ULONGLONG)info.PhysicalAvailable)) goto error;
     if (!pydict_add(dict, "KernelTotal", "K", (ULONGLONG)info.KernelTotal)) goto error;
     if (!pydict_add(dict, "KernelPaged", "K", (ULONGLONG)info.KernelPaged)) goto error;
-    if (!pydict_add(dict, "KernelNonpaged", "K", (ULONGLONG)info.KernelNonpaged)) goto error;
-    if (!pydict_add(dict, "SystemCache", "K", (ULONGLONG)info.SystemCache)) goto error;
+    if (!pydict_add(dict, "KernelNonpaged", "K", (ULONGLONG)info.KernelNonpaged * info.PageSize)) goto error;
+    if (!pydict_add(dict, "SystemCache", "K", (ULONGLONG)info.SystemCache * info.PageSize)) goto error;
     if (!pydict_add(dict, "PageSize", "K", (ULONGLONG)info.PageSize)) goto error;
     // if (!pydict_add(dict, "HandleCount", "I", (unsigned int)info.HandleCount)) goto error;
     // if (!pydict_add(dict, "ProcessCount", "I", (unsigned int)info.ProcessCount)) goto error;

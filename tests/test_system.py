@@ -372,7 +372,12 @@ class TestMemoryAPIs(PsutilTestCase):
                 "shared",
                 "wired",
             )
-        elif WINDOWS or SUNOS or AIX:
+        elif WINDOWS:
+            assert mem._fields[5:] == (
+                "cached",
+                "wired",
+            )
+        elif SUNOS or AIX:
             assert mem._fields[5:] == ()
 
     def test_swap_memory(self):
