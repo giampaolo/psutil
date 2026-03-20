@@ -135,11 +135,11 @@ CPU / scheduling
        for the current process only. psutil works for any PID.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
-       :func:`os.setpriority`,
-       :func:`os.nice`
-     - :func:`os.getpriority` / :func:`os.setpriority` accept a PID like
-       psutil (POSIX only). :func:`os.nice` adjusts by a relative delta
-       only. psutil also supports Windows priority classes.
+       :func:`os.setpriority`
+     - POSIX only. psutil also supports Windows.
+   * - :meth:`Process.nice() <Process.nice>`
+     - :func:`os.nice`
+     - Adjusts by a relative delta only (current process).
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
