@@ -24,12 +24,13 @@ CPU
      - stdlib
      - notes
    * - :func:`cpu_count`
-     - :func:`os.cpu_count`,
-       :func:`os.process_cpu_count`
-     - :func:`os.cpu_count`: same as ``cpu_count(logical=True)`` (logical CPUs).
-       :func:`os.process_cpu_count`: the number of CPUs the calling process is
-       allowed to use (same as ``len(cpu_affinity())``).
-       Neither can return physical core count.
+     - :func:`os.cpu_count`
+     - Exactly the same (logical CPUs). :func:`os.cpu_count` cannot return
+       physical cores count (``psutil.cpu_count(logical=False)``).
+   * - :func:`cpu_count`
+     - :func:`os.process_cpu_count`
+     - CPUs the calling process is allowed to use (Python 3.13+).
+       No correspondance in psutil.
    * - :func:`getloadavg`
      - :func:`os.getloadavg`
      - Same as :func:`os.getloadavg` on POSIX but psutil offers Windows support
