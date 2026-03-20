@@ -64,6 +64,38 @@ Disk
        :func:`os.listmounts` mount points. psutil combines device, mountpoint,
        fstype and opts in a single call.
 
+Network
+~~~~~~~
+
+.. list-table::
+   :class: longtable
+   :header-rows: 1
+   :widths: 25 30 100
+
+   * - psutil
+     - stdlib
+     - notes
+   * - :func:`net_if_addrs`
+     - :func:`socket.if_nameindex`
+     - Returns interface names only (no addresses). psutil
+       returns addresses, netmasks, broadcast and PTP for each
+       NIC.
+
+Process
+~~~~~~~
+
+.. list-table::
+   :class: longtable
+   :header-rows: 1
+   :widths: 25 30 100
+
+   * - psutil
+     - stdlib
+     - notes
+   * - :func:`pid_exists`
+     - ``os.kill(pid, 0)``
+     - Common POSIX idiom. psutil also works on Windows.
+
 Process methods
 ---------------
 
@@ -182,6 +214,23 @@ Memory
      - :func:`resource.getrusage`
      - :func:`resource.getrusage` returns ``ru_majflt`` / ``ru_minflt``
        for the current process only.
+
+I/O
+~~~
+
+.. list-table::
+   :class: longtable
+   :header-rows: 1
+   :widths: 28 27 100
+
+   * - psutil
+     - stdlib
+     - notes
+   * - :meth:`Process.io_counters`
+     - :func:`resource.getrusage`
+     - :func:`resource.getrusage` returns ``ru_inblock`` /
+       ``ru_oublock`` (block I/O operations only, current
+       process). psutil returns read/write bytes and counts.
 
 Threads
 ~~~~~~~
