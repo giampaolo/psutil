@@ -26,8 +26,8 @@ CPU
    * - :func:`cpu_count`
      - :func:`os.cpu_count`,
        :func:`os.process_cpu_count`
-     - :func:`os.cpu_count` is the same as ``cpu_count(logical=True)`` (logical CPUs).
-       :func:`os.process_cpu_count`: returns the number of CPUs the calling process is
+     - :func:`os.cpu_count`: same as ``cpu_count(logical=True)`` (logical CPUs).
+       :func:`os.process_cpu_count`: the number of CPUs the calling process is
        allowed to use (same as ``len(cpu_affinity())``).
        Neither can return physical core count.
    * - :func:`getloadavg`
@@ -48,7 +48,8 @@ Disk
      - notes
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
-     - Identical except psutil adds a ``percent`` field.
+     - Identical except psutil adds a ``percent`` field. Backported to
+       CPython 3.3 in BPO-12442_.
 
 Process methods
 ---------------
@@ -202,19 +203,21 @@ Signals
      - Direct equivalent on POSIX. psutil adds :exc:`NoSuchProcess` and
        :exc:`AccessDenied` handling + it prevents killing a reused PID.
    * - :meth:`Process.suspend`
-     - :func:`os.kill` + ``signal.SIGSTOP``
+     - :func:`os.kill` + :data:`signal.SIGSTOP`
      - Same as above.
    * - :meth:`Process.resume`
-     - :func:`os.kill` + ``signal.SIGCONT``
+     - :func:`os.kill` + :data:`signal.SIGCONT`
      - Same as above.
    * - :meth:`Process.terminate`
-     - :func:`os.kill` + ``signal.SIGTERM``
+     - :func:`os.kill` + :data:`signal.SIGTERM`
      - On Windows, psutil calls ``TerminateProcess()`` (no ``SIGTERM``).
    * - :meth:`Process.kill`
-     - :func:`os.kill` + ``signal.SIGKILL``
+     - :func:`os.kill` + :data:`signal.SIGKILL`
      - On Windows, psutil calls ``TerminateProcess()`` unconditionally.
    * - :meth:`Process.wait`
      - :func:`os.waitpid`,
        :meth:`subprocess.Popen.wait`
      - :func:`os.waitpid` works for child processes only. psutil waits for
        any PID. Prefer :meth:`subprocess.Popen.wait` for subprocesses.
+
+.. _BPO-12442: https://bugs.python.org/issue12442

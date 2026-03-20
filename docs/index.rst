@@ -29,7 +29,7 @@ It is useful mainly for **system monitoring**, **profiling**, **limiting
 process resources**, and **managing running processes**.
 It implements many functionalities offered by UNIX command line tools
 such as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
-(see :doc:`shell equivalents <shell_equivalents>`).
+(see :doc:`shell equivalents <shell-equivalents>`).
 psutil currently supports the following platforms, from **Python 3.7** onwards:
 
 - **Linux**
@@ -100,8 +100,8 @@ Table of contents
    API Reference <api>
    FAQ <faq>
    Recipes <recipes>
-   Shell equivalents <shell_equivalents>
-   Stdlib equivalents <stdlib_equivalents>
+   Shell equivalents <shell-equivalents>
+   Stdlib equivalents <stdlib-equivalents>
    Glossary <glossary>
    Platform support <platform>
    Who uses psutil <adoption>
