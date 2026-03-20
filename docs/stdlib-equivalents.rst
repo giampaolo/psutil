@@ -136,11 +136,11 @@ CPU / scheduling
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
-     - Backported to CPython 3.3 in `BPO-10784`_. POSIX only. psutil
+     - Backported to CPython 3.3 in `BPO-10784`_. Stdlib is POSIX only. psutil
        also supports Windows.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.nice`
-     - Adjusts by a relative delta only (current process).
+     - Stdlib is POSIX only. psutil also supports Windows.
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
