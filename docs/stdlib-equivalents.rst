@@ -126,6 +126,13 @@ CPU / scheduling
      - :func:`os.times` also returns an ``elapsed`` field not present in
        psutil. psutil adds platform-specific fields (``iowait``, ``irq``,
        ``steal``, etc.).
+   * - :meth:`Process.cpu_times`
+     - :func:`resource.getrusage`
+     - ``ru_utime`` / ``ru_stime`` are the same but more precise
+   * - :meth:`Process.num_ctx_switches`
+     - :func:`resource.getrusage`
+     - :func:`resource.getrusage` returns ``ru_nvcsw`` / ``ru_nivcsw``
+       for the current process only. psutil works for any PID.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`,
@@ -137,10 +144,6 @@ CPU / scheduling
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
      - Nearly equivalent. Both accept a PID. Linux only.
-   * - :meth:`Process.num_ctx_switches`
-     - :func:`resource.getrusage`
-     - :func:`resource.getrusage` returns ``ru_nvcsw`` / ``ru_nivcsw``
-       for the current process only. psutil works for any PID.
    * - :meth:`Process.rlimit() <Process.rlimit>`
      - :func:`resource.getrlimit`,
        :func:`resource.setrlimit`
@@ -164,7 +167,7 @@ Memory
    * - :meth:`Process.page_faults`
      - :func:`resource.getrusage`
      - :func:`resource.getrusage` returns ``ru_majflt`` / ``ru_minflt``
-       for the current process only. psutil works for any PID.
+       for the current process only.
 
 Threads
 ~~~~~~~
