@@ -1156,6 +1156,30 @@ class TestSystemNetConnections(LinuxTestCase):
             psutil.net_connections(kind='unix')
             assert m.called
 
+    @pytest.mark.skipif(
+        not shutil.which("ss"), reason="'ss' command not available"
+    )
+    def test_against_ss(self):
+        # Listening ports are stable, so an exact set comparison is
+        # reliable.
+        out = sh(["ss", "-tuanp"])
+        ss_ports = set()
+        for line in out.splitlines():
+            fields = line.split()
+            if (
+                len(fields) >= 5
+                and fields[0] == "tcp"
+                and fields[1] == "LISTEN"
+            ):
+                port = int(fields[4].rsplit(":", 1)[-1])
+                ss_ports.add(port)
+        psutil_ports = {
+            c.laddr.port
+            for c in psutil.net_connections(kind="tcp")
+            if c.status == psutil.CONN_LISTEN
+        }
+        assert ss_ports == psutil_ports
+
 
 # =====================================================================
 # --- system disks
