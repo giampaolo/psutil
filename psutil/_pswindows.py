@@ -183,7 +183,12 @@ def disk_usage(path):
         # XXX: do we want to use "strict"? Probably yes, in order
         # to fail immediately. After all we are accepting input here...
         path = path.decode(ENCODING, errors="strict")
-    total, used, free = cext.disk_usage(path)
+    try:
+        total, used, free = cext.disk_usage(path)
+    except NotADirectoryError:
+        if not os.path.isabs(path):
+            path = os.path.join(os.getcwd(), path)
+        total, used, free = cext.disk_usage(os.path.dirname(path))
     percent = usage_percent(used, total, round_=1)
     return ntp.sdiskusage(total, used, free, percent)
 

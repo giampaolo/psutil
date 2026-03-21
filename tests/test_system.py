@@ -678,11 +678,14 @@ class TestDiskAPIs(PsutilTestCase):
             # see https://github.com/giampaolo/psutil/issues/2147
             assert abs(usage.used - shutil_usage.used) < tolerance
 
-        # if path does not exist OSError ENOENT is expected across
+        # if path does not exist FileNotFoundError is expected across
         # all platforms
         fname = self.get_testfn()
         with pytest.raises(FileNotFoundError):
             psutil.disk_usage(fname)
+
+        # we should also be able to use a file path
+        psutil.disk_usage(__file__)
 
     @pytest.mark.skipif(not ASCII_FS, reason="not an ASCII fs")
     def test_disk_usage_unicode(self):
