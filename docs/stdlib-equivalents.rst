@@ -7,7 +7,8 @@ Stdlib equivalents
 This page maps psutil's Python API to the closest equivalent in the Python
 standard library. This is useful for understanding what psutil replaces and
 how the two APIs differ. The most common difference is that stdlib functions
-only operate on the **current process**, while psutil works on **any process**.
+only operate on the **current process**, while psutil works on **any process**
+(PID).
 
 See also the :doc:`alternatives` page for a higher-level discussion of
 how psutil compares to the standard library and third-party tools.
@@ -29,9 +30,8 @@ CPU
    * - :func:`cpu_count`
      - :func:`os.cpu_count`,
        :func:`multiprocessing.cpu_count`
-     - Same as ``cpu_count(logical=True)``. Cannot return
-       physical core count (``cpu_count(logical=False)``).
-       See :ref:`FAQ <faq_cpu_count>`.
+     - Same as ``cpu_count(logical=True)``; no support for
+       physical cores (``logical=False``). See :ref:`FAQ <faq_cpu_count>`.
    * - :func:`cpu_count`
      - :func:`os.process_cpu_count`
      - CPUs the process is allowed to use (Python 3.13+).
@@ -39,8 +39,7 @@ CPU
        See :ref:`FAQ <faq_cpu_count>`.
    * - :func:`getloadavg`
      - :func:`os.getloadavg`
-     - Same as :func:`os.getloadavg` on POSIX, but psutil also has
-       Windows support.
+     - Same on POSIX; psutil also supports Windows.
 
 Disk
 ~~~~
@@ -55,14 +54,14 @@ Disk
      - notes
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
-     - Identical except psutil adds a ``percent`` field.
-       Later added to CPython 3.3 (BPO-12442_).
+     - Same as :func:`shutil.disk_usage`; psutil also adds
+       ``percent``. Added to CPython 3.3 (BPO-12442_).
    * - :func:`disk_partitions`
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
        :func:`os.listvolumes`
      - Windows only (Python 3.12+). Low-level APIs:
-       drives, volume GUIDs, mount points. psutil
+       drive letters, volume GUIDs, mount points. psutil
        combines them in one cross-platform call.
 
 Network
@@ -78,8 +77,8 @@ Network
      - notes
    * - :func:`net_if_addrs`
      - :func:`socket.if_nameindex`
-     - Stdlib returns NIC names only.
-       psutil returns addresses, netmasks, broadcast, and PTP.
+     - Stdlib returns NIC names only; psutil also returns
+       addresses, netmasks, broadcast, and PTP.
 
 Process
 ~~~~~~~
@@ -94,7 +93,7 @@ Process
      - notes
    * - :func:`pid_exists`
      - ``os.kill(pid, 0)``
-     - Common POSIX idiom. psutil also works on Windows.
+     - Common POSIX idiom; psutil also supports Windows.
 
 Process methods
 ---------------
@@ -121,14 +120,13 @@ Identity
      -
    * - :meth:`Process.environ`
      - :data:`os.environ`
-     - Another process's environ may differ from its launch
-       environment if the process modified it at runtime.
+     - Will differ from launch environment if modified at runtime.
    * - :meth:`Process.exe`
      - :data:`sys.executable`
      - Python interpreter path only.
    * - :meth:`Process.cmdline`
      - :data:`sys.argv`
-     - Only within Python.
+     - Python process only.
 
 Credentials
 ~~~~~~~~~~~
@@ -153,7 +151,7 @@ Credentials
      -
    * - :meth:`Process.username`
      - :func:`os.getlogin`, :func:`getpass.getuser`
-     - Rough equivalents (just not per-process).
+     - Rough equivalent; not per-process.
 
 CPU / scheduling
 ~~~~~~~~~~~~~~~~
@@ -172,28 +170,24 @@ CPU / scheduling
        ``iowait`` (Linux).
    * - :meth:`Process.cpu_times`
      - :func:`resource.getrusage`
-     - ``ru_utime`` / ``ru_stime`` match, but with higher
-       precision.
+     - ``ru_utime`` / ``ru_stime`` match; have higher precision.
    * - :meth:`Process.num_ctx_switches`
      - :func:`resource.getrusage`
-     - :func:`resource.getrusage` returns ``ru_nvcsw`` / ``ru_nivcsw``
-       for the current process only. psutil works for any PID.
+     - Current process only; psutil works for any PID.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
-     - Later added to CPython 3.3 (`BPO-10784`_). POSIX only; psutil also
-       supports Windows.
+     - POSIX only; psutil also supports Windows.
+       Added to CPython 3.3 (BPO-10784_).
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.nice`
-     - Stdlib is POSIX only. psutil also supports Windows.
+     - POSIX only; psutil also supports Windows.
    * - *no equivalent*
      - :func:`os.sched_getscheduler`,
        :func:`os.sched_setscheduler`
-     - Sets scheduling *policy* (``SCHED_OTHER``,
-       ``SCHED_FIFO``, ``SCHED_RR``, etc.). Unlike nice, which
-       sets priority *within* ``SCHED_OTHER``. Real-time
-       policies preempt all normal processes regardless of
-       nice.
+     - Sets scheduling *policy* (``SCHED_*``). Unlike nice,
+       which sets priority within ``SCHED_OTHER``. Real-time
+       policies preempt normal processes.
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
@@ -202,7 +196,7 @@ CPU / scheduling
    * - :meth:`Process.rlimit() <Process.rlimit>`
      - :func:`resource.getrlimit`,
        :func:`resource.setrlimit`
-     - psutil works for any PID (Linux only).
+     - Same interface; psutil works for any PID (Linux only).
 
 Memory
 ~~~~~~
@@ -217,12 +211,11 @@ Memory
      - notes
    * - :meth:`Process.memory_info`
      - :func:`resource.getrusage`
-     - :func:`resource.getrusage` only has peak RSS (``ru_maxrss``);
-       psutil returns current RSS, VMS, and more.
+     - Only peak RSS (``ru_maxrss``); psutil returns current
+       RSS, VMS, and more.
    * - :meth:`Process.page_faults`
      - :func:`resource.getrusage`
-     - :func:`resource.getrusage` returns ``ru_majflt`` / ``ru_minflt``
-       for the current process only.
+     - Current process only.
 
 I/O
 ~~~
@@ -237,9 +230,8 @@ I/O
      - notes
    * - :meth:`Process.io_counters`
      - :func:`resource.getrusage`
-     - :func:`resource.getrusage` only has ``ru_inblock`` /
-       ``ru_oublock`` (block I/O, current process). psutil
-       returns read/write bytes and counts for any PID.
+     - Block I/O only (``ru_inblock`` / ``ru_oublock``),
+       current process. psutil returns bytes and counts for any PID.
 
 Threads
 ~~~~~~~
@@ -254,12 +246,11 @@ Threads
      - notes
    * - :meth:`Process.num_threads`
      - :func:`threading.active_count`
-     - Stdlib counts Python :mod:`threading` threads; psutil counts all
-       OS-level threads.
+     - Stdlib counts Python threads only; psutil counts all OS threads.
    * - :meth:`Process.threads`
      - :func:`threading.enumerate`
-     - Stdlib returns :class:`threading.Thread` objects; psutil returns raw
-       OS-level thread IDs with CPU-time stats.
+     - Stdlib returns :class:`threading.Thread` objects; psutil
+       returns OS thread IDs with CPU times.
 
 Signals
 ~~~~~~~
@@ -274,10 +265,9 @@ Signals
      - notes
    * - :meth:`Process.send_signal`
      - :func:`os.kill`
-     - Direct equivalent on POSIX. :func:`os.kill` has limited
-       Windows signal support. psutil adds
-       :exc:`NoSuchProcess` / :exc:`AccessDenied` handling and
-       won't kill a reused PID.
+     - Same on POSIX; limited on Windows. psutil adds
+       :exc:`NoSuchProcess` / :exc:`AccessDenied` and avoids
+       killing reused PIDs.
    * - :meth:`Process.suspend`
      - :func:`os.kill` + :data:`signal.SIGSTOP`
      - Same as above.
@@ -286,17 +276,14 @@ Signals
      - Same as above.
    * - :meth:`Process.terminate`
      - :func:`os.kill` + :data:`signal.SIGTERM`
-     - Same as above. On Windows, psutil calls ``TerminateProcess()``
-       (no ``SIGTERM``).
+     - Same as above. On Windows uses ``TerminateProcess()``.
    * - :meth:`Process.kill`
      - :func:`os.kill` + :data:`signal.SIGKILL`
-     - Same as above. On Windows, psutil calls ``TerminateProcess()``
-       (no ``SIGKILL``).
+     - Same as above. On Windows uses ``TerminateProcess()``.
    * - :meth:`Process.wait`
      - :func:`os.waitpid`
-     - Works for child processes only. psutil waits for any PID.
+     - Child processes only; psutil works for any PID.
    * - :meth:`Process.wait`
      - :meth:`subprocess.Popen.wait`
-     - Equivalent, but on Linux and BSD psutil uses efficient OS-level
-       waiting instead of busy polling. Later added to CPython
-       3.15 in `GH-144047`_.
+     - Equivalent; psutil uses efficient OS-level waiting on
+       Linux/BSD. Added to CPython 3.15 (GH-144047_).
