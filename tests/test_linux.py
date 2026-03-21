@@ -555,6 +555,19 @@ class TestSystemSwapMemory(LinuxTestCase):
         psutil_value = psutil.swap_memory().free
         assert abs(free_value - psutil_value) < TOLERANCE_SYS_MEM
 
+    @retry_on_failure()
+    def test_sin_sout(self):
+        # Cross-check sin/sout against /proc/vmstat pswpin/pswpout fields.
+        # psutil converts pages to bytes using a 4096-byte page size.
+        PAGE_SIZE = 4 * 1024
+        with open("/proc/vmstat") as f:
+            vmstat = dict(line.split() for line in f if line.split())
+        sin = int(vmstat["pswpin"]) * PAGE_SIZE
+        sout = int(vmstat["pswpout"]) * PAGE_SIZE
+        swap = psutil.swap_memory()
+        assert swap.sin == sin
+        assert swap.sout == sout
+
     def test_missing_sin_sout(self):
         with mock.patch('psutil._common.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
