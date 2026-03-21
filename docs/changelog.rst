@@ -154,7 +154,9 @@ Others
 - :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with family == ``AF_UNSPEC`` and an empty list
-  of addresses.
+  of addresses. Main reason: it creates an inconsistency with
+  :func:`net_io_counters` and :func:`net_if_stats` which do return these
+  interface names.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
