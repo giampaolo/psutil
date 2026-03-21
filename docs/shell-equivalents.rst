@@ -213,7 +213,7 @@ Other
      - same
      -
    * - :func:`pids`
-     - ``ps -eo pid``
+     - ``ps -A -eo pid``
      - same
      - same
      - ``tasklist``

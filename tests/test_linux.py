@@ -877,6 +877,26 @@ class TestSystemCPUFrequency(LinuxTestCase):
                     assert freq.current == 200
 
 
+class TestSystemCPUTimes(LinuxTestCase):
+
+    @retry_on_failure()
+    def test_against_proc_stat(self):
+        with open("/proc/stat") as f:
+            line = f.readline()
+        ticks = [float(x) for x in line.split()[1:]]
+        fields = [t / CLOCK_TICKS for t in ticks]
+        ct = psutil.cpu_times()
+        TOLERANCE = 1  # 1 second
+        assert abs(ct.user - fields[0]) < TOLERANCE
+        assert abs(ct.nice - fields[1]) < TOLERANCE
+        assert abs(ct.system - fields[2]) < TOLERANCE
+        assert abs(ct.idle - fields[3]) < TOLERANCE
+        assert abs(ct.iowait - fields[4]) < TOLERANCE
+        assert abs(ct.irq - fields[5]) < TOLERANCE
+        assert abs(ct.softirq - fields[6]) < TOLERANCE
+        assert abs(ct.steal - fields[7]) < TOLERANCE
+
+
 class TestSystemCPUStats(LinuxTestCase):
 
     # XXX: fails too often.
