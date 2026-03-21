@@ -35,7 +35,9 @@ RE_ANY_TARGET = re.compile(
 # `Foo Bar`_  but NOT  `text <url>`_  and NOT  `text`__
 RE_BACKTICK_REF = re.compile(r'`([^`<\n]+)`_(?!_)')
 # bare reference: BPO-12442_  (word chars and hyphens, no backticks)
-RE_BARE_REF = re.compile(r'(?<![`\w])([A-Za-z0-9][\w-]*)_(?!_)(?![\w`*{])')
+RE_BARE_REF = re.compile(
+    r'(?<![`\w])([A-Za-z0-9][\w-]*)(?<!_)_(?!_)(?![\w`*{])'
+)
 # .. include:: somefile.rst
 RE_INCLUDE = re.compile(r'^\.\. include::\s*(\S+)', re.MULTILINE)
 

@@ -760,8 +760,8 @@ Network
   Each named tuple includes 5 fields:
 
   - **family**: the address family, either :data:`socket.AF_INET`,
-    :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` in case MAC address,
-    :const:`psutil.AF_UNSPEC` in case of virtual or unconfigured interfaces.
+    :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` in case of MAC address,
+    :data:`socket.AF_UNSPEC` in case of virtual or unconfigured interfaces.
   - **address**: the primary NIC address (may be ``None`` in case of virtual
     or unconfigured interfaces).
   - **netmask**: the netmask address (may be ``None``).
@@ -2426,7 +2426,7 @@ Process class
     .. versionchanged:: 7.2.2
        on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use :func:`os.pidfd_open` and
        :func:`select.kqueue` respectively, instead of less efficient busy-loop
-       polling. Added to Python 3.15 in `BPO-144047`_.
+       polling. Added to Python 3.15 in `GH-144047`_.
 
 ----
 

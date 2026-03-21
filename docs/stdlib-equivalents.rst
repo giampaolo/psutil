@@ -56,7 +56,7 @@ Disk
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
      - Identical except psutil adds a ``percent`` field.
-       Backported to CPython 3.3 in BPO-12442_.
+       Added in CPython 3.3 (BPO-12442_).
    * - :func:`disk_partitions`
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
@@ -173,8 +173,8 @@ CPU / scheduling
    * - :meth:`Process.cpu_times`
      - :func:`os.times`
      - :func:`os.times` also returns an ``elapsed`` field not
-       present in psutil, which in turn adds platform-specific
-       fields (``iowait``, ``irq``, ``steal``, etc.).
+       present in psutil, which in turn adds ``iowait``
+       (Linux).
    * - :meth:`Process.cpu_times`
      - :func:`resource.getrusage`
      - ``ru_utime`` / ``ru_stime`` are the same, but with
@@ -186,15 +186,16 @@ CPU / scheduling
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
-     - Backported to CPython 3.3 in `BPO-10784`_. POSIX only; psutil also supports
-       Windows.
+     - Added in CPython 3.3 (`BPO-10784`_). POSIX only; psutil also
+       supports Windows.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.nice`
      - Stdlib is POSIX only. psutil also supports Windows.
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
-     - Nearly equivalent; both accept a PID. Linux only.
+     - Nearly equivalent; both accept a PID. Stdlib is
+       Linux/BSD; psutil also supports Windows.
    * - :meth:`Process.rlimit() <Process.rlimit>`
      - :func:`resource.getrlimit`,
        :func:`resource.setrlimit`
@@ -270,9 +271,9 @@ Signals
      - stdlib
      - notes
    * - :meth:`Process.send_signal`
-     - :func:`os.kill`,
-       :func:`signal.raise_signal`
-     - Direct equivalent on POSIX (no Windows support).
+     - :func:`os.kill`
+     - Direct equivalent on POSIX. On Windows, :func:`os.kill`
+       has limited signal support.
        psutil adds :exc:`NoSuchProcess` and :exc:`AccessDenied` handling + it
        prevents killing a reused PID.
    * - :meth:`Process.suspend`
@@ -295,5 +296,5 @@ Signals
    * - :meth:`Process.wait`
      - :meth:`subprocess.Popen.wait`
      - Equivalent, but on Linux and BSD psutil uses efficient OS-level
-       waiting instead of busy polling. Backported to CPython 3.15
-       in `BPO-144047`_.
+       waiting instead of busy polling. Added to CPython 3.15
+       in `GH-144047`_.
