@@ -15,7 +15,7 @@ Changelog
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
-:gh:`2775`)
+:gh:`2775`, :gh:`2781`)
 
 - Split docs from a single HTML file into multiple sections (API reference,
   install, etc.).
@@ -28,8 +28,11 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     notable software using psutil
   - `/glossary <https://psutil.readthedocs.io/en/latest/glossary.html>`__:
     a section explaining the core concepts
-  - `/shell_equivalents <https://psutil.readthedocs.io/en/latest/shell_equivalents.html>`__:
+  - `/shell-equivalents <https://psutil.readthedocs.io/en/latest/shell-equivalents.html>`__:
     maps each psutil API to native CLI commands
+  - `/stdlib-equivalents <https://psutil.readthedocs.io/en/latest/stdlib-equivalents.html>`__:
+    maps psutil's Python API to the closest equivalent in the Python standard
+    library.
   - `/install <https://psutil.readthedocs.io/en/latest/install.html>`__
     (was old ``INSTALL.rst`` in root dir)
   - `/credits <https://psutil.readthedocs.io/en/latest/credits.html>`__:
