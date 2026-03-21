@@ -324,6 +324,32 @@ class TestSystemVirtualMemoryAgainstVmstat(LinuxTestCase):
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
+class TestSystemVirtualMemoryAgainstMeminfo(LinuxTestCase):
+    @staticmethod
+    def read_meminfo():
+        mems = {}
+        with open("/proc/meminfo") as f:
+            for line in f:
+                fields = line.split()
+                if len(fields) >= 2:
+                    mems[fields[0]] = int(fields[1]) * 1024
+        return mems
+
+    @retry_on_failure()
+    def test_buffers(self):
+        proc_value = self.read_meminfo()["Buffers:"]
+        psutil_value = psutil.virtual_memory().buffers
+        assert abs(psutil_value - proc_value) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure()
+    def test_cached(self):
+        # psutil cached = Cached + SReclaimable
+        mems = self.read_meminfo()
+        proc_value = mems["Cached:"] + mems.get("SReclaimable:", 0)
+        psutil_value = psutil.virtual_memory().cached
+        assert abs(psutil_value - proc_value) < TOLERANCE_SYS_MEM
+
+
 class TestSystemVirtualMemoryMocks(LinuxTestCase):
     def test_warnings_on_misses(self):
         # Emulate a case where /proc/meminfo provides few info.
