@@ -485,11 +485,11 @@ Disks
   See `scripts/disk_usage.py`_ script providing an example usage.
   Returns a list of named tuples with the following fields:
 
-  * **device**: the device path (e.g. ``"/dev/hda1"``). On Windows this is the
-    drive letter (e.g. ``"C:\\"``).
-  * **mountpoint**: the mount point path (e.g. ``"/"``). On Windows this is the
-    drive letter (e.g. ``"C:\\"``).
-  * **fstype**: the partition filesystem (e.g. ``"ext3"`` on UNIX or ``"NTFS"``
+  * **device**: the device path (e.g. "/dev/hda1"). On Windows this is the
+    drive letter (e.g. "C:\\").
+  * **mountpoint**: the mount point path (e.g. "/"). On Windows this is the
+    drive letter (e.g. "C:\\").
+  * **fstype**: the partition filesystem (e.g. "ext3" on UNIX or "NTFS"
     on Windows).
   * **opts**: a comma-separated string indicating different mount options for
     the drive/partition. Platform-dependent.
@@ -512,16 +512,19 @@ Disks
   Return disk usage statistics about the partition which contains the given
   *path* as a named tuple including **total**, **used** and **free** space
   expressed in bytes, plus the **percentage** usage.
-  ``OSError`` is raised if *path* does not exist.
-  Starting from Python 3.3 this is also available as :func:`shutil.disk_usage`
-  (added in `BPO-12442`_).
   See `scripts/disk_usage.py`_ script providing an example usage.
+
+  This function was later incorporated in Python 3.3 as
+  :func:`shutil.disk_usage` (`BPO-12442`_).
 
   .. code-block:: pycon
 
      >>> import psutil
      >>> psutil.disk_usage('/')
      sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
+
+  .. note::
+    Note On UNIX, path must point to a path within a **mounted** filesystem partition.
 
   .. note::
     UNIX usually reserves 5% of the total disk space for the root user.
@@ -1474,8 +1477,9 @@ Process class
        10
        >>>
 
-    Starting from Python 3.3 this functionality is also available as
-    :func:`os.getpriority` and :func:`os.setpriority` (added in `BPO-10784`_).
+    This method was later incorporated in Python 3.3 as
+    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
+
     On Windows this is implemented via `GetPriorityClass`_ and
     `SetPriorityClass`_ Windows APIs and *value* is one of the
     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
@@ -2426,7 +2430,7 @@ Process class
     .. versionchanged:: 7.2.2
        on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use :func:`os.pidfd_open` and
        :func:`select.kqueue` respectively, instead of less efficient busy-loop
-       polling. Added to Python 3.15 in `GH-144047`_.
+       polling. Later added to CPython 3.15 in `GH-144047`_.
 
 ----
 

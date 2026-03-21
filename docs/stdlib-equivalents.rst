@@ -56,7 +56,7 @@ Disk
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
      - Identical except psutil adds a ``percent`` field.
-       Added in CPython 3.3 (BPO-12442_).
+       Later added to CPython 3.3 (BPO-12442_).
    * - :func:`disk_partitions`
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
@@ -186,11 +186,20 @@ CPU / scheduling
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
-     - Added in CPython 3.3 (`BPO-10784`_). POSIX only; psutil also
+     - Later added to CPython 3.3 (`BPO-10784`_). POSIX only; psutil also
        supports Windows.
    * - :meth:`Process.nice() <Process.nice>`
      - :func:`os.nice`
      - Stdlib is POSIX only. psutil also supports Windows.
+   * - *no equivalent*
+     - :func:`os.sched_getscheduler`,
+       :func:`os.sched_setscheduler`
+     - Set process scheduling *policy* (``SCHED_OTHER``,
+       ``SCHED_FIFO``, ``SCHED_RR``, etc.). This is different
+       from nice, which sets the priority *within*
+       ``SCHED_OTHER``. Real-time policies (``SCHED_FIFO``,
+       ``SCHED_RR``) preempt all normal processes regardless
+       of nice value.
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
@@ -252,12 +261,12 @@ Threads
      - notes
    * - :meth:`Process.num_threads`
      - :func:`threading.active_count`
-     - Counts only Python :mod:`threading` threads; psutil counts all
+     - Stdlib counts Python :mod:`threading` threads; psutil counts all
        OS-level threads.
    * - :meth:`Process.threads`
      - :func:`threading.enumerate`
-     - Returns :class:`threading.Thread` objects; psutil returns raw OS-level
-       thread IDs with CPU-time stats.
+     - Stdlib returns :class:`threading.Thread` objects; psutil returns raw
+       OS-level thread IDs with CPU-time stats.
 
 Signals
 ~~~~~~~
@@ -272,7 +281,7 @@ Signals
      - notes
    * - :meth:`Process.send_signal`
      - :func:`os.kill`
-     - Direct equivalent on POSIX. On Windows, :func:`os.kill`
+     - Direct equivalent on POSIX. On Windows :func:`os.kill`
        has limited signal support.
        psutil adds :exc:`NoSuchProcess` and :exc:`AccessDenied` handling + it
        prevents killing a reused PID.
@@ -296,5 +305,5 @@ Signals
    * - :meth:`Process.wait`
      - :meth:`subprocess.Popen.wait`
      - Equivalent, but on Linux and BSD psutil uses efficient OS-level
-       waiting instead of busy polling. Added to CPython 3.15
-       in `GH-144047`_.
+       waiting instead of busy polling. Later added to CPython
+       3.15 in `GH-144047`_.
