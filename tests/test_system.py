@@ -849,7 +849,12 @@ class TestNetAPIs(PsutilTestCase):
         #     psutil.net_io_counters(pernic=True).keys()
         # )
 
-        families = {socket.AF_INET, socket.AF_INET6, psutil.AF_LINK}
+        families = {
+            socket.AF_INET,
+            socket.AF_INET6,
+            socket.AF_UNSPEC,
+            psutil.AF_LINK,
+        }
         for nic, addrs in nics.items():
             assert isinstance(nic, str)
             assert len(set(addrs)) == len(addrs)
