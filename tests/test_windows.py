@@ -121,48 +121,73 @@ def wmic(path, what, converter=int):
 # ===================================================================
 
 
-class TestCpuAPIs(WindowsTestCase):
+class TestCpuCount(WindowsTestCase):
     @pytest.mark.skipif(
         'NUMBER_OF_PROCESSORS' not in os.environ,
         reason="NUMBER_OF_PROCESSORS env var is not available",
     )
-    def test_cpu_count_vs_NUMBER_OF_PROCESSORS(self):
+    def test_against_NUMBER_OF_PROCESSORS(self):
         # Will likely fail on many-cores systems:
         # https://stackoverflow.com/questions/31209256
         num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
         assert num_cpus == psutil.cpu_count()
 
-    def test_cpu_count_vs_GetSystemInfo(self):
+    def test_against_GetSystemInfo(self):
         # Will likely fail on many-cores systems:
         # https://stackoverflow.com/questions/31209256
         assert psutil.cpu_count() == win32api.GetSystemInfo()[5]
 
-    def test_cpu_count_logical_vs_wmi(self):
+    def test_against_wmi(self):
         w = wmi.WMI()
         procs = sum(
             proc.NumberOfLogicalProcessors for proc in w.Win32_Processor()
         )
         assert psutil.cpu_count() == procs
 
-    def test_cpu_count_cores_vs_wmi(self):
+    def test_cores_against_wmi(self):
         w = wmi.WMI()
         cores = sum(proc.NumberOfCores for proc in w.Win32_Processor())
         assert psutil.cpu_count(logical=False) == cores
 
-    def test_cpu_count_vs_cpu_times(self):
+    def test_against_cpu_times(self):
         assert psutil.cpu_count() == len(psutil.cpu_times(percpu=True))
 
-    def test_cpu_times_irq_field(self):
+    def test_irq_field(self):
         t = psutil.cpu_times()
         assert t.irq >= 0
         with pytest.warns(DeprecationWarning, match="interrupt"):
             assert t.interrupt == t.irq
 
+
+class TestCpuFreq(WindowsTestCase):
     def test_cpu_freq(self):
         w = wmi.WMI()
         proc = w.Win32_Processor()[0]
         assert abs(proc.CurrentClockSpeed - psutil.cpu_freq().current) < 100
         assert proc.MaxClockSpeed == psutil.cpu_freq().max
+
+
+class TestCpuStats(WindowsTestCase):
+
+    @retry_on_failure()
+    def test_ctx_switches(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_System()[0]
+        wmi_value = int(w.ContextSwitchesPersec)
+        psutil_value = psutil.cpu_stats().ctx_switches
+        assert abs(psutil_value - wmi_value) < 1000
+
+    @retry_on_failure()
+    def test_interrupts(self):
+        # Interrupts are summed across all CPUs; use _Total from
+        # Win32_PerfRawData_PerfOS_Processor.
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Processor(Name="_Total")[0]
+        wmi_value = int(w.InterruptsPersec)
+        psutil_value = psutil.cpu_stats().interrupts
+        assert abs(psutil_value - wmi_value) < 1000
+
+    def test_soft_interrupts(self):
+        # Always 0 on Windows.
+        assert psutil.cpu_stats().soft_interrupts == 0
 
 
 class TestVirtualMemory(WindowsTestCase):
