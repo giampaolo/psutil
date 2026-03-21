@@ -849,13 +849,20 @@ class TestNetAPIs(PsutilTestCase):
         #     psutil.net_io_counters(pernic=True).keys()
         # )
 
-        families = {socket.AF_INET, socket.AF_INET6, psutil.AF_LINK}
+        families = {
+            socket.AF_INET,
+            socket.AF_INET6,
+            socket.AF_UNSPEC,
+            psutil.AF_LINK,
+        }
         for nic, addrs in nics.items():
             assert isinstance(nic, str)
             assert len(set(addrs)) == len(addrs)
             for addr in addrs:
                 assert isinstance(addr.family, int)
-                assert isinstance(addr.address, str)
+                assert isinstance(addr.address, (str, type(None)))
+                if addr.address is None:  # virtual NIC
+                    assert addr.family == socket.AF_UNSPEC
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
                 assert addr.family in families

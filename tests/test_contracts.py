@@ -10,6 +10,7 @@ Some of these are duplicates of tests test_system.py and test_process.py.
 """
 
 import platform
+import socket
 
 import psutil
 from psutil import AIX
@@ -421,7 +422,9 @@ class TestSystemAPITypes(PsutilTestCase):
             assert isinstance(ifname, str)
             for addr in addrs:
                 assert isinstance(addr.family, enum.IntEnum)
-                assert isinstance(addr.address, str)
+                assert isinstance(addr.address, (str, type(None)))
+                if addr.address is None:  # virtual NIC
+                    assert addr.family == socket.AF_UNSPEC
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
 
