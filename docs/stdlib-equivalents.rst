@@ -61,12 +61,11 @@ Disk
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
        :func:`os.listvolumes`
-     - Windows only (Python 3.12+). These are low-level volume
-       enumeration APIs: :func:`os.listdrives` returns drive
-       letters, :func:`os.listvolumes` returns volume GUID
-       paths, :func:`os.listmounts` returns mount points.
-       psutil combines device, mountpoint, fstype and opts in a
-       single cross-platform call.
+     - Windows only (Python 3.12+). Low-level volume
+       enumeration: :func:`os.listdrives` for drive letters,
+       :func:`os.listvolumes` for volume GUIDs,
+       :func:`os.listmounts` for mount points. psutil combines
+       all of these in one cross-platform call.
 
 Network
 ~~~~~~~
@@ -172,13 +171,12 @@ CPU / scheduling
      - notes
    * - :meth:`Process.cpu_times`
      - :func:`os.times`
-     - :func:`os.times` also returns an ``elapsed`` field not
-       present in psutil, which in turn adds ``iowait``
-       (Linux).
+     - :func:`os.times` also has ``elapsed``; psutil adds
+       ``iowait`` (Linux).
    * - :meth:`Process.cpu_times`
      - :func:`resource.getrusage`
-     - ``ru_utime`` / ``ru_stime`` are the same, but with
-       higher precision.
+     - ``ru_utime`` / ``ru_stime`` match, but with higher
+       precision.
    * - :meth:`Process.num_ctx_switches`
      - :func:`resource.getrusage`
      - :func:`resource.getrusage` returns ``ru_nvcsw`` / ``ru_nivcsw``
@@ -194,12 +192,11 @@ CPU / scheduling
    * - *no equivalent*
      - :func:`os.sched_getscheduler`,
        :func:`os.sched_setscheduler`
-     - Set process scheduling *policy* (``SCHED_OTHER``,
-       ``SCHED_FIFO``, ``SCHED_RR``, etc.). This is different
-       from nice, which sets the priority *within*
-       ``SCHED_OTHER``. Real-time policies (``SCHED_FIFO``,
-       ``SCHED_RR``) preempt all normal processes regardless
-       of nice value.
+     - Sets scheduling *policy* (``SCHED_OTHER``,
+       ``SCHED_FIFO``, ``SCHED_RR``, etc.). Unlike nice, which
+       sets priority *within* ``SCHED_OTHER``. Real-time
+       policies preempt all normal processes regardless of
+       nice.
    * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
@@ -223,8 +220,8 @@ Memory
      - notes
    * - :meth:`Process.memory_info`
      - :func:`resource.getrusage`
-     - :func:`resource.getrusage` returns peak RSS (``ru_maxrss``) only.
-       psutil returns current RSS, VMS, and more fields.
+     - :func:`resource.getrusage` only has peak RSS (``ru_maxrss``);
+       psutil returns current RSS, VMS, and more.
    * - :meth:`Process.page_faults`
      - :func:`resource.getrusage`
      - :func:`resource.getrusage` returns ``ru_majflt`` / ``ru_minflt``
@@ -243,10 +240,9 @@ I/O
      - notes
    * - :meth:`Process.io_counters`
      - :func:`resource.getrusage`
-     - :func:`resource.getrusage` returns ``ru_inblock`` /
-       ``ru_oublock`` (block I/O operations only, current
-       process only). psutil returns read/write bytes and
-       counts for any PID.
+     - :func:`resource.getrusage` only has ``ru_inblock`` /
+       ``ru_oublock`` (block I/O, current process). psutil
+       returns read/write bytes and counts for any PID.
 
 Threads
 ~~~~~~~
@@ -281,10 +277,10 @@ Signals
      - notes
    * - :meth:`Process.send_signal`
      - :func:`os.kill`
-     - Direct equivalent on POSIX. On Windows :func:`os.kill`
-       has limited signal support.
-       psutil adds :exc:`NoSuchProcess` and :exc:`AccessDenied` handling + it
-       prevents killing a reused PID.
+     - Direct equivalent on POSIX. :func:`os.kill` has limited
+       Windows signal support. psutil adds
+       :exc:`NoSuchProcess` / :exc:`AccessDenied` handling and
+       won't kill a reused PID.
    * - :meth:`Process.suspend`
      - :func:`os.kill` + :data:`signal.SIGSTOP`
      - Same as above.
