@@ -227,8 +227,9 @@ class TestVirtualMemory(WindowsTestCase):
         assert abs(psutil.virtual_memory().used - wmi_used) < TOLERANCE_SYS_MEM
 
 
-class TestSystemAPIs(WindowsTestCase):
-    def test_nic_names(self):
+class NetAPIs(WindowsTestCase):
+
+    def test_net_io_counters_nic_names(self):
         out = sh('ipconfig /all')
         nics = psutil.net_io_counters(pernic=True).keys()
         for nic in nics:
@@ -265,7 +266,21 @@ class TestSystemAPIs(WindowsTestCase):
         win_ports = {int(p) for p in out.strip().split(',') if p.strip()}
         assert ps_ports == win_ports
 
-    def test_total_swapmem(self):
+    def test_net_if_stats(self):
+        ps_names = set(cext.net_if_stats())
+        wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
+        wmi_names = set()
+        for wmi_adapter in wmi_adapters:
+            wmi_names.add(wmi_adapter.Name)
+            wmi_names.add(wmi_adapter.NetConnectionID)
+        assert (
+            ps_names & wmi_names
+        ), f"no common entries in {ps_names}, {wmi_names}"
+
+
+class TestSwapMemory(WindowsTestCase):
+
+    def test_total(self):
         w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
         assert (
             int(w.CommitLimit) - psutil.virtual_memory().total
@@ -275,7 +290,7 @@ class TestSystemAPIs(WindowsTestCase):
             assert psutil.swap_memory().free == 0
             assert psutil.swap_memory().used == 0
 
-    def test_percent_swapmem(self):
+    def test_percent(self):
         if psutil.swap_memory().total > 0:
             w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile(Name="_Total")[0]
             # calculate swap usage to percent
@@ -286,29 +301,11 @@ class TestSystemAPIs(WindowsTestCase):
             assert abs(psutil.swap_memory().percent - percentSwap) < 5
             assert psutil.swap_memory().percent <= 100
 
-    # @pytest.mark.skipif(wmi is None, reason="wmi module is not installed")
-    # def test__UPTIME(self):
-    #     # _UPTIME constant is not public but it is used internally
-    #     # as value to return for pid 0 creation time.
-    #     # WMI behaves the same.
-    #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-    #     p = psutil.Process(0)
-    #     wmic_create = str(w.CreationDate.split('.')[0])
-    #     psutil_create = time.strftime("%Y%m%d%H%M%S",
-    #                                   time.localtime(p.create_time()))
 
-    # Note: this test is not very reliable
-    @retry_on_failure()
-    def test_pids(self):
-        # Note: this test might fail if the OS is starting/killing
-        # other processes in the meantime
-        w = wmi.WMI().Win32_Process()
-        wmi_pids = {x.ProcessId for x in w}
-        psutil_pids = set(psutil.pids())
-        assert wmi_pids == psutil_pids
+class TestDiskApis(WindowsTestCase):
 
     @retry_on_failure()
-    def test_disks(self):
+    def test_disk_partitions(self):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
         for ps_part in ps_parts:
@@ -338,18 +335,7 @@ class TestSystemAPIs(WindowsTestCase):
             else:
                 return pytest.fail(f"can't find partition {ps_part!r}")
 
-    @retry_on_failure()
-    def test_disk_usage(self):
-        for disk in psutil.disk_partitions():
-            if 'cdrom' in disk.opts:
-                continue
-            win = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
-            ps = psutil.disk_usage(disk.mountpoint)
-            assert abs(win[0] - ps.free) < TOLERANCE_DISK_USAGE
-            assert abs(win[1] - ps.total) < TOLERANCE_DISK_USAGE
-            assert ps.used == ps.total - ps.free
-
-    def test_disk_partitions(self):
+    def test_disk_partitions_mountpoint(self):
         win = [
             x + '\\'
             for x in win32api.GetLogicalDriveStrings().split("\\\x00")
@@ -361,6 +347,41 @@ class TestSystemAPIs(WindowsTestCase):
             if not x.mountpoint.startswith('A:')
         ]
         assert win == ps
+
+    @retry_on_failure()
+    def test_disk_usage(self):
+        for disk in psutil.disk_partitions():
+            if 'cdrom' in disk.opts:
+                continue
+            win = win32api.GetDiskFreeSpaceEx(disk.mountpoint)
+            ps = psutil.disk_usage(disk.mountpoint)
+            assert abs(win[0] - ps.free) < TOLERANCE_DISK_USAGE
+            assert abs(win[1] - ps.total) < TOLERANCE_DISK_USAGE
+            assert ps.used == ps.total - ps.free
+
+
+class TestOtherSystemAPIs(WindowsTestCase):
+
+    # @pytest.mark.skipif(wmi is None, reason="wmi module is not installed")
+    # def test__UPTIME(self):
+    #     # _UPTIME constant is not public but it is used internally
+    #     # as value to return for pid 0 creation time.
+    #     # WMI behaves the same.
+    #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+    #     p = psutil.Process(0)
+    #     wmic_create = str(w.CreationDate.split('.')[0])
+    #     psutil_create = time.strftime("%Y%m%d%H%M%S",
+    #                                   time.localtime(p.create_time()))
+
+    # Note: this test is not very reliable
+    @retry_on_failure()
+    def test_pids(self):
+        # Note: this test might fail if the OS is starting/killing
+        # other processes in the meantime
+        w = wmi.WMI().Win32_Process()
+        wmi_pids = {x.ProcessId for x in w}
+        psutil_pids = set(psutil.pids())
+        assert wmi_pids == psutil_pids
 
     def test_convert_dos_path_drive(self):
         winpath = 'C:\\Windows\\Temp'
@@ -393,17 +414,6 @@ class TestSystemAPIs(WindowsTestCase):
         assert psutil._pswindows.convert_dos_path(winpath) == winpath
         assert psutil._pswindows.convert_dos_path(ntpath1) == winpath
         assert psutil._pswindows.convert_dos_path(ntpath2) == winpath
-
-    def test_net_if_stats(self):
-        ps_names = set(cext.net_if_stats())
-        wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
-        wmi_names = set()
-        for wmi_adapter in wmi_adapters:
-            wmi_names.add(wmi_adapter.Name)
-            wmi_names.add(wmi_adapter.NetConnectionID)
-        assert (
-            ps_names & wmi_names
-        ), f"no common entries in {ps_names}, {wmi_names}"
 
     def test_boot_time(self):
         wmi_os = wmi.WMI().Win32_OperatingSystem()
