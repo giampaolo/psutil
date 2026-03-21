@@ -21,7 +21,7 @@ CPU
 .. list-table::
    :class: longtable
    :header-rows: 1
-   :widths: 17 37 100
+   :widths: 20 37 100
 
    * - psutil
      - stdlib
@@ -39,8 +39,8 @@ CPU
        See :ref:`FAQ <faq_cpu_count>`.
    * - :func:`getloadavg`
      - :func:`os.getloadavg`
-     - Same as :func:`os.getloadavg` on POSIX, but psutil also offers
-       Windows support (emulated).
+     - Same as :func:`os.getloadavg` on POSIX, but psutil also has
+       Windows support.
 
 Disk
 ~~~~
@@ -61,11 +61,9 @@ Disk
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
        :func:`os.listvolumes`
-     - Windows only (Python 3.12+). Low-level volume
-       enumeration: :func:`os.listdrives` for drive letters,
-       :func:`os.listvolumes` for volume GUIDs,
-       :func:`os.listmounts` for mount points. psutil combines
-       all of these in one cross-platform call.
+     - Windows only (Python 3.12+). Low-level APIs:
+       drives, volume GUIDs, mount points. psutil
+       combines them in one cross-platform call.
 
 Network
 ~~~~~~~
@@ -80,9 +78,8 @@ Network
      - notes
    * - :func:`net_if_addrs`
      - :func:`socket.if_nameindex`
-     - Stdlib returns interface names only (no addresses).
-       psutil returns addresses, netmasks, broadcast, and PTP
-       for each NIC.
+     - Stdlib returns NIC names only.
+       psutil returns addresses, netmasks, broadcast, and PTP.
 
 Process
 ~~~~~~~
@@ -139,7 +136,7 @@ Credentials
 .. list-table::
    :class: longtable
    :header-rows: 1
-   :widths: 25 27 100
+   :widths: 20 37 50
 
    * - psutil
      - stdlib
@@ -164,7 +161,7 @@ CPU / scheduling
 .. list-table::
    :class: longtable
    :header-rows: 1
-   :widths: 35 35 100
+   :widths: 40 35 100
 
    * - psutil
      - stdlib
