@@ -259,7 +259,7 @@ What is the difference between psutil, os, and multiprocessing cpu_count?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :func:`os.cpu_count` returns the number of **logical** CPUs (including
-  hyperthreads). It the same as ``psutil.cpu_count(logical=True)``, but
+  hyperthreads). It's the same as ``psutil.cpu_count(logical=True)``, but
   psutil does not honour
   `PYTHON_CPU_COUNT <https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_CPU_COUNT>`_
   environment variable introduced in Python 3.13.
