@@ -759,9 +759,11 @@ Network
   value is a list of named tuples for each address assigned to the NIC.
   Each named tuple includes 5 fields:
 
-  - **family**: the address family, either :data:`socket.AF_INET` or :data:`socket.AF_INET6`
-    or :const:`psutil.AF_LINK`, which refers to a MAC address.
-  - **address**: the primary NIC address (always set).
+  - **family**: the address family, either :data:`socket.AF_INET`,
+    :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` in case MAC address,
+    :const:`psutil.AF_UNSPEC` in case of virtual interfaces.
+  - **address**: the primary NIC address (may be ``None`` in case of virtual
+    interfaces).
   - **netmask**: the netmask address (may be ``None``).
   - **broadcast**: the broadcast address (may be ``None``).
   - **ptp**: stands for "point to point"; it's the destination address on a
