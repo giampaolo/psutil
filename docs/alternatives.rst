@@ -10,6 +10,9 @@ See also :doc:`adoption` for notable projects that use psutil.
 Python standard library
 -----------------------
 
+See also :doc:`stdlib-equivalents` for a detailed function-by-function
+comparison.
+
 os module
 ^^^^^^^^^
 

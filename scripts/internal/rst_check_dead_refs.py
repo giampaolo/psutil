@@ -33,7 +33,11 @@ RE_ANY_TARGET = re.compile(
     re.MULTILINE,
 )
 # `Foo Bar`_  but NOT  `text <url>`_  and NOT  `text`__
-RE_REF = re.compile(r'`([^`<\n]+)`_(?!_)')
+RE_BACKTICK_REF = re.compile(r'`([^`<\n]+)`_(?!_)')
+# bare reference: BPO-12442_  (word chars and hyphens, no backticks)
+RE_BARE_REF = re.compile(
+    r'(?<![`\w])([A-Za-z0-9][\w-]*)(?<!_)_(?!_)(?![\w`*{])'
+)
 # .. include:: somefile.rst
 RE_INCLUDE = re.compile(r'^\.\. include::\s*(\S+)', re.MULTILINE)
 
@@ -92,14 +96,15 @@ def main():
                 line_number(own_text, m.start()),
             )
 
-    # Pass 2: collect all backtick references (with file + line).
+    # Pass 2: collect all references (with file + line).
     all_refs = []  # list of (lower-case name, original, file, lineno)
     referenced = set()  # lower-case names of all referenced targets
 
     for path in args.files:
         with open(path) as f:
             text = f.read()
-        for m in RE_REF.finditer(text):  # references from the file itself only
+
+        for m in RE_BACKTICK_REF.finditer(text):
             name = m.group(1).strip()
             all_refs.append((
                 name.lower(),
@@ -107,6 +112,17 @@ def main():
                 path,
                 line_number(text, m.start()),
             ))
+            referenced.add(name.lower())
+
+        for m in RE_BARE_REF.finditer(text):
+            name = m.group(1).strip()
+            if name.lower() not in referenced:
+                all_refs.append((
+                    name.lower(),
+                    name,
+                    path,
+                    line_number(text, m.start()),
+                ))
             referenced.add(name.lower())
 
     errors = []

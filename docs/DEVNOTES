@@ -8,6 +8,9 @@ https://github.com/giampaolo/psutil/issues
 FEATURES
 ========
 
+- Use resource.getrusage() to get current process CPU times (it has more
+  precision)
+
 - (UNIX) process root (different from cwd)
 
 - (Linux) locked files via /proc/locks:
