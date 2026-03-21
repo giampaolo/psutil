@@ -855,7 +855,9 @@ class TestNetAPIs(PsutilTestCase):
             assert len(set(addrs)) == len(addrs)
             for addr in addrs:
                 assert isinstance(addr.family, int)
-                assert isinstance(addr.address, str)
+                assert isinstance(addr.address, (str, type(None)))
+                if addr.address is None:  # virtual NIC
+                    assert addr.family == socket.AF_UNSPEC
                 assert isinstance(addr.netmask, (str, type(None)))
                 assert isinstance(addr.broadcast, (str, type(None)))
                 assert addr.family in families
