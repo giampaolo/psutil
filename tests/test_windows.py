@@ -241,6 +241,17 @@ class NetAPIs(WindowsTestCase):
                     f"{nic!r} nic wasn't found in 'ipconfig /all' output"
                 )
 
+    @retry_on_failure()
+    def test_net_io_counters(self):
+        ps = psutil.net_io_counters(pernic=False)
+        wmi_recv = wmi_sent = 0
+        for nic in wmi.WMI().Win32_PerfRawData_Tcpip_NetworkInterface():
+            wmi_recv += int(nic.BytesReceivedPerSec)
+            wmi_sent += int(nic.BytesSentPerSec)
+        tolerance = 1 * 1024 * 1024  # 1 MB
+        assert abs(ps.bytes_recv - wmi_recv) < tolerance
+        assert abs(ps.bytes_sent - wmi_sent) < tolerance
+
     def test_net_if_addrs(self):
         ps_addrs = set()
         for addrs in psutil.net_if_addrs().values():
