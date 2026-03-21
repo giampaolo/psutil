@@ -122,9 +122,10 @@ def wmic(path, what, converter=int):
 
 
 class TestCpuCount(WindowsTestCase):
+
     @pytest.mark.skipif(
         'NUMBER_OF_PROCESSORS' not in os.environ,
-        reason="NUMBER_OF_PROCESSORS env var is not available",
+        reason="env var not available",
     )
     def test_against_NUMBER_OF_PROCESSORS(self):
         # Will likely fail on many-cores systems:
@@ -358,6 +359,16 @@ class TestDiskApis(WindowsTestCase):
             assert abs(win[0] - ps.free) < TOLERANCE_DISK_USAGE
             assert abs(win[1] - ps.total) < TOLERANCE_DISK_USAGE
             assert ps.used == ps.total - ps.free
+
+    @retry_on_failure()
+    def test_disk_io_counters(self):
+        stats = psutil.disk_io_counters()
+        w = wmi.WMI().Win32_PerfRawData_PerfDisk_PhysicalDisk(Name="_Total")[0]
+        tolerance = 10 * 1024 * 1024
+        assert abs(stats.read_bytes - int(w.DiskReadBytesPersec)) < tolerance
+        assert abs(stats.write_bytes - int(w.DiskWriteBytesPersec)) < tolerance
+        assert abs(stats.read_count - int(w.DiskReadsPersec)) < 1000
+        assert abs(stats.write_count - int(w.DiskWritesPersec)) < 1000
 
 
 class TestOtherSystemAPIs(WindowsTestCase):
