@@ -142,16 +142,19 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     }
 
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr)
-            continue;
+        if (!ifa->ifa_addr)  // virtual NIC
+            goto append_none;
+
         family = ifa->ifa_addr->sa_family;
+
         py_address = psutil_convert_ipaddr(ifa->ifa_addr, family);
-        // If the primary address can't be determined just skip it.
-        // I've never seen this happen on Linux but I did on FreeBSD.
-        if (py_address == Py_None)
-            continue;
+        if (py_address == Py_None) {  // virtual NIC
+            Py_CLEAR(py_address);
+            goto append_none;
+        }
         if (py_address == NULL)
             goto error;
+
         py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
@@ -192,6 +195,25 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
         Py_CLEAR(py_netmask);
         Py_CLEAR(py_broadcast);
         Py_CLEAR(py_ptp);
+        continue;
+
+    append_none:
+        // When the primary address can't be determined, still include
+        // the NIC with None values. These are usually virtual
+        // IPv4/IPv6 tunnel interfaces.
+        if (!pylist_append_fmt(
+                py_retlist,
+                "(siOOOO)",
+                ifa->ifa_name,
+                AF_UNSPEC,
+                Py_None,
+                Py_None,
+                Py_None,
+                Py_None
+            ))
+        {
+            goto error;
+        }
     }
 
     freeifaddrs(ifaddr);

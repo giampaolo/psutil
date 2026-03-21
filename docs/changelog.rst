@@ -151,6 +151,12 @@ Others
 - :gh:`2746`, [FreeBSD]: :meth:`Process.memory_maps`, `rss` and `private`
   fields, are erroneously reported in memory pages instead of bytes. Other
   platforms (Linux, macOS, Windows) return bytes.
+- :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
+  which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
+  included in the returned dict with family == ``AF_UNSPEC`` and an empty list
+  of addresses. Main reason: it creates an inconsistency with
+  :func:`net_io_counters` and :func:`net_if_stats` which do return these
+  interface names.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^

@@ -116,7 +116,7 @@ class sconn(NamedTuple):
 # psutil.net_if_addrs()
 class snicaddr(NamedTuple):
     family: socket.AddressFamily
-    address: str
+    address: str | None
     netmask: str | None
     broadcast: str | None
     ptp: str | None
