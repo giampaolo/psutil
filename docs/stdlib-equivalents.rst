@@ -9,6 +9,9 @@ standard library. This is useful for understanding what psutil replaces and
 how the two APIs differ. The most common difference is that stdlib functions
 only operate on the **current process**, while psutil works on **any process**.
 
+See also the :doc:`alternatives` page for a higher-level discussion of
+how psutil compares to the standard library and third-party tools.
+
 System-wide functions
 ---------------------
 
