@@ -186,6 +186,21 @@ class TestVirtualMemory(WindowsTestCase):
             < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
+    def test_available(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        assert (
+            abs(int(w.AvailableBytes) - psutil.virtual_memory().available)
+            < TOLERANCE_SYS_MEM
+        )
+
+    @retry_on_failure()
+    def test_used(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        total = psutil.virtual_memory().total
+        wmi_used = total - int(w.AvailableBytes)
+        assert abs(psutil.virtual_memory().used - wmi_used) < TOLERANCE_SYS_MEM
+
 
 class TestSystemAPIs(WindowsTestCase):
     def test_nic_names(self):
