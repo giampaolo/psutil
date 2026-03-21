@@ -1339,6 +1339,35 @@ class TestSystemDiskIoCounters(LinuxTestCase):
             with pytest.raises(NotImplementedError):
                 psutil.disk_io_counters()
 
+    @pytest.mark.skipif(
+        not shutil.which("iostat"), reason="'iostat' command not available"
+    )
+    @retry_on_failure()
+    def test_against_iostat(self):
+        # Cross-check read_bytes/write_bytes against 'iostat -d -k'
+        # cumulative totals (kB_read, kB_wrtn columns).
+        out = sh(["iostat", "-d", "-k"])
+        iostat_disks = {}
+        for line in out.splitlines():
+            fields = line.split()
+            if len(fields) < 7 or fields[0] in {"Linux", "Device"}:
+                continue
+            name = fields[0]
+            try:
+                kb_read = int(fields[5])
+                kb_wrtn = int(fields[6])
+            except ValueError:
+                continue
+            iostat_disks[name] = (kb_read * 1024, kb_wrtn * 1024)
+
+        psutil_disks = psutil.disk_io_counters(perdisk=True, nowrap=False)
+        for name, (bytes_read, bytes_wrtn) in iostat_disks.items():
+            if name not in psutil_disks:
+                continue
+            stats = psutil_disks[name]
+            assert abs(stats.read_bytes - bytes_read) < 1024 * 1024
+            assert abs(stats.write_bytes - bytes_wrtn) < 1024 * 1024
+
 
 class TestRootFsDeviceFinder(LinuxTestCase):
     def setUp(self):
