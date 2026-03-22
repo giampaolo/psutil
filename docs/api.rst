@@ -1300,6 +1300,15 @@ Process class
 
      The process PID. This is the only (read-only) attribute of the class.
 
+  .. attribute:: info
+
+     A dict containing pre-fetched process info, set by
+     :func:`process_iter` when called with ``attrs``. Use method
+     calls instead (e.g. ``p.name()`` instead of ``p.info['name']``).
+     Accessing this attribute raises :exc:`DeprecationWarning`.
+
+     .. deprecated:: 8.0.0
+
   .. method:: ppid()
 
     The process parent PID. On Windows the return value is cached after the
