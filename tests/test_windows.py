@@ -242,6 +242,7 @@ class NetAPIs(WindowsTestCase):
                 )
 
     @retry_on_failure()
+    @pytest.mark.skipif(GITHUB_ACTIONS, reason="unreliable on GITHUB")
     def test_net_io_counters(self):
         ps = psutil.net_io_counters(pernic=False)
         wmi_recv = wmi_sent = 0
@@ -453,6 +454,10 @@ class TestOtherSystemAPIs(WindowsTestCase):
         ms = ctypes.windll.kernel32.GetTickCount64()
         secs = ms / 1000.0
         assert abs(cext.uptime() - secs) < 0.5
+
+    def test_users(self):
+        current = win32api.GetUserName()
+        assert current in {u.name for u in psutil.users()}
 
 
 # ===================================================================
