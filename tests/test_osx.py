@@ -235,6 +235,28 @@ class TestNetAPIs(MacosTestCase):
                 assert stats.isup == ('RUNNING' in out), out
                 assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
+    @retry_on_failure()
+    def test_net_io_counters(self):
+        out = sh("netstat -ib")
+        netstat = {}
+        for line in out.splitlines():
+            fields = line.split()
+            if len(fields) < 10 or "<Link#" not in fields[2]:
+                continue
+            name = fields[0].rstrip("*")
+            if len(fields) == 11:
+                ibytes, obytes = int(fields[6]), int(fields[9])
+            else:
+                ibytes, obytes = int(fields[5]), int(fields[8])
+            netstat[name] = (ibytes, obytes)
+        ps = psutil.net_io_counters(pernic=True)
+        tolerance = 1 * 1024 * 1024  # 1 MB
+        for name, (ibytes, obytes) in netstat.items():
+            if name not in ps:
+                continue
+            assert abs(ps[name].bytes_recv - ibytes) < tolerance
+            assert abs(ps[name].bytes_sent - obytes) < tolerance
+
 
 class TestSensorsAPIs(MacosTestCase):
 
