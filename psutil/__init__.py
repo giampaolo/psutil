@@ -1255,7 +1255,6 @@ class Process:
             return _ntp.pfullmem(*basic_mem + fp)
         return _ntp.pfullmem(*basic_mem)
 
-    @_use_prefetch
     def memory_percent(self, memtype: str = "rss") -> float:
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
