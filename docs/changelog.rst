@@ -139,6 +139,11 @@ Others
   ``wired`` fields.
 - :gh:`2780`, [Windows]: :func:`disk_usage` now can accept a file path (not
   only a directory path).
+- :gh:`2784`: :func:`process_iter`: when *attrs* is specified, the pre-fetched
+  values are now cached directly on the :class:`Process` instance. Subsequent
+  method calls (e.g. ``p.name()``, ``p.status()``) return the cached values
+  instead of making new system calls. The ``p.info`` dict is deprecated. See
+  :ref:`migration guide <migration-8.0>`.
 
 **Bug fixes**
 

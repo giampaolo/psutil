@@ -20,6 +20,38 @@ release and shows the code changes required to upgrade.
 Migrating to 8.0
 -----------------
 
+process_iter(): p.info is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`process_iter` now caches pre-fetched values internally, so they
+can be accessed via normal method calls instead of the ``p.info`` dict.
+``p.info`` still works but raises :exc:`PendingDeprecationWarning`:
+
+.. code-block:: python
+
+  # before
+  for p in psutil.process_iter(attrs=["name", "status"]):
+      print(p.info["name"], p.info["status"])
+
+  # after
+  for p in psutil.process_iter(attrs=["name", "status"]):
+      print(p.name(), p.status())
+
+When ``attrs`` are specified, method calls return cached values
+(no extra syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess`
+are handled transparently (returning the ``ad_value``, which defaults
+to ``None``):
+
+.. code-block:: python
+
+  # before
+  for p in psutil.process_iter(attrs=["exe"], ad_value=""):
+      print(p.info["exe"])
+
+  # after
+  for p in psutil.process_iter(attrs=["exe"], ad_value=""):
+      print(p.exe())
+
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
