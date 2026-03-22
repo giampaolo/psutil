@@ -39,6 +39,42 @@ try:
 except ImportError:
     pwd = None
 
+if sys.platform == "win32":
+    import ctypes
+    import ctypes.wintypes
+
+    _kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    # Open a handle to a process with SYNCHRONIZE access (lets us wait on it)
+    _OpenProcess = _kernel32.OpenProcess
+    _OpenProcess.argtypes = [
+        ctypes.wintypes.DWORD,  # dwDesiredAccess
+        ctypes.wintypes.BOOL,   # bInheritHandle
+        ctypes.wintypes.DWORD,  # dwProcessId (PID)
+    ]
+    _OpenProcess.restype = ctypes.wintypes.HANDLE
+
+    # Wait until any one of N handles is signaled (process exited)
+    _WaitForMultipleObjects = _kernel32.WaitForMultipleObjects
+    _WaitForMultipleObjects.argtypes = [
+        ctypes.wintypes.DWORD,                      # nCount
+        ctypes.POINTER(ctypes.wintypes.HANDLE),     # lpHandles
+        ctypes.wintypes.BOOL,                       # bWaitAll
+        ctypes.wintypes.DWORD,                      # dwMilliseconds
+    ]
+    _WaitForMultipleObjects.restype = ctypes.wintypes.DWORD
+
+    # Close a handle when we're done with it
+    _CloseHandle = _kernel32.CloseHandle
+    _CloseHandle.argtypes = [ctypes.wintypes.HANDLE]
+    _CloseHandle.restype = ctypes.wintypes.BOOL
+
+    _SYNCHRONIZE = 0x00100000
+    _WAIT_OBJECT_0 = 0x00000000
+    _WAIT_TIMEOUT = 0x00000102
+    _WAIT_FAILED = 0xFFFFFFFF
+    _MAXIMUM_WAIT_OBJECTS = 64  # Windows hard limit per WaitForMultipleObjects call
+
 from . import _common
 from . import _ntuples as _ntp
 from ._common import AIX
@@ -1652,6 +1688,68 @@ process_iter.cache_clear = lambda: _pmap.clear()  # noqa: PLW0108
 process_iter.cache_clear.__doc__ = "Clear process_iter() internal cache."
 
 
+def _wait_procs_windows(alive, gone, deadline, callback):
+    """Windows fast path for wait_procs() using WaitForMultipleObjects.
+
+    Instead of polling each process one at a time, we open a handle for every
+    process and hand them all to the kernel at once. The kernel blocks and
+    wakes us up the instant any one of them exits — no busy-loop required.
+
+    WaitForMultipleObjects has a hard limit of 64 handles per call, so we
+    chunk larger lists and rotate through them.
+    """
+    # Build a mapping of {pid: (proc, handle)} for every alive process.
+    # OpenProcess with SYNCHRONIZE lets us wait on the handle.
+    handle_map = {}  # pid -> (proc, handle)
+    for proc in alive:
+        handle = _OpenProcess(_SYNCHRONIZE, False, proc.pid)
+        if handle:
+            handle_map[proc.pid] = (proc, handle)
+        # If OpenProcess fails the process is likely already gone — the
+        # existing fallback loop at the end of wait_procs() will catch it.
+
+    try:
+        while handle_map:
+            # Respect the deadline if one was given.
+            if deadline is not None:
+                remaining_ms = int((deadline - _timer()) * 1000)
+                if remaining_ms <= 0:
+                    break
+            else:
+                remaining_ms = 0xFFFFFFFF  # INFINITE
+
+            # WaitForMultipleObjects caps at 64 handles, so chunk if needed.
+            pids = list(handle_map.keys())
+            for chunk_start in range(0, len(pids), _MAXIMUM_WAIT_OBJECTS):
+                chunk_pids = pids[chunk_start: chunk_start + _MAXIMUM_WAIT_OBJECTS]
+                handles = [handle_map[pid][1] for pid in chunk_pids]
+
+                arr = (ctypes.wintypes.HANDLE * len(handles))(*handles)
+                ret = _WaitForMultipleObjects(
+                    len(handles),
+                    arr,
+                    False,   # bWaitAll=False: wake on ANY single exit
+                    remaining_ms,
+                )
+
+                if ret == _WAIT_FAILED or ret == _WAIT_TIMEOUT:
+                    # Timeout or error — stop trying, fall through to cleanup.
+                    return
+
+                # ret is the index of the handle that was signaled.
+                exited_pid = chunk_pids[ret - _WAIT_OBJECT_0]
+                proc, handle = handle_map.pop(exited_pid)
+                proc.returncode = proc.wait(timeout=0)
+                gone.add(proc)
+                if callback is not None:
+                    callback(proc)
+                break  # restart outer loop with updated handle_map
+    finally:
+        # Always release handles — leaking them wastes kernel resources.
+        for _proc, handle in handle_map.values():
+            _CloseHandle(handle)
+
+
 def wait_procs(
     procs: list[Process],
     timeout: float | None = None,
@@ -1717,6 +1815,10 @@ def wait_procs(
     alive = set(procs)
     if timeout is not None:
         deadline = _timer() + timeout
+
+    if WINDOWS and alive:
+        _wait_procs_windows(alive, gone, deadline if timeout is not None else None, callback)
+        alive = alive - gone
 
     while alive:
         if timeout is not None and timeout <= 0:
