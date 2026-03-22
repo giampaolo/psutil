@@ -348,6 +348,7 @@ class Process:
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         self._exitcode = _SENTINEL
+        self._prefetch = {}
         self._ident = (self.pid, None)
         try:
             self._ident = self._get_ident()
@@ -664,6 +665,10 @@ class Process:
         """The process parent PID.
         On Windows the return value is cached after first call.
         """
+        ret = self._prefetch.get("ppid", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
+
         # On POSIX we don't want to cache the ppid as it may unexpectedly
         # change to 1 (init) in case this process turns into a zombie:
         # https://github.com/giampaolo/psutil/issues/321
@@ -680,6 +685,10 @@ class Process:
 
     def name(self) -> str:
         """The process name. The return value is cached after first call."""
+        ret = self._prefetch.get("name", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
+
         # Process name is only cached on Windows as on POSIX it may
         # change, see:
         # https://github.com/giampaolo/psutil/issues/692
@@ -714,6 +723,9 @@ class Process:
         May also be an empty string.
         The return value is cached after first call.
         """
+        ret = self._prefetch.get("exe", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
 
         def guess_it(fallback):
             # try to guess exe from cmdline[0] in absence of a native
@@ -753,10 +765,16 @@ class Process:
 
     def cmdline(self) -> list[str]:
         """The command line this process has been called with."""
+        ret = self._prefetch.get("cmdline", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.cmdline()
 
     def status(self) -> ProcessStatus | str:
         """The process current status as a STATUS_* constant."""
+        ret = self._prefetch.get("status", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         try:
             return self._proc.status()
         except ZombieProcess:
@@ -766,6 +784,10 @@ class Process:
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
         """
+        ret = self._prefetch.get("username", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
+
         if POSIX:
             if pwd is None:
                 # might happen if python was installed from sources
@@ -794,11 +816,17 @@ class Process:
 
     def cwd(self) -> str:
         """Process current working directory as an absolute path."""
+        ret = self._prefetch.get("cwd", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.cwd()
 
     def nice(self, value: int | None = None) -> int | None:
         """Get or set process niceness (priority)."""
         if value is None:
+            ret = self._prefetch.get("nice", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.nice_get()
         else:
             self._raise_if_pid_reused()
@@ -811,24 +839,36 @@ class Process:
             """Return process UIDs as a (real, effective, saved)
             named tuple.
             """
+            ret = self._prefetch.get("uids", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.uids()
 
         def gids(self) -> pgids:
             """Return process GIDs as a (real, effective, saved)
             named tuple.
             """
+            ret = self._prefetch.get("gids", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.gids()
 
         def terminal(self) -> str | None:
             """The terminal associated with this process, if any,
             else None.
             """
+            ret = self._prefetch.get("terminal", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.terminal()
 
         def num_fds(self) -> int:
             """Return the number of file descriptors opened by this
             process (POSIX only).
             """
+            ret = self._prefetch.get("num_fds", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.num_fds()
 
     # Linux, BSD, AIX and Windows only
@@ -841,6 +881,9 @@ class Process:
             Those are the number of read/write calls performed and the
             amount of bytes read and written by the process.
             """
+            ret = self._prefetch.get("io_counters", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.io_counters()
 
     # Linux and Windows
@@ -864,6 +907,9 @@ class Process:
                 if value is not None:
                     msg = "'ioclass' argument must be specified"
                     raise ValueError(msg)
+                ret = self._prefetch.get("ionice", _SENTINEL)
+                if ret is not _SENTINEL:
+                    return ret
                 return self._proc.ionice_get()
             else:
                 self._raise_if_pid_reused()
@@ -904,6 +950,9 @@ class Process:
             (Windows, Linux and BSD only).
             """
             if cpus is None:
+                ret = self._prefetch.get("cpu_affinity", _SENTINEL)
+                if ret is not _SENTINEL:
+                    return ret
                 return sorted(set(self._proc.cpu_affinity_get()))
             else:
                 self._raise_if_pid_reused()
@@ -925,6 +974,9 @@ class Process:
             psutil.cpu_percent(percpu=True) to observe the system
             workload distributed across CPUs.
             """
+            ret = self._prefetch.get("cpu_num", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.cpu_num()
 
     # All platforms has it, but maybe not in the future.
@@ -934,6 +986,9 @@ class Process:
             """The environment variables of the process as a dict.  Note: this
             might not reflect changes made after the process started.
             """
+            ret = self._prefetch.get("environ", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.environ()
 
     if WINDOWS:
@@ -942,16 +997,25 @@ class Process:
             """Return the number of handles opened by this process
             (Windows only).
             """
+            ret = self._prefetch.get("num_handles", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.num_handles()
 
     def num_ctx_switches(self) -> pctxsw:
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
+        ret = self._prefetch.get("num_ctx_switches", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.num_ctx_switches()
 
     def num_threads(self) -> int:
         """Return the number of threads used by this process."""
+        ret = self._prefetch.get("num_threads", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.num_threads()
 
     if hasattr(_psplatform.Process, "threads"):
@@ -962,6 +1026,9 @@ class Process:
             thread id and thread CPU times (user/system).
             On OpenBSD this method requires root access.
             """
+            ret = self._prefetch.get("threads", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.threads()
 
     def children(self, recursive: bool = False) -> list[Process]:
@@ -1073,6 +1140,10 @@ class Process:
           2.9
           >>>
         """
+        ret = self._prefetch.get("cpu_percent", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
+
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
             msg = f"interval is not positive (got {interval!r})"
@@ -1140,6 +1211,9 @@ class Process:
         On macOS and Windows children_user and children_system are
         always set to 0.
         """
+        ret = self._prefetch.get("cpu_times", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.cpu_times()
 
     @memoize_when_activated
@@ -1151,6 +1225,9 @@ class Process:
 
         All numbers are expressed in bytes.
         """
+        ret = self._prefetch.get("memory_info", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.memory_info()
 
     @memoize_when_activated
@@ -1160,6 +1237,9 @@ class Process:
 
         All numbers are expressed in bytes.
         """
+        ret = self._prefetch.get("memory_info_ex", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         base = self.memory_info()
         if hasattr(self._proc, "memory_info_ex"):
             extras = self._proc.memory_info_ex()
@@ -1182,6 +1262,9 @@ class Process:
             memory_info() or memory_info_ex() and is considerably
             slower.
             """
+            ret = self._prefetch.get("memory_footprint", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
             return self._proc.memory_footprint()
 
     # DEPRECATED
@@ -1211,6 +1294,10 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
+        ret = self._prefetch.get("memory_percent", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
+
         valid_types = list(_ntp.pmem._fields)
         if hasattr(_ntp, "pmem_ex"):
             valid_types += [
@@ -1263,6 +1350,10 @@ class Process:
             entity and the named tuple will also include the mapped region's
             address space ('addr') and permission set ('perms').
             """
+            ret = self._prefetch.get("memory_maps", _SENTINEL)
+            if ret is not _SENTINEL:
+                return ret
+
             it = self._proc.memory_maps()
             if grouped:
                 d = {}
@@ -1293,6 +1384,9 @@ class Process:
 
         Both counters are cumulative since process creation.
         """
+        ret = self._prefetch.get("page_faults", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.page_faults()
 
     def open_files(self) -> list[popenfile]:
@@ -1300,6 +1394,9 @@ class Process:
         (path, fd) named tuples including the absolute file name
         and file descriptor number.
         """
+        ret = self._prefetch.get("open_files", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         return self._proc.open_files()
 
     def net_connections(self, kind: str = "inet") -> list[pconn]:
@@ -1324,6 +1421,9 @@ class Process:
         | all        | the sum of all the possible families and protocols |
         +------------+----------------------------------------------------+
         """
+        ret = self._prefetch.get("net_connections", _SENTINEL)
+        if ret is not _SENTINEL:
+            return ret
         _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
@@ -1639,8 +1739,10 @@ def process_iter(
             try:
                 if proc is None:  # new process
                     proc = add(pid)
+                proc._prefetch = {}
                 if attrs is not None:
                     proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
+                    proc._prefetch = proc.info.copy()
                 yield proc
             except NoSuchProcess:
                 remove(pid)

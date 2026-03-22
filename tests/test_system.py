@@ -121,6 +121,26 @@ class TestProcessIter(PsutilTestCase):
                 assert p.info['pid'] >= 0
             assert m.called
 
+    def test_prefetch(self):
+        for p in psutil.process_iter(attrs=["name", "status"]):
+            assert p.name() == p.info["name"]
+            assert p.status() == p.info["status"]
+
+    def test_prefetch_ad_value(self):
+        with mock.patch(
+            "psutil._psplatform.Process.cpu_times",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["cpu_times"]):
+                assert p.cpu_times() is None
+
+    def test_prefetch_cleared(self):
+        # Prefetch cache is cleared when attrs is not specified.
+        for p in psutil.process_iter(attrs=["name"]):
+            assert p._prefetch
+        for p in psutil.process_iter():
+            assert not p._prefetch
+
     def test_cache_clear(self):
         list(psutil.process_iter())  # populate cache
         assert psutil._pmap
