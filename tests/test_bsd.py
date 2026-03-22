@@ -246,6 +246,10 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         total, used, free = (int(p) * 1024 for p in parts[1:4])
         return total, used, free
 
+    def test_cpu_count_cores(self):
+        cores = sysctl("kern.smp.cores")
+        assert psutil.cpu_count(logical=False) == cores
+
     def test_cpu_frequency_against_sysctl(self):
         # Currently only cpu 0 is frequency is supported in FreeBSD
         # All other cores use the same frequency.

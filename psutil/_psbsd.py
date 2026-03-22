@@ -10,7 +10,6 @@ import functools
 import os
 from collections import defaultdict
 from collections import namedtuple
-from xml.etree import ElementTree  # noqa: ICN001
 
 from . import _ntuples as ntp
 from . import _psposix
@@ -161,29 +160,7 @@ else:
 
     def cpu_count_cores():
         """Return the number of CPU cores in the system."""
-        # From the C module we'll get an XML string similar to this:
-        # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
-        # We may get None in case "sysctl kern.sched.topology_spec"
-        # is not supported on this BSD version, in which case we'll mimic
-        # os.cpu_count() and return None.
-        ret = None
-        s = cext.cpu_topology()
-        if s is not None:
-            # get rid of padding chars appended at the end of the string
-            index = s.rfind("</groups>")
-            if index != -1:
-                s = s[: index + 9]
-                root = ElementTree.fromstring(s)
-                try:
-                    ret = len(root.findall('group/children/group/cpu')) or None
-                finally:
-                    # needed otherwise it will memleak
-                    root.clear()
-        if not ret:
-            # If logical CPUs == 1 it's obvious we' have only 1 core.
-            if cpu_count_logical() == 1:
-                return 1
-        return ret
+        return cext.cpu_count_cores()
 
 
 def cpu_stats():

@@ -86,7 +86,7 @@ static PyMethodDef mod_methods[] = {
     {"cpu_freq", psutil_cpu_freq, METH_VARARGS},
 #endif
 #if defined(PSUTIL_FREEBSD)
-    {"cpu_topology", psutil_cpu_topology, METH_VARARGS},
+    {"cpu_count_cores", psutil_cpu_count_cores, METH_VARARGS},
     {"sensors_battery", psutil_sensors_battery, METH_VARARGS},
     {"sensors_cpu_temperature", psutil_sensors_cpu_temperature, METH_VARARGS},
 #endif

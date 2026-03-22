@@ -81,23 +81,12 @@ error:
 
 
 PyObject *
-psutil_cpu_topology(PyObject *self, PyObject *args) {
-    char *topology = NULL;
-    size_t size = 0;
-    PyObject *py_str;
+psutil_cpu_count_cores(PyObject *self, PyObject *args) {
+    int num;
 
-    if (psutil_sysctlbyname_malloc(
-            "kern.sched.topology_spec", &topology, &size
-        )
-        != 0)
-    {
-        psutil_debug("ignore sysctlbyname('kern.sched.topology_spec') error");
+    if (psutil_sysctlbyname("kern.smp.cores", &num, sizeof(num)) != 0)
         Py_RETURN_NONE;
-    }
-
-    py_str = PyUnicode_FromString(topology);
-    free(topology);
-    return py_str;
+    return Py_BuildValue("i", num);
 }
 
 

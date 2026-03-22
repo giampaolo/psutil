@@ -162,6 +162,8 @@ Others
   of addresses. Main reason: it creates an inconsistency with
   :func:`net_io_counters` and :func:`net_if_stats` which do return these
   interface names.
+- :gh:`2782`, [FreeBSD]: :func:`cpu_count` ``logical=False`` return None on
+  systems without hyper threading.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
