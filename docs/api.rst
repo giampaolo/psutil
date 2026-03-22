@@ -1043,6 +1043,12 @@ Functions
 
   Sorting order in which processes are returned is based on their PID.
 
+  .. note::
+
+    Since :class:`Process` instances are reused across calls, a subsequent
+    :func:`process_iter` call will overwrite or clear any previously
+    pre-fetched values. Do not rely on cached values from a prior iteration.
+
   .. code-block:: pycon
 
      >>> import psutil
