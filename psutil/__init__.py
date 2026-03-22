@@ -49,7 +49,7 @@ if sys.platform == "win32":
     _OpenProcess = _kernel32.OpenProcess
     _OpenProcess.argtypes = [
         ctypes.wintypes.DWORD,  # dwDesiredAccess
-        ctypes.wintypes.BOOL,   # bInheritHandle
+        ctypes.wintypes.BOOL,  # bInheritHandle
         ctypes.wintypes.DWORD,  # dwProcessId (PID)
     ]
     _OpenProcess.restype = ctypes.wintypes.HANDLE
@@ -57,10 +57,10 @@ if sys.platform == "win32":
     # Wait until any one of N handles is signaled (process exited)
     _WaitForMultipleObjects = _kernel32.WaitForMultipleObjects
     _WaitForMultipleObjects.argtypes = [
-        ctypes.wintypes.DWORD,                      # nCount
-        ctypes.POINTER(ctypes.wintypes.HANDLE),     # lpHandles
-        ctypes.wintypes.BOOL,                       # bWaitAll
-        ctypes.wintypes.DWORD,                      # dwMilliseconds
+        ctypes.wintypes.DWORD,  # nCount
+        ctypes.POINTER(ctypes.wintypes.HANDLE),  # lpHandles
+        ctypes.wintypes.BOOL,  # bWaitAll
+        ctypes.wintypes.DWORD,  # dwMilliseconds
     ]
     _WaitForMultipleObjects.restype = ctypes.wintypes.DWORD
 
@@ -73,7 +73,9 @@ if sys.platform == "win32":
     _WAIT_OBJECT_0 = 0x00000000
     _WAIT_TIMEOUT = 0x00000102
     _WAIT_FAILED = 0xFFFFFFFF
-    _MAXIMUM_WAIT_OBJECTS = 64  # Windows hard limit per WaitForMultipleObjects call
+    _MAXIMUM_WAIT_OBJECTS = (
+        64  # Windows hard limit per WaitForMultipleObjects call
+    )
 
 from . import _common
 from . import _ntuples as _ntp
@@ -1721,14 +1723,16 @@ def _wait_procs_windows(alive, gone, deadline, callback):
             # WaitForMultipleObjects caps at 64 handles, so chunk if needed.
             pids = list(handle_map.keys())
             for chunk_start in range(0, len(pids), _MAXIMUM_WAIT_OBJECTS):
-                chunk_pids = pids[chunk_start: chunk_start + _MAXIMUM_WAIT_OBJECTS]
+                chunk_pids = pids[
+                    chunk_start : chunk_start + _MAXIMUM_WAIT_OBJECTS
+                ]
                 handles = [handle_map[pid][1] for pid in chunk_pids]
 
                 arr = (ctypes.wintypes.HANDLE * len(handles))(*handles)
                 ret = _WaitForMultipleObjects(
                     len(handles),
                     arr,
-                    False,   # bWaitAll=False: wake on ANY single exit
+                    False,  # bWaitAll=False: wake on ANY single exit
                     remaining_ms,
                 )
 
@@ -1817,7 +1821,9 @@ def wait_procs(
         deadline = _timer() + timeout
 
     if WINDOWS and alive:
-        _wait_procs_windows(alive, gone, deadline if timeout is not None else None, callback)
+        _wait_procs_windows(
+            alive, gone, deadline if timeout is not None else None, callback
+        )
         alive = alive - gone
 
     while alive:
