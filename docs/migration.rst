@@ -52,6 +52,26 @@ to ``None``):
   for p in psutil.process_iter(attrs=["exe"], ad_value=""):
       print(p.exe())
 
+.. warning::
+
+  This is a silent behavior change. Before, calling ``p.exe()``
+  directly could raise :exc:`AccessDenied`. Now, if ``"exe"`` was
+  pre-fetched via ``attrs``, the same call returns ``ad_value``
+  (default ``None``) instead. Code that relied on catching
+  exceptions will silently stop seeing them:
+
+  .. code-block:: python
+
+    # this no longer raises AccessDenied if "exe" was prefetched
+    for p in psutil.process_iter(attrs=["exe"]):
+        try:
+            print(p.exe())
+        except psutil.AccessDenied:
+            pass  # never reached
+
+  If you need the exception, do not include the method in ``attrs``,
+  or call it on a fresh :class:`Process` instance.
+
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
