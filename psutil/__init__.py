@@ -288,6 +288,28 @@ def _check_conn_kind(kind):
 # =====================================================================
 
 
+def _use_prefetch(method):
+    """Decorator returning cached values from process_iter(attrs=...).
+
+    When process_iter() is called with an *attrs* argument, it
+    pre-fetches the requested attributes via as_dict() and stores
+    them in Process._prefetch.  This decorator makes the decorated
+    method return the cached value (if present) instead of issuing
+    a new system call.
+    """
+
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if not args and not kwargs:
+            try:
+                return self._prefetch[method.__name__]
+            except KeyError:
+                pass
+        return method(self, *args, **kwargs)
+
+    return wrapper
+
+
 class Process:
     """Represents an OS process with the given PID.
     If PID is omitted current process PID (os.getpid()) is used.
@@ -660,13 +682,12 @@ class Process:
 
     # --- actual API
 
+    @_use_prefetch
     @memoize_when_activated
     def ppid(self) -> int:
         """The process parent PID.
         On Windows the return value is cached after first call.
         """
-        if "ppid" in self._prefetch:
-            return self._prefetch["ppid"]
 
         # On POSIX we don't want to cache the ppid as it may unexpectedly
         # change to 1 (init) in case this process turns into a zombie:
@@ -682,10 +703,9 @@ class Process:
             self._ppid = self._ppid or self._proc.ppid()
             return self._ppid
 
+    @_use_prefetch
     def name(self) -> str:
         """The process name. The return value is cached after first call."""
-        if "name" in self._prefetch:
-            return self._prefetch["name"]
 
         # Process name is only cached on Windows as on POSIX it may
         # change, see:
@@ -716,13 +736,12 @@ class Process:
         self._proc._name = name
         return name
 
+    @_use_prefetch
     def exe(self) -> str:
         """The process executable as an absolute path.
         May also be an empty string.
         The return value is cached after first call.
         """
-        if "exe" in self._prefetch:
-            return self._prefetch["exe"]
 
         def guess_it(fallback):
             # try to guess exe from cmdline[0] in absence of a native
@@ -760,27 +779,24 @@ class Process:
                 self._exe = exe
         return self._exe
 
+    @_use_prefetch
     def cmdline(self) -> list[str]:
         """The command line this process has been called with."""
-        if "cmdline" in self._prefetch:
-            return self._prefetch["cmdline"]
         return self._proc.cmdline()
 
+    @_use_prefetch
     def status(self) -> ProcessStatus | str:
         """The process current status as a STATUS_* constant."""
-        if "status" in self._prefetch:
-            return self._prefetch["status"]
         try:
             return self._proc.status()
         except ZombieProcess:
             return ProcessStatus.STATUS_ZOMBIE
 
+    @_use_prefetch
     def username(self) -> str:
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
         """
-        if "username" in self._prefetch:
-            return self._prefetch["username"]
 
         if POSIX:
             if pwd is None:
@@ -796,6 +812,7 @@ class Process:
         else:
             return self._proc.username()
 
+    @_use_prefetch
     def create_time(self) -> float:
         """The process creation time as a floating point number
         expressed in seconds since the epoch (seconds since January 1,
@@ -808,17 +825,15 @@ class Process:
             self._create_time = self._proc.create_time()
         return self._create_time
 
+    @_use_prefetch
     def cwd(self) -> str:
         """Process current working directory as an absolute path."""
-        if "cwd" in self._prefetch:
-            return self._prefetch["cwd"]
         return self._proc.cwd()
 
+    @_use_prefetch
     def nice(self, value: int | None = None) -> int | None:
         """Get or set process niceness (priority)."""
         if value is None:
-            if "nice" in self._prefetch:
-                return self._prefetch["nice"]
             return self._proc.nice_get()
         else:
             self._raise_if_pid_reused()
@@ -826,42 +841,39 @@ class Process:
 
     if POSIX:
 
+        @_use_prefetch
         @memoize_when_activated
         def uids(self) -> puids:
             """Return process UIDs as a (real, effective, saved)
             named tuple.
             """
-            if "uids" in self._prefetch:
-                return self._prefetch["uids"]
             return self._proc.uids()
 
+        @_use_prefetch
         def gids(self) -> pgids:
             """Return process GIDs as a (real, effective, saved)
             named tuple.
             """
-            if "gids" in self._prefetch:
-                return self._prefetch["gids"]
             return self._proc.gids()
 
+        @_use_prefetch
         def terminal(self) -> str | None:
             """The terminal associated with this process, if any,
             else None.
             """
-            if "terminal" in self._prefetch:
-                return self._prefetch["terminal"]
             return self._proc.terminal()
 
+        @_use_prefetch
         def num_fds(self) -> int:
             """Return the number of file descriptors opened by this
             process (POSIX only).
             """
-            if "num_fds" in self._prefetch:
-                return self._prefetch["num_fds"]
             return self._proc.num_fds()
 
     # Linux, BSD, AIX and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
+        @_use_prefetch
         def io_counters(self) -> pio:
             """Return process I/O statistics as a
             (read_count, write_count, read_bytes, write_bytes)
@@ -869,13 +881,12 @@ class Process:
             Those are the number of read/write calls performed and the
             amount of bytes read and written by the process.
             """
-            if "io_counters" in self._prefetch:
-                return self._prefetch["io_counters"]
             return self._proc.io_counters()
 
     # Linux and Windows
     if hasattr(_psplatform.Process, "ionice_get"):
 
+        @_use_prefetch
         def ionice(
             self, ioclass: int | None = None, value: int | None = None
         ) -> pionice | ProcessIOPriority | None:
@@ -894,8 +905,6 @@ class Process:
                 if value is not None:
                     msg = "'ioclass' argument must be specified"
                     raise ValueError(msg)
-                if "ionice" in self._prefetch:
-                    return self._prefetch["ionice"]
                 return self._proc.ionice_get()
             else:
                 self._raise_if_pid_reused()
@@ -925,6 +934,7 @@ class Process:
     # Windows, Linux and FreeBSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
+        @_use_prefetch
         def cpu_affinity(
             self, cpus: list[int] | None = None
         ) -> list[int] | None:
@@ -936,8 +946,6 @@ class Process:
             (Windows, Linux and BSD only).
             """
             if cpus is None:
-                if "cpu_affinity" in self._prefetch:
-                    return self._prefetch["cpu_affinity"]
                 return sorted(set(self._proc.cpu_affinity_get()))
             else:
                 self._raise_if_pid_reused()
@@ -951,6 +959,7 @@ class Process:
     # Linux, FreeBSD, SunOS
     if hasattr(_psplatform.Process, "cpu_num"):
 
+        @_use_prefetch
         def cpu_num(self) -> int:
             """Return what CPU this process is currently running on.
             The returned number should be <= psutil.cpu_count()
@@ -959,55 +968,48 @@ class Process:
             psutil.cpu_percent(percpu=True) to observe the system
             workload distributed across CPUs.
             """
-            if "cpu_num" in self._prefetch:
-                return self._prefetch["cpu_num"]
             return self._proc.cpu_num()
 
     # All platforms has it, but maybe not in the future.
     if hasattr(_psplatform.Process, "environ"):
 
+        @_use_prefetch
         def environ(self) -> dict[str, str]:
             """The environment variables of the process as a dict.  Note: this
             might not reflect changes made after the process started.
             """
-            if "environ" in self._prefetch:
-                return self._prefetch["environ"]
             return self._proc.environ()
 
     if WINDOWS:
 
+        @_use_prefetch
         def num_handles(self) -> int:
             """Return the number of handles opened by this process
             (Windows only).
             """
-            if "num_handles" in self._prefetch:
-                return self._prefetch["num_handles"]
             return self._proc.num_handles()
 
+    @_use_prefetch
     def num_ctx_switches(self) -> pctxsw:
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
-        if "num_ctx_switches" in self._prefetch:
-            return self._prefetch["num_ctx_switches"]
         return self._proc.num_ctx_switches()
 
+    @_use_prefetch
     def num_threads(self) -> int:
         """Return the number of threads used by this process."""
-        if "num_threads" in self._prefetch:
-            return self._prefetch["num_threads"]
         return self._proc.num_threads()
 
     if hasattr(_psplatform.Process, "threads"):
 
+        @_use_prefetch
         def threads(self) -> list[pthread]:
             """Return threads opened by process as a list of
             (id, user_time, system_time) named tuples representing
             thread id and thread CPU times (user/system).
             On OpenBSD this method requires root access.
             """
-            if "threads" in self._prefetch:
-                return self._prefetch["threads"]
             return self._proc.threads()
 
     def children(self, recursive: bool = False) -> list[Process]:
@@ -1084,6 +1086,7 @@ class Process:
                         pass
         return ret
 
+    @_use_prefetch
     def cpu_percent(self, interval: float | None = None) -> float:
         """Return a float representing the current process CPU
         utilization as a percentage.
@@ -1119,8 +1122,6 @@ class Process:
           2.9
           >>>
         """
-        if "cpu_percent" in self._prefetch:
-            return self._prefetch["cpu_percent"]
 
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
@@ -1180,6 +1181,7 @@ class Process:
             single_cpu_percent = overall_cpus_percent * num_cpus
             return round(single_cpu_percent, 1)
 
+    @_use_prefetch
     @memoize_when_activated
     def cpu_times(self) -> pcputimes:
         """Return a (user, system, children_user, children_system)
@@ -1189,10 +1191,9 @@ class Process:
         On macOS and Windows children_user and children_system are
         always set to 0.
         """
-        if "cpu_times" in self._prefetch:
-            return self._prefetch["cpu_times"]
         return self._proc.cpu_times()
 
+    @_use_prefetch
     @memoize_when_activated
     def memory_info(self) -> pmem:
         """Return a named tuple with variable fields depending on the
@@ -1202,10 +1203,9 @@ class Process:
 
         All numbers are expressed in bytes.
         """
-        if "memory_info" in self._prefetch:
-            return self._prefetch["memory_info"]
         return self._proc.memory_info()
 
+    @_use_prefetch
     @memoize_when_activated
     def memory_info_ex(self) -> pmem_ex:
         """Return a named tuple extending memory_info() with extra
@@ -1213,8 +1213,6 @@ class Process:
 
         All numbers are expressed in bytes.
         """
-        if "memory_info_ex" in self._prefetch:
-            return self._prefetch["memory_info_ex"]
         base = self.memory_info()
         if hasattr(self._proc, "memory_info_ex"):
             extras = self._proc.memory_info_ex()
@@ -1224,6 +1222,7 @@ class Process:
     # Linux, macOS, Windows
     if hasattr(_psplatform.Process, "memory_footprint"):
 
+        @_use_prefetch
         def memory_footprint(self) -> pfootprint:
             """Return a named tuple with USS, PSS and swap memory
             metrics. These provide a better representation of
@@ -1237,8 +1236,6 @@ class Process:
             memory_info() or memory_info_ex() and is considerably
             slower.
             """
-            if "memory_footprint" in self._prefetch:
-                return self._prefetch["memory_footprint"]
             return self._proc.memory_footprint()
 
     # DEPRECATED
@@ -1258,6 +1255,7 @@ class Process:
             return _ntp.pfullmem(*basic_mem + fp)
         return _ntp.pfullmem(*basic_mem)
 
+    @_use_prefetch
     def memory_percent(self, memtype: str = "rss") -> float:
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
@@ -1268,8 +1266,6 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        if "memory_percent" in self._prefetch:
-            return self._prefetch["memory_percent"]
 
         valid_types = list(_ntp.pmem._fields)
         if hasattr(_ntp, "pmem_ex"):
@@ -1310,6 +1306,7 @@ class Process:
 
     if hasattr(_psplatform.Process, "memory_maps"):
 
+        @_use_prefetch
         def memory_maps(
             self, grouped: bool = True
         ) -> list[pmmap_grouped] | list[pmmap_ext]:
@@ -1323,8 +1320,6 @@ class Process:
             entity and the named tuple will also include the mapped region's
             address space ('addr') and permission set ('perms').
             """
-            if "memory_maps" in self._prefetch:
-                return self._prefetch["memory_maps"]
 
             it = self._proc.memory_maps()
             if grouped:
@@ -1340,6 +1335,7 @@ class Process:
             else:
                 return [_ntp.pmmap_ext(*x) for x in it]
 
+    @_use_prefetch
     def page_faults(self) -> ppagefaults:
         """Return the number of page faults for this process as a
         (minor, major) named tuple.
@@ -1356,19 +1352,17 @@ class Process:
 
         Both counters are cumulative since process creation.
         """
-        if "page_faults" in self._prefetch:
-            return self._prefetch["page_faults"]
         return self._proc.page_faults()
 
+    @_use_prefetch
     def open_files(self) -> list[popenfile]:
         """Return files opened by process as a list of
         (path, fd) named tuples including the absolute file name
         and file descriptor number.
         """
-        if "open_files" in self._prefetch:
-            return self._prefetch["open_files"]
         return self._proc.open_files()
 
+    @_use_prefetch
     def net_connections(self, kind: str = "inet") -> list[pconn]:
         """Return socket connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) named tuples.
@@ -1391,8 +1385,6 @@ class Process:
         | all        | the sum of all the possible families and protocols |
         +------------+----------------------------------------------------+
         """
-        if "net_connections" in self._prefetch:
-            return self._prefetch["net_connections"]
         _check_conn_kind(kind)
         return self._proc.net_connections(kind)
 
