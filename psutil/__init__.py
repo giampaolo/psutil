@@ -1736,7 +1736,7 @@ def _wait_procs_windows(alive, gone, deadline, callback):
                     remaining_ms,
                 )
 
-                if ret == _WAIT_FAILED or ret == _WAIT_TIMEOUT:
+                if ret in {_WAIT_FAILED, _WAIT_TIMEOUT}:
                     # Timeout or error — stop trying, fall through to cleanup.
                     return
 
@@ -1824,7 +1824,7 @@ def wait_procs(
         _wait_procs_windows(
             alive, gone, deadline if timeout is not None else None, callback
         )
-        alive = alive - gone
+        alive -= gone
 
     while alive:
         if timeout is not None and timeout <= 0:
