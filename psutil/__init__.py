@@ -1743,7 +1743,12 @@ def _wait_procs_windows(alive, gone, deadline, callback):
                 # ret is the index of the handle that was signaled.
                 exited_pid = chunk_pids[ret - _WAIT_OBJECT_0]
                 proc, handle = handle_map.pop(exited_pid)
-                proc.returncode = proc.wait(timeout=0)
+                try:
+                    proc.returncode = proc.wait(timeout=0)
+                except (TimeoutExpired, subprocess.TimeoutExpired):
+                    # The kernel signaled the process exited but the PID may
+                    # briefly linger. Return None like the original code does.
+                    proc.returncode = None
                 gone.add(proc)
                 if callback is not None:
                     callback(proc)
