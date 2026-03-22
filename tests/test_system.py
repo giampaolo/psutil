@@ -133,7 +133,7 @@ class TestProcessIter(PsutilTestCase):
                 warnings.simplefilter("always")
                 p.info  # noqa: B018
                 assert len(ws) == 1
-                assert issubclass(ws[0].category, PendingDeprecationWarning)
+                assert issubclass(ws[0].category, DeprecationWarning)
                 assert "deprecated" in str(ws[0].message)
             break
 

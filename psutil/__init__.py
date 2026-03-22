@@ -511,7 +511,7 @@ class Process:
             "Process.info is deprecated; use method calls instead"
             " (e.g. p.name() instead of p.info['name'])"
         )
-        warnings.warn(msg, PendingDeprecationWarning, stacklevel=2)
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
         # Returning a copy prevents the user to mutate the dict and
         # corrupt the prefetch cache.
         return self._prefetch.copy()

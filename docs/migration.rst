@@ -25,7 +25,7 @@ process_iter(): p.info is deprecated
 
 :func:`process_iter` now caches pre-fetched values internally, so they
 can be accessed via normal method calls instead of the ``p.info`` dict.
-``p.info`` still works but raises :exc:`PendingDeprecationWarning`:
+``p.info`` still works but raises :exc:`DeprecationWarning`:
 
 .. code-block:: python
 
