@@ -1713,7 +1713,7 @@ def process_iter(
             try:
                 if proc is None:  # new process
                     proc = add(pid)
-                proc._prefetch = {}
+                proc._prefetch = {}  # clear cache
                 if attrs is not None:
                     proc._prefetch = proc.as_dict(
                         attrs=attrs, ad_value=ad_value

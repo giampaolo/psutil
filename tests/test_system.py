@@ -152,6 +152,40 @@ class TestProcessIter(PsutilTestCase):
         for p in psutil.process_iter():
             assert not p._prefetch
 
+    def test_prefetch_with_args_bypasses_cache(self):
+        # Methods called with args should bypass the prefetch cache
+        # (e.g. nice(10) is a setter, not a getter).
+        p = psutil.Process()
+        p._prefetch["nice"] = -999
+        # Without args: returns cached value.
+        assert p.nice() == -999
+        # With args: bypasses cache, calls real method.
+        real_nice = psutil.Process().nice()
+        assert p.nice(real_nice) is None
+        assert p.nice() == -999
+
+    def test_prefetch_double_call(self):
+        # Multiple calls should return the same cached value.
+        for p in psutil.process_iter(attrs=["name"]):
+            name1 = p.name()
+            name2 = p.name()
+            assert name1 == name2
+            assert name1 == p._prefetch["name"]
+            break
+
+    def test_prefetch_empty_attrs(self):
+        # attrs=[] should prefetch all methods.
+        p = next(psutil.process_iter(attrs=[]))
+        assert p._prefetch.keys() == psutil._as_dict_attrnames
+
+    def test_prefetch_with_non_prefetched(self):
+        # A method not in attrs should still do a live syscall.
+        for p in psutil.process_iter(attrs=["name"]):
+            assert "status" not in p._prefetch
+            # status() should still work via syscall
+            assert p.status()
+            break
+
     def test_cache_clear(self):
         list(psutil.process_iter())  # populate cache
         assert psutil._pmap
