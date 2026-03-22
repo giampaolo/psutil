@@ -26,7 +26,7 @@ Find process by name:
   def find_procs_by_name(name):
       ls = []
       for p in psutil.process_iter(["name"]):
-          if p.info["name"] == name:
+          if p.name() == name:
               ls.append(p)
       return ls
 
@@ -44,9 +44,9 @@ A bit more advanced, check string against :meth:`Process.name`,
       ls = []
       for p in psutil.process_iter(["name", "exe", "cmdline"]):
           if (
-              name == p.info["name"]
-              or (p.info["exe"] and os.path.basename(p.info["exe"]) == name)
-              or (p.info["cmdline"] and p.info["cmdline"][0] == name)
+              name == p.name()
+              or (p.exe() and os.path.basename(p.exe()) == name)
+              or (p.cmdline() and p.cmdline()[0] == name)
           ):
               ls.append(p)
       return ls
@@ -103,7 +103,7 @@ Find all processes that have a given file open (useful on Windows):
   def find_procs_using_file(path):
       ls = []
       for p in psutil.process_iter(["open_files"]):
-          for f in p.info["open_files"] or []:
+          for f in p.open_files() or []:
               if f.path == path:
                   ls.append(p)
                   break
@@ -119,7 +119,7 @@ Processes owned by user:
   >>> import getpass
   >>> import psutil
   >>> from pprint import pprint as pp
-  >>> pp([(p.pid, p.info["name"]) for p in psutil.process_iter(["name", "username"]) if p.info["username"] == getpass.getuser()])
+  >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "username"]) if p.username() == getpass.getuser()])
   (16832, 'bash'),
   (19772, 'ssh'),
   (20492, 'python')]
@@ -130,10 +130,10 @@ Processes actively running:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info) for p in psutil.process_iter(["name", "status"]) if p.info["status"] == psutil.STATUS_RUNNING])
-  [(1150, {'name': 'Xorg', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
-   (1776, {'name': 'unity-panel-service', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>}),
-   (20492, {'name': 'python', 'status': <ProcessStatus.STATUS_RUNNING: 'running'>})]
+  >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "status"]) if p.status() == psutil.STATUS_RUNNING])
+  [(1150, 'Xorg'),
+   (1776, 'unity-panel-service'),
+   (20492, 'python')]
 
 ----
 
@@ -142,9 +142,9 @@ Processes using log files:
 .. code-block:: python
 
   >>> for p in psutil.process_iter(["name", "open_files"]):
-  ...      for file in p.info["open_files"] or []:
+  ...      for file in p.open_files() or []:
   ...          if file.path.endswith(".log"):
-  ...               print("{:<5} {:<10} {}".format(p.pid, p.info["name"][:10], file.path))
+  ...               print("{:<5} {:<10} {}".format(p.pid, p.name()[:10], file.path))
   ...
   1510  upstart    /home/giampaolo/.cache/upstart/unity-settings-daemon.log
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
@@ -156,7 +156,7 @@ Processes consuming more than 500M of memory:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info["name"], p.info["memory_info"].rss) for p in psutil.process_iter(["name", "memory_info"]) if p.info["memory_info"].rss > 500 * 1024 * 1024])
+  >>> pp([(p.pid, p.name(), p.memory_info().rss) for p in psutil.process_iter(["name", "memory_info"]) if p.memory_info().rss > 500 * 1024 * 1024])
   [(2650, 'chrome', 532324352),
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
@@ -167,7 +167,7 @@ Top 3 processes which consumed the most CPU time:
 
 .. code-block:: python
 
-  >>> pp([(p.pid, p.info["name"], sum(p.info["cpu_times"])) for p in sorted(psutil.process_iter(["name", "cpu_times"]), key=lambda p: sum(p.info["cpu_times"][:2]))][-3:])
+  >>> pp([(p.pid, p.name(), sum(p.cpu_times())) for p in sorted(psutil.process_iter(["name", "cpu_times"]), key=lambda p: sum(p.cpu_times()[:2]))][-3:])
   [(2721, 'chrome', 10219.73),
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
@@ -288,7 +288,7 @@ Find zombie (defunct) processes:
   import psutil
 
   for p in psutil.process_iter(["status"]):
-      if p.info["status"] == psutil.STATUS_ZOMBIE:
+      if p.status() == psutil.STATUS_ZOMBIE:
           print(f"zombie: pid={p.pid}")
 
 ----
@@ -301,7 +301,7 @@ Terminate all processes matching a given name:
 
   def terminate_procs_by_name(name):
       for p in psutil.process_iter(["name"]):
-          if p.info["name"] == name:
+          if p.name() == name:
               p.terminate()
 
 ----

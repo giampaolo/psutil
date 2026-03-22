@@ -40,16 +40,17 @@ You have two options to deal with it.
     except (psutil.AccessDenied, psutil.NoSuchProcess):
         pass
 
-- Option 2: use :func:`process_iter` with a list of attribute names to pre-fetch. If
-  fetching an attribute raises :exc:`AccessDenied` internally, its value in
-  ``p.info`` is set to ``None`` (or to the ``ad_value`` argument, if specified):
+- Option 2: use :func:`process_iter` with a list of attribute names to pre-fetch.
+  If fetching an attribute raises :exc:`AccessDenied` internally, the
+  corresponding method returns ``None`` (or the ``ad_value`` argument, if
+  specified):
 
   .. code-block:: python
 
     import psutil
 
     for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
-        print(p.info["username"])  # may print "N/A"
+        print(p.username())  # may print "N/A"
 
 .. _faq_no_such_process:
 
@@ -86,7 +87,7 @@ during iteration:
   import psutil
 
   for p in psutil.process_iter(["name"]):
-      print(p.info["name"])
+      print(p.name())
 
 If you have a specific PID (e.g. a known child process), wrap the
 call in a try/except:
@@ -143,7 +144,7 @@ for a :term:`zombie process`.
   import psutil
 
   for p in psutil.process_iter(["status"]):
-      if p.info["status"] == psutil.STATUS_ZOMBIE:
+      if p.status() == psutil.STATUS_ZOMBIE:
           print(f"zombie: pid={p.pid}")
 
 **How to get rid of a zombie:** the only way is to have its parent

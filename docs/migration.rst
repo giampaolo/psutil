@@ -244,7 +244,7 @@ that a process object is still alive and refers to the same process, use
 
   for p in psutil.process_iter(["name"]):
       if p.is_running():
-          print(p.pid, p.info["name"])
+          print(p.pid, p.name())
 
 ----
 

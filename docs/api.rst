@@ -1034,8 +1034,11 @@ Functions
   Cache can optionally be cleared via ``process_iter.cache_clear()``.
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
-  If *attrs* is specified :meth:`Process.as_dict` result will be stored as a
-  ``info`` attribute attached to the returned :class:`Process` instances.
+  If *attrs* is specified, the requested attributes are pre-fetched and
+  cached so that subsequent method calls (e.g. :meth:`Process.name`,
+  :meth:`Process.status`) return the cached values instead of issuing new
+  system calls. If a method raises :exc:`AccessDenied` during pre-fetch,
+  it will return *ad_value* (default ``None``) instead of raising.
   If *attrs* is an empty list it will retrieve all process info (slow).
 
   Sorting order in which processes are returned is based on their PID.
@@ -1044,23 +1047,23 @@ Functions
 
      >>> import psutil
      >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-     ...     print(proc.info)
+     ...     print(proc.pid, proc.name(), proc.username())
      ...
-     {'name': 'systemd', 'pid': 1, 'username': 'root'}
-     {'name': 'kthreadd', 'pid': 2, 'username': 'root'}
-     {'name': 'ksoftirqd/0', 'pid': 3, 'username': 'root'}
+     1 systemd root
+     2 kthreadd root
+     3 ksoftirqd/0 root
      ...
 
-  A dict comprehensions to create a ``{pid: info, ...}`` data structure:
+  A dict comprehension to create a ``{pid: name, ...}`` data structure:
 
   .. code-block:: pycon
 
      >>> import psutil
-     >>> procs = {p.pid: p.info for p in psutil.process_iter(['name', 'username'])}
+     >>> procs = {p.pid: p.name() for p in psutil.process_iter(['name'])}
      >>> procs
-     {1: {'name': 'systemd', 'username': 'root'},
-      2: {'name': 'kthreadd', 'username': 'root'},
-      3: {'name': 'ksoftirqd/0', 'username': 'root'},
+     {1: 'systemd',
+      2: 'kthreadd',
+      3: 'ksoftirqd/0',
       ...}
 
   Clear internal cache:
