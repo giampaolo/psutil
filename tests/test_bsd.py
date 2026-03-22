@@ -10,6 +10,7 @@
 """Tests specific to all BSD platforms."""
 
 import datetime
+import os
 import re
 import shutil
 import time
@@ -249,6 +250,18 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     def test_cpu_count_cores(self):
         cores = sysctl("kern.smp.cores")
         assert psutil.cpu_count(logical=False) == cores
+
+    @retry_on_failure()
+    def test_cpu_times(self):
+        clk_tck = os.sysconf("SC_CLK_TCK")
+        ticks = [int(x) for x in sysctl("kern.cp_time").split()]
+        ct = psutil.cpu_times()
+        tolerance = 0.5
+        assert abs(ct.user - ticks[0] / clk_tck) < tolerance
+        assert abs(ct.nice - ticks[1] / clk_tck) < tolerance
+        assert abs(ct.system - ticks[2] / clk_tck) < tolerance
+        assert abs(ct.irq - ticks[3] / clk_tck) < tolerance
+        assert abs(ct.idle - ticks[4] / clk_tck) < tolerance
 
     def test_cpu_frequency_against_sysctl(self):
         # Currently only cpu 0 is frequency is supported in FreeBSD
