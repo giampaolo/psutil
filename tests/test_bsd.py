@@ -10,7 +10,6 @@
 """Tests specific to all BSD platforms."""
 
 import datetime
-import os
 import re
 import shutil
 import time
@@ -30,13 +29,7 @@ from . import sh
 from . import spawn_subproc
 from . import terminate
 
-if BSD:
-    PAGESIZE = psutil._psplatform.cext.getpagesize()
-    # muse requires root privileges
-    MUSE_AVAILABLE = os.getuid() == 0 and shutil.which("muse")
-else:
-    PAGESIZE = None
-    MUSE_AVAILABLE = False
+PAGESIZE = psutil._psplatform.cext.getpagesize() if BSD else None
 
 
 def sysctl(cmdline):
@@ -52,17 +45,6 @@ def sysctl(cmdline):
         return int(result)
     except ValueError:
         return result
-
-
-def muse(field):
-    """Thin wrapper around 'muse' cmdline utility."""
-    out = sh('muse')
-    for line in out.split('\n'):
-        if line.startswith(field):
-            break
-    else:
-        raise ValueError("line not found")
-    return int(line.split()[1])
 
 
 # =====================================================================
@@ -315,49 +297,6 @@ class FreeBSDSystemTestCase(PsutilTestCase):
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
         assert abs(psutil.virtual_memory().buffers - syst) < TOLERANCE_SYS_MEM
-
-    # --- virtual_memory(); tests against muse
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    def test_muse_vmem_total(self):
-        num = muse('Total')
-        assert psutil.virtual_memory().total == num
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_active(self):
-        num = muse('Active')
-        assert abs(psutil.virtual_memory().active - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_inactive(self):
-        num = muse('Inactive')
-        assert abs(psutil.virtual_memory().inactive - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_wired(self):
-        num = muse('Wired')
-        assert abs(psutil.virtual_memory().wired - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_cached(self):
-        num = muse('Cache')
-        assert abs(psutil.virtual_memory().cached - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_free(self):
-        num = muse('Free')
-        assert abs(psutil.virtual_memory().free - num) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(not MUSE_AVAILABLE, reason="muse not installed")
-    @retry_on_failure()
-    def test_muse_vmem_buffers(self):
-        num = muse('Buffer')
-        assert abs(psutil.virtual_memory().buffers - num) < TOLERANCE_SYS_MEM
 
     def test_cpu_stats_ctx_switches(self):
         assert (
