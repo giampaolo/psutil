@@ -228,7 +228,31 @@ class TestVirtualMemory(WindowsTestCase):
         assert abs(psutil.virtual_memory().used - wmi_used) < TOLERANCE_SYS_MEM
 
 
-class NetAPIs(WindowsTestCase):
+class TestSwapMemory(WindowsTestCase):
+
+    def test_total(self):
+        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
+        assert (
+            int(w.CommitLimit) - psutil.virtual_memory().total
+            == psutil.swap_memory().total
+        )
+        if psutil.swap_memory().total == 0:
+            assert psutil.swap_memory().free == 0
+            assert psutil.swap_memory().used == 0
+
+    def test_percent(self):
+        if psutil.swap_memory().total > 0:
+            w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile(Name="_Total")[0]
+            # calculate swap usage to percent
+            percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
+            # exact percent may change but should be reasonable
+            # assert within +/- 5% and between 0 and 100%
+            assert psutil.swap_memory().percent >= 0
+            assert abs(psutil.swap_memory().percent - percentSwap) < 5
+            assert psutil.swap_memory().percent <= 100
+
+
+class TestNetAPIs(WindowsTestCase):
 
     def test_net_io_counters_nic_names(self):
         out = sh('ipconfig /all')
@@ -289,30 +313,6 @@ class NetAPIs(WindowsTestCase):
         assert (
             ps_names & wmi_names
         ), f"no common entries in {ps_names}, {wmi_names}"
-
-
-class TestSwapMemory(WindowsTestCase):
-
-    def test_total(self):
-        w = wmi.WMI().Win32_PerfRawData_PerfOS_Memory()[0]
-        assert (
-            int(w.CommitLimit) - psutil.virtual_memory().total
-            == psutil.swap_memory().total
-        )
-        if psutil.swap_memory().total == 0:
-            assert psutil.swap_memory().free == 0
-            assert psutil.swap_memory().used == 0
-
-    def test_percent(self):
-        if psutil.swap_memory().total > 0:
-            w = wmi.WMI().Win32_PerfRawData_PerfOS_PagingFile(Name="_Total")[0]
-            # calculate swap usage to percent
-            percentSwap = int(w.PercentUsage) * 100 / int(w.PercentUsage_Base)
-            # exact percent may change but should be reasonable
-            # assert within +/- 5% and between 0 and 100%
-            assert psutil.swap_memory().percent >= 0
-            assert abs(psutil.swap_memory().percent - percentSwap) < 5
-            assert psutil.swap_memory().percent <= 100
 
 
 class TestDiskApis(WindowsTestCase):

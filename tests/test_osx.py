@@ -57,7 +57,13 @@ class MacosTestCase(PsutilTestCase):
     pass
 
 
+# =====================================================================
+# --- Process APIs (most are tested in test_posix.py)
+# =====================================================================
+
+
 class TestProcess(MacosTestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc().pid
@@ -66,7 +72,7 @@ class TestProcess(MacosTestCase):
     def tearDownClass(cls):
         terminate(cls.pid)
 
-    def test_process_create_time(self):
+    def test_create_time(self):
         output = sh(f"ps -o lstart -p {self.pid}")
         start_ps = output.replace('STARTED', '').strip()
         hhmmss = start_ps.split(' ')[-2]
@@ -78,12 +84,92 @@ class TestProcess(MacosTestCase):
         assert year == time.strftime("%Y", time.localtime(start_psutil))
 
 
-class TestSystemAPIs(MacosTestCase):
+# =====================================================================
+# --- Test system APIs
+# =====================================================================
 
-    # --- disk
+
+class TestVirtualMemory(MacosTestCase):
+
+    def test_total(self):
+        sysctl_hwphymem = sysctl('sysctl hw.memsize')
+        assert sysctl_hwphymem == psutil.virtual_memory().total
+
+    @pytest.mark.skipif(
+        CI_TESTING and MACOS and AARCH64,
+        reason="skipped on MACOS + ARM64 + CI_TESTING",
+    )
+    @retry_on_failure()
+    def test_free(self):
+        vmstat_val = vm_stat("free")
+        psutil_val = psutil.virtual_memory().free
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+
+    @pytest.mark.skipif(
+        CI_TESTING and MACOS and AARCH64,
+        reason="skipped on MACOS + ARM64 + CI_TESTING",
+    )
+    @retry_on_failure()
+    def test_active(self):
+        vmstat_val = vm_stat("active")
+        psutil_val = psutil.virtual_memory().active
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+
+    # XXX: fails too often
+    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI_TESTING")
+    @retry_on_failure()
+    def test_inactive(self):
+        vmstat_val = vm_stat("inactive")
+        psutil_val = psutil.virtual_memory().inactive
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
 
     @retry_on_failure()
-    def test_disks(self):
+    def test_wired(self):
+        vmstat_val = vm_stat("wired")
+        psutil_val = psutil.virtual_memory().wired
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+
+
+class TestSwapMemory(MacosTestCase):
+
+    @retry_on_failure()
+    def test_sin(self):
+        vmstat_val = vm_stat("Pageins")
+        psutil_val = psutil.swap_memory().sin
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure()
+    def test_sout(self):
+        vmstat_val = vm_stat("Pageout")
+        psutil_val = psutil.swap_memory().sout
+        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
+
+
+class TestCpuAPIs(MacosTestCase):
+
+    def test_cpu_count_logical(self):
+        num = sysctl("sysctl hw.logicalcpu")
+        assert num == psutil.cpu_count(logical=True)
+
+    def test_cpu_count_cores(self):
+        num = sysctl("sysctl hw.physicalcpu")
+        assert num == psutil.cpu_count(logical=False)
+
+    @pytest.mark.skipif(
+        MACOS and AARCH64 and not HAS_CPU_FREQ,
+        reason="not available on MACOS + AARCH64",
+    )
+    def test_cpu_freq(self):
+        freq = psutil.cpu_freq()
+        assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
+        assert freq.min * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_min")
+        assert freq.max * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_max")
+
+
+class TestDiskAPIs(MacosTestCase):
+
+    @retry_on_failure()
+    def test_disk_partitions(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
         def df(path):
@@ -107,81 +193,8 @@ class TestSystemAPIs(MacosTestCase):
             assert abs(usage.free - free) < TOLERANCE_DISK_USAGE
             assert abs(usage.used - used) < TOLERANCE_DISK_USAGE
 
-    # --- cpu
 
-    def test_cpu_count_logical(self):
-        num = sysctl("sysctl hw.logicalcpu")
-        assert num == psutil.cpu_count(logical=True)
-
-    def test_cpu_count_cores(self):
-        num = sysctl("sysctl hw.physicalcpu")
-        assert num == psutil.cpu_count(logical=False)
-
-    @pytest.mark.skipif(
-        MACOS and AARCH64 and not HAS_CPU_FREQ,
-        reason="not available on MACOS + AARCH64",
-    )
-    def test_cpu_freq(self):
-        freq = psutil.cpu_freq()
-        assert freq.current * 1000 * 1000 == sysctl("sysctl hw.cpufrequency")
-        assert freq.min * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_min")
-        assert freq.max * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_max")
-
-    # --- virtual mem
-
-    def test_vmem_total(self):
-        sysctl_hwphymem = sysctl('sysctl hw.memsize')
-        assert sysctl_hwphymem == psutil.virtual_memory().total
-
-    @pytest.mark.skipif(
-        CI_TESTING and MACOS and AARCH64,
-        reason="skipped on MACOS + ARM64 + CI_TESTING",
-    )
-    @retry_on_failure()
-    def test_vmem_free(self):
-        vmstat_val = vm_stat("free")
-        psutil_val = psutil.virtual_memory().free
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
-
-    @pytest.mark.skipif(
-        CI_TESTING and MACOS and AARCH64,
-        reason="skipped on MACOS + ARM64 + CI_TESTING",
-    )
-    @retry_on_failure()
-    def test_vmem_active(self):
-        vmstat_val = vm_stat("active")
-        psutil_val = psutil.virtual_memory().active
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
-
-    # XXX: fails too often
-    @pytest.mark.skipif(CI_TESTING, reason="skipped on CI_TESTING")
-    @retry_on_failure()
-    def test_vmem_inactive(self):
-        vmstat_val = vm_stat("inactive")
-        psutil_val = psutil.virtual_memory().inactive
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure()
-    def test_vmem_wired(self):
-        vmstat_val = vm_stat("wired")
-        psutil_val = psutil.virtual_memory().wired
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
-
-    # --- swap mem
-
-    @retry_on_failure()
-    def test_swapmem_sin(self):
-        vmstat_val = vm_stat("Pageins")
-        psutil_val = psutil.swap_memory().sin
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
-
-    @retry_on_failure()
-    def test_swapmem_sout(self):
-        vmstat_val = vm_stat("Pageout")
-        psutil_val = psutil.swap_memory().sout
-        assert abs(psutil_val - vmstat_val) < TOLERANCE_SYS_MEM
-
-    # --- network
+class TestNetAPIs(MacosTestCase):
 
     def test_net_if_stats(self):
         for name, stats in psutil.net_if_stats().items():
@@ -193,7 +206,8 @@ class TestSystemAPIs(MacosTestCase):
                 assert stats.isup == ('RUNNING' in out), out
                 assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
-    # --- sensors_battery
+
+class TestSensorsAPIs(MacosTestCase):
 
     @pytest.mark.skipif(not HAS_BATTERY, reason="no battery")
     def test_sensors_battery(self):
@@ -205,7 +219,8 @@ class TestSystemAPIs(MacosTestCase):
         assert psutil_result.power_plugged == power_plugged
         assert psutil_result.percent == int(percent)
 
-    # --- others
+
+class TestOtherSystemAPIs(MacosTestCase):
 
     def test_boot_time(self):
         out = sh('sysctl kern.boottime')
