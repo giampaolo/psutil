@@ -71,26 +71,8 @@ def muse(field):
 
 
 @pytest.mark.skipif(not BSD, reason="BSD only")
-class BSDTestCase(PsutilTestCase):
-    """Generic tests common to all BSD variants."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.pid = spawn_subproc().pid
-
-    @classmethod
-    def tearDownClass(cls):
-        terminate(cls.pid)
-
-    @pytest.mark.skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
-    def test_process_create_time(self):
-        output = sh(f"ps -o lstart -p {self.pid}")
-        start_ps = output.replace('STARTED', '').strip()
-        start_psutil = psutil.Process(self.pid).create_time()
-        start_psutil = time.strftime(
-            "%a %b %e %H:%M:%S %Y", time.localtime(start_psutil)
-        )
-        assert start_ps == start_psutil
+class TestSystemAPIs(PsutilTestCase):
+    """System tests common to all BSD variants."""
 
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -151,13 +133,35 @@ class BSDTestCase(PsutilTestCase):
                     assert stats.mtu == int(re.findall(r'mtu (\d+)', out)[0])
 
 
+@pytest.mark.skipif(not BSD, reason="BSD only")
+class TestProcessAPIs(PsutilTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = spawn_subproc().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        terminate(cls.pid)
+
+    @pytest.mark.skipif(NETBSD, reason="-o lstart doesn't work on NETBSD")
+    def test_create_time(self):
+        output = sh(f"ps -o lstart -p {self.pid}")
+        start_ps = output.replace('STARTED', '').strip()
+        start_psutil = psutil.Process(self.pid).create_time()
+        start_psutil = time.strftime(
+            "%a %b %e %H:%M:%S %Y", time.localtime(start_psutil)
+        )
+        assert start_ps == start_psutil
+
+
 # =====================================================================
 # --- FreeBSD
 # =====================================================================
 
 
 @pytest.mark.skipif(not FREEBSD, reason="FREEBSD only")
-class FreeBSDTestCase(PsutilTestCase):
+class FreeBSDProcessTestCase(PsutilTestCase):
     @classmethod
     def setUpClass(cls):
         cls.pid = spawn_subproc().pid
