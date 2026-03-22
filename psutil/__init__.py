@@ -512,8 +512,8 @@ class Process:
             " (e.g. p.name() instead of p.info['name'])"
         )
         warnings.warn(msg, DeprecationWarning, stacklevel=2)
-        # Returning a copy prevents the user to mutate the dict and
-        # corrupt the prefetch cache.
+        # Return a copy to prevent the user from mutating the dict and
+        # corrupting the prefetch cache.
         return self._prefetch.copy()
 
     # --- utility methods

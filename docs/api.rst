@@ -1092,7 +1092,7 @@ Functions
      when *attrs* is specified, the pre-fetched values are cached
      directly on the :class:`Process` instance so that subsequent
      method calls (e.g. ``p.name()``, ``p.status()``) return the
-     cached values instead of making new system calls. The ``p.info``
+     cached values instead of making new system calls. The :attr:`Process.info`
      dict is deprecated in favor of this new approach.
 
 .. function:: pid_exists(pid)
