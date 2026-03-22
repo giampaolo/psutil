@@ -1034,9 +1034,9 @@ Functions
   Cache can optionally be cleared via ``process_iter.cache_clear()``.
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
-  If *attrs* is specified, the requested attributes are efficiently pre-fetched
-  via :meth:`oneshot` and cached so that subsequent method calls
-  (e.g. :meth:`Process.name`, :meth:`Process.status`) return the cached values
+  If *attrs* is specified, :meth:`Process.as_dict` is called internally and
+  the results are cached so that subsequent method calls (e.g.
+  :meth:`Process.name`, :meth:`Process.status`) return the cached values
   instead of issuing new system calls.
   If a method raises :exc:`AccessDenied` during pre-fetch, it will return
   *ad_value* (default ``None``) instead of raising. If *attrs* is an empty list
