@@ -1680,9 +1680,10 @@ def process_iter(
     their PIDs.
 
     *attrs* and *ad_value* have the same meaning as in
-    Process.as_dict(). If *attrs* is specified as_dict() is called
-    and the resulting dict is stored as a 'info' attribute attached
-    to returned Process instance.
+    Process.as_dict(). If *attrs* is specified, as_dict() is called and
+    the results are cached so that subsequent method calls (e.g.
+    p.name()) return cached values.
+
     If *attrs* is an empty list it will retrieve all process info
     (slow).
     """
