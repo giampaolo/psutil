@@ -132,6 +132,35 @@ class TestVirtualMemory(MacosTestCase):
 
 class TestSwapMemory(MacosTestCase):
 
+    @staticmethod
+    def parse_swapusage(out):
+        # Parse 'sysctl vm.swapusage' output into bytes.
+        # E.g. 'total = 2.00G' -> 2147483648.
+        units = {"K": 1024, "M": 1024**2, "G": 1024**3}
+        ret = {}
+        for key in ("total", "used", "free"):
+            m = re.search(rf"{key}\s*=\s*([0-9.]+)([KMG])", out)
+            ret[key] = int(float(m.group(1)) * units[m.group(2)])
+        return ret
+
+    def test_total(self):
+        out = sh("sysctl vm.swapusage")
+        sysctl_val = self.parse_swapusage(out)["total"]
+        # 0.01M display precision = ~10KB rounding
+        assert abs(psutil.swap_memory().total - sysctl_val) < 100 * 1024
+
+    @retry_on_failure()
+    def test_used(self):
+        out = sh("sysctl vm.swapusage")
+        sysctl_val = self.parse_swapusage(out)["used"]
+        assert abs(psutil.swap_memory().used - sysctl_val) < TOLERANCE_SYS_MEM
+
+    @retry_on_failure()
+    def test_free(self):
+        out = sh("sysctl vm.swapusage")
+        sysctl_val = self.parse_swapusage(out)["free"]
+        assert abs(psutil.swap_memory().free - sysctl_val) < TOLERANCE_SYS_MEM
+
     @retry_on_failure()
     def test_sin(self):
         vmstat_val = vm_stat("Pageins")
