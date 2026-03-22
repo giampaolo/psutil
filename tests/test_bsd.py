@@ -401,6 +401,25 @@ class FreeBSDSystemTestCase(PsutilTestCase):
         total, _used, _free = self.parse_swapinfo()
         assert abs(psutil.swap_memory().total - total) < TOLERANCE_SYS_MEM
 
+    # --- net
+
+    @retry_on_failure()
+    def test_net_io_counters(self):
+        out = sh("netstat -ib")
+        netstat = {}
+        for line in out.splitlines():
+            fields = line.split()
+            if len(fields) == 12 and "<Link#" in fields[2]:
+                name = fields[0]
+                netstat[name] = (int(fields[7]), int(fields[10]))
+        ps = psutil.net_io_counters(pernic=True)
+        tolerance = 1 * 1024 * 1024  # 1 MB
+        for name, (ibytes, obytes) in netstat.items():
+            if name not in ps:
+                continue
+            assert abs(ps[name].bytes_recv - ibytes) < tolerance
+            assert abs(ps[name].bytes_sent - obytes) < tolerance
+
     # --- others
 
     def test_boot_time(self):
