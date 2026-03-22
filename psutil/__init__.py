@@ -427,15 +427,13 @@ class Process:
     def __str__(self):
         info = {}
         info["pid"] = self.pid
-        if self._name:
-            info['name'] = self._name
         with self.oneshot():
             if self._pid_reused:
                 info["status"] = "terminated + PID reused"
             else:
                 try:
-                    info["name"] = self.name()
-                    info["status"] = self.status()
+                    info["name"] = self._name or self.name()
+                    info["status"] = str(self.status())
                 except ZombieProcess:
                     info["status"] = "zombie"
                 except NoSuchProcess:
