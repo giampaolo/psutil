@@ -500,6 +500,22 @@ class Process:
         """The process PID."""
         return self._pid
 
+    # DEPRECATED
+    @property
+    def info(self) -> dict:
+        """Return pre-fetched process_iter() info dict.
+
+        Deprecated: use method calls instead (e.g. p.name()).
+        """
+        msg = (
+            "Process.info is deprecated; use method calls instead"
+            " (e.g. p.name() instead of p.info['name'])"
+        )
+        warnings.warn(msg, PendingDeprecationWarning, stacklevel=2)
+        # Returning a copy prevents the user to mutate the dict and
+        # corrupt the prefetch cache.
+        return self._prefetch.copy()
+
     # --- utility methods
 
     @contextlib.contextmanager
@@ -1522,7 +1538,7 @@ _as_dict_attrnames = {
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot'}
+      'connections', 'memory_full_info', 'oneshot', 'info'}
 }
 # fmt: on
 
@@ -1699,8 +1715,9 @@ def process_iter(
                     proc = add(pid)
                 proc._prefetch = {}
                 if attrs is not None:
-                    proc.info = proc.as_dict(attrs=attrs, ad_value=ad_value)
-                    proc._prefetch = proc.info.copy()
+                    proc._prefetch = proc.as_dict(
+                        attrs=attrs, ad_value=ad_value
+                    )
                 yield proc
             except NoSuchProcess:
                 remove(pid)

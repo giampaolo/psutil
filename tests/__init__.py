@@ -1121,6 +1121,7 @@ class process_namespace:
         ('as_dict', (), {}),
         ('children', (), {'recursive': True}),
         ('connections', (), {}),  # deprecated
+        ('info', (), {}),
         ('is_running', (), {}),
         ('memory_full_info', (), {}),  # deprecated
         ('oneshot', (), {}),

@@ -16,6 +16,7 @@ import signal
 import socket
 import sys
 import time
+import warnings
 from unittest import mock
 
 import psutil
@@ -95,10 +96,10 @@ class TestProcessIter(PsutilTestCase):
 
     def test_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(p._prefetch.keys()) == ['pid']
         # yield again
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(p._prefetch.keys()) == ['pid']
         with pytest.raises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
         with mock.patch(
@@ -106,8 +107,8 @@ class TestProcessIter(PsutilTestCase):
             side_effect=psutil.AccessDenied(0, ""),
         ) as m:
             for p in psutil.process_iter(attrs=["pid", "cpu_times"]):
-                assert p.info['cpu_times'] is None
-                assert p.info['pid'] >= 0
+                assert p._prefetch['cpu_times'] is None
+                assert p._prefetch['pid'] >= 0
             assert m.called
         with mock.patch(
             "psutil._psplatform.Process.cpu_times",
@@ -117,14 +118,24 @@ class TestProcessIter(PsutilTestCase):
             for p in psutil.process_iter(
                 attrs=["pid", "cpu_times"], ad_value=flag
             ):
-                assert p.info['cpu_times'] is flag
-                assert p.info['pid'] >= 0
+                assert p._prefetch['cpu_times'] is flag
+                assert p._prefetch['pid'] >= 0
             assert m.called
 
     def test_prefetch(self):
         for p in psutil.process_iter(attrs=["name", "status"]):
-            assert p.name() == p.info["name"]
-            assert p.status() == p.info["status"]
+            assert p.name() == p._prefetch["name"]
+            assert p.status() == p._prefetch["status"]
+
+    def test_info_deprecation(self):
+        for p in psutil.process_iter(attrs=["name"]):
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                p.info  # noqa: B018
+                assert len(ws) == 1
+                assert issubclass(ws[0].category, PendingDeprecationWarning)
+                assert "deprecated" in str(ws[0].message)
+            break
 
     def test_prefetch_ad_value(self):
         with mock.patch(
