@@ -48,7 +48,7 @@ def main():
     print(header)
     proc_names = {}
     for p in psutil.process_iter(['pid', 'name']):
-        proc_names[p.info['pid']] = p.info['name']
+        proc_names[p.pid] = p.name()
     for c in psutil.net_connections(kind='inet'):
         laddr = f"{c.laddr[0]}:{c.laddr[1]}"
         raddr = ""

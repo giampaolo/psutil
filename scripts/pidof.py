@@ -21,8 +21,8 @@ def pidof(pgname):
     return [
         str(proc.pid)
         for proc in psutil.process_iter(['name', 'cmdline'])
-        if proc.info["name"] == pgname
-        or (proc.info["cmdline"] and proc.info["cmdline"][0] == pgname)
+        if proc.name() == pgname
+        or (proc.cmdline() and proc.cmdline()[0] == pgname)
     ]
 
 
