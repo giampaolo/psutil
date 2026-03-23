@@ -36,6 +36,7 @@ include docs/glossary.rst
 include docs/index.rst
 include docs/install.rst
 include docs/migration.rst
+include docs/performance.rst
 include docs/platform.rst
 include docs/recipes.rst
 include docs/requirements.txt

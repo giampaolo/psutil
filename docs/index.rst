@@ -105,6 +105,7 @@ Table of contents
    Glossary <glossary>
    Platform support <platform>
    Who uses psutil <adoption>
+   Performance <performance>
    Alternatives <alternatives>
    Migration <migration>
    Development guide <devguide>
