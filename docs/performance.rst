@@ -20,10 +20,10 @@ Slow:
   import psutil
 
   p = psutil.Process()
-  p.name()           # triggers a syscall
-  p.cpu_times()      # triggers a syscall
-  p.memory_info()    # triggers a syscall
-  p.status()         # triggers a syscall
+  p.name()           # syscall
+  p.cpu_times()      # syscall
+  p.memory_info()    # syscall
+  p.status()         # syscall
 
 Fast:
 
@@ -41,7 +41,7 @@ Fast:
 The speed improvement depends on the platform and on how many attributes
 you read. On Linux the gain is typically 2-4x; on Windows it can be
 much higher. As a rule of thumb: if you read more than two attributes
-from the same process, use ``oneshot()``.
+from the same process, use :meth:`Process.oneshot`.
 
 Use process_iter() with an attrs list
 --------------------------------------
