@@ -95,6 +95,7 @@ Table of contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: User guide
 
    Install <install>
    API Reference <api>
@@ -103,10 +104,25 @@ Table of contents
    Recipes <recipes>
    Shell equivalents <shell-equivalents>
    Stdlib equivalents <stdlib-equivalents>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
    Glossary <glossary>
    Platform support <platform>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Development
+
    Migration <migration>
    Development guide <devguide>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: About
+
    Who uses psutil <adoption>
    Alternatives <alternatives>
    Credits <credits>
