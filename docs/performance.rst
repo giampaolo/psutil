@@ -5,6 +5,8 @@ Performance
 
 This page describes how to use psutil efficiently.
 
+.. _perf-oneshot:
+
 Use oneshot() when reading multiple process attributes
 ------------------------------------------------------
 
@@ -43,6 +45,8 @@ you read. On Linux the gain is typically 2-4x; on Windows it can be
 much higher. As a rule of thumb: if you read more than two attributes
 from the same process, use :meth:`Process.oneshot`.
 
+.. _perf-process-iter:
+
 Use process_iter() with an attrs list
 --------------------------------------
 
@@ -79,6 +83,8 @@ equivalent of using :meth:`Process.oneshot` on each process.
 Using :func:`process_iter` also saves you from race conditions (e.g.
 if a process disappears while iterating), since attributes are retrieved in a
 single pass and exceptions like :exc:`NoSuchProcess` are handled internally.
+
+.. _perf-pids:
 
 Avoid pids() + loop
 ---------------------

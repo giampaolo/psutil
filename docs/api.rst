@@ -1010,7 +1010,7 @@ Functions
 
   Return a sorted list of current running PIDs.
   To iterate over all processes and avoid race conditions :func:`process_iter`
-  should be preferred.
+  should be preferred, see :ref:`performance section <perf-pids>`.
 
   .. code-block:: pycon
 
@@ -1043,6 +1043,8 @@ Functions
   it will retrieve all process info (slow).
 
   Processes are returned sorted by PID.
+
+  .. seealso:: :ref:`perf-process-iter`
 
   .. note::
 
@@ -1230,6 +1232,8 @@ Process class
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
     about the process. If you're lucky, you'll get a hell of a speedup.
+
+    .. seealso:: :ref:`perf-oneshot`
 
     .. code-block:: pycon
 
