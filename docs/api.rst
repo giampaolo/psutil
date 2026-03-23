@@ -1251,10 +1251,13 @@ Process class
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
-    In the table below horizontal empty rows indicate what process methods can
-    be efficiently grouped together internally.
+    Empty rows indicate methods that are grouped together internally (i.e.
+    they share the same system call).
     The last column (speedup) shows an approximation of the speedup you can get
-    if you call all the methods together (best case scenario).
+    if you call all the methods together (best case scenario). It was
+    calculated via
+    `bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
+    script.
 
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | Linux                        | Windows                       | macOS                        | BSD                          | SunOS                    | AIX                      |
@@ -1297,7 +1300,8 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-
+    | *speedup: +1.8x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         | *speedup: +1.3x*         |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     .. versionadded:: 5.0.0
 
   .. attribute:: pid
