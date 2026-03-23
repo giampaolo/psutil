@@ -106,10 +106,14 @@ def timecall(title, fun, *args, **kw):
     sys.stdout.flush()
     t = timer()
     for n in range(TIMES):
-        fun(*args, **kw)
-        elapsed = timer() - t
-        if elapsed > 2:
-            break
+        try:
+            fun(*args, **kw)
+        except psutil.AccessDenied:
+            return
+        else:
+            elapsed = timer() - t
+            if elapsed > 2:
+                break
     print("\r", end="")
     sys.stdout.flush()
     timings.append((title, n + 1, elapsed))
@@ -186,6 +190,7 @@ def main():
         fun = getattr(p, name)
         if callable(fun):
             timecall(name, fun)
+
     print_timings()
 
     if not prio_set:

@@ -2008,6 +2008,7 @@ class Process:
 
     @wrap_exceptions
     def page_faults(self):
+        raise AccessDenied
         values = self._parse_stat_file()
         return ntp.ppagefaults(int(values['minflt']), int(values['majflt']))
 
