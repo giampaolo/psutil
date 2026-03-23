@@ -24,8 +24,8 @@ process_iter(): p.info is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`process_iter` now caches pre-fetched values internally, so they
-can be accessed via normal method calls instead of the ``p.info`` dict.
-``p.info`` still works but raises :exc:`DeprecationWarning`:
+can be accessed via normal method calls instead of the :attr:`Process.info`
+dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
 
 .. code-block:: python
 
@@ -45,14 +45,14 @@ to ``None``):
 .. code-block:: python
 
   # before
-  for p in psutil.process_iter(attrs=["exe"], ad_value=""):
+  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
       print(p.info["exe"])
 
   # after
-  for p in psutil.process_iter(attrs=["exe"], ad_value=""):
+  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
       print(p.exe())
 
-.. warning::
+.. note::
 
   This is a silent behavior change. Before, calling ``p.exe()``
   directly could raise :exc:`AccessDenied`. Now, if ``"exe"`` was
