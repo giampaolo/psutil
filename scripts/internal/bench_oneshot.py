@@ -128,16 +128,19 @@ setup_code = textwrap.dedent("""
 
 
 def parse_cli():
-    global ITERATIONS, PID
+    global ITERATIONS, PID, names
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("-i", "--iterations", type=int, default=ITERATIONS)
     parser.add_argument("-p", "--pid", type=int, default=PID)
+    parser.add_argument("-n", "--names", default=None, metavar="METHOD,METHOD")
     args = parser.parse_args()
     ITERATIONS = args.iterations
     PID = args.pid
+    if args.names:
+        names = sorted(set(args.names.split(",")))
 
 
 def main():
@@ -149,6 +152,9 @@ def main():
     )
     for name in sorted(names):
         print("    " + name)
+        attr = getattr(psutil.Process, name, None)
+        if attr is None or not callable(attr):
+            raise ValueError(f"invalid name {name!r}")
 
     # "normal" run
     setup = setup_code.format(PID)
