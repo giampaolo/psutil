@@ -1233,7 +1233,9 @@ Process class
     The advice is to use this every time you retrieve more than one attribute
     about the process. If you're lucky, you'll get a hell of a speedup.
 
-    .. seealso:: :ref:`perf-oneshot`
+    .. seealso::
+      - :ref:`perf-oneshot`
+      - :ref:`perf-oneshot-bench`
 
     .. code-block:: pycon
 
