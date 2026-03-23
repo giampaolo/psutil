@@ -79,6 +79,7 @@ import psutil
 from psutil._common import print_color
 
 TIMES = 300
+PID = os.getpid()
 timings = []
 templ = "{:<25} {:>10}   {:>10}"
 
@@ -133,16 +134,21 @@ def set_highest_priority():
         p.ionice(psutil.IOPRIO_HIGH)
 
 
-def main():
-    global TIMES
-
+def parse_cli():
+    global TIMES, PID
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument('-t', '--times', type=int, default=TIMES)
+    parser.add_argument('-p', '--pid', type=int, default=PID)
     args = parser.parse_args()
     TIMES = args.times
+    PID = args.pid
     assert TIMES > 1, TIMES
+
+
+def main():
+    parse_cli()
 
     try:
         set_highest_priority()
@@ -173,7 +179,7 @@ def main():
         fun = getattr(psutil, name)
         args = ()
         if name == 'pid_exists':
-            args = (os.getpid(),)
+            args = (PID,)
         elif name == 'disk_usage':
             args = (os.getcwd(),)
         timecall(name, fun, *args)
@@ -184,7 +190,7 @@ def main():
     # --- process
     print()
     print_header("PROCESS APIS")
-    p = psutil.Process()
+    p = psutil.Process(PID)
     names = p.as_dict().keys()
     for name in sorted(names):
         fun = getattr(p, name)

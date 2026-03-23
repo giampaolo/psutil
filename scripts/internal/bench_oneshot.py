@@ -10,6 +10,7 @@ See: https://github.com/giampaolo/psutil/issues/799.
 """
 
 import argparse
+import os
 import sys
 import textwrap
 import timeit
@@ -17,6 +18,7 @@ import timeit
 import psutil
 
 ITERATIONS = 1000
+PID = os.getpid()
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
@@ -107,7 +109,7 @@ elif psutil.WINDOWS:
 
 names = sorted(set(names))
 
-setup = textwrap.dedent("""
+setup_code = textwrap.dedent("""
     from __main__ import names
     import psutil
 
@@ -120,20 +122,22 @@ setup = textwrap.dedent("""
             for fun in funs:
                 fun()
 
-    p = psutil.Process()
+    p = psutil.Process({})
     funs = [getattr(p, n) for n in names]
     """)
 
 
 def parse_cli():
-    global ITERATIONS
+    global ITERATIONS, PID
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("-i", "--iterations", type=int, default=ITERATIONS)
+    parser.add_argument("-p", "--pid", type=int, default=PID)
     args = parser.parse_args()
     ITERATIONS = args.iterations
+    PID = args.pid
 
 
 def main():
@@ -147,6 +151,7 @@ def main():
         print("    " + name)
 
     # "normal" run
+    setup = setup_code.format(PID)
     elapsed1 = timeit.timeit(
         "call_normal(funs)", setup=setup, number=ITERATIONS
     )
