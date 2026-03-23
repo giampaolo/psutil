@@ -107,8 +107,6 @@ elif psutil.WINDOWS:
         'memory_info',
     ]
 
-NAMES = sorted(set(NAMES))
-
 setup_code = textwrap.dedent("""
     from __main__ import NAMES
     import psutil
@@ -140,7 +138,8 @@ def parse_cli():
     TIMES = args.times
     PID = args.pid
     if args.names:
-        NAMES = sorted(set(args.names.split(",")))
+        NAMES = args.names.split(",")
+    NAMES = sorted(set(NAMES))
 
 
 def main():
@@ -156,12 +155,12 @@ def main():
         if attr is None or not callable(attr):
             raise ValueError(f"invalid name {name!r}")
 
-    # "normal" run
+    # regular run
     setup = setup_code.format(PID)
     elapsed1 = timeit.timeit("call_normal(funs)", setup=setup, number=TIMES)
     print(f"\nregular:  {elapsed1:.3f} secs")
 
-    # "one shot" run
+    # oneshot() run
     elapsed2 = timeit.timeit("call_oneshot(funs)", setup=setup, number=TIMES)
     print(f"oneshot:  {elapsed2:.3f} secs")
 
