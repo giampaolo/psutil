@@ -22,7 +22,7 @@ PID = os.getpid()
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
-names = [
+NAMES = [
     'cpu_times',
     'cpu_percent',
     'memory_info',
@@ -32,10 +32,10 @@ names = [
 ]
 
 if psutil.POSIX:
-    names.extend(('uids', 'username'))
+    NAMES.extend(('uids', 'username'))
 
 if psutil.LINUX:
-    names += [
+    NAMES += [
         # 'memory_footprint',
         # 'memory_maps',
         'cpu_num',
@@ -53,7 +53,7 @@ if psutil.LINUX:
         'uids',
     ]
 elif psutil.BSD:
-    names = [
+    NAMES = [
         'cpu_times',
         'gids',
         'io_counters',
@@ -67,9 +67,9 @@ elif psutil.BSD:
         'uids',
     ]
     if psutil.FREEBSD:
-        names.append('cpu_num')
+        NAMES.append('cpu_num')
 elif psutil.SUNOS:
-    names += [
+    NAMES += [
         'cmdline',
         'gids',
         'memory_footprint',
@@ -82,7 +82,7 @@ elif psutil.SUNOS:
         'uids',
     ]
 elif psutil.MACOS:
-    names += [
+    NAMES += [
         'cpu_times',
         'create_time',
         'gids',
@@ -95,7 +95,7 @@ elif psutil.MACOS:
         'uids',
     ]
 elif psutil.WINDOWS:
-    names += [
+    NAMES += [
         'num_ctx_switches',
         'num_threads',
         # dual implementation, called in case of AccessDenied
@@ -107,10 +107,10 @@ elif psutil.WINDOWS:
         'memory_info',
     ]
 
-names = sorted(set(names))
+NAMES = sorted(set(NAMES))
 
 setup_code = textwrap.dedent("""
-    from __main__ import names
+    from __main__ import NAMES
     import psutil
 
     def call_normal(funs):
@@ -123,12 +123,12 @@ setup_code = textwrap.dedent("""
                 fun()
 
     p = psutil.Process({})
-    funs = [getattr(p, n) for n in names]
+    funs = [getattr(p, n) for n in NAMES]
     """)
 
 
 def parse_cli():
-    global ITERATIONS, PID, names
+    global ITERATIONS, PID, NAMES
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
@@ -140,17 +140,17 @@ def parse_cli():
     ITERATIONS = args.iterations
     PID = args.pid
     if args.names:
-        names = sorted(set(args.names.split(",")))
+        NAMES = sorted(set(args.names.split(",")))
 
 
 def main():
     parse_cli()
     print(
-        f"{len(names)} methods involved on platform"
+        f"{len(NAMES)} methods involved on platform"
         f" {sys.platform!r} ({ITERATIONS} iterations, psutil"
         f" {psutil.__version__}):"
     )
-    for name in sorted(names):
+    for name in sorted(NAMES):
         print("    " + name)
         attr = getattr(psutil.Process, name, None)
         if attr is None or not callable(attr):
