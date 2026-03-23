@@ -40,7 +40,7 @@ class ScriptsTestCase(PsutilTestCase):
     scripts_dir = SCRIPTS_DIR
 
     def assert_stdout(self, exe, *args):
-        """Execute the script, maka sure it doesn't crash and prints
+        """Execute the script, make sure it doesn't crash and prints
         something.
         """
         exe = os.path.join(self.scripts_dir, exe)

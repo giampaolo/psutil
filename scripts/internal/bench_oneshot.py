@@ -45,7 +45,6 @@ if psutil.LINUX:
         'name',
         'num_ctx_switches',
         'num_threads',
-        'num_threads',
         'page_faults',
         'ppid',
         'status',
