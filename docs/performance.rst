@@ -1,4 +1,4 @@
-.. _performance:
+.. currentmodule:: psutil
 
 Performance
 ===========
@@ -6,9 +6,9 @@ Performance
 Use process_iter() with an attrs list
 --------------------------------------
 
-If you iterate over multiple PIDs, use :func:`process_iter`.
-It accepts a ``attrs`` argument that pre-fetches only the attributes you need
-in a single pass, using :meth:`Process.oneshot` internally.
+If you **iterate over multiple PIDs**, use :func:`process_iter`.
+It accepts a ``attrs`` argument that pre-fetches only the requested attributes
+in a single pass, minimizing system calls by fetching multiple attributes at once.
 This is faster than calling individual methods in a loop.
 
 Slow:
@@ -20,7 +20,7 @@ Slow:
   for p in psutil.process_iter():
       try:
           print(p.pid, p.name(), p.status())
-      except psutil.Error:
+      except (psutil.NoSuchProcess, psutil.AccessDenied):
           pass
 
 Fast:
@@ -30,18 +30,19 @@ Fast:
   import psutil
 
   for p in psutil.process_iter(["name", "status"]):
+      # values are retrieved from an internal cache
       print(p.pid, p.name(), p.status())
+
+Note: :func:`process_iter(attrs=...)` is effectively the iterator-friendly
+equivalent of using :meth:`Process.oneshot` on each process.
 
 Use oneshot() when reading multiple process attributes
 ------------------------------------------------------
 
-If you're dealing with a single :class:`Process` instance, always use
-:meth:`Process.oneshot`.
-
-Each attribute call normally issues a separate system call, but many
-attributes are returned together by the OS in a single round-trip.
-:meth:`Process.oneshot` caches that result so subsequent calls within the context
-manager return immediately without hitting the kernel again.
+If you're dealing with a single :class:`Process` instance and need to
+retrieve multiple process information, use :meth:`Process.oneshot`.
+Each method call issue a separate system call, but the OS often returns
+multiple fields at once, which :meth:`oneshot` caches for later use.
 
 Slow:
 
