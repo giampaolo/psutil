@@ -139,10 +139,10 @@ def main():
     # info['proc'] = pprint.pformat(pinfo)
 
     # print
-    print("=" * 70, file=sys.stderr)
+    print("=" * 70)
     for k, v in info.items():
-        print("{:<17} {}".format(k + ":", v), file=sys.stderr)
-    print("=" * 70, file=sys.stderr)
+        print("{:<17} {}".format(k + ":", v))
+    print("=" * 70)
     sys.stdout.flush()
 
 

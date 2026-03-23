@@ -702,7 +702,6 @@ class Process:
         """The process parent PID.
         On Windows the return value is cached after first call.
         """
-
         # On POSIX we don't want to cache the ppid as it may unexpectedly
         # change to 1 (init) in case this process turns into a zombie:
         # https://github.com/giampaolo/psutil/issues/321
@@ -720,7 +719,6 @@ class Process:
     @_use_prefetch
     def name(self) -> str:
         """The process name. The return value is cached after first call."""
-
         # Process name is only cached on Windows as on POSIX it may
         # change, see:
         # https://github.com/giampaolo/psutil/issues/692
@@ -811,7 +809,6 @@ class Process:
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
         """
-
         if POSIX:
             if pwd is None:
                 # might happen if python was installed from sources
@@ -1136,7 +1133,6 @@ class Process:
           2.9
           >>>
         """
-
         blocking = interval is not None and interval > 0.0
         if interval is not None and interval < 0:
             msg = f"interval is not positive (got {interval!r})"
@@ -1279,7 +1275,6 @@ class Process:
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-
         valid_types = list(_ntp.pmem._fields)
         if hasattr(_ntp, "pmem_ex"):
             valid_types += [

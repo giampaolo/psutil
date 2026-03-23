@@ -9,17 +9,20 @@ Process.oneshot() ctx manager.
 See: https://github.com/giampaolo/psutil/issues/799.
 """
 
+import argparse
+import os
 import sys
 import textwrap
 import timeit
 
 import psutil
 
-ITERATIONS = 1000
+TIMES = 1000
+PID = os.getpid()
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
-names = [
+NAMES = [
     'cpu_times',
     'cpu_percent',
     'memory_info',
@@ -29,25 +32,27 @@ names = [
 ]
 
 if psutil.POSIX:
-    names.extend(('uids', 'username'))
+    NAMES.extend(('uids', 'username'))
 
 if psutil.LINUX:
-    names += [
+    NAMES += [
         # 'memory_footprint',
         # 'memory_maps',
         'cpu_num',
         'cpu_times',
         'gids',
+        'memory_info_ex',
         'name',
         'num_ctx_switches',
         'num_threads',
+        'page_faults',
         'ppid',
         'status',
         'terminal',
         'uids',
     ]
 elif psutil.BSD:
-    names = [
+    NAMES = [
         'cpu_times',
         'gids',
         'io_counters',
@@ -61,9 +66,9 @@ elif psutil.BSD:
         'uids',
     ]
     if psutil.FREEBSD:
-        names.append('cpu_num')
+        NAMES.append('cpu_num')
 elif psutil.SUNOS:
-    names += [
+    NAMES += [
         'cmdline',
         'gids',
         'memory_footprint',
@@ -76,7 +81,7 @@ elif psutil.SUNOS:
         'uids',
     ]
 elif psutil.MACOS:
-    names += [
+    NAMES += [
         'cpu_times',
         'create_time',
         'gids',
@@ -89,7 +94,7 @@ elif psutil.MACOS:
         'uids',
     ]
 elif psutil.WINDOWS:
-    names += [
+    NAMES += [
         'num_ctx_switches',
         'num_threads',
         # dual implementation, called in case of AccessDenied
@@ -101,10 +106,8 @@ elif psutil.WINDOWS:
         'memory_info',
     ]
 
-names = sorted(set(names))
-
-setup = textwrap.dedent("""
-    from __main__ import names
+setup_code = textwrap.dedent("""
+    from __main__ import NAMES
     import psutil
 
     def call_normal(funs):
@@ -116,37 +119,55 @@ setup = textwrap.dedent("""
             for fun in funs:
                 fun()
 
-    p = psutil.Process()
-    funs = [getattr(p, n) for n in names]
+    p = psutil.Process({})
+    funs = [getattr(p, n) for n in NAMES]
     """)
 
 
+def parse_cli():
+    global TIMES, PID, NAMES
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument("-i", "--times", type=int, default=TIMES)
+    parser.add_argument("-p", "--pid", type=int, default=PID)
+    parser.add_argument("-n", "--names", default=None, metavar="METHOD,METHOD")
+    args = parser.parse_args()
+    TIMES = args.times
+    PID = args.pid
+    if args.names:
+        NAMES = args.names.split(",")
+    NAMES = sorted(set(NAMES))
+
+
 def main():
+    parse_cli()
     print(
-        f"{len(names)} methods involved on platform"
-        f" {sys.platform!r} ({ITERATIONS} iterations, psutil"
-        f" {psutil.__version__}):"
+        f"{len(NAMES)} methods pre-fetched by oneshot() on platform"
+        f" {sys.platform!r} ({TIMES:,} times, psutil"
+        f" {psutil.__version__}):\n"
     )
-    for name in sorted(names):
-        print("    " + name)
+    for name in sorted(NAMES):
+        print("  " + name)
+        attr = getattr(psutil.Process, name, None)
+        if attr is None or not callable(attr):
+            raise ValueError(f"invalid name {name!r}")
 
-    # "normal" run
-    elapsed1 = timeit.timeit(
-        "call_normal(funs)", setup=setup, number=ITERATIONS
-    )
-    print(f"normal:  {elapsed1:.3f} secs")
+    # regular run
+    setup = setup_code.format(PID)
+    elapsed1 = timeit.timeit("call_normal(funs)", setup=setup, number=TIMES)
+    print(f"\nregular:  {elapsed1:.3f} secs")
 
-    # "one shot" run
-    elapsed2 = timeit.timeit(
-        "call_oneshot(funs)", setup=setup, number=ITERATIONS
-    )
-    print(f"onshot:  {elapsed2:.3f} secs")
+    # oneshot() run
+    elapsed2 = timeit.timeit("call_oneshot(funs)", setup=setup, number=TIMES)
+    print(f"oneshot:  {elapsed2:.3f} secs")
 
     # done
     if elapsed2 < elapsed1:
-        print(f"speedup: +{elapsed1 / elapsed2:.2f}x")
+        print(f"speedup:  +{elapsed1 / elapsed2:.2f}x")
     elif elapsed2 > elapsed1:
-        print(f"slowdown: -{elapsed2 / elapsed1:.2f}x")
+        print(f"slowdown:  -{elapsed2 / elapsed1:.2f}x")
     else:
         print("same speed")
 

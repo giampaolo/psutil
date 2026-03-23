@@ -1010,7 +1010,7 @@ Functions
 
   Return a sorted list of current running PIDs.
   To iterate over all processes and avoid race conditions :func:`process_iter`
-  should be preferred.
+  should be preferred, see :ref:`performance section <perf-pids>`.
 
   .. code-block:: pycon
 
@@ -1043,6 +1043,8 @@ Functions
   it will retrieve all process info (slow).
 
   Processes are returned sorted by PID.
+
+  .. seealso:: :ref:`perf-process-iter`
 
   .. note::
 
@@ -1218,18 +1220,22 @@ Process class
   .. method:: oneshot()
 
     Utility context manager which considerably speeds up the retrieval of
-    multiple process information at the same time.
+    multiple process attributes at the same time.
     Internally different process info (e.g. :meth:`name`, :meth:`ppid`,
     :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
     routine, but only one value is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
-    the example below on :meth:`name`) the value of interest is returned and
+    the example below on :meth:`name`); the value of interest is returned and
     the others are cached.
     The subsequent calls sharing the same internal routine will return the
     cached value.
     The cache is cleared when exiting the context manager block.
-    The advice is to use this every time you retrieve more than one information
+    The advice is to use this every time you retrieve more than one attribute
     about the process. If you're lucky, you'll get a hell of a speedup.
+
+    .. seealso::
+      - :ref:`perf-oneshot`
+      - :ref:`perf-oneshot-bench`
 
     .. code-block:: pycon
 
@@ -1247,10 +1253,13 @@ Process class
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
-    In the table below horizontal empty rows indicate what process methods can
-    be efficiently grouped together internally.
+    Empty rows indicate methods that are grouped together internally (i.e.
+    they share the same system call).
     The last column (speedup) shows an approximation of the speedup you can get
-    if you call all the methods together (best case scenario).
+    if you call all the methods together (best case scenario). It was
+    calculated via
+    `bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
+    script.
 
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | Linux                        | Windows                       | macOS                        | BSD                          | SunOS                    | AIX                      |
@@ -1265,33 +1274,35 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`name`                 | :meth:`memory_info_ex`        | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      | :meth:`memory_info`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`num_ctx_switches`      | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   | :meth:`memory_percent`   |
+    | :meth:`page_faults`          | :meth:`num_ctx_switches`      | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   | :meth:`memory_percent`   |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`status`               | :meth:`num_handles`           |                              | :meth:`name`                 | :meth:`num_threads`      | :meth:`num_threads`      |
+    | :meth:`ppid`                 | :meth:`num_handles`           |                              | :meth:`name`                 | :meth:`num_threads`      | :meth:`num_threads`      |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`terminal`             | :meth:`num_threads`           | :meth:`create_time`          | :meth:`memory_info`          | :meth:`ppid`             | :meth:`ppid`             |
+    | :meth:`status`               | :meth:`num_threads`           | :meth:`create_time`          | :meth:`memory_info`          | :meth:`ppid`             | :meth:`ppid`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              |                               | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
+    | :meth:`terminal`             |                               | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`gids`                 | :meth:`exe`                   | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
+    |                              | :meth:`exe`                   | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_info_ex`       | :meth:`name`                  | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
+    | :meth:`gids`                 | :meth:`name`                  | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     |                               | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
+    | :meth:`memory_info_ex`       |                               | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
+    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
+    | :meth:`num_ctx_switches`     |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`num_threads`          |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`uids`                 |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
+    | :meth:`uids`                 |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`username`         | :meth:`username`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`username`             |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`username`         | :meth:`username`         |
+    | :meth:`username`             |                               | :meth:`username`             | :meth:`username`             |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              |                               | :meth:`username`             | :meth:`username`             |                          |                          |
+    |                              |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`memory_footprint`     |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
     | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | *speedup: +2.6x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         | *speedup: +1.3x*         |
+    | *speedup: +1.8x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         | *speedup: +1.3x*         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
 
     .. versionadded:: 5.0.0

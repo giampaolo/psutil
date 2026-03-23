@@ -36,21 +36,16 @@ SCRIPTS_DIR = pathlib.Path(ROOT_DIR) / "scripts"
 INTERNAL_SCRIPTS_DIR = SCRIPTS_DIR / "internal"
 
 
-# ===================================================================
-# --- Tests scripts in scripts/ directory
-# ===================================================================
+class ScriptsTestCase(PsutilTestCase):
+    scripts_dir = SCRIPTS_DIR
 
-
-@pytest.mark.skipif(
-    CI_TESTING and not os.path.exists(SCRIPTS_DIR),
-    reason="can't find scripts/ directory",
-)
-class TestExampleScripts(PsutilTestCase):
-    @staticmethod
-    def assert_stdout(exe, *args):
+    def assert_stdout(self, exe, *args):
+        """Execute the script, make sure it doesn't crash and prints
+        something.
+        """
+        exe = os.path.join(self.scripts_dir, exe)
         env = PYTHON_EXE_ENV.copy()
         env.pop("PSUTIL_DEBUG", None)  # avoid spamming to stderr
-        exe = os.path.join(SCRIPTS_DIR, exe)
         cmd = [PYTHON_EXE, exe, *args]
         try:
             out = sh(cmd, env=env).strip()
@@ -62,12 +57,24 @@ class TestExampleScripts(PsutilTestCase):
         assert out, out
         return out
 
-    @staticmethod
-    def assert_syntax(exe):
-        exe = os.path.join(SCRIPTS_DIR, exe)
+    def assert_syntax(self, exe):
+        """Check script's syntax without executing it."""
+        exe = os.path.join(self.scripts_dir, exe)
         with open(exe, encoding="utf8") as f:
             src = f.read()
         ast.parse(src)
+
+
+# ===================================================================
+# --- Tests scripts in scripts/ directory
+# ===================================================================
+
+
+@pytest.mark.skipif(
+    CI_TESTING and not os.path.exists(SCRIPTS_DIR),
+    reason="can't find scripts/ directory",
+)
+class TestExampleScripts(ScriptsTestCase):
 
     def test_coverage(self):
         # make sure all example scripts have a test method defined
@@ -181,7 +188,9 @@ class TestExampleScripts(PsutilTestCase):
     CI_TESTING and not os.path.exists(INTERNAL_SCRIPTS_DIR),
     reason="can't find scripts/internal/ directory",
 )
-class TestInternalScripts(PsutilTestCase):
+class TestInternalScripts(ScriptsTestCase):
+    scripts_dir = INTERNAL_SCRIPTS_DIR
+
     @staticmethod
     def ls():
         for name in os.listdir(INTERNAL_SCRIPTS_DIR):
@@ -203,3 +212,9 @@ class TestInternalScripts(PsutilTestCase):
                 import_module_by_path(path)
             except SystemExit:
                 pass
+
+    def test_print_api_speed(self):
+        self.assert_stdout("print_api_speed.py", "-t", "2")
+
+    def test_print_sysinfo(self):
+        self.assert_stdout("print_sysinfo.py")
