@@ -13,7 +13,7 @@ Use oneshot() when reading multiple process attributes
 If you're dealing with a single :class:`Process` instance and need to
 retrieve multiple process information, use :meth:`Process.oneshot`.
 Each method call issue a separate system call, but the OS often returns
-multiple fields at once, which :meth:`oneshot` caches for later use.
+multiple fields at once, which :meth:`Process.oneshot` caches for later use.
 
 Slow:
 
@@ -41,8 +41,8 @@ Fast:
       p.status()       # from cache
 
 The speed improvement depends on the platform and on how many attributes
-you read. On Linux the gain is typically 2-4x; on Windows it can be
-much higher. As a rule of thumb: if you read more than two attributes
+you read. On Linux the gain is typically between 1x and 2x; on Windows it can
+be much higher. As a rule of thumb: if you read more than two attributes
 from the same process, use :meth:`Process.oneshot`.
 
 .. _perf-process-iter:
@@ -103,8 +103,8 @@ construct a :class:`Process` for each PID manually:
       except (psutil.NoSuchProcess, psutil.AccessDenied):
           pass
 
-Prefer :func:`process_iter` instead, supports the ``attrs`` pre-fetch and
-caches :class:`Process` instances internally:
+Prefer :func:`process_iter` instead. It supports the ``attrs`` pre-fetch, is
+safe from race conditions and caches :class:`Process` instances internally:
 
 .. code-block:: python
 
@@ -113,12 +113,46 @@ caches :class:`Process` instances internally:
   for p in psutil.process_iter(["name"]):
       print(p.pid, p.name())
 
+Measuring oneshot() speedup
+---------------------------
+
+There is a
+`scripts/internal/bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
+script measuring :meth:`Process.oneshot` speedup. E.g. on Linux:
+
+.. code-block::
+
+  $ python3 scripts/internal/bench_oneshot.py --times 10000
+  17 methods pre-fetched by oneshot() on platform 'linux' (10,000 times, psutil 8.0.0):
+
+    cpu_num
+    cpu_percent
+    cpu_times
+    gids
+    memory_info
+    memory_info_ex
+    memory_percent
+    name
+    num_ctx_switches
+    num_threads
+    page_faults
+    parent
+    ppid
+    status
+    terminal
+    uids
+    username
+
+  regular:  2.766 secs
+  oneshot:  1.537 secs
+  speedup:  +1.80x
+
 Measuring APIs speed
 --------------------
 
 There is a
 `scripts/internal/print_api_speed.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py>`_
-script measuring API calls, from fastest to slowest. E.g. on Linux:
+script measuring individual API calls, from fastest to slowest. E.g. on Linux:
 
 .. code-block::
 

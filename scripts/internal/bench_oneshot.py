@@ -17,7 +17,7 @@ import timeit
 
 import psutil
 
-ITERATIONS = 1000
+TIMES = 1000
 PID = os.getpid()
 
 # The list of Process methods which gets collected in one shot and
@@ -128,16 +128,16 @@ setup_code = textwrap.dedent("""
 
 
 def parse_cli():
-    global ITERATIONS, PID, NAMES
+    global TIMES, PID, NAMES
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument("-i", "--iterations", type=int, default=ITERATIONS)
+    parser.add_argument("-i", "--times", type=int, default=TIMES)
     parser.add_argument("-p", "--pid", type=int, default=PID)
     parser.add_argument("-n", "--names", default=None, metavar="METHOD,METHOD")
     args = parser.parse_args()
-    ITERATIONS = args.iterations
+    TIMES = args.times
     PID = args.pid
     if args.names:
         NAMES = sorted(set(args.names.split(",")))
@@ -146,34 +146,30 @@ def parse_cli():
 def main():
     parse_cli()
     print(
-        f"{len(NAMES)} methods involved on platform"
-        f" {sys.platform!r} ({ITERATIONS} iterations, psutil"
-        f" {psutil.__version__}):"
+        f"{len(NAMES)} methods pre-fetched by oneshot() on platform"
+        f" {sys.platform!r} ({TIMES:,} times, psutil"
+        f" {psutil.__version__}):\n"
     )
     for name in sorted(NAMES):
-        print("    " + name)
+        print("  " + name)
         attr = getattr(psutil.Process, name, None)
         if attr is None or not callable(attr):
             raise ValueError(f"invalid name {name!r}")
 
     # "normal" run
     setup = setup_code.format(PID)
-    elapsed1 = timeit.timeit(
-        "call_normal(funs)", setup=setup, number=ITERATIONS
-    )
-    print(f"normal:  {elapsed1:.3f} secs")
+    elapsed1 = timeit.timeit("call_normal(funs)", setup=setup, number=TIMES)
+    print(f"\nregular:  {elapsed1:.3f} secs")
 
     # "one shot" run
-    elapsed2 = timeit.timeit(
-        "call_oneshot(funs)", setup=setup, number=ITERATIONS
-    )
-    print(f"onshot:  {elapsed2:.3f} secs")
+    elapsed2 = timeit.timeit("call_oneshot(funs)", setup=setup, number=TIMES)
+    print(f"oneshot:  {elapsed2:.3f} secs")
 
     # done
     if elapsed2 < elapsed1:
-        print(f"speedup: +{elapsed1 / elapsed2:.2f}x")
+        print(f"speedup:  +{elapsed1 / elapsed2:.2f}x")
     elif elapsed2 > elapsed1:
-        print(f"slowdown: -{elapsed2 / elapsed1:.2f}x")
+        print(f"slowdown:  -{elapsed2 / elapsed1:.2f}x")
     else:
         print("same speed")
 
