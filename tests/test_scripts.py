@@ -215,3 +215,6 @@ class TestInternalScripts(ScriptsTestCase):
 
     def test_print_api_speed(self):
         self.assert_stdout("print_api_speed.py", "-t", "2")
+
+    def test_print_sysinfo(self):
+        self.assert_stdout("print_sysinfo.py")
