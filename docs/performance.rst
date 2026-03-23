@@ -10,10 +10,10 @@ This page describes how to use psutil efficiently.
 Use oneshot() when reading multiple process attributes
 ------------------------------------------------------
 
-If you're dealing with a single :class:`Process` instance and need to
-retrieve multiple process information, use :meth:`Process.oneshot`.
-Each method call issue a separate system call, but the OS often returns
-multiple fields at once, which :meth:`Process.oneshot` caches for later use.
+If you're dealing with a single :class:`Process` instance and need to retrieve
+multiple process attributes, use :meth:`Process.oneshot`. Each method call
+issues a separate system call, but the OS often returns multiple attributes at
+once, which :meth:`Process.oneshot` caches for subsequent calls.
 
 Slow:
 
@@ -41,7 +41,7 @@ Fast:
       p.status()       # from cache
 
 The speed improvement depends on the platform and on how many attributes
-you read. On Linux the gain is typically between 1x and 2x; on Windows it can
+you read. On Linux the gain is typically around 1.5x–2x; on Windows it can
 be much higher. As a rule of thumb: if you read more than two attributes
 from the same process, use :meth:`Process.oneshot`.
 
@@ -76,8 +76,8 @@ Fast:
   for p in psutil.process_iter(["name", "status"]):
       print(p.pid, p.name(), p.status())
 
-:func:`process_iter(attrs=...) <psutil.process_iter>` is effectively the iterator-friendly
-equivalent of using :meth:`Process.oneshot` on each process.
+:func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
+to using :meth:`Process.oneshot` on each process.
 
 Using :func:`process_iter` also saves you from race conditions (e.g.
 if a process disappears while iterating), since attributes are retrieved in a
@@ -103,8 +103,8 @@ construct a :class:`Process` for each PID manually:
       except (psutil.NoSuchProcess, psutil.AccessDenied):
           pass
 
-Prefer :func:`process_iter` instead. It supports the ``attrs`` pre-fetch, is
-safe from race conditions and caches :class:`Process` instances internally:
+Prefer :func:`process_iter` instead. It supports the ``attrs`` pre-fetch,
+avoids race conditions, and caches :class:`Process` instances internally:
 
 .. code-block:: python
 
@@ -113,13 +113,13 @@ safe from race conditions and caches :class:`Process` instances internally:
   for p in psutil.process_iter(["name"]):
       print(p.pid, p.name())
 
+.. _perf-oneshot-bench:
+
 Measuring oneshot() speedup
 ---------------------------
 
-There is a
-`scripts/internal/bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
-script measuring :meth:`Process.oneshot` speedup.
-E.g. on Linux:
+`bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
+script measures :meth:`Process.oneshot` speedup. E.g. on Linux:
 
 .. code-block::
 
@@ -148,15 +148,17 @@ E.g. on Linux:
   oneshot:  1.537 secs
   speedup:  +1.80x
 
-This also shows which APIs share the same underlying internal routines.
+This also shows which APIs share the same internal kernel routines.
+
+.. _perf-api-speed:
 
 Measuring APIs speed
 --------------------
 
-There is a
-`scripts/internal/print_api_speed.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py>`_
-which shows the relative cost of each API call. This helps you understand
-which operations are more expensive. E.g. on Linux:
+`print_api_speed.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py>`_
+script shows the relative cost of each API call.
+This helps you understand which operations are more expensive.
+E.g. on Linux:
 
 .. code-block::
 
