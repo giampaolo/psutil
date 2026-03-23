@@ -82,7 +82,8 @@ equivalent of using :meth:`Process.oneshot` on each process.
 
 Using :func:`process_iter` also saves you from race conditions (e.g.
 if a process disappears while iterating), since attributes are retrieved in a
-single pass and exceptions like :exc:`NoSuchProcess` are handled internally.
+single pass and exceptions like :exc:`NoSuchProcess` and :exc:`AccessDenied`
+are handled internally.
 
 .. _perf-pids:
 
@@ -96,7 +97,6 @@ construct a :class:`Process` for each PID manually:
 
   import psutil
 
-  # slow: pids() + manual loop
   for pid in psutil.pids():
       try:
           p = psutil.Process(pid)
