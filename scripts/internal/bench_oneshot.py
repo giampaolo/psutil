@@ -9,6 +9,7 @@ Process.oneshot() ctx manager.
 See: https://github.com/giampaolo/psutil/issues/799.
 """
 
+import argparse
 import sys
 import textwrap
 import timeit
@@ -121,7 +122,19 @@ setup = textwrap.dedent("""
     """)
 
 
+def parse_cli():
+    global ITERATIONS
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument("-i", "--iterations", type=int, default=ITERATIONS)
+    args = parser.parse_args()
+    ITERATIONS = args.iterations
+
+
 def main():
+    parse_cli()
     print(
         f"{len(names)} methods involved on platform"
         f" {sys.platform!r} ({ITERATIONS} iterations, psutil"
