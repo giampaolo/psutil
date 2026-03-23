@@ -112,3 +112,77 @@ caches :class:`Process` instances internally:
 
   for p in psutil.process_iter(["name"]):
       print(p.pid, p.name())
+
+Measuring APIs speed
+--------------------
+
+There is a
+`scripts/internal/print_api_speed.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py>`_
+script measuring API calls, from fastest to slowest. E.g. on Linux:
+
+.. code-block::
+
+  $ python3 scripts/internal/print_api_speed.py
+  SYSTEM APIS                NUM CALLS      SECONDS
+  -------------------------------------------------
+  getloadavg                       300      0.00013
+  heap_trim                        300      0.00027
+  heap_info                        300      0.00028
+  cpu_count                        300      0.00066
+  disk_usage                       300      0.00071
+  pid_exists                       300      0.00249
+  users                            300      0.00394
+  cpu_times                        300      0.00647
+  virtual_memory                   300      0.00648
+  boot_time                        300      0.00727
+  cpu_percent                      300      0.00745
+  net_io_counters                  300      0.00754
+  cpu_times_percent                300      0.00870
+  net_if_addrs                     300      0.01156
+  cpu_stats                        300      0.01195
+  swap_memory                      300      0.01292
+  net_if_stats                     300      0.01360
+  disk_partitions                  300      0.01696
+  disk_io_counters                 300      0.02583
+  sensors_battery                  300      0.03103
+  pids                             300      0.04896
+  cpu_count (cores)                300      0.07208
+  process_iter (all)               300      0.07900
+  cpu_freq                         300      0.15635
+  sensors_fans                     300      0.75810
+  net_connections                  224      2.00111
+  sensors_temperatures              81      2.00266
+
+  PROCESS APIS               NUM CALLS      SECONDS
+  -------------------------------------------------
+  create_time                      300      0.00013
+  exe                              300      0.00016
+  nice                             300      0.00024
+  ionice                           300      0.00039
+  cwd                              300      0.00052
+  cpu_affinity                     300      0.00057
+  num_fds                          300      0.00100
+  memory_info                      300      0.00208
+  io_counters                      300      0.00229
+  cmdline                          300      0.00232
+  cpu_num                          300      0.00254
+  terminal                         300      0.00255
+  status                           300      0.00258
+  page_faults                      300      0.00259
+  name                             300      0.00261
+  memory_percent                   300      0.00265
+  cpu_times                        300      0.00278
+  threads                          300      0.00300
+  gids                             300      0.00304
+  num_threads                      300      0.00305
+  num_ctx_switches                 300      0.00308
+  uids                             300      0.00321
+  cpu_percent                      300      0.00372
+  net_connections                  300      0.00376
+  open_files                       300      0.00453
+  username                         300      0.00505
+  ppid                             300      0.00554
+  memory_info_ex                   300      0.00651
+  environ                          300      0.01013
+  memory_footprint                 300      0.02241
+  memory_maps                      300      0.30282
