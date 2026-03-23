@@ -5,6 +5,44 @@ Performance
 
 This page describes how to use psutil efficiently.
 
+Use oneshot() when reading multiple process attributes
+------------------------------------------------------
+
+If you're dealing with a single :class:`Process` instance and need to
+retrieve multiple process information, use :meth:`Process.oneshot`.
+Each method call issue a separate system call, but the OS often returns
+multiple fields at once, which :meth:`oneshot` caches for later use.
+
+Slow:
+
+.. code-block:: python
+
+  import psutil
+
+  p = psutil.Process()
+  p.name()           # triggers a syscall
+  p.cpu_times()      # triggers a syscall
+  p.memory_info()    # triggers a syscall
+  p.status()         # triggers a syscall
+
+Fast:
+
+.. code-block:: python
+
+  import psutil
+
+  p = psutil.Process()
+  with p.oneshot():
+      p.name()         # one syscall, result cached
+      p.cpu_times()    # from cache
+      p.memory_info()  # from cache
+      p.status()       # from cache
+
+The speed improvement depends on the platform and on how many attributes
+you read. On Linux the gain is typically 2-4x; on Windows it can be
+much higher. As a rule of thumb: if you read more than two attributes
+from the same process, use ``oneshot()``.
+
 Use process_iter() with an attrs list
 --------------------------------------
 
@@ -65,42 +103,3 @@ caches :class:`Process` instances internally:
 
   for p in psutil.process_iter(["name"]):
       print(p.pid, p.name())
-
-
-Use oneshot() when reading multiple process attributes
-------------------------------------------------------
-
-If you're dealing with a single :class:`Process` instance and need to
-retrieve multiple process information, use :meth:`Process.oneshot`.
-Each method call issue a separate system call, but the OS often returns
-multiple fields at once, which :meth:`oneshot` caches for later use.
-
-Slow:
-
-.. code-block:: python
-
-  import psutil
-
-  p = psutil.Process()
-  p.name()           # triggers a syscall
-  p.cpu_times()      # triggers a syscall
-  p.memory_info()    # triggers a syscall
-  p.status()         # triggers a syscall
-
-Fast:
-
-.. code-block:: python
-
-  import psutil
-
-  p = psutil.Process()
-  with p.oneshot():
-      p.name()         # one syscall, result cached
-      p.cpu_times()    # from cache
-      p.memory_info()  # from cache
-      p.status()       # from cache
-
-The speed improvement depends on the platform and on how many attributes
-you read. On Linux the gain is typically 2-4x; on Windows it can be
-much higher. As a rule of thumb: if you read more than two attributes
-from the same process, use ``oneshot()``.
