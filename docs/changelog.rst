@@ -6,10 +6,9 @@ Changelog
 8.0.0 (IN DEVELOPMENT)
 ^^^^^^^^^^^^^^^^^^^^^^
 
-**Compatibility notes**
-
- psutil 8.0 introduces breaking API changes and drops support for Python 3.6.
- See the :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
+.. note::
+   psutil 8.0 introduces breaking API changes. See the
+   :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 **Enhancements**
 
@@ -22,42 +21,29 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 - Added new sections:
 
-  - `/recipes <https://psutil.readthedocs.io/en/latest/recipes.html>`__:
-    show code samples
-  - `/adoption <https://psutil.readthedocs.io/en/latest/adoption.html>`__:
-    notable software using psutil
-  - `/glossary <https://psutil.readthedocs.io/en/latest/glossary.html>`__:
-    a section explaining the core concepts
-  - `/shell-equivalents <https://psutil.readthedocs.io/en/latest/shell-equivalents.html>`__:
-    maps each psutil API to native CLI commands
-  - `/stdlib-equivalents <https://psutil.readthedocs.io/en/latest/stdlib-equivalents.html>`__:
-    maps psutil's Python API to the closest equivalent in the Python standard
-    library.
-  - `/install <https://psutil.readthedocs.io/en/latest/install.html>`__
-    (was old ``INSTALL.rst`` in root dir)
-  - `/credits <https://psutil.readthedocs.io/en/latest/credits.html>`__:
-    list contributors and donors (was old ``CREDITS`` in root dir)
-  - `/platform <https://psutil.readthedocs.io/en/latest/platform.html>`__:
-    summary of OSes and architectures support
-  - `/faq <https://psutil.readthedocs.io/en/latest/faq.html>`__:
-    extended FAQ section.
-  - `/alternatives <https://psutil.readthedocs.io/en/latest/alternatives.html>`__:
-    list of alternative Python libraries and tools that overlap with psutil.
-  - `/migration <https://psutil.readthedocs.io/en/latest/migration.html>`__: a
-    section explaining how to migrate to newer psutil versions that break
-    backward compatibility.
+  - :doc:`/adoption <adoption>`: notable software using psutil
+  - :doc:`/alternatives <alternatives>`: list of alternative Python libraries and tools that overlap with psutil.
+  - :doc:`/credits <credits>`: list contributors and donors (was old ``CREDITS`` in root dir)
+  - :doc:`/faq <faq>`: extended FAQ section.
+  - :doc:`/glossary <glossary>`: core concepts explained
+  - :doc:`/install <install>`: (was old ``INSTALL.rst`` in root dir)
+  - :doc:`/migration <migration>`: explain how to migrate to newer psutil versions that break backward compatibility
+  - :doc:`/platform <platform>`: summary of OSes and architectures support
+  - :doc:`/recipes <recipes>`: code samples
+  - :doc:`/shell-equivalents <shell-equivalents>`: maps each psutil API to native CLI commands
+  - :doc:`/stdlib-equivalents <stdlib-equivalents>`: maps psutil's Python API to the closest equivalent in the Python standard library
 
 - Usability:
 
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
-  - Use sphinx extension to validate Python code snippets syntax at build-time.
 
 - Testing:
 
   - Replace ``rstcheck`` with ``sphinx-lint`` for RST linting.
   - Add custom script to detect dead reference links in ``.rst`` files.
   - Build doc as part of CI process.
+  - Use sphinx extension to validate Python code snippets syntax at build-time.
 
 - Greatly improved :func:`virtual_memory` doc.
 
