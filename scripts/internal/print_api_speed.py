@@ -114,7 +114,7 @@ def timecall(title, fun, *args, **kw):
             elapsed = timer() - t
             if elapsed > 2:
                 break
-    print("\r", end="")
+    print("\033[2K\r", end="")
     sys.stdout.flush()
     timings.append((title, n + 1, elapsed))
 
