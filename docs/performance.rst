@@ -3,11 +3,13 @@
 Performance
 ===========
 
+This page describes how to use psutil efficiently.
+
 Use process_iter() with an attrs list
 --------------------------------------
 
-If you **iterate over multiple PIDs**, use :func:`process_iter`.
-It accepts a ``attrs`` argument that pre-fetches only the requested attributes
+If you iterate over multiple PIDs, use :func:`process_iter`.
+It accepts an ``attrs`` argument that pre-fetches only the requested attributes
 in a single pass, minimizing system calls by fetching multiple attributes at once.
 This is faster than calling individual methods in a loop.
 
@@ -36,6 +38,35 @@ Fast:
 Note: :func:`process_iter(attrs=...)` is effectively the iterator-friendly
 equivalent of using :meth:`Process.oneshot` on each process.
 
+Avoid pids() + loop
+---------------------
+
+A common but inefficient pattern is to call :func:`pids` and then
+construct a :class:`Process` for each PID manually:
+
+.. code-block:: python
+
+  import psutil
+
+  # slow: pids() + manual loop
+  for pid in psutil.pids():
+      try:
+          p = psutil.Process(pid)
+          print(p.name())
+      except (psutil.NoSuchProcess, psutil.AccessDenied):
+          pass
+
+Prefer :func:`process_iter` instead, supports the ``attrs`` pre-fetch and
+caches :class:`Process` instances internally:
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(["name"]):
+      print(p.pid, p.name())
+
+
 Use oneshot() when reading multiple process attributes
 ------------------------------------------------------
 
@@ -51,10 +82,10 @@ Slow:
   import psutil
 
   p = psutil.Process()
-  p.name()           # syscall
-  p.cpu_times()      # syscall
-  p.memory_info()    # syscall
-  p.status()         # syscall
+  p.name()           # triggers a syscall
+  p.cpu_times()      # triggers a syscall
+  p.memory_info()    # triggers a syscall
+  p.status()         # triggers a syscall
 
 Fast:
 
