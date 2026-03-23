@@ -98,17 +98,17 @@ Table of contents
 
    Install <install>
    API Reference <api>
+   Performance <performance>
    FAQ <faq>
    Recipes <recipes>
    Shell equivalents <shell-equivalents>
    Stdlib equivalents <stdlib-equivalents>
    Glossary <glossary>
    Platform support <platform>
-   Who uses psutil <adoption>
-   Performance <performance>
-   Alternatives <alternatives>
    Migration <migration>
    Development guide <devguide>
+   Who uses psutil <adoption>
+   Alternatives <alternatives>
    Credits <credits>
    Timeline <timeline>
 
