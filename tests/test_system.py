@@ -16,6 +16,7 @@ import signal
 import socket
 import sys
 import time
+import warnings
 from unittest import mock
 
 import psutil
@@ -95,10 +96,10 @@ class TestProcessIter(PsutilTestCase):
 
     def test_attrs(self):
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(p._prefetch.keys()) == ['pid']
         # yield again
         for p in psutil.process_iter(attrs=['pid']):
-            assert list(p.info.keys()) == ['pid']
+            assert list(p._prefetch.keys()) == ['pid']
         with pytest.raises(ValueError):
             list(psutil.process_iter(attrs=['foo']))
         with mock.patch(
@@ -106,8 +107,8 @@ class TestProcessIter(PsutilTestCase):
             side_effect=psutil.AccessDenied(0, ""),
         ) as m:
             for p in psutil.process_iter(attrs=["pid", "cpu_times"]):
-                assert p.info['cpu_times'] is None
-                assert p.info['pid'] >= 0
+                assert p._prefetch['cpu_times'] is None
+                assert p._prefetch['pid'] >= 0
             assert m.called
         with mock.patch(
             "psutil._psplatform.Process.cpu_times",
@@ -117,9 +118,73 @@ class TestProcessIter(PsutilTestCase):
             for p in psutil.process_iter(
                 attrs=["pid", "cpu_times"], ad_value=flag
             ):
-                assert p.info['cpu_times'] is flag
-                assert p.info['pid'] >= 0
+                assert p._prefetch['cpu_times'] is flag
+                assert p._prefetch['pid'] >= 0
             assert m.called
+
+    def test_prefetch(self):
+        for p in psutil.process_iter(attrs=["name", "status"]):
+            assert p.name() == p._prefetch["name"]
+            assert p.status() == p._prefetch["status"]
+
+    def test_info_deprecation(self):
+        for p in psutil.process_iter(attrs=["name"]):
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                p.info  # noqa: B018
+                assert len(ws) == 1
+                assert issubclass(ws[0].category, DeprecationWarning)
+                assert "deprecated" in str(ws[0].message)
+            break
+
+    def test_prefetch_ad_value(self):
+        with mock.patch(
+            "psutil._psplatform.Process.cpu_times",
+            side_effect=psutil.AccessDenied(0, ""),
+        ):
+            for p in psutil.process_iter(attrs=["cpu_times"]):
+                assert p.cpu_times() is None
+
+    def test_prefetch_cleared(self):
+        # Prefetch cache is cleared when attrs is not specified.
+        for p in psutil.process_iter(attrs=["name"]):
+            assert p._prefetch
+        for p in psutil.process_iter():
+            assert not p._prefetch
+
+    def test_prefetch_with_args_bypasses_cache(self):
+        # Methods called with args should bypass the prefetch cache
+        # (e.g. nice(10) is a setter, not a getter).
+        p = psutil.Process()
+        p._prefetch["nice"] = -999
+        # Without args: returns cached value.
+        assert p.nice() == -999
+        # With args: bypasses cache, calls real method.
+        real_nice = psutil.Process().nice()
+        assert p.nice(real_nice) is None
+        assert p.nice() == -999
+
+    def test_prefetch_double_call(self):
+        # Multiple calls should return the same cached value.
+        for p in psutil.process_iter(attrs=["name"]):
+            name1 = p.name()
+            name2 = p.name()
+            assert name1 == name2
+            assert name1 == p._prefetch["name"]
+            break
+
+    def test_prefetch_empty_attrs(self):
+        # attrs=[] should prefetch all methods.
+        p = next(psutil.process_iter(attrs=[]))
+        assert p._prefetch.keys() == psutil._as_dict_attrnames
+
+    def test_prefetch_with_non_prefetched(self):
+        # A method not in attrs should still do a live syscall.
+        for p in psutil.process_iter(attrs=["name"]):
+            assert "status" not in p._prefetch
+            # status() should still work via syscall
+            assert p.status()
+            break
 
     def test_cache_clear(self):
         list(psutil.process_iter())  # populate cache

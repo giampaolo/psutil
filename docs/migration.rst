@@ -20,6 +20,58 @@ release and shows the code changes required to upgrade.
 Migrating to 8.0
 -----------------
 
+process_iter(): p.info is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:func:`process_iter` now caches pre-fetched values internally, so they
+can be accessed via normal method calls instead of the :attr:`Process.info`
+dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
+
+.. code-block:: python
+
+  # before
+  for p in psutil.process_iter(attrs=["name", "status"]):
+      print(p.info["name"], p.info["status"])
+
+  # after
+  for p in psutil.process_iter(attrs=["name", "status"]):
+      print(p.name(), p.status())
+
+When ``attrs`` are specified, method calls return cached values
+(no extra syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess`
+are handled transparently (returning the ``ad_value``, which defaults
+to ``None``):
+
+.. code-block:: python
+
+  # before
+  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
+      print(p.info["exe"])
+
+  # after
+  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
+      print(p.exe())
+
+.. note::
+
+  This is a silent behavior change. Before, calling ``p.exe()``
+  directly could raise :exc:`AccessDenied`. Now, if ``"exe"`` was
+  pre-fetched via ``attrs``, the same call returns ``ad_value``
+  (default ``None``) instead. Code that relied on catching
+  exceptions will silently stop seeing them:
+
+  .. code-block:: python
+
+    # this no longer raises AccessDenied if "exe" was prefetched
+    for p in psutil.process_iter(attrs=["exe"]):
+        try:
+            print(p.exe())
+        except psutil.AccessDenied:
+            pass  # never reached
+
+  If you need the exception, do not include the method in ``attrs``,
+  or call it on a fresh :class:`Process` instance.
+
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -244,7 +296,7 @@ that a process object is still alive and refers to the same process, use
 
   for p in psutil.process_iter(["name"]):
       if p.is_running():
-          print(p.pid, p.info["name"])
+          print(p.pid, p.name())
 
 ----
 
