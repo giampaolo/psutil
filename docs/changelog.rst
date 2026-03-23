@@ -14,7 +14,7 @@ Changelog
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
-:gh:`2775`, :gh:`2781`)
+:gh:`2775`, :gh:`2781`, :gh:`2787`)
 
 - Split docs from a single HTML file into multiple sections (API reference,
   install, etc.).
@@ -24,10 +24,11 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - :doc:`/adoption <adoption>`: notable software using psutil
   - :doc:`/alternatives <alternatives>`: list of alternative Python libraries and tools that overlap with psutil.
   - :doc:`/credits <credits>`: list contributors and donors (was old ``CREDITS`` in root dir)
-  - :doc:`/faq <faq>`: extended FAQ section.
+  - :doc:`/faq <faq>`: extended FAQ section
   - :doc:`/glossary <glossary>`: core concepts explained
   - :doc:`/install <install>`: (was old ``INSTALL.rst`` in root dir)
   - :doc:`/migration <migration>`: explain how to migrate to newer psutil versions that break backward compatibility
+  - :doc:`/performance <performance>`: how to use psutil efficiently
   - :doc:`/platform <platform>`: summary of OSes and architectures support
   - :doc:`/recipes <recipes>`: code samples
   - :doc:`/shell-equivalents <shell-equivalents>`: maps each psutil API to native CLI commands
