@@ -118,7 +118,8 @@ Measuring oneshot() speedup
 
 There is a
 `scripts/internal/bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
-script measuring :meth:`Process.oneshot` speedup. E.g. on Linux:
+script measuring :meth:`Process.oneshot` speedup.
+E.g. on Linux:
 
 .. code-block::
 
@@ -147,12 +148,15 @@ script measuring :meth:`Process.oneshot` speedup. E.g. on Linux:
   oneshot:  1.537 secs
   speedup:  +1.80x
 
+This also shows which APIs share the same underlying internal routines.
+
 Measuring APIs speed
 --------------------
 
 There is a
 `scripts/internal/print_api_speed.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py>`_
-script measuring individual API calls, from fastest to slowest. E.g. on Linux:
+which shows the relative cost of each API call. This helps you understand
+which operations are more expensive. E.g. on Linux:
 
 .. code-block::
 
