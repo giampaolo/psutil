@@ -180,27 +180,11 @@ def main():
     # --- process
     print()
     print_header("PROCESS APIS")
-    ignore = [
-        'send_signal',
-        'suspend',
-        'resume',
-        'terminate',
-        'kill',
-        'wait',
-        'as_dict',
-        'parent',
-        'parents',
-        'oneshot',
-        'pid',
-        'rlimit',
-        'children',
-    ]
-    if psutil.MACOS:
-        ignore.append('memory_maps')  # XXX
     p = psutil.Process()
-    for name in sorted(dir(p)):
-        if not name.startswith('_') and name not in ignore:
-            fun = getattr(p, name)
+    names = p.as_dict().keys()
+    for name in sorted(names):
+        fun = getattr(p, name)
+        if callable(fun):
             timecall(name, fun)
     print_timings()
 

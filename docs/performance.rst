@@ -74,7 +74,6 @@ Fast:
   import psutil
 
   for p in psutil.process_iter(["name", "status"]):
-      # values are retrieved from an internal cache
       print(p.pid, p.name(), p.status())
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively the iterator-friendly
