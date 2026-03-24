@@ -205,6 +205,14 @@ memory_full_info() is deprecated
   mem = p.memory_footprint()
   uss = mem.uss
 
+Git tags renamed
+^^^^^^^^^^^^^^^^^
+
+Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z``
+(e.g. ``release-7.2.2`` → ``v7.2.2``). Old tags are kept for
+backward compatibility. If you reference psutil tags in scripts or
+URLs, update them to the new format. See :gh:`2788`.
+
 Python 3.6 dropped
 ^^^^^^^^^^^^^^^^^^^^
 

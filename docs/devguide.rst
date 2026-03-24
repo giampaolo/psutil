@@ -155,6 +155,14 @@ Unit tests are automatically run on every ``git push`` on all platforms except
 AIX. See config files in the `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_
 directory.
 
+Releases
+--------
+
+- Releases are uploaded to `PyPI <https://pypi.org/project/psutil/>`_ via
+  ``make release``.
+- Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
+- The version string is defined in ``psutil/__init__.py`` (``__version__``).
+
 Documentation
 -------------
 

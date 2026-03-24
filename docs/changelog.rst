@@ -131,6 +131,9 @@ Others
   method calls (e.g. ``p.name()``, ``p.status()``) return the cached values
   instead of making new system calls. The ``p.info`` dict is deprecated. See
   :ref:`migration guide <migration-8.0>`.
+- :gh:`2788`: git tags renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
+  ``release-7.2.2`` → ``v7.2.2``). Old tags are kept for backward
+  compatibility.
 
 **Bug fixes**
 
