@@ -1,5 +1,5 @@
 |  |downloads| |stars| |forks| |contributors| |packages|
-|  |version| |license| |stackoverflow| |twitter| |tidelift|
+|  |version| |license| |tidelift|
 |  |github-actions-wheels| |github-actions-bsd|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
@@ -30,7 +30,7 @@
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Absd-tests
     :alt: FreeBSD, NetBSD, OpenBSD
 
-.. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi
+.. |version| image:: https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen
     :target: https://pypi.org/project/psutil
     :alt: Latest version
 

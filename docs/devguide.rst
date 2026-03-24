@@ -155,6 +155,32 @@ Unit tests are automatically run on every ``git push`` on all platforms except
 AIX. See config files in the `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_
 directory.
 
+Documentation
+-------------
+
+- The documentation source is located in the `docs/`_ directory.
+- To build it and generate the HTML (in the ``_build/html`` directory):
+
+  .. code-block:: bash
+
+    cd docs/
+    python3 -m pip install -r requirements.txt
+    make html
+
+- The public documentation is hosted at https://psutil.readthedocs.io.
+- There are 2 versions, which you can select from the dropdown menu at the top
+  of the page:
+
+  - `/stable <https://psutil.readthedocs.io/stable>`_: generated from the most
+    recent Git tag (latest released psutil version).
+  - `/latest <https://psutil.readthedocs.io/latest>`_: generated from the
+    master branch. It is automatically updated on git push.
+
+Redirects:
+
+- https://psutil.readthedocs.io redirects to
+  `/stable <https://psutil.readthedocs.io/stable>`_ by default.
+
 Releases
 --------
 
@@ -163,16 +189,10 @@ Releases
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in ``psutil/__init__.py`` (``__version__``).
 
-Documentation
--------------
-
-- doc is under ``docs/``.
-- doc can be built with ``make install-pydeps-dev; cd docs; make html``.
-- public doc is hosted at https://psutil.readthedocs.io.
-
 .. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`credits.rst`: https://github.com/giampaolo/psutil/blob/master/docs/credits.rst
+.. _`docs/`: https://github.com/giampaolo/psutil/blob/master/psutil/docs/
 .. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/

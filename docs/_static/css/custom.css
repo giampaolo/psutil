@@ -141,6 +141,11 @@ h1 {
 /* Code blocks                                                        */
 /* ================================================================== */
 
+/* reduce bottom margin of code blocks inside list items */
+.rst-content li > div[class^='highlight'] {
+    margin-bottom: 6px !important;
+}
+
 pre {
     padding: 5px !important;
 }
@@ -169,12 +174,12 @@ div[class^='highlight'] div[class^='highlight'] {
 /* Links                                                              */
 /* ================================================================== */
 
-/* external links: dotted underline (except intersphinx) */
-a.reference.external:not([href*="docs.python.org"]) {
+/* external links: dotted underline (except intersphinx and image links) */
+a.reference.external:not([href*="docs.python.org"]):not(:has(img)) {
     text-decoration: underline dotted;
 }
 
-a.reference.external:not([href*="docs.python.org"]):hover {
+a.reference.external:not([href*="docs.python.org"]):not(:has(img)):hover {
     text-decoration: underline solid;
 }
 

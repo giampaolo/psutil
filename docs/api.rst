@@ -1109,7 +1109,7 @@ Functions
   gone and which ones are still alive. The *gone* ones will have a new
   *returncode* attribute indicating process exit status as returned by
   :meth:`Process.wait`.
-  ``callback`` is a function which gets called when one of the processes being
+  *callback* is a function which gets called when one of the processes being
   waited on is terminated and a :class:`Process` instance is passed as callback
   argument (the instance will also have a *returncode* attribute set).
   This function will return as soon as all processes terminate or when
@@ -1255,7 +1255,7 @@ Process class
     on what platform you're on.
     Empty rows indicate methods that are grouped together internally (i.e.
     they share the same system call).
-    The last column (speedup) shows an approximation of the speedup you can get
+    The last row (*speedup*) shows an approximation of the speedup you can get
     if you call all the methods together (best case scenario). It was
     calculated via
     `bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
@@ -1743,7 +1743,7 @@ Process class
     which can also be ``> 100.0`` in case of a process running multiple threads
     on different CPUs.
     When *interval* is > ``0.0`` compares process times to system CPU times
-    elapsed before and after the interval (blocking). When interval is ``0.0``
+    elapsed before and after the interval (blocking). When *interval* is ``0.0``
     or ``None`` compares process times to system CPU times elapsed since last
     call, returning immediately. That means the first time this is called it
     will return a meaningless ``0.0`` value which you are supposed to ignore.
@@ -2062,7 +2062,7 @@ Process class
     memory value is used in the calculation (defaults to ``"rss"``).
 
     .. versionchanged:: 4.0.0
-       added `memtype` parameter.
+       added *memtype* parameter.
 
   .. method:: memory_maps(grouped=True)
 
@@ -2142,7 +2142,7 @@ Process class
 
     Return the children of this process as a list of :class:`Process`
     instances.
-    If recursive is ``True`` return all the parent descendants.
+    If *recursive* is ``True`` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
 
     ::
@@ -2204,7 +2204,7 @@ Process class
 
     - **position** (*Linux*): the file (offset) position.
     - **mode** (*Linux*): a string indicating how the file was opened, similarly
-      to :func:`open` builtin ``mode`` argument.
+      to :func:`open` builtin *mode* argument.
       Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
       There's no distinction between files opened in binary or text mode
       (``"b"`` or ``"t"``).
@@ -2442,7 +2442,7 @@ Process class
 
     .. note::
 
-      When ``timeout`` is not ``None`` and the platform supports it, an
+      When *timeout* is not ``None`` and the platform supports it, an
       efficient event-driven mechanism is used to wait for process termination:
 
       - Linux >= 5.3 with Python >= 3.9 uses :func:`os.pidfd_open` + :func:`select.poll`
