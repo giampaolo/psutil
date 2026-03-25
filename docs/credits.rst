@@ -110,6 +110,7 @@ Code contributors by year
 ~~~~
 
 * `Amaan Qureshi`_ - :gh:`2770`
+* `Data-hYg`_ - :gh:`2789`
 * `Felix Yan`_ - :gh:`2732`
 * `Sergey Fedorov`_ - :gh:`2701`
 
@@ -410,6 +411,7 @@ Code contributors by year
 
 .. _`Adrian Page`: https://github.com/adpag
 .. _`Amaan Qureshi`: https://github.com/amaanq
+.. _`Data-hYg`: https://github.com/Data-hYg
 .. _`qcha0`: https://github.com/qcha0
 .. _`Akos Kiss`: https://github.com/akosthekiss
 .. _`Aleksey Lobanov`: https://github.com/AlekseyLobanov
