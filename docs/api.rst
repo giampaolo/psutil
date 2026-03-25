@@ -432,7 +432,7 @@ Memory
   .. seealso::
     - `scripts/meminfo.py`_
     - :ref:`faq_virtual_memory_available`
-    -  :ref:`faq_used_plus_free`
+    - :ref:`faq_used_plus_free`
 
   .. versionchanged:: 4.2.0
      added *shared* metric on Linux.
@@ -682,7 +682,7 @@ Network
     When the remote endpoint is not connected you'll get an empty tuple
     (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
-    is one of the `psutil.CONN_* <#connections-constants>`_ constants
+    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
     (a string).
     For UDP and UNIX sockets this is always going to be
     :const:`psutil.CONN_NONE`.
@@ -1350,7 +1350,7 @@ Process class
     The process name.  On Windows the return value is cached after first
     call. Not on POSIX because the process name may change.
 
-    .. seealso:: how to `find a process by name <#find-process-by-name>`_.
+    .. seealso:: how to :ref:`find a process by name <recipe_find_process_by_name>`.
 
   .. method:: exe()
 
@@ -1473,7 +1473,7 @@ Process class
 
     The current process status as a :class:`psutil.ProcessStatus` enum member.
     The returned value is one of the
-    `psutil.STATUS_* <#process-status-constants>`_ constants.
+    :data:`psutil.STATUS_* <psutil.STATUS_RUNNING>` constants.
     A common use case is detecting :term:`zombie processes <zombie process>`
     (``p.status() == psutil.STATUS_ZOMBIE``).
 

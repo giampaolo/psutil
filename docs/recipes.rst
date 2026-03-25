@@ -17,6 +17,8 @@ Processes
 Finding processes
 ^^^^^^^^^^^^^^^^^
 
+.. _recipe_find_process_by_name:
+
 Find process by name:
 
 .. code-block:: python
