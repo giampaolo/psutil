@@ -227,65 +227,65 @@ CPU
 
 .. function:: cpu_freq(percpu=False)
 
-    Return CPU frequency as a named tuple including *current*, *min* and *max*
-    frequencies expressed in Mhz. On Linux *current* frequency reports the
-    real-time value, on all other platforms this usually represents the
-    nominal "fixed" value (never changing). If *percpu* is ``True`` and the
-    system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
-    frequencies is returned for each CPU, if not, a list with a single element
-    is returned. If *min* and *max* cannot be determined they are set to
-    ``0.0``.
+  Return CPU frequency as a named tuple including *current*, *min* and *max*
+  frequencies expressed in Mhz. On Linux *current* frequency reports the
+  real-time value, on all other platforms this usually represents the
+  nominal "fixed" value (never changing). If *percpu* is ``True`` and the
+  system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
+  frequencies is returned for each CPU, if not, a list with a single element
+  is returned. If *min* and *max* cannot be determined they are set to
+  ``0.0``.
 
-    Example (Linux):
+  Example (Linux):
 
-    .. code-block:: python
+  .. code-block:: python
 
-       >>> import psutil
-       >>> psutil.cpu_freq()
-       scpufreq(current=931.42925, min=800.0, max=3500.0)
-       >>> psutil.cpu_freq(percpu=True)
-       [scpufreq(current=2394.945, min=800.0, max=3500.0),
-        scpufreq(current=2236.812, min=800.0, max=3500.0),
-        scpufreq(current=1703.609, min=800.0, max=3500.0),
-        scpufreq(current=1754.289, min=800.0, max=3500.0)]
+     >>> import psutil
+     >>> psutil.cpu_freq()
+     scpufreq(current=931.42925, min=800.0, max=3500.0)
+     >>> psutil.cpu_freq(percpu=True)
+     [scpufreq(current=2394.945, min=800.0, max=3500.0),
+      scpufreq(current=2236.812, min=800.0, max=3500.0),
+      scpufreq(current=1703.609, min=800.0, max=3500.0),
+      scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    .. availability:: Linux, macOS, Windows, FreeBSD, OpenBSD.
+  .. availability:: Linux, macOS, Windows, FreeBSD, OpenBSD.
 
-    .. versionadded:: 5.1.0
+  .. versionadded:: 5.1.0
 
-    .. versionchanged:: 5.5.1
-       added FreeBSD support.
+  .. versionchanged:: 5.5.1
+     added FreeBSD support.
 
-    .. versionchanged:: 5.9.1
-       added OpenBSD support.
+  .. versionchanged:: 5.9.1
+     added OpenBSD support.
 
 .. function:: getloadavg()
 
-    Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-    The "load" represents the processes which are in a runnable state, either
-    using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-    On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
-    by using a Windows API that spawns a thread which keeps running in
-    background and updates results every 5 seconds, mimicking the UNIX behavior.
-    Thus, on Windows, the first time this is called and for the next 5 seconds
-    it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
-    The numbers returned only make sense when compared to the number of CPU cores
-    installed on the system. So, for instance, a value of `3.14` on a system
-    with 10 logical CPUs means that the system load was 31.4% percent over the
-    last N minutes.
+  Return the average system load over the last 1, 5 and 15 minutes as a tuple.
+  The "load" represents the processes which are in a runnable state, either
+  using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
+  On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
+  by using a Windows API that spawns a thread which keeps running in
+  background and updates results every 5 seconds, mimicking the UNIX behavior.
+  Thus, on Windows, the first time this is called and for the next 5 seconds
+  it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
+  The numbers returned only make sense when compared to the number of CPU cores
+  installed on the system. So, for instance, a value of `3.14` on a system
+  with 10 logical CPUs means that the system load was 31.4% percent over the
+  last N minutes.
 
-    .. code-block:: python
+  .. code-block:: python
 
-       >>> import psutil
-       >>> psutil.getloadavg()
-       (3.14, 3.89, 4.67)
-       >>> psutil.cpu_count()
-       10
-       >>> # percentage representation
-       >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
-       [31.4, 38.9, 46.7]
+     >>> import psutil
+     >>> psutil.getloadavg()
+     (3.14, 3.89, 4.67)
+     >>> psutil.cpu_count()
+     10
+     >>> # percentage representation
+     >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
+     [31.4, 38.9, 46.7]
 
-    .. versionadded:: 5.6.2
+  .. versionadded:: 5.6.2
 
 Memory
 ^^^^^^
@@ -2538,7 +2538,6 @@ Popen class
      >>> p.wait(timeout=2)
      0
      >>>
-
 
   .. versionchanged:: 4.4.0
      added context manager support.
