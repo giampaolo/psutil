@@ -1327,16 +1327,16 @@ Process class
 
   .. attribute:: pid
 
-     The process PID. This is the only (read-only) attribute of the class.
+    The process PID. This is the only (read-only) attribute of the class.
 
   .. attribute:: info
 
-     A dict containing pre-fetched process info, set by
-     :func:`process_iter` when called with ``attrs``. Use method
-     calls instead (e.g. ``p.name()`` instead of ``p.info['name']``).
-     Accessing this attribute raises :exc:`DeprecationWarning`.
+    A dict containing pre-fetched process info, set by
+    :func:`process_iter` when called with ``attrs``. Use method
+    calls instead (e.g. ``p.name()`` instead of ``p.info['name']``).
+    Accessing this attribute raises :exc:`DeprecationWarning`.
 
-     .. deprecated:: 8.0.0
+    .. deprecated:: 8.0.0
 
   .. method:: ppid()
 
