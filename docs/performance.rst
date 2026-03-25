@@ -87,7 +87,7 @@ are handled internally.
 .. _perf-pids:
 
 Avoid pids() + loop
----------------------
+-------------------
 
 A common but inefficient pattern is to call :func:`pids` and then
 construct a :class:`Process` for each PID manually:

@@ -256,8 +256,8 @@ stays in the 0–100% range because it averages across all cores.
 
 .. _faq_cpu_count:
 
-What is the difference between psutil, os, and multiprocessing cpu_count?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between psutil, os, and multiprocessing cpu_count()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :func:`os.cpu_count` returns the number of **logical** CPUs (including
   hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``, but
