@@ -130,4 +130,3 @@ Table of contents
    Changelog <changelog>
 
 .. _`Tidelift security contact`: https://tidelift.com/security
-..

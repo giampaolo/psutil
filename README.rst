@@ -224,7 +224,7 @@ including CPU, memory, disks, network, sensors, and process management.
 CPU
 ---
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import psutil
     >>>
@@ -269,7 +269,7 @@ CPU
 Memory
 ------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> psutil.virtual_memory()
     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
@@ -280,7 +280,7 @@ Memory
 Disks
 -----
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> psutil.disk_partitions()
     [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
@@ -296,7 +296,7 @@ Disks
 Network
 -------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> psutil.net_io_counters(pernic=True)
     {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
@@ -323,7 +323,7 @@ Network
 Sensors
 -------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import psutil
     >>> psutil.sensors_temperatures()
@@ -342,7 +342,7 @@ Sensors
 Other system info
 -----------------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import psutil
     >>> psutil.users()
@@ -356,7 +356,7 @@ Other system info
 Process management
 ------------------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import psutil
     >>> psutil.pids()
@@ -499,7 +499,7 @@ Process management
 Further process APIs
 --------------------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import psutil
     >>> for proc in psutil.process_iter(['pid', 'name']):
@@ -523,7 +523,7 @@ Further process APIs
 Heap info
 ---------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> import psutil
     >>> psutil.heap_info()
@@ -535,7 +535,7 @@ See also `psleak`_.
 Windows services
 ----------------
 
-.. code-block:: python
+.. code-block:: pycon
 
     >>> list(psutil.win_service_iter())
     [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,

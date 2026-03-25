@@ -114,7 +114,7 @@ Filtering and sorting processes
 
 Processes owned by user:
 
-.. code-block:: python
+.. code-block:: pycon
 
   >>> import getpass
   >>> import psutil
@@ -128,7 +128,7 @@ Processes owned by user:
 
 Processes actively running:
 
-.. code-block:: python
+.. code-block:: pycon
 
   >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "status"]) if p.status() == psutil.STATUS_RUNNING])
   [(1150, 'Xorg'),
@@ -139,7 +139,7 @@ Processes actively running:
 
 Processes using log files:
 
-.. code-block:: python
+.. code-block:: pycon
 
   >>> for p in psutil.process_iter(["name", "open_files"]):
   ...      for file in p.open_files() or []:
@@ -154,7 +154,7 @@ Processes using log files:
 
 Processes consuming more than 500M of memory:
 
-.. code-block:: python
+.. code-block:: pycon
 
   >>> pp([(p.pid, p.name(), p.memory_info().rss) for p in psutil.process_iter(["name", "memory_info"]) if p.memory_info().rss > 500 * 1024 * 1024])
   [(2650, 'chrome', 532324352),
@@ -165,7 +165,7 @@ Processes consuming more than 500M of memory:
 
 Top 3 processes which consumed the most CPU time:
 
-.. code-block:: python
+.. code-block:: pycon
 
   >>> pp([(p.pid, p.name(), sum(p.cpu_times())) for p in sorted(psutil.process_iter(["name", "cpu_times"]), key=lambda p: sum(p.cpu_times()[:2]))][-3:])
   [(2721, 'chrome', 10219.73),

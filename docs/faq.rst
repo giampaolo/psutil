@@ -333,8 +333,8 @@ privileges. On Linux it also returns PSS (Proportional Set Size) and swap.
 
 .. _faq_used_plus_free:
 
-Why does virtual_memory().used + free != total?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Why does virtual_memory() used + free != total?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Because some memory (like cache and buffers) is reclaimable and accounted
 separately:
