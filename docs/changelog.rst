@@ -22,6 +22,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 - Added new sections:
 
   - :doc:`/adoption <adoption>`: notable software using psutil
+  - :doc:`/api-overview <api-overview>`: show entire API via REPL usage examples
   - :doc:`/alternatives <alternatives>`: list of alternative Python libraries and tools that overlap with psutil.
   - :doc:`/credits <credits>`: list contributors and donors (was old ``CREDITS`` in root dir)
   - :doc:`/faq <faq>`: extended FAQ section

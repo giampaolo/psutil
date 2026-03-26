@@ -94,6 +94,7 @@ Table of contents
    :caption: User guide
 
    Install <install>
+   API overview <api-overview>
    API Reference <api>
    Performance <performance>
    FAQ <faq>

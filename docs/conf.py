@@ -61,3 +61,6 @@ html_css_files = [
     'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
     'css/custom.css',
 ]
+
+# https://pygments.org/styles/
+# pygments_style = "monokai"

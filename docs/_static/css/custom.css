@@ -34,7 +34,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* Headings                                                           */
 /* ================================================================== */
 
-h1, h2, h3 {
+h1, h2 {
     background: #eee;
     padding: 5px;
     border-bottom: 1px solid #ccc;
@@ -42,6 +42,19 @@ h1, h2, h3 {
 
 h1 {
     font-size: 35px;
+}
+
+h3 {
+    background: none;
+    padding: 5px 0 5px 0;
+    border-bottom: 1px solid #ccc;
+    font-size: 120%;
+}
+
+h4 {
+    background: none;
+    padding: 5px 0 5px 0;
+    font-size: 90%;
 }
 
 /* ================================================================== */
@@ -185,6 +198,7 @@ pre.literal-block div[class^='highlight'],
 div[class^='highlight'] div[class^='highlight'] {
     background-color: #eeffcc !important;
 }
+
 
 /* ================================================================== */
 /* Links                                                              */

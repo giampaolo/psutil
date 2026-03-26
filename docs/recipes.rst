@@ -186,12 +186,8 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
   def top_io_procs(n=5):
       procs = []
       for p in psutil.process_iter(["io_counters"]):
-          try:
-              io = p.io_counters()
-          except psutil.Error:
-              pass
-          else:
-              procs.append((io.read_bytes + io.write_bytes, p))
+          io = p.io_counters()
+          procs.append((io.read_bytes + io.write_bytes, p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 
@@ -205,11 +201,8 @@ Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
   def top_open_files(n=5):
       procs = []
-      for p in psutil.process_iter():
-          try:
-              procs.append((p.num_fds(), p))
-          except (psutil.NoSuchProcess, psutil.AccessDenied):
-              pass
+      for p in psutil.process_iter(["num_fds"]):
+          procs.append((p.num_fds(), p))
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 
