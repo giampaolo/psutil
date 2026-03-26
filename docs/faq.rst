@@ -67,17 +67,18 @@ You have two options to deal with it.
     except (psutil.AccessDenied, psutil.NoSuchProcess):
         pass
 
-- Option 2: use :func:`process_iter` with a list of attribute names to pre-fetch.
-  If fetching an attribute raises :exc:`AccessDenied` internally, the
-  corresponding method returns ``None`` (or the ``ad_value`` argument, if
-  specified):
+- Option 2: use :func:`process_iter` with a list of attribute names to
+  pre-fetch. Both :exc:`AccessDenied` and :exc:`NoSuchProcess` are handled
+  internally: the corresponding method returns ``None`` (or ``ad_value``)
+  instead of raising. This also avoids the race condition where a process
+  disappears between iteration and method call:
 
   .. code-block:: python
 
     import psutil
 
     for p in psutil.process_iter(["name", "username"], ad_value="N/A"):
-        print(p.username())  # may print "N/A"
+        print(p.name(), p.username())  # no try/except needed
 
 .. _faq_no_such_process:
 
