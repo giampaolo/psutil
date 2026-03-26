@@ -194,9 +194,9 @@ either run as root user or prepend ``sudo``:
 
     sudo pip install psutil
 
+.. _`CPython Developer Guide`: https://devguide.python.org/getting-started/setup-building/#windows
+.. _`download pip`: https://pip.pypa.io/en/latest/installing/
+.. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`install-sysdeps.sh`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/install-sysdeps.sh
 .. _`PyPI`: https://pypi.org/project/psutil/
 .. _`Visual Studio 2017`: https://visualstudio.microsoft.com/vs/older-downloads/
-.. _`CPython Developer Guide`: https://devguide.python.org/getting-started/setup-building/#windows
-.. _`Git for Windows`: https://git-scm.com/install/windows
-.. _`download pip`: https://pip.pypa.io/en/latest/installing/
