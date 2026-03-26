@@ -76,8 +76,8 @@ CPU
   .. note::
     CPU times are always supposed to increase over time, or at least remain the
     same, and that's because time cannot go backwards. Surprisingly sometimes
-    this might not be the case (at least on Windows and Linux), see `#1210
-    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
+    this might not be the case (at least on Windows and Linux), see
+    `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
   .. versionchanged:: 4.1.0
      added **irq** and **dpc** fields on Windows (**irq** was called **interrupt**
@@ -223,7 +223,6 @@ CPU
      scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
 
   .. versionadded:: 4.1.0
-
 
 .. function:: cpu_freq(percpu=False)
 
@@ -964,7 +963,7 @@ Sensors
   .. versionchanged:: 5.4.2
      added macOS support.
 
-----
+-------------------------------------------------------------------------------
 
 Other system info
 ^^^^^^^^^^^^^^^^^
@@ -1012,7 +1011,7 @@ Other system info
   .. versionchanged:: 5.3.0
      added "pid" field.
 
-----
+-------------------------------------------------------------------------------
 
 Processes
 ---------
@@ -2034,7 +2033,7 @@ Process class
     Return a named tuple with USS, PSS and swap memory metrics. These give
     a more accurate picture of actual memory consumption than
     :meth:`memory_info`, as explained in this
-    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_.
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_
     It works by walking the full process address space, so it is
     considerably slower than :meth:`memory_info` and may require elevated
     privileges.
@@ -2164,8 +2163,7 @@ Process class
     .. availability:: Linux, Windows, FreeBSD, SunOS
 
     .. versionchanged:: 5.6.0
-       removed macOS support because inherently broken (see issue `#1291
-       <https://github.com/giampaolo/psutil/issues/1291>`_)
+       removed macOS support because inherently broken (see issue :gh:`1291`)
 
   .. method:: children(recursive=False)
 
@@ -2249,7 +2247,6 @@ Process class
        >>> p = psutil.Process()
        >>> p.open_files()
        [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3, position=0, mode='w', flags=32769)]
-
 
     .. warning::
       on Windows this method is not reliable due to some limitations of the
@@ -2506,7 +2503,7 @@ Process class
        :func:`select.kqueue` respectively, instead of less efficient busy-loop
        polling. Later added to CPython 3.15 in `GH-144047`_.
 
-----
+-------------------------------------------------------------------------------
 
 Popen class
 ^^^^^^^^^^^
@@ -2542,7 +2539,7 @@ Popen class
   .. versionchanged:: 4.4.0
      added context manager support.
 
-----
+-------------------------------------------------------------------------------
 
 C heap introspection
 --------------------
@@ -2624,7 +2621,7 @@ Python's memory tracking misses.
 
   .. versionadded:: 7.2.0
 
-----
+-------------------------------------------------------------------------------
 
 Windows services
 ----------------
@@ -2722,7 +2719,7 @@ Windows services
 
   .. versionadded:: 4.2.0
 
-----
+-------------------------------------------------------------------------------
 
 Constants
 ---------

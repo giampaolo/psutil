@@ -64,6 +64,8 @@ Windows
       make build
       make test-parallel
 
+.. _devguide_debug_mode:
+
 Debug mode
 ----------
 
