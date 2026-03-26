@@ -1,26 +1,22 @@
-|  |downloads| |stars| |forks| |contributors| |packages|
-|  |version| |license| |tidelift|
+|  |downloads| |contributors| |packages|
+|  |version| |license|
 |  |github-actions-wheels| |github-actions-bsd|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://clickpy.clickhouse.com/dashboard/psutil
     :alt: Downloads
 
-.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/stargazers
-    :alt: Github stars
+.. .. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+..     :target: https://github.com/giampaolo/psutil/stargazers
+..     :alt: Github stars
 
-.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/network/members
-    :alt: Github forks
+.. .. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+..     :target: https://github.com/giampaolo/psutil/network/members
+..     :alt: Github forks
 
 .. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
-
-.. |stackoverflow| image:: https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg
-    :target: https://stackoverflow.com/questions/tagged/psutil
-    :alt: Stackoverflow
 
 .. |github-actions-wheels| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Windows
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
@@ -46,9 +42,9 @@
     :target: https://twitter.com/grodola
     :alt: Twitter Follow
 
-.. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
-    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-    :alt: Tidelift
+.. .. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
+..     :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+..     :alt: Tidelift
 
 -----
 
