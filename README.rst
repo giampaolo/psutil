@@ -495,12 +495,12 @@ Further process APIs
 .. code-block:: python
 
     >>> import psutil
-    >>> for proc in psutil.process_iter(['pid', 'name']):
-    ...     print(proc.info)
+    >>> for p in psutil.process_iter(['pid', 'name']):
+    ...     print(p.pid, p.name())
     ...
-    {'pid': 1, 'name': 'systemd'}
-    {'pid': 2, 'name': 'kthreadd'}
-    {'pid': 3, 'name': 'ksoftirqd/0'}
+    1 systemd
+    2 kthreadd
+    3 ksoftirqd/0
     ...
     >>>
     >>> psutil.pid_exists(3)

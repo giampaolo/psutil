@@ -69,6 +69,20 @@ h1 {
     margin-bottom: 0px !important;
 }
 
+/* "wide-table" class: force horizontal scroll on narrow
+   screens instead of squishing columns */
+@media (max-width: 768px) {
+    table.wide-table {
+        min-width: 700px;
+        table-layout: auto !important;
+    }
+
+    table.wide-table td,
+    table.wide-table th {
+        white-space: nowrap;
+    }
+}
+
 /* "longtable" class (used by alternatives.rst): fixed layout
    with extra padding for multi-line cells */
 .wy-table-responsive table.longtable {
@@ -81,7 +95,9 @@ h1 {
     padding: 10px !important;
     white-space: normal !important;
     word-wrap: break-word;
+    overflow-wrap: break-word;
 }
+
 
 /* adoption page logos */
 .document td img[alt$="-logo"] {

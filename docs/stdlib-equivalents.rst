@@ -20,7 +20,7 @@ CPU
 ~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 20 37 100
 
@@ -45,7 +45,7 @@ Disk
 ~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 25 24 100
 
@@ -68,7 +68,7 @@ Network
 ~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 25 30 100
 
@@ -84,7 +84,7 @@ Process
 ~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 25 30 100
 
@@ -102,7 +102,7 @@ Identity
 ~~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 23 20 100
 
@@ -132,7 +132,7 @@ Credentials
 ~~~~~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 20 37 50
 
@@ -157,7 +157,7 @@ CPU / scheduling
 ~~~~~~~~~~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 40 35 100
 
@@ -202,7 +202,7 @@ Memory
 ~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 28 27 100
 
@@ -221,7 +221,7 @@ I/O
 ~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 28 27 100
 
@@ -237,7 +237,7 @@ Threads
 ~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 30 35 100
 
@@ -256,7 +256,7 @@ Signals
 ~~~~~~~
 
 .. list-table::
-   :class: longtable
+   :class: longtable wide-table
    :header-rows: 1
    :widths: 33 45 100
 

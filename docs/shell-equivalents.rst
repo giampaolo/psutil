@@ -16,6 +16,7 @@ CPU
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil function
      - Linux
@@ -78,6 +79,7 @@ Memory
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil function
      - Linux
@@ -110,6 +112,7 @@ Disks
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil function
      - Linux
@@ -137,6 +140,7 @@ Network
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil function
      - Linux
@@ -169,6 +173,7 @@ Sensors
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil function
      - Linux
@@ -196,6 +201,7 @@ Other
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil function
      - Linux
@@ -231,6 +237,7 @@ Identity
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -283,6 +290,7 @@ Process tree
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -320,6 +328,7 @@ Credentials
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -352,6 +361,7 @@ CPU / scheduling
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -424,6 +434,7 @@ Memory
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -466,6 +477,7 @@ Threads
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -488,6 +500,7 @@ Files and connections
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux
@@ -525,6 +538,7 @@ Signals
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - psutil method
      - Linux

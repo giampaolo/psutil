@@ -464,10 +464,10 @@ Memory
     from RAM into swap space) since boot. A continuously increasing **sout**
     is a sign of memory pressure. See :term:`swap-out`.
 
-  **sin** and **sout** are :term:`cumulative counters <cumulative counter>` since boot; monitor
-  their rate of change rather than the absolute value to detect active
-  swapping. See :term:`swap-in` and :term:`swap-out`.
-  On Windows both are always ``0``.
+  **sin** and **sout** are :term:`cumulative counters <cumulative counter>`
+  since boot; monitor their rate of change rather than the absolute value to
+  detect active swapping. See :term:`swap-in` and :term:`swap-out`. On Windows
+  both are always ``0``.
 
   .. code-block:: pycon
 
