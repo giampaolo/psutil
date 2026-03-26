@@ -2184,12 +2184,12 @@ Process class
          ├─ C (child)
          └─ D (child)
 
-      .. code-block:: pycon
+    .. code-block:: pycon
 
-         >>> p.children()
-         B, C, D
-         >>> p.children(recursive=True)
-         B, X, Y, C, D
+       >>> p.children()
+       B, C, D
+       >>> p.children(recursive=True)
+       B, X, Y, C, D
 
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
@@ -2579,11 +2579,11 @@ Python's memory tracking misses.
   - ``heap_count``: (Windows only) number of private heaps created via
     ``HeapCreate()``.
 
-   .. code-block:: pycon
+  .. code-block:: pycon
 
-      >>> import psutil
-      >>> psutil.heap_info()
-      pheap(heap_used=5177792, mmap_used=819200)
+     >>> import psutil
+     >>> psutil.heap_info()
+     pheap(heap_used=5177792, mmap_used=819200)
 
   These fields reflect how unreleased C allocations affect the heap:
 
@@ -2679,7 +2679,7 @@ Windows services
 
   .. method:: pid()
 
-    The process PID, if any, else `None`. This can be passed to
+    The process PID, if any, else ``None``. This can be passed to
     :class:`Process` class to control the service's process.
 
   .. method:: status()
