@@ -152,7 +152,7 @@ process call ``wait()`` (or ``waitpid()``). If the parent never does
 this, killing the parent will cause the zombie to be re-parented to
 ``init`` / ``systemd``, which will reap it automatically.
 
-----
+-------------------------------------------------------------------------------
 
 Processes
 ---------
@@ -203,7 +203,7 @@ against reuse (it's faster). Use :meth:`Process.is_running` when you
 hold a :class:`Process` object and want to confirm it still refers to
 the same process.
 
-----
+-------------------------------------------------------------------------------
 
 CPU
 ---
@@ -256,8 +256,8 @@ stays in the 0–100% range because it averages across all cores.
 
 .. _faq_cpu_count:
 
-What is the difference between psutil, os, and multiprocessing cpu_count?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What is the difference between psutil, os, and multiprocessing cpu_count()?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :func:`os.cpu_count` returns the number of **logical** CPUs (including
   hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``, but
@@ -272,7 +272,7 @@ What is the difference between psutil, os, and multiprocessing cpu_count?
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
   **physical** cores, which has no stdlib equivalent.
 
-----
+-------------------------------------------------------------------------------
 
 Memory
 ------

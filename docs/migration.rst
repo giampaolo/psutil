@@ -218,7 +218,7 @@ Python 3.6 dropped
 
 Python 3.6 is no longer supported. Minimum version is Python 3.7.
 
-----
+-------------------------------------------------------------------------------
 
 .. _migration-7.0:
 
@@ -250,7 +250,7 @@ Python 2.7 is no longer supported. The last release to support Python
 
   pip2 install "psutil==6.1.*"
 
-----
+-------------------------------------------------------------------------------
 
 .. _migration-6.0:
 
@@ -306,7 +306,7 @@ that a process object is still alive and refers to the same process, use
       if p.is_running():
           print(p.pid, p.name())
 
-----
+-------------------------------------------------------------------------------
 
 .. _migration-5.0:
 

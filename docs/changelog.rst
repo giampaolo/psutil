@@ -14,7 +14,7 @@ Changelog
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
-:gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`)
+:gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`)
 
 - Split docs from a single HTML file into multiple sections (API reference,
   install, etc.).

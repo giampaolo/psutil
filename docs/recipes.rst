@@ -17,6 +17,8 @@ Processes
 Finding processes
 ^^^^^^^^^^^^^^^^^
 
+.. _recipe_find_process_by_name:
+
 Find process by name:
 
 .. code-block:: python
@@ -30,7 +32,7 @@ Find process by name:
               ls.append(p)
       return ls
 
-----
+-------------------------------------------------------------------------------
 
 A bit more advanced, check string against :meth:`Process.name`,
 :meth:`Process.exe` and :meth:`Process.cmdline`:
@@ -51,7 +53,7 @@ A bit more advanced, check string against :meth:`Process.name`,
               ls.append(p)
       return ls
 
-----
+-------------------------------------------------------------------------------
 
 Find the process listening on a given TCP port:
 
@@ -71,7 +73,7 @@ Find the process listening on a given TCP port:
                       return proc
       return None
 
-----
+-------------------------------------------------------------------------------
 
 Find all processes that have an active connection to a given remote IP:
 
@@ -92,7 +94,7 @@ Find all processes that have an active connection to a given remote IP:
                       ls.append(proc)
       return ls
 
-----
+-------------------------------------------------------------------------------
 
 Find all processes that have a given file open (useful on Windows):
 
@@ -124,7 +126,7 @@ Processes owned by user:
   (19772, 'ssh'),
   (20492, 'python')]
 
-----
+-------------------------------------------------------------------------------
 
 Processes actively running:
 
@@ -135,7 +137,7 @@ Processes actively running:
    (1776, 'unity-panel-service'),
    (20492, 'python')]
 
-----
+-------------------------------------------------------------------------------
 
 Processes using log files:
 
@@ -150,7 +152,7 @@ Processes using log files:
   2174  nautilus   /home/giampaolo/.local/share/gvfs-metadata/home-ce08efac.log
   2650  chrome     /home/giampaolo/.config/google-chrome/Default/data_reduction_proxy_leveldb/000003.log
 
-----
+-------------------------------------------------------------------------------
 
 Processes consuming more than 500M of memory:
 
@@ -161,7 +163,7 @@ Processes consuming more than 500M of memory:
    (3038, 'chrome', 1120088064),
    (21915, 'sublime_text', 615407616)]
 
-----
+-------------------------------------------------------------------------------
 
 Top 3 processes which consumed the most CPU time:
 
@@ -172,7 +174,7 @@ Top 3 processes which consumed the most CPU time:
    (1150, 'Xorg', 11116.989999999998),
    (2650, 'chrome', 18451.97)]
 
-----
+-------------------------------------------------------------------------------
 
 Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
 
@@ -193,7 +195,7 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
       procs.sort(key=lambda x: x[0], reverse=True)
       return procs[:n]
 
-----
+-------------------------------------------------------------------------------
 
 Top N processes by open file descriptors (useful for diagnosing fd leaks):
 
@@ -278,7 +280,7 @@ Kill a process tree (including grandchildren):
       )
       return (gone, alive)
 
-----
+-------------------------------------------------------------------------------
 
 Find zombie (defunct) processes:
 
@@ -291,7 +293,7 @@ Find zombie (defunct) processes:
       if p.status() == psutil.STATUS_ZOMBIE:
           print(f"zombie: pid={p.pid}")
 
-----
+-------------------------------------------------------------------------------
 
 Terminate all processes matching a given name:
 
@@ -304,7 +306,7 @@ Terminate all processes matching a given name:
           if p.name() == name:
               p.terminate()
 
-----
+-------------------------------------------------------------------------------
 
 Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
 exit within the timeout:
@@ -321,7 +323,7 @@ exit within the timeout:
       except psutil.TimeoutExpired:
           p.kill()
 
-----
+-------------------------------------------------------------------------------
 
 Restart a process:
 
@@ -337,7 +339,7 @@ Restart a process:
       p.wait()
       return subprocess.Popen(cmd)
 
-----
+-------------------------------------------------------------------------------
 
 Temporarily pause and resume a process using a context manager:
 
@@ -359,7 +361,7 @@ Temporarily pause and resume a process using a context manager:
   with suspended(pid):
       pass  # process is paused here
 
-----
+-------------------------------------------------------------------------------
 
 CPU throttle: limit a process's CPU usage to a target percentage by
 alternating :meth:`Process.suspend` and :meth:`Process.resume`:
@@ -379,7 +381,7 @@ alternating :meth:`Process.suspend` and :meth:`Process.resume`:
               time.sleep(interval * cpu / max_cpu_percent)
               p.resume()
 
-----
+-------------------------------------------------------------------------------
 
 Restart a process automatically if it dies:
 
@@ -501,7 +503,7 @@ Print real-time CPU usage percentage:
   CPU: 1.4%
   CPU: 0.9%
 
-----
+-------------------------------------------------------------------------------
 
 For each CPU core:
 
@@ -544,7 +546,7 @@ Show disk usage for all mounted partitions:
   /home           total=878.7G   used=497.5G   free=336.5G   percent=59.7%
 
 
-----
+-------------------------------------------------------------------------------
 
 Show real-time disk I/O:
 
@@ -590,7 +592,7 @@ List IP addresses for each network interface:
   lo              address=127.0.0.1       netmask=255.0.0.0
   eth0            address=10.0.0.4        netmask=255.255.255.0
 
-----
+-------------------------------------------------------------------------------
 
 Show real-time network I/O per interface:
 
@@ -618,7 +620,7 @@ Show real-time network I/O per interface:
   lo         sent=0.0B/s    recv=0.0B/s
   eth0       sent=12.3K/s   recv=45.6K/s
 
-----
+-------------------------------------------------------------------------------
 
 List all active TCP connections with their status:
 

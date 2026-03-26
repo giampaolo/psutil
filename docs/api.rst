@@ -1,6 +1,5 @@
 .. currentmodule:: psutil
 .. include:: _links.rst
-.. _availability:
 
 API reference
 =============
@@ -77,8 +76,8 @@ CPU
   .. note::
     CPU times are always supposed to increase over time, or at least remain the
     same, and that's because time cannot go backwards. Surprisingly sometimes
-    this might not be the case (at least on Windows and Linux), see `#1210
-    <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
+    this might not be the case (at least on Windows and Linux), see
+    `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
   .. versionchanged:: 4.1.0
      added **irq** and **dpc** fields on Windows (**irq** was called **interrupt**
@@ -225,68 +224,67 @@ CPU
 
   .. versionadded:: 4.1.0
 
-
 .. function:: cpu_freq(percpu=False)
 
-    Return CPU frequency as a named tuple including *current*, *min* and *max*
-    frequencies expressed in Mhz. On Linux *current* frequency reports the
-    real-time value, on all other platforms this usually represents the
-    nominal "fixed" value (never changing). If *percpu* is ``True`` and the
-    system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
-    frequencies is returned for each CPU, if not, a list with a single element
-    is returned. If *min* and *max* cannot be determined they are set to
-    ``0.0``.
+  Return CPU frequency as a named tuple including *current*, *min* and *max*
+  frequencies expressed in Mhz. On Linux *current* frequency reports the
+  real-time value, on all other platforms this usually represents the
+  nominal "fixed" value (never changing). If *percpu* is ``True`` and the
+  system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
+  frequencies is returned for each CPU, if not, a list with a single element
+  is returned. If *min* and *max* cannot be determined they are set to
+  ``0.0``.
 
-    Example (Linux):
+  Example (Linux):
 
-    .. code-block:: python
+  .. code-block:: python
 
-       >>> import psutil
-       >>> psutil.cpu_freq()
-       scpufreq(current=931.42925, min=800.0, max=3500.0)
-       >>> psutil.cpu_freq(percpu=True)
-       [scpufreq(current=2394.945, min=800.0, max=3500.0),
-        scpufreq(current=2236.812, min=800.0, max=3500.0),
-        scpufreq(current=1703.609, min=800.0, max=3500.0),
-        scpufreq(current=1754.289, min=800.0, max=3500.0)]
+     >>> import psutil
+     >>> psutil.cpu_freq()
+     scpufreq(current=931.42925, min=800.0, max=3500.0)
+     >>> psutil.cpu_freq(percpu=True)
+     [scpufreq(current=2394.945, min=800.0, max=3500.0),
+      scpufreq(current=2236.812, min=800.0, max=3500.0),
+      scpufreq(current=1703.609, min=800.0, max=3500.0),
+      scpufreq(current=1754.289, min=800.0, max=3500.0)]
 
-    .. availability:: Linux, macOS, Windows, FreeBSD, OpenBSD.
+  .. availability:: Linux, macOS, Windows, FreeBSD, OpenBSD.
 
-    .. versionadded:: 5.1.0
+  .. versionadded:: 5.1.0
 
-    .. versionchanged:: 5.5.1
-       added FreeBSD support.
+  .. versionchanged:: 5.5.1
+     added FreeBSD support.
 
-    .. versionchanged:: 5.9.1
-       added OpenBSD support.
+  .. versionchanged:: 5.9.1
+     added OpenBSD support.
 
 .. function:: getloadavg()
 
-    Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-    The "load" represents the processes which are in a runnable state, either
-    using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-    On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
-    by using a Windows API that spawns a thread which keeps running in
-    background and updates results every 5 seconds, mimicking the UNIX behavior.
-    Thus, on Windows, the first time this is called and for the next 5 seconds
-    it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
-    The numbers returned only make sense when compared to the number of CPU cores
-    installed on the system. So, for instance, a value of `3.14` on a system
-    with 10 logical CPUs means that the system load was 31.4% percent over the
-    last N minutes.
+  Return the average system load over the last 1, 5 and 15 minutes as a tuple.
+  The "load" represents the processes which are in a runnable state, either
+  using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
+  On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
+  by using a Windows API that spawns a thread which keeps running in
+  background and updates results every 5 seconds, mimicking the UNIX behavior.
+  Thus, on Windows, the first time this is called and for the next 5 seconds
+  it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
+  The numbers returned only make sense when compared to the number of CPU cores
+  installed on the system. So, for instance, a value of `3.14` on a system
+  with 10 logical CPUs means that the system load was 31.4% percent over the
+  last N minutes.
 
-    .. code-block:: python
+  .. code-block:: python
 
-       >>> import psutil
-       >>> psutil.getloadavg()
-       (3.14, 3.89, 4.67)
-       >>> psutil.cpu_count()
-       10
-       >>> # percentage representation
-       >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
-       [31.4, 38.9, 46.7]
+     >>> import psutil
+     >>> psutil.getloadavg()
+     (3.14, 3.89, 4.67)
+     >>> psutil.cpu_count()
+     10
+     >>> # percentage representation
+     >>> [x / psutil.cpu_count() * 100 for x in psutil.getloadavg()]
+     [31.4, 38.9, 46.7]
 
-    .. versionadded:: 5.6.2
+  .. versionadded:: 5.6.2
 
 Memory
 ^^^^^^
@@ -433,7 +431,7 @@ Memory
   .. seealso::
     - `scripts/meminfo.py`_
     - :ref:`faq_virtual_memory_available`
-    -  :ref:`faq_used_plus_free`
+    - :ref:`faq_used_plus_free`
 
   .. versionchanged:: 4.2.0
      added *shared* metric on Linux.
@@ -683,7 +681,7 @@ Network
     When the remote endpoint is not connected you'll get an empty tuple
     (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
   - **status**: represents the status of a TCP connection. The return value
-    is one of the `psutil.CONN_* <#connections-constants>`_ constants
+    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
     (a string).
     For UDP and UNIX sockets this is always going to be
     :const:`psutil.CONN_NONE`.
@@ -965,7 +963,7 @@ Sensors
   .. versionchanged:: 5.4.2
      added macOS support.
 
-----
+-------------------------------------------------------------------------------
 
 Other system info
 ^^^^^^^^^^^^^^^^^
@@ -1013,7 +1011,7 @@ Other system info
   .. versionchanged:: 5.3.0
      added "pid" field.
 
-----
+-------------------------------------------------------------------------------
 
 Processes
 ---------
@@ -1139,7 +1137,9 @@ Functions
   - give them some time to terminate
   - send SIGKILL to those ones which are still alive
 
-  Example which terminates and waits all the children of this process::
+  Example which terminates and waits all the children of this process:
+
+  .. code-block:: python
 
     import psutil
 
@@ -1326,16 +1326,16 @@ Process class
 
   .. attribute:: pid
 
-     The process PID. This is the only (read-only) attribute of the class.
+    The process PID. This is the only (read-only) attribute of the class.
 
   .. attribute:: info
 
-     A dict containing pre-fetched process info, set by
-     :func:`process_iter` when called with ``attrs``. Use method
-     calls instead (e.g. ``p.name()`` instead of ``p.info['name']``).
-     Accessing this attribute raises :exc:`DeprecationWarning`.
+    A dict containing pre-fetched process info, set by
+    :func:`process_iter` when called with ``attrs``. Use method
+    calls instead (e.g. ``p.name()`` instead of ``p.info['name']``).
+    Accessing this attribute raises :exc:`DeprecationWarning`.
 
-     .. deprecated:: 8.0.0
+    .. deprecated:: 8.0.0
 
   .. method:: ppid()
 
@@ -1349,7 +1349,7 @@ Process class
     The process name.  On Windows the return value is cached after first
     call. Not on POSIX because the process name may change.
 
-    .. seealso:: how to `find a process by name <#find-process-by-name>`_.
+    .. seealso:: how to :ref:`find a process by name <recipe_find_process_by_name>`.
 
   .. method:: exe()
 
@@ -1385,7 +1385,6 @@ Process class
        >>> import psutil
        >>> psutil.Process().environ()
        {'LC_NUMERIC': 'it_IT.UTF-8', 'QT_QPA_PLATFORMTHEME': 'appmenu-qt5', 'IM_CONFIG_PHASE': '1', 'XDG_GREETER_DATA_DIR': '/var/lib/lightdm-data/giampaolo', 'XDG_CURRENT_DESKTOP': 'Unity', 'UPSTART_EVENTS': 'started starting', 'GNOME_KEYRING_PID': '', 'XDG_VTNR': '7', 'QT_IM_MODULE': 'ibus', 'LOGNAME': 'giampaolo', 'USER': 'giampaolo', 'PATH': '/home/giampaolo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/giampaolo/svn/sysconf/bin', 'LC_PAPER': 'it_IT.UTF-8', 'GNOME_KEYRING_CONTROL': '', 'GTK_IM_MODULE': 'ibus', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'LESS_TERMCAP_se': '\x1b[0m', 'TERM': 'xterm-256color', 'SHELL': '/bin/bash', 'XDG_SESSION_PATH': '/org/freedesktop/DisplayManager/Session0', 'XAUTHORITY': '/home/giampaolo/.Xauthority', 'LANGUAGE': 'en_US', 'COMPIZ_CONFIG_PROFILE': 'ubuntu', 'LC_MONETARY': 'it_IT.UTF-8', 'QT_LINUX_ACCESSIBILITY_ALWAYS_ON': '1', 'LESS_TERMCAP_me': '\x1b[0m', 'LESS_TERMCAP_md': '\x1b[01;38;5;74m', 'LESS_TERMCAP_mb': '\x1b[01;31m', 'HISTSIZE': '100000', 'UPSTART_INSTANCE': '', 'CLUTTER_IM_MODULE': 'xim', 'WINDOWID': '58786407', 'EDITOR': 'vim', 'SESSIONTYPE': 'gnome-session', 'XMODIFIERS': '@im=ibus', 'GPG_AGENT_INFO': '/home/giampaolo/.gnupg/S.gpg-agent:0:1', 'HOME': '/home/giampaolo', 'HISTFILESIZE': '100000', 'QT4_IM_MODULE': 'xim', 'GTK2_MODULES': 'overlay-scrollbar', 'XDG_SESSION_DESKTOP': 'ubuntu', 'SHLVL': '1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'INSTANCE': 'Unity', 'LC_ADDRESS': 'it_IT.UTF-8', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'VTE_VERSION': '4205', 'GDMSESSION': 'ubuntu', 'MANDATORY_PATH': '/usr/share/gconf/ubuntu.mandatory.path', 'VISUAL': 'vim', 'DESKTOP_SESSION': 'ubuntu', 'QT_ACCESSIBILITY': '1', 'XDG_SEAT_PATH': '/org/freedesktop/DisplayManager/Seat0', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LESSOPEN': '| /usr/bin/lesspipe %s', 'XDG_SESSION_ID': 'c2', 'DBUS_SESSION_BUS_ADDRESS': 'unix:abstract=/tmp/dbus-9GAJpvnt8r', '_': '/usr/bin/python', 'DEFAULTS_PATH': '/usr/share/gconf/ubuntu.default.path', 'LC_IDENTIFICATION': 'it_IT.UTF-8', 'LESS_TERMCAP_ue': '\x1b[0m', 'UPSTART_SESSION': 'unix:abstract=/com/ubuntu/upstart-session/1000/1294', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'GTK_MODULES': 'gail:atk-bridge:unity-gtk-module', 'XDG_SESSION_TYPE': 'x11', 'PYTHONSTARTUP': '/home/giampaolo/.pythonstart', 'LC_NAME': 'it_IT.UTF-8', 'OLDPWD': '/home/giampaolo/svn/curio_giampaolo/tests', 'GDM_LANG': 'en_US', 'LC_TELEPHONE': 'it_IT.UTF-8', 'HISTCONTROL': 'ignoredups:erasedups', 'LC_MEASUREMENT': 'it_IT.UTF-8', 'PWD': '/home/giampaolo/svn/curio_giampaolo', 'JOB': 'gnome-session', 'LESS_TERMCAP_us': '\x1b[04;38;5;146m', 'UPSTART_JOB': 'unity-settings-daemon', 'LC_TIME': 'it_IT.UTF-8', 'LESS_TERMCAP_so': '\x1b[38;5;246m', 'PAGER': 'less', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'XDG_SEAT': 'seat0'}
-
 
     .. note::
       on macOS Big Sur this function returns something meaningful only for the
@@ -1473,7 +1472,7 @@ Process class
 
     The current process status as a :class:`psutil.ProcessStatus` enum member.
     The returned value is one of the
-    `psutil.STATUS_* <#process-status-constants>`_ constants.
+    :data:`psutil.STATUS_* <psutil.STATUS_RUNNING>` constants.
     A common use case is detecting :term:`zombie processes <zombie process>`
     (``p.status() == psutil.STATUS_ZOMBIE``).
 
@@ -1747,7 +1746,6 @@ Process class
        pcputimes(user=0.03, system=0.67, children_user=0.0, children_system=0.0, iowait=0.08)
        >>> sum(p.cpu_times()[:2])  # cumulative, excluding children and iowait
        0.70
-
 
     .. versionchanged:: 4.1.0
        return two extra fields: **children_user** and **children_system**.
@@ -2035,7 +2033,7 @@ Process class
     Return a named tuple with USS, PSS and swap memory metrics. These give
     a more accurate picture of actual memory consumption than
     :meth:`memory_info`, as explained in this
-    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_.
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_
     It works by walking the full process address space, so it is
     considerably slower than :meth:`memory_info` and may require elevated
     privileges.
@@ -2165,8 +2163,7 @@ Process class
     .. availability:: Linux, Windows, FreeBSD, SunOS
 
     .. versionchanged:: 5.6.0
-       removed macOS support because inherently broken (see issue `#1291
-       <https://github.com/giampaolo/psutil/issues/1291>`_)
+       removed macOS support because inherently broken (see issue :gh:`1291`)
 
   .. method:: children(recursive=False)
 
@@ -2185,12 +2182,12 @@ Process class
          ├─ C (child)
          └─ D (child)
 
-      .. code-block:: pycon
+    .. code-block:: pycon
 
-         >>> p.children()
-         B, C, D
-         >>> p.children(recursive=True)
-         B, X, Y, C, D
+       >>> p.children()
+       B, C, D
+       >>> p.children(recursive=True)
+       B, X, Y, C, D
 
     Note that in the example above if process X disappears process Y won't be
     returned either as the reference to process A is lost.
@@ -2250,7 +2247,6 @@ Process class
        >>> p = psutil.Process()
        >>> p.open_files()
        [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3, position=0, mode='w', flags=32769)]
-
 
     .. warning::
       on Windows this method is not reliable due to some limitations of the
@@ -2507,7 +2503,7 @@ Process class
        :func:`select.kqueue` respectively, instead of less efficient busy-loop
        polling. Later added to CPython 3.15 in `GH-144047`_.
 
-----
+-------------------------------------------------------------------------------
 
 Popen class
 ^^^^^^^^^^^
@@ -2540,11 +2536,10 @@ Popen class
      0
      >>>
 
-
   .. versionchanged:: 4.4.0
      added context manager support.
 
-----
+-------------------------------------------------------------------------------
 
 C heap introspection
 --------------------
@@ -2581,11 +2576,11 @@ Python's memory tracking misses.
   - ``heap_count``: (Windows only) number of private heaps created via
     ``HeapCreate()``.
 
-   .. code-block:: pycon
+  .. code-block:: pycon
 
-      >>> import psutil
-      >>> psutil.heap_info()
-      pheap(heap_used=5177792, mmap_used=819200)
+     >>> import psutil
+     >>> psutil.heap_info()
+     pheap(heap_used=5177792, mmap_used=819200)
 
   These fields reflect how unreleased C allocations affect the heap:
 
@@ -2626,7 +2621,7 @@ Python's memory tracking misses.
 
   .. versionadded:: 7.2.0
 
-----
+-------------------------------------------------------------------------------
 
 Windows services
 ----------------
@@ -2681,7 +2676,7 @@ Windows services
 
   .. method:: pid()
 
-    The process PID, if any, else `None`. This can be passed to
+    The process PID, if any, else ``None``. This can be passed to
     :class:`Process` class to control the service's process.
 
   .. method:: status()
@@ -2724,7 +2719,7 @@ Windows services
 
   .. versionadded:: 4.2.0
 
-----
+-------------------------------------------------------------------------------
 
 Constants
 ---------

@@ -10,12 +10,12 @@ Build, setup and running tests
 
   .. code-block:: bash
 
-      git clone git@github.com:giampaolo/psutil.git
-      make install-sysdeps      # install gcc and python headers
-      make install-pydeps-test  # install python deps necessary to run unit tests
-      make build
-      make install
-      make test
+     git clone git@github.com:giampaolo/psutil.git
+     make install-sysdeps      # install gcc and python headers
+     make install-pydeps-test  # install python deps necessary to run unit tests
+     make build
+     make install
+     make test
 
 - ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
   install, run tests and do pretty much anything that involves development,
@@ -23,22 +23,22 @@ Build, setup and running tests
 
   .. code-block:: bash
 
-      make clean                # remove build files
-      make install-pydeps-dev   # install all development deps (ruff, black, coverage, ...)
-      make test                 # run tests
-      make test-parallel        # run tests in parallel (faster)
-      make test-memleaks        # run memory leak tests
-      make test-coverage        # run test coverage
-      make lint-all             # run linters
-      make fix-all              # fix linters errors
-      make uninstall
-      make help
+     make clean                # remove build files
+     make install-pydeps-dev   # install all development deps (ruff, black, coverage, ...)
+     make test                 # run tests
+     make test-parallel        # run tests in parallel (faster)
+     make test-memleaks        # run memory leak tests
+     make test-coverage        # run test coverage
+     make lint-all             # run linters
+     make fix-all              # fix linters errors
+     make uninstall
+     make help
 
 - To run a specific unit test:
 
   .. code-block::
 
-      make test ARGS=tests/test_system.py
+     make test ARGS=tests/test_system.py
 
 - Do not use ``sudo``. ``make install`` installs psutil as a limited user in
   "edit" / development mode, meaning you can edit psutil code on the fly while
@@ -48,7 +48,7 @@ Build, setup and running tests
 
   .. code-block::
 
-      make test PYTHON=python3.8
+     make test PYTHON=python3.8
 
 Windows
 -------
@@ -61,8 +61,10 @@ Windows
 
   .. code-block:: bash
 
-      make build
-      make test-parallel
+     make build
+     make test-parallel
+
+.. _devguide_debug_mode:
 
 Debug mode
 ----------
@@ -106,16 +108,16 @@ Code organization
 
 .. code-block:: bash
 
-    psutil/__init__.py                   # Main API namespace ("import psutil")
-    psutil/_common.py                    # Generic utilities
-    psutil/_ntuples.py                   # Named tuples returned by psutil APIs
-    psutil/_enums.py                     # Enum containers backing psutil constants
-    psutil/_ps{platform}.py              # Platform-specific python wrappers
-    psutil/_psutil_{platform}.c          # Platform-specific C extensions (entry point)
-    psutil/arch/all/*.c                  # C code common to all platforms
-    psutil/arch/{platform}/*.c           # Platform-specific C extension
-    tests/test_process|system.py         # Main system/process API tests
-    tests/test_{platform}.py             # Platform-specific tests
+   psutil/__init__.py                   # Main API namespace ("import psutil")
+   psutil/_common.py                    # Generic utilities
+   psutil/_ntuples.py                   # Named tuples returned by psutil APIs
+   psutil/_enums.py                     # Enum containers backing psutil constants
+   psutil/_ps{platform}.py              # Platform-specific python wrappers
+   psutil/_psutil_{platform}.c          # Platform-specific C extensions (entry point)
+   psutil/arch/all/*.c                  # C code common to all platforms
+   psutil/arch/{platform}/*.c           # Platform-specific C extension
+   tests/test_process|system.py         # Main system/process API tests
+   tests/test_{platform}.py             # Platform-specific tests
 
 Adding a new API
 ----------------
@@ -163,13 +165,13 @@ Documentation
 
   .. code-block:: bash
 
-    cd docs/
-    python3 -m pip install -r requirements.txt
-    make html
+     cd docs/
+     python3 -m pip install -r requirements.txt
+     make html
 
 - The public documentation is hosted at https://psutil.readthedocs.io.
 - There are 2 versions, which you can select from the dropdown menu at the top
-  of the page:
+  left of the page:
 
   - `/stable <https://psutil.readthedocs.io/stable>`_: generated from the most
     recent Git tag (latest released psutil version).

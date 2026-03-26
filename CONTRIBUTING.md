@@ -14,7 +14,8 @@
   keeping the issues properly organized and searchable (by OS, issue type,
   etc.).
 - When reporting a malfunction, consider enabling
-  [debug mode](https://psutil.readthedocs.io/en/latest/#debug-mode) first.
+  [debug mode](https://psutil.readthedocs.io/latest/devguide.html#debug-mode)
+  first.
 - To report a **security vulnerability**, use the
   [Tidelift security contact](https://tidelift.com/security). Tidelift will
   coordinate the fix and the disclosure of the reported problem.

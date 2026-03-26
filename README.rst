@@ -1,26 +1,21 @@
-|  |downloads| |stars| |forks| |contributors| |packages|
-|  |version| |license| |tidelift|
+|  |downloads| |contributors| |packages|  |version| |license|
 |  |github-actions-wheels| |github-actions-bsd|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://clickpy.clickhouse.com/dashboard/psutil
     :alt: Downloads
 
-.. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/stargazers
-    :alt: Github stars
+.. .. |stars| image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+..     :target: https://github.com/giampaolo/psutil/stargazers
+..     :alt: Github stars
 
-.. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/network/members
-    :alt: Github forks
+.. .. |forks| image:: https://img.shields.io/github/forks/giampaolo/psutil.svg
+..     :target: https://github.com/giampaolo/psutil/network/members
+..     :alt: Github forks
 
 .. |contributors| image:: https://img.shields.io/github/contributors/giampaolo/psutil.svg
     :target: https://github.com/giampaolo/psutil/graphs/contributors
     :alt: Contributors
-
-.. |stackoverflow| image:: https://img.shields.io/badge/stackoverflow-Ask%20questions-blue.svg
-    :target: https://stackoverflow.com/questions/tagged/psutil
-    :alt: Stackoverflow
 
 .. |github-actions-wheels| image:: https://img.shields.io/github/actions/workflow/status/giampaolo/psutil/.github/workflows/build.yml.svg?label=Linux%2C%20macOS%2C%20Windows
     :target: https://github.com/giampaolo/psutil/actions?query=workflow%3Abuild
@@ -46,9 +41,9 @@
     :target: https://twitter.com/grodola
     :alt: Twitter Follow
 
-.. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
-    :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
-    :alt: Tidelift
+.. .. |tidelift| image:: https://tidelift.com/badges/github/giampaolo/psutil?style=flat
+..     :target: https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme
+..     :alt: Tidelift
 
 -----
 
@@ -60,7 +55,7 @@
         <br />
         <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
-        <a href="https://psutil.readthedocs.io/adoption"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
+        <a href="https://psutil.readthedocs.io/latest/adoption.html"><b>Who uses psutil</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://pypi.org/project/psutil/#files"><b>Download</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;
         <a href="#funding"><b>Funding</b></a>&nbsp;&nbsp;&nbsp;
@@ -125,12 +120,12 @@ immensely from some funding. psutil is among the `top 100`_ most-downloaded
 Python packages, and keeping up with bug reports, user support, and ongoing
 maintenance has become increasingly difficult to sustain as a one-person
 effort. If you're a company that's making significant use of psutil you can
-consider becoming a sponsor via `GitHub
-<https://github.com/sponsors/giampaolo>`_, `Open Collective
-<https://opencollective.com/psutil>`_ or `PayPal
-<https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
-Sponsors can have their logo displayed here and in the psutil `documentation
-<https://psutil.readthedocs.io>`_.
+consider becoming a sponsor via
+`GitHub <https://github.com/sponsors/giampaolo>`_,
+`Open Collective <https://opencollective.com/psutil>`_
+or `PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
+Sponsors can have their logo displayed here and in the psutil
+`documentation <https://psutil.readthedocs.io>`_.
 
 Projects using psutil
 =====================
@@ -154,9 +149,7 @@ million downloads per month, `760,000+ GitHub repositories
   `GRR <https://github.com/google/grr>`_
 - `psleak`_
 
-`Full list <https://psutil.readthedocs.io/adoption>`_
-
-
+`Full list <https://psutil.readthedocs.io/latest/adoption>`_
 
 Ports
 =====
@@ -213,7 +206,7 @@ People who donated money over the years:
 
 .. </PYPI-EXCLUDE>
 
-----
+-------------------------------------------------------------------------------
 
 Example usages
 ==============
@@ -224,7 +217,7 @@ including CPU, memory, disks, network, sensors, and process management.
 CPU
 ---
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import psutil
     >>>
@@ -269,7 +262,7 @@ CPU
 Memory
 ------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> psutil.virtual_memory()
     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
@@ -280,7 +273,7 @@ Memory
 Disks
 -----
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> psutil.disk_partitions()
     [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
@@ -296,7 +289,7 @@ Disks
 Network
 -------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> psutil.net_io_counters(pernic=True)
     {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
@@ -323,7 +316,7 @@ Network
 Sensors
 -------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import psutil
     >>> psutil.sensors_temperatures()
@@ -342,7 +335,7 @@ Sensors
 Other system info
 -----------------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import psutil
     >>> psutil.users()
@@ -356,7 +349,7 @@ Other system info
 Process management
 ------------------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import psutil
     >>> psutil.pids()
@@ -499,7 +492,7 @@ Process management
 Further process APIs
 --------------------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import psutil
     >>> for proc in psutil.process_iter(['pid', 'name']):
@@ -523,7 +516,7 @@ Further process APIs
 Heap info
 ---------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import psutil
     >>> psutil.heap_info()
@@ -535,7 +528,7 @@ See also `psleak`_.
 Windows services
 ----------------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> list(psutil.win_service_iter())
     [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,
@@ -556,5 +549,5 @@ Windows services
 
 
 .. _`psleak`: https://github.com/giampaolo/psleak
-.. _`shell equivalents`: https://psutil.readthedocs.io/en/latest/shell_equivalents.html
+.. _`shell equivalents`: https://psutil.readthedocs.io/stable/shell-equivalents.html
 .. _`top 100`: https://clickpy.clickhouse.com/dashboard/psutil

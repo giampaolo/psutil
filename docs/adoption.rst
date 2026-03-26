@@ -4,10 +4,10 @@ Who uses psutil
 ===============
 
 psutil is among the `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__
-most-downloaded packages on PyPI, with 280+ million downloads per month,
+most-downloaded packages on PyPI, with 300+ million downloads per month,
 `760,000+ GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__ using
 it, and 14,000+ packages depending on it. The projects below are a small
-sample of notable software that depends on it.
+sample of notable software that depends on psutil.
 
 See also :doc:`alternatives` for related Python libraries and equivalents in
 other languages.
@@ -134,7 +134,7 @@ System monitoring
    * - |grr-logo| `GRR <https://github.com/google/grr>`__
      - Remote live forensics by Google
      - |grr-stars|
-     - endpoint system data collection, deep integration
+     - core dependency for system data collection
    * - |stui-logo| `s-tui <https://github.com/amanusk/s-tui>`__
      - Terminal CPU stress and monitoring utility
      - |stui-stars|

@@ -122,7 +122,7 @@ REPLY_MISSING_PYTHON_HEADERS = """\
 It looks like you're missing `Python.h` headers. This usually means you have \
 to install them first, then retry psutil installation.
 Please read \
-[install](https://psutil.readthedocs.io/install) \
+[install](https://psutil.readthedocs.io/latest/install) \
 instructions for your platform. \
 This is an auto-generated response based on the text you submitted. \
 If this was a mistake or you think there's a bug with psutil installation \
