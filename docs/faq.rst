@@ -24,10 +24,10 @@ Always use attribute access instead:
 
 .. code-block:: python
 
-  # bad: breaks if field order changes
+  # bad
   rss, vms = p.memory_info()
 
-  # good: safe across versions
+  # good
   m = p.memory_info()
   print(m.rss, m.vms)
 

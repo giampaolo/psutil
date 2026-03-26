@@ -2,8 +2,26 @@ TODO
 ====
 
 A collection of ideas and notes about stuff to implement in future versions.
-"#NNN" occurrences refer to bug tracker issues at:
-https://github.com/giampaolo/psutil/issues
+
+INCONSISTENCIES
+===============
+
+(the "too late" section)
+
+- PROCFS_PATH should have been set_procfs_path().
+- `virtual_memory()` should have been `memory_virtual()`.
+- `swap_memory()` should have been `memory_swap()`.
+- Named tuples are problematic. Positional unpacking of named tuples could be
+  deprecated. Return frozen dataclasses (with a common base class) instead of
+  `typing.NamedTuple`. The base class would keep `_fields`, `_asdict()` and
+  `len()` for compat, but `__iter__` and `__getitem__` would emit
+  DeprecationWarning. Main concern: `isinstance(x, tuple)` would break.
+
+REJECTED IDEAS
+==============
+
+- #550: threads per core
+- #1667: process_iter(new_only=True)
 
 FEATURES
 ========
@@ -89,24 +107,6 @@ FEATURES
   cannot raise a TimeoutExpired exception with a specific error string.
 
 - round Process.memory_percent() result?
-
-BUGFIXES
-========
-
-- #600: windows / open_files(): support network file handles.
-
-REJECTED IDEAS
-==============
-
-- #550: threads per core
-- #1667: process_iter(new_only=True)
-
-INCONSISTENCIES
-===============
-
-- PROCFS_PATH should have been set_procfs_path().
-- `virtual_memory()` should have been `memory_virtual()`.
-- `swap_memory()` should have been `memory_swap()`.
 
 RESOURCES
 =========
