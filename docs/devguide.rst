@@ -1,8 +1,8 @@
 Development guide
 =================
 
-Build, setup and running tests
-------------------------------
+Build, setup and test
+---------------------
 
 - psutil makes extensive use of C extension modules, meaning a C compiler is
   required, see :doc:`install instructions <install>`. Once you have a compiler
@@ -17,9 +17,9 @@ Build, setup and running tests
      make install
      make test
 
-- ``make`` (and the accompanying `Makefile`_) is the designated tool to build,
-  install, run tests and do pretty much anything that involves development,
-  including on Windows. Some useful commands:
+- ``make`` (and the accompanying `Makefile`_) is the designated tool for
+  building, installing, running tests, and general development tasks,
+  including on Windows (see later).
 
   .. code-block:: bash
 
@@ -53,8 +53,8 @@ Build, setup and running tests
 Windows
 -------
 
-- The recommended way to develop on Windows is using ``make``, just like on
-  UNIX systems.
+- The recommended way to develop on Windows is to use ``make``, just like
+  on UNIX systems.
 - First, install `Git for Windows`_ and launch a **Git Bash shell**. This
   provides a Unix-like environment where ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands:
@@ -69,8 +69,8 @@ Windows
 Debug mode
 ----------
 
-If you want to debug unusual situations or want to report a bug, it may be
-useful to enable debug mode via ``PSUTIL_DEBUG`` environment variable. In this
+If you need to debug unusual situations or report a bug, you can enable
+debug mode via the ``PSUTIL_DEBUG`` environment variable. In this
 mode, psutil may print additional information to stderr. Usually these are
 non-severe error conditions that are ignored instead of causing a crash.
 Unit tests automatically run with debug mode enabled. On UNIX:
@@ -182,6 +182,11 @@ Redirects:
 
 - https://psutil.readthedocs.io redirects to
   `/stable <https://psutil.readthedocs.io/stable>`_ by default.
+
+.. note::
+
+   The ``/latest`` version reflects the development branch and may contain
+   unreleased changes. For stable documentation, use ``/stable``.
 
 Releases
 --------

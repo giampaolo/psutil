@@ -20,6 +20,19 @@ release and shows the code changes required to upgrade.
 Migrating to 8.0
 -----------------
 
+Key breaking changes in 8.0:
+
+- ``Process.info`` is deprecated: use direct methods.
+- Named tuple field order changed: stop positional unpacking.
+- Some return types are now enums instead of strings.
+- ``memory_full_info()`` deprecated: use ``memory_footprint()``
+- Python 3.6 dropped.
+
+.. important::
+
+  Do not rely on positional unpacking of named tuples.
+  Always use attribute access (e.g. ``t.rss``).
+
 process_iter(): p.info is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -39,38 +52,12 @@ dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
 
 When ``attrs`` are specified, method calls return cached values
 (no extra syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess`
-are handled transparently (returning the ``ad_value``, which defaults
-to ``None``):
-
-.. code-block:: python
-
-  # before
-  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
-      print(p.info["exe"])
-
-  # after
-  for p in psutil.process_iter(attrs=["exe"], ad_value="access-denied"):
-      print(p.exe())
+are handled transparently (returning ``ad_value``, default ``None``).
 
 .. note::
-
-  This is a silent behavior change. Before, calling ``p.exe()``
-  directly could raise :exc:`AccessDenied`. Now, if ``"exe"`` was
-  pre-fetched via ``attrs``, the same call returns ``ad_value``
-  (default ``None``) instead. Code that relied on catching
-  exceptions will silently stop seeing them:
-
-  .. code-block:: python
-
-    # this no longer raises AccessDenied if "exe" was prefetched
-    for p in psutil.process_iter(attrs=["exe"]):
-        try:
-            print(p.exe())
-        except psutil.AccessDenied:
-            pass  # never reached
-
-  If you need the exception, do not include the method in ``attrs``,
-  or call it on a fresh :class:`Process` instance.
+  If ``"name"`` was pre-fetched via ``attrs``, calling ``p.name()`` no
+  longer raises :exc:`AccessDenied`. It returns ``ad_value`` instead.
+  If you need the exception, do not include the method in ``attrs``.
 
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -90,41 +77,19 @@ Named tuple field order changed
     t = psutil.cpu_times()
     user, system, idle = t.user, t.system, t.idle
 
-- :meth:`Process.memory_info`:
+- :meth:`Process.memory_info`: the returned named tuple changed size
+  and field order. Always use attribute access (e.g.
+  ``p.memory_info().rss``) instead of positional unpacking.
 
-  - The returned named tuple changed size and field
-    order. Positional access (e.g. ``p.memory_info()[3]`` or ``a, b, c =
-    p.memory_info()``) may break or silently return the wrong field. Always use
-    attribute access instead (e.g. ``p.memory_info().rss``). Also, ``lib`` and ``dirty`` on Linux were removed and turned into aliases emitting `DeprecationWarning`.
-
-    .. code-block:: python
-
-      # Linux before
-      rss, vms, shared, text, lib, data, dirty = p.memory_info()
-
-      # Linux after
-      t = p.memory_info()
-      rss, vms, shared, text, data = t.rss, t.vms, t.shared, t.text, t.data
-
-  - macOS: ``pfaults`` and ``pageins`` fields were removed with **no
-    backward-compatible aliases**. Use :meth:`page_faults` instead.
-
-    .. code-block:: python
-
-      # before
-      rss, vms, pfaults, pageins = p.memory_info()
-
-      # after
-      rss, vms = p.memory_info()
-      minor, major = p.page_faults()
-
-  - Windows: eliminated old aliases: ``wset`` → ``rss``, ``peak_wset`` →
-    ``peak_rss``, ``pagefile`` / ``private`` → ``vms``, ``peak_pagefile`` →
-    ``peak_vms``, ``num_page_faults`` → :meth:`page_faults` method. At the same
-    time ``paged_pool``, ``nonpaged_pool``, ``peak_paged_pool``,
-    ``peak_nonpaged_pool`` were moved to :meth:`memory_info_ex`. All these old
-    names still work but raise `DeprecationWarning`.
-
+  - Linux: ``lib`` and ``dirty`` fields removed (aliases emitting
+    :exc:`DeprecationWarning` are kept).
+  - macOS: ``pfaults`` and ``pageins`` removed with **no aliases**.
+    Use :meth:`Process.page_faults` instead.
+  - Windows: old aliases (``wset``, ``peak_wset``, ``pagefile``,
+    ``private``, ``peak_pagefile``, ``num_page_faults``) were
+    renamed. Old names still work but raise :exc:`DeprecationWarning`.
+    ``paged_pool``, ``nonpaged_pool``, ``peak_paged_pool``,
+    ``peak_nonpaged_pool`` were moved to :meth:`memory_info_ex`.
   - BSD: a new ``peak_rss`` field was added.
 
 - :func:`virtual_memory`: on Windows, new ``cached`` and ``wired`` fields were
@@ -165,29 +130,10 @@ Status and connection fields are now enums
   now returns a :class:`psutil.ConnectionStatus` member instead of a plain
   ``str``.
 
-Because both are :class:`enum.StrEnum` subclasses they compare equal to their
-string values, so existing comparisons continue to work unchanged:
-
-.. code-block:: python
-
-  # these still work
-  p.status() == "running"
-  p.status() == psutil.STATUS_RUNNING
-
-  # repr() and type() differ, so code inspecting these may need updating
-
-
-The individual constants (e.g. :data:`psutil.STATUS_RUNNING`) are kept as
-aliases for the enum members, and should be preferred over accessing them via
-the enum class:
-
-.. code-block:: python
-
-  # prefer this
-  p.status() == psutil.STATUS_RUNNING
-
-  # not this
-  p.status() == psutil.ProcessStatus.STATUS_RUNNING
+Because both are :class:`enum.StrEnum` subclasses they compare equal to
+their string values, so existing comparisons like
+``p.status() == psutil.STATUS_RUNNING`` continue to work unchanged.
+Code inspecting ``repr()`` or ``type()`` may need updating.
 
 memory_full_info() is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -205,6 +151,11 @@ memory_full_info() is deprecated
   mem = p.memory_footprint()
   uss = mem.uss
 
+Python 3.6 dropped
+^^^^^^^^^^^^^^^^^^^^
+
+Python 3.6 is no longer supported. Minimum version is Python 3.7.
+
 Git tags renamed
 ^^^^^^^^^^^^^^^^^
 
@@ -212,11 +163,6 @@ Git tags were renamed from ``release-X.Y.Z`` to ``vX.Y.Z``
 (e.g. ``release-7.2.2`` → ``v7.2.2``). Old tags are kept for
 backward compatibility. If you reference psutil tags in scripts or
 URLs, update them to the new format. See :gh:`2788`.
-
-Python 3.6 dropped
-^^^^^^^^^^^^^^^^^^^^
-
-Python 3.6 is no longer supported. Minimum version is Python 3.7.
 
 -------------------------------------------------------------------------------
 

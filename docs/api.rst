@@ -8,6 +8,10 @@ API reference
    psutil 8.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
+.. important::
+   Do not rely on positional unpacking of named tuples.
+   Always use attribute access (e.g. ``t.rss``).
+
 .. contents::
    :local:
    :depth: 5

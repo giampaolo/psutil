@@ -9,6 +9,33 @@ This section answers common questions and pitfalls when using psutil.
    :local:
    :depth: 3
 
+General
+-------
+
+.. _faq_named_tuple_unpacking:
+
+Why should I avoid positional unpacking of named tuples?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Most psutil functions return named tuples. It is tempting to unpack them
+positionally, but **field order may change across major releases** (as
+happened in 8.0 with :func:`cpu_times` and :meth:`Process.memory_info`).
+Always use attribute access instead:
+
+.. code-block:: python
+
+  # bad: breaks if field order changes
+  rss, vms = p.memory_info()
+
+  # good: safe across versions
+  m = p.memory_info()
+  print(m.rss, m.vms)
+
+See the :ref:`migration guide <migration-8.0>` for the full list of
+field-order changes in 8.0.
+
+-------------------------------------------------------------------------------
+
 Exceptions
 ----------
 
@@ -60,7 +87,7 @@ Why do I get NoSuchProcess?
 :exc:`NoSuchProcess` is raised when a process no longer exists.
 The most common cause is a TOCTOU (time-of-check / time-of-use) race
 condition: a process can die between the moment its PID is obtained and
-the moment it is queried. The following 2 naive patterns are racy:
+the moment it is queried. The following two naive patterns are racy:
 
 .. code-block:: python
 
@@ -125,7 +152,7 @@ for a :term:`zombie process`.
 
 **What you can and cannot do with a zombie:**
 
-- A zombie can be instantiated via :class:`Process` (pid) without error.
+- A zombie process can be instantiated via :class:`Process` (pid) without error.
 - :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
 - :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
 - The zombie appears in :func:`process_iter` and :func:`pids`.

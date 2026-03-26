@@ -15,8 +15,8 @@ Top contributors
 ----------------
 
 * `Giampaolo Rodola`_: creator, primary author and long-time maintainer
-* `Jay Loden`_: original co-author, initial design and bootstrap, original
-  macOS / Windows / FreeBSD implementations
+* `Jay Loden`_: original co-author, initial design and project bootstrap,
+  original macOS / Windows / FreeBSD implementations
 * `Arnon Yaari`_: AIX implementation
 * `Landry Breuil`_: original OpenBSD implementation
 * `Ryo Onodera`_ and `Thomas Klausner`_: original NetBSD implementation
@@ -24,8 +24,8 @@ Top contributors
 Donations
 ---------
 
-The following individuals and organizations have supported
-psutil development through donations.
+The following individuals and organizations have supported psutil
+development through donations.
 
 Companies:
 
