@@ -1,5 +1,4 @@
-|  |downloads| |contributors| |packages|
-|  |version| |license|
+|  |downloads| |contributors| |packages|  |version| |license|
 |  |github-actions-wheels| |github-actions-bsd|
 
 .. |downloads| image:: https://img.shields.io/pypi/dm/psutil.svg
