@@ -205,8 +205,7 @@ was assigned the same PID.
   :meth:`Process.terminate`, :meth:`Process.kill`) **do** check for PID
   reuse (via PID + creation time) before acting, raising
   :exc:`NoSuchProcess` if the PID was recycled. This prevents accidentally
-  killing the wrong process (`BPO-6973
-  <https://bugs.python.org/issue6973>`_).
+  killing the wrong process (`BPO-6973`_).
 
 - *Set methods* :meth:`Process.nice` (set), :meth:`Process.ionice` (set),
   :meth:`Process.cpu_affinity` (set), and
@@ -289,9 +288,8 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 
 - :func:`os.cpu_count` returns the number of **logical** CPUs (including
   hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``, but
-  psutil does not honour
-  `PYTHON_CPU_COUNT <https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_CPU_COUNT>`_
-  environment variable introduced in Python 3.13.
+  psutil does not honour `PYTHON_CPU_COUNT`_ environment variable introduced in
+  Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
   calling process is **allowed to use** (respects CPU affinity and cgroups).
   The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
@@ -376,3 +374,6 @@ separately:
 
 The ``available`` field already includes this reclaimable memory and is the
 best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
+
+.. _`BPO-6973`: https://bugs.python.org/issue6973
+.. _`PYTHON_CPU_COUNT`: https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_CPU_COUNT

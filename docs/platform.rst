@@ -11,7 +11,7 @@ Python
 The 6.1.X series may still receive critical bug-fixes but no new features.
 To install psutil on Python 2.7 run:
 
-::
+.. code-block:: none
 
     python2 -m pip install psutil==6.1.*
 

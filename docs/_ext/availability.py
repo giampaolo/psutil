@@ -66,8 +66,7 @@ class Availability(SphinxDirective):
 
         Arguments is a comma-separated string of platforms. A platform may
         be prefixed with "not " to indicate that a feature is not available.
-        Example::
-
+        Example:
            .. availability:: Windows, Linux >= 4.2, not glibc
         """
         platforms = {}

@@ -2176,7 +2176,7 @@ Process class
     If *recursive* is ``True`` return all the parent descendants.
     Pseudo code example assuming *A == this process*:
 
-    ::
+    .. code-block:: none
 
       A ─┐
          │

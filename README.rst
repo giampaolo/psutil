@@ -84,7 +84,7 @@ psutil currently supports the following platforms:
 Install
 =======
 
-::
+.. code-block:: none
 
     pip install psutil
 

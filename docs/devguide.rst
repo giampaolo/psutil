@@ -36,7 +36,7 @@ Build, setup and test
 
 - To run a specific unit test:
 
-  .. code-block::
+  .. code-block:: none
 
      make test ARGS=tests/test_system.py
 
@@ -46,7 +46,7 @@ Build, setup and test
 
 - If you want to target a specific Python version:
 
-  .. code-block::
+  .. code-block:: none
 
      make test PYTHON=python3.8
 
@@ -75,14 +75,14 @@ mode, psutil may print additional information to stderr. Usually these are
 non-severe error conditions that are ignored instead of causing a crash.
 Unit tests automatically run with debug mode enabled. On UNIX:
 
-::
+.. code-block:: none
 
   $ PSUTIL_DEBUG=1 python3 script.py
   psutil-debug [psutil/_psutil_linux.c:150]> setmntent() failed (ignored)
 
 On Windows:
 
-::
+.. code-block:: none
 
   set PSUTIL_DEBUG=1 && python.exe script.py
   psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)

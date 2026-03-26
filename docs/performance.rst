@@ -118,10 +118,10 @@ avoids race conditions, and caches :class:`Process` instances internally:
 Measuring oneshot() speedup
 ---------------------------
 
-`bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
+`bench_oneshot.py`_
 script measures :meth:`Process.oneshot` speedup. E.g. on Linux:
 
-.. code-block::
+.. code-block:: none
 
   $ python3 scripts/internal/bench_oneshot.py --times 10000
   17 methods pre-fetched by oneshot() on platform 'linux' (10,000 times, psutil 8.0.0):
@@ -155,12 +155,12 @@ This also shows which APIs share the same internal kernel routines.
 Measuring APIs speed
 --------------------
 
-`print_api_speed.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py>`_
+`print_api_speed.py`_
 script shows the relative cost of each API call.
 This helps you understand which operations are more expensive.
 E.g. on Linux:
 
-.. code-block::
+.. code-block:: none
 
   $ python3 scripts/internal/print_api_speed.py
   SYSTEM APIS                NUM CALLS      SECONDS
@@ -226,3 +226,6 @@ E.g. on Linux:
   environ                          300      0.01013
   memory_footprint                 300      0.02241
   memory_maps                      300      0.30282
+
+.. _`bench_oneshot.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py
+.. _`print_api_speed.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py
