@@ -165,6 +165,18 @@ for a :term:`zombie process`.
   the platform.
 - :meth:`Process.as_dict` will not crash.
 
+**How to create a zombie:**
+
+.. code-block:: python
+
+  import os, time
+
+  pid = os.fork()  # the zombie
+  if pid == 0:
+      os._exit(0)  # child exits immediately
+  else:
+      time.sleep(1000)  # parent does NOT call wait()
+
 **How to detect zombies:**
 
 .. code-block:: python

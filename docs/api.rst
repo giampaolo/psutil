@@ -2815,24 +2815,86 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
    See :ref:`migration guide <migration-8.0>`.
 
 .. data:: STATUS_RUNNING
+
+   The process is running or ready to run (e.g. ``while True: pass``).
+
 .. data:: STATUS_SLEEPING
+
+   The process is dormant (e.g. during ``time.sleep()``) but can be woken up,
+   e.g. via a signal.
+
 .. data:: STATUS_DISK_SLEEP
+
+   The process is waiting for disk I/O to complete. The kernel usually ignores
+   signals in this state to prevent data corruption. E.g. ``os.read(fd, 1024)``
+   on a slow / blocked device can produce this state.
+
 .. data:: STATUS_STOPPED
+
+   The process was suspended via ``SIGSTOP`` signal and won't run until it
+   receives ``SIGCONT``.
+
 .. data:: STATUS_TRACING_STOP
+
+   The process is temporarily halted because it is being inspected by a
+   debugger (e.g. via ``strace -p <pid>``).
+
 .. data:: STATUS_ZOMBIE
+
+   The process has finished execution and released its resources, but it
+   remains in the process table until the parent reaps it via ``wait()``.
+
 .. data:: STATUS_DEAD
+
+   The final process state where the kernel is actively removing its entry from
+   the system. Occurs after the process is reaped.
+
 .. data:: STATUS_WAKE_KILL
+
+   (Linux only) A variant of :data:`STATUS_DISK_SLEEP` where the process can be
+   awakened by ``SIGKILL``. Used for tasks which might otherwise remain blocked
+   indefinitely, e.g. unresponsive network filesystems such as NFS, as in
+   ``open("/mnt/nfs_hung/file").read()``.
+
 .. data:: STATUS_WAKING
-.. data:: STATUS_PARKED (Linux)
 
-  .. versionadded:: 5.4.7
+   (Linux only) A transient state right before the process becomes runnable
+   (:data:`STATUS_RUNNING`).
 
-.. data:: STATUS_IDLE (Linux, macOS, FreeBSD)
-.. data:: STATUS_LOCKED (FreeBSD)
-.. data:: STATUS_WAITING (FreeBSD)
-.. data:: STATUS_SUSPENDED (NetBSD)
+.. data:: STATUS_PARKED
 
-  .. versionadded:: 3.4.1
+   (Linux only) A dormant state for kernel threads tied to a specific CPU.
+   These threads are "parked" when a CPU core is taken offline and will
+   remain inactive until the core is re-enabled.
+
+   .. versionadded:: 5.4.7
+
+.. data:: STATUS_IDLE
+
+   (Linux, macOS, FreeBSD) A sleep for kernel threads waiting for work.
+
+   .. versionadded:: 3.4.1
+
+.. data:: STATUS_LOCKED
+
+   (FreeBSD only) The process is blocked specifically waiting for a
+   kernel-level synchronization primitive (e.g. a mutex).
+
+   .. versionadded:: 3.4.1
+
+.. data:: STATUS_WAITING
+
+   (FreeBSD only) The process is waiting in a kernel sleep queue for a
+   specific system event to occur.
+
+   .. versionadded:: 3.4.1
+
+.. data:: STATUS_SUSPENDED
+
+   (NetBSD only) The process has been explicitly paused, similar to
+   the stopped state but managed by the NetBSD scheduler.
+
+   .. versionadded:: 3.4.1
 
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2906,8 +2968,8 @@ Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Constants for getting or setting process resource limits, to be used in in
-conjunction with :meth:`Process.rlimit`. See :func:`resource.getrlimit` for
-further information.
+conjunction with :meth:`Process.rlimit`. The meaning of each constant is
+explained in :func:`resource.getrlimit` documentation.
 
 .. availability:: Linux, FreeBSD
 
