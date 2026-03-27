@@ -39,8 +39,7 @@ A bit more advanced, check string against :meth:`Process.name`,
 
 .. code-block:: python
 
-  import os
-  import psutil
+  import os, psutil
 
   def find_procs_by_name_ex(name):
       ls = []
@@ -182,7 +181,6 @@ Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
 
   import psutil
 
-
   def top_io_procs(n=5):
       procs = []
       for p in psutil.process_iter(["io_counters"]):
@@ -214,8 +212,7 @@ Periodically monitor CPU and memory usage of a process using
 
 .. code-block:: python
 
-  import time
-  import psutil
+  import time, psutil
 
   def monitor(pid, interval=1):
       p = psutil.Process(pid)
@@ -240,11 +237,7 @@ Kill a process tree (including grandchildren):
 
 .. code-block:: python
 
-  import os
-  import signal
-
-  import psutil
-
+  import os, signal, psutil
 
   def kill_proc_tree(
       pid,
@@ -322,8 +315,7 @@ Restart a process:
 
 .. code-block:: python
 
-  import subprocess
-  import psutil
+  import subprocess, psutil
 
   def restart_process(pid):
       p = psutil.Process(pid)
@@ -338,8 +330,7 @@ Temporarily pause and resume a process using a context manager:
 
 .. code-block:: python
 
-  import contextlib
-  import psutil
+  import contextlib, psutil
 
   @contextlib.contextmanager
   def suspended(pid):
@@ -361,8 +352,7 @@ alternating :meth:`Process.suspend` and :meth:`Process.resume`:
 
 .. code-block:: python
 
-  import time
-  import psutil
+  import time, psutil
 
   def throttle(pid, max_cpu_percent=50, interval=0.1):
       """Slow down a process so it uses at most max_cpu_percent% CPU."""
@@ -380,11 +370,7 @@ Restart a process automatically if it dies:
 
 .. code-block:: python
 
-  import subprocess
-  import time
-
-  import psutil
-
+  import subprocess, time, psutil
 
   def watchdog(cmd, max_restarts=None, interval=1):
       """Run cmd as a persistent process. Restart on failure, optionally

@@ -1,4 +1,82 @@
 /* ================================================================== */
+/* Variables                                                          */
+/* ================================================================== */
+
+:root {
+    /* base palette */
+    --gray-100: #f5f5f5;
+    --gray-200: #f0f4f7;
+    --gray-300: #d6d6d6;
+    --gray-400: #ccc;
+    --gray-500: #555;
+    --gray-600: #3b3b3b;
+    --gray-700: #222;
+    --gray-800: #000;
+
+    --blue-200: #f3f9fe;
+    --blue-300: #b0cfe8;
+    --blue-400: #2980b9;
+    --blue-500: #336699;
+    --blue-600: #224466;
+
+    --green-200: #f0faf0;
+    --green-400: #8aba8a;
+    --green-500: #4fc464;
+    --green-700: #296433;
+
+    --yellow-300: #f4e34c;
+    --yellow-700: #854826;
+
+    --red-200: #fff0f0;
+    --red-400: #e8a0a0;
+    --red-500: #f44c4e;
+    --red-700: #9f3133;
+
+    --dark-100: #2d2e27;
+
+    /* semantic */
+    --border-radius: 3px;
+    --h1-h2-border: var(--gray-400);
+
+    --adm-padding-y: 5px;
+    --adm-title: black;
+
+    --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --code-line-height: 1.5;
+    --code-bg: var(--dark-100);
+
+    --adm-note-bg: var(--gray-100);
+    --adm-note-border: var(--gray-400);
+    --adm-inline-code-bg: var(--gray-300);
+    --adm-seealso-accent-border: var(--blue-500);
+    --adm-seealso-bg: var(--blue-200);
+    --adm-seealso-border: var(--blue-300);
+    --adm-seealso-hover: var(--blue-400);
+    --adm-seealso-title: var(--blue-600);
+    --adm-tip-bg: var(--green-200);
+    --adm-tip-border: var(--green-400);
+    --adm-warning-bg: var(--red-200);
+    --adm-warning-border: var(--red-400);
+
+    --sidebar-search-bg: var(--gray-600);
+
+    --versionadded-border: var(--green-500);
+    --versionadded-color: var(--green-700);
+    --versionchanged-border: var(--yellow-300);
+    --versionchanged-color: var(--yellow-700);
+    --deprecated-border: var(--red-500);
+    --deprecated-color: var(--red-700);
+
+    --func-sig-bg: var(--gray-200);
+    --func-sig-border: var(--blue-500);
+    --func-sig-text: var(--gray-700);
+    --func-sig-name: var(--gray-800);
+    --func-sig-param: var(--gray-500);
+
+    --table-header-bg: var(--adm-note-bg);
+}
+
+/* ================================================================== */
 /* Layout                                                             */
 /* ================================================================== */
 
@@ -27,7 +105,17 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* ================================================================== */
 
 .wy-side-nav-search {
-    background-color: grey !important
+    background-color: var(--sidebar-search-bg) !important;
+}
+
+.wy-side-nav-search input[type="text"] {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wy-side-nav-search input[type="text"]:focus {
+    border-color: #7ab3d4;
+    box-shadow: 0 0 0 2px rgba(122, 179, 212, 0.3);
+    outline: none;
 }
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
@@ -47,26 +135,25 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* ================================================================== */
 
 h1, h2 {
-    background: #eee;
     padding: 5px;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--h1-h2-border);
 }
 
 h1 {
-    font-size: 35px;
+    font-size: 2.2rem;
 }
 
 h3 {
     background: none;
     padding: 5px 0 5px 0;
-    border-bottom: 1px solid #ccc;
-    font-size: 120%;
+    border-bottom: 1px solid var(--h1-h2-border);
+    font-size: 1.2rem;
 }
 
 h4 {
     background: none;
     padding: 5px 0 5px 0;
-    font-size: 90%;
+    font-size: 0.9rem;
 }
 
 /* ================================================================== */
@@ -74,7 +161,7 @@ h4 {
 /* ================================================================== */
 
 .wy-table-responsive table thead {
-    background-color: #eeeeee;
+    background-color: var(--table-header-bg);
 }
 
 .document th {
@@ -157,7 +244,7 @@ h4 {
 }
 
 .rst-content dl:not(.docutils) dt {
-    color: #555;
+    color: var(--func-sig-text);
 }
 
 .data dd {
@@ -187,30 +274,27 @@ h4 {
     margin-bottom: 6px !important;
 }
 
-pre {
-    padding: 5px !important;
+.highlight,
+.highlight pre {
+    font-family: var(--code-font) !important;
+}
+
+div[class^="highlight-"] {
+    border-radius: var(--border-radius);
+    background: transparent;
 }
 
 .highlight {
-    background: #eeffcc;
+    background-color: var(--code-bg);
+    border-radius: var(--border-radius);
+    overflow: hidden;
 }
 
-.highlight .hll {
-    background-color: #ffffcc
+.highlight pre {
+    line-height: var(--code-line-height) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
-
-.highlight .c {
-    color: #408090;
-    font-style: italic
-}
-
-.codeblock div[class^='highlight'],
-pre.literal-block div[class^='highlight'],
-.rst-content .literal-block div[class^='highlight'],
-div[class^='highlight'] div[class^='highlight'] {
-    background-color: #eeffcc !important;
-}
-
 
 /* ================================================================== */
 /* Links                                                              */
@@ -234,38 +318,63 @@ a.external[href^="#"] {
 /* Admonitions (note, warning, tip) - styled like python doc          */
 /* ================================================================== */
 
+/* shared structure for all admonition types */
 div.admonition {
     margin-top: 10px !important;
     margin-bottom: 10px !important;
+    padding: var(--adm-padding-y) 10px !important;
+    background-color: var(--adm-note-bg) !important;
+    border: 1px solid var(--adm-note-border) !important;
+    border-left: 3px solid var(--adm-note-border) !important;
+    border-radius: var(--border-radius) !important;
 }
 
+div.admonition p {
+    margin-bottom: var(--adm-padding-y) !important;
+}
+
+/* per-type color overrides */
 div.warning {
-    background-color: #ffe4e4 !important;
-    border: 1px solid #f66 !important;
-    border-radius: 3px !important;
-}
-
-div.note,
-div.important {
-    background-color: #eee !important;
-    border: 1px solid #ccc !important;
-    border-radius: 3px !important;
+    background-color: var(--adm-warning-bg) !important;
+    border-color: var(--adm-warning-border) !important;
+    border-left-color: var(--adm-warning-border) !important;
 }
 
 div.tip {
-    background-color: #dfd !important;
-    border: 1px solid green !important;
-    border-radius: 3px !important;
+    background-color: var(--adm-tip-bg) !important;
+    border-color: var(--adm-tip-border) !important;
+    border-left-color: var(--adm-tip-border) !important;
 }
 
-div.admonition p.admonition-title + p {
+div.seealso {
+    background-color: var(--adm-seealso-bg) !important;
+    border-color: var(--adm-seealso-border) !important;
+    border-left-color: var(--adm-seealso-accent-border) !important;
+}
+
+div.seealso a.reference {
+    color: var(--adm-seealso-accent-border) !important;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+div.seealso a.reference:hover {
+    color: var(--adm-seealso-hover) !important;
+}
+
+/* title: inline with content, no extra spacing */
+p.admonition-title,
+p.admonition-title + p {
     display: inline !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 p.admonition-title {
-    display: inline !important;
     background: none !important;
-    color: black !important;
+    color: var(--adm-title) !important;
+    font-weight: 700 !important;
+    margin-right: 0.4em !important;
 }
 
 p.admonition-title:after {
@@ -280,29 +389,9 @@ p.admonition-title:after {
     display: none !important;
 }
 
-.admonition.warning {
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
-}
-
-.admonition.warning p {
-    margin-bottom: 5px !important;
-}
-
-.admonition.note,
-.admonition.important {
-    padding-top: 5px !important;
-    padding-bottom: 5px !important;
-}
-
-.admonition.note p,
-.admonition.important p {
-    margin-bottom: 5px !important;
-}
-
 .note code,
 .important code {
-    background: #d6d6d6 !important;
+    background: var(--adm-inline-code-bg) !important;
 }
 
 /* ================================================================== */
@@ -317,25 +406,62 @@ div.deprecated {
 }
 
 div.versionadded {
-    border-left-color: rgb(79, 196, 100);
+    border-left-color: var(--versionadded-border);
 }
 
 div.versionchanged {
-    border-left-color: rgb(244, 227, 76);
+    border-left-color: var(--versionchanged-border);
 }
 
 div.deprecated {
-    border-left-color: rgb(244, 76, 78);
+    border-left-color: var(--deprecated-border);
 }
 
 div.versionadded .versionmodified {
-    color: rgb(41, 100, 51);
+    color: var(--versionadded-color);
 }
 
 div.versionchanged .versionmodified {
-    color: rgb(133, 72, 38);
+    color: var(--versionchanged-color);
 }
 
 div.deprecated .versionmodified {
-    color: rgb(159, 49, 51);
+    color: var(--deprecated-color);
+}
+
+/* ================================================================== */
+/* API function / class signatures                                    */
+/* ================================================================== */
+
+/* The container/background bar */
+.rst-content dl:not(.docutils) dt {
+    background: var(--func-sig-bg) !important;
+    border-top: 2px solid var(--func-sig-border) !important;
+    border-left: none !important;
+    color: var(--func-sig-text) !important;
+    padding: 6px 10px !important;
+    font-size: 1.1em;
+}
+
+/* The function name itself */
+.rst-content dl:not(.docutils) dt .descname {
+    color: var(--func-sig-name) !important;
+    font-weight: bold !important;
+}
+
+/* The parameters inside the parentheses */
+.rst-content dl:not(.docutils) dt .sig-paren,
+.rst-content dl:not(.docutils) dt .n,
+.rst-content dl:not(.docutils) dt .o,
+.rst-content dl:not(.docutils) dt .property,
+.rst-content dl:not(.docutils) dt .descclassname {
+    color: var(--func-sig-param) !important;
+    font-weight: normal;
+}
+
+/* Optional: Keep the [source] link subtle */
+.viewcode-link {
+    color: var(--func-sig-border) !important;
+    font-size: 0.8em;
+    font-style: italic;
 }

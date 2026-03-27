@@ -37,6 +37,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 - Usability:
 
+  - Renewed, more modern theme.
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
   - Greatly improved :func:`virtual_memory` doc and many other APIs.

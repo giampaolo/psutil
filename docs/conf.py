@@ -63,4 +63,4 @@ html_css_files = [
 ]
 
 # https://pygments.org/styles/
-# pygments_style = "monokai"
+pygments_style = "monokai"
