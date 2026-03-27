@@ -47,7 +47,7 @@
 
     --adm-note-bg: var(--gray-100);
     --adm-note-border: var(--gray-400);
-    --adm-inline-code-bg: var(--gray-300);
+
     --adm-seealso-accent-border: var(--blue-500);
     --adm-seealso-bg: var(--blue-200);
     --adm-seealso-border: var(--blue-300);
@@ -389,10 +389,6 @@ p.admonition-title:after {
     display: none !important;
 }
 
-.note code,
-.important code {
-    background: var(--adm-inline-code-bg) !important;
-}
 
 /* ================================================================== */
 /* Version directives (versionadded / versionchanged / deprecated)    */

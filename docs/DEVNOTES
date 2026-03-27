@@ -29,6 +29,10 @@ REJECTED IDEAS
 FEATURES
 ========
 
+
+- `net_if_addrs()` could return AF_BLUETOOTH interfaces. E.g.
+  https://pypi.org/project/netifaces does this.
+
 - Use resource.getrusage() to get current process CPU times (it has more
   precision)
 

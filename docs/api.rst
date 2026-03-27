@@ -666,7 +666,7 @@ Network
      numbers no longer wrap (restart from zero) across calls thanks to new
      *nowrap* argument.
 
-.. function:: net_connections(kind='inet')
+.. function:: net_connections(kind="inet")
 
   Return system-wide socket connections as a list of named tuples.
   Every named tuple provides 7 attributes:
@@ -777,6 +777,8 @@ Network
   Return the addresses associated to each :term:`NIC` (network interface card)
   installed on the system as a dictionary whose keys are the NIC names and
   value is a list of named tuples for each address assigned to the NIC.
+  You can have more than one address of the same family associated with each
+  interface (that's why dict values are lists).
   Each named tuple includes 5 fields:
 
   - **family**: the address family, either :data:`socket.AF_INET`,
@@ -785,10 +787,11 @@ Network
   - **address**: the primary NIC address (may be ``None`` in case of virtual
     or unconfigured interfaces).
   - **netmask**: the netmask address (may be ``None``).
-  - **broadcast**: the broadcast address (may be ``None``).
+  - **broadcast**: the broadcast address. May be ``None``. Always ``None`` on
+    Windows.
   - **ptp**: stands for "point to point"; it's the destination address on a
     point to point interface (typically a VPN). *broadcast* and *ptp* are
-    mutually exclusive. May be ``None``.
+    mutually exclusive. May be ``None``. Always ``None`` on Windows.
 
   .. code-block:: pycon
 
@@ -801,18 +804,6 @@ Network
                 snicaddr(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
                 snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
      >>>
-
-  .. note::
-    if you're interested in others families (e.g. AF_BLUETOOTH) you can use
-    the more powerful `netifaces <https://pypi.org/project/netifaces/>`_
-    extension.
-
-  .. note::
-    you can have more than one address of the same family associated with each
-    interface (that's why dict values are lists).
-
-  .. note::
-    *broadcast* and *ptp* are not supported on Windows and are always ``None``.
 
   .. seealso:: `scripts/nettop.py`_ and `scripts/ifconfig.py`_.
 
@@ -1072,18 +1063,6 @@ Functions
      3 ksoftirqd/0 root
      ...
 
-  A dict comprehension to create a ``{pid: name, ...}`` data structure:
-
-  .. code-block:: pycon
-
-     >>> import psutil
-     >>> procs = {p.pid: p.name() for p in psutil.process_iter(['name'])}
-     >>> procs
-     {1: 'systemd',
-      2: 'kthreadd',
-      3: 'ksoftirqd/0',
-      ...}
-
   Clear internal cache:
 
   .. code-block:: pycon
@@ -1175,17 +1154,15 @@ Exceptions
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-  This may be raised by :class:`Process` class methods when querying a
-  :term:`zombie process` on UNIX (Windows doesn't have zombie processes).
-  *name* and *ppid* attributes are available if :meth:`Process.name` or
+  A subclass of :exc:`NoSuchProcess` which may be raised by :class:`Process`
+  class methods when dealing with a :term:`zombie process` on UNIX (Windows
+  doesn't have zombie processes).
+  *name* and *ppid* attributes are set if :meth:`Process.name` or
   :meth:`Process.ppid` methods were called before the process turned into a
   zombie.
 
-  .. note::
-
-    this is a subclass of :exc:`NoSuchProcess` so if you're not interested
-    in retrieving zombies (e.g. when using :func:`process_iter`) you can
-    ignore this exception and just catch :exc:`NoSuchProcess`.
+  If you're not interested in detecting zombie processes you can ignore this
+  exception and just catch :exc:`NoSuchProcess`.
 
   .. seealso:: :ref:`faq_zombie_process`
 
@@ -1230,8 +1207,8 @@ Process class
   .. note::
 
     the way this class is bound to a process is via its **PID**.
-    That means that if the process terminates and the OS reuses its PID you may
-    inadvertently end up interacting with another process. To prevent this
+    That means that if the process terminates, and the OS reuses its PID, you
+    may inadvertently end up interacting with another process. To prevent this
     problem you can use :meth:`is_running` first.
     Some methods (e.g. setters and signal-related methods) perform an
     additional check based on PID + creation time and will raise
@@ -1423,21 +1400,26 @@ Process class
        >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
        '2011-03-05 18:03:52'
 
-  .. method:: as_dict(attrs=None, ad_value=None)
+    .. method:: as_dict(attrs=None, ad_value=None)
 
-    Utility method retrieving multiple process information as a dictionary.
-    If *attrs* is specified it must be a list of strings reflecting available
-    :class:`Process` class's attribute names. Here's a list of possible string
-    values:
-    ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_footprint'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_info_ex'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'```.
-    If *attrs* argument is not passed all public read only attributes are
-    assumed.
-    *ad_value* is the value which gets assigned to a dict key in case
-    :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
-    retrieving that particular process information.
-    Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
-    there's no need you use it also.
+      Utility method retrieving multiple process information as a dictionary.
+      If *attrs* is specified it must be a list of strings reflecting available
+      :class:`Process` class's attribute names. Here's a list of possible string
+      values:
+      ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_footprint'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_info_ex'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'``.
 
+      If *attrs* argument is not passed all public read only attributes are
+      assumed.
+
+      *ad_value* is the value which gets assigned to a dict key in case
+      :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
+      retrieving that particular process information (default ``None``).
+
+      The ``'net_connections'`` attribute is retrieved by calling
+      :meth:`Process.net_connections` with ``kind="inet"``.
+
+      Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
+      there's no need you use it also.
     .. code-block:: pycon
 
        >>> import psutil
@@ -2264,8 +2246,8 @@ Process class
       Tools like ProcessHacker have the same limitation.
 
     .. warning::
-      on BSD this method can return files with a null path ("") due to a
-      kernel bug, hence it's not reliable
+      on BSD this method can return paths as an empty string due to a kernel
+      bug, hence it's not reliable
       (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
     .. versionchanged:: 3.1.0
@@ -2347,11 +2329,11 @@ Process class
       the returned list may be incomplete.
 
     .. note::
-      (Solaris) UNIX sockets are not supported.
+       (Linux, FreeBSD) **raddr** field for UNIX sockets is always set to an
+       empty string. This is a limitation of the OS.
 
     .. note::
-       (Linux, FreeBSD) **raddr** field for UNIX sockets is always set to "".
-       This is a limitation of the OS.
+      (Solaris) UNIX sockets are not supported.
 
     .. note::
        (OpenBSD) **laddr** and **raddr** fields for UNIX sockets are always set to
@@ -2795,10 +2777,13 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   .. versionadded:: 5.1.0
 
+.. _const-oses:
+
 Operating system constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. _const-oses:
+``bool`` constants which define what platform you're on.
+``True`` if on the platform, ``False`` otherwise.
 
 .. data:: POSIX
 .. data:: LINUX
@@ -2810,15 +2795,6 @@ Operating system constants
 .. data:: BSD
 .. data:: SUNOS
 .. data:: AIX
-
-  ``bool`` constants which define what platform you're on. E.g. if on Windows,
-  :const:`WINDOWS` constant will be ``True``, all others will be ``False``.
-
-  .. versionadded:: 4.0.0
-
-  .. versionchanged:: 5.4.0
-     added AIX.
-
 .. data:: OSX
 
   Alias for :const:`MACOS`.
@@ -2826,10 +2802,17 @@ Operating system constants
   .. deprecated:: 5.4.7
      use :const:`MACOS` instead.
 
+.. _const-pstatus:
+
 Process status constants
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. _const-pstatus:
+Represent the current status of a process. Returned by :meth:`Process.status`.
+
+.. versionchanged:: 8.0.0
+   constants are now :class:`psutil.ProcessStatus` enum members (were plain
+   strings).
+   See :ref:`migration guide <migration-8.0>`.
 
 .. data:: STATUS_RUNNING
 .. data:: STATUS_SLEEPING
@@ -2841,25 +2824,29 @@ Process status constants
 .. data:: STATUS_WAKE_KILL
 .. data:: STATUS_WAKING
 .. data:: STATUS_PARKED (Linux)
+
+  .. versionadded:: 5.4.7
+
 .. data:: STATUS_IDLE (Linux, macOS, FreeBSD)
 .. data:: STATUS_LOCKED (FreeBSD)
 .. data:: STATUS_WAITING (FreeBSD)
 .. data:: STATUS_SUSPENDED (NetBSD)
 
-  Represent a process status. Returned by :meth:`Process.status`.
-  These constants are members of the :class:`psutil.ProcessStatus` enum.
-
-  .. versionadded:: 3.4.1 ``STATUS_SUSPENDED`` (NetBSD)
-
-  .. versionadded:: 5.4.7 ``STATUS_PARKED`` (Linux)
-
-  .. versionchanged:: 8.0.0
-     constants are now :class:`psutil.ProcessStatus` enum members (were plain
-     strings).
-     See :ref:`migration guide <migration-8.0>`.
+  .. versionadded:: 3.4.1
 
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Represent the priority of a process on Windows (see `SetPriorityClass`_).
+They can be used in conjunction with :meth:`Process.nice` to get or
+set process priority.
+
+.. availability:: Windows
+
+.. versionchanged:: 8.0.0
+   constants are now :class:`psutil.ProcessPriority` enum members (were plain
+   integers).
+   See :ref:`migration guide <migration-8.0>`.
 
 .. _const-prio:
 
@@ -2870,17 +2857,18 @@ Process priority constants
 .. data:: IDLE_PRIORITY_CLASS
 .. data:: BELOW_NORMAL_PRIORITY_CLASS
 
-  Represent the priority of a process on Windows (see `SetPriorityClass`_).
-  They can be used in conjunction with :meth:`Process.nice` to get or
-  set process priority.
-  These constants are members of the :class:`psutil.ProcessPriority` enum.
+-------------------------------------------------------------------------------
 
-  .. availability:: Windows
+Process I/O priority constants
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  .. versionchanged:: 8.0.0
-     constants are now :class:`psutil.ProcessPriority` enum members (were plain
-     integers).
-     See :ref:`migration guide <migration-8.0>`.
+Represent the priority I/O priority of a process (Linux and Windows only).
+They can be used in conjunction with :meth:`Process.ionice`.
+
+.. versionchanged:: 8.0.0
+   constants are now :class:`psutil.ProcessIOPriority` enum members (previously
+   ``IOPriority`` enum).
+   See :ref:`migration guide <migration-8.0>`.
 
 .. _const-ioprio-linux:
 
@@ -2889,11 +2877,6 @@ Process priority constants
 .. data:: IOPRIO_CLASS_BE
 .. data:: IOPRIO_CLASS_IDLE
 
-  A set of integers representing the I/O priority of a process on Linux. They
-  can be used in conjunction with :meth:`Process.ionice` to get or set
-  process I/O priority.
-  These constants are members of the :class:`psutil.ProcessIOPriority`
-  enum.
   :const:`IOPRIO_CLASS_NONE` and :const:`IOPRIO_CLASS_BE` (best effort) is the
   default for any process that hasn't set a specific I/O priority.
   :const:`IOPRIO_CLASS_RT` (real time) means the process is given first access
@@ -2906,11 +2889,6 @@ Process priority constants
 
   .. availability:: Linux
 
-  .. versionchanged:: 8.0.0
-     constants are now :class:`psutil.ProcessIOPriority` enum members
-     (previously ``IOPriority`` enum).
-     See :ref:`migration guide <migration-8.0>`.
-
 .. _const-ioprio-windows:
 
 .. data:: IOPRIO_VERYLOW
@@ -2918,25 +2896,25 @@ Process priority constants
 .. data:: IOPRIO_NORMAL
 .. data:: IOPRIO_HIGH
 
-  A set of integers representing the I/O priority of a process on Windows.
-  They can be used in conjunction with :meth:`Process.ionice` to get
-  or set process I/O priority.
-  These constants are members of the :class:`psutil.ProcessIOPriority`
-  enum.
-
   .. availability:: Windows
 
   .. versionadded:: 5.6.2
 
-  .. versionchanged:: 8.0.0
-     constants are now :class:`psutil.ProcessIOPriority` enum members
-     (previously ``IOPriority`` enum).
-     See :ref:`migration guide <migration-8.0>`.
+.. _const-rlimit:
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. _const-rlimit:
+Constants for getting or setting process resource limits, to be used in in
+conjunction with :meth:`Process.rlimit`. See :func:`resource.getrlimit` for
+further information.
+
+.. availability:: Linux, FreeBSD
+
+.. versionchanged:: 8.0.0
+   these constants are now :class:`psutil.ProcessRlimit` enum members (were
+   plain integers).
+   See :ref:`migration guide <migration-8.0>`.
 
 Linux / FreeBSD:
 
@@ -2964,29 +2942,31 @@ Linux specific:
 FreeBSD specific:
 
   .. data:: RLIMIT_SWAP
+
+    .. versionadded:: 5.7.3
+
+
   .. data:: RLIMIT_SBSIZE
+
+    .. versionadded:: 5.7.3
+
   .. data:: RLIMIT_NPTS
 
-Constants used for getting and setting process resource limits to be used in
-conjunction with :meth:`Process.rlimit`. See :func:`resource.getrlimit`
-for further information.
-These constants are members of the :class:`psutil.ProcessRlimit` enum.
+    .. versionadded:: 5.7.3
 
-.. availability:: Linux, FreeBSD
-
-.. versionchanged:: 5.7.3
-   added FreeBSD support, added ``RLIMIT_SWAP``, ``RLIMIT_SBSIZE``,
-   ``RLIMIT_NPTS``.
-
-.. versionchanged:: 8.0.0
-   constants are now :class:`psutil.ProcessRlimit` enum members (were plain
-   integers).
-   See :ref:`migration guide <migration-8.0>`.
+.. _const-conn:
 
 Connections constants
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. _const-conn:
+:class:`enum.StrEnum` constants representing the status of a TCP connection.
+Returned by :meth:`Process.net_connections` and :func:`psutil.net_connections`
+(**status** field).
+
+.. versionchanged:: 8.0.0
+   constants are now :class:`psutil.ConnectionStatus` enum members (were
+   plain strings).
+   See :ref:`migration guide <migration-8.0>`.
 
 .. data:: CONN_ESTABLISHED
 .. data:: CONN_SYN_SENT
@@ -3004,16 +2984,6 @@ Connections constants
 .. data:: CONN_IDLE (Solaris)
 .. data:: CONN_BOUND (Solaris)
 
-  A set of strings representing the status of a TCP connection.
-  Returned by :meth:`Process.net_connections` and
-  :func:`psutil.net_connections` (**status** field).
-  These constants are members of the :class:`psutil.ConnectionStatus` enum.
-
-  .. versionchanged:: 8.0.0
-     constants are now :class:`psutil.ConnectionStatus` enum members (were
-     plain strings).
-     See :ref:`migration guide <migration-8.0>`.
-
 Hardware constants
 ^^^^^^^^^^^^^^^^^^
 
@@ -3021,8 +2991,8 @@ Hardware constants
 
 .. data:: AF_LINK
 
-  Constant which identifies a MAC address associated with a network interface.
-  To be used in conjunction with :func:`psutil.net_if_addrs`.
+  Identifies a MAC address associated with a network interface. Returned by
+  :func:`psutil.net_if_addrs` (**family** field).
 
   .. versionadded:: 3.0.0
 
@@ -3032,11 +3002,10 @@ Hardware constants
 .. data:: NIC_DUPLEX_HALF
 .. data:: NIC_DUPLEX_UNKNOWN
 
-  Constants which identifies whether a :term:`NIC` (network interface card) has
-  full or half mode speed. NIC_DUPLEX_FULL means the NIC is able to send and
-  receive data (files) simultaneously, NIC_DUPLEX_HALF means the NIC can either
-  send or receive data at a time.
-  To be used in conjunction with :func:`psutil.net_if_stats`.
+  Identifies whether a :term:`NIC` operates in full, half, or unknown duplex
+  mode.
+  FULL allows simultaneous send/receive, HALF allows only one at a time.
+  Returned by :func:`psutil.net_if_stats` (**duplex** field).
 
   .. versionadded:: 3.0.0
 
@@ -3045,9 +3014,8 @@ Hardware constants
 .. data:: POWER_TIME_UNKNOWN
 .. data:: POWER_TIME_UNLIMITED
 
-  Whether the remaining time of the battery cannot be determined or is
-  unlimited.
-  May be assigned to :func:`psutil.sensors_battery`'s *secsleft* field.
+  Whether the remaining time of a battery cannot be determined or is unlimited.
+  May be assigned to :func:`psutil.sensors_battery`'s **secsleft** field.
 
   .. versionadded:: 5.1.0
 
