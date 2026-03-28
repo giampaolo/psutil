@@ -34,8 +34,6 @@ Always use attribute access instead:
 See the :ref:`migration guide <migration-8.0>` for the full list of
 field-order changes in 8.0.
 
--------------------------------------------------------------------------------
-
 Exceptions
 ----------
 
@@ -143,57 +141,6 @@ An even simpler pattern is to catch :exc:`Error`, which implies both
   except psutil.Error:
       pass
 
-.. _faq_zombie_process:
-
-What is ZombieProcess?
-^^^^^^^^^^^^^^^^^^^^^^^
-
-:exc:`ZombieProcess` is a subclass of :exc:`NoSuchProcess` raised on UNIX
-for a :term:`zombie process`.
-
-**What you can and cannot do with a zombie:**
-
-- A zombie process can be instantiated via :class:`Process` (pid) without error.
-- :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
-- :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
-- The zombie appears in :func:`process_iter` and :func:`pids`.
-- Sending signals (:meth:`Process.terminate`, :meth:`Process.kill`,
-  etc.) has no effect.
-- Most other methods (:meth:`Process.cmdline`, :meth:`Process.exe`,
-  :meth:`Process.memory_maps`, etc.) may raise :exc:`ZombieProcess`,
-  return a meaningful value, or return a null/empty value depending on
-  the platform.
-- :meth:`Process.as_dict` will not crash.
-
-**How to create a zombie:**
-
-.. code-block:: python
-
-  import os, time
-
-  pid = os.fork()  # the zombie
-  if pid == 0:
-      os._exit(0)  # child exits immediately
-  else:
-      time.sleep(1000)  # parent does NOT call wait()
-
-**How to detect zombies:**
-
-.. code-block:: python
-
-  import psutil
-
-  for p in psutil.process_iter(["status"]):
-      if p.status() == psutil.STATUS_ZOMBIE:
-          print(f"zombie: pid={p.pid}")
-
-**How to get rid of a zombie:** the only way is to have its parent
-process call ``wait()`` (or ``waitpid()``). If the parent never does
-this, killing the parent will cause the zombie to be re-parented to
-``init`` / ``systemd``, which will reap it automatically.
-
--------------------------------------------------------------------------------
-
 Processes
 ---------
 
@@ -229,6 +176,59 @@ was assigned the same PID.
 PID and creation time, and returns ``False`` if the PID was reused.
 Prefer it over :func:`pid_exists`.
 
+.. _faq_zombie_process:
+
+What is a zombie process?
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A :term:`zombie process` is a process that has finished execution but whose
+entry remains in the process table until the parent calls ``wait()``. When
+psutil encounters a zombie process it raises :exc:`ZombieProcess`, a subclass
+of :exc:`NoSuchProcess`.
+
+**What you can and cannot do with a zombie:**
+
+- A zombie process can be instantiated via :class:`Process` (pid) without error.
+- :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
+- :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
+- The zombie appears in :func:`process_iter` and :func:`pids`.
+- Sending signals (:meth:`Process.terminate`, :meth:`Process.kill`,
+  etc.) has no effect.
+- Most methods (:meth:`Process.cmdline`, :meth:`Process.exe`,
+  :meth:`Process.memory_maps`, etc.) may raise :exc:`ZombieProcess`,
+  return a meaningful value, or return a null/empty value depending on
+  the platform.
+- :meth:`Process.as_dict` will not crash.
+
+**How to create a zombie:**
+
+.. code-block:: python
+
+  import os, time
+
+  pid = os.fork()  # the zombie
+  if pid == 0:
+      os._exit(0)  # child exits immediately
+  else:
+      time.sleep(1000)  # parent does NOT call wait()
+
+**How to detect zombies:**
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(["status"]):
+      if p.status() == psutil.STATUS_ZOMBIE:
+          print(f"zombie: pid={p.pid}")
+
+**How to get rid of a zombie:**
+
+The only way is to have its parent process call ``wait()`` (or ``waitpid()``).
+If the parent never does this, killing the parent will cause the zombie to be
+re-parented to ``init`` / ``systemd``, which will reap it automatically.
+
+
 .. _faq_pid_exists_vs_isrunning:
 
 What is the difference between pid_exists() and Process.is_running()?
@@ -241,8 +241,6 @@ reuse <faq_pid_reuse>` by comparing the process creation time. Use
 against reuse (it's faster). Use :meth:`Process.is_running` when you
 hold a :class:`Process` object and want to confirm it still refers to
 the same process.
-
--------------------------------------------------------------------------------
 
 CPU
 ---
@@ -309,8 +307,6 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
   :func:`os.process_cpu_count` (Python 3.13+).
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
   **physical** cores, which has no stdlib equivalent.
-
--------------------------------------------------------------------------------
 
 Memory
 ------

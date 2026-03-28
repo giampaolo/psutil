@@ -314,3 +314,5 @@ Glossary
       table until its parent calls ``wait()``. Zombies hold a PID but consume
       no CPU or memory.
       See :ref:`faq_zombie_process`.
+
+      .. seealso:: :ref:`faq_zombie_process`

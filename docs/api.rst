@@ -9,7 +9,7 @@ API reference
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
 .. important::
-   Do not rely on positional unpacking of named tuples.
+   do not rely on positional unpacking of named tuples.
    Always use attribute access (e.g. ``t.rss``).
 
 .. contents::
@@ -420,7 +420,8 @@ Memory
      ...
      >>>
 
-  .. note:: if you just want to know how much physical memory is left in a
+  .. note::
+    if you just want to know how much physical memory is left in a
     cross-platform manner, simply rely on **available** and **percent**
     fields.
 
@@ -538,7 +539,7 @@ Disks
      sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
 
   .. note::
-    On UNIX, *path* must point to a path within a **mounted** filesystem partition.
+    on UNIX, *path* must point to a path within a **mounted** filesystem partition.
 
   .. note::
     UNIX usually reserves 5% of the total disk space for the root user.
@@ -701,27 +702,27 @@ Network
    +----------------+-----------------------------------------------------+
    | Kind value     | Connections using                                   |
    +================+=====================================================+
-   | ``"inet"``     | IPv4 and IPv6                                       |
+   | ``'inet'``     | IPv4 and IPv6                                       |
    +----------------+-----------------------------------------------------+
-   | ``"inet4"``    | IPv4                                                |
+   | ``'inet4'``    | IPv4                                                |
    +----------------+-----------------------------------------------------+
-   | ``"inet6"``    | IPv6                                                |
+   | ``'inet6'``    | IPv6                                                |
    +----------------+-----------------------------------------------------+
-   | ``"tcp"``      | TCP                                                 |
+   | ``'tcp'``      | TCP                                                 |
    +----------------+-----------------------------------------------------+
-   | ``"tcp4"``     | TCP over IPv4                                       |
+   | ``'tcp4'``     | TCP over IPv4                                       |
    +----------------+-----------------------------------------------------+
-   | ``"tcp6"``     | TCP over IPv6                                       |
+   | ``'tcp6'``     | TCP over IPv6                                       |
    +----------------+-----------------------------------------------------+
-   | ``"udp"``      | UDP                                                 |
+   | ``'udp'``      | UDP                                                 |
    +----------------+-----------------------------------------------------+
-   | ``"udp4"``     | UDP over IPv4                                       |
+   | ``'udp4'``     | UDP over IPv4                                       |
    +----------------+-----------------------------------------------------+
-   | ``"udp6"``     | UDP over IPv6                                       |
+   | ``'udp6'``     | UDP over IPv6                                       |
    +----------------+-----------------------------------------------------+
-   | ``"unix"``     | UNIX socket (both UDP and TCP protocols)            |
+   | ``'unix'``     | UNIX socket (both UDP and TCP protocols)            |
    +----------------+-----------------------------------------------------+
-   | ``"all"``      | the sum of all the possible families and protocols  |
+   | ``'all'``      | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
   On macOS and AIX this function requires root privileges.
@@ -738,7 +739,7 @@ Network
       ...]
 
   .. warning::
-    On Linux, retrieving some connections requires root privileges. If psutil is
+    on Linux, retrieving some connections requires root privileges. If psutil is
     not run as root, those connections are silently skipped instead of raising
     :exc:`PermissionError`. That means the returned list may be incomplete.
 
@@ -1071,7 +1072,7 @@ Functions
 
   .. note::
 
-    Since :class:`Process` instances are reused across calls, a subsequent
+    since :class:`Process` instances are reused across calls, a subsequent
     :func:`process_iter` call will overwrite or clear any previously
     pre-fetched values. Do not rely on cached values from a prior iteration.
 
@@ -1200,7 +1201,7 @@ Process class
 
   .. note::
 
-    In order to efficiently fetch more than one information about the process
+    in order to efficiently fetch more than one information about the process
     at the same time, make sure to use either :meth:`oneshot` context manager
     or :meth:`as_dict` utility method.
 
@@ -2287,27 +2288,27 @@ Process class
     +----------------+-----------------------------------------------------+
     | Kind value     | Connections using                                   |
     +================+=====================================================+
-    | ``"inet"``     | IPv4 and IPv6                                       |
+    | ``'inet'``     | IPv4 and IPv6                                       |
     +----------------+-----------------------------------------------------+
-    | ``"inet4"``    | IPv4                                                |
+    | ``'inet4'``    | IPv4                                                |
     +----------------+-----------------------------------------------------+
-    | ``"inet6"``    | IPv6                                                |
+    | ``'inet6'``    | IPv6                                                |
     +----------------+-----------------------------------------------------+
-    | ``"tcp"``      | TCP                                                 |
+    | ``'tcp'``      | TCP                                                 |
     +----------------+-----------------------------------------------------+
-    | ``"tcp4"``     | TCP over IPv4                                       |
+    | ``'tcp4'``     | TCP over IPv4                                       |
     +----------------+-----------------------------------------------------+
-    | ``"tcp6"``     | TCP over IPv6                                       |
+    | ``'tcp6'``     | TCP over IPv6                                       |
     +----------------+-----------------------------------------------------+
-    | ``"udp"``      | UDP                                                 |
+    | ``'udp'``      | UDP                                                 |
     +----------------+-----------------------------------------------------+
-    | ``"udp4"``     | UDP over IPv4                                       |
+    | ``'udp4'``     | UDP over IPv4                                       |
     +----------------+-----------------------------------------------------+
-    | ``"udp6"``     | UDP over IPv6                                       |
+    | ``'udp6'``     | UDP over IPv6                                       |
     +----------------+-----------------------------------------------------+
-    | ``"unix"``     | UNIX socket (both UDP and TCP protocols)            |
+    | ``'unix'``     | UNIX socket (both UDP and TCP protocols)            |
     +----------------+-----------------------------------------------------+
-    | ``"all"``      | the sum of all the possible families and protocols  |
+    | ``'all'``      | the sum of all the possible families and protocols  |
     +----------------+-----------------------------------------------------+
 
     .. code-block:: pycon
@@ -2323,7 +2324,7 @@ Process class
         pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>)]
 
     .. warning::
-      On Linux, retrieving connections for certain processes requires root
+      on Linux, retrieving connections for certain processes requires root
       privileges. If psutil is not run as root, those connections are silently
       skipped instead of raising :exc:`psutil.AccessDenied`. That means
       the returned list may be incomplete.
@@ -2462,7 +2463,7 @@ Process class
 
     .. note::
 
-      When *timeout* is not ``None`` and the platform supports it, an
+      when *timeout* is not ``None`` and the platform supports it, an
       efficient event-driven mechanism is used to wait for process termination:
 
       - Linux >= 5.3 with Python >= 3.9 uses :func:`os.pidfd_open` + :func:`select.poll`

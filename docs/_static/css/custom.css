@@ -87,6 +87,12 @@
     }
 }
 
+@media (max-width: 768px) {
+    .wy-nav-content {
+        padding: 0 12px 1.618em 12px !important;
+    }
+}
+
 /* ================================================================== */
 /* Navigation                                                         */
 /* ================================================================== */
@@ -134,6 +140,11 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* Headings                                                           */
 /* ================================================================== */
 
+h1, h2, h3, h4 {
+    margin-top: 20px !important;
+    margin-bottom: 10px !important;
+}
+
 h1, h2 {
     padding: 5px;
     border-bottom: 1px solid var(--h1-h2-border);
@@ -154,6 +165,10 @@ h4 {
     background: none;
     padding: 5px 0 5px 0;
     font-size: 0.9rem;
+}
+
+.rst-content p {
+    margin-bottom: 16px !important;
 }
 
 /* ================================================================== */
@@ -266,6 +281,33 @@ h4 {
 }
 
 /* ================================================================== */
+/* Inline code / API refs                                              */
+/* ================================================================== */
+
+/* inline literals: ``like this`` */
+.rst-content code, .rst-content tt, code {
+    color: inherit !important;
+    background: rgba(175, 184, 193, 0.2) !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: .1em .35em !important;
+    font-family: var(--code-font) !important;
+    font-weight: normal !important;
+}
+
+/* cross-references to API symbols like :func:`psutil.users` */
+.rst-content a.reference code,
+.rst-content a.reference tt {
+    color: inherit !important;
+    /*background: rgba(175, 184, 193, 0.2) !important;*/
+    background: none !important;
+    /*font-weight: bold !important;*/
+    font-size:90% !important;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* ================================================================== */
 /* Code blocks                                                        */
 /* ================================================================== */
 
@@ -276,6 +318,7 @@ h4 {
 
 .highlight,
 .highlight pre {
+    font-size: 92% !important;
     font-family: var(--code-font) !important;
 }
 
