@@ -220,7 +220,7 @@ CPU
 
   Example (Linux):
 
-  .. code-block:: python
+  .. code-block:: pycon
 
      >>> import psutil
      >>> psutil.cpu_stats()
@@ -241,7 +241,7 @@ CPU
 
   Example (Linux):
 
-  .. code-block:: python
+  .. code-block:: pycon
 
      >>> import psutil
      >>> psutil.cpu_freq()
@@ -277,7 +277,7 @@ CPU
   with 10 logical CPUs means that the system load was 31.4% percent over the
   last N minutes.
 
-  .. code-block:: python
+  .. code-block:: pycon
 
      >>> import psutil
      >>> psutil.getloadavg()
@@ -474,7 +474,7 @@ Memory
 
      >>> import psutil
      >>> psutil.swap_memory()
-     sswap(total=2097147904L, used=886620160L, free=1210527744L, percent=42.3, sin=1050411008, sout=1906720768)
+     sswap(total=2097147904, used=886620160, free=1210527744, percent=42.3, sin=1050411008, sout=1906720768)
 
   .. seealso:: `scripts/meminfo.py`_.
 
@@ -659,7 +659,7 @@ Network
      >>>
      >>> psutil.net_io_counters(pernic=True)
      {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
-     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
+      'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
   .. seealso:: `scripts/nettop.py`_ and `scripts/ifconfig.py`_.
 
@@ -971,7 +971,7 @@ Other system info
   system clock, which means it may be affected by changes such as manual
   adjustments or time synchronization (e.g. NTP).
 
-  .. code-block:: python
+  .. code-block:: pycon
 
      >>> import psutil, datetime
      >>> psutil.boot_time()
@@ -1313,9 +1313,13 @@ Process class
   .. attribute:: info
 
     A dict containing pre-fetched process info, set by
-    :func:`process_iter` when called with ``attrs``. Use method
-    calls instead (e.g. ``p.name()`` instead of ``p.info['name']``).
-    Accessing this attribute raises :exc:`DeprecationWarning`.
+    :func:`process_iter` when called with ``attrs`` argument.
+    Accessing this attribute is deprecated and raises :exc:`DeprecationWarning`.
+    Use method calls instead (e.g. ``p.name()`` instead of ``p.info['name']``)
+    or :func:`process_iter` + :meth:`Process.as_dict` if you need a dict
+    structure.
+
+    .. seealso:: :ref:`migration guide <migration-8.0>`.
 
     .. deprecated:: 8.0.0
 

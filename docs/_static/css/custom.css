@@ -291,6 +291,7 @@ h4 {
     border: none !important;
     border-radius: 4px !important;
     padding: .1em .35em !important;
+    font-size: 85% !important;
     font-family: var(--code-font) !important;
     font-weight: normal !important;
 }
@@ -310,6 +311,11 @@ h4 {
 /* ================================================================== */
 /* Code blocks                                                        */
 /* ================================================================== */
+
+/* Python number, string, and namedtuple name highlights in pycon output */
+.highlight-pycon .pycon-number { color: #ae81ff; }
+.highlight-pycon .pycon-string { color: #e6db74; }
+.highlight-pycon .pycon-name   { color: #89b8d4; }
 
 /* reduce bottom margin of code blocks inside list items */
 .rst-content li > div[class^='highlight'] {
@@ -343,13 +349,19 @@ div[class^="highlight-"] {
 /* Links                                                              */
 /* ================================================================== */
 
-/* external links: dotted underline (except intersphinx and image links) */
+/* external links: small icon instead of dotted underline */
 a.reference.external:not([href*="docs.python.org"]):not(:has(img)) {
-    text-decoration: underline dotted;
+    text-decoration: none;
 }
 
-a.reference.external:not([href*="docs.python.org"]):not(:has(img)):hover {
-    text-decoration: underline solid;
+a.reference.external:not([href*="docs.python.org"]):not(:has(img))::after {
+    content: '\f08e';
+    font-family: FontAwesome;
+    font-size: 0.4em;
+    margin-left: 0.25em;
+    padding-left: 1px;
+    vertical-align: super;
+    opacity: 0.6;
 }
 
 a.external[href^="#"] {

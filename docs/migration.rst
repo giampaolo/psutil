@@ -22,6 +22,7 @@ Migrating to 8.0
 
 Key breaking changes in 8.0:
 
+- :func:`process_iter` pre-fetches values
 - :attr:`Process.info` is deprecated: use direct methods.
 - Named tuple field order changed: stop positional unpacking.
 - Some return types are now enums instead of strings.
@@ -39,9 +40,11 @@ process_iter(): p.info is deprecated
 
 :func:`process_iter` now caches pre-fetched values internally, so they
 can be accessed via normal method calls instead of the :attr:`Process.info`
-dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
+dict. ``p.info`` still works, but raises :exc:`DeprecationWarning`.
 
 .. code-block:: python
+
+  import psutil
 
   # before
   for p in psutil.process_iter(attrs=["name", "status"]):
@@ -53,7 +56,24 @@ dict. ``p.info`` still works but raises :exc:`DeprecationWarning`:
 
 When ``attrs`` are specified, method calls return cached values
 (no extra syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess`
-are handled transparently (returning ``ad_value``, default ``None``).
+are handled transparently (returning ``ad_value``).
+
+If you relied on :attr:`Process.info` because you needed a dict structure, use
+:meth:`Process.as_dict` instead.
+
+.. code-block:: python
+
+  import psutil
+
+  # before
+  for p in psutil.process_iter(attrs=["name", "status"]):
+      print(p.info)
+
+  # after
+  attrs = ["name", "status"]
+  for p in psutil.process_iter(attrs=attrs):
+      print(p.as_dict(attrs))  # non syscall, return pre-fetched values
+
 
 .. note::
   If ``"name"`` was pre-fetched via ``attrs``, calling ``p.name()`` no

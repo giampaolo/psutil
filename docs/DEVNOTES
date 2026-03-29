@@ -29,6 +29,7 @@ REJECTED IDEAS
 FEATURES
 ========
 
+- #2794: enrich Process.wait() return value with exit code enums.
 
 - `net_if_addrs()` could return AF_BLUETOOTH interfaces. E.g.
   https://pypi.org/project/netifaces does this.

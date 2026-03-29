@@ -400,36 +400,36 @@ Memory
             swap=0,
             hugetlb=0)
     >>>
-    >>> p.memory_footprint()  # "real" USS memory usage
-    pfootprint(uss=2355200, pss=2483712, swap=0)
-    >>>
     >>> p.memory_percent()
     0.7823
     >>>
+    >>> p.memory_footprint()  # "real" USS memory usage
+    pfootprint(uss=2355200, pss=2483712, swap=0)
+    >>>
     >>> p.memory_maps()
-     pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so',
-                   rss=3821568,
-                   size=3842048,
-                   pss=3821568,
-                   shared_clean=0,
-                   shared_dirty=0,
-                   private_clean=0,
-                   private_dirty=3821568,
-                   referenced=3575808,
-                   anonymous=3821568,
-                   swap=0),
-     pmmap_grouped(path='[heap]',
-                   rss=32768,
-                   size=139264,
-                   pss=32768,
-                   shared_clean=0,
-                   shared_dirty=0,
-                   private_clean=0,
-                   private_dirty=32768,
-                   referenced=32768,
-                   anonymous=32768,
-                   swap=0),
-     ...]
+    pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so',
+                  rss=3821568,
+                  size=3842048,
+                  pss=3821568,
+                  shared_clean=0,
+                  shared_dirty=0,
+                  private_clean=0,
+                  private_dirty=3821568,
+                  referenced=3575808,
+                  anonymous=3821568,
+                  swap=0),
+    pmmap_grouped(path='[heap]',
+                  rss=32768,
+                  size=139264,
+                  pss=32768,
+                  shared_clean=0,
+                  shared_dirty=0,
+                  private_clean=0,
+                  private_dirty=32768,
+                  referenced=32768,
+                  anonymous=32768,
+                  swap=0),
+    ...]
     >>>
     >>> p.page_faults()
     ppagefaults(minor=5905, major=3)
@@ -493,7 +493,7 @@ Signals
     >>> p.terminate()
     >>> p.kill()
     >>> p.wait(timeout=3)
-    <Exitcode.EX_OK: 0>
+    <NegSignal.SIGTERM: -15>
     >>>
 
 Other process functions
