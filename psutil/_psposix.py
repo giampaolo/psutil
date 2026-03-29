@@ -48,15 +48,15 @@ def pid_exists(pid):
         return True
 
 
-Negsignal = enum.IntEnum(
-    'Negsignal', {x.name: -x.value for x in signal.Signals}
+NegSignal = enum.IntEnum(
+    'NegSignal', {x.name: -x.value for x in signal.Signals}
 )
 
 
 def negsig_to_enum(num):
     """Convert a negative signal value to an enum."""
     try:
-        return Negsignal(num)
+        return NegSignal(num)
     except ValueError:
         return num
 

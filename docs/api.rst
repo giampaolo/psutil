@@ -2459,7 +2459,7 @@ Process class
        >>> p = psutil.Process(9891)
        >>> p.terminate()
        >>> p.wait()
-       <Negsignal.SIGTERM: -15>
+       <NegSignal.SIGTERM: -15>
 
     .. note::
 
