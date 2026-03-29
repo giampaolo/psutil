@@ -137,6 +137,37 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 /* ================================================================== */
+/* Footer                                                           */
+/* ================================================================== */
+
+.footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.footer-row p {
+    margin: 0 !important;
+}
+
+.footer-icons {
+    display: flex;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.footer-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: #999;
+    transition: fill 0.2s;
+}
+
+.footer-icon:hover svg {
+    fill: #444;
+}
+
+/* ================================================================== */
 /* Headings                                                           */
 /* ================================================================== */
 

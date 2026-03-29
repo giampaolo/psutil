@@ -16,10 +16,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
 :gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`)
 
-- Split docs from a single HTML file into multiple sections (API reference,
-  install, etc.).
-
-- Added new sections:
+- Split docs from a single HTML file into multiple new sections:
 
   - :doc:`/adoption <adoption>`: notable software using psutil
   - :doc:`/api-overview <api-overview>`: show entire API via REPL usage examples
@@ -35,9 +32,15 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - :doc:`/shell-equivalents <shell-equivalents>`: maps each psutil API to native CLI commands
   - :doc:`/stdlib-equivalents <stdlib-equivalents>`: maps psutil's Python API to the closest equivalent in the Python standard library
 
+- Theming:
+
+  - Renewed, more modern, custom theme.
+  - Show "last updated" and external icons in the footer.
+  - Show icon for external URLs.
+  - Use Monokai theme for code snippets.
+
 - Usability:
 
-  - Renewed, more modern theme.
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
   - Greatly improved :func:`virtual_memory` doc and many other APIs.
@@ -52,7 +55,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
   - Configured RTD to automatically public doc from Git tags, instead of from
     main on every push.
-  - Build doc as part of CI process (CI fails on error).
+  - Build doc as part of CI process (fails on error).
   - Removed /en language from RTD URLs. Turn that into a redirect.
     - Before: https://psutil.readthedocs.io/en/stable/
     - Now: https://psutil.readthedocs.io/stable/

@@ -40,7 +40,6 @@ extensions = [
 ]
 
 project = PROJECT_NAME
-copyright = f"2009-{THIS_YEAR}, {AUTHOR}"
 author = AUTHOR
 version = VERSION
 release = VERSION
@@ -50,12 +49,13 @@ intersphinx_mapping = {
 extlinks = {
     'gh': ('https://github.com/giampaolo/psutil/issues/%s', '#%s'),
 }
-templates_path = ['_templates']
-html_static_path = ['_static']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-html_theme = 'sphinx_rtd_theme'
 htmlhelp_basename = f"{PROJECT_NAME}-doc"
 copybutton_exclude = '.linenos, .gp'
+
+# --- paths
+
+templates_path = ['_templates']
+html_static_path = ['_static']
 html_css_files = [
     'https://media.readthedocs.org/css/sphinx_rtd_theme.css',
     'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
@@ -64,6 +64,11 @@ html_css_files = [
 html_js_files = [
     'highlight-numbers.js',
 ]
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# https://pygments.org/styles/
-pygments_style = "monokai"
+# --- theming / visual
+
+html_theme = 'sphinx_rtd_theme'
+pygments_style = "monokai"  # https://pygments.org/styles/
+copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
+html_last_updated_fmt = "%b %d, %Y"  # shown in the footer
