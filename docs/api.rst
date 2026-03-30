@@ -1359,7 +1359,7 @@ Process class
 
        >>> import psutil
        >>> psutil.Process().cmdline()
-       ['python', 'manage.py', 'runserver']
+       ['python3', 'manage.py', 'runserver']
 
   .. method:: environ()
 
@@ -2516,9 +2516,9 @@ Popen class
      >>> import psutil
      >>> from subprocess import PIPE
      >>>
-     >>> p = psutil.Popen(["/usr/bin/python", "-c", "print('hello')"], stdout=PIPE)
+     >>> p = psutil.Popen(["/usr/bin/python3", "-c", "print('hello')"], stdout=PIPE)
      >>> p.name()
-     'python'
+     'python3'
      >>> p.username()
      'giampaolo'
      >>> p.communicate()

@@ -73,7 +73,7 @@
     --func-sig-name: var(--gray-800);
     --func-sig-param: var(--gray-500);
 
-    --table-header-bg: var(--adm-note-bg);
+    --table-header-bg: #f0f4f7;
 }
 
 /* ================================================================== */
@@ -85,6 +85,11 @@
         max-width: 1000px;
         padding-left: 20px !important;
     }
+}
+
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 @media (max-width: 768px) {
@@ -136,6 +141,41 @@ footer div[role="navigation"][aria-label="Footer"] {
     color: #333 !important;
 }
 
+.wy-menu-vertical li.current > a {
+    border-left: 3px solid #55a5d9 !important;
+}
+
+/* ================================================================== */
+/* Footer                                                           */
+/* ================================================================== */
+
+.footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.footer-row p {
+    margin: 0 !important;
+}
+
+.footer-icons {
+    display: flex;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.footer-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: #999;
+    transition: fill 0.2s;
+}
+
+.footer-icon:hover svg {
+    fill: #444;
+}
+
 /* ================================================================== */
 /* Headings                                                           */
 /* ================================================================== */
@@ -177,6 +217,14 @@ h4 {
 
 .wy-table-responsive table thead {
     background-color: var(--table-header-bg);
+}
+
+.wy-table-responsive table tbody tr.row-odd td {
+    background-color: #f8f9fa !important;
+}
+
+.wy-table-responsive table tbody tr.row-even td {
+    background-color: #ffffff !important;
 }
 
 .document th {
@@ -256,6 +304,10 @@ h4 {
 
 .rst-content dl:not(.docutils) {
     margin: 0px 0px 0px 0px !important;
+}
+
+.rst-content dl.py + dl.py > dt {
+    margin-top: 28px !important;
 }
 
 .rst-content dl:not(.docutils) dt {
@@ -341,8 +393,6 @@ div[class^="highlight-"] {
 
 .highlight pre {
     line-height: var(--code-line-height) !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
 /* ================================================================== */

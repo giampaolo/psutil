@@ -1564,7 +1564,7 @@ class Popen(Process):
       >>> from subprocess import PIPE
       >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
       >>> p.name()
-      'python'
+      'python3'
       >>> p.uids()
       user(real=1000, effective=1000, saved=1000)
       >>> p.username()
