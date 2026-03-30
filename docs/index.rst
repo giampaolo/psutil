@@ -8,7 +8,7 @@
    <script>document.body.classList.add('home-page');</script>
 
    <div class="hero">
-     <div class="hero-title"><img src="_static/images/logo.svg" class="hero-logo" alt="psutil logo"><span>psutil<span/></div>
+     <div class="hero-title"><img src="_static/images/logo-psutil.svg" class="hero-logo" alt="psutil logo"><span>psutil<span/></div>
      <div class="hero-subtitle">Process and System Utilities for Python</div>
      <div class="hero-badges">
        <a href="https://github.com/giampaolo/psutil"><img src="https://img.shields.io/badge/GitHub-repo-blue" alt="GitHub repo"></a>

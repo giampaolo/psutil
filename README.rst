@@ -50,7 +50,7 @@
 .. raw:: html
 
     <div align="center">
-        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/psutil-logo.svg" /></a>
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/logo-psutil.svg" /></a>
         <br />
         <br />
         <a href="https://github.com/giampaolo/psutil"><b>Home</b></a>&nbsp;&nbsp;&nbsp;
@@ -102,17 +102,17 @@ Sponsors
       <tr>
         <td align="center">
           <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="200" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg">
+            <img width="200" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/logo-tidelift.svg">
           </a>
         </td>
         <td align="center">
           <a href="https://sansec.io/">
-            <img src="https://sansec.io/assets/images/logo.svg">
+            <img src="https://sansec.io/assets/images/logo-psutil.svg">
           </a>
         </td>
         <td align="center">
           <a href="https://www.apivoid.com/">
-            <img width="180" src="https://gmpy.dev/images/apivoid-logo.svg">
+            <img width="180" src="https://gmpy.dev/images/logo-apivoid.svg">
           </a>
         </td>
       </tr>

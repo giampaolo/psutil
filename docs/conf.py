@@ -69,7 +69,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # --- theming / visual
 
 html_title = "psutil"
-html_logo = "_static/images/logo.svg"
+html_logo = "_static/images/logo-psutil.svg"
 html_favicon = "_static/images/favicon.svg"
 html_theme = 'sphinx_rtd_theme'
 pygments_style = "monokai"  # https://pygments.org/styles/
