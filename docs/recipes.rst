@@ -123,7 +123,7 @@ Processes owned by user:
   >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "username"]) if p.username() == getpass.getuser()])
   (16832, 'bash'),
   (19772, 'ssh'),
-  (20492, 'python')]
+  (20492, 'python3')]
 
 -------------------------------------------------------------------------------
 
@@ -134,7 +134,7 @@ Processes actively running:
   >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "status"]) if p.status() == psutil.STATUS_RUNNING])
   [(1150, 'Xorg'),
    (1776, 'unity-panel-service'),
-   (20492, 'python')]
+   (20492, 'python3')]
 
 -------------------------------------------------------------------------------
 
