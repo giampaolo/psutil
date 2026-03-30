@@ -19,11 +19,8 @@ include docs/_ext/availability.py
 include docs/_ext/changelog_anchors.py
 include docs/_ext/check_python_syntax.py
 include docs/_links.rst
-include docs/_static/copybutton.js
 include docs/_static/css/custom.css
-include docs/_static/favicon.ico
-include docs/_static/highlight-numbers.js
-include docs/_static/sidebar.js
+include docs/_static/js/highlight-numbers.js
 include docs/_templates/footer.html
 include docs/_templates/layout.html
 include docs/adoption.rst

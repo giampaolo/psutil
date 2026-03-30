@@ -73,7 +73,22 @@
     --func-sig-name: var(--gray-800);
     --func-sig-param: var(--gray-500);
 
-    --table-header-bg: var(--adm-note-bg);
+    --table-header-bg: var(--gray-200);
+    --table-row-odd: #f8f9fa;
+    --table-row-even: #ffffff;
+
+    --sidebar-bg: #343131;
+    --sidebar-caption: #55a5d9;
+    --sidebar-item: #d9d9d9;
+    --sidebar-item-nested: #333;
+    --sidebar-active-border: #55a5d9;
+    --sidebar-search-focus-border: #7ab3d4;
+    --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
+
+    --footer-icon: #999;
+    --footer-icon-hover: #444;
+
+    --card-bg: #fff;
 }
 
 /* ================================================================== */
@@ -86,12 +101,27 @@
 }
 
 .hero-title {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 700;
     color: var(--gray-800);
     line-height: 1.1;
     margin-bottom: 0.3em;
     font-variant-ligatures: none;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.hero-logo {
+    height: 55px;
+    width: auto;
+    padding-right: 5px;
+}
+
+.hero-title span {
+    position: relative;
+    bottom: -2px;
 }
 
 .hero-subtitle {
@@ -167,7 +197,21 @@
 
 @media (max-width: 480px) {
     .home-feature-cards {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .home-feature-card {
+        padding: 12px 8px;
+    }
+    .home-icon-svg {
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+    .home-icon-fa {
+        font-size: 1.6rem;
+    }
+    .home-feature-title {
+        font-size: 0.8rem;
     }
 }
 
@@ -176,7 +220,7 @@
     border-radius: 8px;
     padding: 20px 14px;
     text-align: center;
-    background: #fff;
+    background: var(--card-bg);
     text-decoration: none !important;
     transition: box-shadow 0.15s, border-color 0.15s;
     display: block;
@@ -214,7 +258,6 @@
     color: var(--gray-500);
     font-family: var(--code-font);
     line-height: 1.9;
->>>>>>> doc-reorg-2
 }
 
 /* ================================================================== */
@@ -256,8 +299,35 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* Sidebar                                                            */
 /* ================================================================== */
 
+.wy-nav-top {
+    background-color: var(--sidebar-bg) !important;
+}
+
 .wy-side-nav-search {
-    background-color: var(--sidebar-search-bg) !important;
+    background-color: var(--sidebar-bg) !important;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wy-side-nav-search a.icon-home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.wy-side-nav-search a.icon-home::before {
+    display: none;
+}
+
+.wy-side-nav-search a.icon-home img.logo {
+    display: inline-block;
+    height: 26px;
+    width: auto;
+    margin: 0;
+    order: -1;
 }
 
 .wy-side-nav-search input[type="text"] {
@@ -265,25 +335,25 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 .wy-side-nav-search input[type="text"]:focus {
-    border-color: #7ab3d4;
-    box-shadow: 0 0 0 2px rgba(122, 179, 212, 0.3);
+    border-color: var(--sidebar-search-focus-border);
+    box-shadow: 0 0 0 2px var(--sidebar-search-focus-shadow);
     outline: none;
 }
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
-    color: #55a5d9;
+    color: var(--sidebar-caption);
 }
 
 .wy-menu-vertical li.toctree-l1:not(.current) > a {
-    color: #d9d9d9 !important;
+    color: var(--sidebar-item) !important;
 }
 
 .wy-menu-vertical li.toctree-l2 > a {
-    color: #333 !important;
+    color: var(--sidebar-item-nested) !important;
 }
 
 .wy-menu-vertical li.current > a {
-    border-left: 3px solid #55a5d9 !important;
+    border-left: 3px solid var(--sidebar-active-border) !important;
 }
 
 /* ================================================================== */
@@ -309,12 +379,12 @@ footer div[role="navigation"][aria-label="Footer"] {
 .footer-icon svg {
     width: 20px;
     height: 20px;
-    fill: #999;
+    fill: var(--footer-icon);
     transition: fill 0.2s;
 }
 
 .footer-icon:hover svg {
-    fill: #444;
+    fill: var(--footer-icon-hover);
 }
 
 /* ================================================================== */
@@ -361,11 +431,11 @@ h4 {
 }
 
 .wy-table-responsive table tbody tr.row-odd td {
-    background-color: #f8f9fa !important;
+    background-color: var(--table-row-odd) !important;
 }
 
 .wy-table-responsive table tbody tr.row-even td {
-    background-color: #ffffff !important;
+    background-color: var(--table-row-even) !important;
 }
 
 .document th {
@@ -517,7 +587,7 @@ h4 {
 
 .highlight,
 .highlight pre {
-    font-size: 92% !important;
+    font-size: 13px !important;
     font-family: var(--code-font) !important;
 }
 

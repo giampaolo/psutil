@@ -1,13 +1,14 @@
 .. module:: psutil
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola <grodola@gmail.com>
+.. title:: Home
 
 .. raw:: html
 
    <script>document.body.classList.add('home-page');</script>
 
    <div class="hero">
-     <div class="hero-title">psutil</div>
+     <div class="hero-title"><img src="_static/images/logo.svg" class="hero-logo" alt="psutil logo"><span>psutil<span/></div>
      <div class="hero-subtitle">Process and System Utilities for Python</div>
      <div class="hero-badges">
        <a href="https://github.com/giampaolo/psutil"><img src="https://img.shields.io/badge/GitHub-repo-blue" alt="GitHub repo"></a>
@@ -130,19 +131,19 @@ Sponsors
 
     <table border="0" cellpadding="10" cellspacing="0" class="sponsor-table">
       <tr>
-        <td align="center">
+        <td align="center" style="vertical-align: middle;">
           <a href="https://tidelift.com/subscription/pkg/pypi-psutil?utm_source=pypi-psutil&utm_medium=referral&utm_campaign=readme">
-            <img width="200" src="https://github.com/giampaolo/psutil/raw/master/docs/_static/tidelift-logo.svg" class="sponsor-logo">
+            <img width="160" src="_static/images/logo-tidelift.svg" class="sponsor-logo">
           </a>
         </td>
-        <td align="center">
+        <td align="center" style="vertical-align: middle;">
           <a href="https://sansec.io/">
-            <img src="https://sansec.io/assets/images/logo.svg" class="sponsor-logo">
+            <img width="145" src="_static/images/logo-sansec.svg" class="sponsor-logo">
           </a>
         </td>
-        <td align="center">
+        <td align="center" style="vertical-align: middle;">
           <a href="https://www.apivoid.com/">
-            <img width="180" src="https://gmpy.dev/images/apivoid-logo.svg" class="sponsor-logo">
+            <img width="130" src="_static/images/logo-apivoid.svg" class="sponsor-logo">
           </a>
         </td>
       </tr>
