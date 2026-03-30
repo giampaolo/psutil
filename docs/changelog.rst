@@ -172,6 +172,9 @@ Others
 - :gh:`2782`, [FreeBSD]: :func:`cpu_count` ``logical=False`` return None on
   systems without hyper threading.
 
+- :gh:`2789`, [AIX]: fix compilation error caused by a typo (accidental
+  space) in ``psutil_net_io_counters()``, introduced during a previous
+  code reformatting.
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
 
