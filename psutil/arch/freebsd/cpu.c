@@ -131,7 +131,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     int current;
     int core;
     char sensor[26];
-    char available_freq_levels[1000];
+    char available_freq_levels[1000] = {0};
     size_t size;
 
     if (!PyArg_ParseTuple(args, "i", &core))
