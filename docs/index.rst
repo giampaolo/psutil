@@ -1,6 +1,7 @@
 .. module:: psutil
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola <grodola@gmail.com>
+.. title:: Home
 
 .. raw:: html
 
