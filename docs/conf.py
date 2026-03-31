@@ -62,7 +62,8 @@ html_css_files = [
     'css/custom.css',
 ]
 html_js_files = [
-    'js/highlight-numbers.js',
+    "js/highlight-numbers.js",
+    "js/external-urls.js",
 ]
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
