@@ -62,15 +62,15 @@ html_css_files = [
     'css/custom.css',
 ]
 html_js_files = [
-    'highlight-numbers.js',
+    'js/highlight-numbers.js',
 ]
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # --- theming / visual
 
 html_title = "psutil"
-html_logo = "_static/logo.svg"
-html_favicon = "_static/favicon.svg"
+html_logo = "_static/images/logo-psutil.svg"
+html_favicon = "_static/images/favicon.svg"
 html_theme = 'sphinx_rtd_theme'
 pygments_style = "monokai"  # https://pygments.org/styles/
 copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
