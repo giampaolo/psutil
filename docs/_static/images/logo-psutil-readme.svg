@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 0 220 74" width="212" height="72">
+  <!-- support for bright / dark background -->
+  <style>
+    .bg       { fill: white; }
+    .wordmark { fill: #111111; }
+    @media (prefers-color-scheme: dark) {
+      .bg       { fill: transparent; }
+      .wordmark { fill: white; }
+    }
+  </style>
+  <rect class="bg" width="100%" height="100%"/>
+  <rect x="7"  y="25" width="16" height="38" rx="3" fill="#4a90b8"/>
+  <rect x="28" y="9"  width="16" height="54" rx="3" fill="#e8a830"/>
+  <rect x="50" y="34" width="16" height="29" rx="3" fill="#8a8a8a"/>
+  <text class="wordmark" x="76" y="62"
+        font-family="system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif"
+        font-size="56"
+        font-weight="700"
+        letter-spacing="-0.7">psutil</text>
+</svg>

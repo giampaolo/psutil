@@ -12,7 +12,7 @@
      <div class="hero-subtitle">Process and System Utilities for Python</div>
      <div class="hero-badges">
        <a href="https://github.com/giampaolo/psutil"><img src="https://img.shields.io/badge/GitHub-repo-blue" alt="GitHub repo"></a>
-       <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://img.shields.io/pypi/dm/psutil.svg?color=green" alt="Downloads"></a>
+       <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://img.shields.io/pypi/dm/psutil?label=downloads" alt="Downloads"></a>
        <a href="https://pypi.org/project/psutil"><img src="https://img.shields.io/pypi/v/psutil.svg?label=pypi&color=yellowgreen" alt="Latest version"></a>
      </div>
    </div>
@@ -40,62 +40,19 @@ in Python. It is useful mainly for **system monitoring**, **profiling**,
 
    <div class="home-feature-cards">
      <a class="home-feature-card" href="api.html#cpu">
-       <svg class="home-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-         <rect x="6" y="6" width="12" height="12" rx="2"/>
-         <line x1="9"  y1="6"  x2="9"  y2="3"/>
-         <line x1="12" y1="6"  x2="12" y2="3"/>
-         <line x1="15" y1="6"  x2="15" y2="3"/>
-         <line x1="9"  y1="18" x2="9"  y2="21"/>
-         <line x1="12" y1="18" x2="12" y2="21"/>
-         <line x1="15" y1="18" x2="15" y2="21"/>
-         <line x1="6"  y1="9"  x2="3"  y2="9"/>
-         <line x1="6"  y1="12" x2="3"  y2="12"/>
-         <line x1="6"  y1="15" x2="3"  y2="15"/>
-         <line x1="18" y1="9"  x2="21" y2="9"/>
-         <line x1="18" y1="12" x2="21" y2="12"/>
-         <line x1="18" y1="15" x2="21" y2="15"/>
-       </svg>
+       <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="CPU">
        <div class="home-feature-title">CPU</div>
      </a>
      <a class="home-feature-card" href="api.html#memory">
-       <svg class="home-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-         <rect x="1" y="4" width="22" height="13" rx="1.5"/>
-         <rect x="3"  y="7.5" width="3" height="6" rx="0.5"/>
-         <rect x="8"  y="7.5" width="3" height="6" rx="0.5"/>
-         <rect x="13" y="7.5" width="3" height="6" rx="0.5"/>
-         <rect x="18" y="7.5" width="3" height="6" rx="0.5"/>
-         <line x1="2"    y1="17" x2="2"    y2="20"/>
-         <line x1="4.2"  y1="17" x2="4.2"  y2="20"/>
-         <line x1="6.4"  y1="17" x2="6.4"  y2="20"/>
-         <line x1="8.6"  y1="17" x2="8.6"  y2="20"/>
-         <line x1="10.8" y1="17" x2="10.8" y2="20"/>
-         <line x1="13.2" y1="17" x2="13.2" y2="20"/>
-         <line x1="15.4" y1="17" x2="15.4" y2="20"/>
-         <line x1="17.6" y1="17" x2="17.6" y2="20"/>
-         <line x1="19.8" y1="17" x2="19.8" y2="20"/>
-         <line x1="22"   y1="17" x2="22"   y2="20"/>
-         <line x1="2"    y1="20" x2="22"   y2="20"/>
-       </svg>
+       <img class="home-icon-svg" src="_static/images/icon-memory.svg" alt="Memory">
        <div class="home-feature-title">Memory</div>
      </a>
      <a class="home-feature-card" href="api.html#disks">
-       <svg class="home-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-         <rect x="1" y="3" width="22" height="18" rx="3"/>
-         <line x1="1"  y1="15" x2="23"  y2="15"/>
-         <line x1="4"  y1="8"  x2="9"   y2="8"/>
-         <line x1="4"  y1="11" x2="9"   y2="11"/>
-         <rect x="3"   y="17"  width="9"   height="2" rx="1"/>
-         <rect x="14"  y="17"  width="2.5" height="2" rx="1"/>
-         <rect x="18"  y="17"  width="2.5" height="2" rx="1"/>
-       </svg>
+       <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="Disks">
        <div class="home-feature-title">Disks</div>
      </a>
      <a class="home-feature-card" href="api.html#network">
-       <svg class="home-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-         <circle cx="12" cy="12" r="10"/>
-         <line x1="2" y1="12" x2="22" y2="12"/>
-         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-       </svg>
+       <img class="home-icon-svg" src="_static/images/icon-network.svg" alt="Network">
        <div class="home-feature-title">Network</div>
      </a>
      <a class="home-feature-card" href="api.html#sensors">
@@ -103,21 +60,14 @@ in Python. It is useful mainly for **system monitoring**, **profiling**,
        <div class="home-feature-title">Sensors</div>
      </a>
      <a class="home-feature-card" href="api.html#processes">
-       <svg class="home-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-         <line x1="8"  y1="6"  x2="21" y2="6"/>
-         <line x1="8"  y1="12" x2="21" y2="12"/>
-         <line x1="8"  y1="18" x2="21" y2="18"/>
-         <circle cx="3.5" cy="6"  r="1"/>
-         <circle cx="3.5" cy="12" r="1"/>
-         <circle cx="3.5" cy="18" r="1"/>
-       </svg>
+       <img class="home-icon-svg" src="_static/images/icon-processes.svg" alt="Processes">
        <div class="home-feature-title">Processes</div>
      </a>
    </div>
 
 
-It implements many functionalities offered by UNIX command line tool such as
-*ps, top, free, iotop, netstat, ifconfig, lsof* and others
+psutil implements many functionalities offered by UNIX command line tool such
+as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
 (see :doc:`shell equivalents <shell-equivalents>`).
 It is used by :doc:`many notable projects <adoption>` including TensorFlow,
 PyTorch, Home Assistant, Ansible, and Celery.
