@@ -171,6 +171,14 @@ Others
   interface names.
 - :gh:`2782`, [FreeBSD]: :func:`cpu_count` ``logical=False`` return None on
   systems without hyper threading.
+- :gh:`2791`, [FreeBSD]: The internal ``psutil_sysctl()`` and
+  ``psutil_sysctlbyname()`` helpers previously required the returned data size
+  to exactly match the allocated buffer size. Relaxed the check to allow the
+  kernel to return fewer bytes than the buffer (normal for variable-length
+  sysctl data), while still raising on overflow.
+- :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
+  ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
+  systems.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
