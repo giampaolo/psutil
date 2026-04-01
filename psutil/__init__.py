@@ -66,6 +66,7 @@ from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
 if _TYPE_CHECKING:
+    from collections.abc import Collection
     from typing import Any
     from typing import Callable
     from typing import Generator
@@ -588,7 +589,7 @@ class Process:
                     self._proc.oneshot_exit()
 
     def as_dict(
-        self, attrs: list[str] | None = None, ad_value: Any = None
+        self, attrs: Collection[str] | None = None, ad_value: Any = None
     ) -> dict[str, Any]:
         """Utility method returning process information as a
         hashable dictionary.
@@ -1665,7 +1666,7 @@ _pids_reused = set()
 
 
 def process_iter(
-    attrs: list[str] | None = None, ad_value: Any = None
+    attrs: Collection[str] | None = None, ad_value: Any = None
 ) -> Iterator[Process]:
     """Return a generator yielding a Process instance for all
     running processes.
