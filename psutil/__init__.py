@@ -593,10 +593,12 @@ class Process:
     ) -> dict[str, Any]:
         """Utility method returning process information as a
         hashable dictionary.
-        If *attrs* is specified it must be a list of strings
-        reflecting available Process class' attribute names
-        (e.g. ['cpu_times', 'name']) else all public (read
-        only) attributes are assumed.
+
+        If *attrs* is specified it must be a collection of strings
+        reflecting available Process class' attribute names (e.g.
+        ['cpu_times', 'name']) else all public (read-only) attributes
+        are assumed. See `Process.attrs` for a full list.
+
         *ad_value* is the value which gets assigned in case
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
@@ -1668,10 +1670,10 @@ _pids_reused = set()
 def process_iter(
     attrs: Collection[str] | None = None, ad_value: Any = None
 ) -> Iterator[Process]:
-    """Return a generator yielding a Process instance for all
+    """Return a generator yielding a `Process` instance for all
     running processes.
 
-    Every new Process instance is only created once and then cached
+    Every new `Process` instance is only created once and then cached
     into an internal table which is updated every time this is used.
     Cache can optionally be cleared via `process_iter.cache_clear()`.
 
@@ -1679,11 +1681,15 @@ def process_iter(
     their PIDs.
 
     *attrs* and *ad_value* have the same meaning as in
-    Process.as_dict(). If *attrs* is specified, as_dict() is called and
-    the results are cached so that subsequent method calls (e.g.
-    p.name()) return cached values.
+    Process.as_dict().
 
-    Use `attrs=Process.attrs` to retrieve all process info (slow).
+    If *attrs* is specified, `Process.as_dict()` is called and the
+    results are cached, so that subsequent method calls (e.g.
+    `p.name()`) return cached values. Use `attrs=Process.attrs` to
+    retrieve all process info (slow).
+
+    If a method raises `AccessDenied` during pre-fetch, it will return
+    *ad_value* (default None) instead of raising.
     """
     global _pmap
 
