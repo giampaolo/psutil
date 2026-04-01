@@ -1066,6 +1066,13 @@ Functions
      3 ksoftirqd/0 root
      ...
 
+  All process attrs except slow ones:
+
+  .. code-block:: pycon
+
+    >>> for p in psutil.process_iter(psutil.Process.attrs - {'memory_footprint', 'memory_maps'}):
+    ...     print(p)
+
   Clear internal cache:
 
   .. code-block:: pycon
@@ -1451,6 +1458,9 @@ Process class
        >>> p = psutil.Process()
        >>> p.as_dict(attrs=['pid', 'name', 'username'])
        {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
+       >>> # all attrs except slow ones
+       >>> p.as_dict(attrs=p.attrs - {'memory_footprint', 'memory_maps'})
+       {'username': 'giampaolo', 'pid': 12366, 'name': 'python', ...}
        >>>
 
     .. versionchanged:: 3.0.0
