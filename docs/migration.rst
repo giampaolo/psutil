@@ -30,8 +30,8 @@ Key breaking changes in 8.0:
   :meth:`Process.memory_footprint`.
 - New :meth:`Process.memory_info_ex` (unrelated to the old method deprecated in
   4.0 and removed in 7.0).
-- New :attr:`Process.attrs`: frozenset of valid attribute names.
-- ``process_iter(attrs=[])`` is deprecated.
+- New :attr:`Process.attrs`: frozenset of valid attribute names;
+  ``process_iter(attrs=[])`` is deprecated.
 - Python 3.6 dropped.
 
 .. important::
@@ -134,17 +134,7 @@ cpu_times() interrupt renamed to irq on Windows
 
 The ``interrupt`` field of :func:`cpu_times` on Windows was renamed to ``irq``
 to match the name used on Linux and BSD. The old name still works but raises
-:exc:`DeprecationWarning`:
-
-.. code-block:: python
-
-  # before
-  t = psutil.cpu_times()
-  print(t.interrupt)
-
-  # after
-  t = psutil.cpu_times()
-  print(t.irq)
+:exc:`DeprecationWarning`.
 
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -163,18 +153,8 @@ Code inspecting ``repr()`` or ``type()`` may need updating.
 memory_full_info() is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_full_info` is deprecated. Use the new
-:meth:`Process.memory_footprint` instead:
-
-.. code-block:: python
-
-  # before
-  mem = p.memory_full_info()
-  uss = mem.uss
-
-  # after
-  mem = p.memory_footprint()
-  uss = mem.uss
+:meth:`Process.memory_full_info` is deprecated. Use
+:meth:`Process.memory_footprint` instead (same fields).
 
 New memory_info_ex() method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -202,7 +182,9 @@ discover available names:
   # after
   attrs = psutil.Process.attrs
 
-It also makes it easy to pass all or a subset of attributes:
+It also makes it easy to pass all or a subset of attributes.
+``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated;
+use ``Process.attrs`` instead:
 
 .. code-block:: python
 
@@ -211,21 +193,6 @@ It also makes it easy to pass all or a subset of attributes:
 
   # all except connections
   psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
-
-process_iter(attrs=[]) is deprecated
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Passing an empty list to :func:`process_iter` to mean "retrieve all
-attributes" is deprecated and raises :exc:`DeprecationWarning`. Use
-:attr:`Process.attrs` instead:
-
-.. code-block:: python
-
-  # before
-  psutil.process_iter(attrs=[])
-
-  # after
-  psutil.process_iter(attrs=psutil.Process.attrs)
 
 Python 3.6 dropped
 ^^^^^^^^^^^^^^^^^^^^
