@@ -523,20 +523,14 @@ class Process:
 
     @contextlib.contextmanager
     def oneshot(self) -> Generator[None, None, None]:
-        """Utility context manager which considerably speeds up the
-        retrieval of multiple process information at the same time.
-
-        Internally different process info (e.g. name, ppid, uids,
-        gids, ...) may be fetched by using the same routine, but
-        only one information is returned and the others are discarded.
-        When using this context manager the internal routine is
-        executed once (in the example below on name()) and the
-        other info are cached.
-
-        The cache is cleared when exiting the context manager block.
-        The advice is to use this every time you retrieve more than
-        one information about the process. If you're lucky, you'll
-        get a hell of a speedup.
+        """Context manager which speeds up the retrieval of multiple
+        process attributes at the same time. Internally, many
+        attributes (e.g. `name()`, `ppid()`, `uids()`, `create_time()`,
+        ...) share the same system call. This context manager executes
+        each system call once, and caches the results, so subsequent
+        calls return cached values. The cache is cleared when exiting
+        the context manager block. Use this every time you retrieve
+        more than one attribute about the process.
 
         >>> import psutil
         >>> p = psutil.Process()

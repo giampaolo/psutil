@@ -40,10 +40,10 @@ Fast:
       p.memory_info()  # from cache
       p.status()       # from cache
 
-The speed improvement depends on the platform and on how many attributes
-you read. On Linux the gain is typically around 1.5x–2x; on Windows it can
-be much higher. As a rule of thumb: if you read more than two attributes
-from the same process, use :meth:`Process.oneshot`.
+The speed improvement depends on the platform and on how many attributes you
+read. On Linux the gain is typically around 1.5x–2x; on Windows it can be much
+higher. As a rule of thumb: if you read more than one attribute from the same
+process, use :meth:`Process.oneshot`.
 
 .. _perf-process-iter:
 

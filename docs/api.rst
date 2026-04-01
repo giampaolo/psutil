@@ -1226,19 +1226,13 @@ Process class
 
   .. method:: oneshot()
 
-    Utility context manager which considerably speeds up the retrieval of
-    multiple process attributes at the same time.
-    Internally different process info (e.g. :meth:`name`, :meth:`ppid`,
-    :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
-    routine, but only one value is returned and the others are discarded.
-    When using this context manager the internal routine is executed once (in
-    the example below on :meth:`name`); the value of interest is returned and
-    the others are cached.
-    The subsequent calls sharing the same internal routine will return the
-    cached value.
-    The cache is cleared when exiting the context manager block.
-    The advice is to use this every time you retrieve more than one attribute
-    about the process. If you're lucky, you'll get a hell of a speedup.
+    Context manager which speeds up the retrieval of multiple process
+    attributes at the same time. Internally, many attributes (e.g.
+    :meth:`name`, :meth:`ppid`, :meth:`uids`, :meth:`create_time`, ...)
+    share the same system call. This context manager executes each system call
+    once and caches the results. Subsequent calls return cached values.
+    The cache is cleared when exiting the context manager block. Use this
+    every time you retrieve more than one attribute about the process.
 
     .. code-block:: pycon
 
