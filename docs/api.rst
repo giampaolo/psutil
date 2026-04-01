@@ -1095,8 +1095,8 @@ Functions
      dict is deprecated in favor of this new approach.
 
   .. versionchanged:: 8.0.0
-     Passing an empty list as *attrs* is deprecated; use
-     ``attrs=Process.attrs`` instead.
+     passing an empty list as *attrs* is deprecated; use
+     ``attrs=Process.attrs`` instead, see :ref:`migration guide <migration-8.0>`.
 
 .. function:: pid_exists(pid)
 
