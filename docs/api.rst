@@ -976,7 +976,7 @@ Functions
 
   Return a sorted list of current running PIDs.
   To iterate over all processes and avoid race conditions :func:`process_iter`
-  should be preferred, see :ref:`performance section <perf-pids>`.
+  should be preferred, see :ref:`perf-process-iter`.
 
   .. code-block:: pycon
 
