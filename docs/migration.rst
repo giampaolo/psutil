@@ -28,6 +28,8 @@ Key breaking changes in 8.0:
 - Some return types are now enums instead of strings.
 - :meth:`Process.memory_full_info` deprecated: use
   :meth:`Process.memory_footprint`.
+- New :meth:`Process.memory_info_ex` (unrelated to the old method deprecated in
+  4.0 and removed in 7.0).
 - Python 3.6 dropped.
 
 .. important::
@@ -172,6 +174,16 @@ memory_full_info() is deprecated
   mem = p.memory_footprint()
   uss = mem.uss
 
+New memory_info_ex() method
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
+:meth:`Process.memory_info` with platform-specific metrics (e.g.
+``peak_rss``, ``swap``, ``rss_anon`` on Linux). This is **unrelated** to
+the old :meth:`Process.memory_info_ex` that was deprecated in 4.0 and
+removed in 7.0 (which corresponded to what later became
+:meth:`Process.memory_full_info`).
+
 Python 3.6 dropped
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -197,7 +209,14 @@ Process.memory_info_ex() removed
 
 The long-deprecated :meth:`Process.memory_info_ex` was removed (it was
 deprecated since 4.0.0 in 2016). Use :meth:`Process.memory_full_info`
-instead:
+instead.
+
+.. note::
+
+  In 8.0, a new :meth:`Process.memory_info_ex` method was introduced
+  with different semantics: it extends :meth:`Process.memory_info`
+  with platform-specific metrics. It is unrelated to the old method
+  documented here.
 
 .. code-block:: python
 

@@ -105,8 +105,8 @@ Sponsors
 Projects using psutil
 =====================
 
-psutil is one of the `top 100`_ most-downloaded packages on PyPI, with **300+
-million** downloads per month, `760,000+ GitHub repositories
+psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 300+
+million downloads per month, `760,000+ GitHub repositories
 <https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
 14,000+ packages depending on it. Some notable projects using psutil:
 

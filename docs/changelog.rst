@@ -84,8 +84,10 @@ Type hints / enums:
 - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   :gh:`2733`).
 
-  - Add new :meth:`Process.memory_info_ex` method, which extends
-    :meth:`Process.memory_info` with platform-specific metrics:
+  - Add new :meth:`Process.memory_info_ex` method (not to be confused
+    with the old method with the same name, deprecated in 4.0 and
+    removed in 7.0), which extends :meth:`Process.memory_info` with
+    platform-specific metrics:
 
     - Linux: *peak_rss*, *peak_vms*, *rss_anon*, *rss_file*, *rss_shmem*,
       *swap*, *hugetlb*
