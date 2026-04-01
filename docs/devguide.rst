@@ -1,6 +1,8 @@
 Development guide
 =================
 
+.. seealso:: `Contributing to psutil project <https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md>`_
+
 Build, setup and test
 ---------------------
 
@@ -160,13 +162,11 @@ Documentation
      python3 -m pip install -r requirements.txt
      make html
 
-- Doc is hosted at https://psutil.readthedocs.io.
-- Two versions:
-  - `/stable <https://psutil.readthedocs.io/stable>`_: latest release.
-  - `/latest <https://psutil.readthedocs.io/latest>`_: development branch.
+- Doc is hosted at https://psutil.readthedocs.io (redirects to `/stable`_).
+- There's 2 versions of the doc (can be selected via dropdown on the top left):
 
-- https://psutil.readthedocs.io redirects to
-  `/stable <https://psutil.readthedocs.io/stable>`_.
+  - `/stable`_: latest release published on `PyPI`_
+  - `/latest`_: ``master`` development branch
 
 .. note::
 
@@ -176,11 +176,12 @@ Documentation
 Releases
 --------
 
-- Uploaded to `PyPI <https://pypi.org/project/psutil/>`_ via
-  ``make release``.
+- Uploaded to `PyPI`_ via ``make release``.
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in ``psutil/__init__.py`` (``__version__``).
 
+.. _`/latest`: https://psutil.readthedocs.io/latest
+.. _`/stable`: https://psutil.readthedocs.io/stable
 .. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`credits.rst`: https://github.com/giampaolo/psutil/blob/master/docs/credits.rst
@@ -191,5 +192,6 @@ Releases
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`psutil/__init__.py`: https://github.com/giampaolo/psutil/blob/master/psutil/__init__.py
 .. _`psutil/_pslinux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
+.. _`PyPI`: https://pypi.org/project/psutil/
 .. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
 .. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
