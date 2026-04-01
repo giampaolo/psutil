@@ -2240,57 +2240,9 @@ Process class
 
   .. method:: net_connections(kind="inet")
 
-    Return socket connections opened by process as a list of named tuples.
-    To get system-wide connections use :func:`psutil.net_connections`.
-    Every named tuple provides 6 attributes:
-
-    - **fd**: the socket file descriptor. If the connection refers to the
-      current process this may be passed to :func:`socket.fromfd` to obtain a usable
-      socket object.
-      On Windows, FreeBSD and SunOS this is always set to ``-1``.
-    - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or
-      :data:`socket.AF_UNIX`.
-    - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
-      :data:`socket.SOCK_SEQPACKET`.
-    - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
-      in case of AF_UNIX sockets. For UNIX sockets see notes below.
-    - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
-      absolute ``path`` in case of UNIX sockets.
-      When the remote endpoint is not connected you'll get an empty tuple
-      (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
-    - **status**: represents the status of a TCP connection. The return value
-      is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants.
-      For UDP and UNIX sockets this is always going to be
-      :const:`psutil.CONN_NONE`.
-
-    The *kind* parameter is a string which filters for connections that fit the
-    following criteria:
-
-    +----------------+-----------------------------------------------------+
-    | Kind value     | Connections using                                   |
-    +================+=====================================================+
-    | ``'inet'``     | IPv4 and IPv6                                       |
-    +----------------+-----------------------------------------------------+
-    | ``'inet4'``    | IPv4                                                |
-    +----------------+-----------------------------------------------------+
-    | ``'inet6'``    | IPv6                                                |
-    +----------------+-----------------------------------------------------+
-    | ``'tcp'``      | TCP                                                 |
-    +----------------+-----------------------------------------------------+
-    | ``'tcp4'``     | TCP over IPv4                                       |
-    +----------------+-----------------------------------------------------+
-    | ``'tcp6'``     | TCP over IPv6                                       |
-    +----------------+-----------------------------------------------------+
-    | ``'udp'``      | UDP                                                 |
-    +----------------+-----------------------------------------------------+
-    | ``'udp4'``     | UDP over IPv4                                       |
-    +----------------+-----------------------------------------------------+
-    | ``'udp6'``     | UDP over IPv6                                       |
-    +----------------+-----------------------------------------------------+
-    | ``'unix'``     | UNIX socket (both UDP and TCP protocols)            |
-    +----------------+-----------------------------------------------------+
-    | ``'all'``      | the sum of all the possible families and protocols  |
-    +----------------+-----------------------------------------------------+
+    Same as :func:`psutil.net_connections` but for this process only (the
+    returned named tuples have no **pid** field). The *kind* parameter and
+    the same limitations apply (root may be needed on some platforms).
 
     .. code-block:: pycon
 
@@ -2303,38 +2255,6 @@ Process class
         pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=43761), raddr=addr(ip='72.14.234.100', port=80), status=<ConnectionStatus.CONN_CLOSING: 'CLOSING'>),
         pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=60759), raddr=addr(ip='72.14.234.104', port=80), status=<ConnectionStatus.CONN_ESTABLISHED: 'ESTABLISHED'>),
         pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=addr(ip='10.0.0.1', port=51314), raddr=addr(ip='72.14.234.83', port=443), status=<ConnectionStatus.CONN_SYN_SENT: 'SYN_SENT'>)]
-
-    .. warning::
-      on Linux, retrieving connections for certain processes requires root
-      privileges. If psutil is not run as root, those connections are silently
-      skipped instead of raising :exc:`psutil.AccessDenied`. That means
-      the returned list may be incomplete.
-
-    .. note::
-       (Linux, FreeBSD) **raddr** field for UNIX sockets is always set to an
-       empty string. This is a limitation of the OS.
-
-    .. note::
-      (Solaris) UNIX sockets are not supported.
-
-    .. note::
-       (OpenBSD) **laddr** and **raddr** fields for UNIX sockets are always set to
-       "". This is a limitation of the OS.
-
-    .. note::
-      (AIX) :exc:`psutil.AccessDenied` is always raised unless running
-      as root (lsof does the same).
-
-    .. versionchanged:: 5.3.0
-       **laddr** and **raddr** are named tuples.
-
-    .. versionchanged:: 6.0.0
-       method renamed from `connections` to `net_connections`.
-
-    .. versionchanged:: 8.0.0
-       **status** field is now a :class:`psutil.ConnectionStatus` enum member
-       instead of a plain ``str``.
-       See :ref:`migration guide <migration-8.0>`.
 
   .. method:: connections()
 
