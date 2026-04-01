@@ -797,24 +797,16 @@ Network
 
 .. function:: net_if_stats()
 
-  Return information about each :term:`NIC` (network interface card) installed on the
-  system as a dictionary whose keys are the NIC names and value is a named tuple
-  with the following fields:
+  Return a dictionary mapping each :term:`NIC` to a named tuple with the
+  following fields:
 
-  - **isup**: a bool indicating whether the NIC is up and running (meaning
-    ethernet cable or Wi-Fi is connected).
-  - **duplex**: the duplex communication type;
-    it can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
+  - **isup**: whether the NIC is up and running (bool).
+  - **duplex**: :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
     :const:`NIC_DUPLEX_UNKNOWN`.
-  - **speed**: the NIC speed expressed in megabits (Mbps), if it can't be
-    determined (e.g. 'localhost') it will be set to ``0``.
-  - **mtu**: NIC's maximum transmission unit expressed in bytes.
-  - **flags**: a string of comma-separated flags on the interface (may be an empty string).
-    Possible flags are: ``up``, ``broadcast``, ``debug``, ``loopback``,
-    ``pointopoint``, ``notrailers``, ``running``, ``noarp``, ``promisc``,
-    ``allmulti``, ``master``, ``slave``, ``multicast``, ``portsel``,
-    ``dynamic``, ``oactive``, ``simplex``, ``link0``, ``link1``, ``link2``,
-    and ``d2`` (some flags are only available on certain platforms).
+  - **speed**: NIC speed in megabits (Mbps); ``0`` if undetermined.
+  - **mtu**: maximum transmission unit in bytes.
+  - **flags**: a comma-separated string of interface flags (e.g.
+    ``"up,broadcast,running,multicast"``); may be an emty string.
 
   .. code-block:: pycon
 
