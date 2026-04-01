@@ -1043,13 +1043,15 @@ Functions
   Cache can optionally be cleared via ``process_iter.cache_clear()``.
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
+
   If *attrs* is specified, :meth:`Process.as_dict` is called internally and
   the results are cached so that subsequent method calls (e.g.
   :meth:`Process.name`, :meth:`Process.status`) return the cached values
-  instead of issuing new system calls.
+  instead of issuing new system calls. See :attr:`Process.attrs` for a
+  list of valid *attrs* names.
+
   If a method raises :exc:`AccessDenied` during pre-fetch, it will return
-  *ad_value* (default ``None``) instead of raising. If *attrs* is an empty list
-  it will retrieve all process info (slow).
+  *ad_value* (default ``None``) instead of raising.
 
   Processes are returned sorted by PID.
 
@@ -1095,8 +1097,8 @@ Functions
      dict is deprecated in favor of this new approach.
 
   .. versionchanged:: 8.0.0
-     passing an empty list as *attrs* is deprecated; use
-     ``attrs=Process.attrs`` instead, see :ref:`migration guide <migration-8.0>`.
+     passing an empty list (``attrs=[]``) to mean "all attributes" is
+     deprecated; use :attr:`Process.attrs` instead.
 
 .. function:: pid_exists(pid)
 
@@ -1317,14 +1319,16 @@ Process class
   .. attribute:: attrs
 
     A ``frozenset`` of strings representing the valid attribute names accepted
-    by :meth:`as_dict` and :func:`process_iter`. Excludes deprecated names.
+    by :meth:`as_dict` and :func:`process_iter`.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> psutil.Process.attrs
        frozenset({'cmdline', 'cpu_num', 'cpu_percent', ...})
-       >>> psutil.process_iter(attrs=psutil.Process.attrs)  # all attrs
+       >>> # all attrs
+       >>> psutil.process_iter(attrs=psutil.Process.attrs)
+       >>> # all attrs except 'net_connections'
        >>> psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
 
     .. versionadded:: 8.0.0
@@ -1427,10 +1431,10 @@ Process class
     .. method:: as_dict(attrs=None, ad_value=None)
 
       Utility method retrieving multiple process information as a dictionary.
-      If *attrs* is specified it must be a collection of strings reflecting
+      If *attrs* is specified, it must be a collection of strings reflecting
       available :class:`Process` class's attribute names (see
-      :attr:`Process.attrs`). If not passed, all public read only attributes
-      are assumed.
+      :attr:`Process.attrs` for a full list). If not passed, all public
+      read-only attributes are assumed.
 
       *ad_value* is the value which gets assigned to a dict key in case
       :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when

@@ -603,7 +603,7 @@ class Process:
         """
         valid_names = self.attrs
         # Deprecated attrs: not returned by default but still accepted if
-        # explicitly requested via as_dict(attrs=[...]).
+        # explicitly requested.
         deprecated_names = {"memory_full_info"}
 
         if attrs is not None:
@@ -1683,8 +1683,7 @@ def process_iter(
     the results are cached so that subsequent method calls (e.g.
     p.name()) return cached values.
 
-    If *attrs* is an empty list a DeprecationWarning is raised.
-    Use *attrs=Process.attrs* to retrieve all process info (slow).
+    Use `attrs=Process.attrs` to retrieve all process info (slow).
     """
     global _pmap
 
