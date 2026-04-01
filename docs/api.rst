@@ -665,27 +665,19 @@ Network
   Return system-wide socket connections as a list of named tuples.
   Every named tuple provides 7 attributes:
 
-  - **fd**: the socket file descriptor. If the connection refers to the current
-    process this may be passed to :func:`socket.fromfd`
-    to obtain a usable socket object.
-    On Windows and SunOS this is always set to ``-1``.
-  - **family**: the address family, either :data:`socket.AF_INET`, :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
-  - **type**: the address type, either :data:`socket.SOCK_STREAM`, :data:`socket.SOCK_DGRAM` or
-    :data:`socket.SOCK_SEQPACKET`.
+  - **fd**: the socket file descriptor; ``-1`` on Windows and SunOS.
+  - **family**: the address family, either :data:`socket.AF_INET`,
+    :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
+  - **type**: the address type, either :data:`socket.SOCK_STREAM`,
+    :data:`socket.SOCK_DGRAM` or :data:`socket.SOCK_SEQPACKET`.
   - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
-    in case of :data:`socket.AF_UNIX` sockets. For UNIX sockets see notes below.
-  - **raddr**: the remote address as a ``(ip, port)`` named tuple or an
-    absolute ``path`` in case of UNIX sockets.
-    When the remote endpoint is not connected you'll get an empty tuple
-    (AF_INET*) or ``""`` (AF_UNIX). For UNIX sockets see notes below.
-  - **status**: represents the status of a TCP connection. The return value
-    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
-    (a string).
-    For UDP and UNIX sockets this is always going to be
-    :const:`psutil.CONN_NONE`.
-  - **pid**: the PID of the process which opened the socket, if retrievable,
-    else ``None``. On some platforms (e.g. Linux) the availability of this
-    field changes depending on process privileges (root is needed).
+    for :data:`socket.AF_UNIX` sockets (see notes below).
+  - **raddr**: the remote address, either an empty tuple (``AF_INET*``) or
+    ``""`` (``AF_UNIX``) when not connected. For UNIX sockets see notes below.
+  - **status**: a :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constant;
+    always :const:`psutil.CONN_NONE` for UDP and UNIX sockets.
+  - **pid**: PID of the process which opened the socket. Set to ``None`` if it
+    can't be retrieved due to insufficient permissions (e.g. Linux).
 
   The *kind* parameter is a string which filters for connections matching the
   following criteria:
@@ -718,7 +710,6 @@ Network
    | ``'all'``      | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
-  On macOS and AIX this function requires root privileges.
   To get per-process connections use :meth:`Process.net_connections`.
 
   .. code-block:: pycon
