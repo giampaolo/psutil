@@ -157,6 +157,8 @@ Others:
 - :gh:`2788`: git tags renamed from ``release-X.Y.Z`` to ``vX.Y.Z`` (e.g.
   ``release-7.2.2`` → ``v7.2.2``). Old tags are kept for backward
   compatibility.
+- :gh:`2799`: :meth:`Process.as_dict` now returns a dict with keys sorted
+  alphabetically when *attrs* is not specified.
 
 **Bug fixes**
 

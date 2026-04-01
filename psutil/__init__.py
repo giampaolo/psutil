@@ -622,9 +622,9 @@ class Process:
                 raise ValueError(msg)
 
         retdict = {}
-        ls = attrs or valid_names
+        names = attrs or sorted(valid_names)
         with self.oneshot():
-            for name in ls:
+            for name in names:
                 try:
                     if name == 'pid':
                         ret = self.pid
