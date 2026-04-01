@@ -131,11 +131,6 @@ CPU
      [2.0, 1.0]
      >>>
 
-  .. note::
-    the first time this function is called with *interval* = ``0.0`` or ``None``
-    it will return a meaningless ``0.0`` value which you are supposed to
-    ignore.
-
   .. seealso:: :ref:`faq_cpu_percent`
 
   .. versionchanged:: 5.9.6
@@ -150,11 +145,6 @@ CPU
   *percpu* arguments have the same meaning as in :func:`cpu_percent`.
   On Linux "guest" and "guest_nice" percentages are not accounted in "user"
   and "user_nice" percentages.
-
-  .. note::
-    the first time this function is called with *interval* = ``0.0`` or
-    ``None`` it will return a meaningless ``0.0`` value which you are supposed
-    to ignore.
 
   .. seealso:: :ref:`faq_cpu_percent`
 
