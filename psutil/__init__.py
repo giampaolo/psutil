@@ -807,7 +807,7 @@ class Process:
 
     @_use_prefetch
     def status(self) -> ProcessStatus | str:
-        """The process current status as a `STATUS_*` constant."""
+        """The process current status as a `STATUS_` constant."""
         try:
             return self._proc.status()
         except ZombieProcess:
@@ -914,10 +914,11 @@ class Process:
             *value* is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
 
-            On Windows only *ioclass* is used and it can be set to 2
-            (normal), 1 (low) or 0 (very low).
+            On Windows only *ioclass* is used and it can be set to
+            one of the `IOPRIO_*` constants (IOPRIO_VERYLOW,
+            IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH).
 
-            Available on Linux and Windows > Vista only.
+            Availability: Linux, Windows
             """
             if ioclass is None:
                 if value is not None:
@@ -963,7 +964,7 @@ class Process:
             want to set the affinity (e.g. [0, 1]). If an empty list is
             passed, all eligible CPUs are assumed (and set).
 
-            Availability: Linux, Windows BSD only
+            Availability: Linux, Windows, FreeBSD
             """
             if cpus is None:
                 return sorted(set(self._proc.cpu_affinity_get()))
@@ -1115,7 +1116,7 @@ class Process:
         When *interval* is 0.0 or None (default) compares process times
         to system CPU times elapsed since last call, returning
         immediately (non-blocking). That means that the first time
-        this is called it will return a meaningful 0.0 value.
+        this is called it will return a meaningless 0.0 value.
 
         When *interval* is > 0.0 compares process times to system CPU
         times elapsed before and after the interval (blocking).
@@ -1205,11 +1206,13 @@ class Process:
     @memoize_when_activated
     def cpu_times(self) -> pcputimes:
         """Return a (user, system, children_user, children_system)
-        named tuple representing the accumulated process time, in
-        seconds.
-        This is similar to os.times() but per-process.
-        On macOS and Windows children_user and children_system are
-        always set to 0.
+        named tuple representing the accumulated process time,
+        expressed in seconds.
+
+        Linux includes an additional `iowait` field.
+
+        On macOS and Windows `children_user` and `children_system`
+        fields are always set to 0.
         """
         return self._proc.cpu_times()
 
@@ -1384,7 +1387,7 @@ class Process:
     @_use_prefetch
     def net_connections(self, kind: str = "inet") -> list[pconn]:
         """Return socket connections opened by process as a list of
-        (fd, family, type, laddr, raddr, status, pid) named tuples.
+        (fd, family, type, laddr, raddr, status) named tuples.
 
         The *kind* parameter filters for connections that match the
         following criteria:
@@ -1445,8 +1448,8 @@ class Process:
         """Send a signal *sig* to process, pre-emptively checking
         whether PID has been reused (see signal module constants).
 
-        On Windows only SIGTERM is valid and is treated as an alias
-        for kill().
+        On Windows only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT
+        are valid. SIGTERM is treated as an alias for kill().
         """
         if POSIX:
             self._send_signal(sig)
@@ -1504,7 +1507,7 @@ class Process:
             self._proc.kill()
 
     def wait(self, timeout: float | None = None) -> int | None:
-        """Wait for process to terminate, and if process is a children
+        """Wait for process to terminate, and if process is a child
         of os.getpid(), also return its exit code, else None.
 
         On Windows there's no such limitation (exit code is always
@@ -2141,8 +2144,9 @@ if hasattr(_psplatform, "cpu_freq"):
         min and max frequency expressed in Mhz.
 
         If *percpu* is True and the system supports per-cpu frequency
-        retrieval (Linux only), a list of frequencies is returned for
-        each CPU. If not, a list with one element is returned.
+        retrieval (Linux and FreeBSD), a list of frequencies is
+        returned for each CPU. If not, a list with one element is
+        returned.
         """
         ret = _psplatform.cpu_freq()
         if percpu:
@@ -2238,7 +2242,7 @@ def virtual_memory() -> svmem:
      - cached (BSD, macOS):
        cache for various things.
 
-     - wired (macOS, BSD):
+     - wired (macOS, BSD, Windows):
        memory that is marked to always stay in RAM. It is never moved to disk.
 
      - shared (BSD):
@@ -2306,8 +2310,10 @@ def disk_io_counters(
      - write_count: number of writes
      - read_bytes:  number of bytes read
      - write_bytes: number of bytes written
-     - read_time:   time spent reading from disk (in ms)
-     - write_time:  time spent writing to disk (in ms)
+     - read_time:   (not NetBSD, OpenBSD) time spent reading from
+       disk (in ms)
+     - write_time:  (not NetBSD, OpenBSD) time spent writing to
+       disk (in ms)
 
     Platform specific:
 
@@ -2507,6 +2513,7 @@ def net_if_stats() -> dict[str, snicstats]:
      - speed: the NIC speed expressed in mega bits (MB); if it can't
               be determined (e.g. 'localhost') it will be set to 0.
      - mtu: the maximum transmission unit expressed in bytes.
+     - flags: a string of comma-separated flags on the interface.
     """
     return _psplatform.net_if_stats()
 
@@ -2581,7 +2588,7 @@ if hasattr(_psplatform, "sensors_battery"):
          - percent: battery power left as a percentage.
          - secsleft: a rough approximation of how many seconds are left
                      before the battery runs out of power. May be
-                     POWER_TIME_UNLIMITED or POWER_TIME_UNLIMITED.
+                     `POWER_TIME_UNLIMITED` or `POWER_TIME_UNKNOWN`.
          - power_plugged: True if the AC power cable is connected.
         """
         return _psplatform.sensors_battery()
@@ -2614,6 +2621,8 @@ def users() -> list[suser]:
      - host: the host name associated with the entry, if any.
      - started: the creation time as a floating point number expressed in
        seconds since the epoch.
+     - pid: the PID of the login process (None on Windows and
+       OpenBSD).
     """
     return _psplatform.users()
 
