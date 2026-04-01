@@ -1529,13 +1529,15 @@ class Process:
 
 # The valid attr names which can be processed by Process.as_dict().
 # fmt: off
-_as_dict_attrnames = {
+Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'info'}
-}
+      'connections', 'memory_full_info', 'oneshot', 'info', 'attrs'}
+)
 # fmt: on
+
+_as_dict_attrnames = Process.attrs
 
 # Deprecated attrs: not returned by default but still accepted if
 # explicitly requested via as_dict(attrs=[...]).
@@ -1679,10 +1681,16 @@ def process_iter(
     the results are cached so that subsequent method calls (e.g.
     p.name()) return cached values.
 
-    If *attrs* is an empty list it will retrieve all process info
-    (slow).
+    If *attrs* is an empty list a DeprecationWarning is raised.
+    Use *attrs=Process.attrs* to retrieve all process info (slow).
     """
     global _pmap
+    if attrs is not None and len(attrs) == 0:
+        msg = (
+            "process_iter(attrs=[]) is deprecated; use "
+            "process_iter(attrs=Process.attrs) to retrieve all attributes"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     def add(pid):
         proc = Process(pid)
