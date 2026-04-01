@@ -1094,6 +1094,10 @@ Functions
      cached values instead of making new system calls. The :attr:`Process.info`
      dict is deprecated in favor of this new approach.
 
+  .. versionchanged:: 8.0.0
+     Passing an empty list as *attrs* is deprecated; use
+     ``attrs=Process.attrs`` instead.
+
 .. function:: pid_exists(pid)
 
   Check whether the given PID exists in the current process list. This is
@@ -1310,6 +1314,21 @@ Process class
 
     The process PID. This is the only (read-only) attribute of the class.
 
+  .. attribute:: attrs
+
+    A ``frozenset`` of strings representing the valid attribute names accepted
+    by :meth:`as_dict` and :func:`process_iter`. Excludes deprecated names.
+
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> psutil.Process.attrs
+       frozenset({'cmdline', 'cpu_num', 'cpu_percent', ...})
+       >>> psutil.process_iter(attrs=psutil.Process.attrs)  # all attrs
+       >>> psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
+    .. versionadded:: 8.0.0
+
   .. attribute:: info
 
     A dict containing pre-fetched process info, set by
@@ -1408,13 +1427,10 @@ Process class
     .. method:: as_dict(attrs=None, ad_value=None)
 
       Utility method retrieving multiple process information as a dictionary.
-      If *attrs* is specified it must be a list of strings reflecting available
-      :class:`Process` class's attribute names. Here's a list of possible string
-      values:
-      ``'cmdline'``, ``'net_connections'``, ``'cpu_affinity'``, ``'cpu_num'``, ``'cpu_percent'``, ``'cpu_times'``, ``'create_time'``, ``'cwd'``, ``'environ'``, ``'exe'``, ``'gids'``, ``'io_counters'``, ``'ionice'``, ``'memory_footprint'``, ``'memory_full_info'``, ``'memory_info'``, ``'memory_info_ex'``, ``'memory_maps'``, ``'memory_percent'``, ``'name'``, ``'nice'``, ``'num_ctx_switches'``, ``'num_fds'``, ``'num_handles'``, ``'num_threads'``, ``'open_files'``, ``'pid'``, ``'ppid'``, ``'status'``, ``'terminal'``, ``'threads'``, ``'uids'``, ``'username'``.
-
-      If *attrs* argument is not passed all public read only attributes are
-      assumed.
+      If *attrs* is specified it must be a collection of strings reflecting
+      available :class:`Process` class's attribute names (see
+      :attr:`Process.attrs`). If not passed, all public read only attributes
+      are assumed.
 
       *ad_value* is the value which gets assigned to a dict key in case
       :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
@@ -1432,9 +1448,6 @@ Process class
        >>> p.as_dict(attrs=['pid', 'name', 'username'])
        {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
        >>>
-       >>> # get a list of valid attrs names
-       >>> list(psutil.Process().as_dict().keys())
-       ['cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent', 'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters', 'ionice', 'memory_footprint', 'memory_full_info', 'memory_info', 'memory_info_ex', 'memory_maps', 'memory_percent', 'name', 'net_connections', 'nice', 'num_ctx_switches', 'num_fds', 'num_threads', 'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username']
 
     .. versionchanged:: 3.0.0
        *ad_value* is used also when incurring into :exc:`ZombieProcess`
