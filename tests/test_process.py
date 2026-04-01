@@ -1232,6 +1232,18 @@ class TestProcess(PsutilTestCase):
         with pytest.raises(ValueError):
             p.as_dict(['foo', 'bar'])
 
+    def test_as_dict_attrs(self):
+        p = psutil.Process()
+        for name in p.as_dict():
+            assert name in dir(psutil.Process)
+        for name in p.as_dict(p.attrs):
+            assert name in dir(psutil.Process)
+        # test excluded attrs
+        assert "net_connections" in list(p.as_dict(p.attrs))
+        assert "net_connections" not in list(
+            p.as_dict(p.attrs - {"net_connections"})
+        )
+
     def test_oneshot(self):
         p = psutil.Process()
         with mock.patch("psutil._psplatform.Process.cpu_times") as m:
