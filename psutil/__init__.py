@@ -1695,12 +1695,22 @@ def process_iter(
     def remove(pid):
         pmap.pop(pid, None)
 
-    if attrs is not None and len(attrs) == 0:
-        msg = (
-            "process_iter(attrs=[]) is deprecated; use "
-            "process_iter(attrs=Process.attrs) to retrieve all attributes"
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    if attrs is not None:
+        if attrs == []:  # deprecated in 8.0.0
+            msg = (
+                "process_iter(attrs=[]) is deprecated; use "
+                "process_iter(attrs=Process.attrs) to retrieve all attributes"
+            )
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        elif not attrs:
+            # as_dict() will resolve an empty list|tuple|set to "all
+            # attribute names", but it's ambiguous and should be
+            # signaled.
+            msg = (
+                f"process_iter(attrs={attrs}) is ambiguous; use "
+                "process_iter(attrs=Process.attrs) to retrieve all attributes"
+            )
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
     pmap = _pmap.copy()
     a = set(pids())
