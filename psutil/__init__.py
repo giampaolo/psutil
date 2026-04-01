@@ -339,7 +339,7 @@ class Process:
     is_running() before querying the process.
     """
 
-    attrs = frozenset()  # set later
+    attrs: frozenset[str] = frozenset()  # dynamically set later
 
     def __init__(self, pid: int | None = None) -> None:
         self._init(pid)
