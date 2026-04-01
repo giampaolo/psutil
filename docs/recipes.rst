@@ -268,32 +268,6 @@ Kill a process tree (including grandchildren):
 
 -------------------------------------------------------------------------------
 
-Find zombie (defunct) processes:
-
-
-.. code-block:: python
-
-  import psutil
-
-  for p in psutil.process_iter(["status"]):
-      if p.status() == psutil.STATUS_ZOMBIE:
-          print(f"zombie: pid={p.pid}")
-
--------------------------------------------------------------------------------
-
-Terminate all processes matching a given name:
-
-.. code-block:: python
-
-  import psutil
-
-  def terminate_procs_by_name(name):
-      for p in psutil.process_iter(["name"]):
-          if p.name() == name:
-              p.terminate()
-
--------------------------------------------------------------------------------
-
 Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
 exit within the timeout:
 
@@ -308,21 +282,6 @@ exit within the timeout:
           p.wait(timeout=timeout)
       except psutil.TimeoutExpired:
           p.kill()
-
--------------------------------------------------------------------------------
-
-Restart a process:
-
-.. code-block:: python
-
-  import subprocess, psutil
-
-  def restart_process(pid):
-      p = psutil.Process(pid)
-      cmd = p.cmdline()
-      p.terminate()
-      p.wait()
-      return subprocess.Popen(cmd)
 
 -------------------------------------------------------------------------------
 
@@ -429,41 +388,6 @@ them to a human-readable string:
               return "{:.1f}{}".format(value, s)
       return "{}B".format(n)
 
-Memory
-^^^^^^
-
-Show both RAM and swap usage in human-readable form:
-
-.. code-block:: python
-
-  import psutil
-
-  def print_memory():
-      ram = psutil.virtual_memory()
-      swap = psutil.swap_memory()
-      print(
-          "RAM:  total={}, used={}, free={}, percent={}%".format(
-              bytes2human(ram.total),
-              bytes2human(ram.used),
-              bytes2human(ram.available),
-              ram.percent,
-          )
-      )
-      print(
-          "Swap: total={}, used={}, free={}, percent={}%".format(
-              bytes2human(swap.total),
-              bytes2human(swap.used),
-              bytes2human(swap.free),
-              swap.percent,
-          )
-      )
-
-
-.. code-block:: none
-
-  RAM:  total=8.0G, used=4.5G, free=3.0G, percent=56.2%
-  Swap: total=2.0G, used=0.1G, free=1.9G, percent=4.1%
-
 CPU
 ^^^
 
@@ -504,29 +428,6 @@ For each CPU core:
 Disks
 ^^^^^
 
-Show disk usage for all mounted partitions:
-
-.. code-block:: python
-
-  import psutil
-
-  def print_disk_usage():
-      for part in psutil.disk_partitions():
-          usage = psutil.disk_usage(part.mountpoint)
-          print("{:<20} total={:<8} used={:<8} free={:<8} percent={}%".format(
-              part.mountpoint,
-              bytes2human(usage.total), bytes2human(usage.used),
-              bytes2human(usage.free), usage.percent))
-
-.. code-block:: none
-
-  /               total=47.8G    used=17.4G    free=27.9G    percent=38.4%
-  /boot/efi       total=256.0M   used=73.6M    free=182.4M   percent=28.8%
-  /home           total=878.7G   used=497.5G   free=336.5G   percent=59.7%
-
-
--------------------------------------------------------------------------------
-
 Show real-time disk I/O:
 
 .. code-block:: python
@@ -549,29 +450,6 @@ Show real-time disk I/O:
 
 Network
 ^^^^^^^
-
-List IP addresses for each network interface:
-
-.. code-block:: python
-
-  import psutil, socket
-
-  def print_net_addrs():
-      for iface, addrs in psutil.net_if_addrs().items():
-          for addr in addrs:
-              if addr.family == socket.AF_INET:
-                  print(
-                      "{:<15} address={:<15} netmask={}".format(
-                          iface, addr.address, addr.netmask
-                      )
-                  )
-
-.. code-block:: none
-
-  lo              address=127.0.0.1       netmask=255.0.0.0
-  eth0            address=10.0.0.4        netmask=255.255.255.0
-
--------------------------------------------------------------------------------
 
 Show real-time network I/O per interface:
 
