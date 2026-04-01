@@ -1326,7 +1326,9 @@ Process class
   .. attribute:: attrs
 
     A ``frozenset`` of strings representing the valid attribute names accepted
-    by :meth:`as_dict` and :func:`process_iter`.
+    by :meth:`as_dict` and :func:`process_iter`. It defaults to all read-only
+    :class:`Process` method names, minus the utility methods such as
+    :meth:`as_dict`, :meth:`children`, etc.
 
     .. code-block:: pycon
 
@@ -1437,11 +1439,11 @@ Process class
 
     .. method:: as_dict(attrs=None, ad_value=None)
 
-      Utility method retrieving multiple process information as a dictionary.
+      Utility method returning multiple process information as a dictionary.
+
       If *attrs* is specified, it must be a collection of strings reflecting
-      available :class:`Process` class's attribute names. If not passed, all
-      public read-only attributes contained in :attr:`Process.attrs` are
-      assumed.
+      available :class:`Process` class's attribute names. If not passed all
+      :attr:`Process.attrs` names are assumed.
 
       *ad_value* is the value which gets assigned to a dict key in case
       :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
