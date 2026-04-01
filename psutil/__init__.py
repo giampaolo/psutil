@@ -338,6 +338,8 @@ class Process:
     is_running() before querying the process.
     """
 
+    attrs = None  # set later
+
     def __init__(self, pid: int | None = None) -> None:
         self._init(pid)
 
@@ -598,13 +600,17 @@ class Process:
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
         """
-        valid_names = _as_dict_attrnames
+        valid_names = self.attrs
+        # Deprecated attrs: not returned by default but still accepted if
+        # explicitly requested via as_dict(attrs=[...]).
+        deprecated_names = {"memory_full_info"}
+
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
                 msg = f"invalid attrs type {type(attrs)}"
                 raise TypeError(msg)
             attrs = set(attrs)
-            invalid_names = attrs - valid_names - _as_dict_attrnames_deprecated
+            invalid_names = attrs - valid_names - deprecated_names
             if invalid_names:
                 msg = "invalid attr name{} {}".format(
                     "s" if len(invalid_names) > 1 else "",
@@ -1527,7 +1533,8 @@ class Process:
         return self._exitcode
 
 
-# The valid attr names which can be processed by Process.as_dict().
+# The valid attr names which can be processed by Process.as_dict(attrs=...)
+# and process_iter(attrs=...).
 # fmt: off
 Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
@@ -1536,12 +1543,6 @@ Process.attrs = frozenset(
       'connections', 'memory_full_info', 'oneshot', 'info', 'attrs'}
 )
 # fmt: on
-
-_as_dict_attrnames = Process.attrs
-
-# Deprecated attrs: not returned by default but still accepted if
-# explicitly requested via as_dict(attrs=[...]).
-_as_dict_attrnames_deprecated = {'memory_full_info'}
 
 
 # =====================================================================
