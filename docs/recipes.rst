@@ -127,17 +127,6 @@ Processes owned by user:
 
 -------------------------------------------------------------------------------
 
-Processes actively running:
-
-.. code-block:: pycon
-
-  >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "status"]) if p.status() == psutil.STATUS_RUNNING])
-  [(1150, 'Xorg'),
-   (1776, 'unity-panel-service'),
-   (20492, 'python3')]
-
--------------------------------------------------------------------------------
-
 Processes using log files:
 
 .. code-block:: pycon
@@ -405,25 +394,6 @@ Print real-time CPU usage percentage:
   CPU: 2.1%
   CPU: 1.4%
   CPU: 0.9%
-
--------------------------------------------------------------------------------
-
-For each CPU core:
-
-.. code-block:: python
-
-  import psutil
-
-  while True:
-      for i, pct in enumerate(psutil.cpu_percent(percpu=True, interval=1)):
-          print("CPU-{}: {}%".format(i, pct))
-      print()
-
-.. code-block:: none
-
-  CPU-0: 1.0%
-  CPU-1: 2.1%
-  CPU-2: 3.0%
 
 Disks
 ^^^^^
