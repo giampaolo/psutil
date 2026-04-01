@@ -580,8 +580,8 @@ Disks
   as a dictionary with partition names as the keys.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
-  (may happen on a very busy or long-lived system) are automatically adjusted
-  so that values never decrease. ``disk_io_counters.cache_clear()`` can be used
+  are automatically adjusted so they never decrease (this can happen on very
+  busy or long-lived systems). ``disk_io_counters.cache_clear()`` can be used
   to invalidate the *nowrap* cache.
 
   On diskless machines this function will return ``None`` or ``{}`` if
@@ -634,15 +634,13 @@ Network
     on macOS and BSD). See :term:`dropin / dropout`.
 
   If *pernic* is ``True`` return the same information for every network
-  interface installed on the system as a dictionary with network interface
-  names as the keys and the named tuple described above as the values.
-  On some systems such as Linux, on a very busy or long-lived system, the
-  numbers returned by the kernel may overflow and wrap (restart from zero).
-  If *nowrap* is ``True`` psutil will detect and adjust those numbers across
-  function calls and add "old value" to "new value" so that the returned
-  numbers will always be increasing or remain the same, but never decrease.
-  ``net_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
-  cache.
+  interface as a dictionary with interface names as the keys.
+
+  If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
+  are automatically adjusted so they never decrease (this can happen on very
+  busy or long-lived systems). ``net_io_counters.cache_clear()`` can be
+  used to invalidate the *nowrap* cache.
+
   On machines with no network interfaces this function will return ``None`` or
   ``{}`` if *pernic* is ``True``.
 

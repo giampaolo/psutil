@@ -2319,8 +2319,8 @@ def disk_io_counters(
     physical disk as a dictionary with partition names as the keys.
 
     If *nowrap* is True (default), counters that overflow and wrap to
-    zero (may happen on a very busy or long-lived system) are
-    automatically adjusted so that values never decrease.
+    zero are automatically adjusted so they never decrease (this can
+    happen on very busy or long-lived systems).
     `disk_io_counters.cache_clear()` can be used to invalidate the
     *nowrap* cache.
     """
@@ -2366,17 +2366,14 @@ def net_io_counters(
                      (always 0 on macOS and BSD)
 
     If *pernic* is True return the same information for every
-    network interface installed on the system as a dictionary
-    with network interface names as the keys and the named tuple
-    described above as the values.
+    network interface as a dictionary with interface names as the
+    keys.
 
-    If *nowrap* is True it detects and adjust the numbers which overflow
-    and wrap (restart from 0) and add "old value" to "new value" so that
-    the returned numbers will always be increasing or remain the same,
-    but never decrease.
-
+    If *nowrap* is True (default), counters that overflow and wrap to
+    zero are automatically adjusted so they never decrease (this can
+    happen on very busy or long-lived systems).
     `net_io_counters.cache_clear()` can be used to invalidate the
-    cache.
+    *nowrap* cache.
     """
     rawdict = _psplatform.net_io_counters()
     if not rawdict:
