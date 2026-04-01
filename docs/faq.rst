@@ -228,6 +228,17 @@ The only way is to have its parent process call ``wait()`` (or ``waitpid()``).
 If the parent never does this, killing the parent will cause the zombie to be
 re-parented to ``init`` / ``systemd``, which will reap it automatically.
 
+.. _faq_open_files_windows:
+
+Why does open_files() not return all files on Windows?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.open_files` on Windows is not guaranteed to enumerate all
+regular file handles. The underlying Windows API may hang when retrieving
+certain handle names, so psutil spawns a thread to query each handle and
+kills it if it doesn't respond within 100 ms. This means some entries can be
+missed. This is a known OS-level limitation shared by tools like Process
+Hacker (see `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
 
 .. _faq_pid_exists_vs_isrunning:
 
@@ -290,6 +301,12 @@ the same time. The maximum value is ``psutil.cpu_count() * 100``. For
 example, on a 4-core machine a fully-loaded process can reach 400%.
 The system-wide :func:`cpu_percent` (without a :class:`Process`) always
 stays in the 0–100% range because it averages across all cores.
+
+The returned value is explicitly *not* split evenly between all available
+CPUs. This is consistent with the ``top`` UNIX utility: a busy loop on a
+system with 2 logical CPUs is reported as 100%, not 50%. Note that Windows
+``taskmgr.exe`` behaves differently (it would report 50%). To emulate that:
+``p.cpu_percent() / psutil.cpu_count()``.
 
 .. _faq_cpu_count:
 

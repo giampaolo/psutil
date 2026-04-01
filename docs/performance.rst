@@ -40,10 +40,10 @@ Fast:
       p.memory_info()  # from cache
       p.status()       # from cache
 
-The speed improvement depends on the platform and on how many attributes
-you read. On Linux the gain is typically around 1.5x–2x; on Windows it can
-be much higher. As a rule of thumb: if you read more than two attributes
-from the same process, use :meth:`Process.oneshot`.
+The speed improvement depends on the platform and on how many attributes you
+read. On Linux the gain is typically around 1.5x–2x; on Windows it can be much
+higher. As a rule of thumb: if you read more than one attribute from the same
+process, use :meth:`Process.oneshot`.
 
 .. _perf-process-iter:
 
@@ -84,7 +84,7 @@ if a process disappears while iterating), since attributes are retrieved in a
 single pass and exceptions like :exc:`NoSuchProcess` and :exc:`AccessDenied`
 are handled internally.
 
-A typical use case may be to fetch all process attrs except the slow ones (see
+A typical use case is to fetch all process attrs except the slow ones (see
 :ref:`perf-api-speed` table below):
 
 .. code-block:: python
@@ -93,35 +93,6 @@ A typical use case may be to fetch all process attrs except the slow ones (see
 
   for p in psutil.process_iter(psutil.Process.attrs - {"memory_footprint", "memory_maps"}):
       ...
-
-.. _perf-pids:
-
-Avoid pids() + loop
--------------------
-
-A common but inefficient pattern is to call :func:`pids` and then
-construct a :class:`Process` for each PID manually:
-
-.. code-block:: python
-
-  import psutil
-
-  for pid in psutil.pids():
-      try:
-          p = psutil.Process(pid)
-          print(p.name())
-      except (psutil.NoSuchProcess, psutil.AccessDenied):
-          pass
-
-Prefer :func:`process_iter` instead. It supports the ``attrs`` pre-fetch,
-avoids race conditions, and caches :class:`Process` instances internally:
-
-.. code-block:: python
-
-  import psutil
-
-  for p in psutil.process_iter(["name"]):
-      print(p.pid, p.name())
 
 .. _perf-oneshot-bench:
 
