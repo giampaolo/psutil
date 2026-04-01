@@ -576,8 +576,9 @@ h4 {
     background: none !important;
     /*font-weight: bold !important;*/
     font-size:90% !important;
-    text-decoration: underline;
-    text-underline-offset: 4px;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 1px;
 }
 
 /* ================================================================== */
@@ -679,8 +680,9 @@ div.seealso {
 
 div.seealso a.reference {
     color: var(--adm-seealso-accent-border) !important;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 1px;
 }
 
 div.seealso a.reference:hover {
