@@ -191,8 +191,7 @@ def main():
     print()
     print_header("PROCESS APIS")
     p = psutil.Process(PID)
-    names = p.as_dict().keys()
-    for name in sorted(names):
+    for name in sorted(p.attrs):
         fun = getattr(p, name)
         if callable(fun):
             timecall(name, fun)

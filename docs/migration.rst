@@ -30,6 +30,8 @@ Key breaking changes in 8.0:
   :meth:`Process.memory_footprint`.
 - New :meth:`Process.memory_info_ex` (unrelated to the old method deprecated in
   4.0 and removed in 7.0).
+- New :attr:`Process.attrs`: frozenset of valid attribute names.
+- ``process_iter(attrs=[])`` is deprecated.
 - Python 3.6 dropped.
 
 .. important::
@@ -183,6 +185,47 @@ New memory_info_ex() method
 the old :meth:`Process.memory_info_ex` that was deprecated in 4.0 and
 removed in 7.0 (which corresponded to what later became
 :meth:`Process.memory_full_info`).
+
+New Process.attrs class attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:attr:`Process.attrs` is a new ``frozenset`` exposing the valid attribute
+names accepted by :meth:`Process.as_dict` and :func:`process_iter`. It
+replaces the previous pattern of creating a throwaway process just to
+discover available names:
+
+.. code-block:: python
+
+  # before
+  attrs = list(psutil.Process().as_dict().keys())
+
+  # after
+  attrs = psutil.Process.attrs
+
+It also makes it easy to pass all or a subset of attributes:
+
+.. code-block:: python
+
+  # all attrs
+  psutil.process_iter(attrs=psutil.Process.attrs)
+
+  # all except connections
+  psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
+process_iter(attrs=[]) is deprecated
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Passing an empty list to :func:`process_iter` to mean "retrieve all
+attributes" is deprecated and raises :exc:`DeprecationWarning`. Use
+:attr:`Process.attrs` instead:
+
+.. code-block:: python
+
+  # before
+  psutil.process_iter(attrs=[])
+
+  # after
+  psutil.process_iter(attrs=psutil.Process.attrs)
 
 Python 3.6 dropped
 ^^^^^^^^^^^^^^^^^^^^

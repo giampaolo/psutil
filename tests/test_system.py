@@ -173,10 +173,11 @@ class TestProcessIter(PsutilTestCase):
             assert name1 == p._prefetch["name"]
             break
 
-    def test_prefetch_empty_attrs(self):
+    def test_deprecated_prefetch_empty_attrs(self):
         # attrs=[] should prefetch all methods.
-        p = next(psutil.process_iter(attrs=[]))
-        assert p._prefetch.keys() == psutil._as_dict_attrnames
+        with pytest.warns(DeprecationWarning):
+            p = next(psutil.process_iter(attrs=[]))
+        assert p._prefetch.keys() == psutil.Process.attrs
 
     def test_prefetch_with_non_prefetched(self):
         # A method not in attrs should still do a live syscall.

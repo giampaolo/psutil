@@ -66,6 +66,7 @@ from ._enums import NicDuplex
 from ._enums import ProcessStatus
 
 if _TYPE_CHECKING:
+    from collections.abc import Collection
     from typing import Any
     from typing import Callable
     from typing import Generator
@@ -338,6 +339,8 @@ class Process:
     is_running() before querying the process.
     """
 
+    attrs: frozenset[str] = frozenset()  # dynamically set later
+
     def __init__(self, pid: int | None = None) -> None:
         self._init(pid)
 
@@ -586,25 +589,31 @@ class Process:
                     self._proc.oneshot_exit()
 
     def as_dict(
-        self, attrs: list[str] | None = None, ad_value: Any = None
+        self, attrs: Collection[str] | None = None, ad_value: Any = None
     ) -> dict[str, Any]:
         """Utility method returning process information as a
         hashable dictionary.
-        If *attrs* is specified it must be a list of strings
-        reflecting available Process class' attribute names
-        (e.g. ['cpu_times', 'name']) else all public (read
-        only) attributes are assumed.
+
+        If *attrs* is specified it must be a collection of strings
+        reflecting available Process class' attribute names (e.g.
+        ['cpu_times', 'name']) else all public (read-only) attributes
+        are assumed. See `Process.attrs` for a full list.
+
         *ad_value* is the value which gets assigned in case
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
         """
-        valid_names = _as_dict_attrnames
+        valid_names = self.attrs
+        # Deprecated attrs: not returned by default but still accepted if
+        # explicitly requested.
+        deprecated_names = {"memory_full_info"}
+
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
                 msg = f"invalid attrs type {type(attrs)}"
                 raise TypeError(msg)
             attrs = set(attrs)
-            invalid_names = attrs - valid_names - _as_dict_attrnames_deprecated
+            invalid_names = attrs - valid_names - deprecated_names
             if invalid_names:
                 msg = "invalid attr name{} {}".format(
                     "s" if len(invalid_names) > 1 else "",
@@ -1527,19 +1536,16 @@ class Process:
         return self._exitcode
 
 
-# The valid attr names which can be processed by Process.as_dict().
+# The valid attr names which can be processed by Process.as_dict(attrs=...)
+# and process_iter(attrs=...).
 # fmt: off
-_as_dict_attrnames = {
+Process.attrs = frozenset(
     x for x in dir(Process) if not x.startswith("_") and x not in
      {'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'parents', 'children', 'rlimit',
-      'connections', 'memory_full_info', 'oneshot', 'info'}
-}
+      'connections', 'memory_full_info', 'oneshot', 'info', 'attrs'}
+)
 # fmt: on
-
-# Deprecated attrs: not returned by default but still accepted if
-# explicitly requested via as_dict(attrs=[...]).
-_as_dict_attrnames_deprecated = {'memory_full_info'}
 
 
 # =====================================================================
@@ -1662,12 +1668,12 @@ _pids_reused = set()
 
 
 def process_iter(
-    attrs: list[str] | None = None, ad_value: Any = None
+    attrs: Collection[str] | None = None, ad_value: Any = None
 ) -> Iterator[Process]:
-    """Return a generator yielding a Process instance for all
+    """Return a generator yielding a `Process` instance for all
     running processes.
 
-    Every new Process instance is only created once and then cached
+    Every new `Process` instance is only created once and then cached
     into an internal table which is updated every time this is used.
     Cache can optionally be cleared via `process_iter.cache_clear()`.
 
@@ -1675,12 +1681,15 @@ def process_iter(
     their PIDs.
 
     *attrs* and *ad_value* have the same meaning as in
-    Process.as_dict(). If *attrs* is specified, as_dict() is called and
-    the results are cached so that subsequent method calls (e.g.
-    p.name()) return cached values.
+    Process.as_dict().
 
-    If *attrs* is an empty list it will retrieve all process info
-    (slow).
+    If *attrs* is specified, `Process.as_dict()` is called and the
+    results are cached, so that subsequent method calls (e.g.
+    `p.name()`) return cached values. Use `attrs=Process.attrs` to
+    retrieve all process info (slow).
+
+    If a method raises `AccessDenied` during pre-fetch, it will return
+    *ad_value* (default None) instead of raising.
     """
     global _pmap
 
@@ -1691,6 +1700,23 @@ def process_iter(
 
     def remove(pid):
         pmap.pop(pid, None)
+
+    if attrs is not None:
+        if attrs == []:  # deprecated in 8.0.0
+            msg = (
+                "process_iter(attrs=[]) is deprecated; use "
+                "process_iter(attrs=Process.attrs) to retrieve all attributes"
+            )
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+        elif not attrs:
+            # as_dict() will resolve an empty list|tuple|set to "all
+            # attribute names", but it's ambiguous and should be
+            # signaled.
+            msg = (
+                f"process_iter(attrs={attrs}) is ambiguous; use "
+                "process_iter(attrs=Process.attrs) to retrieve all attributes"
+            )
+            warnings.warn(msg, UserWarning, stacklevel=2)
 
     pmap = _pmap.copy()
     a = set(pids())

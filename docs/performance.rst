@@ -50,7 +50,7 @@ from the same process, use :meth:`Process.oneshot`.
 Use process_iter() with an attrs list
 --------------------------------------
 
-If you iterate over multiple PIDs, use :func:`process_iter`.
+If you iterate over multiple PIDs, always use :func:`process_iter`.
 It accepts an ``attrs`` argument that pre-fetches only the requested attributes
 in a single pass, minimizing system calls by fetching multiple attributes at once.
 This is faster than calling individual methods in a loop.
@@ -83,6 +83,16 @@ Using :func:`process_iter` also saves you from race conditions (e.g.
 if a process disappears while iterating), since attributes are retrieved in a
 single pass and exceptions like :exc:`NoSuchProcess` and :exc:`AccessDenied`
 are handled internally.
+
+A typical use case may be to fetch all process attrs except the slow ones (see
+:ref:`perf-api-speed` table below):
+
+.. code-block:: python
+
+  import psutil
+
+  for p in psutil.process_iter(psutil.Process.attrs - {"memory_footprint", "memory_maps"}):
+      ...
 
 .. _perf-pids:
 

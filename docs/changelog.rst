@@ -19,8 +19,8 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 - Split docs from a single HTML file into multiple new sections:
 
   - :doc:`/adoption <adoption>`: notable software using psutil
-  - :doc:`/api-overview <api-overview>`: show entire API via REPL usage examples
   - :doc:`/alternatives <alternatives>`: list of alternative Python libraries and tools that overlap with psutil.
+  - :doc:`/api-overview <api-overview>`: show entire API via REPL usage examples
   - :doc:`/credits <credits>`: list contributors and donors (was old ``CREDITS`` in root dir)
   - :doc:`/faq <faq>`: extended FAQ section
   - :doc:`/funding <funding>`: list funding methods and current sponsors
@@ -78,8 +78,16 @@ Type hints / enums:
   ``psutil.STATUS_RUNNING``) remain the primary API, and are now aliases
   for the corresponding enum members.
 
-- New APIs:
+New APIs:
 
+- :gh:`2798`: new :attr:`Process.attrs` class attribute, a ``frozenset`` of
+  valid attribute names accepted by :meth:`Process.as_dict` and
+  :func:`process_iter`. Replaces the old pattern of calling
+  ``list(psutil.Process().as_dict().keys())``.
+  Passing an empty list to :func:`process_iter` (``attrs=[]``) to mean
+  "retrieve all attributes" is **deprecated**. Use
+  ``attrs=Process.attrs`` instead.
+  See :ref:`migration guide <migration-8.0>`.
 - :gh:`1541`: New :meth:`Process.page_faults` method, returning a ``(minor,
   major)`` named tuple.
 - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
@@ -122,7 +130,7 @@ Type hints / enums:
     :meth:`Process.memory_footprint` instead.
     See :ref:`migration guide <migration-8.0>`.
 
-Others
+Others:
 
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
   has been normalized on all platforms, and the first 3 fields are now always
