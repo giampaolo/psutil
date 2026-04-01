@@ -577,18 +577,13 @@ Disks
   - **write_merged_count** (*Linux*): number of merged writes (see `iostats doc`_)
 
   If *perdisk* is ``True`` return the same information for every physical disk
-  installed on the system as a dictionary with partition names as the keys and
-  the named tuple described above as the values.
+  as a dictionary with partition names as the keys.
 
-  On some systems such as Linux, on a very busy or long-lived system, the
-  numbers returned by the kernel may overflow and wrap (restart from zero).
-  If *nowrap* is ``True`` psutil will detect and adjust those numbers across
-  function calls and add "old value" to "new value" so that the returned
-  numbers will always be increasing or remain the same, but never decrease.
-  ``disk_io_counters.cache_clear()`` can be used to invalidate the *nowrap*
-  cache.
-  On Windows it may be necessary to issue ``diskperf -y`` command from cmd.exe
-  first in order to enable IO counters.
+  If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
+  (may happen on a very busy or long-lived system) are automatically adjusted
+  so that values never decrease. ``disk_io_counters.cache_clear()`` can be used
+  to invalidate the *nowrap* cache.
+
   On diskless machines this function will return ``None`` or ``{}`` if
   *perdisk* is ``True``.
 

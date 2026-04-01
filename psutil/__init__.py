@@ -2316,19 +2316,13 @@ def disk_io_counters(
      - write_merged_count (Linux): number of merged writes
 
     If *perdisk* is True return the same information for every
-    physical disk installed on the system as a dictionary
-    with partition names as the keys and the named tuple
-    described above as the values.
+    physical disk as a dictionary with partition names as the keys.
 
-    If *nowrap* is True it detects and adjust the numbers which overflow
-    and wrap (restart from 0) and add "old value" to "new value" so that
-    the returned numbers will always be increasing or remain the same,
-    but never decrease.
-    "disk_io_counters.cache_clear()" can be used to invalidate the
-    cache.
-
-    On recent Windows versions `diskperf -y` command may need to be
-    executed first otherwise this function won't find any disk.
+    If *nowrap* is True (default), counters that overflow and wrap to
+    zero (may happen on a very busy or long-lived system) are
+    automatically adjusted so that values never decrease.
+    `disk_io_counters.cache_clear()` can be used to invalidate the
+    *nowrap* cache.
     """
     kwargs = dict(perdisk=perdisk) if LINUX else {}
     rawdict = _psplatform.disk_io_counters(**kwargs)
