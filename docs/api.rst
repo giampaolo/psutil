@@ -1760,16 +1760,12 @@ Process class
 
   .. method:: cpu_affinity(cpus=None)
 
-    Get or set process current
-    `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`_.
-    CPU affinity consists in telling the OS to run a process on a limited set
-    of CPUs only (on Linux cmdline, ``taskset`` command is typically used).
-    If no argument is passed it returns the current CPU affinity as a list
-    of integers.
-    If passed it must be a list of integers specifying the new CPUs affinity.
-    If an empty list is passed all eligible CPUs are assumed (and set).
-    On some systems such as Linux this may not necessarily mean all available
-    logical CPUs as in ``list(range(psutil.cpu_count()))``).
+    Get or set process
+    `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`_
+    (the set of CPUs the process is allowed to run on).
+    If no argument is passed, return the current affinity as a list of
+    integers. If passed, *cpus* must be a list of CPU integers. An empty
+    list sets affinity to all eligible CPUs.
 
     .. code-block:: pycon
 
