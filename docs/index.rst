@@ -99,18 +99,7 @@ Sponsors
       </tr>
     </table>
 
-    <div style="text-align: center;"><sup><a href="https://github.com/sponsors/giampaolo">add your logo</a></sup></div><br/>
-
-While psutil is free software and will always be, the project would benefit
-immensely from some funding.
-psutil is among the :doc:`top 100 <adoption>`
-most-downloaded Python packages, and keeping up with bug reports, user support,
-and ongoing maintenance has become increasingly difficult to sustain as a
-one-person effort.
-If you're a company that's making significant use of psutil you can consider
-becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`_,
-`Open Collective <https://opencollective.com/psutil>`_ or
-`PayPal <https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8>`_.
+    <div style="text-align: center;"><sup><a href="funding.html">add your logo</a></sup></div><br/>
 
 -------------------------------------------------------------------------------
 
@@ -148,6 +137,7 @@ becoming a sponsor via `GitHub <https://github.com/sponsors/giampaolo>`_,
    Who uses psutil <adoption>
    Alternatives <alternatives>
    Credits <credits>
+   Funding <funding>
    Timeline <timeline>
 
 .. toctree::
