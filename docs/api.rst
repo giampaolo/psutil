@@ -1760,26 +1760,9 @@ Process class
        2.9
 
     .. note::
-      the first time this method is called with interval = ``0.0`` or
-      ``None`` it will return a meaningless ``0.0`` value which you are
-      supposed to ignore.
-
-    .. note::
-      the returned value can be > 100.0 in case of a process running multiple
-      threads on different CPU cores.
-
-    .. note::
-      the returned value is explicitly *not* split evenly between all available
-      CPUs (differently from :func:`psutil.cpu_percent`).
-      This means that a busy loop process running on a system with 2 logical
-      CPUs will be reported as having 100% CPU utilization instead of 50%.
-      This was done in order to be consistent with ``top`` UNIX utility,
-      and also to make it easier to identify processes hogging CPU resources
-      independently from the number of CPUs.
-      It must be noted that ``taskmgr.exe`` on Windows does not behave like
-      this (it would report 50% usage instead).
-      To emulate Windows ``taskmgr.exe`` behavior you can do:
-      ``p.cpu_percent() / psutil.cpu_count()``.
+      the returned value is *not* split evenly between all available CPUs
+      (differently from :func:`psutil.cpu_percent`). To emulate Windows
+      ``taskmgr.exe`` behavior: ``p.cpu_percent() / psutil.cpu_count()``.
 
     .. seealso::
       - :ref:`faq_cpu_percent`
