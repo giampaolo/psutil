@@ -87,21 +87,22 @@ On Windows:
   set PSUTIL_DEBUG=1 && python.exe script.py
   psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
 
-
 Coding style
 ------------
 
-All style and formatting checks are automatically enforced both **locally on
-each `git commit`** and **remotely via a GitHub Actions pipeline**.
+All style and formatting checks are enforced both locally on each
+`git commit` and via a GitHub Actions pipeline.
 
-- **Python** code follows the `PEP-8`_ style guide. We use `black` and `ruff`
-  for formatting and linting.
-- **C** code generally follows the `PEP-7`_ style guide, with formatting
-  enforced by `clang-format`.
-- **Other files** (`.rst`, `.toml`, `.md`, `.yml`) are also validated by
-  dedicated command-line linters.
-- The **GitHub Actions pipeline** re-runs all these checks to ensure
-  consistency (via ``make lint-all``).
+- Python: follows `PEP-8`_, formatted and linted with ``black`` and
+  ``ruff``.
+- C: generally follows `PEP-7`_, formatted with ``clang-format``.
+- Other files (``.rst``, ``.toml``, ``.md``, ``.yml``): validated by linters.
+
+The GitHub Actions pipeline re-runs all checks for consistency
+(via ``make lint-all``).
+
+Run ``make fix-all`` before committing; it usually fixes Python style
+issues (via ``black`` and ``ruff``) and C style issues (via ``clang-format``).
 
 Code organization
 -----------------
