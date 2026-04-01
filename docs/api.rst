@@ -182,9 +182,9 @@ CPU
 
   Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
   actual number of CPUs the current process can use.
-  That can vary in case process CPU affinity has been changed, Linux cgroups
-  are being used or (in case of Windows) on systems using processor groups or
-  having more than 64 CPUs.
+  That can vary if process CPU affinity has been changed, Linux cgroups are
+  being used or (on Windows) on systems using processor groups or having more
+  than 64 CPUs.
   The number of usable CPUs can be obtained with:
 
   .. code-block:: pycon
@@ -470,9 +470,8 @@ Memory
 
   .. versionchanged:: 5.2.3
      on Linux this function relies on /proc fs instead of sysinfo() syscall so
-     that it can be used in conjunction with
-     :const:`psutil.PROCFS_PATH` in order to retrieve memory info about
-     Linux containers such as Docker and Heroku.
+     that it can be used in conjunction with :const:`psutil.PROCFS_PATH` to
+     retrieve memory info about Linux containers such as Docker and Heroku.
 
 Disks
 ^^^^^
@@ -1166,15 +1165,15 @@ Process class
   :meth:`threads` method).
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
-  :func:`hash` builtin can be used against instances of this class in order to
-  identify a process univocally over time (the hash is determined by mixing
-  process PID + creation time). As such it can also be used with :class:`set`.
+  :func:`hash` builtin can be used against instances of this class to identify
+  a process univocally over time (the hash is determined by mixing process PID
+  + creation time). As such it can also be used with :class:`set`.
 
   .. note::
 
-    in order to efficiently fetch more than one information about the process
-    at the same time, make sure to use either :meth:`oneshot` context manager
-    or :meth:`as_dict` utility method.
+    to efficiently fetch multiple attributes about the process at the same
+    time, use either :meth:`oneshot` context manager or :meth:`as_dict`
+    utility method.
 
   .. note::
 
@@ -1528,7 +1527,7 @@ Process class
     If no argument is provided it acts as a get, returning a ``(ioclass, value)``
     tuple on Linux and a *ioclass* integer on Windows.
     If *ioclass* is provided it acts as a set. In this case an additional
-    *value* can be specified on Linux only in order to increase or decrease the
+    *value* can be specified on Linux only to increase or decrease the
     I/O priority even further.
     Here's the possible platform-dependent *ioclass* values.
 
@@ -1728,7 +1727,7 @@ Process class
   .. method:: cpu_percent(interval=None)
 
     Return a float representing the process CPU utilization as a percentage
-    which can also be ``> 100.0`` in case of a process running multiple threads
+    which can also be ``> 100.0`` if the process runs multiple threads
     on different CPUs.
     When *interval* is > ``0.0`` compares process times to system CPU times
     elapsed before and after the interval (blocking). When *interval* is ``0.0``
@@ -2352,7 +2351,7 @@ Process class
        return value is cached (instead of returning ``None``).
 
     .. versionchanged:: 5.7.1
-       on POSIX, in case of negative signal, return it as a human readable
+       on POSIX, if the signal is negative, return it as a human readable
        :mod:`enum`.
 
     .. versionchanged:: 7.2.2
@@ -2374,8 +2373,8 @@ Popen class
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>`,
   :meth:`kill() <psutil.Process.kill()>`.
-  This is done in order to avoid killing another process in case its PID has
-  been reused, fixing `BPO-6973`_.
+  This is done to avoid killing another process if its PID has been reused,
+  fixing `BPO-6973`_.
 
   .. code-block:: pycon
 
