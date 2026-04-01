@@ -1395,17 +1395,17 @@ class Process:
         +------------+----------------------------------------------------+
         | Kind Value | Connections using                                  |
         +------------+----------------------------------------------------+
-        | inet       | IPv4 and IPv6                                      |
-        | inet4      | IPv4                                               |
-        | inet6      | IPv6                                               |
-        | tcp        | TCP                                                |
-        | tcp4       | TCP over IPv4                                      |
-        | tcp6       | TCP over IPv6                                      |
-        | udp        | UDP                                                |
-        | udp4       | UDP over IPv4                                      |
-        | udp6       | UDP over IPv6                                      |
-        | unix       | UNIX socket (both UDP and TCP protocols)           |
-        | all        | the sum of all the possible families and protocols |
+        | 'inet'     | IPv4 and IPv6                                      |
+        | 'inet4'    | IPv4                                               |
+        | 'inet6'    | IPv6                                               |
+        | 'tcp'      | TCP                                                |
+        | 'tcp4'     | TCP over IPv4                                      |
+        | 'tcp6'     | TCP over IPv6                                      |
+        | 'udp'      | UDP                                                |
+        | 'udp4'     | UDP over IPv4                                      |
+        | 'udp6'     | UDP over IPv6                                      |
+        | 'unix'     | UNIX socket (both UDP and TCP protocols)           |
+        | 'all'      | the sum of all the possible families and protocols |
         +------------+----------------------------------------------------+
         """
         _check_conn_kind(kind)
@@ -2422,17 +2422,17 @@ def net_connections(kind: str = 'inet') -> list[sconn]:
     +------------+----------------------------------------------------+
     | Kind Value | Connections using                                  |
     +------------+----------------------------------------------------+
-    | inet       | IPv4 and IPv6                                      |
-    | inet4      | IPv4                                               |
-    | inet6      | IPv6                                               |
-    | tcp        | TCP                                                |
-    | tcp4       | TCP over IPv4                                      |
-    | tcp6       | TCP over IPv6                                      |
-    | udp        | UDP                                                |
-    | udp4       | UDP over IPv4                                      |
-    | udp6       | UDP over IPv6                                      |
-    | unix       | UNIX socket (both UDP and TCP protocols)           |
-    | all        | the sum of all the possible families and protocols |
+    | 'inet'     | IPv4 and IPv6                                      |
+    | 'inet4'    | IPv4                                               |
+    | 'inet6'    | IPv6                                               |
+    | 'tcp'      | TCP                                                |
+    | 'tcp4'     | TCP over IPv4                                      |
+    | 'tcp6'     | TCP over IPv6                                      |
+    | 'udp'      | UDP                                                |
+    | 'udp4'     | UDP over IPv4                                      |
+    | 'udp6'     | UDP over IPv6                                      |
+    | 'unix'     | UNIX socket (both UDP and TCP protocols)           |
+    | 'all'      | the sum of all the possible families and protocols |
     +------------+----------------------------------------------------+
 
     On macOS this function requires root privileges.
