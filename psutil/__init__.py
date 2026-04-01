@@ -1687,12 +1687,6 @@ def process_iter(
     Use *attrs=Process.attrs* to retrieve all process info (slow).
     """
     global _pmap
-    if attrs is not None and len(attrs) == 0:
-        msg = (
-            "process_iter(attrs=[]) is deprecated; use "
-            "process_iter(attrs=Process.attrs) to retrieve all attributes"
-        )
-        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     def add(pid):
         proc = Process(pid)
@@ -1701,6 +1695,13 @@ def process_iter(
 
     def remove(pid):
         pmap.pop(pid, None)
+
+    if attrs is not None and len(attrs) == 0:
+        msg = (
+            "process_iter(attrs=[]) is deprecated; use "
+            "process_iter(attrs=Process.attrs) to retrieve all attributes"
+        )
+        warnings.warn(msg, DeprecationWarning, stacklevel=2)
 
     pmap = _pmap.copy()
     a = set(pids())
