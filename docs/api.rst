@@ -710,8 +710,6 @@ Network
    | ``'all'``      | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
-  To get per-process connections use :meth:`Process.net_connections`.
-
   .. code-block:: pycon
 
      >>> import psutil
@@ -728,17 +726,16 @@ Network
     :exc:`PermissionError`. That means the returned list may be incomplete.
 
   .. note::
-    (macOS and AIX) :exc:`psutil.AccessDenied` is always raised unless running
-    as root. This is a limitation of the OS and ``lsof`` does the same.
+    - Linux, FreeBSD, OpenBSD: *raddr* field for UNIX sockets is always set to
+      ``""`` (empty string); this is a limitation of the OS
+    - macOS and AIX: :exc:`psutil.AccessDenied` is always raised unless running
+      as root; this is a limitation of the OS
+    - Solaris: UNIX sockets are not supported
 
-  .. note::
-    (Solaris) UNIX sockets are not supported.
+  .. seealso::
 
-  .. note::
-     (Linux, FreeBSD, OpenBSD) *raddr* field for UNIX sockets is always set to
-     ``""`` (empty string). This is a limitation of the OS.
-
-  .. seealso:: `scripts/netstat.py`_.
+    - :meth:`Process.net_connections` to get per-process connections
+    - `scripts/netstat.py`_
 
   .. versionadded:: 2.1.0
 
