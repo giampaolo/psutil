@@ -228,6 +228,17 @@ The only way is to have its parent process call ``wait()`` (or ``waitpid()``).
 If the parent never does this, killing the parent will cause the zombie to be
 re-parented to ``init`` / ``systemd``, which will reap it automatically.
 
+.. _faq_open_files_windows:
+
+Why does open_files() not return all files on Windows?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:meth:`Process.open_files` on Windows is not guaranteed to enumerate all
+regular file handles. The underlying Windows API may hang when retrieving
+certain handle names, so psutil spawns a thread to query each handle and
+kills it if it doesn't respond within 100 ms. This means some entries can be
+missed. This is a known OS-level limitation shared by tools like Process
+Hacker (see `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
 
 .. _faq_pid_exists_vs_isrunning:
 
