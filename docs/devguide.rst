@@ -5,64 +5,62 @@ Build, setup and test
 ---------------------
 
 - psutil makes extensive use of C extension modules, meaning a C compiler is
-  required, see :doc:`install instructions <install>`. Once you have a compiler
-  installed run:
+  required, see :doc:`install instructions <install>`. Once installed run:
 
   .. code-block:: bash
 
      git clone git@github.com:giampaolo/psutil.git
      make install-sysdeps      # install gcc and python headers
-     make install-pydeps-test  # install python deps necessary to run unit tests
+     make install-pydeps-test  # install test dependencies
      make build
      make install
      make test
 
-- ``make`` (and the accompanying `Makefile`_) is the designated tool for
-  building, installing, running tests, and general development tasks,
-  including on Windows (see later).
+- ``make`` (via the `Makefile`_) is used for building, testing and general
+  development tasks, including on Windows (see below):
 
   .. code-block:: bash
 
-     make clean                # remove build files
-     make install-pydeps-dev   # install all development deps (ruff, black, coverage, ...)
-     make test                 # run tests
-     make test-parallel        # run tests in parallel (faster)
-     make test-memleaks        # run memory leak tests
-     make test-coverage        # run test coverage
-     make lint-all             # run linters
-     make fix-all              # fix linters errors
+     make clean
+     make install-pydeps-dev   # install dev deps (ruff, black, coverage, ...)
+     make test
+     make test-parallel
+     make test-memleaks
+     make test-coverage
+     make lint-all
+     make fix-all
      make uninstall
      make help
 
-- To run a specific unit test:
+- To run a specific test:
 
   .. code-block:: none
 
      make test ARGS=tests/test_system.py
 
-- Do not use ``sudo``. ``make install`` installs psutil as a limited user in
-  "edit" / development mode, meaning you can edit psutil code on the fly while
-  you develop.
+- Do not use ``sudo``. ``make install`` installs psutil in editable mode,
+  so you can modify the code while developing.
 
-- If you want to target a specific Python version:
+- To target a specific Python version:
 
   .. code-block:: none
 
      make test PYTHON=python3.8
 
+
 Windows
 -------
 
-- The recommended way to develop on Windows is to use ``make``, just like
-  on UNIX systems.
-- First, install `Git for Windows`_ and launch a **Git Bash shell**. This
-  provides a Unix-like environment where ``make`` works.
-- Once inside Git Bash, you can run the usual ``make`` commands:
+- The recommended way to develop on Windows is to use ``make``.
+- Install `Git for Windows`_ and launch a **Git Bash shell**, which provides
+  a Unix-like environment where ``make`` works.
+- Then run:
 
   .. code-block:: bash
 
      make build
      make test-parallel
+
 
 .. _devguide_debug_mode:
 
@@ -85,24 +83,24 @@ On Windows:
 .. code-block:: none
 
   set PSUTIL_DEBUG=1 && python.exe script.py
-  psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(pbi64.PebBaseAddress) -> 998 (Unknown error) (ignored)
+  psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(...) -> 998 (Unknown error) (ignored)
+
 
 Coding style
 ------------
 
-All style and formatting checks are enforced both locally on each
+All style and formatting checks are enforced locally on each
 `git commit` and via a GitHub Actions pipeline.
 
-- Python: follows `PEP-8`_, formatted and linted with ``black`` and
-  ``ruff``.
+- Python: follows `PEP-8`_, formatted and linted with ``black`` and ``ruff``.
 - C: generally follows `PEP-7`_, formatted with ``clang-format``.
 - Other files (``.rst``, ``.toml``, ``.md``, ``.yml``): validated by linters.
 
-The GitHub Actions pipeline re-runs all checks for consistency
-(via ``make lint-all``).
+The pipeline re-runs all checks for consistency (``make lint-all``).
 
-Run ``make fix-all`` before committing; it usually fixes Python style
-issues (via ``black`` and ``ruff``) and C style issues (via ``clang-format``).
+Run ``make fix-all`` before committing; it usually fixes Python issues
+(via ``black`` and ``ruff``) and C issues (via ``clang-format``).
+
 
 Code organization
 -----------------
@@ -112,57 +110,49 @@ Code organization
    psutil/__init__.py                   # Main API namespace ("import psutil")
    psutil/_common.py                    # Generic utilities
    psutil/_ntuples.py                   # Named tuples returned by psutil APIs
-   psutil/_enums.py                     # Enum containers backing psutil constants
-   psutil/_ps{platform}.py              # Platform-specific python wrappers
-   psutil/_psutil_{platform}.c          # Platform-specific C extensions (entry point)
-   psutil/arch/all/*.c                  # C code common to all platforms
-   psutil/arch/{platform}/*.c           # Platform-specific C extension
+   psutil/_enums.py                     # Enum containers
+   psutil/_ps{platform}.py              # OS-specific python wrapper
+   psutil/_psutil_{platform}.c          # OS-specific C extension (entry point)
+   psutil/arch/all/*.c                  # C code common to all OSes
+   psutil/arch/{platform}/*.c           # OS-specific C extension
    tests/test_process|system.py         # Main system/process API tests
-   tests/test_{platform}.py             # Platform-specific tests
+   tests/test_{platform}.py             # OS-specific tests
 
 Adding a new API
 ----------------
 
-Typically, this is what you do:
-
-- Define the new API in `psutil/__init__.py`_.
-- Write the platform specific implementation in ``psutil/_ps{platform}.py``
-  (e.g. `psutil/_pslinux.py`_).
-- If the change requires C code, write the C implementation in
-  ``psutil/arch/{platform}/file.c`` (e.g. `psutil/arch/linux/disk.c`_).
-- Write a generic test in `tests/test_system.py`_ or
-  `tests/test_process.py`_.
-- If possible, write a platform-specific test in
-  ``tests/test_{platform}.py`` (e.g. `tests/test_linux.py`_).
-  This usually means testing the return value of the new API against
-  a system CLI tool.
-- Update the doc in ``docs/api.rst``.
-- Update `changelog.rst`_ and `credits.rst`_ files.
-- Make a pull request.
+- Define the API in `psutil/__init__.py`_.
+- Implement it in ``psutil/_ps{platform}.py`` (e.g. `psutil/_pslinux.py`_).
+- If needed, add C code in ``psutil/arch/{platform}/file.c``.
+- Add a generic test in `tests/test_system.py`_ or `tests/test_process.py`_.
+- Add a platform-specific test in ``tests/test_{platform}.py``.
+- Update ``docs/api.rst``.
+- Update `changelog.rst`_ and `credits.rst`_.
+- Open a pull request.
 
 Make a pull request
 -------------------
 
-- Fork psutil (go to https://github.com/giampaolo/psutil and click on "fork")
-- Git clone the fork locally: ``git clone git@github.com:YOUR-USERNAME/psutil.git``
+- Fork psutil on GitHub.
+- Clone your fork: ``git clone git@github.com:YOUR-USERNAME/psutil.git``
 - Create a branch: ``git checkout -b new-feature``
-- Commit your changes: ``git commit -am 'add some feature'``
-- Push the branch: ``git push origin new-feature``
-- Create a new PR via the GitHub web interface and sign-off your work (see
-  `CONTRIBUTING.md`_ guidelines)
+- Commit changes: ``git commit -am 'add some feature'``
+- Push: ``git push origin new-feature``
+- Open a PR and sign off your work (see `CONTRIBUTING.md`_).
+
 
 Continuous integration
 ----------------------
 
-Unit tests are automatically run on every ``git push`` on all platforms except
-AIX. See config files in the `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_
-directory.
+Unit tests run automatically on every ``git push`` on all platforms except
+AIX. See `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_.
+
 
 Documentation
 -------------
 
-- The documentation source is located in the `docs/`_ directory.
-- To build it and generate the HTML (in the ``_build/html`` directory):
+- Source is in the `docs/`_ directory.
+- To build HTML:
 
   .. code-block:: bash
 
@@ -170,29 +160,23 @@ Documentation
      python3 -m pip install -r requirements.txt
      make html
 
-- The public documentation is hosted at https://psutil.readthedocs.io.
-- There are 2 versions, which you can select from the dropdown menu at the top
-  left of the page:
-
-  - `/stable <https://psutil.readthedocs.io/stable>`_: generated from the most
-    recent Git tag (latest released psutil version).
-  - `/latest <https://psutil.readthedocs.io/latest>`_: generated from the
-    master branch. It is automatically updated on git push.
-
-Redirects:
+- Doc is hosted at https://psutil.readthedocs.io.
+- Two versions:
+  - `/stable <https://psutil.readthedocs.io/stable>`_: latest release.
+  - `/latest <https://psutil.readthedocs.io/latest>`_: development branch.
 
 - https://psutil.readthedocs.io redirects to
-  `/stable <https://psutil.readthedocs.io/stable>`_ by default.
+  `/stable <https://psutil.readthedocs.io/stable>`_.
 
 .. note::
 
-   The ``/latest`` version reflects the development branch and may contain
-   unreleased changes. For stable documentation, use ``/stable``.
+   ``/latest`` may contain unreleased changes. Use ``/stable`` for
+   production docs.
 
 Releases
 --------
 
-- Releases are uploaded to `PyPI <https://pypi.org/project/psutil/>`_ via
+- Uploaded to `PyPI <https://pypi.org/project/psutil/>`_ via
   ``make release``.
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
 - The version string is defined in ``psutil/__init__.py`` (``__version__``).
@@ -207,7 +191,5 @@ Releases
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
 .. _`psutil/__init__.py`: https://github.com/giampaolo/psutil/blob/master/psutil/__init__.py
 .. _`psutil/_pslinux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
-.. _`psutil/arch/linux/disk.c`: https://github.com/giampaolo/psutil/blob/master/psutil/arch/linux/disk.c
-.. _`tests/test_linux.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_linux.py
 .. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
 .. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py
