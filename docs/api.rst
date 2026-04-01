@@ -775,24 +775,19 @@ Network
 
 .. function:: net_if_addrs()
 
-  Return the addresses associated to each :term:`NIC` (network interface card)
-  installed on the system as a dictionary whose keys are the NIC names and
-  value is a list of named tuples for each address assigned to the NIC.
-  You can have more than one address of the same family associated with each
-  interface (that's why dict values are lists).
-  Each named tuple includes 5 fields:
+  Return a dictionary mapping each :term:`NIC` to a list of named tuples
+  representing its addresses. Multiple addresses of the same family can exist
+  per interface. Each named tuple includes 5 fields (addresses may be
+  ``None``):
 
   - **family**: the address family, either :data:`socket.AF_INET`,
-    :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` in case of MAC address,
-    :data:`socket.AF_UNSPEC` in case of virtual or unconfigured interfaces.
-  - **address**: the primary NIC address (may be ``None`` in case of virtual
-    or unconfigured interfaces).
-  - **netmask**: the netmask address (may be ``None``).
-  - **broadcast**: the broadcast address. May be ``None``. Always ``None`` on
-    Windows.
-  - **ptp**: stands for "point to point"; it's the destination address on a
-    point to point interface (typically a VPN). *broadcast* and *ptp* are
-    mutually exclusive. May be ``None``. Always ``None`` on Windows.
+    :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` (a MAC address) or
+    :data:`socket.AF_UNSPEC` (a virtual or unconfigured NIC).
+  - **address**: the primary NIC address
+  - **netmask**: the netmask address
+  - **broadcast**: the broadcast address; always ``None`` on Windows
+  - **ptp**: a "point to point" address (typically a VPN); always ``None`` on
+    Windows
 
   .. code-block:: pycon
 

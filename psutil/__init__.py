@@ -2442,22 +2442,20 @@ def net_connections(kind: str = 'inet') -> list[sconn]:
 
 
 def net_if_addrs() -> dict[str, list[snicaddr]]:
-    """Return the addresses associated to each NIC (network interface
-    card) installed on the system as a dictionary whose keys are the
-    NIC names, and value is a list of named tuples for each address
-    assigned to the NIC. Each named tuple includes 5 fields:
+    """Return a dictionary mapping each NIC (Network Interface Card) to
+    a list of named tuples representing its addresses. Multiple
+    addresses of the same family can exist per interface.
 
-     - family: can be either socket.AF_INET, socket.AF_INET6 or
-               psutil.AF_LINK, which refers to a MAC address.
-     - address: is the primary address and it is always set.
-     - netmask: and 'broadcast' and 'ptp' may be None.
-     - ptp: stands for "point to point" and references the
-            destination address on a point to point interface
-            (typically a VPN).
-     - broadcast: and *ptp* are mutually exclusive.
+    The named tuple includes 5 fields (addresses may be None):
 
-    Note: you can have more than one address of the same family
-    associated with each interface.
+    - family: the address family, either `AF_INET`, `AF_INET6`,
+      `psutil.AF_LINK` (a MAC address) or `AF_UNSPEC` (a virtual or
+      unconfigured NIC).
+    - address: the primary NIC address
+    - netmask: the netmask address
+    - broadcast: the broadcast address; always None on Windows
+    - ptp: a "point to point" address (typically a VPN); always None on
+      Windows
     """
     rawlist = _psplatform.net_if_addrs()
     rawlist.sort(key=lambda x: x[1])  # sort by family
