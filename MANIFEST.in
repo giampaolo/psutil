@@ -25,6 +25,8 @@ include docs/_static/favicon.svg
 include docs/_static/images/favicon.svg
 include docs/_static/images/icon-cpu.svg
 include docs/_static/images/icon-disks.svg
+include docs/_static/images/icon-footer-github.svg
+include docs/_static/images/icon-footer-pypi.svg
 include docs/_static/images/icon-memory.svg
 include docs/_static/images/icon-network.svg
 include docs/_static/images/icon-processes.svg

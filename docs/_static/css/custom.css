@@ -360,22 +360,32 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* ================================================================== */
 
 .footer-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: table;
+    width: 100%;
 }
 
-.footer-row p {
+.footer-row p,
+.footer-icons {
+    display: table-cell;
+    vertical-align: middle;
     margin: 0 !important;
+    padding: 0;
 }
 
 .footer-icons {
-    display: flex;
-    gap: 14px;
-    flex-shrink: 0;
+    text-align: right;
+    white-space: nowrap;
+    width: 1px;
+}
+
+.footer-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 14px;
 }
 
 .footer-icon svg {
+    display: block;
     width: 20px;
     height: 20px;
     fill: var(--footer-icon);
