@@ -2014,25 +2014,21 @@ Process class
 
     Return a named tuple with USS, PSS and swap memory metrics. These give
     a more accurate picture of actual memory consumption than
-    :meth:`memory_info`, as explained in this
-    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_
-    It works by walking the full process address space, so it is
-    considerably slower than :meth:`memory_info` and may require elevated
-    privileges.
+    :meth:`memory_info` (see this
+    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
+    It walks the full process address space, so it is slower than
+    :meth:`memory_info` and may require elevated privileges.
 
-    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`. This is the
-      memory which is unique to a process and which would be freed if the
-      process were terminated right now. The most representative metric for
-      actual memory usage.
+    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`; memory which is
+      unique to the process, and which would be freed if the process were
+      terminated right now.
 
-    - **pss** *(Linux)*: aka :term:`PSS`, is the amount of memory
-      shared with other processes, accounted in a way that the amount is
-      divided evenly between the processes that share it. I.e. if a process has
-      10 MBs all to itself, and 10 MBs shared with another process, its PSS
-      will be 15 MBs.
+    - **pss** *(Linux)*: aka :term:`PSS`; shared memory divided evenly among
+      the processes sharing it. I.e. if a process has 10 MBs all to itself, and
+      10 MBs shared with another process, its PSS will be 15 MBs.
 
-    - **swap** *(Linux)*: process memory currently in swap, counted per-mapping
-      (slower, but may be more accurate than ``memory_info_ex().swap``).
+    - **swap** *(Linux)*: process memory currently in swap, counted
+      per-mapping.
 
     Example on Linux:
 
