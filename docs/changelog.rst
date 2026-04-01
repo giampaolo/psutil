@@ -14,7 +14,7 @@ Changelog
 
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
-:gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`)
+:gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`, :gh:`2797`)
 
 - Split docs from a single HTML file into multiple new sections:
 
@@ -23,6 +23,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - :doc:`/alternatives <alternatives>`: list of alternative Python libraries and tools that overlap with psutil.
   - :doc:`/credits <credits>`: list contributors and donors (was old ``CREDITS`` in root dir)
   - :doc:`/faq <faq>`: extended FAQ section
+  - :doc:`/funding <funding>`: list funding methods and current sponsors
   - :doc:`/glossary <glossary>`: core concepts explained
   - :doc:`/install <install>`: (was old ``INSTALL.rst`` in root dir)
   - :doc:`/migration <migration>`: explain how to migrate to newer psutil versions that break backward compatibility
