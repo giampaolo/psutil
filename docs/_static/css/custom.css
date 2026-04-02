@@ -677,6 +677,10 @@ div.seealso {
     border-left-color: var(--adm-seealso-accent-border) !important;
 }
 
+div.admonition a {
+    text-decoration: none !important;
+}
+
 div.seealso a.reference {
     color: var(--adm-seealso-accent-border) !important;
     text-decoration: underline;

@@ -395,8 +395,41 @@ Print real-time CPU usage percentage:
   CPU: 1.4%
   CPU: 0.9%
 
+Memory
+^^^^^^
+
+.. _recipe_swap_activity:
+
+Show real-time swap activity *(Linux, BSD)*. ``sout`` (:term:`swap-out`) is the
+key metric: a non-zero and growing rate means the OS is moving memory from RAM
+to disk because RAM is full. ``sin`` (:term:`swap-in`) alone is not alarming;
+it just means the system is moving previously evicted pages back into RAM.
+High ``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
+
+.. code-block:: python
+
+  import psutil, time
+
+  def swap_activity(interval=1):
+      before = psutil.swap_memory()
+      while True:
+          time.sleep(interval)
+          after = psutil.swap_memory()
+          sin  = after.sin  - before.sin
+          sout = after.sout - before.sout
+          print("swap-in={}/s  swap-out={}/s  used={}%".format(
+              bytes2human(sin), bytes2human(sout), after.percent))
+          before = after
+
+.. code-block:: none
+
+  swap-in=0.0B/s  swap-out=0.0B/s  used=23%
+  swap-in=0.0B/s  swap-out=1.2M/s  used=24%
+
 Disks
 ^^^^^
+
+.. _recipe_disk_io:
 
 Show real-time disk I/O:
 
@@ -417,6 +450,31 @@ Show real-time disk I/O:
 
   Read: 1.2M/s, Write: 256.0K/s
   Read: 0.0B/s, Write: 128.0K/s
+
+-------------------------------------------------------------------------------
+
+.. _recipe_disk_io_percent:
+
+Show real-time disk utilization percentage *(Linux, FreeBSD)*:
+
+.. code-block:: python
+
+  import psutil, time
+
+  def disk_io_percent(interval=1):
+      before = psutil.disk_io_counters()
+      while True:
+          time.sleep(interval)
+          after = psutil.disk_io_counters()
+          busy_ms = after.busy_time - before.busy_time
+          util = min(busy_ms / (interval * 1000) * 100, 100)
+          print("Disk: {:.1f}%".format(util))
+          before = after
+
+.. code-block:: none
+
+  Disk: 3.2%
+  Disk: 78.5%
 
 Network
 ^^^^^^^

@@ -304,26 +304,26 @@ stays in the 0–100% range because it averages across all cores.
 
 The returned value is explicitly *not* split evenly between all available
 CPUs. This is consistent with the ``top`` UNIX utility: a busy loop on a
-system with 2 logical CPUs is reported as 100%, not 50%. Note that Windows
-``taskmgr.exe`` behaves differently (it would report 50%). To emulate that:
-``p.cpu_percent() / psutil.cpu_count()``.
+system with 2 :term:`logical CPUs <logical CPU>` is reported as 100%, not 50%.
+Note that Windows ``taskmgr.exe`` behaves differently (it would report 50%).
+To emulate that: ``p.cpu_percent() / psutil.cpu_count()``.
 
 .. _faq_cpu_count:
 
 What is the difference between psutil, os, and multiprocessing cpu_count()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :func:`os.cpu_count` returns the number of **logical** CPUs (including
-  hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``, but
-  psutil does not honour `PYTHON_CPU_COUNT`_ environment variable introduced in
-  Python 3.13.
+- :func:`os.cpu_count` returns the number of :term:`logical CPUs <logical CPU>`
+  (including hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``,
+  but psutil does not honour `PYTHON_CPU_COUNT`_ environment variable introduced
+  in Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
   calling process is **allowed to use** (respects CPU affinity and cgroups).
   The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
 - :func:`multiprocessing.cpu_count` returns the same value as
   :func:`os.process_cpu_count` (Python 3.13+).
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
-  **physical** cores, which has no stdlib equivalent.
+  :term:`physical cores <physical CPU>`, which has no stdlib equivalent.
 
 Memory
 ------

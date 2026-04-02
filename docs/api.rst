@@ -65,8 +65,8 @@ CPU
   - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
-  When *percpu* is ``True`` return a list of named tuples for each logical CPU
-  on the system.
+  When *percpu* is ``True`` return a list of named tuples for each
+  :term:`logical CPU` on the system.
   The list is ordered by CPU index.
   The order of the list is consistent across calls.
   Example output on Linux:
@@ -84,11 +84,11 @@ CPU
     `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
   .. versionchanged:: 4.1.0
-     added **irq** and **dpc** fields on Windows (**irq** was called **interrupt**
+     Windows: added **irq** and **dpc** fields (**irq** was called **interrupt**
      before 8.0.0).
 
   .. versionchanged:: 8.0.0
-     **interrupt** field on Windows was renamed to **irq**; **interrupt** still
+     Windows: **interrupt** field was renamed to **irq**; **interrupt** still
      works but raises :exc:`DeprecationWarning`.
 
   .. versionchanged:: 8.0.0
@@ -149,8 +149,8 @@ CPU
   .. seealso:: :ref:`faq_cpu_percent`
 
   .. versionchanged:: 4.1.0
-     two new **irq** and **dpc** fields are returned on Windows (**irq** was
-     called **interrupt** before 8.0.0).
+     Windows: added **irq** and **dpc** fields (**irq** was called
+     **interrupt** before 8.0.0).
 
   .. versionchanged:: 5.9.6
      function is now thread safe.
@@ -161,8 +161,9 @@ CPU
   (similar to :func:`os.cpu_count`) or ``None`` if undetermined.
   Unlike :func:`os.cpu_count`, this is not influenced by the ``PYTHON_CPU_COUNT``
   environment variable introduced in Python 3.13.
-  "logical CPUs" means the number of physical cores multiplied by the number
-  of threads that can run on each core (this is known as Hyper Threading).
+  :term:`Logical CPUs <logical CPU>` means the number of
+  :term:`physical CPUs <physical CPU>` multiplied by the number of threads
+  that can run on each core (this is known as Hyper Threading).
   This is what cloud providers often refer to as vCPUs.
 
   If *logical* is ``False`` return the number of physical cores only, or
@@ -264,8 +265,8 @@ CPU
   it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
   The numbers returned only make sense when compared to the number of CPU cores
   installed on the system. So, for instance, a value of `3.14` on a system
-  with 10 logical CPUs means that the system load was 31.4% percent over the
-  last N minutes.
+  with 10 :term:`logical CPUs <logical CPU>` means that the system load was
+  31.4% percent over the last N minutes.
 
   .. code-block:: pycon
 
@@ -288,12 +289,12 @@ Memory
   Return statistics about system memory usage as a named tuple including the
   following fields, expressed in bytes.
 
-  - **total**: total physical memory (exclusive swap).
+  - **total**: total physical memory (exclusive :term:`swap memory`).
   - **available**: memory that can be given instantly to processes without the
-    system going into swap. On Linux it uses the ``MemAvailable`` field from
-    ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back to an
-    estimate. This is the recommended field for monitoring actual memory usage
-    in a cross-platform fashion. See :term:`available memory`.
+    system going into :term:`swap memory`. On Linux it uses the ``MemAvailable``
+    field from ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back
+    to an estimate. This is the recommended field for monitoring actual memory
+    usage in a cross-platform fashion. See :term:`available memory`.
   - **percent**: the percentage usage calculated as
     ``(total - available) / total * 100``.
   - **used**: memory in use, calculated differently depending on the platform
@@ -316,10 +317,10 @@ Memory
   - **cached** *(Linux, BSD, Windows)*: RAM used by the kernel to cache file
     contents (data read from or written to disk). Reclaimable by the OS when
     needed. See :term:`page cache`.
-  - **shared** *(Linux, BSD)*: memory accessible by multiple processes
-    simultaneously, such as in-memory ``tmpfs`` and POSIX shared memory objects
-    (``shm_open``). On Linux this corresponds to ``Shmem`` in ``/proc/meminfo``
-    and is already counted within **active** / **inactive**.
+  - **shared** *(Linux, BSD)*: :term:`shared memory` accessible by multiple
+    processes simultaneously, such as in-memory ``tmpfs`` and POSIX shared
+    memory objects (``shm_open``). On Linux this corresponds to ``Shmem`` in
+    ``/proc/meminfo`` and is already counted within **active** / **inactive**.
   - **slab** *(Linux)*: memory used by the kernel's internal object caches
     (e.g. inode and dentry caches). The reclaimable portion
     (``SReclaimable``) is already included in **cached**.
@@ -429,18 +430,18 @@ Memory
     - :ref:`faq_used_plus_free`
 
   .. versionchanged:: 4.2.0
-     added *shared* metric on Linux.
+     Linux: added **shared** field.
 
   .. versionchanged:: 5.4.4
-     added *slab* metric on Linux.
+     Linux: added **slab** field.
 
   .. versionchanged:: 8.0.0
-     added *cached* and *wired* metric on Windows.
+     Windows: added **cached** and **wired** fields.
 
 .. function:: swap_memory()
 
-  Return system swap memory statistics as a named tuple including the following
-  fields:
+  Return system :term:`swap memory` statistics as a named tuple
+  including the following fields:
 
   * **total**: total swap space. On Windows this is derived as
     ``CommitLimit - PhysicalTotal``, representing virtual memory backed by
@@ -449,16 +450,15 @@ Memory
   * **free**: swap space not in use (``total - used``).
   * **percent**: swap usage as a percentage, calculated as
     ``used / total * 100``.
-  * **sin**: number of bytes the system has paged *in* from disk (pages moved
-    from swap space back into RAM) since boot. See :term:`swap-in`.
-  * **sout**: number of bytes the system has paged *out* to disk (pages moved
-    from RAM into swap space) since boot. A continuously increasing **sout**
-    is a sign of memory pressure. See :term:`swap-out`.
+  * **sin**: number of bytes the system has moved from disk
+    (:term:`swap <swap memory>`) back into RAM. See :term:`swap-in`.
+  * **sout**: number of bytes the system has moved from RAM to disk
+    (:term:`swap <swap memory>`). A continuously increasing
+    **sout** rate is a sign of memory pressure. See :term:`swap-out`.
 
   **sin** and **sout** are :term:`cumulative counters <cumulative counter>`
-  since boot; monitor their rate of change rather than the absolute value to
-  detect active swapping. See :term:`swap-in` and :term:`swap-out`. On Windows
-  both are always ``0``.
+  since boot. Monitor their rate of change rather than the absolute value to
+  detect active swapping. On Windows both are always ``0``.
 
   .. code-block:: pycon
 
@@ -466,12 +466,13 @@ Memory
      >>> psutil.swap_memory()
      sswap(total=2097147904, used=886620160, free=1210527744, percent=42.3, sin=1050411008, sout=1906720768)
 
-  .. seealso:: `scripts/meminfo.py`_.
+  .. seealso::
+    - `scripts/meminfo.py`_
+    - :ref:`Swap activity recipe <recipe_swap_activity>`
 
   .. versionchanged:: 5.2.3
-     on Linux this function relies on /proc fs instead of sysinfo() syscall so
-     that it can be used in conjunction with :const:`psutil.PROCFS_PATH` to
-     retrieve memory info about Linux containers such as Docker and Heroku.
+     Linux: use /proc instead of ``sysinfo()`` syscall to support
+     :const:`psutil.PROCFS_PATH` usage (e.g. useful for Docker containers ...).
 
 Disks
 ^^^^^
@@ -542,7 +543,7 @@ Disks
   .. seealso:: `scripts/disk_usage.py`_.
 
   .. versionchanged:: 4.3.0
-     *percent* value takes root reserved space into account.
+     **percent** value takes root reserved space into account.
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
@@ -591,18 +592,21 @@ Disks
     on Windows ``"diskperf -y"`` command may need to be executed first
     otherwise this function won't find any disk.
 
-  .. seealso:: `scripts/iotop.py`_.
+  .. seealso::
+     - `scripts/iotop.py`_
+     - :ref:`Real-time disk I/O recipe <recipe_disk_io>`
+     - :ref:`Real-time disk I/O percent recipe <recipe_disk_io_percent>`
 
   .. versionchanged:: 5.3.0
      numbers no longer wrap (restart from zero) across calls thanks to new
-    *nowrap* argument.
+     *nowrap* argument.
 
   .. versionchanged:: 4.0.0
      added **busy_time** (Linux, FreeBSD), **read_merged_count** and
-    **write_merged_count** (Linux) fields.
+     **write_merged_count** (Linux) fields.
 
   .. versionchanged:: 4.0.0
-     NetBSD no longer has **read_time** and **write_time** fields.
+     NetBSD: removed **read_time** and **write_time** fields.
 
 Network
 ^^^^^^^
@@ -618,9 +622,11 @@ Network
   - **packets_recv**: number of packets received
   - **errin**: total number of errors while receiving
   - **errout**: total number of errors while sending
-  - **dropin**: total number of incoming packets which were dropped
-  - **dropout**: total number of outgoing packets which were dropped (always 0
-    on macOS and BSD). See :term:`dropin / dropout`.
+  - **dropin**: total number of incoming packets dropped at the
+    :term:`NIC` level. Unlike **errin**, drops indicate the interface or
+    kernel buffer was overwhelmed.
+  - **dropout**: total number of outgoing packets dropped (always 0 on macOS
+    and BSD). A non-zero and growing count is a sign of network saturation.
 
   If *pernic* is ``True`` return the same information for every network
   interface as a dictionary with interface names as the keys.
@@ -654,7 +660,7 @@ Network
   Return system-wide socket connections as a list of named tuples.
   Every named tuple provides 7 attributes:
 
-  - **fd**: the socket file descriptor; ``-1`` on Windows and SunOS.
+  - **fd**: the socket :term:`file descriptor`; ``-1`` on Windows and SunOS.
   - **family**: the address family, either :data:`socket.AF_INET`,
     :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
   - **type**: the address type, either :data:`socket.SOCK_STREAM`,
@@ -729,7 +735,7 @@ Network
   .. versionadded:: 2.1.0
 
   .. versionchanged:: 5.3.0
-     socket "fd" is now set for real instead of being ``-1``.
+     socket **fd** is now set for real instead of being ``-1``.
 
   .. versionchanged:: 5.3.0
     **laddr** and **raddr** are named tuples.
@@ -776,13 +782,13 @@ Network
   .. versionadded:: 3.0.0
 
   .. versionchanged:: 3.2.0
-     **ptp** field was added.
+     added **ptp** field.
 
   .. versionchanged:: 4.4.0
-     added support for **netmask** field on Windows which is no longer ``None``.
+     Windows: added support for **netmask** field, which is no longer ``None``.
 
   .. versionchanged:: 7.0.0
-     added support for **broadcast** field on Windows which is no longer ``None``.
+     Windows: added support for **broadcast** field, which is no longer ``None``.
 
 .. function:: net_if_stats()
 
@@ -806,15 +812,13 @@ Network
 
   .. seealso:: `scripts/nettop.py`_ and `scripts/ifconfig.py`_.
 
-  .. availability:: UNIX
-
   .. versionadded:: 3.0.0
 
   .. versionchanged:: 5.7.3
-     **isup** on UNIX also checks whether the NIC is running.
+     UNIX: **isup** also reflects whether the :term:`NIC` is running.
 
   .. versionchanged:: 5.9.3
-     **flags** field was added on POSIX.
+     added **flags** field.
 
 Sensors
 ^^^^^^^
@@ -962,7 +966,7 @@ Other system info
       suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
 
   .. versionchanged:: 5.3.0
-     added "pid" field.
+     added **pid** field.
 
 -------------------------------------------------------------------------------
 
@@ -1045,7 +1049,7 @@ Functions
   .. seealso:: :ref:`perf-process-iter`
 
   .. versionchanged:: 5.3.0
-     added "attrs" and "ad_value" parameters.
+     added *attrs* and *ad_value* arguments.
 
   .. versionchanged:: 6.0.0
      no longer checks whether each yielded process PID has been reused.
@@ -1054,11 +1058,11 @@ Functions
      added ``psutil.process_iter.cache_clear()`` API.
 
   .. versionchanged:: 8.0.0
-     when *attrs* is specified, the pre-fetched values are cached
-     directly on the :class:`Process` instance so that subsequent
-     method calls (e.g. ``p.name()``, ``p.status()``) return the
-     cached values instead of making new system calls. The :attr:`Process.info`
-     dict is deprecated in favor of this new approach.
+     when *attrs* is specified, the pre-fetched values are cached directly on
+     the :class:`Process` instance, so that subsequent method calls (e.g.
+     ``p.name()``, ``p.status()``) return the cached values instead of making
+     new system calls. The :attr:`Process.info` dict is deprecated in favor of
+     this new approach.
 
   .. versionchanged:: 8.0.0
      passing an empty list (``attrs=[]``) to mean "all attributes" is
@@ -1489,7 +1493,7 @@ Process class
 
   .. method:: nice(value=None)
 
-    Get or set process niceness (priority).
+    Get or set process :term:`niceness <nice>` (priority).
     On UNIX this is a number which usually goes from ``-20`` to ``20``.
     The higher the nice value, the lower the priority of the process.
 
@@ -1517,13 +1521,13 @@ Process class
        >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
     .. versionchanged:: 8.0.0
-       on Windows, return value is now a :class:`psutil.ProcessPriority` enum
-       member.
+       on Windows, the return value is now a :class:`psutil.ProcessPriority`
+       enum member.
        See :ref:`migration guide <migration-8.0>`.
 
   .. method:: ionice(ioclass=None, value=None)
 
-    Get or set process I/O niceness (priority).
+    Get or set process :term:`I/O niceness <ionice>` (priority).
     If no argument is provided it acts as a get, returning a ``(ioclass, value)``
     tuple on Linux and a *ioclass* integer on Windows.
     If *ioclass* is provided it acts as a set. In this case an additional
@@ -1569,7 +1573,7 @@ Process class
     .. availability:: Linux, Windows
 
     .. versionchanged:: 5.6.2
-       Windows accepts new :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` constants.
+       Windows: accept new :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` constants.
 
     .. versionchanged:: 8.0.0
        *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
@@ -1646,8 +1650,10 @@ Process class
     .. availability:: Linux, Windows, BSD, AIX
 
     .. versionchanged:: 5.2.0
-       added **read_chars** + **write_chars** on Linux and **other_count** +
-       **other_bytes** on Windows.
+       Linux: added **read_chars** and **write_chars** fields.
+
+    .. versionchanged:: 5.2.0
+       Windows: added **other_count** and **other_bytes** fields.
 
   .. method:: num_ctx_switches()
 
@@ -1720,10 +1726,10 @@ Process class
        0.70
 
     .. versionchanged:: 4.1.0
-       return two extra fields: **children_user** and **children_system**.
+       added **children_user** and **children_system** fields.
 
     .. versionchanged:: 5.6.4
-       added **iowait** on Linux.
+       Linux: added **iowait** field.
 
   .. method:: cpu_percent(interval=None)
 
@@ -1830,26 +1836,21 @@ Process class
     |         |         |          |         |     | peak_vms        |
     +---------+---------+----------+---------+-----+-----------------+
 
-    - **rss**: aka :term:`RSS`. The portion of physical memory
-      currently held by this process (code, data, stack, and mapped files that
-      are resident). Pages swapped out to disk are not counted. On UNIX it
-      matches the ``top`` RES column. On Windows it maps to ``WorkingSetSize``.
+    - **rss**: aka :term:`RSS`. On UNIX matches the ``top`` RES column. On
+      Windows maps to ``WorkingSetSize``.
 
-    - **vms**: aka :term:`VMS`. The total address space reserved by
-      the process, including pages not yet touched, pages in swap, and
-      memory-mapped files not yet accessed. Typically much larger than
-      **rss**. On UNIX it matches the ``top`` VIRT column. On Windows this
-      maps to ``PrivateUsage`` (private committed pages only), which differs
-      from the UNIX definition; use ``virtual`` from :meth:`memory_info_ex`
-      for the true virtual address space size.
+    - **vms**: aka :term:`VMS`. On UNIX matches the ``top`` VIRT column. On
+      Windows maps to ``PrivateUsage`` (private committed pages only), which
+      differs from the UNIX definition; use **virtual** from
+      :meth:`memory_info_ex` for the true virtual address space size.
 
-    - **shared** *(Linux)*: memory backed by a file or device (shared
-      libraries, mmap'd files, POSIX shared memory) that *could* be shared
-      with other processes. A page is counted here even if no other process
-      is currently mapping it. Matches ``top``'s SHR column.
+    - **shared** *(Linux)*: :term:`shared memory` that *could* be shared with
+      other processes (shared libraries, mmap'd files, POSIX shared memory).
+      Counted even if no other process is currently mapping it. Matches
+      ``top``'s SHR column.
 
     - **text** *(Linux, BSD)*: aka TRS (Text Resident Set). Resident memory
-      devoted to executable code. These pages are read-only and typically
+      devoted to executable code. This memory is read-only and typically
       shared across all processes running the same binary. Matches ``top``'s
       CODE column.
 
@@ -1861,13 +1862,11 @@ Process class
     - **stack** *(BSD)*: size of the process stack segment. Reported
       separately from **data** (unlike Linux where both are combined).
 
-    - **peak_rss** *(BSD, Windows)*: the highest :term:`RSS` value (high water mark)
-      the process has ever reached. See :term:`peak_rss`. On BSD this may be
-      ``0`` for kernel PIDs.
-      On Windows it maps to ``PeakWorkingSetSize``.
+    - **peak_rss** *(BSD, Windows)*: see :term:`peak_rss`. On BSD may be ``0``
+      for kernel PIDs. On Windows maps to ``PeakWorkingSetSize``.
 
-    - **peak_vms** *(Windows)*: peak private committed (page-file-backed)
-      virtual memory. Maps to ``PeakPagefileUsage``.
+    - **peak_vms** *(Windows)*: see :term:`peak_vms`. Maps to
+      ``PeakPagefileUsage``.
 
     For the full definitions of Windows fields see
     `PROCESS_MEMORY_COUNTERS_EX`_.
@@ -1895,8 +1894,8 @@ Process class
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       macOS: **pfaults** and **pageins** removed with **no backward-compatible
-       aliases**. Use :meth:`page_faults` instead.
+       macOS: removed **pfaults** and **pageins** fields with **no
+       backward-compatible aliases**. Use :meth:`page_faults` instead.
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
@@ -1909,7 +1908,7 @@ Process class
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       BSD: added **peak_rss**.
+       BSD: added **peak_rss** field.
 
   .. method:: memory_info_ex()
 
@@ -1936,30 +1935,28 @@ Process class
     | hugetlb     | phys_footprint |                    |
     +-------------+----------------+--------------------+
 
-    - **peak_rss** *(Linux, macOS)*: the highest :term:`RSS` value (high water
-      mark) the process has reached since it started. See :term:`peak_rss`.
-    - **peak_vms** *(Linux)*: the highest VMS value the process has reached
-      since it started.
-    - **rss_anon** *(Linux, macOS)*: resident :term:`anonymous memory` pages
+    - **peak_rss** *(Linux, macOS)*: see :term:`peak_rss`.
+    - **peak_vms** *(Linux)*: see :term:`peak_vms`.
+    - **rss_anon** *(Linux, macOS)*: resident :term:`anonymous memory`
       (heap, stack, private mappings) not backed by any file. Set to 0
       on Linux < 4.5.
-    - **rss_file** *(Linux, macOS)*: resident file-backed memory; pages mapped
+    - **rss_file** *(Linux, macOS)*: resident file-backed memory mapped
       from files (shared libraries, mmap'd files). Set to 0 on Linux < 4.5.
-    - **rss_shmem** *(Linux)*: resident shared memory pages (``tmpfs``,
+    - **rss_shmem** *(Linux)*: resident :term:`shared memory` (``tmpfs``,
       ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals **rss**. Set to
       0 on Linux < 4.5.
     - **wired** *(macOS)*: memory pinned in RAM by the kernel on behalf of this
       process; cannot be compressed or paged out.
-    - **swap** *(Linux)*: process memory currently in swap. Equivalent to
-      ``memory_footprint().swap`` but cheaper, as it reads from
+    - **swap** *(Linux)*: process memory currently in :term:`swap <swap memory>`.
+      Equivalent to ``memory_footprint().swap`` but cheaper, as it reads from
       ``/proc/<pid>/status`` instead of ``/proc/<pid>/smaps``.
-    - **compressed** *(macOS)*: pages held in the in-RAM memory compressor; not
-      counted in **rss**. A large value signals memory pressure but has not yet
-      triggered swapping.
+    - **compressed** *(macOS)*: memory held in the in-RAM memory compressor;
+      not counted in **rss**. A large value signals memory pressure but has
+      not yet triggered swapping.
     - **hugetlb** *(Linux)*: resident memory backed by huge pages. Set to 0 on
       Linux < 4.4.
     - **phys_footprint** *(macOS)*: total physical memory impact including
-      compressed pages. What Xcode and ``footprint(1)`` report; prefer this
+      compressed memory. What Xcode and ``footprint(1)`` report; prefer this
       over **rss** macOS memory monitoring.
     - **virtual** *(Windows)*: true virtual address space size, including
       reserved-but-uncommitted regions (unlike **vms** in
@@ -1981,23 +1978,23 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return a named tuple with USS, PSS and swap memory metrics. These give
-    a more accurate picture of actual memory consumption than
-    :meth:`memory_info` (see this
+    Return a named tuple with :term:`USS`, :term:`PSS` and :term:`swap memory`
+    metrics. These give a more accurate picture of actual memory consumption
+    than :meth:`memory_info` (see this
     `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
     It walks the full process address space, so it is slower than
     :meth:`memory_info` and may require elevated privileges.
 
-    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`; memory which is
-      unique to the process, and which would be freed if the process were
-      terminated right now.
+    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`; the
+      :term:`private memory` of the process, which would be freed if the
+      process were terminated right now.
 
     - **pss** *(Linux)*: aka :term:`PSS`; shared memory divided evenly among
       the processes sharing it. I.e. if a process has 10 MBs all to itself, and
       10 MBs shared with another process, its PSS will be 15 MBs.
 
-    - **swap** *(Linux)*: process memory currently in swap, counted
-      per-mapping.
+    - **swap** *(Linux)*: process memory currently in :term:`swap <swap memory>`,
+      counted per-mapping.
 
     Example on Linux:
 
@@ -2073,28 +2070,28 @@ Process class
 
     Linux fields (from ``/proc/<pid>/smaps``):
 
-    - **rss**: resident pages in this mapping.
-    - **size**: total virtual size; may far exceed **rss** for sparse or
-      reserved-but-unaccessed mappings.
-    - **pss**: proportional RSS. **rss** divided by the number of processes
-      sharing this mapping. Useful for fair per-process accounting.
-    - **shared_clean**: shared pages not modified (e.g. shared library code);
-      can be dropped from RAM without writing to swap.
-    - **shared_dirty**: shared pages that have been written to.
-    - **private_clean**: private unmodified pages; can be dropped without
-      writing to swap.
-    - **private_dirty**: private modified pages; must be written to swap
-      before they can be reclaimed. The key indicator of a mapping's real
-      memory cost.
-    - **referenced**: pages recently accessed.
-    - **anonymous**: :term:`anonymous memory` pages not backed by a file (heap, stack allocations).
-    - **swap**: pages from this mapping currently in swap.
+    - **rss**: :term:`RSS` for this mapping.
+    - **size**: total virtual size; may far exceed **rss** if parts have
+      never been accessed.
+    - **pss**: :term:`PSS` for this mapping, that is **rss** split
+      proportionally among all processes sharing it.
+    - **shared_clean**: :term:`shared memory` not written to since loaded
+      (clean); can be discarded and reloaded from disk for free.
+    - **shared_dirty**: :term:`shared memory` that has been written to (dirty).
+    - **private_clean**: :term:`private memory` not written to (clean).
+    - **private_dirty**: :term:`private memory` that has been written to
+      (dirty); must be saved to swap before it can be freed. The key
+      indicator of real memory cost.
+    - **referenced**: bytes recently accessed.
+    - **anonymous**: :term:`anonymous memory` in this mapping (heap, stack).
+    - **swap**: bytes from this mapping currently in
+      :term:`swap <swap memory>`.
 
     FreeBSD fields:
 
-    - **private**: pages in this mapping private to this process.
-    - **ref_count**: reference count on the VM object backing this mapping.
-    - **shadow_count**: depth of the copy-on-write shadow object chain.
+    - **private**: :term:`private memory` in this mapping.
+    - **ref_count**: reference count on the underlying memory object.
+    - **shadow_count**: depth of the copy-on-write chain.
 
     .. code-block:: pycon
 
@@ -2173,7 +2170,8 @@ Process class
     the following fields:
 
     - **path**: the absolute file name.
-    - **fd**: the file descriptor number; on Windows this is always ``-1``.
+    - **fd**: the :term:`file descriptor` number; on Windows this is always
+      ``-1``.
 
     Linux only:
 
@@ -2205,7 +2203,7 @@ Process class
        no longer hangs on Windows.
 
     .. versionchanged:: 4.1.0
-       new **position**, **mode** and **flags** fields on Linux.
+       Linux: added **position**, **mode** and **flags** fields.
 
   .. method:: net_connections(kind="inet")
 
@@ -2253,19 +2251,18 @@ Process class
        automatically remove process from :func:`process_iter` internal cache
        if PID has been reused by another process.
 
-  .. method:: send_signal(signal)
+  .. method:: send_signal(sig)
 
-    Send a signal to process (see :mod:`signal` module constants)
+    Send signal *sig* to process (see :mod:`signal` module constants),
     preemptively checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
     On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
-    are supported and *SIGTERM* is treated as an alias for :meth:`kill`.
+    are supported, and *SIGTERM* is treated as an alias for :meth:`kill`.
 
     .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`
 
     .. versionchanged:: 3.2.0
-       support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows was
-       added.
+       Windows: add support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals.
 
   .. method:: suspend()
 
@@ -2344,6 +2341,9 @@ Process class
       If none of these mechanisms are available, the function falls back to a
       busy loop (non-blocking call and short sleeps).
 
+      Functionality also ported to the :mod:`subprocess` module in Python 3.15,
+      see `GH-144047`_.
+
     .. versionchanged:: 5.7.2
        if *timeout* is not ``None``, use efficient event-driven implementation
        on Linux >= 5.3 and macOS / BSD.
@@ -2352,13 +2352,13 @@ Process class
        return value is cached (instead of returning ``None``).
 
     .. versionchanged:: 5.7.1
-       on POSIX, if the signal is negative, return it as a human readable
+       POSIX: if the signal is negative, return it as a human readable
        :mod:`enum`.
 
     .. versionchanged:: 7.2.2
        on Linux >= 5.3 + Python >= 3.9 and macOS/BSD, use :func:`os.pidfd_open` and
        :func:`select.kqueue` respectively, instead of less efficient busy-loop
-       polling. Later added to CPython 3.15 in `GH-144047`_.
+       polling.
 
 -------------------------------------------------------------------------------
 
@@ -2403,11 +2403,11 @@ C heap introspection
 
 The following functions provide direct access to the platform's native
 :term:`heap` allocator (such as glibc's ``malloc`` on Linux or ``jemalloc``
-on BSD). They
-are low-level interfaces intended for detecting memory leaks in C extensions,
-which are usually not revealed via standard RSS / VMS metrics. These functions do
-not reflect Python object memory; they operate solely on allocations made in C
-via ``malloc()``, ``free()``, and related calls.
+on BSD). They are low-level interfaces intended for detecting memory leaks in C
+extensions, which are usually not revealed via standard :term:`RSS` / :term:`VMS`
+metrics.
+These functions do not reflect Python object memory; they operate solely on
+allocations made in C via ``malloc()``, ``free()``, and related calls.
 
 The general idea behind these functions is straightforward: capture the state
 of the :term:`heap` before and after repeatedly invoking a function
@@ -2467,7 +2467,7 @@ Python's memory tracking misses.
   the :term:`heap` (typically small ``malloc()`` allocations).
 
   In practice, modern allocators rarely comply, so this is not a
-  general-purpose memory-reduction tool and won't meaningfully shrink RSS in
+  general-purpose memory-reduction tool and won't meaningfully shrink :term:`RSS` in
   real programs. Its primary value is in **leak detection tools**.
 
   Calling ``heap_trim()`` before taking measurements helps reduce allocator
