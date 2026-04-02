@@ -94,7 +94,7 @@ Glossary
    dropin / dropout
 
       Fields in :func:`net_io_counters` counting packets dropped at the
-      NIC level before they could be processed (``dropin``) or sent
+      :term:`NIC` level before they could be processed (``dropin``) or sent
       (``dropout``). Unlike transmission errors, drops indicate the
       interface or kernel buffer was overwhelmed. A non-zero and growing
       count is a sign of network saturation or misconfiguration.
@@ -118,12 +118,25 @@ Glossary
 
    hardware interrupt
 
-      A signal sent by a hardware device (disk controller, NIC, keyboard)
+      A signal sent by a hardware device (disk controller, :term:`NIC`, keyboard)
       to the CPU to request attention. Each interrupt briefly preempts
       whatever the CPU was doing. Reported as the ``interrupts`` field of
       :func:`cpu_stats` and ``irq`` field of :func:`cpu_times`.
       A very high rate may indicate a misbehaving device driver or a heavily
-      loaded NIC. Also see :term:`soft interrupt`.
+      loaded :term:`NIC`. Also see :term:`soft interrupt`.
+
+   heap
+
+      The memory region managed by the platform's native C allocator
+      (e.g. glibc's ``malloc`` on Linux, ``jemalloc`` on FreeBSD,
+      ``HeapAlloc`` on Windows). When a C extension calls ``malloc()``
+      and never calls ``free()``, the leaked bytes show up here but
+      are not always visible to Python's memory tracking tools (:mod:`tracemalloc`,
+      :func:`sys.getsizeof`) or :term:`RSS` / :term:`VMS` .
+      :func:`heap_info` exposes the current state of the heap, and
+      :func:`heap_trim` asks the allocator to release unused portions
+      of it. Together they provide a way to detect memory leaks in C
+      extensions that standard process-level metrics would otherwise miss.
 
    involuntary context switch
 

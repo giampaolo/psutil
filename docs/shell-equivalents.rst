@@ -8,6 +8,10 @@ This page maps psutil's Python API to the equivalent native terminal commands
 on each platform. This is useful for understanding what psutil replaces and for
 cross-checking results.
 
+.. seealso::
+   - :doc:`stdlib-equivalents`
+   - :doc:`alternatives`
+
 System-wide functions
 ---------------------
 

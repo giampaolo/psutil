@@ -9,17 +9,17 @@ but here is a short list.
 
 A big thanks to all of you.
 
-— Giampaolo
+— Giampaolo Rodola
 
 Top contributors
 ----------------
 
 * `Giampaolo Rodola`_: creator, primary author and long-time maintainer
 * `Jay Loden`_: original co-author, initial design and project bootstrap,
-  original macOS / Windows / FreeBSD implementations
+  initial macOS / Windows / FreeBSD implementations
 * `Arnon Yaari`_: AIX implementation
-* `Landry Breuil`_: original OpenBSD implementation
-* `Ryo Onodera`_ and `Thomas Klausner`_: original NetBSD implementation
+* `Landry Breuil`_: initial OpenBSD implementation
+* `Ryo Onodera`_ and `Thomas Klausner`_: initial NetBSD implementation
 
 Donations
 ---------

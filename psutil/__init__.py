@@ -294,7 +294,7 @@ def _use_prefetch(method):
 
     When `process_iter()` is called with an *attrs* argument, it
     pre-fetches the requested attributes via `as_dict()` and stores
-    them in Process._prefetch.  This decorator makes the decorated
+    them in `Process._prefetch`.  This decorator makes the decorated
     method return the cached value (if present) instead of issuing
     a new system call.
     """
@@ -312,30 +312,19 @@ def _use_prefetch(method):
 
 
 class Process:
-    """Represents an OS process with the given PID.
-    If PID is omitted current process PID (os.getpid()) is used.
-    Raise `NoSuchProcess` if PID does not exist.
+    """Represents an OS process identified by a PID.
 
-    Note that most of the methods of this class do not make sure that
-    the PID of the process being queried has been reused. That means
-    that you may end up retrieving information for another process.
+    If *pid* arg is omitted, the current process PID (`os.getpid()`) is
+    used. Raises `NoSuchProcess` if the PID does not exist.
 
-    The only exceptions for which process identity is pre-emptively
-    checked and guaranteed are:
+    The way this class is bound to a process is via its PID. Most
+    methods do not guarantee that the PID has not been reused, so you
+    may end up retrieving information for a different process.
 
-     - `parent()`
-     - `children()`
-     - `nice()` (set)
-     - `ionice()` (set)
-     - `rlimit()` (set)
-     - `cpu_affinity` (set)
-     - `suspend()`
-     - `resume()`
-     - `send_signal()`
-     - `terminate()`
-     - `kill()`
+    Real process identity is checked (via PID + creation time) only for
+    methods that set attributes or send signals.
 
-    To prevent this problem for all other methods you can use
+    To avoid issues with PID reuse for other read-only methods, call
     `is_running()` before querying the process.
     """
 
@@ -393,15 +382,17 @@ class Process:
             self._gone = True
 
     def _get_ident(self):
-        """Return a (pid, uid) tuple which is supposed to identify a
-        Process instance univocally over time. The PID alone is not
-        enough, as it can be assigned to a new process after this one
-        terminates, so we add process creation time to the mix. We need
-        this in order to prevent killing the wrong process later on.
-        This is also known as PID reuse or PID recycling problem.
+        """Return a `(pid, uid)` tuple which is supposed to identify a
+        Process instance univocally over time.
+
+        The PID alone is not enough, as it can be assigned to a new
+        process after this one terminates, so we add creation time to
+        the mix. We need this in order to prevent killing the wrong
+        process later on. This is also known as PID reuse or PID
+        recycling problem.
 
         The reliability of this strategy mostly depends on
-        create_time() precision, which is 0.01 secs on Linux. The
+        `create_time()` precision, which is 0.01 secs on Linux. The
         assumption is that, after a process terminates, the kernel
         won't reuse the same PID after such a short period of time
         (0.01 secs). Technically this is inherently racy, but
@@ -508,7 +499,7 @@ class Process:
     def info(self) -> dict:
         """Return pre-fetched `process_iter()` info dict.
 
-        Deprecated: use method calls instead (e.g. p.name()).
+        Deprecated: use method calls instead (e.g. `p.name()`).
         """
         msg = (
             "Process.info is deprecated; use method calls instead"
@@ -524,13 +515,14 @@ class Process:
     @contextlib.contextmanager
     def oneshot(self) -> Generator[None, None, None]:
         """Context manager which speeds up the retrieval of multiple
-        process attributes at the same time. Internally, many
-        attributes (e.g. `name()`, `ppid()`, `uids()`, `create_time()`,
-        ...) share the same system call. This context manager executes
-        each system call once, and caches the results, so subsequent
-        calls return cached values. The cache is cleared when exiting
-        the context manager block. Use this every time you retrieve
-        more than one attribute about the process.
+        process attributes at the same time.
+
+        Internally, many attributes (e.g. `name()`, `ppid()`, `uids()`,
+        `create_time()`, ...) share the same system call. This context
+        manager executes each system call once, and caches the results,
+        so subsequent calls return cached values. The cache is cleared
+        when exiting the context manager block. Use this every time you
+        retrieve more than one attribute about the process.
 
         >>> import psutil
         >>> p = psutil.Process()
@@ -638,8 +630,9 @@ class Process:
         return retdict
 
     def parent(self) -> Process | None:
-        """Return the parent process as a Process object pre-emptively
+        """Return the parent process as a `Process` object, pre-emptively
         checking whether PID has been reused.
+
         If no parent is known return None.
         """
         lowest_pid = _LOWEST_PID if _LOWEST_PID is not None else pids()[0]
@@ -660,8 +653,10 @@ class Process:
                 pass
 
     def parents(self) -> list[Process]:
-        """Return the parents of this process as a list of Process
-        instances. If no parents are known return an empty list.
+        """Return the parents of this process as a list of `Process`
+        instances.
+
+        If no parents are known return an empty list.
         """
         parents = []
         proc = self.parent()
@@ -754,8 +749,9 @@ class Process:
     @_use_prefetch
     def exe(self) -> str:
         """The process executable as an absolute path.
-        May also be an empty string.
-        The return value is cached after first call.
+
+        May also be an empty string. The return value is cached after
+        first call.
         """
 
         def guess_it(fallback):
@@ -831,10 +827,11 @@ class Process:
     def create_time(self) -> float:
         """The process creation time as a floating point number
         expressed in seconds since the epoch (seconds since January 1,
-        1970, at midnight UTC). The return value, which is cached after
-        first call, is based on the system clock, which means it may be
-        affected by changes such as manual adjustments or time
-        synchronization (e.g. NTP).
+        1970, at midnight UTC).
+
+        The return value, which is cached after first call, is based on
+        the system clock, which means it may be affected by changes
+        such as manual adjustments or time synchronization (e.g. NTP).
         """
         if self._create_time is None:
             self._create_time = self._proc.create_time()
@@ -859,14 +856,14 @@ class Process:
         @_use_prefetch
         @memoize_when_activated
         def uids(self) -> puids:
-            """Return process UIDs as a (real, effective, saved)
+            """Return process UIDs as a `(real, effective, saved)`
             named tuple.
             """
             return self._proc.uids()
 
         @_use_prefetch
         def gids(self) -> pgids:
-            """Return process GIDs as a (real, effective, saved)
+            """Return process GIDs as a `(real, effective, saved)`
             named tuple.
             """
             return self._proc.gids()
@@ -885,17 +882,17 @@ class Process:
             """
             return self._proc.num_fds()
 
-    # Linux, BSD, AIX and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
         @_use_prefetch
         def io_counters(self) -> pio:
             """Return process I/O statistics (primarily read and
             written bytes).
+
+            Availability: Linux, Windows, BSD, AIX
             """
             return self._proc.io_counters()
 
-    # Linux and Windows
     if hasattr(_psplatform.Process, "ionice_get"):
 
         @_use_prefetch
@@ -909,8 +906,7 @@ class Process:
             value, the lower the I/O priority of the process.
 
             On Windows only *ioclass* is used and it can be set to
-            one of the `IOPRIO_*` constants (IOPRIO_VERYLOW,
-            IOPRIO_LOW, IOPRIO_NORMAL, IOPRIO_HIGH).
+            one of the `IOPRIO_*` constants.
 
             Availability: Linux, Windows
             """
@@ -923,7 +919,6 @@ class Process:
                 self._raise_if_pid_reused()
                 return self._proc.ionice_set(ioclass, value)
 
-    # Linux / FreeBSD only
     if hasattr(_psplatform.Process, "rlimit"):
 
         def rlimit(
@@ -931,21 +926,20 @@ class Process:
             resource: int,
             limits: tuple[int, int] | None = None,
         ) -> tuple[int, int] | None:
-            """Get or set process resource limits as a (soft, hard)
+            """Get or set process resource limits as a `(soft, hard)`
             tuple.
 
-            - *resource*: one of the `RLIMIT_*` constants.
-            - *limits*: a (soft, hard) tuple (set).
+            - resource: one of the `RLIMIT_*` constants.
+            - limits: a `(soft, hard)` tuple (set).
 
             See "man prlimit" for further info.
 
-            Availability: Linux and FreeBSD
+            Availability: Linux, FreeBSD
             """
             if limits is not None:
                 self._raise_if_pid_reused()
             return self._proc.rlimit(resource, limits)
 
-    # Windows, Linux and FreeBSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
         @_use_prefetch
@@ -955,7 +949,7 @@ class Process:
             """Get or set process CPU affinity.
 
             If specified, *cpus* must be a list of CPUs for which you
-            want to set the affinity (e.g. [0, 1]). If an empty list is
+            want to set the affinity (e.g. `[0, 1]`). If an empty list is
             passed, all eligible CPUs are assumed (and set).
 
             Availability: Linux, Windows, FreeBSD
@@ -978,11 +972,7 @@ class Process:
         def cpu_num(self) -> int:
             """Return what CPU this process is currently running on.
 
-            The returned number should be <= psutil.cpu_count()
-            and <= len(psutil.cpu_percent(percpu=True)).
-            It may be used in conjunction with
-            psutil.cpu_percent(percpu=True) to observe the system
-            workload distributed across CPUs.
+            The returned number should be <= `psutil.cpu_count()`.
             """
             return self._proc.cpu_num()
 
@@ -991,8 +981,10 @@ class Process:
 
         @_use_prefetch
         def environ(self) -> dict[str, str]:
-            """The environment variables of the process as a dict.  Note: this
-            might not reflect changes made after the process started.
+            """The environment variables of the process as a dict.
+
+            Note: this might not reflect changes made after the process
+            started.
             """
             return self._proc.environ()
 
@@ -1001,7 +993,8 @@ class Process:
         @_use_prefetch
         def num_handles(self) -> int:
             """Return the number of handles opened by this process
-            (Windows only).
+
+            Availability: Windows
             """
             return self._proc.num_handles()
 
@@ -1022,8 +1015,8 @@ class Process:
         @_use_prefetch
         def threads(self) -> list[pthread]:
             """Return threads opened by process as a list of
-            (id, user_time, system_time) named tuples representing
-            thread id and thread CPU times (user/system).
+            `(id, user_time, system_time)` named tuples.
+
             On OpenBSD this method requires root access.
             """
             return self._proc.threads()
@@ -1031,6 +1024,7 @@ class Process:
     def children(self, recursive: bool = False) -> list[Process]:
         """Return the children of this process as a list of Process
         instances, pre-emptively checking whether PID has been reused.
+
         If *recursive* is True return all the parent descendants.
 
         Example (A == this process):
@@ -1199,7 +1193,7 @@ class Process:
     @_use_prefetch
     @memoize_when_activated
     def cpu_times(self) -> pcputimes:
-        """Return a (user, system, children_user, children_system)
+        """Return a `(user, system, children_user, children_system)`
         named tuple representing the accumulated process time,
         expressed in seconds.
 
@@ -1216,7 +1210,7 @@ class Process:
         """Return a named tuple with variable fields depending on the
         platform, representing memory information about the process.
 
-        The "portable" fields available on all platforms are `rss` and `vms`.
+        The portable fields available on all platforms are `rss` and `vms`.
 
         All numbers are expressed in bytes.
         """
@@ -1241,8 +1235,10 @@ class Process:
 
         @_use_prefetch
         def memory_footprint(self) -> pfootprint:
-            """Return a named tuple with USS, PSS and swap memory
-            metrics. These provide a better representation of
+            """Return a named tuple with USS memory, and on Linux also
+            PSS and swap.
+
+            These values provide a more accurate representation of
             actual process memory usage.
 
             USS is the memory unique to a process and which would
@@ -1354,15 +1350,15 @@ class Process:
     @_use_prefetch
     def page_faults(self) -> ppagefaults:
         """Return the number of page faults for this process as a
-        (minor, major) named tuple.
+        `(minor, major)` named tuple.
 
-        - *minor* (a.k.a. *soft* faults): occur when a memory page is
+        - `minor` (a.k.a. *soft* faults): occur when a memory page is
           not currently mapped into the process address space, but is
           already present in physical RAM (e.g. a shared library page
           loaded by another process). The kernel resolves these without
           disk I/O.
 
-        - *major* (a.k.a. *hard* faults): occur when the page must be
+        - `major` (a.k.a. *hard* faults): occur when the page must be
           fetched from disk. These are expensive because they stall the
           process until I/O completes.
 
@@ -1372,16 +1368,19 @@ class Process:
 
     @_use_prefetch
     def open_files(self) -> list[popenfile]:
-        """Return files opened by process as a list of
-        (path, fd) named tuples including the absolute file name
-        and file descriptor number.
+        """Return files opened by process as a list of `(path, fd)`
+        named tuples including the absolute file name and file
+        descriptor number.
+
+        On Linux the named tuple also includes `position`, `mode` and
+        `flags` fields.
         """
         return self._proc.open_files()
 
     @_use_prefetch
     def net_connections(self, kind: str = "inet") -> list[pconn]:
         """Return socket connections opened by process as a list of
-        (fd, family, type, laddr, raddr, status) named tuples.
+        `(fd, family, type, laddr, raddr, status)` named tuples.
 
         The *kind* parameter filters for connections that match the
         following criteria:
@@ -1443,7 +1442,7 @@ class Process:
         whether PID has been reused (see signal module constants).
 
         On Windows only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT
-        are valid. SIGTERM is treated as an alias for kill().
+        are valid. SIGTERM is treated as an alias for `kill()`.
         """
         if POSIX:
             self._send_signal(sig)
@@ -1482,7 +1481,7 @@ class Process:
         """Terminate the process with SIGTERM pre-emptively checking
         whether PID has been reused.
 
-        On Windows this is an alias for kill().
+        On Windows this is an alias for `kill()`.
         """
         if POSIX:
             self._send_signal(signal.SIGTERM)
@@ -1560,7 +1559,7 @@ Process.attrs = frozenset(
 
 class Popen(Process):
     """Same as `subprocess.Popen`, but in addition it provides all
-    psutil.Process methods in a single class.
+    `Process` methods in a single class.
 
     For the following methods which are common to both classes, psutil
     implementation takes precedence:
@@ -1766,7 +1765,7 @@ def wait_procs(
     """Convenience function which waits for a list of processes to
     terminate.
 
-    Return a (gone, alive) tuple indicating which processes
+    Return a `(gone, alive)` tuple indicating which processes
     are gone and which ones are still alive.
 
     The gone ones will have a new `returncode` attribute indicating
@@ -1887,19 +1886,19 @@ def cpu_times(percpu: bool = False) -> scputimes | list[scputimes]:
     """Return system-wide CPU times as a named tuple.
 
     Every CPU time represents the seconds the CPU has spent in the
-    given mode. The named tuple's fields availability varies depending
-    on the platform:
+    given mode:
 
-     - user
-     - system
-     - idle
-     - nice (UNIX)
-     - iowait (Linux)
-     - irq (Linux, FreeBSD)
-     - softirq (Linux)
-     - steal (Linux)
-     - guest (Linux)
-     - guest_nice (Linux)
+    - `user`
+    - `system`
+    - `idle`
+    - `nice` (UNIX)
+    - `iowait` (Linux)
+    - `irq` (Linux, FreeBSD)
+    - `softirq` (Linux)
+    - `steal` (Linux)
+    - `guest` (Linux)
+    - `guest_nice` (Linux)
+    - `dpc` (Windows)
 
     When *percpu* is True return a list of named tuples for each
     logical CPU. First element of the list refers to first CPU, second
@@ -2197,8 +2196,10 @@ def getloadavg() -> tuple[float, float, float]:
 
 
 def virtual_memory() -> svmem:
-    """Return statistics about system memory usage as a named tuple
-    including the following fields, expressed in bytes:
+    """Return statistics about system memory usage as a named tuple.
+
+    The fields vary by platform (see official doc), but the following
+    are present on all platforms:
 
      - total:
        total physical memory available
@@ -2222,28 +2223,9 @@ def virtual_memory() -> svmem:
        note that this doesn't reflect the actual memory available
        (use 'available' instead)
 
-    Platform-specific fields:
+    The sum of `used` and `available` does not necessarily equal `total`.
 
-     - active (UNIX):
-       memory currently in use or very recently used, and so it is in RAM.
-
-     - inactive (UNIX):
-       memory that is marked as not used.
-
-     - buffers (BSD, Linux):
-       cache for things like file system metadata.
-
-     - cached (BSD, macOS):
-       cache for various things.
-
-     - wired (macOS, BSD, Windows):
-       memory that is marked to always stay in RAM. It is never moved to disk.
-
-     - shared (BSD):
-       memory that may be simultaneously accessed by multiple processes.
-
-    The sum of 'used' and 'available' does not necessarily equal total.
-    On Windows 'available' and 'free' are the same.
+    On Windows `available` and `free` are the same.
     """
     global _TOTAL_PHYMEM
     ret = _psplatform.virtual_memory()
@@ -2263,7 +2245,7 @@ def swap_memory() -> sswap:
      - sin:     no. of bytes the system has swapped in from disk (cumulative)
      - sout:    no. of bytes the system has swapped out from disk (cumulative)
 
-    'sin' and 'sout' on Windows are meaningless and always set to 0.
+    `sin` and `sout` on Windows are meaningless and always set to 0.
     """
     return _psplatform.swap_memory()
 
@@ -2285,7 +2267,7 @@ def disk_partitions(all: bool = False) -> list[sdiskpart]:
     """Return mounted partitions as a list of
     (device, mountpoint, fstype, opts) named tuple.
 
-    'opts' field is a raw string separated by commas indicating mount
+    `opts` field is a raw string separated by commas indicating mount
     options which may vary depending on the platform.
 
     If *all* parameter is False return physical devices only and ignore
@@ -2398,7 +2380,7 @@ def net_connections(kind: str = 'inet') -> list[sconn]:
     """Return system-wide socket connections as a list of
     (fd, family, type, laddr, raddr, status, pid) named tuples.
 
-    In case of limited privileges 'fd' and 'pid' may be set to -1
+    In case of limited privileges `fd` and `pid` may be set to -1
     and None respectively.
 
     The *kind* parameter filters for connections that fit the
@@ -2604,8 +2586,7 @@ def users() -> list[suser]:
      - host: the host name associated with the entry, if any.
      - started: the creation time as a floating point number expressed in
        seconds since the epoch.
-     - pid: the PID of the login process (None on Windows and
-       OpenBSD).
+     - pid: the PID of the login process (None on Windows and OpenBSD).
     """
     return _psplatform.users()
 

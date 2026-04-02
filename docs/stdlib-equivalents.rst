@@ -10,8 +10,9 @@ how the two APIs differ. The most common difference is that stdlib functions
 only operate on the **current process**, while psutil works on **any process**
 (PID).
 
-See also the :doc:`alternatives` page for a higher-level discussion of
-how psutil compares to the standard library and third-party tools.
+.. seealso::
+   - :doc:`shell-equivalents`
+   - :doc:`alternatives`
 
 System-wide functions
 ---------------------

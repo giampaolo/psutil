@@ -1643,7 +1643,7 @@ Process class
        >>> p.io_counters()
        pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0, read_chars=769931, write_chars=203)
 
-    .. availability:: Linux, BSD, Windows, AIX
+    .. availability:: Linux, Windows, BSD, AIX
 
     .. versionchanged:: 5.2.0
        added **read_chars** + **write_chars** on Linux and **other_count** +
@@ -1651,13 +1651,14 @@ Process class
 
   .. method:: num_ctx_switches()
 
-    The number of :term:`context switches <context switch>` performed by this process
+    The number of :term:`context switches <context switch>` performed by this
+    process as a ``(voluntary, involuntary)`` named tuple
     (:term:`cumulative counter`).
 
     .. note::
       (Windows, macOS) **involuntary** value is always set to 0, while
-      **voluntary** value reflect the total number of context switches (voluntary
-      + involuntary). This is a limitation of the OS.
+      **voluntary** value reflects the total number of context switches
+      (voluntary + involuntary). This is a limitation of the OS.
 
     .. versionchanged:: 5.4.1
        added AIX support.
@@ -2400,15 +2401,17 @@ Popen class
 C heap introspection
 --------------------
 
-The following functions provide direct access to the platform's native C heap
-allocator (such as glibc's ``malloc`` on Linux or ``jemalloc`` on BSD). They
+The following functions provide direct access to the platform's native
+:term:`heap` allocator (such as glibc's ``malloc`` on Linux or ``jemalloc``
+on BSD). They
 are low-level interfaces intended for detecting memory leaks in C extensions,
-which are usually not revealed via standard RSS/VMS metrics. These functions do
+which are usually not revealed via standard RSS / VMS metrics. These functions do
 not reflect Python object memory; they operate solely on allocations made in C
 via ``malloc()``, ``free()``, and related calls.
 
 The general idea behind these functions is straightforward: capture the state
-of the C heap before and after repeatedly invoking a function implemented in a
+of the :term:`heap` before and after repeatedly invoking a function
+implemented in a
 C extension, and compare the results. If ``heap_used`` or ``mmap_used`` grows
 steadily across iterations, the C code is likely retaining memory it should be
 releasing. This provides an allocator-level way to spot native leaks that
@@ -2461,7 +2464,7 @@ Python's memory tracking misses.
 .. function:: heap_trim()
 
   Request that the underlying allocator free any unused memory it's holding in
-  the heap (typically small ``malloc()`` allocations).
+  the :term:`heap` (typically small ``malloc()`` allocations).
 
   In practice, modern allocators rarely comply, so this is not a
   general-purpose memory-reduction tool and won't meaningfully shrink RSS in

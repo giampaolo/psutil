@@ -174,16 +174,6 @@ On Windows, `download pip`_, open cmd.exe and install it with:
 
     py get-pip.py
 
-"pip not found"
-^^^^^^^^^^^^^^^
-
-Sometimes pip is installed but it's not available in your ``PATH``
-("pip command not found" or similar). Try this:
-
-.. code-block:: none
-
-    python3 -m pip install psutil
-
 Permission errors (UNIX)
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -99,8 +99,9 @@ A typical use case is to fetch all process attrs except the slow ones (see
 Measuring oneshot() speedup
 ---------------------------
 
-`bench_oneshot.py`_
-script measures :meth:`Process.oneshot` speedup. E.g. on Linux:
+`scripts/internal/bench_oneshot.py`_ measures :meth:`Process.oneshot` speedup.
+It also shows which APIs share the same internal kernel routines. E.g. on
+Linux:
 
 .. code-block:: none
 
@@ -129,15 +130,12 @@ script measures :meth:`Process.oneshot` speedup. E.g. on Linux:
   oneshot:  1.537 secs
   speedup:  +1.80x
 
-This also shows which APIs share the same internal kernel routines.
-
 .. _perf-api-speed:
 
 Measuring APIs speed
 --------------------
 
-`print_api_speed.py`_
-script shows the relative cost of each API call.
+`scripts/internal/print_api_speed.py`_ shows the relative cost of each API call.
 This helps you understand which operations are more expensive.
 E.g. on Linux:
 
@@ -208,5 +206,5 @@ E.g. on Linux:
   memory_footprint                 300      0.02241
   memory_maps                      300      0.30282
 
-.. _`bench_oneshot.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py
-.. _`print_api_speed.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py
+.. _`scripts/internal/bench_oneshot.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py
+.. _`scripts/internal/print_api_speed.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py

@@ -54,8 +54,8 @@ Windows
 -------
 
 - The recommended way to develop on Windows is to use ``make``.
-- Install `Git for Windows`_ and launch a **Git Bash shell**, which provides
-  a Unix-like environment where ``make`` works.
+- Install `Git for Windows`_ and launch a *Git Bash shell*, which provides a
+  Unix-like environment where ``make`` works.
 - Then run:
 
   .. code-block:: bash
@@ -185,7 +185,7 @@ Releases
 .. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
 .. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
 .. _`credits.rst`: https://github.com/giampaolo/psutil/blob/master/docs/credits.rst
-.. _`docs/`: https://github.com/giampaolo/psutil/blob/master/psutil/docs/
+.. _`docs/`: https://github.com/giampaolo/psutil/tree/master/docs
 .. _`Git for Windows`: https://git-scm.com/install/windows
 .. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
