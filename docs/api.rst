@@ -2991,12 +2991,12 @@ Utilities
 
   .. code-block:: pycon
 
-     >>> import psutil
-     >>> psutil.bytes2human(10000)
+     >>> from psutil.helpers import bytes2human
+     >>> bytes2human(10000)
      '9.8K'
-     >>> psutil.bytes2human(100001221)
+     >>> bytes2human(100001221)
      '95.4M'
-     >>> psutil.bytes2human(10000, format="%(value).1f %(symbol)s")
+     >>> bytes2human(10000, format="%(value).1f %(symbol)s")
      '9.8 K'
 
   .. versionadded:: 7.0.0

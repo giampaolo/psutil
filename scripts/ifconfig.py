@@ -45,7 +45,7 @@ wlp3s0:
 import socket
 
 import psutil
-from psutil import bytes2human
+from psutil.helpers import bytes2human
 
 af_map = {
     socket.AF_INET: 'IPv4',

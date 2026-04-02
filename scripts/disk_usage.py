@@ -19,7 +19,7 @@ import os
 import sys
 
 import psutil
-from psutil import bytes2human
+from psutil.helpers import bytes2human
 
 
 def main():
