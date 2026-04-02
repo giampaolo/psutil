@@ -110,11 +110,9 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
 }
 
 
-/*
- * A wrapper around proc_pidinfo().
- * https://opensource.apple.com/source/xnu/xnu-2050.7.9/bsd/kern/proc_info.c
- * Returns 0 on failure.
- */
+// A wrapper around proc_pidinfo().
+// https://opensource.apple.com/source/xnu/xnu-2050.7.9/bsd/kern/proc_info.c
+// Returns 0 on failure.
 int
 psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     int ret;
@@ -141,20 +139,18 @@ psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
 }
 
 
-/*
- * A wrapper around task_for_pid() which sucks big time:
- * - it's not documented
- * - errno is set only sometimes
- * - sometimes errno is ENOENT (?!?)
- * - for PIDs != getpid() or PIDs which are not members of the procmod
- *   it requires root
- * As such we can only guess what the heck went wrong and fail either
- * with NoSuchProcess or give up with AccessDenied.
- * References:
- * https://github.com/giampaolo/psutil/issues/1181
- * https://github.com/giampaolo/psutil/issues/1209
- * https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
- */
+// A wrapper around task_for_pid() which sucks big time:
+// - it's not documented
+// - errno is set only sometimes
+// - sometimes errno is ENOENT (?!?)
+// - for PIDs != getpid() or PIDs which are not members of the procmod
+//   it requires root
+//
+// As such we can only guess what the heck went wrong and fail either
+// with NoSuchProcess or give up with AccessDenied. References:
+// - https://github.com/giampaolo/psutil/issues/1181
+// - https://github.com/giampaolo/psutil/issues/1209
+// - https://github.com/giampaolo/psutil/issues/1291#issuecomment-396062519
 int
 psutil_task_for_pid(pid_t pid, mach_port_t *task) {
     kern_return_t err;
@@ -190,10 +186,8 @@ psutil_task_for_pid(pid_t pid, mach_port_t *task) {
 }
 
 
-/*
- * A wrapper around proc_pidinfo(PROC_PIDLISTFDS), which dynamically sets
- * the buffer size.
- */
+// A wrapper around proc_pidinfo(PROC_PIDLISTFDS), which dynamically sets
+// the buffer size.
 struct proc_fdinfo *
 psutil_proc_list_fds(pid_t pid, int *num_fds) {
     int ret;

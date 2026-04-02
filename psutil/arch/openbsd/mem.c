@@ -59,8 +59,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // * https://people.freebsd.org/~rse/dist/freebsd-memory
     // * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
     // matches zabbix:
-    // * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/
-    //   zbxsysinfo/freebsd/memory.c#L143
+    // * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
     avail = inactive + cached + free;
     used = active + wired + cached;
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);

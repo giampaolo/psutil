@@ -12,17 +12,14 @@
 
 PyObject *ZombieProcessError = NULL;
 
-/*
- * From "man getpagesize" on Linux, https://linux.die.net/man/2/getpagesize:
- *
- * > In SUSv2 the getpagesize() call is labeled LEGACY, and in POSIX.1-2001
- * > it has been dropped.
- * > Portable applications should employ sysconf(_SC_PAGESIZE) instead
- * > of getpagesize().
- * > Most systems allow the synonym _SC_PAGE_SIZE for _SC_PAGESIZE.
- * > Whether getpagesize() is present as a Linux system call depends on the
- * > architecture.
- */
+// "man getpagesize" says:
+//
+// In SUSv2 the getpagesize() call is labeled LEGACY, and in
+// POSIX.1-2001 it has been dropped. Portable applications should
+// employ sysconf(_SC_PAGESIZE) instead of getpagesize(). Most systems
+// allow the synonym _SC_PAGE_SIZE for _SC_PAGESIZE. Whether
+// getpagesize() is present as a Linux system call depends on the
+// architecture.
 long
 psutil_getpagesize(void) {
 #ifdef _SC_PAGESIZE

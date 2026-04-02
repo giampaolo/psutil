@@ -31,9 +31,7 @@ PyObject *TimeoutExpired;
 PyObject *TimeoutAbandoned;
 
 
-/*
- * Return 1 if PID exists in the current process list, else 0.
- */
+// Return 1 if PID exists in the current process list, else 0.
 PyObject *
 psutil_pid_exists(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -49,9 +47,6 @@ psutil_pid_exists(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Kill a process given its PID.
- */
 PyObject *
 psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
@@ -83,9 +78,6 @@ psutil_proc_kill(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Wait for process to terminate and return its exit code.
- */
 PyObject *
 psutil_proc_wait(PyObject *self, PyObject *args) {
     HANDLE hProcess;
@@ -156,9 +148,7 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python tuple (user_time, kernel_time)
- */
+// Return (user_time, kernel_time, create_time).
 PyObject *
 psutil_proc_times(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -206,12 +196,10 @@ psutil_proc_times(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process executable path. Works for all processes regardless of
- * privilege. NtQuerySystemInformation has some sort of internal cache,
- * since it succeeds even when a process is gone (but not if a PID never
- * existed).
- */
+// Return process executable path. Works for all processes regardless
+// of privilege. NtQuerySystemInformation has some sort of internal
+// cache, since it succeeds even when a process is gone (but not if a
+// PID never existed).
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -319,9 +307,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process memory information as a Python dict.
- */
 PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
@@ -429,12 +414,9 @@ psutil_GetProcWsetInformation(
 }
 
 
-/*
- * Returns the USS of the process.
- * Reference:
- * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
- *     nsMemoryReporterManager.cpp
- */
+// Returns the USS of the process.
+// Reference:
+// https://dxr.mozilla.org/mozilla-central/source/xpcom/base/nsMemoryReporterManager.cpp
 PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -483,9 +465,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Resume or suspends a process
- */
+// Resume or suspends a process.
 PyObject *
 psutil_proc_suspend_or_resume(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -695,9 +675,7 @@ error:
 }
 
 
-/*
- * Return process username as a "DOMAIN//USERNAME" string.
- */
+// Return process username as a "DOMAIN//USERNAME" string.
 PyObject *
 psutil_proc_username(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -796,9 +774,7 @@ error:
 }
 
 
-/*
- * Get process priority as a Python integer.
- */
+// Get process priority as a Python integer.
 PyObject *
 psutil_proc_priority_get(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -823,9 +799,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Set process priority.
- */
+// Set process priority.
 PyObject *
 psutil_proc_priority_set(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -852,9 +826,6 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Get process IO priority as a Python integer.
- */
 PyObject *
 psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -880,9 +851,6 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Set process IO priority.
- */
 PyObject *
 psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -909,10 +877,6 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python tuple referencing process I/O counters.
- */
-PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
@@ -943,9 +907,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process CPU affinity as a bitmask
- */
+// Return process CPU affinity as a bitmask.
 PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -970,9 +932,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Set process CPU affinity
- */
 PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -1024,9 +983,7 @@ psutil_proc_page_faults(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return True if all process threads are in waiting/suspended state.
- */
+// Return True if all process threads are in waiting/suspended state.
 PyObject *
 psutil_proc_is_suspended(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -1051,9 +1008,6 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return the number of handles opened by process.
- */
 PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
     DWORD pid;
@@ -1100,9 +1054,6 @@ get_region_protection_string(ULONG protection) {
 }
 
 
-/*
- * Return a list of process's memory mappings.
- */
 PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     MEMORY_BASIC_INFORMATION basicInfo;
@@ -1170,9 +1121,7 @@ error:
 }
 
 
-/*
- * Return a {pid:ppid, ...} dict for all running processes.
- */
+// Return a {pid:ppid, ...} dict for all running processes.
 PyObject *
 psutil_ppid_map(PyObject *self, PyObject *args) {
     PyObject *py_pid = NULL;

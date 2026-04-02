@@ -11,10 +11,8 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Return the number of logical, active CPUs. Return 0 if undetermined.
- * See discussion at: https://bugs.python.org/issue33166#msg314631
- */
+// Return the number of logical, active CPUs. Return 0 if undetermined.
+// See discussion at: https://bugs.python.org/issue33166#msg314631
 static unsigned int
 psutil_get_num_cpus(int fail_on_err) {
     unsigned int ncpus = 0;
@@ -40,11 +38,8 @@ psutil_get_num_cpus(int fail_on_err) {
 }
 
 
-/*
- * Retrieves system CPU timing information as a (user, system, idle)
- * tuple. On a multiprocessor system, the values returned are the
- * sum of the designated times across all processors.
- */
+// Retrieves system CPU timing information as a (user, system, idle)
+// tuple. The values returned are the sum of times across all CPUs.
 PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, user, system;
@@ -70,9 +65,7 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Same as above but for all system CPUs.
- */
+// Same as above but for all CPUs.
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     double idle, kernel, systemt, user, interrupt, dpc;
@@ -151,9 +144,7 @@ error:
 }
 
 
-/*
- * Return the number of active, logical CPUs.
- */
+// Return the number of active, logical CPUs.
 PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     unsigned int ncpus;
@@ -166,9 +157,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return the number of CPU cores (non hyper-threading).
- */
+// Return the number of CPU cores (non hyper-threading).
 PyObject *
 psutil_cpu_count_cores(PyObject *self, PyObject *args) {
     DWORD rc;
@@ -249,9 +238,6 @@ return_none:
 }
 
 
-/*
- * Return CPU statistics.
- */
 PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     NTSTATUS status;
@@ -364,9 +350,6 @@ error:
 }
 
 
-/*
- * Return CPU frequency.
- */
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     PROCESSOR_POWER_INFORMATION *ppi;

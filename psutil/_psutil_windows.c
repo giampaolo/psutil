@@ -4,17 +4,15 @@
  * found in the LICENSE file.
  */
 
-/*
- * Windows platform-specific module methods for _psutil_windows.
- *
- * List of undocumented Windows NT APIs which are used in here and in
- * other modules:
- * - NtQuerySystemInformation
- * - NtQueryInformationProcess
- * - NtQueryObject
- * - NtSuspendProcess
- * - NtResumeProcess
- */
+// Windows module methods.
+//
+// List of undocumented Windows NT APIs which are used in here and in
+// other modules:
+// - NtQuerySystemInformation
+// - NtQueryInformationProcess
+// - NtQueryObject
+// - NtSuspendProcess
+// - NtResumeProcess
 
 #include <Python.h>
 #include <windows.h>

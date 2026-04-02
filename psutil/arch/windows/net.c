@@ -126,9 +126,7 @@ error:
 }
 
 
-/*
- * Return NICs addresses.
- */
+// Return NICs addresses.
 PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args) {
     unsigned int i = 0;
@@ -334,10 +332,8 @@ error:
 }
 
 
-/*
- * Provides stats about NIC interfaces installed on the system.
- * TODO: get 'duplex' (currently it's hard coded to '2', aka 'full duplex')
- */
+// Provides stats about NIC interfaces installed on the system.
+// TODO: get 'duplex' (currently it's hard coded to '2', aka 'full duplex')
 PyObject *
 psutil_net_if_stats(PyObject *self, PyObject *args) {
     int i;

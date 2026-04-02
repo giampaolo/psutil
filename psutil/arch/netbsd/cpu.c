@@ -12,15 +12,12 @@
 
 #include "../../arch/all/init.h"
 
-
-/*
-CPU related functions. Original code was refactored and moved from
-psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
-already) from cset 84219ad. For reference, here's the git history with
-original(ish) implementations:
-- per CPU times: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
-- CPU stats: a991494e4502e1235ebc62b5ba450287d0dedec0 (Jan 2016)
-*/
+// CPU related functions. Original code was refactored and moved from
+// psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
+// already) from cset 84219ad. For reference, here's the git history with
+// original(ish) implementations:
+// - per CPU times: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
+// - CPU stats: a991494e4502e1235ebc62b5ba450287d0dedec0 (Jan 2016)
 
 
 PyObject *

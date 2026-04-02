@@ -4,8 +4,6 @@
  * found in the LICENSE file.
  */
 
-// macOS platform-specific module methods.
-
 #include <Python.h>
 #include <sys/time.h>  // needed for old macOS versions
 #include <sys/proc.h>

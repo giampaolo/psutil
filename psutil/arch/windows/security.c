@@ -2,10 +2,10 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Security related functions for Windows platform (Set privileges such as
- * SE DEBUG).
  */
+
+// Security related functions for Windows platform (Set privileges such
+// as SE DEBUG).
 
 #include <windows.h>
 #include <Python.h>
@@ -107,13 +107,11 @@ psutil_print_err() {
 }
 
 
-/*
- * Set this process in SE DEBUG mode so that we have more chances of
- * querying processes owned by other users, including many owned by
- * Administrator and Local System.
- * https://docs.microsoft.com/windows-hardware/drivers/debugger/debug-privilege
- * This is executed on module import and we don't crash on error.
- */
+// Set this process in SE DEBUG mode so that we have more chances of
+// querying processes owned by other users, including many owned by
+// Administrator and Local System.
+// https://docs.microsoft.com/windows-hardware/drivers/debugger/debug-privilege
+// This is executed on module import and we don't crash on error.
 int
 psutil_set_se_debug() {
     HANDLE hToken;

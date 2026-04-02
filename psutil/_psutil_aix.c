@@ -6,27 +6,25 @@
  * found in the LICENSE file.
  */
 
-/*
- * AIX support is experimental at this time.
- * The following functions and methods are unsupported on the AIX platform:
- * - psutil.Process.memory_maps
- *
- * Known limitations:
- * - psutil.Process.io_counters read count is always 0
- * - psutil.Process.io_counters may not be available on older AIX versions
- * - psutil.Process.threads may not be available on older AIX versions
- * - psutil.net_io_counters may not be available on older AIX versions
- * - reading basic process info may fail or return incorrect values when
- *   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
- * - sockets and pipes may not be counted in num_fds (fixed in newer AIX
- *    versions)
- *
- * Useful resources:
- * - proc filesystem: http://www-01.ibm.com/support/knowledgecenter/
- *       ssw_aix_72/com.ibm.aix.files/proc.htm
- * - libperfstat: http://www-01.ibm.com/support/knowledgecenter/
- *       ssw_aix_72/com.ibm.aix.files/libperfstat.h.htm
- */
+// AIX support is experimental at this time.
+// The following functions and methods are unsupported on the AIX platform:
+// - psutil.Process.memory_maps
+//
+// Known limitations:
+// - psutil.Process.io_counters read count is always 0
+// - psutil.Process.io_counters may not be available on older AIX versions
+// - psutil.Process.threads may not be available on older AIX versions
+// - psutil.net_io_counters may not be available on older AIX versions
+// - reading basic process info may fail or return incorrect values when
+//   process is starting (see IBM APAR IV58499 - fixed in newer AIX versions)
+// - sockets and pipes may not be counted in num_fds (fixed in newer AIX
+//   versions)
+//
+// Useful resources:
+// - proc filesystem:
+// http://www-01.ibm.com/support/knowledgecenter/ssw_aix_72/com.ibm.aix.files/proc.htm
+// - libperfstat:
+// http://www-01.ibm.com/support/knowledgecenter/ssw_aix_72/com.ibm.aix.files/libperfstat.h.htm
 
 #include <Python.h>
 #include <sys/limits.h>
@@ -58,9 +56,7 @@
 
 #define TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
 
-/*
- * Read a file content and fills a C structure with it.
- */
+// Read a file content and fills a C structure with it.
 int
 psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
@@ -86,10 +82,8 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
 }
 
 
-/*
- * Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
- * as a Python tuple.
- */
+// Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
+// as a Python tuple.
 static PyObject *
 psutil_proc_oneshot(PyObject *self, PyObject *args) {
     int pid;
@@ -135,9 +129,6 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process name as a Python string.
- */
 static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
     int pid;
@@ -155,9 +146,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process command line arguments as a Python list
- */
+// Return process command line arguments as a Python list
 static PyObject *
 psutil_proc_args(PyObject *self, PyObject *args) {
     int pid;
@@ -187,9 +176,9 @@ psutil_proc_args(PyObject *self, PyObject *args) {
     }
 
     curarg = argbuf;
-    /* getargs will always append an extra NULL to end the arg list,
-     * even if the buffer is not big enough (even though it is supposed
-     * to be) so the following 'while' is safe */
+    // getargs will always append an extra NULL to end the arg list,
+    // even if the buffer is not big enough (even though it is supposed
+    // to be) so the following 'while' is safe
     while (*curarg != '\0') {
         if (!pylist_append_obj(py_retlist, PyUnicode_DecodeFSDefault(curarg)))
             goto error;
@@ -208,9 +197,6 @@ error:
 }
 
 
-/*
- * Return process environment variables as a Python dict
- */
 static PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
     int pid;
@@ -243,9 +229,9 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     }
 
     curvar = envbuf;
-    /* getevars will always append an extra NULL to end the arg list,
-     * even if the buffer is not big enough (even though it is supposed
-     * to be) so the following 'while' is safe */
+    // getevars will always append an extra NULL to end the arg list,
+    // even if the buffer is not big enough (even though it is supposed
+    // to be) so the following 'while' is safe
     while (*curvar != '\0') {
         separator = strchr(curvar, '=');
         if (separator != NULL) {
@@ -280,11 +266,6 @@ error:
 
 
 #ifdef CURR_VERSION_THREAD
-
-/*
- * Retrieves all threads used by process returning a list of tuples
- * including thread id, user time and system time.
- */
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
@@ -298,14 +279,14 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    /* Get the count of threads */
+    // Get the count of threads
     thread_count = perfstat_thread(NULL, NULL, sizeof(perfstat_thread_t), 0);
     if (thread_count <= 0) {
         psutil_oserror();
         goto error;
     }
 
-    /* Allocate enough memory */
+    // Allocate enough memory
     threadt = (perfstat_thread_t *)calloc(
         thread_count, sizeof(perfstat_thread_t)
     );
@@ -347,12 +328,10 @@ error:
         free(threadt);
     return NULL;
 }
-
-#endif
+#endif  // CURR_VERSION_THREAD
 
 
 #ifdef CURR_VERSION_PROCESS
-
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     long pid;
@@ -377,13 +356,9 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
         procinfo.outBytes
     );
 }
+#endif  // CURR_VERSION_PROCESS
 
-#endif
 
-
-/*
- * Return process user and system CPU times as a Python tuple.
- */
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
@@ -407,9 +382,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process uids/gids as a Python tuple.
- */
+// Return process uids/gids as a Python tuple.
 static PyObject *
 psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
@@ -434,9 +407,6 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process voluntary and involuntary context switches as a Python tuple.
- */
 static PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
@@ -453,30 +423,26 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     if (!processes)
         return NULL;
 
-    /* Loop through processes */
+    // Loop through processes
     for (p = processes; np > 0; np--, p++) {
         pid = p->pi_pid;
         if (requested_pid != pid)
             continue;
         py_tuple = Py_BuildValue(
             "LL",
-            (long long)p->pi_ru.ru_nvcsw, /* voluntary context switches */
-            (long long)p->pi_ru.ru_nivcsw
-        ); /* involuntary */
+            (long long)p->pi_ru.ru_nvcsw,  // voluntary
+            (long long)p->pi_ru.ru_nivcsw  // involuntary
+        );
         free(processes);
         return py_tuple;
     }
 
-    /* finished iteration without finding requested pid */
+    // finished iteration without finding requested pid
     free(processes);
     return psutil_oserror_nsp("psutil_read_process_table (no PID found)");
 }
 
 
-/*
- * Return disk mounted partitions as a list of tuples including device,
- * mount point and filesystem type.
- */
 static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
@@ -530,10 +496,6 @@ error:
 
 
 #if defined(CURR_VERSION_NETINTERFACE) && CURR_VERSION_NETINTERFACE >= 3
-
-/*
- * Return a list of tuples for network I/O statistics.
- */
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     perfstat_netinterface_t *statp = NULL;
@@ -546,7 +508,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    /* check how many perfstat_netinterface_t structures are available */
+    // check how many perfstat_netinterface_t structures are available
     tot = perfstat_netinterface(
         NULL, NULL, sizeof(perfstat_netinterface_t), 0
     );
@@ -603,7 +565,6 @@ error:
     Py_DECREF(py_retdict);
     return NULL;
 }
-
 #endif
 
 
@@ -682,9 +643,6 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return a Python list of tuple representing per-cpu times
- */
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
@@ -696,21 +654,21 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    /* get the number of ticks per second */
+    // get the number of ticks per second
     ticks = sysconf(_SC_CLK_TCK);
     if (ticks < 0) {
         psutil_oserror();
         goto error;
     }
 
-    /* get the number of cpus in ncpu */
+    // get the number of cpus in ncpu
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
     if (ncpu <= 0) {
         psutil_oserror();
         goto error;
     }
 
-    /* allocate enough memory to hold the ncpu structures */
+    // allocate enough memory to hold the ncpu structures
     cpu = (perfstat_cpu_t *)malloc(ncpu * sizeof(perfstat_cpu_t));
     if (cpu == NULL) {
         PyErr_NoMemory();
@@ -749,9 +707,6 @@ error:
 }
 
 
-/*
- * Return disk IO statistics.
- */
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
     PyObject *py_retdict = PyDict_New();
@@ -763,14 +718,14 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    /* Get the count of disks */
+    // Get the count of disks
     disk_count = perfstat_disk(NULL, NULL, sizeof(perfstat_disk_t), 0);
     if (disk_count <= 0) {
         psutil_oserror();
         goto error;
     }
 
-    /* Allocate enough memory */
+    // Allocate enough memory
     diskt = (perfstat_disk_t *)calloc(disk_count, sizeof(perfstat_disk_t));
     if (diskt == NULL) {
         PyErr_NoMemory();
@@ -812,9 +767,6 @@ error:
 }
 
 
-/*
- * Return virtual memory usage statistics.
- */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int rc;
@@ -840,9 +792,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return stats about swap memory.
- */
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     int rc;
@@ -867,9 +816,6 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return CPU statistics.
- */
 static PyObject *
 psutil_cpu_stats(PyObject *self, PyObject *args) {
     int ncpu, rc, i;
@@ -882,14 +828,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     u_longlong_t softintrs = 0;
     u_longlong_t syscall = 0;
 
-    /* get the number of cpus in ncpu */
+    // get the number of cpus in ncpu
     ncpu = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
     if (ncpu <= 0) {
         psutil_oserror();
         goto error;
     }
 
-    /* allocate enough memory to hold the ncpu structures */
+    // allocate enough memory to hold the ncpu structures
     cpu = (perfstat_cpu_t *)malloc(ncpu * sizeof(perfstat_cpu_t));
     if (cpu == NULL) {
         PyErr_NoMemory();
@@ -922,9 +868,7 @@ error:
 }
 
 
-/*
- * define the psutil C module methods and initialize the module.
- */
+// define the psutil C module methods and initialize the module.
 static PyMethodDef PsutilMethods[] = {
     // --- process-related functions
     {"proc_args", psutil_proc_args, METH_VARARGS},

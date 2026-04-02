@@ -7,7 +7,6 @@
 // System memory related functions. Original code was refactored and moved
 // from psutil/_psutil_osx.c in 2023. This is the GIT blame before the move:
 // https://github.com/giampaolo/psutil/blame/efd7ed3/psutil/_psutil_osx.c
-
 // See:
 // https://github.com/apple-open-source/macos/blob/master/system_cmds/vm_stat/vm_stat.c
 
@@ -46,11 +45,8 @@ psutil_sys_vminfo(vm_statistics64_t vmstat) {
 }
 
 
-/*
- * Return system virtual memory stats.
- * See:
- * https://opensource.apple.com/source/system_cmds/system_cmds-790/vm_stat.tproj/vm_stat.c.auto.html
- */
+// Return system virtual memory stats. See:
+// https://opensource.apple.com/source/system_cmds/system_cmds-790/vm_stat.tproj/vm_stat.c.auto.html
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     uint64_t total;
@@ -103,9 +99,6 @@ error:
 }
 
 
-/*
- * Return stats about swap memory.
- */
 PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
     struct xsw_usage totals;

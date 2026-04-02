@@ -17,6 +17,7 @@
 #define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
 #define STATUS_UNSUCCESSFUL 0xC0000001
 
+
 // Note about GetExtended[Tcp|Udp]Table syscalls: due to other processes
 // being active on the machine, it's possible that the size of the table
 // increases between the moment we query the size and the moment we query

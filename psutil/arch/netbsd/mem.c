@@ -5,14 +5,12 @@
  * found in the LICENSE file.
  */
 
-/*
-Memory related functions. Original code was refactored and moved from
-psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
-already) from cset 84219ad. For reference, here's the git history with
-original(ish) implementations:
-- virtual memory: 0749a69c01b374ca3e2180aaafc3c95e3b2d91b9 (Oct 2016)
-- swap memory: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
-*/
+// Memory related functions. Original code was refactored and moved from
+// psutil/arch/netbsd/specific.c in 2023 (and was moved in there previously
+// already) from cset 84219ad. For reference, here's the git history with
+// original(ish) implementations:
+// - virtual memory: 0749a69c01b374ca3e2180aaafc3c95e3b2d91b9 (Oct 2016)
+// - swap memory: 312442ad2a5b5d0c608476c5ab3e267735c3bc59 (Jan 2016)
 
 #include <Python.h>
 #include <stdio.h>

@@ -52,8 +52,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             ifc_name[sdl->sdl_nlen] = '\0';
 
             // XXX: ignore usbus interfaces:
-            // http://lists.freebsd.org/pipermail/freebsd-current/
-            //     2011-October/028752.html
+            // http://lists.freebsd.org/pipermail/freebsd-current/2011-October/028752.html
             // 'ifconfig -a' doesn't show them, nor do we.
             if (strncmp(ifc_name, "usbus", 5) == 0)
                 continue;

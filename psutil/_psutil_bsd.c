@@ -6,18 +6,6 @@
  * found in the LICENSE file.
  */
 
-/*
- * Platform-specific module methods for FreeBSD and OpenBSD.
-
- * OpenBSD references:
- * - OpenBSD source code: https://github.com/openbsd/src
- *
- * OpenBSD / NetBSD: missing APIs compared to FreeBSD implementation:
- * - psutil.net_connections()
- * - psutil.Process.get/set_cpu_affinity()  (not supported natively)
- * - psutil.Process.memory_maps()
- */
-
 #include <Python.h>
 #include <sys/proc.h>
 #include <sys/param.h>  // BSD version
@@ -35,9 +23,6 @@
 #endif
 
 
-/*
- * define the psutil C module methods and initialize the module.
- */
 static PyMethodDef mod_methods[] = {
     // --- per-process functions
 

@@ -4,19 +4,17 @@
  * found in the LICENSE file.
  */
 
-/*
-System-wide CPU related functions.
-
-Original code was refactored and moved from psutil/_psutil_osx.c in 2020
-right before a4c0a0eb0d2a872ab7a45e47fcf37ef1fde5b012.
-For reference, here's the git history with original implementations:
-
-- CPU count logical: 3d291d425b856077e65163e43244050fb188def1
-- CPU count physical: 4263e354bb4984334bc44adf5dd2f32013d69fba
-- CPU times: 32488bdf54aed0f8cef90d639c1667ffaa3c31c7
-- CPU stat: fa00dfb961ef63426c7818899340866ced8d2418
-- CPU frequency: 6ba1ac4ebfcd8c95fca324b15606ab0ec1412d39
-*/
+// System-wide CPU related functions.
+//
+// Original code was refactored and moved from psutil/_psutil_osx.c in 2020,
+// right before a4c0a0eb0d2a872ab7a45e47fcf37ef1fde5b012.
+//
+// For reference, here's the git history with original implementations:
+// - CPU count logical: 3d291d425b856077e65163e43244050fb188def1
+// - CPU count physical: 4263e354bb4984334bc44adf5dd2f32013d69fba
+// - CPU times: 32488bdf54aed0f8cef90d639c1667ffaa3c31c7
+// - CPU stat: fa00dfb961ef63426c7818899340866ced8d2418
+// - CPU frequency: 6ba1ac4ebfcd8c95fca324b15606ab0ec1412d39
 
 #include <Python.h>
 #include <mach/mach_error.h>

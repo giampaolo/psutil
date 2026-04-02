@@ -38,10 +38,6 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
 }
 
 
-/*
- * Return process ppid, rss, vms, ctime, nice, nthreads, status and tty
- * as a Python tuple.
- */
 PyObject *
 psutil_proc_oneshot(PyObject *self, PyObject *args) {
     int pid;
@@ -73,9 +69,7 @@ psutil_proc_oneshot(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process name and args as a Python tuple.
- */
+// Return process name and args as a Python tuple.
 PyObject *
 psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
@@ -129,8 +123,8 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
         psutil_free_cstrings_array(argv, argc);
     }
 
-    /* If we can't read process memory or can't decode the result
-     * then return args from /proc. */
+    // If we can't read process memory or can't decode the result
+    // then return args from /proc.
     if (!py_args_list) {
         PyErr_Clear();
         py_args_str = PyUnicode_DecodeFSDefault(info.pr_psargs);
@@ -170,9 +164,6 @@ error:
 }
 
 
-/*
- * Return process environ block.
- */
 PyObject *
 psutil_proc_environ(PyObject *self, PyObject *args) {
     int pid;
@@ -245,9 +236,6 @@ error:
 }
 
 
-/*
- * Return process user and system CPU times as a Python tuple.
- */
 PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
@@ -271,9 +259,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return what CPU the process is running on.
- */
+// Return what CPU the process is running on.
 PyObject *
 psutil_proc_cpu_num(PyObject *self, PyObject *args) {
     int fd = -1;
@@ -342,9 +328,7 @@ error:
 }
 
 
-/*
- * Return process uids/gids as a Python tuple.
- */
+// Return process uids/gids as a Python tuple.
 PyObject *
 psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
@@ -369,9 +353,6 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process voluntary and involuntary context switches as a Python tuple.
- */
 PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     int pid;
@@ -388,9 +369,6 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process page faults as a (minor, major) tuple.
- */
 PyObject *
 psutil_proc_page_faults(PyObject *self, PyObject *args) {
     int pid;
@@ -445,9 +423,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
 */
 
 
-/*
- * Return information about a given process thread.
- */
+// Return information about a given process thread.
 PyObject *
 psutil_proc_query_thread(PyObject *self, PyObject *args) {
     int pid, tid;
@@ -468,9 +444,6 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return process memory mappings.
- */
 PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int pid;

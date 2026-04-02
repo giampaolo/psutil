@@ -4,16 +4,14 @@
  * found in the LICENSE file.
  */
 
-/*
- * Functions specific to Sun OS Solaris platforms.
- *
- * Thanks to Justin Venus who originally wrote a consistent part of
- * this in Cython which I later on translated in C.
- *
- * Fix compilation issue on SunOS 5.10, see:
- * https://github.com/giampaolo/psutil/issues/421
- * https://github.com/giampaolo/psutil/issues/1077
- */
+// Functions specific to Sun OS Solaris platforms.
+//
+// Thanks to Justin Venus who originally wrote a consistent part of
+// this in Cython which I later on translated in C.
+//
+// Fix compilation issue on SunOS 5.10, see:
+// https://github.com/giampaolo/psutil/issues/421
+// https://github.com/giampaolo/psutil/issues/1077
 
 #define _STRUCTURED_PROC 1
 #define NEW_MIB_COMPLIANT 1
@@ -118,9 +116,8 @@ PyInit__psutil_sunos(void) {
     if (PyModule_AddIntConstant(mod, "SWAIT", SWAIT))
         return NULL;
 #else
-    /* sys/proc.h started defining SWAIT somewhere
-     * after Update 3 and prior to Update 5 included.
-     */
+    // sys/proc.h started defining SWAIT somewhere
+    // after Update 3 and prior to Update 5 included.
     if (PyModule_AddIntConstant(mod, "SWAIT", 0))
         return NULL;
 #endif

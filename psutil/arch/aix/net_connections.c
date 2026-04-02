@@ -5,13 +5,12 @@
  * found in the LICENSE file.
  */
 
-/* Baded on code from lsof:
- * http://www.ibm.com/developerworks/aix/library/au-lsof.html
- * - dialects/aix/dproc.c:gather_proc_info
- * - lib/prfp.c:process_file
- * - dialects/aix/dsock.c:process_socket
- * - dialects/aix/dproc.c:get_kernel_access
- */
+// Based on code from lsof:
+// http://www.ibm.com/developerworks/aix/library/au-lsof.html
+// - dialects/aix/dproc.c:gather_proc_info
+// - lib/prfp.c:process_file
+// - dialects/aix/dsock.c:process_socket
+// - dialects/aix/dproc.c:get_kernel_access
 
 #include <Python.h>
 #include <stdlib.h>
@@ -83,7 +82,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
     char unix_laddr_str[PATH_MAX] = {0};
     char unix_raddr_str[PATH_MAX] = {0};
 
-    /* Read file structure */
+    // Read file structure
     if (psutil_kread(Kd, fp, (char *)&f, sizeof(f))) {
         return NULL;
     }
@@ -117,7 +116,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
 
     fam = d.dom_family;
     if (fam == AF_INET || fam == AF_INET6) {
-        /* Read protocol control block */
+        // Read protocol control block
         if (!s.so_pcb) {
             psutil_runtime_error("invalid socket PCB");
             return NULL;
@@ -127,7 +126,7 @@ process_file(int Kd, pid32_t pid, int fd, KA_T fp) {
         }
 
         if (p.pr_protocol == IPPROTO_TCP) {
-            /* If this is a TCP socket, read its control block */
+            // If this is a TCP socket, read its control block
             if (inp.inp_ppcb
                 && !psutil_kread(
                     Kd, (KA_T)inp.inp_ppcb, (char *)&t, sizeof(t)
@@ -259,7 +258,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     if (!processes)
         goto error;
 
-    /* Loop through processes */
+    // Loop through processes
     for (p = processes; np > 0; np--, p++) {
         pid = p->pi_pid;
         if (requested_pid != -1 && requested_pid != pid)
@@ -280,7 +279,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
             != 1)
             continue;
 
-        /* loop over file descriptors */
+        // loop over file descriptors
         for (i = 0; i < p->pi_maxofile; i++) {
             fp = (KA_T)fds->pi_ufd[i].fp;
             if (fp) {

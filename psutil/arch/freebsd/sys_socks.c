@@ -3,11 +3,11 @@
  * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
- * Retrieves system-wide open socket connections. This is based off of
- * sockstat utility source code:
- * https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
  */
+
+// Retrieves system-wide open socket connections. This is based off of
+// sockstat utility source code:
+// https://github.com/freebsd/freebsd/blob/master/usr.bin/sockstat/sockstat.c
 
 #include <Python.h>
 #include <sys/param.h>
