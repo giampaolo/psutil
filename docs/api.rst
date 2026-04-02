@@ -291,7 +291,7 @@ Memory
 
   - **total**: total physical memory (exclusive :term:`swap memory`).
   - **available**: memory that can be given instantly to processes without the
-    system going into :term:`swap memory`. On Linux it uses the ``MemAvailable``
+    system going into :term:`swap <swap memory>`. On Linux it uses the ``MemAvailable``
     field from ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back
     to an estimate. This is the recommended field for monitoring actual memory
     usage in a cross-platform fashion. See :term:`available memory`.

@@ -115,15 +115,18 @@ Filtering and sorting processes
 
 Processes owned by user:
 
-.. code-block:: pycon
+.. code-block:: python
 
-  >>> import getpass
-  >>> import psutil
-  >>> from pprint import pprint as pp
-  >>> pp([(p.pid, p.name()) for p in psutil.process_iter(["name", "username"]) if p.username() == getpass.getuser()])
-  (16832, 'bash'),
-  (19772, 'ssh'),
-  (20492, 'python3')]
+  import getpass, psutil
+
+  def procs_by_user(user=None):
+      if user is None:
+          user = getpass.getuser()
+      return [
+          (p.pid, p.name())
+          for p in psutil.process_iter(["name", "username"])
+          if p.username() == user
+      ]
 
 -------------------------------------------------------------------------------
 
@@ -144,23 +147,31 @@ Processes using log files:
 
 Processes consuming more than 500M of memory:
 
-.. code-block:: pycon
+.. code-block:: python
 
-  >>> pp([(p.pid, p.name(), p.memory_info().rss) for p in psutil.process_iter(["name", "memory_info"]) if p.memory_info().rss > 500 * 1024 * 1024])
-  [(2650, 'chrome', 532324352),
-   (3038, 'chrome', 1120088064),
-   (21915, 'sublime_text', 615407616)]
+  import psutil
+
+  def procs_by_memory(min_bytes=500 * 1024 * 1024):
+      return [
+          (p.pid, p.name(), p.memory_info().rss)
+          for p in psutil.process_iter(["name", "memory_info"])
+          if p.memory_info().rss > min_bytes
+      ]
 
 -------------------------------------------------------------------------------
 
-Top 3 processes which consumed the most CPU time:
+Top N processes by cumulative CPU time:
 
-.. code-block:: pycon
+.. code-block:: python
 
-  >>> pp([(p.pid, p.name(), sum(p.cpu_times())) for p in sorted(psutil.process_iter(["name", "cpu_times"]), key=lambda p: sum(p.cpu_times()[:2]))][-3:])
-  [(2721, 'chrome', 10219.73),
-   (1150, 'Xorg', 11116.989999999998),
-   (2650, 'chrome', 18451.97)]
+  import psutil
+
+  def top_cpu_procs(n=3):
+      procs = sorted(
+          psutil.process_iter(["name", "cpu_times"]),
+          key=lambda p: sum(p.cpu_times()[:2]),
+      )
+      return [(p.pid, p.name(), sum(p.cpu_times())) for p in procs[-n:]]
 
 -------------------------------------------------------------------------------
 
@@ -462,14 +473,13 @@ Show real-time disk utilization percentage *(Linux, FreeBSD)*:
   import psutil, time
 
   def disk_io_percent(interval=1):
-      before = psutil.disk_io_counters()
       while True:
+          before = psutil.disk_io_counters()
           time.sleep(interval)
           after = psutil.disk_io_counters()
           busy_ms = after.busy_time - before.busy_time
           util = min(busy_ms / (interval * 1000) * 100, 100)
           print("Disk: {:.1f}%".format(util))
-          before = after
 
 .. code-block:: none
 
