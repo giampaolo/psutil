@@ -450,13 +450,12 @@ footer div[role="navigation"][aria-label="Footer"] {
 
 /* theme switch in sidebar */
 .sidebar-theme-switch {
-    padding: 6px 0.809em 10px;
+    padding: 10px 0 10px;
+    text-align: left;
 }
 
 .theme-switch {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: inline-flex;
     cursor: pointer;
     user-select: none;
 }
@@ -465,41 +464,68 @@ footer div[role="navigation"][aria-label="Footer"] {
     display: none;
 }
 
+/* pill track */
 .theme-switch-track {
-    width: 34px;
-    height: 18px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.15);
     position: relative;
+    width: 64px;
+    height: 30px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    transition: background 0.25s;
     flex-shrink: 0;
-    transition: background 0.2s;
 }
 
+/* sliding circle */
 .theme-switch-thumb {
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 14px;
-    height: 14px;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    transition: left 0.2s, background 0.2s;
+    background: var(--sidebar-active-border);
+    transition: left 0.25s;
+    z-index: 1;
 }
 
+/* sun and moon icons at fixed positions */
+.theme-switch-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.theme-switch-sun  { left: 3px;  color: #fff; }
+.theme-switch-moon { right: 3px; color: rgba(0, 0, 0, 0.3); }
+
+/* dark mode: pill darkens slightly, circle slides right */
 .theme-switch input:checked + .theme-switch-track,
 [data-theme="dark"] .theme-switch-track {
-    background: var(--sidebar-active-border);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 .theme-switch input:checked + .theme-switch-track .theme-switch-thumb,
 [data-theme="dark"] .theme-switch-thumb {
-    left: 18px;
-    background: #fff;
+    left: 37px;
 }
 
-.theme-switch-label {
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.45);
+/* dark mode icon colors swap */
+.theme-switch input:checked + .theme-switch-track .theme-switch-sun,
+[data-theme="dark"] .theme-switch-sun {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.theme-switch input:checked + .theme-switch-track .theme-switch-moon,
+[data-theme="dark"] .theme-switch-moon {
+    color: #fff;
 }
 
 /* ================================================================== */
