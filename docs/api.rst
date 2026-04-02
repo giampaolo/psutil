@@ -2982,6 +2982,25 @@ Other constants
   .. versionchanged:: 5.4.0
      also available on AIX.
 
+Utilities
+---------
+
+.. function:: bytes2human(n, format="%(value).1f%(symbol)s")
+
+  Convert *n* bytes to a human-readable string.
+
+  .. code-block:: pycon
+
+     >>> import psutil
+     >>> psutil.bytes2human(10000)
+     '9.8K'
+     >>> psutil.bytes2human(100001221)
+     '95.4M'
+     >>> psutil.bytes2human(10000, format="%(value).1f %(symbol)s")
+     '9.8 K'
+
+  .. versionadded:: 7.0.0
+
 .. _const-version-info:
 
 .. data:: version_info
@@ -2993,6 +3012,8 @@ Other constants
      >>> import psutil
      >>> if psutil.version_info >= (4, 5):
      ...    pass
+
+
 
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt

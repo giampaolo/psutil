@@ -643,12 +643,14 @@ def bcat(fname, fallback=_DEFAULT):
 
 
 def bytes2human(n, format="%(value).1f%(symbol)s"):
-    """Used by various scripts. See: https://code.activestate.com/recipes/578019-bytes-to-human-human-to-bytes-converter/?in=user-4178764.
+    """Convert n bytes to a human-readable string.
 
     >>> bytes2human(10000)
     '9.8K'
     >>> bytes2human(100001221)
     '95.4M'
+    >>> bytes2human(10000, format="%(value).1f %(symbol)s")
+    '9.8 K'
     """
     symbols = ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}

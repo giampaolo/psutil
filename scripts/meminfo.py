@@ -30,7 +30,7 @@ Sout       :      0B
 """
 
 import psutil
-from psutil._common import bytes2human
+from psutil import bytes2human
 
 
 def pprint_ntuple(nt):

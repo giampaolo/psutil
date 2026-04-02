@@ -57,6 +57,7 @@ from ._common import Error
 from ._common import NoSuchProcess
 from ._common import TimeoutExpired
 from ._common import ZombieProcess
+from ._common import bytes2human
 from ._common import debug
 from ._common import memoize_when_activated
 from ._common import wrap_numbers as _wrap_numbers
@@ -177,6 +178,7 @@ __all__ = [
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     # "sensors_temperatures", "sensors_battery", "sensors_fans"     # sensors
     "users", "boot_time",                                           # others
+    "bytes2human",
 ]
 # fmt: on
 
