@@ -295,6 +295,80 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 /* ================================================================== */
+/* Dark theme                                                         */
+/* ================================================================== */
+
+[data-theme="dark"] {
+    --gray-100: #1e1e1e;
+    --gray-200: #252525;
+    --gray-300: #3a3a3a;
+    --gray-400: #555;
+    --gray-500: #aaa;
+    --gray-600: #ccc;
+    --gray-700: #e0e0e0;
+    --gray-800: #f0f0f0;
+    --blue-200: #1a2a3a;
+    --blue-300: #2a4a6a;
+    --h1-h2-border: #3a3a3a;
+    --func-sig-bg: #252525;
+    --table-header-bg: #2a2d3a;
+    --table-row-odd: #222222;
+    --table-row-even: #272727;
+    --adm-title: #ddd;
+    --adm-note-bg: #2a2a2a;
+    --adm-note-border: #4a4a4a;
+    --adm-seealso-accent-border: #5599cc;
+    --adm-seealso-bg: #192533;
+    --adm-seealso-border: #2d5280;
+    --adm-seealso-title: #7ab0d9;
+    --adm-tip-bg: #1a2a1a;
+    --adm-tip-border: #3a6a3a;
+    --adm-warning-bg: #2e1a1a;
+    --adm-warning-border: #8a3030;
+    --card-bg: #252525;
+}
+
+[data-theme="dark"] .wy-body-for-nav,
+[data-theme="dark"] .wy-nav-content-wrap,
+[data-theme="dark"] .wy-nav-content {
+    background: #1e1e1e !important;
+}
+
+[data-theme="dark"] .wy-nav-content {
+    border-right: 1px solid #3a3a3a;
+}
+
+[data-theme="dark"] .rst-content div[class^=highlight],
+[data-theme="dark"] .rst-content pre.literal-block {
+    border-color: #3a3a3a !important;
+}
+
+[data-theme="dark"] .wy-table-responsive table,
+[data-theme="dark"] .wy-table-responsive table th,
+[data-theme="dark"] .wy-table-responsive table td {
+    border-color: #3a3a3a !important;
+}
+
+[data-theme="dark"] .wy-table-responsive table thead th {
+    color: var(--gray-600);
+}
+
+[data-theme="dark"] .rst-content {
+    color: var(--gray-600);
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h1 a,
+[data-theme="dark"] h2,
+[data-theme="dark"] h2 a,
+[data-theme="dark"] h3,
+[data-theme="dark"] h3 a,
+[data-theme="dark"] h4,
+[data-theme="dark"] h4 a {
+    color: #b8bcc4 !important;
+}
+
+/* ================================================================== */
 /* Sidebar                                                            */
 /* ================================================================== */
 
@@ -353,6 +427,64 @@ footer div[role="navigation"][aria-label="Footer"] {
 
 .wy-menu-vertical li.current > a {
     border-left: 3px solid var(--sidebar-active-border) !important;
+}
+
+/* ================================================================== */
+/* Sidebar theme switch                                               */
+/* ================================================================== */
+
+/* theme switch in sidebar */
+.sidebar-theme-switch {
+    padding: 6px 0.809em 10px;
+}
+
+.theme-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.theme-switch-track {
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.theme-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transition: left 0.2s, background 0.2s;
+}
+
+.theme-switch input:checked + .theme-switch-track,
+[data-theme="dark"] .theme-switch-track {
+    background: var(--sidebar-active-border);
+}
+
+.theme-switch input:checked + .theme-switch-track .theme-switch-thumb,
+[data-theme="dark"] .theme-switch-thumb {
+    left: 18px;
+    background: #fff;
+}
+
+.theme-switch-label {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.45);
 }
 
 /* ================================================================== */

@@ -1,6 +1,15 @@
 {% extends "!layout.html" %}
 {% block extrahead %}
 {{ super() }}
+
+<!-- apply saved theme before first paint to avoid flash -->
+<script>
+  (function () {
+    if (localStorage.getItem('psutil-theme') === 'dark')
+      document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
+
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-G7374TFB11"></script>
 <script>
@@ -9,4 +18,17 @@
   gtag('js', new Date());
   gtag('config', 'G-G7374TFB11');
 </script>
+{% endblock %}
+
+<!-- Override sidebar to add theme switch button -->
+{% block sidebartitle %}
+{{ super() }}
+<div class="sidebar-theme-switch">
+  <label class="theme-switch" title="Toggle dark/light theme">
+    <input type="checkbox" id="theme-toggle" autocomplete="off">
+    <span class="theme-switch-track">
+      <span class="theme-switch-thumb"></span>
+    </span>
+  </label>
+</div>
 {% endblock %}

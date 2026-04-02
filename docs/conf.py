@@ -64,6 +64,7 @@ html_css_files = [
 html_js_files = [
     "js/highlight-numbers.js",
     "js/external-urls.js",
+    ("js/theme-toggle.js", {"defer": "defer"}),
 ]
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
