@@ -357,6 +357,21 @@ footer div[role="navigation"][aria-label="Footer"] {
     color: var(--gray-600);
 }
 
+/* brighter links */
+[data-theme="dark"] .rst-content a {
+    color: #6ab0de;
+}
+
+[data-theme="dark"] .viewcode-link {
+    color: #6ab0de !important;
+}
+
+[data-theme="dark"] {
+    --versionadded-color: #5ec46e;
+    --versionchanged-color: #c8963a;
+    --deprecated-color: #d06060;
+}
+
 [data-theme="dark"] h1,
 [data-theme="dark"] h1 a,
 [data-theme="dark"] h2,
