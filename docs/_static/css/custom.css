@@ -464,69 +464,34 @@ footer div[role="navigation"][aria-label="Footer"] {
     display: none;
 }
 
-/* pill track */
-.theme-switch-track {
-    position: relative;
-    width: 64px;
-    height: 30px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    transition: background 0.25s;
-    flex-shrink: 0;
-}
-
-/* sliding circle */
-.theme-switch-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--sidebar-active-border);
-    transition: left 0.25s;
-    z-index: 1;
-}
-
-/* sun and moon icons at fixed positions */
-.theme-switch-icon {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+/* the circle button */
+.theme-switch-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    z-index: 2;
-    pointer-events: none;
-}
-
-.theme-switch-sun  { left: 3px;  color: #fff; }
-.theme-switch-moon { right: 3px; color: rgba(0, 0, 0, 0.3); }
-
-/* dark mode: pill darkens slightly, circle slides right */
-.theme-switch input:checked + .theme-switch-track,
-[data-theme="dark"] .theme-switch-track {
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.theme-switch input:checked + .theme-switch-track .theme-switch-thumb,
-[data-theme="dark"] .theme-switch-thumb {
-    left: 37px;
-}
-
-/* dark mode icon colors swap */
-.theme-switch input:checked + .theme-switch-track .theme-switch-sun,
-[data-theme="dark"] .theme-switch-sun {
-    color: rgba(255, 255, 255, 0.35);
-}
-
-.theme-switch input:checked + .theme-switch-track .theme-switch-moon,
-[data-theme="dark"] .theme-switch-moon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
     color: #fff;
+    font-size: 1rem;
+    transition: background 0.2s;
 }
+
+.theme-switch:hover .theme-switch-btn {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* light mode: show moon, hide sun */
+.theme-switch-sun { display: none; }
+.theme-switch-moon { display: block; }
+
+/* dark mode: show sun, hide moon */
+.theme-switch input:checked ~ .theme-switch-btn .theme-switch-sun,
+[data-theme="dark"] .theme-switch-sun  { display: block; }
+
+.theme-switch input:checked ~ .theme-switch-btn .theme-switch-moon,
+[data-theme="dark"] .theme-switch-moon { display: none; }
 
 /* ================================================================== */
 /* Footer                                                           */
