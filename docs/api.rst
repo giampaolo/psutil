@@ -1701,9 +1701,8 @@ Process class
     method requires root privileges.
 
     - :field:`id`: the native thread ID assigned by the kernel. If :attr:`pid`
-      refers to the current process, this matches the
-      `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`_
-      attribute of the :class:`threading.Thread` class, and can be used to reference
+      refers to the current process this matches
+      :attr:`threading.Thread.native_id`, and can be used to reference
       individual Python threads running within your own Python app.
     - :field:`user_time`: time spent in user mode.
     - :field:`system_time`: time spent in kernel mode.

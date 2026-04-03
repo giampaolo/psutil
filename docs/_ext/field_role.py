@@ -13,7 +13,7 @@ def field_role(
     name, rawtext, text, lineno, inliner, options=None, content=None
 ):
     """Render :field:`name` as inline code (monospace bold)."""
-    node = nodes.literal(rawtext, text, classes=["field"])
+    node = nodes.literal(rawtext, text, classes=["ntuple-field"])
     return [node], []
 
 
