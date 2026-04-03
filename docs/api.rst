@@ -1907,12 +1907,16 @@ Process class
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       Windows: eliminated old aliases: :field:`wset` → :field:`rss`, :field:`peak_wset` →
-       :field:`peak_rss`, :field:`pagefile` / :field:`private` → :field:`vms`, :field:`peak_pagefile` →
-       :field:`peak_vms`, :field:`num_page_faults` → :meth:`page_faults` method. At the same
-       time :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
-       :field:`peak_nonpaged_pool` were moved to :meth:`memory_info_ex`. All these old
-       names still work but raise `DeprecationWarning`.
+       Windows: eliminated old aliases:
+       :field:`wset` → :field:`rss`,
+       :field:`peak_wset` → :field:`peak_rss`,
+       :field:`pagefile` and :field:`private` → :field:`vms`,
+       :field:`peak_pagefile` → :field:`peak_vms`,
+       :field:`num_page_faults` → :meth:`page_faults` method.
+       At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
+       :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
+       :meth:`memory_info_ex`.
+       All these old names still work but raise `DeprecationWarning`.
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
