@@ -158,11 +158,6 @@
 }
 */
 
-[data-theme="dark"] .sponsor-logo {
-    filter: brightness(0) invert(1);
-    opacity: 0.85;
-}
-
 .home-platforms {
     display: flex;
     justify-content: center;
