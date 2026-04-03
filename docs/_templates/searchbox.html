@@ -1,0 +1,16 @@
+{%- if 'singlehtml' not in builder %}
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="{{ pathto('search') }}" method="get">
+    <input type="text" name="q" placeholder="{{ _('Search docs') }}" aria-label="{{ _('Search docs') }}" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+    <label class="theme-switch" title="Toggle dark/light theme">
+      <input type="checkbox" id="theme-toggle" autocomplete="off">
+      <span class="theme-switch-btn">
+        <i class="fa fa-moon-o theme-switch-moon"></i>
+        <i class="fa fa-sun-o  theme-switch-sun"></i>
+      </span>
+    </label>
+  </form>
+</div>
+{%- endif %}

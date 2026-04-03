@@ -41,6 +41,7 @@ include docs/_templates/footer.html
 include docs/_templates/icon-footer-github.svg
 include docs/_templates/icon-footer-pypi.svg
 include docs/_templates/layout.html
+include docs/_templates/searchbox.html
 include docs/adoption.rst
 include docs/alternatives.rst
 include docs/api-overview.rst

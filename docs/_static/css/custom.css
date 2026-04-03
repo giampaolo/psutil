@@ -448,16 +448,25 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* Sidebar theme switch                                               */
 /* ================================================================== */
 
-/* theme switch in sidebar */
-.sidebar-theme-switch {
-    padding: 10px 0 10px;
-    text-align: left;
+.wy-side-nav-search .wy-form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wy-side-nav-search .wy-form input[type="text"] {
+    flex: 1;
+    width: auto !important;
+    margin-bottom: 0;
 }
 
 .theme-switch {
-    display: inline-flex;
+    display: flex;
+    align-items: center;
     cursor: pointer;
     user-select: none;
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .theme-switch input {
