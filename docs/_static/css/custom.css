@@ -36,6 +36,7 @@
 
     /* semantic */
     --border-radius: 3px;
+    --theme-transition: 0.2s ease;
     --h1-h2-border: var(--gray-400);
 
     --adm-padding-y: 5px;
@@ -447,6 +448,16 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* ================================================================== */
 /* Sidebar theme switch                                               */
 /* ================================================================== */
+
+/* smooth transition effect  */
+html {
+    transition: background-color var(--theme-transition), color var(--theme-transition);
+}
+
+*, *::before, *::after {
+    transition: background-color var(--theme-transition), color var(--theme-transition),
+                border-color var(--theme-transition);
+}
 
 .wy-side-nav-search .wy-form {
     display: flex;
