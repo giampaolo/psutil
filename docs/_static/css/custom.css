@@ -9,6 +9,8 @@
     --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --code-line-height: 1.5;
     --h1-h2-border: var(--headings-underline);
+    --content-font-size: 17px;
+    --content-line-height: 26px;
 }
 
 /* ================================================================== */
@@ -375,6 +377,11 @@
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+.rst-content p, .rst-content li, .rst-content dd {
+    font-size: var(--content-font-size) !important;
+    line-height: var(--content-line-height) !important;
 }
 
 @media (max-width: 768px) {
@@ -936,7 +943,7 @@ div.deprecated .versionmodified {
     border-left: none !important;
     color: var(--func-sig-text) !important;
     padding: 6px 10px !important;
-    font-size: 1.1em;
+    font-size: var(--content-font-size) !important;
 }
 
 /* The function name itself */
