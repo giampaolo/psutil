@@ -103,6 +103,8 @@
     /* page */
     --body-bg: #1e1e1e;
     --content-bg: #1e1e1e;
+    --sidebar-bg: #272727;
+    --sidebar-top-bg: #272727;
     --surface-sunken: #2a2a2a;
     --surface-raised: #2e2e2e;
     --border: #3a3a3a;
