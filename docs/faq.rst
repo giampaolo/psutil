@@ -333,33 +333,33 @@ Memory
 What is the difference between virtual_memory() available and free?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`virtual_memory` returns both ``free`` and ``available``, but they
+:func:`virtual_memory` returns both :field:`free` and :field:`available`, but they
 measure different things:
 
-- ``free``: memory that is not being used at all.
-- ``available``: how much memory can be given to processes without swapping.
+- :field:`free`: memory that is not being used at all.
+- :field:`available`: how much memory can be given to processes without swapping.
   This includes reclaimable caches and buffers that the OS can reclaim under
   pressure.
 
-In practice, ``available`` is almost always the metric you want when monitoring
-memory. ``free`` can be misleadingly low on systems where the OS aggressively
-uses RAM for caches (which is normal and healthy). On Windows, ``free`` and
-``available`` are the same value.
+In practice, :field:`available` is almost always the metric you want when
+monitoring memory. :field:`free` can be misleadingly low on systems where the
+OS aggressively uses RAM for caches (which is normal and healthy). On Windows,
+:field:`free` and :field:`available` are the same value.
 
 .. _faq_memory_rss_vs_vms:
 
 What is the difference between RSS and VMS?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- ``rss`` (Resident Set Size): the amount of physical memory (RAM)
+- :field:`rss` (Resident Set Size): the amount of physical memory (RAM)
   currently mapped into the process.
-- ``vms`` (Virtual Memory Size): the total virtual address space of the
+- :field:`vms` (Virtual Memory Size): the total virtual address space of the
   process, including memory that has been swapped out, shared libraries,
   and memory-mapped files.
 
-``rss`` is the go-to metric for answering "how much RAM is this process
+:field:`rss` is the go-to metric for answering "how much RAM is this process
 using?". Note that it includes shared memory, so it may overestimate
-actual usage when compared across processes. ``vms`` is generally larger
+actual usage when compared across processes. :field:`vms` is generally larger
 and can be misleadingly high, as it includes memory that is not resident
 in physical RAM.
 
@@ -371,10 +371,10 @@ Both values are portable across platforms and are returned by
 When should I use memory_footprint() vs memory_info()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_info` returns ``rss``, which includes shared
+:meth:`Process.memory_info` returns :field:`rss`, which includes shared
 libraries counted in every process that uses them. For example, if
 ``libc`` uses 2 MB and 100 processes map it, each process includes those
-2 MB in its ``rss``.
+2 MB in its :field:`rss`.
 
 :meth:`Process.memory_footprint` returns USS (Unique Set Size), i.e.
 memory private to the process. It represents the amount of memory that
@@ -397,7 +397,7 @@ separately:
   >>> m.used + m.free == m.total
   False
 
-The ``available`` field already includes this reclaimable memory and is the
+The :field:`available` field already includes this reclaimable memory and is the
 best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
 
 .. _`BPO-6973`: https://bugs.python.org/issue6973
