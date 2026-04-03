@@ -56,7 +56,7 @@ Disk
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
      - Same as :func:`shutil.disk_usage`; psutil also adds
-       ``percent``. Added to CPython 3.3 (BPO-12442_).
+       :field:`percent`. Added to CPython 3.3 (BPO-12442_).
    * - :func:`disk_partitions`
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
@@ -168,7 +168,7 @@ CPU / scheduling
    * - :meth:`Process.cpu_times`
      - :func:`os.times`
      - :func:`os.times` also has ``elapsed``; psutil adds
-       ``iowait`` (Linux).
+       :field:`iowait` (Linux).
    * - :meth:`Process.cpu_times`
      - :func:`resource.getrusage`
      - ``ru_utime`` / ``ru_stime`` match; have higher precision.

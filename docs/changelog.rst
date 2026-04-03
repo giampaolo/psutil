@@ -101,32 +101,37 @@ New APIs:
     removed in 7.0), which extends :meth:`Process.memory_info` with
     platform-specific metrics:
 
-    - Linux: *peak_rss*, *peak_vms*, *rss_anon*, *rss_file*, *rss_shmem*,
-      *swap*, *hugetlb*
-    - macOS: *peak_rss*, *rss_anon*, *rss_file*, *wired*, *compressed*,
-      *phys_footprint*
-    - Windows: *virtual*, *peak_virtual*
+    - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
+      :field:`rss_file`, :field:`rss_shmem`, :field:`swap`, :field:`hugetlb`
+    - macOS: :field:`peak_rss`, :field:`rss_anon`, :field:`rss_file`,
+      :field:`wired`, :field:`compressed`, :field:`phys_footprint`
+    - Windows: :field:`virtual`, :field:`peak_virtual`
 
-  - Add new :meth:`Process.memory_footprint` method, which returns *uss*,
-    *pss* and *swap* metrics (what :meth:`Process.memory_full_info` used to
-    return, which is now **deprecated**, see
+  - Add new :meth:`Process.memory_footprint` method, which returns :field:`uss`,
+    :field:`pss` and :field:`swap` metrics (what :meth:`Process.memory_full_info`
+    used to return, which is now **deprecated**, see
     :ref:`migration guide <migration-8.0>`).
 
   - :meth:`Process.memory_info` named tuple changed:
 
-    - BSD: added *peak_rss*.
+    - BSD: added :field:`peak_rss`.
 
-    - Linux: *lib* and *dirty* removed (always 0 since Linux 2.6). Deprecated
-      aliases returning 0 and emitting `DeprecationWarning` are kept.
+    - Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux 2.6).
+      Deprecated aliases returning 0 and emitting :exc:`DeprecationWarning` are
+      kept.
 
-    - macOS: *pfaults* and *pageins* removed with **no
+    - macOS: :field:`pfaults` and :field:`pageins` removed with **no
       backward-compatible aliases**. Use :meth:`Process.page_faults` instead.
 
-    - Windows: eliminated old aliases: *wset* → *rss*, *peak_wset* →
-      *peak_rss*, *pagefile* / *private* → *vms*, *peak_pagefile* → *peak_vms*.
-      At the same time *paged_pool*, *nonpaged_pool*, *peak_paged_pool*,
-      *peak_nonpaged_pool* were moved to :meth:`Process.memory_info_ex`. All
-      these old names still work but raise `DeprecationWarning`.
+    - Windows: eliminated old aliases:
+      :field:`wset` → :field:`rss`,
+      :field:`peak_wset` → :field:`peak_rss`,
+      :field:`pagefile` and :field:`private` → :field:`vms`,
+      :field:`peak_pagefile` → :field:`peak_vms`.
+      At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
+      :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
+      :meth:`Process.memory_info_ex`.
+      All these old names still work but raise :exc:`DeprecationWarning`.
       See :ref:`migration guide <migration-8.0>`.
 
   - :meth:`Process.memory_full_info` is **deprecated**. Use the new
@@ -137,19 +142,19 @@ Others:
 
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
   has been normalized on all platforms, and the first 3 fields are now always
-  ``user, system, idle``. See compatibility notes below.
-- :gh:`2754`: standardize :func:`sensors_battery`'s `percent` so that it
+  :field:`user`, :field:`system`, :field:`idle`. See compatibility notes below.
+- :gh:`2754`: standardize :func:`sensors_battery`'s :field:`percent` so that it
   returns a `float` instead of `int` on all systems, not only Linux.
 - :gh:`2765`: add a PR bot that uses Claude to summarize PR changes and update
   ``changelog.rst`` and ``credits.rst`` when commenting with /changelog.
 - :gh:`2766`: remove remaining Python 2.7 compatibility shims from
   ``setup.py``, simplifying the build infrastructure.
-- :gh:`2772`, [Windows]: :func:`cpu_times` ``interrupt`` field renamed to
-  ``irq`` to match the field name used on Linux and BSD. ``interrupt`` still
-  works but raises :exc:`DeprecationWarning`.
+- :gh:`2772`, [Windows]: :func:`cpu_times` :field:`interrupt` field renamed to
+  :field:`irq` to match the field name used on Linux and BSD. :field:`interrupt`
+  still works but raises :exc:`DeprecationWarning`.
   See :ref:`migration guide <migration-8.0>`.
-- :gh:`2776`, [Windows]: :func:`virtual_memory` now includes ``cached`` and
-  ``wired`` fields.
+- :gh:`2776`, [Windows]: :func:`virtual_memory` now includes :field:`cached` and
+  :field:`wired` fields.
 - :gh:`2780`, [Windows]: :func:`disk_usage` now can accept a file path (not
   only a directory path).
 - :gh:`2784`: :func:`process_iter`: when *attrs* is specified, the pre-fetched
@@ -469,7 +474,7 @@ Others:
 
 **Enhancements**
 
-- :gh:`2109`: ``maxfile`` and ``maxpath`` fields were removed from the
+- :gh:`2109`: :field:`maxfile` and :field:`maxpath` fields were removed from the
   named tuple returned by :func:`disk_partitions`. Reason: on network
   filesystems (NFS) this can potentially take a very long time to complete.
 - :gh:`2366`, [Windows]: log debug message when using slower process APIs.
@@ -484,7 +489,7 @@ Others:
   Gross)
 - :gh:`2407`: :meth:`Process.connections` was renamed to
   :meth:`Process.net_connections`. The old name is still available, but it's
-  deprecated (triggers a ``DeprecationWarning``) and will be removed in the
+  deprecated (triggers a :exc:`DeprecationWarning`) and will be removed in the
   future.
 - :gh:`2425`: [Linux]: provide aarch64 wheels.  (patch by Matthieu Darbois /
   Ben Raz)
@@ -513,7 +518,7 @@ Others:
 Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`2109`: the named tuple returned by :func:`disk_partitions`' no longer
-  has ``maxfile`` and ``maxpath`` fields.
+  has :field:`maxfile` and :field:`maxpath` fields.
 - :gh:`2396`: :func:`process_iter` no longer pre-emptively checks whether
   PIDs have been reused. If you want to check for PID reusage you are supposed
   to use
@@ -522,7 +527,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   internal cache.
 - :gh:`2407`: :meth:`Process.connections` was renamed to
   :meth:`Process.net_connections`. The old name is still available, but it's
-  deprecated (triggers a ``DeprecationWarning``) and will be removed in the
+  deprecated (triggers a :exc:`DeprecationWarning`) and will be removed in the
   future.
 
 5.9.8 — 2024-01-19
@@ -618,7 +623,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`2196`: in case of exception, display a cleaner error traceback by hiding
   the `KeyError` bit deriving from a missed cache hit.
-- :gh:`2217`: print the full traceback when a `DeprecationWarning` or
+- :gh:`2217`: print the full traceback when a :exc:`DeprecationWarning` or
   `UserWarning` is raised.
 - :gh:`2230`, [OpenBSD]: :func:`net_connections` implementation was rewritten
   from scratch:
@@ -657,10 +662,10 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   attribute (off by 1 minute).
 - :gh:`2229`, [OpenBSD]: unable to properly recognize zombie processes.
   :exc:`NoSuchProcess` may be raised instead of :exc:`ZombieProcess`.
-- :gh:`2231`, [NetBSD]: *available*  :func:`virtual_memory` is higher than
-  *total*.
-- :gh:`2234`, [NetBSD]: :func:`virtual_memory` metrics are wrong: *available*
-  and *used* are too high. We now match values shown by *htop* CLI utility.
+- :gh:`2231`, [NetBSD]: :field:`available`  :func:`virtual_memory` is higher than
+  :field:`total`.
+- :gh:`2234`, [NetBSD]: :func:`virtual_memory` metrics are wrong: :field:`available`
+  and :field:`used` are too high. We now match values shown by *htop* CLI utility.
 - :gh:`2236`, [NetBSD]: :meth:`Process.num_threads` and
   :meth:`Process.threads` return threads that are already terminated.
 - :gh:`2237`, [OpenBSD], [NetBSD]: :meth:`Process.cwd` may raise
@@ -749,7 +754,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2048`: ``AttributeError`` is raised if ``psutil.Error`` class is raised
   manually and passed through ``str``.
 - :gh:`2049`, [Linux]: :func:`cpu_freq` erroneously returns ``curr`` value in
-  GHz while ``min`` and ``max`` are in MHz.
+  GHz while :field:`min` and :field:`max` are in MHz.
 - :gh:`2050`, [Linux]: :func:`virtual_memory` may raise ``ValueError`` if
   running in a LCX container.
 
@@ -821,8 +826,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`1863`: :func:`disk_partitions` exposes 2 extra fields: ``maxfile`` and
-  ``maxpath``, which are the maximum file name and path name length.
+- :gh:`1863`: :func:`disk_partitions` exposes 2 extra fields: :field:`maxfile` and
+  :field:`maxpath`, which are the maximum file name and path name length.
 - :gh:`1872`, [Windows]: added support for PyPy 2.7.
 - :gh:`1879`: provide pre-compiled wheels for Linux and macOS (yey!).
 - :gh:`1880`: get rid of Travis and Cirrus CI services (they are no longer
@@ -862,10 +867,10 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`809`, [FreeBSD]: add support for :meth:`Process.rlimit`.
 - :gh:`893`, [BSD]: add support for :meth:`Process.environ` (patch by Armin
   Gruner)
-- :gh:`1830`, [POSIX]: :func:`net_if_stats` ``isup`` also checks whether the
+- :gh:`1830`, [POSIX]: :func:`net_if_stats` :field:`isup` also checks whether the
   NIC is running (meaning Wi-Fi or ethernet cable is connected).  (patch by
   Chris Burger)
-- :gh:`1837`, [Linux]: improved battery detection and charge ``secsleft``
+- :gh:`1837`, [Linux]: improved battery detection and charge :field:`secsleft`
   calculation (patch by aristocratos)
 
 **Bug fixes**
@@ -878,7 +883,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1791`, [macOS]: fix missing include for ``getpagesize()``.
 - :gh:`1823`, [Windows], **[critical]**: :meth:`Process.open_files` may cause
   a segfault due to a NULL pointer.
-- :gh:`1838`, [Linux]: :func:`sensors_battery`: if `percent` can be
+- :gh:`1838`, [Linux]: :func:`sensors_battery`: if :field:`percent` can be
   determined but not the remaining values, still return a result instead of
   ``None``. (patch by aristocratos)
 
@@ -1005,7 +1010,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`1527`, [Linux]: added :meth:`Process.cpu_times` ``iowait`` counter,
+- :gh:`1527`, [Linux]: added :meth:`Process.cpu_times` :field:`iowait` counter,
   which is the time spent waiting for blocking I/O to complete.
 - :gh:`1565`: add PEP 517/8 build backend and requirements specification for
   better pip integration.  (patch by Bernát Gábor)
@@ -1079,7 +1084,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1223`, [Windows]: :func:`boot_time` may return incorrect value on
   Windows XP.
 - :gh:`1456`, [Linux]: :func:`cpu_freq` returns ``None`` instead of 0.0 when
-  ``min`` and ``max`` fields can't be determined. (patch by Alex Manuskin)
+  :field:`min` and :field:`max` fields can't be determined. (patch by Alex Manuskin)
 - :gh:`1462`, [Linux]: (tests) make tests invariant to ``LANG`` setting (patch
   by Benjamin Drung)
 - :gh:`1463`: `scripts/cpu_distribution.py`_ was broken.
@@ -1314,7 +1319,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`1239`, [Linux]: expose kernel ``slab`` memory field for
+- :gh:`1239`, [Linux]: expose kernel :field:`slab` memory field for
   :func:`virtual_memory`. (patch by Maxime Mouial)
 
 **Bug fixes**
@@ -1383,7 +1388,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1183`: :meth:`Process.children` is 2x faster on POSIX and 2.4x faster
   on Linux.
 - :gh:`1188`: deprecated method :meth:`Process.memory_info_ex` now warns by
-  using ``FutureWarning`` instead of ``DeprecationWarning``.
+  using :exc:`FutureWarning` instead of :exc:`DeprecationWarning`.
 
 **Bug fixes**
 
@@ -1467,12 +1472,12 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`802`: :func:`disk_io_counters` and :func:`net_io_counters` numbers
   no longer wrap (restart from 0). Introduced a new ``nowrap`` argument.
 - :gh:`928`: :func:`net_connections` and :meth:`Process.connections`
-  ``laddr`` and ``raddr`` are now named tuples.
+  :field:`laddr` and :field:`raddr` are now named tuples.
 - :gh:`1015`: :func:`swap_memory` now relies on ``/proc/meminfo`` instead of
   ``sysinfo()`` syscall so that it can be used in conjunction with
   :data:`PROCFS_PATH` in order to retrieve memory info about Linux containers
   such as Docker and Heroku.
-- :gh:`1022`: :func:`users` provides a new ``pid`` field.
+- :gh:`1022`: :func:`users` provides a new :field:`pid` field.
 - :gh:`1025`: :func:`process_iter` accepts two new parameters in order to
   invoke
   :meth:`Process.as_dict`: ``attrs`` and ``ad_value``. With these you can
@@ -1572,7 +1577,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1039`: returned types consolidation. 1) Windows /
   :meth:`Process.cpu_times`: fields #3 and #4 were int instead of float. 2)
   Linux / FreeBSD / OpenBSD:
-  :meth:`Process.connections` ``raddr`` is now set to  ``""`` instead of
+  :meth:`Process.connections` :field:`raddr` is now set to  ``""`` instead of
   ``None`` when retrieving UNIX sockets.
 - :gh:`1040`: all strings are encoded by using OS fs encoding.
 - :gh:`1040`: the following Windows APIs on Python 2 now return a string
@@ -1617,9 +1622,9 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`971`, [Linux]: Add :func:`sensors_fans` function.  (patch by Nicolas
   Hennion)
 - :gh:`976`, [Windows]: :meth:`Process.io_counters` has 2 new fields:
-  ``other_count`` and ``other_bytes``.
+  :field:`other_count` and :field:`other_bytes`.
 - :gh:`976`, [Linux]: :meth:`Process.io_counters` has 2 new fields:
-  ``read_chars`` and ``write_chars``.
+  :field:`read_chars` and :field:`write_chars`.
 
 **Bug fixes**
 
@@ -1655,7 +1660,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`966`, [Linux]: :func:`sensors_battery` ``percent`` is a float and is
+- :gh:`966`, [Linux]: :func:`sensors_battery` :field:`percent` is a float and is
   more precise.
 
 **Bug fixes**
@@ -1751,11 +1756,11 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 **Enhancements**
 
 - :gh:`874`, [Windows]: make :func:`net_if_addrs` also return the
-  ``netmask``.
-- :gh:`887`, [Linux]: :func:`virtual_memory` ``available`` and ``used``
-  values are more precise and match ``free`` cmdline utility.  ``available``
-  also takes into account LCX containers preventing ``available`` to overflow
-  ``total``.
+  :field:`netmask`.
+- :gh:`887`, [Linux]: :func:`virtual_memory` :field:`available` and :field:`used`
+  values are more precise and match ``free`` cmdline utility.  :field:`available`
+  also takes into account LCX containers preventing :field:`available` to overflow
+  :field:`total`.
 - :gh:`891`: `scripts/procinfo.py`_ has been updated and provides a lot more
   info.
 
@@ -1831,7 +1836,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`812`, [NetBSD], **[critical]**: fix compilation on NetBSD-5.x.
 - :gh:`823`, [NetBSD]: :func:`virtual_memory` raises ``TypeError`` on Python
   3.
-- :gh:`829`, [POSIX]: :func:`disk_usage` ``percent`` field takes root
+- :gh:`829`, [POSIX]: :func:`disk_usage` :field:`percent` field takes root
   reserved space into account.
 - :gh:`816`, [Windows]: fixed :func:`net_io_counters` values wrapping after
   4.3GB in Windows Vista (NT 6.0) and above using 64bit values from newer win
@@ -1844,8 +1849,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`795`, [Windows]: new APIs to deal with Windows services:
   :func:`win_service_iter` and :func:`win_service_get`.
-- :gh:`800`, [Linux]: :func:`virtual_memory` returns a new ``shared`` memory
-  field.
+- :gh:`800`, [Linux]: :func:`virtual_memory` returns a new :field:`shared`
+  memory field.
 - :gh:`819`, [Linux]: speedup ``/proc`` parsing:
   :meth:`Process.ppid` +20% faster.
   :meth:`Process.status` +28% faster.
@@ -1865,14 +1870,15 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 **Enhancements**
 
 - :gh:`777`, [Linux]: :meth:`Process.open_files` on Linux return 3 new
-  fields: ``position``, ``mode`` and ``flags``.
+  fields: :field:`position`, :field:`mode` and :field:`flags`.
 - :gh:`779`: :meth:`Process.cpu_times` returns two new fields,
-  ``children_user`` and ``children_system`` (always set to 0 on macOS and
-  Windows).
+  :field:`children_user` and :field:`children_system` (always set to 0 on macOS
+  and Windows).
 - :gh:`789`, [Windows]: :func:`cpu_times` return two new fields:
-  ``interrupt`` and ``dpc``. Same for :func:`cpu_times_percent`.
+  :field:`interrupt` and :field:`dpc`. Same for :func:`cpu_times_percent`.
 - :gh:`792`: new :func:`cpu_stats` function returning number of CPU
-  ``ctx_switches``, ``interrupts``, ``soft_interrupts`` and ``syscalls``.
+  :field:`ctx_switches`, :field:`interrupts`, :field:`soft_interrupts` and
+  :field:`syscalls`.
 
 **Bug fixes**
 
@@ -1892,7 +1898,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 **Enhancements**
 
 - :gh:`523`, [Linux], [FreeBSD]: :func:`disk_io_counters` return a new
-  ``busy_time`` field.
+  :field:`busy_time` field.
 - :gh:`660`, [Windows]: make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - :gh:`732`: :meth:`Process.environ`.  (patch by Frank Benkstein)
@@ -1902,7 +1908,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`758`: tests now live in psutil namespace.
 - :gh:`760`: expose OS constants (``psutil.LINUX``, ``psutil.OSX``, etc.)
 - :gh:`756`, [Linux]: :func:`disk_io_counters` return 2 new fields:
-  ``read_merged_count`` and ``write_merged_count``.
+  :field:`read_merged_count` and :field:`write_merged_count`.
 - :gh:`762`: add `scripts/procsmem.py`_.
 
 **Bug fixes**
@@ -1942,7 +1948,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Bug fixes**
 
-- :gh:`724`, [FreeBSD]: :func:`virtual_memory` ``total`` is incorrect.
+- :gh:`724`, [FreeBSD]: :func:`virtual_memory` :field:`total` is incorrect.
 - :gh:`730`, [FreeBSD], **[critical]**: :func:`virtual_memory` crashes with
   "OSError: [Errno 12] Cannot allocate memory".
 
@@ -1969,7 +1975,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   visible.
 - :gh:`722`, [Linux]: :func:`swap_memory` no longer crashes if ``sin`` /
   ``sout`` can't be determined due to missing ``/proc/vmstat``.
-- :gh:`724`, [FreeBSD]: :func:`virtual_memory` ``total`` is slightly
+- :gh:`724`, [FreeBSD]: :func:`virtual_memory` :field:`total` is slightly
   incorrect.
 
 3.3.0 — 2015-11-25
@@ -2106,8 +2112,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`250`: new :func:`net_if_stats` returning NIC statistics (``isup``,
-  ``duplex``, ``speed``, ``mtu``).
+- :gh:`250`: new :func:`net_if_stats` returning NIC statistics (:field:`isup`,
+  :field:`duplex`, :field:`speed`, :field:`mtu`).
 - :gh:`376`: new :func:`net_if_addrs` returning all NIC addresses a-la
   ``ifconfig``.
 - :gh:`469`: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS``
@@ -2303,7 +2309,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 For the sake of consistency a lot of psutil APIs have been renamed. In most
 cases accessing the old names will work but it will cause a
-``DeprecationWarning``.
+:exc:`DeprecationWarning`.
 
 - ``psutil.*`` module level constants have being replaced by functions:
 
@@ -2528,7 +2534,7 @@ cases accessing the old names will work but it will cause a
 **Enhancements**
 
 - :gh:`18`, [SunOS]: add Solaris support (yay!)  (thanks Justin Venus)
-- :gh:`367`: :meth:`Process.connections` ``status`` strings are now
+- :gh:`367`: :meth:`Process.connections` :field:`status` strings are now
   constants.
 - :gh:`380`: test suite exits with non-zero on failure.  (patch by
   floppymaster)
@@ -2547,10 +2553,10 @@ cases accessing the old names will work but it will cause a
 
 **API changes**
 
-- :meth:`Process.connections` ``status`` field is no longer a string but a
+- :meth:`Process.connections` :field:`status` field is no longer a string but a
   constant object (``psutil.CONN_*``).
-- :meth:`Process.connections` ``local_address`` and ``remote_address`` fields
-  renamed to ``laddr`` and ``raddr``.
+- :meth:`Process.connections` :field:`local_address` and :field:`remote_address`
+  fields renamed to :field:`laddr` and :field:`raddr`.
 - psutil.network_io_counters() renamed to :func:`net_io_counters`.
 
 0.7.1 — 2013-05-03
@@ -2576,9 +2582,9 @@ cases accessing the old names will work but it will cause a
 - :gh:`328`, [Windows]: :meth:`Process.ionice` support.
 - :gh:`359`: add :func:`boot_time` as a substitute of ``psutil.BOOT_TIME``
   since the latter cannot reflect system clock updates.
-- :gh:`361`, [Linux]: :func:`cpu_times` now includes new ``steal``, ``guest``
-  and ``guest_nice`` fields available on recent Linux kernels. Also,
-  :func:`cpu_percent` is more accurate.
+- :gh:`361`, [Linux]: :func:`cpu_times` now includes new :field:`steal`,
+  :field:`guest` and :field:`guest_nice` fields available on recent Linux
+  kernels. Also, :func:`cpu_percent` is more accurate.
 - :gh:`362`: add :func:`cpu_times_percent` (per-CPU-time utilization as a
   percentage).
 
@@ -2694,9 +2700,9 @@ cases accessing the old names will work but it will cause a
   memory. Added new :func:`virtual_memory` and :func:`swap_memory`
   functions. All old memory-related functions are deprecated. Also two new
   example scripts were added:  `scripts/free.py`_ and `scripts/meminfo.py`_.
-- :gh:`312`: ``net_io_counters()`` named tuple includes 4 new fields: ``errin``,
-  ``errout``, ``dropin`` and ``dropout``, reflecting the number of packets
-  dropped and with errors.
+- :gh:`312`: ``net_io_counters()`` named tuple includes 4 new fields: :field:`errin`,
+  :field:`errout`, :field:`dropin` and :field:`dropout`, reflecting the number
+  of packets dropped and with errors.
 
 **Bug fixes**
 
@@ -2889,9 +2895,9 @@ cases accessing the old names will work but it will cause a
 - :gh:`163`: per-process associated terminal / TTY
   (:meth:`Process.terminal`).
 - :gh:`171`: added ``get_phymem()`` and ``get_virtmem()`` functions returning
-  system memory information (``total``, ``used``, ``free``) and memory percent
-  usage. ``total_*``, ``avail_*`` and ``used_*`` memory functions are
-  deprecated.
+  system memory information (:field:`total`, :field:`used`, :field:`free`) and
+  memory percent usage. ``total_*``, ``avail_*`` and ``used_*`` memory functions
+  are deprecated.
 - :gh:`172`: disk usage statistics (:func:`disk_usage`).
 - :gh:`174`: mounted disk partitions (:func:`disk_partitions`).
 - :gh:`179`: setuptools is now used in setup.py

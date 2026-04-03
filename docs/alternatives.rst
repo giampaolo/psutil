@@ -156,6 +156,11 @@ process information.
      - CPU, memory, disk, network, processes. Directly inspired
        by psutil and follows a similar API.
 
+   * - `heim <https://github.com/heim-rs/heim>`_
+     - Rust
+     - Async-first library covering CPU, memory, disk, network,
+       processes and sensors.
+
    * - `Hardware.Info <https://github.com/Jinjinov/Hardware.Info>`_
      - C# / .NET
      - CPU, RAM, GPU, disk, network, battery.
@@ -168,6 +173,10 @@ process information.
      - Java
      - OS and hardware information: CPU, memory, disk, network,
        processes, sensors, USB devices.
+
+   * - `rust-psutil <https://github.com/rust-psutil/rust-psutil>`_
+     - Rust
+     - Directly inspired by psutil and follows a similar API.
 
    * - `sysinfo <https://github.com/GuillaumeGomez/sysinfo>`_
      - Rust

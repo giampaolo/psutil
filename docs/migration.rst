@@ -87,9 +87,9 @@ If you relied on :attr:`Process.info` because you needed a dict structure, use
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :func:`cpu_times`: ``user``, ``system``, ``idle`` fields changed order on Linux,
+- :func:`cpu_times`: :field:`user`, :field:`system`, :field:`idle` fields changed order on Linux,
   macOS and BSD. They are now always the first 3 fields on all platforms, with
-  platform-specific fields (e.g. ``nice``) following. Positional access (e.g.
+  platform-specific fields (e.g. :field:`nice`) following. Positional access (e.g.
   ``cpu_times()[3]``) will silently return the wrong field. Always use
   attribute access instead (e.g. ``cpu_times().idle``).
 
@@ -106,18 +106,18 @@ Named tuple field order changed
   and field order. Always use attribute access (e.g.
   ``p.memory_info().rss``) instead of positional unpacking.
 
-  - Linux: ``lib`` and ``dirty`` fields removed (aliases emitting
+  - Linux: :field:`lib` and :field:`dirty` fields removed (aliases emitting
     :exc:`DeprecationWarning` are kept).
-  - macOS: ``pfaults`` and ``pageins`` removed with **no aliases**.
+  - macOS: :field:`pfaults` and :field:`pageins` removed with **no aliases**.
     Use :meth:`Process.page_faults` instead.
-  - Windows: old aliases (``wset``, ``peak_wset``, ``pagefile``,
-    ``private``, ``peak_pagefile``, ``num_page_faults``) were
+  - Windows: old aliases (:field:`wset`, :field:`peak_wset`, :field:`pagefile`,
+    :field:`private`, :field:`peak_pagefile`, :field:`num_page_faults`) were
     renamed. Old names still work but raise :exc:`DeprecationWarning`.
-    ``paged_pool``, ``nonpaged_pool``, ``peak_paged_pool``,
-    ``peak_nonpaged_pool`` were moved to :meth:`memory_info_ex`.
-  - BSD: a new ``peak_rss`` field was added.
+    :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
+    :field:`peak_nonpaged_pool` were moved to :meth:`memory_info_ex`.
+  - BSD: a new :field:`peak_rss` field was added.
 
-- :func:`virtual_memory`: on Windows, new ``cached`` and ``wired`` fields were
+- :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired` fields were
   added. Code using positional unpacking will break:
 
   .. code-block:: python
@@ -132,7 +132,7 @@ Named tuple field order changed
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``interrupt`` field of :func:`cpu_times` on Windows was renamed to ``irq``
+The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to :field:`irq`
 to match the name used on Linux and BSD. The old name still works but raises
 :exc:`DeprecationWarning`.
 
@@ -141,7 +141,7 @@ Status and connection fields are now enums
 
 - :meth:`Process.status` now returns a :class:`psutil.ProcessStatus` member
   instead of a plain ``str``.
-- :meth:`Process.net_connections` and :func:`net_connections` ``status`` field
+- :meth:`Process.net_connections` and :func:`net_connections` :field:`status` field
   now returns a :class:`psutil.ConnectionStatus` member instead of a plain
   ``str``.
 
@@ -161,7 +161,7 @@ New memory_info_ex() method
 
 8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
 :meth:`Process.memory_info` with platform-specific metrics (e.g.
-``peak_rss``, ``swap``, ``rss_anon`` on Linux). This is **unrelated** to
+:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). This is **unrelated** to
 the old :meth:`Process.memory_info_ex` that was deprecated in 4.0 and
 removed in 7.0 (which corresponded to what later became
 :meth:`Process.memory_full_info`).
@@ -258,7 +258,7 @@ Process.connections() renamed
 
 :meth:`Process.connections` was renamed to
 :meth:`Process.net_connections` for consistency with the system-level
-:func:`net_connections`. The old name triggers a ``DeprecationWarning``
+:func:`net_connections`. The old name triggers a :exc:`DeprecationWarning`
 and will be removed in a future release:
 
 .. code-block:: python
@@ -274,7 +274,7 @@ and will be removed in a future release:
 disk_partitions() lost two fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``maxfile`` and ``maxpath`` fields were removed from the named tuple
+The :field:`maxfile` and :field:`maxpath` fields were removed from the named tuple
 returned by :func:`disk_partitions`. Code unpacking the tuple
 positionally will break:
 
@@ -314,7 +314,7 @@ Migrating to 5.0
 module-level names were changed.
 
 Old :class:`Process` method names still worked but raised
-``DeprecationWarning``. They were fully removed in 6.0.
+:exc:`DeprecationWarning`. They were fully removed in 6.0.
 
 Process methods
 ^^^^^^^^^^^^^^^^
