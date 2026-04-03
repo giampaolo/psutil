@@ -5,8 +5,19 @@
 <!-- apply saved theme before first paint to avoid flash -->
 <script>
   (function () {
+    var html = document.documentElement;
+
+    // suppress transitions during initial load
+    html.classList.add('no-transition');
     if (localStorage.getItem('psutil-theme') === 'dark')
-      document.documentElement.setAttribute('data-theme', 'dark');
+      html.setAttribute('data-theme', 'dark');
+
+    // re-enable transitions after two animation frames
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        html.classList.remove('no-transition');
+      });
+    });
   })();
 </script>
 

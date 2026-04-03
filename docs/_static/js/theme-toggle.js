@@ -6,13 +6,11 @@
         html.setAttribute('data-theme', dark ? 'dark' : 'light');
         localStorage.setItem(KEY, dark ? 'dark' : 'light');
 
-        // set backgrounds directly on all three layers that RTD
-        // theme hard-codes to #fcfcfc
-        var bg = dark ? '#1e1e1e' : '';
+        // clear any inline background styles so CSS variables take over
         ['.wy-nav-content-wrap', '.wy-nav-content', '.wy-body-for-nav']
             .forEach(function (sel) {
                 var el = document.querySelector(sel);
-                if (el) el.style.background = bg;
+                if (el) el.style.background = '';
             });
 
         var cb = document.getElementById('theme-toggle');
