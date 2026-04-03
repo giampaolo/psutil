@@ -169,6 +169,10 @@ process information.
      - OS and hardware information: CPU, memory, disk, network,
        processes, sensors, USB devices.
 
+   * - `rust-psutil <https://github.com/rust-psutil/rust-psutil>`_
+     - Rust
+     - Directly inspired by psutil and follows a similar API.
+
    * - `sysinfo <https://github.com/GuillaumeGomez/sysinfo>`_
      - Rust
      - CPU, memory, disk, network, processes, components.
