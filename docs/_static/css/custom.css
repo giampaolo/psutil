@@ -34,6 +34,7 @@
     --links-visited: #9b59b6;
     --links-api: #336699;
     --links-underline: #336699;
+    --links-api-underline: #336699;
 
     /* sidebar */
     --sidebar-bg: #343131;
@@ -112,8 +113,9 @@
     /* links */
     --links: #6ab0de;
     --links-visited: #b98eca;
-    --links-api: #6ab0de;
     --links-underline: #6ab0de;
+    --links-api: #6ab0de;
+    --links-api-underline: #6ab0de;
 
     /* admonitions */
     --adm-title: #ddd;
@@ -745,6 +747,7 @@ h4 {
     /*font-weight: bold !important;*/
     font-size:90% !important;
     text-decoration: underline;
+    text-decoration-color: var(--links-api-underline);
     text-underline-offset: 4px;
 }
 
