@@ -8,7 +8,7 @@
 
         // set backgrounds directly on all three layers that RTD
         // theme hard-codes to #fcfcfc
-        var bg = dark ? '#1e1e1e' : '';
+        var bg = dark ? '#1e1e1e' : '#fcfcfc';
         ['.wy-nav-content-wrap', '.wy-nav-content', '.wy-body-for-nav']
             .forEach(function (sel) {
                 var el = document.querySelector(sel);
