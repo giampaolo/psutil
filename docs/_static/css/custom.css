@@ -44,7 +44,7 @@
     --sidebar-top-bg: #343131;
     --sidebar-caption: #55a5d9;
     --sidebar-item: #d9d9d9;
-    --sidebar-item-nested: #c0c0c0;
+    --sidebar-item-nested: #404040;
     --sidebar-active-border: #55a5d9;
     --sidebar-search-focus-border: #7ab3d4;
     --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
@@ -116,7 +116,6 @@
     /* links */
     --links: #6ab0de;
     --links-visited: #b98eca;
-    --links-underline: #6ab0de;
     --links-api: #6ab0de;
     --links-api-underline: #6ab0de;
 
@@ -420,6 +419,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
     font-size: var(--sidebar-caption-font-size) !important;
+    margin-left: -15px !important;
 }
 
 .wy-menu-vertical li.toctree-l1:not(.current) > a {
