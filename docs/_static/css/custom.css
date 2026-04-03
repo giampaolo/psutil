@@ -148,12 +148,6 @@
     --card-border: #2a4a6a;
 }
 
-[data-theme="dark"] .wy-body-for-nav,
-[data-theme="dark"] .wy-nav-content-wrap,
-[data-theme="dark"] .wy-nav-content {
-    background: var(--content-bg) !important;
-}
-
 [data-theme="dark"] .wy-nav-content {
     border-right: 1px solid var(--headings-underline);
 }
