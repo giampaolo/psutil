@@ -450,13 +450,12 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* ================================================================== */
 
 /* smooth transition effect  */
-html {
+html,
+body,
+.wy-body-for-nav,
+.wy-nav-content-wrap,
+.wy-nav-content {
     transition: background-color var(--theme-transition), color var(--theme-transition);
-}
-
-*, *::before, *::after {
-    transition: background-color var(--theme-transition), color var(--theme-transition),
-                border-color var(--theme-transition);
 }
 
 .wy-side-nav-search .wy-form {
