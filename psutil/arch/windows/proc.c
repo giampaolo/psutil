@@ -877,6 +877,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 }
 
 
+PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
