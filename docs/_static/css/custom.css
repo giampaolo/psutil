@@ -1,27 +1,49 @@
 /* ================================================================== */
-/* Variables                                                          */
+/* Sizes and effects                                                  */
 /* ================================================================== */
 
 :root {
-    /* semantic — light mode */
     --border-radius: 3px;
     --theme-transition: 0.2s ease;
+    --h1-h2-border: var(--headings-underline);
+    --adm-padding-y: 5px;
+    --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --code-line-height: 1.5;
+    --func-sig-bg: var(--surface-raised);
+    --func-sig-border: var(--links-api);
+    --func-sig-text: var(--headings);
+    --func-sig-name: var(--headings);
+    --func-sig-param: var(--text-muted);
+    --table-header-bg: var(--surface-raised);
+    --adm-note-bg: var(--surface-sunken);
+    --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
+}
 
+/* ================================================================== */
+/* Colors — light mode (default)                                      */
+/* ================================================================== */
+
+:root {
+    /* page */
     --body-bg: #fcfcfc;
     --content-bg: #fcfcfc;
+    --surface-sunken: #f5f5f5;
+    --surface-raised: #f0f4f7;
+    --border: #d6d6d6;
+
+    /* text */
     --content-text: #3b3b3b;
     --text-muted: #555;
     --headings: #222;
     --headings-underline: #ccc;
-    --border: #d6d6d6;
-    --surface-sunken: #f5f5f5;
-    --surface-raised: #f0f4f7;
 
+    /* links */
     --links: #2980b9;
     --links-visited: #9b59b6;
     --links-api: #336699;
     --links-underline: #336699;
 
+    /* sidebar */
     --sidebar-bg: #343131;
     --sidebar-top-bg: #343131;
     --sidebar-caption: #55a5d9;
@@ -29,17 +51,12 @@
     --sidebar-item-nested: #333;
     --sidebar-active-border: #55a5d9;
     --sidebar-search-focus-border: #7ab3d4;
-    --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
 
-    --h1-h2-border: var(--headings-underline);
-
-    --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    --code-line-height: 1.5;
+    /* code blocks */
     --code-bg: #2d2e27;
 
-    --adm-padding-y: 5px;
+    /* admonitions */
     --adm-title: black;
-    --adm-note-bg: var(--surface-sunken);
     --adm-note-border: #ccc;
     --adm-seealso-accent-border: #336699;
     --adm-seealso-bg: #f3f9fe;
@@ -51,6 +68,7 @@
     --adm-warning-bg: #fff0f0;
     --adm-warning-border: #e8a0a0;
 
+    /* version directives */
     --versionadded-border: #4fc464;
     --versionadded-color: #296433;
     --versionchanged-border: #f4e34c;
@@ -58,43 +76,44 @@
     --deprecated-border: #f44c4e;
     --deprecated-color: #9f3133;
 
-    --func-sig-bg: var(--surface-raised);
-    --func-sig-border: var(--links-api);
-    --func-sig-text: var(--headings);
-    --func-sig-name: var(--headings);
-    --func-sig-param: var(--text-muted);
-
-    --table-header-bg: var(--surface-raised);
+    /* tables */
     --table-row-odd: #f8f9fa;
     --table-row-even: #ffffff;
 
+    /* cards */
     --card-bg: #fff;
     --card-border: #b0cfe8;
 
+    /* footer */
     --footer-icon: #999;
     --footer-icon-hover: #444;
 }
 
 /* ================================================================== */
-/* Dark theme                                                         */
+/* Colors — dark mode                                                 */
 /* ================================================================== */
 
 [data-theme="dark"] {
+    /* page */
     --body-bg: #1e1e1e;
     --content-bg: #1e1e1e;
+    --surface-sunken: #2a2a2a;
+    --surface-raised: #252525;
+    --border: #3a3a3a;
+
+    /* text */
     --content-text: #ececec;
     --text-muted: #b0b0ba;
     --headings: #f0f0f0;
     --headings-underline: #3a3a3a;
-    --border: #3a3a3a;
-    --surface-sunken: #2a2a2a;
-    --surface-raised: #252525;
 
+    /* links */
     --links: #6ab0de;
     --links-visited: #b98eca;
     --links-api: #6ab0de;
     --links-underline: #6ab0de;
 
+    /* admonitions */
     --adm-title: #ddd;
     --adm-note-bg: #2a2a2a;
     --adm-note-border: #4a4a4a;
@@ -107,16 +126,19 @@
     --adm-warning-bg: #2e1a1a;
     --adm-warning-border: #8a3030;
 
+    /* version directives */
+    --versionadded-color: #5ec46e;
+    --versionchanged-color: #c8963a;
+    --deprecated-color: #d06060;
+
+    /* tables */
     --table-header-bg: #2a2d3a;
     --table-row-odd: #222222;
     --table-row-even: #272727;
 
+    /* cards */
     --card-bg: #252525;
     --card-border: #2a4a6a;
-
-    --versionadded-color: #5ec46e;
-    --versionchanged-color: #c8963a;
-    --deprecated-color: #d06060;
 }
 
 [data-theme="dark"] .wy-body-for-nav,
