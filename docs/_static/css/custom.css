@@ -297,6 +297,10 @@
     margin: 0 auto 10px;
 }
 
+[data-theme="dark"] .home-icon-svg {
+    filter: brightness(1.45) saturate(0.7);
+}
+
 .home-icon-fa {
     font-size: 2.2rem;
     color: var(--links);
