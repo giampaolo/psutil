@@ -12,6 +12,7 @@
     --content-font-size: 16.5px;
     --content-line-height: 26px;
     --sidebar-font-size: 15px;
+    --sidebar-caption-font-size: 14px;
 }
 
 /* ================================================================== */
@@ -418,6 +419,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
+    font-size: var(--sidebar-caption-font-size) !important;
 }
 
 .wy-menu-vertical li.toctree-l1:not(.current) > a {
