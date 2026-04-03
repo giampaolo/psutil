@@ -374,6 +374,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* Sidebar                                                            */
 /* ================================================================== */
 
+.wy-nav-side,
 .wy-nav-top {
     background-color: var(--sidebar-bg) !important;
 }
