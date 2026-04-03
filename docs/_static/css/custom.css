@@ -9,7 +9,7 @@
     --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --code-line-height: 1.5;
     --h1-h2-border: var(--headings-underline);
-    --content-font-size: 17px;
+    --content-font-size: 16.5px;
     --content-line-height: 26px;
     --sidebar-font-size: 15px;
 }
@@ -104,7 +104,7 @@
     --body-bg: #1e1e1e;
     --content-bg: #1e1e1e;
     --surface-sunken: #2a2a2a;
-    --surface-raised: #252525;
+    --surface-raised: #2e2e2e;
     --border: #3a3a3a;
 
     /* text */
@@ -125,7 +125,7 @@
     --adm-note-bg: #2a2a2a;
     --adm-note-border: #4a4a4a;
     --adm-seealso-accent-border: #5599cc;
-    --adm-seealso-bg: #192533;
+    --adm-seealso-bg: #1e2d3d;
     --adm-seealso-border: #2d5280;
     --adm-seealso-title: #7ab0d9;
     --adm-tip-bg: #1a2a1a;
