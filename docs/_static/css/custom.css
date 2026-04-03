@@ -462,7 +462,7 @@ html {
 .wy-side-nav-search .wy-form {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .wy-side-nav-search .wy-form input[type="text"] {
@@ -495,6 +495,7 @@ html {
     background: rgba(255, 255, 255, 0.12);
     color: #fff;
     font-size: 1rem;
+    line-height: 1;
     transition: background 0.2s;
 }
 
