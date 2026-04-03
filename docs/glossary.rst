@@ -12,27 +12,27 @@ Glossary
       :term:`page cache`), such as the :term:`heap`, the stack, and other
       memory allocated directly by the program (e.g. via ``malloc()``).
       Anonymous pages have no on-disk counterpart and must be written to
-      :term:`swap memory` if evicted. Exposed by psutil via the ``rss_anon`` field of
-      :meth:`Process.memory_info_ex` (total resident anonymous pages) and the
-      ``anonymous`` field of :meth:`Process.memory_maps` (per mapping).
-      Anonymous regions are also visible in the ``path`` column of
-      :meth:`Process.memory_maps` as ``"[heap]"``, ``"[stack]"``, or an empty
-      string.
+      :term:`swap memory` if evicted. Exposed by psutil via the :field:`rss_anon`
+      field of :meth:`Process.memory_info_ex` (total resident anonymous pages)
+      and the :field:`anonymous` field of :meth:`Process.memory_maps` (per
+      mapping). Anonymous regions are also visible in the :field:`path` column
+      of :meth:`Process.memory_maps` as ``"[heap]"``, ``"[stack]"``, or an
+      empty string.
 
    available memory
 
       The amount of RAM that can be given to processes without the system going
       into :term:`swap <swap memory>`. This is the right field to watch for
-      memory pressure, not ``free``. ``free`` is often deceptively low because
-      the OS keeps recently freed pages as reclaimable cache; those pages are
-      counted in ``available`` but not in ``free``. A monitoring alert should
-      fire on ``available`` (or ``percent``) falling below a threshold, not on
-      ``free``. See :func:`virtual_memory`.
+      memory pressure, not :field:`free`. :field:`free` is often deceptively low
+      because the OS keeps recently freed pages as reclaimable cache; those pages
+      are counted in :field:`available` but not in :field:`free`.
+      A monitoring alert should fire on :field:`available` (or :field:`percent`)
+      falling below a threshold, not on :field:`free`. See :func:`virtual_memory`.
 
    busy_time
 
       A :term:`cumulative counter` (milliseconds) tracking the time a disk
-      device spent actually performing I/O, as reported in the ``busy_time``
+      device spent actually performing I/O, as reported in the :field:`busy_time`
       field of :func:`disk_io_counters` (Linux and FreeBSD only). To use it,
       sample twice and divide the delta by elapsed time to get a utilization
       percentage (analogous to CPU percent but for disks). A value close to
@@ -96,8 +96,8 @@ Glossary
 
       A signal sent by a hardware device (disk controller, :term:`NIC`, keyboard)
       to the CPU to request attention. Each interrupt briefly preempts
-      whatever the CPU was doing. Reported as the ``interrupts`` field of
-      :func:`cpu_stats` and ``irq`` field of :func:`cpu_times`.
+      whatever the CPU was doing. Reported as the :field:`interrupts` field of
+      :func:`cpu_stats` and :field:`irq` field of :func:`cpu_times`.
       A very high rate may indicate a misbehaving device driver or a heavily
       loaded :term:`NIC`. Also see :term:`soft interrupt`.
 
@@ -107,8 +107,8 @@ Glossary
       (e.g. glibc's ``malloc`` on Linux, ``jemalloc`` on FreeBSD,
       ``HeapAlloc`` on Windows). When a C extension calls ``malloc()``
       and never calls ``free()``, the leaked bytes show up here but
-      are not always visible to Python's memory tracking tools (:mod:`tracemalloc`,
-      :func:`sys.getsizeof`) or :term:`RSS` / :term:`VMS` .
+      are not always visible to Python's memory tracking tools
+      (:mod:`tracemalloc`, :func:`sys.getsizeof`) or :term:`RSS` / :term:`VMS`.
       :func:`heap_info` exposes the current state of the heap, and
       :func:`heap_trim` asks the allocator to release unused portions
       of it. Together they provide a way to detect memory leaks in C
@@ -175,8 +175,8 @@ Glossary
       it writes, the data is first stored in the cache before being written to
       disk. Subsequent reads or writes can be served from RAM without disk I/O,
       making access fast. The OS reclaims page cache automatically under memory
-      pressure, so a large cache is healthy. Shown as the ``cached`` field of
-      :func:`virtual_memory` on Linux/BSD.
+      pressure, so a large cache is healthy. Shown as the :field:`cached` field
+      of :func:`virtual_memory` on Linux/BSD.
 
    peak_rss
 
@@ -184,7 +184,7 @@ Glossary
       started (memory high-water mark). Available via
       :meth:`Process.memory_info` (BSD, Windows) and
       :meth:`Process.memory_info_ex` (Linux, macOS). Useful for capacity
-      planning and leak detection: if ``peak_rss`` keeps growing across
+      planning and leak detection: if :field:`peak_rss` keeps growing across
       successive runs or over time, the process is likely leaking memory.
       See also :term:`peak_vms`.
 
@@ -199,9 +199,9 @@ Glossary
    page fault
 
       An event that occurs when a process accesses a virtual memory page
-      that is not currently mapped in physical RAM. A **minor** fault is
+      that is not currently mapped in physical RAM. A :field:`minor` fault is
       resolved without disk I/O (e.g. the page is already in RAM but not
-      yet mapped, or it is copy-on-write). A **major** fault requires
+      yet mapped, or it is copy-on-write). A :field:`major` fault requires
       reading the page from disk (e.g. from a memory-mapped file or the
       :term:`swap memory` area) and is significantly more expensive. Many
       major faults may indicate memory pressure or excessive swapping. See
@@ -222,8 +222,8 @@ Glossary
       :term:`USS`, returned by :meth:`Process.memory_footprint`, measures
       exactly the private memory of a process, that is the bytes that would be
       freed if the process exited. At a per-mapping level, the
-      ``private_clean`` and ``private_dirty`` fields of
-      :meth:`Process.memory_maps` (Linux) and the ``private`` field (FreeBSD)
+      :field:`private_clean` and :field:`private_dirty` fields of
+      :meth:`Process.memory_maps` (Linux) and the :field:`private` field (FreeBSD)
       break it down further.
 
    PSS
@@ -248,7 +248,7 @@ Glossary
       run later in a less time-critical context (e.g. network packet
       processing, block I/O completion). Using soft interrupts lets the
       hardware interrupt return quickly while the heavier processing
-      happens shortly after. Reported as the ``soft_interrupts`` field of
+      happens shortly after. Reported as the :field:`soft_interrupts` field of
       :func:`cpu_stats`. A high rate usually points to heavy network or
       disk I/O throughput rather than a hardware problem.
 
@@ -262,24 +262,24 @@ Glossary
       shared page proportionally among the processes that use it.
       See also :term:`private memory`.
 
-      Exposed by psutil as the ``shared`` field of :func:`virtual_memory` and
-      :meth:`Process.memory_info` (Linux), the ``rss_shmem`` field of
-      :meth:`Process.memory_info_ex` (Linux), and the ``shared_clean`` /
-      ``shared_dirty`` fields of :meth:`Process.memory_maps` (Linux).
+      Exposed by psutil as the :field:`shared` field of :func:`virtual_memory` and
+      :meth:`Process.memory_info` (Linux), the :field:`rss_shmem` field of
+      :meth:`Process.memory_info_ex` (Linux), and the :field:`shared_clean` /
+      :field:`shared_dirty` fields of :meth:`Process.memory_maps` (Linux).
 
    swap-in
 
       Memory moved from disk (:term:`swap <swap memory>`) back into RAM.
-      Reported as the ``sin`` :term:`cumulative counter` of
-      :func:`swap_memory`. A non-zero ``sin`` rate usually means the system
+      Reported as the :field:`sin` :term:`cumulative counter` of
+      :func:`swap_memory`. A non-zero :field:`sin` rate usually means the system
       is bringing memory back into RAM for processes to use. See also
       :term:`swap-out`.
 
    swap-out
 
       Memory moved from RAM to disk (:term:`swap <swap memory>`).
-      Reported as the ``sout`` :term:`cumulative counter` of
-      :func:`swap_memory`.  A non-zero ``sout`` rate indicates memory
+      Reported as the :field:`sout` :term:`cumulative counter` of
+      :func:`swap_memory`.  A non-zero :field:`sout` rate indicates memory
       pressure: the system is running low on RAM and must move data to disk,
       which can slow performance. See also :term:`swap-in`.
 
@@ -313,9 +313,9 @@ Glossary
       A condition where the system spends more time moving memory between RAM
       and disk (:term:`swap <swap memory>`) than doing actual work, because memory
       demand exceeds available RAM. The symptom is high and sustained rates on
-      both ``sin`` and ``sout`` from :func:`swap_memory`. As a result, the
-      system becomes very slow or unresponsive. CPU utilization may look low
-      while everything is waiting on disk I/O.
+      both :field:`sin` and :field:`sout` from :func:`swap_memory`.
+      As a result, the system becomes very slow or unresponsive. CPU utilization
+      may look low while everything is waiting on disk I/O.
 
    USS
 
