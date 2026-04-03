@@ -304,10 +304,10 @@ footer div[role="navigation"][aria-label="Footer"] {
     --gray-200: #252525;
     --gray-300: #3a3a3a;
     --gray-400: #555;
-    --gray-500: #aaa;
-    --gray-600: #ccc;
-    --gray-700: #e0e0e0;
-    --gray-800: #f0f0f0;
+    --gray-500: #b0b0ba;
+    --gray-600: #ececec;
+    --gray-700: #f2f2f2;
+    --gray-800: #f8f8f8;
     --blue-200: #1a2a3a;
     --blue-300: #2a4a6a;
     --h1-h2-border: #3a3a3a;
@@ -381,7 +381,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 [data-theme="dark"] h3 a,
 [data-theme="dark"] h4,
 [data-theme="dark"] h4 a {
-    color: #b8bcc4 !important;
+    color: #f0f0f0 !important;
 }
 
 /* ================================================================== */
