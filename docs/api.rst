@@ -30,39 +30,40 @@ CPU
   The attributes availability varies depending on the platform.
   Cross-platform fields:
 
-  - **user**: time spent by normal processes executing in user mode; on Linux
-    this also includes **guest** time
+  - :field:`user`: time spent by normal processes executing in user mode; on
+    Linux this also includes :field:`guest` time
 
-  - **system**: time spent by processes executing in kernel mode
+  - :field:`system`: time spent by processes executing in kernel mode
 
-  - **idle**: time spent doing nothing
+  - :field:`idle`: time spent doing nothing
 
   Platform-specific fields:
 
-  - **nice** *(Linux, macOS, BSD)*: time spent by :term:`niced <nice>`
+  - :field:`nice` *(Linux, macOS, BSD)*: time spent by :term:`niced <nice>`
     (lower-priority) processes executing in user mode; on Linux this also
-    includes **guest_nice** time.
+    includes :field:`guest_nice` time.
 
-  - **iowait** *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete
-    (:term:`iowait`). This is *not* accounted in **idle** time counter.
+  - :field:`iowait` *(Linux, SunOS, AIX)*: time spent waiting for I/O to complete
+    (:term:`iowait`). This is *not* accounted in :field:`idle` time counter.
 
-  - **irq** *(Linux, Windows, BSD)*: time spent for servicing
+  - :field:`irq` *(Linux, Windows, BSD)*: time spent for servicing
     :term:`hardware interrupts <hardware interrupt>`
 
-  - **softirq** *(Linux)*: time spent for servicing
+  - :field:`softirq` *(Linux)*: time spent for servicing
     :term:`soft interrupts <soft interrupt>`
 
-  - **steal** *(Linux)*: CPU time the virtual machine wanted to run but was
+  - :field:`steal` *(Linux)*: CPU time the virtual machine wanted to run but was
     used by other virtual machines or the host. A sustained non-zero steal rate
     indicates CPU contention.
 
-  - **guest** *(Linux)*: time the host CPU spent running a guest operating
-    system (virtual machine). Already included in **user** time.
+  - :field:`guest` *(Linux)*: time the host CPU spent running a guest operating
+    system (virtual machine). Already included in :field:`user` time.
 
-  - **guest_nice** *(Linux)*: like **guest**, but for virtual CPUs running at a
-    lower :term:`nice` priority. Already included in **nice** time.
+  - :field:`guest_nice` *(Linux)*: like :field:`guest`, but for virtual CPUs
+    running at a lower :term:`nice` priority. Already included in :field:`nice`
+    time.
 
-  - **dpc** *(Windows)*: time spent servicing deferred procedure calls (DPCs);
+  - :field:`dpc` *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
   When *percpu* is ``True`` return a list of named tuples for each
@@ -84,18 +85,18 @@ CPU
     `#1210 <https://github.com/giampaolo/psutil/issues/1210#issuecomment-363046156>`_.
 
   .. versionchanged:: 4.1.0
-     Windows: added **irq** and **dpc** fields (**irq** was called **interrupt**
-     before 8.0.0).
+     Windows: added :field:`irq` and :field:`dpc` fields (:field:`irq` was
+     called :field:`interrupt` before 8.0.0).
 
   .. versionchanged:: 8.0.0
-     Windows: **interrupt** field was renamed to **irq**; **interrupt** still
-     works but raises :exc:`DeprecationWarning`.
+     Windows: :field:`interrupt` field was renamed to :field:`irq`;
+     :field:`interrupt` still works but raises :exc:`DeprecationWarning`.
 
   .. versionchanged:: 8.0.0
-     field order was standardized: **user**, **system**, **idle** are now
-     always the first three fields. Previously on Linux, macOS, and BSD the
-     first three were **user**, **nice**, **system**. See :ref:`migration guide
-     <migration-8.0>`.
+     field order was standardized: :field:`user`, :field:`system`,
+     :field:`idle` are now always the first three fields. Previously on Linux,
+     macOS, and BSD the first three were :field:`user`, :field:`nice`,
+     :field:`system`. See :ref:`migration guide <migration-8.0>`.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -149,8 +150,8 @@ CPU
   .. seealso:: :ref:`faq_cpu_percent`
 
   .. versionchanged:: 4.1.0
-     Windows: added **irq** and **dpc** fields (**irq** was called
-     **interrupt** before 8.0.0).
+     Windows: added :field:`irq` and :field:`dpc` fields (:field:`irq` was
+     called :field:`interrupt` before 8.0.0).
 
   .. versionchanged:: 5.9.6
      function is now thread safe.
@@ -200,14 +201,14 @@ CPU
   Return various CPU statistics as a named tuple. All fields are
   :term:`cumulative counters <cumulative counter>` since boot.
 
-  - **ctx_switches**: number of :term:`context switches <context switch>`
+  - :field:`ctx_switches`: number of :term:`context switches <context switch>`
     (voluntary + involuntary).
-  - **interrupts**:
+  - :field:`interrupts`:
     number of :term:`hardware interrupts <hardware interrupt>`.
-  - **soft_interrupts**:
+  - :field:`soft_interrupts`:
     number of :term:`soft interrupts <soft interrupt>`. Always set to ``0`` on
     Windows and SunOS.
-  - **syscalls**: number of system calls. Always set to ``0`` on Linux.
+  - :field:`syscalls`: number of system calls. Always set to ``0`` on Linux.
 
   Example (Linux):
 
@@ -289,42 +290,43 @@ Memory
   Return statistics about system memory usage as a named tuple including the
   following fields, expressed in bytes.
 
-  - **total**: total physical memory (exclusive :term:`swap memory`).
-  - **available**: memory that can be given instantly to processes without the
+  - :field:`total`: total physical memory (exclusive :term:`swap memory`).
+  - :field:`available`: memory that can be given instantly to processes without the
     system going into :term:`swap <swap memory>`. On Linux it uses the ``MemAvailable``
     field from ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back
     to an estimate. This is the recommended field for monitoring actual memory
     usage in a cross-platform fashion. See :term:`available memory`.
-  - **percent**: the percentage usage calculated as
+  - :field:`percent`: the percentage usage calculated as
     ``(total - available) / total * 100``.
-  - **used**: memory in use, calculated differently depending on the platform
+  - :field:`used`: memory in use, calculated differently depending on the platform
     (see the table below). It is meant for informational purposes. Neither
     ``total - free`` nor ``total - available`` necessarily equals ``used``.
-  - **free**: memory not currently allocated to anything. This is
-    typically much lower than **available** because the OS keeps recently
-    freed memory as reclaimable cache (see **cached** and **buffers**)
+  - :field:`free`: memory not currently allocated to anything. This is
+    typically much lower than :field:`available` because the OS keeps recently
+    freed memory as reclaimable cache (see :field:`cached` and :field:`buffers`)
     rather than zeroing it immediately. Do not use this to check for
-    memory pressure; use **available** instead.
-  - **active** *(Linux, macOS, BSD)*: memory currently mapped by processes
+    memory pressure; use :field:`available` instead.
+  - :field:`active` *(Linux, macOS, BSD)*: memory currently mapped by processes
     or recently accessed, held in RAM. It is unlikely to be reclaimed unless
     the system is under significant memory pressure.
-  - **inactive** *(Linux, macOS, BSD)*: memory not recently accessed. It
+  - :field:`inactive` *(Linux, macOS, BSD)*: memory not recently accessed. It
     still holds valid data (:term:`page cache`, old allocations) but is a
     candidate for reclamation or swapping. On BSD systems it is counted in
-    **available**.
-  - **buffers** *(Linux, BSD)*: memory used by the kernel to cache disk
+    :field:`available`.
+  - :field:`buffers` *(Linux, BSD)*: memory used by the kernel to cache disk
     metadata (e.g. filesystem structures). Reclaimable by the OS when needed.
-  - **cached** *(Linux, BSD, Windows)*: RAM used by the kernel to cache file
+  - :field:`cached` *(Linux, BSD, Windows)*: RAM used by the kernel to cache file
     contents (data read from or written to disk). Reclaimable by the OS when
     needed. See :term:`page cache`.
-  - **shared** *(Linux, BSD)*: :term:`shared memory` accessible by multiple
+  - :field:`shared` *(Linux, BSD)*: :term:`shared memory` accessible by multiple
     processes simultaneously, such as in-memory ``tmpfs`` and POSIX shared
     memory objects (``shm_open``). On Linux this corresponds to ``Shmem`` in
-    ``/proc/meminfo`` and is already counted within **active** / **inactive**.
-  - **slab** *(Linux)*: memory used by the kernel's internal object caches
+    ``/proc/meminfo`` and is already counted within :field:`active` /
+    :field:`inactive`.
+  - :field:`slab` *(Linux)*: memory used by the kernel's internal object caches
     (e.g. inode and dentry caches). The reclaimable portion
-    (``SReclaimable``) is already included in **cached**.
-  - **wired** *(macOS, BSD, Windows)*: memory pinned in RAM by the kernel (e.g.
+    (``SReclaimable``) is already included in :field:`cached`.
+  - :field:`wired` *(macOS, BSD, Windows)*: memory pinned in RAM by the kernel (e.g.
     kernel code and critical data structures). It can never be moved to disk.
 
   Below is a table showing implementation details. All info on Linux is
@@ -413,16 +415,16 @@ Memory
 
   .. note::
     if you just want to know how much physical memory is left in a
-    cross-platform manner, simply rely on **available** and **percent**
-    fields.
+    cross-platform manner, simply rely on :field:`available` and
+    :field:`percent` fields.
 
   .. note::
-     - On Linux, **total**, **free**, **used**, **shared**, and **available**
-       match the output of the ``free`` command.
-     - On macOS, **free**, **active**, **inactive**, and **wired** match
-       ``vm_stat`` output.
-     - On Windows, **total**, **used** ("In use"), and **available** match
-       the Task Manager (Performance > Memory tab).
+     - On Linux, :field:`total`, :field:`free`, :field:`used`, :field:`shared`,
+       and :field:`available` match the output of the ``free`` command.
+     - On macOS, :field:`free`, :field:`active`, :field:`inactive`,
+       and :field:`wired` match ``vm_stat`` output.
+     - On Windows, :field:`total`, :field:`used` ("In use"), and
+       :field:`available` match the Task Manager (Performance > Memory tab).
 
   .. seealso::
     - `scripts/meminfo.py`_
@@ -430,33 +432,33 @@ Memory
     - :ref:`faq_used_plus_free`
 
   .. versionchanged:: 4.2.0
-     Linux: added **shared** field.
+     Linux: added :field:`shared` field.
 
   .. versionchanged:: 5.4.4
-     Linux: added **slab** field.
+     Linux: added :field:`slab` field.
 
   .. versionchanged:: 8.0.0
-     Windows: added **cached** and **wired** fields.
+     Windows: added :field:`cached` and :field:`wired` fields.
 
 .. function:: swap_memory()
 
-  Return system :term:`swap memory` statistics as a named tuple
-  including the following fields:
+  Return system :term:`swap memory` statistics as a named tuple including the
+  following fields:
 
-  * **total**: total swap space. On Windows this is derived as
+  * :field:`total`: total swap space. On Windows this is derived as
     ``CommitLimit - PhysicalTotal``, representing virtual memory backed by
     the page file rather than the raw page-file size.
-  * **used**: swap space currently in use.
-  * **free**: swap space not in use (``total - used``).
-  * **percent**: swap usage as a percentage, calculated as
+  * :field:`used`: swap space currently in use.
+  * :field:`free`: swap space not in use (``total - used``).
+  * :field:`percent`: swap usage as a percentage, calculated as
     ``used / total * 100``.
-  * **sin**: number of bytes the system has moved from disk
+  * :field:`sin`: number of bytes the system has moved from disk
     (:term:`swap <swap memory>`) back into RAM. See :term:`swap-in`.
-  * **sout**: number of bytes the system has moved from RAM to disk
+  * :field:`sout`: number of bytes the system has moved from RAM to disk
     (:term:`swap <swap memory>`). A continuously increasing
-    **sout** rate is a sign of memory pressure. See :term:`swap-out`.
+    :field:`sout` rate is a sign of memory pressure. See :term:`swap-out`.
 
-  **sin** and **sout** are :term:`cumulative counters <cumulative counter>`
+  :field:`sin` and :field:`sout` are :term:`cumulative counters <cumulative counter>`
   since boot. Monitor their rate of change rather than the absolute value to
   detect active swapping. On Windows both are always ``0``.
 
@@ -489,13 +491,13 @@ Disks
 
   Returns a list of named tuples with the following fields:
 
-  * **device**: the device path (e.g. "/dev/hda1"). On Windows this is the
+  * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
     drive letter (e.g. "C:\\").
-  * **mountpoint**: the mount point path (e.g. "/"). On Windows this is the
+  * :field:`mountpoint`: the mount point path (e.g. "/"). On Windows this is the
     drive letter (e.g. "C:\\").
-  * **fstype**: the partition filesystem (e.g. "ext3" on UNIX or "NTFS"
+  * :field:`fstype`: the partition filesystem (e.g. "ext3" on UNIX or "NTFS"
     on Windows).
-  * **opts**: a comma-separated string indicating different mount options for
+  * :field:`opts`: a comma-separated string indicating different mount options for
     the drive/partition. Platform-dependent.
 
   .. code-block:: pycon
@@ -508,16 +510,16 @@ Disks
   .. seealso:: `scripts/disk_usage.py`_.
 
   .. versionchanged:: 5.7.4
-     added **maxfile** and **maxpath** fields.
+     added :field:`maxfile` and :field:`maxpath` fields.
 
   .. versionchanged:: 6.0.0
-     removed **maxfile** and **maxpath** fields.
+     removed :field:`maxfile` and :field:`maxpath` fields.
 
 .. function:: disk_usage(path)
 
   Return disk usage statistics about the partition which contains the given
-  *path* as a named tuple including **total**, **used** and **free** space
-  expressed in bytes, plus the **percentage** usage.
+  *path* as a named tuple including :field:`total`, :field:`used` and
+  :field:`free` space expressed in bytes, plus the :field:`percentage` usage.
 
   This function was later incorporated in Python 3.3 as
   :func:`shutil.disk_usage` (`BPO-12442`_).
@@ -533,38 +535,40 @@ Disks
 
   .. note::
     UNIX usually reserves 5% of the total disk space for the root user.
-    **total** and **used** fields on UNIX refer to the overall total and used
-    space, whereas **free** represents the space available to
-    unprivileged users and **percent** represents unprivileged user
+    :field:`total` and :field:`used` fields on UNIX refer to the overall total and used
+    space, whereas :field:`free` represents the space available to
+    unprivileged users and :field:`percent` represents unprivileged user
     utilization (see `source code <https://github.com/giampaolo/psutil/blob/3dea30d583b8c1275057edb1b3b720813b4d0f60/psutil/_psposix.py#L123>`_).
-    That is why the **percent** value may look 5% bigger than expected.
+    That is why the :field:`percent` value may look 5% bigger than expected.
     Also note that all four values match the "df" command-line utility.
 
   .. seealso:: `scripts/disk_usage.py`_.
 
   .. versionchanged:: 4.3.0
-     **percent** value takes root reserved space into account.
+     :field:`percent` value takes root reserved space into account.
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
   Return system-wide disk I/O statistics as a named tuple including the
   following fields:
 
-  - **read_count**: number of reads
-  - **write_count**: number of writes
-  - **read_bytes**: number of bytes read
-  - **write_bytes**: number of bytes written
+  - :field:`read_count`: number of reads
+  - :field:`write_count`: number of writes
+  - :field:`read_bytes`: number of bytes read
+  - :field:`write_bytes`: number of bytes written
 
   Platform-specific fields:
 
-  - **read_time**: (all except *NetBSD* and *OpenBSD*) time spent reading from
-    disk (in milliseconds)
-  - **write_time**: (all except *NetBSD* and *OpenBSD*) time spent writing to disk
-    (in milliseconds)
-  - **busy_time**: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
+  - :field:`read_time`: (all except *NetBSD* and *OpenBSD*) time spent reading
+    from disk (in milliseconds)
+  - :field:`write_time`: (all except *NetBSD* and *OpenBSD*) time spent writing
+    to disk (in milliseconds)
+  - :field:`busy_time`: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
     milliseconds). See :term:`busy_time`.
-  - **read_merged_count** (*Linux*): number of merged reads (see `iostats doc`_)
-  - **write_merged_count** (*Linux*): number of merged writes (see `iostats doc`_)
+  - :field:`read_merged_count` (*Linux*): number of merged reads
+    (see `iostats doc`_)
+  - :field:`write_merged_count` (*Linux*): number of merged writes
+    (see `iostats doc`_)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   as a dictionary with partition names as the keys.
@@ -602,11 +606,11 @@ Disks
      *nowrap* argument.
 
   .. versionchanged:: 4.0.0
-     added **busy_time** (Linux, FreeBSD), **read_merged_count** and
-     **write_merged_count** (Linux) fields.
+     added :field:`busy_time` (Linux, FreeBSD), :field:`read_merged_count` and
+     :field:`write_merged_count` (Linux) fields.
 
   .. versionchanged:: 4.0.0
-     NetBSD: removed **read_time** and **write_time** fields.
+     NetBSD: removed :field:`read_time` and :field:`write_time` fields.
 
 Network
 ^^^^^^^
@@ -616,16 +620,16 @@ Network
   Return system-wide network I/O statistics as a named tuple including the
   following attributes:
 
-  - **bytes_sent**: number of bytes sent
-  - **bytes_recv**: number of bytes received
-  - **packets_sent**: number of packets sent
-  - **packets_recv**: number of packets received
-  - **errin**: total number of errors while receiving
-  - **errout**: total number of errors while sending
-  - **dropin**: total number of incoming packets dropped at the
-    :term:`NIC` level. Unlike **errin**, drops indicate the interface or
+  - :field:`bytes_sent`: number of bytes sent
+  - :field:`bytes_recv`: number of bytes received
+  - :field:`packets_sent`: number of packets sent
+  - :field:`packets_recv`: number of packets received
+  - :field:`errin`: total number of errors while receiving
+  - :field:`errout`: total number of errors while sending
+  - :field:`dropin`: total number of incoming packets dropped at the
+    :term:`NIC` level. Unlike :field:`errin`, drops indicate the interface or
     kernel buffer was overwhelmed.
-  - **dropout**: total number of outgoing packets dropped (always 0 on macOS
+  - :field:`dropout`: total number of outgoing packets dropped (always 0 on macOS
     and BSD). A non-zero and growing count is a sign of network saturation.
 
   If *pernic* is ``True`` return the same information for every network
@@ -660,19 +664,19 @@ Network
   Return system-wide socket connections as a list of named tuples.
   Every named tuple provides 7 attributes:
 
-  - **fd**: the socket :term:`file descriptor`; ``-1`` on Windows and SunOS.
-  - **family**: the address family, either :data:`socket.AF_INET`,
+  - :field:`fd`: the socket :term:`file descriptor`; ``-1`` on Windows and SunOS.
+  - :field:`family`: the address family, either :data:`socket.AF_INET`,
     :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
-  - **type**: the address type, either :data:`socket.SOCK_STREAM`,
+  - :field:`type`: the address type, either :data:`socket.SOCK_STREAM`,
     :data:`socket.SOCK_DGRAM` or :data:`socket.SOCK_SEQPACKET`.
-  - **laddr**: the local address as a ``(ip, port)`` named tuple or a ``path``
-    for :data:`socket.AF_UNIX` sockets (see notes below).
-  - **raddr**: the remote address, either an empty tuple (``AF_INET*``) or
+  - :field:`laddr`: the local address as a ``(ip, port)`` named tuple or a
+    ``path`` for :data:`socket.AF_UNIX` sockets (see notes below).
+  - :field:`raddr`: the remote address, either an empty tuple (``AF_INET*``) or
     ``""`` (``AF_UNIX``) when not connected. For UNIX sockets see notes below.
-  - **status**: a :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constant;
+  - :field:`status`: a :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constant;
     always :const:`psutil.CONN_NONE` for UDP and UNIX sockets.
-  - **pid**: PID of the process which opened the socket. Set to ``None`` if it
-    can't be retrieved due to insufficient permissions (e.g. Linux).
+  - :field:`pid`: PID of the process which opened the socket. Set to ``None``
+    if it can't be retrieved due to insufficient permissions (e.g. Linux).
 
   The *kind* parameter is a string which filters for connections matching the
   following criteria:
@@ -735,34 +739,35 @@ Network
   .. versionadded:: 2.1.0
 
   .. versionchanged:: 5.3.0
-     socket **fd** is now set for real instead of being ``-1``.
+     socket :field:`fd` is now set for real instead of being ``-1``.
 
   .. versionchanged:: 5.3.0
-    **laddr** and **raddr** are named tuples.
+    :field:`laddr` and :field:`raddr` are named tuples.
 
   .. versionchanged:: 5.9.5
-     OpenBSD: retrieve **laddr** path for :data:`socket.AF_UNIX` sockets
+     OpenBSD: retrieve :field:`laddr` path for :data:`socket.AF_UNIX` sockets
      (before it was an empty string).
 
   .. versionchanged:: 8.0.0
-     **status** field is now a :class:`psutil.ConnectionStatus` enum member
+     :field:`status` field is now a :class:`psutil.ConnectionStatus` enum member
      instead of a plain ``str``.
      See :ref:`migration guide <migration-8.0>`.
 
 .. function:: net_if_addrs()
+
 
   Return a dictionary mapping each :term:`NIC` to a list of named tuples
   representing its addresses. Multiple addresses of the same family can exist
   per interface. Each named tuple includes 5 fields (addresses may be
   ``None``):
 
-  - **family**: the address family, either :data:`socket.AF_INET`,
+  - :field:`family`: the address family, either :data:`socket.AF_INET`,
     :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` (a MAC address) or
     :data:`socket.AF_UNSPEC` (a virtual or unconfigured NIC).
-  - **address**: the primary NIC address
-  - **netmask**: the netmask address
-  - **broadcast**: the broadcast address; always ``None`` on Windows
-  - **ptp**: a "point to point" address (typically a VPN); always ``None`` on
+  - :field:`address`: the primary NIC address
+  - :field:`netmask`: the netmask address
+  - :field:`broadcast`: the broadcast address; always ``None`` on Windows
+  - :field:`ptp`: a "point to point" address (typically a VPN); always ``None`` on
     Windows
 
   .. code-block:: pycon
@@ -782,25 +787,25 @@ Network
   .. versionadded:: 3.0.0
 
   .. versionchanged:: 3.2.0
-     added **ptp** field.
+     added :field:`ptp` field.
 
   .. versionchanged:: 4.4.0
-     Windows: added support for **netmask** field, which is no longer ``None``.
+     Windows: added support for :field:`netmask` field, which is no longer ``None``.
 
   .. versionchanged:: 7.0.0
-     Windows: added support for **broadcast** field, which is no longer ``None``.
+     Windows: added support for :field:`broadcast` field, which is no longer ``None``.
 
 .. function:: net_if_stats()
 
   Return a dictionary mapping each :term:`NIC` to a named tuple with the
   following fields:
 
-  - **isup**: whether the NIC is up and running (bool).
-  - **duplex**: :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
+  - :field:`isup`: whether the NIC is up and running (bool).
+  - :field:`duplex`: :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
     :const:`NIC_DUPLEX_UNKNOWN`.
-  - **speed**: NIC speed in megabits (Mbps); ``0`` if undetermined.
-  - **mtu**: maximum transmission unit in bytes.
-  - **flags**: a comma-separated string of interface flags (e.g.
+  - :field:`speed`: NIC speed in megabits (Mbps); ``0`` if undetermined.
+  - :field:`mtu`: maximum transmission unit in bytes.
+  - :field:`flags`: a comma-separated string of interface flags (e.g.
     ``"up,broadcast,running,multicast"``); may be an emty string.
 
   .. code-block:: pycon
@@ -815,10 +820,10 @@ Network
   .. versionadded:: 3.0.0
 
   .. versionchanged:: 5.7.3
-     UNIX: **isup** also reflects whether the :term:`NIC` is running.
+     UNIX: :field:`isup` also reflects whether the :term:`NIC` is running.
 
   .. versionchanged:: 5.9.3
-     added **flags** field.
+     added :field:`flags` field.
 
 Sensors
 ^^^^^^^
@@ -833,11 +838,11 @@ Sensors
   If sensors are not supported by the OS an empty dict is returned.
   Each named tuple includes 4 fields:
 
-  - **label**: a string label for the sensor, if available, else ``""``.
-  - **current**: current temperature, or ``None`` if not available.
-  - **high**: temperature at which the system will throttle, or ``None``
+  - :field:`label`: a string label for the sensor, if available, else ``""``.
+  - :field:`current`: current temperature, or ``None`` if not available.
+  - :field:`high`: temperature at which the system will throttle, or ``None``
     if not available.
-  - **critical**: temperature at which the system will shut down, or
+  - :field:`critical`: temperature at which the system will shut down, or
     ``None`` if not available.
 
   .. code-block:: pycon
@@ -886,14 +891,14 @@ Sensors
   values. If no battery is installed or metrics can't be determined ``None``
   is returned.
 
-  - **percent**: battery power left as a percentage.
-  - **secsleft**: a rough approximation of how many seconds are left before the
+  - :field:`percent`: battery power left as a percentage.
+  - :field:`secsleft`: a rough approximation of how many seconds are left before the
     battery runs out of power.
     If the AC power cable is connected this is set to
     :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
     If it can't be determined it is set to
     :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
-  - **power_plugged**: ``True`` if the AC power cable is connected, ``False``
+  - :field:`power_plugged`: ``True`` if the AC power cable is connected, ``False``
     if not or ``None`` if it can't be determined.
 
   .. code-block:: pycon
@@ -949,13 +954,13 @@ Other system info
   Return users currently connected on the system as a list of named tuples
   including the following fields:
 
-  - **name**: the name of the user.
-  - **terminal**: the tty or pseudo-tty associated with the user, if any,
+  - :field:`name`: the name of the user.
+  - :field:`terminal`: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
-  - **host**: the host name associated with the entry, if any, else ``None``.
-  - **started**: the creation time as a floating point number expressed in
+  - :field:`host`: the host name associated with the entry, if any, else ``None``.
+  - :field:`started`: the creation time as a floating point number expressed in
     seconds since the epoch.
-  - **pid**: the PID of the login process (like sshd, tmux, gdm-session-worker,
+  - :field:`pid`: the PID of the login process (like sshd, tmux, gdm-session-worker,
     ...). On Windows and OpenBSD this is always set to ``None``.
 
   .. code-block:: pycon
@@ -966,7 +971,7 @@ Other system info
       suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0, pid=1788)]
 
   .. versionchanged:: 5.3.0
-     added **pid** field.
+     added :field:`pid` field.
 
 -------------------------------------------------------------------------------
 
@@ -1541,11 +1546,11 @@ Process class
       every time. Use it with care as it can starve the entire
       system. Additional priority *level* can be specified and ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * :const:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't set
-      a specific I/O priority. Additional priority *level* ranges from
+    * :const:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't
+      set a specific I/O priority. Additional priority *level* ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * :const:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the disk.
-      No additional *value* is accepted.
+    * :const:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the
+      disk. No additional *value* is accepted.
     * :const:`IOPRIO_CLASS_NONE`: returned when no priority was previously set.
 
     Windows:
@@ -1613,31 +1618,34 @@ Process class
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
 
-    All fields are :term:`cumulative counters <cumulative counter>` since process creation.
+    All fields are :term:`cumulative counters <cumulative counter>` since
+    process creation.
 
-    - **read_count**: the number of read operations performed.
+    - :field:`read_count`: the number of read operations performed.
       This is supposed to count the number of read-related syscalls such as
       ``read()`` and ``pread()`` on UNIX.
-    - **write_count**: the number of write operations performed.
+    - :field:`write_count`: the number of write operations performed.
       This is supposed to count the number of write-related syscalls such as
       ``write()`` and ``pwrite()`` on UNIX.
-    - **read_bytes**: the number of bytes read. Always ``-1`` on BSD.
-    - **write_bytes**: the number of bytes written. Always ``-1`` on BSD.
+    - :field:`read_bytes`: the number of bytes read. Always ``-1`` on BSD.
+    - :field:`write_bytes`: the number of bytes written. Always ``-1`` on BSD.
 
     Linux specific:
 
-    - **read_chars** *(Linux)*: the amount of bytes which this process passed
-      to ``read()`` and ``pread()`` syscalls. Differently from *read_bytes*
-      it doesn't care whether or not actual physical disk I/O occurred.
-    - **write_chars** *(Linux)*: the amount of bytes which this process passed
-      to ``write()`` and ``pwrite()`` syscalls. Differently from *write_bytes*
-      it doesn't care whether or not actual physical disk I/O occurred.
+    - :field:`read_chars` *(Linux)*: the amount of bytes which this process
+      passed to ``read()`` and ``pread()`` syscalls. Differently from
+      :field:`read_bytes` it doesn't care whether or not actual physical disk
+      I/O occurred.
+    - :field:`write_chars` *(Linux)*: the amount of bytes which this process
+      passed to ``write()`` and ``pwrite()`` syscalls. Differently from
+      :field:`write_bytes` it doesn't care whether or not actual physical disk
+      I/O occurred.
 
     Windows specific:
 
-    - **other_count** *(Windows)*: the number of I/O operations performed
+    - :field:`other_count` *(Windows)*: the number of I/O operations performed
       other than read and write operations.
-    - **other_bytes** *(Windows)*: the number of bytes transferred during
+    - :field:`other_bytes` *(Windows)*: the number of bytes transferred during
       operations other than read and write operations.
 
     .. code-block:: pycon
@@ -1650,10 +1658,10 @@ Process class
     .. availability:: Linux, Windows, BSD, AIX
 
     .. versionchanged:: 5.2.0
-       Linux: added **read_chars** and **write_chars** fields.
+       Linux: added :field:`read_chars` and :field:`write_chars` fields.
 
     .. versionchanged:: 5.2.0
-       Windows: added **other_count** and **other_bytes** fields.
+       Windows: added :field:`other_count` and :field:`other_bytes` fields.
 
   .. method:: num_ctx_switches()
 
@@ -1662,8 +1670,8 @@ Process class
     (:term:`cumulative counter`).
 
     .. note::
-      (Windows, macOS) **involuntary** value is always set to 0, while
-      **voluntary** value reflects the total number of context switches
+      (Windows, macOS) :field:`involuntary` value is always set to 0, while
+      :field:`voluntary` value reflects the total number of context switches
       (voluntary + involuntary). This is a limitation of the OS.
 
     .. versionchanged:: 5.4.1
@@ -1671,14 +1679,15 @@ Process class
 
   .. method:: num_fds()
 
-    The number of :term:`file descriptors <file descriptor>` currently opened by this process
-    (non cumulative).
+    The number of :term:`file descriptors <file descriptor>` currently opened
+    by this process (non cumulative).
 
     .. availability:: UNIX
 
   .. method:: num_handles()
 
-    The number of :term:`handles <handle>` currently used by this process (non cumulative).
+    The number of :term:`handles <handle>` currently used by this process (non
+    cumulative).
 
     .. availability:: Windows
 
@@ -1691,13 +1700,13 @@ Process class
     Return threads opened by process as a list of named tuples. On OpenBSD this
     method requires root privileges.
 
-    - **id**: the native thread ID assigned by the kernel. If :attr:`pid` refers
-      to the current process, this matches the
+    - :field:`id`: the native thread ID assigned by the kernel. If :attr:`pid`
+      refers to the current process, this matches the
       `native_id <https://docs.python.org/3/library/threading.html#threading.Thread.native_id>`_
       attribute of the :class:`threading.Thread` class, and can be used to reference
       individual Python threads running within your own Python app.
-    - **user_time**: time spent in user mode.
-    - **system_time**: time spent in kernel mode.
+    - :field:`user_time`: time spent in user mode.
+    - :field:`system_time`: time spent in kernel mode.
 
   .. method:: cpu_times()
 
@@ -1706,15 +1715,15 @@ Process class
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
     This is similar to :func:`os.times` but can be used for any process PID.
 
-    - **user**: time spent in user mode.
-    - **system**: time spent in kernel mode.
-    - **children_user**: user time of all child processes (always ``0`` on
+    - :field:`user`: time spent in user mode.
+    - :field:`system`: time spent in kernel mode.
+    - :field:`children_user`: user time of all child processes (always ``0`` on
       Windows and macOS).
-    - **children_system**: system time of all child processes (always ``0`` on
-      Windows and macOS).
-    - **iowait**: (Linux) time spent waiting for blocking I/O to complete (:term:`iowait`).
-      This value is excluded from `user` and `system` times count (because the
-      CPU is not doing any work).
+    - :field:`children_system`: system time of all child processes (always
+      ``0`` on Windows and macOS).
+    - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete
+      (:term:`iowait`). This value is excluded from `user` and `system` times
+      count (because the CPU is not doing any work).
 
     .. code-block:: pycon
 
@@ -1726,10 +1735,10 @@ Process class
        0.70
 
     .. versionchanged:: 4.1.0
-       added **children_user** and **children_system** fields.
+       added :field:`children_user` and :field:`children_system` fields.
 
     .. versionchanged:: 5.6.4
-       Linux: added **iowait** field.
+       Linux: added :field:`iowait` field.
 
   .. method:: cpu_percent(interval=None)
 
@@ -1815,8 +1824,8 @@ Process class
 
     Return a named tuple with variable fields depending on the platform
     representing memory information about the process.
-    The "portable" fields available on all platforms are **rss** and **vms**.
-    All numbers are expressed in bytes.
+    The "portable" fields available on all platforms are :field:`rss` and
+    :field:`vms`. All numbers are expressed in bytes.
 
     +---------+---------+----------+---------+-----+-----------------+
     | Linux   | macOS   | BSD      | Solaris | AIX | Windows         |
@@ -1836,36 +1845,36 @@ Process class
     |         |         |          |         |     | peak_vms        |
     +---------+---------+----------+---------+-----+-----------------+
 
-    - **rss**: aka :term:`RSS`. On UNIX matches the ``top`` RES column. On
+    - :field:`rss`: aka :term:`RSS`. On UNIX matches the ``top`` RES column. On
       Windows maps to ``WorkingSetSize``.
 
-    - **vms**: aka :term:`VMS`. On UNIX matches the ``top`` VIRT column. On
+    - :field:`vms`: aka :term:`VMS`. On UNIX matches the ``top`` VIRT column. On
       Windows maps to ``PrivateUsage`` (private committed pages only), which
-      differs from the UNIX definition; use **virtual** from
+      differs from the UNIX definition; use :field:`virtual` from
       :meth:`memory_info_ex` for the true virtual address space size.
 
-    - **shared** *(Linux)*: :term:`shared memory` that *could* be shared with
-      other processes (shared libraries, mmap'd files, POSIX shared memory).
+    - :field:`shared` *(Linux)*: :term:`shared memory` that *could* be shared
+      with other processes (shared libraries, mmap'd files, POSIX shared memory).
       Counted even if no other process is currently mapping it. Matches
       ``top``'s SHR column.
 
-    - **text** *(Linux, BSD)*: aka TRS (Text Resident Set). Resident memory
+    - :field:`text` *(Linux, BSD)*: aka TRS (Text Resident Set). Resident memory
       devoted to executable code. This memory is read-only and typically
       shared across all processes running the same binary. Matches ``top``'s
       CODE column.
 
-    - **data** *(Linux, BSD)*: aka DRS (Data Resident Set). On Linux this
+    - :field:`data` *(Linux, BSD)*: aka DRS (Data Resident Set). On Linux this
       covers the data **and** stack segments combined (from
       ``/proc/<pid>/statm``). On BSD it covers the data segment only (see
-      **stack**). Matches ``top``'s DATA column.
+      :field:`stack`). Matches ``top``'s DATA column.
 
-    - **stack** *(BSD)*: size of the process stack segment. Reported
-      separately from **data** (unlike Linux where both are combined).
+    - :field:`stack` *(BSD)*: size of the process stack segment. Reported
+      separately from :field:`data` (unlike Linux where both are combined).
 
-    - **peak_rss** *(BSD, Windows)*: see :term:`peak_rss`. On BSD may be ``0``
-      for kernel PIDs. On Windows maps to ``PeakWorkingSetSize``.
+    - :field:`peak_rss` *(BSD, Windows)*: see :term:`peak_rss`. On BSD may be
+      ``0`` for kernel PIDs. On Windows maps to ``PeakWorkingSetSize``.
 
-    - **peak_vms** *(Windows)*: see :term:`peak_vms`. Maps to
+    - :field:`peak_vms` *(Windows)*: see :term:`peak_vms`. Maps to
       ``PeakPagefileUsage``.
 
     For the full definitions of Windows fields see
@@ -1886,29 +1895,29 @@ Process class
       - :ref:`faq_memory_footprint`
 
     .. versionchanged:: 4.0.0
-       multiple fields are returned, not only **rss** and **vms**.
+       multiple fields are returned, not only :field:`rss` and :field:`vms`.
 
     .. versionchanged:: 8.0.0
-       Linux: **lib** and **dirty** removed (always 0 since Linux 2.6). Deprecated
-       aliases returning 0 and emitting `DeprecationWarning` are kept.
-       See :ref:`migration guide <migration-8.0>`.
+       Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux
+       2.6). Deprecated aliases returning 0 and emitting `DeprecationWarning`
+       are kept. See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       macOS: removed **pfaults** and **pageins** fields with **no
+       macOS: removed :field:`pfaults` and :field:`pageins` fields with **no
        backward-compatible aliases**. Use :meth:`page_faults` instead.
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       Windows: eliminated old aliases: **wset** → **rss**, **peak_wset** →
-       **peak_rss**, **pagefile** / **private** → **vms**, **peak_pagefile** →
-       **peak_vms**, **num_page_faults** → :meth:`page_faults` method. At the same
-       time **paged_pool**, **nonpaged_pool**, **peak_paged_pool**,
-       **peak_nonpaged_pool** were moved to :meth:`memory_info_ex`. All these old
+       Windows: eliminated old aliases: :field:`wset` → :field:`rss`, :field:`peak_wset` →
+       :field:`peak_rss`, :field:`pagefile` / :field:`private` → :field:`vms`, :field:`peak_pagefile` →
+       :field:`peak_vms`, :field:`num_page_faults` → :meth:`page_faults` method. At the same
+       time :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
+       :field:`peak_nonpaged_pool` were moved to :meth:`memory_info_ex`. All these old
        names still work but raise `DeprecationWarning`.
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
-       BSD: added **peak_rss** field.
+       BSD: added :field:`peak_rss` field.
 
   .. method:: memory_info_ex()
 
@@ -1935,41 +1944,43 @@ Process class
     | hugetlb     | phys_footprint |                    |
     +-------------+----------------+--------------------+
 
-    - **peak_rss** *(Linux, macOS)*: see :term:`peak_rss`.
-    - **peak_vms** *(Linux)*: see :term:`peak_vms`.
-    - **rss_anon** *(Linux, macOS)*: resident :term:`anonymous memory`
+    - :field:`peak_rss` *(Linux, macOS)*: see :term:`peak_rss`.
+    - :field:`peak_vms` *(Linux)*: see :term:`peak_vms`.
+    - :field:`rss_anon` *(Linux, macOS)*: resident :term:`anonymous memory`
       (heap, stack, private mappings) not backed by any file. Set to 0
       on Linux < 4.5.
-    - **rss_file** *(Linux, macOS)*: resident file-backed memory mapped
+    - :field:`rss_file` *(Linux, macOS)*: resident file-backed memory mapped
       from files (shared libraries, mmap'd files). Set to 0 on Linux < 4.5.
-    - **rss_shmem** *(Linux)*: resident :term:`shared memory` (``tmpfs``,
-      ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals **rss**. Set to
+    - :field:`rss_shmem` *(Linux)*: resident :term:`shared memory` (``tmpfs``,
+      ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals :field:`rss`. Set to
       0 on Linux < 4.5.
-    - **wired** *(macOS)*: memory pinned in RAM by the kernel on behalf of this
+    - :field:`wired` *(macOS)*: memory pinned in RAM by the kernel on behalf of this
       process; cannot be compressed or paged out.
-    - **swap** *(Linux)*: process memory currently in :term:`swap <swap memory>`.
-      Equivalent to ``memory_footprint().swap`` but cheaper, as it reads from
-      ``/proc/<pid>/status`` instead of ``/proc/<pid>/smaps``.
-    - **compressed** *(macOS)*: memory held in the in-RAM memory compressor;
-      not counted in **rss**. A large value signals memory pressure but has
+    - :field:`swap` *(Linux)*: process memory currently in
+      :term:`swap <swap memory>`. Equivalent to ``memory_footprint().swap`` but
+      cheaper, as it reads from ``/proc/<pid>/status`` instead of
+      ``/proc/<pid>/smaps``.
+    - :field:`compressed` *(macOS)*: memory held in the in-RAM memory compressor;
+      not counted in :field:`rss`. A large value signals memory pressure but has
       not yet triggered swapping.
-    - **hugetlb** *(Linux)*: resident memory backed by huge pages. Set to 0 on
-      Linux < 4.4.
-    - **phys_footprint** *(macOS)*: total physical memory impact including
+    - :field:`hugetlb` *(Linux)*: resident memory backed by huge pages. Set to
+      0 on Linux < 4.4.
+    - :field:`phys_footprint` *(macOS)*: total physical memory impact including
       compressed memory. What Xcode and ``footprint(1)`` report; prefer this
-      over **rss** macOS memory monitoring.
-    - **virtual** *(Windows)*: true virtual address space size, including
-      reserved-but-uncommitted regions (unlike **vms** in
+      over :field:`rss` macOS memory monitoring.
+    - :field:`virtual` *(Windows)*: true virtual address space size, including
+      reserved-but-uncommitted regions (unlike :field:`vms` in
       :meth:`memory_info`).
-    - **peak_virtual** *(Windows)*: peak virtual address space size.
-    - **paged_pool** *(Windows)*: kernel memory used for objects created by
+    - :field:`peak_virtual` *(Windows)*: peak virtual address space size.
+    - :field:`paged_pool` *(Windows)*: kernel memory used for objects created by
       this process (open file handles, registry keys, etc.) that the OS may
       swap to disk under memory pressure.
-    - **nonpaged_pool** *(Windows)*: kernel memory used for objects that must
-      stay in RAM at all times (I/O request packets, device driver buffers,
-      etc.). A large or growing value may indicate a driver memory leak.
-    - **peak_paged_pool** *(Windows)*: peak paged-pool usage.
-    - **peak_nonpaged_pool** *(Windows)*: peak non-paged-pool usage.
+    - :field:`nonpaged_pool` *(Windows)*: kernel memory used for objects that
+      must stay in RAM at all times (I/O request packets, device driver
+      buffers, etc.). A large or growing value may indicate a driver memory
+      leak.
+    - :field:`peak_paged_pool` *(Windows)*: peak paged-pool usage.
+    - :field:`peak_nonpaged_pool` *(Windows)*: peak non-paged-pool usage.
 
     For the full definitions of Windows fields see
     `PROCESS_MEMORY_COUNTERS_EX`_.
@@ -1985,15 +1996,15 @@ Process class
     It walks the full process address space, so it is slower than
     :meth:`memory_info` and may require elevated privileges.
 
-    - **uss** *(Linux, macOS, Windows)*: aka :term:`USS`; the
+    - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
       process were terminated right now.
 
-    - **pss** *(Linux)*: aka :term:`PSS`; shared memory divided evenly among
+    - :field:`pss` *(Linux)*: aka :term:`PSS`; shared memory divided evenly among
       the processes sharing it. I.e. if a process has 10 MBs all to itself, and
       10 MBs shared with another process, its PSS will be 15 MBs.
 
-    - **swap** *(Linux)*: process memory currently in :term:`swap <swap memory>`,
+    - :field:`swap` *(Linux)*: process memory currently in :term:`swap <swap memory>`,
       counted per-mapping.
 
     Example on Linux:
@@ -2070,28 +2081,28 @@ Process class
 
     Linux fields (from ``/proc/<pid>/smaps``):
 
-    - **rss**: :term:`RSS` for this mapping.
-    - **size**: total virtual size; may far exceed **rss** if parts have
-      never been accessed.
-    - **pss**: :term:`PSS` for this mapping, that is **rss** split
+    - :field:`rss`: :term:`RSS` for this mapping.
+    - :field:`size`: total virtual size; may far exceed :field:`rss` if parts
+      have never been accessed.
+    - :field:`pss`: :term:`PSS` for this mapping, that is :field:`rss` split
       proportionally among all processes sharing it.
-    - **shared_clean**: :term:`shared memory` not written to since loaded
+    - :field:`shared_clean`: :term:`shared memory` not written to since loaded
       (clean); can be discarded and reloaded from disk for free.
-    - **shared_dirty**: :term:`shared memory` that has been written to (dirty).
-    - **private_clean**: :term:`private memory` not written to (clean).
-    - **private_dirty**: :term:`private memory` that has been written to
+    - :field:`shared_dirty`: :term:`shared memory` that has been written to (dirty).
+    - :field:`private_clean`: :term:`private memory` not written to (clean).
+    - :field:`private_dirty`: :term:`private memory` that has been written to
       (dirty); must be saved to swap before it can be freed. The key
       indicator of real memory cost.
-    - **referenced**: bytes recently accessed.
-    - **anonymous**: :term:`anonymous memory` in this mapping (heap, stack).
-    - **swap**: bytes from this mapping currently in
+    - :field:`referenced`: bytes recently accessed.
+    - :field:`anonymous`: :term:`anonymous memory` in this mapping (heap, stack).
+    - :field:`swap`: bytes from this mapping currently in
       :term:`swap <swap memory>`.
 
     FreeBSD fields:
 
-    - **private**: :term:`private memory` in this mapping.
-    - **ref_count**: reference count on the underlying memory object.
-    - **shadow_count**: depth of the copy-on-write chain.
+    - :field:`private`: :term:`private memory` in this mapping.
+    - :field:`ref_count`: reference count on the underlying memory object.
+    - :field:`shadow_count`: depth of the copy-on-write chain.
 
     .. code-block:: pycon
 
@@ -2145,15 +2156,16 @@ Process class
     Return the number of :term:`page faults <page fault>` for this process as a
     ``(minor, major)`` named tuple.
 
-    - **minor** (a.k.a. *soft* faults): occur when a memory page is not
+    - :field:`minor` (a.k.a. *soft* faults): occur when a memory page is not
       currently mapped into the process address space, but is already present
       in physical RAM (e.g. a shared library loaded by another process). The
       kernel resolves these without disk I/O.
-    - **major** (a.k.a. *hard* faults): occur when the page must be fetched
+    - :field:`major` (a.k.a. *hard* faults): occur when the page must be fetched
       from disk. These are expensive because they stall the process until I/O
       completes.
 
-    Both counters are :term:`cumulative counters <cumulative counter>` since process creation.
+    Both counters are :term:`cumulative counters <cumulative counter>` since
+    process creation.
 
     .. code-block:: pycon
 
@@ -2169,19 +2181,19 @@ Process class
     Return regular files opened by process as a list of named tuples including
     the following fields:
 
-    - **path**: the absolute file name.
-    - **fd**: the :term:`file descriptor` number; on Windows this is always
+    - :field:`path`: the absolute file name.
+    - :field:`fd`: the :term:`file descriptor` number; on Windows this is always
       ``-1``.
 
     Linux only:
 
-    - **position** (*Linux*): the file (offset) position.
-    - **mode** (*Linux*): a string indicating how the file was opened, similarly
-      to :func:`open` builtin *mode* argument.
+    - :field:`position` (*Linux*): the file (offset) position.
+    - :field:`mode` (*Linux*): a string indicating how the file was opened,
+      similarly to :func:`open` builtin *mode* argument.
       Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
       There's no distinction between files opened in binary or text mode
       (``"b"`` or ``"t"``).
-    - **flags** (*Linux*): the flags which were passed to the underlying
+    - :field:`flags` (*Linux*): the flags which were passed to the underlying
       :func:`os.open` C call when the file was opened (e.g. :data:`os.O_RDONLY`,
       :data:`os.O_TRUNC`, etc).
 
@@ -2203,12 +2215,12 @@ Process class
        no longer hangs on Windows.
 
     .. versionchanged:: 4.1.0
-       Linux: added **position**, **mode** and **flags** fields.
+       Linux: added :field:`position`, :field:`mode` and :field:`flags` fields.
 
   .. method:: net_connections(kind="inet")
 
     Same as :func:`psutil.net_connections` but for this process only (the
-    returned named tuples have no **pid** field). The *kind* parameter and
+    returned named tuples have no :field:`pid` field). The *kind* parameter and
     the same limitations apply (root may be needed on some platforms).
 
     .. code-block:: pycon
@@ -2467,8 +2479,8 @@ Python's memory tracking misses.
   the :term:`heap` (typically small ``malloc()`` allocations).
 
   In practice, modern allocators rarely comply, so this is not a
-  general-purpose memory-reduction tool and won't meaningfully shrink :term:`RSS` in
-  real programs. Its primary value is in **leak detection tools**.
+  general-purpose memory-reduction tool and won't meaningfully shrink :term:`RSS`
+  in real programs. Its primary value is in **leak detection tools**.
 
   Calling ``heap_trim()`` before taking measurements helps reduce allocator
   noise, giving you a cleaner baseline so that changes in ``heap_used`` come
@@ -2631,7 +2643,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 .. class:: psutil.ConnectionStatus
 
   :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
-  constants. Returned in the **status** field of
+  constants. Returned in the :field:`status` field of
   :func:`psutil.net_connections` and :meth:`Process.net_connections`.
 
   .. versionadded:: 8.0.0
@@ -2896,7 +2908,7 @@ Connections constants
 
 :class:`enum.StrEnum` constants representing the status of a TCP connection.
 Returned by :meth:`Process.net_connections` and :func:`psutil.net_connections`
-(**status** field).
+(:field:`status` field).
 
 .. versionchanged:: 8.0.0
    constants are now :class:`psutil.ConnectionStatus` enum members (were
@@ -2927,7 +2939,7 @@ Hardware constants
 .. data:: AF_LINK
 
   Identifies a MAC address associated with a network interface. Returned by
-  :func:`psutil.net_if_addrs` (**family** field).
+  :func:`psutil.net_if_addrs` (:field:`family` field).
 
   .. versionadded:: 3.0.0
 
@@ -2940,7 +2952,7 @@ Hardware constants
   Identifies whether a :term:`NIC` operates in full, half, or unknown duplex
   mode.
   FULL allows simultaneous send/receive, HALF allows only one at a time.
-  Returned by :func:`psutil.net_if_stats` (**duplex** field).
+  Returned by :func:`psutil.net_if_stats` (:field:`duplex` field).
 
   .. versionadded:: 3.0.0
 
@@ -2950,7 +2962,7 @@ Hardware constants
 .. data:: POWER_TIME_UNLIMITED
 
   Whether the remaining time of a battery cannot be determined or is unlimited.
-  May be assigned to :func:`psutil.sensors_battery`'s **secsleft** field.
+  May be assigned to :func:`psutil.sensors_battery`'s :field:`secsleft` field.
 
   .. versionadded:: 5.1.0
 

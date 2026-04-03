@@ -37,6 +37,7 @@ extensions = [
     "add_home_link",
     "changelog_anchors",
     "check_python_syntax",
+    "field_role",
 ]
 
 project = PROJECT_NAME
