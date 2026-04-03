@@ -57,6 +57,7 @@
     --adm-note-bg: var(--surface-sunken);
     --adm-note-border: #ccc;
     --adm-seealso-accent-border: #336699;
+    --adm-seealso-link: #2a6099;
     --adm-seealso-bg: #f3f9fe;
     --adm-seealso-border: #b0cfe8;
     --adm-seealso-hover: #2980b9;
@@ -126,6 +127,7 @@
     --adm-note-bg: #2a2a2a;
     --adm-note-border: #4a4a4a;
     --adm-seealso-accent-border: #5599cc;
+    --adm-seealso-link: #90c8ee;
     --adm-seealso-bg: #243a4e;
     --adm-seealso-border: #2d5280;
     --adm-seealso-hover: #8bbfe0;
@@ -880,7 +882,7 @@ div.admonition a {
 }
 
 div.seealso a.reference {
-    color: var(--adm-seealso-accent-border) !important;
+    color: var(--adm-seealso-link) !important;
     text-decoration: underline;
     text-underline-offset: 2px;
 }
