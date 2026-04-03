@@ -5,18 +5,10 @@
 :root {
     --border-radius: 3px;
     --theme-transition: 0.2s ease;
-    --h1-h2-border: var(--headings-underline);
     --adm-padding-y: 5px;
     --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --code-line-height: 1.5;
-    --func-sig-bg: var(--surface-raised);
-    --func-sig-border: var(--links-api);
-    --func-sig-text: var(--headings);
-    --func-sig-name: var(--headings);
-    --func-sig-param: var(--text-muted);
-    --table-header-bg: var(--surface-raised);
-    --adm-note-bg: var(--surface-sunken);
-    --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
+    --h1-h2-border: var(--headings-underline);
 }
 
 /* ================================================================== */
@@ -51,12 +43,14 @@
     --sidebar-item-nested: #333;
     --sidebar-active-border: #55a5d9;
     --sidebar-search-focus-border: #7ab3d4;
+    --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
 
     /* code blocks */
     --code-bg: #2d2e27;
 
     /* admonitions */
     --adm-title: black;
+    --adm-note-bg: var(--surface-sunken);
     --adm-note-border: #ccc;
     --adm-seealso-accent-border: #336699;
     --adm-seealso-bg: #f3f9fe;
@@ -77,8 +71,16 @@
     --deprecated-color: #9f3133;
 
     /* tables */
+    --table-header-bg: var(--surface-raised);
     --table-row-odd: #f8f9fa;
     --table-row-even: #ffffff;
+
+    /* API signatures */
+    --func-sig-bg: var(--surface-raised);
+    --func-sig-border: var(--links-api);
+    --func-sig-text: var(--headings);
+    --func-sig-name: var(--headings);
+    --func-sig-param: var(--text-muted);
 
     /* cards */
     --card-bg: #fff;
