@@ -40,6 +40,7 @@
 
     /* sidebar */
     --sidebar-bg: #343131;
+    --sidebar-top-bg: #343131;
     --sidebar-caption: #55a5d9;
     --sidebar-item: #d9d9d9;
     --sidebar-item-nested: #c0c0c0;
@@ -379,7 +380,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 .wy-side-nav-search {
-    background-color: var(--sidebar-bg) !important;
+    background-color: var(--sidebar-top-bg) !important;
     position: sticky;
     top: 0;
     z-index: 10;
