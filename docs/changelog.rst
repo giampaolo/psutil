@@ -117,7 +117,8 @@ New APIs:
     - BSD: added :field:`peak_rss`.
 
     - Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux 2.6).
-      Deprecated aliases returning 0 and emitting `DeprecationWarning` are kept.
+      Deprecated aliases returning 0 and emitting :exc:`DeprecationWarning` are
+      kept.
 
     - macOS: :field:`pfaults` and :field:`pageins` removed with **no
       backward-compatible aliases**. Use :meth:`Process.page_faults` instead.
@@ -130,7 +131,7 @@ New APIs:
       At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
       :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
       :meth:`Process.memory_info_ex`.
-      All these old names still work but raise `DeprecationWarning`.
+      All these old names still work but raise :exc:`DeprecationWarning`.
       See :ref:`migration guide <migration-8.0>`.
 
   - :meth:`Process.memory_full_info` is **deprecated**. Use the new
@@ -488,7 +489,7 @@ Others:
   Gross)
 - :gh:`2407`: :meth:`Process.connections` was renamed to
   :meth:`Process.net_connections`. The old name is still available, but it's
-  deprecated (triggers a ``DeprecationWarning``) and will be removed in the
+  deprecated (triggers a :exc:`DeprecationWarning`) and will be removed in the
   future.
 - :gh:`2425`: [Linux]: provide aarch64 wheels.  (patch by Matthieu Darbois /
   Ben Raz)
@@ -526,7 +527,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   internal cache.
 - :gh:`2407`: :meth:`Process.connections` was renamed to
   :meth:`Process.net_connections`. The old name is still available, but it's
-  deprecated (triggers a ``DeprecationWarning``) and will be removed in the
+  deprecated (triggers a :exc:`DeprecationWarning`) and will be removed in the
   future.
 
 5.9.8 — 2024-01-19
@@ -622,7 +623,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`2196`: in case of exception, display a cleaner error traceback by hiding
   the `KeyError` bit deriving from a missed cache hit.
-- :gh:`2217`: print the full traceback when a `DeprecationWarning` or
+- :gh:`2217`: print the full traceback when a :exc:`DeprecationWarning` or
   `UserWarning` is raised.
 - :gh:`2230`, [OpenBSD]: :func:`net_connections` implementation was rewritten
   from scratch:
@@ -1387,7 +1388,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1183`: :meth:`Process.children` is 2x faster on POSIX and 2.4x faster
   on Linux.
 - :gh:`1188`: deprecated method :meth:`Process.memory_info_ex` now warns by
-  using ``FutureWarning`` instead of ``DeprecationWarning``.
+  using :exc:`FutureWarning` instead of :exc:`DeprecationWarning`.
 
 **Bug fixes**
 
@@ -2308,7 +2309,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 For the sake of consistency a lot of psutil APIs have been renamed. In most
 cases accessing the old names will work but it will cause a
-``DeprecationWarning``.
+:exc:`DeprecationWarning`.
 
 - ``psutil.*`` module level constants have being replaced by functions:
 

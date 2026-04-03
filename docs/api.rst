@@ -1898,7 +1898,7 @@ Process class
 
     .. versionchanged:: 8.0.0
        Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux
-       2.6). Deprecated aliases returning 0 and emitting `DeprecationWarning`
+       2.6). Deprecated aliases returning 0 and emitting :exc:`DeprecationWarning`
        are kept. See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0
@@ -1916,7 +1916,7 @@ Process class
        At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
        :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
        :meth:`memory_info_ex`.
-       All these old names still work but raise `DeprecationWarning`.
+       All these old names still work but raise :exc:`DeprecationWarning`.
        See :ref:`migration guide <migration-8.0>`.
 
     .. versionchanged:: 8.0.0

@@ -258,7 +258,7 @@ Process.connections() renamed
 
 :meth:`Process.connections` was renamed to
 :meth:`Process.net_connections` for consistency with the system-level
-:func:`net_connections`. The old name triggers a ``DeprecationWarning``
+:func:`net_connections`. The old name triggers a :exc:`DeprecationWarning`
 and will be removed in a future release:
 
 .. code-block:: python
@@ -314,7 +314,7 @@ Migrating to 5.0
 module-level names were changed.
 
 Old :class:`Process` method names still worked but raised
-``DeprecationWarning``. They were fully removed in 6.0.
+:exc:`DeprecationWarning`. They were fully removed in 6.0.
 
 Process methods
 ^^^^^^^^^^^^^^^^
