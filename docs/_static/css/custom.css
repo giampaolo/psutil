@@ -118,7 +118,7 @@
     --border: #3a3a3a;
 
     /* text */
-    --content-text: #ececec;
+    --content-text: #c8c8c8;
     --text-muted: #b0b0ba;
     --headings: #f5f0e8;
     --headings-underline: #3a3a3a;
@@ -866,7 +866,7 @@ a.reference.external:not(:has(img))::after {
 
 /* adjust cpython API links (intersphinx) icon position */
 a.reference.external[href*="docs.python.org"]:not(:has(img))::after {
-    margin-left: -5px;
+    margin-left: -3px;
     margin-right: 2px;
     padding-left: 0;
 }
