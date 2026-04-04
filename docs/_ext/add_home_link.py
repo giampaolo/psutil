@@ -22,3 +22,4 @@ def add_home_link(app: Sphinx, pagename, templatename, context, doctree):
 
 def setup(app: Sphinx):
     app.connect("html-page-context", add_home_link)
+    return {"parallel_read_safe": True, "parallel_write_safe": True}
