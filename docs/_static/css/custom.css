@@ -433,7 +433,6 @@ footer div[role="navigation"][aria-label="Footer"] {
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
     font-size: var(--sidebar-caption-font-size) !important;
-    margin-left: -15px !important;
 }
 
 .wy-menu-vertical li.toctree-l1:not(.current) > a {
@@ -836,12 +835,17 @@ div[class^="highlight-"] {
 /* Links                                                              */
 /* ================================================================== */
 
-/* external links: small icon instead of dotted underline */
+a.external[href^="#"] {
+    text-decoration: none;
+    color: inherit;
+}
+
 a.reference.external:not([href*="docs.python.org"]):not(:has(img)) {
     text-decoration: none;
 }
 
-a.reference.external:not([href*="docs.python.org"]):not(:has(img))::after {
+/* external links: show a small icon */
+a.reference.external:not(:has(img))::after {
     content: '\f08e';
     font-family: FontAwesome;
     font-size: 0.4em;
@@ -851,9 +855,10 @@ a.reference.external:not([href*="docs.python.org"]):not(:has(img))::after {
     opacity: 0.6;
 }
 
-a.external[href^="#"] {
-    text-decoration: none;
-    color: inherit;
+/* adjust cpython API links (intersphinx) icon position */
+a.reference.external[href*="docs.python.org"]:not(:has(img))::after {
+    margin-left: 0;
+    padding-left: 0;
 }
 
 /* ================================================================== */
