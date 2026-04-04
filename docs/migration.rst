@@ -30,7 +30,7 @@ Key breaking changes in 8.0:
   :meth:`Process.memory_footprint`.
 - New :meth:`Process.memory_info_ex` (unrelated to the old method deprecated in
   4.0 and removed in 7.0).
-- New :attr:`Process.attrs`: frozenset of valid attribute names;
+- New :attr:`Process.attrs`: :class:`frozenset` of valid attribute names;
   ``process_iter(attrs=[])`` is deprecated.
 - Python 3.6 dropped.
 
@@ -114,7 +114,7 @@ Named tuple field order changed
     :field:`private`, :field:`peak_pagefile`, :field:`num_page_faults`) were
     renamed. Old names still work but raise :exc:`DeprecationWarning`.
     :field:`paged_pool`, :field:`nonpaged_pool`, :field:`peak_paged_pool`,
-    :field:`peak_nonpaged_pool` were moved to :meth:`memory_info_ex`.
+    :field:`peak_nonpaged_pool` were moved to :meth:`Process.memory_info_ex`.
   - BSD: a new :field:`peak_rss` field was added.
 
 - :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired` fields were
@@ -139,10 +139,10 @@ to match the name used on Linux and BSD. The old name still works but raises
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :meth:`Process.status` now returns a :class:`psutil.ProcessStatus` member
-  instead of a plain ``str``.
+- :meth:`Process.status` now returns a :class:`ProcessStatus` member instead of
+  a plain ``str``.
 - :meth:`Process.net_connections` and :func:`net_connections` :field:`status` field
-  now returns a :class:`psutil.ConnectionStatus` member instead of a plain
+  now returns a :class:`ConnectionStatus` member instead of a plain
   ``str``.
 
 Because both are :class:`enum.StrEnum` subclasses they compare equal to
@@ -169,7 +169,7 @@ removed in 7.0 (which corresponded to what later became
 New Process.attrs class attribute
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:attr:`Process.attrs` is a new ``frozenset`` exposing the valid attribute
+:attr:`Process.attrs` is a new :class:`frozenset` exposing the valid attribute
 names accepted by :meth:`Process.as_dict` and :func:`process_iter`. It
 replaces the previous pattern of creating a throwaway process just to
 discover available names:

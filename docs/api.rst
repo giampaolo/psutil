@@ -184,9 +184,9 @@ CPU
 
   Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
   actual number of CPUs the current process can use.
-  That can vary if process CPU affinity has been changed, Linux cgroups are
-  being used or (on Windows) on systems using processor groups or having more
-  than 64 CPUs.
+  That can vary if process :term:`CPU affinity` has been changed, Linux cgroups
+  are being used or (on Windows) on systems using processor groups or having
+  more than 64 CPUs.
   The number of usable CPUs can be obtained with:
 
   .. code-block:: pycon
@@ -265,7 +265,7 @@ CPU
   Thus, on Windows, the first time this is called and for the next 5 seconds
   it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
   The numbers returned only make sense when compared to the number of CPU cores
-  installed on the system. So, for instance, a value of `3.14` on a system
+  installed on the system. So, for instance, a value of ``3.14`` on a system
   with 10 :term:`logical CPUs <logical CPU>` means that the system load was
   31.4% percent over the last N minutes.
 
@@ -474,7 +474,7 @@ Memory
 
   .. versionchanged:: 5.2.3
      Linux: use /proc instead of ``sysinfo()`` syscall to support
-     :const:`psutil.PROCFS_PATH` usage (e.g. useful for Docker containers ...).
+     :data:`PROCFS_PATH` usage (e.g. useful for Docker containers ...).
 
 Disks
 ^^^^^
@@ -593,7 +593,7 @@ Disks
       'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
   .. note::
-    on Windows ``"diskperf -y"`` command may need to be executed first
+    on Windows ``diskperf -y`` command may need to be executed first
     otherwise this function won't find any disk.
 
   .. seealso::
@@ -673,8 +673,8 @@ Network
     ``path`` for :data:`socket.AF_UNIX` sockets (see notes below).
   - :field:`raddr`: the remote address, either an empty tuple (``AF_INET*``) or
     ``""`` (``AF_UNIX``) when not connected. For UNIX sockets see notes below.
-  - :field:`status`: a :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constant;
-    always :const:`psutil.CONN_NONE` for UDP and UNIX sockets.
+  - :field:`status`: a :data:`CONN_* <psutil.CONN_ESTABLISHED>` constant;
+    always :data:`CONN_NONE` for UDP and UNIX sockets.
   - :field:`pid`: PID of the process which opened the socket. Set to ``None``
     if it can't be retrieved due to insufficient permissions (e.g. Linux).
 
@@ -726,10 +726,10 @@ Network
 
   .. note::
     - Linux, FreeBSD, OpenBSD: *raddr* field for UNIX sockets is always set to
-      ``""`` (empty string); this is a limitation of the OS
-    - macOS and AIX: :exc:`psutil.AccessDenied` is always raised unless running
-      as root; this is a limitation of the OS
-    - Solaris: UNIX sockets are not supported
+      ``""`` (empty string); this is a limitation of the OS.
+    - macOS and AIX: :exc:`AccessDenied` is always raised unless running
+      as root; this is a limitation of the OS.
+    - Solaris: UNIX sockets are not supported.
 
   .. seealso::
 
@@ -749,7 +749,7 @@ Network
      (before it was an empty string).
 
   .. versionchanged:: 8.0.0
-     :field:`status` field is now a :class:`psutil.ConnectionStatus` enum member
+     :field:`status` field is now a :class:`ConnectionStatus` enum member
      instead of a plain ``str``.
      See :ref:`migration guide <migration-8.0>`.
 
@@ -761,9 +761,9 @@ Network
   per interface. Each named tuple includes 5 fields (addresses may be
   ``None``):
 
-  - :field:`family`: the address family, either :data:`socket.AF_INET`,
-    :data:`socket.AF_INET6`, :const:`psutil.AF_LINK` (a MAC address) or
-    :data:`socket.AF_UNSPEC` (a virtual or unconfigured NIC).
+  - :field:`family`: the address family, either :data:`socket.AF_INET` (IPv4),
+    :data:`socket.AF_INET6` (IPv6), :data:`socket.AF_UNSPEC` (a virtual or
+    unconfigured NIC), or :data:`AF_LINK` (a MAC address).
   - :field:`address`: the primary NIC address
   - :field:`netmask`: the netmask address
   - :field:`broadcast`: the broadcast address; always ``None`` on Windows
@@ -801,8 +801,8 @@ Network
   following fields:
 
   - :field:`isup`: whether the NIC is up and running (bool).
-  - :field:`duplex`: :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
-    :const:`NIC_DUPLEX_UNKNOWN`.
+  - :field:`duplex`: :data:`NIC_DUPLEX_FULL`, :data:`NIC_DUPLEX_HALF` or
+    :data:`NIC_DUPLEX_UNKNOWN`.
   - :field:`speed`: NIC speed in megabits (Mbps); ``0`` if undetermined.
   - :field:`mtu`: maximum transmission unit in bytes.
   - :field:`flags`: a comma-separated string of interface flags (e.g.
@@ -894,10 +894,8 @@ Sensors
   - :field:`percent`: battery power left as a percentage.
   - :field:`secsleft`: a rough approximation of how many seconds are left before the
     battery runs out of power.
-    If the AC power cable is connected this is set to
-    :data:`psutil.POWER_TIME_UNLIMITED <psutil.POWER_TIME_UNLIMITED>`.
-    If it can't be determined it is set to
-    :data:`psutil.POWER_TIME_UNKNOWN <psutil.POWER_TIME_UNKNOWN>`.
+    If the AC power cable is connected this is set to :data:`POWER_TIME_UNLIMITED`.
+    If it can't be determined it is set to :data:`POWER_TIME_UNKNOWN`.
   - :field:`power_plugged`: ``True`` if the AC power cable is connected, ``False``
     if not or ``None`` if it can't be determined.
 
@@ -1285,7 +1283,7 @@ Process class
 
   .. attribute:: attrs
 
-    A ``frozenset`` of strings representing the valid attribute names accepted
+    A :class:`frozenset` of strings representing the valid attribute names accepted
     by :meth:`as_dict` and :func:`process_iter`. It defaults to all read-only
     :class:`Process` method names, minus the utility methods such as
     :meth:`as_dict`, :meth:`children`, etc.
@@ -1450,15 +1448,15 @@ Process class
 
   .. method:: status()
 
-    The current process status as a :class:`psutil.ProcessStatus` enum member.
-    The returned value is one of the
-    :data:`psutil.STATUS_* <psutil.STATUS_RUNNING>` constants.
+    The current process status as a :class:`ProcessStatus` enum member.
+    The returned value is one of the :data:`STATUS_* <psutil.STATUS_RUNNING>`
+    constants.
     A common use case is detecting :term:`zombie processes <zombie process>`
     (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. versionchanged:: 8.0.0
-       return value is now a :class:`psutil.ProcessStatus` enum member instead
-       of a plain ``str``.
+       return value is now a :class:`ProcessStatus` enum member instead of a
+       plain ``str``.
        See :ref:`migration guide <migration-8.0>`.
 
   .. method:: cwd()
@@ -1516,9 +1514,9 @@ Process class
 
     On Windows this is implemented via `GetPriorityClass`_ and
     `SetPriorityClass`_ Windows APIs and *value* is one of the
-    :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
+    :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
     constants reflecting the MSDN documentation.
-    The return value on Windows is a :class:`psutil.ProcessPriority` enum member.
+    The return value on Windows is a :class:`ProcessPriority` enum member.
     Example which increases process priority on Windows:
 
     .. code-block:: pycon
@@ -1526,9 +1524,8 @@ Process class
        >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
     .. versionchanged:: 8.0.0
-       on Windows, the return value is now a :class:`psutil.ProcessPriority`
-       enum member.
-       See :ref:`migration guide <migration-8.0>`.
+       on Windows, the return value is now a :class:`ProcessPriority` enum
+       member. See :ref:`migration guide <migration-8.0>`.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1542,23 +1539,23 @@ Process class
 
     Linux (see `ioprio_get`_ manual):
 
-    * :const:`IOPRIO_CLASS_RT`: (high) the process gets first access to the disk
+    * :data:`IOPRIO_CLASS_RT`: (high) the process gets first access to the disk
       every time. Use it with care as it can starve the entire
       system. Additional priority *level* can be specified and ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * :const:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't
+    * :data:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't
       set a specific I/O priority. Additional priority *level* ranges from
       ``0`` (highest) to ``7`` (lowest).
-    * :const:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the
+    * :data:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the
       disk. No additional *value* is accepted.
-    * :const:`IOPRIO_CLASS_NONE`: returned when no priority was previously set.
+    * :data:`IOPRIO_CLASS_NONE`: returned when no priority was previously set.
 
     Windows:
 
-    * :const:`IOPRIO_HIGH`: highest priority.
-    * :const:`IOPRIO_NORMAL`: default priority.
-    * :const:`IOPRIO_LOW`: low priority.
-    * :const:`IOPRIO_VERYLOW`: lowest priority.
+    * :data:`IOPRIO_HIGH`: highest priority.
+    * :data:`IOPRIO_NORMAL`: default priority.
+    * :data:`IOPRIO_LOW`: low priority.
+    * :data:`IOPRIO_VERYLOW`: lowest priority.
 
     Here's an example on how to set the highest I/O priority depending on what
     platform you're on:
@@ -1581,19 +1578,19 @@ Process class
        Windows: accept new :data:`IOPRIO_* <psutil.IOPRIO_VERYLOW>` constants.
 
     .. versionchanged:: 8.0.0
-       *ioclass* is now a :class:`psutil.ProcessIOPriority` enum member.
+       *ioclass* is now a :class:`ProcessIOPriority` enum member.
        See :ref:`migration guide <migration-8.0>`.
 
   .. method:: rlimit(resource, limits=None)
 
     Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_).
-    *resource* is one of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`
+    *resource* is one of the :data:`RLIMIT_* <psutil.RLIM_INFINITY>`
     constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
     but can be used for any process PID, not only :func:`os.getpid`.
     For get, return value is a ``(soft, hard)`` tuple. Each value may be either
-    an integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
+    an integer or :data:`RLIMIT_* <psutil.RLIM_INFINITY>`.
 
     .. code-block:: pycon
 
@@ -1774,9 +1771,8 @@ Process class
 
   .. method:: cpu_affinity(cpus=None)
 
-    Get or set process
-    `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`_
-    (the set of CPUs the process is allowed to run on).
+    Get or set process :term:`CPU affinity` (the set of CPUs the process is
+    allowed to run on).
     If no argument is passed, return the current affinity as a list of
     integers. If passed, *cpus* must be a list of CPU integers. An empty
     list sets affinity to all eligible CPUs.
@@ -2512,7 +2508,7 @@ Windows services
 .. function:: win_service_get(name)
 
   Get a Windows service by name, returning a :class:`WindowsService` instance.
-  Raise :exc:`psutil.NoSuchProcess` if no service with such name exists.
+  Raise :exc:`NoSuchProcess` if no service with such name exists.
 
   .. versionadded:: 4.2.0
 
@@ -2600,19 +2596,19 @@ Constants
 
 The following enum classes group related constants and are useful for type
 annotations and introspection. The individual constants (e.g.
-:data:`psutil.STATUS_RUNNING`) are also accessible directly from the psutil
+:data:`STATUS_RUNNING`) are also accessible directly from the psutil
 namespace as aliases for the enum members and should be preferred over
 accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 ``psutil.ProcessStatus.STATUS_RUNNING``).
 
-.. class:: psutil.ProcessStatus
+.. class:: ProcessStatus
 
   :class:`enum.StrEnum` collection of :data:`STATUS_* <psutil.STATUS_RUNNING>`
   constants. Returned by :meth:`Process.status`.
 
   .. versionadded:: 8.0.0
 
-.. class:: psutil.ProcessPriority
+.. class:: ProcessPriority
 
   :class:`enum.IntEnum` collection of
   :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>` constants for
@@ -2622,7 +2618,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   .. versionadded:: 8.0.0
 
-.. class:: psutil.ProcessIOPriority
+.. class:: ProcessIOPriority
 
   :class:`enum.IntEnum` collection of I/O priority constants for
   :meth:`Process.ionice`.
@@ -2634,7 +2630,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   .. versionadded:: 8.0.0
 
-.. class:: psutil.ProcessRlimit
+.. class:: ProcessRlimit
 
   :class:`enum.IntEnum` collection of :data:`RLIMIT_* <psutil.RLIMIT_NOFILE>`
   constants for :meth:`Process.rlimit`.
@@ -2643,7 +2639,7 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   .. versionadded:: 8.0.0
 
-.. class:: psutil.ConnectionStatus
+.. class:: ConnectionStatus
 
   :class:`enum.StrEnum` collection of :data:`CONN_* <psutil.CONN_ESTABLISHED>`
   constants. Returned in the :field:`status` field of
@@ -2651,14 +2647,14 @@ accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 
   .. versionadded:: 8.0.0
 
-.. class:: psutil.NicDuplex
+.. class:: NicDuplex
 
   :class:`enum.IntEnum` collection of :data:`NIC_DUPLEX_* <psutil.NIC_DUPLEX_FULL>`
   constants. Returned in the *duplex* field of :func:`psutil.net_if_stats`.
 
   .. versionadded:: 3.0.0
 
-.. class:: psutil.BatteryTime
+.. class:: BatteryTime
 
   :class:`enum.IntEnum` collection of :data:`POWER_TIME_* <psutil.POWER_TIME_UNKNOWN>`
   constants. May appear in the *secsleft* field of :func:`psutil.sensors_battery`.
@@ -2685,10 +2681,10 @@ Operating system constants
 .. data:: AIX
 .. data:: OSX
 
-  Alias for :const:`MACOS`.
+  Alias for :data:`MACOS`.
 
   .. deprecated:: 5.4.7
-     use :const:`MACOS` instead.
+     use :data:`MACOS` instead.
 
 .. _const-pstatus:
 
@@ -2698,8 +2694,7 @@ Process status constants
 Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. versionchanged:: 8.0.0
-   constants are now :class:`psutil.ProcessStatus` enum members (were plain
-   strings).
+   constants are now :class:`ProcessStatus` enum members (were plain strings).
    See :ref:`migration guide <migration-8.0>`.
 
 .. data:: STATUS_RUNNING
@@ -2794,7 +2789,7 @@ set process priority.
 .. availability:: Windows
 
 .. versionchanged:: 8.0.0
-   constants are now :class:`psutil.ProcessPriority` enum members (were plain
+   constants are now :class:`ProcessPriority` enum members (were plain
    integers).
    See :ref:`migration guide <migration-8.0>`.
 
@@ -2816,8 +2811,7 @@ Represent the priority I/O priority of a process (Linux and Windows only).
 They can be used in conjunction with :meth:`Process.ionice`.
 
 .. versionchanged:: 8.0.0
-   constants are now :class:`psutil.ProcessIOPriority` enum members (previously
-   ``IOPriority`` enum).
+   constants are now :class:`ProcessIOPriority` enum members.
    See :ref:`migration guide <migration-8.0>`.
 
 .. _const-ioprio-linux:
@@ -2827,11 +2821,11 @@ They can be used in conjunction with :meth:`Process.ionice`.
 .. data:: IOPRIO_CLASS_BE
 .. data:: IOPRIO_CLASS_IDLE
 
-  :const:`IOPRIO_CLASS_NONE` and :const:`IOPRIO_CLASS_BE` (best effort) is the
+  :data:`IOPRIO_CLASS_NONE` and :data:`IOPRIO_CLASS_BE` (best effort) is the
   default for any process that hasn't set a specific I/O priority.
-  :const:`IOPRIO_CLASS_RT` (real time) means the process is given first access
+  :data:`IOPRIO_CLASS_RT` (real time) means the process is given first access
   to the disk, regardless of what else is going on in the system.
-  :const:`IOPRIO_CLASS_IDLE` means the process will get I/O time when no-one else
+  :data:`IOPRIO_CLASS_IDLE` means the process will get I/O time when no-one else
   needs the disk.
   For further information refer to manuals of
   `ionice <http://linux.die.net/man/1/ionice>`_ command line utility or
@@ -2862,9 +2856,8 @@ explained in :func:`resource.getrlimit` documentation.
 .. availability:: Linux, FreeBSD
 
 .. versionchanged:: 8.0.0
-   these constants are now :class:`psutil.ProcessRlimit` enum members (were
-   plain integers).
-   See :ref:`migration guide <migration-8.0>`.
+   these constants are now :class:`ProcessRlimit` enum members (were plain
+   integers). See :ref:`migration guide <migration-8.0>`.
 
 Linux / FreeBSD:
 
@@ -2914,8 +2907,7 @@ Returned by :meth:`Process.net_connections` and :func:`psutil.net_connections`
 (:field:`status` field).
 
 .. versionchanged:: 8.0.0
-   constants are now :class:`psutil.ConnectionStatus` enum members (were
-   plain strings).
+   constants are now :class:`ConnectionStatus` enum members (were plain strings).
    See :ref:`migration guide <migration-8.0>`.
 
 .. data:: CONN_ESTABLISHED
@@ -3008,6 +3000,23 @@ Other constants
      >>> import psutil
      >>> if psutil.version_info >= (4, 5):
      ...    pass
+
+Environment variables
+---------------------
+
+.. envvar:: PSUTIL_DEBUG
+
+  If set, psutil will print debug messages to stderr. This is useful for
+  troubleshooting internal errors or understanding the library's behavior at
+  a lower level. The variable is checked at import time, and affects both the
+  Python layer and the underlying C extension modules. It can also be toggled
+  programmatically at runtime via ``psutil._set_debug(True)``.
+
+  .. code-block:: bash
+
+     $ PSUTIL_DEBUG=1 python3 script.py
+
+  .. versionadded:: 5.4.2
 
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
