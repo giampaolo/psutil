@@ -127,6 +127,9 @@
     --inline-code-bg: #2a2f36;
     --inline-code-text: #e6e6e6;
 
+    /* code blocks */
+    --code-bg: #272822;
+
     /* ntuple fields */
     --ntuple-color: #6db99a;
 
@@ -830,7 +833,7 @@ div[class^="highlight-"] {
 }
 
 .highlight {
-    /*background-color: var(--code-bg);*/
+    background-color: var(--code-bg);
     border-radius: var(--border-radius);
     overflow: hidden;
 }
