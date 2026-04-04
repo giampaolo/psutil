@@ -42,3 +42,4 @@ def check_python_blocks(app, doctree, docname):
 
 def setup(app):
     app.connect("doctree-resolved", check_python_blocks)
+    return {"parallel_read_safe": True, "parallel_write_safe": True}

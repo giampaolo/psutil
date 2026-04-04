@@ -97,8 +97,4 @@ class Availability(SphinxDirective):
 
 def setup(app):
     app.add_directive("availability", Availability)
-    return {
-        "version": "1.0",
-        "parallel_read_safe": True,
-        "parallel_write_safe": True,
-    }
+    return {"parallel_read_safe": True, "parallel_write_safe": True}

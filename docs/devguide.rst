@@ -70,7 +70,7 @@ Debug mode
 ----------
 
 If you need to debug unusual situations or report a bug, you can enable
-debug mode via the ``PSUTIL_DEBUG`` environment variable. In this
+debug mode via the :envvar:`PSUTIL_DEBUG` environment variable. In this
 mode, psutil may print additional information to stderr. Usually these are
 non-severe error conditions that are ignored instead of causing a crash.
 Unit tests automatically run with debug mode enabled. On UNIX:
@@ -86,7 +86,6 @@ On Windows:
 
   set PSUTIL_DEBUG=1 && python.exe script.py
   psutil-debug [psutil/arch/windows/proc.c:90]> NtWow64ReadVirtualMemory64(...) -> 998 (Unknown error) (ignored)
-
 
 Coding style
 ------------

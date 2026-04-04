@@ -19,3 +19,4 @@ def field_role(
 
 def setup(app):
     app.add_role("field", field_role)
+    return {"parallel_read_safe": True, "parallel_write_safe": True}
