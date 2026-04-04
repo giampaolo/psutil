@@ -807,15 +807,6 @@ code.ntuple-field {
 /* Code blocks                                                        */
 /* ================================================================== */
 
-/* Python number, string, and namedtuple name highlights in pycon output */
-.highlight-pycon .pycon-number { color: #8f6fcc; }
-.highlight-pycon .pycon-string { color: #b8a84e; }
-.highlight-pycon .pycon-field  { color: #7a9aaa; }
-
-/* tone down Pygments Generic.Prompt (>>>) and Generic.Output */
-.highlight .gp { color: #666666; font-weight: normal; }
-.highlight .go { color: #7a9aaa; }
-
 /* reduce bottom margin of code blocks inside list items */
 .rst-content li > div[class^='highlight'] {
     margin-bottom: 6px !important;
@@ -833,7 +824,6 @@ div[class^="highlight-"] {
 }
 
 .highlight {
-    background-color: var(--code-bg);
     border-radius: var(--border-radius);
     overflow: hidden;
 }
@@ -845,6 +835,21 @@ div[class^="highlight-"] {
 
 .highlight pre {
     line-height: var(--code-line-height) !important;
+}
+
+/* --- syntax highlight colors --- */
+
+/* Python number, string, and namedtuple name highlights in pycon output */
+.highlight-pycon .pycon-number { color: #8f6fcc; }
+.highlight-pycon .pycon-string { color: #b8a84e; }
+.highlight-pycon .pycon-field  { color: #7a9aaa; }
+
+/* tone down Pygments Generic.Prompt (>>>) and Generic.Output */
+.highlight .gp { color: #666666; font-weight: normal; }
+.highlight .go { color: #7a9aaa; }
+
+.highlight {
+    background-color: var(--code-bg);
 }
 
 /* ================================================================== */
