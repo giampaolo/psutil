@@ -857,7 +857,8 @@ a.reference.external:not(:has(img))::after {
 
 /* adjust cpython API links (intersphinx) icon position */
 a.reference.external[href*="docs.python.org"]:not(:has(img))::after {
-    margin-left: 0;
+    margin-left: -5px;
+    margin-right: 2px;
     padding-left: 0;
 }
 
