@@ -812,12 +812,6 @@ code.ntuple-field {
     margin-bottom: 6px !important;
 }
 
-.highlight,
-.highlight pre {
-    font-size: 13px !important;
-    font-family: var(--code-font) !important;
-}
-
 div[class^="highlight-"] {
     border-radius: var(--border-radius);
     background: transparent;
@@ -833,11 +827,19 @@ div[class^="highlight-"] {
     border-color: var(--border) !important;
 }
 
+/* ------------------------- font ------------------------- */
+
+.highlight,
+.highlight pre {
+    font-size: 13px !important;
+    font-family: var(--code-font) !important;
+}
+
 .highlight pre {
     line-height: var(--code-line-height) !important;
 }
 
-/* --- syntax highlight colors --- */
+/* ----------------- syntax highlight colors --------------- */
 
 /* Python number, string, and namedtuple name highlights in pycon output */
 .highlight-pycon .pycon-number { color: #8f6fcc; }
@@ -849,7 +851,7 @@ div[class^="highlight-"] {
 .highlight .go { color: #7a9aaa; }
 
 .highlight {
-    background-color: var(--code-bg);
+    background-color: var(--code-bg) !important;
 }
 
 /* ================================================================== */
