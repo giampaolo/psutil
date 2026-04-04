@@ -35,7 +35,7 @@ include docs/_static/images/logo-psutil.svg
 include docs/_static/images/logo-sansec.svg
 include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
-include docs/_static/js/highlight-numbers.js
+include docs/_static/js/highlight-repl.js
 include docs/_static/js/theme-toggle.js
 include docs/_static/logo.svg
 include docs/_templates/footer.html

@@ -63,7 +63,7 @@ html_css_files = [
     'css/custom.css',
 ]
 html_js_files = [
-    "js/highlight-numbers.js",
+    "js/highlight-repl.js",
     "js/external-urls.js",
     ("js/theme-toggle.js", {"defer": "defer"}),
 ]
