@@ -701,6 +701,18 @@ h4 {
 }
 
 /* ================================================================== */
+/* Links                                                              */
+/* ================================================================== */
+
+.rst-content a {
+    color: var(--links);
+}
+
+.rst-content a:visited {
+    color: var(--links-visited);
+}
+
+/* ================================================================== */
 /* API signatures                                                     */
 /* ================================================================== */
 
@@ -767,12 +779,9 @@ h4 {
     text-underline-offset: 4px;
 }
 
-.rst-content a {
-    color: var(--links);
-}
-
-.rst-content a:visited {
-    color: var(--links-visited);
+/* named tuple field */
+code.ntuple-field {
+    font-weight: bold !important;
 }
 
 /* ================================================================== */
