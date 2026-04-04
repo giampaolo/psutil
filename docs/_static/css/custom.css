@@ -39,6 +39,13 @@
     --links-api: #336699;
     --links-api-underline: var(--links-api);
 
+    /* inline code */
+    --inline-code-bg: rgba(175, 184, 193, 0.2);
+    --inline-code-text: inherit;
+
+    /* code blocks */
+    --code-bg: #2d2e27;
+
     /* sidebar */
     --sidebar-bg: #343131;
     --sidebar-top-bg: #343131;
@@ -48,9 +55,6 @@
     --sidebar-active-border: #55a5d9;
     --sidebar-search-focus-border: #7ab3d4;
     --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
-
-    /* code blocks */
-    --code-bg: #2d2e27;
 
     /* ntuple fields */
     --ntuple-color: #333;
@@ -119,6 +123,10 @@
     --headings: #f0f0f0;
     --headings-underline: #3a3a3a;
 
+    /* inline code */
+    --inline-code-bg: #2a2f36;
+    --inline-code-text: #e6e6e6;
+
     /* ntuple fields */
     --ntuple-color: #81cfb0;
 
@@ -156,6 +164,7 @@
     /* cards */
     --card-bg: #252525;
     --card-border: #2a4a6a;
+
 }
 
 /* ================================================================== */
@@ -757,8 +766,8 @@ h4 {
 
 /* inline literals: ``like this`` */
 .rst-content code, .rst-content tt, code {
-    color: inherit !important;
-    background: rgba(175, 184, 193, 0.2) !important;
+    color: var(--inline-code-text) !important;
+    background: var(--inline-code-bg) !important;
     border: none !important;
     border-radius: 4px !important;
     padding: .1em .35em !important;
