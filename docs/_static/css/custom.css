@@ -844,7 +844,7 @@ div[class^="highlight-"] {
 /* Python number, string, and namedtuple name highlights in pycon output */
 .highlight-pycon .pycon-number { color: #8f6fcc; }
 .highlight-pycon .pycon-string { color: #b8a84e; }
-.highlight-pycon .pycon-field  { color: #7a9aaa; }
+.highlight-pycon .pycon-field  { color: #6db99a }
 
 /* tone down Pygments Generic.Prompt (>>>) and Generic.Output */
 .highlight .gp { color: #666666; font-weight: normal; }
