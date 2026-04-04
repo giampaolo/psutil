@@ -782,6 +782,7 @@ h4 {
     font-size:90% !important;
     text-decoration: underline;
     text-decoration-color: var(--links-api-underline);
+    text-decoration-thickness: 1px;
     text-underline-offset: 4px;
 }
 
