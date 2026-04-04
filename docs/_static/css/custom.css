@@ -52,6 +52,9 @@
     /* code blocks */
     --code-bg: #2d2e27;
 
+    /* ntuple fields */
+    --ntuple-color: black;
+
     /* admonitions */
     --adm-title: black;
     --adm-note-bg: var(--surface-sunken);
@@ -115,6 +118,9 @@
     --text-muted: #b0b0ba;
     --headings: #f0f0f0;
     --headings-underline: #3a3a3a;
+
+    /* ntuple fields */
+    --ntuple-color: #81cfb0;
 
     /* links */
     --links: #6ab0de;
@@ -781,6 +787,7 @@ h4 {
 
 /* named tuple field */
 code.ntuple-field {
+    color: var(--ntuple-color) !important;
     font-weight: bold !important;
 }
 
