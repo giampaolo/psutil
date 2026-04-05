@@ -1052,38 +1052,36 @@ Functions
 
 .. function:: wait_procs(procs, timeout=None, callback=None)
 
-  Convenience function which waits for a list of :class:`Process` instances to
-  terminate. Return a ``(gone, alive)`` tuple indicating which processes are
-  gone and which ones are still alive. The *gone* ones will have a new
-  *returncode* attribute indicating process exit status as returned by
+  Bulk operation that waits for a list of :class:`Process` instances to
+  terminate. Return a ``(gone, alive)`` tuple. The ``gone`` processes will have
+  a new ``returncode`` attribute set by
   :meth:`Process.wait`.
-  *callback* is a function which gets called when one of the processes being
-  waited on is terminated and a :class:`Process` instance is passed as callback
-  argument (the instance will also have a *returncode* attribute set).
-  This function will return as soon as all processes terminate or when
-  *timeout* (seconds) occurs.
-  Differently from :meth:`Process.wait` it will not raise
-  :exc:`TimeoutExpired` if timeout occurs.
-  The typical use case is:
+
+  *callback* is called with a :class:`Process` instance whenever a process
+  terminates.
+
+  Returns as soon as all processes terminate or *timeout* (seconds) expires.
+  Unlike :meth:`Process.wait`, it does not raise :exc:`TimeoutExpired` on timeout.
+
+  Typical usage:
 
   - send SIGTERM to a list of processes
-  - give them some time to terminate
-  - send SIGKILL to those ones which are still alive
-
-  Example which terminates and waits all the children of this process:
+  - wait a short time
+  - send SIGKILL to any still alive
 
   .. code-block:: python
 
     import psutil
 
     def on_terminate(proc):
-        print("process {} terminated with exit code {}".format(proc, proc.returncode))
+        print(f"{proc} terminated with exit code {proc.returncode}")
 
     procs = psutil.Process().children()
     for p in procs:
         p.terminate()
     gone, alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
     for p in alive:
+        print(f"{p} is still alive, send SIGKILL")
         p.kill()
 
 Exceptions
