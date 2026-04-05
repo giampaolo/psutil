@@ -2140,7 +2140,7 @@ Process class
 
     Linux only:
 
-    - :field:`position` (*Linux*): the file (offset) position.
+    - :field:`position` (*Linux*): the file position (offset).
     - :field:`mode` (*Linux*): a string indicating how the file was opened,
       similarly to :func:`open` builtin *mode* argument.
       Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
@@ -2197,16 +2197,15 @@ Process class
 
   .. method:: is_running()
 
-    Return whether the current process is running in the current process list.
+    Return whether the current process is running.
     Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
     case the process is gone and its PID reused by another process.
 
     If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
 
-    .. note::
-      this will return ``True`` also if the process is a :term:`zombie process`
-      (``p.status() == psutil.STATUS_ZOMBIE``).
+    This will return ``True`` also if the process is a :term:`zombie process`
+    (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. seealso::
       - :ref:`faq_pid_reuse`
