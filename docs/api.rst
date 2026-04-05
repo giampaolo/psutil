@@ -870,7 +870,7 @@ Sensors
     If the AC power cable is connected this is set to :data:`POWER_TIME_UNLIMITED`.
     If it can't be determined it is set to :data:`POWER_TIME_UNKNOWN`.
   - :field:`power_plugged`: ``True`` if the AC power cable is connected, ``False``
-    if not or ``None`` if it can't be determined.
+    if not, or ``None`` if it can't be determined.
 
   .. code-block:: pycon
 
@@ -905,7 +905,7 @@ Other system info
 
   Return the system boot time expressed in seconds since the epoch (seconds
   since January 1, 1970, at midnight UTC). The returned value is based on the
-  system clock, which means it may be affected by changes such as manual
+  system clock, which means it can be affected by changes such as manual
   adjustments or time synchronization (e.g. NTP).
 
   .. code-block:: pycon
@@ -927,11 +927,12 @@ Other system info
   - :field:`name`: the name of the user.
   - :field:`terminal`: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
-  - :field:`host`: the host name associated with the entry, if any, else ``None``.
+  - :field:`host`: the host name associated with the entry, if any (for
+    example, the remote host in an SSH session), else ``None``.
   - :field:`started`: the creation time as a floating point number expressed in
     seconds since the epoch.
-  - :field:`pid`: the PID of the login process (like sshd, tmux, gdm-session-worker,
-    ...). On Windows and OpenBSD this is always set to ``None``.
+  - :field:`pid`: the PID of the login process (like sshd for remote logins,
+    tmux, etc.). On Windows and OpenBSD this is always ``None``.
 
   .. code-block:: pycon
 
@@ -953,9 +954,9 @@ Functions
 
 .. function:: pids()
 
-  Return a sorted list of current running PIDs.
+  Return a sorted list of currently running PIDs.
   To iterate over all processes and avoid race conditions :func:`process_iter`
-  should be preferred, see :ref:`perf-process-iter`.
+  is preferred, see :ref:`perf-process-iter`.
 
   .. code-block:: pycon
 
