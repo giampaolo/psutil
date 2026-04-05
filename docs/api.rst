@@ -1244,7 +1244,7 @@ Process class
 
   .. attribute:: pid
 
-    The process PID. This is the only (read-only) attribute of the class.
+    The process PID as a read-only property.
 
   .. attribute:: attrs
 
@@ -1281,9 +1281,9 @@ Process class
   .. method:: ppid()
 
     The process parent PID. On Windows the return value is cached after the
-    first call. On POSIX it is not cached because the ppid may change if the
-    process becomes a :term:`zombie process`.
-    See also :meth:`parent` and :meth:`parents` methods.
+    first call. On POSIX it is not cached because it may change if the process
+    becomes a :term:`zombie <zombie process>`. See also :meth:`parent` and
+    :meth:`parents` methods.
 
   .. method:: name()
 
