@@ -213,7 +213,7 @@ CPU
 .. function:: cpu_freq(percpu=False)
 
   Return :field:`current`, :field:`min` and :field:`max` CPU frequencies
-  expressed in Mhz. On Linux :field:`current` is the real-time frequency value
+  expressed in MHz. On Linux, :field:`current` is the real-time frequency value
   (changing), on all other platforms this usually represents the nominal
   "fixed" value (never changing).
 
