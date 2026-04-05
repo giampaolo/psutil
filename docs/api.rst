@@ -809,14 +809,17 @@ Sensors
 
   Return hardware temperatures. Each entry represents a sensor (CPU, disk,
   etc.). Values are in Celsius unless *fahrenheit* is ``True``. If unsupported,
-  return an empty dict. Each entry includes 4 fields:
+  an empty dict is returned. Each entry includes:
 
-  - :field:`label`: a string label for the sensor, if available, else ``""``.
-  - :field:`current`: current temperature, or ``None`` if not available.
-  - :field:`high`: temperature at which the system will throttle, or ``None``
-    if not available.
-  - :field:`critical`: temperature at which the system will shut down, or
-    ``None`` if not available.
+  - :field:`label`: string label for the sensor, if available, else ``""``.
+  - :field:`current`: current temperature reading (changing), or ``None`` if
+    unavailable.
+  - :field:`high`: sensor-specified high temperature threshold (fixed), or
+    ``None`` if unavailable. Typically indicates when hardware may start
+    throttling to reduce heat.
+  - :field:`critical`: sensor-specified critical temperature threshold (fixed),
+    or ``None`` if unavailable. Typically indicates when hardware considers
+    itself at risk; behavior may include throttling, fan ramp-up, or shutdown.
 
   .. code-block:: pycon
 
