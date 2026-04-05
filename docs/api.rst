@@ -970,8 +970,8 @@ Functions
 
 .. function:: process_iter(attrs=None, ad_value=None)
 
-  Return an iterator yielding a :class:`Process` class instance for all running
-  processes on the local machine.
+  Return an iterator yielding a :class:`Process` instance for all running
+  processes.
   This should be preferred over :func:`psutil.pids` to iterate over
   processes, as retrieving info is safe from race conditions.
 
@@ -981,11 +981,10 @@ Functions
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
 
-  If *attrs* is specified, :meth:`Process.as_dict` is called internally and
-  the results are cached so that subsequent method calls (e.g.
-  :meth:`Process.name`, :meth:`Process.status`) return the cached values
-  instead of issuing new system calls. See :attr:`Process.attrs` for a
-  list of valid *attrs* names.
+  If *attrs* is specified, :meth:`Process.as_dict` is called internally, and the
+  results are cached so that subsequent method calls (e.g. ``p.name()``,
+  ``p.status()``) return the cached values instead of issuing new system calls.
+  See :attr:`Process.attrs` for a list of valid *attrs* names.
 
   If a method raises :exc:`AccessDenied` during pre-fetch, it will return
   *ad_value* (default ``None``) instead of raising.
@@ -996,7 +995,7 @@ Functions
 
      >>> import psutil
      >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-     ...     print(proc.pid, proc.name(), proc.username())
+     ...     print(proc.pid, proc.name(), proc.username())  # return cached values, never raise
      ...
      1 systemd root
      2 kthreadd root
