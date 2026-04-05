@@ -158,18 +158,14 @@ CPU
 
   Return the number of :term:`logical CPUs <logical CPU>` in the system
   (same as :func:`os.cpu_count`), or ``None`` if undetermined.
-  Unlike :func:`os.cpu_count`, this is not influenced by the :envvar:`PYTHON_CPU_COUNT`
-  environment variable introduced in Python 3.13.
-  :term:`Logical CPUs <logical CPU>` means the number of
-  :term:`physical CPUs <physical CPU>` multiplied by the number of threads
-  that can run on each core (this is known as *Hyper Threading*).
+  Unlike :func:`os.cpu_count`, this is not influenced by the
+  :envvar:`PYTHON_CPU_COUNT` environment variable (Python 3.13+).
 
-  If *logical* is ``False`` return the number of physical cores only, or
-  ``None`` if undetermined.
+  If *logical* is ``False`` return the number of :term:`physical CPUs
+  <physical CPU>` only, or ``None`` if undetermined (always ``None`` on
+  OpenBSD and NetBSD).
 
-  On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
-  ``None``.
-  Example on a system having 2 cores + Hyper Threading:
+  Example on a system with 2 cores + Hyper Threading:
 
   .. code-block:: pycon
 
@@ -179,12 +175,9 @@ CPU
      >>> psutil.cpu_count(logical=False)
      2
 
-  Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
-  actual number of CPUs the current process can use.
-  That can vary if process :term:`CPU affinity` has been changed, Linux cgroups
-  are being used or (on Windows) on systems using processor groups or having
-  more than 64 CPUs.
-  The number of usable CPUs can be obtained with:
+  Note that this may differ from the number of CPUs the current process can
+  actually use (e.g. due to :term:`CPU affinity`, cgroups, or Windows
+  processor groups). The number of usable CPUs can be obtained with:
 
   .. code-block:: pycon
 
