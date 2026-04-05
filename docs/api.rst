@@ -2004,12 +2004,13 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-    Return process's memory-mapped file regions as a list. Fields vary by
-    platform (all values in bytes). If *grouped* is ``True``
-    regions with the same *path* are merged and their numeric fields summed.
-    If *grouped* is ``False`` each region is listed individually and the
-    tuple also includes *addr* (address range) and *perms* (permission
-    string e.g. ``"r-xp"``).
+    Return the process's memory-mapped file regions as a list. Fields vary by
+    platform (all values in bytes).
+
+    If *grouped* is ``True``, regions with the same *path* are merged and their
+    numeric fields summed. If *grouped* is ``False``, each region is listed
+    individually; the tuple also includes *addr* (address range) and *perms*
+    (permission string, e.g., ``"r-xp"``).
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |
