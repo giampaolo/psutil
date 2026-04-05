@@ -70,8 +70,6 @@ CPU
   system. The list is ordered by CPU index. The order of the list is consistent
   across calls.
 
-  Example output on Linux:
-
   .. code-block:: pycon
 
      >>> import psutil
@@ -101,22 +99,23 @@ CPU
 .. function:: cpu_percent(interval=None, percpu=False)
 
   Return a float representing the current system-wide CPU utilization as a
-  percentage. When *interval* is > ``0.0`` compares system CPU times elapsed
-  before and after the interval (blocking).
-  When *interval* is ``0.0`` or ``None`` compares system CPU times elapsed
-  since last call or module import, returning immediately.
+  percentage.
+
+  When *interval* is > ``0.0``, compares system CPU times elapsed before and
+  after the interval (blocking). When ``0.0`` or ``None``, compares times
+  elapsed since the last call or module import, returning immediately.
   That means the first time this is called it will return a meaningless ``0.0``
   value which you are supposed to ignore.
   In this case it is recommended for accuracy that this function be called with
   at least ``0.1`` seconds between calls.
-  When *percpu* is ``True`` returns a list of floats representing the
-  utilization as a percentage for each CPU.
-  The list is ordered by CPU index. The order of the list is consistent across
+
+  When *percpu* is ``True``, returns a list of floats for each :term:`logical CPU`
+  on the system. The list is ordered by CPU index and is consistent across
   calls.
-  Internally this function maintains a global map (a dict) where each key is
-  the ID of the calling thread (:func:`threading.get_ident`). This means it can be
-  called from different threads, at different intervals, and still return
-  meaningful and independent results.
+
+  This function is thread-safe. It maintains a internal map of calling thread
+  IDs (:func:`threading.get_ident`), allowing independent results when called
+  from different threads at different intervals.
 
   .. code-block:: pycon
 
