@@ -2230,21 +2230,21 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with *SIGSTOP* signal preemptively
+    Suspend process execution with *SIGSTOP* signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
-    On Windows this is done by suspending all process threads execution.
+    On Windows this is done by suspending all process threads.
 
   .. method:: resume()
 
-    Resume process execution with *SIGCONT* signal preemptively
+    Resume process execution with *SIGCONT* signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
-    On Windows this is done by resuming all process threads execution.
+    On Windows this is done by resuming all process threads.
 
   .. method:: terminate()
 
-    Terminate the process with *SIGTERM* signal preemptively checking
+    Terminate the process with *SIGTERM* signal, preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
@@ -2253,7 +2253,7 @@ Process class
 
   .. method:: kill()
 
-    Kill the current process by using *SIGKILL* signal preemptively
+    Kill the current process by using *SIGKILL* signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
@@ -2265,19 +2265,17 @@ Process class
     Wait for a process PID to terminate. The details about the return value
     differ on UNIX and Windows.
 
-    *On UNIX*: if the process terminated normally, the return value is a
-    positive integer >= 0 indicating the exit code.
-    If the process was terminated by a signal return the negated value of the
-    signal which caused the termination (e.g. ``-SIGTERM``).
-    If PID is not a child of :func:`os.getpid` (current process) just wait until
-    the process disappears and return ``None``.
-    If PID does not exist return ``None`` immediately.
+    *On UNIX*: if the process terminated normally, the return value is an
+    integer >= 0 indicating the exit code. If the process was terminated by a
+    signal, returns the negated value of the signal which caused the
+    termination (e.g. ``-SIGTERM``). If PID is not a child of :func:`os.getpid`
+    (current process), it just waits until the process disappears and return
+    ``None``. If PID does not exist return ``None`` immediately.
 
-    *On Windows*: always return the exit code, which is a positive integer as
-    returned by `GetExitCodeProcess`_.
+    *On Windows*: always return the exit code via `GetExitCodeProcess`_.
 
-    *timeout* is expressed in seconds. If specified and the process is still
-    alive raise :exc:`TimeoutExpired` exception.
+    *timeout* is expressed in seconds. If specified, and the process is still
+    alive, raise :exc:`TimeoutExpired`.
     ``timeout=0`` can be used in non-blocking apps: it will either return
     immediately or raise :exc:`TimeoutExpired`.
 
