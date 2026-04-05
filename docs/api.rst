@@ -1046,7 +1046,7 @@ Functions
 .. function:: pid_exists(pid)
 
   Check whether the given PID exists in the current process list. This is
-  faster than doing ``pid in psutil.pids()`` and should be preferred.
+  faster than doing ``pid in psutil.pids()``, and should be preferred.
 
   .. seealso:: :ref:`faq_pid_exists_vs_isrunning`
 
@@ -1064,7 +1064,7 @@ Functions
   *timeout* (seconds) occurs.
   Differently from :meth:`Process.wait` it will not raise
   :exc:`TimeoutExpired` if timeout occurs.
-  A typical use case may be:
+  The typical use case is:
 
   - send SIGTERM to a list of processes
   - give them some time to terminate
