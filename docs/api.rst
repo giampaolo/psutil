@@ -196,9 +196,9 @@ CPU
   - :field:`interrupts`:
     number of :term:`hardware interrupts <hardware interrupt>`.
   - :field:`soft_interrupts`:
-    number of :term:`soft interrupts <soft interrupt>`. Always set to ``0`` on
+    number of :term:`soft interrupts <soft interrupt>`; always set to ``0`` on
     Windows and SunOS.
-  - :field:`syscalls`: number of system calls. Always set to ``0`` on Linux.
+  - :field:`syscalls`: number of system calls; always set to ``0`` on Linux.
 
   Example (Linux):
 
