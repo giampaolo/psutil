@@ -18,9 +18,11 @@
    </div>
 
 psutil is a cross-platform library for retrieving information about running
-**processes** and **system utilization** (CPU, memory, disks, network, sensors)
-in Python. It is useful mainly for **system monitoring**, **profiling**,
-**limiting process resources**, and **managing running processes**.
+processes and system utilization (CPU, memory, disks, network, sensors)
+in Python. It is useful mainly for system monitoring, profiling,
+limiting process resources, and managing running processes.
+
+----
 
 .. raw:: html
 
@@ -62,7 +64,6 @@ in Python. It is useful mainly for **system monitoring**, **profiling**,
        <div class="home-feature-title">Processes</div>
      </a>
    </div>
-
 
 psutil implements many functionalities offered by UNIX command line tool such
 as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
