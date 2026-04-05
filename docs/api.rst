@@ -1649,13 +1649,12 @@ Process class
 
   .. method:: threads()
 
-    Return threads opened by this process as a list. On OpenBSD this method
-    requires root privileges. Each entry includes:
+    Return a list of threads spawned by this process. On OpenBSD, root privileges
+    are required. Each entry includes:
 
-    - :field:`id`: the native thread ID assigned by the kernel. If :attr:`pid`
-      refers to the current process this matches
-      :attr:`threading.Thread.native_id`, and can be used to reference
-      individual Python threads running within your own Python app.
+    - :field:`id`: native thread ID assigned by the kernel. If :attr:`pid` refers
+      to the current process, this matches :attr:`threading.Thread.native_id`
+      and can be used to reference individual Python threads in your app.
     - :field:`user_time`: time spent in user mode.
     - :field:`system_time`: time spent in kernel mode.
 
