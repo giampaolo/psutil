@@ -1,6 +1,26 @@
 {% extends "!layout.html" %}
 {% block extrahead %}
 {{ super() }}
+
+<!-- apply saved theme before first paint to avoid flash -->
+<script>
+  (function () {
+    var html = document.documentElement;
+
+    // suppress transitions during initial load
+    html.classList.add('no-transition');
+    if (localStorage.getItem('psutil-theme') === 'dark')
+      html.setAttribute('data-theme', 'dark');
+
+    // re-enable transitions after two animation frames
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        html.classList.remove('no-transition');
+      });
+    });
+  })();
+</script>
+
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-G7374TFB11"></script>
 <script>

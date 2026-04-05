@@ -725,8 +725,8 @@ Network
     :exc:`PermissionError`. That means the returned list may be incomplete.
 
   .. note::
-    - Linux, FreeBSD, OpenBSD: *raddr* field for UNIX sockets is always set to
-      ``""`` (empty string); this is a limitation of the OS.
+    - Linux, FreeBSD, OpenBSD: :field:`raddr` field for UNIX sockets is always set to
+      ``""``; this is a limitation of the OS.
     - macOS and AIX: :exc:`AccessDenied` is always raised unless running
       as root; this is a limitation of the OS.
     - Solaris: UNIX sockets are not supported.

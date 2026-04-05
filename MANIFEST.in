@@ -35,12 +35,14 @@ include docs/_static/images/logo-psutil.svg
 include docs/_static/images/logo-sansec.svg
 include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
-include docs/_static/js/highlight-numbers.js
+include docs/_static/js/highlight-repl.js
+include docs/_static/js/theme-toggle.js
 include docs/_static/logo.svg
 include docs/_templates/footer.html
 include docs/_templates/icon-footer-github.svg
 include docs/_templates/icon-footer-pypi.svg
 include docs/_templates/layout.html
+include docs/_templates/searchbox.html
 include docs/adoption.rst
 include docs/alternatives.rst
 include docs/api-overview.rst

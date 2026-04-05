@@ -17,12 +17,12 @@
      </div>
    </div>
 
--------------------------------------------------------------------------------
-
 psutil is a cross-platform library for retrieving information about running
-**processes** and **system utilization** (CPU, memory, disks, network, sensors)
-in Python. It is useful mainly for **system monitoring**, **profiling**,
-**limiting process resources**, and **managing running processes**.
+processes and system utilization (CPU, memory, disks, network, sensors)
+in Python. It is useful mainly for system monitoring, profiling,
+limiting process resources, and managing running processes.
+
+----
 
 .. raw:: html
 
@@ -65,22 +65,18 @@ in Python. It is useful mainly for **system monitoring**, **profiling**,
      </a>
    </div>
 
-
 psutil implements many functionalities offered by UNIX command line tool such
 as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
 (see :doc:`shell equivalents <shell-equivalents>`).
 It is used by :doc:`many notable projects <adoption>` including TensorFlow,
 PyTorch, Home Assistant, Ansible, and Celery.
 
--------------------------------------------------------------------------------
 
 Sponsors
 --------
 
 .. raw:: html
    :file: _sponsors.html
-
--------------------------------------------------------------------------------
 
 .. toctree::
    :maxdepth: 2

@@ -5,6 +5,7 @@
 <style type="text/css">
 	.st0{fill:#4B5168;}
 	.st1{fill:#F6914D;}
+	:root[data-theme="dark"] .st0{fill:#c8cad0;}
 </style>
 <g>
 	<path class="st0" d="M33.4,27.7V5.3c0-2.3,0-2.3,2.4-2.3c2.4,0,2.4,0,2.4,2.3v22.4c0,2.3,0,2.3-2.4,2.3

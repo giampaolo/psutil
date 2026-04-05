@@ -1,94 +1,173 @@
 /* ================================================================== */
-/* Variables                                                          */
+/* Sizes and effects                                                  */
 /* ================================================================== */
 
 :root {
-    /* base palette */
-    --gray-100: #f5f5f5;
-    --gray-200: #f0f4f7;
-    --gray-300: #d6d6d6;
-    --gray-400: #ccc;
-    --gray-500: #555;
-    --gray-600: #3b3b3b;
-    --gray-700: #222;
-    --gray-800: #000;
-
-    --blue-200: #f3f9fe;
-    --blue-300: #b0cfe8;
-    --blue-400: #2980b9;
-    --blue-500: #336699;
-    --blue-600: #224466;
-
-    --green-200: #f0faf0;
-    --green-400: #8aba8a;
-    --green-500: #4fc464;
-    --green-700: #296433;
-
-    --yellow-300: #f4e34c;
-    --yellow-700: #854826;
-
-    --red-200: #fff0f0;
-    --red-400: #e8a0a0;
-    --red-500: #f44c4e;
-    --red-700: #9f3133;
-
-    --dark-100: #2d2e27;
-
-    /* semantic */
     --border-radius: 3px;
-    --h1-h2-border: var(--gray-400);
-
+    --theme-transition: 0.2s ease;
     --adm-padding-y: 5px;
-    --adm-title: black;
-
     --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --code-line-height: 1.5;
-    --code-bg: var(--dark-100);
+    --h1-h2-border: var(--headings-underline);
+    --content-font-size: 16.5px;
+    --content-line-height: 26px;
+    --sidebar-font-size: 15px;
+    --sidebar-caption-font-size: 14px;
+}
 
-    --adm-note-bg: var(--gray-100);
-    --adm-note-border: var(--gray-400);
+/* ================================================================== */
+/* Colors — light mode (default)                                      */
+/* ================================================================== */
 
-    --adm-seealso-accent-border: var(--blue-500);
-    --adm-seealso-bg: var(--blue-200);
-    --adm-seealso-border: var(--blue-300);
-    --adm-seealso-hover: var(--blue-400);
-    --adm-seealso-title: var(--blue-600);
-    --adm-tip-bg: var(--green-200);
-    --adm-tip-border: var(--green-400);
-    --adm-warning-bg: var(--red-200);
-    --adm-warning-border: var(--red-400);
+:root {
+    /* page */
+    --body-bg: #efefef;
+    --content-bg: #fcfcfc;
+    --surface-sunken: #f5f5f5;
+    --surface-raised: #f0f4f7;
+    --border: #d6d6d6;
 
-    --sidebar-search-bg: var(--gray-600);
+    /* text */
+    --content-text: #3b3b3b;
+    --text-muted: #555;
+    --headings: #222;
+    --headings-underline: #ccc;
 
-    --versionadded-border: var(--green-500);
-    --versionadded-color: var(--green-700);
-    --versionchanged-border: var(--yellow-300);
-    --versionchanged-color: var(--yellow-700);
-    --deprecated-border: var(--red-500);
-    --deprecated-color: var(--red-700);
+    /* links */
+    --links: #2980b9;
+    --links-visited: #9b59b6;
+    --links-api: #336699;
+    --links-api-underline: var(--links-api);
 
-    --func-sig-bg: var(--gray-200);
-    --func-sig-border: var(--blue-500);
-    --func-sig-text: var(--gray-700);
-    --func-sig-name: var(--gray-800);
-    --func-sig-param: var(--gray-500);
+    /* inline code */
+    --inline-code-bg: rgba(175, 184, 193, 0.2);
+    --inline-code-text: inherit;
 
-    --table-header-bg: var(--gray-200);
-    --table-row-odd: #f8f9fa;
-    --table-row-even: #ffffff;
+    /* code blocks */
+    --code-bg: #2d2e27;
 
+    /* sidebar */
     --sidebar-bg: #343131;
+    --sidebar-top-bg: #343131;
     --sidebar-caption: #55a5d9;
     --sidebar-item: #d9d9d9;
-    --sidebar-item-nested: #333;
+    --sidebar-item-nested: #404040;
     --sidebar-active-border: #55a5d9;
     --sidebar-search-focus-border: #7ab3d4;
     --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
 
+    /* ntuple fields */
+    --ntuple-color: #333;
+
+    /* admonitions */
+    --adm-title: black;
+    --adm-note-bg: var(--surface-sunken);
+    --adm-note-border: #ccc;
+    --adm-seealso-accent-border: #336699;
+    --adm-seealso-link: #2a6099;
+    --adm-seealso-bg: #f3f9fe;
+    --adm-seealso-border: #b0cfe8;
+    --adm-seealso-hover: #2980b9;
+    --adm-seealso-title: #224466;
+    --adm-tip-bg: #f0faf0;
+    --adm-tip-border: #8aba8a;
+    --adm-warning-bg: #fff0f0;
+    --adm-warning-border: #e8a0a0;
+
+    /* version directives */
+    --versionadded-border: #4fc464;
+    --versionadded-color: #296433;
+    --versionchanged-border: #f4e34c;
+    --versionchanged-color: #854826;
+    --deprecated-border: #f44c4e;
+    --deprecated-color: #9f3133;
+
+    /* tables */
+    --table-header-bg: var(--surface-raised);
+    --table-row-odd: #f8f9fa;
+    --table-row-even: #ffffff;
+
+    /* API signatures */
+    --func-sig-bg: var(--surface-raised);
+    --func-sig-border: var(--links-api);
+    --func-sig-text: var(--headings);
+    --func-sig-name: var(--headings);
+    --func-sig-param: var(--text-muted);
+
+    /* cards */
+    --card-bg: #fff;
+    --card-border: #b0cfe8;
+
+    /* footer */
     --footer-icon: #999;
     --footer-icon-hover: #444;
+}
 
-    --card-bg: #fff;
+/* ================================================================== */
+/* Colors — dark mode                                                 */
+/* ================================================================== */
+
+[data-theme="dark"] {
+    /* page */
+    --body-bg: #1e1e1e;
+    --content-bg: #1e1e1e;
+    --sidebar-bg: #272727;
+    --sidebar-top-bg: #272727;
+    --surface-sunken: #2a2a2a;
+    --surface-raised: #2e2e2e;
+    --border: #3a3a3a;
+
+    /* text */
+    --content-text: #c8c8c8;
+    --text-muted: #b0b0ba;
+    --headings: #d1d1d1;
+    --headings-underline: #3a3a3a;
+
+    /* inline code */
+    --inline-code-bg: #2a2f36;
+    --inline-code-text: #e6e6e6;
+
+    /* code blocks */
+    --code-bg: #1f211d;
+
+    /* ntuple fields */
+    --ntuple-color: #6db99a;
+
+    /* links */
+    --links: #6ab0de;
+    --links-visited: #c5a3ff;
+    --links-api: #7ecfff;
+    --links-api-underline: #7ecfff;
+
+    /* admonitions */
+    --adm-title: #ddd;
+    --adm-note-bg: #2a2a2a;
+    --adm-note-border: #4a4a4a;
+    --adm-seealso-accent-border: #5599cc;
+    --adm-seealso-link: #90c8ee;
+    --adm-seealso-bg: #243a4e;
+    --adm-seealso-border: #2d5280;
+    --adm-seealso-hover: #8bbfe0;
+    --adm-seealso-title: #7ab0d9;
+    --adm-tip-bg: #1a2a1a;
+    --adm-tip-border: #3a6a3a;
+    --adm-warning-bg: #472424;
+    --adm-warning-border: #8a3030;
+
+    /* version directives */
+    --versionadded-color: #5ec46e;
+    --versionchanged-color: #c8963a;
+    --deprecated-color: #d06060;
+
+    /* tables */
+    --table-header-bg: #2a2d3a;
+    --table-row-odd: #222222;
+    --table-row-even: #272727;
+
+    /* cards */
+    --card-bg: #252525;
+    --card-border: #2a4a6a;
+
 }
 
 /* ================================================================== */
@@ -98,12 +177,13 @@
 .hero {
     text-align: center;
     padding: 1.5em 0 2em;
+    /*background: radial-gradient(ellipse, #2d2d2d 0%, var(--content-bg) 70%);*/
 }
 
 .hero-title {
     font-size: 3.5rem;
     font-weight: 700;
-    color: var(--gray-800);
+    color: var(--headings);
     line-height: 1.1;
     margin-bottom: 0.3em;
     font-variant-ligatures: none;
@@ -126,7 +206,7 @@
 
 .hero-subtitle {
     font-size: 1.15rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     margin-bottom: 0.9em;
 }
 
@@ -167,7 +247,7 @@
 
 .home-platform-label {
     font-size: 0.92rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     font-weight: 600;
     align-self: center;
 }
@@ -175,11 +255,11 @@
 .home-platform-pill {
     display: inline-block;
     padding: 3px 12px;
-    border: 1px solid var(--gray-300);
+    border: 1px solid var(--border);
     border-radius: 999px;
     font-size: 0.82rem;
-    color: var(--gray-500);
-    background: var(--gray-100);
+    color: var(--text-muted);
+    background: var(--surface-sunken);
 }
 
 .home-feature-cards {
@@ -216,7 +296,7 @@
 }
 
 .home-feature-card {
-    border: 1px solid var(--blue-300);
+    border: 1px solid var(--card-border);
     border-radius: 8px;
     padding: 20px 14px;
     text-align: center;
@@ -228,7 +308,7 @@
 
 .home-feature-card:hover {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-color: var(--blue-400);
+    border-color: var(--links);
 }
 
 .home-icon-svg {
@@ -238,9 +318,13 @@
     margin: 0 auto 10px;
 }
 
+[data-theme="dark"] .home-icon-svg {
+    filter: brightness(1.45) saturate(0.7);
+}
+
 .home-icon-fa {
     font-size: 2.2rem;
-    color: var(--blue-400);
+    color: var(--links);
     display: block;
     margin-bottom: 10px;
 }
@@ -249,12 +333,12 @@
     font-weight: 700;
     font-size: 0.95rem;
     margin-bottom: 10px;
-    color: var(--gray-700);
+    color: var(--headings);
 }
 
 .home-feature-apis {
     font-size: 0.78rem;
-    color: var(--gray-500);
+    color: var(--text-muted);
     font-family: var(--code-font);
     line-height: 1.9;
 }
@@ -273,6 +357,25 @@
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+.wy-nav-content-wrap {
+    background: var(--body-bg) !important;
+}
+
+.wy-nav-content {
+    background: var(--content-bg) !important;
+    /* dark mode only: subtle separator between content and the strip */
+    border-right: 1px solid var(--headings-underline);
+}
+
+.rst-content {
+    color: var(--content-text);
+}
+
+.rst-content p, .rst-content li, .rst-content dd {
+    font-size: var(--content-font-size) !important;
+    line-height: var(--content-line-height) !important;
 }
 
 @media (max-width: 768px) {
@@ -298,12 +401,13 @@ footer div[role="navigation"][aria-label="Footer"] {
 /* Sidebar                                                            */
 /* ================================================================== */
 
+.wy-nav-side,
 .wy-nav-top {
     background-color: var(--sidebar-bg) !important;
 }
 
 .wy-side-nav-search {
-    background-color: var(--sidebar-bg) !important;
+    background-color: var(--sidebar-top-bg) !important;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -341,6 +445,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
+    font-size: var(--sidebar-caption-font-size) !important;
 }
 
 .wy-menu-vertical li.toctree-l1:not(.current) > a {
@@ -354,6 +459,83 @@ footer div[role="navigation"][aria-label="Footer"] {
 .wy-menu-vertical li.current > a {
     border-left: 3px solid var(--sidebar-active-border) !important;
 }
+
+.wy-menu-vertical a {
+    font-size: var(--sidebar-font-size) !important;
+}
+
+/* ================================================================== */
+/* Sidebar theme switch                                               */
+/* ================================================================== */
+
+/* smooth transition effect  */
+html,
+body,
+.wy-body-for-nav,
+.wy-nav-content-wrap,
+.wy-nav-content {
+    transition: background-color var(--theme-transition), color var(--theme-transition);
+}
+
+/* suppress all transitions during initial page load */
+.no-transition * {
+    transition: none !important;
+}
+
+.wy-side-nav-search .wy-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wy-side-nav-search .wy-form input[type="text"] {
+    flex: 1;
+    width: auto !important;
+    margin-bottom: 0;
+}
+
+.theme-switch {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.theme-switch input {
+    display: none;
+}
+
+/* the circle button */
+.theme-switch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+    transition: background 0.2s;
+}
+
+.theme-switch:hover .theme-switch-btn {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* light mode: show moon, hide sun */
+.theme-switch-sun { display: none; }
+.theme-switch-moon { display: block; }
+
+/* dark mode: show sun, hide moon */
+.theme-switch input:checked ~ .theme-switch-btn .theme-switch-sun,
+[data-theme="dark"] .theme-switch-sun  { display: block; }
+
+.theme-switch input:checked ~ .theme-switch-btn .theme-switch-moon,
+[data-theme="dark"] .theme-switch-moon { display: none; }
 
 /* ================================================================== */
 /* Footer                                                           */
@@ -403,11 +585,19 @@ footer div[role="navigation"][aria-label="Footer"] {
 h1, h2, h3, h4 {
     margin-top: 20px !important;
     margin-bottom: 10px !important;
+    color: var(--headings) !important;
 }
 
 h1, h2 {
     padding: 5px;
     border-bottom: 1px solid var(--h1-h2-border);
+}
+
+h1, h1 a,
+h2, h2 a,
+h3, h3 a,
+h4, h4 a {
+    color: var(--headings) !important;
 }
 
 h1 {
@@ -439,12 +629,22 @@ h4 {
     background-color: var(--table-header-bg);
 }
 
+.wy-table-responsive table thead th {
+    color: var(--content-text);
+}
+
 .wy-table-responsive table tbody tr.row-odd td {
     background-color: var(--table-row-odd) !important;
 }
 
 .wy-table-responsive table tbody tr.row-even td {
     background-color: var(--table-row-even) !important;
+}
+
+.wy-table-responsive table,
+.wy-table-responsive table th,
+.wy-table-responsive table td {
+    border-color: var(--border) !important;
 }
 
 .document th {
@@ -519,6 +719,18 @@ h4 {
 }
 
 /* ================================================================== */
+/* Links                                                              */
+/* ================================================================== */
+
+.rst-content a {
+    color: var(--links);
+}
+
+.rst-content a:visited {
+    color: var(--links-visited);
+}
+
+/* ================================================================== */
 /* API signatures                                                     */
 /* ================================================================== */
 
@@ -558,8 +770,8 @@ h4 {
 
 /* inline literals: ``like this`` */
 .rst-content code, .rst-content tt, code {
-    color: inherit !important;
-    background: rgba(175, 184, 193, 0.2) !important;
+    color: var(--inline-code-text) !important;
+    background: var(--inline-code-bg) !important;
     border: none !important;
     border-radius: 4px !important;
     padding: .1em .35em !important;
@@ -569,6 +781,10 @@ h4 {
 }
 
 /* cross-references to API symbols like :func:`psutil.users` */
+.rst-content a.reference:has(code.xref) {
+    color: var(--links-api) !important;
+}
+
 .rst-content a.reference code,
 .rst-content a.reference tt {
     color: inherit !important;
@@ -577,11 +793,14 @@ h4 {
     /*font-weight: bold !important;*/
     font-size:90% !important;
     text-decoration: underline;
+    text-decoration-color: var(--links-api-underline);
+    text-decoration-thickness: 1px;
     text-underline-offset: 4px;
 }
 
 /* named tuple field */
 code.ntuple-field {
+    color: var(--ntuple-color) !important;
     font-weight: bold !important;
 }
 
@@ -589,20 +808,9 @@ code.ntuple-field {
 /* Code blocks                                                        */
 /* ================================================================== */
 
-/* Python number, string, and namedtuple name highlights in pycon output */
-.highlight-pycon .pycon-number { color: #ae81ff; }
-.highlight-pycon .pycon-string { color: #e6db74; }
-.highlight-pycon .pycon-name   { color: #89b8d4; }
-
 /* reduce bottom margin of code blocks inside list items */
 .rst-content li > div[class^='highlight'] {
     margin-bottom: 6px !important;
-}
-
-.highlight,
-.highlight pre {
-    font-size: 13px !important;
-    font-family: var(--code-font) !important;
 }
 
 div[class^="highlight-"] {
@@ -611,25 +819,57 @@ div[class^="highlight-"] {
 }
 
 .highlight {
-    background-color: var(--code-bg);
     border-radius: var(--border-radius);
     overflow: hidden;
+}
+
+.rst-content div[class^=highlight],
+.rst-content pre.literal-block {
+    border-color: var(--border) !important;
+}
+
+/* ------------------------- font ------------------------- */
+
+.highlight,
+.highlight pre {
+    font-size: 13px !important;
+    font-family: var(--code-font) !important;
 }
 
 .highlight pre {
     line-height: var(--code-line-height) !important;
 }
 
+/* ----------------- syntax highlight colors --------------- */
+
+/* Python number, string, and namedtuple name highlights in pycon output */
+.highlight-pycon .pycon-number { color: #8f6fcc; }
+.highlight-pycon .pycon-string { color: #b8a84e; }
+.highlight-pycon .pycon-field  { color: #6db99a }
+
+/* tone down Pygments Generic.Prompt (>>>) and Generic.Output */
+.highlight .gp { color: #666666; font-weight: normal; }
+.highlight .go { color: #7a9aaa; }
+
+.highlight {
+    background-color: var(--code-bg) !important;
+}
+
 /* ================================================================== */
 /* Links                                                              */
 /* ================================================================== */
 
-/* external links: small icon instead of dotted underline */
+a.external[href^="#"] {
+    text-decoration: none;
+    color: inherit;
+}
+
 a.reference.external:not([href*="docs.python.org"]):not(:has(img)) {
     text-decoration: none;
 }
 
-a.reference.external:not([href*="docs.python.org"]):not(:has(img))::after {
+/* external links: show a small icon */
+a.reference.external:not(:has(img))::after {
     content: '\f08e';
     font-family: FontAwesome;
     font-size: 0.4em;
@@ -639,9 +879,11 @@ a.reference.external:not([href*="docs.python.org"]):not(:has(img))::after {
     opacity: 0.6;
 }
 
-a.external[href^="#"] {
-    text-decoration: none;
-    color: inherit;
+/* adjust cpython API links (intersphinx) icon position */
+a.reference.external[href*="docs.python.org"]:not(:has(img))::after {
+    margin-left: -3px;
+    margin-right: 2px;
+    padding-left: 0;
 }
 
 /* ================================================================== */
@@ -687,7 +929,7 @@ div.admonition a {
 }
 
 div.seealso a.reference {
-    color: var(--adm-seealso-accent-border) !important;
+    color: var(--adm-seealso-link) !important;
     text-decoration: underline;
     text-underline-offset: 2px;
 }
@@ -770,7 +1012,7 @@ div.deprecated .versionmodified {
     border-left: none !important;
     color: var(--func-sig-text) !important;
     padding: 6px 10px !important;
-    font-size: 1.1em;
+    font-size: var(--content-font-size) !important;
 }
 
 /* The function name itself */
@@ -789,7 +1031,7 @@ div.deprecated .versionmodified {
     font-weight: normal;
 }
 
-/* Optional: Keep the [source] link subtle */
+/* Keep the [source] link subtle */
 .viewcode-link {
     color: var(--func-sig-border) !important;
     font-size: 0.8em;
