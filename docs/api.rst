@@ -1692,15 +1692,15 @@ Process class
 
   .. method:: cpu_percent(interval=None)
 
-    Return a float representing the process CPU utilization as a percentage
-    which can also be ``> 100.0`` if the process runs multiple threads
-    on different CPUs.
-    When *interval* is > ``0.0`` compares process times to system CPU times
-    elapsed before and after the interval (blocking). When *interval* is ``0.0``
-    or ``None`` compares process times to system CPU times elapsed since last
-    call, returning immediately. That means the first time this is called it
-    will return a meaningless ``0.0`` value which you are supposed to ignore.
-    For accuracy, it is recommended to call this function a second time with
+    Return process CPU utilization as a percentage. Values can exceed ``100.0``
+    if the process runs multiple threads on different CPUs.
+
+    If *interval* is > ``0.0``, measures CPU times before and after the interval
+    (blocking). If ``0.0`` or ``None``, returns the utilization since the last
+    call or module import, returning immediately.
+    That means the first time this is called it will return a meaningless ``0.0``
+    value which you are supposed to ignore.
+    In this case it is recommended for accuracy that this method be called with
     at least ``0.1`` seconds between calls.
 
     .. code-block:: pycon
