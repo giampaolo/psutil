@@ -573,8 +573,8 @@ Disks
       'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
   .. note::
-    on Windows ``diskperf -y`` command may need to be executed first
-    otherwise this function won't find any disk.
+     On Windows, you may need to run ``diskperf -y`` command first, otherwise
+     this function might not detect any disks.
 
   .. seealso::
      - `scripts/iotop.py`_
@@ -612,15 +612,15 @@ Network
     and BSD). A non-zero and growing count is a sign of network saturation.
 
   If *pernic* is ``True``, return the same information for every network
-  interface as a dictionary with interface names as the keys.
+  interface as a dictionary, with interface names as the keys.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
   are automatically adjusted so they never decrease (this can happen on very
   busy or long-lived systems). ``net_io_counters.cache_clear()`` can be
   used to invalidate the *nowrap* cache.
 
-  On machines with no network interfaces this function will return ``None`` or
-  ``{}`` if *pernic* is ``True``.
+  On machines with no :term:`NICs <NIC>` installed this function will return
+  ``None`` or ``{}`` if *pernic* is ``True``.
 
   .. code-block:: pycon
 
@@ -642,15 +642,17 @@ Network
 
   Return system-wide socket connections as a list. Each entry provides 7 fields:
 
-  - :field:`fd`: the socket :term:`file descriptor`; ``-1`` on Windows and SunOS.
+  - :field:`fd`: the socket :term:`file descriptor`; set to ``-1`` on Windows
+    and SunOS.
   - :field:`family`: the address family, either :data:`socket.AF_INET`,
     :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
   - :field:`type`: the address type, either :data:`socket.SOCK_STREAM`,
     :data:`socket.SOCK_DGRAM` or :data:`socket.SOCK_SEQPACKET`.
-  - :field:`laddr`: the local address as a ``(ip, port)`` named tuple or a
+  - :field:`laddr`: the local address as a ``(ip, port)`` named tuple, or a
     ``path`` for :data:`socket.AF_UNIX` sockets (see notes below).
-  - :field:`raddr`: the remote address, either an empty tuple (``AF_INET*``) or
-    ``""`` (``AF_UNIX``) when not connected. For UNIX sockets see notes below.
+  - :field:`raddr`: the remote address. When not connected, this is either
+    an empty tuple (``AF_INET*``) or an empty string (``""``) for ``AF_UNIX``
+    sockets. See notes below for UNIX sockets.
   - :field:`status`: a :data:`CONN_* <psutil.CONN_ESTABLISHED>` constant;
     always :data:`CONN_NONE` for UDP and UNIX sockets.
   - :field:`pid`: PID of the process which opened the socket. Set to ``None``
@@ -781,7 +783,7 @@ Network
   - :field:`speed`: NIC speed in megabits (Mbps); ``0`` if undetermined.
   - :field:`mtu`: maximum transmission unit in bytes.
   - :field:`flags`: a comma-separated string of interface flags (e.g.
-    ``"up,broadcast,running,multicast"``); may be an emty string.
+    ``"up,broadcast,running,multicast"``); may be an empty string.
 
   .. code-block:: pycon
 
