@@ -1094,22 +1094,21 @@ Exceptions
 .. exception:: NoSuchProcess(pid, name=None, msg=None)
 
   Raised by :class:`Process` methods when a process with the given *pid*
-  is not found or no longer exists. *name* is set only if
+  is not found or no longer exists. *name* attribute is set only if
   :meth:`Process.name` was called before the process disappeared.
 
   .. seealso:: :ref:`faq_no_such_process`
 
+
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-  A subclass of :exc:`NoSuchProcess` which may be raised by :class:`Process`
-  class methods when dealing with a :term:`zombie process` on UNIX (Windows
-  doesn't have zombie processes).
-  *name* and *ppid* attributes are set if :meth:`Process.name` or
-  :meth:`Process.ppid` methods were called before the process turned into a
-  zombie.
+  Subclass of :exc:`NoSuchProcess`, raised by :class:`Process` methods when
+  encountering a :term:`zombie process` on UNIX (Windows does not have
+  zombies). *name* and *ppid* attributes are set if :meth:`Process.name` or
+  :meth:`Process.ppid` were called before the process became a zombie.
 
-  If you're not interested in detecting zombie processes you can ignore this
-  exception and just catch :exc:`NoSuchProcess`.
+  If you do not need to detect zombies, you can ignore this exception and
+  just catch :exc:`NoSuchProcess`.
 
   .. seealso:: :ref:`faq_zombie_process`
 
