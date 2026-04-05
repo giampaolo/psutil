@@ -1476,13 +1476,14 @@ Process class
        10
        >>>
 
-    On Windows this is implemented via `GetPriorityClass`_ and
-    `SetPriorityClass`_, and *value* is one of the
-    :ref:`*_PRIORITY_CLASS <const-proc-prio>` constants:
+    On Windows *value* is one of the :ref:`*_PRIORITY_CLASS <const-proc-prio>`
+    constants:
 
     .. code-block:: pycon
 
-       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)  # increase priority
+       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)  # set higher priority
+       >>> p.nice()  # get
+       <ProcessPriority.HIGH_PRIORITY_CLASS: 32768>
 
     This method was later incorporated in Python 3.3 as
     :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
@@ -2744,7 +2745,7 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Represent the priority of a process on Windows (see `SetPriorityClass`_).
+Represent the priority of a process on Windows (see `SetPriorityClass`_ doc).
 They can be used in conjunction with :meth:`Process.nice` to get or
 set process priority.
 
@@ -2991,7 +2992,6 @@ Environment variables
 
 .. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`GetPerformanceInfo`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
-.. _`GetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
 .. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess
