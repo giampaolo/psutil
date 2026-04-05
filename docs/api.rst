@@ -98,24 +98,23 @@ CPU
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
-  Return a float representing the current system-wide CPU utilization as a
-  percentage.
+  Return the current system-wide CPU utilization as a percentage.
 
-  When *interval* is > ``0.0``, compares system CPU times elapsed before and
-  after the interval (blocking). When ``0.0`` or ``None``, compares times
-  elapsed since the last call or module import, returning immediately.
+  If *interval* is > 0.0, measures CPU times before and after the interval
+  (blocking). If 0.0 or ``None``, returns the utilization since the last
+  call or module import returning immediately.
   That means the first time this is called it will return a meaningless ``0.0``
   value which you are supposed to ignore.
   In this case it is recommended for accuracy that this function be called with
   at least ``0.1`` seconds between calls.
 
-  When *percpu* is ``True``, returns a list of floats for each :term:`logical CPU`
-  on the system. The list is ordered by CPU index and is consistent across
+  If *percpu* is ``True``, returns a list of floats representing each
+  :term:`logical CPU`. The list is ordered by CPU index and consistent across
   calls.
 
-  This function is thread-safe. It maintains a internal map of calling thread
-  IDs (:func:`threading.get_ident`), allowing independent results when called
-  from different threads at different intervals.
+  This function is thread-safe. It maintains an internal map of thread IDs
+  (:func:`threading.get_ident`) so that independent results are returned when
+  called from different threads at different intervals.
 
   .. code-block:: pycon
 
