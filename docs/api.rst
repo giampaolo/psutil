@@ -466,11 +466,14 @@ Disks
 .. function:: disk_partitions(all=False)
 
   Return mounted disk partitions as a list. This is similar to the ``df``
-  command on UNIX. When *all* is ``False``, only physical devices
-  (e.g., hard disks, CD-ROM drives, USB keys) are returned; pseudo, memory,
-  duplicate, and inaccessible filesystems are ignored.
-  Note that ``all=False`` may not be fully reliable on all systems (e.g.,
-  on BSD, this parameter is ignored).
+  command on UNIX. When *all* is ``False``, virtual/pseudo filesystems
+  (tmpfs, sysfs, devtmpfs, cgroup, etc.) are excluded, keeping only physical
+  devices (e.g., hard disks, CD-ROM drives, USB keys). The filtering logic
+  varies by platform: on Linux, it checks ``/proc/filesystems`` for
+  ``nodev``-flagged types (ZFS is always included); on macOS, it checks
+  whether the device path exists; on SunOS and AIX, it excludes filesystems
+  with zero total size. On BSD, *all* is ignored and all partitions are
+  always returned.
 
   * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
     drive letter (e.g. "C:\\").
