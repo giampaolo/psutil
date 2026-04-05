@@ -1988,11 +1988,16 @@ Process class
 
   .. method:: memory_percent(memtype="rss")
 
-    Return process memory usage as a percentage of total physical memory
-    (``process.memory_info().rss / virtual_memory().total * 100``).
-    *memtype* can be any field name from :meth:`memory_info`,
-    :meth:`memory_info_ex`, or :meth:`memory_footprint` and controls which
-    memory value is used in the calculation (defaults to ``"rss"``).
+    Return process memory usage as a percentage of total physical memory. Same
+    as:
+
+    .. code-block:: python
+
+       Process().memory_info().rss / virtual_memory().total * 100
+
+    *memtype* selects which memory field to use and can be any attribute
+    from :meth:`memory_info`, :meth:`memory_info_ex`, or :meth:`memory_footprint`
+    (default is ``"rss"``).
 
     .. versionchanged:: 4.0.0
        added *memtype* parameter.
