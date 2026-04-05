@@ -138,13 +138,13 @@ CPU
 
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
-  Same as :func:`cpu_percent` but provides utilization percentages for each
+  Similar to :func:`cpu_percent` but provides utilization percentages for each
   specific CPU time as is returned by
   :func:`psutil.cpu_times(percpu=True)<cpu_times()>`.
   *interval* and
   *percpu* arguments have the same meaning as in :func:`cpu_percent`.
-  On Linux "guest" and "guest_nice" percentages are not accounted in "user"
-  and "user_nice" percentages.
+  On Linux, :field:`guest` and :field:`guest_nice` percentages are not accounted
+  in :field:`user` and :field:`user_nice`.
 
   .. seealso:: :ref:`faq_cpu_percent`
 
