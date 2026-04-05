@@ -1093,10 +1093,9 @@ Exceptions
 
 .. exception:: NoSuchProcess(pid, name=None, msg=None)
 
-  Raised by :class:`Process` class methods when no process with the given
-  *pid* is found in the current process list, or when a process no longer
-  exists. *name* is the name the process had before disappearing
-  and gets set only if :meth:`Process.name` was previously called.
+  Raised by :class:`Process` methods when a process with the given *pid*
+  is not found or no longer exists. *name* is set only if
+  :meth:`Process.name` was called before the process disappeared.
 
   .. seealso:: :ref:`faq_no_such_process`
 
