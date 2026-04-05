@@ -1409,7 +1409,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 **Enhancements**
 
 - :gh:`802`: :func:`disk_io_counters` and :func:`net_io_counters` no longer
-  wrap (restart from 0). New ``nowrap`` argument.
+  wrap (restart from 0). New *nowrap* argument.
 - :gh:`928`: :func:`net_connections` and :meth:`Process.connections`
   :field:`laddr` and :field:`raddr` are now named tuples.
 - :gh:`1015`: :func:`swap_memory` now reads ``/proc/meminfo`` instead of
@@ -2191,13 +2191,13 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`424`, [Windows]: installer for Python 3.X 64 bit.
 - :gh:`427`: add :func:`cpu_count`.
-- :gh:`447`: :func:`wait_procs` ``timeout`` parameter is now optional.
+- :gh:`447`: :func:`wait_procs` *timeout* parameter is now optional.
 - :gh:`452`: make :class:`Process` instances hashable and usable with ``set()``
   s.
 - :gh:`453`: tests on Python < 2.7 require ``unittest2`` module.
 - :gh:`459`: add a Makefile for running tests and other repetitive tasks (also
   on Windows).
-- :gh:`463`: make timeout parameter of ``cpu_percent*`` functions default to
+- :gh:`463`: make *timeout* parameter of ``cpu_percent*`` functions default to
   ``0.0`` 'cause it's a common trap to introduce slowdowns.
 - :gh:`468`: move documentation to readthedocs.com.
 - :gh:`477`: :meth:`Process.cpu_percent` is about 30% faster.  (suggested by
@@ -2349,7 +2349,7 @@ cases accessing the old names will work but it will cause a
   | p.create_time | p.create_time() |
   +---------------+-----------------+
 
-- timeout parameter of ``cpu_percent*`` functions defaults to 0.0 instead of
+- *timeout* parameter of ``cpu_percent*`` functions defaults to 0.0 instead of
   0.1.
 - long deprecated ``psutil.error`` module is gone; exception classes now live
   in "psutil" namespace only.
@@ -2766,7 +2766,7 @@ cases accessing the old names will work but it will cause a
 - :gh:`206`: add :func:`disk_io_counters`). (macOS and Windows patch by Jeremy
   Whitlock)
 - :gh:`213`: add `scripts/iotop.py`_.
-- :gh:`217`: :meth:`Process.connections` now has a ``kind`` argument to
+- :gh:`217`: :meth:`Process.connections` now has a *kind* argument to
   filter for connections with different criteria.
 - :gh:`221`, [FreeBSD]: :meth:`Process.open_files` has been rewritten in C
   and no longer relies on ``lsof``.
@@ -2887,7 +2887,7 @@ cases accessing the old names will work but it will cause a
   uses WMI, much faster, pywin32 no longer required). (patch by wj32)
 - :gh:`117`, [Windows]: added support for Windows 2000.
 - :gh:`123`: :func:`cpu_percent` and :meth:`Process.cpu_percent` accept a
-  new ``interval`` parameter.
+  new *interval* parameter.
 - :gh:`129`: add :meth:`Process.threads`.
 
 **Bug fixes**
@@ -2916,7 +2916,7 @@ cases accessing the old names will work but it will cause a
 
 - ``psutil.Process.path`` property is deprecated and works as an alias for
   ``psutil.Process.exe`` property.
-- :meth:`Process.kill`: signal argument was removed - to send a signal to the
+- :meth:`Process.kill`: *signal* argument was removed - to send a signal to the
   process use :meth:`Process.send_signal` method instead.
 - :meth:`Process.memory_info` returns a nametuple instead of a tuple.
 - :func:`cpu_times` returns a nametuple instead of a tuple.
