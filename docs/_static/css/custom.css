@@ -177,7 +177,7 @@
 .hero {
     text-align: center;
     padding: 1.5em 0 2em;
-    /*background: radial-gradient(circle, #2d2d2d 0%, #1a1a1a 70%);*/
+    /*background: radial-gradient(ellipse, #2d2d2d 0%, var(--content-bg) 70%);*/
 }
 
 .hero-title {
