@@ -31,11 +31,11 @@ CPU
   Cross-platform fields:
 
   - :field:`user`: time spent by normal processes executing in user mode; on
-    Linux this also includes :field:`guest` time
+    Linux this also includes :field:`guest` time.
 
-  - :field:`system`: time spent by processes executing in kernel mode
+  - :field:`system`: time spent by processes executing in kernel mode.
 
-  - :field:`idle`: time spent doing nothing
+  - :field:`idle`: time spent doing nothing.
 
   Platform-specific fields:
 
@@ -47,10 +47,10 @@ CPU
     (:term:`iowait`). This is *not* accounted in :field:`idle` time counter.
 
   - :field:`irq` *(Linux, Windows, BSD)*: time spent for servicing
-    :term:`hardware interrupts <hardware interrupt>`
+    :term:`hardware interrupts <hardware interrupt>`.
 
   - :field:`softirq` *(Linux)*: time spent for servicing
-    :term:`soft interrupts <soft interrupt>`
+    :term:`soft interrupts <soft interrupt>`.
 
   - :field:`steal` *(Linux)*: CPU time the virtual machine wanted to run but was
     used by other virtual machines or the host. A sustained non-zero steal rate
@@ -544,23 +544,23 @@ Disks
 
   Return system-wide disk I/O statistics:
 
-  - :field:`read_count`: number of reads
-  - :field:`write_count`: number of writes
-  - :field:`read_bytes`: number of bytes read
-  - :field:`write_bytes`: number of bytes written
+  - :field:`read_count`: number of reads.
+  - :field:`write_count`: number of writes.
+  - :field:`read_bytes`: number of bytes read.
+  - :field:`write_bytes`: number of bytes written.
 
   Platform-specific fields:
 
   - :field:`read_time`: (all except *NetBSD* and *OpenBSD*) time spent reading
-    from disk (in milliseconds)
+    from disk (in milliseconds).
   - :field:`write_time`: (all except *NetBSD* and *OpenBSD*) time spent writing
-    to disk (in milliseconds)
+    to disk (in milliseconds).
   - :field:`busy_time`: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
     milliseconds). See :term:`busy_time`.
   - :field:`read_merged_count` (*Linux*): number of merged reads
-    (see `iostats doc`_)
+    (see `iostats doc`_).
   - :field:`write_merged_count` (*Linux*): number of merged writes
-    (see `iostats doc`_)
+    (see `iostats doc`_).
 
   If *perdisk* is ``True`` return the same information for every physical disk
   as a dictionary with partition names as the keys.
@@ -611,12 +611,12 @@ Network
 
   Return system-wide network I/O statistics:
 
-  - :field:`bytes_sent`: number of bytes sent
-  - :field:`bytes_recv`: number of bytes received
-  - :field:`packets_sent`: number of packets sent
-  - :field:`packets_recv`: number of packets received
-  - :field:`errin`: total number of errors while receiving
-  - :field:`errout`: total number of errors while sending
+  - :field:`bytes_sent`: number of bytes sent.
+  - :field:`bytes_recv`: number of bytes received.
+  - :field:`packets_sent`: number of packets sent.
+  - :field:`packets_recv`: number of packets received.
+  - :field:`errin`: total number of errors while receiving.
+  - :field:`errout`: total number of errors while sending.
   - :field:`dropin`: total number of incoming packets dropped at the
     :term:`NIC` level. Unlike :field:`errin`, drops indicate the interface or
     kernel buffer was overwhelmed.
@@ -752,11 +752,11 @@ Network
   - :field:`family`: the address family, either :data:`socket.AF_INET` (IPv4),
     :data:`socket.AF_INET6` (IPv6), :data:`socket.AF_UNSPEC` (a virtual or
     unconfigured NIC), or :data:`AF_LINK` (a MAC address).
-  - :field:`address`: the primary NIC address
-  - :field:`netmask`: the netmask address
-  - :field:`broadcast`: the broadcast address; always ``None`` on Windows
+  - :field:`address`: the primary NIC address.
+  - :field:`netmask`: the netmask address.
+  - :field:`broadcast`: the broadcast address; always ``None`` on Windows.
   - :field:`ptp`: a "point to point" address (typically a VPN); always ``None`` on
-    Windows
+    Windows.
 
   .. code-block:: pycon
 
