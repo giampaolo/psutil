@@ -246,18 +246,13 @@ CPU
 
 .. function:: getloadavg()
 
-  Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-  The "load" represents the processes which are in a runnable state, either
-  using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-  On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
-  by using a Windows API that spawns a thread which keeps running in
-  background and updates results every 5 seconds, mimicking the UNIX behavior.
-  Thus, on Windows, the first time this is called and for the next 5 seconds
-  it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
-  The numbers returned only make sense when compared to the number of CPU cores
-  installed on the system. So, for instance, a value of ``3.14`` on a system
-  with 10 :term:`logical CPUs <logical CPU>` means that the system load was
-  31.4% percent over the last N minutes.
+  Return the average system load over the last 1, 5 and 15 minutes as a
+  tuple. On UNIX, this relies on :func:`os.getloadavg`. On Windows, this is
+  emulated via a background thread that updates every 5 seconds; the first
+  call (and for the following 5 seconds) returns ``(0.0, 0.0, 0.0)``.
+  The values only make sense relative to the number of installed
+  :term:`logical CPUs <logical CPU>` (e.g. ``3.14`` on a 10-CPU system means
+  31.4% load).
 
   .. code-block:: pycon
 

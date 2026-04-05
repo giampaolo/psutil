@@ -146,14 +146,6 @@ Glossary
       entries returned by ``cpu_percent(percpu=True)``. See also
       :term:`physical CPU`.
 
-   load average
-
-      Three floating-point values representing the average number of
-      processes in a *runnable* or *uninterruptible* state over the last
-      1, 5, and 15 minutes. A load average equal to the number of
-      :term:`logical CPUs <logical CPU>` means the system is fully saturated.
-      See :func:`getloadavg`.
-
    NIC
 
       *Network Interface Card*, a hardware or virtual network interface.
