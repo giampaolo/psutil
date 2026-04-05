@@ -217,7 +217,7 @@ CPU
   (changing), on all other platforms this usually represents the nominal
   "fixed" value (never changing).
 
-  If *percpu* is ``True`` and the system supports per-CPU frequency retrieval
+  If *percpu* is ``True``, and the system supports per-CPU frequency retrieval
   (Linux and FreeBSD), a list of frequencies is returned for each CPU; if not,
   a list with a single element is returned.
 
@@ -613,7 +613,7 @@ Network
   - :field:`dropout`: total number of outgoing packets dropped (always 0 on macOS
     and BSD). A non-zero and growing count is a sign of network saturation.
 
-  If *pernic* is ``True`` return the same information for every network
+  If *pernic* is ``True``, return the same information for every network
   interface as a dictionary with interface names as the keys.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
