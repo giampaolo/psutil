@@ -315,8 +315,8 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 
 - :func:`os.cpu_count` returns the number of :term:`logical CPUs <logical CPU>`
   (including hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``,
-  but psutil does not honour `PYTHON_CPU_COUNT`_ environment variable introduced
-  in Python 3.13.
+  but psutil does not honour :envvar:`PYTHON_CPU_COUNT` environment variable
+  introduced in Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
   calling process is **allowed to use** (respects CPU affinity and cgroups).
   The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
@@ -403,4 +403,3 @@ The :field:`available` field already includes this reclaimable memory and is the
 best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
 
 .. _`BPO-6973`: https://bugs.python.org/issue6973
-.. _`PYTHON_CPU_COUNT`: https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_CPU_COUNT

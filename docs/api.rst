@@ -100,9 +100,9 @@ CPU
 
   Return the current system-wide CPU utilization as a percentage.
 
-  If *interval* is > 0.0, measures CPU times before and after the interval
-  (blocking). If 0.0 or ``None``, returns the utilization since the last
-  call or module import returning immediately.
+  If *interval* is > ``0.0``, measures CPU times before and after the interval
+  (blocking). If ``0.0`` or ``None``, returns the utilization since the last
+  call or module import, returning immediately.
   That means the first time this is called it will return a meaningless ``0.0``
   value which you are supposed to ignore.
   In this case it is recommended for accuracy that this function be called with
@@ -127,7 +127,7 @@ CPU
      2.9
      >>> # blocking, per-cpu
      >>> psutil.cpu_percent(interval=1, percpu=True)
-     [2.0, 1.0]
+     [5.6, 1.0]
      >>>
 
   .. seealso:: :ref:`faq_cpu_percent`
@@ -157,13 +157,12 @@ CPU
 .. function:: cpu_count(logical=True)
 
   Return the number of :term:`logical CPUs <logical CPU>` in the system
-  (similar to :func:`os.cpu_count`) or ``None`` if undetermined.
-  Unlike :func:`os.cpu_count`, this is not influenced by the ``PYTHON_CPU_COUNT``
+  (same as :func:`os.cpu_count`), or ``None`` if undetermined.
+  Unlike :func:`os.cpu_count`, this is not influenced by the :envvar:`PYTHON_CPU_COUNT`
   environment variable introduced in Python 3.13.
   :term:`Logical CPUs <logical CPU>` means the number of
   :term:`physical CPUs <physical CPU>` multiplied by the number of threads
-  that can run on each core (this is known as Hyper Threading).
-  This is what cloud providers often refer to as vCPUs.
+  that can run on each core (this is known as *Hyper Threading*).
 
   If *logical* is ``False`` return the number of physical cores only, or
   ``None`` if undetermined.
