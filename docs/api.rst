@@ -2080,9 +2080,8 @@ Process class
   .. method:: children(recursive=False)
 
     Return the children of this process as a list of :class:`Process`
-    instances.
-    If *recursive* is ``True`` return all the parent descendants.
-    Pseudo code example assuming *A == this process*:
+    instances. If *recursive* is ``True``, return all descendants.
+    Pseudo-code example (assuming A is this process):
 
     .. code-block:: none
 
@@ -2090,7 +2089,7 @@ Process class
          │
          ├─ B (child) ─┐
          │             └─ X (grandchild) ─┐
-         │                                └─ Y (great grandchild)
+         │                                └─ Y (great-grandchild)
          ├─ C (child)
          └─ D (child)
 
@@ -2101,8 +2100,8 @@ Process class
        >>> p.children(recursive=True)
        B, X, Y, C, D
 
-    Note that in the example above if process X disappears process Y won't be
-    returned either as the reference to process A is lost.
+    Note: if a process in the tree disappears (e.g., X), its descendants
+    (Y) won’t be returned since the reference to the parent is lost.
     This concept is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
 
