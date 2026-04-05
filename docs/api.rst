@@ -66,10 +66,10 @@ CPU
   - :field:`dpc` *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
-  When *percpu* is ``True`` return a list of named tuples for each
-  :term:`logical CPU` on the system.
-  The list is ordered by CPU index.
-  The order of the list is consistent across calls.
+  When *percpu* is ``True`` return a list for each :term:`logical CPU` on the
+  system. The list is ordered by CPU index. The order of the list is consistent
+  across calls.
+
   Example output on Linux:
 
   .. code-block:: pycon
@@ -198,7 +198,7 @@ CPU
 
 .. function:: cpu_stats()
 
-  Return various CPU statistics as a named tuple. All fields are
+  Return various CPU statistics. All fields are
   :term:`cumulative counters <cumulative counter>` since boot.
 
   - :field:`ctx_switches`: number of :term:`context switches <context switch>`
@@ -222,16 +222,16 @@ CPU
 
 .. function:: cpu_freq(percpu=False)
 
-  Return CPU frequency as a named tuple including *current*, *min* and *max*
-  frequencies expressed in Mhz. On Linux *current* frequency reports the
-  real-time value, on all other platforms this usually represents the
-  nominal "fixed" value (never changing). If *percpu* is ``True`` and the
-  system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
-  frequencies is returned for each CPU, if not, a list with a single element
-  is returned. If *min* and *max* cannot be determined they are set to
-  ``0.0``.
+  Return :field:`current`, :field:`min` and :field:`max` CPU frequencies
+  expressed in Mhz. On Linux :field:`current` is the real-time frequency value
+  (changing), on all other platforms this usually represents the nominal
+  "fixed" value (never changing).
 
-  Example (Linux):
+  If *percpu* is ``True`` and the system supports per-CPU frequency retrieval
+  (Linux and FreeBSD), a list of frequencies is returned for each CPU; if not,
+  a list with a single element is returned.
+
+  If :field:`min` and :field:`max` cannot be determined they are set to ``0.0``.
 
   .. code-block:: pycon
 
@@ -287,8 +287,8 @@ Memory
 
 .. function:: virtual_memory()
 
-  Return statistics about system memory usage as a named tuple including the
-  following fields, expressed in bytes.
+  Return statistics about system memory usage. All values are expressed in
+  bytes.
 
   - :field:`total`: total physical memory (exclusive :term:`swap memory`).
   - :field:`available`: memory that can be given instantly to processes without the
@@ -442,8 +442,7 @@ Memory
 
 .. function:: swap_memory()
 
-  Return system :term:`swap memory` statistics as a named tuple including the
-  following fields:
+  Return system :term:`swap memory` statistics:
 
   * :field:`total`: total swap space. On Windows this is derived as
     ``CommitLimit - PhysicalTotal``, representing virtual memory backed by
@@ -481,15 +480,12 @@ Disks
 
 .. function:: disk_partitions(all=False)
 
-  Return all mounted disk partitions as a list of named tuples including device,
-  mount point and filesystem type, similarly to "df" command on UNIX. If *all*
-  parameter is ``False`` it tries to distinguish and return physical devices
-  only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
-  (e.g. pseudo, memory, duplicate, inaccessible filesystems).
-  Note that this may not be fully reliable on all systems (e.g. on BSD this
-  parameter is ignored).
-
-  Returns a list of named tuples with the following fields:
+  Return all mounted disk partitions as a list. This is similar
+  to "df" command on UNIX. If *all* parameter is ``False`` it tries to
+  distinguish and return physical devices only (e.g. hard disks, cd-rom drives,
+  USB keys) and ignore all others (e.g. pseudo, memory, duplicate, inaccessible
+  filesystems). Note that this may not be fully reliable on all systems (e.g.
+  on BSD this parameter is ignored).
 
   * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
     drive letter (e.g. "C:\\").
@@ -517,10 +513,10 @@ Disks
 
 .. function:: disk_usage(path)
 
-  Return disk usage statistics about the partition which contains the given
-  *path* as a named tuple including :field:`total`, :field:`used` and
-  :field:`free` space expressed in bytes, plus the :field:`percentage` usage.
-
+  Return disk usage statistics for the partition containing *path*. Values are
+  expressed in bytes and include :field:`total`, :field:`used` and
+  :field:`free` space, plus the :field:`percentage` usage.
+  On UNIX, *path* must point to a path within a **mounted** filesystem partition.
   This function was later incorporated in Python 3.3 as
   :func:`shutil.disk_usage` (`BPO-12442`_).
 
@@ -529,9 +525,6 @@ Disks
      >>> import psutil
      >>> psutil.disk_usage('/')
      sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
-
-  .. note::
-    on UNIX, *path* must point to a path within a **mounted** filesystem partition.
 
   .. note::
     UNIX usually reserves 5% of the total disk space for the root user.
@@ -549,8 +542,7 @@ Disks
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
-  Return system-wide disk I/O statistics as a named tuple including the
-  following fields:
+  Return system-wide disk I/O statistics:
 
   - :field:`read_count`: number of reads
   - :field:`write_count`: number of writes
@@ -617,8 +609,7 @@ Network
 
 .. function:: net_io_counters(pernic=False, nowrap=True)
 
-  Return system-wide network I/O statistics as a named tuple including the
-  following attributes:
+  Return system-wide network I/O statistics:
 
   - :field:`bytes_sent`: number of bytes sent
   - :field:`bytes_recv`: number of bytes received
@@ -661,8 +652,7 @@ Network
 
 .. function:: net_connections(kind="inet")
 
-  Return system-wide socket connections as a list of named tuples.
-  Every named tuple provides 7 attributes:
+  Return system-wide socket connections as a list. Each entry provides 7 fields:
 
   - :field:`fd`: the socket :term:`file descriptor`; ``-1`` on Windows and SunOS.
   - :field:`family`: the address family, either :data:`socket.AF_INET`,
@@ -755,10 +745,8 @@ Network
 
 .. function:: net_if_addrs()
 
-
-  Return a dictionary mapping each :term:`NIC` to a list of named tuples
-  representing its addresses. Multiple addresses of the same family can exist
-  per interface. Each named tuple includes 5 fields (addresses may be
+  Return a dict mapping each :term:`NIC` to its addresses. Interfaces may have
+  multiple addresses per family. Each entry includes 5 fields (addresses may be
   ``None``):
 
   - :field:`family`: the address family, either :data:`socket.AF_INET` (IPv4),
@@ -797,8 +785,7 @@ Network
 
 .. function:: net_if_stats()
 
-  Return a dictionary mapping each :term:`NIC` to a named tuple with the
-  following fields:
+  Return a dictionary mapping each :term:`NIC` to its stats:
 
   - :field:`isup`: whether the NIC is up and running (bool).
   - :field:`duplex`: :data:`NIC_DUPLEX_FULL`, :data:`NIC_DUPLEX_HALF` or
@@ -830,13 +817,9 @@ Sensors
 
 .. function:: sensors_temperatures(fahrenheit=False)
 
-  Return hardware temperatures. Each entry is a named tuple representing a
-  certain hardware temperature sensor (it may be a CPU, an hard disk or
-  something else, depending on the OS and its configuration).
-  All temperatures are expressed in celsius unless *fahrenheit* is set to
-  ``True``.
-  If sensors are not supported by the OS an empty dict is returned.
-  Each named tuple includes 4 fields:
+  Return hardware temperatures. Each entry represents a sensor (CPU, disk,
+  etc.). Values are in Celsius unless *fahrenheit* is ``True``. If unsupported,
+  return an empty dict. Each entry includes 4 fields:
 
   - :field:`label`: a string label for the sensor, if available, else ``""``.
   - :field:`current`: current temperature, or ``None`` if not available.
@@ -868,10 +851,8 @@ Sensors
 
 .. function:: sensors_fans()
 
-  Return hardware fans speed. Each entry is a named tuple representing a
-  certain hardware sensor fan.
-  Fan speed is expressed in RPM (revolutions per minute).
-  If sensors are not supported by the OS an empty dict is returned.
+  Return hardware fan speeds in RPM (revolutions per minute).
+  If unsupported, return an empty dict.
 
   .. code-block:: pycon
 
@@ -887,9 +868,8 @@ Sensors
 
 .. function:: sensors_battery()
 
-  Return battery status information as a named tuple including the following
-  values. If no battery is installed or metrics can't be determined ``None``
-  is returned.
+  Return battery status information. If no battery is installed or metrics
+  can't be determined ``None`` is returned.
 
   - :field:`percent`: battery power left as a percentage.
   - :field:`secsleft`: a rough approximation of how many seconds are left before the
@@ -949,8 +929,7 @@ Other system info
 
 .. function:: users()
 
-  Return users currently connected on the system as a list of named tuples
-  including the following fields:
+  Return users currently connected on the system as a list. Each entry includes:
 
   - :field:`name`: the name of the user.
   - :field:`terminal`: the tty or pseudo-tty associated with the user, if any,
@@ -1475,15 +1454,17 @@ Process class
 
   .. method:: uids()
 
-    The real, effective and saved user ids of this process as a named tuple.
-    This is the same as :func:`os.getresuid` but can be used for any process PID.
+    The :field:`real`, :field:`effective` and :field:`saved` user ids of this
+    process as a named tuple. This is the same as :func:`os.getresuid` but can
+    be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: gids()
 
-    The real, effective and saved group ids of this process as a named tuple.
-    This is the same as :func:`os.getresgid` but can be used for any process PID.
+    The :field:`real`, :field:`effective` and :field:`saved` group ids of this
+    process as a named tuple. This is the same as :func:`os.getresgid` but can
+    be used for any process PID.
 
     .. availability:: UNIX
 
@@ -1611,7 +1592,7 @@ Process class
 
   .. method:: io_counters()
 
-    Return process I/O statistics as a named tuple.
+    Return process I/O statistics.
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
 
@@ -1694,8 +1675,8 @@ Process class
 
   .. method:: threads()
 
-    Return threads opened by process as a list of named tuples. On OpenBSD this
-    method requires root privileges.
+    Return threads opened by this process as a list. On OpenBSD this method
+    requires root privileges. Each entry includes:
 
     - :field:`id`: the native thread ID assigned by the kernel. If :attr:`pid`
       refers to the current process this matches
@@ -1706,8 +1687,8 @@ Process class
 
   .. method:: cpu_times()
 
-    Return a named tuple of :term:`cumulative counters <cumulative counter>` (seconds)
-    representing the accumulated process CPU times
+    Return accumulated process CPU times as
+    :term:`cumulative counters <cumulative counter>` (seconds)
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
     This is similar to :func:`os.times` but can be used for any process PID.
 
@@ -1817,10 +1798,9 @@ Process class
 
   .. method:: memory_info()
 
-    Return a named tuple with variable fields depending on the platform
-    representing memory information about the process.
-    The "portable" fields available on all platforms are :field:`rss` and
-    :field:`vms`. All numbers are expressed in bytes.
+    Return memory information about the process. Fields vary by platform
+    (all values in bytes). The portable fields available on all platforms
+    are :field:`rss` and :field:`vms`.
 
     +---------+---------+----------+---------+-----+-----------------+
     | Linux   | macOS   | BSD      | Solaris | AIX | Windows         |
@@ -1920,10 +1900,9 @@ Process class
 
   .. method:: memory_info_ex()
 
-    Return a named tuple extending :meth:`memory_info` with additional
-    platform-specific memory metrics. On platforms where extra fields are not
-    implemented this returns the same result as :meth:`memory_info`. All
-    numbers are expressed in bytes.
+    Extends :meth:`memory_info` with additional platform-specific memory
+    metrics (all values in bytes). On platforms where extra fields are not
+    implemented this returns the same result as :meth:`memory_info`.
 
     +-------------+----------------+--------------------+
     | Linux       | macOS          | Windows            |
@@ -1988,10 +1967,10 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return a named tuple with :term:`USS`, :term:`PSS` and :term:`swap memory`
-    metrics. These give a more accurate picture of actual memory consumption
-    than :meth:`memory_info` (see this
-    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
+    Return :field:`uss`, :field:`pss` and :field:`swap` memory metrics. These
+    give a more accurate picture of actual memory consumption than
+    :meth:`memory_info` (see this `blog post
+    <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
     It walks the full process address space, so it is slower than
     :meth:`memory_info` and may require elevated privileges.
 
@@ -2047,8 +2026,8 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-    Return process's memory-mapped file regions as a list of named tuples whose
-    fields vary by platform (all values in bytes). If *grouped* is ``True``
+    Return process's memory-mapped file regions as a list. Fields vary by
+    platform (all values in bytes). If *grouped* is ``True``
     regions with the same *path* are merged and their numeric fields summed.
     If *grouped* is ``False`` each region is listed individually and the
     tuple also includes *addr* (address range) and *perms* (permission
@@ -2177,8 +2156,7 @@ Process class
 
   .. method:: open_files()
 
-    Return regular files opened by process as a list of named tuples including
-    the following fields:
+    Return regular files opened by process as a list. Each entry includes:
 
     - :field:`path`: the absolute file name.
     - :field:`fd`: the :term:`file descriptor` number; on Windows this is always
@@ -2437,7 +2415,6 @@ Python's memory tracking misses.
 
   Return low-level heap statistics from the system's C allocator. On Linux,
   this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
-  Returns a named tuple containing:
 
   - ``heap_used``: total number of bytes currently allocated via ``malloc()``
     (small allocations).
