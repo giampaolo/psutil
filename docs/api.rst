@@ -2329,9 +2329,9 @@ Popen class
 
 .. class:: Popen(*args, **kwargs)
 
-  Same as :class:`subprocess.Popen` but in addition it provides all
+  Same as :class:`subprocess.Popen`, but in addition it provides all
   :class:`psutil.Process` methods in a single class.
-  For the following methods which are common to both classes, psutil
+  For the following methods, which are common to both classes, psutil
   implementation takes precedence:
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>`,
@@ -2387,7 +2387,7 @@ Python's memory tracking misses.
 .. function:: heap_info()
 
   Return low-level heap statistics from the system's C allocator. On Linux,
-  this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
+  this exposes ``uordblks`` and ``hblkhd`` fields from glibc `mallinfo2`_.
 
   - ``heap_used``: total number of bytes currently allocated via ``malloc()``
     (small allocations).
@@ -2448,8 +2448,8 @@ Windows services
 
 .. function:: win_service_iter()
 
-  Return an iterator yielding a :class:`WindowsService` class instance for all
-  Windows services installed.
+  Return an iterator yielding :class:`WindowsService` instances for all
+  installed Windows services.
 
   .. versionadded:: 4.2.0
 
@@ -2467,12 +2467,12 @@ Windows services
 .. class:: WindowsService
 
   Represents a Windows service with the given *name*. This class is returned
-  by :func:`win_service_iter` and :func:`win_service_get` functions and it is
+  by :func:`win_service_iter` and :func:`win_service_get` functions, and it's
   not supposed to be instantiated directly.
 
   .. method:: name()
 
-    The service name. This string is how a service is referenced and can be
+    The service name. This string is how a service is referenced, and can be
     passed to :func:`win_service_get` to get a new :class:`WindowsService`
     instance.
 
@@ -2492,7 +2492,8 @@ Windows services
 
   .. method:: start_type()
 
-    A string which can either be `"automatic"`, `"manual"` or `"disabled"`.
+    A string which can either be either ``'automatic'``, ``'manual'`` or
+    ``'disabled'``.
 
   .. method:: pid()
 
@@ -2501,9 +2502,9 @@ Windows services
 
   .. method:: status()
 
-    Service status as a string, which may be either `"running"`, `"paused"`,
-    `"start_pending"`, `"pause_pending"`, `"continue_pending"`,
-    `"stop_pending"` or `"stopped"`.
+    Service status as a string, which can be either ``'running'``,
+    ``'paused'``, ``'start_pending'``, ``'pause_pending'``,
+    ``'continue_pending'``, ``'stop_pending'`` or ``'stopped'``.
 
   .. method:: description()
 
@@ -2544,10 +2545,10 @@ Windows services
 Constants
 ---------
 
-The following enum classes group related constants and are useful for type
+The following enum classes group related constants, and are useful for type
 annotations and introspection. The individual constants (e.g.
 :data:`STATUS_RUNNING`) are also accessible directly from the psutil
-namespace as aliases for the enum members and should be preferred over
+namespace as aliases for the enum members, and should be preferred over
 accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 ``psutil.ProcessStatus.STATUS_RUNNING``).
 
