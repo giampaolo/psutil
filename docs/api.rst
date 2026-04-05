@@ -1116,9 +1116,9 @@ Exceptions
 
 .. exception:: AccessDenied(pid=None, name=None, msg=None)
 
-  Raised by :class:`Process` class methods when permission to perform an
-  action is denied due to insufficient privileges.
-  *name* attribute is available if :meth:`Process.name` was previously called.
+  Raised by :class:`Process` methods when an action is denied due to
+  insufficient privileges. *name* is set if :meth:`Process.name` was called
+  before the exception was raised.
 
   .. seealso:: :ref:`faq_access_denied`
 
@@ -1126,7 +1126,7 @@ Exceptions
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive.
-  *name* attribute is available if :meth:`Process.name` was previously called.
+  *name* attribute is set if :meth:`Process.name` was previously called.
 
 Process class
 ^^^^^^^^^^^^^
