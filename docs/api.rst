@@ -1576,29 +1576,22 @@ Process class
     Return process I/O statistics.
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
-
     All fields are :term:`cumulative counters <cumulative counter>` since
     process creation.
 
-    - :field:`read_count`: the number of read operations performed.
-      This is supposed to count the number of read-related syscalls such as
-      ``read()`` and ``pread()`` on UNIX.
-    - :field:`write_count`: the number of write operations performed.
-      This is supposed to count the number of write-related syscalls such as
-      ``write()`` and ``pwrite()`` on UNIX.
-    - :field:`read_bytes`: the number of bytes read. Always ``-1`` on BSD.
-    - :field:`write_bytes`: the number of bytes written. Always ``-1`` on BSD.
+    - :field:`read_count`: number of read syscalls (e.g., ``read()``, ``pread()``).
+    - :field:`write_count`: number of write syscalls (e.g., ``write()``, ``pwrite()``).
+    - :field:`read_bytes`: bytes read (``-1`` on BSD).
+    - :field:`write_bytes`: bytes written (``-1`` on BSD).
 
     Linux specific:
 
-    - :field:`read_chars` *(Linux)*: the amount of bytes which this process
-      passed to ``read()`` and ``pread()`` syscalls. Differently from
-      :field:`read_bytes` it doesn't care whether or not actual physical disk
-      I/O occurred.
-    - :field:`write_chars` *(Linux)*: the amount of bytes which this process
-      passed to ``write()`` and ``pwrite()`` syscalls. Differently from
-      :field:`write_bytes` it doesn't care whether or not actual physical disk
-      I/O occurred.
+    - :field:`read_chars` *(Linux)*: bytes read via ``read()`` and
+      ``pread()`` syscalls. Unlike :field:`read_bytes`, this includes tty
+      I/O and counts bytes regardless of whether actual disk I/O occurred
+      (e.g. reads served from :term:`page cache` are included).
+    - :field:`write_chars` *(Linux)*: bytes written via ``write()`` and
+      ``pwrite()`` syscalls. Same caveats as :field:`read_chars`.
 
     Windows specific:
 
