@@ -337,9 +337,10 @@ What is the difference between virtual_memory() available and free?
 measure different things:
 
 - :field:`free`: memory that is not being used at all.
-- :field:`available`: how much memory can be given to processes without swapping.
-  This includes reclaimable caches and buffers that the OS can reclaim under
-  pressure.
+- :field:`available`: how much memory can be given to processes without
+  :term:`swapping <swap memory>`.
+  This includes reclaimable :term:`caches <page cache>` and buffers that the OS
+  can reclaim under pressure.
 
 In practice, :field:`available` is almost always the metric you want when
 monitoring memory. :field:`free` can be misleadingly low on systems where the
@@ -380,7 +381,8 @@ libraries counted in every process that uses them. For example, if
 memory private to the process. It represents the amount of memory that
 would be freed if the process were terminated right now.
 It is more accurate than RSS, but substantially slower and requires higher
-privileges. On Linux it also returns PSS (Proportional Set Size) and swap.
+privileges. On Linux it also returns PSS (Proportional Set Size) and
+:term:`swap <swap memory>`.
 
 .. _faq_used_plus_free:
 
