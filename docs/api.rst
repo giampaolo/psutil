@@ -1663,7 +1663,7 @@ Process class
     Return accumulated process CPU times as
     :term:`cumulative counters <cumulative counter>` (seconds)
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
-    This is similar to :func:`os.times` but can be used for any process PID.
+    Same as :func:`os.times`, but works for any process PID.
 
     - :field:`user`: time spent in user mode.
     - :field:`system`: time spent in kernel mode.
@@ -1671,9 +1671,9 @@ Process class
       Windows and macOS).
     - :field:`children_system`: system time of all child processes (always
       ``0`` on Windows and macOS).
-    - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete
-      (:term:`iowait`). This value is excluded from `user` and `system` times
-      count (because the CPU is not doing any work).
+    - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete.
+      (:term:`iowait`). Excluded from :field:`user` and :field:`system` times
+      count (because the CPU is idle).
 
     .. code-block:: pycon
 
