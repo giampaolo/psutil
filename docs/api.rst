@@ -1278,13 +1278,6 @@ Process class
 
     .. deprecated:: 8.0.0
 
-  .. method:: ppid()
-
-    The process parent PID. On Windows the return value is cached after the
-    first call. On POSIX it is not cached because it may change if the process
-    becomes a :term:`zombie <zombie process>`. See also :meth:`parent` and
-    :meth:`parents` methods.
-
   .. method:: name()
 
     The process name.  On Windows the return value is cached after first
@@ -1396,6 +1389,13 @@ Process class
        :meth:`as_dict` is considerably faster thanks to :meth:`oneshot`
        context manager.
 
+  .. method:: ppid()
+
+    The process parent PID. On Windows the return value is cached after the
+    first call. On POSIX it is not cached because it may change if the process
+    becomes a :term:`zombie <zombie process>`. See also :meth:`parent` and
+    :meth:`parents` methods.
+
   .. method:: parent()
 
     Utility method which returns the parent process as a :class:`Process`
@@ -1426,9 +1426,9 @@ Process class
 
   .. method:: cwd()
 
-    The process current working directory as an absolute path. If cwd cannot be
-    determined for some internal reason (e.g. system process or directory no
-    longer exists) it may return an empty string.
+    The process current working directory as an absolute path. If it cannot be
+    determined (e.g. a system process or directory no longer exists) it may
+    return an empty string.
 
     .. versionchanged:: 5.6.4
        added support for NetBSD.
@@ -1436,20 +1436,20 @@ Process class
   .. method:: username()
 
     The name of the user that owns the process. On UNIX this is calculated by
-    using real process uid.
+    using the :field:`real` process UID from :meth:`uids`.
 
   .. method:: uids()
 
-    The :field:`real`, :field:`effective` and :field:`saved` user ids of this
-    process as a named tuple. This is the same as :func:`os.getresuid` but can
+    The :field:`real`, :field:`effective` and :field:`saved` user ID of this
+    process as a named tuple. This is the same as :func:`os.getresuid`, but can
     be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: gids()
 
-    The :field:`real`, :field:`effective` and :field:`saved` group ids of this
-    process as a named tuple. This is the same as :func:`os.getresgid` but can
+    The :field:`real`, :field:`effective` and :field:`saved` group ID of this
+    process as a named tuple. This is the same as :func:`os.getresgid`, but can
     be used for any process PID.
 
     .. availability:: UNIX
@@ -1457,38 +1457,35 @@ Process class
   .. method:: terminal()
 
     The terminal associated with this process, if any, else ``None``. This is
-    similar to "tty" command but can be used for any process PID.
+    similar to ``tty`` command but can be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: nice(value=None)
 
     Get or set process :term:`niceness <nice>` (priority).
-    On UNIX this is a number which usually goes from ``-20`` to ``20``.
+    On UNIX this is a number which goes from ``-20`` to ``20``.
     The higher the nice value, the lower the priority of the process.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> p = psutil.Process()
-       >>> p.nice(10)  # set
+       >>> p.nice(10)  # set lower priority
        >>> p.nice()  # get
        10
        >>>
 
-    This method was later incorporated in Python 3.3 as
-    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
-
     On Windows this is implemented via `GetPriorityClass`_ and
-    `SetPriorityClass`_ Windows APIs and *value* is one of the
-    :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
-    constants reflecting the MSDN documentation.
-    The return value on Windows is a :class:`ProcessPriority` enum member.
-    Example which increases process priority on Windows:
+    `SetPriorityClass`_, and *value* is one of the
+    :ref:`*_PRIORITY_CLASS <const-proc-prio>` constants:
 
     .. code-block:: pycon
 
-       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
+       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)  # increase priority
+
+    This method was later incorporated in Python 3.3 as
+    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
 
     .. versionchanged:: 8.0.0
        on Windows, the return value is now a :class:`ProcessPriority` enum
@@ -2741,6 +2738,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
    the stopped state but managed by the NetBSD scheduler.
 
    .. versionadded:: 3.4.1
+
+.. _const-proc-prio:
 
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
