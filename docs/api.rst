@@ -1548,24 +1548,21 @@ Process class
 
   .. method:: rlimit(resource, limits=None)
 
-    Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_).
-    *resource* is one of the :data:`RLIMIT_* <psutil.RLIM_INFINITY>`
-    constants.
-    *limits* is a ``(soft, hard)`` tuple.
-    This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
-    but can be used for any process PID, not only :func:`os.getpid`.
-    For get, return value is a ``(soft, hard)`` tuple. Each value may be either
-    an integer or :data:`RLIMIT_* <psutil.RLIM_INFINITY>`.
+    Get or set process :term:`resource limits <resource limit>`.
+    *resource* must be one of the :ref:`RLIMIT_* <const-proc-rlimit>` constants.
+    *limits* is an optional ``(soft, hard)`` tuple. If provided, the method sets
+    the limits; if omitted, it returns the current ``(soft, hard)`` tuple.
+    This is the same as stdlib :func:`resource.getrlimit` and
+    :func:`resource.setrlimit`, but can be used for any process PID.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> p = psutil.Process()
-       >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
-       >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
-       >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
+       >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # max 128 file descriptors
+       >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # max file size 1024 bytes
+       >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get current limits of ...
        (1024, 1024)
-       >>>
 
     .. seealso:: `scripts/procinfo.py`_.
 
@@ -2807,7 +2804,7 @@ They can be used in conjunction with :meth:`Process.ionice`.
 
   .. versionadded:: 5.6.2
 
-.. _const-rlimit:
+.. _const-proc-rlimit:
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2984,7 +2981,6 @@ Environment variables
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
-.. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`psleak`: https://github.com/giampaolo/psleak
 .. _`/proc/meminfo`: https://man7.org/linux/man-pages/man5/proc_meminfo.5.html
 
