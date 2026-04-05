@@ -1133,33 +1133,30 @@ Process class
 
 .. class:: Process(pid=None)
 
-  Represents an OS process with the given *pid*.
-  If *pid* is omitted current process *pid* (:func:`os.getpid`) is used.
-  Raise :exc:`NoSuchProcess` if *pid* does not exist.
-  On Linux *pid* can also refer to a thread ID (the *id* field returned by
-  :meth:`threads` method).
+  Represents an OS process with the given *pid*. If *pid* is omitted, the
+  current process *pid* (:func:`os.getpid`) is used. Raises
+  :exc:`NoSuchProcess` if the specified *pid* does not exist. On Linux, *pid*
+  can also refer to a thread ID (the :field:`id` field returned by :meth:`threads`).
+
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
-  :func:`hash` builtin can be used against instances of this class to identify
-  a process univocally over time (the hash is determined by mixing process PID
-  + creation time). As such it can also be used with :class:`set`.
+  The builtin :func:`hash` can be used on instances to uniquely identify a
+  process over time (the hash combines PID and creation time), so instances
+  can also be used in a :class:`set`.
 
   .. note::
 
-    to efficiently fetch multiple attributes about the process at the same
-    time, use either :meth:`oneshot` context manager or :meth:`as_dict`
-    utility method.
+    To fetch multiple attributes efficiently, use the :meth:`oneshot` context
+    manager or the :meth:`as_dict` utility method.
 
   .. note::
 
-    the way this class is bound to a process is via its **PID**.
-    That means that if the process terminates, and the OS reuses its PID, you
-    may inadvertently end up interacting with another process. To prevent this
-    problem you can use :meth:`is_running` first.
-    Some methods (e.g. setters and signal-related methods) perform an
-    additional check based on PID + creation time and will raise
-    :exc:`NoSuchProcess` if the PID has been reused. See :ref:`faq_pid_reuse`
-    FAQ for details.
+    This class is bound to a process via its **PID**. If the process terminates
+    and the OS reuses its PID, you may accidentally interact with another
+    process. To prevent this, use :meth:`is_running` first. Some methods
+    (e.g., setters and signal-related methods) perform an additional check
+    using PID + creation time, and will raise :exc:`NoSuchProcess` if the PID
+    has been reused. See :ref:`faq_pid_reuse` for details.
 
   .. method:: oneshot()
 
