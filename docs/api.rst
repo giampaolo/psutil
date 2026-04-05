@@ -2109,19 +2109,17 @@ Process class
 
   .. method:: page_faults()
 
-    Return the number of :term:`page faults <page fault>` for this process as a
-    ``(minor, major)`` named tuple.
+    Return the number of :term:`page faults <page fault>` for this process
+    as a ``(minor, major)`` named tuple. Both are
+    :term:`cumulative counters <cumulative counter>` since process creation.
 
-    - :field:`minor` (a.k.a. *soft* faults): occur when a memory page is not
-      currently mapped into the process address space, but is already present
-      in physical RAM (e.g. a shared library loaded by another process). The
-      kernel resolves these without disk I/O.
-    - :field:`major` (a.k.a. *hard* faults): occur when the page must be fetched
-      from disk. These are expensive because they stall the process until I/O
-      completes.
-
-    Both counters are :term:`cumulative counters <cumulative counter>` since
-    process creation.
+    - :field:`minor` (soft faults): occur when a page is already in physical
+      RAM (e.g., in the :term:`page cache` or other :term:`shared memory`) but
+      not yet mapped into the process's virtual address space. No disk I/O is
+      required.
+    - :field:`major` (hard faults): occur when a page must be loaded from disk
+      into RAM and mapped. These are expensive as the process is stalled until
+      I/O completes.
 
     .. code-block:: pycon
 
