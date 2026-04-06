@@ -2921,14 +2921,15 @@ Other constants
 
 .. data:: PROCFS_PATH
 
-  The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
-  ``"/proc"``).
+  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
+  ``'/proc'``).
   You may want to re-set this constant right after importing psutil in case
-  your /proc filesystem is mounted elsewhere or if you want to retrieve
+  ``/proc`` is mounted elsewhere, or if you want to retrieve
   information about Linux containers such as Docker, Heroku or LXC (see
   `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
   for more info).
-  It must be noted that this trick works only for APIs which rely on /proc
+
+  It must be noted that this trick works only for APIs which rely on ``/proc``
   filesystem (e.g. memory-related APIs and many (but not all)
   :class:`Process` class methods).
 
