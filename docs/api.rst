@@ -916,10 +916,6 @@ Other system info
      >>> datetime.datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
      '2014-01-12 22:51:00'
 
-  .. note::
-    on Windows this function may return a time which is off by 1 second if it's
-    used across different processes (see issue :gh:`1007`).
-
 .. function:: users()
 
   Return users currently connected on the system as a list. Each entry includes:

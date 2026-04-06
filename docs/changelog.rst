@@ -174,6 +174,11 @@ Others:
 
 **Bug fixes**
 
+- :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
+  across calls or across processes. It is now read atomically from the kernel
+  via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
+  old ``time.time() - uptime()`` computation that sampled two counters from
+  Python and produced sub-second differences.
 - :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
   :exc:`ValueError` on s390x architecture, where ``/proc/cpuinfo`` uses spaces
   before the colon separator instead of a tab.
