@@ -2665,8 +2665,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_STOPPED
 
-   The process was suspended via ``SIGSTOP`` signal and won't run until it
-   receives ``SIGCONT``.
+   The process is stopped (e.g., by ``SIGSTOP`` or ``SIGTSTP``, which is sent
+   on Ctrl+Z) and will not run until resumed (e.g., via ``SIGCONT``).
 
 .. data:: STATUS_TRACING_STOP
 
