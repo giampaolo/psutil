@@ -20,6 +20,42 @@
 #include "../../arch/all/init.h"
 
 
+// System boot time expressed in seconds since the UNIX epoch.
+//
+// Read boot time atomically from the kernel via
+// NtQuerySystemInformation(SystemTimeOfDayInformation), so the value
+// is identical across processes and has zero differences between calls
+// (fixes issue #1007 for the second time, which was caused by sampling
+// `time.time()` and `cext.uptime()` as two separate Python calls).
+//
+// This function is subject to system clock updates / NTP (it's by
+// contract and documented). It also takes into account the time spent
+// in suspend / hibernate mode, so that it returns the same result
+// on wakeup.
+PyObject *
+psutil_boot_time(PyObject *self, PyObject *args) {
+    SYSTEM_TIMEOFDAY_INFORMATION info;
+    NTSTATUS status;
+    LARGE_INTEGER boot;
+
+    status = NtQuerySystemInformation(
+        SystemTimeOfDayInformation, &info, sizeof(info), NULL
+    );
+    if (!NT_SUCCESS(status)) {
+        psutil_SetFromNTStatusErr(
+            status, "NtQuerySystemInformation(SystemTimeOfDayInformation)"
+        );
+        return NULL;
+    }
+    // Both BootTime and SleepTimeBias are in 100-ns units.
+    boot.QuadPart = info.BootTime.QuadPart - (LONGLONG)info.SleepTimeBias;
+    return Py_BuildValue("d", psutil_LargeIntegerToUnixTime(boot));
+}
+
+
+// Commented out in favor of psutil_boot_time() above.
+
+/*
 // The number of seconds passed since boot. This is a monotonic timer,
 // not affected by system clock updates. On Windows 7+ it also includes
 // the time spent during suspend / hybernate.
@@ -39,6 +75,7 @@ psutil_uptime(PyObject *self, PyObject *args) {
     }
     return Py_BuildValue("d", uptimeSeconds);
 }
+*/
 
 
 PyObject *

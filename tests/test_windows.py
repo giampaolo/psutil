@@ -448,13 +448,6 @@ class TestOtherSystemAPIs(WindowsTestCase):
         diff = abs((wmi_btime_dt - psutil_dt).total_seconds())
         assert diff <= 5, (psutil_dt, wmi_btime_dt)
 
-    def test_uptime(self):
-        # ...against GetTickCount64() (Windows < 7, does not include
-        # time spent during suspend / hybernate).
-        ms = ctypes.windll.kernel32.GetTickCount64()
-        secs = ms / 1000.0
-        assert abs(cext.uptime() - secs) < 0.5
-
     def test_users(self):
         current = win32api.GetUserName()
         assert current in {u.name for u in psutil.users()}
