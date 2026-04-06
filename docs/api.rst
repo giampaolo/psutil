@@ -2218,10 +2218,10 @@ Process class
   .. method:: send_signal(sig)
 
     Send signal *sig* to process (see :mod:`signal` module constants),
-    preemptively checking whether PID has been reused.
-    On UNIX this is the same as ``os.kill(pid, sig)``.
-    On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
-    are supported, and *SIGTERM* is treated as an alias for :meth:`kill`.
+    preemptively checking whether PID has been reused. On UNIX this is the same
+    as ``os.kill(pid, sig)``. On Windows only ``SIGTERM``, ``CTRL_C_EVENT`` and
+    ``CTRL_BREAK_EVENT`` signals are supported, and ``SIGTERM`` is treated as
+    an alias for :meth:`kill`.
 
     .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`
 
@@ -2230,21 +2230,21 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with *SIGSTOP* signal, preemptively
+    Suspend process execution with ``SIGSTOP`` signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
     On Windows this is done by suspending all process threads.
 
   .. method:: resume()
 
-    Resume process execution with *SIGCONT* signal, preemptively
+    Resume process execution with ``SIGCONT`` signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
     On Windows this is done by resuming all process threads.
 
   .. method:: terminate()
 
-    Terminate the process with *SIGTERM* signal, preemptively checking
+    Terminate the process with ``SIGTERM`` signal, preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
@@ -2253,7 +2253,7 @@ Process class
 
   .. method:: kill()
 
-    Kill the current process by using *SIGKILL* signal, preemptively
+    Kill the current process by using ``SIGKILL`` signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
@@ -2677,11 +2677,11 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
    The process has finished execution and released its resources, but it
    remains in the process table until the parent reaps it via ``wait()``.
+   See also :ref:`faq_zombie_process`.
 
 .. data:: STATUS_DEAD
 
-   The final process state where the kernel is actively removing its entry from
-   the system. Occurs after the process is reaped.
+   The process is about to disappear (final state before it is gone).
 
 .. data:: STATUS_WAKE_KILL
 
@@ -2760,7 +2760,7 @@ set process priority.
 Process I/O priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Represent the priority I/O priority of a process (Linux and Windows only).
+Represent the I/O priority of a process (Linux and Windows only).
 They can be used in conjunction with :meth:`Process.ionice`.
 
 .. versionchanged:: 8.0.0
