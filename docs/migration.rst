@@ -56,7 +56,7 @@ dict. ``p.info`` still works, but raises :exc:`DeprecationWarning`.
 
   # after
   for p in psutil.process_iter(attrs=["name", "status"]):
-      print(p.name(), p.status())
+      print(p.name(), p.status())  # return cached values, never raise
 
 When ``attrs`` are specified, method calls return cached values
 (no extra syscall), and :exc:`AccessDenied` / :exc:`ZombieProcess`
@@ -76,7 +76,7 @@ If you relied on :attr:`Process.info` because you needed a dict structure, use
   # after
   attrs = ["name", "status"]
   for p in psutil.process_iter(attrs=attrs):
-      print(p.as_dict(attrs))  # non syscall, return pre-fetched values
+      print(p.as_dict(attrs))  # return cached values, never raise
 
 
 .. note::

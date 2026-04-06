@@ -146,14 +146,6 @@ Glossary
       entries returned by ``cpu_percent(percpu=True)``. See also
       :term:`physical CPU`.
 
-   load average
-
-      Three floating-point values representing the average number of
-      processes in a *runnable* or *uninterruptible* state over the last
-      1, 5, and 15 minutes. A load average equal to the number of
-      :term:`logical CPUs <logical CPU>` means the system is fully saturated.
-      See :func:`getloadavg`.
-
    NIC
 
       *Network Interface Card*, a hardware or virtual network interface.
@@ -236,11 +228,12 @@ Glossary
 
    RSS
 
-      *Resident Set Size*, the amount of physical RAM currently occupied
-      by a process, including :term:`shared memory` pages. It is the most
-      commonly reported memory metric (shown as ``RES`` in ``top``), but
-      it can be misleading because shared pages are counted in full for
-      every process that maps them. See :meth:`Process.memory_info`.
+      *Resident Set Size*, the amount of physical RAM currently used by a
+      process. This includes :term:`shared memory` pages. It is the most
+      commonly reported memory metric (shown as ``RES`` in ``top``), but can be
+      misleading because :term:`shared memory` is counted in full for each
+      process that maps it.
+      See :meth:`Process.memory_info`.
 
    soft interrupt
 

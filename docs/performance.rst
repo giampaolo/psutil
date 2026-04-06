@@ -74,7 +74,7 @@ Fast:
   import psutil
 
   for p in psutil.process_iter(["name", "status"]):
-      print(p.pid, p.name(), p.status())
+      print(p.pid, p.name(), p.status())  # return cached values, never raise
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
 to using :meth:`Process.oneshot` on each process.

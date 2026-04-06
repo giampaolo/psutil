@@ -315,8 +315,8 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 
 - :func:`os.cpu_count` returns the number of :term:`logical CPUs <logical CPU>`
   (including hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``,
-  but psutil does not honour `PYTHON_CPU_COUNT`_ environment variable introduced
-  in Python 3.13.
+  but psutil does not honour :envvar:`PYTHON_CPU_COUNT` environment variable
+  introduced in Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
   calling process is **allowed to use** (respects CPU affinity and cgroups).
   The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
@@ -337,9 +337,10 @@ What is the difference between virtual_memory() available and free?
 measure different things:
 
 - :field:`free`: memory that is not being used at all.
-- :field:`available`: how much memory can be given to processes without swapping.
-  This includes reclaimable caches and buffers that the OS can reclaim under
-  pressure.
+- :field:`available`: how much memory can be given to processes without
+  :term:`swapping <swap memory>`.
+  This includes reclaimable :term:`caches <page cache>` and buffers that the OS
+  can reclaim under pressure.
 
 In practice, :field:`available` is almost always the metric you want when
 monitoring memory. :field:`free` can be misleadingly low on systems where the
@@ -380,7 +381,8 @@ libraries counted in every process that uses them. For example, if
 memory private to the process. It represents the amount of memory that
 would be freed if the process were terminated right now.
 It is more accurate than RSS, but substantially slower and requires higher
-privileges. On Linux it also returns PSS (Proportional Set Size) and swap.
+privileges. On Linux it also returns PSS (Proportional Set Size) and
+:term:`swap <swap memory>`.
 
 .. _faq_used_plus_free:
 
@@ -401,4 +403,3 @@ The :field:`available` field already includes this reclaimable memory and is the
 best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
 
 .. _`BPO-6973`: https://bugs.python.org/issue6973
-.. _`PYTHON_CPU_COUNT`: https://docs.python.org/3/using/cmdline.html#envvar-PYTHON_CPU_COUNT

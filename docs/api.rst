@@ -31,11 +31,11 @@ CPU
   Cross-platform fields:
 
   - :field:`user`: time spent by normal processes executing in user mode; on
-    Linux this also includes :field:`guest` time
+    Linux this also includes :field:`guest` time.
 
-  - :field:`system`: time spent by processes executing in kernel mode
+  - :field:`system`: time spent by processes executing in kernel mode.
 
-  - :field:`idle`: time spent doing nothing
+  - :field:`idle`: time spent doing nothing.
 
   Platform-specific fields:
 
@@ -47,10 +47,10 @@ CPU
     (:term:`iowait`). This is *not* accounted in :field:`idle` time counter.
 
   - :field:`irq` *(Linux, Windows, BSD)*: time spent for servicing
-    :term:`hardware interrupts <hardware interrupt>`
+    :term:`hardware interrupts <hardware interrupt>`.
 
   - :field:`softirq` *(Linux)*: time spent for servicing
-    :term:`soft interrupts <soft interrupt>`
+    :term:`soft interrupts <soft interrupt>`.
 
   - :field:`steal` *(Linux)*: CPU time the virtual machine wanted to run but was
     used by other virtual machines or the host. A sustained non-zero steal rate
@@ -66,11 +66,9 @@ CPU
   - :field:`dpc` *(Windows)*: time spent servicing deferred procedure calls (DPCs);
     DPCs are interrupts that run at a lower priority than standard interrupts.
 
-  When *percpu* is ``True`` return a list of named tuples for each
-  :term:`logical CPU` on the system.
-  The list is ordered by CPU index.
-  The order of the list is consistent across calls.
-  Example output on Linux:
+  When *percpu* is ``True`` return a list for each :term:`logical CPU` on the
+  system. The list is ordered by CPU index. The order of the list is consistent
+  across calls.
 
   .. code-block:: pycon
 
@@ -100,23 +98,23 @@ CPU
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
-  Return a float representing the current system-wide CPU utilization as a
-  percentage. When *interval* is > ``0.0`` compares system CPU times elapsed
-  before and after the interval (blocking).
-  When *interval* is ``0.0`` or ``None`` compares system CPU times elapsed
-  since last call or module import, returning immediately.
+  Return the current system-wide CPU utilization as a percentage.
+
+  If *interval* is > ``0.0``, measures CPU times before and after the interval
+  (blocking). If ``0.0`` or ``None``, returns the utilization since the last
+  call or module import, returning immediately.
   That means the first time this is called it will return a meaningless ``0.0``
   value which you are supposed to ignore.
   In this case it is recommended for accuracy that this function be called with
   at least ``0.1`` seconds between calls.
-  When *percpu* is ``True`` returns a list of floats representing the
-  utilization as a percentage for each CPU.
-  The list is ordered by CPU index. The order of the list is consistent across
+
+  If *percpu* is ``True``, returns a list of floats representing each
+  :term:`logical CPU`. The list is ordered by CPU index and consistent across
   calls.
-  Internally this function maintains a global map (a dict) where each key is
-  the ID of the calling thread (:func:`threading.get_ident`). This means it can be
-  called from different threads, at different intervals, and still return
-  meaningful and independent results.
+
+  This function is thread-safe. It maintains an internal map of thread IDs
+  (:func:`threading.get_ident`) so that independent results are returned when
+  called from different threads at different intervals.
 
   .. code-block:: pycon
 
@@ -129,7 +127,7 @@ CPU
      2.9
      >>> # blocking, per-cpu
      >>> psutil.cpu_percent(interval=1, percpu=True)
-     [2.0, 1.0]
+     [5.6, 1.0]
      >>>
 
   .. seealso:: :ref:`faq_cpu_percent`
@@ -139,13 +137,13 @@ CPU
 
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
-  Same as :func:`cpu_percent` but provides utilization percentages for each
+  Similar to :func:`cpu_percent` but provides utilization percentages for each
   specific CPU time as is returned by
   :func:`psutil.cpu_times(percpu=True)<cpu_times()>`.
   *interval* and
   *percpu* arguments have the same meaning as in :func:`cpu_percent`.
-  On Linux "guest" and "guest_nice" percentages are not accounted in "user"
-  and "user_nice" percentages.
+  On Linux, :field:`guest` and :field:`guest_nice` percentages are not accounted
+  in :field:`user` and :field:`user_nice`.
 
   .. seealso:: :ref:`faq_cpu_percent`
 
@@ -159,20 +157,15 @@ CPU
 .. function:: cpu_count(logical=True)
 
   Return the number of :term:`logical CPUs <logical CPU>` in the system
-  (similar to :func:`os.cpu_count`) or ``None`` if undetermined.
-  Unlike :func:`os.cpu_count`, this is not influenced by the ``PYTHON_CPU_COUNT``
-  environment variable introduced in Python 3.13.
-  :term:`Logical CPUs <logical CPU>` means the number of
-  :term:`physical CPUs <physical CPU>` multiplied by the number of threads
-  that can run on each core (this is known as Hyper Threading).
-  This is what cloud providers often refer to as vCPUs.
+  (same as :func:`os.cpu_count`), or ``None`` if undetermined.
+  Unlike :func:`os.cpu_count`, this is not influenced by the
+  :envvar:`PYTHON_CPU_COUNT` environment variable (Python 3.13+).
 
-  If *logical* is ``False`` return the number of physical cores only, or
-  ``None`` if undetermined.
+  If *logical* is ``False`` return the number of :term:`physical CPUs
+  <physical CPU>` only, or ``None`` if undetermined (always ``None`` on
+  OpenBSD and NetBSD).
 
-  On OpenBSD and NetBSD ``psutil.cpu_count(logical=False)`` always return
-  ``None``.
-  Example on a system having 2 cores + Hyper Threading:
+  Example on a system with 2 cores + Hyper Threading:
 
   .. code-block:: pycon
 
@@ -182,12 +175,9 @@ CPU
      >>> psutil.cpu_count(logical=False)
      2
 
-  Note that ``psutil.cpu_count()`` may not necessarily be equivalent to the
-  actual number of CPUs the current process can use.
-  That can vary if process :term:`CPU affinity` has been changed, Linux cgroups
-  are being used or (on Windows) on systems using processor groups or having
-  more than 64 CPUs.
-  The number of usable CPUs can be obtained with:
+  Note that this may differ from the number of CPUs the current process can
+  actually use (e.g. due to :term:`CPU affinity`, cgroups, or Windows
+  processor groups). The number of usable CPUs can be obtained with:
 
   .. code-block:: pycon
 
@@ -198,7 +188,7 @@ CPU
 
 .. function:: cpu_stats()
 
-  Return various CPU statistics as a named tuple. All fields are
+  Return various CPU statistics. All fields are
   :term:`cumulative counters <cumulative counter>` since boot.
 
   - :field:`ctx_switches`: number of :term:`context switches <context switch>`
@@ -206,9 +196,9 @@ CPU
   - :field:`interrupts`:
     number of :term:`hardware interrupts <hardware interrupt>`.
   - :field:`soft_interrupts`:
-    number of :term:`soft interrupts <soft interrupt>`. Always set to ``0`` on
+    number of :term:`soft interrupts <soft interrupt>`; always set to ``0`` on
     Windows and SunOS.
-  - :field:`syscalls`: number of system calls. Always set to ``0`` on Linux.
+  - :field:`syscalls`: number of system calls; always set to ``0`` on Linux.
 
   Example (Linux):
 
@@ -222,16 +212,16 @@ CPU
 
 .. function:: cpu_freq(percpu=False)
 
-  Return CPU frequency as a named tuple including *current*, *min* and *max*
-  frequencies expressed in Mhz. On Linux *current* frequency reports the
-  real-time value, on all other platforms this usually represents the
-  nominal "fixed" value (never changing). If *percpu* is ``True`` and the
-  system supports per-cpu frequency retrieval (Linux and FreeBSD), a list of
-  frequencies is returned for each CPU, if not, a list with a single element
-  is returned. If *min* and *max* cannot be determined they are set to
-  ``0.0``.
+  Return :field:`current`, :field:`min` and :field:`max` CPU frequencies
+  expressed in MHz. On Linux, :field:`current` is the real-time frequency value
+  (changing), on all other platforms this usually represents the nominal
+  "fixed" value (never changing).
 
-  Example (Linux):
+  If *percpu* is ``True``, and the system supports per-CPU frequency retrieval
+  (Linux and FreeBSD), a list of frequencies is returned for each CPU; if not,
+  a list with a single element is returned.
+
+  If :field:`min` and :field:`max` cannot be determined they are set to ``0.0``.
 
   .. code-block:: pycon
 
@@ -256,18 +246,13 @@ CPU
 
 .. function:: getloadavg()
 
-  Return the average system load over the last 1, 5 and 15 minutes as a tuple.
-  The "load" represents the processes which are in a runnable state, either
-  using the CPU or waiting to use the CPU (e.g. waiting for disk I/O).
-  On UNIX systems this relies on :func:`os.getloadavg`. On Windows this is emulated
-  by using a Windows API that spawns a thread which keeps running in
-  background and updates results every 5 seconds, mimicking the UNIX behavior.
-  Thus, on Windows, the first time this is called and for the next 5 seconds
-  it will return a meaningless ``(0.0, 0.0, 0.0)`` tuple.
-  The numbers returned only make sense when compared to the number of CPU cores
-  installed on the system. So, for instance, a value of ``3.14`` on a system
-  with 10 :term:`logical CPUs <logical CPU>` means that the system load was
-  31.4% percent over the last N minutes.
+  Return the average system load over the last 1, 5 and 15 minutes as a
+  tuple. On UNIX, this relies on :func:`os.getloadavg`. On Windows, this is
+  emulated via a background thread that updates every 5 seconds; the first
+  call (and for the following 5 seconds) returns ``(0.0, 0.0, 0.0)``.
+  The values only make sense relative to the number of installed
+  :term:`logical CPUs <logical CPU>` (e.g. ``3.14`` on a 10-CPU system means
+  31.4% load).
 
   .. code-block:: pycon
 
@@ -287,8 +272,8 @@ Memory
 
 .. function:: virtual_memory()
 
-  Return statistics about system memory usage as a named tuple including the
-  following fields, expressed in bytes.
+  Return statistics about system memory usage. All values are expressed in
+  bytes.
 
   - :field:`total`: total physical memory (exclusive :term:`swap memory`).
   - :field:`available`: memory that can be given instantly to processes without the
@@ -442,8 +427,7 @@ Memory
 
 .. function:: swap_memory()
 
-  Return system :term:`swap memory` statistics as a named tuple including the
-  following fields:
+  Return system :term:`swap memory` statistics:
 
   * :field:`total`: total swap space. On Windows this is derived as
     ``CommitLimit - PhysicalTotal``, representing virtual memory backed by
@@ -481,15 +465,15 @@ Disks
 
 .. function:: disk_partitions(all=False)
 
-  Return all mounted disk partitions as a list of named tuples including device,
-  mount point and filesystem type, similarly to "df" command on UNIX. If *all*
-  parameter is ``False`` it tries to distinguish and return physical devices
-  only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
-  (e.g. pseudo, memory, duplicate, inaccessible filesystems).
-  Note that this may not be fully reliable on all systems (e.g. on BSD this
-  parameter is ignored).
-
-  Returns a list of named tuples with the following fields:
+  Return mounted disk partitions as a list. This is similar to the ``df``
+  command on UNIX. When *all* is ``False``, virtual/pseudo filesystems
+  (tmpfs, sysfs, devtmpfs, cgroup, etc.) are excluded, keeping only physical
+  devices (e.g., hard disks, CD-ROM drives, USB keys). The filtering logic
+  varies by platform: on Linux, it checks ``/proc/filesystems`` for
+  ``nodev``-flagged types (ZFS is always included); on macOS, it checks
+  whether the device path exists; on SunOS and AIX, it excludes filesystems
+  with zero total size. On BSD, *all* is ignored and all partitions are
+  always returned.
 
   * :field:`device`: the device path (e.g. "/dev/hda1"). On Windows this is the
     drive letter (e.g. "C:\\").
@@ -517,10 +501,10 @@ Disks
 
 .. function:: disk_usage(path)
 
-  Return disk usage statistics about the partition which contains the given
-  *path* as a named tuple including :field:`total`, :field:`used` and
-  :field:`free` space expressed in bytes, plus the :field:`percentage` usage.
-
+  Return disk usage statistics for the partition containing *path*. Values are
+  expressed in bytes and include :field:`total`, :field:`used` and
+  :field:`free` space, plus the :field:`percentage` usage.
+  On UNIX, *path* must point to a path within a **mounted** filesystem partition.
   This function was later incorporated in Python 3.3 as
   :func:`shutil.disk_usage` (`BPO-12442`_).
 
@@ -529,9 +513,6 @@ Disks
      >>> import psutil
      >>> psutil.disk_usage('/')
      sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
-
-  .. note::
-    on UNIX, *path* must point to a path within a **mounted** filesystem partition.
 
   .. note::
     UNIX usually reserves 5% of the total disk space for the root user.
@@ -549,26 +530,25 @@ Disks
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
-  Return system-wide disk I/O statistics as a named tuple including the
-  following fields:
+  Return system-wide disk I/O statistics:
 
-  - :field:`read_count`: number of reads
-  - :field:`write_count`: number of writes
-  - :field:`read_bytes`: number of bytes read
-  - :field:`write_bytes`: number of bytes written
+  - :field:`read_count`: number of reads.
+  - :field:`write_count`: number of writes.
+  - :field:`read_bytes`: number of bytes read.
+  - :field:`write_bytes`: number of bytes written.
 
   Platform-specific fields:
 
   - :field:`read_time`: (all except *NetBSD* and *OpenBSD*) time spent reading
-    from disk (in milliseconds)
+    from disk (in milliseconds).
   - :field:`write_time`: (all except *NetBSD* and *OpenBSD*) time spent writing
-    to disk (in milliseconds)
+    to disk (in milliseconds).
   - :field:`busy_time`: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
     milliseconds). See :term:`busy_time`.
   - :field:`read_merged_count` (*Linux*): number of merged reads
-    (see `iostats doc`_)
+    (see `iostats doc`_).
   - :field:`write_merged_count` (*Linux*): number of merged writes
-    (see `iostats doc`_)
+    (see `iostats doc`_).
 
   If *perdisk* is ``True`` return the same information for every physical disk
   as a dictionary with partition names as the keys.
@@ -593,8 +573,8 @@ Disks
       'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
   .. note::
-    on Windows ``diskperf -y`` command may need to be executed first
-    otherwise this function won't find any disk.
+     On Windows, you may need to run ``diskperf -y`` command first, otherwise
+     this function might not detect any disks.
 
   .. seealso::
      - `scripts/iotop.py`_
@@ -617,31 +597,30 @@ Network
 
 .. function:: net_io_counters(pernic=False, nowrap=True)
 
-  Return system-wide network I/O statistics as a named tuple including the
-  following attributes:
+  Return system-wide network I/O statistics:
 
-  - :field:`bytes_sent`: number of bytes sent
-  - :field:`bytes_recv`: number of bytes received
-  - :field:`packets_sent`: number of packets sent
-  - :field:`packets_recv`: number of packets received
-  - :field:`errin`: total number of errors while receiving
-  - :field:`errout`: total number of errors while sending
+  - :field:`bytes_sent`: number of bytes sent.
+  - :field:`bytes_recv`: number of bytes received.
+  - :field:`packets_sent`: number of packets sent.
+  - :field:`packets_recv`: number of packets received.
+  - :field:`errin`: total number of errors while receiving.
+  - :field:`errout`: total number of errors while sending.
   - :field:`dropin`: total number of incoming packets dropped at the
     :term:`NIC` level. Unlike :field:`errin`, drops indicate the interface or
     kernel buffer was overwhelmed.
   - :field:`dropout`: total number of outgoing packets dropped (always 0 on macOS
     and BSD). A non-zero and growing count is a sign of network saturation.
 
-  If *pernic* is ``True`` return the same information for every network
-  interface as a dictionary with interface names as the keys.
+  If *pernic* is ``True``, return the same information for every network
+  interface as a dictionary, with interface names as the keys.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
   are automatically adjusted so they never decrease (this can happen on very
   busy or long-lived systems). ``net_io_counters.cache_clear()`` can be
   used to invalidate the *nowrap* cache.
 
-  On machines with no network interfaces this function will return ``None`` or
-  ``{}`` if *pernic* is ``True``.
+  On machines with no :term:`NICs <NIC>` installed this function will return
+  ``None`` or ``{}`` if *pernic* is ``True``.
 
   .. code-block:: pycon
 
@@ -661,18 +640,19 @@ Network
 
 .. function:: net_connections(kind="inet")
 
-  Return system-wide socket connections as a list of named tuples.
-  Every named tuple provides 7 attributes:
+  Return system-wide socket connections as a list. Each entry provides 7 fields:
 
-  - :field:`fd`: the socket :term:`file descriptor`; ``-1`` on Windows and SunOS.
+  - :field:`fd`: the socket :term:`file descriptor`; set to ``-1`` on Windows
+    and SunOS.
   - :field:`family`: the address family, either :data:`socket.AF_INET`,
     :data:`socket.AF_INET6` or :data:`socket.AF_UNIX`.
   - :field:`type`: the address type, either :data:`socket.SOCK_STREAM`,
     :data:`socket.SOCK_DGRAM` or :data:`socket.SOCK_SEQPACKET`.
-  - :field:`laddr`: the local address as a ``(ip, port)`` named tuple or a
+  - :field:`laddr`: the local address as a ``(ip, port)`` named tuple, or a
     ``path`` for :data:`socket.AF_UNIX` sockets (see notes below).
-  - :field:`raddr`: the remote address, either an empty tuple (``AF_INET*``) or
-    ``""`` (``AF_UNIX``) when not connected. For UNIX sockets see notes below.
+  - :field:`raddr`: the remote address. When not connected, this is either
+    an empty tuple (``AF_INET*``) or an empty string (``""``) for ``AF_UNIX``
+    sockets. See notes below for UNIX sockets.
   - :field:`status`: a :data:`CONN_* <psutil.CONN_ESTABLISHED>` constant;
     always :data:`CONN_NONE` for UDP and UNIX sockets.
   - :field:`pid`: PID of the process which opened the socket. Set to ``None``
@@ -755,20 +735,18 @@ Network
 
 .. function:: net_if_addrs()
 
-
-  Return a dictionary mapping each :term:`NIC` to a list of named tuples
-  representing its addresses. Multiple addresses of the same family can exist
-  per interface. Each named tuple includes 5 fields (addresses may be
+  Return a dict mapping each :term:`NIC` to its addresses. Interfaces may have
+  multiple addresses per family. Each entry includes 5 fields (addresses may be
   ``None``):
 
   - :field:`family`: the address family, either :data:`socket.AF_INET` (IPv4),
     :data:`socket.AF_INET6` (IPv6), :data:`socket.AF_UNSPEC` (a virtual or
     unconfigured NIC), or :data:`AF_LINK` (a MAC address).
-  - :field:`address`: the primary NIC address
-  - :field:`netmask`: the netmask address
-  - :field:`broadcast`: the broadcast address; always ``None`` on Windows
+  - :field:`address`: the primary NIC address.
+  - :field:`netmask`: the netmask address.
+  - :field:`broadcast`: the broadcast address; always ``None`` on Windows.
   - :field:`ptp`: a "point to point" address (typically a VPN); always ``None`` on
-    Windows
+    Windows.
 
   .. code-block:: pycon
 
@@ -797,8 +775,7 @@ Network
 
 .. function:: net_if_stats()
 
-  Return a dictionary mapping each :term:`NIC` to a named tuple with the
-  following fields:
+  Return a dictionary mapping each :term:`NIC` to its stats:
 
   - :field:`isup`: whether the NIC is up and running (bool).
   - :field:`duplex`: :data:`NIC_DUPLEX_FULL`, :data:`NIC_DUPLEX_HALF` or
@@ -806,7 +783,7 @@ Network
   - :field:`speed`: NIC speed in megabits (Mbps); ``0`` if undetermined.
   - :field:`mtu`: maximum transmission unit in bytes.
   - :field:`flags`: a comma-separated string of interface flags (e.g.
-    ``"up,broadcast,running,multicast"``); may be an emty string.
+    ``"up,broadcast,running,multicast"``); may be an empty string.
 
   .. code-block:: pycon
 
@@ -830,20 +807,19 @@ Sensors
 
 .. function:: sensors_temperatures(fahrenheit=False)
 
-  Return hardware temperatures. Each entry is a named tuple representing a
-  certain hardware temperature sensor (it may be a CPU, an hard disk or
-  something else, depending on the OS and its configuration).
-  All temperatures are expressed in celsius unless *fahrenheit* is set to
-  ``True``.
-  If sensors are not supported by the OS an empty dict is returned.
-  Each named tuple includes 4 fields:
+  Return hardware temperatures. Each entry represents a sensor (CPU, disk,
+  etc.). Values are in Celsius unless *fahrenheit* is ``True``. If unsupported,
+  an empty dict is returned. Each entry includes:
 
-  - :field:`label`: a string label for the sensor, if available, else ``""``.
-  - :field:`current`: current temperature, or ``None`` if not available.
-  - :field:`high`: temperature at which the system will throttle, or ``None``
-    if not available.
-  - :field:`critical`: temperature at which the system will shut down, or
-    ``None`` if not available.
+  - :field:`label`: string label for the sensor, if available, else ``""``.
+  - :field:`current`: current temperature reading (changing), or ``None`` if
+    unavailable.
+  - :field:`high`: sensor-specified high temperature threshold (fixed), or
+    ``None`` if unavailable. Typically indicates when hardware may start
+    throttling to reduce heat.
+  - :field:`critical`: sensor-specified critical temperature threshold (fixed),
+    or ``None`` if unavailable. Typically indicates when hardware considers
+    itself at risk; behavior may include throttling, fan ramp-up, or shutdown.
 
   .. code-block:: pycon
 
@@ -868,10 +844,8 @@ Sensors
 
 .. function:: sensors_fans()
 
-  Return hardware fans speed. Each entry is a named tuple representing a
-  certain hardware sensor fan.
-  Fan speed is expressed in RPM (revolutions per minute).
-  If sensors are not supported by the OS an empty dict is returned.
+  Return hardware fan speeds in RPM (revolutions per minute).
+  If unsupported, return an empty dict.
 
   .. code-block:: pycon
 
@@ -887,9 +861,8 @@ Sensors
 
 .. function:: sensors_battery()
 
-  Return battery status information as a named tuple including the following
-  values. If no battery is installed or metrics can't be determined ``None``
-  is returned.
+  Return battery status information. If no battery is installed or metrics
+  can't be determined ``None`` is returned.
 
   - :field:`percent`: battery power left as a percentage.
   - :field:`secsleft`: a rough approximation of how many seconds are left before the
@@ -897,7 +870,7 @@ Sensors
     If the AC power cable is connected this is set to :data:`POWER_TIME_UNLIMITED`.
     If it can't be determined it is set to :data:`POWER_TIME_UNKNOWN`.
   - :field:`power_plugged`: ``True`` if the AC power cable is connected, ``False``
-    if not or ``None`` if it can't be determined.
+    if not, or ``None`` if it can't be determined.
 
   .. code-block:: pycon
 
@@ -932,7 +905,7 @@ Other system info
 
   Return the system boot time expressed in seconds since the epoch (seconds
   since January 1, 1970, at midnight UTC). The returned value is based on the
-  system clock, which means it may be affected by changes such as manual
+  system clock, which means it can be affected by changes such as manual
   adjustments or time synchronization (e.g. NTP).
 
   .. code-block:: pycon
@@ -949,17 +922,17 @@ Other system info
 
 .. function:: users()
 
-  Return users currently connected on the system as a list of named tuples
-  including the following fields:
+  Return users currently connected on the system as a list. Each entry includes:
 
   - :field:`name`: the name of the user.
   - :field:`terminal`: the tty or pseudo-tty associated with the user, if any,
     else ``None``.
-  - :field:`host`: the host name associated with the entry, if any, else ``None``.
+  - :field:`host`: the host name associated with the entry, if any (for
+    example, the remote host in an SSH session), else ``None``.
   - :field:`started`: the creation time as a floating point number expressed in
     seconds since the epoch.
-  - :field:`pid`: the PID of the login process (like sshd, tmux, gdm-session-worker,
-    ...). On Windows and OpenBSD this is always set to ``None``.
+  - :field:`pid`: the PID of the login process (like sshd for remote logins,
+    tmux, etc.). On Windows and OpenBSD this is always ``None``.
 
   .. code-block:: pycon
 
@@ -981,9 +954,9 @@ Functions
 
 .. function:: pids()
 
-  Return a sorted list of current running PIDs.
+  Return a sorted list of currently running PIDs.
   To iterate over all processes and avoid race conditions :func:`process_iter`
-  should be preferred, see :ref:`perf-process-iter`.
+  is preferred, see :ref:`perf-process-iter`.
 
   .. code-block:: pycon
 
@@ -997,8 +970,8 @@ Functions
 
 .. function:: process_iter(attrs=None, ad_value=None)
 
-  Return an iterator yielding a :class:`Process` class instance for all running
-  processes on the local machine.
+  Return an iterator yielding a :class:`Process` instance for all running
+  processes.
   This should be preferred over :func:`psutil.pids` to iterate over
   processes, as retrieving info is safe from race conditions.
 
@@ -1008,11 +981,10 @@ Functions
 
   *attrs* and *ad_value* have the same meaning as in :meth:`Process.as_dict`.
 
-  If *attrs* is specified, :meth:`Process.as_dict` is called internally and
-  the results are cached so that subsequent method calls (e.g.
-  :meth:`Process.name`, :meth:`Process.status`) return the cached values
-  instead of issuing new system calls. See :attr:`Process.attrs` for a
-  list of valid *attrs* names.
+  If *attrs* is specified, :meth:`Process.as_dict` is called internally, and the
+  results are cached so that subsequent method calls (e.g. ``p.name()``,
+  ``p.status()``) return the cached values instead of issuing new system calls.
+  See :attr:`Process.attrs` for a list of valid *attrs* names.
 
   If a method raises :exc:`AccessDenied` during pre-fetch, it will return
   *ad_value* (default ``None``) instead of raising.
@@ -1023,7 +995,7 @@ Functions
 
      >>> import psutil
      >>> for proc in psutil.process_iter(['pid', 'name', 'username']):
-     ...     print(proc.pid, proc.name(), proc.username())
+     ...     print(proc.pid, proc.name(), proc.username())  # return cached values, never raise
      ...
      1 systemd root
      2 kthreadd root
@@ -1074,44 +1046,42 @@ Functions
 .. function:: pid_exists(pid)
 
   Check whether the given PID exists in the current process list. This is
-  faster than doing ``pid in psutil.pids()`` and should be preferred.
+  faster than doing ``pid in psutil.pids()``, and should be preferred.
 
   .. seealso:: :ref:`faq_pid_exists_vs_isrunning`
 
 .. function:: wait_procs(procs, timeout=None, callback=None)
 
-  Convenience function which waits for a list of :class:`Process` instances to
-  terminate. Return a ``(gone, alive)`` tuple indicating which processes are
-  gone and which ones are still alive. The *gone* ones will have a new
-  *returncode* attribute indicating process exit status as returned by
+  Bulk operation that waits for a list of :class:`Process` instances to
+  terminate. Return a ``(gone, alive)`` tuple. The ``gone`` processes will have
+  a new ``returncode`` attribute set by
   :meth:`Process.wait`.
-  *callback* is a function which gets called when one of the processes being
-  waited on is terminated and a :class:`Process` instance is passed as callback
-  argument (the instance will also have a *returncode* attribute set).
-  This function will return as soon as all processes terminate or when
-  *timeout* (seconds) occurs.
-  Differently from :meth:`Process.wait` it will not raise
-  :exc:`TimeoutExpired` if timeout occurs.
-  A typical use case may be:
+
+  *callback* is called with a :class:`Process` instance whenever a process
+  terminates.
+
+  Returns as soon as all processes terminate or *timeout* (seconds) expires.
+  Unlike :meth:`Process.wait`, it does not raise :exc:`TimeoutExpired` on timeout.
+
+  Typical usage:
 
   - send SIGTERM to a list of processes
-  - give them some time to terminate
-  - send SIGKILL to those ones which are still alive
-
-  Example which terminates and waits all the children of this process:
+  - wait a short time
+  - send SIGKILL to any still alive
 
   .. code-block:: python
 
     import psutil
 
     def on_terminate(proc):
-        print("process {} terminated with exit code {}".format(proc, proc.returncode))
+        print(f"{proc} terminated with exit code {proc.returncode}")
 
     procs = psutil.Process().children()
     for p in procs:
         p.terminate()
     gone, alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
     for p in alive:
+        print(f"{p} is still alive, send SIGKILL")
         p.kill()
 
 Exceptions
@@ -1123,24 +1093,22 @@ Exceptions
 
 .. exception:: NoSuchProcess(pid, name=None, msg=None)
 
-  Raised by :class:`Process` class methods when no process with the given
-  *pid* is found in the current process list, or when a process no longer
-  exists. *name* is the name the process had before disappearing
-  and gets set only if :meth:`Process.name` was previously called.
+  Raised by :class:`Process` methods when a process with the given *pid*
+  is not found or no longer exists. *name* attribute is set only if
+  :meth:`Process.name` was called before the process disappeared.
 
   .. seealso:: :ref:`faq_no_such_process`
 
+
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-  A subclass of :exc:`NoSuchProcess` which may be raised by :class:`Process`
-  class methods when dealing with a :term:`zombie process` on UNIX (Windows
-  doesn't have zombie processes).
-  *name* and *ppid* attributes are set if :meth:`Process.name` or
-  :meth:`Process.ppid` methods were called before the process turned into a
-  zombie.
+  Subclass of :exc:`NoSuchProcess`, raised by :class:`Process` methods when
+  encountering a :term:`zombie process` on UNIX (Windows does not have
+  zombies). *name* and *ppid* attributes are set if :meth:`Process.name` or
+  :meth:`Process.ppid` were called before the process became a zombie.
 
-  If you're not interested in detecting zombie processes you can ignore this
-  exception and just catch :exc:`NoSuchProcess`.
+  If you do not need to detect zombies, you can ignore this exception and
+  just catch :exc:`NoSuchProcess`.
 
   .. seealso:: :ref:`faq_zombie_process`
 
@@ -1148,9 +1116,9 @@ Exceptions
 
 .. exception:: AccessDenied(pid=None, name=None, msg=None)
 
-  Raised by :class:`Process` class methods when permission to perform an
-  action is denied due to insufficient privileges.
-  *name* attribute is available if :meth:`Process.name` was previously called.
+  Raised by :class:`Process` methods when an action is denied due to
+  insufficient privileges. *name* is set if :meth:`Process.name` was called
+  before the exception was raised.
 
   .. seealso:: :ref:`faq_access_denied`
 
@@ -1158,40 +1126,37 @@ Exceptions
 
   Raised by :meth:`Process.wait` method if timeout expires and the process is
   still alive.
-  *name* attribute is available if :meth:`Process.name` was previously called.
+  *name* attribute is set if :meth:`Process.name` was previously called.
 
 Process class
 ^^^^^^^^^^^^^
 
 .. class:: Process(pid=None)
 
-  Represents an OS process with the given *pid*.
-  If *pid* is omitted current process *pid* (:func:`os.getpid`) is used.
-  Raise :exc:`NoSuchProcess` if *pid* does not exist.
-  On Linux *pid* can also refer to a thread ID (the *id* field returned by
-  :meth:`threads` method).
+  Represents an OS process with the given *pid*. If *pid* is omitted, the
+  current process *pid* (:func:`os.getpid`) is used. Raises
+  :exc:`NoSuchProcess` if the specified *pid* does not exist. On Linux, *pid*
+  can also refer to a thread ID (the :field:`id` field returned by :meth:`threads`).
+
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
-  :func:`hash` builtin can be used against instances of this class to identify
-  a process univocally over time (the hash is determined by mixing process PID
-  + creation time). As such it can also be used with :class:`set`.
+  The builtin :func:`hash` can be used on instances to uniquely identify a
+  process over time (the hash combines PID and creation time), so instances
+  can also be used in a :class:`set`.
 
   .. note::
 
-    to efficiently fetch multiple attributes about the process at the same
-    time, use either :meth:`oneshot` context manager or :meth:`as_dict`
-    utility method.
+    To fetch multiple attributes efficiently, use the :meth:`oneshot` context
+    manager or the :meth:`as_dict` utility method.
 
   .. note::
 
-    the way this class is bound to a process is via its **PID**.
-    That means that if the process terminates, and the OS reuses its PID, you
-    may inadvertently end up interacting with another process. To prevent this
-    problem you can use :meth:`is_running` first.
-    Some methods (e.g. setters and signal-related methods) perform an
-    additional check based on PID + creation time and will raise
-    :exc:`NoSuchProcess` if the PID has been reused. See :ref:`faq_pid_reuse`
-    FAQ for details.
+    This class is bound to a process via its **PID**. If the process terminates
+    and the OS reuses its PID, you may accidentally interact with another
+    process. To prevent this, use :meth:`is_running` first. Some methods
+    (e.g., setters and signal-related methods) perform an additional check
+    using PID + creation time, and will raise :exc:`NoSuchProcess` if the PID
+    has been reused. See :ref:`faq_pid_reuse` for details.
 
   .. method:: oneshot()
 
@@ -1279,7 +1244,7 @@ Process class
 
   .. attribute:: pid
 
-    The process PID. This is the only (read-only) attribute of the class.
+    The process PID as a read-only property.
 
   .. attribute:: attrs
 
@@ -1312,13 +1277,6 @@ Process class
     .. seealso:: :ref:`migration guide <migration-8.0>`.
 
     .. deprecated:: 8.0.0
-
-  .. method:: ppid()
-
-    The process parent PID. On Windows the return value is cached after the
-    first call. On POSIX it is not cached because the ppid may change if the
-    process becomes a :term:`zombie process`.
-    See also :meth:`parent` and :meth:`parents` methods.
 
   .. method:: name()
 
@@ -1431,6 +1389,13 @@ Process class
        :meth:`as_dict` is considerably faster thanks to :meth:`oneshot`
        context manager.
 
+  .. method:: ppid()
+
+    The process parent PID. On Windows the return value is cached after the
+    first call. On POSIX it is not cached because it may change if the process
+    becomes a :term:`zombie <zombie process>`. See also :meth:`parent` and
+    :meth:`parents` methods.
+
   .. method:: parent()
 
     Utility method which returns the parent process as a :class:`Process`
@@ -1461,9 +1426,9 @@ Process class
 
   .. method:: cwd()
 
-    The process current working directory as an absolute path. If cwd cannot be
-    determined for some internal reason (e.g. system process or directory no
-    longer exists) it may return an empty string.
+    The process current working directory as an absolute path. If it cannot be
+    determined (e.g. a system process or directory no longer exists) it may
+    return an empty string.
 
     .. versionchanged:: 5.6.4
        added support for NetBSD.
@@ -1471,57 +1436,57 @@ Process class
   .. method:: username()
 
     The name of the user that owns the process. On UNIX this is calculated by
-    using real process uid.
+    using the :field:`real` process UID from :meth:`uids`.
 
   .. method:: uids()
 
-    The real, effective and saved user ids of this process as a named tuple.
-    This is the same as :func:`os.getresuid` but can be used for any process PID.
+    The :field:`real`, :field:`effective` and :field:`saved` user ID of this
+    process as a named tuple. This is the same as :func:`os.getresuid`, but can
+    be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: gids()
 
-    The real, effective and saved group ids of this process as a named tuple.
-    This is the same as :func:`os.getresgid` but can be used for any process PID.
+    The :field:`real`, :field:`effective` and :field:`saved` group ID of this
+    process as a named tuple. This is the same as :func:`os.getresgid`, but can
+    be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: terminal()
 
     The terminal associated with this process, if any, else ``None``. This is
-    similar to "tty" command but can be used for any process PID.
+    similar to ``tty`` command but can be used for any process PID.
 
     .. availability:: UNIX
 
   .. method:: nice(value=None)
 
     Get or set process :term:`niceness <nice>` (priority).
-    On UNIX this is a number which usually goes from ``-20`` to ``20``.
+    On UNIX this is a number which goes from ``-20`` to ``20``.
     The higher the nice value, the lower the priority of the process.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> p = psutil.Process()
-       >>> p.nice(10)  # set
+       >>> p.nice(10)  # set lower priority
        >>> p.nice()  # get
        10
        >>>
 
-    This method was later incorporated in Python 3.3 as
-    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
-
-    On Windows this is implemented via `GetPriorityClass`_ and
-    `SetPriorityClass`_ Windows APIs and *value* is one of the
-    :data:`*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
-    constants reflecting the MSDN documentation.
-    The return value on Windows is a :class:`ProcessPriority` enum member.
-    Example which increases process priority on Windows:
+    On Windows *value* is one of the :ref:`*_PRIORITY_CLASS <const-proc-prio>`
+    constants:
 
     .. code-block:: pycon
 
-       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
+       >>> p.nice(psutil.HIGH_PRIORITY_CLASS)  # set higher priority
+       >>> p.nice()  # get
+       <ProcessPriority.HIGH_PRIORITY_CLASS: 32768>
+
+    This method was later incorporated in Python 3.3 as
+    :func:`os.getpriority` and :func:`os.setpriority` (see `BPO-10784`_).
 
     .. versionchanged:: 8.0.0
        on Windows, the return value is now a :class:`ProcessPriority` enum
@@ -1583,24 +1548,21 @@ Process class
 
   .. method:: rlimit(resource, limits=None)
 
-    Get or set process :term:`resource limits <resource limit>` (see `man prlimit`_).
-    *resource* is one of the :data:`RLIMIT_* <psutil.RLIM_INFINITY>`
-    constants.
-    *limits* is a ``(soft, hard)`` tuple.
-    This is the same as :func:`resource.getrlimit` and :func:`resource.setrlimit`
-    but can be used for any process PID, not only :func:`os.getpid`.
-    For get, return value is a ``(soft, hard)`` tuple. Each value may be either
-    an integer or :data:`RLIMIT_* <psutil.RLIM_INFINITY>`.
+    Get or set process :term:`resource limits <resource limit>`.
+    *resource* must be one of the :ref:`RLIMIT_* <const-proc-rlimit>` constants.
+    *limits* is an optional ``(soft, hard)`` tuple. If provided, the method sets
+    the limits; if omitted, it returns the current ``(soft, hard)`` tuple.
+    This is the same as stdlib :func:`resource.getrlimit` and
+    :func:`resource.setrlimit`, but can be used for any process PID.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> p = psutil.Process()
-       >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # process can open max 128 file descriptors
-       >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # can create files no bigger than 1024 bytes
-       >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get
+       >>> p.rlimit(psutil.RLIMIT_NOFILE, (128, 128))   # max 128 file descriptors
+       >>> p.rlimit(psutil.RLIMIT_FSIZE, (1024, 1024))  # max file size 1024 bytes
+       >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get current limits of ...
        (1024, 1024)
-       >>>
 
     .. seealso:: `scripts/procinfo.py`_.
 
@@ -1611,32 +1573,25 @@ Process class
 
   .. method:: io_counters()
 
-    Return process I/O statistics as a named tuple.
+    Return process I/O statistics.
     For Linux you can refer to
     `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
-
     All fields are :term:`cumulative counters <cumulative counter>` since
     process creation.
 
-    - :field:`read_count`: the number of read operations performed.
-      This is supposed to count the number of read-related syscalls such as
-      ``read()`` and ``pread()`` on UNIX.
-    - :field:`write_count`: the number of write operations performed.
-      This is supposed to count the number of write-related syscalls such as
-      ``write()`` and ``pwrite()`` on UNIX.
-    - :field:`read_bytes`: the number of bytes read. Always ``-1`` on BSD.
-    - :field:`write_bytes`: the number of bytes written. Always ``-1`` on BSD.
+    - :field:`read_count`: number of read syscalls (e.g., ``read()``, ``pread()``).
+    - :field:`write_count`: number of write syscalls (e.g., ``write()``, ``pwrite()``).
+    - :field:`read_bytes`: bytes read (``-1`` on BSD).
+    - :field:`write_bytes`: bytes written (``-1`` on BSD).
 
     Linux specific:
 
-    - :field:`read_chars` *(Linux)*: the amount of bytes which this process
-      passed to ``read()`` and ``pread()`` syscalls. Differently from
-      :field:`read_bytes` it doesn't care whether or not actual physical disk
-      I/O occurred.
-    - :field:`write_chars` *(Linux)*: the amount of bytes which this process
-      passed to ``write()`` and ``pwrite()`` syscalls. Differently from
-      :field:`write_bytes` it doesn't care whether or not actual physical disk
-      I/O occurred.
+    - :field:`read_chars` *(Linux)*: bytes read via ``read()`` and
+      ``pread()`` syscalls. Unlike :field:`read_bytes`, this includes tty
+      I/O and counts bytes regardless of whether actual disk I/O occurred
+      (e.g. reads served from :term:`page cache` are included).
+    - :field:`write_chars` *(Linux)*: bytes written via ``write()`` and
+      ``pwrite()`` syscalls. Same caveats as :field:`read_chars`.
 
     Windows specific:
 
@@ -1694,22 +1649,21 @@ Process class
 
   .. method:: threads()
 
-    Return threads opened by process as a list of named tuples. On OpenBSD this
-    method requires root privileges.
+    Return a list of threads spawned by this process. On OpenBSD, root privileges
+    are required. Each entry includes:
 
-    - :field:`id`: the native thread ID assigned by the kernel. If :attr:`pid`
-      refers to the current process this matches
-      :attr:`threading.Thread.native_id`, and can be used to reference
-      individual Python threads running within your own Python app.
+    - :field:`id`: native thread ID assigned by the kernel. If :attr:`pid` refers
+      to the current process, this matches :attr:`threading.Thread.native_id`
+      and can be used to reference individual Python threads in your app.
     - :field:`user_time`: time spent in user mode.
     - :field:`system_time`: time spent in kernel mode.
 
   .. method:: cpu_times()
 
-    Return a named tuple of :term:`cumulative counters <cumulative counter>` (seconds)
-    representing the accumulated process CPU times
+    Return accumulated process CPU times as
+    :term:`cumulative counters <cumulative counter>` (seconds)
     (see `explanation <http://stackoverflow.com/questions/556405/>`_).
-    This is similar to :func:`os.times` but can be used for any process PID.
+    Same as :func:`os.times`, but works for any process PID.
 
     - :field:`user`: time spent in user mode.
     - :field:`system`: time spent in kernel mode.
@@ -1717,9 +1671,9 @@ Process class
       Windows and macOS).
     - :field:`children_system`: system time of all child processes (always
       ``0`` on Windows and macOS).
-    - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete
-      (:term:`iowait`). This value is excluded from `user` and `system` times
-      count (because the CPU is not doing any work).
+    - :field:`iowait`: (Linux) time spent waiting for blocking I/O to complete.
+      (:term:`iowait`). Excluded from :field:`user` and :field:`system` times
+      count (because the CPU is idle).
 
     .. code-block:: pycon
 
@@ -1738,15 +1692,15 @@ Process class
 
   .. method:: cpu_percent(interval=None)
 
-    Return a float representing the process CPU utilization as a percentage
-    which can also be ``> 100.0`` if the process runs multiple threads
-    on different CPUs.
-    When *interval* is > ``0.0`` compares process times to system CPU times
-    elapsed before and after the interval (blocking). When *interval* is ``0.0``
-    or ``None`` compares process times to system CPU times elapsed since last
-    call, returning immediately. That means the first time this is called it
-    will return a meaningless ``0.0`` value which you are supposed to ignore.
-    For accuracy, it is recommended to call this function a second time with
+    Return process CPU utilization as a percentage. Values can exceed ``100.0``
+    if the process runs multiple threads on different CPUs.
+
+    If *interval* is > ``0.0``, measures CPU times before and after the interval
+    (blocking). If ``0.0`` or ``None``, returns the utilization since the last
+    call or module import, returning immediately.
+    That means the first time this is called it will return a meaningless ``0.0``
+    value which you are supposed to ignore.
+    In this case it is recommended for accuracy that this method be called with
     at least ``0.1`` seconds between calls.
 
     .. code-block:: pycon
@@ -1817,10 +1771,9 @@ Process class
 
   .. method:: memory_info()
 
-    Return a named tuple with variable fields depending on the platform
-    representing memory information about the process.
-    The "portable" fields available on all platforms are :field:`rss` and
-    :field:`vms`. All numbers are expressed in bytes.
+    Return memory information about the process. Fields vary by platform
+    (all values in bytes). The portable fields available on all platforms
+    are :field:`rss` and :field:`vms`.
 
     +---------+---------+----------+---------+-----+-----------------+
     | Linux   | macOS   | BSD      | Solaris | AIX | Windows         |
@@ -1920,10 +1873,9 @@ Process class
 
   .. method:: memory_info_ex()
 
-    Return a named tuple extending :meth:`memory_info` with additional
-    platform-specific memory metrics. On platforms where extra fields are not
-    implemented this returns the same result as :meth:`memory_info`. All
-    numbers are expressed in bytes.
+    Extends :meth:`memory_info` with additional platform-specific memory
+    metrics (all values in bytes). On platforms where extra fields are not
+    implemented this returns the same result as :meth:`memory_info`.
 
     +-------------+----------------+--------------------+
     | Linux       | macOS          | Windows            |
@@ -1988,10 +1940,10 @@ Process class
 
   .. method:: memory_footprint()
 
-    Return a named tuple with :term:`USS`, :term:`PSS` and :term:`swap memory`
-    metrics. These give a more accurate picture of actual memory consumption
-    than :meth:`memory_info` (see this
-    `blog post <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
+    Return :field:`uss`, :field:`pss` and :field:`swap` memory metrics. These
+    give a more accurate picture of actual memory consumption than
+    :meth:`memory_info` (see this `blog post
+    <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
     It walks the full process address space, so it is slower than
     :meth:`memory_info` and may require elevated privileges.
 
@@ -2036,23 +1988,29 @@ Process class
 
   .. method:: memory_percent(memtype="rss")
 
-    Return process memory usage as a percentage of total physical memory
-    (``process.memory_info().rss / virtual_memory().total * 100``).
-    *memtype* can be any field name from :meth:`memory_info`,
-    :meth:`memory_info_ex`, or :meth:`memory_footprint` and controls which
-    memory value is used in the calculation (defaults to ``"rss"``).
+    Return process memory usage as a percentage of total physical memory. Same
+    as:
+
+    .. code-block:: python
+
+       Process().memory_info().rss / virtual_memory().total * 100
+
+    *memtype* selects which memory field to use and can be any attribute
+    from :meth:`memory_info`, :meth:`memory_info_ex`, or :meth:`memory_footprint`
+    (default is ``"rss"``).
 
     .. versionchanged:: 4.0.0
        added *memtype* parameter.
 
   .. method:: memory_maps(grouped=True)
 
-    Return process's memory-mapped file regions as a list of named tuples whose
-    fields vary by platform (all values in bytes). If *grouped* is ``True``
-    regions with the same *path* are merged and their numeric fields summed.
-    If *grouped* is ``False`` each region is listed individually and the
-    tuple also includes *addr* (address range) and *perms* (permission
-    string e.g. ``"r-xp"``).
+    Return the process's memory-mapped file regions as a list. Fields vary by
+    platform (all values in bytes).
+
+    If *grouped* is ``True``, regions with the same *path* are merged and their
+    numeric fields summed. If *grouped* is ``False``, each region is listed
+    individually; the tuple also includes *addr* (address range) and *perms*
+    (permission string, e.g., ``"r-xp"``).
 
     +---------------+---------+--------------+-----------+
     | Linux         | Windows | FreeBSD      | Solaris   |
@@ -2122,9 +2080,8 @@ Process class
   .. method:: children(recursive=False)
 
     Return the children of this process as a list of :class:`Process`
-    instances.
-    If *recursive* is ``True`` return all the parent descendants.
-    Pseudo code example assuming *A == this process*:
+    instances. If *recursive* is ``True``, return all descendants.
+    Pseudo-code example (assuming A is this process):
 
     .. code-block:: none
 
@@ -2132,7 +2089,7 @@ Process class
          │
          ├─ B (child) ─┐
          │             └─ X (grandchild) ─┐
-         │                                └─ Y (great grandchild)
+         │                                └─ Y (great-grandchild)
          ├─ C (child)
          └─ D (child)
 
@@ -2143,8 +2100,8 @@ Process class
        >>> p.children(recursive=True)
        B, X, Y, C, D
 
-    Note that in the example above if process X disappears process Y won't be
-    returned either as the reference to process A is lost.
+    Note: if a process in the tree disappears (e.g., X), its descendants
+    (Y) won’t be returned since the reference to the parent is lost.
     This concept is well illustrated by this
     `unit test <https://github.com/giampaolo/psutil/blob/65a52341b55faaab41f68ebc4ed31f18f0929754/psutil/tests/test_process.py#L1064-L1075>`_.
 
@@ -2152,19 +2109,17 @@ Process class
 
   .. method:: page_faults()
 
-    Return the number of :term:`page faults <page fault>` for this process as a
-    ``(minor, major)`` named tuple.
+    Return the number of :term:`page faults <page fault>` for this process
+    as a ``(minor, major)`` named tuple. Both are
+    :term:`cumulative counters <cumulative counter>` since process creation.
 
-    - :field:`minor` (a.k.a. *soft* faults): occur when a memory page is not
-      currently mapped into the process address space, but is already present
-      in physical RAM (e.g. a shared library loaded by another process). The
-      kernel resolves these without disk I/O.
-    - :field:`major` (a.k.a. *hard* faults): occur when the page must be fetched
-      from disk. These are expensive because they stall the process until I/O
-      completes.
-
-    Both counters are :term:`cumulative counters <cumulative counter>` since
-    process creation.
+    - :field:`minor` (soft faults): occur when a page is already in physical
+      RAM (e.g., in the :term:`page cache` or other :term:`shared memory`) but
+      not yet mapped into the process's virtual address space. No disk I/O is
+      required.
+    - :field:`major` (hard faults): occur when a page must be loaded from disk
+      into RAM and mapped. These are expensive as the process is stalled until
+      I/O completes.
 
     .. code-block:: pycon
 
@@ -2177,8 +2132,7 @@ Process class
 
   .. method:: open_files()
 
-    Return regular files opened by process as a list of named tuples including
-    the following fields:
+    Return regular files opened by process as a list. Each entry includes:
 
     - :field:`path`: the absolute file name.
     - :field:`fd`: the :term:`file descriptor` number; on Windows this is always
@@ -2186,7 +2140,7 @@ Process class
 
     Linux only:
 
-    - :field:`position` (*Linux*): the file (offset) position.
+    - :field:`position` (*Linux*): the file position (offset).
     - :field:`mode` (*Linux*): a string indicating how the file was opened,
       similarly to :func:`open` builtin *mode* argument.
       Possible values are ``'r'``, ``'w'``, ``'a'``, ``'r+'`` and ``'a+'``.
@@ -2243,16 +2197,15 @@ Process class
 
   .. method:: is_running()
 
-    Return whether the current process is running in the current process list.
+    Return whether the current process is running.
     Differently from ``psutil.pid_exists(p.pid)``, this is reliable also in
     case the process is gone and its PID reused by another process.
 
     If PID has been reused, this method will also remove the process from
     :func:`process_iter` internal cache.
 
-    .. note::
-      this will return ``True`` also if the process is a :term:`zombie process`
-      (``p.status() == psutil.STATUS_ZOMBIE``).
+    This will return ``True`` also if the process is a :term:`zombie process`
+    (``p.status() == psutil.STATUS_ZOMBIE``).
 
     .. seealso::
       - :ref:`faq_pid_reuse`
@@ -2265,10 +2218,10 @@ Process class
   .. method:: send_signal(sig)
 
     Send signal *sig* to process (see :mod:`signal` module constants),
-    preemptively checking whether PID has been reused.
-    On UNIX this is the same as ``os.kill(pid, sig)``.
-    On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
-    are supported, and *SIGTERM* is treated as an alias for :meth:`kill`.
+    preemptively checking whether PID has been reused. On UNIX this is the same
+    as ``os.kill(pid, sig)``. On Windows only ``SIGTERM``, ``CTRL_C_EVENT`` and
+    ``CTRL_BREAK_EVENT`` signals are supported, and ``SIGTERM`` is treated as
+    an alias for :meth:`kill`.
 
     .. seealso:: how to :ref:`kill a process tree <recipe_kill_proc_tree>`
 
@@ -2277,21 +2230,21 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with *SIGSTOP* signal preemptively
+    Suspend process execution with ``SIGSTOP`` signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
-    On Windows this is done by suspending all process threads execution.
+    On Windows this is done by suspending all process threads.
 
   .. method:: resume()
 
-    Resume process execution with *SIGCONT* signal preemptively
+    Resume process execution with ``SIGCONT`` signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
-    On Windows this is done by resuming all process threads execution.
+    On Windows this is done by resuming all process threads.
 
   .. method:: terminate()
 
-    Terminate the process with *SIGTERM* signal preemptively checking
+    Terminate the process with ``SIGTERM`` signal, preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
@@ -2300,7 +2253,7 @@ Process class
 
   .. method:: kill()
 
-    Kill the current process by using *SIGKILL* signal preemptively
+    Kill the current process by using ``SIGKILL`` signal, preemptively
     checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
     On Windows this is done by using `TerminateProcess`_.
@@ -2312,19 +2265,17 @@ Process class
     Wait for a process PID to terminate. The details about the return value
     differ on UNIX and Windows.
 
-    *On UNIX*: if the process terminated normally, the return value is a
-    positive integer >= 0 indicating the exit code.
-    If the process was terminated by a signal return the negated value of the
-    signal which caused the termination (e.g. ``-SIGTERM``).
-    If PID is not a child of :func:`os.getpid` (current process) just wait until
-    the process disappears and return ``None``.
-    If PID does not exist return ``None`` immediately.
+    *On UNIX*: if the process terminated normally, the return value is an
+    integer >= 0 indicating the exit code. If the process was terminated by a
+    signal, returns the negated value of the signal which caused the
+    termination (e.g. ``-SIGTERM``). If PID is not a child of :func:`os.getpid`
+    (current process), it just waits until the process disappears and return
+    ``None``. If PID does not exist return ``None`` immediately.
 
-    *On Windows*: always return the exit code, which is a positive integer as
-    returned by `GetExitCodeProcess`_.
+    *On Windows*: always return the exit code via `GetExitCodeProcess`_.
 
-    *timeout* is expressed in seconds. If specified and the process is still
-    alive raise :exc:`TimeoutExpired` exception.
+    *timeout* is expressed in seconds. If specified, and the process is still
+    alive, raise :exc:`TimeoutExpired`.
     ``timeout=0`` can be used in non-blocking apps: it will either return
     immediately or raise :exc:`TimeoutExpired`.
 
@@ -2378,9 +2329,9 @@ Popen class
 
 .. class:: Popen(*args, **kwargs)
 
-  Same as :class:`subprocess.Popen` but in addition it provides all
+  Same as :class:`subprocess.Popen`, but in addition it provides all
   :class:`psutil.Process` methods in a single class.
-  For the following methods which are common to both classes, psutil
+  For the following methods, which are common to both classes, psutil
   implementation takes precedence:
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>`,
@@ -2436,8 +2387,7 @@ Python's memory tracking misses.
 .. function:: heap_info()
 
   Return low-level heap statistics from the system's C allocator. On Linux,
-  this exposes ``uordblks`` and ``hblkhd`` fields from glibc's `mallinfo2`_.
-  Returns a named tuple containing:
+  this exposes ``uordblks`` and ``hblkhd`` fields from glibc `mallinfo2`_.
 
   - ``heap_used``: total number of bytes currently allocated via ``malloc()``
     (small allocations).
@@ -2498,8 +2448,8 @@ Windows services
 
 .. function:: win_service_iter()
 
-  Return an iterator yielding a :class:`WindowsService` class instance for all
-  Windows services installed.
+  Return an iterator yielding :class:`WindowsService` instances for all
+  installed Windows services.
 
   .. versionadded:: 4.2.0
 
@@ -2517,12 +2467,12 @@ Windows services
 .. class:: WindowsService
 
   Represents a Windows service with the given *name*. This class is returned
-  by :func:`win_service_iter` and :func:`win_service_get` functions and it is
+  by :func:`win_service_iter` and :func:`win_service_get` functions, and it's
   not supposed to be instantiated directly.
 
   .. method:: name()
 
-    The service name. This string is how a service is referenced and can be
+    The service name. This string is how a service is referenced, and can be
     passed to :func:`win_service_get` to get a new :class:`WindowsService`
     instance.
 
@@ -2542,7 +2492,8 @@ Windows services
 
   .. method:: start_type()
 
-    A string which can either be `"automatic"`, `"manual"` or `"disabled"`.
+    A string which can either be either ``'automatic'``, ``'manual'`` or
+    ``'disabled'``.
 
   .. method:: pid()
 
@@ -2551,9 +2502,9 @@ Windows services
 
   .. method:: status()
 
-    Service status as a string, which may be either `"running"`, `"paused"`,
-    `"start_pending"`, `"pause_pending"`, `"continue_pending"`,
-    `"stop_pending"` or `"stopped"`.
+    Service status as a string, which can be either ``'running'``,
+    ``'paused'``, ``'start_pending'``, ``'pause_pending'``,
+    ``'continue_pending'``, ``'stop_pending'`` or ``'stopped'``.
 
   .. method:: description()
 
@@ -2594,10 +2545,10 @@ Windows services
 Constants
 ---------
 
-The following enum classes group related constants and are useful for type
+The following enum classes group related constants, and are useful for type
 annotations and introspection. The individual constants (e.g.
 :data:`STATUS_RUNNING`) are also accessible directly from the psutil
-namespace as aliases for the enum members and should be preferred over
+namespace as aliases for the enum members, and should be preferred over
 accessing them via the enum class (e.g. prefer ``psutil.STATUS_RUNNING`` over
 ``psutil.ProcessStatus.STATUS_RUNNING``).
 
@@ -2714,8 +2665,8 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
 .. data:: STATUS_STOPPED
 
-   The process was suspended via ``SIGSTOP`` signal and won't run until it
-   receives ``SIGCONT``.
+   The process is stopped (e.g., by ``SIGSTOP`` or ``SIGTSTP``, which is sent
+   on Ctrl+Z) and will not run until resumed (e.g., via ``SIGCONT``).
 
 .. data:: STATUS_TRACING_STOP
 
@@ -2726,11 +2677,11 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
    The process has finished execution and released its resources, but it
    remains in the process table until the parent reaps it via ``wait()``.
+   See also :ref:`faq_zombie_process`.
 
 .. data:: STATUS_DEAD
 
-   The final process state where the kernel is actively removing its entry from
-   the system. Occurs after the process is reaped.
+   The process is about to disappear (final state before it is gone).
 
 .. data:: STATUS_WAKE_KILL
 
@@ -2779,10 +2730,12 @@ Represent the current status of a process. Returned by :meth:`Process.status`.
 
    .. versionadded:: 3.4.1
 
+.. _const-proc-prio:
+
 Process priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Represent the priority of a process on Windows (see `SetPriorityClass`_).
+Represent the priority of a process on Windows (see `SetPriorityClass`_ doc).
 They can be used in conjunction with :meth:`Process.nice` to get or
 set process priority.
 
@@ -2807,7 +2760,7 @@ set process priority.
 Process I/O priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Represent the priority I/O priority of a process (Linux and Windows only).
+Represent the I/O priority of a process (Linux and Windows only).
 They can be used in conjunction with :meth:`Process.ionice`.
 
 .. versionchanged:: 8.0.0
@@ -2844,7 +2797,7 @@ They can be used in conjunction with :meth:`Process.ionice`.
 
   .. versionadded:: 5.6.2
 
-.. _const-rlimit:
+.. _const-proc-rlimit:
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2968,14 +2921,15 @@ Other constants
 
 .. data:: PROCFS_PATH
 
-  The path of the /proc filesystem on Linux, Solaris and AIX (defaults to
-  ``"/proc"``).
+  The path of the ``/proc`` filesystem on Linux, Solaris and AIX (defaults to
+  ``'/proc'``).
   You may want to re-set this constant right after importing psutil in case
-  your /proc filesystem is mounted elsewhere or if you want to retrieve
+  ``/proc`` is mounted elsewhere, or if you want to retrieve
   information about Linux containers such as Docker, Heroku or LXC (see
   `here <https://fabiokung.com/2014/03/13/memory-inside-linux-containers/>`_
   for more info).
-  It must be noted that this trick works only for APIs which rely on /proc
+
+  It must be noted that this trick works only for APIs which rely on ``/proc``
   filesystem (e.g. memory-related APIs and many (but not all)
   :class:`Process` class methods).
 
@@ -3021,7 +2975,6 @@ Environment variables
 .. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
-.. _`man prlimit`: https://linux.die.net/man/2/prlimit
 .. _`psleak`: https://github.com/giampaolo/psleak
 .. _`/proc/meminfo`: https://man7.org/linux/man-pages/man5/proc_meminfo.5.html
 
@@ -3029,7 +2982,6 @@ Environment variables
 
 .. _`GetExitCodeProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess
 .. _`GetPerformanceInfo`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getperformanceinfo
-.. _`GetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getpriorityclass
 .. _`PROCESS_MEMORY_COUNTERS_EX`: https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex
 .. _`SetPriorityClass`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setpriorityclass
 .. _`TerminateProcess`: https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess
