@@ -24,15 +24,14 @@
 //
 // Read boot time atomically from the kernel via
 // NtQuerySystemInformation(SystemTimeOfDayInformation), so the value
-// is bit-identical across processes and has zero differences between
-// calls (fixes issue #1007 for the second time, which was caused by
-// sampling `time.time()` and `cext.uptime()` as two separate Python
-// calls).
+// is identical across processes and has zero differences between calls
+// (fixes issue #1007 for the second time, which was caused by sampling
+// `time.time()` and `cext.uptime()` as two separate Python calls).
 //
 // This function is subject to system clock updates / NTP (it's by
-// contract and documented. It also takes into account the time spent
-// in suspend / hibernate mode, in which case it returns the same
-// result.
+// contract and documented). It also takes into account the time spent
+// in suspend / hibernate mode, so that it returns the same result
+// on wakeup.
 PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
     SYSTEM_TIMEOFDAY_INFORMATION info;
