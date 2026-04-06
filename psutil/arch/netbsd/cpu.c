@@ -40,10 +40,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    struct nlist nl[] = {
-        { .n_name = "_cpu_counts" },
-        { .n_name = NULL          }
-    };
+    struct nlist nl[] = {{.n_name = "_cpu_counts"}, {.n_name = NULL}};
 
     if (kvm_nlist(kd, nl) != 0 || nl[0].n_value == 0) {
         fprintf(stderr, "kvm_nlist(_cpu_counts): %s\n", kvm_geterr(kd));
@@ -56,8 +53,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     int64_t nintr = 0;
 
     if (kvm_read(kd, addr, &nintr, sizeof(nintr)) != sizeof(nintr)) {
-        fprintf(stderr, "kvm_read(cpu_counts[NINTR]): %s\n",
-                kvm_geterr(kd));
+        fprintf(stderr, "kvm_read(cpu_counts[NINTR]): %s\n", kvm_geterr(kd));
         kvm_close(kd);
         return NULL;
     }
@@ -66,13 +62,13 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     return Py_BuildValue(
         "KKKKKKK",
-        (uint64_t)uv.swtch,    // ctx switches
-        (uint64_t)nintr,        // interrupts
-        (uint64_t)uv.softs,    // soft interrupts
-        (uint64_t)uv.syscalls, // syscalls - XXX always 0
-        (uint64_t)uv.traps,    // traps
-        (uint64_t)uv.faults,   // faults
-        (uint64_t)uv.forks     // forks
+        (uint64_t)uv.swtch,  // ctx switches
+        (uint64_t)nintr,  // interrupts
+        (uint64_t)uv.softs,  // soft interrupts
+        (uint64_t)uv.syscalls,  // syscalls - XXX always 0
+        (uint64_t)uv.traps,  // traps
+        (uint64_t)uv.faults,  // faults
+        (uint64_t)uv.forks  // forks
     );
 }
 

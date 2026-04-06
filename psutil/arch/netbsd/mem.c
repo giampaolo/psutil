@@ -44,14 +44,14 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
-    total    = (unsigned long long)uv.npages   << uv.pageshift;
-    free     = (unsigned long long)uv.free     << uv.pageshift;
-    active   = (unsigned long long)uv.active   << uv.pageshift;
+    total = (unsigned long long)uv.npages << uv.pageshift;
+    free = (unsigned long long)uv.free << uv.pageshift;
+    active = (unsigned long long)uv.active << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
-    wired    = (unsigned long long)uv.wired    << uv.pageshift;
-    shared   = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
-    cached   = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
-               << uv.pageshift;
+    wired = (unsigned long long)uv.wired << uv.pageshift;
+    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
+    cached = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
+             << uv.pageshift;
 
     /*
      * buffers: file-backed pages excluding executable mappings.
@@ -70,21 +70,21 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
      */
     buffers = (unsigned long long)uv.filepages << uv.pageshift;
 
-    used   = active + wired;
-    avail  = total - used;
+    used = active + wired;
+    avail = total - used;
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
-    if (!(pydict_add(dict, "total",    "K", total)
-        | pydict_add(dict, "available","K", avail)
-        | pydict_add(dict, "percent",  "d", percent)
-        | pydict_add(dict, "used",     "K", used)
-        | pydict_add(dict, "free",     "K", free)
-        | pydict_add(dict, "active",   "K", active)
-        | pydict_add(dict, "inactive", "K", inactive)
-        | pydict_add(dict, "buffers",  "K", buffers)
-        | pydict_add(dict, "wired",    "K", wired)
-        | pydict_add(dict, "cached",   "K", cached)
-        | pydict_add(dict, "shared",   "K", shared)))
+    if (!(pydict_add(dict, "total", "K", total)
+          | pydict_add(dict, "available", "K", avail)
+          | pydict_add(dict, "percent", "d", percent)
+          | pydict_add(dict, "used", "K", used)
+          | pydict_add(dict, "free", "K", free)
+          | pydict_add(dict, "active", "K", active)
+          | pydict_add(dict, "inactive", "K", inactive)
+          | pydict_add(dict, "buffers", "K", buffers)
+          | pydict_add(dict, "wired", "K", wired)
+          | pydict_add(dict, "cached", "K", cached)
+          | pydict_add(dict, "shared", "K", shared)))
         goto error;
 
     return dict;
