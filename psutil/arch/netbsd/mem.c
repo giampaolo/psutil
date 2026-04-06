@@ -34,8 +34,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned long long buffers, shared, used, avail;
     double percent;
     long pagesize = psutil_getpagesize();
-    FILE *f;
-    char line[256];
     PyObject *dict = PyDict_New();
 
     if (dict == NULL)
@@ -46,56 +44,47 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
-    // get buffers from /proc/meminfo
-    buffers = 0;
-    f = fopen("/proc/meminfo", "r");
-    if (f != NULL) {
-        while (fgets(line, sizeof(line), f) != NULL) {
-            if (strncmp(line, "Buffers:", 8) == 0) {
-                sscanf(line + 8, "%llu", &buffers);
-                break;
-            }
-        }
-        fclose(f);
-        buffers *= 1024;
-    }
-
-    total = (unsigned long long)uv.npages << uv.pageshift;
-    free = (unsigned long long)uv.free << uv.pageshift;
-    active = (unsigned long long)uv.active << uv.pageshift;
+    total    = (unsigned long long)uv.npages   << uv.pageshift;
+    free     = (unsigned long long)uv.free     << uv.pageshift;
+    active   = (unsigned long long)uv.active   << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
-    wired = (unsigned long long)uv.wired << uv.pageshift;
-    // Also in /proc/meminfo as MemShared
-    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
+    wired    = (unsigned long long)uv.wired    << uv.pageshift;
+    shared   = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
+    cached   = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
+               << uv.pageshift;
 
-    // Note: zabbix does not include anonpages, but that doesn't match
-    // the "Cached" value in /proc/meminfo.
-    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/
-    //   zbxsysinfo/netbsd/memory.c#L182
-    cached = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
-             << uv.pageshift;
+    /*
+     * buffers: file-backed pages excluding executable mappings.
+     *
+     * Previously read from /proc/meminfo "Buffers:" but that field is
+     * unreliable on NetBSD — procfs_domeminfo() reads the underlying
+     * cpu_counts[] without calling cpu_count_sync() first, so it
+     * returns stale per-CPU accumulated values.
+     *
+     * The correct source is uvmexp_sysctl.filepages, which is a
+     * properly maintained aggregate field on the struct itself.
+     * This matches what btop uses on NetBSD:
+     *   cached = (filepages + execpages + anonpages) * pagesize
+     * and filepages alone is the file cache excluding exec mappings,
+     * which is the closest accurate equivalent to Linux "Buffers".
+     */
+    buffers = (unsigned long long)uv.filepages << uv.pageshift;
 
-    // Before avail was calculated as (inactive + cached + free), same
-    // as zabbix, but it turned out it could exceed total (see #2233),
-    // so zabbix seems to be wrong. Htop calculates it differently, and
-    // the used value seem more realistic, so let's match htop.
-    // https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
-    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135
-    used = active + wired;
-    avail = total - used;
+    used   = active + wired;
+    avail  = total - used;
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
-    if (!(pydict_add(dict, "total", "K", total)
-          | pydict_add(dict, "available", "K", avail)
-          | pydict_add(dict, "percent", "d", percent)
-          | pydict_add(dict, "used", "K", used)
-          | pydict_add(dict, "free", "K", free)
-          | pydict_add(dict, "active", "K", active)
-          | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "buffers", "K", buffers)
-          | pydict_add(dict, "wired", "K", wired)
-          | pydict_add(dict, "cached", "K", cached)
-          | pydict_add(dict, "shared", "K", shared)))
+    if (!(pydict_add(dict, "total",    "K", total)
+        | pydict_add(dict, "available","K", avail)
+        | pydict_add(dict, "percent",  "d", percent)
+        | pydict_add(dict, "used",     "K", used)
+        | pydict_add(dict, "free",     "K", free)
+        | pydict_add(dict, "active",   "K", active)
+        | pydict_add(dict, "inactive", "K", inactive)
+        | pydict_add(dict, "buffers",  "K", buffers)
+        | pydict_add(dict, "wired",    "K", wired)
+        | pydict_add(dict, "cached",   "K", cached)
+        | pydict_add(dict, "shared",   "K", shared)))
         goto error;
 
     return dict;
