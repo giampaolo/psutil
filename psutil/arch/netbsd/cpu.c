@@ -65,14 +65,14 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     kvm_close(kd);
 
     return Py_BuildValue(
-        "IIIIIII",
-        uv.swtch,  // ctx switches
-        (uint64_t)nintr,  // interrupts
-        uv.softs,  // soft interrupts
-        uv.syscalls,  // syscalls - XXX always 0
-        uv.traps,  // traps
-        uv.faults,  // faults
-        uv.forks  // forks
+        "KKKKKKK",
+        (uint64_t)uv.swtch,    // ctx switches
+        (uint64_t)nintr,        // interrupts
+        (uint64_t)uv.softs,    // soft interrupts
+        (uint64_t)uv.syscalls, // syscalls - XXX always 0
+        (uint64_t)uv.traps,    // traps
+        (uint64_t)uv.faults,   // faults
+        (uint64_t)uv.forks     // forks
     );
 }
 
