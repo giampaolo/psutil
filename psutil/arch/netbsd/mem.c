@@ -22,8 +22,16 @@
 #include "../../arch/all/init.h"
 
 
-// Virtual memory stats, taken from:
-// https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
+/*
+ * Virtual memory stats for NetBSD using VM_UVMEXP2 and VM_METER.
+ *
+ * Sources:
+ *   cached  = (filepages + execpages + anonpages) << pageshift  [btop]
+ *   buffers = filepages << pageshift  [file cache * excl. exec]
+ *   shared  = (t_vmshr + t_rmshr) * pagesize [vmtotal]
+ *   used    =  (active + wired) << pageshift [top/btop]
+ *   avail   = total - used [htop/btop]
+ */
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
@@ -44,6 +52,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
+    // https://github.com/aristocratos/btop/blob/main/src/netbsd/btop_collect.cpp#L723
     total = (unsigned long long)uv.npages << uv.pageshift;
     free = (unsigned long long)uv.free << uv.pageshift;
     active = (unsigned long long)uv.active << uv.pageshift;
@@ -56,13 +65,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     /*
      * buffers: file-backed pages excluding executable mappings.
      *
-     * Previously read from /proc/meminfo "Buffers:" but that field is
-     * unreliable on NetBSD — procfs_domeminfo() reads the underlying
-     * cpu_counts[] without calling cpu_count_sync() first, so it
-     * returns stale per-CPU accumulated values.
-     *
-     * The correct source is uvmexp_sysctl.filepages, which is a
-     * properly maintained aggregate field on the struct itself.
+     * The source is uvmexp_sysctl.filepages
      * This matches what btop uses on NetBSD:
      *   cached = (filepages + execpages + anonpages) * pagesize
      * and filepages alone is the file cache excluding exec mappings,
