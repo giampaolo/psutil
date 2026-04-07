@@ -46,8 +46,7 @@ extensions = [
 
 project = PROJECT_NAME
 author = AUTHOR
-version = VERSION
-release = VERSION
+version = release = VERSION
 copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
 
 # =====================================================================
@@ -65,7 +64,6 @@ extlinks = {
 # Paths
 # =====================================================================
 
-templates_path = ["_templates", "_static/images"]
 html_static_path = ["_static"]
 exclude_patterns = ["_build"]
 
@@ -91,13 +89,11 @@ copybutton_exclude = ".linenos, .gp"
 html_theme = "sphinx_rtd_theme"
 
 if html_theme == "sphinx_rtd_theme":
-
+    templates_path = ["_templates", "_static/images"]
     pygments_style = "monokai"  # https://pygments.org/styles/
-
     html_css_files = [
         "css/custom.css",
     ]
-
     html_js_files = [
         "js/highlight-repl.js",
         "js/external-urls.js",
