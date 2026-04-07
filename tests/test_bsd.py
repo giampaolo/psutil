@@ -526,10 +526,19 @@ class NetBSDTestCase(PsutilTestCase):
             < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
     def test_vmem_shared(self):
-        # vmtotal.t_vmshr + t_rmshr (CTL_VM, VM_METER) is not exposed by
-        # any CLI tool; verify the field is present and non-negative.
-        assert psutil.virtual_memory().shared >= 0
+        # vmstat -t outputs vmtotal fields including vm-sh (t_vmshr) and
+        # rm-sh (t_rmshr). Header line: total-v active-v active-r vm-sh ...
+        out = sh("vmstat -t")
+        lines = out.splitlines()
+        headers = lines[1].split()
+        values = lines[2].split()
+        row = dict(zip(headers, values))
+        expected = (int(row["vm-sh"]) + int(row["rm-sh"])) * PAGESIZE
+        assert (
+            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
+        )
 
     @retry_on_failure()
     def test_vmem_cached(self):
