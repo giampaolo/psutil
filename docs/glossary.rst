@@ -190,14 +190,14 @@ Glossary
 
    page fault
 
-      An event that occurs when a process accesses a virtual memory page
-      that is not currently mapped in physical RAM. A :field:`minor` fault is
-      resolved without disk I/O (e.g. the page is already in RAM but not
-      yet mapped, or it is copy-on-write). A :field:`major` fault requires
-      reading the page from disk (e.g. from a memory-mapped file or the
-      :term:`swap memory` area) and is significantly more expensive. Many
-      major faults may indicate memory pressure or excessive swapping. See
-      :meth:`Process.page_faults`.
+      An event that occurs when a process accesses a virtual memory page that
+      is not currently mapped in physical RAM. A :field:`minor` fault occurs
+      when a page is already in physical RAM (e.g., in the :term:`page cache`
+      or other :term:`shared memory`) but not yet mapped into the process's
+      virtual address space, so no disk I/O is required (fast). A :field:`major`
+      fault requires reading the page from disk, and is significantly
+      more expensive. Many major faults may indicate memory pressure or
+      excessive swapping. See :meth:`Process.page_faults`.
 
    physical CPU
 

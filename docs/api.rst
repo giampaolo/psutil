@@ -30,7 +30,7 @@ CPU
   The attributes availability varies depending on the platform.
   Cross-platform fields:
 
-  - :field:`user`: time spent by normal processes executing in user mode; on
+  - :field:`user`: time spent by processes executing in user mode; on
     Linux this also includes :field:`guest` time.
 
   - :field:`system`: time spent by processes executing in kernel mode.
@@ -52,9 +52,8 @@ CPU
   - :field:`softirq` *(Linux)*: time spent for servicing
     :term:`soft interrupts <soft interrupt>`.
 
-  - :field:`steal` *(Linux)*: CPU time the virtual machine wanted to run but was
-    used by other virtual machines or the host. A sustained non-zero steal rate
-    indicates CPU contention.
+  - :field:`steal` *(Linux)*: CPU time the virtual machine wanted to run, but was
+    used by other virtual machines or the host.
 
   - :field:`guest` *(Linux)*: time the host CPU spent running a guest operating
     system (virtual machine). Already included in :field:`user` time.
@@ -137,13 +136,10 @@ CPU
 
 .. function:: cpu_times_percent(interval=None, percpu=False)
 
-  Similar to :func:`cpu_percent` but provides utilization percentages for each
-  specific CPU time as is returned by
-  :func:`psutil.cpu_times(percpu=True)<cpu_times()>`.
-  *interval* and
-  *percpu* arguments have the same meaning as in :func:`cpu_percent`.
-  On Linux, :field:`guest` and :field:`guest_nice` percentages are not accounted
-  in :field:`user` and :field:`user_nice`.
+  Similar to :func:`cpu_percent`, but provides utilization percentages for each
+  specific CPU time. *interval* and *percpu* arguments have the same meaning as
+  in :func:`cpu_percent`. On Linux, :field:`guest` and :field:`guest_nice`
+  percentages are not accounted in :field:`user` and :field:`user_nice`.
 
   .. seealso:: :ref:`faq_cpu_percent`
 
@@ -506,7 +502,7 @@ Disks
   :field:`free` space, plus the :field:`percentage` usage.
   On UNIX, *path* must point to a path within a **mounted** filesystem partition.
   This function was later incorporated in Python 3.3 as
-  :func:`shutil.disk_usage` (`BPO-12442`_).
+  :func:`shutil.disk_usage` (see `BPO-12442`_).
 
   .. code-block:: pycon
 
@@ -515,13 +511,11 @@ Disks
      sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
 
   .. note::
-    UNIX usually reserves 5% of the total disk space for the root user.
-    :field:`total` and :field:`used` fields on UNIX refer to the overall total and used
-    space, whereas :field:`free` represents the space available to
-    unprivileged users and :field:`percent` represents unprivileged user
-    utilization (see `source code <https://github.com/giampaolo/psutil/blob/3dea30d583b8c1275057edb1b3b720813b4d0f60/psutil/_psposix.py#L123>`_).
-    That is why the :field:`percent` value may look 5% bigger than expected.
-    Also note that all four values match the "df" command-line utility.
+    UNIX typically reserves 5% of disk space for root.
+    :field:`total` and :field:`used` refer to overall space, while
+    :field:`free` and :field:`percent` reflect unprivileged user usage.
+    As a result, :field:`percent` may appear ~5% higher than expected.
+    All values match the ``df`` command line utility.
 
   .. seealso:: `scripts/disk_usage.py`_.
 
@@ -544,13 +538,13 @@ Disks
   - :field:`write_time`: (all except *NetBSD* and *OpenBSD*) time spent writing
     to disk (in milliseconds).
   - :field:`busy_time`: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
-    milliseconds). See :term:`busy_time`.
+    milliseconds); see :term:`busy_time`.
   - :field:`read_merged_count` (*Linux*): number of merged reads
     (see `iostats doc`_).
   - :field:`write_merged_count` (*Linux*): number of merged writes
     (see `iostats doc`_).
 
-  If *perdisk* is ``True`` return the same information for every physical disk
+  If *perdisk* is ``True``, return the same information for every physical disk
   as a dictionary with partition names as the keys.
 
   If *nowrap* is ``True`` (default), counters that overflow and wrap to zero
@@ -649,10 +643,10 @@ Network
   - :field:`type`: the address type, either :data:`socket.SOCK_STREAM`,
     :data:`socket.SOCK_DGRAM` or :data:`socket.SOCK_SEQPACKET`.
   - :field:`laddr`: the local address as a ``(ip, port)`` named tuple, or a
-    ``path`` for :data:`socket.AF_UNIX` sockets (see notes below).
-  - :field:`raddr`: the remote address. When not connected, this is either
+    ``path`` for :data:`socket.AF_UNIX` sockets.
+  - :field:`raddr`: the remote address. When the socket is not connected, this is either
     an empty tuple (``AF_INET*``) or an empty string (``""``) for ``AF_UNIX``
-    sockets. See notes below for UNIX sockets.
+    sockets (see note below).
   - :field:`status`: a :data:`CONN_* <psutil.CONN_ESTABLISHED>` constant;
     always :data:`CONN_NONE` for UDP and UNIX sockets.
   - :field:`pid`: PID of the process which opened the socket. Set to ``None``
@@ -904,7 +898,7 @@ Other system info
 .. function:: boot_time()
 
   Return the system boot time expressed in seconds since the epoch (seconds
-  since January 1, 1970, at midnight UTC). The returned value is based on the
+  since January 1, 1970, at midnight UTC). The return value is based on the
   system clock, which means it can be affected by changes such as manual
   adjustments or time synchronization (e.g. NTP).
 
@@ -1023,21 +1017,19 @@ Functions
      added *attrs* and *ad_value* arguments.
 
   .. versionchanged:: 6.0.0
-     no longer checks whether each yielded process PID has been reused.
 
-  .. versionchanged:: 6.0.0
-     added ``psutil.process_iter.cache_clear()`` API.
-
-  .. versionchanged:: 8.0.0
-     when *attrs* is specified, the pre-fetched values are cached directly on
-     the :class:`Process` instance, so that subsequent method calls (e.g.
-     ``p.name()``, ``p.status()``) return the cached values instead of making
-     new system calls. The :attr:`Process.info` dict is deprecated in favor of
-     this new approach.
+     - No longer checks whether each yielded process PID has been reused.
+     - Added ``psutil.process_iter.cache_clear()`` API.
 
   .. versionchanged:: 8.0.0
-     passing an empty list (``attrs=[]``) to mean "all attributes" is
-     deprecated; use :attr:`Process.attrs` instead.
+
+     - When *attrs* is specified, the pre-fetched values are cached directly on
+       the :class:`Process` instance, so that subsequent method calls (e.g.
+       ``p.name()``, ``p.status()``) return the cached values instead of making
+       new system calls. The :attr:`Process.info` dict is deprecated in favor of
+       this new approach.
+     - Passing an empty list (``attrs=[]``) to mean "all attributes" is
+       deprecated; use :attr:`Process.attrs` instead.
 
 .. function:: pid_exists(pid)
 
@@ -1089,8 +1081,9 @@ Exceptions
 
 .. exception:: NoSuchProcess(pid, name=None, msg=None)
 
-  Raised by :class:`Process` methods when a process with the given *pid*
-  is not found or no longer exists. *name* attribute is set only if
+  Raised by :class:`Process` class or its methods when a process with the given
+  *pid* is not found, no longer exists, or its PID has been reused. *name*
+  attribute is set only if
   :meth:`Process.name` was called before the process disappeared.
 
   .. seealso:: :ref:`faq_no_such_process`
@@ -1098,7 +1091,7 @@ Exceptions
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-  Subclass of :exc:`NoSuchProcess`, raised by :class:`Process` methods when
+  Subclass of :exc:`NoSuchProcess`. Raised by :class:`Process` methods when
   encountering a :term:`zombie process` on UNIX (Windows does not have
   zombies). *name* and *ppid* attributes are set if :meth:`Process.name` or
   :meth:`Process.ppid` were called before the process became a zombie.
@@ -1131,19 +1124,16 @@ Process class
 
   Represents an OS process with the given *pid*. If *pid* is omitted, the
   current process *pid* (:func:`os.getpid`) is used. Raises
-  :exc:`NoSuchProcess` if the specified *pid* does not exist. On Linux, *pid*
-  can also refer to a thread ID (the :field:`id` field returned by :meth:`threads`).
+  :exc:`NoSuchProcess` if *pid* does not exist.
+
+  On Linux, *pid* can also refer to a thread ID (the :field:`id` field returned
+  by :meth:`threads`).
 
   When calling methods of this class, always be prepared to catch
   :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions.
   The builtin :func:`hash` can be used on instances to uniquely identify a
   process over time (the hash combines PID and creation time), so instances
   can also be used in a :class:`set`.
-
-  .. note::
-
-    To fetch multiple attributes efficiently, use the :meth:`oneshot` context
-    manager or the :meth:`as_dict` utility method.
 
   .. note::
 
@@ -1154,37 +1144,73 @@ Process class
     using PID + creation time, and will raise :exc:`NoSuchProcess` if the PID
     has been reused. See :ref:`faq_pid_reuse` for details.
 
+  .. note::
+
+    To fetch multiple attributes efficiently, use the :meth:`oneshot` context
+    manager or the :meth:`as_dict` utility method.
+
+  .. attribute:: pid
+
+    The process PID as a read-only property.
+
+  .. attribute:: attrs
+
+    A :class:`frozenset` of strings representing the valid attribute names accepted
+    by :meth:`as_dict` and :func:`process_iter`. It defaults to all read-only
+    :class:`Process` method names, minus the utility methods such as
+    :meth:`as_dict`, :meth:`children`, etc.
+
+    .. code-block:: pycon
+
+       >>> import psutil
+       >>> psutil.Process.attrs
+       frozenset({'cmdline', 'cpu_num', 'cpu_percent', ...})
+       >>> # all attrs
+       >>> psutil.process_iter(attrs=psutil.Process.attrs)
+       >>> # all attrs except 'net_connections'
+       >>> psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
+
+    .. versionadded:: 8.0.0
+
+  .. attribute:: info
+
+    A dict containing pre-fetched process info, set by
+    :func:`process_iter` when called with ``attrs`` argument.
+    Accessing this attribute is deprecated and raises :exc:`DeprecationWarning`.
+    Use method calls instead (e.g. ``p.name()`` instead of ``p.info['name']``)
+    or :func:`process_iter` + :meth:`Process.as_dict` if you need a dict
+    structure.
+
+    .. seealso:: :ref:`migration guide <migration-8.0>`.
+
+    .. deprecated:: 8.0.0
+
   .. method:: oneshot()
 
-    Context manager which speeds up the retrieval of multiple process
-    attributes at the same time. Internally, many attributes (e.g.
+    Context manager that speeds up retrieval of multiple process
+    attributes. Internally, many attributes (e.g.
     :meth:`name`, :meth:`ppid`, :meth:`uids`, :meth:`create_time`, ...)
-    share the same system call. This context manager executes each system call
-    once and caches the results. Subsequent calls return cached values.
-    The cache is cleared when exiting the context manager block. Use this
-    every time you retrieve more than one attribute about the process.
+    share the same underlying system call; within this context, those
+    calls are executed once and results are cached, avoiding redundant
+    syscalls.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> p = psutil.Process()
        >>> with p.oneshot():
-       ...     p.name()  # execute internal routine once collecting multiple info
-       ...     p.cpu_times()  # return cached value
-       ...     p.cpu_percent()  # return cached value
-       ...     p.create_time()  # return cached value
-       ...     p.ppid()  # return cached value
-       ...     p.status()  # return cached value
+       ...     p.name()  # actual syscall
+       ...     p.cpu_times()  # from cache
+       ...     p.create_time()  # from cache
+       ...     p.ppid()  # from cache
+       ...     p.status()  # from cache
        ...
        >>>
 
-    Here's a list of methods which can take advantage of the speedup depending
-    on what platform you're on.
-    Empty rows indicate methods that are grouped together internally (i.e.
-    they share the same system call).
-    The last row (*speedup*) shows an approximation of the speedup you can get
-    if you call all the methods together (best case scenario). It was
-    calculated via
+    The table below lists methods that benefit from the speedup, grouped
+    by platform. Methods separated by an empty row share the same
+    underlying system call. The *speedup* row estimates the gain when all
+    listed methods are called together (best case), as measured by
     `bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
     script.
 
@@ -1238,42 +1264,6 @@ Process class
 
     .. versionadded:: 5.0.0
 
-  .. attribute:: pid
-
-    The process PID as a read-only property.
-
-  .. attribute:: attrs
-
-    A :class:`frozenset` of strings representing the valid attribute names accepted
-    by :meth:`as_dict` and :func:`process_iter`. It defaults to all read-only
-    :class:`Process` method names, minus the utility methods such as
-    :meth:`as_dict`, :meth:`children`, etc.
-
-    .. code-block:: pycon
-
-       >>> import psutil
-       >>> psutil.Process.attrs
-       frozenset({'cmdline', 'cpu_num', 'cpu_percent', ...})
-       >>> # all attrs
-       >>> psutil.process_iter(attrs=psutil.Process.attrs)
-       >>> # all attrs except 'net_connections'
-       >>> psutil.process_iter(attrs=psutil.Process.attrs - {"net_connections"})
-
-    .. versionadded:: 8.0.0
-
-  .. attribute:: info
-
-    A dict containing pre-fetched process info, set by
-    :func:`process_iter` when called with ``attrs`` argument.
-    Accessing this attribute is deprecated and raises :exc:`DeprecationWarning`.
-    Use method calls instead (e.g. ``p.name()`` instead of ``p.info['name']``)
-    or :func:`process_iter` + :meth:`Process.as_dict` if you need a dict
-    structure.
-
-    .. seealso:: :ref:`migration guide <migration-8.0>`.
-
-    .. deprecated:: 8.0.0
-
   .. method:: name()
 
     The process name.  On Windows the return value is cached after first
@@ -1285,8 +1275,8 @@ Process class
 
     The process executable as an absolute path. On some systems, if exe cannot
     be determined for some internal reason (e.g. system process or path no
-    longer exists), this may be an empty string. The return value is cached
-    after first call.
+    longer exists), this is an empty string. The return value is cached after
+    first call.
 
     .. code-block:: pycon
 
@@ -1337,7 +1327,7 @@ Process class
     The process creation time as a floating point number expressed in seconds
     since the epoch (seconds since January 1, 1970, at midnight UTC). The
     return value, which is cached after first call, is based on the system
-    clock, which means it may be affected by changes such as manual adjustments
+    clock, which means it is affected by changes such as manual adjustments
     or time synchronization (e.g. NTP).
 
     .. code-block:: pycon
@@ -1423,8 +1413,8 @@ Process class
   .. method:: cwd()
 
     The process current working directory as an absolute path. If it cannot be
-    determined (e.g. a system process or directory no longer exists) it may
-    return an empty string.
+    determined (e.g. a system process or directory no longer exists) it returns
+    an empty string.
 
     .. versionchanged:: 5.6.4
        added support for NetBSD.
@@ -1490,43 +1480,19 @@ Process class
 
   .. method:: ionice(ioclass=None, value=None)
 
-    Get or set process :term:`I/O niceness <ionice>` (priority).
-    If no argument is provided it acts as a get, returning a ``(ioclass, value)``
-    tuple on Linux and a *ioclass* integer on Windows.
-    If *ioclass* is provided it acts as a set. In this case an additional
-    *value* can be specified on Linux only to increase or decrease the
-    I/O priority even further.
-    Here's the possible platform-dependent *ioclass* values.
-
-    Linux (see `ioprio_get`_ manual):
-
-    * :data:`IOPRIO_CLASS_RT`: (high) the process gets first access to the disk
-      every time. Use it with care as it can starve the entire
-      system. Additional priority *level* can be specified and ranges from
-      ``0`` (highest) to ``7`` (lowest).
-    * :data:`IOPRIO_CLASS_BE`: (normal) the default for any process that hasn't
-      set a specific I/O priority. Additional priority *level* ranges from
-      ``0`` (highest) to ``7`` (lowest).
-    * :data:`IOPRIO_CLASS_IDLE`: (low) get I/O time when no-one else needs the
-      disk. No additional *value* is accepted.
-    * :data:`IOPRIO_CLASS_NONE`: returned when no priority was previously set.
-
-    Windows:
-
-    * :data:`IOPRIO_HIGH`: highest priority.
-    * :data:`IOPRIO_NORMAL`: default priority.
-    * :data:`IOPRIO_LOW`: low priority.
-    * :data:`IOPRIO_VERYLOW`: lowest priority.
-
-    Here's an example on how to set the highest I/O priority depending on what
-    platform you're on:
+    Get or set process :term:`I/O niceness <ionice>` (priority). Called with no
+    arguments (get), returns a ``(ioclass, value)`` named tuple on Linux or an
+    *ioclass* integer on Windows. Called with *ioclass* (one of the
+    :ref:`IOPRIO_* <const-proc-ioprio>` constants), sets the I/O priority. On
+    Linux, an additional *value* ranging from ``0`` to ``7`` can be specified
+    to further adjust the priority level specified by *ioclass*.
 
     .. code-block:: pycon
 
        >>> import psutil
        >>> p = psutil.Process()
        >>> if psutil.LINUX:
-       ...     p.ionice(psutil.IOPRIO_CLASS_RT, value=7)
+       ...     p.ionice(psutil.IOPRIO_CLASS_RT, value=7)  # highest
        ... else:
        ...     p.ionice(psutil.IOPRIO_HIGH)
        ...
@@ -1570,8 +1536,6 @@ Process class
   .. method:: io_counters()
 
     Return process I/O statistics.
-    For Linux you can refer to
-    `/proc filesystem documentation <https://stackoverflow.com/questions/3633286/>`_.
     All fields are :term:`cumulative counters <cumulative counter>` since
     process creation.
 
@@ -1649,7 +1613,7 @@ Process class
     are required. Each entry includes:
 
     - :field:`id`: native thread ID assigned by the kernel. If :attr:`pid` refers
-      to the current process, this matches :attr:`threading.Thread.native_id`
+      to the current process, this matches :attr:`threading.Thread.native_id`,
       and can be used to reference individual Python threads in your app.
     - :field:`user_time`: time spent in user mode.
     - :field:`system_time`: time spent in kernel mode.
@@ -1841,31 +1805,24 @@ Process class
     .. versionchanged:: 4.0.0
        multiple fields are returned, not only :field:`rss` and :field:`vms`.
 
-    .. versionchanged:: 8.0.0
-       Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux
-       2.6). Deprecated aliases returning 0 and emitting :exc:`DeprecationWarning`
-       are kept. See :ref:`migration guide <migration-8.0>`.
+    .. versionchanged:: 8.0.0 (see :ref:`migration guide <migration-8.0>`)
 
-    .. versionchanged:: 8.0.0
-       macOS: removed :field:`pfaults` and :field:`pageins` fields with **no
-       backward-compatible aliases**. Use :meth:`page_faults` instead.
-       See :ref:`migration guide <migration-8.0>`.
-
-    .. versionchanged:: 8.0.0
-       Windows: eliminated old aliases:
-       :field:`wset` → :field:`rss`,
-       :field:`peak_wset` → :field:`peak_rss`,
-       :field:`pagefile` and :field:`private` → :field:`vms`,
-       :field:`peak_pagefile` → :field:`peak_vms`,
-       :field:`num_page_faults` → :meth:`page_faults` method.
-       At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
-       :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
-       :meth:`memory_info_ex`.
-       All these old names still work but raise :exc:`DeprecationWarning`.
-       See :ref:`migration guide <migration-8.0>`.
-
-    .. versionchanged:: 8.0.0
-       BSD: added :field:`peak_rss` field.
+       - *Linux*: :field:`lib` and :field:`dirty` removed (always 0 since Linux
+         2.6). Deprecated aliases returning 0 and emitting :exc:`DeprecationWarning`
+         are kept.
+       - *macOS*: removed :field:`pfaults` and :field:`pageins` fields with no
+         backward-compatible aliases. Use :meth:`page_faults` instead.
+       - *Windows*: eliminated old aliases:
+         :field:`wset` → :field:`rss`,
+         :field:`peak_wset` → :field:`peak_rss`,
+         :field:`pagefile` and :field:`private` → :field:`vms`,
+         :field:`peak_pagefile` → :field:`peak_vms`,
+         :field:`num_page_faults` → :meth:`page_faults` method.
+         At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
+         :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
+         :meth:`memory_info_ex`.
+         All these old names still work but raise :exc:`DeprecationWarning`.
+       - *BSD*: added :field:`peak_rss` field.
 
   .. method:: memory_info_ex()
 
@@ -2108,14 +2065,6 @@ Process class
     Return the number of :term:`page faults <page fault>` for this process
     as a ``(minor, major)`` named tuple. Both are
     :term:`cumulative counters <cumulative counter>` since process creation.
-
-    - :field:`minor` (soft faults): occur when a page is already in physical
-      RAM (e.g., in the :term:`page cache` or other :term:`shared memory`) but
-      not yet mapped into the process's virtual address space. No disk I/O is
-      required.
-    - :field:`major` (hard faults): occur when a page must be loaded from disk
-      into RAM and mapped. These are expensive as the process is stalled until
-      I/O completes.
 
     .. code-block:: pycon
 
@@ -2753,47 +2702,44 @@ set process priority.
 
 -------------------------------------------------------------------------------
 
+.. _const-proc-ioprio:
+
 Process I/O priority constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Represent the I/O priority of a process (Linux and Windows only).
-They can be used in conjunction with :meth:`Process.ionice`.
+Represent the I/O priority class of a process (Linux and Windows only).
+They can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
+
+Linux (see `ioprio_get()`_ manual):
+
+  .. data:: IOPRIO_CLASS_RT
+
+     Highest priority.
+
+  .. data:: IOPRIO_CLASS_BE
+
+     Normal priority.
+
+  .. data:: IOPRIO_CLASS_IDLE
+
+     Lowest priority.
+
+  .. data:: IOPRIO_CLASS_NONE
+
+     No priority set (default; treated as :data:`IOPRIO_CLASS_BE`).
+
+Windows:
+
+  .. data:: IOPRIO_VERYLOW
+  .. data:: IOPRIO_LOW
+  .. data:: IOPRIO_NORMAL
+  .. data:: IOPRIO_HIGH
+
+.. versionadded:: 5.6.2
 
 .. versionchanged:: 8.0.0
    constants are now :class:`ProcessIOPriority` enum members.
    See :ref:`migration guide <migration-8.0>`.
-
-.. _const-ioprio-linux:
-
-.. data:: IOPRIO_CLASS_NONE
-.. data:: IOPRIO_CLASS_RT
-.. data:: IOPRIO_CLASS_BE
-.. data:: IOPRIO_CLASS_IDLE
-
-  :data:`IOPRIO_CLASS_NONE` and :data:`IOPRIO_CLASS_BE` (best effort) is the
-  default for any process that hasn't set a specific I/O priority.
-  :data:`IOPRIO_CLASS_RT` (real time) means the process is given first access
-  to the disk, regardless of what else is going on in the system.
-  :data:`IOPRIO_CLASS_IDLE` means the process will get I/O time when no-one else
-  needs the disk.
-  For further information refer to manuals of
-  `ionice <http://linux.die.net/man/1/ionice>`_ command line utility or
-  `ioprio_get`_ system call.
-
-  .. availability:: Linux
-
-.. _const-ioprio-windows:
-
-.. data:: IOPRIO_VERYLOW
-.. data:: IOPRIO_LOW
-.. data:: IOPRIO_NORMAL
-.. data:: IOPRIO_HIGH
-
-  .. availability:: Windows
-
-  .. versionadded:: 5.6.2
-
-.. _const-proc-rlimit:
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2968,7 +2914,7 @@ Environment variables
 
   .. versionadded:: 5.4.2
 
-.. _`ioprio_get`: https://linux.die.net/man/2/ioprio_get
+.. _`ioprio_get()`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
 .. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
 .. _`psleak`: https://github.com/giampaolo/psleak
