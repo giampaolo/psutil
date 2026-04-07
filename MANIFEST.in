@@ -22,7 +22,6 @@ include docs/_ext/field_role.py
 include docs/_links.rst
 include docs/_sponsors.html
 include docs/_static/css/custom.css
-include docs/_static/favicon.svg
 include docs/_static/images/favicon.svg
 include docs/_static/images/footer-icon-github.svg
 include docs/_static/images/footer-icon-pypi.svg
@@ -39,7 +38,6 @@ include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
 include docs/_static/js/highlight-repl.js
 include docs/_static/js/theme-toggle.js
-include docs/_static/logo.svg
 include docs/_templates/footer.html
 include docs/_templates/layout.html
 include docs/_templates/searchbox.html
