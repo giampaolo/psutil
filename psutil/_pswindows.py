@@ -362,7 +362,7 @@ def sensors_battery():
 
 def boot_time():
     """The system boot time expressed in seconds since the epoch. This
-    also includes the time spent during hybernate / suspend.
+    also includes the time spent during hibernate / suspend.
     """
     return cext.boot_time()
 

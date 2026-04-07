@@ -292,10 +292,9 @@ Memory
     the system is under significant memory pressure.
   - :field:`inactive` *(Linux, macOS, BSD)*: memory not recently accessed. It
     still holds valid data (:term:`page cache`, old allocations) but is a
-    candidate for reclamation or swapping. On BSD systems it is counted in
-    :field:`available`.
-  - :field:`buffers` *(Linux, BSD)*: memory used by the kernel to cache disk
-    metadata (e.g. filesystem structures). Reclaimable by the OS when needed.
+    candidate for reclamation or :term:`swapping <swap memory>`.
+    On BSD systems it is counted in :field:`available`.
+  - :field:`buffers` *(Linux, BSD)*: see :term:`buffers`. Reclaimable by the OS when needed.
   - :field:`cached` *(Linux, BSD, Windows)*: RAM used by the kernel to cache file
     contents (data read from or written to disk). Reclaimable by the OS when
     needed. See :term:`page cache`.
@@ -440,7 +439,7 @@ Memory
 
   :field:`sin` and :field:`sout` are :term:`cumulative counters <cumulative counter>`
   since boot. Monitor their rate of change rather than the absolute value to
-  detect active swapping. On Windows both are always ``0``.
+  detect active :term:`swapping <swap memory>`. On Windows both are always ``0``.
 
   .. code-block:: pycon
 
@@ -1762,7 +1761,7 @@ Process class
       :meth:`memory_info_ex` for the true virtual address space size.
 
     - :field:`shared` *(Linux)*: :term:`shared memory` that *could* be shared
-      with other processes (shared libraries, mmap'd files, POSIX shared memory).
+      with other processes (shared libraries, :term:`memory-mapped files <mapped memory>`).
       Counted even if no other process is currently mapping it. Matches
       ``top``'s SHR column.
 
@@ -1851,10 +1850,11 @@ Process class
     - :field:`peak_rss` *(Linux, macOS)*: see :term:`peak_rss`.
     - :field:`peak_vms` *(Linux)*: see :term:`peak_vms`.
     - :field:`rss_anon` *(Linux, macOS)*: resident :term:`anonymous memory`
-      (heap, stack, private mappings) not backed by any file. Set to 0
+      (:term:`heap`, stack, private mappings) not backed by any file. Set to 0
       on Linux < 4.5.
     - :field:`rss_file` *(Linux, macOS)*: resident file-backed memory mapped
-      from files (shared libraries, mmap'd files). Set to 0 on Linux < 4.5.
+      from files (:term:`shared libraries <shared memory>`,
+      :term:`memory-mapped files <mapped memory>`). Set to 0 on Linux < 4.5.
     - :field:`rss_shmem` *(Linux)*: resident :term:`shared memory` (``tmpfs``,
       ``shm_open``). ``rss_anon + rss_file + rss_shmem`` equals :field:`rss`. Set to
       0 on Linux < 4.5.
@@ -1866,7 +1866,7 @@ Process class
       ``/proc/<pid>/smaps``.
     - :field:`compressed` *(macOS)*: memory held in the in-RAM memory compressor;
       not counted in :field:`rss`. A large value signals memory pressure but has
-      not yet triggered swapping.
+      not yet triggered :term:`swapping <swap memory>`.
     - :field:`hugetlb` *(Linux)*: resident memory backed by huge pages. Set to
       0 on Linux < 4.4.
     - :field:`phys_footprint` *(macOS)*: total physical memory impact including
@@ -1957,8 +1957,8 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-    Return the process's memory-mapped file regions as a list. Fields vary by
-    platform (all values in bytes).
+    Return the process's :term:`memory-mapped <mapped memory>` file regions as
+    a list. Fields vary by platform (all values in bytes).
 
     If *grouped* is ``True``, regions with the same *path* are merged and their
     numeric fields summed. If *grouped* is ``False``, each region is listed
@@ -2004,7 +2004,8 @@ Process class
       (dirty); must be saved to swap before it can be freed. The key
       indicator of real memory cost.
     - :field:`referenced`: bytes recently accessed.
-    - :field:`anonymous`: :term:`anonymous memory` in this mapping (heap, stack).
+    - :field:`anonymous`: :term:`anonymous memory` in this mapping (:term:`heap`,
+      stack).
     - :field:`swap`: bytes from this mapping currently in
       :term:`swap <swap memory>`.
 
@@ -2740,6 +2741,8 @@ Windows:
 .. versionchanged:: 8.0.0
    constants are now :class:`ProcessIOPriority` enum members.
    See :ref:`migration guide <migration-8.0>`.
+
+.. _const-proc-rlimit:
 
 Process resource constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

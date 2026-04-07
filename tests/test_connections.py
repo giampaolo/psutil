@@ -77,7 +77,7 @@ class ConnectionTestCase(PsutilTestCase):
                 return
             else:
                 raise
-        # Filter for this proc PID and exlucde PIDs from the tuple.
+        # Filter for this proc PID and exclude PIDs from the tuple.
         sys_cons = [c[:-1] for c in sys_cons if c.pid == pid]
         sys_cons.sort()
         proc_cons.sort()
@@ -216,7 +216,7 @@ class TestConnectedSocket(ConnectionTestCase):
             assert cons[0].status == psutil.CONN_ESTABLISHED
             assert cons[1].status == psutil.CONN_ESTABLISHED
             # May not be fast enough to change state so it stays
-            # commenteed.
+            # commented.
             # client.close()
             # cons = this_proc_net_connections(kind='all')
             # assert len(cons) == 1
@@ -476,7 +476,7 @@ class TestFilters(ConnectionTestCase):
                 for conn in cons:
                     assert conn.family == AF_INET6
                     assert conn.type in {SOCK_STREAM, SOCK_DGRAM}
-            # Skipped on BSD becayse by default the Python process
+            # Skipped on BSD because by default the Python process
             # creates a UNIX socket to '/var/run/log'.
             if HAS_NET_CONNECTIONS_UNIX and not (FREEBSD or NETBSD):
                 cons = this_proc_net_connections(kind='unix')

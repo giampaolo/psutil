@@ -3,7 +3,7 @@
 .. raw:: html
 
     <div align="center">
-        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/doc-reorg/docs/_static/images/logo-psutil-readme.svg" alt="psutil" /></a>
+        <a href="https://github.com/giampaolo/psutil"><img src="https://github.com/giampaolo/psutil/raw/master/docs/_static/images/logo-psutil-readme.svg" alt="psutil" /></a>
         <p align="center">Process and System Utilities for Python</p>
         <a href="https://psutil.readthedocs.io/"><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;
         <a href="https://gmpy.dev/tags/psutil"><b>Blog</b></a>&nbsp;&nbsp;&nbsp;

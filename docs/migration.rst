@@ -291,7 +291,7 @@ positionally will break:
 process_iter() no longer checks for PID reuse
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`process_iter` no longer pre-emptively checks whether yielded
+:func:`process_iter` no longer preemptively checks whether yielded
 PIDs have been reused (this made it ~20× faster). If you need to verify
 that a process object is still alive and refers to the same process, use
 :meth:`Process.is_running` explicitly:

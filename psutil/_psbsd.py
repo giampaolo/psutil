@@ -750,7 +750,7 @@ class Process:
 
         @wrap_exceptions
         def cpu_affinity_set(self, cpus):
-            # Pre-emptively check if CPUs are valid because the C
+            # preemptively check if CPUs are valid because the C
             # function has a weird behavior in case of invalid CPUs,
             # see: https://github.com/giampaolo/psutil/issues/586
             allcpus = set(range(len(per_cpu_times())))

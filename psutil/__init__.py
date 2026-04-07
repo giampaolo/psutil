@@ -630,7 +630,7 @@ class Process:
         return retdict
 
     def parent(self) -> Process | None:
-        """Return the parent process as a `Process` object, pre-emptively
+        """Return the parent process as a `Process` object, preemptively
         checking whether PID has been reused.
 
         If no parent is known return None.
@@ -1023,7 +1023,7 @@ class Process:
 
     def children(self, recursive: bool = False) -> list[Process]:
         """Return the children of this process as a list of Process
-        instances, pre-emptively checking whether PID has been reused.
+        instances, preemptively checking whether PID has been reused.
 
         If *recursive* is True return all the parent descendants.
 
@@ -1438,7 +1438,7 @@ class Process:
                 raise AccessDenied(pid, name) from err
 
     def send_signal(self, sig: int) -> None:
-        """Send a signal *sig* to process, pre-emptively checking
+        """Send a signal *sig* to process, preemptively checking
         whether PID has been reused (see signal module constants).
 
         On Windows only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT
@@ -1454,7 +1454,7 @@ class Process:
             self._proc.send_signal(sig)
 
     def suspend(self) -> None:
-        """Suspend process execution with SIGSTOP pre-emptively checking
+        """Suspend process execution with SIGSTOP preemptively checking
         whether PID has been reused.
 
         On Windows this has the effect of suspending all process threads.
@@ -1466,7 +1466,7 @@ class Process:
             self._proc.suspend()
 
     def resume(self) -> None:
-        """Resume process execution with SIGCONT pre-emptively checking
+        """Resume process execution with SIGCONT preemptively checking
         whether PID has been reused.
 
         On Windows this has the effect of resuming all process threads.
@@ -1478,7 +1478,7 @@ class Process:
             self._proc.resume()
 
     def terminate(self) -> None:
-        """Terminate the process with SIGTERM pre-emptively checking
+        """Terminate the process with SIGTERM preemptively checking
         whether PID has been reused.
 
         On Windows this is an alias for `kill()`.
@@ -1490,7 +1490,7 @@ class Process:
             self._proc.kill()
 
     def kill(self) -> None:
-        """Kill the current process with SIGKILL pre-emptively checking
+        """Kill the current process with SIGKILL preemptively checking
         whether PID has been reused.
         """
         if POSIX:

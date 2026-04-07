@@ -23,7 +23,7 @@ CPU
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 20 37 100
+   :widths: 30 60 100
 
    * - psutil
      - stdlib
@@ -48,7 +48,7 @@ Disk
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 25 24 100
+   :widths: 45 45 100
 
    * - psutil
      - stdlib
@@ -71,14 +71,14 @@ Network
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 25 30 100
+   :widths: 45 45 100
 
    * - psutil
      - stdlib
      - notes
    * - :func:`net_if_addrs`
      - :func:`socket.if_nameindex`
-     - Stdlib returns NIC names only; psutil also returns
+     - Stdlib returns :term:`NIC` names only; psutil also returns
        addresses, netmasks, broadcast, and PTP.
 
 Process
@@ -87,7 +87,7 @@ Process
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 25 30 100
+   :widths: 45 45 100
 
    * - psutil
      - stdlib
@@ -105,7 +105,7 @@ Identity
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 23 20 100
+   :widths: 45 45 100
 
    * - psutil
      - stdlib
@@ -135,7 +135,7 @@ Credentials
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 20 37 50
+   :widths: 30 65 50
 
    * - psutil
      - stdlib
@@ -160,7 +160,7 @@ CPU / scheduling
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 40 35 100
+   :widths: 60 60 100
 
    * - psutil
      - stdlib
@@ -205,15 +205,14 @@ Memory
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 28 27 100
+   :widths: 45 45 100
 
    * - psutil
      - stdlib
      - notes
    * - :meth:`Process.memory_info`
      - :func:`resource.getrusage`
-     - Only peak RSS (``ru_maxrss``); psutil returns current
-       RSS, VMS, and more.
+     - Only :term:`peak_rss` (``ru_maxrss``); psutil returns :term:`RSS`, :term:`VMS`, and more.
    * - :meth:`Process.page_faults`
      - :func:`resource.getrusage`
      - Current process only.
@@ -224,7 +223,7 @@ I/O
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 28 27 100
+   :widths: 45 45 100
 
    * - psutil
      - stdlib
@@ -240,7 +239,7 @@ Threads
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 30 35 100
+   :widths: 50 55 100
 
    * - psutil
      - stdlib
@@ -259,7 +258,7 @@ Signals
 .. list-table::
    :class: longtable wide-table
    :header-rows: 1
-   :widths: 33 45 100
+   :widths: 45 55 100
 
    * - psutil
      - stdlib

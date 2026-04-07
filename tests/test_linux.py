@@ -1825,7 +1825,7 @@ class TestSensorsBattery(LinuxTestCase):
     def test_percent_against_capacity(self):
         # Internally, if we have /energy_full, the percentage will be
         # calculated by NOT reading the /capacity file, to get more
-        # accuracy. Check againt /capacity to make sure our percentage
+        # accuracy. Check against /capacity to make sure our percentage
         # is calculated correctly.
         with open("/sys/class/power_supply/BAT0/capacity") as f:
             capacity = float(f.read())

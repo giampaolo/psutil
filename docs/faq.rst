@@ -318,7 +318,7 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
   but psutil does not honour :envvar:`PYTHON_CPU_COUNT` environment variable
   introduced in Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
-  calling process is **allowed to use** (respects CPU affinity and cgroups).
+  calling process is **allowed to use** (respects :term:`CPU affinity` and cgroups).
   The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
 - :func:`multiprocessing.cpu_count` returns the same value as
   :func:`os.process_cpu_count` (Python 3.13+).
@@ -339,8 +339,8 @@ measure different things:
 - :field:`free`: memory that is not being used at all.
 - :field:`available`: how much memory can be given to processes without
   :term:`swapping <swap memory>`.
-  This includes reclaimable :term:`caches <page cache>` and buffers that the OS
-  can reclaim under pressure.
+  This includes reclaimable :term:`caches <page cache>` and :term:`buffers`
+  that the OS can reclaim under pressure.
 
 In practice, :field:`available` is almost always the metric you want when
 monitoring memory. :field:`free` can be misleadingly low on systems where the
@@ -352,18 +352,18 @@ OS aggressively uses RAM for caches (which is normal and healthy). On Windows,
 What is the difference between RSS and VMS?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :field:`rss` (Resident Set Size): the amount of physical memory (RAM)
+- :field:`rss` (:term:`Resident Set Size <RSS>`) is the amount of physical memory (RAM)
   currently mapped into the process.
-- :field:`vms` (Virtual Memory Size): the total virtual address space of the
-  process, including memory that has been swapped out, shared libraries,
-  and memory-mapped files.
+- :field:`vms` (:term:`Virtual Memory Size <VMS>`) is the total virtual address
+  space of the process, including memory that has been
+  :term:`swapped out <swap-out>`, shared libraries, and
+  :term:`memory-mapped files <mapped memory>`.
 
 :field:`rss` is the go-to metric for answering "how much RAM is this process
-using?". Note that it includes shared memory, so it may overestimate
+using?". Note that it includes :term:`shared memory`, so it may overestimate
 actual usage when compared across processes. :field:`vms` is generally larger
 and can be misleadingly high, as it includes memory that is not resident
 in physical RAM.
-
 Both values are portable across platforms and are returned by
 :meth:`Process.memory_info`.
 
@@ -372,25 +372,25 @@ Both values are portable across platforms and are returned by
 When should I use memory_footprint() vs memory_info()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_info` returns :field:`rss`, which includes shared
-libraries counted in every process that uses them. For example, if
-``libc`` uses 2 MB and 100 processes map it, each process includes those
-2 MB in its :field:`rss`.
+:meth:`Process.memory_info` returns :field:`rss` (:term:`Resident Set Size <RSS>`),
+which includes :term:`shared libraries <shared memory>` counted in every process that uses them.
+For example, if ``libc`` uses 2 MB and 100 processes map it, each process
+includes those 2 MB in its :field:`rss`.
 
-:meth:`Process.memory_footprint` returns USS (Unique Set Size), i.e.
-memory private to the process. It represents the amount of memory that
+:meth:`Process.memory_footprint` returns :field:`uss` (:term:`Unique Set Size <USS>`),
+i.e. :term:`private memory` of the process. It represents the amount of memory that
 would be freed if the process were terminated right now.
-It is more accurate than RSS, but substantially slower and requires higher
-privileges. On Linux it also returns PSS (Proportional Set Size) and
-:term:`swap <swap memory>`.
+It is more accurate than :term:`RSS`, but substantially slower and requires
+higher privileges. On Linux it also returns :field:`pss`
+(:term:`Proportional Set Size <PSS>`) and :term:`swap <swap memory>`.
 
 .. _faq_used_plus_free:
 
 Why does virtual_memory() used + free != total?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Because some memory (like cache and buffers) is reclaimable and accounted
-separately:
+Because some memory (like :term:`page cache` and :term:`buffers`) is
+reclaimable and accounted separately:
 
 .. code-block:: pycon
 

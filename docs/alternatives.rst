@@ -111,7 +111,7 @@ specific platform or subsystem.
      - Export metrics to Prometheus. Use *alongside* psutil.
 
    * - `py-cpuinfo <https://github.com/workhorsy/py-cpuinfo>`_
-     - CPU brand string, microarchitecture, feature flags.
+     - CPU brand string, micro architecture, feature flags.
 
    * - `pyroute2 <https://github.com/svinota/pyroute2>`_
      - Linux netlink (interfaces, routes, connections).

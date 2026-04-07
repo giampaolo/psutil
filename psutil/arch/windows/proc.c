@@ -724,8 +724,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
             }
             else if (GetLastError() == ERROR_NONE_MAPPED) {
                 // From MS doc:
-                // https://docs.microsoft.com/en-us/windows/win32/api/winbase/
-                //     nf-winbase-lookupaccountsida
+                // https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-lookupaccountsida
                 // If the function cannot find an account name for the SID,
                 // GetLastError returns ERROR_NONE_MAPPED. This can occur if
                 // a network time-out prevents the function from finding the

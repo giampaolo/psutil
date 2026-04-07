@@ -162,7 +162,7 @@ Processes consuming more than 500M of memory:
 
 -------------------------------------------------------------------------------
 
-Top N processes by cumulative CPU time:
+Top N processes by :term:`cumulative <cumulative counter>` CPU time:
 
 .. code-block:: python
 
@@ -177,7 +177,8 @@ Top N processes by cumulative CPU time:
 
 -------------------------------------------------------------------------------
 
-Top N processes by cumulative disk read + write bytes (similar to ``iotop``):
+Top N processes by :term:`cumulative <cumulative counter>` disk read + write
+bytes (similar to ``iotop``):
 
 .. code-block:: python
 

@@ -469,7 +469,7 @@ Others:
   :func:`disk_partitions` (can be very slow on NFS).
 - :gh:`2366`, [Windows]: log debug message when using slower process APIs.
 - :gh:`2375`, [macOS]: provide arm64 wheels.  (patch by Matthieu Darbois)
-- :gh:`2396`: :func:`process_iter` no longer pre-emptively checks whether PIDs
+- :gh:`2396`: :func:`process_iter` no longer preemptively checks whether PIDs
   have been reused, making it around 20x faster.
 - :gh:`2396`: a new ``process_iter.cache_clear()`` API can be used to clear
   :func:`process_iter` internal cache.
@@ -504,7 +504,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`2109`: the named tuple returned by :func:`disk_partitions`' no longer
   has :field:`maxfile` and :field:`maxpath` fields.
-- :gh:`2396`: :func:`process_iter` no longer pre-emptively checks whether PIDs
+- :gh:`2396`: :func:`process_iter` no longer preemptively checks whether PIDs
   have been reused. Use :meth:`Process.is_running` on yielded instances instead
   (also removes reused PIDs from the internal cache).
 - :gh:`2407`: rename :meth:`Process.connections` to
@@ -554,7 +554,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`2266`: if :class:`Process` class is passed a very high PID, raise
   :exc:`NoSuchProcess` instead of :exc:`OverflowError`.  (patch by Xuehai Pan)
 - :gh:`2246`: drop python 3.4 & 3.5 support.  (patch by Matthieu Darbois)
-- :gh:`2290`: PID reuse is now pre-emptively checked for
+- :gh:`2290`: PID reuse is now preemptively checked for
   :meth:`Process.ppid` and :meth:`Process.parents`.
 - :gh:`2312`: use ``ruff`` linter instead of ``flake8 + isort``.
 
@@ -582,7 +582,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   :meth:`Process.cmdline` and :meth:`Process.memory_maps` instead of
   returning a "null" value.
 - :gh:`2290`: differently from what stated in the doc, PID reuse is not
-  pre-emptively checked for :meth:`Process.nice` (set),
+  preemptively checked for :meth:`Process.nice` (set),
   :meth:`Process.ionice`, (set), :meth:`Process.cpu_affinity` (set),
   :meth:`Process.rlimit` (set), :meth:`Process.parent`.
 - :gh:`2308`, [OpenBSD]: :meth:`Process.threads` always fail with
@@ -743,7 +743,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   :field:`max` are set to 0 if can't be determined (instead of crashing).
 - :gh:`1512`, [macOS]: sometimes :meth:`Process.connections` will crash with
   ``EOPNOTSUPP`` for one connection; this is now ignored.
-- :gh:`1598`, [Windows]: :func:`disk_partitions` only returns mountpoints on
+- :gh:`1598`, [Windows]: :func:`disk_partitions` only returns mount points on
   drives where it first finds one.
 - :gh:`1874`, [SunOS]: swap output error due to incorrect range.
 - :gh:`1892`, [macOS]: :func:`cpu_freq` broken on Apple M1.
@@ -2228,7 +2228,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`470`: :func:`wait_procs` might not wait.  (patch by crusaderky)
 - :gh:`471`, [Windows]: :meth:`Process.exe` improper unicode handling. (patch
   by alex@mroja.net)
-- :gh:`473`: :class:`Popen` ``wait()`` method does not set returncode
+- :gh:`473`: :class:`Popen` ``wait()`` method does not set ``returncode``
   attribute.
 - :gh:`474`, [Windows]: :meth:`Process.cpu_percent` is no longer capped at
   100%.
@@ -2784,7 +2784,7 @@ cases accessing the old names will work but it will cause a
 - :gh:`144`, [Linux]: no longer support 0 special PID.
 - :gh:`188`, [Linux]: psutil import error on Linux ARM architectures.
 - :gh:`194`, [POSIX]: :meth:`Process.cpu_percent` now reports a percentage
-  over 100 on multicore processors.
+  over 100 on multi core processors.
 - :gh:`197`, [Linux]: :meth:`Process.connections` is broken on platforms not
   supporting IPv6.
 - :gh:`200`, [Linux], **[critical]**: ``psutil.NUM_CPUS`` not working on armel
@@ -2923,8 +2923,8 @@ cases accessing the old names will work but it will cause a
   ``psutil.Process.exe`` property.
 - :meth:`Process.kill`: *signal* argument was removed - to send a signal to the
   process use :meth:`Process.send_signal` method instead.
-- :meth:`Process.memory_info` returns a nametuple instead of a tuple.
-- :func:`cpu_times` returns a nametuple instead of a tuple.
+- :meth:`Process.memory_info` returns a named tuple instead of a tuple.
+- :func:`cpu_times` returns a named tuple instead of a tuple.
 - Add :meth:`Process.open_files`, :meth:`Process.connections`,
   :meth:`Process.send_signal` and :meth:`Process.terminate`.
 - :meth:`Process.ppid`, :meth:`Process.uids`, :meth:`Process.gids`,
@@ -2944,7 +2944,7 @@ cases accessing the old names will work but it will cause a
 - :gh:`14`: :meth:`Process.username`.
 - :gh:`51`, [Linux], [Windows]: add :meth:`Process.cwd`.
 - :gh:`59`: :meth:`Process.is_running` is now 10 times faster.
-- :gh:`61`, [FreeBSD]: added supoprt for FreeBSD 64 bit.
+- :gh:`61`, [FreeBSD]: added support for FreeBSD 64 bit.
 - :gh:`71`: add :meth:`Process.suspend` and :meth:`Process.resume`.
 - :gh:`75`: Python 3 support.
 
