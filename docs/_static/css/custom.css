@@ -414,6 +414,11 @@ footer div[role="navigation"][aria-label="Footer"] {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* hide version switch */
+.version-switch {
+    display: none !important;
+}
+
 .wy-side-nav-search a.icon-home {
     display: flex;
     align-items: center;
