@@ -67,7 +67,7 @@ extlinks = {
 # Paths
 # =====================================================================
 
-templates_path = ['_templates']
+templates_path = ['_templates', '_static/images']
 html_static_path = ['_static']
 exclude_patterns = ['_build']
 html_css_files = [
