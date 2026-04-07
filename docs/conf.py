@@ -24,7 +24,7 @@ VERSION = get_version()
 # Extensions
 # =====================================================================
 
-_ext_dir = str(pathlib.Path(__file__).resolve().parent / '_ext')
+_ext_dir = str(pathlib.Path(__file__).resolve().parent / "_ext")
 sys.path.insert(0, _ext_dir)
 
 extensions = [
@@ -55,41 +55,51 @@ copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
 # =====================================================================
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
+    "python": ("https://docs.python.org/3", None),
 }
 extlinks = {
-    'gh': ('https://github.com/giampaolo/psutil/issues/%s', '#%s'),
+    "gh": ("https://github.com/giampaolo/psutil/issues/%s", "#%s"),
 }
 
 # =====================================================================
 # Paths
 # =====================================================================
 
-templates_path = ['_templates', '_static/images']
-html_static_path = ['_static']
-exclude_patterns = ['_build']
-html_css_files = [
-    'css/custom.css',
-]
-html_js_files = [
-    "js/highlight-repl.js",
-    "js/external-urls.js",
-    ("js/theme-toggle.js", {"defer": "defer"}),
-]
+templates_path = ["_templates", "_static/images"]
+html_static_path = ["_static"]
+exclude_patterns = ["_build"]
 
 # =====================================================================
-# HTML / theming
+# HTML
 # =====================================================================
 
 html_title = PROJECT_NAME
 html_logo = "_static/images/logo-psutil.svg"  # shown in the sidebar
 html_favicon = "_static/images/favicon.svg"
-html_theme = 'sphinx_rtd_theme'
-pygments_style = "monokai"  # https://pygments.org/styles/
 html_last_updated_fmt = "%b %d, %Y"  # shown in the footer
 
 # =====================================================================
 # Plugins
 # =====================================================================
 
-copybutton_exclude = '.linenos, .gp'
+copybutton_exclude = ".linenos, .gp"
+
+# =====================================================================
+# Theming
+# =====================================================================
+
+html_theme = "sphinx_rtd_theme"
+
+if html_theme == "sphinx_rtd_theme":
+
+    pygments_style = "monokai"  # https://pygments.org/styles/
+
+    html_css_files = [
+        "css/custom.css",
+    ]
+
+    html_js_files = [
+        "js/highlight-repl.js",
+        "js/external-urls.js",
+        ("js/theme-toggle.js", {"defer": "defer"}),
+    ]
