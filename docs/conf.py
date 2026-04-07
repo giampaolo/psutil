@@ -16,9 +16,6 @@ PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
 THIS_YEAR = str(datetime.datetime.now().year)
 
-_HERE = pathlib.Path(__file__).resolve().parent
-_ROOT_DIR = _HERE.parent
-sys.path.insert(0, str(_ROOT_DIR))
 from _bootstrap import get_version  # noqa: E402
 
 VERSION = get_version()
@@ -27,7 +24,8 @@ VERSION = get_version()
 # Extensions
 # =====================================================================
 
-sys.path.insert(0, str(_HERE / '_ext'))
+_ext_dir = str(pathlib.Path(__file__).resolve().parent / '_ext')
+sys.path.insert(0, _ext_dir)
 
 extensions = [
     "sphinx.ext.extlinks",
@@ -83,8 +81,8 @@ html_js_files = [
 # HTML / theming
 # =====================================================================
 
-html_title = "psutil"
-html_logo = "_static/images/logo-psutil.svg"
+html_title = PROJECT_NAME
+html_logo = "_static/images/logo-psutil.svg"  # shown in the sidebar
 html_favicon = "_static/images/favicon.svg"
 html_theme = 'sphinx_rtd_theme'
 pygments_style = "monokai"  # https://pygments.org/styles/
@@ -94,5 +92,4 @@ html_last_updated_fmt = "%b %d, %Y"  # shown in the footer
 # Plugins
 # =====================================================================
 
-htmlhelp_basename = f"{PROJECT_NAME}-doc"
 copybutton_exclude = '.linenos, .gp'
