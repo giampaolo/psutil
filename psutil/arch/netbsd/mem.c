@@ -22,16 +22,14 @@
 #include "../../arch/all/init.h"
 
 
-/*
- * Virtual memory stats for NetBSD using VM_UVMEXP2 and VM_METER.
- *
- * Sources:
- *   cached  = (filepages + execpages + anonpages) << pageshift  [btop]
- *   buffers = filepages << pageshift  [file cache * excl. exec]
- *   shared  = (t_vmshr + t_rmshr) * pagesize [vmtotal]
- *   used    =  (active + wired) << pageshift [top/btop]
- *   avail   = total - used [htop/btop]
- */
+// Virtual memory stats for NetBSD using VM_UVMEXP2 and VM_METER.
+//
+// Sources:
+//   cached  = (filepages + execpages + anonpages) << pageshift  [btop]
+//   buffers = filepages << pageshift  [file cache * excl. exec]
+//   shared  = (t_vmshr + t_rmshr) * pagesize [vmtotal]
+//   used    = (active + wired) << pageshift [top/btop]
+//   avail   = total - used [htop/btop]
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
@@ -52,7 +50,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
-    // https://github.com/aristocratos/btop/blob/main/src/netbsd/btop_collect.cpp#L723
+    // https://github.com/aristocratos/btop/blob/v1.4.6/src/netbsd/btop_collect.cpp#L720
     total = (unsigned long long)uv.npages << uv.pageshift;
     free = (unsigned long long)uv.free << uv.pageshift;
     active = (unsigned long long)uv.active << uv.pageshift;
