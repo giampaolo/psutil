@@ -224,6 +224,12 @@
 .sponsor-table {
     margin-left: auto !important;
     margin-right: auto !important;
+    max-width: 100%;
+}
+
+.sponsor-table svg {
+    max-width: 100%;
+    height: auto;
 }
 
 /*
