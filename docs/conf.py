@@ -58,8 +58,6 @@ copybutton_exclude = '.linenos, .gp'
 templates_path = ['_templates']
 html_static_path = ['_static']
 html_css_files = [
-    'https://media.readthedocs.org/css/sphinx_rtd_theme.css',
-    'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
     'css/custom.css',
 ]
 html_js_files = [
