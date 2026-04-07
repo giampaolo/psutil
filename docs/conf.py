@@ -2,12 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Sphinx config file."""
+"""Sphinx configuration file.
 
-# See doc at:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+Sphinx doc at:
+https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""
 
 import datetime
 import pathlib
@@ -65,7 +64,7 @@ html_js_files = [
     "js/external-urls.js",
     ("js/theme-toggle.js", {"defer": "defer"}),
 ]
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build']
 
 # --- theming / visual
 
