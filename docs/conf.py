@@ -12,20 +12,21 @@ import datetime
 import pathlib
 import sys
 
-PROJECT_NAME = "psutil"
-AUTHOR = "Giampaolo Rodola"
-THIS_YEAR = str(datetime.datetime.now().year)
+_HERE = pathlib.Path(__file__).resolve().parent
+_ROOT_DIR = _HERE.parent
+sys.path.insert(0, str(_ROOT_DIR))
+sys.path.insert(0, str(_HERE / '_ext'))
 
 from _bootstrap import get_version  # noqa: E402
 
+PROJECT_NAME = "psutil"
+AUTHOR = "Giampaolo Rodola"
+THIS_YEAR = str(datetime.datetime.now().year)
 VERSION = get_version()
 
 # =====================================================================
 # Extensions
 # =====================================================================
-
-_ext_dir = str(pathlib.Path(__file__).resolve().parent / "_ext")
-sys.path.insert(0, _ext_dir)
 
 extensions = [
     "sphinx.ext.extlinks",
