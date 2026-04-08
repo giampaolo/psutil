@@ -85,20 +85,19 @@ Sponsors
    Install <install>
    API overview <api-overview>
    API Reference <api>
+   FAQ <faq>
    Performance <performance>
    Recipes <recipes>
-   FAQ <faq>
-   Shell equivalents <shell-equivalents>
-   Stdlib equivalents <stdlib-equivalents>
 
 .. toctree::
    :maxdepth: 2
-   :caption: Resources
+   :caption: Reference
 
+   Shell equivalents <shell-equivalents>
+   Stdlib equivalents <stdlib-equivalents>
    Glossary <glossary>
    Platform support <platform>
    Migration <migration>
-   Development guide <devguide>
 
 .. toctree::
    :maxdepth: 2
@@ -112,8 +111,9 @@ Sponsors
 .. toctree::
    :maxdepth: 2
    :titlesonly:
-   :caption: History & Index
+   :caption: Project
 
    Changelog <changelog>
    Timeline <timeline>
-   Index <genindex>
+   Development guide <devguide>
+   General Index <genindex>
