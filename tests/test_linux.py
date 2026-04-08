@@ -550,6 +550,27 @@ class TestVirtualMemoryMocks(LinuxTestCase):
             assert mem.slab == 22 * 1024
             assert mem.available == 3 * 1024
 
+    def test_virtual_memory_no_space_after_colon(self):
+        """Some Linux meminfo fields may not have a space after the colon:
+        https://github.com/torvalds/linux/blob/8356a5a3b078ca89c526dd6d71e9a76fec571c37/fs/proc/meminfo.c#L113-L116
+        """
+        content = textwrap.dedent("""\
+            MemTotal:              100 kB
+            MemFree:               2 kB
+            MemAvailable:          3 kB
+            Buffers:               4 kB
+            Cached:                5 kB
+            Active:                6 kB
+            Inactive:              7 kB
+            Shmem:                 8 kB
+            Slab:                  9 kB
+            ShadowCallStack:10373888 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}) as m:
+            mem = psutil.virtual_memory()
+            assert m.called
+            assert mem.total == 100 * 1024
+
 
 # =====================================================================
 # --- system swap memory
