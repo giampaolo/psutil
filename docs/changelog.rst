@@ -28,7 +28,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     in root dir)
   - :doc:`/faq <faq>`: extended FAQ section
   - :doc:`/funding <funding>`: list funding methods and current sponsors
-  - :doc:`/genindex <genindex>`: a general index
+  - :ref:`/genindex <genindex>`: a general index
   - :doc:`/glossary <glossary>`: core concepts explained
   - :doc:`/install <install>`: (was old ``INSTALL.rst`` in root dir)
   - :doc:`/migration <migration>`: explain how to migrate to newer psutil
