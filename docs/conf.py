@@ -99,4 +99,5 @@ if html_theme == "sphinx_rtd_theme":
         "js/highlight-repl.js",
         "js/external-urls.js",
         ("js/theme-toggle.js", {"defer": "defer"}),
+        ("js/sidebar-close.js", {"defer": "defer"}),
     ]

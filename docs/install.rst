@@ -5,7 +5,7 @@ Linux, Windows, macOS (wheels)
 ------------------------------
 
 Pre-compiled wheels are distributed for these platforms, so you usually won't
-need a C compiler. All you have to do is:
+need a C compiler. Install psutil with:
 
 .. code-block:: none
 

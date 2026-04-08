@@ -37,6 +37,7 @@ include docs/_static/images/logo-sansec.svg
 include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
 include docs/_static/js/highlight-repl.js
+include docs/_static/js/sidebar-close.js
 include docs/_static/js/theme-toggle.js
 include docs/_templates/footer.html
 include docs/_templates/layout.html

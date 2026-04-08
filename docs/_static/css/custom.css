@@ -1,18 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
 /* ================================================================== */
 /* Sizes and effects                                                  */
 /* ================================================================== */
 
 :root {
+    /* fonts & text  */
+    --font-body: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+    --font-headings: "Roboto Slab", "ff-tisa-web-pro", "Georgia", Arial, sans-serif;
+    --font-sidebar: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+    --font-hero: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+    --font-hero-subtext: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+    --font-search: "Inter", system-ui, -apple-system, sans-serif;
+    --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --code-line-height: 1.5;
+
+    --content-font-size: 16.5px;
+    --content-line-height: 26px;
+
+    --sidebar-font-size: 15px;
+    --sidebar-caption-font-size: 14px;
+
+    /* others */
     --border-radius: 3px;
     --theme-transition: 0.2s ease;
     --adm-padding-y: 5px;
-    --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    --code-line-height: 1.5;
-    --h1-h2-border: var(--headings-underline);
-    --content-font-size: 16.5px;
-    --content-line-height: 26px;
-    --sidebar-font-size: 15px;
-    --sidebar-caption-font-size: 14px;
 }
 
 /* ================================================================== */
@@ -28,9 +40,9 @@
     --border: #d6d6d6;
 
     /* text */
-    --content-text: #3b3b3b;
+    --content-text: #404040;
     --text-muted: #555;
-    --headings: #222;
+    --headings: #404040;
     --headings-underline: #ccc;
 
     /* links */
@@ -84,6 +96,7 @@
 
     /* tables */
     --table-header-bg: var(--surface-raised);
+    --table-header-text: var(--content-text);
     --table-row-odd: #f8f9fa;
     --table-row-even: #ffffff;
 
@@ -120,7 +133,7 @@
     /* text */
     --content-text: #c8c8c8;
     --text-muted: #b0b0ba;
-    --headings: #d1d1d1;
+    --headings: #e0e0e0;
     --headings-underline: #3a3a3a;
 
     /* inline code */
@@ -160,7 +173,8 @@
     --deprecated-color: #d06060;
 
     /* tables */
-    --table-header-bg: #2a2d3a;
+    --table-header-bg: #2d2d2d;
+    --table-header-text: var(--content-text);
     --table-row-odd: #222222;
     --table-row-even: #272727;
 
@@ -181,6 +195,7 @@
 }
 
 .hero-title {
+    font-family: var(--font-hero);
     font-size: 3.5rem;
     font-weight: 700;
     color: var(--headings);
@@ -205,6 +220,7 @@
 }
 
 .hero-subtitle {
+    font-family: var(--font-hero-subtext);
     font-size: 1.15rem;
     color: var(--text-muted);
     margin-bottom: 0.9em;
@@ -360,7 +376,12 @@
     }
 }
 
+html {
+    background: var(--body-bg);
+}
+
 body {
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -389,6 +410,25 @@ body {
         padding: 0 12px 1.618em 12px !important;
     }
 }
+
+/* ================================================================== */
+/* Centered layout                                                     */
+/* ================================================================== */
+
+/*
+.wy-grid-for-nav {
+    background: var(--body-bg);
+}
+
+.wy-body-for-nav {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.wy-nav-side {
+    left: max(0px, calc((100vw - 1400px) / 2));
+}
+*/
 
 /* ================================================================== */
 /* Navigation                                                         */
@@ -445,6 +485,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 .wy-side-nav-search input[type="text"] {
+    font-family: var(--font-search);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -472,6 +513,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 .wy-menu-vertical a {
+    font-family: var(--font-sidebar) !important;
     font-size: var(--sidebar-font-size) !important;
 }
 
@@ -548,6 +590,21 @@ body,
 .theme-switch input:checked ~ .theme-switch-btn .theme-switch-moon,
 [data-theme="dark"] .theme-switch-moon { display: none; }
 
+
+/* ================================================================== */
+/* Sidebar effects                                                    */
+/* ================================================================== */
+
+/* Smooth sidebar open/close on mobile */
+@media screen and (max-width: 768px) {
+    .wy-nav-side {
+        transition: left 0.2s ease, width 0.2s ease;
+    }
+    .wy-nav-content-wrap {
+        transition: left 0.2s ease;
+    }
+}
+
 /* ================================================================== */
 /* Footer                                                           */
 /* ================================================================== */
@@ -597,11 +654,11 @@ h1, h2, h3, h4 {
     margin-top: 20px !important;
     margin-bottom: 10px !important;
     color: var(--headings) !important;
+    font-family: var(--font-headings) !important;
 }
 
 h1, h2 {
     padding: 5px;
-    border-bottom: 1px solid var(--h1-h2-border);
 }
 
 h1, h1 a,
@@ -612,20 +669,21 @@ h4, h4 a {
 }
 
 h1 {
-    font-size: 2.2rem;
+    font-size: 2.6rem;
+}
+
+h2 {
+    font-size: 1.8rem;
 }
 
 h3 {
-    background: none;
-    padding: 5px 0 5px 0;
-    border-bottom: 1px solid var(--h1-h2-border);
     font-size: 1.2rem;
+    padding: 5px 0 5px 0;
 }
 
 h4 {
-    background: none;
-    padding: 5px 0 5px 0;
     font-size: 0.9rem;
+    padding: 5px 0 5px 0;
 }
 
 .rst-content p {
@@ -641,7 +699,7 @@ h4 {
 }
 
 .wy-table-responsive table thead th {
-    color: var(--content-text);
+    color: var(--table-header-text);
 }
 
 .wy-table-responsive table tbody tr.row-odd td {
