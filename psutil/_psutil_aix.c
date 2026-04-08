@@ -545,7 +545,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             statp[i].ipackets,  // packets received
             statp[i].ierrors,  // input errors
             statp[i].oerrors,  // output errors
-            statp[i].if_iqdrop s,  // dropped on input
+            statp[i].if_iqdrops,  // dropped on input
             statp[i].xmitdrops  // not transmitted
         );
         if (!py_ifc_info)

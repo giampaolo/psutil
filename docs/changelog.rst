@@ -210,6 +210,9 @@ Others:
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
 
+- :gh:`2789`, [AIX]: fix compilation error caused by a typo (accidental
+  space) in ``psutil_net_io_counters()``, introduced during a previous
+  code reformatting.
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
 
