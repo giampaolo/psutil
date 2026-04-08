@@ -113,9 +113,12 @@ Sponsors
    Alternatives <alternatives>
    Funding <funding>
    Credits <credits>
-   Timeline <timeline>
 
 .. toctree::
+   :maxdepth: 2
    :titlesonly:
+   :caption: Project
 
+   Timeline <timeline>
    Changelog <changelog>
+   Index <genindex>
