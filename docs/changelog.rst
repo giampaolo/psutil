@@ -209,8 +209,9 @@ Others:
 - :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
-- :gh:`2811`, [OpenBSD]: :func:`virtual_memory` :field:`shared` field returns
-  pages instead of bytes.
+- :gh:`2811`, [OpenBSD]: :func:`virtual_memory` :field:`shared` field returned
+  pages instead of bytes, plus it was double counted (also included virtual
+  shared mem).
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
