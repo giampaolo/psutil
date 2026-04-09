@@ -546,59 +546,93 @@ class OpenBSDSystemTestCase(PsutilTestCase):
 @pytest.mark.skipif(not NETBSD, reason="NETBSD only")
 class NetBSDTestCase(PsutilTestCase):
     @staticmethod
-    def parse_meminfo(look_for):
-        with open('/proc/meminfo') as f:
-            for line in f:
-                if line.startswith(look_for):
-                    return int(line.split()[1]) * 1024
-        raise ValueError(f"can't find {look_for}")
+    def parse_vmstat(look_for):
+        """Parse a cumulative field from 'vmstat -s' output.
+        Lines are formatted as: '<value> <description>'
+        Mirrors the same uvmexp_sysctl fields that psutil reads via
+        sysctl(CTL_VM, VM_UVMEXP2) in C, without requiring procfs.
+        """
+        out = sh("vmstat -s")
+        for line in out.splitlines():
+            line = line.strip()
+            if look_for in line:
+                return int(line.split()[0])
+        raise ValueError(f"can't find {look_for!r} in vmstat -s output")
 
     # --- virtual mem
 
     def test_vmem_total(self):
-        assert psutil.virtual_memory().total == self.parse_meminfo("MemTotal:")
+        # uv.npages (managed pages), not hw.physmem64 (physical RAM)
+        assert (
+            psutil.virtual_memory().total
+            == self.parse_vmstat("pages managed") * PAGESIZE
+        )
 
+    @retry_on_failure()
     def test_vmem_free(self):
         assert (
-            abs(psutil.virtual_memory().free - self.parse_meminfo("MemFree:"))
+            abs(
+                psutil.virtual_memory().free
+                - self.parse_vmstat("pages free") * PAGESIZE
+            )
             < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
     def test_vmem_buffers(self):
+        # uv.filepages: file-backed pages excluding executable mappings
         assert (
             abs(
                 psutil.virtual_memory().buffers
-                - self.parse_meminfo("Buffers:")
+                - self.parse_vmstat("cached file pages") * PAGESIZE
             )
             < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
     def test_vmem_shared(self):
+        # vmstat -t outputs vmtotal fields including vm-sh (t_vmshr) and
+        # rm-sh (t_rmshr). Header line: total-v active-v active-r vm-sh ...
+        out = sh("vmstat -t")
+        lines = out.splitlines()
+        headers = lines[1].split()
+        values = lines[2].split()
+        row = dict(zip(headers, values))
+        expected = (int(row["vm-sh"]) + int(row["rm-sh"])) * PAGESIZE
         assert (
-            abs(
-                psutil.virtual_memory().shared
-                - self.parse_meminfo("MemShared:")
-            )
-            < TOLERANCE_SYS_MEM
+            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
     def test_vmem_cached(self):
+        # uv.filepages + uv.execpages + uv.anonpages
+        expected = (
+            self.parse_vmstat("cached file pages")
+            + self.parse_vmstat("cached executable pages")
+            + self.parse_vmstat("anonymous pages")
+        ) * PAGESIZE
         assert (
-            abs(psutil.virtual_memory().cached - self.parse_meminfo("Cached:"))
-            < TOLERANCE_SYS_MEM
+            abs(psutil.virtual_memory().cached - expected) < TOLERANCE_SYS_MEM
         )
 
     # --- swap mem
 
+    @retry_on_failure()
     def test_swapmem_total(self):
         assert (
-            abs(psutil.swap_memory().total - self.parse_meminfo("SwapTotal:"))
+            abs(
+                psutil.swap_memory().total
+                - self.parse_vmstat("swap pages") * PAGESIZE
+            )
             < TOLERANCE_SYS_MEM
         )
 
+    @retry_on_failure()
     def test_swapmem_free(self):
+        total = self.parse_vmstat("swap pages")
+        in_use = self.parse_vmstat("swap pages in use")
         assert (
-            abs(psutil.swap_memory().free - self.parse_meminfo("SwapFree:"))
+            abs(psutil.swap_memory().free - (total - in_use) * PAGESIZE)
             < TOLERANCE_SYS_MEM
         )
 
@@ -606,24 +640,24 @@ class NetBSDTestCase(PsutilTestCase):
         smem = psutil.swap_memory()
         assert smem.used == smem.total - smem.free
 
-    # --- others
+    # --- cpu stats
 
+    @retry_on_failure()
     def test_cpu_stats_interrupts(self):
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'intr'):
-                    interrupts = int(line.split()[1])
-                    break
-            else:
-                raise ValueError("couldn't find line")
-        assert abs(psutil.cpu_stats().interrupts - interrupts) < 1000
+        assert (
+            abs(
+                psutil.cpu_stats().interrupts
+                - self.parse_vmstat("device interrupts")
+            )
+            < 1000
+        )
 
+    @retry_on_failure()
     def test_cpu_stats_ctx_switches(self):
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'ctxt'):
-                    ctx_switches = int(line.split()[1])
-                    break
-            else:
-                raise ValueError("couldn't find line")
-        assert abs(psutil.cpu_stats().ctx_switches - ctx_switches) < 1000
+        assert (
+            abs(
+                psutil.cpu_stats().ctx_switches
+                - self.parse_vmstat("CPU context switches")
+            )
+            < 1000
+        )

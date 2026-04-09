@@ -172,6 +172,10 @@ Others:
   compatibility.
 - :gh:`2799`: :meth:`Process.as_dict` now returns a dict with keys sorted
   alphabetically when *attrs* is not specified.
+- :gh:`2805`, [BSD]: remove ``procfs`` dependency on NetBSD for
+  :func:`cpu_stats` and :func:`virtual_memory`; values are now retrieved
+  via the ``sysctl(9)`` and ``uvm(9)`` kernel APIs instead. (patch by 
+  Santhosh Raju)
 
 **Bug fixes**
 
