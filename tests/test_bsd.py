@@ -467,12 +467,27 @@ class FreeBSDSystemTestCase(PsutilTestCase):
 
 
 @pytest.mark.skipif(not OPENBSD, reason="OPENBSD only")
-class OpenBSDTestCase(PsutilTestCase):
+class OpenBSDSystemTestCase(PsutilTestCase):
+
+    @staticmethod
+    def vmstat(stat):
+        out = sh(["vmstat", "-s"], env={"LANG": "C.UTF-8"})
+        for line in out.split("\n"):
+            line = line.strip()
+            if stat in line:
+                return int(line.split(' ')[0])
+        raise ValueError(f"can't find {stat!r} in 'vmstat' output")
+
     def test_boot_time(self):
         s = sysctl('kern.boottime')
         sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
         psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
         assert sys_bt == psutil_bt
+
+    def test_vmem_wired(self):
+        vmstat_value = self.vmstat('pages wired') * PAGESIZE
+        psutil_value = psutil.virtual_memory().wired
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
 
 # =====================================================================
