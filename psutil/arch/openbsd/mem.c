@@ -14,6 +14,14 @@
 #include "../../arch/all/init.h"
 
 
+// References
+// ----------
+//
+// top:
+//   https://github.com/openbsd/src/blob/master/usr.bin/top/machine.c
+// zabbix:
+//   https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/openbsd/memory.c
+
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int64_t _total;
@@ -86,7 +94,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // matches zabbix:
     // * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
     avail = inactive + cached + free;
+
+    // 'top' calculates this as `total - free`.
     used = active + wired + cached;
+
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
     if (!(pydict_add(dict, "total", "K", total)
