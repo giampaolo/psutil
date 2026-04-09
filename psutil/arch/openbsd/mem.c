@@ -47,8 +47,9 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // physical (hardware) RAM, so prefer this value. This matches
     // `sysctl hw.physmem`.
     total = (unsigned long long)_total;
-
+    // same as top
     free = (unsigned long long)uvmexp.free * pagesize;
+    // same as top
     active = (unsigned long long)uvmexp.active * pagesize;
     inactive = (unsigned long long)uvmexp.inactive * pagesize;
     wired = (unsigned long long)uvmexp.wired * pagesize;
