@@ -50,7 +50,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     active = (unsigned long long)uvmexp.active * pagesize;
     inactive = (unsigned long long)uvmexp.inactive * pagesize;
     wired = (unsigned long long)uvmexp.wired * pagesize;
-    shared = (unsigned long long)vmdata.t_vmshr + vmdata.t_rmshr;
+    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
 
     // this is how "top" determines cached mem
     cached = (unsigned long long)bcstats.numbufpages * pagesize;

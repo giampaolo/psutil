@@ -209,6 +209,8 @@ Others:
 - :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
+- :gh:`2811`, [OpenBSD]: :func:`virtual_memory` :field:`shared` field returns
+  pages instead of bytes.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
@@ -381,7 +383,7 @@ Others:
   (patch by Julien Stephan)
 - :gh:`2586`, [macOS], [CRITICAL]: fixed different places in C code which can
   trigger a segfault.
-- :gh:`2604`, [Linux]: :func:`virtual_memory` "used" memory does not match
+- :gh:`2604`, [Linux]: :func:`virtual_memory` :field:`used` field does not match
   recent versions of ``free`` CLI utility.  (patch by Isaac K. Ko)
 - :gh:`2605`, [Linux]: :func:`sensors_battery` reports a negative amount for
   seconds left.
