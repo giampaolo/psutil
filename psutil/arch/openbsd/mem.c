@@ -33,9 +33,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (dict == NULL)
         return NULL;
 
-    // Note: many programs calculate total memory as "uvmexp.npages *
-    // pagesize" but this is incorrect and does not match "sysctl |
-    // grep hw.physmem".
     if (psutil_sysctl(physmem_mib, 2, &_total, sizeof(_total)) != 0)
         goto error;
     if (psutil_sysctl(uvmexp_mib, 2, &uvmexp, sizeof(uvmexp)) != 0)
@@ -45,7 +42,12 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
+    // psutil uses HW_PHYSMEM64, while "top" uses uvmexp.npages *
+    // pagesize, which is slightly smaller. HW_PHYSMEM64 reflects the
+    // physical (hardware) RAM, so prefer this value. This matches
+    // `sysctl hw.physmem`.
     total = (unsigned long long)_total;
+
     free = (unsigned long long)uvmexp.free * pagesize;
     active = (unsigned long long)uvmexp.active * pagesize;
     inactive = (unsigned long long)uvmexp.inactive * pagesize;
