@@ -489,6 +489,16 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         psutil_value = psutil.virtual_memory().free
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
+    def test_vmem_active(self):
+        vmstat_value = self.vmstat('pages active') * PAGESIZE
+        psutil_value = psutil.virtual_memory().active
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_vmem_inactive(self):
+        vmstat_value = self.vmstat('pages inactive') * PAGESIZE
+        psutil_value = psutil.virtual_memory().inactive
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
     def test_vmem_wired(self):
         vmstat_value = self.vmstat('pages wired') * PAGESIZE
         psutil_value = psutil.virtual_memory().wired
