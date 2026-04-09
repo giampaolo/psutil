@@ -110,10 +110,7 @@ A collection of ideas and notes about stuff to implement in future versions.
 
 ## Resources
 
-- sigar: https://github.com/hyperic/sigar (Java)
 - zabbix: https://zabbix.org/wiki/Get_Zabbix
-- libstatgrab: http://www.i-scream.org/libstatgrab/
-- oshi: https://github.com/oshi/oshi
 - netdata: https://github.com/netdata/netdata
 
 ## Stats
