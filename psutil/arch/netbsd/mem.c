@@ -23,10 +23,11 @@
 
 
 // Virtual memory stats for NetBSD using VM_UVMEXP2 and VM_METER.
+// https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
 //
 // Sources:
 //   cached  = (filepages + execpages + anonpages) << pageshift  [btop]
-//   buffers = filepages << pageshift  [file cache * excl. exec]
+//   buffers = 0 [follow OpenBSD's psutil implementation]
 //   shared  = (t_vmshr + t_rmshr) * pagesize [vmtotal]
 //   used    = (active + wired) << pageshift [top/btop]
 //   avail   = total - used [htop/btop]
@@ -56,21 +57,22 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     active = (unsigned long long)uv.active << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
     wired = (unsigned long long)uv.wired << uv.pageshift;
-    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
+    // Note: zabbix does not include anonpages, but that doesn't match
+    // the "Cached" value in /proc/meminfo.
+    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/
+    //   zbxsysinfo/netbsd/memory.c#L182
     cached = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
              << uv.pageshift;
-
-    /*
-     * buffers: file-backed pages excluding executable mappings.
-     *
-     * The source is uvmexp_sysctl.filepages
-     * This matches what btop uses on NetBSD:
-     *   cached = (filepages + execpages + anonpages) * pagesize
-     * and filepages alone is the file cache excluding exec mappings,
-     * which is the closest accurate equivalent to Linux "Buffers".
-     */
+    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
+    // XXX: Still being determined.
     buffers = (unsigned long long)uv.filepages << uv.pageshift;
 
+    // Before avail was calculated as (inactive + cached + free), same
+    // as zabbix, but it turned out it could exceed total (see #2233),
+    // so zabbix seems to be wrong. Htop calculates it differently, and
+    // the used value seem more realistic, so let's match htop.
+    // https://github.com/htop-dev/htop/blob/e7f447b/netbsd/NetBSDProcessList.c#L162
+    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/netbsd/memory.c#L135
     used = active + wired;
     avail = total - used;
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
