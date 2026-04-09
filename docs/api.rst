@@ -196,8 +196,6 @@ CPU
     Windows and SunOS.
   - :field:`syscalls`: number of system calls; always set to ``0`` on Linux.
 
-  Example (Linux):
-
   .. code-block:: pycon
 
      >>> import psutil
@@ -2460,8 +2458,6 @@ Windows services
 
     Utility method retrieving all the information above as a dictionary.
 
-  Example code:
-
   .. code-block:: pycon
 
      >>> import psutil
@@ -2892,7 +2888,7 @@ Other constants
 
 .. data:: version_info
 
-  A tuple to check psutil installed version. Example:
+  A tuple to check psutil installed version.
 
   .. code-block:: pycon
 

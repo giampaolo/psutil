@@ -14,6 +14,14 @@
 #include "../../arch/all/init.h"
 
 
+// References
+// ----------
+//
+// top:
+//   https://github.com/openbsd/src/blob/master/usr.bin/top/machine.c
+// zabbix:
+//   https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/openbsd/memory.c
+
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int64_t _total;
@@ -48,10 +56,24 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // `sysctl hw.physmem`.
     total = (unsigned long long)_total;
 
+    // same as 'top' and 'vmstat -s'
     free = (unsigned long long)uvmexp.free * pagesize;
+
+    // same as 'top' and 'vmstat -s'
     active = (unsigned long long)uvmexp.active * pagesize;
+
+    // same as 'vmstat -s'
     inactive = (unsigned long long)uvmexp.inactive * pagesize;
+
+    // same as 'vmstat -s'
     wired = (unsigned long long)uvmexp.wired * pagesize;
+
+    // Updated by kernel every 5 secs. We have:
+    //   u_int32_t t_vmshr;  /* shared virtual memory */
+    //   u_int32_t t_avmshr; /* active shared virtual memory */
+    //   u_int32_t t_rmshr;  /* shared real memory */
+    // We return `t_rmshr` (real shared). Reason: report physical
+    // resource pressure rather than just kernel bookkeeping.
     shared = (unsigned long long)vmdata.t_rmshr * pagesize;
 
     // "top" derives cached memory from `bcstats.numbufpages`, which
@@ -71,13 +93,14 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     buffers = (unsigned long long)bcstats.numbufpages * pagesize;
     cached = buffers;
 
-    // matches freebsd-memory CLI:
-    // * https://people.freebsd.org/~rse/dist/freebsd-memory
-    // * https://www.cyberciti.biz/files/scripts/freebsd-memory.pl.txt
-    // matches zabbix:
-    // * https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/zbxsysinfo/freebsd/memory.c#L143
+    // Matches zabbix on FreeBSD (but not on OpenBSD).
     avail = inactive + cached + free;
+
+    // 'top' calculates this as `total - free`. Zabbix does `active + wired`.
+    // We do `active + wired + cached` (cached memory **is** used memory),
+    // which matches Zabbix on FreeBSD.
     used = active + wired + cached;
+
     percent = psutil_usage_percent((double)(total - avail), (double)total, 1);
 
     if (!(pydict_add(dict, "total", "K", total)
