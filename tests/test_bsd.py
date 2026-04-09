@@ -185,6 +185,22 @@ class TestVmstat(PsutilTestCase):
         psutil_value = psutil.virtual_memory().wired
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
+    @pytest.mark.skipif(
+        not (OPENBSD or NETBSD), reason="NETBSD / OPENBSD only"
+    )
+    def test_vmem_shared(self):
+        out = sh("vmstat -t")
+        if "vm-sh" not in out:
+            return pytest.skip("can't find 'vm-sh' in vmstat output")
+        lines = out.splitlines()
+        headers = lines[1].split()
+        values = lines[2].split()
+        row = dict(zip(headers, values))
+        expected = int(row["vm-sh"]) * PAGESIZE
+        assert (
+            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
+        )
+
     # --- swap_memory()
 
     def test_swap_total(self):
@@ -589,20 +605,6 @@ class NetBSDTestCase(PsutilTestCase):
                 - self.parse_vmstat("cached file pages") * PAGESIZE
             )
             < TOLERANCE_SYS_MEM
-        )
-
-    @retry_on_failure()
-    def test_vmem_shared(self):
-        # vmstat -t outputs vmtotal fields including vm-sh (t_vmshr) and
-        # rm-sh (t_rmshr). Header line: total-v active-v active-r vm-sh ...
-        out = sh("vmstat -t")
-        lines = out.splitlines()
-        headers = lines[1].split()
-        values = lines[2].split()
-        row = dict(zip(headers, values))
-        expected = (int(row["vm-sh"]) + int(row["rm-sh"])) * PAGESIZE
-        assert (
-            abs(psutil.virtual_memory().shared - expected) < TOLERANCE_SYS_MEM
         )
 
     @retry_on_failure()

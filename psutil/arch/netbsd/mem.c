@@ -61,7 +61,14 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // same as 'vmstat -s' (2 distinct values)
     cached = (unsigned long long)(uv.filepages + uv.execpages) * pagesize;
 
-    shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
+    // Updated by kernel every 5 secs. We have:
+    //   u_int32_t t_vmshr;  /* shared virtual memory */
+    //   u_int32_t t_avmshr; /* active shared virtual memory */
+    //   u_int32_t t_rmshr;  /* shared real memory */
+    // We return `t_rmshr` (real shared). Reason: report physical
+    // resource pressure rather than just kernel bookkeeping.
+    shared = (unsigned long long)vmdata.t_rmshr * pagesize;
+
     // XXX: Still being determined.
     buffers = (unsigned long long)uv.filepages << uv.pageshift;
 
