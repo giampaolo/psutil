@@ -478,11 +478,7 @@ class OpenBSDSystemTestCase(PsutilTestCase):
                 return int(line.split(' ')[0])
         raise ValueError(f"can't find {stat!r} in 'vmstat' output")
 
-    def test_boot_time(self):
-        s = sysctl('kern.boottime')
-        sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
-        psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
-        assert sys_bt == psutil_bt
+    # --- virtual_memory()
 
     def test_vmem_free(self):
         vmstat_value = self.vmstat('pages free') * PAGESIZE
@@ -504,6 +500,20 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         psutil_value = psutil.virtual_memory().wired
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
+    # --- swap_memory()
+
+    def test_swap_total(self):
+        vmstat_value = self.vmstat('swap pages') * PAGESIZE
+        psutil_value = psutil.swap_memory().total
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_used(self):
+        vmstat_value = self.vmstat('swap pages in use') * PAGESIZE
+        psutil_value = psutil.swap_memory().used
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    # --- cpu_stats()
+
     def test_cpu_stats_interrupts(self):
         vmstat_value = self.vmstat('interrupts')
         psutil_value = psutil.cpu_stats().interrupts
@@ -513,6 +523,14 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         vmstat_value = self.vmstat('syscalls')
         psutil_value = psutil.cpu_stats().syscalls
         assert abs(vmstat_value - psutil_value) <= 100
+
+    # --- other
+
+    def test_boot_time(self):
+        s = sysctl('kern.boottime')
+        sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
+        psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
+        assert sys_bt == psutil_bt
 
 
 # =====================================================================
