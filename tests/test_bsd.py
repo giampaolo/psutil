@@ -509,6 +509,11 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         psutil_value = psutil.cpu_stats().interrupts
         assert abs(vmstat_value - psutil_value) <= 100
 
+    def test_cpu_stats_syscalls(self):
+        vmstat_value = self.vmstat('syscalls')
+        psutil_value = psutil.cpu_stats().syscalls
+        assert abs(vmstat_value - psutil_value) <= 100
+
 
 # =====================================================================
 # --- NetBSD
