@@ -212,6 +212,9 @@ Others:
 - :gh:`2811`, [OpenBSD]: :func:`virtual_memory` :field:`shared` field returned
   pages instead of bytes, plus it was double counted (also included virtual
   shared mem).
+- :gh:`2813`, [OpenBSD]: :func:`virtual_memory` :field:`buffers` was always 0.
+  Now it returns a meaningful value, which is the same as :field:`cached`.
+  That's because OpenBSD does not distinguish between the 2.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^

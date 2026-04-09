@@ -18,7 +18,7 @@ PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     int64_t _total;
     unsigned long long free, active, inactive, wired, cached, shared;
-    unsigned long long total, avail, used;
+    unsigned long long total, avail, used, buffers;
     double percent;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
     int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
@@ -52,8 +52,22 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     wired = (unsigned long long)uvmexp.wired * pagesize;
     shared = (unsigned long long)vmdata.t_rmshr * pagesize;
 
-    // this is how "top" determines cached mem
-    cached = (unsigned long long)bcstats.numbufpages * pagesize;
+    // "top" derives cached memory from `bcstats.numbufpages`, which
+    // technically corresponds to 'buffers' memory:
+    // https://github.com/openbsd/src/blob/master/usr.bin/top/machine.c
+    //
+    // Intuitively, 'cached' memory should instead be
+    // `uvmexp.vnodepages`, described as 'vnode page cache', but it's
+    // always 0, and the struct contains an "XXX" comment, suggesting
+    // that `vnodepages` should probably not be used. This article
+    // suggests that 'buffers' became the primary caching mechanism in
+    // the system:
+    // https://undeadly.org/cgi?action=article;sid=20140908113732
+    //
+    // So, treat 'cached' and 'buffers' as aliases. See:
+    // https://github.com/giampaolo/psutil/issues/2813
+    buffers = (unsigned long long)bcstats.numbufpages * pagesize;
+    cached = buffers;
 
     // matches freebsd-memory CLI:
     // * https://people.freebsd.org/~rse/dist/freebsd-memory
@@ -71,7 +85,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
           | pydict_add(dict, "free", "K", free)
           | pydict_add(dict, "active", "K", active)
           | pydict_add(dict, "inactive", "K", inactive)
-          | pydict_add(dict, "buffers", "K", 0ULL)
+          | pydict_add(dict, "buffers", "K", buffers)
           | pydict_add(dict, "cached", "K", cached)
           | pydict_add(dict, "shared", "K", shared)
           | pydict_add(dict, "wired", "K", wired)))
