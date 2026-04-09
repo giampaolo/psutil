@@ -504,6 +504,11 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         psutil_value = psutil.virtual_memory().wired
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
+    def test_cpu_stats_interrupts(self):
+        vmstat_value = self.vmstat('interrupts')
+        psutil_value = psutil.cpu_stats().interrupts
+        assert abs(vmstat_value - psutil_value) <= 100
+
 
 # =====================================================================
 # --- NetBSD
