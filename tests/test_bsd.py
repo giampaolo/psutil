@@ -524,6 +524,11 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         psutil_value = psutil.cpu_stats().syscalls
         assert abs(vmstat_value - psutil_value) <= 100
 
+    def test_cpu_stats_ctx_switches(self):
+        vmstat_value = self.vmstat('cpu context switches')
+        psutil_value = psutil.cpu_stats().ctx_switches
+        assert abs(vmstat_value - psutil_value) <= 100
+
     # --- other
 
     def test_boot_time(self):
