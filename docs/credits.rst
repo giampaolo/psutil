@@ -111,6 +111,7 @@ Code contributors by year
 
 * `Amaan Qureshi`_ - :gh:`2770`
 * `Felix Yan`_ - :gh:`2732`
+* `Santhosh Raju`_ - :gh:`2805`
 * `Sergey Fedorov`_ - :gh:`2701`
 
 2025
@@ -526,6 +527,7 @@ Code contributors by year
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury
 .. _`Samer Masterson`: https://github.com/samertm
+.. _`Santhosh Raju`: https://github.com/fraggerfox
 .. _`Sebastian Saip`: https://github.com/ssaip
 .. _`Sebastian-Gabriel Brestin`: https://github.com/bsebi
 .. _`Sergey Fedorov`: https://github.com/barracuda156
