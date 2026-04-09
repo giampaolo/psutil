@@ -484,6 +484,11 @@ class OpenBSDSystemTestCase(PsutilTestCase):
         psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
         assert sys_bt == psutil_bt
 
+    def test_vmem_free(self):
+        vmstat_value = self.vmstat('pages free') * PAGESIZE
+        psutil_value = psutil.virtual_memory().free
+        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
     def test_vmem_wired(self):
         vmstat_value = self.vmstat('pages wired') * PAGESIZE
         psutil_value = psutil.virtual_memory().wired
