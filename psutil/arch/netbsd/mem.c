@@ -57,12 +57,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     active = (unsigned long long)uv.active << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
     wired = (unsigned long long)uv.wired << uv.pageshift;
-    // Note: zabbix does not include anonpages, but that doesn't match
-    // the "Cached" value in /proc/meminfo.
-    // https://github.com/zabbix/zabbix/blob/af5e0f8/src/libs/
-    //   zbxsysinfo/netbsd/memory.c#L182
-    cached = (unsigned long long)(uv.filepages + uv.execpages + uv.anonpages)
-             << uv.pageshift;
+
+    // same as 'vmstat -s' (2 distinct values)
+    cached = (unsigned long long)(uv.filepages + uv.execpages) * pagesize;
+
     shared = (unsigned long long)(vmdata.t_vmshr + vmdata.t_rmshr) * pagesize;
     // XXX: Still being determined.
     buffers = (unsigned long long)uv.filepages << uv.pageshift;

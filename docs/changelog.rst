@@ -174,7 +174,7 @@ Others:
   alphabetically when *attrs* is not specified.
 - :gh:`2805`, [BSD]: remove ``procfs`` dependency on NetBSD for
   :func:`cpu_stats` and :func:`virtual_memory`; values are now retrieved
-  via the ``sysctl(9)`` and ``uvm(9)`` kernel APIs instead. (patch by 
+  via the ``sysctl(9)`` and ``uvm(9)`` kernel APIs instead. (patch by
   Santhosh Raju)
 
 **Bug fixes**
@@ -219,6 +219,8 @@ Others:
 - :gh:`2813`, [OpenBSD]: :func:`virtual_memory` :field:`buffers` was always 0.
   Now it returns a meaningful value, which is the same as :field:`cached`.
   That's because OpenBSD does not distinguish between the 2.
+- :gh:`2814`, [NetBSD]: :func:`virtual_memory` :field:`cached` is overvalued,
+  since it includes anonymous pages.
 
 7.2.3 — 2026-02-08
 ^^^^^^^^^^^^^^^^^^
