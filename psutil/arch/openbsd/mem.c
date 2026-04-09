@@ -47,12 +47,20 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // physical (hardware) RAM, so prefer this value. This matches
     // `sysctl hw.physmem`.
     total = (unsigned long long)_total;
-    // same as top
+    // same as 'top' and 'vmstat -s'
     free = (unsigned long long)uvmexp.free * pagesize;
-    // same as top
+    // same as 'top' and 'vmstat -s'
     active = (unsigned long long)uvmexp.active * pagesize;
+    // same as 'vmstat -s'
     inactive = (unsigned long long)uvmexp.inactive * pagesize;
+    // same as 'vmstat -s'
     wired = (unsigned long long)uvmexp.wired * pagesize;
+
+    // Updated by kernel every 5 secs. We have:
+    // u_int32_t t_vmshr;  /* shared virtual memory */
+    // u_int32_t t_avmshr; /* active shared virtual memory */
+    // u_int32_t t_rmshr;  /* shared real memory */
+    // We return `t_rmshr` (real shared)
     shared = (unsigned long long)vmdata.t_rmshr * pagesize;
 
     // "top" derives cached memory from `bcstats.numbufpages`, which
