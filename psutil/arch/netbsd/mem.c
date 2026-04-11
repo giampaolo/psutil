@@ -22,15 +22,11 @@
 #include "../../arch/all/init.h"
 
 
-// Virtual memory stats for NetBSD using VM_UVMEXP2 and VM_METER.
-// https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
+// References
+// ----------
 //
-// Sources:
-//   cached  = (filepages + execpages + anonpages) << pageshift  [btop]
-//   buffers = 0 [follow OpenBSD's psutil implementation]
-//   shared  = (t_vmshr + t_rmshr) * pagesize [vmtotal]
-//   used    = (active + wired) << pageshift [top/btop]
-//   avail   = total - used [htop/btop]
+// Zabbix:
+//   https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
