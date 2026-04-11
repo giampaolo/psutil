@@ -272,7 +272,7 @@ Memory
   Return statistics about system memory usage. All values are expressed in
   bytes.
 
-  - :field:`total`: total physical memory (exclusive :term:`swap memory`).
+  - :field:`total`: total physical RAM.
   - :field:`available`: memory that can be given instantly to processes without the
     system going into :term:`swap <swap memory>`. On Linux it uses the ``MemAvailable``
     field from ``/proc/meminfo`` *(kernel 3.14+)*; on older kernels it falls back
