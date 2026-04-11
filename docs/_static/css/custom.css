@@ -225,7 +225,12 @@
     text-decoration: none !important;
     font-weight: 700;
     font-size: 0.95rem;
-    color: #d1d1d1 !important;
+    color: #fff !important;
+}
+
+.top-bar-logo span {
+    line-height: 1;
+    padding-top: 7px;
 }
 
 .top-bar-logo img {
@@ -730,6 +735,10 @@ body {
     .wy-nav-content {
         padding: 0 12px 1.618em 12px !important;
     }
+}
+
+.document {
+    padding-top: 20px !important;
 }
 
 /* ================================================================== */
