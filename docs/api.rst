@@ -457,6 +457,9 @@ Memory
      Linux: use /proc instead of ``sysinfo()`` syscall to support
      :data:`PROCFS_PATH` usage (e.g. useful for Docker containers ...).
 
+  .. versionchanged:: 8.0.0
+     OpenBSD: :field:`sin` / :field:`sout` are no longer set to ``0``.
+
 Disks
 ^^^^^
 
