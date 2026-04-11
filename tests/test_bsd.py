@@ -170,7 +170,7 @@ class TestVmstat(PsutilTestCase):
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     def test_vmem_cached(self):
-        # NetBSD only
+        # NetBSD / OpenBSD
         vmstat_value = (
             self.vmstat(['cached file pages'])
             + self.vmstat(['cached executable pages'])
@@ -605,18 +605,6 @@ class NetBSDTestCase(PsutilTestCase):
                 - self.parse_vmstat("cached file pages") * PAGESIZE
             )
             < TOLERANCE_SYS_MEM
-        )
-
-    @retry_on_failure()
-    def test_vmem_cached(self):
-        # uv.filepages + uv.execpages + uv.anonpages
-        expected = (
-            self.parse_vmstat("cached file pages")
-            + self.parse_vmstat("cached executable pages")
-            + self.parse_vmstat("anonymous pages")
-        ) * PAGESIZE
-        assert (
-            abs(psutil.virtual_memory().cached - expected) < TOLERANCE_SYS_MEM
         )
 
     # --- swap mem
