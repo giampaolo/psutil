@@ -150,7 +150,7 @@ class TestVmstat(PsutilTestCase):
             for label in labels:
                 if label == what:
                     return int(num)
-        raise pytest.skip(f"can't find {labels} in vmstat output")
+        return pytest.skip(f"can't find {labels} in vmstat output")
 
     # --- virtual_memory()
 
@@ -170,7 +170,7 @@ class TestVmstat(PsutilTestCase):
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
 
     def test_vmem_cached(self):
-        # NetBSD only
+        # NetBSD / OpenBSD
         vmstat_value = (
             self.vmstat(['cached file pages'])
             + self.vmstat(['cached executable pages'])
@@ -212,6 +212,16 @@ class TestVmstat(PsutilTestCase):
         vmstat_value = self.vmstat(['swap pages in use']) * PAGESIZE
         psutil_value = psutil.swap_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_sin(self):
+        vmstat_value = self.vmstat(['pages swapped in']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sin
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    def test_swap_sout(self):
+        vmstat_value = self.vmstat(['pages swapped oud']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sout
+        assert abs(vmstat_value - psutil_value) < 1024
 
     # --- cpu_stats()
 
@@ -605,18 +615,6 @@ class NetBSDTestCase(PsutilTestCase):
                 - self.parse_vmstat("cached file pages") * PAGESIZE
             )
             < TOLERANCE_SYS_MEM
-        )
-
-    @retry_on_failure()
-    def test_vmem_cached(self):
-        # uv.filepages + uv.execpages + uv.anonpages
-        expected = (
-            self.parse_vmstat("cached file pages")
-            + self.parse_vmstat("cached executable pages")
-            + self.parse_vmstat("anonymous pages")
-        ) * PAGESIZE
-        assert (
-            abs(psutil.virtual_memory().cached - expected) < TOLERANCE_SYS_MEM
         )
 
     # --- swap mem

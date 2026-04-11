@@ -273,7 +273,7 @@ class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
             pass
 
     def test_cpu_affinity_set_badarg(self):
-        raise pytest.skip("skip")
+        return pytest.skip("skip")
 
     if WINDOWS:
 

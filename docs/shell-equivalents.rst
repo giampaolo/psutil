@@ -70,7 +70,7 @@ CPU
    * - :func:`cpu_stats`
      -
      -
-     - ``sysctl vm.stats.sys``
+     - ``vmstat -s``, ``sysctl vm.stats.sys``
      -
    * - :func:`getloadavg`
      - ``uptime``
@@ -93,12 +93,12 @@ Memory
    * - :func:`virtual_memory`
      - ``free``, ``vmstat``, ``cat /proc/meminfo``
      - ``vm_stat``
-     - ``sysctl vm.stats``
+     - ``vmstat -s``, ``sysctl vm.stats``
      - ``systeminfo``
    * - :func:`swap_memory`
      - ``free``, ``vmstat``, ``swapon``
      - ``sysctl vm.swapusage``
-     - ``swapinfo``
+     - ``vmstat -s``, ``swapinfo``
      -
    * - :func:`heap_info`
      -
@@ -129,7 +129,7 @@ Disks
      - same
      - ``fsutil volume diskfree C:\``
    * - :func:`disk_partitions`
-     - ``findmnt``, ``mount``
+     - ``mount``, ``findmnt``
      - ``mount``
      - ``mount``
      -
