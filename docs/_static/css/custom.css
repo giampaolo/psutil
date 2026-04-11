@@ -59,13 +59,13 @@
     --code-bg: #2d2e27;
 
     /* top bar */
-    --topbar-bg: #343131;
+    --topbar-bg: #2a2828;
     --topbar-fg: #d1d1d1;
     --topbar-fg-active: #fff;
 
     /* sidebar */
-    --sidebar-bg: var(--topbar-bg);
-    --sidebar-top-bg: var(--topbar-bg);
+    --sidebar-bg: #343131;
+    --sidebar-top-bg: #343131;
     --sidebar-caption: #55a5d9;
     --sidebar-item: #d9d9d9;
     --sidebar-item-nested: #404040;
@@ -803,7 +803,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 .wy-side-nav-search {
     background-color: var(--sidebar-top-bg) !important;
     position: sticky;
-    top: 0;
+    top: 44px;
     z-index: 10;
 }
 
