@@ -112,7 +112,7 @@
     --card-border: #b0cfe8;
 
     /* footer */
-    --footer-icon: #999;
+    --footer-icon: #666;
     --footer-icon-hover: #444;
 }
 
@@ -250,9 +250,6 @@
     height: auto;
 }
 
-
-/*
-
 /* Sponsors --------------------------------------------------------- */
 
 .home-page #sponsors {
@@ -262,6 +259,15 @@
     border-top: 1px solid var(--border);
     margin-bottom: 20px;
     text-align: center;
+}
+
+@media (max-width: 768px) {
+    .home-page #sponsors {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 [data-theme="dark"] .home-page #sponsors {
@@ -443,7 +449,7 @@
     flex-shrink: 0;
     padding-right: 0.35rem;
     line-height: 1;
-    vertical-align: middle;
+    padding-top: 2px;
 }
 
 .home-desc-card:nth-child(1) .home-desc-card-icon { color: #2a6a90; }
@@ -579,7 +585,6 @@
     text-decoration: underline;
     color: var(--links);
 }
-
 
 /* TOC (hidden) ----------------------------------------------------- */
 
@@ -719,7 +724,8 @@ footer div[role="navigation"][aria-label="Footer"] {
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
-    font-size: var(--sidebar-caption-font-size) !important;
+    font-size: 13px !important;
+    letter-spacing: 0.1em;
 }
 
 .wy-menu-vertical li.toctree-l1 > a {

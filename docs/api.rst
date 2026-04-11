@@ -1,9 +1,6 @@
 .. currentmodule:: psutil
 .. include:: _links.rst
 
-API reference
-=============
-
 .. note::
    psutil 8.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
@@ -11,6 +8,12 @@ API reference
 .. important::
    do not rely on positional unpacking of named tuples.
    Always use attribute access (e.g. ``t.rss``).
+
+API reference
+=============
+
+Complete reference for all psutil classes and functions. For a high-level
+overview with short examples see :doc:`api-overview`.
 
 .. contents::
    :local:
