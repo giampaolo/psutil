@@ -274,13 +274,27 @@
 
 
 .top-bar-version {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
     font-size: 0.78rem;
     font-weight: 600;
     color: #d1d1d1;
-    padding: 2px 8px;
+    padding: 1px 8px 0;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 999px;
     margin-left: 4px;
+    text-decoration: none !important;
+}
+
+.top-bar-version:visited,
+.top-bar-version:link {
+    color: #d1d1d1;
+}
+
+.top-bar-version:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* ================================================================== */
