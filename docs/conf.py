@@ -72,7 +72,6 @@ exclude_patterns = ["_build"]
 # =====================================================================
 
 html_title = PROJECT_NAME
-html_logo = "_static/images/logo-psutil.svg"  # shown in the sidebar
 html_favicon = "_static/images/favicon.svg"
 html_last_updated_fmt = "%b %d, %Y"  # shown in the footer
 
