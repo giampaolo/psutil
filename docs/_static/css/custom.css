@@ -259,10 +259,11 @@
     background: transparent;
     cursor: pointer;
     color: var(--topbar-fg);
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     text-decoration: none !important;
     transition: background 0.15s, color 0.15s;
 }
+
 
 .top-bar-link:hover,
 .top-bar-btn:hover {
