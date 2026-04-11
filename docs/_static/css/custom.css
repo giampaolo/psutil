@@ -920,6 +920,24 @@ body,
 /* Sidebar effects                                                    */
 /* ================================================================== */
 
+@media (max-width: 768px) {
+    .top-bar {
+        height: 40px;
+    }
+    .top-bar-inner {
+        justify-content: flex-end;
+        padding: 0 0.75rem;
+    }
+    .top-bar-logo,
+    .top-bar-version {
+        display: none;
+    }
+    .wy-nav-content-wrap {
+        margin-top: 40px !important;
+        padding-top: 0 !important;
+    }
+}
+
 /* Smooth sidebar open/close on mobile */
 @media screen and (max-width: 768px) {
     .wy-nav-side {
