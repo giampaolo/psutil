@@ -22,15 +22,6 @@
 #include "../../arch/all/init.h"
 
 
-// Virtual memory stats for NetBSD using VM_UVMEXP2 and VM_METER.
-// https://github.com/zabbix/zabbix/blob/master/src/libs/zbxsysinfo/netbsd/memory.c
-//
-// Sources:
-//   cached  = (filepages + execpages + anonpages) << pageshift  [btop]
-//   buffers = 0 [follow OpenBSD's psutil implementation]
-//   shared  = (t_vmshr + t_rmshr) * pagesize [vmtotal]
-//   used    = (active + wired) << pageshift [top/btop]
-//   avail   = total - used [htop/btop]
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
@@ -51,15 +42,11 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (psutil_sysctl(vmmeter_mib, 2, &vmdata, sizeof(vmdata)) != 0)
         goto error;
 
-    // https://github.com/aristocratos/btop/blob/v1.4.6/src/netbsd/btop_collect.cpp#L720
     total = (unsigned long long)uv.npages << uv.pageshift;
     free = (unsigned long long)uv.free << uv.pageshift;
     active = (unsigned long long)uv.active << uv.pageshift;
     inactive = (unsigned long long)uv.inactive << uv.pageshift;
     wired = (unsigned long long)uv.wired << uv.pageshift;
-
-    // same as 'vmstat -s' (2 distinct values)
-    cached = (unsigned long long)(uv.filepages + uv.execpages) * pagesize;
 
     // Updated by kernel every 5 secs. We have:
     //   u_int32_t t_vmshr;  /* shared virtual memory */
@@ -69,8 +56,11 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     // resource pressure rather than just kernel bookkeeping.
     shared = (unsigned long long)vmdata.t_rmshr * pagesize;
 
-    // XXX: Still being determined.
+    // Note: on OpenBSD 'cached' and 'buffers' are aliases; not on NetBSD.
     buffers = (unsigned long long)uv.filepages << uv.pageshift;
+
+    // same as 'vmstat -s' (2 distinct values)
+    cached = (unsigned long long)(uv.filepages + uv.execpages) * pagesize;
 
     // Before avail was calculated as (inactive + cached + free), same
     // as zabbix, but it turned out it could exceed total (see #2233),

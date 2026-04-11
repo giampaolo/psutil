@@ -519,7 +519,7 @@ Files and connections
    * - :meth:`Process.open_files`
      - ``lsof -p PID``
      - same
-     - ``procstat -f PID``
+     - ``procstat -f PID``, ``fstat``
      - ``handle.exe -p PID``
    * - :meth:`Process.io_counters`
      - ``cat /proc/PID/io``
