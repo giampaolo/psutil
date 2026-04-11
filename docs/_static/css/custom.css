@@ -500,6 +500,10 @@ footer div[role="navigation"][aria-label="Footer"] {
     font-size: var(--sidebar-caption-font-size) !important;
 }
 
+.wy-menu-vertical li.toctree-l1 > a {
+    text-transform: capitalize;
+}
+
 .wy-menu-vertical li.toctree-l1:not(.current) > a {
     color: var(--sidebar-item) !important;
 }
