@@ -55,15 +55,18 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         }
     }
 
+    // Get swap in/out.
 #if defined(PSUTIL_NETBSD)
-    // Get swap in/out
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
+#else  // OpenBSD
+    struct uvmexp uv;
+    int mib[] = {CTL_VM, VM_UVMEXP};
+#endif
     if (psutil_sysctl(mib, 2, &uv, sizeof(uv)) != 0)
         goto error;
     sin = (uint64_t)uv.pgswapin * pagesize;
     sout = (uint64_t)uv.pgswapout * pagesize;
-#endif
 
     free(swdev);
 
