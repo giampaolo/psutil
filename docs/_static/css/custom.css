@@ -704,6 +704,7 @@
 
 html {
     background: var(--body-bg);
+    scroll-padding-top: 44px;
 }
 
 body {
