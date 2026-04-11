@@ -134,7 +134,7 @@
 
     /* text */
     --content-text: #c8c8c8;
-    --text-muted: #b0b0ba;
+    --text-muted: #d1d1d1;
     --headings: #e0e0e0;
     --headings-underline: #3a3a3a;
 
@@ -191,10 +191,12 @@
 /* ================================================================== */
 
 .top-bar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 9999;
-    background: var(--topbar-bg);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%), var(--topbar-bg);
     height: 44px;
 }
 
@@ -203,14 +205,14 @@
     align-items: center;
     justify-content: space-between;
     height: 100%;
-    padding: 0 1.618em 0 0;
+    padding: 0 2.5rem 0 0;
 }
 
 /* At widths where content hits max-width (300px sidebar + 1000px = 1300px),
    grow right padding to keep actions aligned with the content right edge. */
 @media (min-width: 1300px) {
     .top-bar-inner {
-        padding-right: calc(100vw - 1300px + 1.618em);
+        padding-right: calc(100vw - 1300px + 2.5rem);
     }
 }
 
@@ -223,7 +225,7 @@
     text-decoration: none !important;
     font-weight: 700;
     font-size: 0.95rem;
-    color: #fff !important;
+    color: #d1d1d1 !important;
 }
 
 .top-bar-logo img {
@@ -239,7 +241,7 @@
 
 .top-bar-link:visited,
 .top-bar-link:link {
-    color: #b0b0ba;
+    color: #d1d1d1;
 }
 
 .top-bar-link,
@@ -253,7 +255,7 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    color: #b0b0ba;
+    color: #d1d1d1;
     font-size: 1.25rem;
     text-decoration: none !important;
     transition: background 0.15s, color 0.15s;
@@ -265,10 +267,11 @@
     color: #fff;
 }
 
+
 .top-bar-version {
     font-size: 0.78rem;
     font-weight: 600;
-    color: #b0b0ba;
+    color: #d1d1d1;
     padding: 2px 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 999px;
