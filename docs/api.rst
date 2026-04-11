@@ -392,17 +392,19 @@ Memory
      >>>
 
   .. note::
-    if you just want to know how much physical memory is left in a
-    cross-platform manner, simply rely on :field:`available` and
-    :field:`percent` fields.
-
-  .. note::
      - On Linux, :field:`total`, :field:`free`, :field:`used`, :field:`shared`,
        and :field:`available` match the output of the ``free`` command.
      - On macOS, :field:`free`, :field:`active`, :field:`inactive`,
-       and :field:`wired` match ``vm_stat`` output.
+       and :field:`wired` match ``vm_stat`` command.
+     - On BSD, :field:`free`, :field:`active`, :field:`inactive`,
+       :field:`cached`, and :field:`wired` match ``vmstat -s`` command.
      - On Windows, :field:`total`, :field:`used` ("In use"), and
        :field:`available` match the Task Manager (Performance > Memory tab).
+
+  .. note::
+    if you just want to know how much physical memory is left in a
+    cross-platform manner, rely on :field:`available` and
+    :field:`percent` fields.
 
   .. seealso::
     - `scripts/meminfo.py`_

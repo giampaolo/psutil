@@ -129,7 +129,7 @@ Disks
      - same
      - ``fsutil volume diskfree C:\``
    * - :func:`disk_partitions`
-     - ``findmnt``, ``mount``
+     - ``mount``, ``findmnt``
      - ``mount``
      - ``mount``
      -
