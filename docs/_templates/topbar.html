@@ -1,0 +1,17 @@
+<header class="top-bar">
+  <div class="top-bar-inner">
+    <a class="top-bar-logo" href="{{ pathto(master_doc) }}">
+      <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" alt="psutil logo">
+      <span>psutil</span>
+    </a>
+    <div class="top-bar-actions">
+      <button id="theme-toggle" class="top-bar-btn" title="Toggle dark mode">
+        <i class="fa fa-moon-o" id="theme-icon"></i>
+      </button>
+      <a class="top-bar-link" href="https://github.com/giampaolo/psutil" title="GitHub" target="_blank" rel="noopener">
+        <i class="fa fa-github"></i>
+      </a>
+      <span class="top-bar-version">v{{ release }}</span>
+    </div>
+  </div>
+</header>

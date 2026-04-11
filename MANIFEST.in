@@ -40,6 +40,7 @@ include docs/_static/js/sidebar-close.js
 include docs/_static/js/theme-toggle.js
 include docs/_templates/footer.html
 include docs/_templates/layout.html
+include docs/_templates/topbar.html
 include docs/adoption.rst
 include docs/alternatives.rst
 include docs/api-overview.rst
