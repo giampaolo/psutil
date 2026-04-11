@@ -150,7 +150,7 @@ class TestVmstat(PsutilTestCase):
             for label in labels:
                 if label == what:
                     return int(num)
-        raise pytest.skip(f"can't find {labels} in vmstat output")
+        return pytest.skip(f"can't find {labels} in vmstat output")
 
     # --- virtual_memory()
 
