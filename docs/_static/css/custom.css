@@ -229,7 +229,7 @@
     gap: 7px;
     text-decoration: none !important;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     color: var(--topbar-fg-active) !important;
 }
 
@@ -799,6 +799,15 @@ footer div[role="navigation"][aria-label="Footer"] {
     background-color: var(--sidebar-bg) !important;
 }
 
+/* Push sidebar below the fixed top bar; auto-scrollbar shows only when needed */
+.wy-nav-side {
+    top: 44px !important;
+}
+
+.wy-side-scroll {
+    overflow-y: auto;
+}
+
 .wy-side-nav-search {
     background-color: var(--sidebar-top-bg) !important;
     position: sticky;
@@ -812,22 +821,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 .wy-side-nav-search a.icon-home {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-}
-
-.wy-side-nav-search a.icon-home::before {
     display: none;
-}
-
-.wy-side-nav-search a.icon-home img.logo {
-    display: inline-block;
-    height: 26px;
-    width: auto;
-    margin: 0;
-    order: -1;
 }
 
 .wy-side-nav-search input[type="text"] {
