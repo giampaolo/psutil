@@ -88,6 +88,7 @@ copybutton_exclude = ".linenos, .gp"
 html_theme = "sphinx_rtd_theme"
 
 if html_theme == "sphinx_rtd_theme":
+    html_theme_options = {"collapse_navigation": False}
     templates_path = ["_templates", "_static/images"]
     pygments_style = "monokai"  # https://pygments.org/styles/
     html_css_files = [
