@@ -16,7 +16,7 @@
     --code-line-height: 1.5;
 
     --content-font-size: 16.5px;
-    --content-line-height: 26px;
+    --content-line-height: 1.65;
 
     --sidebar-font-size: 15px;
     --sidebar-caption-font-size: 14px;
@@ -188,6 +188,8 @@
 /* Home page                                                          */
 /* ================================================================== */
 
+/* Hero ------------------------------------------------------------- */
+
 .hero {
     text-align: center;
     padding: 1.5em 0 2em;
@@ -248,7 +250,33 @@
     height: auto;
 }
 
+
 /*
+
+/* Sponsors --------------------------------------------------------- */
+
+.home-page #sponsors {
+    margin: 2rem -3rem 0;
+    padding: 1.5rem 3rem 2rem;
+    background: #f8f9fa;
+    border-top: 1px solid var(--border);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+[data-theme="dark"] .home-page #sponsors {
+    background: #1e1e1e;
+}
+
+.home-page #sponsors h1 {
+    text-align: center;
+}
+
+.home-page .sponsor-table {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
 .sponsor-logo {
     filter: grayscale(100%) opacity(100%);
     transition: filter 0.2s;
@@ -257,14 +285,15 @@
 .sponsor-logo:hover {
     filter: grayscale(0%) opacity(100%);
 }
-*/
+
+/* Platform pills ---------------------------------------------------- */
 
 .home-platforms {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin: 1em 0 2em;
+    margin: 1em 0 3em;
 }
 
 .home-platform-label {
@@ -283,6 +312,8 @@
     color: var(--text-muted);
     background: var(--surface-sunken);
 }
+
+/* Feature icon cards ------------------------------------------------ */
 
 .home-feature-cards {
     display: grid;
@@ -363,6 +394,197 @@
     color: var(--text-muted);
     font-family: var(--code-font);
     line-height: 1.9;
+}
+
+/* Description cards ------------------------------------------------- */
+
+.home-desc-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: stretch;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+@media (max-width: 700px) {
+    .home-desc-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.home-desc-card {
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    background: var(--card-bg);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+}
+
+[data-theme="dark"] .home-desc-card {
+    border-color: #2e2e2e;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.home-desc-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: -1.1rem -1.3rem 0.75rem;
+    padding: 0.55rem 1.3rem;
+    background: var(--surface-raised);
+    border-bottom: 1px solid var(--card-border);
+    border-radius: 8px 8px 0 0;
+}
+
+.home-desc-card-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    padding-right: 0.35rem;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.home-desc-card:nth-child(1) .home-desc-card-icon { color: #2a6a90; }
+.home-desc-card:nth-child(2) .home-desc-card-icon { color: #c07800; }
+.home-desc-card:nth-child(3) .home-desc-card-icon { color: #5d6d7e; }
+
+.home-desc-card:nth-child(1) .home-desc-card-header {
+    background: linear-gradient(to bottom, #6aafd4, #4a90b8);
+    border-bottom-color: #3a7aa0;
+}
+
+.home-desc-card:nth-child(1) {
+    background: #f0f6fb;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .home-desc-card:nth-child(1) {
+    background: #1a2430;
+}
+
+.home-desc-card:nth-child(1)::after {
+    content: '\f085';
+    font-family: 'FontAwesome';
+    font-size: 7rem;
+    position: absolute;
+    bottom: -0.75rem;
+    right: 0.5rem;
+    opacity: 0.07;
+    color: #2a6a90;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.home-desc-card:nth-child(2) .home-desc-card-header {
+    background: linear-gradient(to bottom, #f5ca68, #e8a830);
+    border-bottom-color: #c98e20;
+}
+
+.home-desc-card:nth-child(2) {
+    background: #fdf8ee;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .home-desc-card:nth-child(2) {
+    background: #221a08;
+}
+
+.home-desc-card:nth-child(2)::after {
+    content: '\f080';
+    font-family: 'FontAwesome';
+    font-size: 7rem;
+    position: absolute;
+    bottom: -0.75rem;
+    right: 0.5rem;
+    opacity: 0.07;
+    color: #c07800;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.home-desc-card:nth-child(3) .home-desc-card-header {
+    background: linear-gradient(to bottom, #a0b0bc, #7a8fa0);
+    border-bottom-color: #637888;
+}
+
+.home-desc-card:nth-child(3) {
+    background: #f0f6fb;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .home-desc-card:nth-child(3) {
+    background: #1a2430;
+}
+
+.home-desc-card:nth-child(3)::after {
+    content: '\f0ac';
+    font-family: 'FontAwesome';
+    font-size: 7rem;
+    position: absolute;
+    bottom: -0.75rem;
+    right: 0.5rem;
+    opacity: 0.07;
+    color: #5d6d7e;
+    pointer-events: none;
+    line-height: 1;
+}
+
+.home-desc-card-header .home-desc-card-title {
+    color: #fff;
+    text-shadow:
+        0 0 2px rgba(0, 0, 0, 0.4),
+        0 1px 4px rgba(0, 0, 0, 0.5);
+    -webkit-text-stroke: 0.3px rgba(0, 0, 0, 0.25);
+}
+
+.home-desc-card-header .home-desc-card-icon {
+    color: #fff;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+    font-size: 1.2rem;
+}
+
+.home-desc-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--headings);
+}
+
+.home-desc-card p {
+    font-size: 0.88rem;
+    color: var(--content-text);
+    margin: 0 0 0.75rem;
+    line-height: 1.6;
+    flex-grow: 1;
+}
+
+.home-desc-card-link {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--links);
+    text-decoration: none;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    width: 100%;
+}
+
+.home-desc-card-link:hover {
+    text-decoration: underline;
+    color: var(--links);
+}
+
+
+/* TOC (hidden) ----------------------------------------------------- */
+
+.home-page .toctree-wrapper {
+    display: none;
 }
 
 /* ================================================================== */

@@ -78,12 +78,9 @@ Fast:
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
 to using :meth:`Process.oneshot` on each process.
-
-Using :func:`process_iter` also saves you from race conditions (e.g.
-if a process disappears while iterating), since attributes are retrieved in a
-single pass and exceptions like :exc:`NoSuchProcess` and :exc:`AccessDenied`
-are handled internally.
-
+Using :func:`process_iter` also saves you from **race conditions** (e.g. if a
+process disappears while iterating), since :exc:`NoSuchProcess` and
+:exc:`AccessDenied` exceptions are handled internally.
 A typical use case is to fetch all process attrs except the slow ones (see
 :ref:`perf-api-speed` table below):
 

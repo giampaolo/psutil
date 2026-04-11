@@ -3,6 +3,10 @@
 .. moduleauthor:: Giampaolo Rodola <grodola@gmail.com>
 .. title:: Home
 
+.. ============================================================================
+.. Hero
+.. ============================================================================
+
 .. raw:: html
 
    <script>document.body.classList.add('home-page');</script>
@@ -17,12 +21,21 @@
      </div>
    </div>
 
-psutil is a cross-platform library for retrieving information about running
+Psutil is a cross-platform library for retrieving information about running
 processes and system utilization (CPU, memory, disks, network, sensors)
 in Python. It is useful mainly for system monitoring, profiling,
 limiting process resources, and managing running processes.
+Psutil implements many functionalities offered by UNIX command line tool such
+as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
+(see :doc:`shell equivalents <shell-equivalents>`).
+It is used by :doc:`many notable projects <adoption>` including TensorFlow,
+PyTorch, Home Assistant, Ansible, and Celery.
 
 ----
+
+.. ============================================================================
+.. Platform pills
+.. ============================================================================
 
 .. raw:: html
 
@@ -38,6 +51,12 @@ limiting process resources, and managing running processes.
      <span class="home-platform-pill">AIX</span>
    </div>
 
+.. ============================================================================
+.. Feature cards
+.. ============================================================================
+
+.. raw:: html
+
    <div class="home-feature-cards">
      <a class="home-feature-card" href="api.html#cpu">
        <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="CPU">
@@ -48,7 +67,7 @@ limiting process resources, and managing running processes.
        <div class="home-feature-title">Memory</div>
      </a>
      <a class="home-feature-card" href="api.html#disks">
-       <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="Disks">
+       <i class="fa fa-hdd-o home-icon-fa"></i>
        <div class="home-feature-title">Disks</div>
      </a>
      <a class="home-feature-card" href="api.html#network">
@@ -65,18 +84,50 @@ limiting process resources, and managing running processes.
      </a>
    </div>
 
-psutil implements many functionalities offered by UNIX command line tool such
-as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
-(see :doc:`shell equivalents <shell-equivalents>`).
-It is used by :doc:`many notable projects <adoption>` including TensorFlow,
-PyTorch, Home Assistant, Ansible, and Celery.
 
+.. ============================================================================
+.. Description cards
+.. ============================================================================
+
+.. raw:: html
+
+   <div class="home-desc-cards">
+     <div class="home-desc-card">
+       <div class="home-desc-card-header">
+         <i class="fa fa-cogs home-desc-card-icon"></i>
+         <div class="home-desc-card-title">Process management</div>
+       </div>
+       <p>Query and control running processes: CPU, memory, files, connections, threads, and more.</p>
+     </div>
+     <div class="home-desc-card">
+       <div class="home-desc-card-header">
+         <i class="fa fa-heartbeat home-desc-card-icon"></i>
+         <div class="home-desc-card-title">System monitoring</div>
+       </div>
+       <p>Get real-time metrics for CPU, memory, disks, network, and hardware sensors.</p>
+     </div>
+     <div class="home-desc-card">
+       <div class="home-desc-card-header">
+         <i class="fa fa-plug home-desc-card-icon"></i>
+         <div class="home-desc-card-title">Cross-platform</div>
+       </div>
+       <p>One API for all platforms. Psutil primary goal is to abstract OS differences, so your monitoring code runs unchanged everywhere.</p>
+     </div>
+   </div>
+
+.. ============================================================================
+.. Sponsors
+.. ============================================================================
 
 Sponsors
 --------
 
 .. raw:: html
    :file: _sponsors.html
+
+.. ============================================================================
+.. TOC: hidden via CSS, needed by Sphinx for sidebar nav
+.. ============================================================================
 
 .. toctree::
    :maxdepth: 2
