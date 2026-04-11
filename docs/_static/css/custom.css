@@ -59,6 +59,7 @@
     --code-bg: #2d2e27;
 
     /* sidebar */
+    --topbar-bg: #343131;
     --sidebar-bg: #343131;
     --sidebar-top-bg: #343131;
     --sidebar-caption: #55a5d9;
@@ -124,6 +125,7 @@
     /* page */
     --body-bg: #1e1e1e;
     --content-bg: #1e1e1e;
+    --topbar-bg: #272727;
     --sidebar-bg: #272727;
     --sidebar-top-bg: #272727;
     --surface-sunken: #2a2a2a;
@@ -182,6 +184,89 @@
     --card-bg: #252525;
     --card-border: #2a4a6a;
 
+}
+
+/* ================================================================== */
+/* Top bar                                                            */
+/* ================================================================== */
+
+.top-bar {
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    background: var(--topbar-bg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    height: 44px;
+}
+
+.top-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 1.618em;
+}
+
+/* At widths where content hits max-width (300px sidebar + 1000px = 1300px),
+   grow right padding to keep actions aligned with the content right edge. */
+@media (min-width: 1300px) {
+    .top-bar-inner {
+        padding-right: calc(100vw - 1300px + 1.618em);
+    }
+}
+
+.top-bar-logo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    text-decoration: none !important;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff !important;
+}
+
+.top-bar-logo img {
+    height: 22px;
+    width: auto;
+}
+
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.top-bar-link,
+.top-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--sidebar-item);
+    font-size: 1.05rem;
+    text-decoration: none !important;
+    transition: background 0.15s, color 0.15s;
+}
+
+.top-bar-link:hover,
+.top-bar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.top-bar-version {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--sidebar-item);
+    padding: 2px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    margin-left: 4px;
 }
 
 /* ================================================================== */

@@ -1,4 +1,28 @@
 {% extends "!layout.html" %}
+
+{% block extrabody %}
+<header class="top-bar">
+  <div class="top-bar-inner">
+    <a class="top-bar-logo" href="{{ pathto(master_doc) }}">
+      <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" alt="psutil logo">
+      <span>psutil</span>
+    </a>
+    <div class="top-bar-actions">
+      <a class="top-bar-link" href="https://github.com/giampaolo/psutil" title="GitHub" target="_blank" rel="noopener">
+        <i class="fa fa-github"></i>
+      </a>
+      <a class="top-bar-link" href="https://pypi.org/project/psutil" title="PyPI" target="_blank" rel="noopener">
+        <i class="fa fa-cube"></i>
+      </a>
+      <button id="theme-toggle" class="top-bar-btn" title="Toggle dark mode">
+        <i class="fa fa-moon-o" id="theme-icon"></i>
+      </button>
+      <span class="top-bar-version">v{{ release }}</span>
+    </div>
+  </div>
+</header>
+{% endblock %}
+
 {% block extrahead %}
 {{ super() }}
 
@@ -28,5 +52,25 @@
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-G7374TFB11');
+</script>
+
+<script>
+  // Theme toggle button
+  document.addEventListener('DOMContentLoaded', function () {
+    var btn = document.getElementById('theme-toggle');
+    var icon = document.getElementById('theme-icon');
+    function updateIcon() {
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      icon.className = dark ? 'fa fa-sun-o' : 'fa fa-moon-o';
+    }
+    updateIcon();
+    btn.addEventListener('click', function () {
+      var html = document.documentElement;
+      var dark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', dark ? 'light' : 'dark');
+      localStorage.setItem('psutil-theme', dark ? 'light' : 'dark');
+      updateIcon();
+    });
+  });
 </script>
 {% endblock %}
