@@ -176,6 +176,8 @@ Others:
   :func:`cpu_stats` and :func:`virtual_memory`; values are now retrieved
   via the ``sysctl(9)`` and ``uvm(9)`` kernel APIs instead. (patch by
   Santhosh Raju)
+- :gh:`2816`, [OpenBSD]: :func:`swap_memory` :field:`sin` and :field:`sout` are
+  no longer set to ``0``.
 
 **Bug fixes**
 
