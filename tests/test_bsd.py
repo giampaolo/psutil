@@ -206,12 +206,22 @@ class TestVmstat(PsutilTestCase):
     def test_swap_total(self):
         vmstat_value = self.vmstat(['swap pages']) * PAGESIZE
         psutil_value = psutil.swap_memory().total
-        assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+        assert vmstat_value == psutil_value
 
     def test_swap_used(self):
         vmstat_value = self.vmstat(['swap pages in use']) * PAGESIZE
         psutil_value = psutil.swap_memory().used
         assert abs(vmstat_value - psutil_value) < TOLERANCE_SYS_MEM
+
+    def test_swap_sin(self):
+        vmstat_value = self.vmstat(['pages swapped in']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sin
+        assert abs(vmstat_value - psutil_value) < 1024
+
+    def test_swap_sout(self):
+        vmstat_value = self.vmstat(['pages swapped oud']) * PAGESIZE
+        psutil_value = psutil.swap_memory().sout
+        assert abs(vmstat_value - psutil_value) < 1024
 
     # --- cpu_stats()
 
