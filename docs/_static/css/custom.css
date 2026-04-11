@@ -799,14 +799,6 @@ footer div[role="navigation"][aria-label="Footer"] {
     background-color: var(--sidebar-bg) !important;
 }
 
-/* Push sidebar below the fixed top bar; auto-scrollbar shows only when needed */
-.wy-nav-side {
-    top: 44px !important;
-}
-
-.wy-side-scroll {
-    overflow-y: auto;
-}
 
 .wy-side-nav-search {
     background-color: var(--sidebar-top-bg) !important;
