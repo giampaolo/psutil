@@ -292,10 +292,12 @@ Memory
     still holds valid data (:term:`page cache`, old allocations) but is a
     candidate for reclamation or :term:`swapping <swap memory>`.
     On BSD systems it is counted in :field:`available`.
-  - :field:`buffers` *(Linux, BSD)*: see :term:`buffers`. Reclaimable by the OS when needed.
+  - :field:`buffers` *(Linux, BSD)*: see :term:`buffers`.
+    On OpenBSD :field:`buffers` and :field:`cached` are aliases.
   - :field:`cached` *(Linux, BSD, Windows)*: RAM used by the kernel to cache file
-    contents (data read from or written to disk). Reclaimable by the OS when
-    needed. See :term:`page cache`.
+    contents (data read from or written to disk).
+    On OpenBSD :field:`buffers` and :field:`cached` are aliases.
+    See :term:`page cache`.
   - :field:`shared` *(Linux, BSD)*: :term:`shared memory` accessible by multiple
     processes simultaneously, such as in-memory ``tmpfs`` and POSIX shared
     memory objects (``shm_open``). On Linux this corresponds to ``Shmem`` in
