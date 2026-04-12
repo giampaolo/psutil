@@ -27,4 +27,13 @@
             setTheme(cb.checked);
         });
     }
+
+    // Shift+D: toggle dark mode.
+    document.addEventListener('keydown', function (e) {
+        var tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA')
+            return;
+        if (e.shiftKey && e.key === 'D')
+            setTheme(html.getAttribute('data-theme') !== 'dark');
+    });
 })();

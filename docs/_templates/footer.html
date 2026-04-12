@@ -14,11 +14,14 @@
 
   <div role="contentinfo">
   {%- block contentinfo %}
-    <p>
-    {%- if show_copyright %}&#169; Copyright {{ copyright }}.{%- endif %}
-    {%- if last_updated %} Last updated on: <i>{{ last_updated }}</i>.{%- endif %}
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>.
-    </p>
+    <div class="footer-content">
+      <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" class="footer-logo" alt="psutil logo">
+      <div class="footer-text">
+        &#169 Copyright {{ copyright }} · Last updated on: <i>{{ last_updated }}</i> ·
+        Built with <a href="https://www.sphinx-doc.org">Sphinx</a> ·
+        <a href="{{ pathto('about') }}">Keyboard Shortcuts</a>
+      </div>
+    </div>
   {%- endblock %}
   </div>
 
