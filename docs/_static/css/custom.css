@@ -943,11 +943,13 @@ body,
         height: 40px;
     }
     .top-bar-inner {
-        justify-content: flex-end;
+        justify-content: space-between;
         padding: 0 0.75rem;
     }
     .top-bar-logo {
-        display: none;
+        display: flex;
+        width: auto;
+        padding-left: 0;
     }
     /* Smooth sidebar open/close */
     .wy-nav-side {
