@@ -58,6 +58,11 @@
     /* code blocks */
     --code-bg: #2d2e27;
 
+    /* top bar */
+    --topbar-bg: #2a2828;
+    --topbar-fg: #d1d1d1;
+    --topbar-fg-active: #fff;
+
     /* sidebar */
     --sidebar-bg: #343131;
     --sidebar-top-bg: #343131;
@@ -110,10 +115,6 @@
     /* cards */
     --card-bg: #fff;
     --card-border: #b0cfe8;
-
-    /* footer */
-    --footer-icon: #666;
-    --footer-icon-hover: #444;
 }
 
 /* ================================================================== */
@@ -124,6 +125,7 @@
     /* page */
     --body-bg: #1e1e1e;
     --content-bg: #1e1e1e;
+    --topbar-bg: #272727;
     --sidebar-bg: #272727;
     --sidebar-top-bg: #272727;
     --surface-sunken: #2a2a2a;
@@ -132,7 +134,7 @@
 
     /* text */
     --content-text: #c8c8c8;
-    --text-muted: #b0b0ba;
+    --text-muted: #d1d1d1;
     --headings: #e0e0e0;
     --headings-underline: #3a3a3a;
 
@@ -182,6 +184,117 @@
     --card-bg: #252525;
     --card-border: #2a4a6a;
 
+}
+
+/* ================================================================== */
+/* Top bar                                                            */
+/* ================================================================== */
+
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%), var(--topbar-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    height: 44px;
+}
+
+.top-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 2.5rem 0 0;
+}
+
+/* At widths where content hits max-width (300px sidebar + 1000px = 1300px),
+   grow right padding to keep actions aligned with the content right edge. */
+@media (min-width: 1300px) {
+    .top-bar-inner {
+        padding-right: calc(100vw - 1300px + 2.5rem);
+    }
+}
+
+.top-bar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 300px;
+    padding-left: 1.25rem;
+    gap: 7px;
+    text-decoration: none !important;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--topbar-fg-active) !important;
+}
+
+.top-bar-logo span {
+    line-height: 1;
+    padding-top: 7px;
+}
+
+.top-bar-logo img {
+    height: 22px;
+}
+
+.top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.top-bar-link,
+.top-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--topbar-fg);
+    font-size: 1.5rem;
+    text-decoration: none !important;
+    transition: background 0.15s, color 0.15s;
+}
+
+
+.top-bar-link:hover,
+.top-bar-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--topbar-fg-active);
+}
+
+.top-bar-version {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--topbar-fg);
+    padding: 1px 8px 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    margin-left: 4px;
+    text-decoration: none !important;
+}
+
+/* prevent browser from overriding link/visited colours in the top bar */
+.top-bar-link:link,
+.top-bar-link:visited,
+.top-bar-version:link,
+.top-bar-version:visited {
+    color: var(--topbar-fg);
+}
+
+.top-bar-version:hover {
+    color: var(--topbar-fg-active);
+    border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* ================================================================== */
@@ -605,6 +718,7 @@
 
 html {
     background: var(--body-bg);
+    scroll-padding-top: 44px;
 }
 
 body {
@@ -636,6 +750,10 @@ body {
     .wy-nav-content {
         padding: 0 12px 1.618em 12px !important;
     }
+}
+
+.document {
+    padding-top: 20px !important;
 }
 
 /* ================================================================== */
@@ -679,12 +797,12 @@ footer div[role="navigation"][aria-label="Footer"] {
     background-color: var(--sidebar-bg) !important;
 }
 
+
 .wy-side-nav-search {
     background-color: var(--sidebar-top-bg) !important;
     position: sticky;
-    top: 0;
+    top: 44px;
     z-index: 10;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* hide version switch */
@@ -693,22 +811,7 @@ footer div[role="navigation"][aria-label="Footer"] {
 }
 
 .wy-side-nav-search a.icon-home {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-}
-
-.wy-side-nav-search a.icon-home::before {
     display: none;
-}
-
-.wy-side-nav-search a.icon-home img.logo {
-    display: inline-block;
-    height: 26px;
-    width: auto;
-    margin: 0;
-    order: -1;
 }
 
 .wy-side-nav-search input[type="text"] {
@@ -720,6 +823,10 @@ footer div[role="navigation"][aria-label="Footer"] {
     border-color: var(--sidebar-search-focus-border);
     box-shadow: 0 0 0 2px var(--sidebar-search-focus-shadow);
     outline: none;
+}
+
+.wy-menu-vertical {
+    margin-top: 45px;
 }
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
@@ -827,12 +934,26 @@ body,
 /* Sidebar effects                                                    */
 /* ================================================================== */
 
-/* Smooth sidebar open/close on mobile */
-@media screen and (max-width: 768px) {
+@media (max-width: 768px) {
+    .top-bar {
+        height: 40px;
+    }
+    .top-bar-inner {
+        justify-content: space-between;
+        padding: 0 0.75rem;
+    }
+    .top-bar-logo {
+        display: flex;
+        width: auto;
+        padding-left: 0;
+    }
+    /* Smooth sidebar open/close */
     .wy-nav-side {
         transition: left 0.2s ease, width 0.2s ease;
     }
     .wy-nav-content-wrap {
+        margin-top: 40px !important;
+        padding-top: 0 !important;
         transition: left 0.2s ease;
     }
 }
@@ -841,41 +962,9 @@ body,
 /* Footer                                                           */
 /* ================================================================== */
 
-.footer-row {
-    display: table;
-    width: 100%;
-}
-
-.footer-row p,
-.footer-icons {
-    display: table-cell;
-    vertical-align: middle;
+.footer-row p {
     margin: 0 !important;
     padding: 0;
-}
-
-.footer-icons {
-    text-align: right;
-    white-space: nowrap;
-    width: 1px;
-}
-
-.footer-icon {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 14px;
-}
-
-.footer-icon svg {
-    display: block;
-    width: 20px;
-    height: 20px;
-    fill: var(--footer-icon);
-    transition: fill 0.2s;
-}
-
-.footer-icon:hover svg {
-    fill: var(--footer-icon-hover);
 }
 
 /* ================================================================== */
@@ -1337,4 +1426,20 @@ div.deprecated .versionmodified {
     color: var(--func-sig-border) !important;
     font-size: 0.8em;
     font-style: italic;
+}
+
+/* ================================================================== */
+/* Genindex (Index page)                                               */
+/* ================================================================== */
+
+/* On small screens, collapse the two-column index table into a single
+   column so items are not split across two narrow vertical sections. */
+@media screen and (max-width: 768px) {
+    table.indextable tr {
+        display: block;
+    }
+    table.indextable td {
+        display: block;
+        width: 100% !important;
+    }
 }

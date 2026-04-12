@@ -14,7 +14,6 @@ include docs/.readthedocs.yaml
 include docs/DEVNOTES.md
 include docs/Makefile
 include docs/README
-include docs/_ext/add_home_link.py
 include docs/_ext/availability.py
 include docs/_ext/changelog_anchors.py
 include docs/_ext/check_python_syntax.py
@@ -23,8 +22,6 @@ include docs/_links.rst
 include docs/_sponsors.html
 include docs/_static/css/custom.css
 include docs/_static/images/favicon.svg
-include docs/_static/images/footer-icon-github.svg
-include docs/_static/images/footer-icon-pypi.svg
 include docs/_static/images/icon-cpu.svg
 include docs/_static/images/icon-memory.svg
 include docs/_static/images/icon-network.svg
@@ -40,7 +37,7 @@ include docs/_static/js/sidebar-close.js
 include docs/_static/js/theme-toggle.js
 include docs/_templates/footer.html
 include docs/_templates/layout.html
-include docs/_templates/searchbox.html
+include docs/_templates/topbar.html
 include docs/adoption.rst
 include docs/alternatives.rst
 include docs/api-overview.rst

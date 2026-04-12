@@ -16,7 +16,7 @@ Changelog
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
 :gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`, :gh:`2797`,
-:gh:`2801`, :gh:`2808`)
+:gh:`2801`, :gh:`2803`, :gh:`2808`, :gh:`2819`)
 
 - Split docs from a single HTML file into multiple new sections:
 
@@ -43,17 +43,18 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 - Theming:
 
-  - Renewed, more modern, custom theme.
+  - Renewed, modern, custom theme.
+  - Top bar
+  - Toggable dark theme
   - Show "last updated" and external icons in the footer.
   - Show icon for external URLs.
   - Use Monokai theme for code snippets.
 
 - Usability:
 
-  - Improve overall doc clarity and shorten long sentences.
+  - Improved overall doc clarity and shortened long sentences.
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
-  - Greatly improved :func:`virtual_memory` doc and many other APIs.
 
 - Testing:
 
