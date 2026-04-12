@@ -1461,3 +1461,19 @@ div.deprecated .versionmodified {
     font-size: 0.8em;
     font-style: italic;
 }
+
+/* ================================================================== */
+/* Genindex (Index page)                                               */
+/* ================================================================== */
+
+/* On small screens, collapse the two-column index table into a single
+   column so items are not split across two narrow vertical sections. */
+@media screen and (max-width: 768px) {
+    table.indextable tr {
+        display: block;
+    }
+    table.indextable td {
+        display: block;
+        width: 100% !important;
+    }
+}
