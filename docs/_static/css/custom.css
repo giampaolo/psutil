@@ -829,6 +829,10 @@ footer div[role="navigation"][aria-label="Footer"] {
     outline: none;
 }
 
+.wy-menu-vertical {
+    margin-top: 45px;
+}
+
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
     font-size: 13px !important;
