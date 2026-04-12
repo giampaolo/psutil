@@ -38,6 +38,7 @@ extensions = [
     "changelog_anchors",
     "check_python_syntax",
     "field_role",
+    "genindex_filter",
 ]
 
 # =====================================================================
