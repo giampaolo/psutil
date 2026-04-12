@@ -12,21 +12,13 @@
 
   <hr/>
 
-  <div role="contentinfo" class="footer-row">
+  <div role="contentinfo">
   {%- block contentinfo %}
     <p>
     {%- if show_copyright %}&#169; Copyright {{ copyright }}.{%- endif %}
     {%- if last_updated %} Last updated on: <i>{{ last_updated }}</i>.{%- endif %}
     Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>.
     </p>
-    <div class="footer-icons">
-      <a href="https://github.com/giampaolo/psutil" title="GitHub" target="_blank" class="footer-icon">
-        {% include "footer-icon-github.svg" %}
-      </a>
-      <a href="https://pypi.org/project/psutil" title="PyPI" target="_blank" class="footer-icon">
-        {% include "footer-icon-pypi.svg" %}
-      </a>
-    </div>
   {%- endblock %}
   </div>
 

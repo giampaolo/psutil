@@ -115,10 +115,6 @@
     /* cards */
     --card-bg: #fff;
     --card-border: #b0cfe8;
-
-    /* footer */
-    --footer-icon: #666;
-    --footer-icon-hover: #444;
 }
 
 /* ================================================================== */
@@ -966,41 +962,9 @@ body,
 /* Footer                                                           */
 /* ================================================================== */
 
-.footer-row {
-    display: table;
-    width: 100%;
-}
-
-.footer-row p,
-.footer-icons {
-    display: table-cell;
-    vertical-align: middle;
+.footer-row p {
     margin: 0 !important;
     padding: 0;
-}
-
-.footer-icons {
-    text-align: right;
-    white-space: nowrap;
-    width: 1px;
-}
-
-.footer-icon {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 14px;
-}
-
-.footer-icon svg {
-    display: block;
-    width: 20px;
-    height: 20px;
-    fill: var(--footer-icon);
-    transition: fill 0.2s;
-}
-
-.footer-icon:hover svg {
-    fill: var(--footer-icon-hover);
 }
 
 /* ================================================================== */
