@@ -34,11 +34,13 @@ include docs/_static/images/logo-sansec.svg
 include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
 include docs/_static/js/highlight-repl.js
+include docs/_static/js/search-shortcuts.js
 include docs/_static/js/sidebar-close.js
 include docs/_static/js/theme-toggle.js
 include docs/_templates/footer.html
 include docs/_templates/layout.html
 include docs/_templates/topbar.html
+include docs/about.rst
 include docs/adoption.rst
 include docs/alternatives.rst
 include docs/api-overview.rst
