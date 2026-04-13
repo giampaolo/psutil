@@ -24,7 +24,7 @@ import re
 REGEX = re.compile(r'<a href="([^"]+)">([^(<][^<]*?) (\([^)]+\))</a>')
 
 
-def _replace(m):
+def replace(m):
     href, name, qualifier = m.group(1), m.group(2), m.group(3)
     if qualifier == "(in module psutil)":
         qualifier = "(function)" if name.endswith("()") else "(constant)"
@@ -38,18 +38,18 @@ def _replace(m):
     )
 
 
-def _on_build_finished(app, exception):
+def on_build_finished(app, exception):
     if exception or app.builder.name != "html":
         return
     genindex = pathlib.Path(app.outdir) / "genindex.html"
     if not genindex.exists():
         return
     original = genindex.read_text(encoding="utf-8")
-    processed = REGEX.sub(_replace, original)
+    processed = REGEX.sub(replace, original)
     if processed != original:
         genindex.write_text(processed, encoding="utf-8")
 
 
 def setup(app):
-    app.connect("build-finished", _on_build_finished)
+    app.connect("build-finished", on_build_finished)
     return {"parallel_read_safe": True, "parallel_write_safe": True}

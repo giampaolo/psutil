@@ -13,18 +13,18 @@
                 if (el) el.style.background = '';
             });
 
-        var cb = document.getElementById('theme-toggle');
-        if (cb) cb.checked = dark;
+        var icon = document.getElementById('theme-icon');
+        if (icon) icon.className = dark ? 'fa fa-sun-o' : 'fa fa-moon-o';
     }
 
     // restore saved preference
     setTheme(localStorage.getItem(KEY) === 'dark');
 
-    // wire up the checkbox (DOM is ready because script is deferred)
-    var cb = document.getElementById('theme-toggle');
-    if (cb) {
-        cb.addEventListener('change', function () {
-            setTheme(cb.checked);
+    // wire up the toggle button (DOM is ready because script is deferred)
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+        btn.addEventListener('click', function () {
+            setTheme(html.getAttribute('data-theme') !== 'dark');
         });
     }
 

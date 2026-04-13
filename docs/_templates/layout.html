@@ -33,23 +33,4 @@
   gtag('config', 'G-G7374TFB11');
 </script>
 
-<script>
-  // Theme toggle button
-  document.addEventListener('DOMContentLoaded', function () {
-    var btn = document.getElementById('theme-toggle');
-    var icon = document.getElementById('theme-icon');
-    function updateIcon() {
-      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-      icon.className = dark ? 'fa fa-sun-o' : 'fa fa-moon-o';
-    }
-    updateIcon();
-    btn.addEventListener('click', function () {
-      var html = document.documentElement;
-      var dark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', dark ? 'light' : 'dark');
-      localStorage.setItem('psutil-theme', dark ? 'light' : 'dark');
-      updateIcon();
-    });
-  });
-</script>
 {% endblock %}

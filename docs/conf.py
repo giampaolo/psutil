@@ -4,8 +4,11 @@
 
 """Sphinx configuration file.
 
-Sphinx doc at:
+Sphinx doc:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+RTD theme doc:
+https://sphinx-rtd-theme.readthedocs.io/en/stable/
 """
 
 import datetime
@@ -75,6 +78,8 @@ exclude_patterns = ["_build"]
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
 html_last_updated_fmt = "%b %d, %Y"  # shown in the footer
+# Sidebar shows method() instead of Class.method()
+toc_object_entries_show_parents = "hide"
 
 # =====================================================================
 # Plugins
@@ -89,9 +94,13 @@ copybutton_exclude = ".linenos, .gp"
 html_theme = "sphinx_rtd_theme"
 
 if html_theme == "sphinx_rtd_theme":
-    html_theme_options = {"collapse_navigation": False}
+    html_theme_options = {
+        "collapse_navigation": False,
+        "navigation_depth": 5,
+        "flyout_display": "attached",
+    }
     templates_path = ["_templates", "_static/images"]
-    pygments_style = "monokai"  # https://pygments.org/styles/
+    pygments_style = "tango"  # https://pygments.org/styles/
     html_css_files = [
         "css/custom.css",
     ]

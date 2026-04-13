@@ -22,7 +22,7 @@
     --sidebar-caption-font-size: 14px;
 
     /* others */
-    --border-radius: 3px;
+    --border-radius: 4px;
     --theme-transition: 0.2s ease;
     --adm-padding-y: 5px;
 }
@@ -54,9 +54,6 @@
     /* inline code */
     --inline-code-bg: rgba(175, 184, 193, 0.2);
     --inline-code-text: inherit;
-
-    /* code blocks */
-    --code-bg: #2d2e27;
 
     /* top bar */
     --topbar-bg: #2a2828;
@@ -142,9 +139,6 @@
     --inline-code-bg: #2a2f36;
     --inline-code-text: #e6e6e6;
 
-    /* code blocks */
-    --code-bg: #1f211d;
-
     /* ntuple fields */
     --ntuple-color: #6db99a;
 
@@ -227,6 +221,7 @@
 }
 
 .top-bar-logo {
+    margin-top: -2px;
     letter-spacing: 0.03em;
     display: flex;
     align-items: center;
@@ -942,7 +937,7 @@ body,
 
 .search-kbd-hint {
     position: absolute;
-    right: 10px;
+    right: 12px;
     display: flex;
     align-items: center;
     gap: 2px;
@@ -958,7 +953,8 @@ body,
     font-family: var(--font-search);
     font-size: 10px;
     font-weight: 600;
-    line-height: 1.5;
+    line-height: 1;
+    padding-top: 3px;
     color: #888;
     background: #f5f5f5;
     border: 1px solid #d0d0d0;
@@ -1005,6 +1001,24 @@ body,
 
 footer hr {
     border-color: var(--border) !important;
+}
+
+/* Prev / Next navigation buttons */
+.rst-footer-buttons .btn.btn-neutral {
+    padding-top: 6px !important;
+    padding-bottom: 4px !important;
+}
+
+[data-theme="dark"] .rst-footer-buttons .btn.btn-neutral {
+    background-color: #2a2a2a !important;
+    color: #cccccc !important;
+    border-color: #444444 !important;
+}
+
+[data-theme="dark"] .rst-footer-buttons .btn.btn-neutral:hover {
+    background-color: #353535 !important;
+    color: #ffffff !important;
+    border-color: #666666 !important;
 }
 
 /* ================================================================== */
@@ -1210,6 +1224,16 @@ h4 {
     font-weight: normal !important;
 }
 
+/* undo inline-code styling inside the sidebar nav */
+.wy-nav-side code,
+.wy-nav-side tt {
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-size: inherit !important;
+}
+
 /* cross-references to API symbols like :func:`psutil.users` */
 .rst-content a.reference:has(code.xref) {
     color: var(--links-api) !important;
@@ -1232,57 +1256,6 @@ h4 {
 code.ntuple-field {
     color: var(--ntuple-color) !important;
     font-weight: bold !important;
-}
-
-/* ================================================================== */
-/* Code blocks                                                        */
-/* ================================================================== */
-
-/* reduce bottom margin of code blocks inside list items */
-.rst-content li > div[class^='highlight'] {
-    margin-bottom: 6px !important;
-}
-
-div[class^="highlight-"] {
-    border-radius: var(--border-radius);
-    background: transparent;
-}
-
-.highlight {
-    border-radius: var(--border-radius);
-    overflow: hidden;
-}
-
-.rst-content div[class^=highlight],
-.rst-content pre.literal-block {
-    border-color: var(--border) !important;
-}
-
-/* ------------------------- font ------------------------- */
-
-.highlight,
-.highlight pre {
-    font-size: 13px !important;
-    font-family: var(--code-font) !important;
-}
-
-.highlight pre {
-    line-height: var(--code-line-height) !important;
-}
-
-/* ----------------- syntax highlight colors --------------- */
-
-/* Python number, string, and namedtuple name highlights in pycon output */
-.highlight-pycon .pycon-number { color: #8f6fcc; }
-.highlight-pycon .pycon-string { color: #b8a84e; }
-.highlight-pycon .pycon-field  { color: #6db99a }
-
-/* tone down Pygments Generic.Prompt (>>>) and Generic.Output */
-.highlight .gp { color: #666666; font-weight: normal; }
-.highlight .go { color: #7a9aaa; }
-
-.highlight {
-    background-color: var(--code-bg) !important;
 }
 
 /* ================================================================== */
@@ -1432,65 +1405,6 @@ div.deprecated .versionmodified {
 }
 
 /* ================================================================== */
-/* API function / class signatures                                    */
-/* ================================================================== */
-
-/* The container/background bar */
-.rst-content dl:not(.docutils) dt {
-    background: var(--func-sig-bg) !important;
-    border-top: 2px solid var(--func-sig-border) !important;
-    border-left: none !important;
-    color: var(--func-sig-text) !important;
-    padding: 6px 10px !important;
-    font-size: var(--content-font-size) !important;
-}
-
-/* The function name itself */
-.rst-content dl:not(.docutils) dt .descname {
-    color: var(--func-sig-name) !important;
-    font-weight: bold !important;
-}
-
-/* The parameters inside the parentheses */
-.rst-content dl:not(.docutils) dt .sig-paren,
-.rst-content dl:not(.docutils) dt .n,
-.rst-content dl:not(.docutils) dt .o,
-.rst-content dl:not(.docutils) dt .property,
-.rst-content dl:not(.docutils) dt .descclassname {
-    color: var(--func-sig-param) !important;
-    font-weight: normal;
-}
-
-/* Keep the [source] link subtle */
-.viewcode-link {
-    color: var(--func-sig-border) !important;
-    font-size: 0.8em;
-    font-style: italic;
-}
-
-/* ================================================================== */
-/* Genindex (Index page)                                               */
-/* ================================================================== */
-
-/* On small screens, collapse the two-column index table into a single
-   column so items are not split across two narrow vertical sections. */
-@media screen and (max-width: 768px) {
-    table.indextable tr {
-        display: block;
-    }
-    table.indextable td {
-        display: block;
-        width: 100% !important;
-    }
-}
-
-.index-qualifier {
-    font-size: 0.90em !important;
-    color: var(--text-muted);
-    opacity: 0.8;
-}
-
-/* ================================================================== */
 /* Search results page                                                */
 /* ================================================================== */
 
@@ -1602,3 +1516,226 @@ span.highlighted {
     background-color: rgba(255, 193, 7, 0.3) !important;
     border: 1px solid rgba(255, 193, 7, 0.5) !important;
 }
+
+/* ================================================================== */
+/* API function / class signatures                                    */
+/* ================================================================== */
+
+/* The container/background bar */
+.rst-content dl:not(.docutils) dt {
+    background: var(--func-sig-bg) !important;
+    border-top: 2px solid var(--func-sig-border) !important;
+    border-left: none !important;
+    color: var(--func-sig-text) !important;
+    padding: 6px 10px !important;
+    font-size: var(--content-font-size) !important;
+}
+
+/* The function name itself */
+.rst-content dl:not(.docutils) dt .descname {
+    color: var(--func-sig-name) !important;
+    font-weight: bold !important;
+}
+
+/* The parameters inside the parentheses */
+.rst-content dl:not(.docutils) dt .sig-paren,
+.rst-content dl:not(.docutils) dt .n,
+.rst-content dl:not(.docutils) dt .o,
+.rst-content dl:not(.docutils) dt .property,
+.rst-content dl:not(.docutils) dt .descclassname {
+    color: var(--func-sig-param) !important;
+    font-weight: normal;
+}
+
+/* Keep the [source] link subtle */
+.viewcode-link {
+    color: var(--func-sig-border) !important;
+    font-size: 0.8em;
+    font-style: italic;
+}
+
+/* ================================================================== */
+/* Genindex (Index page)                                              */
+/* ================================================================== */
+
+/* On small screens, collapse the two-column index table into a single
+   column so items are not split across two narrow vertical sections. */
+@media screen and (max-width: 768px) {
+    table.indextable tr {
+        display: block;
+    }
+    table.indextable td {
+        display: block;
+        width: 100% !important;
+    }
+}
+
+.index-qualifier {
+    font-size: 0.90em !important;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+/* ================================================================== */
+/* Syntax highlight — imported Monokai rules                          */
+/* ================================================================== */
+
+[data-theme="dark"] .highlight          { color: #F8F8F2; }
+[data-theme="dark"] .highlight .hll     { background-color: #49483e; }
+[data-theme="dark"] .highlight .c       { color: #959077; }  /* Comment */
+[data-theme="dark"] .highlight .err     { color: #ED007E; background-color: #1E0010; }  /* Error */
+[data-theme="dark"] .highlight .esc     { color: #F8F8F2; }  /* Escape */
+[data-theme="dark"] .highlight .g       { color: #F8F8F2; }  /* Generic */
+[data-theme="dark"] .highlight .k       { color: #66D9EF; }  /* Keyword */
+[data-theme="dark"] .highlight .l       { color: #AE81FF; }  /* Literal */
+[data-theme="dark"] .highlight .n       { color: #F8F8F2; }  /* Name */
+[data-theme="dark"] .highlight .o       { color: #FF4689; }  /* Operator */
+[data-theme="dark"] .highlight .x       { color: #F8F8F2; }  /* Other */
+[data-theme="dark"] .highlight .p       { color: #F8F8F2; }  /* Punctuation */
+[data-theme="dark"] .highlight .ch      { color: #959077; }  /* Comment.Hashbang */
+[data-theme="dark"] .highlight .cm      { color: #959077; }  /* Comment.Multiline */
+[data-theme="dark"] .highlight .cp      { color: #959077; }  /* Comment.Preproc */
+[data-theme="dark"] .highlight .cpf     { color: #959077; }  /* Comment.PreprocFile */
+[data-theme="dark"] .highlight .c1      { color: #959077; }  /* Comment.Single */
+[data-theme="dark"] .highlight .cs      { color: #959077; }  /* Comment.Special */
+[data-theme="dark"] .highlight .gd      { color: #FF4689; }  /* Generic.Deleted */
+[data-theme="dark"] .highlight .ge      { color: #F8F8F2; font-style: italic; }  /* Generic.Emph */
+[data-theme="dark"] .highlight .ges     { color: #F8F8F2; font-weight: bold; font-style: italic; }  /* Generic.EmphStrong */
+[data-theme="dark"] .highlight .gr      { color: #F8F8F2; }  /* Generic.Error */
+[data-theme="dark"] .highlight .gh      { color: #F8F8F2; }  /* Generic.Heading */
+[data-theme="dark"] .highlight .gi      { color: #A6E22E; }  /* Generic.Inserted */
+/* .go, .gp: overridden in the REPL theme sections above */
+[data-theme="dark"] .highlight .gs      { color: #F8F8F2; font-weight: bold; }  /* Generic.Strong */
+[data-theme="dark"] .highlight .gu      { color: #959077; }  /* Generic.Subheading */
+[data-theme="dark"] .highlight .gt      { color: #F8F8F2; }  /* Generic.Traceback */
+[data-theme="dark"] .highlight .kc      { color: #66D9EF; }  /* Keyword.Constant */
+[data-theme="dark"] .highlight .kd      { color: #66D9EF; }  /* Keyword.Declaration */
+[data-theme="dark"] .highlight .kn      { color: #FF4689; }  /* Keyword.Namespace */
+[data-theme="dark"] .highlight .kp      { color: #66D9EF; }  /* Keyword.Pseudo */
+[data-theme="dark"] .highlight .kr      { color: #66D9EF; }  /* Keyword.Reserved */
+[data-theme="dark"] .highlight .kt      { color: #66D9EF; }  /* Keyword.Type */
+[data-theme="dark"] .highlight .ld      { color: #E6DB74; }  /* Literal.Date */
+[data-theme="dark"] .highlight .m       { color: #AE81FF; }  /* Literal.Number */
+[data-theme="dark"] .highlight .s       { color: #E6DB74; }  /* Literal.String */
+[data-theme="dark"] .highlight .na      { color: #A6E22E; }  /* Name.Attribute */
+[data-theme="dark"] .highlight .nb      { color: #F8F8F2; }  /* Name.Builtin */
+[data-theme="dark"] .highlight .nc      { color: #A6E22E; }  /* Name.Class */
+[data-theme="dark"] .highlight .no      { color: #66D9EF; }  /* Name.Constant */
+[data-theme="dark"] .highlight .nd      { color: #A6E22E; }  /* Name.Decorator */
+[data-theme="dark"] .highlight .ni      { color: #F8F8F2; }  /* Name.Entity */
+[data-theme="dark"] .highlight .ne      { color: #A6E22E; }  /* Name.Exception */
+[data-theme="dark"] .highlight .nf      { color: #A6E22E; }  /* Name.Function */
+[data-theme="dark"] .highlight .nl      { color: #F8F8F2; }  /* Name.Label */
+[data-theme="dark"] .highlight .nn      { color: #F8F8F2; }  /* Name.Namespace */
+[data-theme="dark"] .highlight .nx      { color: #A6E22E; }  /* Name.Other */
+[data-theme="dark"] .highlight .py      { color: #F8F8F2; }  /* Name.Property */
+[data-theme="dark"] .highlight .nt      { color: #FF4689; }  /* Name.Tag */
+[data-theme="dark"] .highlight .nv      { color: #F8F8F2; }  /* Name.Variable */
+[data-theme="dark"] .highlight .ow      { color: #FF4689; }  /* Operator.Word */
+[data-theme="dark"] .highlight .pm      { color: #F8F8F2; }  /* Punctuation.Marker */
+[data-theme="dark"] .highlight .w       { color: #F8F8F2; }  /* Text.Whitespace */
+[data-theme="dark"] .highlight .mb      { color: #AE81FF; }  /* Literal.Number.Bin */
+[data-theme="dark"] .highlight .mf      { color: #AE81FF; }  /* Literal.Number.Float */
+[data-theme="dark"] .highlight .mh      { color: #AE81FF; }  /* Literal.Number.Hex */
+[data-theme="dark"] .highlight .mi      { color: #AE81FF; }  /* Literal.Number.Integer */
+[data-theme="dark"] .highlight .mo      { color: #AE81FF; }  /* Literal.Number.Oct */
+[data-theme="dark"] .highlight .sa      { color: #E6DB74; }  /* Literal.String.Affix */
+[data-theme="dark"] .highlight .sb      { color: #E6DB74; }  /* Literal.String.Backtick */
+[data-theme="dark"] .highlight .sc      { color: #E6DB74; }  /* Literal.String.Char */
+[data-theme="dark"] .highlight .dl      { color: #E6DB74; }  /* Literal.String.Delimiter */
+[data-theme="dark"] .highlight .sd      { color: #E6DB74; }  /* Literal.String.Doc */
+[data-theme="dark"] .highlight .s2      { color: #E6DB74; }  /* Literal.String.Double */
+[data-theme="dark"] .highlight .se      { color: #AE81FF; }  /* Literal.String.Escape */
+[data-theme="dark"] .highlight .sh      { color: #E6DB74; }  /* Literal.String.Heredoc */
+[data-theme="dark"] .highlight .si      { color: #E6DB74; }  /* Literal.String.Interpol */
+[data-theme="dark"] .highlight .sx      { color: #E6DB74; }  /* Literal.String.Other */
+[data-theme="dark"] .highlight .sr      { color: #E6DB74; }  /* Literal.String.Regex */
+[data-theme="dark"] .highlight .s1      { color: #E6DB74; }  /* Literal.String.Single */
+[data-theme="dark"] .highlight .ss      { color: #E6DB74; }  /* Literal.String.Symbol */
+[data-theme="dark"] .highlight .bp      { color: #F8F8F2; }  /* Name.Builtin.Pseudo */
+[data-theme="dark"] .highlight .fm      { color: #A6E22E; }  /* Name.Function.Magic */
+[data-theme="dark"] .highlight .vc      { color: #F8F8F2; }  /* Name.Variable.Class */
+[data-theme="dark"] .highlight .vg      { color: #F8F8F2; }  /* Name.Variable.Global */
+[data-theme="dark"] .highlight .vi      { color: #F8F8F2; }  /* Name.Variable.Instance */
+[data-theme="dark"] .highlight .vm      { color: #F8F8F2; }  /* Name.Variable.Magic */
+[data-theme="dark"] .highlight .il      { color: #AE81FF; }  /* Literal.Number.Integer.Long */
+
+/* ================================================================== */
+/* Code blocks                                                        */
+/* ================================================================== */
+
+/* layout */
+div[class^="highlight-"] {
+    border-radius: var(--border-radius);
+    background: transparent;
+}
+
+/* font */
+.highlight,
+.highlight pre {
+    font-size: 13px !important;
+    font-family: var(--code-font) !important;
+}
+
+/* REPL >>> prompt */
+.highlight .gp {
+    font-weight: normal;
+    font-style: normal;
+}
+
+  /* REPL output */
+.highlight .go {
+    font-weight: normal;
+    font-style: normal;
+}
+
+.highlight pre {
+    line-height: var(--code-line-height) !important;
+}
+
+/* border */
+.rst-content div[class^=highlight],
+.rst-content pre.literal-block {
+    border-color: var(--border) !important;
+}
+
+/* reduce bottom margin inside list items */
+.rst-content li > div[class^='highlight'] {
+    margin-bottom: 6px !important;
+}
+
+/* background */
+[data-theme="light"] .highlight { background: #f8f8f8 !important; }
+[data-theme="dark"]  .highlight { background: #272727 !important; }
+
+.highlight .k      { font-weight:normal; font-style: normal !important;}  /* (, [, ], )*/
+.highlight .p      { font-weight:normal; }  /* (, [, ], )*/
+.highlight .mi     { font-weight:normal; }  /* numbers */
+.highlight .mf     { font-weight:normal; }  /* floats */
+
+/* ----------------- REPL light theme ---------------- */
+
+[data-theme="light"] .highlight-pycon .pycon-number { color:  #204A87; }
+[data-theme="light"] .highlight-pycon .pycon-string { color: brown; }
+[data-theme="light"] .highlight-pycon .pycon-field  { color: #4d4d4d; background: #eff1f3}
+[data-theme="light"] .highlight .gp                 { color: #204A87; }
+[data-theme="light"] .highlight .go                 { color: #666666; }
+
+/* ----------------- REPL dark theme ---------------- */
+
+[data-theme="dark"]  .highlight-pycon .pycon-number { color: #ae81ff; }
+[data-theme="dark"]  .highlight-pycon .pycon-string { color: #e6db74; }
+[data-theme="dark"]  .highlight-pycon .pycon-field  { color: #a6e22e; }
+[data-theme="dark"]  .highlight .gp                 { color: #888888; }  /* >>> prompt */
+[data-theme="dark"]  .highlight .go                 { color: #7a9aaa; }  /* output */
+
+/* ----------------- syntax highlight ---------------- */
+
+[data-theme="dark"] .highlight .k                 { color: #ff3a6e}  /* numbers */
+[data-theme="dark"] .highlight .ow                 { color: #ff3a6e}  /* numbers */
+[data-theme="dark"] .highlight .kn                 { color: #ff3a6e}  /* numbers */
+
+/* --------------------------------------------------- */
+
+[data-theme="light"] .highlight .mi                 { color: #204A87}  /* numbers */
+[data-theme="light"] .highlight .nf                 { color: #A31515}  /* functions */

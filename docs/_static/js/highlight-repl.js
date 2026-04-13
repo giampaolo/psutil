@@ -12,8 +12,8 @@ document.addEventListener("DOMContentLoaded", function () {
         // The (?!") lookahead avoids matching class= in the injected span tags.
         html = html.replace(/\b([a-z_]\w*)=(?!")/g,
             '<span class="pycon-field">$1</span>=');
-        // Highlight numbers.
-        html = html.replace(/\b\d+\.?\d*\b/g,
+        // Highlight numbers after '=' or at the start of a line.
+        html = html.replace(/(?<==)\d+\.?\d*|^\d+\.?\d*/gm,
             '<span class="pycon-number">$&</span>');
         span.innerHTML = html;
     });
