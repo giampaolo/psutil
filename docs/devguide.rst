@@ -91,7 +91,7 @@ Coding style
 ------------
 
 All style and formatting checks are enforced locally on each
-`git commit` and via a GitHub Actions pipeline.
+``git commit`` and via a GitHub Actions pipeline.
 
 - Python: follows `PEP-8`_, formatted and linted with ``black`` and ``ruff``.
 - C: generally follows `PEP-7`_, formatted with ``clang-format``.

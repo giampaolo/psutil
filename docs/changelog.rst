@@ -79,7 +79,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 Type hints / enums:
 
-- :gh:`1946`: Add inline type hints to all public APIs in `psutil/__init__.py`.
+- :gh:`1946`: Add inline type hints to all public APIs in ``psutil/__init__.py``.
   Type checkers (mypy, pyright, etc.) can now statically verify code that uses
   psutil. No runtime behavior is changed; the annotations are purely
   informational.
@@ -299,7 +299,7 @@ Others:
 
 **Enhancements**
 
-- :gh:`2667`: enforce `clang-format` on all C and header files. It is now the
+- :gh:`2667`: enforce ``clang-format`` on all C and header files. It is now the
   mandatory formatting style for all C sources.
 - :gh:`2672`, [macOS], [BSD]: increase the chances to recognize zombie
   processes and raise the appropriate exception (:exc:`ZombieProcess`).
@@ -371,7 +371,7 @@ Others:
 - :gh:`2581`, [Windows]: publish ARM64 wheels.  (patch by Matthieu Darbois)
 - :gh:`2571`, [FreeBSD]: Dropped support for FreeBSD 8 and earlier. FreeBSD 8
   was maintained from 2009 to 2013.
-- :gh:`2575`: introduced `dprint` CLI tool to format .yml and .md files.
+- :gh:`2575`: introduced ``dprint`` CLI tool to format .yml and .md files.
 
 **Bug fixes**
 

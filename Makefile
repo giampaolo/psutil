@@ -187,7 +187,7 @@ dprint:
 
 lint-rst:  ## Run linter for .rst files.
 	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_check_dead_refs.py
-	@$(call _ls,'*.rst') | xargs sphinx-lint
+	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
