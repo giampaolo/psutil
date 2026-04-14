@@ -61,7 +61,8 @@ Support history
 * psutil 8.0.0 (2026-XX): drop Python 3.6
 * psutil 7.2.0 (2025-12): publish wheels for **Linux musl**
 * psutil 7.1.2 (2025-10): publish wheels for **free-threaded Python**
-* psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and Windows)
+* psutil 7.1.2 (2025-10): no longer publish wheels for 32-bit Python (Linux and
+  Windows)
 * psutil 7.1.1 (2025-10): drop **SunOS 10**
 * psutil 7.1.0 (2025-09): drop **FreeBSD 8**
 * psutil 7.0.0 (2025-02): drop Python 2.7

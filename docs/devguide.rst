@@ -6,8 +6,8 @@ Development guide
 Build, setup and test
 ---------------------
 
-- psutil makes extensive use of C extension modules, meaning a C compiler is
-  required, see :doc:`install instructions <install>`. Once installed run:
+- psutil makes extensive use of C extension modules, meaning a C compiler
+  is required, see :doc:`install instructions <install>`. Once installed run:
 
   .. code-block:: bash
 
@@ -48,7 +48,6 @@ Build, setup and test
   .. code-block:: none
 
      make test PYTHON=python3.8
-
 
 Windows
 -------
@@ -102,7 +101,6 @@ The pipeline re-runs all checks for consistency (``make lint-all``).
 Run ``make fix-all`` before committing; it usually fixes Python issues
 (via ``black`` and ``ruff``) and C issues (via ``clang-format``).
 
-
 Code organization
 -----------------
 
@@ -145,9 +143,9 @@ Make a pull request
 Continuous integration
 ----------------------
 
-Unit tests run automatically on every ``git push`` on all platforms except
-AIX. See `.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_.
-
+Unit tests run automatically on every ``git push`` on all platforms except AIX.
+See
+`.github/workflows <https://github.com/giampaolo/psutil/tree/master/.github/workflows>`_.
 
 Documentation
 -------------

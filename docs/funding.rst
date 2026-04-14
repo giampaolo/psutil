@@ -10,9 +10,9 @@ used by millions of developers and hundreds of thousands of projects worldwide,
 including TensorFlow, PyTorch, Home Assistant, Ansible, and Celery.
 
 Keeping up with bug reports, platform compatibility, user support, and ongoing
-maintenance has become increasingly difficult to sustain as a one-person effort.
-Financial support helps dedicate more time to the project and ensures its
-long-term health.
+maintenance has become increasingly difficult to sustain as a one-person
+effort. Financial support helps dedicate more time to the project and ensures
+its long-term health.
 
 How to fund
 -----------

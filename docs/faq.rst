@@ -188,7 +188,8 @@ of :exc:`NoSuchProcess`.
 
 **What you can and cannot do with a zombie:**
 
-- A zombie process can be instantiated via :class:`Process` (pid) without error.
+- A zombie process can be instantiated via :class:`Process` (pid) without
+  error.
 - :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
 - :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
 - The zombie appears in :func:`process_iter` and :func:`pids`.
@@ -314,12 +315,12 @@ What is the difference between psutil, os, and multiprocessing cpu_count()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :func:`os.cpu_count` returns the number of :term:`logical CPUs <logical CPU>`
-  (including hyperthreads). It is the same as ``psutil.cpu_count(logical=True)``,
-  but psutil does not honour :envvar:`PYTHON_CPU_COUNT` environment variable
-  introduced in Python 3.13.
+  (including hyperthreads). It is the same as
+  ``psutil.cpu_count(logical=True)``, but psutil does not honour
+  :envvar:`PYTHON_CPU_COUNT` environment variable introduced in Python 3.13.
 - :func:`os.process_cpu_count` (Python 3.13+) returns the number of CPUs the
-  calling process is **allowed to use** (respects :term:`CPU affinity` and cgroups).
-  The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
+  calling process is **allowed to use** (respects :term:`CPU affinity` and
+  cgroups). The psutil equivalent is ``len(psutil.Process().cpu_affinity())``.
 - :func:`multiprocessing.cpu_count` returns the same value as
   :func:`os.process_cpu_count` (Python 3.13+).
 - :func:`psutil.cpu_count` with ``logical=False`` returns the number of
@@ -333,8 +334,8 @@ Memory
 What is the difference between virtual_memory() available and free?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:func:`virtual_memory` returns both :field:`free` and :field:`available`, but they
-measure different things:
+:func:`virtual_memory` returns both :field:`free` and :field:`available`, but
+they measure different things:
 
 - :field:`free`: memory that is not being used at all.
 - :field:`available`: how much memory can be given to processes without
@@ -352,8 +353,8 @@ OS aggressively uses RAM for caches (which is normal and healthy). On Windows,
 What is the difference between RSS and VMS?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :field:`rss` (:term:`Resident Set Size <RSS>`) is the amount of physical memory (RAM)
-  currently mapped into the process.
+- :field:`rss` (:term:`Resident Set Size <RSS>`) is the amount of physical
+  memory (RAM) currently mapped into the process.
 - :field:`vms` (:term:`Virtual Memory Size <VMS>`) is the total virtual address
   space of the process, including memory that has been
   :term:`swapped out <swap-out>`, shared libraries, and
@@ -372,16 +373,17 @@ Both values are portable across platforms and are returned by
 When should I use memory_footprint() vs memory_info()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:meth:`Process.memory_info` returns :field:`rss` (:term:`Resident Set Size <RSS>`),
-which includes :term:`shared libraries <shared memory>` counted in every process that uses them.
-For example, if ``libc`` uses 2 MB and 100 processes map it, each process
+:meth:`Process.memory_info` returns :field:`rss`
+(:term:`Resident Set Size <RSS>`), which includes
+:term:`shared libraries <shared memory>` counted in every process that uses
+them. For example, if ``libc`` uses 2 MB and 100 processes map it, each process
 includes those 2 MB in its :field:`rss`.
 
-:meth:`Process.memory_footprint` returns :field:`uss` (:term:`Unique Set Size <USS>`),
-i.e. :term:`private memory` of the process. It represents the amount of memory that
-would be freed if the process were terminated right now.
-It is more accurate than :term:`RSS`, but substantially slower and requires
-higher privileges. On Linux it also returns :field:`pss`
+:meth:`Process.memory_footprint` returns :field:`uss`
+(:term:`Unique Set Size <USS>`), i.e. :term:`private memory` of the process. It
+represents the amount of memory that would be freed if the process were
+terminated right now. It is more accurate than :term:`RSS`, but substantially
+slower and requires higher privileges. On Linux it also returns :field:`pss`
 (:term:`Proportional Set Size <PSS>`) and :term:`swap <swap memory>`.
 
 .. _faq_used_plus_free:
@@ -399,7 +401,7 @@ reclaimable and accounted separately:
   >>> m.used + m.free == m.total
   False
 
-The :field:`available` field already includes this reclaimable memory and is the
-best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
+The :field:`available` field already includes this reclaimable memory and is
+the best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
 
 .. _`BPO-6973`: https://bugs.python.org/issue6973

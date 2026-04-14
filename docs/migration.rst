@@ -87,11 +87,12 @@ If you relied on :attr:`Process.info` because you needed a dict structure, use
 Named tuple field order changed
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- :func:`cpu_times`: :field:`user`, :field:`system`, :field:`idle` fields changed order on Linux,
-  macOS and BSD. They are now always the first 3 fields on all platforms, with
-  platform-specific fields (e.g. :field:`nice`) following. Positional access (e.g.
-  ``cpu_times()[3]``) will silently return the wrong field. Always use
-  attribute access instead (e.g. ``cpu_times().idle``).
+- :func:`cpu_times`: :field:`user`, :field:`system`, :field:`idle` fields
+  changed order on Linux, macOS and BSD. They are now always the first 3 fields
+  on all platforms, with platform-specific fields (e.g. :field:`nice`)
+  following. Positional access (e.g. ``cpu_times()[3]``) will silently return
+  the wrong field. Always use attribute access instead (e.g.
+  ``cpu_times().idle``).
 
   .. code-block:: python
 
@@ -117,8 +118,8 @@ Named tuple field order changed
     :field:`peak_nonpaged_pool` were moved to :meth:`Process.memory_info_ex`.
   - BSD: a new :field:`peak_rss` field was added.
 
-- :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired` fields were
-  added. Code using positional unpacking will break:
+- :func:`virtual_memory`: on Windows, new :field:`cached` and :field:`wired`
+  fields were added. Code using positional unpacking will break:
 
   .. code-block:: python
 
@@ -132,17 +133,17 @@ Named tuple field order changed
 cpu_times() interrupt renamed to irq on Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to :field:`irq`
-to match the name used on Linux and BSD. The old name still works but raises
-:exc:`DeprecationWarning`.
+The :field:`interrupt` field of :func:`cpu_times` on Windows was renamed to
+:field:`irq` to match the name used on Linux and BSD. The old name still works
+but raises :exc:`DeprecationWarning`.
 
 Status and connection fields are now enums
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - :meth:`Process.status` now returns a :class:`ProcessStatus` member instead of
   a plain ``str``.
-- :meth:`Process.net_connections` and :func:`net_connections` :field:`status` field
-  now returns a :class:`ConnectionStatus` member instead of a plain
+- :meth:`Process.net_connections` and :func:`net_connections` :field:`status`
+  field now returns a :class:`ConnectionStatus` member instead of a plain
   ``str``.
 
 Because both are :class:`enum.StrEnum` subclasses they compare equal to
@@ -161,9 +162,9 @@ New memory_info_ex() method
 
 8.0 introduces a new :meth:`Process.memory_info_ex` method that extends
 :meth:`Process.memory_info` with platform-specific metrics (e.g.
-:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). This is **unrelated** to
-the old :meth:`Process.memory_info_ex` that was deprecated in 4.0 and
-removed in 7.0 (which corresponded to what later became
+:field:`peak_rss`, :field:`swap`, :field:`rss_anon` on Linux). This is
+**unrelated** to the old :meth:`Process.memory_info_ex` that was deprecated in
+4.0 and removed in 7.0 (which corresponded to what later became
 :meth:`Process.memory_full_info`).
 
 New Process.attrs class attribute
@@ -274,8 +275,8 @@ and will be removed in a future release:
 disk_partitions() lost two fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :field:`maxfile` and :field:`maxpath` fields were removed from the named tuple
-returned by :func:`disk_partitions`. Code unpacking the tuple
+The :field:`maxfile` and :field:`maxpath` fields were removed from the named
+tuple returned by :func:`disk_partitions`. Code unpacking the tuple
 positionally will break:
 
 .. code-block:: python

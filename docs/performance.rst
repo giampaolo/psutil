@@ -50,9 +50,9 @@ process, use :meth:`Process.oneshot`.
 Use process_iter() with an attrs list
 --------------------------------------
 
-If you iterate over multiple PIDs, always use :func:`process_iter`.
-It accepts an ``attrs`` argument that pre-fetches only the requested attributes
-in a single pass, minimizing system calls by fetching multiple attributes at once.
+If you iterate over multiple PIDs, always use :func:`process_iter`. It accepts
+an ``attrs`` argument that pre-fetches only the requested attributes in a
+single pass, minimizing system calls by fetching multiple attributes at once.
 This is faster than calling individual methods in a loop.
 
 Slow:
@@ -132,9 +132,9 @@ Linux:
 Measuring APIs speed
 --------------------
 
-`scripts/internal/print_api_speed.py`_ shows the relative cost of each API call.
-This helps you understand which operations are more expensive.
-E.g. on Linux:
+`scripts/internal/print_api_speed.py`_ shows the relative cost of each API
+call. This helps you understand which operations are more expensive. E.g. on
+Linux:
 
 .. code-block:: none
 

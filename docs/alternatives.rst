@@ -24,15 +24,15 @@ only need information about the *current* process and don't need
 cross-platform code.
 
 psutil goes further in several directions. Its primary goal is to provide a
-**single portable interface** for concepts that are traditionally UNIX-only. Things
-like process CPU and memory usage, open file descriptors, network connections,
-signals, nice levels, and I/O counters exist as first-class OS primitives on
-Linux and macOS, but have no direct equivalent on Windows. psutil implements
-all of them on Windows too (using Win32 APIs, ``NtQuerySystemInformation`` and
-WMI) so that code written against psutil runs unmodified on every supported
-platform. Beyond portability, it also exposes the same information for *any*
-process (not just the current one), and returns structured named tuples instead
-of raw values.
+**single portable interface** for concepts that are traditionally UNIX-only.
+Things like process CPU and memory usage, open file descriptors, network
+connections, signals, nice levels, and I/O counters exist as first-class OS
+primitives on Linux and macOS, but have no direct equivalent on Windows. psutil
+implements all of them on Windows too (using Win32 APIs,
+``NtQuerySystemInformation`` and WMI) so that code written against psutil runs
+unmodified on every supported platform. Beyond portability, it also exposes the
+same information for *any* process (not just the current one), and returns
+structured named tuples instead of raw values.
 
 resource module
 ^^^^^^^^^^^^^^^

@@ -79,30 +79,29 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 Type hints / enums:
 
-- :gh:`1946`: Add inline type hints to all public APIs in ``psutil/__init__.py``.
-  Type checkers (mypy, pyright, etc.) can now statically verify code that uses
-  psutil. No runtime behavior is changed; the annotations are purely
-  informational.
+- :gh:`1946`: Add inline type hints to all public APIs in
+  ``psutil/__init__.py``. Type checkers (mypy, pyright, etc.) can now
+  statically verify code that uses psutil. No runtime behavior is changed; the
+  annotations are purely informational.
 - :gh:`2751`: Convert all named tuples from :func:`collections.namedtuple` to
   :class:`typing.NamedTuple` classes with **type annotations**. This makes the
   classes self-documenting, effectively turning this module into a readable
   API reference.
 - :gh:`2753`: Introduce enum classes (:class:`ProcessStatus`,
-  :class:`ConnectionStatus`, :class:`ProcessIOPriority`, :class:`ProcessPriority`,
-  :class:`ProcessRlimit`) grouping related constants.
-  The individual top-level constants (e.g. :data:`STATUS_RUNNING`) remain
-  the primary API, and are now aliases for the corresponding enum members.
+  :class:`ConnectionStatus`, :class:`ProcessIOPriority`,
+  :class:`ProcessPriority`, :class:`ProcessRlimit`) grouping related constants.
+  The individual top-level constants (e.g. :data:`STATUS_RUNNING`) remain the
+  primary API, and are now aliases for the corresponding enum members.
 
 New APIs:
 
-- :gh:`2798`: new :attr:`Process.attrs` class attribute, a :class:`frozenset` of
-  valid attribute names accepted by :meth:`Process.as_dict` and
+- :gh:`2798`: new :attr:`Process.attrs` class attribute, a :class:`frozenset`
+  of valid attribute names accepted by :meth:`Process.as_dict` and
   :func:`process_iter`. Replaces the old pattern of calling
-  ``list(psutil.Process().as_dict().keys())``.
-  Passing an empty list to :func:`process_iter` (``attrs=[]``) to mean
-  "retrieve all attributes" is **deprecated**. Use
-  ``attrs=Process.attrs`` instead.
-  See :ref:`migration guide <migration-8.0>`.
+  ``list(psutil.Process().as_dict().keys())``. Passing an empty list to
+  :func:`process_iter` (``attrs=[]``) to mean "retrieve all attributes" is
+  **deprecated**. Use ``attrs=Process.attrs`` instead. See
+  :ref:`migration guide <migration-8.0>`.
 - :gh:`1541`: New :meth:`Process.page_faults` method, returning a ``(minor,
   major)`` named tuple.
 - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
@@ -162,11 +161,11 @@ Others:
 - :gh:`2766`: remove remaining Python 2.7 compatibility shims from
   ``setup.py``, simplifying the build infrastructure.
 - :gh:`2772`, [Windows]: :func:`cpu_times` :field:`interrupt` field renamed to
-  :field:`irq` to match the field name used on Linux and BSD. :field:`interrupt`
-  still works but raises :exc:`DeprecationWarning`.
-  See :ref:`migration guide <migration-8.0>`.
-- :gh:`2776`, [Windows]: :func:`virtual_memory` now includes :field:`cached` and
-  :field:`wired` fields.
+  :field:`irq` to match the field name used on Linux and BSD.
+  :field:`interrupt` still works but raises :exc:`DeprecationWarning`. See
+  :ref:`migration guide <migration-8.0>`.
+- :gh:`2776`, [Windows]: :func:`virtual_memory` now includes :field:`cached`
+  and :field:`wired` fields.
 - :gh:`2780`, [Windows]: :func:`disk_usage` now can accept a file path (not
   only a directory path).
 - :gh:`2784`: :func:`process_iter`: when *attrs* is specified, the pre-fetched
@@ -404,12 +403,12 @@ Others:
   (patch by Julien Stephan)
 - :gh:`2586`, [macOS], [CRITICAL]: fixed different places in C code which can
   trigger a segfault.
-- :gh:`2604`, [Linux]: :func:`virtual_memory` :field:`used` field does not match
-  recent versions of ``free`` CLI utility.  (patch by Isaac K. Ko)
+- :gh:`2604`, [Linux]: :func:`virtual_memory` :field:`used` field does not
+  match recent versions of ``free`` CLI utility. (patch by Isaac K. Ko)
 - :gh:`2605`, [Linux]: :func:`sensors_battery` reports a negative amount for
   seconds left.
-- :gh:`2607`, [Windows]: :meth:`WindowsService.description` method may fail with
-  ``ERROR_NOT_FOUND``. Now it returns an empty string instead.
+- :gh:`2607`, [Windows]: :meth:`WindowsService.description` method may fail
+  with ``ERROR_NOT_FOUND``. Now it returns an empty string instead.
 - 2610:, [macOS], [CRITICAL]: fix :func:`cpu_freq` segfault on ARM
   architectures.
 
@@ -422,8 +421,8 @@ Others:
 
 **Enhancements**
 
-- :gh:`669`, [Windows]: :func:`net_if_addrs` also returns the :field:`broadcast`
-  address instead of ``None``.
+- :gh:`669`, [Windows]: :func:`net_if_addrs` also returns the
+  :field:`broadcast` address instead of ``None``.
 - :gh:`2480`: drop Python 2.7 support. Latest version supporting it is
   psutil 6.1.X (``pip2 install psutil==6.1.*``).
 - :gh:`2490`: remove long deprecated :meth:`Process.memory_info_ex` (deprecated
@@ -476,8 +475,8 @@ Others:
 
 - :gh:`2427`: psutil (segfault) on import in the free-threaded (no GIL) version
   of Python 3.13.  (patch by Sam Gross)
-- :gh:`2455`, [Linux]: :exc:`IndexError` may occur when reading ``/proc/pid/stat``
-  and field 40 (``blkio_ticks``) is missing.
+- :gh:`2455`, [Linux]: :exc:`IndexError` may occur when reading
+  ``/proc/pid/stat`` and field 40 (``blkio_ticks``) is missing.
 - :gh:`2457`, [AIX]: significantly improve the speed of
   :meth:`Process.open_files` for some edge cases.
 - :gh:`2460`, [OpenBSD]: :meth:`Process.num_fds` and
@@ -509,8 +508,8 @@ Others:
 - :gh:`2250`, [NetBSD]: :meth:`Process.cmdline` sometimes fail with ``EBUSY``
   for long cmdlines. Now retries up to 50 times, returning an empty list as
   last resort.
-- :gh:`2254`, [Linux]: offline cpus raise :exc:`NotImplementedError` in :func:`cpu_freq`
-  (patch by Shade Gladden)
+- :gh:`2254`, [Linux]: offline cpus raise :exc:`NotImplementedError` in
+  :func:`cpu_freq` (patch by Shade Gladden)
 - :gh:`2272`: Add pickle support to psutil Exceptions.
 - :gh:`2359`, [Windows], [CRITICAL]: :func:`pid_exists` disagrees with
   :class:`Process` on whether a pid exists when ``ERROR_ACCESS_DENIED``.
@@ -651,10 +650,11 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   field (off by 1 minute).
 - :gh:`2229`, [OpenBSD]: unable to properly recognize zombie processes.
   :exc:`NoSuchProcess` may be raised instead of :exc:`ZombieProcess`.
-- :gh:`2231`, [NetBSD]: :field:`available`  :func:`virtual_memory` is higher than
-  :field:`total`.
-- :gh:`2234`, [NetBSD]: :func:`virtual_memory` metrics are wrong: :field:`available`
-  and :field:`used` are too high. We now match values shown by *htop* CLI utility.
+- :gh:`2231`, [NetBSD]: :field:`available` :func:`virtual_memory` is higher
+  than :field:`total`.
+- :gh:`2234`, [NetBSD]: :func:`virtual_memory` metrics are wrong:
+  :field:`available` and :field:`used` are too high. We now match values shown
+  by *htop* CLI utility.
 - :gh:`2236`, [NetBSD]: :meth:`Process.num_threads` and
   :meth:`Process.threads` return threads that are already terminated.
 - :gh:`2237`, [OpenBSD], [NetBSD]: :meth:`Process.cwd` may raise
@@ -737,8 +737,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Bug fixes**
 
-- :gh:`2048`: :exc:`AttributeError` is raised if :exc:`psutil.Error` class is raised
-  manually and passed through ``str``.
+- :gh:`2048`: :exc:`AttributeError` is raised if :exc:`psutil.Error` class is
+  raised manually and passed through ``str``.
 - :gh:`2049`, [Linux]: :func:`cpu_freq` erroneously returns :field:`current`
   value in GHz while :field:`min` and :field:`max` are in MHz.
 - :gh:`2050`, [Linux]: :func:`virtual_memory` may raise :exc:`ValueError` if
@@ -806,8 +806,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`1863`: :func:`disk_partitions` exposes 2 extra fields: :field:`maxfile` and
-  :field:`maxpath`, which are the maximum file name and path name length.
+- :gh:`1863`: :func:`disk_partitions` exposes 2 extra fields: :field:`maxfile`
+  and :field:`maxpath`, which are the maximum file name and path name length.
 - :gh:`1872`, [Windows]: added support for PyPy 2.7.
 - :gh:`1879`: provide pre-compiled wheels for Linux and macOS (yey!).
 - :gh:`1880`: switch CI from Travis/Cirrus to GitHub Actions (Linux, macOS,
@@ -846,8 +846,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`809`, [FreeBSD]: add support for :meth:`Process.rlimit`.
 - :gh:`893`, [BSD]: add support for :meth:`Process.environ` (patch by Armin
   Gruner)
-- :gh:`1830`, [POSIX]: :func:`net_if_stats` :field:`isup` also checks whether the
-  NIC is running (meaning Wi-Fi or ethernet cable is connected).  (patch by
+- :gh:`1830`, [POSIX]: :func:`net_if_stats` :field:`isup` also checks whether
+  the NIC is running (meaning Wi-Fi or ethernet cable is connected). (patch by
   Chris Burger)
 - :gh:`1837`, [Linux]: improved battery detection and charge :field:`secsleft`
   calculation (patch by aristocratos)
@@ -857,8 +857,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1620`, [Linux]: :func:`cpu_count` with ``logical=False`` result is
   incorrect on systems with more than one CPU socket.  (patch by Vincent A.
   Arcila)
-- :gh:`1738`, [macOS]: :meth:`Process.exe` may raise :exc:`FileNotFoundError` if
-  process is still alive but the exe file which launched it got deleted.
+- :gh:`1738`, [macOS]: :meth:`Process.exe` may raise :exc:`FileNotFoundError`
+  if process is still alive but the exe file which launched it got deleted.
 - :gh:`1791`, [macOS]: fix missing include for ``getpagesize()``.
 - :gh:`1823`, [Windows], **[critical]**: :meth:`Process.open_files` may cause
   a segfault due to a NULL pointer.
@@ -1059,7 +1059,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`1223`, [Windows]: :func:`boot_time` may return incorrect value on
   Windows XP.
 - :gh:`1456`, [Linux]: :func:`cpu_freq` returns ``None`` instead of 0.0 when
-  :field:`min` and :field:`max` fields can't be determined. (patch by Alex Manuskin)
+  :field:`min` and :field:`max` fields can't be determined. (patch by Alex
+  Manuskin)
 - :gh:`1462`, [Linux]: (tests) make tests invariant to ``LANG`` setting (patch
   by Benjamin Drung)
 - :gh:`1463`: `scripts/cpu_distribution.py`_ was broken.
@@ -1324,8 +1325,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   battery is not listed as "BAT0" under ``/sys/class/power_supply``.
 - :gh:`1240`, [Windows]: :func:`cpu_times` float loses accuracy in a long
   running system. (patch by stswandering)
-- :gh:`1245`, [Linux]: :func:`sensors_temperatures` may fail with :exc:`IOError`
-  "no such file".
+- :gh:`1245`, [Linux]: :func:`sensors_temperatures` may fail with
+  :exc:`IOError` "no such file".
 - :gh:`1255`, [FreeBSD]: :func:`swap_memory` stats were erroneously
   represented in KB. (patch by Denis Krienbühl)
 
@@ -1477,8 +1478,9 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   raise :exc:`UnicodeDecodeError`.
 - :gh:`1033`, [macOS], [FreeBSD]: memory leak for :func:`net_connections` and
   :meth:`Process.connections` when retrieving UNIX sockets (``kind='unix'``).
-- :gh:`1040`: fixed many unicode related issues such as :exc:`UnicodeDecodeError`
-  on Python 3 + POSIX and invalid encoded data on Windows.
+- :gh:`1040`: fixed many unicode related issues such as
+  :exc:`UnicodeDecodeError` on Python 3 + POSIX and invalid encoded data on
+  Windows.
 - :gh:`1042`, [FreeBSD], **[critical]**: psutil won't compile on FreeBSD 12.
 - :gh:`1044`, [macOS]: different :class:`Process` methods incorrectly raise
   :exc:`AccessDenied` for zombie processes.
@@ -1607,8 +1609,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`966`, [Linux]: :func:`sensors_battery` :field:`power_plugged` may
   erroneously return ``None`` on Python 3.
-- :gh:`968`, [Linux]: :func:`disk_io_counters` raises :exc:`TypeError` on Python
-  3.
+- :gh:`968`, [Linux]: :func:`disk_io_counters` raises :exc:`TypeError` on
+  Python 3.
 - :gh:`970`, [Linux]: :func:`sensors_battery` :field:`name` and :field:`label`
   fields on Python 3 are bytes instead of str.
 
@@ -1617,8 +1619,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 **Enhancements**
 
-- :gh:`966`, [Linux]: :func:`sensors_battery` :field:`percent` is a float and is
-  more precise.
+- :gh:`966`, [Linux]: :func:`sensors_battery` :field:`percent` is a float and
+  is more precise.
 
 **Bug fixes**
 
@@ -1738,8 +1740,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`885`: :exc:`ValueError` is raised if a negative integer is passed to
   :func:`cpu_percent` functions.
 - :gh:`892`, [Linux], **[critical]**: :meth:`Process.cpu_affinity` with
-  ``[-1]`` as arg raises :exc:`SystemError` with no error set; now :exc:`ValueError`
-  is raised.
+  ``[-1]`` as arg raises :exc:`SystemError` with no error set; now
+  :exc:`ValueError` is raised.
 - :gh:`906`, [BSD]: :func:`disk_partitions` with ``all=False`` returned an
   empty list. Now the argument is ignored and all partitions are always
   returned.
@@ -1749,8 +1751,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   the real error for high-privileged PIDs and raise :exc:`NoSuchProcess` and
   :exc:`AccessDenied` instead of :exc:`OSError` and :exc:`RuntimeError`.
 - :gh:`909`, [macOS]: :meth:`Process.open_files` and
-  :meth:`Process.connections` methods may raise :exc:`OSError` with no exception
-  set if process is gone.
+  :meth:`Process.connections` methods may raise :exc:`OSError` with no
+  exception set if process is gone.
 - :gh:`916`, [macOS]: fix many compilation warnings.
 
 4.3.1 — 2016-09-01
@@ -1764,11 +1766,10 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 
 - :gh:`854`: :meth:`Process.as_dict` raises :exc:`ValueError` if passed an
   erroneous attrs name.
-- :gh:`857`, [SunOS]: :meth:`Process.cpu_times`,
-  :meth:`Process.cpu_percent`,
+- :gh:`857`, [SunOS]: :meth:`Process.cpu_times`, :meth:`Process.cpu_percent`,
   :meth:`Process.threads` and :meth:`Process.memory_maps` may raise
-  :exc:`RuntimeError` if attempting to query a 64bit process with a 32bit Python.
-  "Null" values are returned as a fallback.
+  :exc:`RuntimeError` if attempting to query a 64bit process with a 32bit
+  Python. "Null" values are returned as a fallback.
 - :gh:`858`: :meth:`Process.as_dict` should not call
   :meth:`Process.memory_info_ex` because it's deprecated.
 - :gh:`863`, [Windows]: :meth:`Process.memory_maps` truncates addresses above
@@ -2508,8 +2509,8 @@ cases accessing the old names will work but it will cause a
 
 - :meth:`Process.connections` :field:`status` field is no longer a string but a
   constant object (``psutil.CONN_*``).
-- :meth:`Process.connections` :field:`local_address` and :field:`remote_address`
-  fields renamed to :field:`laddr` and :field:`raddr`.
+- :meth:`Process.connections` :field:`local_address` and
+  :field:`remote_address` fields renamed to :field:`laddr` and :field:`raddr`.
 - psutil.network_io_counters() renamed to :func:`net_io_counters`.
 
 0.7.1 — 2013-05-03
@@ -2563,9 +2564,9 @@ cases accessing the old names will work but it will cause a
   as it may change.
 - :gh:`333`, [macOS]: leak of Mach ports (patch by rsesek@google.com)
 - :gh:`337`, [Linux], **[critical]**: :class:`Process` methods not working
-  because of a poor ``/proc`` implementation will raise :exc:`NotImplementedError`
-  rather than :exc:`RuntimeError` and :meth:`Process.as_dict` will not blow up.
-  (patch by Curtin1060)
+  because of a poor ``/proc`` implementation will raise
+  :exc:`NotImplementedError` rather than :exc:`RuntimeError` and
+  :meth:`Process.as_dict` will not blow up. (patch by Curtin1060)
 - :gh:`338`, [Linux]: :func:`disk_io_counters` fails to find some disks.
 - :gh:`339`, [FreeBSD]: ``get_pid_list()`` can allocate all the memory on
   system.
@@ -2879,11 +2880,11 @@ cases accessing the old names will work but it will cause a
 - :gh:`130`, [Linux]: a race condition can cause :exc:`IOError` exception be
   raised on if process disappears between ``open()`` and the subsequent
   ``read()`` call.
-- :gh:`145`, [Windows], **[critical]**: :exc:`WindowsError` was raised instead of
-  :exc:`AccessDenied` when using :meth:`Process.resume` or
+- :gh:`145`, [Windows], **[critical]**: :exc:`WindowsError` was raised instead
+  of :exc:`AccessDenied` when using :meth:`Process.resume` or
   :meth:`Process.suspend`.
-- :gh:`146`, [Linux]: :meth:`Process.exe` property can raise :exc:`TypeError` if
-  path contains NULL bytes.
+- :gh:`146`, [Linux]: :meth:`Process.exe` property can raise :exc:`TypeError`
+  if path contains NULL bytes.
 - :gh:`151`, [Linux]: :meth:`Process.exe` and :meth:`Process.cwd` for PID 0
   return inconsistent data.
 
@@ -3031,7 +3032,8 @@ cases accessing the old names will work but it will cause a
   nonexistent process, or when retrieving information about a process that
   has gone away.
 - :gh:`21`, [Windows]: :exc:`AccessDenied` exception created for raising access
-  denied errors from :exc:`OSError` or :exc:`WindowsError` on individual platforms.
+  denied errors from :exc:`OSError` or :exc:`WindowsError` on individual
+  platforms.
 - :gh:`26`: :func:`process_iter` function to iterate over processes as
   :class:`Process` objects with a generator.
 - :class:`Process` objects can now also be compared with == operator for

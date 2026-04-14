@@ -417,8 +417,8 @@ Memory
 Show real-time swap activity *(Linux, BSD)*. ``sout`` (:term:`swap-out`) is the
 key metric: a non-zero and growing rate means the OS is moving memory from RAM
 to disk because RAM is full. ``sin`` (:term:`swap-in`) alone is not alarming;
-it just means the system is moving previously evicted pages back into RAM.
-High ``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
+it just means the system is moving previously evicted pages back into RAM. High
+``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
 
 .. code-block:: python
 
