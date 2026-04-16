@@ -1669,7 +1669,6 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
    psutil 5.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-5.0>` if upgrading from 4.x.
 
-
 **Enhncements**
 
 - :gh:`799`: new :meth:`Process.oneshot` context manager (+2x faster in

@@ -65,7 +65,6 @@ Install
 For platform-specific details see
 `installation <https://psutil.readthedocs.io/latest/install.html>`_.
 
-
 Documentation
 =============
 

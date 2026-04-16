@@ -364,7 +364,6 @@ Restart a process automatically if it dies:
   if __name__ == "__main__":
       watchdog(["python3", "script.py"])
 
-
 System
 ------
 

@@ -78,7 +78,6 @@ If you relied on :attr:`Process.info` because you needed a dict structure, use
   for p in psutil.process_iter(attrs=attrs):
       print(p.as_dict(attrs))  # return cached values, never raise
 
-
 .. note::
   If ``"name"`` was pre-fetched via ``attrs``, calling ``p.name()`` no longer
   raises :exc:`AccessDenied`. It returns ``ad_value`` instead. If you need the

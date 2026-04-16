@@ -968,7 +968,6 @@ Functions
      >>> psutil.pids()
      [1, 2, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, ..., 32498]
 
-
   .. versionchanged:: 5.6.0
      PIDs are returned in sorted order.
 
@@ -1100,7 +1099,6 @@ Exceptions
   disappeared.
 
   .. seealso:: :ref:`faq_no_such_process`
-
 
 .. exception:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
@@ -1806,7 +1804,6 @@ Process class
        >>> p = psutil.Process()
        >>> p.memory_info()
        pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, data=9891840)
-
 
     .. seealso::
       - :ref:`faq_memory_rss_vs_vms`

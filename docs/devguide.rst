@@ -62,7 +62,6 @@ Windows
      make build
      make test-parallel
 
-
 .. _devguide_debug_mode:
 
 Debug mode
@@ -138,7 +137,6 @@ Make a pull request
 - Commit changes: ``git commit -am 'add some feature'``
 - Push: ``git push origin new-feature``
 - Open a PR and sign off your work (see `CONTRIBUTING.md`_).
-
 
 Continuous integration
 ----------------------
