@@ -77,12 +77,11 @@ Fast:
       print(p.pid, p.name(), p.status())  # return cached values, never raise
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
-to using :meth:`Process.oneshot` on each process.
-Using :func:`process_iter` also saves you from **race conditions** (e.g. if a
-process disappears while iterating), since :exc:`NoSuchProcess` and
-:exc:`AccessDenied` exceptions are handled internally.
-A typical use case is to fetch all process attrs except the slow ones (see
-:ref:`perf-api-speed` table below):
+to using :meth:`Process.oneshot` on each process. Using :func:`process_iter`
+also saves you from **race conditions** (e.g. if a process disappears while
+iterating), since :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions are
+handled internally. A typical use case is to fetch all process attrs except the
+slow ones (see :ref:`perf-api-speed` table below):
 
 .. code-block:: python
 

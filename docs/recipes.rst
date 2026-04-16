@@ -271,8 +271,8 @@ Kill a process tree (including grandchildren):
 
 -------------------------------------------------------------------------------
 
-Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
-exit within the timeout:
+Terminate a process gracefully, falling back to ``SIGKILL`` if it does not exit
+within the timeout:
 
 .. code-block:: python
 
@@ -309,8 +309,8 @@ Temporarily pause and resume a process using a context manager:
 
 -------------------------------------------------------------------------------
 
-CPU throttle: limit a process's CPU usage to a target percentage by
-alternating :meth:`Process.suspend` and :meth:`Process.resume`:
+CPU throttle: limit a process's CPU usage to a target percentage by alternating
+:meth:`Process.suspend` and :meth:`Process.resume`:
 
 .. code-block:: python
 

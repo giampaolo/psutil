@@ -3,9 +3,9 @@
 Alternatives
 ============
 
-This page describes Python tools and modules that overlap with psutil,
-to help you pick the right tool for the job.
-See also :doc:`adoption` for notable projects that use psutil.
+This page describes Python tools and modules that overlap with psutil, to help
+you pick the right tool for the job. See also :doc:`adoption` for notable
+projects that use psutil.
 
 Python standard library
 -----------------------
@@ -17,11 +17,10 @@ os module
 ^^^^^^^^^
 
 The :mod:`os` module provides a handful of process-related functions:
-:func:`os.getpid`, :func:`os.getppid`, :func:`os.getuid`,
-:func:`os.cpu_count`, :func:`os.getloadavg` (UNIX only). These are
-cheap wrappers around POSIX syscalls and are perfectly fine when you
-only need information about the *current* process and don't need
-cross-platform code.
+:func:`os.getpid`, :func:`os.getppid`, :func:`os.getuid`, :func:`os.cpu_count`,
+:func:`os.getloadavg` (UNIX only). These are cheap wrappers around POSIX
+syscalls and are perfectly fine when you only need information about the
+*current* process and don't need cross-platform code.
 
 psutil goes further in several directions. Its primary goal is to provide a
 **single portable interface** for concepts that are traditionally UNIX-only.
@@ -38,32 +37,31 @@ resource module
 ^^^^^^^^^^^^^^^
 
 :mod:`resource` (UNIX only) lets you read and set resource limits
-(``RLIMIT_*``) and get basic usage counters (user/system time, page
-faults, I/O ops) for the *current* process or its children via
-:func:`resource.getrusage`. It is the right tool when you specifically
-want to enforce or inspect ``ulimit``-style limits.
+(``RLIMIT_*``) and get basic usage counters (user/system time, page faults, I/O
+ops) for the *current* process or its children via :func:`resource.getrusage`.
+It is the right tool when you specifically want to enforce or inspect
+``ulimit``-style limits.
 
-psutil's :meth:`Process.rlimit` exposes the same interface but extends it
-to all processes, not just the caller.
+psutil's :meth:`Process.rlimit` exposes the same interface but extends it to
+all processes, not just the caller.
 
 subprocess module
 ^^^^^^^^^^^^^^^^^
 
 Calling tools like ``ps``, ``top``, ``netstat``, ``vmstat`` via
-:mod:`subprocess` and parsing their output is fragile: output
-formats differ across OS versions and locales, parsing is error-prone,
-and spawning a subprocess per sample is slow. psutil reads the same
-kernel data sources directly without spawning any external processes.
+:mod:`subprocess` and parsing their output is fragile: output formats differ
+across OS versions and locales, parsing is error-prone, and spawning a
+subprocess per sample is slow. psutil reads the same kernel data sources
+directly without spawning any external processes.
 
 platform module
 ^^^^^^^^^^^^^^^
 
-:mod:`platform` provides information about the OS and Python runtime,
-such as OS name, kernel version, architecture, and machine type.
-It is useful for identifying the environment, but does not expose
-runtime metrics or process information like psutil. Overlaps with
-psutil's OS constants (:data:`LINUX`, :data:`WINDOWS`, :data:`MACOS`,
-etc.).
+:mod:`platform` provides information about the OS and Python runtime, such as
+OS name, kernel version, architecture, and machine type. It is useful for
+identifying the environment, but does not expose runtime metrics or process
+information like psutil. Overlaps with psutil's OS constants (:data:`LINUX`,
+:data:`WINDOWS`, :data:`MACOS`, etc.).
 
 /proc filesystem
 ^^^^^^^^^^^^^^^^
@@ -73,15 +71,15 @@ Reading ``/proc/pid/status`` or ``/proc/meminfo`` directly is fast and has no
 dependencies, which is why some minimal containers or scripts do this. The
 downsides are that it is Linux-only, the format may vary across kernel
 versions, and you have to parse raw text yourself. psutil parses ``/proc``
-internally, exposes the same information through a consistent
-cross-platform API and handles edge cases (invalid format, compatibility with
-old kernels, graceful fallbacks, etc.).
+internally, exposes the same information through a consistent cross-platform
+API and handles edge cases (invalid format, compatibility with old kernels,
+graceful fallbacks, etc.).
 
 Third-party libraries
 ---------------------
 
-Libraries that cover areas psutil does not, or that go deeper on a
-specific platform or subsystem.
+Libraries that cover areas psutil does not, or that go deeper on a specific
+platform or subsystem.
 
 .. list-table::
    :header-rows: 1

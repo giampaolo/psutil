@@ -5,10 +5,10 @@
 About this site
 ===============
 
-This site is built with `Sphinx <https://www.sphinx-doc.org/>`__ and the `Read
-the Docs theme <https://sphinx-rtd-theme.readthedocs.io/>`__, with a number of
-custom additions: a dark mode, keyboard shortcuts, a top bar, an improved
-search navigation.
+This site is built with `Sphinx <https://www.sphinx-doc.org/>`__ and the
+`Read the Docs theme <https://sphinx-rtd-theme.readthedocs.io/>`__, with a
+number of custom additions: a dark mode, keyboard shortcuts, a top bar, an
+improved search navigation.
 
 Keyboard shortcuts
 ------------------
@@ -33,13 +33,12 @@ Keyboard shortcuts
 Dark mode
 ---------
 
-Click the moon icon in the top-right corner, or press **Shift+D**
-anywhere on the page. Your preference is saved and restored on your
-next visit.
+Click the moon icon in the top-right corner, or press **Shift+D** anywhere on
+the page. Your preference is saved and restored on your next visit.
 
 Search
 ------
 
-Press **Ctrl+K** to jump straight to the search box. Once results
-appear, use the **arrow keys** to move through them and **Enter** to
-open one — no mouse needed.
+Press **Ctrl+K** to jump straight to the search box. Once results appear, use
+the **arrow keys** to move through them and **Enter** to open one — no mouse
+needed.

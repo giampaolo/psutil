@@ -18,9 +18,9 @@ Why should I avoid positional unpacking of named tuples?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Most psutil functions return named tuples. It is tempting to unpack them
-positionally, but **field order may change across major releases** (as
-happened in 8.0 with :func:`cpu_times` and :meth:`Process.memory_info`).
-Always use attribute access instead:
+positionally, but **field order may change across major releases** (as happened
+in 8.0 with :func:`cpu_times` and :meth:`Process.memory_info`). Always use
+attribute access instead:
 
 .. code-block:: python
 
@@ -31,8 +31,8 @@ Always use attribute access instead:
   m = p.memory_info()
   print(m.rss, m.vms)
 
-See the :ref:`migration guide <migration-8.0>` for the full list of
-field-order changes in 8.0.
+See the :ref:`migration guide <migration-8.0>` for the full list of field-order
+changes in 8.0.
 
 Exceptions
 ----------
@@ -42,9 +42,9 @@ Exceptions
 Why do I get AccessDenied?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:exc:`AccessDenied` is raised when the OS refuses to return information about
-a process because the calling user does not have sufficient privileges.
-This is expected behavior and is not a bug. It typically happens when:
+:exc:`AccessDenied` is raised when the OS refuses to return information about a
+process because the calling user does not have sufficient privileges. This is
+expected behavior and is not a bug. It typically happens when:
 
 - querying processes owned by other users (e.g. *root*)
 - calling certain methods like :meth:`Process.memory_maps`,
@@ -83,10 +83,10 @@ You have two options to deal with it.
 Why do I get NoSuchProcess?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:exc:`NoSuchProcess` is raised when a process no longer exists.
-The most common cause is a TOCTOU (time-of-check / time-of-use) race
-condition: a process can die between the moment its PID is obtained and
-the moment it is queried. The following two naive patterns are racy:
+:exc:`NoSuchProcess` is raised when a process no longer exists. The most common
+cause is a TOCTOU (time-of-check / time-of-use) race condition: a process can
+die between the moment its PID is obtained and the moment it is queried. The
+following two naive patterns are racy:
 
 .. code-block:: python
 
@@ -105,8 +105,8 @@ the moment it is queried. The following two naive patterns are racy:
       print(p.name())  # may raise NoSuchProcess
 
 The correct approach is to use :func:`process_iter`, which handles
-:exc:`NoSuchProcess` internally and skips processes that disappear
-during iteration:
+:exc:`NoSuchProcess` internally and skips processes that disappear during
+iteration:
 
 .. code-block:: python
 
@@ -115,8 +115,8 @@ during iteration:
   for p in psutil.process_iter(["name"]):
       print(p.name())
 
-If you have a specific PID (e.g. a known child process), wrap the
-call in a try/except:
+If you have a specific PID (e.g. a known child process), wrap the call in a
+try/except:
 
 .. code-block:: python
 
@@ -156,25 +156,23 @@ was assigned the same PID.
 **How psutil handles this:**
 
 - *Most read-only methods* (e.g. :meth:`Process.name`,
-  :meth:`Process.cpu_percent`) do **not** check for PID reuse and instead
-  query whatever process currently holds that PID.
+  :meth:`Process.cpu_percent`) do **not** check for PID reuse and instead query
+  whatever process currently holds that PID.
 
-- *Signal methods* (e.g. :meth:`Process.send_signal`,
-  :meth:`Process.suspend`, :meth:`Process.resume`,
-  :meth:`Process.terminate`, :meth:`Process.kill`) **do** check for PID
-  reuse (via PID + creation time) before acting, raising
+- *Signal methods* (e.g. :meth:`Process.send_signal`, :meth:`Process.suspend`,
+  :meth:`Process.resume`, :meth:`Process.terminate`, :meth:`Process.kill`)
+  **do** check for PID reuse (via PID + creation time) before acting, raising
   :exc:`NoSuchProcess` if the PID was recycled. This prevents accidentally
   killing the wrong process (`BPO-6973`_).
 
 - *Set methods* :meth:`Process.nice` (set), :meth:`Process.ionice` (set),
-  :meth:`Process.cpu_affinity` (set), and
-  :meth:`Process.rlimit` (set) also perform this check before applying
-  changes.
+  :meth:`Process.cpu_affinity` (set), and :meth:`Process.rlimit` (set) also
+  perform this check before applying changes.
 
 :meth:`Process.is_running` is the recommended way to verify whether a
-:class:`Process` instance still refers to the same process. It compares
-PID and creation time, and returns ``False`` if the PID was reused.
-Prefer it over :func:`pid_exists`.
+:class:`Process` instance still refers to the same process. It compares PID and
+creation time, and returns ``False`` if the PID was reused. Prefer it over
+:func:`pid_exists`.
 
 .. _faq_zombie_process:
 
@@ -193,12 +191,11 @@ of :exc:`NoSuchProcess`.
 - :meth:`Process.status` always returns :data:`STATUS_ZOMBIE`.
 - :meth:`Process.is_running` and :func:`pid_exists` return ``True``.
 - The zombie appears in :func:`process_iter` and :func:`pids`.
-- Sending signals (:meth:`Process.terminate`, :meth:`Process.kill`,
-  etc.) has no effect.
+- Sending signals (:meth:`Process.terminate`, :meth:`Process.kill`, etc.) has
+  no effect.
 - Most methods (:meth:`Process.cmdline`, :meth:`Process.exe`,
-  :meth:`Process.memory_maps`, etc.) may raise :exc:`ZombieProcess`,
-  return a meaningful value, or return a null/empty value depending on
-  the platform.
+  :meth:`Process.memory_maps`, etc.) may raise :exc:`ZombieProcess`, return a
+  meaningful value, or return a null/empty value depending on the platform.
 - :meth:`Process.as_dict` will not crash.
 
 **How to create a zombie:**
@@ -236,10 +233,10 @@ Why does open_files() not return all files on Windows?
 
 :meth:`Process.open_files` on Windows is not guaranteed to enumerate all
 regular file handles. The underlying Windows API may hang when retrieving
-certain handle names, so psutil spawns a thread to query each handle and
-kills it if it doesn't respond within 100 ms. This means some entries can be
-missed. This is a known OS-level limitation shared by tools like Process
-Hacker (see `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
+certain handle names, so psutil spawns a thread to query each handle and kills
+it if it doesn't respond within 100 ms. This means some entries can be missed.
+This is a known OS-level limitation shared by tools like Process Hacker (see
+`issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
 
 .. _faq_pid_exists_vs_isrunning:
 
@@ -247,12 +244,12 @@ What is the difference between pid_exists() and Process.is_running()?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :func:`pid_exists` checks whether a PID is present in the process list.
-:meth:`Process.is_running` does the same, but also detects :ref:`PID
-reuse <faq_pid_reuse>` by comparing the process creation time. Use
-:func:`pid_exists` when you have a bare PID and don't need to guard
-against reuse (it's faster). Use :meth:`Process.is_running` when you
-hold a :class:`Process` object and want to confirm it still refers to
-the same process.
+:meth:`Process.is_running` does the same, but also detects
+:ref:`PID reuse <faq_pid_reuse>` by comparing the process creation time. Use
+:func:`pid_exists` when you have a bare PID and don't need to guard against
+reuse (it's faster). Use :meth:`Process.is_running` when you hold a
+:class:`Process` object and want to confirm it still refers to the same
+process.
 
 CPU
 ---
@@ -264,9 +261,8 @@ Why does cpu_percent() return 0.0 on first call?
 
 :func:`cpu_percent` (and :meth:`Process.cpu_percent`) measures CPU usage
 *between two calls*. The very first call has no prior sample to compare
-against, so it always returns ``0.0``. The fix is to call it once to
-initialize the baseline, discard the result, then call it again after a
-short sleep:
+against, so it always returns ``0.0``. The fix is to call it once to initialize
+the baseline, discard the result, then call it again after a short sleep:
 
 .. code-block:: python
 
@@ -297,17 +293,17 @@ The same applies to :meth:`Process.cpu_percent`:
 Can Process.cpu_percent() return a value higher than 100%?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Yes. On a multi-core system a process can run threads on several CPUs at
-the same time. The maximum value is ``psutil.cpu_count() * 100``. For
-example, on a 4-core machine a fully-loaded process can reach 400%.
-The system-wide :func:`cpu_percent` (without a :class:`Process`) always
-stays in the 0–100% range because it averages across all cores.
+Yes. On a multi-core system a process can run threads on several CPUs at the
+same time. The maximum value is ``psutil.cpu_count() * 100``. For example, on a
+4-core machine a fully-loaded process can reach 400%. The system-wide
+:func:`cpu_percent` (without a :class:`Process`) always stays in the 0–100%
+range because it averages across all cores.
 
-The returned value is explicitly *not* split evenly between all available
-CPUs. This is consistent with the ``top`` UNIX utility: a busy loop on a
-system with 2 :term:`logical CPUs <logical CPU>` is reported as 100%, not 50%.
-Note that Windows ``taskmgr.exe`` behaves differently (it would report 50%).
-To emulate that: ``p.cpu_percent() / psutil.cpu_count()``.
+The returned value is explicitly *not* split evenly between all available CPUs.
+This is consistent with the ``top`` UNIX utility: a busy loop on a system with
+2 :term:`logical CPUs <logical CPU>` is reported as 100%, not 50%. Note that
+Windows ``taskmgr.exe`` behaves differently (it would report 50%). To emulate
+that: ``p.cpu_percent() / psutil.cpu_count()``.
 
 .. _faq_cpu_count:
 
@@ -339,9 +335,9 @@ they measure different things:
 
 - :field:`free`: memory that is not being used at all.
 - :field:`available`: how much memory can be given to processes without
-  :term:`swapping <swap memory>`.
-  This includes reclaimable :term:`caches <page cache>` and :term:`buffers`
-  that the OS can reclaim under pressure.
+  :term:`swapping <swap memory>`. This includes reclaimable
+  :term:`caches <page cache>` and :term:`buffers` that the OS can reclaim under
+  pressure.
 
 In practice, :field:`available` is almost always the metric you want when
 monitoring memory. :field:`free` can be misleadingly low on systems where the
@@ -363,9 +359,8 @@ What is the difference between RSS and VMS?
 :field:`rss` is the go-to metric for answering "how much RAM is this process
 using?". Note that it includes :term:`shared memory`, so it may overestimate
 actual usage when compared across processes. :field:`vms` is generally larger
-and can be misleadingly high, as it includes memory that is not resident
-in physical RAM.
-Both values are portable across platforms and are returned by
+and can be misleadingly high, as it includes memory that is not resident in
+physical RAM. Both values are portable across platforms and are returned by
 :meth:`Process.memory_info`.
 
 .. _faq_memory_footprint:
