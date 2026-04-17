@@ -19,7 +19,6 @@ include docs/_ext/changelog_anchors.py
 include docs/_ext/check_python_syntax.py
 include docs/_ext/field_role.py
 include docs/_ext/genindex_filter.py
-include docs/_links.rst
 include docs/_sponsors.html
 include docs/_static/css/custom.css
 include docs/_static/images/favicon.svg
@@ -204,7 +203,6 @@ include scripts/internal/print_downloads.py
 include scripts/internal/print_hashes.py
 include scripts/internal/print_sysinfo.py
 include scripts/internal/purge_installation.py
-include scripts/internal/rst_check_dead_refs.py
 include scripts/iotop.py
 include scripts/killall.py
 include scripts/meminfo.py
