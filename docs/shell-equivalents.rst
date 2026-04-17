@@ -1,3 +1,6 @@
+
+.. currentmodule:: psutil
+
 Shell equivalents
 =================
 

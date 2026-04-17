@@ -1,3 +1,6 @@
+.. currentmodule:: psutil
+.. include:: _links.rst
+
 .. note::
    psutil 8.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
@@ -2786,6 +2789,7 @@ FreeBSD specific:
   .. data:: RLIMIT_SWAP
 
     .. versionadded:: 5.7.3
+
 
   .. data:: RLIMIT_SBSIZE
 

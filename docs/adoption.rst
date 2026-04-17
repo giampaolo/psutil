@@ -1,3 +1,5 @@
+.. currentmodule:: psutil
+
 Who uses psutil
 ===============
 

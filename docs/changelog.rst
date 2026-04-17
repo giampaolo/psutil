@@ -1,3 +1,6 @@
+.. currentmodule:: psutil
+.. include:: _links.rst
+
 Changelog
 =========
 

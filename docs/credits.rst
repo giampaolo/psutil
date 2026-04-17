@@ -1,3 +1,5 @@
+.. currentmodule:: psutil
+
 Credits
 =======
 

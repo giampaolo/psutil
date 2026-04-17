@@ -1,3 +1,5 @@
+.. currentmodule:: psutil
+
 Recipes
 =======
 
@@ -357,6 +359,7 @@ Restart a process automatically if it dies:
               break
 
           time.sleep(interval)
+
 
   if __name__ == "__main__":
       watchdog(["python3", "script.py"])
