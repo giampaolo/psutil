@@ -425,11 +425,9 @@ def main():
         long_description_content_type='text/x-rst',
         # fmt: off
         keywords=[
-            'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
-            'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',
-            'ifconfig', 'taskset', 'who', 'pidof', 'pmap', 'smem', 'pstree',
-            'monitoring', 'ulimit', 'prlimit', 'smem', 'performance',
-            'metrics', 'agent', 'observability',
+            'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'df', 'uptime',
+            'taskmgr', 'process', 'monitoring', 'performance', 'metrics',
+            'observability',
         ],
         # fmt: on
         author='Giampaolo Rodola',
@@ -440,12 +438,25 @@ def main():
         packages=['psutil'],
         ext_modules=[ext],
         options=options,
+        # https://docs.pypi.org/project_metadata/
+        project_urls={
+            'Homepage': 'https://github.com/giampaolo/psutil',
+            'Source': 'https://github.com/giampaolo/psutil',
+            'Issues': 'https://github.com/giampaolo/psutil/issues',
+            'Documentation': 'https://psutil.readthedocs.io/',
+            'Changelog': (
+                'https://github.com/giampaolo/psutil/blob/master/HISTORY.rst'
+            ),
+            'Funding': 'https://github.com/sponsors/giampaolo',
+        },
+        # https://pypi.org/classifiers/
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',
             'Intended Audience :: Developers',
             'Intended Audience :: Information Technology',
             'Intended Audience :: System Administrators',
+            'License :: OSI Approved :: BSD License',
             'Operating System :: MacOS :: MacOS X',
             'Operating System :: Microsoft :: Windows :: Windows 10',
             'Operating System :: Microsoft :: Windows :: Windows 11',
