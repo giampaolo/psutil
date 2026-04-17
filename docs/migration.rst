@@ -1,6 +1,3 @@
-.. currentmodule:: psutil
-.. include:: _links.rst
-
 Migration guide
 ===============
 

@@ -1,5 +1,3 @@
-.. currentmodule:: psutil
-
 FAQ
 ===
 

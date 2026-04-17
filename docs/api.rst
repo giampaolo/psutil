@@ -1,6 +1,3 @@
-.. currentmodule:: psutil
-.. include:: _links.rst
-
 .. note::
    psutil 8.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.

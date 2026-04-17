@@ -69,7 +69,7 @@ extlinks = {
 # =====================================================================
 
 html_static_path = ["_static"]
-exclude_patterns = ["_build"]
+exclude_patterns = ["_build", "_globals.rst"]
 
 # =====================================================================
 # HTML
@@ -111,3 +111,9 @@ if html_theme == "sphinx_rtd_theme":
         ("js/sidebar-close.js", {"defer": "defer"}),
         ("js/search-shortcuts.js", {"defer": "defer"}),
     ]
+
+# =====================================================================
+# Prolog prepended to every .rst file
+# =====================================================================
+
+rst_prolog = (_HERE / "_globals.rst").read_text()
