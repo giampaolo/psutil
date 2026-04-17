@@ -24,9 +24,10 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - :doc:`/adoption <adoption>`: notable software using psutil
   - :doc:`/alternatives <alternatives>`: list of alternative Python libraries
     and tools that overlap with psutil.
-  - :doc:`/api-overview <api-overview>`: show entire API via REPL usage examples
-  - :doc:`/credits <credits>`: list contributors and donors (was old ``CREDITS``
-    in root dir)
+  - :doc:`/api-overview <api-overview>`: show entire API via REPL usage
+    examples
+  - :doc:`/credits <credits>`: list contributors and donors (was old
+    ``CREDITS`` in root dir)
   - :doc:`/faq <faq>`: extended FAQ section
   - :doc:`/funding <funding>`: list funding methods and current sponsors
   - :ref:`/genindex <genindex>`: a general index
@@ -107,10 +108,9 @@ New APIs:
 - Reorganization of process memory APIs (:gh:`2731`, :gh:`2736`, :gh:`2723`,
   :gh:`2733`).
 
-  - Add new :meth:`Process.memory_info_ex` method (not to be confused
-    with the old method with the same name, deprecated in 4.0 and
-    removed in 7.0), which extends :meth:`Process.memory_info` with
-    platform-specific metrics:
+  - Add new :meth:`Process.memory_info_ex` method (not to be confused with the
+    old method with the same name, deprecated in 4.0 and removed in 7.0), which
+    extends :meth:`Process.memory_info` with platform-specific metrics:
 
     - Linux: :field:`peak_rss`, :field:`peak_vms`, :field:`rss_anon`,
       :field:`rss_file`, :field:`rss_shmem`, :field:`swap`, :field:`hugetlb`
@@ -118,36 +118,35 @@ New APIs:
       :field:`wired`, :field:`compressed`, :field:`phys_footprint`
     - Windows: :field:`virtual`, :field:`peak_virtual`
 
-  - Add new :meth:`Process.memory_footprint` method, which returns :field:`uss`,
-    :field:`pss` and :field:`swap` metrics (what :meth:`Process.memory_full_info`
-    used to return, which is now **deprecated**, see
-    :ref:`migration guide <migration-8.0>`).
+  - Add new :meth:`Process.memory_footprint` method, which returns
+    :field:`uss`, :field:`pss` and :field:`swap` metrics (what
+    :meth:`Process.memory_full_info` used to return, which is now
+    **deprecated**, see :ref:`migration guide <migration-8.0>`).
 
   - :meth:`Process.memory_info` named tuple changed:
 
     - BSD: added :field:`peak_rss`.
 
-    - Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux 2.6).
-      Deprecated aliases returning 0 and emitting :exc:`DeprecationWarning` are
-      kept.
+    - Linux: :field:`lib` and :field:`dirty` removed (always 0 since Linux
+      2.6). Deprecated aliases returning 0 and emitting
+      :exc:`DeprecationWarning` are kept.
 
-    - macOS: :field:`pfaults` and :field:`pageins` removed with **no
-      backward-compatible aliases**. Use :meth:`Process.page_faults` instead.
+    - macOS: :field:`pfaults` and :field:`pageins` removed with
+      **no backward-compatible aliases**. Use :meth:`Process.page_faults`
+      instead.
 
-    - Windows: eliminated old aliases:
-      :field:`wset` → :field:`rss`,
-      :field:`peak_wset` → :field:`peak_rss`,
-      :field:`pagefile` and :field:`private` → :field:`vms`,
-      :field:`peak_pagefile` → :field:`peak_vms`.
-      At the same time :field:`paged_pool`, :field:`nonpaged_pool`,
-      :field:`peak_paged_pool`, :field:`peak_nonpaged_pool` were moved to
-      :meth:`Process.memory_info_ex`.
-      All these old names still work but raise :exc:`DeprecationWarning`.
-      See :ref:`migration guide <migration-8.0>`.
+    - Windows: eliminated old aliases: :field:`wset` → :field:`rss`,
+      :field:`peak_wset` → :field:`peak_rss`, :field:`pagefile` and
+      :field:`private` → :field:`vms`, :field:`peak_pagefile` →
+      :field:`peak_vms`. At the same time :field:`paged_pool`,
+      :field:`nonpaged_pool`, :field:`peak_paged_pool`,
+      :field:`peak_nonpaged_pool` were moved to :meth:`Process.memory_info_ex`.
+      All these old names still work but raise :exc:`DeprecationWarning`. See
+      :ref:`migration guide <migration-8.0>`.
 
   - :meth:`Process.memory_full_info` is **deprecated**. Use the new
-    :meth:`Process.memory_footprint` instead.
-    See :ref:`migration guide <migration-8.0>`.
+    :meth:`Process.memory_footprint` instead. See
+    :ref:`migration guide <migration-8.0>`.
 
 Others:
 
