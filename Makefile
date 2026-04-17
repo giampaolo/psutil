@@ -186,7 +186,7 @@ dprint:
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_check_dead_refs.py
+	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_unused_targets.py
 	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
 	@$(call _ls,'*.rst') | xargs rstwrap --check
 
