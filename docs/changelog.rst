@@ -16,7 +16,7 @@ Changelog
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
 :gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`, :gh:`2797`,
-:gh:`2801`, :gh:`2803`, :gh:`2808`, :gh:`2819`, :gh:`2820`)
+:gh:`2801`, :gh:`2803`, :gh:`2808`, :gh:`2819`, :gh:`2820`, :gh:`2823`)
 
 - Split docs from a single HTML file into multiple new sections:
 
@@ -69,14 +69,19 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Add custom script to detect dead reference links in ``.rst`` files.
   - Use sphinx extension to validate Python code snippets syntax at build-time.
 
-- Build / RTD:
+- RTD:
 
   - Configured RTD to automatically public doc from Git tags, instead of from
     main on every push.
-  - Build doc as part of CI process (fails on error).
   - Removed /en language from RTD URLs. Turn that into a redirect.
     - Before: https://psutil.readthedocs.io/en/stable/
     - Now: https://psutil.readthedocs.io/stable/
+
+- Misc:
+
+  - Build doc as part of CI process (fails on error).
+  - All ``.rst`` files are now wrapped to 79 characters via
+    https://github.com/giampaolo/rstwrap.
 
 Type hints / enums:
 
@@ -191,16 +196,18 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
-- :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
-  :exc:`ValueError` on s390x architecture, where ``/proc/cpuinfo`` uses spaces
-  before the colon separator instead of a tab.
-- :gh:`2726`, [macOS]: :meth:`Process.num_ctx_switches` return an unusual high
-  number due to a C type precision issue.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+- :gh:`2715`, [Linux]: ``wait_pid_pidfd_open()`` (from :meth:`Process.wait`)
+  crashes with ``EINVAL`` due to kernel race condition.
+- :gh:`2726`, [macOS]: :meth:`Process.num_ctx_switches` return an unusual high
+  number due to a C type precision issue.
 - :gh:`2732`, [Linux]: :func:`net_if_stats`: handle ``EBUSY`` from
   ``ioctl(SIOCETHTOOL)``.
+- :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
+  :exc:`ValueError` on s390x architecture, where ``/proc/cpuinfo`` uses spaces
+  before the colon separator instead of a tab.
 - :gh:`2744`, [NetBSD]: fix possible double ``free()`` in :func:`swap_memory`.
 - :gh:`2746`, [FreeBSD]: :meth:`Process.memory_maps`, :field:`rss` and
   :field:`private` fields are erroneously reported in memory pages instead of
@@ -229,14 +236,6 @@ Others:
   since it includes anonymous pages.
 - :gh:`2815`, [OpenBSD]: :func:`virtual_memory` :field:`shared` was overvalued
   (summed shared ``virtual`` + ``real``, now we only return ``real``).
-
-7.2.3 — 2026-02-08
-^^^^^^^^^^^^^^^^^^
-
-**Bug fixes**
-
-- :gh:`2715`, [Linux]: ``wait_pid_pidfd_open()`` (from :meth:`Process.wait`)
-  crashes with ``EINVAL`` due to kernel race condition.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
