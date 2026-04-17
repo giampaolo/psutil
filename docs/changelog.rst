@@ -236,6 +236,9 @@ Others:
   since it includes anonymous pages.
 - :gh:`2815`, [OpenBSD]: :func:`virtual_memory` :field:`shared` was overvalued
   (summed shared ``virtual`` + ``real``, now we only return ``real``).
+- :gh:`2822`, [BSD]: :meth:`Process.cmdline()` on NetBSD could raise
+  ``OSError: [Errno 14] Bad address`` if the process about to exit. It now raises 
+  :exc:`NoSuchProcess` instead.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
