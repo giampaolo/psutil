@@ -188,6 +188,7 @@ dprint:
 lint-rst:  ## Run linter for .rst files.
 	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_check_dead_refs.py
 	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
+	@$(call _ls,'*.rst') | xargs rstwrap --check
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
@@ -223,6 +224,9 @@ fix-c:
 
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
+
+fix-rst:
+	@git ls-files '*.rst' | xargs rstwrap
 
 fix-dprint:
 	@$(DPRINT) fmt

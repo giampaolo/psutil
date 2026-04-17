@@ -162,13 +162,13 @@ How this list was compiled
 
 - `GitHub dependency graph <https://github.com/giampaolo/psutil/network/dependents>`__
   was used to identify packages and repositories that depend on psutil.
-- GitHub code search with query "psutil in:readme language:Python", sorted
-  by stars, was used to find additional projects that mention psutil in their
+- GitHub code search with query "psutil in:readme language:Python", sorted by
+  stars, was used to find additional projects that mention psutil in their
   README.
 - Each candidate was then manually verified by checking the project's
   pyproject.toml, setup.py, setup.cfg or requirements.txt to confirm that
-  psutil is an actual dependency (direct, build-time, or optional), not just
-  a passing mention.
+  psutil is an actual dependency (direct, build-time, or optional), not just a
+  passing mention.
 - Projects were excluded if they only mention psutil in documentation or
   examples without declaring it as a dependency.
 - Star counts are pulled dynamically from `shields.io <https://shields.io/>`__

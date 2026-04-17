@@ -6,8 +6,8 @@ Development guide
 Build, setup and test
 ---------------------
 
-- psutil makes extensive use of C extension modules, meaning a C compiler
-  is required, see :doc:`install instructions <install>`. Once installed run:
+- psutil makes extensive use of C extension modules, meaning a C compiler is
+  required, see :doc:`install instructions <install>`. Once installed run:
 
   .. code-block:: bash
 
@@ -40,8 +40,8 @@ Build, setup and test
 
      make test ARGS=tests/test_system.py
 
-- Do not use ``sudo``. ``make install`` installs psutil in editable mode,
-  so you can modify the code while developing.
+- Do not use ``sudo``. ``make install`` installs psutil in editable mode, so
+  you can modify the code while developing.
 
 - To target a specific Python version:
 
@@ -62,17 +62,16 @@ Windows
      make build
      make test-parallel
 
-
 .. _devguide_debug_mode:
 
 Debug mode
 ----------
 
-If you need to debug unusual situations or report a bug, you can enable
-debug mode via the :envvar:`PSUTIL_DEBUG` environment variable. In this
-mode, psutil may print additional information to stderr. Usually these are
-non-severe error conditions that are ignored instead of causing a crash.
-Unit tests automatically run with debug mode enabled. On UNIX:
+If you need to debug unusual situations or report a bug, you can enable debug
+mode via the :envvar:`PSUTIL_DEBUG` environment variable. In this mode, psutil
+may print additional information to stderr. Usually these are non-severe error
+conditions that are ignored instead of causing a crash. Unit tests
+automatically run with debug mode enabled. On UNIX:
 
 .. code-block:: none
 
@@ -89,8 +88,8 @@ On Windows:
 Coding style
 ------------
 
-All style and formatting checks are enforced locally on each
-``git commit`` and via a GitHub Actions pipeline.
+All style and formatting checks are enforced locally on each ``git commit`` and
+via a GitHub Actions pipeline.
 
 - Python: follows `PEP-8`_, formatted and linted with ``black`` and ``ruff``.
 - C: generally follows `PEP-7`_, formatted with ``clang-format``.
@@ -98,8 +97,8 @@ All style and formatting checks are enforced locally on each
 
 The pipeline re-runs all checks for consistency (``make lint-all``).
 
-Run ``make fix-all`` before committing; it usually fixes Python issues
-(via ``black`` and ``ruff``) and C issues (via ``clang-format``).
+Run ``make fix-all`` before committing; it usually fixes Python issues (via
+``black`` and ``ruff``) and C issues (via ``clang-format``).
 
 Code organization
 -----------------
@@ -139,7 +138,6 @@ Make a pull request
 - Push: ``git push origin new-feature``
 - Open a PR and sign off your work (see `CONTRIBUTING.md`_).
 
-
 Continuous integration
 ----------------------
 
@@ -167,8 +165,8 @@ Documentation
 
 .. note::
 
-   ``/latest`` may contain unreleased changes. Use ``/stable`` for
-   production docs.
+   ``/latest`` may contain unreleased changes. Use ``/stable`` for production
+   docs.
 
 Releases
 --------

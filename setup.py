@@ -77,6 +77,7 @@ TEST_DEPS = [
 # `make install-pydeps-lint`.
 LINT_DEPS = [
     "black",
+    "rstwrap",
     "ruff",
     "sphinx-lint",
     "toml-sort",

@@ -5,9 +5,9 @@ Stdlib equivalents
 ==================
 
 This page maps psutil's Python API to the closest equivalent in the Python
-standard library. This is useful for understanding what psutil replaces and
-how the two APIs differ. The most common difference is that stdlib functions
-only operate on the **current process**, while psutil works on **any process**
+standard library. This is useful for understanding what psutil replaces and how
+the two APIs differ. The most common difference is that stdlib functions only
+operate on the **current process**, while psutil works on **any process**
 (PID).
 
 .. seealso::

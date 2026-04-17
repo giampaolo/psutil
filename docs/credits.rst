@@ -24,8 +24,8 @@ Top contributors
 Donations
 ---------
 
-The following individuals and organizations have supported psutil
-development through donations.
+The following individuals and organizations have supported psutil development
+through donations.
 
 Companies:
 
