@@ -194,6 +194,21 @@ class TestCpuAPIs(MacosTestCase):
         assert freq.min * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_min")
         assert freq.max * 1000 * 1000 == sysctl("sysctl hw.cpufrequency_max")
 
+    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not available")
+    def test_cpu_freq_bounds(self):
+        # Plausibility bounds in MHz. Guards against unit-conversion
+        # regressions (cf. issue #2642, M4 reporting values 1000x too low).
+        # Observed Apple Silicon range M1-M5: ~600 MHz to ~4.6 GHz; the
+        # upper bound leaves generous headroom for future generations
+        # while still catching 1000x-off mistakes by orders of magnitude.
+        MIN_PLAUSIBLE_MHZ = 500
+        MAX_PLAUSIBLE_MHZ = 20000
+
+        freq = psutil.cpu_freq()
+        assert MIN_PLAUSIBLE_MHZ <= freq.min <= MAX_PLAUSIBLE_MHZ, freq
+        assert MIN_PLAUSIBLE_MHZ <= freq.max <= MAX_PLAUSIBLE_MHZ, freq
+        assert freq.min <= freq.current <= freq.max, freq
+
 
 class TestDiskAPIs(MacosTestCase):
 
