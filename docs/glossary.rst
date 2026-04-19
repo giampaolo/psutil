@@ -139,8 +139,8 @@ Glossary
 
       An I/O scheduling priority that controls how much disk bandwidth a
       process receives. On Linux three scheduling classes are supported:
-      ``IOPRIO_CLASS_RT`` (real-time), ``IOPRIO_CLASS_BE`` (best-effort,
-      the default), and ``IOPRIO_CLASS_IDLE``. See
+      :data:`IOPRIO_CLASS_RT` (real-time), :data:`IOPRIO_CLASS_BE`
+      (best-effort, the default), and :data:`IOPRIO_CLASS_IDLE`. See
       :meth:`Process.ionice`.
 
    logical CPU

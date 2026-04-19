@@ -10,16 +10,17 @@
     </div>
   {%- endif %}
 
-  <hr/>
-
   <div role="contentinfo">
   {%- block contentinfo %}
     <div class="footer-content">
-      <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" class="footer-logo" alt="psutil logo">
       <div class="footer-text">
-        &#169 Copyright {{ copyright }} · Last updated on: <i>{{ last_updated }}</i> ·
-        Built with <a href="https://www.sphinx-doc.org">Sphinx</a> ·
-        <a href="{{ pathto('about') }}">Keyboard Shortcuts</a>
+        <span>&copy; {{ copyright }}</span>
+        <span>Updated: {{ last_updated }}</span>
+        <span><a href="{{ pathto('about') }}">Tips</a></span>
+        {%- if pagename not in ("search", "genindex", "py-modindex") %}
+        <span><a href="https://github.com/giampaolo/psutil/edit/master/docs/{{ pagename }}.rst"
+                 rel="noopener noreferrer" target="_blank">Edit on GitHub</a></span>
+        {%- endif %}
       </div>
     </div>
   {%- endblock %}

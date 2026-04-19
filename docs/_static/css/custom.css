@@ -47,12 +47,12 @@
 
     /* links */
     --links: #2980b9;
-    --links-visited: #9b59b6;
+    --links-visited: #2980b9;  /* same as --links: visited state disabled site-wide */
     --links-api: #336699;
     --links-api-underline: var(--links-api);
 
     /* inline code */
-    --inline-code-bg: rgba(175, 184, 193, 0.2);
+    --inline-code-bg: rgba(175, 184, 193, 0.17);
     --inline-code-text: inherit;
 
     /* top bar */
@@ -77,6 +77,7 @@
     --adm-title: black;
     --adm-note-bg: var(--surface-sunken);
     --adm-note-border: #ccc;
+    --adm-note-accent-border: #2980b9;
     --adm-seealso-accent-border: #336699;
     --adm-seealso-link: #2a6099;
     --adm-seealso-bg: #f3f9fe;
@@ -112,6 +113,10 @@
     /* cards */
     --card-bg: #fff;
     --card-border: #b0cfe8;
+
+    /* primary CTA button */
+    --cta-fill: color-mix(in srgb, var(--links) 78%, #666 22%);
+    --cta-fill-hover: var(--links);
 }
 
 /* ================================================================== */
@@ -119,14 +124,13 @@
 /* ================================================================== */
 
 [data-theme="dark"] {
-    /* page */
-    --body-bg: #1e1e1e;
-    --content-bg: #1e1e1e;
-    --topbar-bg: #272727;
-    --sidebar-bg: #272727;
-    --sidebar-top-bg: #272727;
-    --surface-sunken: #2a2a2a;
-    --surface-raised: #2e2e2e;
+    --body-bg: #141414;
+    --content-bg: #212121;
+    --topbar-bg: #181818;
+    --sidebar-bg: #181818;
+    --sidebar-top-bg: #181818;
+    --surface-sunken: #272727;
+    --surface-raised: #2c2c2c;
     --border: #3a3a3a;
 
     /* text */
@@ -136,7 +140,7 @@
     --headings-underline: #3a3a3a;
 
     /* inline code */
-    --inline-code-bg: #2a2f36;
+    --inline-code-bg: rgba(255, 255, 255, 0.08);
     --inline-code-text: #e6e6e6;
 
     /* ntuple fields */
@@ -144,7 +148,7 @@
 
     /* links */
     --links: #6ab0de;
-    --links-visited: #c5a3ff;
+    --links-visited: #6ab0de;  /* same as --links: visited state disabled site-wide */
     --links-api: #7ecfff;
     --links-api-underline: #7ecfff;
 
@@ -152,9 +156,10 @@
     --adm-title: #ddd;
     --adm-note-bg: #2a2a2a;
     --adm-note-border: #4a4a4a;
+    --adm-note-accent-border: #6ab0de;
     --adm-seealso-accent-border: #5599cc;
     --adm-seealso-link: #90c8ee;
-    --adm-seealso-bg: #243a4e;
+    --adm-seealso-bg: #1d2e40;
     --adm-seealso-border: #2d5280;
     --adm-seealso-hover: #8bbfe0;
     --adm-seealso-title: #7ab0d9;
@@ -165,7 +170,7 @@
 
     /* version directives */
     --versionadded-color: #5ec46e;
-    --versionchanged-color: #c8963a;
+    --versionchanged-color: #b0873a;
     --deprecated-color: #d06060;
 
     /* tables */
@@ -178,6 +183,9 @@
     --card-bg: #252525;
     --card-border: #2a4a6a;
 
+    /* primary CTA button */
+    --cta-fill: #2d6fa8;
+    --cta-fill-hover: #3a85c4;
 }
 
 /* ================================================================== */
@@ -292,8 +300,28 @@
 .top-bar-link:link,
 .top-bar-link:visited,
 .top-bar-version:link,
-.top-bar-version:visited {
+.top-bar-version:visited,
+.top-bar-text:link,
+.top-bar-text:visited {
     color: var(--topbar-fg);
+}
+
+.top-bar-text {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background var(--theme-transition), color var(--theme-transition);
+}
+
+.top-bar-text:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--topbar-fg-active);
+    text-decoration: none;
 }
 
 .top-bar-version:hover {
@@ -356,6 +384,78 @@
     vertical-align: middle;
 }
 
+/* Primary + secondary call-to-action buttons below the description cards. */
+.hero-cta {
+    margin: 2.5em 0 3em;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.rst-content a.hero-btn,
+.rst-content a.hero-btn:visited {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.55em 1.4em;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-decoration: none !important;
+    border: 1px solid transparent;
+    transition: background var(--theme-transition),
+                color var(--theme-transition),
+                border-color var(--theme-transition),
+                box-shadow var(--theme-transition),
+                transform 0.08s ease;
+}
+
+.rst-content a.hero-btn:active {
+    transform: translateY(1px);
+}
+
+.rst-content a.hero-btn i.fa {
+    font-size: 0.8em;
+    transition: transform 0.15s ease;
+}
+
+.rst-content a.hero-btn:hover i.fa-arrow-right {
+    transform: translateX(3px);
+}
+
+.rst-content a.hero-btn-primary,
+.rst-content a.hero-btn-primary:visited {
+    background: var(--cta-fill);
+    color: #fff !important;
+    border-color: var(--cta-fill);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.rst-content a.hero-btn-primary:hover {
+    background: var(--cta-fill-hover);
+    border-color: var(--cta-fill-hover);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .rst-content a.hero-btn-primary,
+[data-theme="dark"] .rst-content a.hero-btn-primary:visited {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* secondary: outlined, same palette */
+.rst-content a.hero-btn-secondary,
+.rst-content a.hero-btn-secondary:visited {
+    background: transparent;
+    color: var(--links) !important;
+    border-color: var(--links);
+}
+
+.rst-content a.hero-btn-secondary:hover {
+    background: var(--surface-sunken);
+}
+
 .sponsor-table {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -395,11 +495,6 @@
     text-align: center;
 }
 
-.home-page .sponsor-table {
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-
 .sponsor-logo {
     filter: grayscale(100%) opacity(100%);
     transition: filter 0.2s;
@@ -413,20 +508,37 @@
 
 .home-platforms {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6em;
     margin: 1em 0 3em;
 }
 
-.home-platform-label {
-    font-size: 0.92rem;
+.rst-content a.home-platforms-label,
+.rst-content a.home-platforms-label:visited {
+    font-size: 0.82rem;
     color: var(--text-muted);
-    font-weight: 600;
-    align-self: center;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: color var(--theme-transition);
 }
 
-.home-platform-pill {
+.rst-content a.home-platforms-label:hover {
+    color: var(--content-text);
+    text-decoration: none;
+}
+
+.home-platforms-pills {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rst-content a.home-platform-pill,
+.rst-content a.home-platform-pill:visited {
     display: inline-block;
     padding: 3px 12px;
     border: 1px solid var(--border);
@@ -434,6 +546,17 @@
     font-size: 0.82rem;
     color: var(--text-muted);
     background: var(--surface-sunken);
+    text-decoration: none !important;
+    transition: border-color var(--theme-transition),
+                color var(--theme-transition),
+                background var(--theme-transition);
+}
+
+.rst-content a.home-platform-pill:hover {
+    border-color: var(--text-muted);
+    color: var(--content-text);
+    background: var(--surface-raised);
+    text-decoration: none !important;
 }
 
 /* Feature icon cards ------------------------------------------------ */
@@ -570,63 +693,42 @@
 }
 
 .home-desc-card:nth-child(1) .home-desc-card-icon { color: #2a6a90; }
-.home-desc-card:nth-child(2) .home-desc-card-icon { color: #c07800; }
+.home-desc-card:nth-child(2) .home-desc-card-icon { color: #8a7550; }
 .home-desc-card:nth-child(3) .home-desc-card-icon { color: #5d6d7e; }
+
+.home-desc-card:nth-child(1),
+.home-desc-card:nth-child(2),
+.home-desc-card:nth-child(3) {
+    position: relative;
+    overflow: hidden;
+}
+
+.home-desc-card:nth-child(1),
+.home-desc-card:nth-child(3) {
+    background: #f0f6fb;
+}
+
+.home-desc-card:nth-child(2) {
+    background: #faf5ec;
+}
+
+[data-theme="dark"] .home-desc-card:nth-child(1),
+[data-theme="dark"] .home-desc-card:nth-child(3) {
+    background: #1a2430;
+}
+
+[data-theme="dark"] .home-desc-card:nth-child(2) {
+    background: #1f1c14;
+}
 
 .home-desc-card:nth-child(1) .home-desc-card-header {
     background: linear-gradient(to bottom, #6aafd4, #4a90b8);
     border-bottom-color: #3a7aa0;
 }
 
-.home-desc-card:nth-child(1) {
-    background: #f0f6fb;
-    position: relative;
-    overflow: hidden;
-}
-
-[data-theme="dark"] .home-desc-card:nth-child(1) {
-    background: #1a2430;
-}
-
-.home-desc-card:nth-child(1)::after {
-    content: '\f085';
-    font-family: 'FontAwesome';
-    font-size: 7rem;
-    position: absolute;
-    bottom: -0.75rem;
-    right: 0.5rem;
-    opacity: 0.07;
-    color: #2a6a90;
-    pointer-events: none;
-    line-height: 1;
-}
-
 .home-desc-card:nth-child(2) .home-desc-card-header {
-    background: linear-gradient(to bottom, #f5ca68, #e8a830);
-    border-bottom-color: #c98e20;
-}
-
-.home-desc-card:nth-child(2) {
-    background: #fdf8ee;
-    position: relative;
-    overflow: hidden;
-}
-
-[data-theme="dark"] .home-desc-card:nth-child(2) {
-    background: #221a08;
-}
-
-.home-desc-card:nth-child(2)::after {
-    content: '\f080';
-    font-family: 'FontAwesome';
-    font-size: 7rem;
-    position: absolute;
-    bottom: -0.75rem;
-    right: 0.5rem;
-    opacity: 0.07;
-    color: #c07800;
-    pointer-events: none;
-    line-height: 1;
+    background: linear-gradient(to bottom, #d9c49a, #b8a078);
+    border-bottom-color: #8a7550;
 }
 
 .home-desc-card:nth-child(3) .home-desc-card-header {
@@ -634,27 +736,32 @@
     border-bottom-color: #637888;
 }
 
-.home-desc-card:nth-child(3) {
-    background: #f0f6fb;
-    position: relative;
-    overflow: hidden;
-}
-
-[data-theme="dark"] .home-desc-card:nth-child(3) {
-    background: #1a2430;
-}
-
-.home-desc-card:nth-child(3)::after {
-    content: '\f0ac';
+.home-desc-card:nth-child(1)::before,
+.home-desc-card:nth-child(2)::before,
+.home-desc-card:nth-child(3)::before {
     font-family: 'FontAwesome';
     font-size: 7rem;
     position: absolute;
     bottom: -0.75rem;
     right: 0.5rem;
     opacity: 0.07;
-    color: #5d6d7e;
     pointer-events: none;
     line-height: 1;
+}
+
+.home-desc-card:nth-child(1)::before {
+    content: '\f085';
+    color: #2a6a90;
+}
+
+.home-desc-card:nth-child(2)::before {
+    content: '\f080';
+    color: #8a7550;
+}
+
+.home-desc-card:nth-child(3)::before {
+    content: '\f0ac';
+    color: #5d6d7e;
 }
 
 .home-desc-card-header .home-desc-card-title {
@@ -723,6 +830,9 @@
 html {
     background: var(--body-bg);
     scroll-padding-top: 48px;
+    /* Always reserve scrollbar space so layout doesn't move on refresh
+       (happens for search results) */
+    scrollbar-gutter: stable;
 }
 
 body {
@@ -783,13 +893,10 @@ body {
 /* Navigation                                                         */
 /* ================================================================== */
 
-/* hide top navigation, keep footer navigation */
+/* Hide the RTD top navigation (breadcrumb). On blog pages
+   _templates/breadcrumbs.html renders a custom "Blog" banner instead.*/
 .rst-content > div[role="navigation"] {
     display: none;
-}
-
-footer div[role="navigation"][aria-label="Footer"] {
-    display: block;
 }
 
 /* ================================================================== */
@@ -971,6 +1078,9 @@ body,
 /* Footer                                                           */
 /* ================================================================== */
 
+footer div[role="navigation"][aria-label="Footer"] {
+    display: block;
+}
 
 .footer-content {
     display: flex;
@@ -978,29 +1088,70 @@ body,
     gap: 12px;
 }
 
-.footer-logo {
-    height: 1.6em !important;
-    width: auto !important;
-    flex-shrink: 0;
-    padding-bottom: 5px;
-    margin-right: -5px;
-    filter: grayscale(100%) opacity(0.5);
+.footer-text {
+    color: var(--text-muted);
+    opacity: 0.7;
+    line-height: 1.4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em 0.7em;
 }
 
-.footer-text {
-    color: #999 !important;
-    /*font-size: 0.88em !important;*/
-    line-height: 1.4;
+/* Middot separator between items — attached to the end of each
+   item (except the last) so wrapping never leaves an orphan `·`
+   at the start of a line. */
+.footer-text > span:not(:last-child)::after {
+    content: "·";
+    margin-left: 0.7em;
+    color: var(--text-muted);
+    opacity: 0.7;
 }
 
 .footer-text a,
-.footer-text a:visited,
-.footer-text a:hover {
-    color: var(--links) !important;
+.footer-text a:visited {
+    color: var(--text-muted) !important;
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 3px;
 }
 
-footer hr {
-    border-color: var(--border) !important;
+.footer-text a:hover {
+    color: var(--links) !important;
+    text-decoration-color: currentColor;
+}
+
+/* RSS icon anchored to the right of the footer row. Icon-only link,
+   so :visited must not change its color (per the theme convention
+   for button/icon links). */
+footer a.footer-rss,
+footer a.footer-rss:visited {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    color: #555;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] footer a.footer-rss,
+[data-theme="dark"] footer a.footer-rss:visited {
+    color: #bbb;
+}
+
+footer a.footer-rss:hover {
+    color: var(--links);
+}
+
+a.footer-rss svg {
+    width: 1.4em;
+    height: 1.4em;
+    margin-top: -4px;
+}
+
+footer [role="contentinfo"] {
+    margin-top: 2em;
+    padding-top: 1.2em;
+    border-top: 1px solid var(--border);
 }
 
 /* Prev / Next navigation buttons */
@@ -1044,20 +1195,20 @@ h4, h4 a {
 }
 
 h1 {
-    font-size: 2.6rem;
+    font-size: 2.2rem;
 }
 
 h2 {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
 }
 
 h3 {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     padding: 5px 0 5px 0;
 }
 
 h4 {
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     padding: 5px 0 5px 0;
 }
 
@@ -1092,7 +1243,7 @@ h4 {
 }
 
 .document th {
-    padding: 4px 8px !important;
+    padding: 6px 10px !important;
     font-weight: 600;
 }
 
@@ -1101,7 +1252,7 @@ h4 {
 }
 
 .document td {
-    padding: 4px 8px !important;
+    padding: 6px 10px !important;
 }
 
 .document td p {
@@ -1137,12 +1288,33 @@ h4 {
     overflow-wrap: break-word;
 }
 
+/* list-tables (used by adoption.rst): respect declared :widths:
+   ratios and wrap content instead of clipping or horizontal-scrolling. */
+.rst-content table.docutils {
+    table-layout: fixed;
+    width: 100%;
+}
 
-/* adoption page logos */
-.document td img[alt$="-logo"] {
-    height: 20px !important;
-    width: 20px !important;
+.rst-content table.docutils th,
+.rst-content table.docutils td {
+    white-space: normal !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* shields.io star badges: light dim so they recede a bit. */
+.rst-content td img[alt$="-stars"] {
+    opacity: 0.9;
     vertical-align: middle;
+}
+
+/* Shrink section headers so they don't dominate. */
+.rst-content:has(#who-uses-psutil) h2 {
+    font-size: 1.3rem;
+    margin-top: 2em;
+    margin-bottom: 0.4em;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid var(--border);
 }
 
 /* ================================================================== */
@@ -1174,38 +1346,36 @@ h4 {
     color: var(--links-visited);
 }
 
-/* ================================================================== */
-/* API signatures                                                     */
-/* ================================================================== */
-
-.rst-content dl:not(.docutils) {
-    margin: 0px 0px 0px 0px !important;
+a.external[href^="#"] {
+    text-decoration: none;
+    color: inherit;
 }
 
-.rst-content dl.py + dl.py > dt {
-    margin-top: 28px !important;
+a.reference.external:not([href*="docs.python.org"]):not(:has(img)) {
+    text-decoration: none;
 }
 
-.rst-content dl:not(.docutils) dt {
-    color: var(--func-sig-text);
+/* external links: show a small icon after the link text */
+a.reference.external:not(:has(img))::after {
+    content: '\f08e';
+    font-family: FontAwesome;
+    font-size: 0.4em;
+    margin-left: 0.3em;
+    vertical-align: super;
+    opacity: 0.6;
 }
 
-.data dd {
-    margin-bottom: 0px !important;
+/* adjust cpython API links (intersphinx) icon position */
+a.reference.external[href*="docs.python.org"]:not(:has(img))::after {
+    margin-left: 0.2em;
 }
 
-.data .descname {
-    border-right:10px !important;
-}
-
-.function .descclassname,
-.class .descclassname {
-    font-weight: normal !important;
-}
-
-.sig-paren {
-    padding-left: 2px;
-    padding-right: 2px;
+/* When the link wraps inline code, the <code> has its own right
+   padding (.35em) which stacks with the icon's margin, making the
+   icon look detached. Pull it closer. */
+a.reference.external:has(> code):not(:has(img))::after,
+a.reference.external:has(> span > code):not(:has(img))::after {
+    margin-left: 0;
 }
 
 /* ================================================================== */
@@ -1259,37 +1429,6 @@ code.ntuple-field {
 }
 
 /* ================================================================== */
-/* Links                                                              */
-/* ================================================================== */
-
-a.external[href^="#"] {
-    text-decoration: none;
-    color: inherit;
-}
-
-a.reference.external:not([href*="docs.python.org"]):not(:has(img)) {
-    text-decoration: none;
-}
-
-/* external links: show a small icon */
-a.reference.external:not(:has(img))::after {
-    content: '\f08e';
-    font-family: FontAwesome;
-    font-size: 0.4em;
-    margin-left: 0.25em;
-    padding-left: 1px;
-    vertical-align: super;
-    opacity: 0.6;
-}
-
-/* adjust cpython API links (intersphinx) icon position */
-a.reference.external[href*="docs.python.org"]:not(:has(img))::after {
-    margin-left: -3px;
-    margin-right: 2px;
-    padding-left: 0;
-}
-
-/* ================================================================== */
 /* Admonitions (note, warning, tip) - styled like python doc          */
 /* ================================================================== */
 
@@ -1300,7 +1439,7 @@ div.admonition {
     padding: var(--adm-padding-y) 10px !important;
     background-color: var(--adm-note-bg) !important;
     border: 1px solid var(--adm-note-border) !important;
-    border-left: 3px solid var(--adm-note-border) !important;
+    border-left: 4px solid var(--adm-note-accent-border) !important;
     border-radius: var(--border-radius) !important;
 }
 
@@ -1408,6 +1547,18 @@ div.deprecated .versionmodified {
 /* Search results page                                                */
 /* ================================================================== */
 
+/* ---- Result cards ---- */
+
+/* "Search finished, found N pages...": increase size/weight */
+#search-results p.search-summary {
+    font-size: 1.15em !important;
+    font-weight: 500 !important;
+    margin: 0 0 1.2em 0 !important;
+    padding-bottom: 0.8em !important;
+    border-bottom: 1px solid var(--border);
+    color: var(--headings);
+}
+
 #search-results ul {
     padding: 8px 0;
     display: flex;
@@ -1422,7 +1573,7 @@ div.deprecated .versionmodified {
     display: flex !important;
     flex-wrap: wrap;
     align-items: flex-start;
-    column-gap: 8px;
+    column-gap: 6px;
     line-height: normal !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 6px;
@@ -1452,12 +1603,60 @@ div.deprecated .versionmodified {
     box-shadow: 0 0 0 3px rgba(106, 176, 222, 0.2);
 }
 
-/* icon */
+/* ---- Card content ---- */
+
+/* link title — takes remaining space on first row. Result cards look
+   like buttons/chips, so don't let :visited turn them violet. Force
+   a single title color so result rows don't look "rainbow" based on
+   link target (icons are the per-type color cue). */
+#search-results li > a,
+#search-results li > a:visited,
+#search-results li > a *,
+#search-results li > a:visited * {
+    flex: 1;
+    font-weight: bold;
+    margin-bottom: 0;
+    color: var(--links) !important;
+}
+
+/* description text e.g. "(Python function, in API reference)" */
+#search-results li > span {
+    font-size: 0.75em;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.1em 0.55em;
+    align-self: center;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+/* context paragraph: full width, aligned with the title. */
+#search-results li > p.context {
+    flex-basis: 100%;
+    margin: 0 0 0 28px !important;
+    font-size: 0.90em !important;
+    color: var(--text-muted);
+    opacity: 0.8;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ---- Icons: generic (Sphinx SearchResultKind) ---- */
+
 #search-results li::before {
     font-family: FontAwesome;
-    font-size: 13px;
+    font-size: 18px;
     flex-shrink: 0;
-    margin-top: 3px;
+    margin-top: 1px;
+    width: 1.2em;
+    text-align: center;
 }
 
 /* page title match */
@@ -1481,27 +1680,72 @@ div.deprecated .versionmodified {
     color: #e5a825;
 }
 
-/* link title — takes remaining space on first row */
-#search-results li > a {
-    flex: 1;
-    font-weight: bold;
-    margin-bottom: 0;
+/* ---- Icons: page-specific overrides ---- */
+
+/* blog post: RSS feed */
+#search-results li:has(> a[href^="blog/"])::before,
+#search-results li:has(> a[href*="/blog/"])::before {
+    content: "\f09e";
+    color: #0d9488;
 }
 
-/* description text e.g. "(Python function, in API reference)" */
-#search-results li > span {
-    font-size: 0.82em;
+/* FAQ: question-in-circle */
+#search-results li:has(> a[href^="faq.html"])::before,
+#search-results li:has(> a[href*="/faq.html"])::before {
+    content: "\f059";
+    color: #2563eb;
 }
 
-/* context paragraph — full width, indented past the icon */
-#search-results li > p.context {
-    flex-basis: 100%;
-    margin: 0 0 0 20px !important;
-    font-size: 0.90em !important;
-    color: var(--text-muted);
-    opacity: 0.8;
-    line-height: 1.5;
+[data-theme="dark"] #search-results li:has(> a[href^="faq.html"])::before,
+[data-theme="dark"] #search-results li:has(> a[href*="/faq.html"])::before {
+    color: #60a5fa;
 }
+
+/* changelog: history / clock */
+#search-results li:has(> a[href^="changelog.html"])::before,
+#search-results li:has(> a[href*="/changelog.html"])::before {
+    content: "\f1da";
+    color: #a16207;
+}
+
+/* install: download arrow */
+#search-results li:has(> a[href^="install.html"])::before,
+#search-results li:has(> a[href*="/install.html"])::before {
+    content: "\f019";
+    color: #16a34a;
+}
+
+/* recipes: lightbulb */
+#search-results li:has(> a[href^="recipes.html"])::before,
+#search-results li:has(> a[href*="/recipes.html"])::before {
+    content: "\f0eb";
+    color: #eab308;
+}
+
+/* migration: exchange arrows */
+#search-results li:has(> a[href^="migration.html"])::before,
+#search-results li:has(> a[href*="/migration.html"])::before {
+    content: "\f0ec";
+    color: #7c3aed;
+}
+
+/* glossary: list with descriptions */
+#search-results li:has(> a[href^="glossary.html"])::before,
+#search-results li:has(> a[href*="/glossary.html"])::before {
+    content: "\f022";
+    color: #475569;
+}
+
+/* API reference: gears. Different ahn individual API symbol ⚙️. */
+#search-results li:not(.kind-object):has(> a[href^="api.html"])::before,
+#search-results li:not(.kind-object):has(> a[href*="/api.html"])::before,
+#search-results li:not(.kind-object):has(> a[href^="api-overview.html"])::before,
+#search-results li:not(.kind-object):has(> a[href*="/api-overview.html"])::before {
+    content: "\f085";
+    color: var(--links-api);
+}
+
+/* ---- Search-term highlighting ---- */
 
 span.highlighted {
     background-color: #fff3b0 !important;
@@ -1520,6 +1764,23 @@ span.highlighted {
 /* ================================================================== */
 /* API function / class signatures                                    */
 /* ================================================================== */
+
+.rst-content dl:not(.docutils) {
+    margin: 0px 0px 0px 0px !important;
+}
+
+.rst-content dl.py + dl.py > dt {
+    margin-top: 28px !important;
+}
+
+.data dd {
+    margin-bottom: 0px !important;
+}
+
+.sig-paren {
+    padding-left: 2px;
+    padding-right: 2px;
+}
 
 /* The container/background bar */
 .rst-content dl:not(.docutils) dt {
@@ -1555,6 +1816,35 @@ span.highlighted {
 }
 
 /* ================================================================== */
+/* Glossary                                                           */
+/* ================================================================== */
+
+/* Glossary <dl class="glossary"> inherits the function-signature
+   styling above (via dl:not(.docutils) dt). Strip it: glossary terms
+   are definitions, not API signatures. Selector is placed after the
+   API rules so it wins the cascade at equal specificity. */
+.rst-content dl.glossary > dt {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 1.1em !important;
+    font-weight: 600 !important;
+    color: var(--headings) !important;
+    margin: 1.6em 0 0.3em 0 !important;
+}
+
+.rst-content dl.glossary > dd {
+    margin: 0 0 1em 1.5em !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.rst-content dl.glossary > dd p {
+    margin: 0 0 0.5em 0 !important;
+}
+
+/* ================================================================== */
 /* Genindex (Index page)                                              */
 /* ================================================================== */
 
@@ -1576,6 +1866,136 @@ span.highlighted {
     opacity: 0.8;
 }
 
+.rst-content table.genindextable a:visited,
+.rst-content table.genindextable a:visited strong,
+.rst-content .genindex-jumpbox a:visited,
+.rst-content .genindex-jumpbox a:visited strong {
+    color: var(--links) !important;
+}
+
+.rst-content table.genindextable {
+    border-collapse: separate;
+    border-spacing: 3em 0;
+    margin-left: -3em;
+    margin-right: -3em;
+}
+
+.rst-content:has(.genindex-jumpbox) h2 {
+    font-size: 1.3rem;
+    margin: 1.2em 0 0.4em 0;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* ================================================================== */
+/* Funding page                                                       */
+/* ================================================================== */
+
+.rst-content #how-to-fund dl.simple {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7em;
+    margin: 1em 0 1.5em 0;
+}
+
+.rst-content #how-to-fund dl.simple dt {
+    background: var(--surface-sunken) !important;
+    border: 1px solid var(--border) !important;
+    border-left: 3px solid var(--links) !important;
+    border-top: none !important;
+    border-radius: var(--border-radius);
+    padding: 0.6em 0.9em !important;
+    font-size: 1.02em !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+}
+
+.rst-content #how-to-fund dl.simple dd {
+    margin: 0.2em 0 0 1.1em !important;
+    color: var(--text-muted);
+}
+
+.rst-content #how-to-fund dl.simple dd p {
+    margin: 0 !important;
+}
+
+.rst-content a.reference.external[href^="mailto:"]:visited,
+.rst-content a.reference.external[href^="mailto:"]:visited * {
+    color: var(--links) !important;
+}
+
+/* Benefits list: swap plain bullets for checkmarks — each item is
+   something the sponsor gets. Aesthetic match with the channel
+   cards above. */
+.rst-content #for-companies ul.simple {
+    list-style: none !important;
+    padding-left: 0;
+    margin: 0.8em 0 1.2em 0;
+}
+
+.rst-content #for-companies ul.simple > li {
+    list-style: none !important;
+    list-style-type: none !important;
+    position: relative;
+    padding: 0.15em 0 0.15em 1.8em;
+    margin: 0 !important;
+}
+
+.rst-content #for-companies ul.simple > li::before {
+    content: "\f00c";  /* FontAwesome checkmark */
+    font-family: FontAwesome;
+    position: absolute;
+    left: 0;
+    top: 0.25em;
+    color: var(--headings);
+    font-size: 0.9em;
+}
+
+/* Current sponsors section: give the logo row a subtle surface so
+   it reads as an intentional block rather than free-floating SVGs. */
+.rst-content table.sponsor-table {
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    margin: 1em auto 0.5em auto;
+    padding: 0.8em 1.2em;
+    display: table;
+}
+
+.rst-content table.sponsor-table,
+.rst-content table.sponsor-table tr,
+.rst-content table.sponsor-table td {
+    background: transparent !important;
+    border: none !important;
+}
+
+.sponsor-cta-wrap {
+    text-align: center;
+    margin-top: 1em;
+}
+
+.rst-content a.sponsor-cta,
+.rst-content a.sponsor-cta:visited {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-decoration: underline dashed;
+    text-decoration-color: var(--border);
+    text-underline-offset: 3px;
+    opacity: 0.8;
+    transition: color var(--theme-transition),
+                opacity var(--theme-transition),
+                text-decoration-color var(--theme-transition);
+}
+
+.rst-content a.sponsor-cta:hover {
+    color: var(--links);
+    opacity: 1;
+    text-decoration: underline;
+    text-decoration-color: var(--links);
+}
+
 /* ================================================================== */
 /* Syntax highlight — imported Monokai rules                          */
 /* ================================================================== */
@@ -1589,7 +2009,7 @@ span.highlighted {
 [data-theme="dark"] .highlight .k       { color: #66D9EF; }  /* Keyword */
 [data-theme="dark"] .highlight .l       { color: #AE81FF; }  /* Literal */
 [data-theme="dark"] .highlight .n       { color: #F8F8F2; }  /* Name */
-[data-theme="dark"] .highlight .o       { color: #FF4689; }  /* Operator */
+[data-theme="dark"] .highlight .o       { color: #F8F8F2; }  /* Operator */
 [data-theme="dark"] .highlight .x       { color: #F8F8F2; }  /* Other */
 [data-theme="dark"] .highlight .p       { color: #F8F8F2; }  /* Punctuation */
 [data-theme="dark"] .highlight .ch      { color: #959077; }  /* Comment.Hashbang */
@@ -1603,7 +2023,7 @@ span.highlighted {
 [data-theme="dark"] .highlight .ges     { color: #F8F8F2; font-weight: bold; font-style: italic; }  /* Generic.EmphStrong */
 [data-theme="dark"] .highlight .gr      { color: #F8F8F2; }  /* Generic.Error */
 [data-theme="dark"] .highlight .gh      { color: #F8F8F2; }  /* Generic.Heading */
-[data-theme="dark"] .highlight .gi      { color: #A6E22E; }  /* Generic.Inserted */
+[data-theme="dark"] .highlight .gi      { color: #9ccfa5; }  /* Generic.Inserted */
 /* .go, .gp: overridden in the REPL theme sections above */
 [data-theme="dark"] .highlight .gs      { color: #F8F8F2; font-weight: bold; }  /* Generic.Strong */
 [data-theme="dark"] .highlight .gu      { color: #959077; }  /* Generic.Subheading */
@@ -1614,51 +2034,51 @@ span.highlighted {
 [data-theme="dark"] .highlight .kp      { color: #66D9EF; }  /* Keyword.Pseudo */
 [data-theme="dark"] .highlight .kr      { color: #66D9EF; }  /* Keyword.Reserved */
 [data-theme="dark"] .highlight .kt      { color: #66D9EF; }  /* Keyword.Type */
-[data-theme="dark"] .highlight .ld      { color: #E6DB74; }  /* Literal.Date */
-[data-theme="dark"] .highlight .m       { color: #AE81FF; }  /* Literal.Number */
-[data-theme="dark"] .highlight .s       { color: #E6DB74; }  /* Literal.String */
-[data-theme="dark"] .highlight .na      { color: #A6E22E; }  /* Name.Attribute */
+[data-theme="dark"] .highlight .ld      { color: #d8c88a; }  /* Literal.Date */
+[data-theme="dark"] .highlight .m       { color: #b9a5e0; }  /* Literal.Number */
+[data-theme="dark"] .highlight .s       { color: #d8c88a; }  /* Literal.String */
+[data-theme="dark"] .highlight .na      { color: #9ccfa5; }  /* Name.Attribute */
 [data-theme="dark"] .highlight .nb      { color: #F8F8F2; }  /* Name.Builtin */
-[data-theme="dark"] .highlight .nc      { color: #A6E22E; }  /* Name.Class */
+[data-theme="dark"] .highlight .nc      { color: #9ccfa5; }  /* Name.Class */
 [data-theme="dark"] .highlight .no      { color: #66D9EF; }  /* Name.Constant */
-[data-theme="dark"] .highlight .nd      { color: #A6E22E; }  /* Name.Decorator */
+[data-theme="dark"] .highlight .nd      { color: #9ccfa5; }  /* Name.Decorator */
 [data-theme="dark"] .highlight .ni      { color: #F8F8F2; }  /* Name.Entity */
-[data-theme="dark"] .highlight .ne      { color: #A6E22E; }  /* Name.Exception */
-[data-theme="dark"] .highlight .nf      { color: #A6E22E; }  /* Name.Function */
+[data-theme="dark"] .highlight .ne      { color: #9ccfa5; }  /* Name.Exception */
+[data-theme="dark"] .highlight .nf      { color: #9ccfa5; }  /* Name.Function */
 [data-theme="dark"] .highlight .nl      { color: #F8F8F2; }  /* Name.Label */
 [data-theme="dark"] .highlight .nn      { color: #F8F8F2; }  /* Name.Namespace */
-[data-theme="dark"] .highlight .nx      { color: #A6E22E; }  /* Name.Other */
+[data-theme="dark"] .highlight .nx      { color: #9ccfa5; }  /* Name.Other */
 [data-theme="dark"] .highlight .py      { color: #F8F8F2; }  /* Name.Property */
 [data-theme="dark"] .highlight .nt      { color: #FF4689; }  /* Name.Tag */
 [data-theme="dark"] .highlight .nv      { color: #F8F8F2; }  /* Name.Variable */
-[data-theme="dark"] .highlight .ow      { color: #FF4689; }  /* Operator.Word */
+[data-theme="dark"] .highlight .ow      { color: #66D9EF; }  /* Operator.Word */
 [data-theme="dark"] .highlight .pm      { color: #F8F8F2; }  /* Punctuation.Marker */
 [data-theme="dark"] .highlight .w       { color: #F8F8F2; }  /* Text.Whitespace */
-[data-theme="dark"] .highlight .mb      { color: #AE81FF; }  /* Literal.Number.Bin */
-[data-theme="dark"] .highlight .mf      { color: #AE81FF; }  /* Literal.Number.Float */
-[data-theme="dark"] .highlight .mh      { color: #AE81FF; }  /* Literal.Number.Hex */
-[data-theme="dark"] .highlight .mi      { color: #AE81FF; }  /* Literal.Number.Integer */
-[data-theme="dark"] .highlight .mo      { color: #AE81FF; }  /* Literal.Number.Oct */
-[data-theme="dark"] .highlight .sa      { color: #E6DB74; }  /* Literal.String.Affix */
-[data-theme="dark"] .highlight .sb      { color: #E6DB74; }  /* Literal.String.Backtick */
-[data-theme="dark"] .highlight .sc      { color: #E6DB74; }  /* Literal.String.Char */
-[data-theme="dark"] .highlight .dl      { color: #E6DB74; }  /* Literal.String.Delimiter */
-[data-theme="dark"] .highlight .sd      { color: #E6DB74; }  /* Literal.String.Doc */
-[data-theme="dark"] .highlight .s2      { color: #E6DB74; }  /* Literal.String.Double */
+[data-theme="dark"] .highlight .mb      { color: #b9a5e0; }  /* Literal.Number.Bin */
+[data-theme="dark"] .highlight .mf      { color: #b9a5e0; }  /* Literal.Number.Float */
+[data-theme="dark"] .highlight .mh      { color: #b9a5e0; }  /* Literal.Number.Hex */
+[data-theme="dark"] .highlight .mi      { color: #b9a5e0; }  /* Literal.Number.Integer */
+[data-theme="dark"] .highlight .mo      { color: #b9a5e0; }  /* Literal.Number.Oct */
+[data-theme="dark"] .highlight .sa      { color: #d8c88a; }  /* Literal.String.Affix */
+[data-theme="dark"] .highlight .sb      { color: #d8c88a; }  /* Literal.String.Backtick */
+[data-theme="dark"] .highlight .sc      { color: #d8c88a; }  /* Literal.String.Char */
+[data-theme="dark"] .highlight .dl      { color: #d8c88a; }  /* Literal.String.Delimiter */
+[data-theme="dark"] .highlight .sd      { color: #d8c88a; }  /* Literal.String.Doc */
+[data-theme="dark"] .highlight .s2      { color: #d8c88a; }  /* Literal.String.Double */
 [data-theme="dark"] .highlight .se      { color: #AE81FF; }  /* Literal.String.Escape */
-[data-theme="dark"] .highlight .sh      { color: #E6DB74; }  /* Literal.String.Heredoc */
-[data-theme="dark"] .highlight .si      { color: #E6DB74; }  /* Literal.String.Interpol */
-[data-theme="dark"] .highlight .sx      { color: #E6DB74; }  /* Literal.String.Other */
-[data-theme="dark"] .highlight .sr      { color: #E6DB74; }  /* Literal.String.Regex */
-[data-theme="dark"] .highlight .s1      { color: #E6DB74; }  /* Literal.String.Single */
-[data-theme="dark"] .highlight .ss      { color: #E6DB74; }  /* Literal.String.Symbol */
+[data-theme="dark"] .highlight .sh      { color: #d8c88a; }  /* Literal.String.Heredoc */
+[data-theme="dark"] .highlight .si      { color: #d8c88a; }  /* Literal.String.Interpol */
+[data-theme="dark"] .highlight .sx      { color: #d8c88a; }  /* Literal.String.Other */
+[data-theme="dark"] .highlight .sr      { color: #d8c88a; }  /* Literal.String.Regex */
+[data-theme="dark"] .highlight .s1      { color: #d8c88a; }  /* Literal.String.Single */
+[data-theme="dark"] .highlight .ss      { color: #d8c88a; }  /* Literal.String.Symbol */
 [data-theme="dark"] .highlight .bp      { color: #F8F8F2; }  /* Name.Builtin.Pseudo */
-[data-theme="dark"] .highlight .fm      { color: #A6E22E; }  /* Name.Function.Magic */
+[data-theme="dark"] .highlight .fm      { color: #9ccfa5; }  /* Name.Function.Magic */
 [data-theme="dark"] .highlight .vc      { color: #F8F8F2; }  /* Name.Variable.Class */
 [data-theme="dark"] .highlight .vg      { color: #F8F8F2; }  /* Name.Variable.Global */
 [data-theme="dark"] .highlight .vi      { color: #F8F8F2; }  /* Name.Variable.Instance */
 [data-theme="dark"] .highlight .vm      { color: #F8F8F2; }  /* Name.Variable.Magic */
-[data-theme="dark"] .highlight .il      { color: #AE81FF; }  /* Literal.Number.Integer.Long */
+[data-theme="dark"] .highlight .il      { color: #b9a5e0; }  /* Literal.Number.Integer.Long */
 
 /* ================================================================== */
 /* Code blocks                                                        */
@@ -1705,8 +2125,16 @@ div[class^="highlight-"] {
 }
 
 /* background */
-[data-theme="light"] .highlight { background: #f8f8f8 !important; }
-[data-theme="dark"]  .highlight { background: #272727 !important; }
+[data-theme="light"] .highlight {
+    background: #f8f8f8 !important;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+}
+[data-theme="dark"]  .highlight {
+    background: #262626 !important;
+    border: 1px solid #3a3a3a;
+    border-radius: var(--border-radius);
+}
 
 .highlight .k      { font-weight:normal; font-style: normal !important;}  /* (, [, ], )*/
 .highlight .p      { font-weight:normal; }  /* (, [, ], )*/
@@ -1716,26 +2144,47 @@ div[class^="highlight-"] {
 /* ----------------- REPL light theme ---------------- */
 
 [data-theme="light"] .highlight-pycon .pycon-number { color:  #204A87; }
-[data-theme="light"] .highlight-pycon .pycon-string { color: brown; }
+[data-theme="light"] .highlight-pycon .pycon-string { color: #8a5a2d; }
+[data-theme="light"] .highlight .s,
+[data-theme="light"] .highlight .s1,
+[data-theme="light"] .highlight .s2,
+[data-theme="light"] .highlight .sa,
+[data-theme="light"] .highlight .sb,
+[data-theme="light"] .highlight .sc,
+[data-theme="light"] .highlight .dl,
+[data-theme="light"] .highlight .sd,
+[data-theme="light"] .highlight .sh,
+[data-theme="light"] .highlight .si,
+[data-theme="light"] .highlight .sx,
+[data-theme="light"] .highlight .sr,
+[data-theme="light"] .highlight .ss,
+[data-theme="light"] .highlight .se   { color: #6b8e4e; }  /* strings: muted olive */
 [data-theme="light"] .highlight-pycon .pycon-field  { color: #4d4d4d; background: #eff1f3}
-[data-theme="light"] .highlight .gp                 { color: #204A87; }
-[data-theme="light"] .highlight .go                 { color: #666666; }
+[data-theme="light"] .highlight .gp                 { color: #8a8a8a; }  /* >>> prompt: muted */
+[data-theme="light"] .highlight .c,
+[data-theme="light"] .highlight .ch,
+[data-theme="light"] .highlight .cm,
+[data-theme="light"] .highlight .cp,
+[data-theme="light"] .highlight .cpf,
+[data-theme="light"] .highlight .c1,
+[data-theme="light"] .highlight .cs  { color: #6a737d; font-style: normal; }  /* comments: muted gray */
+[data-theme="light"] .highlight .go                 { color: #8a8a8a; }  /* output dimmer than code */
 
 /* ----------------- REPL dark theme ---------------- */
 
-[data-theme="dark"]  .highlight-pycon .pycon-number { color: #ae81ff; }
-[data-theme="dark"]  .highlight-pycon .pycon-string { color: #e6db74; }
-[data-theme="dark"]  .highlight-pycon .pycon-field  { color: #a6e22e; }
+[data-theme="dark"]  .highlight-pycon .pycon-number { color: #b9a5e0; }
+[data-theme="dark"]  .highlight-pycon .pycon-string { color: #d8c88a; }
+[data-theme="dark"]  .highlight-pycon .pycon-field  { color: #9ccfa5; }
 [data-theme="dark"]  .highlight .gp                 { color: #888888; }  /* >>> prompt */
-[data-theme="dark"]  .highlight .go                 { color: #7a9aaa; }  /* output */
+[data-theme="dark"]  .highlight .go                 { color: #6c7a88; }  /* output dimmer than code */
 
 /* ----------------- syntax highlight ---------------- */
 
-[data-theme="dark"] .highlight .k                 { color: #ff3a6e}  /* numbers */
-[data-theme="dark"] .highlight .ow                 { color: #ff3a6e}  /* numbers */
-[data-theme="dark"] .highlight .kn                 { color: #ff3a6e}  /* numbers */
+[data-theme="dark"] .highlight .k                 { color: #f56b8b}  /* keyword */
+[data-theme="dark"] .highlight .kn                 { color: #f56b8b}  /* keyword.namespace */
 
 /* --------------------------------------------------- */
 
 [data-theme="light"] .highlight .mi                 { color: #204A87}  /* numbers */
 [data-theme="light"] .highlight .nf                 { color: #A31515}  /* functions */
+[data-theme="light"] .highlight .o                  { color: inherit; font-weight: normal; }  /* operators  */

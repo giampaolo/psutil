@@ -145,7 +145,7 @@ Status and connection fields are now enums
 Because both are :class:`enum.StrEnum` subclasses they compare equal to their
 string values, so existing comparisons like
 ``p.status() == psutil.STATUS_RUNNING`` continue to work unchanged. Code
-inspecting ``repr()`` or ``type()`` may need updating.
+inspecting :func:`repr` or :class:`type` may need updating.
 
 memory_full_info() is deprecated
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -181,7 +181,7 @@ names:
 
 It also makes it easy to pass all or a subset of attributes.
 ``process_iter(attrs=[])`` (empty list meaning "all") is now deprecated; use
-``Process.attrs`` instead:
+:attr:`Process.attrs` instead:
 
 .. code-block:: python
 

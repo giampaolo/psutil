@@ -77,7 +77,7 @@ exclude_patterns = ["_build", "_globals.rst"]
 
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
-html_last_updated_fmt = "%b %d, %Y"  # shown in the footer
+html_last_updated_fmt = "%Y-%m-%d"  # ISO date shown in the footer
 # Sidebar shows method() instead of Class.method()
 toc_object_entries_show_parents = "hide"
 

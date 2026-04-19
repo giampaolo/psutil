@@ -40,15 +40,17 @@ Assistant, Ansible, and Celery.
 .. raw:: html
 
    <div class="home-platforms">
-     <span class="home-platform-label">Runs on:</span>
-     <span class="home-platform-pill">Linux</span>
-     <span class="home-platform-pill">Windows</span>
-     <span class="home-platform-pill">macOS</span>
-     <span class="home-platform-pill">FreeBSD</span>
-     <span class="home-platform-pill">OpenBSD</span>
-     <span class="home-platform-pill">NetBSD</span>
-     <span class="home-platform-pill">Solaris</span>
-     <span class="home-platform-pill">AIX</span>
+     <a class="home-platforms-label" href="platform.html">Runs on</a>
+     <div class="home-platforms-pills">
+       <a class="home-platform-pill" href="platform.html">Linux</a>
+       <a class="home-platform-pill" href="platform.html">Windows</a>
+       <a class="home-platform-pill" href="platform.html">macOS</a>
+       <a class="home-platform-pill" href="platform.html">FreeBSD</a>
+       <a class="home-platform-pill" href="platform.html">OpenBSD</a>
+       <a class="home-platform-pill" href="platform.html">NetBSD</a>
+       <a class="home-platform-pill" href="platform.html">Solaris</a>
+       <a class="home-platform-pill" href="platform.html">AIX</a>
+     </div>
    </div>
 
 .. ============================================================================
@@ -108,10 +110,15 @@ Assistant, Ansible, and Celery.
      <div class="home-desc-card">
        <div class="home-desc-card-header">
          <i class="fa fa-plug home-desc-card-icon"></i>
-         <div class="home-desc-card-title">Cross-platform</div>
+         <div class="home-desc-card-title">Platform portability</div>
        </div>
        <p>One API for all platforms. Psutil primary goal is to abstract OS differences, so your monitoring code runs unchanged everywhere.</p>
      </div>
+   </div>
+
+   <div class="hero-cta">
+     <a class="hero-btn hero-btn-primary" href="install.html">Install <i class="fa fa-arrow-right"></i></a>
+     <a class="hero-btn hero-btn-secondary" href="api.html">API reference</a>
    </div>
 
 .. ============================================================================
