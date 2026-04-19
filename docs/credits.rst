@@ -108,6 +108,7 @@ Code contributors by year
 ~~~~
 
 * `Amaan Qureshi`_ - :gh:`2770`
+* `Bert Pluymers`_ - :gh:`2642`
 * `Felix Yan`_ - :gh:`2732`
 * `Santhosh Raju`_ - :gh:`2805`
 * `Sergey Fedorov`_ - :gh:`2701`
@@ -459,6 +460,7 @@ Code contributors by year
 .. _`Benjamin Drung`: https://github.com/bdrung
 .. _`Bernhard Urban-Forster`: https://github.com/lewurm
 .. _`Bernát Gábor`: https://github.com/gaborbernat
+.. _`Bert Pluymers`: https://github.com/bertpl
 .. _`Bruno Binet`: https://github.com/bbinet
 .. _`Cedric Lamoriniere`: https://github.com/clamoriniere
 .. _`Chris Burger`: https://github.com/phobozad

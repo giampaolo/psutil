@@ -183,55 +183,176 @@ psutil_has_cpu_freq(PyObject *self, PyObject *args) {
 }
 
 
+// Compute overall min/max CPU frequency by enumerating every
+// `voltage-states<N>-sram` property on the pmgr entry. This design
+// deliberately avoids:
+//   - hard-coding specific property indexes (Apple renumbered the
+//     `voltage-statesN-sram` key space on M5-family chips, so any
+//     fixed index assumption breaks there)
+//   - dispatching on chip generation (the raw values tell us the unit
+//     themselves; no lookup table required)
+// Apple M1-M3 encode frequencies in Hz; M4+ switched to kHz. The unit
+// is detected per-value by magnitude. Observed Apple Silicon range
+// M1-M5 is ~0.6-4.6 GHz, so Hz values are >>1e8 while kHz values are
+// <<1e8.
+//
+// The `-sram` suffix alone is not a CPU discriminator: on M3 Max the
+// GPU / NPU / fabric subsystems also publish -sram DVFS tables (e.g.
+// `voltage-states9-sram`, `voltage-states14..16-sram`) with fmax
+// around 1.4 GHz. We additionally require each table's fmax to exceed
+// 2 GHz to qualify as a CPU cluster; this is the same per-table filter
+// macpow uses, and is comfortably above observed GPU peaks (~1.6 GHz)
+// while below every CPU cluster fmax ever shipped (M1 E-core at 2064
+// MHz is the lowest). Forward risk: Apple Silicon GPU fmax is rising
+// ~10%/generation, so the 2 GHz floor is expected to give several
+// generations of headroom — revisit if a future chip closes the gap.
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
+    static const char KEY_PREFIX[] = "voltage-states";
+    static const char KEY_SUFFIX[] = "-sram";
+    static const size_t KEY_PREFIX_LEN = sizeof(KEY_PREFIX) - 1;
+    static const size_t KEY_SUFFIX_LEN = sizeof(KEY_SUFFIX) - 1;
+    // Raw frequency values above 10^8 are Hz; below are kHz.
+    static const uint32_t UNIT_THRESHOLD = 100000000U;
+    // Per-value plausibility bounds. Drops terminator zeros and any
+    // junk the enumeration might pick up.
+    static const uint32_t MIN_PLAUSIBLE_MHZ = 500;
+    static const uint32_t MAX_PLAUSIBLE_MHZ = 20000;
+    // Per-table classification: CPU clusters have fmax >= 2 GHz. See
+    // block comment above for justification.
+    static const uint32_t CPU_CLUSTER_MIN_FMAX_MHZ = 2000;
+
     io_registry_entry_t entry = IO_OBJECT_NULL;
-    CFTypeRef pCoreRef = NULL;
-    CFTypeRef eCoreRef = NULL;
-    size_t pCoreLength = 0;
-    uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
+    CFMutableDictionaryRef props = NULL;
+    const void **keys = NULL;
+    const void **values = NULL;
+    CFIndex count = 0;
+    uint32_t min_mhz = UINT32_MAX;
+    uint32_t max_mhz = 0;
+    int found_any = 0;
 
     if (!psutil_find_pmgr_entry(&entry)) {
         psutil_runtime_error("'pmgr' entry not found in AppleARMIODevice");
         return NULL;
     }
 
-    pCoreRef = IORegistryEntryCreateCFProperty(
-        entry, CFSTR("voltage-states5-sram"), kCFAllocatorDefault, 0
-    );
-    eCoreRef = IORegistryEntryCreateCFProperty(
-        entry, CFSTR("voltage-states1-sram"), kCFAllocatorDefault, 0
-    );
-
-    if (!pCoreRef || !eCoreRef || CFGetTypeID(pCoreRef) != CFDataGetTypeID()
-        || CFGetTypeID(eCoreRef) != CFDataGetTypeID()
-        || CFDataGetLength(pCoreRef) < 8 || CFDataGetLength(eCoreRef) < 4)
+    if (IORegistryEntryCreateCFProperties(
+            entry, &props, kCFAllocatorDefault, 0
+        ) != KERN_SUCCESS
+        || props == NULL)
     {
-        psutil_runtime_error("invalid CPU frequency data");
-        goto cleanup;
+        IOObjectRelease(entry);
+        psutil_runtime_error("IORegistryEntryCreateCFProperties failed");
+        return NULL;
     }
 
-    pCoreLength = CFDataGetLength(pCoreRef);
-    CFDataGetBytes(pCoreRef, CFRangeMake(0, 4), (UInt8 *)&pMin);
-    CFDataGetBytes(eCoreRef, CFRangeMake(0, 4), (UInt8 *)&eMin);
-    CFDataGetBytes(pCoreRef, CFRangeMake(pCoreLength - 8, 4), (UInt8 *)&max);
+    count = CFDictionaryGetCount(props);
+    if (count > 0) {
+        keys = (const void **)malloc(count * sizeof(void *));
+        values = (const void **)malloc(count * sizeof(void *));
+        if (keys == NULL || values == NULL) {
+            free(keys);
+            free(values);
+            CFRelease(props);
+            IOObjectRelease(entry);
+            PyErr_NoMemory();
+            return NULL;
+        }
+        CFDictionaryGetKeysAndValues(props, keys, values);
+    }
 
-    min = (pMin < eMin) ? pMin : eMin;
-    curr = max;
+    for (CFIndex i = 0; i < count; i++) {
+        CFStringRef key = (CFStringRef)keys[i];
+        CFTypeRef value = (CFTypeRef)values[i];
+        char name[64];
+        size_t name_len;
+        int all_digits;
 
-cleanup:
-    if (pCoreRef)
-        CFRelease(pCoreRef);
-    if (eCoreRef)
-        CFRelease(eCoreRef);
-    if (entry != IO_OBJECT_NULL)
-        IOObjectRelease(entry);
+        // Key must be "voltage-states<N>-sram" where N is one or more digits.
+        if (CFGetTypeID(key) != CFStringGetTypeID())
+            continue;
+        if (!CFStringGetCString(
+                key, name, sizeof(name), kCFStringEncodingUTF8
+            ))
+            continue;
+        name_len = strlen(name);
+        if (name_len < KEY_PREFIX_LEN + 1 + KEY_SUFFIX_LEN)
+            continue;
+        if (strncmp(name, KEY_PREFIX, KEY_PREFIX_LEN) != 0)
+            continue;
+        if (strcmp(name + name_len - KEY_SUFFIX_LEN, KEY_SUFFIX) != 0)
+            continue;
+        all_digits = 1;
+        for (size_t j = KEY_PREFIX_LEN; j < name_len - KEY_SUFFIX_LEN; j++) {
+            if (name[j] < '0' || name[j] > '9') {
+                all_digits = 0;
+                break;
+            }
+        }
+        if (!all_digits)
+            continue;
 
+        if (CFGetTypeID(value) != CFDataGetTypeID())
+            continue;
+
+        // Each DVFS entry is 8 bytes: 4-byte LE freq + 4-byte LE voltage.
+        // Accumulate this table's min/max first; then fold into overall
+        // min/max only if the table's fmax qualifies it as a CPU cluster.
+        uint32_t table_min = UINT32_MAX;
+        uint32_t table_max = 0;
+        int table_has_value = 0;
+        CFIndex blob_len = CFDataGetLength((CFDataRef)value);
+        const UInt8 *bytes = CFDataGetBytePtr((CFDataRef)value);
+        for (CFIndex off = 0; off + 4 <= blob_len; off += 8) {
+            uint32_t raw_freq;
+            uint32_t freq_mhz;
+
+            // ARM64 is little-endian; copy 4 bytes as native uint32.
+            memcpy(&raw_freq, bytes + off, sizeof(raw_freq));
+
+            if (raw_freq > UNIT_THRESHOLD)
+                freq_mhz = raw_freq / 1000U / 1000U;  // Hz -> MHz
+            else
+                freq_mhz = raw_freq / 1000U;  // kHz -> MHz
+
+            if (freq_mhz < MIN_PLAUSIBLE_MHZ || freq_mhz > MAX_PLAUSIBLE_MHZ)
+                continue;
+
+            if (freq_mhz < table_min)
+                table_min = freq_mhz;
+            if (freq_mhz > table_max)
+                table_max = freq_mhz;
+            table_has_value = 1;
+        }
+
+        if (!table_has_value || table_max < CPU_CLUSTER_MIN_FMAX_MHZ)
+            continue;
+
+        if (table_min < min_mhz)
+            min_mhz = table_min;
+        if (table_max > max_mhz)
+            max_mhz = table_max;
+        found_any = 1;
+    }
+
+    free(keys);
+    free(values);
+    CFRelease(props);
+    IOObjectRelease(entry);
+
+    if (!found_any) {
+        psutil_runtime_error(
+            "no valid CPU frequency data found in pmgr voltage-states tables"
+        );
+        return NULL;
+    }
+
+    // No real current-frequency API on Apple Silicon; report max as current.
     return Py_BuildValue(
         "KKK",
-        (unsigned long long)(curr / 1000 / 1000),
-        (unsigned long long)(min / 1000 / 1000),
-        (unsigned long long)(max / 1000 / 1000)
+        (unsigned long long)max_mhz,
+        (unsigned long long)min_mhz,
+        (unsigned long long)max_mhz
     );
 }
 
