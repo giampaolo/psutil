@@ -111,6 +111,7 @@ Code contributors by year
 
 * :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`
 * :user:`Amaan Qureshi <amaanq>` - :gh:`2770`
+* :user:`Bert Pluymers <bertpl>` - :gh:`2642`
 * :user:`Ding Qiuran <dynapx>` - :gh:`2860`
 * :user:`Felix Yan <felixonmars>` - :gh:`2732`
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`

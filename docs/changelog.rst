@@ -224,6 +224,14 @@ Others:
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+- :gh:`2642`, [macOS]: fix :func:`cpu_freq` on Apple Silicon. On M4+ it
+  returned values ~1000x too small because the ``voltage-statesN-sram``
+  IORegistry tables switched from Hz to kHz; on M5-family chips it failed
+  because the hardcoded table indexes were renumbered. The implementation now
+  enumerates CPU ``voltage-states*-sram`` tables dynamically, detects the unit
+  per-value by magnitude, and filters CPU clusters from GPU/NPU tables via a
+  per-table fmax threshold. Works uniformly from M1 through M5 Max. (patch by
+  Bert Pluymers)
 - :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
   ``broadcast`` field of network interfaces instead of the correct broadcast
   address.
