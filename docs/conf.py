@@ -13,8 +13,10 @@ import importlib.util
 import pathlib
 import sys
 
-# sphinx-codeautolink needs `import psutil` to work at build time
-# to resolve instance method calls like `p.name()` in code blocks.
+# sphinx-codeautolink needs `import psutil` to things like `p.name()`
+# in code blocks. It imports psutil itself internally, but silently
+# pass if it can't, so we do it here to crash explicitly.
+import psutil  # noqa: F401
 
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
