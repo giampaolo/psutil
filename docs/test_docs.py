@@ -197,6 +197,24 @@ class TestHtmlBuildSite:
 
 
 @pytest.mark.usefixtures("build_html")
+class TestCodeAutoLink:
+    """Checks sphinx-codeautolink integration."""
+
+    def test_enabled(self):
+        html = (HTML_DIR / "api-overview.html").read_text()
+        assert "sphinx-codeautolink-a" in html
+
+    def test_resolves_process_instance_methods(self):
+        # Check that things like `p.name()`are resolved.
+        html = (HTML_DIR / "api-overview.html").read_text()
+        assert (
+            '<a class="sphinx-codeautolink-a" '
+            'href="api.html#psutil.Process.name"'
+            in html
+        )
+
+
+@pytest.mark.usefixtures("build_html")
 class TestHtmlBuildBlog:
     """Checks on blog pages."""
 

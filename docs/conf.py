@@ -13,11 +13,6 @@ import importlib.util
 import pathlib
 import sys
 
-# sphinx-codeautolink needs `import psutil` to things like `p.name()`
-# in code blocks. It imports psutil itself internally, but silently
-# pass if it can't, so we do it here to crash explicitly.
-import psutil  # noqa: F401
-
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
 sys.path.insert(0, str(_HERE / '_ext'))  # needed to load local extensions
@@ -208,9 +203,16 @@ codeautolink_global_preface = "import psutil"
 # =====================================================================
 
 
-# Monkey patch to support parallel builds in ablog:
-# https://github.com/sunpy/ablog/pull/330.
 def setup(app):
+    # sphinx-codeautolink needs `import psutil` to resolve things like
+    # `p.name()` in code blocks. It imports psutil itself internally,
+    # but silently passes if it can't, so we do it here to crash
+    # explicitly. Kept inside setup() (not at module scope) so pytest
+    # collection of docs/test_docs.py doesn't hit it.
+    import psutil  # noqa: F401
+
+    # Monkey patch ablog to support parallel builds:
+    # https://github.com/sunpy/ablog/pull/330.
     def merge_ablog_posts(app, env, docnames, other):
         if hasattr(other, "ablog_posts"):
             if not hasattr(env, "ablog_posts"):
