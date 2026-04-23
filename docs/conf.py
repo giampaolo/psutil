@@ -193,6 +193,11 @@ suppress_warnings = ["git.too_shallow"]
 # in a later block lose the type of `p`.
 codeautolink_concat_default = True
 
+# Seed every block with an implicit `import psutil`, so snippets that
+# start mid-session (no explicit import line) still have `psutil.X`
+# references resolvable.
+codeautolink_global_preface = "import psutil"
+
 # =====================================================================
 # Sphinx setup hook
 # =====================================================================
