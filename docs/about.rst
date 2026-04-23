@@ -47,6 +47,6 @@ Clickable API references
 ------------------------
 
 Identifiers in code blocks (e.g. ``p = psutil.Process()``, ``p.cpu_percent()``)
-are links to their API reference entry. Hover over one to see the highlight,
-then click to jump. This is powered by
+are clickable. Hover over one of those to see the highlight, then click to jump
+to the corresponding API reference doc. This is powered by
 `sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
