@@ -187,6 +187,12 @@ suppress_warnings = ["git.too_shallow"]
 # sphinx-codeautolink
 # =====================================================================
 
+# Treat all code blocks on the same page as one interpreter session: a
+# variable defined in block 1 stays known in block 2. Without this,
+# snippets like `>>> p = psutil.Process()` followed by `>>> p.name()`
+# in a later block lose the type of `p`.
+codeautolink_concat_default = True
+
 # =====================================================================
 # Sphinx setup hook
 # =====================================================================
