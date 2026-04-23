@@ -9,15 +9,31 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import datetime
+import importlib.util
 import pathlib
 import sys
 
+# sphinx-codeautolink needs `import psutil` to work at build time
+# to resolve instance method calls like `p.name()` in code blocks.
+
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
-sys.path.insert(0, str(_ROOT_DIR))
-sys.path.insert(0, str(_HERE / '_ext'))
+sys.path.insert(0, str(_HERE / '_ext'))  # needed to load local extensions
 
-from _bootstrap import get_version  # noqa: E402
+
+# Load _bootstrap.py (at the repo root) without putting the repo
+# root on sys.path. Doing so would expose the uncompiled source
+# `psutil/` package and shadow any installed psutil, breaking
+# `import psutil` at build time (needed by sphinx-codeautolink to
+# resolve things like `p.name()` in code blocks).
+def _load(path):
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+get_version = _load(_ROOT_DIR / "_bootstrap.py").get_version
 
 PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
@@ -166,6 +182,10 @@ sitemap_show_lastmod = True
 # Suppress sphinx-sitemap warning (turned into error by
 # --fail-on-warning) occurring on CI.
 suppress_warnings = ["git.too_shallow"]
+
+# =====================================================================
+# sphinx-codeautolink
+# =====================================================================
 
 # =====================================================================
 # Sphinx setup hook
