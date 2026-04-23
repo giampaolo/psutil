@@ -33,6 +33,7 @@ _third_party_exts = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinxext.opengraph",
