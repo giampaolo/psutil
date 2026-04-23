@@ -1,0 +1,27 @@
+{#-
+  Override of ablog/postnavy.html — renders prev/next navigation at
+  the bottom of each post as two card-style links.
+-#}
+{% set post = ablog[pagename] %}
+{% if post.published and ablog.post_show_prev_next and (post.prev or post.next) %}
+<nav class="post-nav" aria-label="Post navigation">
+  {% if post.prev %}
+  <a class="post-nav-link post-nav-prev"
+     href="{{ pathto(post.prev.docname) }}{{ anchor(post.prev) }}">
+    <span class="post-nav-label">&larr; Previous</span>
+    <span class="post-nav-title">{{ post.prev.title }}</span>
+  </a>
+  {% else %}
+  <span class="post-nav-placeholder"></span>
+  {% endif %}
+  {% if post.next %}
+  <a class="post-nav-link post-nav-next"
+     href="{{ pathto(post.next.docname) }}{{ anchor(post.next) }}">
+    <span class="post-nav-label">Next &rarr;</span>
+    <span class="post-nav-title">{{ post.next.title }}</span>
+  </a>
+  {% else %}
+  <span class="post-nav-placeholder"></span>
+  {% endif %}
+</nav>
+{% endif %}

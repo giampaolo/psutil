@@ -15,7 +15,7 @@ import sphinx.errors
 def check_python_blocks(app, doctree, docname):
     path = app.env.doc2path(docname)
 
-    for node in doctree.traverse(docutils.nodes.literal_block):
+    for node in doctree.findall(docutils.nodes.literal_block):
         lang = node.get("language")
         if lang not in {"python", "py"}:
             continue

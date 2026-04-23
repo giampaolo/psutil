@@ -279,6 +279,7 @@ Code contributors by year
 * `Andre Caron`_ - :gh:`880`
 * `Arcadiy Ivanov`_ - :gh:`919`
 * `ewedlund`_ - :gh:`874`
+* `Eric Rahm`_ - :gh:`745`, :gh:`746` (:term:`USS` memory on macOS and Windows)
 * `Farhan Khan`_ - :gh:`823`
 * `Frank Benkstein`_ - :gh:`732`, :gh:`733`, :gh:`736`, :gh:`738`, :gh:`739`,
   :gh:`740`
@@ -475,6 +476,7 @@ Code contributors by year
 .. _`Denis Krienbühl`: https://github.com/href
 .. _`EccoTheFlintstone`: https://github.com/EccoTheFlintstone
 .. _`Eli Wenig`: https://github.com/elisw93
+.. _`Eric Rahm`: https://github.com/EricRahm
 .. _`Erwan Le Pape`: https://github.com/erwan-le-pape
 .. _`ewedlund`: https://github.com/ewedlund
 .. _`Fabian Groffen`: https://github.com/fabian
@@ -571,6 +573,7 @@ Code contributors by year
 .. _`Tim Schlueter`: https://github.com/modelrockettier
 .. _`Timmy Konick`: https://github.com/tijko
 .. _`Vincent A. Arcila`: https://github.com/jandrovins
+.. _`vser1`: https://github.com/vser1
 .. _`Wen Jia Liu (wj32)`: https://github.com/wj32
 .. _`Wilfried Goesgens`: https://github.com/dothebart
 .. _`Will Hawes`: https://github.com/wdh
@@ -581,4 +584,3 @@ Code contributors by year
 .. _`Yannick Gingras`: https://github.com/ygingras
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
-.. _`vser1`: https://github.com/vser1

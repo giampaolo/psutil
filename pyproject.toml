@@ -243,6 +243,9 @@ verbosity_subtests = "0"
 testpaths = ["tests/"]
 python_files = ["test_*.py"]
 
+[tool.rstwrap]
+width = 79
+
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = ["setuptools>=43"]

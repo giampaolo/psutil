@@ -1,0 +1,99 @@
+{#-
+  Override of ablog/collection.html — renders blog.html (all posts),
+  tag pages, year archives. Card-style listing inspired by
+  blog.python.org.
+-#}
+{%- extends "page.html" %}
+
+{%- macro postlink(post) -%}
+  {%- if post.external_link -%}{{ post.external_link }}
+  {%- else -%}{{ pathto(post.docname) }}{{ anchor(post) }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- set month_abbr = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] -%}
+
+{% block body %}
+<div class="blog-listing">
+  {% if pagename != ablog.blog_path %}
+  <div class="blog-listing-header">
+    <h1 class="blog-listing-title">
+      {{ header }}
+      {% if collection.href %}<a class="blog-listing-title-value" href="{{ collection.href }}">{{ collection }}</a>
+      {% else %}<span class="blog-listing-title-value">{{ collection }}</span>{% endif %}
+    </h1>
+  </div>
+  {% endif %}
+  {%- set years = [] -%}
+  {%- for post in collection -%}
+    {%- if post.published and post.date.year not in years -%}
+      {%- set _ = years.append(post.date.year) -%}
+    {%- endif -%}
+  {%- endfor %}
+  <div class="blog-listing-meta">
+    {% if pagename != ablog.blog_path %}
+    <div class="blog-facet">
+      <span class="blog-facet-label">Posts</span>
+      <ul class="blog-facet-list">
+        <li>{{ collection|length }}</li>
+      </ul>
+    </div>
+    {% endif %}
+    {% if pagename == ablog.blog_path and years|length > 1 %}
+    <div class="blog-facet">
+      <span class="blog-facet-label">Years</span>
+      <ul class="blog-facet-list">
+      {% for year in years -%}
+        <li><a href="{{ pathto(ablog.blog_path ~ '/' ~ year) }}">{{ year }}</a></li>
+      {%- endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% if pagename == ablog.blog_path or pagename.startswith(ablog.blog_path ~ '/tag/') %}
+    <div class="blog-facet">
+      <span class="blog-facet-label">Tags</span>
+      <ul class="blog-facet-list blog-facet-list--pills">
+      {% for tag in ablog.tags -%}
+        {% if tag|string != 'featured' %}<li{% if pagename == tag.docname %} class="is-active"{% endif %}><a href="{{ pathto(tag.docname) }}">{{ tag }} <span class="blog-facet-count">{{ tag|length }}</span></a></li>{% endif %}
+      {%- endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <ol class="blog-cards">
+  {% for post in collection %}
+    {% set ns = namespace(featured=false) %}
+    {% for tag in post.tags or [] %}{% if tag|string == 'featured' %}{% set ns.featured = true %}{% endif %}{% endfor %}
+    {% set featured = ns.featured %}
+    <li class="blog-card{% if featured %} is-featured{% endif %}">
+      <div class="blog-card-head">
+        <span class="blog-card-meta">
+          {% if post.published %}
+            <time datetime="{{ post.date.strftime('%Y-%m-%d') }}">{{ month_abbr[post.date.month - 1] }} {{ post.date.day }}, {{ post.date.year }}</time>
+          {% else %}
+            <span class="blog-card-draft">Draft</span>
+          {% endif %}
+        </span>
+        <h2 class="blog-card-title">
+          <a href="{{ postlink(post) }}">{{ post.title }}</a>
+          {% if featured %}<a class="blog-card-badge blog-card-badge-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a>{% endif %}
+        </h2>
+      </div>
+      {% if post.excerpt %}
+      <div class="blog-card-summary">{{ post.to_html(pagename) | safe }}</div>
+      {% endif %}
+      {% if post.tags %}
+      <ul class="blog-card-tags">
+        {% for tag in post.tags|sort %}
+          {% if tag|string != 'featured' %}
+          <li><a href="{{ pathto(tag.docname) }}">{{ tag }}</a></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+</div>
+{% endblock body %}

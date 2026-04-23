@@ -170,6 +170,7 @@ Sponsors
    :titlesonly:
    :caption: Project
 
+   Blog <blog>
    Changelog <changelog>
    Timeline <timeline>
    Development guide <devguide>
