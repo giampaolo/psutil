@@ -292,14 +292,15 @@ class TestHtmlBuildBlog:
         # used to leak into og:description, making social previews
         # start with "Giampaolo Rodola 2026-01-28 5 min read ...".
         pattern = re.compile(
-            r'<meta property="og:description" content="([^"]*)"'
+            r'<meta (?:property="og:description" content="([^"]*)"'
+            r'|content="([^"]*)" property="og:description")'
         )
         for rst in blog_posts():
             html = blog_html(rst)
             m = pattern.search(html)
             with subtests.test(rst=rst):
                 assert m is not None
-                desc = m.group(1)
+                desc = m.group(1) or m.group(2)
                 assert not desc.startswith("Giampaolo")
                 assert "min read" not in desc[:80]
 
