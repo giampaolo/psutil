@@ -1,0 +1,683 @@
+/*
+   Styles for the blog sub-site. Loaded after custom.css. */
+
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* ================================================================== */
+/* Variables                                                          */
+/* ================================================================== */
+
+:root {
+    --font-post-body: "Merriweather", Charter, Georgia, serif;
+    /* Blog sub-site accent — warm rust, editorial feel. Defined at
+       :root so non-blog contexts (like the search page) can reach it
+       for blog-specific highlighting. */
+    --blog-accent: #9a3412;
+    --blog-accent-deep: #7c2d12;
+}
+
+[data-theme="dark"] {
+    --blog-accent: #fb923c;
+    --blog-accent-deep: #fdba74;
+}
+
+/* ================================================================== */
+/* Blog palette                                                       */
+/* ================================================================== */
+
+/* Scoped to the blog sub-site so every link inside it picks up the
+   blog accent in place of the site's cool blue. */
+.wy-nav-content:has(.blog-section-banner) {
+    --links: var(--blog-accent);
+    --links-visited: var(--blog-accent);
+    --links-api: var(--blog-accent-deep);
+    --links-api-underline: var(--blog-accent-deep);
+}
+
+/* ================================================================== */
+/* Fonts / layout                                                     */
+/* ================================================================== */
+
+/* Use a different font for the blog. */
+.rst-content:has(.post-meta-banner) p,
+.rst-content:has(.post-meta-banner) li,
+.rst-content:has(.post-meta-banner) blockquote,
+.rst-content:has(.post-meta-banner) dd {
+    font-family: var(--font-post-body);
+    line-height: 1.75;
+}
+
+.rst-content:has(.post-meta-banner) h1 {
+    font-size: 2.1em;
+    line-height: 1.25;
+    margin-bottom: 0.4em;
+}
+
+.rst-content:has(.post-meta-banner) h2 {
+    font-size: 1.5em;
+    line-height: 1.3;
+    margin-top: 1.8em !important;
+    padding-top: 0.5em;
+}
+
+.rst-content:has(.post-meta-banner) h3 {
+    font-size: 1.2em;
+    line-height: 1.35;
+    margin-top: 1.5em !important;
+}
+
+.rst-content:has(.post-meta-banner) div[class^="highlight-"] {
+    margin: 1.3em 0;
+}
+
+/* GitHub-style blockquotes: muted text with a gray bar on the left. */
+.rst-content:has(.post-meta-banner) blockquote {
+    margin: 1em 0;
+    padding: 0 1em;
+    border-left: 0.25em solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    font-style: normal;
+}
+
+.rst-content:has(.post-meta-banner) blockquote > div {
+    margin: 0;
+}
+
+.rst-content:has(.post-meta-banner) blockquote p {
+    margin: 0.5em 0;
+}
+
+/* ================================================================== */
+/* Blog section banner                                              */
+/* ================================================================== */
+
+/* Shown on every page under the blog path; a visual signal that the
+   visitor is in the blog "sub-site". Rendered by
+   _templates/breadcrumbs.html. */
+
+.blog-section-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+    flex-wrap: wrap;
+    padding: 0.3em 0;
+    margin: 44px 0 0.3em 0;  /* clear the fixed topbar + breathing room */
+    border-bottom: 1px solid var(--border);
+}
+
+/* fix for mobile */
+@media (max-width: 768px) {
+    .blog-section-banner {
+        margin-top: 0.3em;
+    }
+}
+
+.blog-section-banner .blog-rss {
+    margin-left: auto;
+}
+
+.blog-section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+}
+
+.blog-section-icon {
+    width: 1.3em;
+    height: 1.3em;
+    color: var(--links);
+    flex-shrink: 0;
+}
+
+.rst-content a.blog-section-title,
+.rst-content a.blog-section-title:visited {
+    font-size: 1.35em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--headings);
+    text-decoration: none;
+}
+
+.rst-content a.blog-section-title:hover {
+    color: var(--links);
+}
+
+.blog-section-subtitle {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    font-style: normal;
+    opacity: 0.8;
+}
+
+/* RSS subscribe button — lives inside the section banner. */
+
+.rst-content a.blog-rss,
+.rst-content a.blog-rss:visited {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.35em 0.75em;
+    background: transparent;
+    color: var(--blog-accent);
+    border: 1px solid var(--blog-accent);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9em;
+    line-height: 1;
+    flex: 0 0 auto;
+    transition: background var(--theme-transition),
+                color var(--theme-transition);
+}
+
+.rst-content a.blog-rss:hover {
+    background: var(--blog-accent);
+    color: var(--surface);
+    text-decoration: none;
+}
+
+.blog-rss-icon {
+    width: 1.1em;
+    height: 1.1em;
+    flex: 0 0 auto;
+    transform: translateY(-0.05em);
+}
+
+/* ================================================================== */
+/* Blog listing (overrides ablog/collection.html)                     */
+/* ================================================================== */
+
+.blog-listing-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    margin-bottom: 0.2em;
+}
+
+.blog-listing-title {
+    font-size: 2.2em;
+    margin: 0;
+}
+
+.rst-content .blog-listing-title-value,
+.rst-content .blog-listing-title-value:visited {
+    color: var(--blog-accent);
+    border-bottom: none;
+    text-decoration: none;
+}
+
+.blog-listing-meta {
+    color: var(--text-muted);
+    font-size: 0.85em;
+    line-height: 1.7;
+    margin: 0 0 2.6em 0;
+    padding-bottom: 1.8em;
+    border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 12%, transparent);
+}
+
+.blog-facet {
+    display: flex;
+    align-items: baseline;
+    gap: 1.2em;
+    margin: 0 0 0.3em 0;
+}
+
+.blog-facet-label {
+    flex: 0 0 3.5em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72em;
+    font-weight: 700;
+    padding-top: 0.1em;
+}
+
+.blog-facet-list {
+    list-style: none !important;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1em 0.7em;
+}
+
+.blog-facet-list li {
+    list-style: none !important;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.blog-facet-list li:not(:last-child)::after {
+    content: "·";
+    color: var(--text-muted);
+    opacity: 0.5;
+    margin-left: 0.7em;
+    vertical-align: middle;
+}
+
+.rst-content .blog-listing-meta a,
+.rst-content .blog-listing-meta a:visited {
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 1px dotted color-mix(in srgb, var(--text-muted) 55%, transparent);
+    padding-bottom: 1px;
+}
+
+[data-theme="dark"] .rst-content .blog-listing-meta a,
+[data-theme="dark"] .rst-content .blog-listing-meta a:visited {
+    border-bottom-color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+}
+
+.rst-content .blog-listing-meta a:hover {
+    color: var(--links);
+    border-bottom-style: solid;
+    border-bottom-color: var(--links);
+}
+
+/* Tags facet: pill style matching card tags. */
+.blog-facet-list--pills {
+    gap: 0.3em;
+}
+
+.blog-facet-list--pills li:not(:last-child)::after {
+    content: none;
+}
+
+.rst-content .blog-facet-list--pills a,
+.rst-content .blog-facet-list--pills a:visited {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4em;
+    padding: 0.05em 0.55em;
+    border-radius: 999px;
+    border-bottom: none;
+    font-size: 0.82em;
+    line-height: 1.6;
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--text-muted) 7%, transparent);
+    text-decoration: none;
+    transition: background var(--theme-transition),
+                color var(--theme-transition);
+}
+
+.rst-content .blog-facet-list--pills a:hover {
+    color: var(--blog-accent);
+    background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
+    border-bottom: none;
+    text-decoration: none;
+}
+
+.rst-content .blog-facet-list--pills .is-active a,
+.rst-content .blog-facet-list--pills .is-active a:visited {
+    color: var(--blog-accent);
+    background: color-mix(in srgb, var(--blog-accent) 16%, transparent);
+    font-weight: 600;
+}
+
+.blog-facet-count {
+    color: inherit;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9em;
+}
+
+ol.blog-cards {
+    list-style: none !important;
+    margin: 0;
+    padding: 0;
+}
+
+ol.blog-cards > li.blog-card {
+    list-style: none !important;
+    margin: 0;
+}
+
+.blog-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        "date"
+        "title"
+        "summary"
+        "tags";
+    row-gap: 0;
+    padding: 1.1em 0 1.3em 0;
+    margin: 0;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    border-top: none;
+    border-right: none;
+    border-left: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 12%, transparent);
+}
+
+ol.blog-cards > li.blog-card:last-child {
+    border-bottom: none;
+}
+
+.blog-card:first-child {
+    padding-top: 0;
+}
+
+.blog-card-head {
+    display: contents;
+}
+
+.blog-card-title {
+    grid-area: title;
+    font-size: 1.3em;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 0.4em 0 !important;
+    padding: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8em;
+}
+
+.blog-card-title > .blog-card-badge {
+    margin-top: 0.4em;
+}
+
+.blog-card-title > a:not(.blog-card-badge) {
+    flex: 1;
+    min-width: 0;
+}
+
+.rst-content .blog-card-title a,
+.rst-content .blog-card-title a:visited {
+    text-decoration: none;
+    color: var(--headings);
+    transition: color var(--theme-transition);
+}
+
+.rst-content .blog-card-title a:hover {
+    color: var(--blog-accent) !important;
+    text-decoration: none;
+}
+
+.blog-card-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3em 0.6em;
+    border-radius: 999px;
+    font-family: var(--font-search);
+    font-size: 0.52em;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.blog-card-badge-featured,
+.rst-content a.blog-card-badge-featured,
+.rst-content a.blog-card-badge-featured:visited {
+    background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
+    color: var(--blog-accent) !important;
+    border: 1px solid color-mix(in srgb, var(--blog-accent) 28%, transparent);
+    text-decoration: none;
+    transition: background var(--theme-transition),
+                border-color var(--theme-transition);
+}
+
+.rst-content a.blog-card-badge-featured:hover {
+    background: color-mix(in srgb, var(--blog-accent) 22%, transparent);
+    border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
+}
+
+[data-theme="dark"] .blog-card-badge-featured,
+[data-theme="dark"] .rst-content a.blog-card-badge-featured,
+[data-theme="dark"] .post-meta-featured,
+[data-theme="dark"] .rst-content a.post-meta-featured {
+    background: color-mix(in srgb, var(--blog-accent) 20%, transparent);
+    border-color: color-mix(in srgb, var(--blog-accent) 45%, transparent);
+}
+
+.blog-card-meta {
+    grid-area: date;
+    color: var(--text-muted);
+    font-size: 0.78em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 0.35em 0;
+}
+
+.blog-card-draft {
+    font-style: italic;
+}
+
+.blog-card-summary {
+    grid-area: summary;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 1.05em;
+    line-height: 1.6;
+    margin: 0.3em 0 0 0;
+}
+
+.rst-content .blog-card-summary a,
+.rst-content .blog-card-summary a:visited {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px dotted var(--border);
+}
+
+.rst-content .blog-card-summary a:hover {
+    color: var(--blog-accent);
+    border-bottom-color: var(--blog-accent);
+}
+
+.rst-content .blog-card-summary code,
+.rst-content .blog-card-summary .literal,
+.rst-content .blog-card-summary tt {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: 0.92em;
+}
+
+/* Ablog emits <p class="ablog-post-excerpt"><p>text</p></p>;
+   browsers parse that as an empty wrapper + content siblings.
+   Hide the empty one. */
+.blog-card-summary p:empty {
+    display: none;
+}
+
+.blog-card-summary p {
+    margin: 0;
+}
+
+.blog-card-tags {
+    grid-area: tags;
+    justify-self: start;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    margin: 0.2em 0 0 0;
+    padding: 0;
+}
+
+.blog-card-tags li {
+    list-style: none;
+    margin: 0;
+}
+
+/* Anchor pill styling for .blog-card-tags a is shared with
+   .post-meta-tags a below. */
+
+/* ================================================================== */
+/* Blog post meta banner (date + tags below the H1)                   */
+/* ================================================================== */
+
+.post-meta-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    align-items: center;
+    margin: 0 0 2em 0;
+    padding: 0.4em 0 0 0;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.post-meta-banner > *:not(:first-child)::before {
+    content: "·";
+    color: var(--text-muted);
+    opacity: 0.6;
+    margin: 0 0.5em 0 0.15em;
+}
+
+.post-meta-banner > .post-meta-tags::before,
+.post-meta-banner > :has(> .post-meta-featured) + *::before {
+    content: none;
+    margin: 0;
+}
+
+.post-meta-featured,
+.rst-content a.post-meta-featured,
+.rst-content a.post-meta-featured:visited {
+    padding: 0.15em 0.65em;
+    border-radius: 999px;
+    font-family: var(--font-search);
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.6;
+    color: var(--blog-accent);
+    background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blog-accent) 28%, transparent);
+    text-decoration: none;
+    transition: background var(--theme-transition),
+                border-color var(--theme-transition);
+}
+
+.rst-content a.post-meta-featured:hover {
+    background: color-mix(in srgb, var(--blog-accent) 22%, transparent);
+    border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
+}
+
+.post-meta-author {
+    font-style: italic;
+}
+
+.post-meta-date,
+.post-meta-readtime {
+    font-variant-numeric: tabular-nums;
+}
+
+.post-meta-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    align-items: center;
+}
+
+/* Shared tag-pill style: applies to both the post banner
+   (.post-meta-tags) and the listing card (.blog-card-tags). */
+.rst-content .post-meta-tags a,
+.rst-content .post-meta-tags a:visited,
+.rst-content .blog-card-tags a,
+.rst-content .blog-card-tags a:visited {
+    display: inline-block;
+    padding: 0.05em 0.55em;
+    border-radius: 999px;
+    font-size: 0.82em;
+    line-height: 1.6;
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--text-muted) 7%, transparent);
+    text-decoration: none;
+    transition: background var(--theme-transition),
+                color var(--theme-transition);
+}
+
+.rst-content .post-meta-tags a:hover,
+.rst-content .blog-card-tags a:hover {
+    color: var(--blog-accent);
+    background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
+    text-decoration: none;
+}
+
+/* ================================================================== */
+/* Blog prev/next nav (overrides ablog/postnavy.html)                 */
+/* ================================================================== */
+
+.post-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--border);
+}
+
+.rst-content .post-nav a.post-nav-link,
+.rst-content .post-nav a.post-nav-link:visited {
+    display: block;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    text-decoration: none;
+    color: var(--content-text);
+}
+
+.rst-content .post-nav a.post-nav-link:hover .post-nav-title {
+    color: var(--blog-accent);
+    text-decoration-color: var(--blog-accent);
+}
+
+.post-nav-next {
+    text-align: right;
+}
+
+.post-nav-label {
+    display: block;
+    font-size: 0.72em;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.35em;
+}
+
+.post-nav-title {
+    display: block;
+    color: var(--headings);
+    font-weight: 500;
+    line-height: 1.3;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--text-muted) 40%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: color var(--theme-transition),
+                text-decoration-color var(--theme-transition);
+}
+
+@media (max-width: 600px) {
+    .post-nav {
+        grid-template-columns: 1fr;
+    }
+    .post-nav-next {
+        text-align: left;
+    }
+}
+
+/* ================================================================== */
+/* Search results — blog-specific icon tint                           */
+/* ================================================================== */
+
+#search-results li:has(> a[href^="blog/"])::before,
+#search-results li:has(> a[href*="/blog/"])::before {
+    content: "\f09e";
+    color: var(--blog-accent);
+}

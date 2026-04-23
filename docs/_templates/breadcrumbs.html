@@ -1,0 +1,34 @@
+{#-
+  Override sphinx_rtd_theme/breadcrumbs.html. The RTD breadcrumb is
+  hidden site-wide via CSS; in its place we render a small "Blog"
+  section banner on every page under the blog path, as a visual
+  signal that the visitor is in the blog area. Nothing renders here
+  on the main docs pages.
+-#}
+{%- set in_blog = pagename == ablog.blog_path or pagename.startswith(ablog.blog_path ~ '/') %}
+{%- if in_blog %}
+<div class="blog-section-banner">
+  <div class="blog-section-label">
+    <svg class="blog-section-icon" viewBox="0 0 24 24" aria-hidden="true"
+         xmlns="http://www.w3.org/2000/svg" fill="none"
+         stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+    <a class="blog-section-title" href="{{ pathto(ablog.blog_path) }}">Blog</a>
+  </div>
+  <div class="blog-section-subtitle">Releases, deep dives, war stories</div>
+  <a class="blog-rss"
+     href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
+     title="Subscribe (Atom feed)">
+    <svg class="blog-rss-icon" viewBox="0 0 24 24" aria-hidden="true"
+         xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+      <path d="M4 4.44v2.83c7.03 0 12.73 5.7 12.73 12.73h2.83c0-8.59-6.97-15.56-15.56-15.56z"/>
+      <path d="M4 10.1v2.83c3.9 0 7.07 3.17 7.07 7.07h2.83c0-5.46-4.44-9.9-9.9-9.9z"/>
+      <circle cx="5.8" cy="18.2" r="1.8"/>
+    </svg>
+    <span>RSS</span>
+  </a>
+</div>
+{%- endif %}

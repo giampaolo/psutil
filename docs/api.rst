@@ -1265,6 +1265,7 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
 
     .. seealso::
+      - :doc:`/blog/2016/500-is-twice-as-fast`
       - :ref:`perf-oneshot`
       - :ref:`perf-oneshot-bench`
 
@@ -1898,10 +1899,8 @@ Process class
 
     Return :field:`uss`, :field:`pss` and :field:`swap` memory metrics. These
     give a more accurate picture of actual memory consumption than
-    :meth:`memory_info` (see this `blog post
-    <https://gmpy.dev/blog/2016/real-process-memory-and-environ-in-python>`_).
-    It walks the full process address space, so it is slower than
-    :meth:`memory_info` and may require elevated privileges.
+    :meth:`memory_info`. It walks the full process address space, so it is
+    slower than :meth:`memory_info` and may require elevated privileges.
 
     - :field:`uss` *(Linux, macOS, Windows)*: aka :term:`USS`; the
       :term:`private memory` of the process, which would be freed if the
@@ -1926,6 +1925,7 @@ Process class
     .. seealso::
       - `scripts/procsmem.py`_.
       - :ref:`faq_memory_footprint`
+      - :doc:`/blog/2016/real-process-memory-in-python`
 
     .. availability:: Linux, macOS, Windows
 
@@ -2239,6 +2239,8 @@ Process class
        >>> p.wait()
        <NegSignal.SIGTERM: -15>
 
+    .. seealso:: :doc:`/blog/2026/event-driven-process-waiting`
+
     .. note::
 
       when *timeout* is not ``None`` and the platform supports it, an efficient
@@ -2325,6 +2327,10 @@ in a C extension, and compare the results. If ``heap_used`` or ``mmap_used``
 grows steadily across iterations, the C code is likely retaining memory it
 should be releasing. This provides an allocator-level way to spot native leaks
 that Python's memory tracking misses.
+
+.. seealso::
+
+  :doc:`/blog/2025/heap-introspection-apis`
 
 .. tip::
 

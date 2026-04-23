@@ -132,6 +132,9 @@ test-unicode:  ## Test APIs dealing with strings.
 test-contracts:  ## APIs sanity tests.
 	$(RUN_TEST) tests/test_contracts.py $(ARGS)
 
+test-docs:  ## Run doc sanity tests (outside testpaths, run on demand).
+	$(RUN_TEST) docs/test_docs.py $(ARGS)
+
 test-type-hints:  ## Test type hints
 	$(RUN_TEST) tests/test_type_hints.py $(ARGS)
 

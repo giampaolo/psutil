@@ -40,6 +40,14 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - :doc:`/stdlib-equivalents <stdlib-equivalents>`: maps psutil's Python API
     to the closest equivalent in the Python standard library
 
+- Blog:
+
+  - :gh:`2825`: new blog at :doc:`/blog <blog>`, built via the
+    `ablog <https://ablog.readthedocs.io/>`__ Sphinx extension, with 20 posts
+    imported from https://gmpy.dev, covering psutil topics from 2014 to 2026.
+    Includes Atom feed. Posts are searchable. Use OpenGraph for nice preview
+    when posts are shared on social media.
+
 - Theming:
 
   - Renewed, modern, custom theme.
@@ -65,6 +73,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Replace ``rstcheck`` with ``sphinx-lint`` for RST linting.
   - Add custom script to detect dead reference links in ``.rst`` files.
   - Use sphinx extension to validate Python code snippets syntax at build-time.
+  - New ``make test-docs`` with sanity checks for built HTML docs.
 
 - RTD:
 
@@ -79,6 +88,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Build doc as part of CI process (fails on error).
   - All ``.rst`` files are now wrapped to 79 characters via
     https://github.com/giampaolo/rstwrap.
+  - Add ``/sitemap.xml`` to help search engine discovery.
 
 Type hints / enums:
 
@@ -927,7 +937,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   cause a segfault due to a backward incompatible change in a C type on FreeBSD
   12.0.
 - :gh:`1656`, [Windows]: :meth:`Process.memory_full_info` raises
-  :exc:`AccessDenied` even for the current user and os.getpid().
+  :exc:`AccessDenied` even for the current user and :func:`os.getpid`.
 - :gh:`1660`, [Windows]: :meth:`Process.open_files` rewritten with proper error
   handling.
 - :gh:`1662`, [Windows], **[critical]**: :meth:`Process.exe` may raise
@@ -1061,9 +1071,9 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   Raspberry-pi 3.
 - :gh:`1474`: fix formatting of ``psutil.tests()`` which mimics ``ps aux``
   output.
-- :gh:`1475`, [Windows], **[critical]**: ``OSError.winerror`` attribute wasn't
-  properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)`` being
-  raised instead of :exc:`AccessDenied`.
+- :gh:`1475`, [Windows], **[critical]**: :attr:`OSError.winerror` attribute
+  wasn't properly checked resulting in ``WindowsError(ERROR_ACCESS_DENIED)``
+  being raised instead of :exc:`AccessDenied`.
 - :gh:`1477`, [Windows]: wrong or absent error handling for private
   ``NTSTATUS`` Windows APIs. Different process methods were affected by this.
 - :gh:`1480`, [Windows], **[critical]**: :func:`cpu_count` with
@@ -1965,7 +1975,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`663`, [POSIX]: :func:`net_if_addrs` now returns point-to-point (VPNs)
   addresses.
 - :gh:`655`, [Windows]: fix various unicode handling issues. On Python 2,
-  string APIs now return encoded strings using ``sys.getfilesystemencoding()``.
+  string APIs now return encoded strings using
+  :func:`sys.getfilesystemencoding`.
 
 **Bug fixes**
 
@@ -2035,7 +2046,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   connections.
 - :gh:`634`, [Linux]: :meth:`Process.cmdline` does not include empty string
   arguments.
-- :gh:`635`, [POSIX], **[critical]**: crash on module import if ``enum``
+- :gh:`635`, [POSIX], **[critical]**: crash on module import if :mod:`enum`
   package is installed on Python < 3.4.
 
 3.0.0 — 2015-06-13

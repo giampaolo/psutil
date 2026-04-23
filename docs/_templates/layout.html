@@ -24,6 +24,11 @@
 {% block extrahead %}
 {{ super() }}
 
+{#- Atom feed autodiscovery: this lets feed readers and RSS browser
+    extensions find the blog feed automatically. #}
+<link rel="alternate" type="application/atom+xml"
+      title="{{ project }} blog" href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml">
+
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-G7374TFB11"></script>
 <script>

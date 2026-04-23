@@ -6,9 +6,6 @@
 
 Sphinx doc:
 https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-RTD theme doc:
-https://sphinx-rtd-theme.readthedocs.io/en/stable/
 """
 
 import datetime
@@ -31,18 +28,26 @@ VERSION = get_version()
 # Extensions
 # =====================================================================
 
-extensions = [
+_third_party_exts = [
+    "ablog",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
     "sphinx_copybutton",
-    # custom extensions in _ext/ dir
+    "sphinx_sitemap",
+    "sphinxext.opengraph",
+]
+
+_local_exts = [  # defined in the _ext/ folder
     "availability",
     "changelog_anchors",
     "check_python_syntax",
     "field_role",
     "genindex_filter",
+    "post_banner",
 ]
+
+extensions = _third_party_exts + _local_exts
 
 # =====================================================================
 # Project metadata
@@ -62,6 +67,7 @@ intersphinx_mapping = {
 }
 extlinks = {
     "gh": ("https://github.com/giampaolo/psutil/issues/%s", "#%s"),
+    "pr": ("https://github.com/giampaolo/psutil/pull/%s", "PR-%s"),
 }
 
 # =====================================================================
@@ -70,14 +76,24 @@ extlinks = {
 
 html_static_path = ["_static"]
 exclude_patterns = ["_build", "_globals.rst"]
+rst_prolog = (_HERE / "_globals.rst").read_text()
 
 # =====================================================================
 # HTML
 # =====================================================================
 
+# Canonical site URL. Picked up by Sphinx for <link rel="canonical">
+# tags. Reused below by ablog (Atom feed), sphinxext-opengraph
+# (og:url), and sphinx-sitemap.
+# - TODO: revisit once the psutil.org domain is live. Changing this
+#   later may cause feed readers to redeliver all posts as "new". See
+#   also RTD's READTHEDOCS_CANONICAL_URL env var.
+html_baseurl = "https://psutil.readthedocs.io/"
+
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
 html_last_updated_fmt = "%Y-%m-%d"  # ISO date shown in the footer
+
 # Sidebar shows method() instead of Class.method()
 toc_object_entries_show_parents = "hide"
 
@@ -103,6 +119,7 @@ if html_theme == "sphinx_rtd_theme":
     pygments_style = "tango"  # https://pygments.org/styles/
     html_css_files = [
         "css/custom.css",
+        "css/blog.css",
     ]
     html_js_files = [
         "js/highlight-repl.js",
@@ -113,7 +130,55 @@ if html_theme == "sphinx_rtd_theme":
     ]
 
 # =====================================================================
-# Prolog prepended to every .rst file
+# Blog (ablog package)
 # =====================================================================
 
-rst_prolog = (_HERE / "_globals.rst").read_text()
+# ablog-specific alias of html_baseurl; used in Atom feed entry
+# <link> and <id>.
+blog_baseurl = html_baseurl
+
+# =====================================================================
+# sphinxext-opengraph
+# =====================================================================
+
+# sphinxext-opengraph emits <meta property="og:*"> + Twitter Card tags
+# in every page's <head>, so that URLs shared on social medias render
+# as rich preview cards instead of bare links.
+ogp_site_url = html_baseurl
+ogp_site_name = PROJECT_NAME
+ogp_description_length = 200
+
+# The logo shown in the preview. sphinxext-opengraph requires a .png
+# file.
+_logo = "_static/images/logo-psutil.png"
+ogp_social_cards = {"image": _logo, "image_mini": _logo}
+
+# =====================================================================
+# sphinx-sitemap
+# =====================================================================
+
+# sphinx-sitemap emits <build>/sitemap.xml listing every built page,
+# for search engine discovery. Reads html_baseurl; {link} scheme avoids
+# the default {lang}{version} prefix (we don't use either in URLs).
+sitemap_url_scheme = "{link}"
+sitemap_show_lastmod = True
+# Suppress sphinx-sitemap warning (turned into error by
+# --fail-on-warning) occurring on CI.
+suppress_warnings = ["git.too_shallow"]
+
+# =====================================================================
+# Sphinx setup hook
+# =====================================================================
+
+
+# Monkey patch to support parallel builds in ablog:
+# https://github.com/sunpy/ablog/pull/330.
+def setup(app):
+    def merge_ablog_posts(app, env, docnames, other):
+        if hasattr(other, "ablog_posts"):
+            if not hasattr(env, "ablog_posts"):
+                env.ablog_posts = {}
+            env.ablog_posts.update(other.ablog_posts)
+
+    app.connect("env-merge-info", merge_ablog_posts)
+    app.extensions["ablog"].parallel_read_safe = True

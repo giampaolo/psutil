@@ -5,12 +5,13 @@
 /* ================================================================== */
 
 :root {
-    /* fonts & text  */
+    /* fonts & text. Sidebar/hero default to body; named aliases
+       kept so a future divergence needs only a single-line change. */
     --font-body: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
     --font-headings: "Roboto Slab", "ff-tisa-web-pro", "Georgia", Arial, sans-serif;
-    --font-sidebar: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
-    --font-hero: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
-    --font-hero-subtext: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+    --font-sidebar: var(--font-body);
+    --font-hero: var(--font-body);
+    --font-hero-subtext: var(--font-body);
     --font-search: "Inter", system-ui, -apple-system, sans-serif;
     --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --code-line-height: 1.5;
@@ -124,6 +125,9 @@
 /* ================================================================== */
 
 [data-theme="dark"] {
+    /* page — surface hierarchy: body (outer chrome) darkest,
+       content brightest so it "pops" as the primary surface.
+       top-bar matches sidebar for a unified dark frame. */
     --body-bg: #141414;
     --content-bg: #212121;
     --topbar-bg: #181818;
@@ -186,14 +190,6 @@
     /* primary CTA button */
     --cta-fill: #2d6fa8;
     --cta-fill-hover: #3a85c4;
-}
-
-/* ================================================================== */
-/* Separators                                                         */
-/* ================================================================== */
-
-[data-theme="dark"] hr {
-    border-color: var(--border);
 }
 
 /* ================================================================== */
@@ -275,6 +271,15 @@
     transition: background 0.15s, color 0.15s;
 }
 
+/* prevent browser from overriding link/visited colours in the top bar */
+.top-bar-link:link,
+.top-bar-link:visited,
+.top-bar-version:link,
+.top-bar-version:visited,
+.top-bar-text:link,
+.top-bar-text:visited {
+    color: var(--topbar-fg);
+}
 
 .top-bar-link:hover,
 .top-bar-btn:hover {
@@ -294,16 +299,6 @@
     border-radius: 999px;
     margin-left: 4px;
     text-decoration: none !important;
-}
-
-/* prevent browser from overriding link/visited colours in the top bar */
-.top-bar-link:link,
-.top-bar-link:visited,
-.top-bar-version:link,
-.top-bar-version:visited,
-.top-bar-text:link,
-.top-bar-text:visited {
-    color: var(--topbar-fg);
 }
 
 .top-bar-text {
@@ -338,7 +333,6 @@
 .hero {
     text-align: center;
     padding: 1.5em 0 2em;
-    /*background: radial-gradient(ellipse, #2d2d2d 0%, var(--content-bg) 70%);*/
 }
 
 .hero-title {
@@ -870,6 +864,10 @@ body {
     padding-top: 20px !important;
 }
 
+[data-theme="dark"] hr {
+    border-color: var(--border);
+}
+
 /* ================================================================== */
 /* Centered layout                                                     */
 /* ================================================================== */
@@ -906,6 +904,24 @@ body {
 .wy-nav-side,
 .wy-nav-top {
     background-color: var(--sidebar-bg) !important;
+}
+
+/* Default RTD sets line-height: 50px + padding, making the mobile
+   header ~80px tall; compact it so it doesn't leave a visible gap
+   below the fixed topbar. Also zero margin-top so it sits flush
+   under the topbar. */
+@media (max-width: 768px) {
+    .wy-nav-top {
+        line-height: 1.4;
+        padding: 0.5em 0.8em;
+        margin-top: 0;
+    }
+    .wy-nav-content-wrap {
+        padding-top: 0 !important;
+    }
+    .wy-nav-content {
+        padding-top: 1em !important;
+    }
 }
 
 
@@ -998,7 +1014,7 @@ body,
 }
 
 /* ================================================================== */
-/* Sidebar effects                                                    */
+/* Mobile                                                             */
 /* ================================================================== */
 
 @media (max-width: 768px) {
@@ -1412,10 +1428,8 @@ a.reference.external:has(> span > code):not(:has(img))::after {
 .rst-content a.reference code,
 .rst-content a.reference tt {
     color: inherit !important;
-    /*background: rgba(175, 184, 193, 0.2) !important;*/
     background: none !important;
-    /*font-weight: bold !important;*/
-    font-size:90% !important;
+    font-size: 90% !important;
     text-decoration: underline;
     text-decoration-color: var(--links-api-underline);
     text-decoration-thickness: 1px;
@@ -1681,13 +1695,6 @@ div.deprecated .versionmodified {
 }
 
 /* ---- Icons: page-specific overrides ---- */
-
-/* blog post: RSS feed */
-#search-results li:has(> a[href^="blog/"])::before,
-#search-results li:has(> a[href*="/blog/"])::before {
-    content: "\f09e";
-    color: #0d9488;
-}
 
 /* FAQ: question-in-circle */
 #search-results li:has(> a[href^="faq.html"])::before,

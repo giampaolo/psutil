@@ -200,3 +200,19 @@ Repository: https://github.com/openbsd/src
 - https://pepy.tech/projects/psutil
 - https://clickpy.clickhouse.com/dashboard/psutil
 - https://pypistats.org/packages/psutil
+
+## Doc
+
+### Blog
+
+Example sites using sphinx ablog:
+
+- ablog: https://ablog.readthedocs.io/en/stable/blog.html (dogfoods its own
+  extension)
+- SunPy (solar-physics Python library): https://sunpy.org/blog.html
+- sgkit (genetics toolkit): https://sgkit-dev.github.io/sgkit/latest/blog.html
+- Nuitka (Python-to-C compiler): https://nuitka.net/blog.html
+- Executable Books Project (Jupyter Book / MyST):
+  https://executablebooks.org/en/latest/blog/
+- Adriaan Rol (quantum researcher personal site): https://adriaanrol.com/
+- Jean-Pierre Chauvel (personal tech blog): https://www.chauvel.org/blog/
