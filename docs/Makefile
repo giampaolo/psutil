@@ -5,6 +5,8 @@ SPHINXBUILD = PYTHONWARNINGS="always,ignore:::sphinx_sitemap" $(PYTHON) -m sphin
 BUILDDIR = _build
 ALLSPHINXOPTS = --fail-on-warning --nitpicky --jobs=auto -d $(BUILDDIR)/doctrees .
 
+# --- sphinx
+
 clean:  ## Remove all build files
 	rm -rf $(BUILDDIR)
 
@@ -19,10 +21,22 @@ autoreload-hard:  ## Same as above but re-writes all files on every refresh
 	make clean
 	sphinx-autobuild -a --nitpick -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
 
+# --- checkers
+
 check-links:  ## Check links
 	$(SPHINXBUILD) -b linkcheck $(ALLSPHINXOPTS) $(BUILDDIR)/linkcheck
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in $(BUILDDIR)/linkcheck/output.txt."
+
+check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fatal).
+	$(MAKE) clean
+	$(PYTHON) -m sphinx -b html --nitpicky --jobs=auto \
+		-D codeautolink_warn_on_failed_resolve=1 \
+		-d $(BUILDDIR)/doctrees . $(BUILDDIR)/html 2>&1 \
+		| grep -E "codeautolink|Could not import" || \
+		echo "No codeautolink resolution issues."
+
+# --- tools
 
 blog-post:  ## Create a new blog post skeleton
 	@test -n "$(SLUG)" || { echo "Usage: make blog-post SLUG=<slug> [TITLE=<text>] [TAGS=<csv>]"; exit 1; }

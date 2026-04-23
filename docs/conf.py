@@ -200,6 +200,9 @@ codeautolink_concat_default = True
 # references resolvable.
 codeautolink_global_preface = "import psutil"
 
+# Print warnings for names it can't resolve.
+# codeautolink_warn_on_failed_resolve = True
+
 # =====================================================================
 # Sphinx setup hook
 # =====================================================================
