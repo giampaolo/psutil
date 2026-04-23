@@ -42,9 +42,11 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 - Blog:
 
-  - New blog at :doc:`/blog <blog>`, built via the
+  - :gh:`2825`: new blog at :doc:`/blog <blog>`, built via the
     `ablog <https://ablog.readthedocs.io/>`__ Sphinx extension, with 20 posts
     imported from https://gmpy.dev, covering psutil topics from 2014 to 2026.
+    Includes Atom feed. Posts are searchable. Use OpenGraph for nice preview
+    when posts are shared on social media.
 
 - Theming:
 
@@ -86,6 +88,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Build doc as part of CI process (fails on error).
   - All ``.rst`` files are now wrapped to 79 characters via
     https://github.com/giampaolo/rstwrap.
+  - Add ``/sitemap.xml`` to help search engine discovery.
 
 Type hints / enums:
 
