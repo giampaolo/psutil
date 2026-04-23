@@ -33,9 +33,7 @@ check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fata
 	$(PYTHON) -m sphinx -b html --nitpicky --jobs=auto \
 		-D codeautolink_warn_on_failed_resolve=1 \
 		-D codeautolink_warn_on_missing_inventory=1 \
-		-d $(BUILDDIR)/doctrees . $(BUILDDIR)/html 2>&1 \
-		| grep -E "codeautolink|Could not import" || \
-		echo "No codeautolink resolution issues."
+		-d $(BUILDDIR)/doctrees . $(BUILDDIR)/html 2>&1
 
 # --- tools
 

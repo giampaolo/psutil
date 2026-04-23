@@ -8,7 +8,7 @@ About this site
 This site is built with `Sphinx <https://www.sphinx-doc.org/>`__ and the
 `Read the Docs theme <https://sphinx-rtd-theme.readthedocs.io/>`__, with a
 number of custom additions: a dark mode, keyboard shortcuts, a top bar, an
-improved search navigation.
+improved search navigation, and clickable API references in code blocks.
 
 Keyboard shortcuts
 ------------------
@@ -42,3 +42,11 @@ Search
 Press **Ctrl+K** to jump straight to the search box. Once results appear, use
 the **arrow keys** to move through them and **Enter** to open one — no mouse
 needed.
+
+Clickable API references
+------------------------
+
+Identifiers in code blocks (e.g. ``p = psutil.Process()``, ``p.cpu_percent()``)
+are links to their API reference entry. Hover over one to see the highlight,
+then click to jump. This is powered by
+`sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
