@@ -9,15 +9,28 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 """
 
 import datetime
+import importlib.util
 import pathlib
 import sys
 
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
-sys.path.insert(0, str(_ROOT_DIR))
-sys.path.insert(0, str(_HERE / '_ext'))
+sys.path.insert(0, str(_HERE / '_ext'))  # needed to load local extensions
 
-from _bootstrap import get_version  # noqa: E402
+
+# Load _bootstrap.py (at the repo root) without putting the repo
+# root on sys.path. Doing so would expose the uncompiled source
+# `psutil/` package and shadow any installed psutil, breaking
+# `import psutil` at build time (needed by sphinx-codeautolink to
+# resolve things like `p.name()` in code blocks).
+def _load(path):
+    spec = importlib.util.spec_from_file_location(path.stem, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+get_version = _load(_ROOT_DIR / "_bootstrap.py").get_version
 
 PROJECT_NAME = "psutil"
 AUTHOR = "Giampaolo Rodola"
@@ -33,6 +46,7 @@ _third_party_exts = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
+    "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinxext.opengraph",
@@ -167,13 +181,38 @@ sitemap_show_lastmod = True
 suppress_warnings = ["git.too_shallow"]
 
 # =====================================================================
+# sphinx-codeautolink
+# =====================================================================
+
+# Treat all code blocks on the same page as one interpreter session: a
+# variable defined in block 1 stays known in block 2. Without this,
+# snippets like `>>> p = psutil.Process()` followed by `>>> p.name()`
+# in a later block lose the type of `p`.
+codeautolink_concat_default = True
+
+# Seed every block with an implicit `import psutil`, so snippets that
+# start mid-session (no explicit import line) still have `psutil.X`
+# references resolvable.
+codeautolink_global_preface = "import psutil"
+
+# Print warnings for names it can't resolve.
+# codeautolink_warn_on_failed_resolve = True
+
+# =====================================================================
 # Sphinx setup hook
 # =====================================================================
 
 
-# Monkey patch to support parallel builds in ablog:
-# https://github.com/sunpy/ablog/pull/330.
 def setup(app):
+    # sphinx-codeautolink needs `import psutil` to resolve things like
+    # `p.name()` in code blocks. It imports psutil itself internally,
+    # but silently passes if it can't, so we do it here to crash
+    # explicitly. Kept inside setup() (not at module scope) so pytest
+    # collection of docs/test_docs.py doesn't hit it.
+    import psutil  # noqa: F401
+
+    # Monkey patch ablog to support parallel builds:
+    # https://github.com/sunpy/ablog/pull/330.
     def merge_ablog_posts(app, env, docnames, other):
         if hasattr(other, "ablog_posts"):
             if not hasattr(env, "ablog_posts"):

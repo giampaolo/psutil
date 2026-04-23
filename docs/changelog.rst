@@ -67,6 +67,10 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     selected result.
   - Search results are styled as cards with subtle borders and shadows (no
     longer rely on RTD).
+  - :gh:`2826`: identifiers in code blocks (e.g. ``psutil.Process()``,
+    ``p.cpu_percent()``) are now clickable and link to their API reference
+    entry on click, via
+    `sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
 
 - Testing:
 

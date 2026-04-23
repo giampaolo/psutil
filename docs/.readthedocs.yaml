@@ -18,3 +18,8 @@ sphinx:
 python:
   install:
     - requirements: docs/requirements.txt
+    # Install psutil from the checkout so `import psutil` works at
+    # build time. sphinx-codeautolink needs this to resolve instance
+    # method calls (e.g. `p.name()`) in code blocks.
+    - method: pip
+      path: .

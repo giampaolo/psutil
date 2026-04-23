@@ -197,6 +197,24 @@ class TestHtmlBuildSite:
 
 
 @pytest.mark.usefixtures("build_html")
+class TestCodeAutoLink:
+    """Checks sphinx-codeautolink integration."""
+
+    def test_enabled(self):
+        html = (HTML_DIR / "api-overview.html").read_text()
+        assert "sphinx-codeautolink-a" in html
+
+    def test_resolves_process_instance_methods(self):
+        # Check that things like `p.name()`are resolved.
+        html = (HTML_DIR / "api-overview.html").read_text()
+        assert (
+            '<a class="sphinx-codeautolink-a" '
+            'href="api.html#psutil.Process.name"'
+            in html
+        )
+
+
+@pytest.mark.usefixtures("build_html")
 class TestHtmlBuildBlog:
     """Checks on blog pages."""
 
@@ -292,14 +310,15 @@ class TestHtmlBuildBlog:
         # used to leak into og:description, making social previews
         # start with "Giampaolo Rodola 2026-01-28 5 min read ...".
         pattern = re.compile(
-            r'<meta property="og:description" content="([^"]*)"'
+            r'<meta (?:property="og:description" content="([^"]*)"'
+            r'|content="([^"]*)" property="og:description")'
         )
         for rst in blog_posts():
             html = blog_html(rst)
             m = pattern.search(html)
             with subtests.test(rst=rst):
                 assert m is not None
-                desc = m.group(1)
+                desc = m.group(1) or m.group(2)
                 assert not desc.startswith("Giampaolo")
                 assert "min read" not in desc[:80]
 
