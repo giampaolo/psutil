@@ -23,7 +23,9 @@ include docs/_ext/post_banner.py
 include docs/_globals.rst
 include docs/_sponsors.html
 include docs/_static/css/blog.css
+include docs/_static/css/code.css
 include docs/_static/css/custom.css
+include docs/_static/css/home.css
 include docs/_static/images/favicon.svg
 include docs/_static/images/icon-cpu.svg
 include docs/_static/images/icon-memory.svg

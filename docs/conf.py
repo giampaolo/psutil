@@ -133,6 +133,8 @@ if html_theme == "sphinx_rtd_theme":
     pygments_style = "tango"  # https://pygments.org/styles/
     html_css_files = [
         "css/custom.css",
+        "css/code.css",
+        "css/home.css",
         "css/blog.css",
     ]
     html_js_files = [

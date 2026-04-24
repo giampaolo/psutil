@@ -27,7 +27,7 @@
 
 /* Scoped to the blog sub-site so every link inside it picks up the
    blog accent in place of the site's cool blue. */
-.wy-nav-content:has(.blog-section-banner) {
+body:has(.blog-section-banner) {
     --links: var(--blog-accent);
     --links-visited: var(--blog-accent);
     --links-api: var(--blog-accent-deep);
@@ -39,39 +39,39 @@
 /* ================================================================== */
 
 /* Use a different font for the blog. */
-.rst-content:has(.post-meta-banner) p,
-.rst-content:has(.post-meta-banner) li,
-.rst-content:has(.post-meta-banner) blockquote,
-.rst-content:has(.post-meta-banner) dd {
+.document:has(.post-meta-banner) p,
+.document:has(.post-meta-banner) li,
+.document:has(.post-meta-banner) blockquote,
+.document:has(.post-meta-banner) dd {
     font-family: var(--font-post-body);
     line-height: 1.75;
 }
 
-.rst-content:has(.post-meta-banner) h1 {
+.document:has(.post-meta-banner) h1 {
     font-size: 2.1em;
     line-height: 1.25;
     margin-bottom: 0.4em;
 }
 
-.rst-content:has(.post-meta-banner) h2 {
+.document:has(.post-meta-banner) h2 {
     font-size: 1.5em;
     line-height: 1.3;
     margin-top: 1.8em !important;
     padding-top: 0.5em;
 }
 
-.rst-content:has(.post-meta-banner) h3 {
+.document:has(.post-meta-banner) h3 {
     font-size: 1.2em;
     line-height: 1.35;
     margin-top: 1.5em !important;
 }
 
-.rst-content:has(.post-meta-banner) div[class^="highlight-"] {
+.document:has(.post-meta-banner) div[class^="highlight-"] {
     margin: 1.3em 0;
 }
 
 /* GitHub-style blockquotes: muted text with a gray bar on the left. */
-.rst-content:has(.post-meta-banner) blockquote {
+.document:has(.post-meta-banner) blockquote {
     margin: 1em 0;
     padding: 0 1em;
     border-left: 0.25em solid var(--border);
@@ -80,11 +80,11 @@
     font-style: normal;
 }
 
-.rst-content:has(.post-meta-banner) blockquote > div {
+.document:has(.post-meta-banner) blockquote > div {
     margin: 0;
 }
 
-.rst-content:has(.post-meta-banner) blockquote p {
+.document:has(.post-meta-banner) blockquote p {
     margin: 0.5em 0;
 }
 
@@ -130,8 +130,8 @@
     flex-shrink: 0;
 }
 
-.rst-content a.blog-section-title,
-.rst-content a.blog-section-title:visited {
+a.blog-section-title,
+a.blog-section-title:visited {
     font-size: 1.35em;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -139,7 +139,7 @@
     text-decoration: none;
 }
 
-.rst-content a.blog-section-title:hover {
+a.blog-section-title:hover {
     color: var(--links);
 }
 
@@ -152,8 +152,8 @@
 
 /* RSS subscribe button — lives inside the section banner. */
 
-.rst-content a.blog-rss,
-.rst-content a.blog-rss:visited {
+a.blog-rss,
+a.blog-rss:visited {
     display: inline-flex;
     align-items: center;
     gap: 0.4em;
@@ -171,7 +171,7 @@
                 color var(--theme-transition);
 }
 
-.rst-content a.blog-rss:hover {
+a.blog-rss:hover {
     background: var(--blog-accent);
     color: var(--surface);
     text-decoration: none;
@@ -201,8 +201,8 @@
     margin: 0;
 }
 
-.rst-content .blog-listing-title-value,
-.rst-content .blog-listing-title-value:visited {
+a.blog-listing-title-value,
+a.blog-listing-title-value:visited {
     color: var(--blog-accent);
     border-bottom: none;
     text-decoration: none;
@@ -257,20 +257,20 @@
     vertical-align: middle;
 }
 
-.rst-content .blog-listing-meta a,
-.rst-content .blog-listing-meta a:visited {
+.blog-listing-meta a,
+.blog-listing-meta a:visited {
     color: var(--text-muted);
     text-decoration: none;
     border-bottom: 1px dotted color-mix(in srgb, var(--text-muted) 55%, transparent);
     padding-bottom: 1px;
 }
 
-[data-theme="dark"] .rst-content .blog-listing-meta a,
-[data-theme="dark"] .rst-content .blog-listing-meta a:visited {
+[data-theme="dark"] .blog-listing-meta a,
+[data-theme="dark"] .blog-listing-meta a:visited {
     border-bottom-color: color-mix(in srgb, var(--text-muted) 80%, transparent);
 }
 
-.rst-content .blog-listing-meta a:hover {
+.blog-listing-meta a:hover {
     color: var(--links);
     border-bottom-style: solid;
     border-bottom-color: var(--links);
@@ -285,8 +285,8 @@
     content: none;
 }
 
-.rst-content .blog-facet-list--pills a,
-.rst-content .blog-facet-list--pills a:visited {
+.blog-facet-list--pills a,
+.blog-facet-list--pills a:visited {
     display: inline-flex;
     align-items: baseline;
     gap: 0.4em;
@@ -302,15 +302,15 @@
                 color var(--theme-transition);
 }
 
-.rst-content .blog-facet-list--pills a:hover {
+.blog-facet-list--pills a:hover {
     color: var(--blog-accent);
     background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
     border-bottom: none;
     text-decoration: none;
 }
 
-.rst-content .blog-facet-list--pills .is-active a,
-.rst-content .blog-facet-list--pills .is-active a:visited {
+.blog-facet-list--pills .is-active a,
+.blog-facet-list--pills .is-active a:visited {
     color: var(--blog-accent);
     background: color-mix(in srgb, var(--blog-accent) 16%, transparent);
     font-weight: 600;
@@ -387,14 +387,14 @@ ol.blog-cards > li.blog-card:last-child {
     min-width: 0;
 }
 
-.rst-content .blog-card-title a,
-.rst-content .blog-card-title a:visited {
+.blog-card-title a,
+.blog-card-title a:visited {
     text-decoration: none;
     color: var(--headings);
     transition: color var(--theme-transition);
 }
 
-.rst-content .blog-card-title a:hover {
+.blog-card-title a:hover {
     color: var(--blog-accent) !important;
     text-decoration: none;
 }
@@ -415,8 +415,8 @@ ol.blog-cards > li.blog-card:last-child {
 }
 
 .blog-card-badge-featured,
-.rst-content a.blog-card-badge-featured,
-.rst-content a.blog-card-badge-featured:visited {
+a.blog-card-badge-featured,
+a.blog-card-badge-featured:visited {
     background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
     color: var(--blog-accent) !important;
     border: 1px solid color-mix(in srgb, var(--blog-accent) 28%, transparent);
@@ -425,15 +425,15 @@ ol.blog-cards > li.blog-card:last-child {
                 border-color var(--theme-transition);
 }
 
-.rst-content a.blog-card-badge-featured:hover {
+a.blog-card-badge-featured:hover {
     background: color-mix(in srgb, var(--blog-accent) 22%, transparent);
     border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
 }
 
 [data-theme="dark"] .blog-card-badge-featured,
-[data-theme="dark"] .rst-content a.blog-card-badge-featured,
+[data-theme="dark"] a.blog-card-badge-featured,
 [data-theme="dark"] .post-meta-featured,
-[data-theme="dark"] .rst-content a.post-meta-featured {
+[data-theme="dark"] a.post-meta-featured {
     background: color-mix(in srgb, var(--blog-accent) 20%, transparent);
     border-color: color-mix(in srgb, var(--blog-accent) 45%, transparent);
 }
@@ -462,21 +462,21 @@ ol.blog-cards > li.blog-card:last-child {
     margin: 0.3em 0 0 0;
 }
 
-.rst-content .blog-card-summary a,
-.rst-content .blog-card-summary a:visited {
+.blog-card-summary a,
+.blog-card-summary a:visited {
     color: inherit;
     text-decoration: none;
     border-bottom: 1px dotted var(--border);
 }
 
-.rst-content .blog-card-summary a:hover {
+.blog-card-summary a:hover {
     color: var(--blog-accent);
     border-bottom-color: var(--blog-accent);
 }
 
-.rst-content .blog-card-summary code,
-.rst-content .blog-card-summary .literal,
-.rst-content .blog-card-summary tt {
+.blog-card-summary code,
+.blog-card-summary .literal,
+.blog-card-summary tt {
     background: none;
     border: none;
     padding: 0;
@@ -543,8 +543,8 @@ ol.blog-cards > li.blog-card:last-child {
 }
 
 .post-meta-featured,
-.rst-content a.post-meta-featured,
-.rst-content a.post-meta-featured:visited {
+a.post-meta-featured,
+a.post-meta-featured:visited {
     padding: 0.15em 0.65em;
     border-radius: 999px;
     font-family: var(--font-search);
@@ -561,7 +561,7 @@ ol.blog-cards > li.blog-card:last-child {
                 border-color var(--theme-transition);
 }
 
-.rst-content a.post-meta-featured:hover {
+a.post-meta-featured:hover {
     background: color-mix(in srgb, var(--blog-accent) 22%, transparent);
     border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
 }
@@ -584,10 +584,10 @@ ol.blog-cards > li.blog-card:last-child {
 
 /* Shared tag-pill style: applies to both the post banner
    (.post-meta-tags) and the listing card (.blog-card-tags). */
-.rst-content .post-meta-tags a,
-.rst-content .post-meta-tags a:visited,
-.rst-content .blog-card-tags a,
-.rst-content .blog-card-tags a:visited {
+.post-meta-tags a,
+.post-meta-tags a:visited,
+.blog-card-tags a,
+.blog-card-tags a:visited {
     display: inline-block;
     padding: 0.05em 0.55em;
     border-radius: 999px;
@@ -600,8 +600,8 @@ ol.blog-cards > li.blog-card:last-child {
                 color var(--theme-transition);
 }
 
-.rst-content .post-meta-tags a:hover,
-.rst-content .blog-card-tags a:hover {
+.post-meta-tags a:hover,
+.blog-card-tags a:hover {
     color: var(--blog-accent);
     background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
     text-decoration: none;
@@ -620,8 +620,8 @@ ol.blog-cards > li.blog-card:last-child {
     border-top: 1px solid var(--border);
 }
 
-.rst-content .post-nav a.post-nav-link,
-.rst-content .post-nav a.post-nav-link:visited {
+.post-nav a.post-nav-link,
+.post-nav a.post-nav-link:visited {
     display: block;
     padding: 0;
     border: none;
@@ -631,7 +631,7 @@ ol.blog-cards > li.blog-card:last-child {
     color: var(--content-text);
 }
 
-.rst-content .post-nav a.post-nav-link:hover .post-nav-title {
+.post-nav a.post-nav-link:hover .post-nav-title {
     color: var(--blog-accent);
     text-decoration-color: var(--blog-accent);
 }
