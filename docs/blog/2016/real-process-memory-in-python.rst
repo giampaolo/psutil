@@ -32,7 +32,7 @@ The :term:`USS` (Unique Set Size) is the memory unique to a process, that would
 be freed if the process were terminated right now. On Linux it can be
 determined by parsing the "private" blocks in ``/proc/PID/smaps``. The Firefox
 team pushed this further and got it working on
-`macOS and Windows <https://dxr.mozilla.org/mozilla-central/rev/aa90f482e16db77cdb7dea84564ea1cbd8f7f6b3/xpcom/base/nsMemoryReporterManager.cpp>`__
+`macOS and Windows <https://searchfox.org/mozilla-central/source/xpcom/base/nsMemoryReporterManager.cpp>`__
 too.
 
 .. code-block:: pycon

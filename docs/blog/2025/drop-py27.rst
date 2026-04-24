@@ -89,8 +89,9 @@ The removal was done in :pr:`2481`, which dropped around 1500 lines of code
 (nice!). **It felt liberating**. In doing so, in the doc I still made the
 promise that the 6.1.\* series will keep supporting Python 2.7 and will receive
 **critical bug-fixes only** (no new features). It will be maintained in a
-specific `python2 branch <https://github.com/giampaolo/psutil/tree/python2>`__.
-I explicitly kept the
+specific
+`python2 branch <https://github.com/giampaolo/psutil/tree/release-6.1.1>`__. I
+explicitly kept the
 `setup.py <https://github.com/giampaolo/psutil/blob/fbb6d9ce98f930d3d101b7df5a4f4d0f1d2b35a3/setup.py>`__
 script compatible with Python 2.7 in terms of syntax, so that, when the tarball
 is fetched from PyPI, it will emit an informative error message on

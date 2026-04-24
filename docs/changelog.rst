@@ -2020,7 +2020,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`646`, [Windows]: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
 - :gh:`647`: new dev guide:
-  https://github.com/giampaolo/psutil/blob/master/docs/DEVGUIDE.rst
+  https://github.com/giampaolo/psutil/blob/master/docs/devguide.rst
 - :gh:`651`: continuous code quality test integration with scrutinizer-ci.com
 
 **Bug fixes**

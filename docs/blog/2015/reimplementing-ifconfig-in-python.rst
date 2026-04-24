@@ -111,8 +111,8 @@ Final words
 
 I must say I'm pretty satisfied with how psutil is evolving and with the
 enjoyment I still get every time I work on it. It now gets almost
-`800,000 downloads a month <https://pypi.python.org/pypi/psutil#downloads>`__,
-which is quite remarkable for a Python library.
+`800,000 downloads a month <https://pypi.org/project/psutil/>`__, which is
+quite remarkable for a Python library.
 
 At this point, I consider psutil almost "complete" feature-wise, meaning I'm
 starting to run out of ideas for what to add next (see
