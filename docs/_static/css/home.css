@@ -135,6 +135,11 @@
 /* Platform pills                                                     */
 /* ================================================================== */
 
+.home-page hr:has(+ .home-platforms) {
+    margin-top: 32px;
+    margin-bottom: 16px;
+}
+
 .home-page .home-platforms {
     display: flex;
     flex-direction: column;

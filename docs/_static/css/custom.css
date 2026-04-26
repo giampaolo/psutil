@@ -688,6 +688,16 @@ footer [role="contentinfo"] {
 .rst-footer-buttons .btn.btn-neutral {
     padding-top: 6px !important;
     padding-bottom: 4px !important;
+    background-color: var(--surface-sunken) !important;
+    color: var(--content-text) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+
+.rst-footer-buttons .btn.btn-neutral:hover {
+    background-color: var(--surface-raised) !important;
+    color: var(--content-text) !important;
+    border-color: var(--text-muted) !important;
 }
 
 [data-theme="dark"] .rst-footer-buttons .btn.btn-neutral {
@@ -726,6 +736,7 @@ h4, h4 a {
 
 h1 {
     font-size: 2.2rem;
+    line-height: 1.25;
 }
 
 h2 {
@@ -969,6 +980,10 @@ div.admonition {
     border: 1px solid var(--adm-note-border) !important;
     border-left: 4px solid var(--adm-note-accent-border) !important;
     border-radius: var(--border-radius) !important;
+}
+
+div.admonition + div.admonition {
+    margin-top: 16px !important;
 }
 
 div.admonition p {
