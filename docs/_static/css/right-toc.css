@@ -1,0 +1,116 @@
+/*
+ * Right-side per-page TOC ("On this page").
+ * All rules scoped to >=1500px. Below that, the aside renders in
+ * normal flow as plain text, hidden via display: none here.
+ */
+
+/* Hidden by default. The aside still renders in HTML at all sizes,
+ * but only shows above the breakpoint. */
+.right-toc {
+    display: none;
+}
+
+/* The home page has its own hero layout in home.css. Sphinx produces
+ * only the page title in toc, which we hide as a duplicate, so the
+ * TOC would be empty. Skip it entirely. */
+.home-page .right-toc {
+    display: none !important;
+}
+
+@media (min-width: 1500px) {
+    /* Layout: flex split between article and TOC. */
+    .article-with-toc {
+        display: flex;
+        gap: 32px;
+        align-items: flex-start;
+    }
+
+    .article-with-toc > [role="main"] {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: 1000px;
+    }
+
+    /* Override custom.css's .wy-nav-content max-width so there's
+     * room for the article + gap + TOC column. */
+    .wy-nav-content {
+        max-width: 1280px;
+    }
+
+    /* Drop the existing right border on .wy-nav-content; the TOC's
+     * own visual edge is the separator now. */
+    .wy-nav-content {
+        border-right: none;
+    }
+
+    /* The TOC column itself. */
+    .right-toc {
+        display: block;
+        flex: 0 0 240px;
+        position: sticky;
+        top: 64px;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .right-toc-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 0.6rem;
+        padding-left: 12px;
+    }
+
+    /* Tree. */
+    .right-toc-tree ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .right-toc-tree > ul {
+        border-left: 1px solid var(--border);
+    }
+
+    .right-toc-tree li {
+        padding: 0;
+        margin: 0;
+    }
+
+    .right-toc-tree ul ul {
+        padding-left: 12px;
+    }
+
+    /* Hide the duplicate page-title (first <li> from Sphinx's toc
+     * is the H1, which is already shown as the page heading). */
+    .right-toc-tree > ul > li:first-child > a {
+        display: none;
+    }
+    .right-toc-tree > ul > li:first-child > ul {
+        padding-left: 0;
+    }
+
+    /* Links. */
+    .right-toc a,
+    .right-toc a:visited {
+        display: block;
+        padding: 0.25rem 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        overflow-wrap: anywhere;
+    }
+
+    .right-toc a:hover {
+        color: var(--content-text);
+    }
+
+    /* Active state, set by right-toc.js scroll-spy. */
+    .right-toc-tree li.scroll-current > a,
+    .right-toc-tree li.scroll-current > a:visited {
+        color: var(--links);
+        font-weight: 600;
+    }
+}

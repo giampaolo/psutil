@@ -136,6 +136,7 @@ if html_theme == "sphinx_rtd_theme":
         "css/code.css",
         "css/home.css",
         "css/blog.css",
+        "css/right-toc.css",
     ]
     html_js_files = [
         "js/highlight-repl.js",
@@ -143,6 +144,7 @@ if html_theme == "sphinx_rtd_theme":
         ("js/theme-toggle.js", {"defer": "defer"}),
         ("js/sidebar-close.js", {"defer": "defer"}),
         ("js/search-shortcuts.js", {"defer": "defer"}),
+        ("js/right-toc.js", {"defer": "defer"}),
     ]
 
 # =====================================================================
