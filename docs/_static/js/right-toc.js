@@ -28,8 +28,24 @@
         return;
     }
 
+    var tocContainer = document.querySelector(".right-toc");
+
     // The currently active <li>s (leaf + ancestors).
     var activeLis = [];
+
+    // Scroll the TOC's own overflow container so `el` is visible.
+    // Only touches the container; never scrolls the page (using
+    // scrollIntoView would cascade up and move the document too).
+    function ensureVisibleInToc(el) {
+        if (!tocContainer || !el) return;
+        var c = tocContainer.getBoundingClientRect();
+        var r = el.getBoundingClientRect();
+        if (r.top < c.top) {
+            tocContainer.scrollTop -= c.top - r.top;
+        } else if (r.bottom > c.bottom) {
+            tocContainer.scrollTop += r.bottom - c.bottom;
+        }
+    }
 
     function setActive(link) {
         // Clear previous.
@@ -48,6 +64,8 @@
             // Move to the nearest ancestor <li> (skip the <ul> in between).
             li = li.parentNode && li.parentNode.closest("li");
         }
+
+        ensureVisibleInToc(link);
     }
 
     // Pick the last heading whose top is at or above the activation
