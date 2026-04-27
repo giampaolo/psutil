@@ -38,10 +38,10 @@
           {% else %}
             <span class="blog-card-draft">Draft</span>
           {% endif %}
+          {% if featured %}<a class="blog-card-badge-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">★ Featured</a>{% endif %}
         </span>
         <h2 class="blog-card-title">
           <a href="{{ postlink(post) }}">{{ post.title }}</a>
-          {% if featured %}<a class="blog-card-badge blog-card-badge-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a>{% endif %}
         </h2>
       </div>
       {% if post.excerpt %}

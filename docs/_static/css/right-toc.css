@@ -69,13 +69,13 @@
         contain: layout paint;
     }
 
-    /* Anchor the column with a low-contrast left rule so it reads
-     * as page chrome rather than floating. Default-mode draws the
-     * rule on the inner UL (see .right-toc-tree > ul below), so
-     * scope this to the modes whose tree has no left rule. */
+    /* Anchor the column with a left rule so it reads as page chrome
+     * rather than floating. Default-mode draws the rule on the
+     * inner UL (see .right-toc-tree > ul below), so scope this to
+     * the modes whose tree has no left rule. */
     .right-toc--blog,
     .right-toc--glossary {
-        border-left: 1px solid var(--border);
+        border-left: 1px solid color-mix(in srgb, var(--text-muted) 30%, transparent);
         padding-left: 16px;
     }
 
@@ -182,14 +182,14 @@
         background: var(--surface-sunken);
     }
 
-    /* ============================================================
-     * Blog "Browse" mode: Years + Tags rendered as wrapping pill
-     * chips matching the in-content tag pill style.
-     * ============================================================ */
+    body:has(.post-meta-banner) .right-toc-tree li.scroll-current > a,
+    body:has(.post-meta-banner) .right-toc-tree li.scroll-current > a:visited {
+        color: var(--blog-accent);
+    }
+    body:has(.post-meta-banner) .right-toc-tree li.scroll-current-leaf > a {
+        box-shadow: inset 3px 0 0 var(--blog-accent);
+    }
 
-    /* Group label ("Years", "Tags"). The element is a <p>, which
-     * .rst-content p sets to ~16px in the RTD theme — beating our
-     * unmarked rule. Force the small label size with !important. */
     .rst-content .right-toc-blog-section,
     .right-toc-blog-section {
         margin: 1rem 12px 0.25rem 12px !important;
@@ -211,25 +211,14 @@
         opacity: 0.75;
     }
 
-    /* Wrapping grid of pills, no list bullets, no left rule. */
+    /* Tags: vertical stack of pills, no bullets, no left rule. */
     .right-toc--blog .right-toc-tree ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
+        display: block;
         padding: 0 12px;
         border-left: none;
     }
-
-    /* Tags: stack them vertically  */
-    .right-toc--blog .right-toc-tree ul.right-toc-blog-tags {
-        display: block;
-    }
-    .right-toc--blog .right-toc-tree ul.right-toc-blog-tags li {
-        margin: 8px 0;
-    }
-
     .right-toc--blog .right-toc-tree li {
-        margin: 0;
+        margin: 8px 0;
         padding: 0;
     }
 
@@ -240,27 +229,16 @@
         gap: 4px;
         padding: 0.05em 0.55em;
         border-radius: 999px;
-        font-size: 0.82em;
+        font-size: 0.82rem;
         line-height: 1.6;
         color: var(--text-muted);
         background: color-mix(in srgb, var(--text-muted) 7%, transparent);
-        border: 1px solid transparent;
-    }
-
-    /* Years */
-    .right-toc--blog .right-toc-blog-years a,
-    .right-toc--blog .right-toc-blog-years a:visited {
-        background: transparent;
-        border-color: var(--border);
+        transition: background var(--theme-transition),
+                    color var(--theme-transition);
     }
 
     .right-toc--blog .right-toc-tree a:hover {
         color: var(--blog-accent);
         background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
-    }
-
-    .right-toc--blog .right-toc-blog-years a:hover {
-        background: transparent;
-        border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
     }
 }
