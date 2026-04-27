@@ -3,10 +3,6 @@ FAQ
 
 This section answers common questions and pitfalls when using psutil.
 
-.. contents::
-   :local:
-   :depth: 3
-
 General
 -------
 

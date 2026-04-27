@@ -1,7 +1,5 @@
 /*
  * Right-side per-page TOC ("On this page").
- * All rules scoped to >=1500px. Below that, the aside renders in
- * normal flow as plain text, hidden via display: none here.
  */
 
 /* Hidden by default. The aside still renders in HTML at all sizes,
@@ -10,61 +8,80 @@
     display: none;
 }
 
-/* The home page has its own hero layout in home.css. Sphinx produces
- * only the page title in toc, which we hide as a duplicate, so the
- * TOC would be empty. Skip it entirely. */
-.home-page .right-toc {
-    display: none !important;
-}
-
-@media (min-width: 1500px) {
+@media (min-width: 1452px) {
     /* Layout: flex split between article and TOC. */
     .article-with-toc {
         display: flex;
-        gap: 32px;
+        gap: 64px;
         align-items: flex-start;
     }
 
-    .article-with-toc > [role="main"] {
+    /* Center the whole layout group (left sidebar + content +
+     * right TOC) within the viewport. The left sidebar and the
+     * content wrap shift right by the same amount so they stay
+     * aligned. */
+    .wy-nav-side {
+        left: calc((100vw - 1452px) / 2);
+    }
+    .wy-nav-content-wrap {
+        margin-left: calc((100vw - 1452px) / 2 + 300px);
+    }
+
+    /* Align the topbar's logo with the left sidebar, and its right
+     * group (Blog / theme / GitHub / version) with the article
+     * column's right edge (same x as the Next button below).
+     * Padding-right uses 100% (the topbar's actual rendered width)
+     * rather than 100vw, since 100vw includes the scrollbar gutter
+     * and would push the actions 15px past the article right edge.
+     * Overrides the custom.css >=1100 rule by source order. */
+    .top-bar-inner {
+        padding-left: calc((100vw - 1452px) / 2);
+        padding-right: calc(100% - (100vw - 1452px) / 2 - 1100px);
+    }
+
+    .article-with-toc > .article-column {
         flex: 1 1 auto;
         min-width: 0;
-        max-width: 1000px;
+        max-width: 800px;
+        padding-left: 32px;
+        padding-right: 8px;
     }
 
-    /* Override custom.css's .wy-nav-content max-width so there's
-     * room for the article + gap + TOC column. */
     .wy-nav-content {
-        max-width: 1280px;
-    }
-
-    /* Drop the existing right border on .wy-nav-content; the TOC's
-     * own visual edge is the separator now. */
-    .wy-nav-content {
+        max-width: 1152px;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0;
+        margin-right: auto;
         border-right: none;
     }
 
-    /* The TOC column itself. */
     .right-toc {
         display: block;
-        flex: 0 0 240px;
+        flex: 0 0 280px;
         position: sticky;
         top: 64px;
         max-height: calc(100vh - 80px);
         overflow-y: auto;
         font-size: 0.85rem;
         line-height: 1.4;
+        padding-right: 8px;
+        contain: layout paint;
     }
 
     .right-toc-title {
-        font-size: 0.75rem;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--content-bg);
+        font-size: 13px;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--text-muted);
-        margin-bottom: 0.6rem;
-        padding-left: 12px;
+        letter-spacing: 0.1em;
+        color: var(--content-text);
+        padding: 0 12px 0.6rem 12px;
     }
 
-    /* Tree. */
     .right-toc-tree ul {
         list-style: none;
         margin: 0;
@@ -76,12 +93,25 @@
     }
 
     .right-toc-tree li {
+        list-style: none;
         padding: 0;
         margin: 0;
+        font-size: 0.85rem !important;
+        line-height: 1.5 !important;
     }
 
     .right-toc-tree ul ul {
-        padding-left: 12px;
+        padding-left: 16px;
+    }
+
+    /* Hybrid collapse: H2 + H3 headings stay visible always (so the
+     * TOC keeps its job as a structure overview), but H4 leaf
+     * lists collapse under non-active H3s.  */
+    .right-toc-tree ul ul ul ul {
+        display: none;
+    }
+    .right-toc-tree li.scroll-current > ul {
+        display: block;
     }
 
     /* Hide the duplicate page-title (first <li> from Sphinx's toc
@@ -93,24 +123,49 @@
         padding-left: 0;
     }
 
-    /* Links. */
     .right-toc a,
     .right-toc a:visited {
         display: block;
-        padding: 0.25rem 12px;
+        padding: 0.45rem 12px;
         color: var(--text-muted);
         text-decoration: none;
         overflow-wrap: anywhere;
+    }
+
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
+        font-weight: 500;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li:not(.scroll-current) > a {
+        color: var(--content-text);
+    }
+
+    .rst-content .right-toc a code,
+    .rst-content .right-toc a code .pre {
+        text-decoration: none;
+        font-family: var(--font-body) !important;
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    .right-toc-tree > ul > li:first-child > ul > li > a {
+        font-weight: 600;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a {
+        color: var(--content-text);
     }
 
     .right-toc a:hover {
         color: var(--content-text);
     }
 
-    /* Active state, set by right-toc.js scroll-spy. */
     .right-toc-tree li.scroll-current > a,
     .right-toc-tree li.scroll-current > a:visited {
         color: var(--links);
-        font-weight: 600;
+    }
+
+    .right-toc-tree li.scroll-current-leaf > a {
+        box-shadow: inset 3px 0 0 var(--sidebar-active-border);
+        background: var(--surface-sunken);
     }
 }

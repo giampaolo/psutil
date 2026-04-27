@@ -7,10 +7,6 @@ adapted to real-world code. The examples are intentionally short and avoid
 unnecessary abstractions so that the underlying psutil APIs are easy to
 understand. Most of them are not meant to be used in production.
 
-.. contents::
-   :local:
-   :depth: 3
-
 Processes
 ---------
 

@@ -46,7 +46,7 @@ _third_party_exts = [
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
-    "sphinx_codeautolink",
+    # "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_sitemap",
     "sphinxext.opengraph",
@@ -126,7 +126,8 @@ html_theme = "sphinx_rtd_theme"
 if html_theme == "sphinx_rtd_theme":
     html_theme_options = {
         "collapse_navigation": False,
-        "navigation_depth": 5,
+        "navigation_depth": 1,
+        "titles_only": True,
         "flyout_display": "attached",
     }
     templates_path = ["_templates", "_static/images"]

@@ -2,19 +2,17 @@
    psutil 8.0 introduces breaking API changes. See the
    :ref:`migration guide <migration-8.0>` if upgrading from 7.x.
 
-.. important::
-   do not rely on positional unpacking of named tuples. Always use attribute
-   access (e.g. ``t.rss``).
-
 API reference
 =============
 
-Complete reference for all psutil classes and functions. For a high-level
-overview with short examples see :doc:`api-overview`.
+Complete reference for all psutil classes and functions. Provided as a single
+HTML page for ease of searchability.
 
 .. contents::
    :local:
-   :depth: 5
+   :depth: 1
+
+For a high-level overview with short examples see :doc:`api-overview`.
 
 System related functions
 ------------------------
@@ -1125,8 +1123,8 @@ Exceptions
   still alive. *name* attribute is set if :meth:`Process.name` was previously
   called.
 
-Process class
-^^^^^^^^^^^^^
+Classes
+^^^^^^^
 
 .. class:: Process(pid=None)
 
@@ -1346,23 +1344,24 @@ Process class
        >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
        '2011-03-05 18:03:52'
 
-    .. method:: as_dict(attrs=None, ad_value=None)
+  .. method:: as_dict(attrs=None, ad_value=None)
 
-      Utility method returning multiple process information as a dictionary.
+    Utility method returning multiple process information as a dictionary.
 
-      If *attrs* is specified, it must be a collection of strings reflecting
-      available :class:`Process` class's attribute names. If not passed all
-      :attr:`Process.attrs` names are assumed.
+    If *attrs* is specified, it must be a collection of strings reflecting
+    available :class:`Process` class's attribute names. If not passed all
+    :attr:`Process.attrs` names are assumed.
 
-      *ad_value* is the value which gets assigned to a dict key in case
-      :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
-      retrieving that particular process information (default ``None``).
+    *ad_value* is the value which gets assigned to a dict key in case
+    :exc:`AccessDenied` or :exc:`ZombieProcess` exception is raised when
+    retrieving that particular process information (default ``None``).
 
-      The ``'net_connections'`` attribute is retrieved by calling
-      :meth:`Process.net_connections` with ``kind="inet"``.
+    The ``'net_connections'`` attribute is retrieved by calling
+    :meth:`Process.net_connections` with ``kind="inet"``.
 
-      Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
-      there's no need you use it also.
+    Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so there's
+    no need you use it also.
+
     .. code-block:: pycon
 
        >>> import psutil
@@ -2275,9 +2274,6 @@ Process class
        busy-loop polling.
 
 -------------------------------------------------------------------------------
-
-Popen class
-^^^^^^^^^^^
 
 .. class:: Popen(*args, **kwargs)
 

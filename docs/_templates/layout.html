@@ -42,19 +42,22 @@
 
 {% block content %}
 <div class="rst-content">
-  {% include "breadcrumbs.html" %}
   <div class="article-with-toc">
-    <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-      {%- block document %}
-      <div itemprop="articleBody">
-        {% block body %}{% endblock %}
+    <div class="article-column">
+      {% include "breadcrumbs.html" %}
+      <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+        {%- block document %}
+        <div itemprop="articleBody">
+          {% block body %}{% endblock %}
+        </div>
+        {%- if self.comments()|trim %}
+        <div class="articleComments">
+          {%- block comments %}{% endblock %}
+        </div>
+        {%- endif %}
+        {%- endblock %}
       </div>
-      {%- if self.comments()|trim %}
-      <div class="articleComments">
-        {%- block comments %}{% endblock %}
-      </div>
-      {%- endif %}
-      {%- endblock %}
+      {% include "footer.html" %}
     </div>
     {% if toc %}
     <aside class="right-toc" aria-label="On this page">
@@ -63,6 +66,5 @@
     </aside>
     {% endif %}
   </div>
-  {% include "footer.html" %}
 </div>
 {% endblock %}

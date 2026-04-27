@@ -8,10 +8,6 @@ shows the code changes required to upgrade.
   Minor and patch releases (e.g. 6.1.x, 7.1.x) never contain breaking changes.
   Only major releases are listed here.
 
-.. contents::
-   :local:
-   :depth: 2
-
 .. _migration-8.0:
 
 Migrating to 8.0

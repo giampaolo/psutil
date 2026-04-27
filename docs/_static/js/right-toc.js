@@ -1,130 +1,219 @@
-// Right-side per-page TOC: scroll-spy via IntersectionObserver.
-// Highlights the heading currently below the topbar by adding the
-// .scroll-current class to its <li> and to all ancestor <li>s.
+// Right-side per-page TOC.
+//
+// Modeled after pydata-sphinx-theme.
+//
+// Pydata collapses non-active TOC branches via CSS so the visible
+// TOC stays short. Our 200+ item TOC isn't collapsed, except for h4.
+
 (function () {
     "use strict";
 
-    var entries = Array.prototype.slice
-        .call(document.querySelectorAll(".right-toc a[href^=\"#\"]"))
-        .map(function (link) {
-            var hash = link.getAttribute("href").slice(1);
-            var target = document.getElementById(decodeURIComponent(hash));
-            if (!target) return null;
-            // Sphinx puts ids on <section> wrappers, which span the
-            // whole subsection content. Observe the heading element
-            // inside instead, since its small height plays nicely
-            // with IntersectionObserver. For non-section targets
-            // (e.g. <dt> for autodoc functions), use as-is.
-            var heading = target;
-            if (target.tagName === "SECTION") {
-                var h = target.querySelector("h1, h2, h3, h4, h5, h6");
-                if (h) heading = h;
-            }
-            return { link: link, heading: heading };
-        })
-        .filter(Boolean);
-
-    if (entries.length === 0) {
+    var pageToc = document.querySelector(".right-toc");
+    if (!pageToc) {
         return;
     }
 
-    var tocContainer = document.querySelector(".right-toc");
-
-    // The currently active <li>s (leaf + ancestors).
-    var activeLis = [];
-
-    // Scroll the TOC's own overflow container so `el` is visible.
-    // Only touches the container; never scrolls the page (using
-    // scrollIntoView would cascade up and move the document too).
-    function ensureVisibleInToc(el) {
-        if (!tocContainer || !el) return;
-        var c = tocContainer.getBoundingClientRect();
-        var r = el.getBoundingClientRect();
-        if (r.top < c.top) {
-            tocContainer.scrollTop -= c.top - r.top;
-        } else if (r.bottom > c.bottom) {
-            tocContainer.scrollTop += r.bottom - c.bottom;
-        }
-    }
-
-    function setActive(link) {
-        // Clear previous.
-        activeLis.forEach(function (li) {
-            li.classList.remove("scroll-current");
-        });
-        activeLis = [];
-
-        if (!link) return;
-
-        // Walk up the <li> chain from the link's parent.
-        var li = link.parentNode && link.parentNode.closest("li");
-        while (li) {
-            li.classList.add("scroll-current");
-            activeLis.push(li);
-            // Move to the nearest ancestor <li> (skip the <ul> in between).
-            li = li.parentNode && li.parentNode.closest("li");
-        }
-
-        ensureVisibleInToc(link);
-    }
-
-    // Pick the last heading whose top is at or above the activation
-    // band (64px below viewport top). If we're at the very bottom of
-    // the page, force the last heading active so short final
-    // sections (which never reach the band) still get highlighted.
-    function pickActive() {
-        var atBottom =
-            window.innerHeight + window.scrollY >=
-            document.documentElement.scrollHeight - 4;
-        if (atBottom) {
-            setActive(entries[entries.length - 1].link);
-            return;
-        }
-        var best = null;
-        for (var i = 0; i < entries.length; i++) {
-            var top = entries[i].heading.getBoundingClientRect().top;
-            if (top <= 64) {
-                best = entries[i];
-            } else {
-                break;
-            }
-        }
-        setActive(best ? best.link : null);
-    }
-
-    // The IntersectionObserver fires when a heading enters or leaves
-    // the activation band, which is the cheap signal to recompute.
-    var observer = new IntersectionObserver(
-        function () {
-            pickActive();
-        },
-        {
-            rootMargin: "-64px 0px -70% 0px",
-            threshold: 0,
-        }
+    var tocLinks = Array.prototype.slice.call(
+        pageToc.querySelectorAll("a[href^=\"#\"]")
     );
 
-    entries.forEach(function (e) {
-        observer.observe(e.heading);
+    if (tocLinks.length === 0) {
+        return;
+    }
+
+    function getHeading(tocLink) {
+        var href = tocLink.getAttribute("href");
+        if (!href || !href.startsWith("#")) {
+            return null;
+        }
+
+        var id = href.substring(1);
+        if (!id) {
+            return null;
+        }
+
+        var target = document.getElementById(decodeURIComponent(id));
+        if (!target) {
+            return null;
+        }
+
+        // Prefer the heading inside the section (small height plays
+        // better with IO than the section wrapper). Fall back to
+        // target itself for things like <dt> autodoc anchors.
+        var heading = target.querySelector("h1, h2, h3, h4, h5, h6");
+        if (heading) {
+            return heading;
+        }
+        return target;
+    }
+
+    var headingsToTocLinks = new Map();
+
+    tocLinks.forEach(function (tocLink) {
+        var heading = getHeading(tocLink);
+        if (heading) {
+            headingsToTocLinks.set(heading, tocLink);
+        }
     });
 
-    // Initial pass for deep links (page loads scrolled to a hash).
-    pickActive();
+    // Title height — cached once. The .right-toc-title is sticky at
+    // top:0, so its height equals its bottom edge in container
+    // coords, regardless of scrollTop. Recomputed on resize (the
+    // observer rebuild path), where layout may change.
+    var titleHeight = 0;
 
-    // Scroll listener (rAF-throttled) covers the cases the observer
-    // misses: scrolling within a single section without crossing
-    // any heading, and the at-bottom snap.
-    var scrollPending = false;
+    function refreshTitleHeight() {
+        var title = pageToc.querySelector(".right-toc-title");
+        if (title) {
+            titleHeight = title.offsetHeight;
+        }
+        else {
+            titleHeight = 0;
+        }
+    }
+
+    refreshTitleHeight();
+
+    // Use offsetTop / clientHeight — both precomputed by the
+    // layout engine — instead of getBoundingClientRect, which
+    // forces a synchronous layout flush each call.
+    function ensureVisibleInToc(link) {
+        var linkTop = link.offsetTop;
+        var linkBottom = linkTop + link.offsetHeight;
+
+        var visibleTop = pageToc.scrollTop + titleHeight;
+        var visibleBottom =
+            pageToc.scrollTop + pageToc.clientHeight;
+
+        if (linkTop < visibleTop) {
+            pageToc.scrollTop = linkTop - titleHeight;
+        }
+        else if (linkBottom > visibleBottom) {
+            pageToc.scrollTop = linkBottom - pageToc.clientHeight;
+        }
+    }
+
+    // Track the active link + ancestor <li>s so we only touch what
+    // changes. Iterating all nav items per activation triggered a
+    // style-recalc storm at 200+ items.
+    var activeLink = null;
+    var activeLis = [];
+
+    // The leaf <li> also gets .scroll-current-leaf so CSS can target
+    // the deepest item without `:has()`, which is expensive when
+    // re-evaluated on every class change.
+    function activate(tocLink) {
+        if (tocLink === activeLink) {
+            return;
+        }
+
+        if (activeLink) {
+            activeLink.classList.remove("scroll-current");
+            activeLink.removeAttribute("aria-current");
+        }
+
+        activeLis.forEach(function (li) {
+            li.classList.remove("scroll-current");
+            li.classList.remove("scroll-current-leaf");
+        });
+
+        activeLis = [];
+        activeLink = tocLink;
+
+        if (!tocLink) {
+            return;
+        }
+
+        tocLink.classList.add("scroll-current");
+        tocLink.setAttribute("aria-current", "true");
+
+        var leaf = tocLink.parentNode && tocLink.parentNode.closest("li");
+
+        if (leaf) {
+            leaf.classList.add("scroll-current");
+            leaf.classList.add("scroll-current-leaf");
+
+            activeLis.push(leaf);
+
+            var li = leaf.parentNode && leaf.parentNode.closest("li");
+
+            while (li) {
+                li.classList.add("scroll-current");
+                activeLis.push(li);
+                li = li.parentNode && li.parentNode.closest("li");
+            }
+        }
+
+        ensureVisibleInToc(tocLink);
+    }
+
+    var observer;
+
+    function connectIntersectionObserver() {
+        if (observer) {
+            observer.disconnect();
+        }
+
+        refreshTitleHeight();
+
+        var topbar = document.querySelector(".top-bar");
+
+        var headerHeight = 0;
+        if (topbar) {
+            headerHeight = topbar.offsetHeight;
+        }
+
+        var options = {
+            root: null,
+            // Top of band: just below the header. Bottom: 70% from
+            // the viewport bottom — i.e., active when heading is in
+            // the top 30% of the viewport. Same numbers pydata uses.
+            rootMargin: "-" + headerHeight + "px 0px -70% 0px",
+            threshold: 0,
+        };
+
+        function callback(entries) {
+            var entry = entries
+                .filter(function (e) {
+                    return e.isIntersecting;
+                })
+                .pop();
+
+            if (!entry) {
+                return;
+            }
+
+            var tocLink = headingsToTocLinks.get(entry.target);
+
+            if (tocLink) {
+                activate(tocLink);
+            }
+        }
+
+        observer = new IntersectionObserver(callback, options);
+
+        Array.from(headingsToTocLinks.keys()).forEach(
+            function (h) {
+                observer.observe(h);
+            }
+        );
+    }
+
+    function debounce(fun, wait) {
+        var t;
+
+        return function () {
+            clearTimeout(t);
+            t = setTimeout(fun, wait);
+        };
+    }
+
+    // Header height can change on resize; rebuild observer with
+    // the updated rootMargin.
     window.addEventListener(
-        "scroll",
-        function () {
-            if (scrollPending) return;
-            scrollPending = true;
-            requestAnimationFrame(function () {
-                scrollPending = false;
-                pickActive();
-            });
-        },
-        { passive: true }
+        "resize",
+        debounce(connectIntersectionObserver, 300)
     );
+
+    connectIntersectionObserver();
 })();
