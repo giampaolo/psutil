@@ -8,7 +8,7 @@
     display: none;
 }
 
-@media (min-width: 1452px) {
+@media (min-width: 1280px) {
     /* Layout: flex split between article and TOC. */
     .article-with-toc {
         display: flex;
@@ -21,10 +21,10 @@
      * content wrap shift right by the same amount so they stay
      * aligned. */
     .wy-nav-side {
-        left: calc((100vw - 1452px) / 2);
+        left: calc((100vw - 1280px) / 2);
     }
     .wy-nav-content-wrap {
-        margin-left: calc((100vw - 1452px) / 2 + 300px);
+        margin-left: calc((100vw - 1280px) / 2 + 300px);
     }
 
     /* Align the topbar's logo with the left sidebar, and its right
@@ -35,8 +35,8 @@
      * and would push the actions 15px past the article right edge.
      * Overrides the custom.css >=1100 rule by source order. */
     .top-bar-inner {
-        padding-left: calc((100vw - 1452px) / 2);
-        padding-right: calc(100% - (100vw - 1452px) / 2 - 1100px);
+        padding-left: calc((100vw - 1280px) / 2);
+        padding-right: calc(100% - (100vw - 1280px) / 2 - 1100px);
     }
 
     .article-with-toc > .article-column {
@@ -67,6 +67,16 @@
         line-height: 1.4;
         padding-right: 8px;
         contain: layout paint;
+    }
+
+    /* Anchor the column with a low-contrast left rule so it reads
+     * as page chrome rather than floating. Default-mode draws the
+     * rule on the inner UL (see .right-toc-tree > ul below), so
+     * scope this to the modes whose tree has no left rule. */
+    .right-toc--blog,
+    .right-toc--glossary {
+        border-left: 1px solid var(--border);
+        padding-left: 16px;
     }
 
     .right-toc-title {
@@ -115,11 +125,14 @@
     }
 
     /* Hide the duplicate page-title (first <li> from Sphinx's toc
-     * is the H1, which is already shown as the page heading). */
-    .right-toc-tree > ul > li:first-child > a {
+     * is the H1, which is already shown as the page heading).
+     * Default mode only — blog/glossary modes don't have an H1
+     * dupe, so hiding the first item there would drop a real entry
+     * (e.g. the most recent year). */
+    .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul > li:first-child > a {
         display: none;
     }
-    .right-toc-tree > ul > li:first-child > ul {
+    .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul > li:first-child > ul {
         padding-left: 0;
     }
 
@@ -174,14 +187,18 @@
      * chips matching the in-content tag pill style.
      * ============================================================ */
 
-    /* Group label ("Years", "Tags"). */
+    /* Group label ("Years", "Tags"). The element is a <p>, which
+     * .rst-content p sets to ~16px in the RTD theme — beating our
+     * unmarked rule. Force the small label size with !important. */
+    .rst-content .right-toc-blog-section,
     .right-toc-blog-section {
         margin: 1rem 12px 0.25rem 12px !important;
-        font-size: 11px;
+        font-size: 11px !important;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: var(--text-muted);
+        line-height: 1.4 !important;
     }
     .right-toc-blog-section:first-child {
         margin-top: 0 !important;
@@ -191,6 +208,7 @@
     .right-toc-blog-count {
         color: var(--text-muted);
         font-size: 0.85em;
+        opacity: 0.75;
     }
 
     /* Wrapping grid of pills, no list bullets, no left rule. */
@@ -200,6 +218,14 @@
         gap: 6px;
         padding: 0 12px;
         border-left: none;
+    }
+
+    /* Tags: stack them vertically  */
+    .right-toc--blog .right-toc-tree ul.right-toc-blog-tags {
+        display: block;
+    }
+    .right-toc--blog .right-toc-tree ul.right-toc-blog-tags li {
+        margin: 8px 0;
     }
 
     .right-toc--blog .right-toc-tree li {
@@ -218,10 +244,23 @@
         line-height: 1.6;
         color: var(--text-muted);
         background: color-mix(in srgb, var(--text-muted) 7%, transparent);
+        border: 1px solid transparent;
+    }
+
+    /* Years */
+    .right-toc--blog .right-toc-blog-years a,
+    .right-toc--blog .right-toc-blog-years a:visited {
+        background: transparent;
+        border-color: var(--border);
     }
 
     .right-toc--blog .right-toc-tree a:hover {
         color: var(--blog-accent);
         background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
+    }
+
+    .right-toc--blog .right-toc-blog-years a:hover {
+        background: transparent;
+        border-color: color-mix(in srgb, var(--blog-accent) 50%, transparent);
     }
 }

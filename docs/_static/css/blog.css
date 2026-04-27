@@ -132,7 +132,7 @@ body:has(.blog-section-banner) {
 
 a.blog-section-title,
 a.blog-section-title:visited {
-    font-size: 1.35em;
+    font-size: 1.9em;
     font-weight: 700;
     letter-spacing: 0.04em;
     color: var(--headings);
@@ -228,7 +228,7 @@ ol.blog-cards > li.blog-card {
         "summary"
         "tags";
     row-gap: 0;
-    padding: 1.1em 0 1.3em 0;
+    padding: 1.5em 0 1.7em 0;
     margin: 0;
     background: none;
     box-shadow: none;
@@ -325,9 +325,9 @@ a.blog-card-badge-featured:hover {
 
 .blog-card-meta {
     grid-area: date;
-    color: var(--text-muted);
+    color: color-mix(in srgb, var(--text-muted) 75%, transparent);
     font-size: 0.78em;
-    font-weight: 600;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     font-variant-numeric: tabular-nums;

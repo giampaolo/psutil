@@ -28,7 +28,6 @@
 {# ========================================================================= #}
 {% elif right_toc_mode == 'blog-browse' %}
 <aside class="right-toc right-toc--blog" data-toc-mode="blog-browse" aria-label="Browse blog">
-  <div class="right-toc-title">Browse</div>
   <nav class="right-toc-tree">
     {%- set blog_years = [] -%}
     {%- for post in collection -%}
@@ -38,7 +37,7 @@
     {%- endfor -%}
     {% if blog_years %}
     <p class="right-toc-blog-section">Years</p>
-    <ul>
+    <ul class="right-toc-blog-years">
       {% for year in blog_years %}
       <li><a href="{{ pathto(ablog.blog_path ~ '/' ~ year) }}">{{ year }}</a></li>
       {% endfor %}
@@ -46,7 +45,7 @@
     {% endif %}
     {% if ablog.tags %}
     <p class="right-toc-blog-section">Tags</p>
-    <ul>
+    <ul class="right-toc-blog-tags">
       {% for tag in ablog.tags %}
         {% if tag|string != 'featured' %}
         <li><a href="{{ pathto(tag.docname) }}">{{ tag }} <span class="right-toc-blog-count">{{ tag|length }}</span></a></li>
