@@ -58,6 +58,7 @@ _local_exts = [  # defined in the _ext/ folder
     "check_python_syntax",
     "field_role",
     "genindex_filter",
+    "glossary_toc",
     "post_banner",
 ]
 

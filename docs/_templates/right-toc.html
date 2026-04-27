@@ -33,7 +33,12 @@
 <aside class="right-toc right-toc--glossary" data-toc-mode="glossary" aria-label="Terms">
   <div class="right-toc-title">Terms</div>
   <nav class="right-toc-tree">
-    {# placeholder — populated client-side from <dl.glossary > dt> #}
+    {# glossary_terms is set by docs/_ext/glossary_toc.py #}
+    <ul>
+      {% for term in glossary_terms %}
+      <li><a href="#{{ term.id }}">{{ term.text }}</a></li>
+      {% endfor %}
+    </ul>
   </nav>
 </aside>
 {# right_toc_mode == 'none' → no <aside> rendered #}
