@@ -2,14 +2,17 @@
  * Right-side per-page TOC ("On this page").
  */
 
-/* Hidden by default. The aside still renders in HTML at all sizes,
- * but only shows above the breakpoint. */
+/* Hidden by default. */
 .right-toc {
     display: none;
 }
 
 @media (min-width: 1280px) {
-    /* Layout: flex split between article and TOC. */
+
+    /* ============================================================== */
+    /* Layout                                                         */
+    /* ============================================================== */
+
     .article-with-toc {
         display: flex;
         gap: 64px;
@@ -17,9 +20,7 @@
     }
 
     /* Center the whole layout group (left sidebar + content +
-     * right TOC) within the viewport. The left sidebar and the
-     * content wrap shift right by the same amount so they stay
-     * aligned. */
+     * right TOC) within the viewport. */
     .wy-nav-side {
         left: calc((100vw - 1280px) / 2);
     }
@@ -29,11 +30,7 @@
 
     /* Align the topbar's logo with the left sidebar, and its right
      * group (Blog / theme / GitHub / version) with the article
-     * column's right edge (same x as the Next button below).
-     * Padding-right uses 100% (the topbar's actual rendered width)
-     * rather than 100vw, since 100vw includes the scrollbar gutter
-     * and would push the actions 15px past the article right edge.
-     * Overrides the custom.css >=1100 rule by source order. */
+     * column's right edge (same x as the Next button below). */
     .top-bar-inner {
         padding-left: calc((100vw - 1280px) / 2);
         padding-right: calc(100% - (100vw - 1280px) / 2 - 1100px);
@@ -55,6 +52,10 @@
         margin-right: auto;
         border-right: none;
     }
+
+    /* ============================================================== */
+    /* Panel (sticky aside)                                           */
+    /* ============================================================== */
 
     .right-toc {
         display: block;
@@ -79,6 +80,10 @@
         padding-left: 16px;
     }
 
+    /* ============================================================== */
+    /* Title ("On this page")                                         */
+    /* ============================================================== */
+
     .right-toc-title {
         position: sticky;
         top: 0;
@@ -91,6 +96,10 @@
         color: var(--content-text);
         padding: 0 12px 0.6rem 12px;
     }
+
+    /* ============================================================== */
+    /* Tree (UL/LI structure)                                         */
+    /* ============================================================== */
 
     .right-toc-tree ul {
         list-style: none;
@@ -116,7 +125,7 @@
 
     /* Hybrid collapse: H2 + H3 headings stay visible always (so the
      * TOC keeps its job as a structure overview), but H4 leaf
-     * lists collapse under non-active H3s.  */
+     * lists collapse under non-active H3s. */
     .right-toc-tree ul ul ul ul {
         display: none;
     }
@@ -124,17 +133,37 @@
         display: block;
     }
 
+    /* ============================================================== */
+    /* Default mode: H1 dupe hide + per-level weights                */
+    /* ============================================================== */
+
     /* Hide the duplicate page-title (first <li> from Sphinx's toc
      * is the H1, which is already shown as the page heading).
      * Default mode only — blog/glossary modes don't have an H1
-     * dupe, so hiding the first item there would drop a real entry
-     * (e.g. the most recent year). */
+     * dupe, so hiding the first item there would drop a real entry. */
     .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul > li:first-child > a {
         display: none;
     }
     .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul > li:first-child > ul {
         padding-left: 0;
     }
+
+    .right-toc-tree > ul > li:first-child > ul > li > a {
+        font-weight: 600;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
+        font-weight: 500;
+    }
+    /* Non-current H2 + H3 entries use the regular content color
+     * instead of the muted base; H4 entries keep muted for hierarchy. */
+    .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a,
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li:not(.scroll-current) > a {
+        color: var(--content-text);
+    }
+
+    /* ============================================================== */
+    /* Anchors                                                        */
+    /* ============================================================== */
 
     .right-toc a,
     .right-toc a:visited {
@@ -145,13 +174,11 @@
         overflow-wrap: anywhere;
     }
 
-    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
-        font-weight: 500;
-    }
-    .right-toc-tree > ul > li:first-child > ul > li > ul > li:not(.scroll-current) > a {
+    .right-toc a:hover {
         color: var(--content-text);
     }
 
+    /* Inline code in the TOC reads as plain text, not as code chrome. */
     .rst-content .right-toc a code,
     .rst-content .right-toc a code .pre {
         text-decoration: none;
@@ -161,16 +188,9 @@
         border-radius: 0 !important;
     }
 
-    .right-toc-tree > ul > li:first-child > ul > li > a {
-        font-weight: 600;
-    }
-    .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a {
-        color: var(--content-text);
-    }
-
-    .right-toc a:hover {
-        color: var(--content-text);
-    }
+    /* ============================================================== */
+    /* Active state (scroll-current)                                  */
+    /* ============================================================== */
 
     .right-toc-tree li.scroll-current > a,
     .right-toc-tree li.scroll-current > a:visited {
@@ -182,6 +202,10 @@
         background: var(--surface-sunken);
     }
 
+    /* Blog posts use the rust accent throughout, so the active TOC
+     * entry should match instead of falling back to the default
+     * link blue. Detected by the post-meta banner the post layout
+     * always renders. */
     body:has(.post-meta-banner) .right-toc-tree li.scroll-current > a,
     body:has(.post-meta-banner) .right-toc-tree li.scroll-current > a:visited {
         color: var(--blog-accent);
@@ -190,6 +214,12 @@
         box-shadow: inset 3px 0 0 var(--blog-accent);
     }
 
+    /* ============================================================== */
+    /* Blog "Browse" mode — Tags pill list                            */
+    /* ============================================================== */
+
+    /* Section label ("Tags"). Element is a <p>, which .rst-content p
+     * sets to ~16px in the RTD theme — beating our unmarked rule. */
     .rst-content .right-toc-blog-section,
     .right-toc-blog-section {
         margin: 1rem 12px 0.25rem 12px !important;
@@ -211,17 +241,21 @@
         opacity: 0.75;
     }
 
-    /* Tags: vertical stack of pills, no bullets, no left rule. */
+    /* Vertical stack of pills: re-add horizontal padding (the
+     * default-mode left rule sits at 0; we drop that and inset
+     * the list instead) and override the base list margin. */
     .right-toc--blog .right-toc-tree ul {
-        display: block;
         padding: 0 12px;
         border-left: none;
     }
     .right-toc--blog .right-toc-tree li {
         margin: 8px 0;
-        padding: 0;
     }
 
+    /* Pill style: matches in-content tag pills (.blog-card-tags a)
+     * so right-rail Tag pills are indistinguishable from card tags.
+     * Use rem (not em) so size doesn't shrink relative to the TOC's
+     * 0.85rem base. */
     .right-toc--blog .right-toc-tree a,
     .right-toc--blog .right-toc-tree a:visited {
         display: inline-flex;
@@ -231,7 +265,6 @@
         border-radius: 999px;
         font-size: 0.82rem;
         line-height: 1.6;
-        color: var(--text-muted);
         background: color-mix(in srgb, var(--text-muted) 7%, transparent);
         transition: background var(--theme-transition),
                     color var(--theme-transition);
