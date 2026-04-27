@@ -1,0 +1,40 @@
+{#-
+  Right TOC.
+
+  Each page type picks a "mode" via the template context. Each mode
+  renders a different <aside> with data-toc-mode set so JS can dispatch
+  the same way.
+-#}
+
+{%- set right_toc_mode = 'default' -%}
+{%- if pagename == master_doc -%}
+  {%- set right_toc_mode = 'none' -%}
+{%- elif collection is defined and collection -%}
+  {%- set right_toc_mode = 'blog-browse' -%}
+{%- elif pagename == 'glossary' -%}
+  {%- set right_toc_mode = 'glossary' -%}
+{%- elif not toc -%}
+  {%- set right_toc_mode = 'none' -%}
+{%- endif -%}
+
+{% if right_toc_mode == 'default' %}
+<aside class="right-toc" data-toc-mode="default" aria-label="On this page">
+  <div class="right-toc-title">On this page</div>
+  <nav class="right-toc-tree">{{ toc }}</nav>
+</aside>
+{% elif right_toc_mode == 'blog-browse' %}
+<aside class="right-toc right-toc--blog" data-toc-mode="blog-browse" aria-label="Browse blog">
+  <div class="right-toc-title">Browse</div>
+  <nav class="right-toc-tree">
+    {# placeholder — Years + Tags list goes here #}
+  </nav>
+</aside>
+{% elif right_toc_mode == 'glossary' %}
+<aside class="right-toc right-toc--glossary" data-toc-mode="glossary" aria-label="Terms">
+  <div class="right-toc-title">Terms</div>
+  <nav class="right-toc-tree">
+    {# placeholder — populated client-side from <dl.glossary > dt> #}
+  </nav>
+</aside>
+{# right_toc_mode == 'none' → no <aside> rendered #}
+{% endif %}

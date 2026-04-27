@@ -59,12 +59,7 @@
       </div>
       {% include "footer.html" %}
     </div>
-    {% if toc %}
-    <aside class="right-toc" aria-label="On this page">
-      <div class="right-toc-title">On this page</div>
-      <nav class="right-toc-tree">{{ toc }}</nav>
-    </aside>
-    {% endif %}
+    {% include "right-toc.html" %}
   </div>
 </div>
 {% endblock %}
