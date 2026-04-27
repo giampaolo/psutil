@@ -22,13 +22,44 @@
   <div class="right-toc-title">On this page</div>
   <nav class="right-toc-tree">{{ toc }}</nav>
 </aside>
+
+{# ========================================================================= #}
+{# Blog TOC                                                                  #}
+{# ========================================================================= #}
 {% elif right_toc_mode == 'blog-browse' %}
 <aside class="right-toc right-toc--blog" data-toc-mode="blog-browse" aria-label="Browse blog">
   <div class="right-toc-title">Browse</div>
   <nav class="right-toc-tree">
-    {# placeholder — Years + Tags list goes here #}
+    {%- set blog_years = [] -%}
+    {%- for post in collection -%}
+      {%- if post.published and post.date.year not in blog_years -%}
+        {%- set _ = blog_years.append(post.date.year) -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {% if blog_years %}
+    <p class="right-toc-blog-section">Years</p>
+    <ul>
+      {% for year in blog_years %}
+      <li><a href="{{ pathto(ablog.blog_path ~ '/' ~ year) }}">{{ year }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% if ablog.tags %}
+    <p class="right-toc-blog-section">Tags</p>
+    <ul>
+      {% for tag in ablog.tags %}
+        {% if tag|string != 'featured' %}
+        <li><a href="{{ pathto(tag.docname) }}">{{ tag }} <span class="right-toc-blog-count">{{ tag|length }}</span></a></li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+    {% endif %}
   </nav>
 </aside>
+
+{# ========================================================================= #}
+{# Glossary TOC                                                              #}
+{# ========================================================================= #}
 {% elif right_toc_mode == 'glossary' %}
 <aside class="right-toc right-toc--glossary" data-toc-mode="glossary" aria-label="Terms">
   <div class="right-toc-title">Terms</div>
@@ -41,5 +72,6 @@
     </ul>
   </nav>
 </aside>
+
 {# right_toc_mode == 'none' → no <aside> rendered #}
 {% endif %}

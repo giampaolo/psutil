@@ -168,4 +168,60 @@
         box-shadow: inset 3px 0 0 var(--sidebar-active-border);
         background: var(--surface-sunken);
     }
+
+    /* ============================================================
+     * Blog "Browse" mode: Years + Tags rendered as wrapping pill
+     * chips matching the in-content tag pill style.
+     * ============================================================ */
+
+    /* Group label ("Years", "Tags"). */
+    .right-toc-blog-section {
+        margin: 1rem 12px 0.25rem 12px !important;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+    }
+    .right-toc-blog-section:first-child {
+        margin-top: 0 !important;
+    }
+
+    /* Post-count badge after a tag pill. */
+    .right-toc-blog-count {
+        color: var(--text-muted);
+        font-size: 0.85em;
+    }
+
+    /* Wrapping grid of pills, no list bullets, no left rule. */
+    .right-toc--blog .right-toc-tree ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 0 12px;
+        border-left: none;
+    }
+
+    .right-toc--blog .right-toc-tree li {
+        margin: 0;
+        padding: 0;
+    }
+
+    .right-toc--blog .right-toc-tree a,
+    .right-toc--blog .right-toc-tree a:visited {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0.05em 0.55em;
+        border-radius: 999px;
+        font-size: 0.82em;
+        line-height: 1.6;
+        color: var(--text-muted);
+        background: color-mix(in srgb, var(--text-muted) 7%, transparent);
+    }
+
+    .right-toc--blog .right-toc-tree a:hover {
+        color: var(--blog-accent);
+        background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
+    }
 }
