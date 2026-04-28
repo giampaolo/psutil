@@ -15,37 +15,43 @@
 
     .article-with-toc {
         display: flex;
-        gap: 64px;
+        gap: var(--layout-gap);
         align-items: flex-start;
     }
 
     /* Center the whole layout group (left sidebar + content +
-     * right TOC) within the viewport. */
+     * right TOC) within the viewport. The breakpoint above is 1280
+     * so the right-toc appears on 1440-class laptops, but the
+     * actual layout footprint is --layout-width (sidebar + content).
+     * Use max(0, ...) so between 1280 and --layout-width the sidebar
+     * stays pinned to the left edge, and above that symmetric
+     * gutters appear on both sides. */
     .wy-nav-side {
-        left: calc((100vw - 1280px) / 2);
+        left: max(0px, calc((100vw - var(--layout-width)) / 2));
     }
     .wy-nav-content-wrap {
-        margin-left: calc((100vw - 1280px) / 2 + 300px);
+        margin-left: max(var(--sidebar-width), calc((100vw - var(--layout-width)) / 2 + var(--sidebar-width)));
     }
 
     /* Align the topbar's logo with the left sidebar, and its right
      * group (Blog / theme / GitHub / version) with the article
-     * column's right edge (same x as the Next button below). */
+     * column's right edge (same x as the Next button below). The
+     * inner right edge sits at sidebar + article-max from the left. */
     .top-bar-inner {
-        padding-left: calc((100vw - 1280px) / 2);
-        padding-right: calc(100% - (100vw - 1280px) / 2 - 1100px);
+        padding-left: max(0px, calc((100vw - var(--layout-width)) / 2));
+        padding-right: max(2.5rem, calc(100% - (100vw - var(--layout-width)) / 2 - var(--sidebar-width) - var(--article-max-width)));
     }
 
     .article-with-toc > .article-column {
         flex: 1 1 auto;
         min-width: 0;
-        max-width: 800px;
+        max-width: var(--article-max-width);
         padding-left: 32px;
         padding-right: 8px;
     }
 
     .wy-nav-content {
-        max-width: 1152px;
+        max-width: var(--content-max-width);
         padding-left: 0 !important;
         padding-right: 0 !important;
         margin-left: 0;
@@ -59,7 +65,7 @@
 
     .right-toc {
         display: block;
-        flex: 0 0 280px;
+        flex: 0 0 var(--right-toc-width);
         position: sticky;
         top: 64px;
         max-height: calc(100vh - 80px);

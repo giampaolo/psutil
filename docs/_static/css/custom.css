@@ -22,6 +22,15 @@
     --sidebar-font-size: 15px;
     --sidebar-caption-font-size: 14px;
 
+    /* Layout. Used by both the RTD-overriding rules in this file and the
+       3-column flex layout in right-toc.css.*/
+    --sidebar-width: 300px;
+    --article-max-width: 800px;
+    --content-max-width: 1152px;
+    --right-toc-width: 280px;
+    --layout-gap: 64px;
+    --layout-width: calc(var(--sidebar-width) + var(--content-max-width));
+
     /* others */
     --border-radius: 4px;
     --theme-transition: 0.2s ease;
@@ -216,11 +225,12 @@
     padding: 0 2.5rem 0 0;
 }
 
-/* At widths where content hits max-width (300px sidebar + 800px = 1100px),
-   grow right padding to keep actions aligned with the content right edge. */
+/* At widths where content hits max-width (sidebar + article-max),
+   grow right padding to keep actions aligned with the content right
+   edge. Breakpoint 1100 = 300 + 800; tied to those vars below. */
 @media (min-width: 1100px) {
     .top-bar-inner {
-        padding-right: calc(100vw - 1100px + 2.5rem);
+        padding-right: calc(100vw - var(--sidebar-width) - var(--article-max-width) + 2.5rem);
     }
 }
 
@@ -230,7 +240,7 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    width: 300px;
+    width: var(--sidebar-width);
     padding-left: 1.15rem;
     gap: 7px;
     text-decoration: none !important;
@@ -330,7 +340,7 @@
 
 @media (min-width: 1200px) {
     .wy-nav-content {
-        max-width: 800px;
+        max-width: var(--article-max-width);
         padding-left: 120px !important;
     }
 }
