@@ -80,6 +80,7 @@
     --sidebar-item: #d9d9d9;
     --sidebar-item-nested: #404040;
     --sidebar-active-border: #55a5d9;
+    --sidebar-active-bg: rgba(85, 165, 217, 0.14);
     --sidebar-search-focus-border: #7ab3d4;
     --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
 
@@ -489,7 +490,9 @@ body {
 }
 
 .wy-menu-vertical li.current > a {
-    border-left: 3px solid var(--sidebar-active-border) !important;
+    box-shadow: inset 3px 0 0 var(--sidebar-active-border);
+    font-weight: 600;
+    border-left: none !important;
 }
 
 .wy-menu-vertical a {

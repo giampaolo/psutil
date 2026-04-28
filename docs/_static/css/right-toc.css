@@ -102,7 +102,7 @@
         top: 0;
         z-index: 1;
         background: var(--content-bg);
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.1em;
@@ -133,7 +133,7 @@
     }
 
     .right-toc-tree ul ul {
-        padding-left: 16px;
+        padding-left: 24px;
     }
 
     /* Hybrid collapse: H2 + H3 headings stay visible always (so the
@@ -161,9 +161,25 @@
         padding-left: 0;
     }
 
-    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
-        font-weight: 500;
+    .right-toc-tree > ul > li:first-child > ul > li {
+        margin-top: 0.7rem;
     }
+    .right-toc-tree > ul > li:first-child > ul > li:first-child {
+        margin-top: 0;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > a {
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
+        font-size: 0.85rem;
+        font-weight: 400;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > ul > li > a {
+        font-size: 0.8rem;
+        font-weight: 400;
+    }
+
     /* Non-current H2 + H3 entries use the regular content color
      * instead of the muted base; H4 entries keep muted for hierarchy. */
     .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a,
