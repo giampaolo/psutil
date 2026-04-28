@@ -217,13 +217,35 @@
 
     connectIntersectionObserver();
 
-    // Set the first visible TOC as the default highlight.
-    if (!activeLink) {
-        for (var i = 0; i < tocLinks.length; i++) {
-            if (getComputedStyle(tocLinks[i]).display !== "none") {
-                activate(tocLinks[i]);
+    // Initial activation: read positions directly. The observer's
+    // initial callback can fire before scroll is restored on refresh.
+    function activateForCurrentScroll() {
+        var topbar = document.querySelector(".top-bar");
+        var headerHeight = topbar ? topbar.offsetHeight : 0;
+        var bandTop = headerHeight + 1;
+
+        var current = null;
+        for (var i = 0; i < observedHeadings.length; i++) {
+            if (observedHeadings[i].getBoundingClientRect().top <= bandTop) {
+                current = observedHeadings[i];
+            }
+            else {
                 break;
             }
         }
+        if (!current && observedHeadings.length > 0) {
+            current = observedHeadings[0];
+        }
+        if (current) {
+            var link = headingsToTocLinks.get(current);
+            if (link) {
+                activate(link);
+            }
+        }
     }
+
+    // pageshow fires after scroll restore; rAF defers past layout.
+    window.addEventListener("pageshow", function () {
+        requestAnimationFrame(activateForCurrentScroll);
+    });
 })();
