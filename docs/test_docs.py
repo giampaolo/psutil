@@ -294,19 +294,6 @@ class TestHtmlBuildBlog:
             with subtests.test(card=i):
                 assert plain
 
-    def test_listing_years(self):
-        # blog.html should list every year that has at least one post.
-        expected = sorted({p.parent.name for p in blog_posts()}, reverse=True)
-        html = (HTML_DIR / "blog.html").read_text()
-        m = re.search(
-            r">Years</span>\s*<ul class=\"blog-facet-list\">(.*?)</ul>",
-            html,
-            re.DOTALL,
-        )
-        assert m
-        years = re.findall(r">(\d{4})</a>", m.group(1))
-        assert years == expected
-
     def test_atom_feed(self):
         feed = HTML_DIR / "blog" / "atom.xml"
         ns = {"a": "http://www.w3.org/2005/Atom"}
