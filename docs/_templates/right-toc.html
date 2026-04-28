@@ -28,6 +28,7 @@
 {# ========================================================================= #}
 {% elif right_toc_mode == 'blog-browse' %}
 <aside class="right-toc right-toc--blog" data-toc-mode="blog-browse" aria-label="Browse blog">
+  <div class="right-toc-title">Tags</div>
   <nav class="right-toc-tree">
     {% if ablog.tags %}
     {%- set tag_pairs = [] -%}
@@ -36,10 +37,9 @@
         {%- set _ = tag_pairs.append((tag|length, tag)) -%}
       {%- endif -%}
     {%- endfor -%}
-    <p class="right-toc-blog-section">Tags</p>
-    <ul class="right-toc-blog-tags">
+    <ul>
       {% for count, tag in tag_pairs|sort(reverse=true) %}
-      <li><a href="{{ pathto(tag.docname) }}">{{ tag }} <span class="right-toc-blog-count">{{ count }}</span></a></li>
+      <li><a href="{{ pathto(tag.docname) }}">{{ tag }}<span class="right-toc-count">{{ count }}</span></a></li>
       {% endfor %}
     </ul>
     {% endif %}
