@@ -190,14 +190,15 @@
         color: var(--links);
     }
 
-    /* Inline code in the TOC reads as plain text, not as code chrome. */
     .rst-content .right-toc a code,
     .rst-content .right-toc a code .pre {
         text-decoration: none;
-        font-family: var(--font-body) !important;
+        font-family: var(--code-font) !important;
+        font-size: 0.92em;
         background: transparent !important;
         padding: 0 !important;
         border-radius: 0 !important;
+        border: none !important;
     }
 
     /* ============================================================== */

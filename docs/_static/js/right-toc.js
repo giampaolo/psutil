@@ -8,6 +8,13 @@
         return;
     }
 
+    // Strip trailing "()" from function-name entries (just visual noise).
+    pageToc.querySelectorAll("a code .pre").forEach(function (el) {
+        if (el.textContent.endsWith("()")) {
+            el.textContent = el.textContent.slice(0, -2);
+        }
+    });
+
     var tocLinks = Array.prototype.slice.call(
         pageToc.querySelectorAll("a[href^=\"#\"]")
     );
