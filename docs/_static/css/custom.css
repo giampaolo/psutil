@@ -25,9 +25,9 @@
     /* Layout. Used by both the RTD-overriding rules in this file and the
        3-column flex layout in right-toc.css.*/
     --sidebar-width: 300px;
-    --article-max-width: 800px;
+    --article-max-width: 850px;
     --content-max-width: 1152px;
-    --right-toc-width: 280px;
+    --right-toc-width: 230px;
     --layout-gap: 64px;
     --layout-width: calc(var(--sidebar-width) + var(--content-max-width));
 
