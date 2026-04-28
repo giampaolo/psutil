@@ -161,9 +161,6 @@
         padding-left: 0;
     }
 
-    .right-toc-tree > ul > li:first-child > ul > li > a {
-        font-weight: 600;
-    }
     .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
         font-weight: 500;
     }
