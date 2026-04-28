@@ -56,6 +56,9 @@
         }
     });
 
+    var observedHeadings = Array.from(headingsToTocLinks.keys());
+    var intersectingHeadings = new Set();
+
     // Title height — cached once. The .right-toc-title is sticky at
     // top:0, so its height equals its bottom edge in container
     // coords, regardless of scrollTop. Recomputed on resize (the
@@ -154,6 +157,8 @@
             observer.disconnect();
         }
 
+        intersectingHeadings.clear();
+
         refreshTitleHeight();
 
         var topbar = document.querySelector(".top-bar");
@@ -173,20 +178,29 @@
         };
 
         function callback(entries) {
-            var entry = entries
-                .filter(function (e) {
-                    return e.isIntersecting;
-                })
-                .pop();
+            // Update the running set of intersecting headings.
+            entries.forEach(function (e) {
+                if (e.isIntersecting) {
+                    intersectingHeadings.add(e.target);
+                }
+                else {
+                    intersectingHeadings.delete(e.target);
+                }
+            });
 
-            if (!entry) {
+            if (intersectingHeadings.size === 0) {
                 return;
             }
 
-            var tocLink = headingsToTocLinks.get(entry.target);
+            var top = observedHeadings.find(function (h) {
+                return intersectingHeadings.has(h);
+            });
 
-            if (tocLink) {
-                activate(tocLink);
+            if (top) {
+                var tocLink = headingsToTocLinks.get(top);
+                if (tocLink) {
+                    activate(tocLink);
+                }
             }
         }
 

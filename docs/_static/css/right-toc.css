@@ -127,7 +127,7 @@
     .right-toc-tree li {
         list-style: none;
         padding: 0;
-        margin: 0;
+        margin: 4px 0;
         font-size: 0.85rem !important;
         line-height: 1.5 !important;
     }
@@ -178,14 +178,16 @@
     .right-toc a,
     .right-toc a:visited {
         display: block;
-        padding: 0.45rem 12px;
+        padding: 0.2rem 12px;
         color: var(--text-muted);
         text-decoration: none;
         overflow-wrap: anywhere;
     }
 
-    .right-toc a:hover {
-        color: var(--content-text);
+    .right-toc a:hover,
+    .right-toc-tree > ul > li:first-child > ul > li > a:hover,
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a:hover {
+        color: var(--links);
     }
 
     /* Inline code in the TOC reads as plain text, not as code chrome. */
