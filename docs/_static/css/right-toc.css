@@ -149,7 +149,7 @@
     }
 
     .right-toc-tree > ul > li:first-child > ul > li {
-        margin-top: 1.2rem;
+        margin-top: 0.7rem;
     }
     .right-toc-tree > ul > li:first-child > ul > li:first-child {
         margin-top: 0;

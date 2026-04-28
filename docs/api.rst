@@ -1123,8 +1123,8 @@ Exceptions
   still alive. *name* attribute is set if :meth:`Process.name` was previously
   called.
 
-Classes
-^^^^^^^
+Process class
+^^^^^^^^^^^^^
 
 .. class:: Process(pid=None)
 
@@ -2274,6 +2274,9 @@ Classes
        busy-loop polling.
 
 -------------------------------------------------------------------------------
+
+Popen class
+^^^^^^^^^^^
 
 .. class:: Popen(*args, **kwargs)
 
