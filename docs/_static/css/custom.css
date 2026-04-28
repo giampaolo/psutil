@@ -239,27 +239,29 @@
 }
 
 .top-bar-logo {
-    margin-top: -2px;
-    letter-spacing: 0.03em;
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    height: 100%;
     width: var(--sidebar-width);
     padding-left: 1.15rem;
-    gap: 7px;
+    gap: 10px;
     text-decoration: none !important;
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
+    letter-spacing: 0.01em;
     color: var(--topbar-fg-active) !important;
 }
 
 .top-bar-logo span {
+    padding-top:11px;
     line-height: 1;
-    padding-top: 7px;
 }
 
 .top-bar-logo img {
-    height: 26px;
+    height: 30px;
+    width: auto;
+    display: block;
 }
 
 .top-bar-actions {
