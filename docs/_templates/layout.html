@@ -39,3 +39,27 @@
 </script>
 
 {% endblock %}
+
+{% block content %}
+<div class="rst-content">
+  <div class="article-with-toc">
+    <div class="article-column">
+      {% include "breadcrumbs.html" %}
+      <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+        {%- block document %}
+        <div itemprop="articleBody">
+          {% block body %}{% endblock %}
+        </div>
+        {%- if self.comments()|trim %}
+        <div class="articleComments">
+          {%- block comments %}{% endblock %}
+        </div>
+        {%- endif %}
+        {%- endblock %}
+      </div>
+      {% include "footer.html" %}
+    </div>
+    {% include "right-toc.html" %}
+  </div>
+</div>
+{% endblock %}

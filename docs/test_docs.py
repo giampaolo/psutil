@@ -195,6 +195,52 @@ class TestHtmlBuildSite:
                 ):
                     assert needle in html
 
+    def test_toc(self, subtests):
+        has_toc = ("api.html", "faq.html", "glossary.html", "blog.html")
+        no_toc = ("index.html", "genindex.html", "search.html")
+        pat = re.compile(r'<aside[^>]*\bclass="[^"]*\bright-toc\b')
+        for file in has_toc:
+            html = (HTML_DIR / file).read_text()
+            with subtests.test(file=file):
+                assert pat.search(html)
+        for file in no_toc:
+            html = (HTML_DIR / file).read_text()
+            with subtests.test(file=file):
+                assert not pat.search(html)
+
+    def test_right_toc_hash_targets_resolve(self, subtests):
+        # Every <a href="#..."> inside the right-toc must point to an
+        # id that exists on the same page. Otherwise the JS hash-match
+        # path in right-toc.js silently misses on direct URL load.
+        html = (HTML_DIR / "api.html").read_text()
+        m = re.search(
+            r'<aside[^>]*\bclass="[^"]*\bright-toc\b[^"]*"[^>]*>(.*?)</aside>',
+            html,
+            re.DOTALL,
+        )
+        assert m
+        hrefs = re.findall(r'href="#([^"]+)"', m.group(1))
+        assert hrefs
+        ids_on_page = set(re.findall(r'\bid="([^"]+)"', html))
+        for href in hrefs:
+            with subtests.test(href=href):
+                assert href in ids_on_page
+
+    def test_right_toc_glossary_mode(self):
+        # Tests docs/_ext/glossary_toc.py, which injects
+        # glossary_terms into the Jinja context.
+        html = (HTML_DIR / "glossary.html").read_text()
+        assert 'data-toc-mode="glossary"' in html
+        m = re.search(
+            r'<aside class="right-toc right-toc--glossary"[^>]*>(.*?)</aside>',
+            html,
+            re.DOTALL,
+        )
+        assert m, "right-toc--glossary aside not found"
+        terms = re.findall(r'<a href="#term-[^"]*">([^<]+)</a>', m.group(1))
+        assert terms
+        assert terms == sorted(terms, key=str.lower)
+
 
 @pytest.mark.usefixtures("build_html")
 class TestCodeAutoLink:
@@ -265,19 +311,6 @@ class TestHtmlBuildBlog:
             plain = re.sub(r"<[^>]+>", "", summary).strip()
             with subtests.test(card=i):
                 assert plain
-
-    def test_listing_years(self):
-        # blog.html should list every year that has at least one post.
-        expected = sorted({p.parent.name for p in blog_posts()}, reverse=True)
-        html = (HTML_DIR / "blog.html").read_text()
-        m = re.search(
-            r">Years</span>\s*<ul class=\"blog-facet-list\">(.*?)</ul>",
-            html,
-            re.DOTALL,
-        )
-        assert m
-        years = re.findall(r">(\d{4})</a>", m.group(1))
-        assert years == expected
 
     def test_atom_feed(self):
         feed = HTML_DIR / "blog" / "atom.xml"

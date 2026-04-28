@@ -24,42 +24,6 @@
     </h1>
   </div>
   {% endif %}
-  {%- set years = [] -%}
-  {%- for post in collection -%}
-    {%- if post.published and post.date.year not in years -%}
-      {%- set _ = years.append(post.date.year) -%}
-    {%- endif -%}
-  {%- endfor %}
-  <div class="blog-listing-meta">
-    {% if pagename != ablog.blog_path %}
-    <div class="blog-facet">
-      <span class="blog-facet-label">Posts</span>
-      <ul class="blog-facet-list">
-        <li>{{ collection|length }}</li>
-      </ul>
-    </div>
-    {% endif %}
-    {% if pagename == ablog.blog_path and years|length > 1 %}
-    <div class="blog-facet">
-      <span class="blog-facet-label">Years</span>
-      <ul class="blog-facet-list">
-      {% for year in years -%}
-        <li><a href="{{ pathto(ablog.blog_path ~ '/' ~ year) }}">{{ year }}</a></li>
-      {%- endfor %}
-      </ul>
-    </div>
-    {% endif %}
-    {% if pagename == ablog.blog_path or pagename.startswith(ablog.blog_path ~ '/tag/') %}
-    <div class="blog-facet">
-      <span class="blog-facet-label">Tags</span>
-      <ul class="blog-facet-list blog-facet-list--pills">
-      {% for tag in ablog.tags -%}
-        {% if tag|string != 'featured' %}<li{% if pagename == tag.docname %} class="is-active"{% endif %}><a href="{{ pathto(tag.docname) }}">{{ tag }} <span class="blog-facet-count">{{ tag|length }}</span></a></li>{% endif %}
-      {%- endfor %}
-      </ul>
-    </div>
-    {% endif %}
-  </div>
 
   <ol class="blog-cards">
   {% for post in collection %}
@@ -74,10 +38,10 @@
           {% else %}
             <span class="blog-card-draft">Draft</span>
           {% endif %}
+          {% if featured %}<a class="blog-card-badge-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">★ Featured</a>{% endif %}
         </span>
         <h2 class="blog-card-title">
           <a href="{{ postlink(post) }}">{{ post.title }}</a>
-          {% if featured %}<a class="blog-card-badge blog-card-badge-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a>{% endif %}
         </h2>
       </div>
       {% if post.excerpt %}

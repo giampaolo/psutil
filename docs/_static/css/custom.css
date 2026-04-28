@@ -22,6 +22,18 @@
     --sidebar-font-size: 15px;
     --sidebar-caption-font-size: 14px;
 
+    /* Layout. Used by both the RTD-overriding rules in this file and the
+       3-column flex layout in right-toc.css.*/
+    --sidebar-width: 260px;
+    --article-max-width: 850px;
+    --content-max-width: 1152px;
+    --right-toc-width: 230px;
+    --layout-gap: 64px;
+    --layout-width: calc(var(--sidebar-width) + var(--content-max-width));
+
+    /* Sidebar search input width. */
+    --search-width: 230px;
+
     /* others */
     --border-radius: 4px;
     --theme-transition: 0.2s ease;
@@ -68,6 +80,7 @@
     --sidebar-item: #d9d9d9;
     --sidebar-item-nested: #404040;
     --sidebar-active-border: #55a5d9;
+    --sidebar-active-bg: rgba(85, 165, 217, 0.14);
     --sidebar-search-focus-border: #7ab3d4;
     --sidebar-search-focus-shadow: rgba(122, 179, 212, 0.3);
 
@@ -216,36 +229,39 @@
     padding: 0 2.5rem 0 0;
 }
 
-/* At widths where content hits max-width (300px sidebar + 1000px = 1300px),
-   grow right padding to keep actions aligned with the content right edge. */
-@media (min-width: 1300px) {
+/* At widths where content hits max-width (sidebar + article-max),
+   grow right padding to keep actions aligned with the content right
+   edge. Breakpoint 1100 = 300 + 800; tied to those vars below. */
+@media (min-width: 1100px) {
     .top-bar-inner {
-        padding-right: calc(100vw - 1300px + 2.5rem);
+        padding-right: calc(100vw - var(--sidebar-width) - var(--article-max-width) + 2.5rem);
     }
 }
 
 .top-bar-logo {
-    margin-top: -2px;
-    letter-spacing: 0.03em;
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    width: 300px;
+    height: 100%;
+    width: var(--sidebar-width);
     padding-left: 1.15rem;
-    gap: 7px;
+    gap: 10px;
     text-decoration: none !important;
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
+    letter-spacing: 0.01em;
     color: var(--topbar-fg-active) !important;
 }
 
 .top-bar-logo span {
+    padding-top: 11px;
     line-height: 1;
-    padding-top: 7px;
 }
 
 .top-bar-logo img {
-    height: 26px;
+    height: 30px;
+    width: auto;
+    display: block;
 }
 
 .top-bar-actions {
@@ -330,8 +346,8 @@
 
 @media (min-width: 1200px) {
     .wy-nav-content {
-        max-width: 1000px;
-        padding-left: 20px !important;
+        max-width: var(--article-max-width);
+        padding-left: 120px !important;
     }
 }
 
@@ -347,6 +363,7 @@ body {
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background: var(--body-bg) !important;
 }
 
 .wy-nav-content-wrap {
@@ -383,25 +400,6 @@ body {
 }
 
 /* ================================================================== */
-/* Centered layout                                                     */
-/* ================================================================== */
-
-/*
-.wy-grid-for-nav {
-    background: var(--body-bg);
-}
-
-.wy-body-for-nav {
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.wy-nav-side {
-    left: max(0px, calc((100vw - 1400px) / 2));
-}
-*/
-
-/* ================================================================== */
 /* Navigation                                                         */
 /* ================================================================== */
 
@@ -418,6 +416,10 @@ body {
 .wy-nav-side,
 .wy-nav-top {
     background-color: var(--sidebar-bg) !important;
+}
+
+.wy-nav-side {
+    width: var(--sidebar-width);
 }
 
 /* Default RTD sets line-height: 50px + padding, making the mobile
@@ -444,6 +446,7 @@ body {
     position: sticky;
     top: 44px;
     z-index: 10;
+    width: var(--sidebar-width);
 }
 
 /* hide version switch */
@@ -457,11 +460,14 @@ body {
 
 .wy-side-nav-search input[type="text"] {
     font-family: var(--font-search);
+    border-radius: 8px !important;
+    border-color: #555 !important;
+    padding: 7px 12px !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .wy-side-nav-search input[type="text"]:focus {
-    border-color: var(--sidebar-search-focus-border);
+    border-color: var(--sidebar-search-focus-border) !important;
     box-shadow: 0 0 0 2px var(--sidebar-search-focus-shadow);
     outline: none;
 }
@@ -489,7 +495,9 @@ body {
 }
 
 .wy-menu-vertical li.current > a {
-    border-left: 3px solid var(--sidebar-active-border) !important;
+    box-shadow: inset 3px 0 0 var(--sidebar-active-border);
+    font-weight: 600;
+    border-left: none !important;
 }
 
 .wy-menu-vertical a {
@@ -503,7 +511,6 @@ body {
 
 /* smooth transition effect  */
 html,
-body,
 .wy-body-for-nav,
 .wy-nav-content-wrap,
 .wy-nav-content {
@@ -523,8 +530,9 @@ body,
 
 .wy-side-nav-search .wy-form input[type="text"] {
     flex: 1;
-    width: auto !important;
+    width: 100% !important;
     margin-bottom: 0;
+    box-sizing: border-box;
 }
 
 /* ================================================================== */
@@ -564,6 +572,8 @@ body,
     flex: 1;
     display: flex;
     align-items: center;
+    max-width: var(--search-width);
+    margin: 0 auto;
 }
 
 .search-input-wrapper input[type="text"] {
@@ -574,10 +584,10 @@ body,
 
 .search-kbd-hint {
     position: absolute;
-    right: 12px;
+    right: 10px;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     pointer-events: none;
     transition: opacity 0.15s ease;
 }
@@ -586,22 +596,21 @@ body,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 4px;
+    padding: 3px 5px 0;
     font-family: var(--font-search);
     font-size: 10px;
     font-weight: 600;
     line-height: 1;
-    padding-top: 3px;
-    color: #888;
-    background: #f5f5f5;
-    border: 1px solid #d0d0d0;
+    color: #555;
+    background: #fafafa;
+    border: 1px solid #b8b8b8;
+    border-bottom-width: 2px;
     border-radius: 3px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 }
 
 .search-kbd-sep {
     font-size: 10px;
-    color: #aaa;
+    color: #888;
 }
 
 /* ================================================================== */
@@ -688,6 +697,16 @@ footer [role="contentinfo"] {
 .rst-footer-buttons .btn.btn-neutral {
     padding-top: 6px !important;
     padding-bottom: 4px !important;
+    background-color: var(--surface-sunken) !important;
+    color: var(--content-text) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+
+.rst-footer-buttons .btn.btn-neutral:hover {
+    background-color: var(--surface-raised) !important;
+    color: var(--content-text) !important;
+    border-color: var(--text-muted) !important;
 }
 
 [data-theme="dark"] .rst-footer-buttons .btn.btn-neutral {
@@ -725,16 +744,25 @@ h4, h4 a {
 }
 
 h1 {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    padding-top: 20px !important;
+    margin-bottom: 1.2rem !important;
 }
 
 h2 {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
+    line-height: 1.3;
+    margin-top: 2rem !important;
+    margin-bottom: 0.8rem !important;
 }
 
 h3 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+    line-height: 1.35;
     padding: 5px 0 5px 0;
+    margin-top: 1.5rem !important;
 }
 
 h4 {
@@ -969,6 +997,10 @@ div.admonition {
     border: 1px solid var(--adm-note-border) !important;
     border-left: 4px solid var(--adm-note-accent-border) !important;
     border-radius: var(--border-radius) !important;
+}
+
+div.admonition + div.admonition {
+    margin-top: 16px !important;
 }
 
 div.admonition p {
@@ -1306,11 +1338,20 @@ span.highlighted {
 /* The container/background bar */
 .rst-content dl:not(.docutils) dt {
     background: var(--func-sig-bg) !important;
-    border-top: 2px solid var(--func-sig-border) !important;
+    border-top: none !important;
     border-left: none !important;
     color: var(--func-sig-text) !important;
     padding: 6px 10px !important;
     font-size: var(--content-font-size) !important;
+}
+
+.rst-content dl:not(.docutils) dt,
+.rst-content dl:not(.docutils) dt .pre,
+.rst-content dl:not(.docutils) dt .sig-name,
+.rst-content dl:not(.docutils) dt .sig-prename,
+.rst-content dl:not(.docutils) dt .sig-paren,
+.rst-content dl:not(.docutils) dt .sig-param {
+    font-family: var(--font-body) !important;
 }
 
 /* The function name itself */

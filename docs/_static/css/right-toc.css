@@ -1,0 +1,241 @@
+/*
+ * Right-side per-page TOC ("On this page").
+ */
+
+/* Hidden by default. */
+.right-toc {
+    display: none;
+}
+
+@media (min-width: 1280px) {
+
+    /* ============================================================== */
+    /* Layout                                                         */
+    /* ============================================================== */
+
+    .article-with-toc {
+        display: flex;
+        gap: var(--layout-gap);
+        align-items: flex-start;
+    }
+
+    /* Center the whole layout group (left sidebar + content +
+     * right TOC) within the viewport. The breakpoint above is 1280
+     * so the right-toc appears on 1440-class laptops, but the
+     * actual layout footprint is --layout-width (sidebar + content).
+     * Use max(0, ...) so between 1280 and --layout-width the sidebar
+     * stays pinned to the left edge, and above that symmetric
+     * gutters appear on both sides. */
+    .wy-nav-side {
+        left: max(0px, calc((100vw - var(--layout-width)) / 2));
+    }
+    .wy-nav-content-wrap {
+        margin-left: max(var(--sidebar-width), calc((100vw - var(--layout-width)) / 2 + var(--sidebar-width)));
+    }
+
+    /* Align the topbar's logo with the left sidebar, and its right
+     * group (Blog / theme / GitHub / version) with the article
+     * column's right edge (same x as the Next button below). The
+     * inner right edge sits at sidebar + article-max from the left. */
+    .top-bar-inner {
+        padding-left: max(0px, calc((100vw - var(--layout-width)) / 2));
+        padding-right: max(2.5rem, calc(100% - (100vw - var(--layout-width)) / 2 - var(--sidebar-width) - var(--content-max-width) + 1rem));
+    }
+
+    .article-with-toc > .article-column {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: var(--article-max-width);
+        padding-left: 32px;
+        padding-right: 8px;
+    }
+
+    /* When no right-toc renders (home, genindex, mode='none'), drop
+     * the article-column cap so content fills the content area. */
+    body:not(:has(aside.right-toc)) .article-with-toc > .article-column {
+        max-width: none;
+        padding-right: 52px;
+    }
+
+    .wy-nav-content {
+        max-width: var(--content-max-width);
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0;
+        margin-right: auto;
+        border-right: none;
+    }
+
+    /* ============================================================== */
+    /* Panel (sticky aside)                                           */
+    /* ============================================================== */
+
+    .right-toc {
+        display: block;
+        flex: 0 0 var(--right-toc-width);
+        position: sticky;
+        top: 64px;
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        padding-right: 16px;
+        border-left: 1px solid var(--border);
+        contain: layout paint;
+    }
+
+    /* ============================================================== */
+    /* Title ("On this page")                                         */
+    /* ============================================================== */
+
+    .right-toc-title {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--content-bg);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--content-text);
+        padding: 0 12px 0.6rem 12px;
+    }
+
+    /* ============================================================== */
+    /* Tree (UL/LI structure)                                         */
+    /* ============================================================== */
+
+    .right-toc-tree ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .right-toc-tree li {
+        list-style: none;
+        padding: 0;
+        margin: 4px 0;
+        font-size: 0.85rem !important;
+        line-height: 1.5 !important;
+    }
+
+    .right-toc-tree ul ul {
+        padding-left: 14px;
+    }
+
+    /* Hybrid collapse: H2 + H3 headings stay visible always (so the
+     * TOC keeps its job as a structure overview), but H4 leaf
+     * lists collapse under non-active H3s. */
+    .right-toc-tree ul ul ul ul {
+        display: none;
+    }
+    .right-toc-tree li.scroll-current > ul {
+        display: block;
+    }
+
+    /* ============================================================== */
+    /* Default mode: H1 dupe hide + per-level weights                */
+    /* ============================================================== */
+
+    /* Hide the duplicate page-title (first <li> from Sphinx's toc
+     * is the H1, which is already shown as the page heading).
+     * Default mode only — blog/glossary modes don't have an H1
+     * dupe, so hiding the first item there would drop a real entry. */
+    .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul > li:first-child > a {
+        display: none;
+    }
+    .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul > li:first-child > ul {
+        padding-left: 0;
+    }
+
+    .right-toc-tree > ul > li:first-child > ul > li {
+        margin-top: 0.7rem;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li:first-child {
+        margin-top: 0;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > a {
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
+        font-size: 0.85rem;
+        font-weight: 400;
+    }
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > ul > li > a {
+        font-size: 0.8rem;
+        font-weight: 400;
+    }
+
+    .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a {
+        color: var(--content-text);
+    }
+
+    /* ============================================================== */
+    /* Anchors                                                        */
+    /* ============================================================== */
+
+    .right-toc a,
+    .right-toc a:visited {
+        display: block;
+        padding: 0.2rem 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        overflow-wrap: anywhere;
+    }
+
+    .right-toc a:hover,
+    .right-toc-tree > ul > li:first-child > ul > li > a:hover,
+    .right-toc-tree > ul > li:first-child > ul > li > ul > li > a:hover {
+        color: var(--links);
+    }
+
+    .rst-content .right-toc a code,
+    .rst-content .right-toc a code .pre {
+        text-decoration: none;
+        font-family: var(--code-font) !important;
+        font-size: 0.92em;
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    /* ============================================================== */
+    /* Active state (scroll-current)                                  */
+    /* ============================================================== */
+
+    .right-toc-tree li.scroll-current > a,
+    .right-toc-tree li.scroll-current > a:visited {
+        color: var(--links);
+    }
+
+    .right-toc-tree li.scroll-current-leaf > a {
+        box-shadow: inset 3px 0 0 var(--sidebar-active-border);
+        background: var(--surface-sunken);
+    }
+
+    /* Blog posts use the rust accent throughout, so the active TOC
+     * entry should match instead of falling back to the default
+     * link blue. Detected by the post-meta banner the post layout
+     * always renders. */
+    body:has(.post-meta-banner) .right-toc-tree li.scroll-current > a,
+    body:has(.post-meta-banner) .right-toc-tree li.scroll-current > a:visited {
+        color: var(--blog-accent);
+    }
+    body:has(.post-meta-banner) .right-toc-tree li.scroll-current-leaf > a {
+        box-shadow: inset 3px 0 0 var(--blog-accent);
+    }
+
+    /* ============================================================== */
+    /* Per-entry count suffix (e.g. blog tag post count)              */
+    /* ============================================================== */
+
+    .right-toc-count {
+        margin-left: 6px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+        font-size: 0.85em;
+        opacity: 0.75;
+    }
+}

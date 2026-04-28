@@ -58,6 +58,7 @@ _local_exts = [  # defined in the _ext/ folder
     "check_python_syntax",
     "field_role",
     "genindex_filter",
+    "glossary_toc",
     "post_banner",
 ]
 
@@ -126,7 +127,8 @@ html_theme = "sphinx_rtd_theme"
 if html_theme == "sphinx_rtd_theme":
     html_theme_options = {
         "collapse_navigation": False,
-        "navigation_depth": 5,
+        "navigation_depth": 1,
+        "titles_only": True,
         "flyout_display": "attached",
     }
     templates_path = ["_templates", "_static/images"]
@@ -136,6 +138,7 @@ if html_theme == "sphinx_rtd_theme":
         "css/code.css",
         "css/home.css",
         "css/blog.css",
+        "css/right-toc.css",
     ]
     html_js_files = [
         "js/highlight-repl.js",
@@ -143,6 +146,7 @@ if html_theme == "sphinx_rtd_theme":
         ("js/theme-toggle.js", {"defer": "defer"}),
         ("js/sidebar-close.js", {"defer": "defer"}),
         ("js/search-shortcuts.js", {"defer": "defer"}),
+        ("js/right-toc.js", {"defer": "defer"}),
     ]
 
 # =====================================================================
