@@ -1,9 +1,4 @@
-// Right-side per-page TOC.
-//
-// Modeled after pydata-sphinx-theme.
-//
-// Pydata collapses non-active TOC branches via CSS so the visible
-// TOC stays short. Our 200+ item TOC isn't collapsed, except for h4.
+// Right-side per-page TOC. Modeled after pydata-sphinx-theme.
 
 (function () {
     "use strict";
@@ -37,9 +32,8 @@
             return null;
         }
 
-        // Prefer the heading inside the section (small height plays
-        // better with IO than the section wrapper). Fall back to
-        // target itself for things like <dt> autodoc anchors.
+        // Prefer the heading inside; fall back to target itself for
+        // <dt> autodoc anchors with no inner heading.
         var heading = target.querySelector("h1, h2, h3, h4, h5, h6");
         if (heading) {
             return heading;
@@ -59,10 +53,6 @@
     var observedHeadings = Array.from(headingsToTocLinks.keys());
     var intersectingHeadings = new Set();
 
-    // Title height — cached once. The .right-toc-title is sticky at
-    // top:0, so its height equals its bottom edge in container
-    // coords, regardless of scrollTop. Recomputed on resize (the
-    // observer rebuild path), where layout may change.
     var titleHeight = 0;
 
     function refreshTitleHeight() {
@@ -77,16 +67,14 @@
 
     refreshTitleHeight();
 
-    // Use offsetTop / clientHeight — both precomputed by the
-    // layout engine — instead of getBoundingClientRect, which
-    // forces a synchronous layout flush each call.
+    // offsetTop / clientHeight are precomputed; getBoundingClientRect
+    // would force a layout flush each call.
     function ensureVisibleInToc(link) {
         var linkTop = link.offsetTop;
         var linkBottom = linkTop + link.offsetHeight;
 
         var visibleTop = pageToc.scrollTop + titleHeight;
-        var visibleBottom =
-            pageToc.scrollTop + pageToc.clientHeight;
+        var visibleBottom = pageToc.scrollTop + pageToc.clientHeight;
 
         if (linkTop < visibleTop) {
             pageToc.scrollTop = linkTop - titleHeight;
@@ -96,15 +84,9 @@
         }
     }
 
-    // Track the active link + ancestor <li>s so we only touch what
-    // changes. Iterating all nav items per activation triggered a
-    // style-recalc storm at 200+ items.
     var activeLink = null;
     var activeLis = [];
 
-    // The leaf <li> also gets .scroll-current-leaf so CSS can target
-    // the deepest item without `:has()`, which is expensive when
-    // re-evaluated on every class change.
     function activate(tocLink) {
         if (tocLink === activeLink) {
             return;
@@ -158,27 +140,19 @@
         }
 
         intersectingHeadings.clear();
-
         refreshTitleHeight();
 
         var topbar = document.querySelector(".top-bar");
+        var headerHeight = topbar ? topbar.offsetHeight : 0;
 
-        var headerHeight = 0;
-        if (topbar) {
-            headerHeight = topbar.offsetHeight;
-        }
-
+        // Active band: top 30% of viewport below the header.
         var options = {
             root: null,
-            // Top of band: just below the header. Bottom: 70% from
-            // the viewport bottom — i.e., active when heading is in
-            // the top 30% of the viewport. Same numbers pydata uses.
             rootMargin: "-" + headerHeight + "px 0px -70% 0px",
             threshold: 0,
         };
 
         function callback(entries) {
-            // Update the running set of intersecting headings.
             entries.forEach(function (e) {
                 if (e.isIntersecting) {
                     intersectingHeadings.add(e.target);
@@ -206,11 +180,9 @@
 
         observer = new IntersectionObserver(callback, options);
 
-        Array.from(headingsToTocLinks.keys()).forEach(
-            function (h) {
-                observer.observe(h);
-            }
-        );
+        observedHeadings.forEach(function (h) {
+            observer.observe(h);
+        });
     }
 
     function debounce(fun, wait) {
@@ -222,12 +194,20 @@
         };
     }
 
-    // Header height can change on resize; rebuild observer with
-    // the updated rootMargin.
     window.addEventListener(
         "resize",
         debounce(connectIntersectionObserver, 300)
     );
 
     connectIntersectionObserver();
+
+    // Set the first visible TOC as the default highlight.
+    if (!activeLink) {
+        for (var i = 0; i < tocLinks.length; i++) {
+            if (getComputedStyle(tocLinks[i]).display !== "none") {
+                activate(tocLinks[i]);
+                break;
+            }
+        }
+    }
 })();
