@@ -458,11 +458,14 @@ body {
 
 .wy-side-nav-search input[type="text"] {
     font-family: var(--font-search);
+    border-radius: 8px !important;
+    border-color: #555 !important;
+    padding: 7px 12px !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .wy-side-nav-search input[type="text"]:focus {
-    border-color: var(--sidebar-search-focus-border);
+    border-color: var(--sidebar-search-focus-border) !important;
     box-shadow: 0 0 0 2px var(--sidebar-search-focus-shadow);
     outline: none;
 }
