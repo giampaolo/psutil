@@ -576,10 +576,10 @@ html,
 
 .search-kbd-hint {
     position: absolute;
-    right: 12px;
+    right: 10px;
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
     pointer-events: none;
     transition: opacity 0.15s ease;
 }
@@ -588,22 +588,21 @@ html,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 4px;
+    padding: 3px 5px 0;
     font-family: var(--font-search);
     font-size: 10px;
     font-weight: 600;
     line-height: 1;
-    padding-top: 3px;
-    color: #888;
-    background: #f5f5f5;
-    border: 1px solid #d0d0d0;
+    color: #555;
+    background: #fafafa;
+    border: 1px solid #b8b8b8;
+    border-bottom-width: 2px;
     border-radius: 3px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 }
 
 .search-kbd-sep {
     font-size: 10px;
-    color: #aaa;
+    color: #888;
 }
 
 /* ================================================================== */
