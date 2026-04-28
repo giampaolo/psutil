@@ -24,12 +24,15 @@
 
     /* Layout. Used by both the RTD-overriding rules in this file and the
        3-column flex layout in right-toc.css.*/
-    --sidebar-width: 300px;
+    --sidebar-width: 260px;
     --article-max-width: 850px;
     --content-max-width: 1152px;
     --right-toc-width: 230px;
     --layout-gap: 64px;
     --layout-width: calc(var(--sidebar-width) + var(--content-max-width));
+
+    /* Sidebar search input width. */
+    --search-width: 230px;
 
     /* others */
     --border-radius: 4px;
@@ -412,6 +415,10 @@ body {
     background-color: var(--sidebar-bg) !important;
 }
 
+.wy-nav-side {
+    width: var(--sidebar-width);
+}
+
 /* Default RTD sets line-height: 50px + padding, making the mobile
    header ~80px tall; compact it so it doesn't leave a visible gap
    below the fixed topbar. Also zero margin-top so it sits flush
@@ -436,6 +443,7 @@ body {
     position: sticky;
     top: 44px;
     z-index: 10;
+    width: var(--sidebar-width);
 }
 
 /* hide version switch */
@@ -514,8 +522,9 @@ html,
 
 .wy-side-nav-search .wy-form input[type="text"] {
     flex: 1;
-    width: auto !important;
+    width: 100% !important;
     margin-bottom: 0;
+    box-sizing: border-box;
 }
 
 /* ================================================================== */
@@ -555,6 +564,8 @@ html,
     flex: 1;
     display: flex;
     align-items: center;
+    max-width: var(--search-width);
+    margin: 0 auto;
 }
 
 .search-input-wrapper input[type="text"] {
