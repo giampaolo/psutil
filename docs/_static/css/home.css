@@ -14,6 +14,11 @@
     display: none !important;
 }
 
+/* Hide next/prev buttons */
+.home-page .rst-footer-buttons {
+    display: none !important;
+}
+
 /* ================================================================== */
 /* Hero                                                               */
 /* ================================================================== */

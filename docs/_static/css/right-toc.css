@@ -39,7 +39,7 @@
      * inner right edge sits at sidebar + article-max from the left. */
     .top-bar-inner {
         padding-left: max(0px, calc((100vw - var(--layout-width)) / 2));
-        padding-right: max(2.5rem, calc(100% - (100vw - var(--layout-width)) / 2 - var(--sidebar-width) - var(--article-max-width)));
+        padding-right: max(2.5rem, calc(100% - (100vw - var(--layout-width)) / 2 - var(--sidebar-width) - var(--content-max-width) + 1rem));
     }
 
     .article-with-toc > .article-column {
@@ -48,6 +48,13 @@
         max-width: var(--article-max-width);
         padding-left: 32px;
         padding-right: 8px;
+    }
+
+    /* When no right-toc renders (home, genindex, mode='none'), drop
+     * the article-column cap so content fills the content area. */
+    body:not(:has(aside.right-toc)) .article-with-toc > .article-column {
+        max-width: none;
+        padding-right: 52px;
     }
 
     .wy-nav-content {
@@ -113,7 +120,7 @@
         padding: 0;
     }
 
-    .right-toc-tree > ul {
+    .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul {
         border-left: 1px solid var(--border);
     }
 
