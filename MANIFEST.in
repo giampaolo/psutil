@@ -50,6 +50,7 @@ include docs/_templates/breadcrumbs.html
 include docs/_templates/footer.html
 include docs/_templates/layout.html
 include docs/_templates/right-toc.html
+include docs/_templates/searchbox.html
 include docs/_templates/topbar.html
 include docs/about.rst
 include docs/adoption.rst
