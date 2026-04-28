@@ -79,18 +79,9 @@
         overflow-y: auto;
         font-size: 0.85rem;
         line-height: 1.4;
-        padding-right: 8px;
+        padding-right: 16px;
+        border-left: 1px solid var(--border);
         contain: layout paint;
-    }
-
-    /* Anchor the column with a left rule so it reads as page chrome
-     * rather than floating. Default-mode draws the rule on the
-     * inner UL (see .right-toc-tree > ul below), so scope this to
-     * the modes whose tree has no left rule. */
-    .right-toc--blog,
-    .right-toc--glossary {
-        border-left: 1px solid color-mix(in srgb, var(--text-muted) 30%, transparent);
-        padding-left: 16px;
     }
 
     /* ============================================================== */
@@ -120,10 +111,6 @@
         padding: 0;
     }
 
-    .right-toc:not(.right-toc--blog):not(.right-toc--glossary) .right-toc-tree > ul {
-        border-left: 1px solid var(--border);
-    }
-
     .right-toc-tree li {
         list-style: none;
         padding: 0;
@@ -133,7 +120,7 @@
     }
 
     .right-toc-tree ul ul {
-        padding-left: 24px;
+        padding-left: 14px;
     }
 
     /* Hybrid collapse: H2 + H3 headings stay visible always (so the
@@ -162,7 +149,7 @@
     }
 
     .right-toc-tree > ul > li:first-child > ul > li {
-        margin-top: 0.7rem;
+        margin-top: 1.2rem;
     }
     .right-toc-tree > ul > li:first-child > ul > li:first-child {
         margin-top: 0;
@@ -180,10 +167,7 @@
         font-weight: 400;
     }
 
-    /* Non-current H2 + H3 entries use the regular content color
-     * instead of the muted base; H4 entries keep muted for hierarchy. */
-    .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a,
-    .right-toc-tree > ul > li:first-child > ul > li > ul > li:not(.scroll-current) > a {
+    .right-toc-tree > ul > li:first-child > ul > li:not(.scroll-current) > a {
         color: var(--content-text);
     }
 
@@ -269,12 +253,8 @@
         opacity: 0.75;
     }
 
-    /* Vertical stack of pills: re-add horizontal padding (the
-     * default-mode left rule sits at 0; we drop that and inset
-     * the list instead) and override the base list margin. */
     .right-toc--blog .right-toc-tree ul {
         padding: 0 12px;
-        border-left: none;
     }
     .right-toc--blog .right-toc-tree li {
         margin: 8px 0;
