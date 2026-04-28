@@ -27,7 +27,16 @@
             return null;
         }
 
-        var target = document.getElementById(decodeURIComponent(id));
+        var decodedId;
+        try {
+            decodedId = decodeURIComponent(id);
+        }
+        catch (e) {
+            // Malformed %-escape in the href; ignore this entry.
+            return null;
+        }
+
+        var target = document.getElementById(decodedId);
         if (!target) {
             return null;
         }
@@ -77,7 +86,7 @@
         var visibleBottom = pageToc.scrollTop + pageToc.clientHeight;
 
         if (linkTop < visibleTop) {
-            pageToc.scrollTop = linkTop - titleHeight;
+            pageToc.scrollTop = Math.max(0, linkTop - titleHeight);
         }
         else if (linkBottom > visibleBottom) {
             pageToc.scrollTop = linkBottom - pageToc.clientHeight;
