@@ -220,6 +220,17 @@
     // Initial activation: read positions directly. The observer's
     // initial callback can fire before scroll is restored on refresh.
     function activateForCurrentScroll() {
+        // Hash in URL: prefer the matching link directly.
+        if (location.hash && location.hash.length > 1) {
+            var hashLink = pageToc.querySelector(
+                "a[href=\"" + location.hash + "\"]"
+            );
+            if (hashLink) {
+                activate(hashLink);
+                return;
+            }
+        }
+
         var topbar = document.querySelector(".top-bar");
         var headerHeight = topbar ? topbar.offsetHeight : 0;
         var bandTop = headerHeight + 1;

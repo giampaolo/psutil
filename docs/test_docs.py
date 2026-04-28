@@ -208,6 +208,24 @@ class TestHtmlBuildSite:
             with subtests.test(file=file):
                 assert not pat.search(html)
 
+    def test_right_toc_hash_targets_resolve(self, subtests):
+        # Every <a href="#..."> inside the right-toc must point to an
+        # id that exists on the same page. Otherwise the JS hash-match
+        # path in right-toc.js silently misses on direct URL load.
+        html = (HTML_DIR / "api.html").read_text()
+        m = re.search(
+            r'<aside[^>]*\bclass="[^"]*\bright-toc\b[^"]*"[^>]*>(.*?)</aside>',
+            html,
+            re.DOTALL,
+        )
+        assert m
+        hrefs = re.findall(r'href="#([^"]+)"', m.group(1))
+        assert hrefs
+        ids_on_page = set(re.findall(r'\bid="([^"]+)"', html))
+        for href in hrefs:
+            with subtests.test(href=href):
+                assert href in ids_on_page
+
     def test_right_toc_glossary_mode(self):
         # Tests docs/_ext/glossary_toc.py, which injects
         # glossary_terms into the Jinja context.
