@@ -195,6 +195,34 @@ class TestHtmlBuildSite:
                 ):
                     assert needle in html
 
+    def test_toc(self, subtests):
+        has_toc = ("api.html", "faq.html", "glossary.html", "blog.html")
+        no_toc = ("index.html", "genindex.html", "search.html")
+        pat = re.compile(r'<aside[^>]*\bclass="[^"]*\bright-toc\b')
+        for file in has_toc:
+            html = (HTML_DIR / file).read_text()
+            with subtests.test(file=file):
+                assert pat.search(html)
+        for file in no_toc:
+            html = (HTML_DIR / file).read_text()
+            with subtests.test(file=file):
+                assert not pat.search(html)
+
+    def test_right_toc_glossary_mode(self):
+        # Tests docs/_ext/glossary_toc.py, which injects
+        # glossary_terms into the Jinja context.
+        html = (HTML_DIR / "glossary.html").read_text()
+        assert 'data-toc-mode="glossary"' in html
+        m = re.search(
+            r'<aside class="right-toc right-toc--glossary"[^>]*>(.*?)</aside>',
+            html,
+            re.DOTALL,
+        )
+        assert m, "right-toc--glossary aside not found"
+        terms = re.findall(r'<a href="#term-[^"]*">([^<]+)</a>', m.group(1))
+        assert terms
+        assert terms == sorted(terms, key=str.lower)
+
 
 @pytest.mark.usefixtures("build_html")
 class TestCodeAutoLink:
