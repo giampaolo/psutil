@@ -192,7 +192,7 @@ a.blog-rss:hover {
     align-items: center;
     justify-content: space-between;
     gap: 1em;
-    margin-bottom: 0.2em;
+    margin-bottom: 1.5em;
 }
 
 .blog-listing-title {
@@ -200,9 +200,10 @@ a.blog-rss:hover {
     margin: 0;
 }
 
-a.blog-listing-title-value,
-a.blog-listing-title-value:visited {
-    color: var(--blog-accent);
+.blog-listing-title-value,
+.blog-listing-title-value:visited {
+    color: color-mix(in srgb, var(--blog-accent) 60%, var(--headings));
+    font-weight: 500;
     border-bottom: none;
     text-decoration: none;
 }

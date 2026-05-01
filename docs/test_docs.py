@@ -159,6 +159,8 @@ class TestHtmlBuildSite:
         html = (HTML_DIR / "api.html").read_text()
         assert 'href="https://docs.python.org/3/' in html
 
+    # --- sitemap
+
     def test_sitemap(self, subtests):
         # sphinx-sitemap should emit one <url> per built HTML page
         # (source docs + blog posts + ablog-generated pages),
@@ -176,6 +178,44 @@ class TestHtmlBuildSite:
         ):
             with subtests.test(page=page):
                 assert conf.html_baseurl + page in urls
+
+    def test_sitemap_has_every_blog_post(self, subtests):
+        # Catches drift between ablog's post registry and
+        # sphinx-sitemap. If sphinx-sitemap stops listing some posts
+        # (e.g. due to an ablog version bump), search engines stop
+        # discovering them.
+        sitemap = HTML_DIR / "sitemap.xml"
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = {
+            u.text
+            for u in ET.parse(sitemap).getroot().findall("s:url/s:loc", ns)
+        }
+        for rst in blog_posts():
+            rel = rst.relative_to(BLOG).with_suffix(".html")
+            expected = conf.html_baseurl + "blog/" + rel.as_posix()
+            with subtests.test(rst=rst):
+                assert expected in urls
+
+    def test_canonical_link_on_pages(self, subtests):
+        # Sphinx emits <link rel="canonical"> using html_baseurl. If
+        # html_baseurl is misconfigured (e.g. lacks the /latest/
+        # prefix while the deploy is version-pathed), every shared
+        # URL points at a 404.
+        pattern = re.compile(
+            r'<link (?:rel="canonical" href="([^"]*)"'
+            r'|href="([^"]*)" rel="canonical")'
+        )
+        for page in (
+            "index.html",
+            "api.html",
+            "blog/2026/event-driven-process-waiting.html",
+        ):
+            html = (HTML_DIR / page).read_text()
+            m = pattern.search(html)
+            with subtests.test(page=page):
+                assert m is not None
+                url = m.group(1) or m.group(2)
+                assert url.startswith(conf.html_baseurl)
 
     def test_og_tags_on_source_pages(self, subtests):
         for rst in sorted(DOCS.rglob("*.rst")):
@@ -271,12 +311,11 @@ class TestHtmlBuildBlog:
             "post-meta-date",
             "post-meta-readtime",
             "post-meta-tags",
-            "post-nav",
         )
         for rst in blog_posts():
             html = blog_html(rst)
             for css in css_names:
-                with subtests.test(rst=rst):
+                with subtests.test(rst=rst, css=css):
                     assert css in html
 
     def test_listing_has_all_posts(self, subtests):
@@ -312,31 +351,154 @@ class TestHtmlBuildBlog:
             with subtests.test(card=i):
                 assert plain
 
+    def test_featured_pill_on_post_page(self, subtests):
+        # Posts with the "featured" tag show a "Featured" pill in
+        # their post-meta banner via _ext/post_banner.py. Other posts
+        # must not.
+        for rst in blog_posts():
+            text = rst.read_text()
+            m = re.search(r":tags:\s*(.+)", text)
+            tags = [t.strip() for t in m.group(1).split(",")] if m else []
+            is_featured = "featured" in tags
+            html = blog_html(rst)
+            with subtests.test(rst=rst, is_featured=is_featured):
+                if is_featured:
+                    assert "post-meta-featured" in html
+                else:
+                    assert "post-meta-featured" not in html
+
+    # --- atom feed
+
     def test_atom_feed(self):
         feed = HTML_DIR / "blog" / "atom.xml"
         ns = {"a": "http://www.w3.org/2005/Atom"}
         entries = ET.parse(feed).getroot().findall("a:entry", ns)
         assert len(entries) == len(blog_posts())
 
+    def test_atom_feed_uses_utc(self):
+        feed = HTML_DIR / "blog" / "atom.xml"
+        ns = {"a": "http://www.w3.org/2005/Atom"}
+        entries = ET.parse(feed).getroot().findall("a:entry", ns)
+        assert entries
+        non_utc = []
+        for e in entries:
+            for tag in ("a:updated", "a:published"):
+                el = e.find(tag, ns)
+                assert el is not None
+                if not (el.text.endswith("+00:00") or el.text.endswith("Z")):
+                    non_utc.append(el.text)
+        assert non_utc == []
+
+    def test_atom_feed_uses_canonical_url(self):
+        # Regression: feed-level + per-entry URLs must include the
+        # RTD version path (/latest/) so they match the deployed
+        # location. Without it, feed readers 404. This check needs
+        # updating when the Single Version toggle is flipped at
+        # 8.0.0 — see the TODO on html_baseurl in conf.py.
+        feed = HTML_DIR / "blog" / "atom.xml"
+        ns = {"a": "http://www.w3.org/2005/Atom"}
+        root = ET.parse(feed).getroot()
+        urls = [link.get("href") for link in root.findall("a:link", ns)]
+        for e in root.findall("a:entry", ns):
+            urls.append(e.find("a:id", ns).text)
+            urls.extend(link.get("href") for link in e.findall("a:link", ns))
+        bad = [u for u in urls if u and "/latest/" not in u]
+        assert bad == []
+
     def test_atom_on_every_page(self, subtests):
         # Without it, feed readers can't auto-find the feed from post
         # URLs. The tag lives in <head>, so only scan the first chunk.
+        skip = {"genindex.html", "search.html", "py-modindex.html"}
         needle = 'type="application/atom+xml"'
         for html in sorted(HTML_DIR.rglob("*.html")):
+            if html.name in skip:
+                continue
             with subtests.test(page=html.relative_to(HTML_DIR)):
                 with open(html, encoding="utf-8") as f:
                     head = f.read(8192)
                 assert needle in head
 
+    def test_atom_link_not_duplicated(self, subtests):
+        # Regression: layout.html used to inject the atom feed <link>
+        # unconditionally, duplicating ablog's auto-injection on most
+        # pages.
+        needle = 'type="application/atom+xml"'
+        for html in sorted(HTML_DIR.rglob("*.html")):
+            with subtests.test(page=html.relative_to(HTML_DIR)):
+                head = html.read_text()[:8192]
+                assert head.count(needle) <= 1
+
+    # --- og tags
+
     def test_og_tags_on_blog_posts(self, subtests):
         # sphinxext-opengraph should emit og:* meta tags on every
         # post page so that shared URLs render as rich previews.
-        properties = ("og:title", "og:url", "og:site_name", "og:description")
+        properties = (
+            "og:title",
+            "og:url",
+            "og:site_name",
+            "og:description",
+            "og:image",
+        )
         for rst in blog_posts():
             html = blog_html(rst)
             for prop in properties:
                 with subtests.test(rst=rst, prop=prop):
                     assert f'property="{prop}"' in html
+
+    def test_og_type(self, subtests):
+        # For blog posts it must be og:type="article" else "website".
+        pattern = re.compile(
+            r'<meta (?:property="og:type" content="([^"]*)"'
+            r'|content="([^"]*)" property="og:type")'
+        )
+        for rst in blog_posts():
+            m = pattern.search(blog_html(rst))
+            with subtests.test(rst=rst, expected="article"):
+                assert m is not None
+                assert (m.group(1) or m.group(2)) == "article"
+        for page in ("index.html", "api.html", "install.html"):
+            m = pattern.search((HTML_DIR / page).read_text())
+            with subtests.test(page=page, expected="website"):
+                assert m is not None
+                assert (m.group(1) or m.group(2)) == "website"
+
+    def test_blog_index_has_og_metadata(self, subtests):
+        # Regression: ablog renders blog.html without a doctree, so
+        # sphinxext-opengraph skips emitting og:* tags. Our
+        # opengraph_override extension synthesizes them.
+        html = (HTML_DIR / "blog.html").read_text()
+        for tag in (
+            'name="description"',
+            'property="og:title"',
+            'property="og:type"',
+            'property="og:url"',
+            'property="og:site_name"',
+            'property="og:description"',
+            'property="og:image"',
+            'name="twitter:card"',
+        ):
+            with subtests.test(tag=tag):
+                assert tag in html
+
+    def test_og_description_uses_post_excerpt(self):
+        # Blog post og:description (and the social card PNG sourced
+        # from the same value) should be the curated excerpt from the
+        # `.. post::` directive body, not the page body's first
+        # paragraph. Spot-check on a known post.
+        html = (
+            HTML_DIR / "blog" / "2026" / "event-driven-process-waiting.html"
+        ).read_text()
+        pattern = re.compile(
+            r'<meta (?:property="og:description" content="([^"]*)"'
+            r'|content="([^"]*)" property="og:description")'
+        )
+        m = pattern.search(html)
+        assert m is not None
+        desc = m.group(1) or m.group(2)
+        # Excerpt opens with "Replacing"; the page body opens with
+        # "One of the less fun aspects of process management ...".
+        assert desc.startswith("Replacing")
 
     def test_og_description_excludes_post_banner(self, subtests):
         # Regression: the post banner (author/date/readtime/tags)
@@ -354,19 +516,3 @@ class TestHtmlBuildBlog:
                 desc = m.group(1) or m.group(2)
                 assert not desc.startswith("Giampaolo")
                 assert "min read" not in desc[:80]
-
-    def test_featured_pill_on_post_page(self, subtests):
-        # Posts with the "featured" tag show a "Featured" pill in
-        # their post-meta banner via _ext/post_banner.py. Other posts
-        # must not.
-        for rst in blog_posts():
-            text = rst.read_text()
-            m = re.search(r":tags:\s*(.+)", text)
-            tags = [t.strip() for t in m.group(1).split(",")] if m else []
-            is_featured = "featured" in tags
-            html = blog_html(rst)
-            with subtests.test(rst=rst, is_featured=is_featured):
-                if is_featured:
-                    assert "post-meta-featured" in html
-                else:
-                    assert "post-meta-featured" not in html

@@ -15,15 +15,18 @@
 
 {% block body %}
 <div class="blog-listing">
-  {% if pagename != ablog.blog_path %}
   <div class="blog-listing-header">
     <h1 class="blog-listing-title">
-      {{ header }}
-      {% if collection.href %}<a class="blog-listing-title-value" href="{{ collection.href }}">{{ collection }}</a>
-      {% else %}<span class="blog-listing-title-value">{{ collection }}</span>{% endif %}
+      {%- if pagename == ablog.blog_path -%}
+      <span class="blog-listing-title-value">All posts</span>
+      {%- else -%}
+      {%- set is_tag = '/tag/' in pagename -%}
+      {%- set lq = '“' if is_tag else '' -%}
+      {%- set rq = '”' if is_tag else '' -%}
+      {{ header }} {{ lq }}{% if collection.href %}<a class="blog-listing-title-value" href="{{ collection.href }}">{{ collection }}</a>{% else %}<span class="blog-listing-title-value">{{ collection }}</span>{% endif %}{{ rq }}
+      {%- endif -%}
     </h1>
   </div>
-  {% endif %}
 
   <ol class="blog-cards">
   {% for post in collection %}

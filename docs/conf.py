@@ -10,8 +10,10 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import datetime
 import importlib.util
+import os
 import pathlib
 import sys
+import time
 
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
@@ -59,6 +61,7 @@ _local_exts = [  # defined in the _ext/ folder
     "field_role",
     "genindex_filter",
     "glossary_toc",
+    "opengraph_override",
     "post_banner",
 ]
 
@@ -98,12 +101,15 @@ rst_prolog = (_HERE / "_globals.rst").read_text()
 # =====================================================================
 
 # Canonical site URL. Picked up by Sphinx for <link rel="canonical">
-# tags. Reused below by ablog (Atom feed), sphinxext-opengraph
-# (og:url), and sphinx-sitemap.
-# - TODO: revisit once the psutil.org domain is live. Changing this
-#   later may cause feed readers to redeliver all posts as "new". See
-#   also RTD's READTHEDOCS_CANONICAL_URL env var.
-html_baseurl = "https://psutil.readthedocs.io/"
+# tags. Reused below by sphinxext-opengraph (og:url), sphinx-sitemap,
+# and (via blog_baseurl) ablog's atom feed.
+#
+#         -------- TODO / IMPORTANT -------
+#
+# At 8.0.0 release, change this to the final base URL
+# (https://psutil.readthedocs.io/ or https://psutil.org/) and flip the
+# RTD Single Version toggle at the same time.
+html_baseurl = "https://psutil.readthedocs.io/latest/"
 
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
@@ -130,6 +136,8 @@ if html_theme == "sphinx_rtd_theme":
         "navigation_depth": 1,
         "titles_only": True,
         "flyout_display": "attached",
+        "version_selector": False,
+        "language_selector": False,
     }
     templates_path = ["_templates", "_static/images"]
     pygments_style = "tango"  # https://pygments.org/styles/
@@ -162,8 +170,14 @@ if html_theme == "sphinx_rtd_theme":
 # Blog (ablog package)
 # =====================================================================
 
-# ablog-specific alias of html_baseurl; used in Atom feed entry
-# <link> and <id>.
+# Force UTC for build-time timestamps so atom feed entries are
+# the same across build hosts (RTD runs UTC; local devs may not).
+os.environ["TZ"] = "UTC"
+if hasattr(time, "tzset"):
+    time.tzset()
+
+# Drives atom feed entry <id>s and <link>s. Same value as html_baseurl
+# so feed URLs track canonicals URLs.
 blog_baseurl = html_baseurl
 
 # =====================================================================
@@ -175,7 +189,7 @@ blog_baseurl = html_baseurl
 # as rich preview cards instead of bare links.
 ogp_site_url = html_baseurl
 ogp_site_name = PROJECT_NAME
-ogp_description_length = 200
+ogp_description_length = 160  # Google SERP snippet width
 
 # The logo shown in the preview. sphinxext-opengraph requires a .png
 # file.

@@ -490,11 +490,6 @@ body {
     width: var(--sidebar-width);
 }
 
-/* hide version switch */
-.version-switch {
-    display: none !important;
-}
-
 .wy-side-nav-search a.icon-home {
     display: none;
 }
