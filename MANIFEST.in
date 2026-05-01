@@ -40,6 +40,7 @@ include docs/_static/images/logo-psutil.svg
 include docs/_static/images/logo-sansec.svg
 include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
+include docs/_static/js/github-meta.js
 include docs/_static/js/highlight-repl.js
 include docs/_static/js/right-toc.js
 include docs/_static/js/search-shortcuts.js

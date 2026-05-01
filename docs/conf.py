@@ -155,6 +155,7 @@ if html_theme == "sphinx_rtd_theme":
         ("js/sidebar-close.js", {"defer": "defer"}),
         ("js/search-shortcuts.js", {"defer": "defer"}),
         ("js/right-toc.js", {"defer": "defer"}),
+        ("js/github-meta.js", {"defer": "defer"}),
     ]
 
 # =====================================================================

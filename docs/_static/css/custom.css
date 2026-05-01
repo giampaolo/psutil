@@ -265,7 +265,7 @@
 .top-bar-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 12px;
 }
 
 .top-bar-link,
@@ -301,18 +301,56 @@
     color: var(--topbar-fg-active);
 }
 
+.top-bar-github {
+    width: auto;
+    padding: 0 8px 0 6px;
+    gap: 6px;
+}
+
+.github-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--topbar-fg);
+}
+
+.github-stars:empty {
+    display: none;
+}
+
+.github-stars::before {
+    content: "\f005";  /* FontAwesome star */
+    font-family: FontAwesome;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
 .top-bar-version {
     display: inline-flex;
     align-items: center;
-    height: 22px;
+    gap: 5px;
     font-size: 0.78rem;
     font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
     color: var(--topbar-fg);
-    padding: 1px 8px 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    margin-left: 4px;
     text-decoration: none !important;
+    transition: color var(--theme-transition);
+}
+
+.top-bar-version:empty {
+    display: none;
+}
+
+.top-bar-version::before {
+    content: "\f02b";  /* FontAwesome tag */
+    font-family: FontAwesome;
+    font-size: 0.95em;
+    opacity: 0.85;
 }
 
 .top-bar-text {
@@ -335,7 +373,6 @@
 
 .top-bar-version:hover {
     color: var(--topbar-fg-active);
-    border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* ================================================================== */
