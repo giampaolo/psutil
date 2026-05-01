@@ -38,22 +38,32 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Inject the Ctrl+K visual badge inside the search input.
+    // Hide/show the server-rendered Ctrl+K badge on focus/blur.
     function initCtrlKBadge(input) {
-        if (!input) return;
-        var wrapper = document.createElement("div");
-        wrapper.className = "search-input-wrapper";
-        input.parentNode.insertBefore(wrapper, input);
-        wrapper.appendChild(input);
-
-        var badge = document.createElement("span");
-        badge.className = "search-kbd-hint";
-        badge.innerHTML =
-            "<kbd>Ctrl</kbd><span class='search-kbd-sep'>+</span><kbd>K</kbd>";
-        wrapper.appendChild(badge);
-
+        if (!input)
+            return;
+        var badge = input.parentNode.querySelector(".search-kbd-hint");
+        if (!badge)
+            return;
         input.addEventListener("focus", function () { badge.style.opacity = "0"; });
         input.addEventListener("blur",  function () { badge.style.opacity = ""; });
+    }
+
+    // Shade the rest of the page while the search input is focused
+    // by overlaying a dim layer; the search container is lifted
+    // above it via CSS.
+    function initFocusBlur(input) {
+        if (!input)
+            return;
+        var overlay = document.createElement("div");
+        overlay.className = "search-overlay";
+        document.body.appendChild(overlay);
+        input.addEventListener("focus", function () {
+            document.body.classList.add("search-focused");
+        });
+        input.addEventListener("blur", function () {
+            document.body.classList.remove("search-focused");
+        });
     }
 
     // Enable Up/Down arrow navigation and Enter to open on the
@@ -147,5 +157,6 @@ document.addEventListener("DOMContentLoaded", function () {
     disableSphinxShortcut();
     initCtrlK(searchInput);
     initCtrlKBadge(searchInput);
+    initFocusBlur(searchInput);
     initResultsNavigation(searchInput);
 });

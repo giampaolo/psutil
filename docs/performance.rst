@@ -88,6 +88,105 @@ slow ones (see :ref:`perf-api-speed` table below):
   for p in psutil.process_iter(psutil.Process.attrs - {"memory_footprint", "memory_maps"}):
       ...
 
+.. _perf-oneshot-methods:
+
+Methods sped up by oneshot()
+----------------------------
+
+The table below lists methods that benefit from :meth:`Process.oneshot`,
+grouped by platform. Methods separated by an empty row share the same
+underlying system call. The *speedup* row estimates the gain when all listed
+methods are called together (best case), as measured by
+`scripts/internal/bench_oneshot.py`_.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Linux
+     - Windows
+     - macOS
+     - BSD
+   * - :meth:`~Process.cpu_num`
+     - :meth:`~Process.cpu_percent`
+     - :meth:`~Process.cpu_percent`
+     - :meth:`~Process.cpu_num`
+   * - :meth:`~Process.cpu_percent`
+     - :meth:`~Process.cpu_times`
+     - :meth:`~Process.cpu_times`
+     - :meth:`~Process.cpu_percent`
+   * - :meth:`~Process.cpu_times`
+     - :meth:`~Process.io_counters`
+     - :meth:`~Process.memory_info`
+     - :meth:`~Process.cpu_times`
+   * - :meth:`~Process.create_time`
+     - :meth:`~Process.memory_info`
+     - :meth:`~Process.memory_percent`
+     - :meth:`~Process.create_time`
+   * - :meth:`~Process.name`
+     - :meth:`~Process.memory_info_ex`
+     - :meth:`~Process.num_ctx_switches`
+     - :meth:`~Process.gids`
+   * - :meth:`~Process.page_faults`
+     - :meth:`~Process.num_ctx_switches`
+     - :meth:`~Process.num_threads`
+     - :meth:`~Process.io_counters`
+   * - :meth:`~Process.ppid`
+     - :meth:`~Process.num_handles`
+     -
+     - :meth:`~Process.name`
+   * - :meth:`~Process.status`
+     - :meth:`~Process.num_threads`
+     - :meth:`~Process.create_time`
+     - :meth:`~Process.memory_info`
+   * - :meth:`~Process.terminal`
+     -
+     - :meth:`~Process.gids`
+     - :meth:`~Process.memory_percent`
+   * -
+     - :meth:`~Process.exe`
+     - :meth:`~Process.name`
+     - :meth:`~Process.num_ctx_switches`
+   * - :meth:`~Process.gids`
+     - :meth:`~Process.name`
+     - :meth:`~Process.ppid`
+     - :meth:`~Process.ppid`
+   * - :meth:`~Process.memory_info_ex`
+     -
+     - :meth:`~Process.status`
+     - :meth:`~Process.status`
+   * - :meth:`~Process.num_ctx_switches`
+     -
+     - :meth:`~Process.terminal`
+     - :meth:`~Process.terminal`
+   * - :meth:`~Process.num_threads`
+     -
+     - :meth:`~Process.terminal`
+     - :meth:`~Process.terminal`
+   * - :meth:`~Process.uids`
+     -
+     - :meth:`~Process.uids`
+     - :meth:`~Process.uids`
+   * - :meth:`~Process.username`
+     -
+     - :meth:`~Process.username`
+     - :meth:`~Process.username`
+   * -
+     -
+     -
+     -
+   * - :meth:`~Process.memory_footprint`
+     -
+     -
+     -
+   * - :meth:`~Process.memory_maps`
+     -
+     -
+     -
+   * - *speedup: +1.8x*
+     - *speedup: +1.8x / +6.5x*
+     - *speedup: +1.9x*
+     - *speedup: +2.0x*
+
 .. _perf-oneshot-bench:
 
 Measuring oneshot() speedup

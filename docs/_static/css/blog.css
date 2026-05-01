@@ -1,7 +1,6 @@
 /*
-   Styles for the blog sub-site. Loaded after custom.css. */
-
-@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
+   Styles for the blog sub-site. Loaded after custom.css.
+   Merriweather @font-face is in fonts.css (self-hosted). */
 
 /* ================================================================== */
 /* Variables                                                          */
@@ -455,71 +454,6 @@ a.post-meta-featured:hover {
     color: var(--blog-accent);
     background: color-mix(in srgb, var(--blog-accent) 10%, transparent);
     text-decoration: none;
-}
-
-/* ================================================================== */
-/* Blog prev/next nav (overrides ablog/postnavy.html)                 */
-/* ================================================================== */
-
-.post-nav {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-top: 3em;
-    padding-top: 1.5em;
-    border-top: 1px solid var(--border);
-}
-
-.post-nav a.post-nav-link,
-.post-nav a.post-nav-link:visited {
-    display: block;
-    padding: 0;
-    border: none;
-    border-radius: 0;
-    background: none;
-    text-decoration: none;
-    color: var(--content-text);
-}
-
-.post-nav a.post-nav-link:hover .post-nav-title {
-    color: var(--blog-accent);
-    text-decoration-color: var(--blog-accent);
-}
-
-.post-nav-next {
-    text-align: right;
-}
-
-.post-nav-label {
-    display: block;
-    font-size: 0.72em;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 0.35em;
-}
-
-.post-nav-title {
-    display: block;
-    color: var(--headings);
-    font-weight: 500;
-    line-height: 1.3;
-    text-decoration: underline;
-    text-decoration-color: color-mix(in srgb, var(--text-muted) 40%, transparent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-    transition: color var(--theme-transition),
-                text-decoration-color var(--theme-transition);
-}
-
-@media (max-width: 600px) {
-    .post-nav {
-        grid-template-columns: 1fr;
-    }
-    .post-nav-next {
-        text-align: left;
-    }
 }
 
 /* ================================================================== */

@@ -15,7 +15,7 @@
 
     .article-with-toc {
         display: flex;
-        gap: var(--layout-gap);
+        gap: 24px;
         align-items: flex-start;
     }
 
@@ -45,9 +45,8 @@
     .article-with-toc > .article-column {
         flex: 1 1 auto;
         min-width: 0;
-        max-width: var(--article-max-width);
-        padding-left: 32px;
-        padding-right: 8px;
+        max-width: calc(var(--article-max-width) + 40px);
+        padding-left: 24px;
     }
 
     /* When no right-toc renders (home, genindex, mode='none'), drop
@@ -157,6 +156,11 @@
     .right-toc-tree > ul > li:first-child > ul > li > a {
         font-size: 0.92rem;
         font-weight: 600;
+    }
+
+    /* Drop the bold weight when the page has only H2s (no H3+ descendants) */
+    .right-toc-tree > ul > li:first-child > ul:not(:has(ul)) > li > a {
+        font-weight: 400;
     }
     .right-toc-tree > ul > li:first-child > ul > li > ul > li > a {
         font-size: 0.85rem;

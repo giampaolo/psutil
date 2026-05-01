@@ -269,10 +269,8 @@ Memory
 
   - :field:`total`: total physical RAM.
   - :field:`available`: memory that can be given instantly to processes without
-    the system going into :term:`swap <swap memory>`. On Linux it uses the
-    ``MemAvailable`` field from ``/proc/meminfo`` *(kernel 3.14+)*; on older
-    kernels it falls back to an estimate. This is the recommended field for
-    monitoring actual memory usage in a cross-platform fashion. See
+    the system going into :term:`swap <swap memory>`. This is the recommended
+    field for monitoring actual memory usage in a cross-platform fashion. See
     :term:`available memory`.
   - :field:`percent`: the percentage usage calculated as
     ``(total - available) / total * 100``.
@@ -528,7 +526,8 @@ Disks
 
 .. function:: disk_io_counters(perdisk=False, nowrap=True)
 
-  Return system-wide disk I/O statistics:
+  Return system-wide disk I/O statistics. All fields are
+  :term:`cumulative counters <cumulative counter>` since boot.
 
   - :field:`read_count`: number of reads.
   - :field:`write_count`: number of writes.
@@ -595,7 +594,8 @@ Network
 
 .. function:: net_io_counters(pernic=False, nowrap=True)
 
-  Return system-wide network I/O statistics:
+  Return system-wide network I/O statistics. All fields are
+  :term:`cumulative counters <cumulative counter>` since boot.
 
   - :field:`bytes_sent`: number of bytes sent.
   - :field:`bytes_recv`: number of bytes received.
@@ -1211,61 +1211,9 @@ Process class
        ...
        >>>
 
-    The table below lists methods that benefit from the speedup, grouped by
-    platform. Methods separated by an empty row share the same underlying
-    system call. The *speedup* row estimates the gain when all listed methods
-    are called together (best case), as measured by
-    `bench_oneshot.py <https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py>`_
-    script.
-
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | Linux                        | Windows                       | macOS                        | BSD                          | SunOS                    | AIX                      |
-    +==============================+===============================+==============================+==============================+==========================+==========================+
-    | :meth:`cpu_num`              | :meth:`~Process.cpu_percent`  | :meth:`~Process.cpu_percent` | :meth:`cpu_num`              | :meth:`name`             | :meth:`name`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`~Process.cpu_percent` | :meth:`cpu_times`             | :meth:`cpu_times`            | :meth:`~Process.cpu_percent` | :meth:`cmdline`          | :meth:`cmdline`          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`cpu_times`            | :meth:`io_counters`           | :meth:`memory_info`          | :meth:`cpu_times`            | :meth:`create_time`      | :meth:`create_time`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`create_time`          | :meth:`memory_info`           | :meth:`memory_percent`       | :meth:`create_time`          |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`memory_info_ex`        | :meth:`num_ctx_switches`     | :meth:`gids`                 | :meth:`memory_info`      | :meth:`memory_info`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`page_faults`          | :meth:`num_ctx_switches`      | :meth:`num_threads`          | :meth:`io_counters`          | :meth:`memory_percent`   | :meth:`memory_percent`   |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`num_handles`           |                              | :meth:`name`                 | :meth:`num_threads`      | :meth:`num_threads`      |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`status`               | :meth:`num_threads`           | :meth:`create_time`          | :meth:`memory_info`          | :meth:`ppid`             | :meth:`ppid`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`terminal`             |                               | :meth:`gids`                 | :meth:`memory_percent`       | :meth:`status`           | :meth:`status`           |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              | :meth:`exe`                   | :meth:`name`                 | :meth:`num_ctx_switches`     | :meth:`terminal`         | :meth:`terminal`         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`gids`                 | :meth:`name`                  | :meth:`ppid`                 | :meth:`ppid`                 |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_info_ex`       |                               | :meth:`status`               | :meth:`status`               | :meth:`gids`             | :meth:`gids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`num_threads`          |                               | :meth:`terminal`             | :meth:`terminal`             | :meth:`uids`             | :meth:`uids`             |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`uids`                 |                               | :meth:`uids`                 | :meth:`uids`                 | :meth:`username`         | :meth:`username`         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`username`             |                               | :meth:`username`             | :meth:`username`             |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    |                              |                               |                              |                              |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_footprint`     |                               |                              |                              |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | :meth:`memory_maps`          |                               |                              |                              |                          |                          |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-    | *speedup: +1.8x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         | *speedup: +1.3x*         |
-    +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+--------------------------+
-
     .. seealso::
+      - :doc:`performance`
       - :doc:`/blog/2016/500-is-twice-as-fast`
-      - :ref:`perf-oneshot`
-      - :ref:`perf-oneshot-bench`
 
     .. versionadded:: 5.0.0
 
@@ -1628,9 +1576,8 @@ Process class
   .. method:: cpu_times()
 
     Return accumulated process CPU times as
-    :term:`cumulative counters <cumulative counter>` (seconds) (see
-    `explanation <http://stackoverflow.com/questions/556405/>`_). Same as
-    :func:`os.times`, but works for any process PID.
+    :term:`cumulative counters <cumulative counter>` expressed in seconds. Same
+    as :func:`os.times`, but works for any process PID.
 
     - :field:`user`: time spent in user mode.
     - :field:`system`: time spent in kernel mode.

@@ -1,27 +1,15 @@
 {#-
-  Override of ablog/postnavy.html — renders prev/next navigation at
-  the bottom of each post as two card-style links.
+  Override of ablog/postnavy.html: emit the same HTML as the doc
+  footer's prev/next, so a single CSS styles both.
 -#}
 {% set post = ablog[pagename] %}
 {% if post.published and ablog.post_show_prev_next and (post.prev or post.next) %}
-<nav class="post-nav" aria-label="Post navigation">
-  {% if post.prev %}
-  <a class="post-nav-link post-nav-prev"
-     href="{{ pathto(post.prev.docname) }}{{ anchor(post.prev) }}">
-    <span class="post-nav-label">&larr; Previous</span>
-    <span class="post-nav-title">{{ post.prev.title }}</span>
-  </a>
-  {% else %}
-  <span class="post-nav-placeholder"></span>
-  {% endif %}
-  {% if post.next %}
-  <a class="post-nav-link post-nav-next"
-     href="{{ pathto(post.next.docname) }}{{ anchor(post.next) }}">
-    <span class="post-nav-label">Next &rarr;</span>
-    <span class="post-nav-title">{{ post.next.title }}</span>
-  </a>
-  {% else %}
-  <span class="post-nav-placeholder"></span>
-  {% endif %}
-</nav>
+<div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+  {%- if post.prev %}
+  <a href="{{ pathto(post.prev.docname) }}{{ anchor(post.prev) }}" class="btn btn-neutral float-left" title="{{ post.prev.title|striptags|e }}" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+  {%- endif %}
+  {%- if post.next %}
+  <a href="{{ pathto(post.next.docname) }}{{ anchor(post.next) }}" class="btn btn-neutral float-right" title="{{ post.next.title|striptags|e }}" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  {%- endif %}
+</div>
 {% endif %}
