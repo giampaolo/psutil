@@ -96,6 +96,8 @@ Process
 Process methods
 ---------------
 
+Assuming ``p = psutil.Process()``.
+
 Identity
 ~~~~~~~~
 
@@ -107,22 +109,23 @@ Identity
    * - psutil
      - stdlib
      - notes
-   * - :attr:`Process.pid`
+   * - :meth:`p.pid <Process.pid>`
+
      - :func:`os.getpid`
      -
-   * - :meth:`Process.ppid`
+   * - :meth:`p.ppid() <Process.ppid>`
      - :func:`os.getppid`
      -
-   * - :meth:`Process.cwd`
+   * - :meth:`p.cwd() <Process.cwd>`
      - :func:`os.getcwd`
      -
-   * - :meth:`Process.environ`
+   * - :meth:`p.environ() <Process.environ>`
      - :data:`os.environ`
      - Will differ from launch environment if modified at runtime.
-   * - :meth:`Process.exe`
+   * - :meth:`p.exe() <Process.exe>`
      - :data:`sys.executable`
      - Python interpreter path only.
-   * - :meth:`Process.cmdline`
+   * - :meth:`p.cmdline() <Process.cmdline>`
      - :data:`sys.argv`
      - Python process only.
 
@@ -137,17 +140,17 @@ Credentials
    * - psutil
      - stdlib
      - notes
-   * - :meth:`Process.uids`
+   * - :meth:`p.uids() <Process.uids>`
      - :func:`os.getuid`,
        :func:`os.geteuid`,
        :func:`os.getresuid`
      -
-   * - :meth:`Process.gids`
+   * - :meth:`p.gids() <Process.gids>`
      - :func:`os.getgid`,
        :func:`os.getegid`,
        :func:`os.getresgid`
      -
-   * - :meth:`Process.username`
+   * - :meth:`p.username() <Process.username>`
      - :func:`os.getlogin`, :func:`getpass.getuser`
      - Rough equivalent; not per-process.
 
@@ -162,22 +165,22 @@ CPU / scheduling
    * - psutil
      - stdlib
      - notes
-   * - :meth:`Process.cpu_times`
+   * - :meth:`p.cpu_times() <Process.cpu_times>`
      - :func:`os.times`
      - :func:`os.times` also has ``elapsed``; psutil adds
        :field:`iowait` (Linux).
-   * - :meth:`Process.cpu_times`
+   * - :meth:`p.cpu_times() <Process.cpu_times>`
      - :func:`resource.getrusage`
      - ``ru_utime`` / ``ru_stime`` match; have higher precision.
-   * - :meth:`Process.num_ctx_switches`
+   * - :meth:`p.num_ctx_switches() <Process.num_ctx_switches>`
      - :func:`resource.getrusage`
      - Current process only; psutil works for any PID.
-   * - :meth:`Process.nice() <Process.nice>`
+   * - :meth:`p.nice() <Process.nice>`
      - :func:`os.getpriority`,
        :func:`os.setpriority`
      - POSIX only; psutil also supports Windows.
        Added to CPython 3.3 (BPO-10784_).
-   * - :meth:`Process.nice() <Process.nice>`
+   * - :meth:`p.nice() <Process.nice>`
      - :func:`os.nice`
      - POSIX only; psutil also supports Windows.
    * - *no equivalent*
@@ -186,12 +189,12 @@ CPU / scheduling
      - Sets scheduling *policy* (``SCHED_*``). Unlike nice,
        which sets priority within ``SCHED_OTHER``. Real-time
        policies preempt normal processes.
-   * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
+   * - :meth:`p.cpu_affinity() <Process.cpu_affinity>`
      - :func:`os.sched_getaffinity`,
        :func:`os.sched_setaffinity`
      - Nearly equivalent; both accept a PID. Stdlib is
        Linux/BSD; psutil also supports Windows.
-   * - :meth:`Process.rlimit() <Process.rlimit>`
+   * - :meth:`p.rlimit() <Process.rlimit>`
      - :func:`resource.getrlimit`,
        :func:`resource.setrlimit`
      - Same interface; psutil works for any PID (Linux only).
@@ -207,10 +210,10 @@ Memory
    * - psutil
      - stdlib
      - notes
-   * - :meth:`Process.memory_info`
+   * - :meth:`p.memory_info() <Process.memory_info>`
      - :func:`resource.getrusage`
      - Only :term:`peak_rss` (``ru_maxrss``); psutil returns :term:`RSS`, :term:`VMS`, and more.
-   * - :meth:`Process.page_faults`
+   * - :meth:`p.page_faults() <Process.page_faults>`
      - :func:`resource.getrusage`
      - Current process only.
 
@@ -225,7 +228,7 @@ I/O
    * - psutil
      - stdlib
      - notes
-   * - :meth:`Process.io_counters`
+   * - :meth:`p.io_counters() <Process.io_counters>`
      - :func:`resource.getrusage`
      - Block I/O only (``ru_inblock`` / ``ru_oublock``),
        current process. psutil returns bytes and counts for any PID.
@@ -241,10 +244,10 @@ Threads
    * - psutil
      - stdlib
      - notes
-   * - :meth:`Process.num_threads`
+   * - :meth:`p.num_threads() <Process.num_threads>`
      - :func:`threading.active_count`
      - Stdlib counts Python threads only; psutil counts all OS threads.
-   * - :meth:`Process.threads`
+   * - :meth:`p.threads() <Process.threads>`
      - :func:`threading.enumerate`
      - Stdlib returns :class:`threading.Thread` objects; psutil
        returns OS thread IDs with CPU times.
@@ -260,27 +263,27 @@ Signals
    * - psutil
      - stdlib
      - notes
-   * - :meth:`Process.send_signal`
+   * - :meth:`p.send_signal() <Process.send_signal>`
      - :func:`os.kill`
      - Same on POSIX; limited on Windows. psutil adds
        :exc:`NoSuchProcess` / :exc:`AccessDenied` and avoids
        killing reused PIDs.
-   * - :meth:`Process.suspend`
+   * - :meth:`p.suspend() <Process.suspend>`
      - :func:`os.kill` + :data:`signal.SIGSTOP`
      - Same as above.
-   * - :meth:`Process.resume`
+   * - :meth:`p.resume() <Process.resume>`
      - :func:`os.kill` + :data:`signal.SIGCONT`
      - Same as above.
-   * - :meth:`Process.terminate`
+   * - :meth:`p.terminate() <Process.terminate>`
      - :func:`os.kill` + :data:`signal.SIGTERM`
      - Same as above. On Windows uses ``TerminateProcess()``.
-   * - :meth:`Process.kill`
+   * - :meth:`p.kill() <Process.kill>`
      - :func:`os.kill` + :data:`signal.SIGKILL`
      - Same as above. On Windows uses ``TerminateProcess()``.
-   * - :meth:`Process.wait`
+   * - :meth:`p.wait() <Process.wait>`
      - :func:`os.waitpid`
      - Child processes only; psutil works for any PID.
-   * - :meth:`Process.wait`
+   * - :meth:`p.wait() <Process.wait>`
      - :meth:`subprocess.Popen.wait`
      - Equivalent; psutil uses efficient OS-level waiting on
        Linux/BSD. Added to CPython 3.15 (GH-144047_).

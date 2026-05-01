@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
 /* ================================================================== */
 /* Sizes and effects                                                  */
 /* ================================================================== */
@@ -7,16 +5,16 @@
 :root {
     /* fonts & text. Sidebar/hero default to body; named aliases
        kept so a future divergence needs only a single-line change. */
-    --font-body: "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
-    --font-headings: "Roboto Slab", "ff-tisa-web-pro", "Georgia", Arial, sans-serif;
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --font-headings: var(--font-body);
     --font-sidebar: var(--font-body);
     --font-hero: var(--font-body);
     --font-hero-subtext: var(--font-body);
-    --font-search: "Inter", system-ui, -apple-system, sans-serif;
-    --code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --font-search: var(--font-body);
+    --code-font: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     --code-line-height: 1.5;
 
-    --content-font-size: 16.5px;
+    --content-font-size: 16px;
     --content-line-height: 1.65;
 
     --sidebar-font-size: 15px;
@@ -254,7 +252,7 @@
 }
 
 .top-bar-logo span {
-    padding-top: 11px;
+    padding-top: 6px;
     line-height: 1;
 }
 
@@ -267,7 +265,7 @@
 .top-bar-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 12px;
 }
 
 .top-bar-link,
@@ -303,18 +301,56 @@
     color: var(--topbar-fg-active);
 }
 
+.top-bar-github {
+    width: auto;
+    padding: 0 8px 0 6px;
+    gap: 6px;
+}
+
+.github-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--topbar-fg);
+}
+
+.github-stars:empty {
+    display: none;
+}
+
+.github-stars::before {
+    content: "\f005";  /* FontAwesome star */
+    font-family: FontAwesome;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
 .top-bar-version {
     display: inline-flex;
     align-items: center;
-    height: 22px;
+    gap: 5px;
     font-size: 0.78rem;
     font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
     color: var(--topbar-fg);
-    padding: 1px 8px 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 999px;
-    margin-left: 4px;
     text-decoration: none !important;
+    transition: color var(--theme-transition);
+}
+
+.top-bar-version:empty {
+    display: none;
+}
+
+.top-bar-version::before {
+    content: "\f02b";  /* FontAwesome tag */
+    font-family: FontAwesome;
+    font-size: 0.95em;
+    opacity: 0.85;
 }
 
 .top-bar-text {
@@ -337,7 +373,6 @@
 
 .top-bar-version:hover {
     color: var(--topbar-fg-active);
-    border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* ================================================================== */
@@ -393,6 +428,12 @@ body {
 
 .document {
     padding-top: 20px !important;
+}
+
+/* Fix (maybe) for changelog.rst and api.rst that delay the right-toc */
+.rst-content section section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 600px;
 }
 
 [data-theme="dark"] hr {
@@ -592,6 +633,53 @@ html,
     transition: opacity 0.15s ease;
 }
 
+/* Touch devices have no Ctrl key; the focus/blur handler is also a . */
+@media (pointer: coarse) {
+    .search-kbd-hint {
+        display: none;
+    }
+}
+
+/* Shade the rest of the page while the search input is focused. */
+.search-overlay,
+.wy-nav-side::after,
+.wy-side-nav-search::after {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.wy-nav-side::after,
+.wy-side-nav-search::after {
+    content: "";
+}
+
+.search-overlay { position: fixed; z-index: 10000; }
+.wy-nav-side::after { z-index: 5; }
+.wy-side-nav-search::after { z-index: 1; }
+
+body.search-focused {
+    .search-overlay,
+    .wy-nav-side::after,
+    .wy-side-nav-search::after {
+        opacity: 1;
+    }
+
+    .wy-nav-side {
+        z-index: 10001;
+        /* don't cover the topbar (44px) or its drop shadow below it */
+        clip-path: inset(45px 0 0 0);
+    }
+
+    .wy-side-nav-search .wy-form {
+        position: relative;
+        z-index: 2;
+    }
+}
+
 .search-kbd-hint kbd {
     display: inline-flex;
     align-items: center;
@@ -599,18 +687,18 @@ html,
     padding: 3px 5px 0;
     font-family: var(--font-search);
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1;
-    color: #555;
-    background: #fafafa;
-    border: 1px solid #b8b8b8;
-    border-bottom-width: 2px;
+    color: #777;
+    background: #f3f3f3;
+    border: 1px solid #c8c8c8;
+    border-bottom-width: 1.5px;
     border-radius: 3px;
 }
 
 .search-kbd-sep {
     font-size: 10px;
-    color: #888;
+    color: #999;
 }
 
 /* ================================================================== */
@@ -693,47 +781,19 @@ footer [role="contentinfo"] {
     border-top: 1px solid var(--border);
 }
 
-/* Prev / Next navigation buttons */
-.rst-footer-buttons .btn.btn-neutral {
-    padding-top: 6px !important;
-    padding-bottom: 4px !important;
-    background-color: var(--surface-sunken) !important;
-    color: var(--content-text) !important;
-    border: 1px solid var(--border) !important;
-    box-shadow: none !important;
-}
-
-.rst-footer-buttons .btn.btn-neutral:hover {
-    background-color: var(--surface-raised) !important;
-    color: var(--content-text) !important;
-    border-color: var(--text-muted) !important;
-}
-
-[data-theme="dark"] .rst-footer-buttons .btn.btn-neutral {
-    background-color: #2a2a2a !important;
-    color: #cccccc !important;
-    border-color: #444444 !important;
-}
-
-[data-theme="dark"] .rst-footer-buttons .btn.btn-neutral:hover {
-    background-color: #353535 !important;
-    color: #ffffff !important;
-    border-color: #666666 !important;
-}
-
 /* ================================================================== */
 /* Headings                                                           */
 /* ================================================================== */
 
 h1, h2, h3, h4 {
-    margin-top: 20px !important;
-    margin-bottom: 10px !important;
+    margin-top: 14px !important;
+    margin-bottom: 8px !important;
     color: var(--headings) !important;
     font-family: var(--font-headings) !important;
 }
 
 h1, h2 {
-    padding: 5px;
+    padding: 2px 0;
 }
 
 h1, h1 a,
@@ -744,30 +804,34 @@ h4, h4 a {
 }
 
 h1 {
-    font-size: 2.5rem;
+    font-size: 230%;
+    font-weight: 700 !important;
     line-height: 1.2;
-    letter-spacing: -0.01em;
-    padding-top: 20px !important;
-    margin-bottom: 1.2rem !important;
-}
-
-h2 {
-    font-size: 1.6rem;
-    line-height: 1.3;
-    margin-top: 2rem !important;
+    letter-spacing: -0.015em;
+    padding-top: 4px !important;
     margin-bottom: 0.8rem !important;
 }
 
+h2 {
+    font-size: 150%;
+    font-weight: 600 !important;
+    line-height: 1.3;
+    margin-top: 1.4rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
 h3 {
-    font-size: 1.25rem;
+    font-size: 125%;
+    font-weight: 600 !important;
     line-height: 1.35;
-    padding: 5px 0 5px 0;
-    margin-top: 1.5rem !important;
+    padding: 2px 0;
+    margin-top: 1rem !important;
 }
 
 h4 {
-    font-size: 1.05rem;
-    padding: 5px 0 5px 0;
+    font-size: 115%;
+    font-weight: 600 !important;
+    padding: 2px 0;
 }
 
 .rst-content p {

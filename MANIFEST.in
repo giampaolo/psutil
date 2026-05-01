@@ -27,6 +27,7 @@ include docs/_static/css/blog.css
 include docs/_static/css/code.css
 include docs/_static/css/custom.css
 include docs/_static/css/home.css
+include docs/_static/css/prev-next.css
 include docs/_static/css/right-toc.css
 include docs/_static/images/favicon.svg
 include docs/_static/images/icon-cpu.svg
@@ -39,6 +40,7 @@ include docs/_static/images/logo-psutil.svg
 include docs/_static/images/logo-sansec.svg
 include docs/_static/images/logo-tidelift.svg
 include docs/_static/js/external-urls.js
+include docs/_static/js/github-meta.js
 include docs/_static/js/highlight-repl.js
 include docs/_static/js/right-toc.js
 include docs/_static/js/search-shortcuts.js

@@ -233,6 +233,8 @@ Other
 Process methods
 ---------------
 
+Assuming ``p = psutil.Process()``.
+
 Identity
 ~~~~~~~~
 
@@ -245,42 +247,42 @@ Identity
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.name`
+   * - :meth:`p.name() <Process.name>`
      - ``ps -o comm -p PID``
      - same
      - ``procstat -b PID``
      -
-   * - :meth:`Process.exe`
+   * - :meth:`p.exe() <Process.exe>`
      - ``readlink /proc/PID/exe``
      - ``lsof -p PID``
      - ``procstat -b PID``
      -
-   * - :meth:`Process.cmdline`
+   * - :meth:`p.cmdline() <Process.cmdline>`
      - ``ps -o args -p PID``
      - same
      - ``procstat -c PID``
      -
-   * - :meth:`Process.status`
+   * - :meth:`p.status() <Process.status>`
      - ``ps -o stat -p PID``
      - same
      - same
      -
-   * - :meth:`Process.create_time`
+   * - :meth:`p.create_time() <Process.create_time>`
      - ``ps -o lstart -p PID``
      - same
      - same
      -
-   * - :meth:`Process.is_running`
+   * - :meth:`p.is_running() <Process.is_running>`
      - ``kill -0 PID``
      - same
      - same
      -
-   * - :meth:`Process.environ`
+   * - :meth:`p.environ() <Process.environ>`
      - ``xargs -0 -a /proc/PID/environ``
      -
      - ``procstat -e PID``
      -
-   * - :meth:`Process.cwd`
+   * - :meth:`p.cwd() <Process.cwd>`
      - ``pwdx PID``
      - ``lsof -p PID -a -d cwd``
      -
@@ -298,27 +300,27 @@ Process tree
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.ppid`
+   * - :meth:`p.ppid() <Process.ppid>`
      - ``ps -o ppid= -p PID``
      - same
      - same
      -
-   * - :meth:`Process.parent`
+   * - :meth:`p.parent() <Process.parent>`
      - ``ps -p $(ps -o ppid= -p PID)``
      - same
      - same
      -
-   * - :meth:`Process.parents`
+   * - :meth:`p.parents() <Process.parents>`
      - ``pstree -s PID``
      - same
      - same
      -
-   * - :meth:`Process.children(recursive=False) <Process.children>`
+   * - :meth:`p.children(recursive=False) <Process.children>`
      - ``pgrep -P PID``
      - same
      - same
      -
-   * - :meth:`Process.children(recursive=True) <Process.children>`
+   * - :meth:`p.children(recursive=True) <Process.children>`
      - ``pstree -p PID``
      - same
      - same
@@ -336,22 +338,22 @@ Credentials
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.uids`
+   * - :meth:`p.uids() <Process.uids>`
      - ``ps -o uid,ruid,suid -p PID``
      - same
      - ``procstat -s PID``
      -
-   * - :meth:`Process.gids`
+   * - :meth:`p.gids() <Process.gids>`
      - ``ps -o gid,rgid,sgid -p PID``
      - same
      - ``procstat -s PID``
      -
-   * - :meth:`Process.username`
+   * - :meth:`p.username() <Process.username>`
      - ``ps -o user -p PID``
      - same
      - same
      -
-   * - :meth:`Process.terminal`
+   * - :meth:`p.terminal() <Process.terminal>`
      - ``ps -o tty -p PID``
      - same
      - same
@@ -369,62 +371,62 @@ CPU / scheduling
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.cpu_percent`
+   * - :meth:`p.cpu_percent() <Process.cpu_percent>`
      - ``ps -o %cpu -p PID``
      - same
      - same
      -
-   * - :meth:`Process.cpu_times`
+   * - :meth:`p.cpu_times() <Process.cpu_times>`
      - ``ps -o cputime -p PID``
      - same
      - ``procstat -r PID``
      -
-   * - :meth:`Process.cpu_num`
+   * - :meth:`p.cpu_num() <Process.cpu_num>`
      - ``ps -o psr -p PID``
      -
      -
      -
-   * - :meth:`Process.num_ctx_switches`
+   * - :meth:`p.num_ctx_switches() <Process.num_ctx_switches>`
      - ``pidstat -w -p PID``
      -
      - ``procstat -r PID``
      -
-   * - :meth:`Process.cpu_affinity() <Process.cpu_affinity>`
+   * - :meth:`p.cpu_affinity() <Process.cpu_affinity>`
      - ``taskset -p PID``
      -
      - ``cpuset -g -p PID``
      -
-   * - :meth:`Process.cpu_affinity(CPUS) <Process.cpu_affinity>`
+   * - :meth:`p.cpu_affinity(CPUS) <Process.cpu_affinity>`
      - ``taskset -p MASK PID``
      -
      - ``cpuset -s -p PID -l CPUS``
      -
-   * - :meth:`Process.ionice() <Process.ionice>`
+   * - :meth:`p.ionice() <Process.ionice>`
      - ``ionice -p PID``
      -
      -
      -
-   * - :meth:`Process.ionice(CLASS) <Process.ionice>`
+   * - :meth:`p.ionice(CLASS) <Process.ionice>`
      - ``ionice -c CLASS -p PID``
      -
      -
      -
-   * - :meth:`Process.nice() <Process.nice>`
+   * - :meth:`p.nice() <Process.nice>`
      - ``ps -o nice -p PID``
      - same
      - same
      -
-   * - :meth:`Process.nice(VALUE) <Process.nice>`
+   * - :meth:`p.nice(VALUE) <Process.nice>`
      - ``renice -n VALUE -p PID``
      - same
      - same
      -
-   * - :meth:`Process.rlimit(RES) <Process.rlimit>`
+   * - :meth:`p.rlimit(RES) <Process.rlimit>`
      - ``prlimit --pid PID``
      -
      - ``procstat rlimit PID``
      -
-   * - :meth:`Process.rlimit(RES, LIMITS) <Process.rlimit>`
+   * - :meth:`p.rlimit(RES, LIMITS) <Process.rlimit>`
      - ``prlimit --pid PID --RES=SOFT:HARD``
      -
      -
@@ -442,32 +444,32 @@ Memory
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.memory_info`
+   * - :meth:`p.memory_info() <Process.memory_info>`
      - ``ps -o rss,vsz -p PID``
      - same
      - same
      -
-   * - :meth:`Process.memory_info_ex`
+   * - :meth:`p.memory_info_ex() <Process.memory_info_ex>`
      - ``cat /proc/PID/status``
      -
      -
      -
-   * - :meth:`Process.memory_percent`
+   * - :meth:`p.memory_percent() <Process.memory_percent>`
      - ``ps -o %mem -p PID``
      - same
      - same
      -
-   * - :meth:`Process.memory_maps`
+   * - :meth:`p.memory_maps() <Process.memory_maps>`
      - ``pmap PID``
      - ``vmmap PID``
      - ``procstat -v PID``
      -
-   * - :meth:`Process.memory_footprint`
+   * - :meth:`p.memory_footprint() <Process.memory_footprint>`
      - ``smem``, ``smemstat``
      -
      -
      -
-   * - :meth:`Process.page_faults`
+   * - :meth:`p.page_faults() <Process.page_faults>`
      - ``ps -o maj_flt,min_flt -p PID``
      - ``ps -o faults -p PID``
      - ``procstat -r PID``
@@ -485,12 +487,12 @@ Threads
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.num_threads`
+   * - :meth:`p.num_threads() <Process.num_threads>`
      - ``ps -o nlwp -p PID``
      - same
      - same
      -
-   * - :meth:`Process.threads`
+   * - :meth:`p.threads() <Process.threads>`
      - ``ps -T -p PID``
      -
      -
@@ -508,27 +510,27 @@ Files and connections
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.net_connections`
+   * - :meth:`p.net_connections() <Process.net_connections>`
      - ``ss -p``, ``lsof -p PID -i``
      - ``lsof -p PID -i``
      -
      - ``netstat -ano | findstr PID``
-   * - :meth:`Process.open_files`
+   * - :meth:`p.open_files() <Process.open_files>`
      - ``lsof -p PID``
      - same
      - ``procstat -f PID``, ``fstat``
      - ``handle.exe -p PID``
-   * - :meth:`Process.io_counters`
+   * - :meth:`p.io_counters() <Process.io_counters>`
      - ``cat /proc/PID/io``
      -
      -
      -
-   * - :meth:`Process.num_fds`
+   * - :meth:`p.num_fds() <Process.num_fds>`
      - ``ls /proc/PID/fd | wc -l``
      -
      -
      -
-   * - :meth:`Process.num_handles`
+   * - :meth:`p.num_handles() <Process.num_handles>`
      -
      -
      -
@@ -546,32 +548,32 @@ Signals
      - macOS
      - BSD
      - Windows
-   * - :meth:`Process.send_signal`
+   * - :meth:`p.send_signal() <Process.send_signal>`
      - ``kill -SIG PID``
      - same
      - same
      -
-   * - :meth:`Process.suspend`
+   * - :meth:`p.suspend() <Process.suspend>`
      - ``kill -STOP PID``
      - same
      - same
      -
-   * - :meth:`Process.resume`
+   * - :meth:`p.resume() <Process.resume>`
      - ``kill -CONT PID``
      - same
      - same
      -
-   * - :meth:`Process.terminate`
+   * - :meth:`p.terminate() <Process.terminate>`
      - ``kill -TERM PID``
      - same
      - same
      - ``taskkill /PID PID``
-   * - :meth:`Process.kill`
+   * - :meth:`p.kill() <Process.kill>`
      - ``kill -KILL PID``
      - same
      - same
      - ``taskkill /F /PID PID``
-   * - :meth:`Process.wait`
+   * - :meth:`p.wait() <Process.wait>`
      - ``tail --pid=PID -f /dev/null``
      - ``lsof -p PID +r 1``
      - ``pwait PID``

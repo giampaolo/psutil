@@ -134,11 +134,19 @@ if html_theme == "sphinx_rtd_theme":
     templates_path = ["_templates", "_static/images"]
     pygments_style = "tango"  # https://pygments.org/styles/
     html_css_files = [
+        (
+            "https://fonts.googleapis.com/css2"
+            "?family=Inter:wght@400;500;600;700"
+            "&family=JetBrains+Mono:wght@400;600"
+            "&family=Merriweather:ital,wght@0,400;0,700;1,400"
+            "&display=swap"
+        ),
         "css/custom.css",
         "css/code.css",
         "css/home.css",
         "css/blog.css",
         "css/right-toc.css",
+        "css/prev-next.css",
     ]
     html_js_files = [
         "js/highlight-repl.js",
@@ -147,6 +155,7 @@ if html_theme == "sphinx_rtd_theme":
         ("js/sidebar-close.js", {"defer": "defer"}),
         ("js/search-shortcuts.js", {"defer": "defer"}),
         ("js/right-toc.js", {"defer": "defer"}),
+        ("js/github-meta.js", {"defer": "defer"}),
     ]
 
 # =====================================================================
