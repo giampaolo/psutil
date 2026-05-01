@@ -13,7 +13,8 @@ Changelog
 Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
 :gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`, :gh:`2797`,
-:gh:`2801`, :gh:`2803`, :gh:`2808`, :gh:`2819`, :gh:`2820`, :gh:`2823`)
+:gh:`2801`, :gh:`2803`, :gh:`2808`, :gh:`2819`, :gh:`2820`, :gh:`2823`,
+:gh:`2828`)
 
 - Split docs from a single HTML file into multiple new sections:
 
@@ -59,6 +60,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 
 - Usability:
 
+  - Right TOC sidebar.
   - Improved overall doc clarity and shortened long sentences.
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
@@ -1590,8 +1592,8 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
 - :gh:`986`, [Linux]: :meth:`Process.cwd` may raise :exc:`NoSuchProcess`
   instead of :exc:`ZombieProcess`.
 
-5.1.3
-^^^^^
+5.1.3 — 2017-02-07
+^^^^^^^^^^^^^^^^^^
 
 **Bug fixes**
 

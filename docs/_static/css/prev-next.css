@@ -1,0 +1,113 @@
+/*
+ * Prev / Next navigation at the bottom of doc and blog pages.
+ */
+
+.rst-footer-buttons {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.rst-footer-buttons::before,
+.rst-footer-buttons::after {
+    content: none !important;
+    display: none !important;
+}
+
+.rst-footer-buttons .btn.btn-neutral {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    float: none !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    text-decoration: none !important;
+    transition: color var(--theme-transition);
+    font-family: var(--font-body) !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    text-align: left;
+    vertical-align: baseline;
+    white-space: normal !important;
+}
+
+.rst-footer-buttons .btn[rel="prev"] {
+    padding-left: 2.2em !important;
+}
+
+.rst-footer-buttons .btn[rel="next"] {
+    padding-right: 2.2em !important;
+    text-align: right;
+}
+
+/* hide RTD's FA arrow icons */
+.rst-footer-buttons .btn .fa {
+    display: none !important;
+}
+
+.rst-footer-buttons .btn::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+    transition: color var(--theme-transition);
+}
+
+.rst-footer-buttons .btn[rel="prev"]::before {
+    content: "‹";
+    left: 0;
+}
+
+.rst-footer-buttons .btn[rel="next"]::before {
+    content: "›";
+    right: 0;
+}
+
+.rst-footer-buttons .btn::after {
+    content: attr(title);
+    display: block;
+    margin-top: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--headings);
+    text-transform: none;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+.rst-footer-buttons .btn.btn-neutral:hover {
+    background: transparent !important;
+    color: var(--links) !important;
+}
+
+.rst-footer-buttons .btn.btn-neutral:hover::before,
+.rst-footer-buttons .btn.btn-neutral:hover::after {
+    color: var(--links);
+}
+
+/* Suppress the browser's default focus/active outline that
+   briefly appears as a square box around the link on click. */
+.rst-footer-buttons .btn.btn-neutral:focus,
+.rst-footer-buttons .btn.btn-neutral:focus-visible,
+.rst-footer-buttons .btn.btn-neutral:active {
+    outline: none;
+}

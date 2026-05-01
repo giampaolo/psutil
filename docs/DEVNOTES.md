@@ -217,6 +217,7 @@ Example sites using sphinx ablog:
 - Adriaan Rol (quantum researcher personal site): https://adriaanrol.com/
 - Jean-Pierre Chauvel (personal tech blog): https://www.chauvel.org/blog/
 
-### Ideas
+### Nice sites
 
 - Nice home: https://pnpm.io/
+- https://vite.dev/
