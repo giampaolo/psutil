@@ -1,0 +1,26 @@
+:orphan:
+
+404 - Page not found
+====================
+
+.. code-block:: pytb
+
+   Traceback (most recent call last):
+     File "<browser>", line 1, in <module>
+       fetch_page(url)
+   psutil.NoSuchProcess: process no longer exists (pid=404)
+
+The page you're looking for doesn't exist. Or it does, as a
+:class:`~psutil.ZombieProcess` we can't reap.
+
+What now?
+---------
+
+- Hit ``Ctrl + K`` (or ``⌘ K``) to open the search box.
+- Jump to the :doc:`install guide <install>`, :doc:`API reference <api>`,
+  :doc:`FAQ <faq>` or :doc:`recipes <recipes>`.
+- Read the :doc:`blog <blog>` for posts and release notes.
+- If you got here from a link that *should* work, please
+  `open an issue on GitHub`_.
+
+.. _open an issue on GitHub: https://github.com/giampaolo/psutil/issues/new?title=Broken+link%3A+

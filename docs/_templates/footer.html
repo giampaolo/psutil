@@ -14,7 +14,7 @@
   {%- block contentinfo %}
     <div class="footer-content">
       <div class="footer-text">
-        <span>&copy; {{ copyright }}</span>
+        <span><a class="footer-egg" href="{{ pathto('404') }}" title="🥚">&copy;</a> {{ copyright }}</span>
         {%- if last_updated %}
         <span>Updated: {{ last_updated }}</span>
         {%- endif %}

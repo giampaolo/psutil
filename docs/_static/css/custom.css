@@ -742,6 +742,17 @@ footer div[role="navigation"][aria-label="Footer"] {
     text-decoration-color: currentColor;
 }
 
+/* Easter egg: the © symbol is a link to the 404 page. */
+.footer-text a.footer-egg,
+.footer-text a.footer-egg:visited {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.footer-text a.footer-egg:hover {
+    color: var(--blog-accent) !important;
+}
+
 /* RSS icon anchored to the right of the footer row. Icon-only link,
    so :visited must not change its color (per the theme convention
    for button/icon links). */

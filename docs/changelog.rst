@@ -14,7 +14,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
 :gh:`2764`, :gh:`2767`, :gh:`2768`, :gh:`2769`, :gh:`2771`, :gh:`2774`,
 :gh:`2775`, :gh:`2781`, :gh:`2787`, :gh:`2739`, :gh:`2790`, :gh:`2797`,
 :gh:`2801`, :gh:`2803`, :gh:`2808`, :gh:`2819`, :gh:`2820`, :gh:`2823`,
-:gh:`2828`)
+:gh:`2826, :gh:`2828`, :gh:`2829`)
 
 - Split docs from a single HTML file into multiple new sections:
 
@@ -69,9 +69,8 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
     selected result.
   - Search results are styled as cards with subtle borders and shadows (no
     longer rely on RTD).
-  - :gh:`2826`: identifiers in code blocks (e.g. ``psutil.Process()``,
-    ``p.cpu_percent()``) are now clickable and link to their API reference
-    entry on click, via
+  - Identifiers in code blocks (e.g. ``psutil.Process()``, ``p.cpu_percent()``)
+    are now clickable and link to their API reference entry on click, via
     `sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
 
 - Testing:
@@ -95,6 +94,8 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - All ``.rst`` files are now wrapped to 79 characters via
     https://github.com/giampaolo/rstwrap.
   - Add ``/sitemap.xml`` to help search engine discovery.
+  - Custom 404 page. Hovering over the © copyright in the footer reveals an
+    easter egg. Clicking it takes you to the 404 page containing a joke.
 
 Type hints / enums:
 
