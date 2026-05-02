@@ -748,6 +748,7 @@ footer div[role="navigation"][aria-label="Footer"] {
     color: inherit !important;
     text-decoration: none !important;
 }
+
 .footer-text a.footer-egg:hover {
     color: var(--blog-accent) !important;
 }
