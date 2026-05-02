@@ -45,6 +45,7 @@ VERSION = get_version()
 
 _third_party_exts = [
     "ablog",
+    "notfound.extension",  # custom 404 page
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.viewcode",
@@ -110,6 +111,12 @@ rst_prolog = (_HERE / "_globals.rst").read_text()
 # (https://psutil.readthedocs.io/ or https://psutil.org/) and flip the
 # RTD Single Version toggle at the same time.
 html_baseurl = "https://psutil.readthedocs.io/latest/"
+
+#         -------- TODO / IMPORTANT -------
+#
+# sphinx-notfound-page: absolute URL prefix for static files and
+# nav links on 404.html. Will become "/" when we switch domain.
+notfound_urls_prefix = "/latest/"
 
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"

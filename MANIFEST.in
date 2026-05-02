@@ -11,6 +11,7 @@ include README.rst
 include SECURITY.md
 include _bootstrap.py
 include docs/.readthedocs.yaml
+include docs/404.rst
 include docs/DEVNOTES.md
 include docs/Makefile
 include docs/README
