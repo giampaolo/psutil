@@ -13,7 +13,9 @@ covers the unused-target case.
 """
 
 import argparse
+import os
 import re
+import subprocess
 import sys
 
 # .. _`Foo`: https://...   or   .. _foo: https://...
@@ -26,19 +28,31 @@ RE_BACKTICK_REF = re.compile(r"`([^`<\n]+)`_(?!_)")
 RE_BARE_REF = re.compile(r"(?<![`\w])([A-Za-z][\w-]*)_(?!\w)")
 
 
+def all_rst_files():
+    out = subprocess.check_output(["git", "ls-files", "*.rst"], text=True)
+    return [ln.strip() for ln in out.splitlines() if ln.strip()]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", nargs="+", metavar="FILE")
     args = parser.parse_args()
+
+    # We only report on definitions in the input files, but we collect
+    # "used" references from every tracked .rst file. Without this the
+    # script would false-positive when invoked on a subset (e.g. the
+    # pre-commit hook scoping to changed files only).
+    input_paths = {os.path.abspath(f) for f in args.files}
     defined = {}  # lower_name -> (name, path, lineno)
     used = set()
-    for path in args.files:
+    for path in all_rst_files():
         with open(path) as f:
             text = f.read()
-        for m in RE_URL_TARGET.finditer(text):
-            name = m.group(1).strip()
-            lineno = text.count("\n", 0, m.start()) + 1
-            defined[name.lower()] = (name, path, lineno)
+        if os.path.abspath(path) in input_paths:
+            for m in RE_URL_TARGET.finditer(text):
+                name = m.group(1).strip()
+                lineno = text.count("\n", 0, m.start()) + 1
+                defined[name.lower()] = (name, path, lineno)
         for regex in (RE_BACKTICK_REF, RE_BARE_REF):
             used.update(
                 m.group(1).strip().lower() for m in regex.finditer(text)

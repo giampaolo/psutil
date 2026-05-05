@@ -18,8 +18,8 @@ Except on Linux and Windows (which does not have them), support for
 The problem
 -----------
 
-Say you create a zombie process and instantiate a :class:`~psutil.Process` for
-it:
+Say you create a :term:`zombie process` and instantiate a
+:class:`~psutil.Process` for it:
 
 .. code-block:: python
 

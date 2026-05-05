@@ -157,7 +157,7 @@ was assigned the same PID.
   :meth:`Process.resume`, :meth:`Process.terminate`, :meth:`Process.kill`)
   **do** check for PID reuse (via PID + creation time) before acting, raising
   :exc:`NoSuchProcess` if the PID was recycled. This prevents accidentally
-  killing the wrong process (`BPO-6973`_).
+  killing the wrong process (:bpo:`6973`).
 
 - *Set methods* :meth:`Process.nice` (set), :meth:`Process.ionice` (set),
   :meth:`Process.cpu_affinity` (set), and :meth:`Process.rlimit` (set) also
@@ -175,8 +175,8 @@ What is a zombie process?
 
 A :term:`zombie process` is a process that has finished execution but whose
 entry remains in the process table until the parent calls ``wait()``. When
-psutil encounters a zombie process it raises :exc:`ZombieProcess`, a subclass
-of :exc:`NoSuchProcess`.
+psutil encounters a :term:`zombie process` it raises :exc:`ZombieProcess`, a
+subclass of :exc:`NoSuchProcess`.
 
 **What you can and cannot do with a zombie:**
 
@@ -227,10 +227,10 @@ Why does open_files() not return all files on Windows?
 
 :meth:`Process.open_files` on Windows is not guaranteed to enumerate all
 regular file handles. The underlying Windows API may hang when retrieving
-certain handle names, so psutil spawns a thread to query each handle and kills
-it if it doesn't respond within 100 ms. This means some entries can be missed.
-This is a known OS-level limitation shared by tools like Process Hacker (see
-`issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
+certain :term:`handle` names, so psutil spawns a thread to query each handle
+and kills it if it doesn't respond within 100 ms. This means some entries can
+be missed. This is a known OS-level limitation shared by tools like Process
+Hacker (see `issue 597 <https://github.com/giampaolo/psutil/pull/597>`_).
 
 .. _faq_pid_exists_vs_isrunning:
 
@@ -393,4 +393,3 @@ reclaimable and accounted separately:
 The :field:`available` field already includes this reclaimable memory and is
 the best indicator of memory pressure. See :ref:`faq_virtual_memory_available`.
 
-.. _`BPO-6973`: https://bugs.python.org/issue6973

@@ -40,6 +40,14 @@ THIS_YEAR = str(datetime.datetime.now().year)
 VERSION = get_version()
 
 # =====================================================================
+# Core
+# =====================================================================
+
+needs_sphinx = "9.1"
+language = "en"
+nitpicky = True  # always warn on unresolved cross-references
+
+# =====================================================================
 # Extensions
 # =====================================================================
 
@@ -64,6 +72,7 @@ _local_exts = [  # defined in the _ext/ folder
     "glossary_toc",
     "opengraph_override",
     "post_banner",
+    "proc_role",
 ]
 
 extensions = _third_party_exts + _local_exts
@@ -87,15 +96,23 @@ intersphinx_mapping = {
 extlinks = {
     "gh": ("https://github.com/giampaolo/psutil/issues/%s", "#%s"),
     "pr": ("https://github.com/giampaolo/psutil/pull/%s", "PR-%s"),
+    "user": ("https://github.com/%s", "@%s"),
+    "commit": ("https://github.com/giampaolo/psutil/commit/%s", "%s"),
+    "pypi": ("https://pypi.org/project/psutil/%s/", "%s"),
+    "bpo": ("https://bugs.python.org/issue%s", "BPO-%s"),
+    "cpy": ("https://github.com/python/cpython/issues/%s", "cpython/#%s"),
+    "cpy-pr": ("https://github.com/python/cpython/pull/%s", "cpython/PR-%s"),
+    "src": ("https://github.com/giampaolo/psutil/blob/master/%s", "%s"),
 }
+manpages_url = "https://manpages.debian.org/{path}"
 
 # =====================================================================
 # Paths
 # =====================================================================
 
 html_static_path = ["_static"]
-exclude_patterns = ["_build", "_globals.rst"]
-rst_prolog = (_HERE / "_globals.rst").read_text()
+exclude_patterns = ["_build"]
+rst_prolog = ".. currentmodule:: psutil\n"  # Prepended to every .rst file
 
 # =====================================================================
 # HTML
@@ -121,6 +138,8 @@ notfound_urls_prefix = "/latest/"
 html_title = PROJECT_NAME
 html_favicon = "_static/images/favicon.svg"
 html_last_updated_fmt = "%Y-%m-%d"  # ISO date shown in the footer
+html_show_sphinx = False  # removes "Created using Sphinx" in the footer
+html_show_sourcelink = False  # removes "View page source" sidebar link
 
 # Sidebar shows method() instead of Class.method()
 toc_object_entries_show_parents = "hide"

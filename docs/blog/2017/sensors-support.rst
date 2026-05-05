@@ -81,7 +81,7 @@ What CPU a process is on
 Tells you which CPU a process is currently running on, somewhat related to
 :meth:`Process.cpu_affinity` (:pr:`954`). It's interesting for visualizing how
 the OS scheduler keeps evenly reassigning processes across CPUs (see the
-`scripts/cpu_distribution.py`_ script).
+:src:`scripts/cpu_distribution.py` script).
 
 CPU affinity
 ------------

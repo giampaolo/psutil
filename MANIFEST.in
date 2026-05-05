@@ -23,7 +23,7 @@ include docs/_ext/genindex_filter.py
 include docs/_ext/glossary_toc.py
 include docs/_ext/opengraph_override.py
 include docs/_ext/post_banner.py
-include docs/_globals.rst
+include docs/_ext/proc_role.py
 include docs/_sponsors.html
 include docs/_static/css/blog.css
 include docs/_static/css/code.css

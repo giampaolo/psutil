@@ -23,9 +23,9 @@ syscalls and are perfectly fine when you only need information about the
 psutil goes further in several directions. Its primary goal is to provide a
 **single portable interface** for concepts that are traditionally UNIX-only.
 Things like process CPU and memory usage, open file descriptors, network
-connections, signals, nice levels, and I/O counters exist as first-class OS
-primitives on Linux and macOS, but have no direct equivalent on Windows. psutil
-implements all of them on Windows too (using Win32 APIs,
+connections, signals, :term:`nice` levels, and I/O counters exist as
+first-class OS primitives on Linux and macOS, but have no direct equivalent on
+Windows. psutil implements all of them on Windows too (using Win32 APIs,
 ``NtQuerySystemInformation`` and WMI) so that code written against psutil runs
 unmodified on every supported platform. Beyond portability, it also exposes the
 same information for *any* process (not just the current one), and returns
@@ -65,9 +65,9 @@ information like psutil. Overlaps with psutil's OS constants (:data:`LINUX`,
 ^^^^^^^^^^^^^^^^
 
 On Linux, ``/proc`` exposes process and system information as virtual files.
-Reading ``/proc/pid/status`` or ``/proc/meminfo`` directly is fast and has no
-dependencies, which is why some minimal containers or scripts do this. The
-downsides are that it is Linux-only, the format may vary across kernel
+Reading :proc:`/proc/pid/status` or :proc:`/proc/meminfo` directly is fast and
+has no dependencies, which is why some minimal containers or scripts do this.
+The downsides are that it is Linux-only, the format may vary across kernel
 versions, and you have to parse raw text yourself. psutil parses ``/proc``
 internally, exposes the same information through a consistent cross-platform
 API and handles edge cases (invalid format, compatibility with old kernels,

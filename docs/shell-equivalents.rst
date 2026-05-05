@@ -253,7 +253,7 @@ Identity
      - ``procstat -b PID``
      -
    * - :meth:`p.exe() <Process.exe>`
-     - ``readlink /proc/PID/exe``
+     - ``readlink /proc/pid/exe``
      - ``lsof -p PID``
      - ``procstat -b PID``
      -
@@ -278,7 +278,7 @@ Identity
      - same
      -
    * - :meth:`p.environ() <Process.environ>`
-     - ``xargs -0 -a /proc/PID/environ``
+     - ``xargs -0 -a /proc/pid/environ``
      -
      - ``procstat -e PID``
      -
@@ -450,7 +450,7 @@ Memory
      - same
      -
    * - :meth:`p.memory_info_ex() <Process.memory_info_ex>`
-     - ``cat /proc/PID/status``
+     - ``cat /proc/pid/status``
      -
      -
      -
@@ -521,12 +521,12 @@ Files and connections
      - ``procstat -f PID``, ``fstat``
      - ``handle.exe -p PID``
    * - :meth:`p.io_counters() <Process.io_counters>`
-     - ``cat /proc/PID/io``
+     - ``cat /proc/pid/io``
      -
      -
      -
    * - :meth:`p.num_fds() <Process.num_fds>`
-     - ``ls /proc/PID/fd | wc -l``
+     - ``ls /proc/pid/fd | wc -l``
      -
      -
      -

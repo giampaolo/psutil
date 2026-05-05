@@ -97,7 +97,7 @@ The table below lists methods that benefit from :meth:`Process.oneshot`,
 grouped by platform. Methods separated by an empty row share the same
 underlying system call. The *speedup* row estimates the gain when all listed
 methods are called together (best case), as measured by
-`scripts/internal/bench_oneshot.py`_.
+:src:`scripts/internal/bench_oneshot.py`.
 
 .. list-table::
    :header-rows: 1
@@ -192,9 +192,9 @@ methods are called together (best case), as measured by
 Measuring oneshot() speedup
 ---------------------------
 
-`scripts/internal/bench_oneshot.py`_ measures :meth:`Process.oneshot` speedup.
-It also shows which APIs share the same internal kernel routines. E.g. on
-Linux:
+:src:`scripts/internal/bench_oneshot.py` measures :meth:`Process.oneshot`
+speedup. It also shows which APIs share the same internal kernel routines. E.g.
+on Linux:
 
 .. code-block:: none
 
@@ -228,7 +228,7 @@ Linux:
 Measuring APIs speed
 --------------------
 
-`scripts/internal/print_api_speed.py`_ shows the relative cost of each API
+:src:`scripts/internal/print_api_speed.py` shows the relative cost of each API
 call. This helps you understand which operations are more expensive. E.g. on
 Linux:
 
@@ -299,5 +299,3 @@ Linux:
   memory_footprint                 300      0.02241
   memory_maps                      300      0.30282
 
-.. _`scripts/internal/bench_oneshot.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py
-.. _`scripts/internal/print_api_speed.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py

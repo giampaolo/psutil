@@ -16,7 +16,7 @@ The page you're looking for doesn't exist. Or it does, as a
 What now?
 ---------
 
-- Hit ``Ctrl + K`` (or ``⌘ K``) to open the search box.
+- Hit ``Ctrl + K`` (or ``Cmd + K``) to open the search box.
 - Jump to the :doc:`install guide <install>`, :doc:`API reference <api>`,
   :doc:`FAQ <faq>` or :doc:`recipes <recipes>`.
 - Read the :doc:`blog <blog>` for posts and release notes.

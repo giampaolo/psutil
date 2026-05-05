@@ -18,7 +18,7 @@ Build, setup and test
      make install
      make test
 
-- ``make`` (via the `Makefile`_) is used for building, testing and general
+- ``make`` (via the :src:`Makefile`) is used for building, testing and general
   development tasks, including on Windows (see below):
 
   .. code-block:: bash
@@ -119,13 +119,14 @@ Code organization
 Adding a new API
 ----------------
 
-- Define the API in `psutil/__init__.py`_.
-- Implement it in ``psutil/_ps{platform}.py`` (e.g. `psutil/_pslinux.py`_).
+- Define the API in :src:`psutil/__init__.py`.
+- Implement it in ``psutil/_ps{platform}.py`` (e.g. :src:`psutil/_pslinux.py`).
 - If needed, add C code in ``psutil/arch/{platform}/file.c``.
-- Add a generic test in `tests/test_system.py`_ or `tests/test_process.py`_.
+- Add a generic test in :src:`tests/test_system.py` or
+  :src:`tests/test_process.py`.
 - Add a platform-specific test in ``tests/test_{platform}.py``.
-- Update ``docs/api.rst``.
-- Update `changelog.rst`_ and `credits.rst`_.
+- Update :src:`docs/api.rst`.
+- Update :src:`docs/changelog.rst` and :src:`docs/credits.rst`.
 - Open a pull request.
 
 Make a pull request
@@ -136,7 +137,7 @@ Make a pull request
 - Create a branch: ``git checkout -b new-feature``
 - Commit changes: ``git commit -am 'add some feature'``
 - Push: ``git push origin new-feature``
-- Open a PR and sign off your work (see `CONTRIBUTING.md`_).
+- Open a PR and sign off your work (see :src:`CONTRIBUTING.md`).
 
 Continuous integration
 ----------------------
@@ -148,7 +149,7 @@ See
 Documentation
 -------------
 
-- Source is in the `docs/`_ directory.
+- Source is in the :src:`docs/ <docs/>` directory.
 - To build HTML:
 
   .. code-block:: bash
@@ -173,20 +174,11 @@ Releases
 
 - Uploaded to `PyPI`_ via ``make release``.
 - Git tags use the ``vX.Y.Z`` format (e.g. ``v7.2.2``).
-- The version string is defined in ``psutil/__init__.py`` (``__version__``).
+- The version string is defined in :src:`psutil/__init__.py` (``__version__``).
 
 .. _`/latest`: https://psutil.readthedocs.io/latest
 .. _`/stable`: https://psutil.readthedocs.io/stable
-.. _`changelog.rst`: https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst
-.. _`CONTRIBUTING.md`: https://github.com/giampaolo/psutil/blob/master/CONTRIBUTING.md
-.. _`credits.rst`: https://github.com/giampaolo/psutil/blob/master/docs/credits.rst
-.. _`docs/`: https://github.com/giampaolo/psutil/tree/master/docs
 .. _`Git for Windows`: https://git-scm.com/install/windows
-.. _`Makefile`: https://github.com/giampaolo/psutil/blob/master/Makefile
 .. _`PEP-7`: https://www.python.org/dev/peps/pep-0007/
 .. _`PEP-8`: https://www.python.org/dev/peps/pep-0008/
-.. _`psutil/__init__.py`: https://github.com/giampaolo/psutil/blob/master/psutil/__init__.py
-.. _`psutil/_pslinux.py`: https://github.com/giampaolo/psutil/blob/master/psutil/_pslinux.py
 .. _`PyPI`: https://pypi.org/project/psutil/
-.. _`tests/test_process.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_process.py
-.. _`tests/test_system.py`: https://github.com/giampaolo/psutil/blob/master/tests/test_system.py

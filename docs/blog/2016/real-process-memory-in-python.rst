@@ -30,8 +30,8 @@ USS memory
 
 The :term:`USS` (Unique Set Size) is the memory unique to a process, that would
 be freed if the process were terminated right now. On Linux it can be
-determined by parsing the "private" blocks in ``/proc/PID/smaps``. The Firefox
-team pushed this further and got it working on
+determined by parsing the "private" blocks in :proc:`/proc/pid/smaps`. The
+Firefox team pushed this further and got it working on
 `macOS and Windows <https://searchfox.org/mozilla-central/source/xpcom/base/nsMemoryReporterManager.cpp>`__
 too.
 
@@ -44,7 +44,7 @@ PSS and swap
 ------------
 
 On Linux there are two additional metrics that can also be determined via
-``/proc/PID/smaps``: :term:`PSS` and :term:`swap <swap memory>`.
+:proc:`/proc/pid/smaps`: :term:`PSS` and :term:`swap <swap memory>`.
 
 :field:`pss`, aka "Proportional Set Size", represents the amount of memory
 shared with other processes, accounted so that the amount is divided evenly
@@ -54,7 +54,7 @@ between the processes that share it. I.e. if a process has 10 MBs all to itself
 
 :field:`swap` is simply the amount of memory that has been
 :term:`swapped out <swap-out>` to disk. With :meth:`Process.memory_full_info`
-it is possible to implement a tool like `scripts/procsmem.py`_, similar to
+it is possible to implement a tool like :src:`scripts/procsmem.py`, similar to
 `smem <https://www.selenic.com/smem/>`__ on Linux, which provides a list of
 processes sorted by :field:`uss`. It's interesting to see how :field:`rss`
 differs from :field:`uss`:
@@ -101,7 +101,8 @@ Memory type percent
 
 After reorganizing the process memory APIs (:pr:`744`), I added a new
 ``memtype`` parameter to :meth:`Process.memory_percent`. You can now compare a
-specific memory type (not only RSS) against the total physical memory. E.g.
+specific memory type (not only :term:`RSS`) against the total physical memory.
+E.g.
 
 .. code-block:: pycon
 

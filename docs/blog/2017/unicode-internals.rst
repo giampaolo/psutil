@@ -72,9 +72,8 @@ but I didn't want to do that, nor have APIs which return two different types
 depending on the circumstance.
 
 Since unicode support is already broken in Python 2 and its stdlib (see
-`bpo-18695 <https://bugs.python.org/issue18695>`__), I was happy to always
-return ``str``, use ``'replace'`` as the error handler, and simply consider
-unicode support in psutil + Python 2 broken.
+:bpo:`18695`), I was happy to always return ``str``, use ``'replace'`` as the
+error handler, and simply consider unicode support in psutil + Python 2 broken.
 
 Final behavior
 --------------

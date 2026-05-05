@@ -15,14 +15,16 @@ such as :term:`RSS` and :term:`VMS` fail to reveal them because Python's memory
 allocator
 (`pymalloc <https://docs.python.org/3/c-api/memory.html#the-pymalloc-allocator>`__)
 sits above the platform's native :term:`heap`. If something in an extension
-calls ``malloc()`` without a corresponding ``free()``, that memory often won't
-show up in :term:`RSS` / :term:`VMS`. You have a leak, and you don't know.
+calls :manpage:`malloc(3)` without a corresponding :manpage:`free(3)`, that
+memory often won't show up in :term:`RSS` / :term:`VMS`. You have a leak, and
+you don't know.
 
-psutil 7.2.0 introduces two new APIs for **C heap introspection**, designed
-specifically to catch these kinds of native leaks. They give you a window
-directly into the underlying platform allocator (e.g. glibc's malloc), letting
-you track how much memory the C layer actually allocates. If your :term:`RSS`
-is flat but your C :term:`heap` usage climbs, you now have a way to see it.
+psutil 7.2.0 introduces two new APIs for **C :term:`heap` introspection**,
+designed specifically to catch these kinds of native leaks. They give you a
+window directly into the underlying platform allocator (e.g. glibc's malloc),
+letting you track how much memory the C layer actually allocates. If your
+:term:`RSS` is flat but your C :term:`heap` usage climbs, you now have a way to
+see it.
 
 Why native heap introspection matters
 -------------------------------------
@@ -50,8 +52,8 @@ heap_info(): direct allocator statistics
 
 -  :field:`heap_used`: total number of bytes currently allocated via
    ``malloc()`` (small allocations).
--  :field:`mmap_used`: total number of bytes currently allocated via ``mmap()``
-   or via large ``malloc()`` allocations.
+-  :field:`mmap_used`: total number of bytes currently allocated via
+   :manpage:`mmap(2)` or via large ``malloc()`` allocations.
 -  :field:`heap_count`: (Windows only) number of private heaps created via
    ``HeapCreate()``.
 
@@ -76,7 +78,7 @@ Reference for what contributes to each field:
      - :field:`heap_used`
    * - UNIX / Windows
      - large ``malloc()`` >128 KB without ``free()``, or ``mmap()``
-       without ``munmap()`` (UNIX)
+       without :manpage:`munmap(2)` (UNIX)
      - :field:`mmap_used`
    * - Windows
      - ``HeapAlloc()`` without ``HeapFree()``
@@ -185,9 +187,8 @@ Under the hood
 For those interested in seeing how I did this in terms of code:
 
 -  `Linux <https://github.com/giampaolo/psutil/blob/d40164f1/psutil/arch/linux/heap.c>`__:
-   uses glibc's
-   `mallinfo2() <https://man7.org/linux/man-pages/man3/mallinfo.3.html>`__ to
-   report ``uordblks`` (heap allocations) and ``hblkhd`` (mmap-backed blocks).
+   uses glibc's :manpage:`mallinfo2(3)` to report ``uordblks`` (heap
+   allocations) and ``hblkhd`` (mmap-backed blocks).
 -  `Windows <https://github.com/giampaolo/psutil/blob/d40164f1/psutil/arch/windows/heap.c>`__:
    enumerates heaps and aggregates ``HeapAlloc`` / ``VirtualAlloc`` usage.
 -  `macOS <https://github.com/giampaolo/psutil/blob/d40164f1/psutil/arch/osx/heap.c>`__:

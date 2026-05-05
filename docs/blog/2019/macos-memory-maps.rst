@@ -25,7 +25,7 @@ Both triggered from code as simple as ``psutil.Process().as_dict()``, since
 The root cause was inside Apple's undocumented ``proc_regionfilename()``
 syscall. On some memory regions it returns ``EINVAL``. On others it takes the
 process down. Which regions? Nobody figured out. Arnon Yaari
-(`@wiggin15 <https://github.com/wiggin15>`__) did most of the
+(:user:`wiggin15`) did most of the
 investigation: he wrote a `standalone C reproducer
 <https://gist.github.com/wiggin15/0a4c51b5bc6c52e6e31e2234f88558ab>`__
 and walked me through what he'd tried.

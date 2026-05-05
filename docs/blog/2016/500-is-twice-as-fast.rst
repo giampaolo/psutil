@@ -26,10 +26,10 @@ which OS you're on.
 
 Internally, multiple pieces of process info (e.g. :meth:`Process.name`,
 :meth:`Process.ppid`, :meth:`Process.uids`, :meth:`Process.create_time`) are
-fetched by the same syscall. On Linux we read ``/proc/PID/stat`` to get the
+fetched by the same syscall. On Linux we read :proc:`/proc/pid/stat` to get the
 process name, terminal, CPU times, creation time, status and parent PID, but
 only one value is returned: the others are discarded. On Linux this code reads
-``/proc/PID/stat`` 6 times:
+:proc:`/proc/pid/stat` 6 times:
 
 .. code-block:: pycon
 
@@ -56,7 +56,7 @@ htop, where process info is continuously fetched in a loop. psutil 5.0.0
 introduces a new :meth:`Process.oneshot` context manager. Inside it, the
 internal routine runs once (in the example, on the first :meth:`Process.name`
 call) and the other values are cached. Subsequent calls sharing the same
-internal routine (read ``/proc/PID/stat``, call ``sysctl()`` or whatever)
+internal routine (read :proc:`/proc/pid/stat`, call ``sysctl()`` or whatever)
 return the cached value. The code above can now be rewritten like this, and on
 Linux it runs 2.4 times faster:
 
@@ -141,9 +141,9 @@ Linux: +2.56x speedup
 ---------------------
 
 The Linux implementation is mostly Python, reading files in ``/proc``. These
-files typically expose multiple pieces of info per process; ``/proc/PID/stat``
-and ``/proc/PID/status`` are the perfect example. We aggregate them into three
-groups. See the relevant code
+files typically expose multiple pieces of info per process;
+:proc:`/proc/pid/stat` and :proc:`/proc/pid/status` are the perfect example. We
+aggregate them into three groups. See the relevant code
 `here <https://github.com/giampaolo/psutil/blob/b5582380ac70ca8c180344d9b22aacdff73b1e0b/psutil/_pslinux.py#L1108-L1153>`__.
 
 Windows: from +1.9x to +6.5x speedup

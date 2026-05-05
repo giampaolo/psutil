@@ -54,10 +54,8 @@ Event-driven waiting
 --------------------
 
 All POSIX systems provide at least one mechanism to be notified when a file
-descriptor becomes ready. These are
-`select() <https://man7.org/linux/man-pages/man2/select.2.html>`__,
-`poll() <https://man7.org/linux/man-pages/man2/poll.2.html>`__,
-`epoll() <https://man7.org/linux/man-pages/man7/epoll.7.html>`__ (Linux) and
+descriptor becomes ready. These are :manpage:`select(2)`, :manpage:`poll(2)`,
+:manpage:`epoll(7)` (Linux) and
 `kqueue() <https://man.freebsd.org/cgi/man.cgi?query=kqueue>`__ (BSD / macOS)
 system calls. Until recently, I believed they could only be used with file
 descriptors referencing sockets, pipes, etc., but it turns out they can also be
@@ -68,9 +66,10 @@ Linux
 
 In 2019, Linux 5.3 introduced a new syscall, :func:`os.pidfd_open`, which was
 added in Python 3.9. It returns a :term:`file descriptor` referencing a process
-PID. The interesting thing is that ``pidfd_open()`` can be used in conjunction
-with ``select()``, ``poll()`` or ``epoll()`` to effectively wait until the
-process exits. E.g. by using ``poll()``:
+PID. The interesting thing is that :manpage:`pidfd_open(2)` can be used in
+conjunction with :manpage:`select(2)`, :manpage:`poll(2)` or
+:manpage:`epoll(7)` to effectively wait until the process exits. E.g. by using
+``poll()``:
 
 .. code-block:: python
 
@@ -92,7 +91,7 @@ process terminates or when the timeout expires if the PID is still alive.
 I chose ``poll()`` over ``select()`` because ``select()`` has a historical file
 descriptor limit (``FD_SETSIZE``), which typically caps it at 1024
 :term:`file descriptors <file descriptor>` per-process (reminded me of
-`BPO-1685000 <https://bugs.python.org/issue1685000>`__).
+:bpo:`1685000`).
 
 I chose ``poll()`` over ``epoll()`` because it does not require creating an
 additional :term:`file descriptor`. It also needs only a single syscall, which
@@ -143,12 +142,11 @@ example, with ``EMFILE`` if the process runs out of
 sysadmin (e.g. via SECCOMP). In all cases, psutil silently falls back to the
 traditional busy-loop polling approach rather than raising an exception.
 
-This fast-path-with-fallback approach is similar in spirit to
-`BPO-33671 <https://bugs.python.org/issue33671>`__, where I sped up
-:func:`shutil.copyfile` by using zero-copy system calls back in 2018. In there,
-more efficient :func:`os.sendfile` is attempted first, and if it fails (e.g. on
-network filesystems) we fall back to the traditional ``read()`` / ``write()``
-approach to copy regular files.
+This fast-path-with-fallback approach is similar in spirit to :bpo:`33671`,
+where I sped up :func:`shutil.copyfile` by using zero-copy system calls back in
+2018. In there, more efficient :func:`os.sendfile` is attempted first, and if
+it fails (e.g. on network filesystems) we fall back to the traditional
+:manpage:`read(2)` / :manpage:`write(2)` approach to copy regular files.
 
 Measurement
 -----------
@@ -219,15 +217,15 @@ CPython contribution
 
 After landing the psutil implementation (:pr:`2706`), I took the extra step and
 submitted a matching pull request for CPython :mod:`subprocess` module:
-`cpython/PR-144047 <https://github.com/python/cpython/pull/144047>`__.
+:cpy-pr:`144047`.
 
 I'm especially proud of this one: this is the **third time** in psutil's 17+
 year history that a feature developed in psutil made its way upstream into the
 Python standard library.
 
 -  The first was back in 2010, when :meth:`Process.nice` inspired
-   :func:`os.getpriority` and :func:`os.setpriority`, see
-   `BPO-10784 <https://bugs.python.org/issue10784>`__. Landed in Python 3.3.
+   :func:`os.getpriority` and :func:`os.setpriority`, see :bpo:`10784`. Landed
+   in Python 3.3.
 
 -  The second was back in 2011, when :func:`psutil.disk_usage` inspired
    :func:`shutil.disk_usage`, see `python-ideas ML
@@ -238,10 +236,9 @@ Python standard library.
 :meth:`subprocess.Popen.wait` (see
 `commit <https://github.com/python/cpython/commit/31aa7dd1419>`__). That's
 probably where I took inspiration when I first added the *timeout* parameter to
-psutil's :meth:`Process.wait` around the same time (see
-`commit <https://github.com/giampaolo/psutil/commit/886710daf>`__). Now, 15
-years later, I'm contributing back a similar improvement for that very same
-*timeout* parameter. **The circle is complete**.
+psutil's :meth:`Process.wait` around the same time (see :commit:`886710daf`).
+Now, 15 years later, I'm contributing back a similar improvement for that very
+same *timeout* parameter. **The circle is complete**.
 
 Links
 -----
@@ -252,9 +249,8 @@ Topics related to this:
    (:func:`psutil.wait_procs`).
 -  :gh:`2703`: proposal for asynchronous :meth:`Process.wait` integration with
    :mod:`asyncio`.
--  `cpython/#144211 <https://github.com/python/cpython/issues/144211>`__:
-   proposal to extend the :mod:`selectors` module to enable :mod:`asyncio`
-   optimization on BSD / macOS via ``kqueue()``.
+-  :cpy:`144211`: proposal to extend the :mod:`selectors` module to enable
+   :mod:`asyncio` optimization on BSD / macOS via ``kqueue()``.
 
 Discussion
 ----------

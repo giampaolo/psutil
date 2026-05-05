@@ -16,7 +16,10 @@
       <div class="footer-text">
         <span><a class="footer-egg" href="{{ pathto('404') }}" title="🥚">&copy;</a> {{ copyright }}</span>
         {%- if last_updated %}
-        <span>Updated: {{ last_updated }}</span>
+        <span>Updated: <a
+          href="https://github.com/giampaolo/psutil/commits/master/docs/{{ pagename }}.rst"
+          rel="noopener noreferrer" target="_blank"
+          title="View commit history on GitHub">{{ last_updated }}</a></span>
         {%- endif %}
         <span><a href="{{ pathto('about') }}">Tips</a></span>
         {%- if pagename not in ("search", "genindex", "py-modindex") %}

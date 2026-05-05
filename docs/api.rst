@@ -298,7 +298,7 @@ Memory
   - :field:`shared` *(Linux, BSD)*: :term:`shared memory` accessible by
     multiple processes simultaneously, such as in-memory ``tmpfs`` and POSIX
     shared memory objects (``shm_open``). On Linux this corresponds to
-    ``Shmem`` in ``/proc/meminfo`` and is already counted within
+    ``Shmem`` in :proc:`/proc/meminfo` and is already counted within
     :field:`active` / :field:`inactive`.
   - :field:`slab` *(Linux)*: memory used by the kernel's internal object caches
     (e.g. inode and dentry caches). The reclaimable portion (``SReclaimable``)
@@ -308,8 +308,8 @@ Memory
     disk.
 
   Below is a table showing implementation details. All info on Linux is
-  retrieved from `/proc/meminfo`_. On macOS via ``host_statistics64()``. On
-  Windows via `GetPerformanceInfo`_.
+  retrieved from :proc:`/proc/meminfo`. On macOS via ``host_statistics64()``.
+  On Windows via `GetPerformanceInfo`_.
 
   .. list-table::
      :header-rows: 1
@@ -407,7 +407,7 @@ Memory
     fields.
 
   .. seealso::
-    - `scripts/meminfo.py`_
+    - :src:`scripts/meminfo.py`
     - :ref:`faq_virtual_memory_available`
     - :ref:`faq_used_plus_free`
 
@@ -449,11 +449,11 @@ Memory
      sswap(total=2097147904, used=886620160, free=1210527744, percent=42.3, sin=1050411008, sout=1906720768)
 
   .. seealso::
-    - `scripts/meminfo.py`_
+    - :src:`scripts/meminfo.py`
     - :ref:`Swap activity recipe <recipe_swap_activity>`
 
   .. versionchanged:: 5.2.3
-     Linux: use /proc instead of ``sysinfo()`` syscall to support
+     Linux: use /proc instead of :manpage:`sysinfo(2)` syscall to support
      :data:`PROCFS_PATH` usage (e.g. useful for Docker containers ...).
 
   .. versionchanged:: 8.0.0
@@ -468,7 +468,7 @@ Disks
   command on UNIX. When *all* is ``False``, virtual/pseudo filesystems (tmpfs,
   sysfs, devtmpfs, cgroup, etc.) are excluded, keeping only physical devices
   (e.g., hard disks, CD-ROM drives, USB keys). The filtering logic varies by
-  platform: on Linux, it checks ``/proc/filesystems`` for ``nodev``-flagged
+  platform: on Linux, it checks :proc:`/proc/filesystems` for ``nodev``-flagged
   types (ZFS is always included); on macOS, it checks whether the device path
   exists; on SunOS and AIX, it excludes filesystems with zero total size. On
   BSD, *all* is ignored and all partitions are always returned.
@@ -489,7 +489,7 @@ Disks
      [sdiskpart(device='/dev/sda3', mountpoint='/', fstype='ext4', opts='rw,errors=remount-ro'),
       sdiskpart(device='/dev/sda7', mountpoint='/home', fstype='ext4', opts='rw')]
 
-  .. seealso:: `scripts/disk_usage.py`_.
+  .. seealso:: :src:`scripts/disk_usage.py`.
 
   .. versionchanged:: 5.7.4
      added :field:`maxfile` and :field:`maxpath` fields.
@@ -504,7 +504,7 @@ Disks
   :field:`free` space, plus the :field:`percentage` usage. On UNIX, *path* must
   point to a path within a **mounted** filesystem partition. This function was
   later incorporated in Python 3.3 as :func:`shutil.disk_usage` (see
-  `BPO-12442`_).
+  :bpo:`12442`).
 
   .. code-block:: pycon
 
@@ -519,7 +519,7 @@ Disks
     :field:`percent` may appear ~5% higher than expected. All values match the
     ``df`` command line utility.
 
-  .. seealso:: `scripts/disk_usage.py`_.
+  .. seealso:: :src:`scripts/disk_usage.py`.
 
   .. versionchanged:: 4.3.0
      :field:`percent` value takes root reserved space into account.
@@ -574,7 +574,7 @@ Disks
      this function might not detect any disks.
 
   .. seealso::
-     - `scripts/iotop.py`_
+     - :src:`scripts/iotop.py`
      - :ref:`Real-time disk I/O recipe <recipe_disk_io>`
      - :ref:`Real-time disk I/O percent recipe <recipe_disk_io_percent>`
 
@@ -631,7 +631,7 @@ Network
      {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
       'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
-  .. seealso:: `scripts/nettop.py`_ and `scripts/ifconfig.py`_.
+  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
 
   .. versionchanged:: 5.3.0
      numbers no longer wrap (restart from zero) across calls thanks to new
@@ -715,7 +715,7 @@ Network
   .. seealso::
 
     - :meth:`Process.net_connections` to get per-process connections
-    - `scripts/netstat.py`_
+    - :src:`scripts/netstat.py`
 
   .. versionadded:: 2.1.0
 
@@ -760,7 +760,7 @@ Network
                 snicaddr(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
      >>>
 
-  .. seealso:: `scripts/nettop.py`_ and `scripts/ifconfig.py`_.
+  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
 
   .. versionadded:: 3.0.0
 
@@ -794,7 +794,7 @@ Network
      {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500, flags='up,broadcast,running,multicast'),
       'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536, flags='up,loopback,running')}
 
-  .. seealso:: `scripts/nettop.py`_ and `scripts/ifconfig.py`_.
+  .. seealso:: :src:`scripts/nettop.py` and :src:`scripts/ifconfig.py`.
 
   .. versionadded:: 3.0.0
 
@@ -835,7 +835,7 @@ Sensors
                    shwtemp(label='Core 2', current=45.0, high=100.0, critical=100.0),
                    shwtemp(label='Core 3', current=47.0, high=100.0, critical=100.0)]}
 
-  .. seealso:: `scripts/temperatures.py`_ and `scripts/sensors.py`_.
+  .. seealso:: :src:`scripts/temperatures.py` and :src:`scripts/sensors.py`.
 
   .. availability:: Linux, FreeBSD
 
@@ -855,7 +855,7 @@ Sensors
      >>> psutil.sensors_fans()
      {'asus': [sfan(label='cpu_fan', current=3200)]}
 
-  .. seealso:: `scripts/fans.py`_ and `scripts/sensors.py`_.
+  .. seealso:: :src:`scripts/fans.py` and :src:`scripts/sensors.py`.
 
   .. availability:: Linux
 
@@ -889,7 +889,7 @@ Sensors
      >>> print("charge = %s%%, time left = %s" % (battery.percent, secs2hours(battery.secsleft)))
      charge = 93%, time left = 4:37:08
 
-  .. seealso:: `scripts/battery.py`_ and `scripts/sensors.py`_.
+  .. seealso:: :src:`scripts/battery.py` and :src:`scripts/sensors.py`.
 
   .. availability:: Linux, Windows, macOS, FreeBSD
 
@@ -1425,7 +1425,7 @@ Process class
        <ProcessPriority.HIGH_PRIORITY_CLASS: 32768>
 
     This method was later incorporated in Python 3.3 as :func:`os.getpriority`
-    and :func:`os.setpriority` (see `BPO-10784`_).
+    and :func:`os.setpriority` (see :bpo:`10784`).
 
     .. versionchanged:: 8.0.0
        on Windows, the return value is now a :class:`ProcessPriority` enum
@@ -1479,7 +1479,7 @@ Process class
        >>> p.rlimit(psutil.RLIMIT_FSIZE)                # get current limits of ...
        (1024, 1024)
 
-    .. seealso:: `scripts/procinfo.py`_.
+    .. seealso:: :src:`scripts/procinfo.py`.
 
     .. availability:: Linux, FreeBSD
 
@@ -1491,10 +1491,10 @@ Process class
     Return process I/O statistics. All fields are
     :term:`cumulative counters <cumulative counter>` since process creation.
 
-    - :field:`read_count`: number of read syscalls (e.g., ``read()``,
-      ``pread()``).
-    - :field:`write_count`: number of write syscalls (e.g., ``write()``,
-      ``pwrite()``).
+    - :field:`read_count`: number of read syscalls (e.g., :manpage:`read(2)`,
+      :manpage:`pread(2)`).
+    - :field:`write_count`: number of write syscalls (e.g.,
+      :manpage:`write(2)`, :manpage:`pwrite(2)`).
     - :field:`read_bytes`: bytes read (``-1`` on BSD).
     - :field:`write_bytes`: bytes written (``-1`` on BSD).
 
@@ -1675,7 +1675,7 @@ Process class
     ``psutil.cpu_percent(percpu=True)`` to observe the system workload
     distributed across multiple CPUs.
 
-    .. seealso:: `scripts/cpu_distribution.py`_.
+    .. seealso:: :src:`scripts/cpu_distribution.py`.
 
     .. availability:: Linux, FreeBSD, SunOS
 
@@ -1725,7 +1725,7 @@ Process class
 
     - :field:`data` *(Linux, BSD)*: aka DRS (Data Resident Set). On Linux this
       covers the data **and** stack segments combined (from
-      ``/proc/<pid>/statm``). On BSD it covers the data segment only (see
+      :proc:`/proc/pid/statm`). On BSD it covers the data segment only (see
       :field:`stack`). Matches ``top``'s DATA column.
 
     - :field:`stack` *(BSD)*: size of the process stack segment. Reported
@@ -1812,8 +1812,8 @@ Process class
       this process; cannot be compressed or paged out.
     - :field:`swap` *(Linux)*: process memory currently in
       :term:`swap <swap memory>`. Equivalent to ``memory_footprint().swap`` but
-      cheaper, as it reads from ``/proc/<pid>/status`` instead of
-      ``/proc/<pid>/smaps``.
+      cheaper, as it reads from :proc:`/proc/pid/status` instead of
+      :proc:`/proc/pid/smaps`.
     - :field:`compressed` *(macOS)*: memory held in the in-RAM memory
       compressor; not counted in :field:`rss`. A large value signals memory
       pressure but has not yet triggered :term:`swapping <swap memory>`.
@@ -1869,7 +1869,7 @@ Process class
        pfootprint(uss=6545408, pss=6872064, swap=0)
 
     .. seealso::
-      - `scripts/procsmem.py`_.
+      - :src:`scripts/procsmem.py`.
       - :ref:`faq_memory_footprint`
       - :doc:`/blog/2016/real-process-memory-in-python`
 
@@ -1938,7 +1938,7 @@ Process class
     | swap          |         |              |           |
     +---------------+---------+--------------+-----------+
 
-    Linux fields (from ``/proc/<pid>/smaps``):
+    Linux fields (from :proc:`/proc/pid/smaps`):
 
     - :field:`rss`: :term:`RSS` for this mapping.
     - :field:`size`: total virtual size; may far exceed :field:`rss` if parts
@@ -1974,7 +1974,7 @@ Process class
         pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
         ...]
 
-    .. seealso:: `scripts/pmap.py`_.
+    .. seealso:: :src:`scripts/pmap.py`.
 
     .. availability:: Linux, Windows, FreeBSD, SunOS
 
@@ -2202,7 +2202,7 @@ Process class
       busy loop (non-blocking call and short sleeps).
 
       Functionality also ported to the :mod:`subprocess` module in Python 3.15,
-      see `GH-144047`_.
+      see :cpy-pr:`144047`.
 
     .. versionchanged:: 5.7.2
        if *timeout* is not ``None``, use efficient event-driven implementation
@@ -2233,7 +2233,7 @@ Popen class
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>`,
   :meth:`kill() <psutil.Process.kill()>`. This is done to avoid killing another
-  process if its PID has been reused, fixing `BPO-6973`_.
+  process if its PID has been reused, fixing :bpo:`6973`.
 
   .. code-block:: pycon
 
@@ -2264,8 +2264,8 @@ The following functions provide direct access to the platform's native
 BSD). They are low-level interfaces intended for detecting memory leaks in C
 extensions, which are usually not revealed via standard :term:`RSS` /
 :term:`VMS` metrics. These functions do not reflect Python object memory; they
-operate solely on allocations made in C via ``malloc()``, ``free()``, and
-related calls.
+operate solely on allocations made in C via :manpage:`malloc(3)`,
+:manpage:`free(3)`, and related calls.
 
 The general idea behind these functions is straightforward: capture the state
 of the :term:`heap` before and after repeatedly invoking a function implemented
@@ -2286,12 +2286,14 @@ that Python's memory tracking misses.
 .. function:: heap_info()
 
   Return low-level heap statistics from the system's C allocator. On Linux,
-  this exposes ``uordblks`` and ``hblkhd`` fields from glibc `mallinfo2`_.
+  this exposes ``uordblks`` and ``hblkhd`` fields from glibc
+  :manpage:`mallinfo2(3)`.
 
   - ``heap_used``: total number of bytes currently allocated via ``malloc()``
     (small allocations).
-  - ``mmap_used``: total number of bytes currently allocated via ``mmap()`` or
-    via large ``malloc()`` allocations. Always set to 0 on macOS.
+  - ``mmap_used``: total number of bytes currently allocated via
+    :manpage:`mmap(2)` or via large ``malloc()`` allocations. Always set to 0
+    on macOS.
   - ``heap_count``: (Windows only) number of private heaps created via
     ``HeapCreate()``.
 
@@ -2664,7 +2666,7 @@ Process I/O priority constants
 Represent the I/O priority class of a process (Linux and Windows only). They
 can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 
-Linux (see `ioprio_get()`_ manual):
+Linux (see :manpage:`ioprio_get(2)`):
 
   .. data:: IOPRIO_CLASS_RT
 
@@ -2868,11 +2870,8 @@ Environment variables
 
   .. versionadded:: 5.4.2
 
-.. _`ioprio_get()`: https://linux.die.net/man/2/ioprio_get
 .. _`iostats doc`: https://www.kernel.org/doc/Documentation/iostats.txt
-.. _`mallinfo2`: https://man7.org/linux/man-pages/man3/mallinfo.3.html
 .. _`psleak`: https://github.com/giampaolo/psleak
-.. _`/proc/meminfo`: https://man7.org/linux/man-pages/man5/proc_meminfo.5.html
 
 .. === Windows API
 

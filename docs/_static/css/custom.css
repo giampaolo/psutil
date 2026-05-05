@@ -887,14 +887,31 @@ h4 {
     margin-bottom: 0px !important;
 }
 
-/* "wide-table" class: force horizontal scroll on narrow
-   screens instead of squishing columns */
+/* "wide-table" class: opt out of the global fixed-column layout
+   (set further below on .rst-content table.docutils) so columns
+   size to their content. Without this, monospace cells like
+   ``cpu_count(logical=True)`` overflow narrow columns and visually
+   collide with the next column. */
+table.wide-table {
+    table-layout: auto !important;
+}
+
+/* Inline code/links inside wide tables must wrap; default RTD
+   styling may apply white-space: nowrap which forces overflow. */
+table.wide-table td code,
+table.wide-table th code,
+table.wide-table td a,
+table.wide-table th a {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+
+/* On narrow screens, force horizontal scroll instead of squishing
+   the now-content-sized columns into illegibility. */
 @media (max-width: 768px) {
     table.wide-table {
         min-width: 700px;
-        table-layout: auto !important;
     }
-
     table.wide-table td,
     table.wide-table th {
         white-space: nowrap;

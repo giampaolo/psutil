@@ -87,8 +87,9 @@ psutil 4.2.0 comes with 2 other enhancements for Linux:
 
 * :func:`psutil.virtual_memory` returns a new :field:`shared` memory field.
   This is the same value reported by ``free`` cmdline utility.
-* I changed how ``/proc`` was parsed. Instead of reading ``/proc/{pid}/status``
-  line by line I used a regular expression. Here's the speedups:
+* I changed how ``/proc`` was parsed. Instead of reading
+  :proc:`/proc/pid/status` line by line I used a regular expression. Here's the
+  speedups:
 
   * :meth:`Process.ppid` ~20% faster.
 

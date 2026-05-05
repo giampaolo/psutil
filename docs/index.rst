@@ -97,7 +97,7 @@ Assistant, Ansible, and Celery.
          <i class="fa fa-cogs home-desc-card-icon"></i>
          <div class="home-desc-card-title">Process management</div>
        </div>
-       <p>Query and control running processes: CPU, memory, files, connections, threads, and more.</p>
+       <p>Enumerate, query and control running processes. Read CPU, memory, files, connections, threads, and more.</p>
      </div>
      <div class="home-desc-card">
        <div class="home-desc-card-header">
@@ -111,7 +111,7 @@ Assistant, Ansible, and Celery.
          <i class="fa fa-plug home-desc-card-icon"></i>
          <div class="home-desc-card-title">Platform portability</div>
        </div>
-       <p>One API for all platforms. Psutil primary goal is to abstract OS differences, so your monitoring code runs unchanged everywhere.</p>
+       <p>Every operating system exposes process and system info through different syscalls and conventions. psutil's job is to wrap those differences behind a single Python API that works the same on every platform.</p>
      </div>
    </div>
 

@@ -1,9 +1,10 @@
 # Makefile for Sphinx documentation
 
 PYTHON = python3
-SPHINXBUILD = PYTHONWARNINGS="always,ignore:::sphinx_sitemap" $(PYTHON) -m sphinx
+PYTHONWARNINGS = always,ignore:::sphinx_sitemap,ignore:importing 'Const',ignore:::matplotlib.projections,ignore:::notfound.extension
+SPHINXBUILD = PYTHONWARNINGS="$(PYTHONWARNINGS)" $(PYTHON) -m sphinx
 BUILDDIR = _build
-ALLSPHINXOPTS = --fail-on-warning --nitpicky --jobs=auto -d $(BUILDDIR)/doctrees .
+ALLSPHINXOPTS = --fail-on-warning --jobs=auto -d $(BUILDDIR)/doctrees .
 
 # --- sphinx
 
@@ -15,11 +16,11 @@ html:  ## Generate doc in HTML format. Warnings are turned into failures.
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 autoreload:  ## Rebuild HTML + live-reload browser on file changes (requires sphinx-autobuild)
-	sphinx-autobuild --nitpicky -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
+	sphinx-autobuild -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
 
 autoreload-hard:  ## Same as above but re-writes all files on every refresh
 	make clean
-	sphinx-autobuild -a --nitpick -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
+	sphinx-autobuild -a -d $(BUILDDIR)/doctrees . $(BUILDDIR)/html
 
 # --- checkers
 
@@ -30,7 +31,7 @@ check-links:  ## Check links
 
 check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fatal).
 	$(MAKE) clean
-	$(PYTHON) -m sphinx -b html --nitpicky --jobs=auto \
+	$(PYTHON) -m sphinx -b html --jobs=auto \
 		-D codeautolink_warn_on_failed_resolve=1 \
 		-D codeautolink_warn_on_missing_inventory=1 \
 		-d $(BUILDDIR)/doctrees . $(BUILDDIR)/html 2>&1

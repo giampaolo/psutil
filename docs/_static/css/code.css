@@ -135,6 +135,7 @@ div[class^="highlight-"] {
     border: 1px solid var(--border);
     border-radius: var(--border-radius);
 }
+
 [data-theme="dark"]  .highlight {
     background: #262626 !important;
     border: 1px solid #3a3a3a;
@@ -145,6 +146,17 @@ div[class^="highlight-"] {
 .highlight .p      { font-weight:normal; }  /* (, [, ], )*/
 .highlight .mi     { font-weight:normal; }  /* numbers */
 .highlight .mf     { font-weight:normal; }  /* floats */
+
+/* Avoiod != → ≠, <= → ≤, etc.. */
+.highlight,
+.highlight pre,
+code,
+pre,
+kbd,
+samp,
+tt {
+    font-variant-ligatures: none;
+}
 
 /* ----------------- REPL light theme ---------------- */
 

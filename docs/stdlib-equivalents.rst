@@ -53,7 +53,7 @@ Disk
    * - :func:`disk_usage`
      - :func:`shutil.disk_usage`
      - Same as :func:`shutil.disk_usage`; psutil also adds
-       :field:`percent`. Added to CPython 3.3 (BPO-12442_).
+       :field:`percent`. Added to CPython 3.3 (:bpo:`12442`).
    * - :func:`disk_partitions`
      - :func:`os.listdrives`,
        :func:`os.listmounts`,
@@ -179,7 +179,7 @@ CPU / scheduling
      - :func:`os.getpriority`,
        :func:`os.setpriority`
      - POSIX only; psutil also supports Windows.
-       Added to CPython 3.3 (BPO-10784_).
+       Added to CPython 3.3 (:bpo:`10784`).
    * - :meth:`p.nice() <Process.nice>`
      - :func:`os.nice`
      - POSIX only; psutil also supports Windows.
@@ -286,4 +286,4 @@ Signals
    * - :meth:`p.wait() <Process.wait>`
      - :meth:`subprocess.Popen.wait`
      - Equivalent; psutil uses efficient OS-level waiting on
-       Linux/BSD. Added to CPython 3.15 (GH-144047_).
+       Linux/BSD. Added to CPython 3.15 (:cpy-pr:`144047`).

@@ -230,7 +230,7 @@ Code contributors by year
 * `Nathan Houghton`_ - :gh:`1619`
 * `Samer Masterson`_ - :gh:`1480`
 * `Xiaoling Bao`_ - :gh:`1223`
-* Mozilla Foundation - Sample code for process USS memory
+* Mozilla Foundation - Sample code for process :term:`USS` memory
 
 2018
 ~~~~
