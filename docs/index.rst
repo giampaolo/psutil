@@ -14,10 +14,6 @@
    <div class="hero">
      <div class="hero-title"><img src="_static/images/logo-psutil.svg" class="hero-logo" alt="psutil logo"><span>psutil<span/></div>
      <div class="hero-subtitle">Process and System Utilities for Python</div>
-     <div class="hero-badges">
-       <a href="https://github.com/giampaolo/psutil"><img src="https://img.shields.io/badge/GitHub-repo-blue" alt="GitHub repo"></a>
-       <a href="https://clickpy.clickhouse.com/dashboard/psutil"><img src="https://img.shields.io/pypi/dm/psutil?label=downloads" alt="Downloads"></a>
-     </div>
    </div>
 
 Psutil is a cross-platform library for retrieving information about running
@@ -29,8 +25,6 @@ functionalities offered by UNIX command line tool such as
 :doc:`shell equivalents <shell-equivalents>`). It is used by
 :doc:`many notable projects <adoption>` including TensorFlow, PyTorch, Home
 Assistant, Ansible, and Celery.
-
-----
 
 .. ============================================================================
 .. Platform pills
@@ -113,6 +107,28 @@ Assistant, Ansible, and Celery.
        </div>
        <p>Every operating system exposes process and system info through different syscalls and conventions. psutil's job is to wrap those differences behind a single Python API that works the same on every platform.</p>
      </div>
+   </div>
+
+.. ============================================================================
+.. Adoption stats. Numbers kept in sync with adoption.rst and README.rst
+.. by scripts/internal/refresh_adoption_stats.py.
+.. ============================================================================
+
+.. raw:: html
+
+   <div class="home-stats">
+     <a class="home-stat" href="https://clickpy.clickhouse.com/dashboard/psutil">
+       <span class="home-stat-num">330+ million</span>
+       <span class="home-stat-label">downloads per month</span>
+     </a>
+     <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents">
+       <span class="home-stat-num">760,000+</span>
+       <span class="home-stat-label">GitHub repositories</span>
+     </a>
+     <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents?dependent_type=PACKAGE">
+       <span class="home-stat-num">15,000+</span>
+       <span class="home-stat-label">packages depending</span>
+     </a>
    </div>
 
    <div class="hero-cta">

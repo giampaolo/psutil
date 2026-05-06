@@ -131,8 +131,8 @@ div[class^="highlight-"] {
 
 /* background */
 [data-theme="light"] .highlight {
-    background: #f8f8f8 !important;
-    border: 1px solid var(--border);
+    background: #eef1f4 !important;
+    border: 1px solid #c7ccd1;
     border-radius: var(--border-radius);
 }
 

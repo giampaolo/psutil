@@ -18,18 +18,21 @@ psutil on Python 2.7 run:
 Operating systems
 ^^^^^^^^^^^^^^^^^
 
-================  ================  ====  =================================================  =========
-Platform          Minimum version   Year  How enforced                                       CI tested
-================  ================  ====  =================================================  =========
-Linux             2.6.13 (soft)     2005  graceful fallbacks; no hard check                  yes
-Windows           Vista             2007  hard check at import + build time                  yes
-macOS             10.7 (Lion)       2011  ``MAC_OS_X_VERSION_MIN_REQUIRED`` in C             yes
-FreeBSD           12.0              2018  graceful fallbacks via ``#if __FreeBSD_version``   yes
-NetBSD            5.0               2009  graceful fallbacks via ``#if __NetBSD_Version__``  yes
-OpenBSD           unknown                                                                    yes
-SunOS / Solaris   unknown                                                                    memleak tests only
-AIX               unknown                                                                    no
-================  ================  ====  =================================================  =========
+.. table::
+   :class: wide-table
+
+   ================  ================  ====  =================================================  =========
+   Platform          Minimum version   Year  How enforced                                       CI tested
+   ================  ================  ====  =================================================  =========
+   Linux             2.6.13 (soft)     2005  graceful fallbacks; no hard check                  yes
+   Windows           Vista             2007  hard check at import + build time                  yes
+   macOS             10.7 (Lion)       2011  ``MAC_OS_X_VERSION_MIN_REQUIRED`` in C             yes
+   FreeBSD           12.0              2018  graceful fallbacks via ``#if __FreeBSD_version``   yes
+   NetBSD            5.0               2009  graceful fallbacks via ``#if __NetBSD_Version__``  yes
+   OpenBSD           unknown                                                                    yes
+   SunOS / Solaris   unknown                                                                    memleak tests only
+   AIX               unknown                                                                    no
+   ================  ================  ====  =================================================  =========
 
 Note: psutil may work on older versions of the above platforms but it is not
 guaranteed.
@@ -39,12 +42,15 @@ Architectures
 
 Supported CPU architectures and platforms tested in CI or with prebuilt wheels:
 
-================  ===========================  ===========================
-Architecture      CI-tested platforms          Wheel builds
-================  ===========================  ===========================
-x86_64            Linux, macOS, Windows        Linux, macOS, Windows
-aarch64 / ARM64   Linux, macOS, Windows        Linux, macOS, Windows
-================  ===========================  ===========================
+.. table::
+   :class: wide-table
+
+   ================  ===========================  ===========================
+   Architecture      CI-tested platforms          Wheel builds
+   ================  ===========================  ===========================
+   x86_64            Linux, macOS, Windows        Linux, macOS, Windows
+   aarch64 / ARM64   Linux, macOS, Windows        Linux, macOS, Windows
+   ================  ===========================  ===========================
 
 Notes:
 

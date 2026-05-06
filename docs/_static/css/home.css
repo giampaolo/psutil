@@ -60,17 +60,6 @@
     margin-bottom: 0.9em;
 }
 
-.home-page .hero-badges {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.home-page .hero-badges img {
-    vertical-align: middle;
-}
-
 /* Primary + secondary call-to-action buttons below the description cards. */
 .home-page .hero-cta {
     margin: 2.5em 0 3em;
@@ -153,6 +142,19 @@
     margin-bottom: 16px;
 }
 
+/* Soften the Sponsors H2 */
+.home-page h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    border-bottom: none;
+    margin-top: 2.5em;
+    margin-bottom: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
 .home-page .home-platforms {
     display: flex;
     flex-direction: column;
@@ -204,6 +206,56 @@
     color: var(--content-text);
     background: var(--surface-raised);
     text-decoration: none !important;
+}
+
+/* ================================================================== */
+/* Adoption stats banner                                              */
+/* ================================================================== */
+
+.home-page .home-stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin: 2em 0 2.5em;
+}
+
+.home-page a.home-stat,
+.home-page a.home-stat:visited {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 0;
+    min-width: 180px;
+    max-width: 260px;
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--surface-sunken);
+    color: var(--content-text);
+    text-decoration: none !important;
+    transition: border-color var(--theme-transition),
+                background var(--theme-transition);
+}
+
+.home-page a.home-stat:hover {
+    border-color: var(--links);
+    background: var(--surface-raised);
+    text-decoration: none !important;
+}
+
+.home-page .home-stat-num {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--content-text);
+    line-height: 1.2;
+}
+
+.home-page .home-stat-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-align: center;
 }
 
 /* ================================================================== */
@@ -365,11 +417,11 @@
 
 [data-theme="dark"] .home-page .home-desc-card:nth-child(1),
 [data-theme="dark"] .home-page .home-desc-card:nth-child(3) {
-    background: #1a2430;
+    background: #253344;
 }
 
 [data-theme="dark"] .home-page .home-desc-card:nth-child(2) {
-    background: #1f1c14;
+    background: #2e2920;
 }
 
 .home-page .home-desc-card:nth-child(1) .home-desc-card-header {
@@ -466,20 +518,26 @@
 /* ================================================================== */
 
 .home-page #sponsors {
-    margin: 2rem -3rem 0;
-    padding: 1.5rem 3rem 2rem;
+    margin: 2rem -24px 20px;
+    padding: 1.5rem 24px 2rem;
     background: #f8f9fa;
     border-top: 1px solid var(--border);
-    margin-bottom: 20px;
     text-align: center;
 }
 
 @media (max-width: 768px) {
     .home-page #sponsors {
-        margin-left: 0;
-        margin-right: 0;
+        margin-left: -12px;
+        margin-right: -12px;
         padding-left: 1rem;
         padding-right: 1rem;
+    }
+}
+
+@media (min-width: 1280px) {
+    body.home-page:not(:has(aside.right-toc)) #sponsors {
+        margin-left: -24px;
+        margin-right: -52px;
     }
 }
 

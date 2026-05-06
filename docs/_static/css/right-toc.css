@@ -7,6 +7,20 @@
     display: none;
 }
 
+@media (min-width: 768px) {
+    .wy-nav-content-wrap {
+        margin-left: var(--sidebar-width);
+    }
+    .wy-nav-content {
+        max-width: var(--content-max-width);
+        padding-left: 24px;
+        padding-right: 24px;
+        margin-left: 0;
+        margin-right: auto;
+        border-right: none;
+    }
+}
+
 @media (min-width: 1280px) {
 
     /* ============================================================== */
@@ -31,6 +45,12 @@
     }
     .wy-nav-content-wrap {
         margin-left: max(var(--sidebar-width), calc((100vw - var(--layout-width)) / 2 + var(--sidebar-width)));
+        margin-right: max(0px, calc((100vw - var(--layout-width)) / 2));
+    }
+
+    .wy-nav-content {
+        padding-left: 0;
+        padding-right: 0;
     }
 
     /* Align the topbar's logo with the left sidebar, and its right
@@ -54,15 +74,6 @@
     body:not(:has(aside.right-toc)) .article-with-toc > .article-column {
         max-width: none;
         padding-right: 52px;
-    }
-
-    .wy-nav-content {
-        max-width: var(--content-max-width);
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        margin-left: 0;
-        margin-right: auto;
-        border-right: none;
     }
 
     /* ============================================================== */
@@ -212,11 +223,11 @@
     .right-toc-tree li.scroll-current > a,
     .right-toc-tree li.scroll-current > a:visited {
         color: var(--links);
+        font-weight: 600;
     }
 
     .right-toc-tree li.scroll-current-leaf > a {
-        box-shadow: inset 3px 0 0 var(--sidebar-active-border);
-        background: var(--surface-sunken);
+        box-shadow: inset 1px 0 0 var(--sidebar-active-border);
     }
 
     /* Blog posts use the rust accent throughout, so the active TOC

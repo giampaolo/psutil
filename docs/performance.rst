@@ -101,6 +101,7 @@ methods are called together (best case), as measured by
 
 .. list-table::
    :header-rows: 1
+   :class: wide-table
 
    * - Linux
      - Windows

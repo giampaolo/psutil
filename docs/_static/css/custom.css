@@ -285,6 +285,33 @@
     transition: background 0.15s, color 0.15s;
 }
 
+/* Hamburger only shows on mobile (RTD's wy-nav-top is hidden there). */
+.top-bar-hamburger {
+    display: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--topbar-fg);
+    font-size: 1.25rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    margin-right: 4px;
+    transition: background 0.15s;
+}
+
+.top-bar-hamburger:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 768px) {
+    .top-bar-hamburger {
+        display: inline-flex;
+    }
+}
+
 /* prevent browser from overriding link/visited colours in the top bar */
 .top-bar-link:link,
 .top-bar-link:visited,
@@ -379,13 +406,6 @@
 /* Layout                                                             */
 /* ================================================================== */
 
-@media (min-width: 1200px) {
-    .wy-nav-content {
-        max-width: var(--article-max-width);
-        padding-left: 120px !important;
-    }
-}
-
 html {
     background: var(--body-bg);
     scroll-padding-top: 48px;
@@ -463,15 +483,10 @@ body {
     width: var(--sidebar-width);
 }
 
-/* Default RTD sets line-height: 50px + padding, making the mobile
-   header ~80px tall; compact it so it doesn't leave a visible gap
-   below the fixed topbar. Also zero margin-top so it sits flush
-   under the topbar. */
+/* Hide RTD's mobile header entirely. We already have the hamburger. */
 @media (max-width: 768px) {
     .wy-nav-top {
-        line-height: 1.4;
-        padding: 0.5em 0.8em;
-        margin-top: 0;
+        display: none;
     }
     .wy-nav-content-wrap {
         padding-top: 0 !important;
@@ -580,18 +595,49 @@ html,
         height: 40px;
     }
     .top-bar-inner {
-        justify-content: space-between;
-        padding: 0 0.75rem;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 0 0.5rem;
     }
     .top-bar-logo {
         display: flex;
         width: auto;
         padding-left: 0;
+        flex: 1 1 auto;
+        min-width: 0;
     }
-    /* Smooth sidebar open/close */
-    .wy-nav-side {
+    .top-bar-actions {
+        flex: 0 0 auto;
+        gap: 2px;
+    }
+
+    /* Drop the version pill (saves room; GH icon links to the repo). */
+    .top-bar-actions .top-bar-version {
+        display: none;
+    }
+
+    /* GH badge: icon only, no star count, narrower hit area. */
+    .top-bar-github .github-stars {
+        display: none;
+    }
+
+    /* Narrower sidebar on mobile. */
+    .wy-nav-side,
+    .wy-nav-side.shift {
+        width: min(220px, 75vw) !important;
         transition: left 0.2s ease, width 0.2s ease;
     }
+    .wy-side-nav-search,
+    .rst-versions {
+        width: min(220px, 75vw) !important;
+    }
+
+    /* Don't shift the wrap when the sidebar opens. */
+    .wy-nav-content-wrap.shift {
+        position: static !important;
+        left: auto !important;
+    }
+
     .wy-nav-content-wrap {
         margin-top: 40px !important;
         padding-top: 0 !important;
@@ -887,6 +933,11 @@ h4 {
     margin-bottom: 0px !important;
 }
 
+/* RTD's bottom-left "rst-versions" flyout */
+.rst-versions {
+    width: var(--sidebar-width) !important;
+}
+
 /* "wide-table" class: opt out of the global fixed-column layout
    (set further below on .rst-content table.docutils) so columns
    size to their content. Without this, monospace cells like
@@ -1034,7 +1085,7 @@ a.reference.external:has(> span > code):not(:has(img))::after {
     border: none !important;
     border-radius: 4px !important;
     padding: .1em .35em !important;
-    font-size: 85% !important;
+    font-size: 92% !important;
     font-family: var(--code-font) !important;
     font-weight: normal !important;
 }

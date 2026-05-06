@@ -14,7 +14,7 @@
 
     <div align="center">
       <a href="https://clickpy.clickhouse.com/dashboard/psutil">
-        <img src="https://img.shields.io/pypi/dm/psutil?label=downloads" alt="Downloads">
+        <img src="https://static.pepy.tech/badge/psutil/month" alt="Downloads">
       </a>
 
       <a href="https://repology.org/metapackage/python:psutil/versions">
@@ -55,6 +55,18 @@ It implements many functionalities offered by UNIX command line tool such as
 - **Sun Solaris**
 - **AIX**
 
+Adoption
+========
+
+psutil is among the
+`top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
+packages on PyPI, with **330+ million** downloads per month, **760,000+**
+`GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
+using it, and **15,000+** packages depending on it.
+
+See also `adoptions <https://psutil.readthedocs.io/latest/adoption.html>`__ and
+`alternatives <https://psutil.readthedocs.io/latest/alternatives.html>`__.
+
 Install
 =======
 
@@ -68,7 +80,7 @@ For platform-specific details see
 Documentation
 =============
 
-psutil documentation is available at https://psutil.readthedocs.io/.
+psutil documentation is available at https://psutil.readthedocs.io/latest.
 
 .. <PYPI-EXCLUDE>
 
@@ -100,29 +112,6 @@ Sponsors
     <div style="text-align: center;"><sup><a href="https://psutil.readthedocs.io/latest/funding.html">add your logo</a></sup></div>
 
 .. </PYPI-EXCLUDE>
-
-Projects using psutil
-=====================
-
-psutil is one of the `top 100`_ most-downloaded packages on PyPI, with 300+
-million downloads per month, `760,000+ GitHub repositories
-<https://github.com/giampaolo/psutil/network/dependents>`_ using it, and
-14,000+ packages depending on it. Some notable projects using psutil:
-
-- `TensorFlow <https://github.com/tensorflow/tensorflow>`_,
-  `PyTorch <https://github.com/pytorch/pytorch>`_,
-- `Home Assistant <https://github.com/home-assistant/core>`_,
-  `Ansible <https://github.com/ansible/ansible>`_,
-  `Apache Airflow <https://github.com/apache/airflow>`_,
-  `Sentry <https://github.com/getsentry/sentry>`_
-- `Celery <https://github.com/celery/celery>`_,
-  `Dask <https://github.com/dask/dask>`_
-- `Glances <https://github.com/nicolargo/glances>`_,
-  `bpytop <https://github.com/aristocratos/bpytop>`_,
-  `Ajenti <https://github.com/ajenti/ajenti>`_,
-  `GRR <https://github.com/google/grr>`_
-
-`Full list <https://psutil.readthedocs.io/latest/adoption.html>`_
 
 Example usages
 ==============
@@ -210,7 +199,6 @@ For the full API with more examples, see the
     ...
 
 .. _`shell equivalents`: https://psutil.readthedocs.io/latest/shell-equivalents.html
-.. _`top 100`: https://clickpy.clickhouse.com/dashboard/psutil
 
 .. <PYPI-EXCLUDE>
 

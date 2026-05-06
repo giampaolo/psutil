@@ -10,6 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import datetime
 import importlib.util
+import locale
 import os
 import pathlib
 import sys
@@ -201,6 +202,12 @@ if html_theme == "sphinx_rtd_theme":
 os.environ["TZ"] = "UTC"
 if hasattr(time, "tzset"):
     time.tzset()
+
+# Fix for ablog which shows local dates locally (not on RTD)
+try:
+    locale.setlocale(locale.LC_TIME, "C")
+except locale.Error:
+    pass
 
 # Drives atom feed entry <id>s and <link>s. Same value as html_baseurl
 # so feed URLs track canonicals URLs.
