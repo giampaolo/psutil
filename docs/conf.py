@@ -60,6 +60,7 @@ _third_party_exts = [
     "sphinx.ext.viewcode",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinx_design",  # tabbed code examples on the home page
     "sphinx_sitemap",
     "sphinxext.opengraph",
 ]
@@ -191,6 +192,7 @@ if html_theme == "sphinx_rtd_theme":
         ("js/search-shortcuts.js", {"defer": "defer"}),
         ("js/right-toc.js", {"defer": "defer"}),
         ("js/github-meta.js", {"defer": "defer"}),
+        ("js/home-install-copy.js", {"defer": "defer"}),
     ]
 
 # =====================================================================

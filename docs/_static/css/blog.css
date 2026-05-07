@@ -457,12 +457,3 @@ a.post-meta-featured:hover {
     text-decoration: none;
 }
 
-/* ================================================================== */
-/* Search results — blog-specific icon tint                           */
-/* ================================================================== */
-
-#search-results li:has(> a[href^="blog/"])::before,
-#search-results li:has(> a[href*="/blog/"])::before {
-    content: "\f09e";
-    color: var(--blog-accent);
-}

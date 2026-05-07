@@ -108,10 +108,11 @@ document.addEventListener("DOMContentLoaded", function () {
         initResultsObserver(container, getResults, clearActive, setActive);
         initNavigationKeys(searchInput, getResults, setActive, clearActive);
 
-        // Watch for new <li> elements and auto-select the first result
-        // once the batch finishes loading.
+        // Watch for new <li> elements and clear any prior selection
+        // when the result set changes. We don't auto-select the first
+        // result on landing — that should only happen when the user
+        // presses ArrowDown to opt into keyboard navigation.
         function initResultsObserver(container, getResults, clearActive, setActive) {
-            var debounceTimer;
             new MutationObserver(function (mutations) {
                 var hasNewLi = mutations.some(function (m) {
                     return Array.from(m.addedNodes).some(function (n) {
@@ -120,22 +121,28 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
                 if (!hasNewLi) return;
                 clearActive();
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(function () {
-                    if (getResults().length) setActive(0);
-                }, 80);
             }).observe(container, { childList: true, subtree: true });
         }
 
         // Handle arrow-key navigation and Enter to open the active
-        // result. Down from the search input moves to the first result.
+        // result. Down from a search input moves to the first result.
         function initNavigationKeys(searchInput, getResults, setActive, clearActive) {
+            // The search-results page has its own prominent input
+            // (.search-page-input). Treat both as "search inputs" so
+            // pressing Enter in either submits the form normally and
+            // doesn't get hijacked into "open the active result".
+            function isSearchInput(el) {
+                return el && (
+                    el === searchInput ||
+                    el.classList.contains("search-page-input")
+                );
+            }
             document.addEventListener("keydown", function (e) {
                 if (!getResults().length) return;
-                if (document.activeElement === searchInput) {
+                if (isSearchInput(document.activeElement)) {
                     if (e.key !== "ArrowDown") return;
                     e.preventDefault();
-                    searchInput.blur();
+                    document.activeElement.blur();
                     setActive(0);
                     return;
                 }

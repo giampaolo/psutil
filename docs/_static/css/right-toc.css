@@ -73,6 +73,7 @@
      * the article-column cap so content fills the content area. */
     body:not(:has(aside.right-toc)) .article-with-toc > .article-column {
         max-width: none;
+        padding-left: 52px;
         padding-right: 52px;
     }
 

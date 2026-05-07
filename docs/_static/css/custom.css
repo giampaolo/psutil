@@ -530,7 +530,7 @@ body {
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
     font-size: 13px !important;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
 }
 
 .wy-menu-vertical li.toctree-l1 > a {
@@ -1245,16 +1245,77 @@ div.deprecated .versionmodified {
 /* Search results page                                                */
 /* ================================================================== */
 
+.search-page-form {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    margin: 0 0 1.5em;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--card-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search-page-form:focus-within {
+    border-color: var(--links);
+    box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+}
+
+[data-theme="dark"] .search-page-form:focus-within {
+    box-shadow: 0 0 0 3px rgba(106, 176, 222, 0.2);
+}
+
+.search-page-icon {
+    align-self: center;
+    padding: 0 0.4em 0 0.9em;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.search-page-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.7em 0.4em !important;
+    font-size: 1.15rem !important;
+    font-family: var(--font-search);
+    color: var(--content-text);
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box;
+}
+
+.search-page-btn {
+    flex-shrink: 0;
+    padding: 0 1.4em;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--border);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+}
+
+.search-page-btn:hover {
+    color: var(--links);
+    background: var(--surface-sunken);
+}
+
 /* ---- Result cards ---- */
 
-/* "Search finished, found N pages...": increase size/weight */
+/* Result count line ("20 results for X"): keep it as a quiet
+ * strapline above the results, not a heading-replacement. */
 #search-results p.search-summary {
-    font-size: 1.15em !important;
+    font-size: 0.9em !important;
     font-weight: 500 !important;
-    margin: 0 0 1.2em 0 !important;
-    padding-bottom: 0.8em !important;
-    border-bottom: 1px solid var(--border);
-    color: var(--headings);
+    margin: 0 0 1em 0 !important;
+    padding: 0 !important;
+    border-bottom: none;
+    color: var(--text-muted);
 }
 
 #search-results ul {
@@ -1273,7 +1334,7 @@ div.deprecated .versionmodified {
     align-items: flex-start;
     column-gap: 6px;
     line-height: normal !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
     border-radius: 6px;
     background-color: var(--card-bg);
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.04);
@@ -1291,14 +1352,8 @@ div.deprecated .versionmodified {
 
 /* keyboard-active result */
 #search-results li.search-result-active {
-    border-color: var(--links) !important;
-    box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+    background-color: var(--surface-sunken);
     outline: none;
-}
-
-[data-theme="dark"] #search-results li.search-result-active {
-    border-color: var(--links) !important;
-    box-shadow: 0 0 0 3px rgba(106, 176, 222, 0.2);
 }
 
 /* ---- Card content ---- */
@@ -1337,7 +1392,6 @@ div.deprecated .versionmodified {
     margin: 0 0 0 28px !important;
     font-size: 0.90em !important;
     color: var(--text-muted);
-    opacity: 0.8;
     line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -1347,14 +1401,16 @@ div.deprecated .versionmodified {
 }
 
 /* ---- Icons: generic (Sphinx SearchResultKind) ---- */
-
 #search-results li::before {
+    content: "\f0f6";
     font-family: FontAwesome;
-    font-size: 18px;
+    font-size: 16px;
     flex-shrink: 0;
-    margin-top: 1px;
+    margin-top: 4px;
+    margin-right: 2px;
     width: 1.2em;
     text-align: center;
+    color: var(--text-muted);
 }
 
 /* page title match */
@@ -1364,7 +1420,7 @@ div.deprecated .versionmodified {
 
 /* API object (function, class, constant, …) */
 #search-results li.kind-object::before {
-    content: "⚙️";
+    content: "\f085";
 }
 
 /* body text match */
@@ -1374,82 +1430,73 @@ div.deprecated .versionmodified {
 
 /* index entry */
 #search-results li.kind-index::before {
-    content: "\f02e";
-    color: #e5a825;
+    content: "\f097";
 }
 
-/* ---- Icons: page-specific overrides ---- */
+/* Page-specific overrides — same color, distinct glyph. */
+#search-results li:has(> a[href^="api.html"])::before,
+#search-results li:has(> a[href*="/api.html"])::before,
+#search-results li:has(> a[href^="api-overview.html"])::before,
+#search-results li:has(> a[href*="/api-overview.html"])::before {
+    content: "\f085";
+}
 
 /* FAQ: question-in-circle */
 #search-results li:has(> a[href^="faq.html"])::before,
 #search-results li:has(> a[href*="/faq.html"])::before {
-    content: "\f059";
-    color: #2563eb;
+    content: "\f29c";
 }
 
-[data-theme="dark"] #search-results li:has(> a[href^="faq.html"])::before,
-[data-theme="dark"] #search-results li:has(> a[href*="/faq.html"])::before {
-    color: #60a5fa;
-}
-
-/* changelog: history / clock */
 #search-results li:has(> a[href^="changelog.html"])::before,
 #search-results li:has(> a[href*="/changelog.html"])::before {
     content: "\f1da";
-    color: #a16207;
 }
 
-/* install: download arrow */
 #search-results li:has(> a[href^="install.html"])::before,
 #search-results li:has(> a[href*="/install.html"])::before {
     content: "\f019";
-    color: #16a34a;
 }
 
-/* recipes: lightbulb */
 #search-results li:has(> a[href^="recipes.html"])::before,
 #search-results li:has(> a[href*="/recipes.html"])::before {
-    content: "\f0eb";
-    color: #eab308;
+    content: "\f121";
 }
 
-/* migration: exchange arrows */
 #search-results li:has(> a[href^="migration.html"])::before,
 #search-results li:has(> a[href*="/migration.html"])::before {
     content: "\f0ec";
-    color: #7c3aed;
 }
 
-/* glossary: list with descriptions */
 #search-results li:has(> a[href^="glossary.html"])::before,
 #search-results li:has(> a[href*="/glossary.html"])::before {
-    content: "\f022";
-    color: #475569;
+    content: "\f02d";
 }
 
-/* API reference: gears. Different ahn individual API symbol ⚙️. */
-#search-results li:not(.kind-object):has(> a[href^="api.html"])::before,
-#search-results li:not(.kind-object):has(> a[href*="/api.html"])::before,
-#search-results li:not(.kind-object):has(> a[href^="api-overview.html"])::before,
-#search-results li:not(.kind-object):has(> a[href*="/api-overview.html"])::before {
-    content: "\f085";
-    color: var(--links-api);
+#search-results li:has(> a[href^="blog/"])::before,
+#search-results li:has(> a[href*="/blog/"])::before {
+    content: "\f09e";
+}
+
+#search-results li:has(> a[href^="blog/"]) > a::before,
+#search-results li:has(> a[href*="/blog/"]) > a::before {
+    content: "Blog > ";
 }
 
 /* ---- Search-term highlighting ---- */
 
 span.highlighted {
-    background-color: #fff3b0 !important;
+    background-color: rgba(41, 128, 185, 0.14) !important;
     color: inherit !important;
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
     border-radius: 2px;
+    padding: 0 2px;
 }
 
 [data-theme="dark"] span.highlighted {
-    background-color: rgba(255, 193, 7, 0.3) !important;
-    border: 1px solid rgba(255, 193, 7, 0.5) !important;
+    background-color: rgba(106, 176, 222, 0.16) !important;
+    border: none !important;
 }
 
 /* ================================================================== */

@@ -25,7 +25,7 @@
 
 .home-page .hero {
     text-align: center;
-    padding: 1.5em 0 2em;
+    padding: 1.5em 0 1em;
 }
 
 .home-page .hero-title {
@@ -60,78 +60,131 @@
     margin-bottom: 0.9em;
 }
 
-/* Primary + secondary call-to-action buttons below the description cards. */
-.home-page .hero-cta {
-    margin: 2.5em 0 3em;
+.home-page .home-intro {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.home-page .home-intro p {
+    margin-bottom: 0;
+}
+
+/* ================================================================== */
+/* Install one-liner                                                  */
+/* ================================================================== */
+
+.home-page .home-install {
+    position: relative;
     display: flex;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.home-page a.hero-btn,
-.home-page a.hero-btn:visited {
-    display: inline-flex;
     align-items: center;
-    gap: 0.5em;
-    padding: 0.55em 1.4em;
-    border-radius: var(--border-radius);
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    text-decoration: none !important;
-    border: 1px solid transparent;
-    transition: background var(--theme-transition),
-                color var(--theme-transition),
-                border-color var(--theme-transition),
-                box-shadow var(--theme-transition),
-                transform 0.08s ease;
-}
-
-.home-page a.hero-btn:active {
-    transform: translateY(1px);
-}
-
-.home-page a.hero-btn i.fa {
-    font-size: 0.8em;
-    transition: transform 0.15s ease;
-}
-
-.home-page a.hero-btn:hover i.fa-arrow-right {
-    transform: translateX(3px);
-}
-
-.home-page a.hero-btn-primary,
-.home-page a.hero-btn-primary:visited {
-    background: var(--cta-fill);
-    color: #fff !important;
-    border-color: var(--cta-fill);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-.home-page a.hero-btn-primary:hover {
-    background: var(--cta-fill-hover);
-    border-color: var(--cta-fill-hover);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-}
-
-[data-theme="dark"] .home-page a.hero-btn-primary,
-[data-theme="dark"] .home-page a.hero-btn-primary:visited {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-/* secondary: outlined, same palette */
-.home-page a.hero-btn-secondary,
-.home-page a.hero-btn-secondary:visited {
+    gap: 0.6em;
+    width: max-content;
+    max-width: 100%;
+    margin: 1.6em auto 0;
+    padding: 0.45em 0.55em 0.45em 0.85em;
     background: transparent;
-    color: var(--links) !important;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--code-font);
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--content-text);
+    transition: border-color 0.2s ease;
+}
+
+.home-page .home-install:hover {
+    border-color: var(--text-muted);
+}
+
+.home-page .home-install.copied {
     border-color: var(--links);
 }
 
-.home-page a.hero-btn-secondary:hover {
-    background: var(--surface-sunken);
+.home-page .home-install-prompt {
+    color: var(--text-muted);
+    font-weight: 600;
+    user-select: none;
 }
 
+.home-page .home-install-cmd {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--content-text);
+    font-family: var(--code-font);
+    font-size: inherit;
+    white-space: nowrap;
+}
+
+.home-page button.home-install-copy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9em;
+    height: 1.9em;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.home-page button.home-install-copy:hover {
+    background: var(--surface-sunken);
+    color: var(--content-text);
+}
+
+/* Icon swap: show copy by default, check when .copied is set on the
+   wrapper. Both SVGs are stacked at the same spot via grid trick on
+   the button so the layout doesn't shift. */
+.home-page .home-install-icon-copy,
+.home-page .home-install-icon-check {
+    grid-area: 1 / 1;
+}
+
+.home-page button.home-install-copy {
+    display: inline-grid;
+    place-items: center;
+}
+
+.home-page .home-install-icon-check {
+    visibility: hidden;
+    color: var(--links);
+}
+
+.home-page .home-install.copied .home-install-icon-copy {
+    visibility: hidden;
+}
+
+.home-page .home-install.copied .home-install-icon-check {
+    visibility: visible;
+}
+
+/* "Copied" toast: floats above the button, fades + lifts in. */
+.home-page .home-install-toast {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0.4em;
+    padding: 0.18em 0.55em;
+    background: var(--links);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: 4px;
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.home-page .home-install.copied .home-install-toast {
+    opacity: 1;
+    transform: translateY(0);
+}
 
 /* ================================================================== */
 /* Platform pills                                                     */
@@ -159,16 +212,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.6em;
-    margin: 1em 0 3em;
+    gap: 0.9em;
+    margin: 2.5em 0 0;
 }
 
 .home-page a.home-platforms-label,
 .home-page a.home-platforms-label:visited {
-    font-size: 0.82rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     text-decoration: none;
     transition: color var(--theme-transition);
@@ -216,32 +269,24 @@
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 24px;
-    margin: 2em 0 2.5em;
+    gap: 56px;
+    margin: 3em 0 1.5em;
 }
 
+/* Quiet stats: just numbers + labels, no boxes. The figures speak;
+   the chrome was reading as Series-B-SaaS marketing strip. */
 .home-page a.home-stat,
 .home-page a.home-stat:visited {
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: 1 1 0;
-    min-width: 180px;
-    max-width: 260px;
-    padding: 14px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    background: var(--surface-sunken);
     color: var(--content-text);
     text-decoration: none !important;
-    transition: border-color var(--theme-transition),
-                background var(--theme-transition);
+    transition: color var(--theme-transition);
 }
 
-.home-page a.home-stat:hover {
-    border-color: var(--links);
-    background: var(--surface-raised);
-    text-decoration: none !important;
+.home-page a.home-stat:hover .home-stat-num {
+    color: var(--links);
 }
 
 .home-page .home-stat-num {
@@ -249,13 +294,16 @@
     font-weight: 700;
     color: var(--content-text);
     line-height: 1.2;
+    transition: color var(--theme-transition);
 }
 
 .home-page .home-stat-label {
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
     margin-top: 4px;
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 /* ================================================================== */
@@ -266,7 +314,7 @@
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 14px;
-    margin: 0 0 2.5em;
+    margin: 0;
 }
 
 @media (max-width: 900px) {
@@ -296,6 +344,7 @@
 }
 
 .home-page .home-feature-card {
+    position: relative;
     border: 1px solid var(--card-border);
     border-radius: 8px;
     padding: 20px 14px;
@@ -309,6 +358,37 @@
 .home-page .home-feature-card:hover {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     border-color: var(--links);
+}
+
+/* Hover-revealed arrow signals "this is a nav link, click to jump." */
+.home-page .home-feature-card::after {
+    content: "↗";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.home-page .home-feature-card:hover::after {
+    opacity: 1;
+    color: var(--links);
+}
+
+/* Small caps section labels (Runs on, Explore the API, Try it).
+ * Margins drive the page rhythm: 2.5em above each section, 0.9em
+ * caption-to-content. Sections themselves use margin: 0 so gaps
+ * don't stack. */
+.home-page .home-section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 2.5em 0 0.9em;
 }
 
 .home-page .home-icon-svg {
@@ -518,11 +598,15 @@
 /* ================================================================== */
 
 .home-page #sponsors {
-    margin: 2rem -24px 20px;
+    margin: 1.5rem -24px 20px;
     padding: 1.5rem 24px 2rem;
     background: #f8f9fa;
     border-top: 1px solid var(--border);
     text-align: center;
+}
+
+.home-page #sponsors > .home-section-label {
+    margin-top: 1.2em;
 }
 
 @media (max-width: 768px) {
@@ -619,4 +703,222 @@ a.sponsor-cta:hover {
 /* TOC (hidden) */
 .home-page .toctree-wrapper {
     display: none;
+}
+
+/* ================================================================== */
+/* Release callout strip (under the hero)                             */
+/* ================================================================== */
+
+.home-page a.home-release-callout,
+.home-page a.home-release-callout:visited {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0.5em auto 2em;
+    max-width: 640px;
+    padding: 0.55em 1em;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-sunken);
+    color: var(--content-text) !important;
+    font-size: 0.9rem;
+    text-decoration: none !important;
+    transition: border-color var(--theme-transition),
+                background var(--theme-transition);
+}
+
+.home-page a.home-release-callout:hover {
+    border-color: var(--links);
+    background: var(--surface-raised);
+}
+
+.home-release-callout-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--links);
+    color: #fff;
+}
+
+.home-release-callout-arrow {
+    font-size: 0.75em;
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+}
+
+.home-page a.home-release-callout:hover .home-release-callout-arrow {
+    transform: translateX(3px);
+    color: var(--links);
+}
+
+/* ================================================================== */
+/* Latest from the blog                                               */
+/* ================================================================== */
+
+.home-page .home-blog-feature {
+    max-width: 640px;
+    margin: 1em auto 2em;
+    padding: 1em 1.5em;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--surface-sunken);
+    text-align: center;
+}
+
+.home-page .home-blog-feature .rubric {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin: 0 0 0.4em;
+    border: none;
+    padding: 0;
+}
+
+/* Drop the bullet on the single post item; the card is the marker. */
+.home-page .home-blog-feature ul.postlist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.home-page .home-blog-feature ul.postlist > li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.home-page .home-blog-feature .ablog-post-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--content-text);
+    line-height: 1.35;
+}
+
+.home-page .home-blog-feature .ablog-post-title a,
+.home-page .home-blog-feature .ablog-post-title a:visited {
+    color: var(--links);
+    text-decoration: none;
+}
+
+.home-page .home-blog-feature .ablog-post-title a:hover {
+    text-decoration: underline;
+}
+
+/* ================================================================== */
+/* Quickstart tabs (sphinx-design)                                    */
+/* ================================================================== */
+
+.home-page .home-quickstart {
+    padding: 0 1.5em 0.6em;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .home-page .home-quickstart {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.home-page .home-quickstart .sd-tab-set {
+    margin: 0;
+}
+
+.home-page .home-quickstart .sd-tab-content {
+    padding: 0.5rem 0 0;
+    box-shadow: 0 -0.0625rem var(--sd-color-tabs-overline);
+}
+
+/* "See more →" link below each tab's code block. */
+.home-quickstart .home-tab-more {
+    margin-top: 0.8em;
+    text-align: right;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.home-quickstart .home-tab-more p {
+    margin-bottom: 0;
+}
+
+.home-quickstart .home-tab-more a,
+.home-quickstart .home-tab-more a:visited {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.home-quickstart .home-tab-more a:hover {
+    color: var(--links);
+    text-decoration: underline;
+}
+
+/* Inactive tabs: lighter than default so the current tab pops. */
+.home-quickstart .sd-tab-label {
+    color: var(--text-muted) !important;
+    opacity: 0.7;
+    font-weight: 500 !important;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.home-quickstart .sd-tab-label:hover {
+    opacity: 1;
+    color: var(--content-text) !important;
+}
+
+/* Active tab: bolder weight + full opacity so it carries the page. */
+.home-quickstart input:checked + .sd-tab-label {
+    color: var(--links) !important;
+    opacity: 1;
+    font-weight: 700 !important;
+}
+
+/* ================================================================== */
+/* Quickstart code-block window chrome                                */
+/* ================================================================== */
+
+/* macOS-style traffic-light dots. */
+
+.home-quickstart .highlight {
+    position: relative;
+    padding-top: 42px !important;  /* beat RTD's .rst-content nested rule */
+}
+
+.home-quickstart .highlight pre {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+.home-quickstart .highlight button.copybtn {
+    top: 36px !important;
+    right: 8px !important;
+}
+
+.home-quickstart .highlight::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+    background-color: #e4e8ec;
+    background-image:
+        radial-gradient(circle at 14px 14px, #d49995 4px, transparent 4.5px),
+        radial-gradient(circle at 30px 14px, #d4b685 4px, transparent 4.5px),
+        radial-gradient(circle at 46px 14px, #9bc7a0 4px, transparent 4.5px);
+    border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .home-quickstart .highlight::before {
+    background-color: #1d1d1d;
+    border-bottom-color: #3a3a3a;
 }
