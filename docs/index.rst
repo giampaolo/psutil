@@ -283,16 +283,20 @@
    Migration <migration>
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: About
 
-   About <about>
+   Who uses psutil <adoption>
+   Alternatives <alternatives>
+   Funding <funding>
+   Credits <credits>
 
 .. toctree::
    :maxdepth: 2
    :titlesonly:
    :caption: Project
 
+   Blog <blog>
    Changelog <changelog>
    Timeline <timeline>
    Development guide <devguide>

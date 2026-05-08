@@ -57,6 +57,7 @@ include docs/_templates/right-toc.html
 include docs/_templates/search.html
 include docs/_templates/searchbox.html
 include docs/_templates/topbar.html
+include docs/about.rst
 include docs/adoption.rst
 include docs/alternatives.rst
 include docs/api-overview.rst
@@ -100,7 +101,6 @@ include docs/shell-equivalents.rst
 include docs/stdlib-equivalents.rst
 include docs/test_docs.py
 include docs/timeline.rst
-include docs/tips.rst
 include psutil/__init__.py
 include psutil/_common.py
 include psutil/_enums.py
