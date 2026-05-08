@@ -74,7 +74,7 @@
     /* sidebar */
     --sidebar-bg: #343131;
     --sidebar-top-bg: #343131;
-    --sidebar-caption: #55a5d9;
+    --sidebar-caption: #7a9ab2;
     --sidebar-item: #d9d9d9;
     --sidebar-item-nested: #404040;
     --sidebar-active-border: #55a5d9;
@@ -100,6 +100,8 @@
     --adm-tip-border: #8aba8a;
     --adm-warning-bg: #fff0f0;
     --adm-warning-border: #e8a0a0;
+    --adm-important-bg: #fdf3dc;
+    --adm-important-border: #d4a23e;
 
     /* version directives */
     --versionadded-border: #4fc464;
@@ -144,13 +146,14 @@
     --topbar-bg: #181818;
     --sidebar-bg: #181818;
     --sidebar-top-bg: #181818;
+    --sidebar-caption: #7a9ab2;
     --surface-sunken: #272727;
     --surface-raised: #2c2c2c;
     --border: #3a3a3a;
 
     /* text */
     --content-text: #c8c8c8;
-    --text-muted: #d1d1d1;
+    --text-muted: #909090;
     --headings: #e0e0e0;
     --headings-underline: #3a3a3a;
 
@@ -182,6 +185,8 @@
     --adm-tip-border: #3a6a3a;
     --adm-warning-bg: #472424;
     --adm-warning-border: #8a3030;
+    --adm-important-bg: #2a200d;
+    --adm-important-border: #6e5328;
 
     /* version directives */
     --versionadded-color: #5ec46e;
@@ -483,6 +488,10 @@ body {
     width: var(--sidebar-width);
 }
 
+.wy-side-scroll {
+    scroll-padding-top: 105px;
+}
+
 /* Hide RTD's mobile header entirely. We already have the hamburger. */
 @media (max-width: 768px) {
     .wy-nav-top {
@@ -529,8 +538,9 @@ body {
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
     color: var(--sidebar-caption);
-    font-size: 13px !important;
-    letter-spacing: 0.15em;
+    font-size: 12px !important;
+    letter-spacing: 0.12em;
+    font-weight: 500;
 }
 
 .wy-menu-vertical li.toctree-l1 > a {
@@ -1156,6 +1166,12 @@ div.tip {
     background-color: var(--adm-tip-bg) !important;
     border-color: var(--adm-tip-border) !important;
     border-left-color: var(--adm-tip-border) !important;
+}
+
+div.important {
+    background-color: var(--adm-important-bg) !important;
+    border-color: var(--adm-important-border) !important;
+    border-left-color: var(--adm-important-border) !important;
 }
 
 div.seealso {

@@ -14,7 +14,8 @@
     });
   })();
 </script>
-{{ super() }}
+<!-- Don't use hyphen in title -->
+<title>{{ title|striptags|e }}{% if not embedded and docstitle %} - {{ docstitle|e }}{% endif %}</title>
 {% endblock %}
 
 {% block extrabody %}

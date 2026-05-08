@@ -171,8 +171,8 @@ a.blog-rss:visited {
 }
 
 a.blog-rss:hover {
-    background: var(--blog-accent);
-    color: var(--surface);
+    background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
+    color: var(--blog-accent);
     text-decoration: none;
 }
 
@@ -202,7 +202,7 @@ a.blog-rss:hover {
 
 .blog-listing-title-value,
 .blog-listing-title-value:visited {
-    color: color-mix(in srgb, var(--blog-accent) 60%, var(--headings));
+    color: var(--headings);
     font-weight: 500;
     border-bottom: none;
     text-decoration: none;
