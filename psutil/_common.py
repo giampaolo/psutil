@@ -59,7 +59,8 @@ __all__ = [
 
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
-LINUX = sys.platform.startswith("linux")
+# python 3.13+ on android identifies itself as "android", rather than "linux"
+LINUX = sys.platform.startswith(("linux", "android"))
 MACOS = sys.platform.startswith("darwin")
 OSX = MACOS  # deprecated alias
 FREEBSD = sys.platform.startswith(("freebsd", "midnightbsd"))
