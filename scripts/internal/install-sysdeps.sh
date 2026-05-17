@@ -43,6 +43,7 @@ fi
 # Function to install system dependencies
 main() {
     if [ $HAS_APT ]; then
+        $SUDO apt-get update
         $SUDO apt-get install -y python3-dev gcc
         $SUDO apt-get install -y net-tools coreutils util-linux sudo  # for tests
     elif [ $HAS_YUM ]; then
