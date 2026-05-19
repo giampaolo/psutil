@@ -43,6 +43,7 @@ jobs:
           # runs next to cp314 instead of after it.
           - { os: macos-15-intel, arch: x86_64, build: "cp314-*", tag: cp314 }
           - { os: macos-15-intel, arch: x86_64, build: "cp314t-*", tag: cp314t }
+          - { os: ubuntu-24.04-riscv, arch: riscv64 }
           - { os: macos-15, arch: arm64 }
           - { os: windows-2025, arch: AMD64 }
           - { os: windows-11-arm, arch: ARM64, python: "3.13" }
