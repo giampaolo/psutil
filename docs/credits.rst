@@ -569,7 +569,7 @@ Code contributors by year
 .. _`Sylvain Mouquet`: https://github.com/sylvainmouquet
 .. _`Syohei YOSHIDA`: https://github.com/syohex
 .. _`Thiago Borges Abdnur`: https://github.com/bolaum
-.. _`Thomas Klausner`: https://github.com/tklauser
+.. _`Thomas Klausner`: https://github.com/0-wiz-0
 .. _`Tim Schlueter`: https://github.com/modelrockettier
 .. _`Timmy Konick`: https://github.com/tijko
 .. _`Vincent A. Arcila`: https://github.com/jandrovins

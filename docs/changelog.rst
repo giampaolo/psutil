@@ -608,7 +608,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   :proc:`/proc/stat` can't be read due to permission error. Redirect it to
   :envvar:`PSUTIL_DEBUG` instead.
 - :gh:`2241`, [NetBSD]: can't compile On NetBSD 10.99.3/amd64. (patch by
-  :user:`Thomas Klausner <tklauser>`)
+  :user:`Thomas Klausner <0-wiz-0>`)
 - :gh:`2245`, [Windows]: fix var unbound error on possibly in
   :func:`swap_memory` (patch by :user:`student_2333 <lgc2333>`)
 - :gh:`2268`: ``bytes2human()`` utility function was unable to properly
@@ -742,7 +742,7 @@ Version 6.0.0 introduces some changes which affect backward compatibility:
   ENOMEM due to missing ``#include <sys/param.h>`` directive. (patch by
   :user:`Peter Jeremy <peterjeremy>`)
 - :gh:`2128`, [NetBSD]: :func:`swap_memory` was miscalculated. (patch by
-  :user:`Thomas Klausner <tklauser>`)
+  :user:`Thomas Klausner <0-wiz-0>`)
 
 5.9.1 — 2022-05-20
 ^^^^^^^^^^^^^^^^^^
