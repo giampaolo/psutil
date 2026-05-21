@@ -111,6 +111,7 @@ Code contributors by year
 * `Felix Yan`_ - :gh:`2732`
 * `Santhosh Raju`_ - :gh:`2805`
 * `Sergey Fedorov`_ - :gh:`2701`
+* :user:`Tobias Klauser <tklauser>` - :gh:`2711`
 
 2025
 ~~~~

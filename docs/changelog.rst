@@ -213,6 +213,9 @@ Others:
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+- :gh:`2711`, [Windows]: :func:`net_if_addrs()` was returning ``None`` for
+  the ``broadcast`` field of network interfaces instead of the correct
+  broadcast address.
 - :gh:`2715`, [Linux]: ``wait_pid_pidfd_open()`` (from :meth:`Process.wait`)
   crashes with ``EINVAL`` due to kernel race condition.
 - :gh:`2726`, [macOS]: :meth:`Process.num_ctx_switches` return an unusual high
