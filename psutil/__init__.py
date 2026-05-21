@@ -2460,7 +2460,7 @@ def net_if_addrs() -> dict[str, list[snicaddr]]:
                 debug(err)
             else:
                 if broadcast is not None:
-                    nt._replace(broadcast=broadcast)
+                    nt = nt._replace(broadcast=broadcast)
 
         ret[name].append(nt)
 
