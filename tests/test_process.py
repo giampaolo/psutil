@@ -213,9 +213,9 @@ class TestProcess(PsutilTestCase):
         _psposix.get_terminal_map = fake_get_terminal_map
         try:
             p.terminal()
-            assert call_count[0] == 2, (
-                "terminal() did not refresh the stale get_terminal_map() cache"
-            )
+            assert (
+                call_count[0] == 2
+            ), "terminal() did not refresh the stale get_terminal_map() cache"
         finally:
             _psposix.get_terminal_map = orig
             orig.cache_clear()
@@ -896,10 +896,8 @@ class TestProcess(PsutilTestCase):
         cmd = [
             PYTHON_EXE,
             "-c",
-            (
-                "import os, time; os.chdir('..'); [time.sleep(0.1) for x in"
-                " range(100)]"
-            ),
+            "import os, time; os.chdir('..'); [time.sleep(0.1) for x in"
+            " range(100)]",
         ]
         p = self.spawn_psproc(cmd)
         call_until(lambda: p.cwd() == os.path.dirname(os.getcwd()))
@@ -1500,11 +1498,13 @@ class TestProcess(PsutilTestCase):
         def clean_dict(d):
             exclude = {"PLAT", "HOME"}
             if MACOS:
-                exclude.update([
-                    "__CF_USER_TEXT_ENCODING",
-                    "VERSIONER_PYTHON_PREFER_32_BIT",
-                    "VERSIONER_PYTHON_VERSION",
-                ])
+                exclude.update(
+                    [
+                        "__CF_USER_TEXT_ENCODING",
+                        "VERSIONER_PYTHON_PREFER_32_BIT",
+                        "VERSIONER_PYTHON_VERSION",
+                    ]
+                )
             for name in list(d.keys()):
                 if name in exclude or name.startswith("PYTEST_"):
                     d.pop(name)
@@ -1533,7 +1533,8 @@ class TestProcess(PsutilTestCase):
     )
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
-        code = textwrap.dedent("""
+        code = textwrap.dedent(
+            """
             #include <unistd.h>
             #include <fcntl.h>
 
@@ -1547,7 +1548,8 @@ class TestProcess(PsutilTestCase):
                     return 0;
                 return execve("/bin/cat", argv, envp);
             }
-            """)
+            """
+        )
         cexe = create_c_exe(self.get_testfn(), c_code=code)
         sproc = self.spawn_subproc(
             [cexe], stdin=subprocess.PIPE, stderr=subprocess.PIPE
@@ -1577,7 +1579,6 @@ class TestProcess(PsutilTestCase):
 
 
 class TestProcessWait(PsutilTestCase):
-
     def test_wait_exited(self):
         # Test waitpid() + WIFEXITED -> WEXITSTATUS.
         # normal return, same as exit(0)
