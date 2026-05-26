@@ -192,7 +192,7 @@ class TestProcess(PsutilTestCase):
         # PTYs allocated after the first call are resolved correctly.
         import functools
 
-        import psutil._psposix as _psposix
+        from psutil import _psposix
 
         p = psutil.Process()
         _psposix.get_terminal_map.cache_clear()
