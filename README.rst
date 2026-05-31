@@ -125,10 +125,15 @@ For the full API with more examples, see the
 .. code-block:: python
 
     >>> import psutil
+    # Get CPU usage percentage for each core over a 1-second interval
     >>> psutil.cpu_percent(interval=1, percpu=True)
     [4.0, 6.9, 3.7, 9.2]
+    
+    # Get number of physical cores (excluding hyper-threading)
     >>> psutil.cpu_count(logical=False)
     2
+    
+    # Get current CPU frequency (in MHz)
     >>> psutil.cpu_freq()
     scpufreq(current=931.42, min=800.0, max=3500.0)
 
@@ -137,10 +142,8 @@ For the full API with more examples, see the
 .. code-block:: python
 
     >>> psutil.virtual_memory()
+    # Returns named tuple with total, available, percent, used, free memory (in bytes)
     svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, ...)
-    >>> psutil.swap_memory()
-    sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
-
 **Disks**
 
 .. code-block:: python
