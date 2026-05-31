@@ -48,7 +48,7 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v5
         with:
-          ref: refs/pull/${{ github.event.issue.number }}/head
+          ref: ${{ github.event.pull_request.head.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
