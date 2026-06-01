@@ -1734,10 +1734,12 @@ class Process:
     def terminal(self):
         tty_nr = int(self._parse_stat_file()['ttynr'])
         tmap = _psposix.get_terminal_map()
-        try:
-            return tmap[tty_nr]
-        except KeyError:
-            return None
+        if tty_nr not in tmap:
+            # The PTY may have been allocated after the initial cache build;
+            # clear the cache and rebuild once to pick up new /dev/pts entries.
+            _psposix.get_terminal_map.cache_clear()
+            tmap = _psposix.get_terminal_map()
+        return tmap.get(tty_nr)
 
     # May not be available on old kernels.
     if os.path.exists(f"/proc/{os.getpid()}/io"):

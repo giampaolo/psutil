@@ -185,6 +185,41 @@ class TestProcess(PsutilTestCase):
             else:
                 assert terminal == tty
 
+    @pytest.mark.skipif(not POSIX, reason="POSIX only")
+    def test_terminal_stale_cache(self):
+        # Regression test for https://github.com/giampaolo/psutil/issues/2830.
+        # terminal() must refresh the get_terminal_map() cache on a miss so
+        # PTYs allocated after the first call are resolved correctly.
+        import functools
+
+        from psutil import _psposix
+
+        p = psutil.Process()
+        _psposix.get_terminal_map.cache_clear()
+        real_map = dict(_psposix.get_terminal_map())
+
+        call_count = [0]
+
+        @functools.lru_cache
+        def fake_get_terminal_map():
+            call_count[0] += 1
+            # First call returns an empty map (simulates stale cache built
+            # before any PTY existed); second call returns the real map.
+            if call_count[0] == 1:
+                return {}
+            return real_map
+
+        orig = _psposix.get_terminal_map
+        _psposix.get_terminal_map = fake_get_terminal_map
+        try:
+            p.terminal()
+            assert (
+                call_count[0] == 2
+            ), "terminal() did not refresh the stale get_terminal_map() cache"
+        finally:
+            _psposix.get_terminal_map = orig
+            orig.cache_clear()
+
     @pytest.mark.skipif(not HAS_PROC_IO_COUNTERS, reason="not supported")
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
@@ -1542,7 +1577,6 @@ class TestProcess(PsutilTestCase):
 
 
 class TestProcessWait(PsutilTestCase):
-
     def test_wait_exited(self):
         # Test waitpid() + WIFEXITED -> WEXITSTATUS.
         # normal return, same as exit(0)
