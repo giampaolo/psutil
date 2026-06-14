@@ -202,6 +202,8 @@ Others:
   :user:`Santhosh Raju <fraggerfox>`)
 - :gh:`2816`, [OpenBSD]: :func:`swap_memory` :field:`sin` and :field:`sout` are
   no longer set to ``0``.
+- :gh:`2844`: removed docs/ from tarball. Tarball before: 586K. Tarball now:
+  396K.
 
 **Bug fixes**
 
