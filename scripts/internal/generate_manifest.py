@@ -12,7 +12,7 @@ import subprocess
 
 SKIP_EXTS = ('.png', '.jpg', '.jpeg')
 SKIP_FILES = ()
-SKIP_PREFIXES = ('.ci/', '.github/')
+SKIP_PREFIXES = ('.github/', 'docs/')
 
 
 def sh(cmd):
@@ -34,8 +34,6 @@ def main():
 
     for file in sorted(files):
         print("include " + file)
-
-    print("recursive-exclude docs/_static *")
 
 
 if __name__ == '__main__':
