@@ -31,7 +31,7 @@
     --bg-input: #ffffff;
     --bg-key: #f0f0f0;
     --kbd-bg: #f3f3f3;
-    --kbd-text: #777;
+    --kbd-text: #6a6a6a;
     --kbd-border: #c8c8c8;
     --bg-search-highlight: #e1edf5;
     --bg-hover: rgba(0, 0, 0, 0.04);
@@ -63,8 +63,7 @@
     --border-radius: 6px;
     --border-radius-code: 3px;
 
-    /* Accent (active state, focus, links). */
-    --accent: #2980b9;
+    --accent: #2371a8;
     --accent-ring: rgba(40, 100, 180, 0.25);
 
     /* Inline API links (cross-refs to symbols). */
