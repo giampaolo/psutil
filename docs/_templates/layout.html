@@ -18,8 +18,8 @@
 {% block extrahead %}
 {{ super() }}
 
-{# Keep the auto-generated index pages out of search results. #}
-{%- if pagename in ['genindex', 'py-modindex'] %}
+{# Keep the auto-generated index + 404 pages out of search results. #}
+{%- if pagename in ['genindex', 'py-modindex', '404'] %}
 <meta name="robots" content="noindex">
 {%- endif %}
 

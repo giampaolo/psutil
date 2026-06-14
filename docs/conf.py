@@ -256,6 +256,7 @@ sitemap_excludes = [
     "search.html",
     "genindex.html",
     "py-modindex.html",
+    "404.html",
     "_modules/*",
     "blog/archive.html",
     "blog/drafts.html",

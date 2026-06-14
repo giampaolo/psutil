@@ -13,6 +13,16 @@ BLOG_DESCRIPTION = "Psutil blog: releases, deep dives, war stories"
 HOME_OG_TITLE = "psutil: Process and System Utilities for Python"
 DESCRIPTION_OVERRIDE = {}
 
+STATIC_DESCRIPTIONS = {
+    "index": (
+        "psutil is a cross-platform Python library for retrieving "
+        "information on running processes and system utilization: CPU, "
+        "memory, disks, network and sensors."
+    ),
+    "api": "psutil full API reference.",
+    "install": "How to install psutil.",
+}
+
 VIEWPORT_RE = re.compile(r'\s*<meta name="viewport"[^>]*>', re.IGNORECASE)
 OG_TITLE_RE = re.compile(r'(<meta property="og:title" content=")[^"]*(")')
 
@@ -33,6 +43,10 @@ def capture_post_summary(app, pagename, templatename, context, doctree):
     # Get post's summary (the body of the .. post:: directive) and use
     # it in the og preview.
     DESCRIPTION_OVERRIDE.pop("current", None)
+    static = STATIC_DESCRIPTIONS.get(pagename)
+    if static:
+        DESCRIPTION_OVERRIDE["current"] = static
+        return
     posts = (getattr(app.env, "ablog_posts", {}) or {}).get(pagename) or []
     if not posts:
         return
@@ -63,6 +77,7 @@ def emit_blog_index_meta(app, pagename, templatename, context, doctree):
         return
     project = app.config.project
     base = app.config.html_baseurl.rstrip("/") + "/"
+    feed_title = app.config.blog_title or "Blog"
     fields = [
         ("name", "description", BLOG_DESCRIPTION),
         ("property", "og:title", project + " blog"),
@@ -71,11 +86,23 @@ def emit_blog_index_meta(app, pagename, templatename, context, doctree):
         ("property", "og:site_name", project),
         ("property", "og:description", BLOG_DESCRIPTION),
         ("property", "og:image", base + "_static/images/logo-psutil.png"),
-        ("property", "og:image:alt", project + " logo"),
+        (
+            "property",
+            "og:image:alt",
+            (
+                "psutil blog: articles on processes, system monitoring "
+                "and psutil development"
+            ),
+        ),
         ("name", "twitter:card", "summary"),
     ]
     tags = "\n".join(
         f'<meta {attr}="{key}" content="{val}" />' for attr, key, val in fields
+    )
+    # ablog skips the atom <link> on the no-doctree collection page; add it.
+    tags += (
+        '\n<link rel="alternate" type="application/atom+xml" '
+        f'href="{app.config.blog_path}/atom.xml" title="{feed_title}" />'
     )
     context["metatags"] = context.get("metatags", "") + tags + "\n"
 
