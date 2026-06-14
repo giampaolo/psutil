@@ -285,8 +285,7 @@ ol.blog-cards > li.blog-card {
     margin: 0 0.5em 0 0.15em;
 }
 
-.post-meta-banner > .post-meta-tags::before,
-.post-meta-banner > :has(> .post-meta-featured) + *::before {
+.post-meta-banner > .post-meta-tags::before {
     content: none;
     margin: 0;
 }

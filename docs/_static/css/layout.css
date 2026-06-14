@@ -264,6 +264,11 @@ html {
     [data-theme="dark"] .back-to-top.is-visible {
         opacity: 1;
     }
+
+    /* Hide RTD version flyout on mobile */
+    readthedocs-flyout {
+        display: none;
+    }
 }
 
 /* Wide viewports: tuck the button into the 32px gap between the
