@@ -68,8 +68,7 @@ a.blog-section-title:visited {
 }
 
 a.blog-section-title:hover,
-.blog-card-title a:hover,
-a.blog-card-badge-featured:hover {
+.blog-card-title a:hover {
     color: var(--blog-accent);
     text-decoration: none;
 }
@@ -184,8 +183,16 @@ ol.blog-cards > li.blog-card {
     font-style: italic;
 }
 
-.blog-card .blog-card-title {
+.blog-card-titlerow {
     grid-area: title;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75em;
+}
+
+.blog-card .blog-card-title {
+    min-width: 0;
     font-family: var(--font-body);
     font-size: 1.3em;
     font-weight: 700;
@@ -200,15 +207,8 @@ ol.blog-cards > li.blog-card {
     color: var(--text);
 }
 
-.blog-card-badge-featured,
-a.blog-card-badge-featured,
-a.blog-card-badge-featured:visited {
-    color: var(--text-muted);
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-left: 0.4em;
-    text-decoration: none;
+.blog-card-titlerow .post-meta-featured {
+    font-size: 0.7em;
 }
 
 .blog-card-summary {

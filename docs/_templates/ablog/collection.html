@@ -41,11 +41,13 @@
           {% else %}
             <span class="blog-card-draft">Draft</span>
           {% endif %}
-          {% if featured %}<a class="blog-card-badge-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">★ Featured</a>{% endif %}
         </span>
-        <h2 class="blog-card-title">
-          <a href="{{ postlink(post) }}">{{ post.title }}</a>
-        </h2>
+        <div class="blog-card-titlerow">
+          <h2 class="blog-card-title">
+            <a href="{{ postlink(post) }}">{{ post.title }}</a>
+          </h2>
+          {% if featured %}<a class="post-meta-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a>{% endif %}
+        </div>
       </div>
       {% if post.excerpt %}
       <div class="blog-card-summary">{{ post.to_html(pagename) | safe }}</div>
