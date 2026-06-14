@@ -1,8 +1,6 @@
 /*
    Styles for code blocks: Pygments syntax highlighting (Monokai for
    dark mode, custom palette for light).
-   Loaded after custom.css, which defines the :root CSS variables
-   and [data-theme="dark"] overrides used here.
 */
 
 /* ================================================================== */
@@ -33,7 +31,7 @@
 [data-theme="dark"] .highlight .gr      { color: #F8F8F2; }  /* Generic.Error */
 [data-theme="dark"] .highlight .gh      { color: #F8F8F2; }  /* Generic.Heading */
 [data-theme="dark"] .highlight .gi      { color: #9ccfa5; }  /* Generic.Inserted */
-/* .go, .gp: overridden in the REPL theme sections above */
+/* .go, .gp: overridden in the REPL theme sections below */
 [data-theme="dark"] .highlight .gs      { color: #F8F8F2; font-weight: bold; }  /* Generic.Strong */
 [data-theme="dark"] .highlight .gu      { color: #959077; }  /* Generic.Subheading */
 [data-theme="dark"] .highlight .gt      { color: #F8F8F2; }  /* Generic.Traceback */
@@ -91,8 +89,20 @@
 
 /* layout */
 div[class^="highlight-"] {
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-code);
     background: transparent;
+}
+
+/* Padding: applied to the wrapper, none on the inner pre so we don't
+   double up margins or shrink the scrollbar area. */
+.highlight {
+    padding: 12px 14px;
+    overflow-x: auto;
+}
+
+.highlight pre {
+    padding: 0;
+    margin: 0;
 }
 
 /* font */
@@ -118,31 +128,20 @@ div[class^="highlight-"] {
     line-height: var(--code-line-height) !important;
 }
 
-/* border */
-.rst-content div[class^=highlight],
-.rst-content pre.literal-block {
-    border-color: var(--border) !important;
-}
-
-/* reduce bottom margin inside list items */
-.rst-content li > div[class^='highlight'] {
-    margin-bottom: 6px !important;
-}
-
 /* background */
 [data-theme="light"] .highlight {
     background: #eef1f4 !important;
     border: 1px solid #c7ccd1;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-code);
 }
 
 [data-theme="dark"]  .highlight {
     background: #262626 !important;
     border: 1px solid #3a3a3a;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-code);
 }
 
-.highlight .k      { font-weight:normal; font-style: normal !important;}  /* (, [, ], )*/
+.highlight .k      { font-weight:normal; font-style: normal !important;}  /* keyword */
 .highlight .p      { font-weight:normal; }  /* (, [, ], )*/
 .highlight .mi     { font-weight:normal; }  /* numbers */
 .highlight .mf     { font-weight:normal; }  /* floats */

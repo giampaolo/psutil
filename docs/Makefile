@@ -36,6 +36,11 @@ check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fata
 		-D codeautolink_warn_on_missing_inventory=1 \
 		-d $(BUILDDIR)/doctrees . $(BUILDDIR)/html 2>&1
 
+# --- tests
+
+test:  ## Run doc sanity tests.
+	$(PYTHON) -m pytest test_docs.py $(ARGS)
+
 # --- tools
 
 blog-post:  ## Create a new blog post skeleton

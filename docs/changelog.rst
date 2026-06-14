@@ -67,11 +67,11 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Search: ``Ctrl+K`` to focus the search box (replaces ``/``).
   - Search: ``Up``/``Down`` arrow keys navigate results; ``Enter`` opens the
     selected result.
-  - Search results are styled as cards with subtle borders and shadows (no
-    longer rely on RTD).
+  - Search results are styled as cards with subtle borders and shadows.
   - Identifiers in code blocks (e.g. ``psutil.Process()``, ``p.cpu_percent()``)
     are now clickable and link to their API reference entry on click, via
     `sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
+  - A "back to top" button.
 
 - Testing:
 
@@ -213,9 +213,9 @@ Others:
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
-- :gh:`2711`, [Windows]: :func:`net_if_addrs()` was returning ``None`` for
-  the ``broadcast`` field of network interfaces instead of the correct
-  broadcast address.
+- :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
+  ``broadcast`` field of network interfaces instead of the correct broadcast
+  address.
 - :gh:`2715`, [Linux]: ``wait_pid_pidfd_open()`` (from :meth:`Process.wait`)
   crashes with ``EINVAL`` due to kernel race condition.
 - :gh:`2726`, [macOS]: :meth:`Process.num_ctx_switches` return an unusual high
@@ -3071,3 +3071,18 @@ cases accessing the old names will work but it will cause a
 - :gh:`24`, [Windows], **[critical]**: :meth:`Process.kill` for PID 0 now
   raises :exc:`AccessDenied` exception instead of :exc:`WindowsError`.
 - :gh:`30`: psutil.get_pid_list() was returning two 0 PIDs.
+
+0.1.0 — 2009-01-27
+^^^^^^^^^^^^^^^^^^
+
+Initial release. Supports Linux, Windows, and macOS via per-platform backends
+(``_pslinux``, ``_psmswindows``, ``_psosx``) with C extensions for Windows and
+macOS.
+
+**Features**
+
+- :class:`Process` class exposing ``pid``, ``name``, ``path``, and ``cmdline``,
+  with a ``kill()`` method.
+- ``get_process_list()`` returning all running processes.
+- ``ProcessInfo`` value object passed between the public API and the platform
+  backends.

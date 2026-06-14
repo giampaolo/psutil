@@ -5,10 +5,16 @@
 About this site
 ===============
 
-This site is built with `Sphinx <https://www.sphinx-doc.org/>`__ and the
-`Read the Docs theme <https://sphinx-rtd-theme.readthedocs.io/>`__, with a
-number of custom additions: a dark mode, keyboard shortcuts, a top bar, an
-improved search navigation, and clickable API references in code blocks.
+This site is built with `Sphinx <https://www.sphinx-doc.org/>`__ on top of its
+built-in ``basic`` theme, with a custom layout and a number of additions:
+
+- Dark mode
+- Keyboard shortcuts
+- Top bar
+- On-this-page navigation
+- Improved search navigation
+- Clickable API references in code blocks
+- A "back to top" button
 
 Keyboard shortcuts
 ------------------
@@ -23,12 +29,14 @@ Keyboard shortcuts
      - Open search
    * - Shift+D
      - Toggle dark / light mode
-   * - ↓ / ↑
+   * - ↑ / ↓
      - Navigate search results
    * - Enter
      - Open highlighted search result
    * - Escape
-     - Close search
+     - Close search / dialog
+   * - ?
+     - Show this help
 
 Dark mode
 ---------

@@ -1,0 +1,253 @@
+/* ---- Hamburger (mobile only) ---------------------------------------- */
+
+.topbar-hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-right: 4px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--sidebar-fg);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+    .topbar-hamburger {
+        display: inline-flex;
+    }
+}
+
+/* ---- Container ------------------------------------------------------- */
+
+.topbar {
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0) 100%
+    ), var(--bg-topbar);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--sidebar-fg);
+}
+
+.topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    max-width: var(--layout-width);
+    margin: 0 auto;
+    padding: 0 2.5rem 0 0;
+}
+
+/* ---- Left: logo block (same width as the left sidebar) -------------- */
+
+.topbar .topbar-logo,
+.topbar .topbar-logo:visited {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: var(--left-sidebar-width);
+    /* Match the left sidebar's item indentation (1.618em) so the
+       wordmark sits directly above where the toctree items start. */
+    padding-left: 1.618em;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 1.1rem;
+    letter-spacing: 0.01em;
+}
+
+.topbar-logo span {
+    padding-top: 6px;
+    line-height: 1;
+}
+
+.topbar-logo img {
+    height: 30px;
+    width: auto;
+    display: block;
+}
+
+/* ---- Right: actions cluster ----------------------------------------- */
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Visual gap between the "preferences/nav" group (Blog, theme) and the
+   "repo facts" group (GitHub, version). */
+.topbar-btn + .topbar-link {
+    margin-left: 6px;
+}
+
+/* Square icon button base (theme-toggle button + GitHub link). FA
+   icons inside scale via font-size. */
+.topbar-link,
+.topbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--sidebar-fg);
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+/* Blog link reads as a text label, not an icon button. */
+.topbar-text {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--sidebar-fg);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+/* Shared hover for every actionable element in the topbar. */
+.topbar-hamburger:hover,
+.topbar-link:hover,
+.topbar-btn:hover,
+.topbar-text:hover,
+.topbar-version:hover {
+    background: var(--bg-hover-on-dark);
+    color: #ffffff;
+}
+
+.topbar a:hover {
+    text-decoration: none;
+}
+
+/* GitHub: icon + star count, expands beyond the 32px square. */
+.topbar-github {
+    width: auto;
+    padding: 0 8px 0 6px;
+    gap: 6px;
+}
+
+.topbar-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--sidebar-fg);
+}
+
+/* FontAwesome star, matching the old site exactly. */
+.topbar-stars::before {
+    content: "\f005";
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
+.topbar-stars:empty {
+    display: none;
+}
+
+/* PyPI version: tag icon + version number. */
+.topbar-version {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 8px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--sidebar-fg);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+/* FontAwesome tag, matching the old site exactly. */
+.topbar-version::before {
+    content: "\f02b";
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+    font-size: 0.95em;
+    opacity: 0.85;
+}
+
+.topbar-version:empty {
+    display: none;
+}
+
+/* ---- Mobile responsive ---------------------------------------------- */
+
+@media (max-width: 1024px) {
+    .topbar-logo,
+    .topbar-logo:visited {
+        width: auto;
+        padding-left: 0;
+    }
+
+    .topbar-inner {
+        padding: 0 12px;
+        justify-content: flex-start;
+    }
+
+    .topbar-actions {
+        gap: 6px;
+        margin-left: auto;
+    }
+
+    /* Drop the stars count + version pill once the hamburger is in
+       play; the icon-only GitHub link stays. */
+    .topbar-version {
+        display: none;
+    }
+
+    .topbar-stars {
+        display: none;
+    }
+
+    .topbar-github {
+        padding: 0 6px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar-text {
+        padding: 0 6px;
+        font-size: 0.95rem;
+    }
+}
+
+/* Touch devices: meet the 44px minimum tap target (WCAG 2.5.5). */
+@media (pointer: coarse) {
+    .topbar-link,
+    .topbar-btn,
+    .topbar-hamburger {
+        width: 44px;
+        height: 44px;
+    }
+
+    .topbar-text,
+    .topbar-version {
+        height: 44px;
+    }
+}

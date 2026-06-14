@@ -1,0 +1,92 @@
+/*
+ * psutil-sphinx-theme: HTML tables + version directives.
+ */
+
+/* ---- Tables -------------------------------------------------------- */
+
+.article table.docutils {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    table-layout: fixed;
+}
+
+.article table.docutils th,
+.article table.docutils td {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+    text-align: left;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.article table.docutils th {
+    background: var(--table-header-bg);
+    color: var(--table-header-text);
+    font-weight: 600;
+    text-align: left;
+}
+
+.article table.docutils tbody tr:nth-child(odd) td {
+    background: var(--table-row-odd);
+}
+
+.article table.docutils tbody tr:nth-child(even) td {
+    background: var(--table-row-even);
+}
+
+/* Cell paragraphs shouldn't add bottom margin. */
+.article table.docutils th p,
+.article table.docutils td p {
+    margin: 0;
+}
+
+/* "wide-table" opt-out: size columns to content. */
+.article table.wide-table {
+    table-layout: auto;
+}
+
+/* Narrow screens: let tables scroll horizontally. */
+@media (max-width: 1024px) {
+    .article table.docutils {
+        display: block;
+        overflow-x: auto;
+        table-layout: auto;
+        max-width: 100%;
+    }
+}
+
+/* ---- Version directives -------------------------------------------- */
+
+div.versionadded,
+div.versionchanged,
+div.deprecated {
+    border-left: 3px solid;
+    padding: 0 1rem;
+    margin: 1em 0;
+}
+
+div.versionadded {
+    border-left-color: var(--versionadded-border);
+}
+div.versionchanged {
+    border-left-color: var(--versionchanged-border);
+}
+div.deprecated {
+    border-left-color: var(--deprecated-border);
+}
+
+div.versionadded .versionmodified {
+    color: var(--versionadded-color);
+    font-weight: 600;
+}
+div.versionchanged .versionmodified {
+    color: var(--versionchanged-color);
+    font-weight: 600;
+}
+div.deprecated .versionmodified {
+    color: var(--deprecated-color);
+    font-weight: 600;
+}

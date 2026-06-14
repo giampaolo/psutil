@@ -1,0 +1,129 @@
+/* Left sidebar menu icons. Also shared with search results. */
+
+/* Documentation */
+a[href*="install.html"],
+ul.search > li:has(> a[href*="install.html"]),
+body[data-page="install"] .left-sidebar a.current {
+    --doc-icon: "\f019";
+}
+
+a[href*="api-overview.html"],
+ul.search > li:has(> a[href*="api-overview.html"]),
+body[data-page="api-overview"] .left-sidebar a.current {
+    --doc-icon: "\f14e";
+}
+
+a[href*="api.html"],
+ul.search > li:has(> a[href*="api.html"]),
+body[data-page="api"] .left-sidebar a.current {
+    --doc-icon: "\f121";
+}
+
+a[href*="faq.html"],
+ul.search > li:has(> a[href*="faq.html"]),
+body[data-page="faq"] .left-sidebar a.current {
+    --doc-icon: "\3f";
+}
+
+a[href*="performance.html"],
+ul.search > li:has(> a[href*="performance.html"]),
+body[data-page="performance"] .left-sidebar a.current {
+    --doc-icon: "\f0e7";
+}
+
+a[href*="recipes.html"],
+ul.search > li:has(> a[href*="recipes.html"]),
+body[data-page="recipes"] .left-sidebar a.current {
+    --doc-icon: "\f2e7";
+}
+
+/* Reference */
+a[href*="shell-equivalents.html"],
+ul.search > li:has(> a[href*="shell-equivalents.html"]),
+body[data-page="shell-equivalents"] .left-sidebar a.current {
+    --doc-icon: "\f120";
+}
+
+a[href*="stdlib-equivalents.html"],
+ul.search > li:has(> a[href*="stdlib-equivalents.html"]),
+body[data-page="stdlib-equivalents"] .left-sidebar a.current {
+    --doc-icon: "\f3e2";
+    --doc-icon-font: var(--fa-family-brands);
+    --doc-icon-weight: 400;
+}
+
+a[href*="glossary.html"],
+ul.search > li:has(> a[href*="glossary.html"]),
+body[data-page="glossary"] .left-sidebar a.current {
+    --doc-icon: "\f031";
+}
+
+a[href*="platform.html"],
+ul.search > li:has(> a[href*="platform.html"]),
+body[data-page="platform"] .left-sidebar a.current {
+    --doc-icon: "\f5fd";
+}
+
+a[href*="migration.html"],
+ul.search > li:has(> a[href*="migration.html"]),
+body[data-page="migration"] .left-sidebar a.current {
+    --doc-icon: "\f362";
+}
+
+/* About */
+a[href*="adoption.html"],
+ul.search > li:has(> a[href*="adoption.html"]),
+body[data-page="adoption"] .left-sidebar a.current {
+    --doc-icon: "\f0c0";
+}
+
+a[href*="alternatives.html"],
+ul.search > li:has(> a[href*="alternatives.html"]),
+body[data-page="alternatives"] .left-sidebar a.current {
+    --doc-icon: "\e13a";
+}
+
+a[href*="funding.html"],
+ul.search > li:has(> a[href*="funding.html"]),
+body[data-page="funding"] .left-sidebar a.current {
+    --doc-icon: "\f4be";
+}
+
+a[href*="credits.html"],
+ul.search > li:has(> a[href*="credits.html"]),
+body[data-page="credits"] .left-sidebar a.current {
+    --doc-icon: "\f559";
+}
+
+/* Project */
+a[href*="blog.html"],
+ul.search > li:has(> a[href*="blog.html"]),
+ul.search > li:has(> a[href^="blog/"]),
+ul.search > li:has(> a[href*="/blog/"]),
+body[data-page="blog"] .left-sidebar a.current {
+    --doc-icon: "\f09e";
+}
+
+a[href*="changelog.html"],
+ul.search > li:has(> a[href*="changelog.html"]),
+body[data-page="changelog"] .left-sidebar a.current {
+    --doc-icon: "\f1da";
+}
+
+a[href*="timeline.html"],
+ul.search > li:has(> a[href*="timeline.html"]),
+body[data-page="timeline"] .left-sidebar a.current {
+    --doc-icon: "\e29c";
+}
+
+a[href*="devguide.html"],
+ul.search > li:has(> a[href*="devguide.html"]),
+body[data-page="devguide"] .left-sidebar a.current {
+    --doc-icon: "\f7d9";
+}
+
+a[href*="genindex.html"],
+ul.search > li:has(> a[href*="genindex.html"]),
+body[data-page="genindex"] .left-sidebar a.current {
+    --doc-icon: "\f15d";
+}

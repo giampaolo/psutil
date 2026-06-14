@@ -1,17 +1,17 @@
 /*
-   Styles for the blog sub-site. Loaded after custom.css.
-   Merriweather @font-face is in fonts.css (self-hosted). */
+ * psutil-sphinx-theme: blog sub-site.
+ *
+ * Loaded for every page; rules are scoped to blog pages via
+ * `body:has(.blog-section-banner)` (any page under the blog path
+ * renders the banner) or `.article:has(.post-meta-banner)` (only
+ * blog posts) so non-blog pages stay unaffected.
+ */
 
-/* ================================================================== */
-/* Variables                                                          */
-/* ================================================================== */
+/* ---- Tokens ---------------------------------------------------------- */
 
 :root {
     --font-post-body: "Merriweather", Charter, Georgia, serif;
-    /* Blog sub-site accent — warm rust, editorial feel. Defined at
-       :root so non-blog contexts (like the search page) can reach it
-       for blog-specific highlighting. */
-    --blog-accent: #9a3412;
+    --blog-accent: #9a3412;       /* warm rust, editorial */
     --blog-accent-deep: #7c2d12;
 }
 
@@ -20,80 +20,7 @@
     --blog-accent-deep: #fdba74;
 }
 
-/* ================================================================== */
-/* Blog palette                                                       */
-/* ================================================================== */
-
-/* Scoped to the blog sub-site so every link inside it picks up the
-   blog accent in place of the site's cool blue. */
-body:has(.blog-section-banner) {
-    --links: var(--blog-accent);
-    --links-visited: var(--blog-accent);
-    --links-api: var(--blog-accent-deep);
-    --links-api-underline: var(--blog-accent-deep);
-}
-
-/* ================================================================== */
-/* Fonts / layout                                                     */
-/* ================================================================== */
-
-/* Use a different font for the blog. */
-.document:has(.post-meta-banner) p,
-.document:has(.post-meta-banner) li,
-.document:has(.post-meta-banner) blockquote,
-.document:has(.post-meta-banner) dd {
-    font-family: var(--font-post-body);
-    line-height: 1.75;
-}
-
-.document:has(.post-meta-banner) h1 {
-    font-size: 2.1em;
-    line-height: 1.25;
-    margin-bottom: 0.4em;
-}
-
-.document:has(.post-meta-banner) h2 {
-    font-size: 1.5em;
-    line-height: 1.3;
-    margin-top: 1.8em !important;
-    padding-top: 0.5em;
-}
-
-.document:has(.post-meta-banner) h3 {
-    font-size: 1.2em;
-    line-height: 1.35;
-    margin-top: 1.5em !important;
-}
-
-.document:has(.post-meta-banner) div[class^="highlight-"] {
-    margin: 1.3em 0;
-}
-
-/* GitHub-style blockquotes: muted text with a gray bar on the left. */
-.document:has(.post-meta-banner) blockquote {
-    margin: 1em 0;
-    padding: 0 1em;
-    border-left: 0.25em solid var(--border);
-    color: var(--text-muted);
-    background: transparent;
-    font-style: normal;
-}
-
-.document:has(.post-meta-banner) blockquote > div {
-    margin: 0;
-}
-
-.document:has(.post-meta-banner) blockquote p {
-    margin: 0.5em 0;
-}
-
-/* ================================================================== */
-/* Blog section banner                                              */
-/* ================================================================== */
-
-/* Shown on every page under the blog path; a visual signal that the
-   visitor is in the blog "sub-site". Rendered by
-   _templates/breadcrumbs.html. */
+/* ---- Section banner (top of every blog page) ------------------------ */
 
 .blog-section-banner {
     display: flex;
@@ -101,14 +28,13 @@ body:has(.blog-section-banner) {
     gap: 0.7em;
     flex-wrap: wrap;
     padding: 0.3em 0;
-    margin: 44px 0 0.3em 0;  /* clear the fixed topbar + breathing room */
+    margin: 1.5em 0 0.3em 0;
     border-bottom: 1px solid var(--border);
 }
 
-/* fix for mobile */
-@media (max-width: 768px) {
-    .blog-section-banner {
-        margin-top: 0.3em;
+@media (min-width: 1280px) {
+    .main:has(.article-with-toc:not(.no-toc)) .blog-section-banner {
+        max-width: calc(100% - var(--right-sidebar-width) - 32px);
     }
 }
 
@@ -123,34 +49,40 @@ body:has(.blog-section-banner) {
 }
 
 .blog-section-icon {
+    grid-area: icon;
     width: 1.7em;
     height: 1.7em;
-    color: var(--links);
+    color: var(--blog-accent);
     flex-shrink: 0;
 }
 
 a.blog-section-title,
 a.blog-section-title:visited {
+    grid-area: title;
     font-size: 1.9em;
     font-weight: 700;
     letter-spacing: 0.04em;
-    color: var(--headings);
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.1;
+}
+
+a.blog-section-title:hover,
+.blog-card-title a:hover,
+a.blog-card-badge-featured:hover {
+    color: var(--blog-accent);
     text-decoration: none;
 }
 
-a.blog-section-title:hover {
-    color: var(--links);
-}
-
 .blog-section-subtitle {
+    grid-area: subtitle;
     font-size: 0.85em;
     color: var(--text-muted);
-    font-style: normal;
     opacity: 0.8;
+    margin-top: 0.15em;
 }
 
-/* RSS subscribe button — lives inside the section banner. */
-
+/* RSS subscribe button (orange outlined). */
 a.blog-rss,
 a.blog-rss:visited {
     display: inline-flex;
@@ -160,14 +92,12 @@ a.blog-rss:visited {
     background: transparent;
     color: var(--blog-accent);
     border: 1px solid var(--blog-accent);
-    border-radius: var(--border-radius);
+    border-radius: 4px;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.9em;
     line-height: 1;
     flex: 0 0 auto;
-    transition: background var(--theme-transition),
-                color var(--theme-transition);
 }
 
 a.blog-rss:hover {
@@ -183,9 +113,7 @@ a.blog-rss:hover {
     transform: translateY(-0.05em);
 }
 
-/* ================================================================== */
-/* Blog listing (overrides ablog/collection.html)                     */
-/* ================================================================== */
+/* ---- Blog listing (post cards) -------------------------------------- */
 
 .blog-listing-header {
     display: flex;
@@ -202,20 +130,20 @@ a.blog-rss:hover {
 
 .blog-listing-title-value,
 .blog-listing-title-value:visited {
-    color: var(--headings);
+    color: var(--text);
     font-weight: 500;
     border-bottom: none;
     text-decoration: none;
 }
 
 ol.blog-cards {
-    list-style: none !important;
+    list-style: none;
     margin: 0;
     padding: 0;
 }
 
 ol.blog-cards > li.blog-card {
-    list-style: none !important;
+    list-style: none;
     margin: 0;
 }
 
@@ -227,12 +155,9 @@ ol.blog-cards > li.blog-card {
         "title"
         "summary"
         "tags";
-    row-gap: 0;
-    padding: 1.6em 0 1.6em 0;
+    padding: 1.6em 0;
     margin: 0;
     background: none;
-    box-shadow: none;
-    border-radius: 0;
     border: none;
 }
 
@@ -244,26 +169,35 @@ ol.blog-cards > li.blog-card {
     display: contents;
 }
 
-.blog-card-title {
+.blog-card-meta {
+    grid-area: date;
+    color: color-mix(in srgb, var(--text-muted) 75%, transparent);
+    font-size: 0.78em;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 0.05em 0;
+}
+
+.blog-card-draft {
+    font-style: italic;
+}
+
+.blog-card .blog-card-title {
     grid-area: title;
     font-family: var(--font-body);
     font-size: 1.3em;
     font-weight: 700;
     line-height: 1.3;
-    margin: 0 0 0.4em 0 !important;
+    margin: 0 0 0.4em 0;
     padding: 0;
 }
 
 .blog-card-title a,
 .blog-card-title a:visited {
     text-decoration: none;
-    color: var(--headings);
-    transition: color var(--theme-transition);
-}
-
-.blog-card-title a:hover {
-    color: var(--blog-accent) !important;
-    text-decoration: none;
+    color: var(--text);
 }
 
 .blog-card-badge-featured,
@@ -275,32 +209,6 @@ a.blog-card-badge-featured:visited {
     padding: 0;
     margin-left: 0.4em;
     text-decoration: none;
-    transition: color var(--theme-transition);
-}
-
-a.blog-card-badge-featured:hover {
-    color: var(--blog-accent);
-}
-
-[data-theme="dark"] .post-meta-featured,
-[data-theme="dark"] a.post-meta-featured {
-    background: color-mix(in srgb, var(--blog-accent) 20%, transparent);
-    border-color: color-mix(in srgb, var(--blog-accent) 45%, transparent);
-}
-
-.blog-card-meta {
-    grid-area: date;
-    color: color-mix(in srgb, var(--text-muted) 75%, transparent);
-    font-size: 0.78em;
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-variant-numeric: tabular-nums;
-    margin: 0 0 0.35em 0;
-}
-
-.blog-card-draft {
-    font-style: italic;
 }
 
 .blog-card-summary {
@@ -322,11 +230,10 @@ a.blog-card-badge-featured:hover {
 .blog-card-summary a:hover {
     color: var(--blog-accent);
     border-bottom-color: var(--blog-accent);
+    text-decoration: none;
 }
 
-.blog-card-summary code,
-.blog-card-summary .literal,
-.blog-card-summary tt {
+.blog-card-summary code {
     background: none;
     border: none;
     padding: 0;
@@ -334,9 +241,6 @@ a.blog-card-badge-featured:hover {
     font-size: 0.92em;
 }
 
-/* Ablog emits <p class="ablog-post-excerpt"><p>text</p></p>;
-   browsers parse that as an empty wrapper + content siblings.
-   Hide the empty one. */
 .blog-card-summary p:empty {
     display: none;
 }
@@ -345,15 +249,15 @@ a.blog-card-badge-featured:hover {
     margin: 0;
 }
 
-.blog-card-tags {
+.blog-card .blog-card-tags {
     grid-area: tags;
     justify-self: start;
     list-style: none;
     display: flex;
     flex-wrap: wrap;
     gap: 0.3em;
-    margin: 0.2em 0 0 0;
-    padding: 0;
+    margin: 0.9em 0 0 0;
+    padding-left: 0;
 }
 
 .blog-card-tags li {
@@ -361,12 +265,7 @@ a.blog-card-badge-featured:hover {
     margin: 0;
 }
 
-/* Anchor pill styling for .blog-card-tags a is shared with
-   .post-meta-tags a below. */
-
-/* ================================================================== */
-/* Blog post meta banner (date + tags below the H1)                   */
-/* ================================================================== */
+/* ---- Post meta banner (date + tags below the H1 of a post) --------- */
 
 .post-meta-banner {
     display: flex;
@@ -397,7 +296,6 @@ a.post-meta-featured,
 a.post-meta-featured:visited {
     padding: 0.15em 0.65em;
     border-radius: 999px;
-    font-family: var(--font-search);
     font-size: 0.78em;
     font-weight: 600;
     letter-spacing: 0.06em;
@@ -407,8 +305,6 @@ a.post-meta-featured:visited {
     background: color-mix(in srgb, var(--blog-accent) 12%, transparent);
     border: 1px solid color-mix(in srgb, var(--blog-accent) 28%, transparent);
     text-decoration: none;
-    transition: background var(--theme-transition),
-                border-color var(--theme-transition);
 }
 
 a.post-meta-featured:hover {
@@ -432,8 +328,7 @@ a.post-meta-featured:hover {
     align-items: center;
 }
 
-/* Shared tag-pill style: applies to both the post banner
-   (.post-meta-tags) and the listing card (.blog-card-tags). */
+/* Shared tag-pill style: card listing + post banner. */
 .post-meta-tags a,
 .post-meta-tags a:visited,
 .blog-card-tags a,
@@ -446,8 +341,6 @@ a.post-meta-featured:hover {
     color: var(--text-muted);
     background: color-mix(in srgb, var(--text-muted) 7%, transparent);
     text-decoration: none;
-    transition: background var(--theme-transition),
-                color var(--theme-transition);
 }
 
 .post-meta-tags a:hover,
@@ -457,3 +350,55 @@ a.post-meta-featured:hover {
     text-decoration: none;
 }
 
+/* ---- Blog post body: switch to serif typography -------------------- */
+
+.article:has(.post-meta-banner) p,
+.article:has(.post-meta-banner) li,
+.article:has(.post-meta-banner) blockquote,
+.article:has(.post-meta-banner) dd {
+    font-family: var(--font-post-body);
+    line-height: 1.75;
+}
+
+.article:has(.post-meta-banner) h1 {
+    font-size: 2.1em;
+    line-height: 1.25;
+    margin-bottom: 0.4em;
+}
+
+.article:has(.post-meta-banner) h2 {
+    font-size: 1.5em;
+    line-height: 1.3;
+    margin-top: 1.8em;
+    padding-top: 0.5em;
+}
+
+.article:has(.post-meta-banner) h3 {
+    font-size: 1.2em;
+    line-height: 1.35;
+    margin-top: 1.5em;
+}
+
+/* GitHub-style blockquotes inside posts. */
+.article:has(.post-meta-banner) blockquote {
+    margin: 1em 0;
+    padding: 0 1em;
+    border-left: 0.25em solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    font-style: normal;
+}
+
+.article:has(.post-meta-banner) blockquote p {
+    margin: 0.5em 0;
+}
+
+/* ---- Blog-scoped accent: redefine the link tokens inside the blog
+   sub-site so every link picks up the rust hue without needing
+   per-element overrides. */
+
+body:has(.blog-section-banner) {
+    --accent: var(--blog-accent);
+    --links-api: var(--blog-accent-deep);
+    --links-api-underline: var(--blog-accent-deep);
+}

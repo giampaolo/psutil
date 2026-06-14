@@ -302,7 +302,7 @@ class TestRightToc:
     def test_visibility(self, subtests):
         has_toc = ("api.html", "faq.html", "glossary.html", "blog.html")
         no_toc = ("index.html", "genindex.html", "search.html")
-        pat = re.compile(r'<aside[^>]*\bclass="[^"]*\bright-toc\b')
+        pat = re.compile(r'<aside[^>]*\bclass="[^"]*\bright-sidebar\b')
         for file in has_toc:
             with subtests.test(file=file):
                 assert pat.search(read_html(file))
@@ -311,12 +311,13 @@ class TestRightToc:
                 assert not pat.search(read_html(file))
 
     def test_hash_targets_resolve(self, subtests):
-        # Every <a href="#..."> inside the right-toc must point to an
-        # id that exists on the same page. Otherwise the JS hash-match
-        # path in right-toc.js silently misses on direct URL load.
+        # Every <a href="#..."> inside the right-sidebar must point to
+        # an id that exists on the same page. Otherwise the JS
+        # hash-match path in right-toc.js silently misses on direct
+        # URL load.
         html = read_html("api.html")
         m = re.search(
-            r'<aside[^>]*\bclass="[^"]*\bright-toc\b[^"]*"[^>]*>(.*?)</aside>',
+            r'<aside[^>]*\bclass="[^"]*\bright-sidebar\b[^"]*"[^>]*>(.*?)</aside>',
             html,
             re.DOTALL,
         )
@@ -334,11 +335,12 @@ class TestRightToc:
         html = read_html("glossary.html")
         assert 'data-toc-mode="glossary"' in html
         m = re.search(
-            r'<aside class="right-toc right-toc--glossary"[^>]*>(.*?)</aside>',
+            r'<aside class="right-sidebar'
+            r' right-sidebar--glossary"[^>]*>(.*?)</aside>',
             html,
             re.DOTALL,
         )
-        assert m, "right-toc--glossary aside not found"
+        assert m, "right-sidebar--glossary aside not found"
         terms = re.findall(r'<a href="#term-[^"]*">([^<]+)</a>', m.group(1))
         assert terms
         assert terms == sorted(terms, key=str.lower)

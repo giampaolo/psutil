@@ -1,0 +1,132 @@
+/*
+ * psutil-sphinx-theme: API function / class signatures.
+ */
+
+/* ---- Signature container -------------------------------------------- */
+
+.article dl:not(.docutils):not(.simple) {
+    margin: 0 0 0 0;
+}
+
+.article dl.py + dl.py > dt {
+    margin-top: 10px;
+}
+
+/* Collapse constants without a description body. */
+.article dl.py:not(:has(> dd p)) + dl.py > dt {
+    margin-top: 0px;
+}
+
+.article dl.py > dd:not(:has(p)) {
+    margin: 0;
+    padding: 0;
+}
+
+.article dl:not(.docutils):not(.glossary) > dt {
+    background: var(--func-sig-bg);
+    color: var(--func-sig-text);
+    padding: 1px 9px;
+    border-left: 3px solid var(--func-sig-border);
+    border-radius: 0;
+    font-family: var(--font-body);
+    font-size: 17px;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-weight: 500;
+    display: inline-block;
+    line-height: 1.5;
+    position: relative;
+}
+
+.article dl:not(.docutils):not(.glossary) > dt a.headerlink {
+    position: absolute;
+    right: -1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0.4rem;
+    padding: 0;
+}
+
+/* Function name + default values (e.g. "False" / "None"): bold. */
+.article dl:not(.docutils) > dt .descname,
+.article dl:not(.docutils) > dt .sig-name,
+.article dl:not(.docutils) > dt .default_value {
+    color: var(--func-sig-name);
+    font-weight: 700;
+}
+
+/* Reset to muted/normal: psutil. prefix, parens, param names,
+   operators, properties. Default values keep 700 from the dt. */
+.article dl:not(.docutils) > dt .sig-paren,
+.article dl:not(.docutils) > dt .sig-prename,
+.article dl:not(.docutils) > dt .descclassname,
+.article dl:not(.docutils) > dt .n,
+.article dl:not(.docutils) > dt .o,
+.article dl:not(.docutils) > dt .property {
+    color: var(--func-sig-param);
+    font-weight: 400;
+}
+
+.sig-paren {
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+/* "[source]" link to the right of the signature. */
+.viewcode-link {
+    color: var(--func-sig-border);
+    font-size: 0.8em;
+    font-style: italic;
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 1.5em;
+    vertical-align: middle;
+    position: relative;
+    top: 5px;
+}
+
+.viewcode-link:hover {
+    text-decoration: underline;
+}
+
+/* Nested <dd> body for the doc paragraph. */
+.article dl:not(.docutils):not(.glossary) > dd {
+    margin: 0.6em 0 1em 0;
+    padding: 0 0 0 1em;
+}
+
+/* ---- Glossary opt-out ---------------------------------------------- */
+
+.article dl.glossary > dt {
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--headings);
+    margin: 1.6em 0 0.3em 0;
+}
+
+.article dl.glossary > dd {
+    margin: 0 0 1em 1.5em;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+/* ---- Inline ntuple field code (e.g. `user`, `system`) -------------- */
+
+code.ntuple-field,
+.ntuple-field {
+    color: var(--ntuple-color);
+    font-weight: 700;
+}
+
+/* Compress constants */
+.article dl.py.data > dt {
+    margin-bottom: 2px;
+}
+
+.article dl.py.data + dl.py.data > dt {
+    margin-top: 0;
+}

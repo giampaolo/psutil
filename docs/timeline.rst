@@ -7,7 +7,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -24,7 +23,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -65,7 +63,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -94,7 +91,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -119,7 +115,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -148,7 +143,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -165,7 +159,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -198,7 +191,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -251,7 +243,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -288,7 +279,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -349,7 +339,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -410,7 +399,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -463,7 +451,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -496,7 +483,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -545,7 +531,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -574,7 +559,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -603,7 +587,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -624,7 +607,6 @@ Timeline
 .. list-table::
    :header-rows: 1
    :widths: 30 50 40 20
-   :class: modern-timeline-table
 
    * - Version
      - Date
@@ -638,3 +620,7 @@ Timeline
      - 2009-03-06
      - :ref:`what's new <011>`
      - `diff <https://github.com/giampaolo/psutil/compare/release-0.1.0...release-0.1.1#files_bucket>`__
+   * - :pypi:`0.1.0`
+     - 2009-01-27
+     - :ref:`what's new <010>`
+     - `diff <https://github.com/giampaolo/psutil/compare/d84cc9a7...release-0.1.0#files_bucket>`__

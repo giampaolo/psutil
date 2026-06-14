@@ -1,95 +1,87 @@
-// Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// Implement keyboard shortcuts re. to search.
-// - Ctrl+K: un/focus the search input (was /)
-// - esc: unfocus the search input
+// Sidebar input:
+//   `CTRL+K` / `CMD+K`: focus / select the search input
+//   `ESC`: exit search
+//
 // Search results page:
-// - up/down: move selection
-// - enter: open entry
+//   `Arrow Up` / `Arrow down`: navigate results
+//   `ENTER`: open result
 
-document.addEventListener("DOMContentLoaded", function () {
-    // No-op on touch/mobile devices.
-    if (window.matchMedia("(pointer: coarse)").matches)
-        return;
-
-    var searchInput = document.querySelector(
-        "#rtd-search-form input[name='q']"
-    );
-
-    // Disable Sphinx's built-in "/" search shortcut.
-    function disableSphinxShortcut() {
-        if (typeof DOCUMENTATION_OPTIONS !== "undefined")
-            DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS = false;
+(function () {
+    // Disable Sphinx's built-in "/" shortcut so it doesn't compete.
+    // Done before the touch-device early return so it applies there too.
+    if (typeof DOCUMENTATION_OPTIONS !== "undefined") {
+        DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS = false;
     }
 
-    // Focus the search input on Ctrl+K; blur it on Escape.
-    function initCtrlK(input) {
-        if (!input) return;
-        document.addEventListener("keydown", function (e) {
-            if (e.ctrlKey && e.key === "k") {
+    if (window.matchMedia("(pointer: coarse)").matches) {
+        return;
+    }
+
+    function getInput() {
+        return document.getElementById("search-input");
+    }
+
+    // Re-submitting the same query on the search page is a browser
+    // no-op (URL doesn't change). Force a reload only in that case;
+    // for a real navigation, let the browser do its thing.
+    getInput()?.form?.addEventListener("submit", (e) => {
+        const form = e.currentTarget;
+        const action = new URL(form.action, location.href);
+        action.search = "?" + new URLSearchParams(new FormData(form));
+        if (action.pathname === location.pathname
+            && action.search === location.search) {
+            e.preventDefault();
+            location.reload();
+        }
+    });
+
+    // ---- Ctrl+K + Esc on the sidebar input -------------------------
+
+    document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+            const input = getInput();
+            if (input) {
                 e.preventDefault();
-                if (document.activeElement === input)
+                if (document.activeElement === input) {
                     input.blur();
-                else {
+                } else {
                     input.focus();
                     input.select();
                 }
             }
-            else if (e.key === "Escape" && document.activeElement === input)
+            return;
+        }
+        if (e.key === "Escape") {
+            const input = getInput();
+            if (input && document.activeElement === input) {
+                input.value = "";
                 input.blur();
-        });
-    }
+            }
+        }
+    });
 
-    // Hide/show the server-rendered Ctrl+K badge on focus/blur.
-    function initCtrlKBadge(input) {
-        if (!input)
+    // ---- Arrow-key navigation on the search results page -----------
+    (function () {
+        const container = document.getElementById("search-results");
+        if (!container) {
             return;
-        var badge = input.parentNode.querySelector(".search-kbd-hint");
-        if (!badge)
-            return;
-        input.addEventListener("focus", function () { badge.style.opacity = "0"; });
-        input.addEventListener("blur",  function () { badge.style.opacity = ""; });
-    }
-
-    // Shade the rest of the page while the search input is focused
-    // by overlaying a dim layer; the search container is lifted
-    // above it via CSS.
-    function initFocusBlur(input) {
-        if (!input)
-            return;
-        var overlay = document.createElement("div");
-        overlay.className = "search-overlay";
-        document.body.appendChild(overlay);
-        input.addEventListener("focus", function () {
-            document.body.classList.add("search-focused");
-        });
-        input.addEventListener("blur", function () {
-            document.body.classList.remove("search-focused");
-        });
-    }
-
-    // Enable Up/Down arrow navigation and Enter to open on the
-    // search results page. The first result is auto-selected once
-    // results finish loading.
-    function initResultsNavigation(searchInput) {
-        var container = document.getElementById("search-results");
-        if (!container) return;
-
-        var activeIndex = -1;
-
-        // Return the current list of result <li> elements.
-        function getResults() {
-            return Array.from(container.querySelectorAll("ul.search li"));
         }
 
-        // Highlight the result at `index` and scroll it into view.
+        const pageInput = document.querySelector(".search-page-input");
+        const sidebarInput = getInput();
+        let activeIndex = -1;
+
+        function getResults() {
+            return Array.from(container.querySelectorAll("ul.search > li"));
+        }
+
         function setActive(index) {
-            var results = getResults();
-            if (!results.length) return;
+            const results = getResults();
+            if (!results.length) {
+                return;
+            }
             index = Math.max(0, Math.min(index, results.length - 1));
-            results.forEach(function (li) {
+            results.forEach((li) => {
                 li.classList.remove("search-result-active");
             });
             activeIndex = index;
@@ -97,77 +89,57 @@ document.addEventListener("DOMContentLoaded", function () {
             results[index].scrollIntoView({ block: "nearest" });
         }
 
-        // Remove highlight from all results.
         function clearActive() {
             activeIndex = -1;
-            getResults().forEach(function (li) {
+            getResults().forEach((li) => {
                 li.classList.remove("search-result-active");
             });
         }
 
-        initResultsObserver(container, getResults, clearActive, setActive);
-        initNavigationKeys(searchInput, getResults, setActive, clearActive);
-
-        // Watch for new <li> elements and clear any prior selection
-        // when the result set changes. We don't auto-select the first
-        // result on landing — that should only happen when the user
-        // presses ArrowDown to opt into keyboard navigation.
-        function initResultsObserver(container, getResults, clearActive, setActive) {
-            new MutationObserver(function (mutations) {
-                var hasNewLi = mutations.some(function (m) {
-                    return Array.from(m.addedNodes).some(function (n) {
-                        return n.tagName === "LI";
-                    });
+        // When Sphinx adds new <li>s, drop any prior selection.
+        new MutationObserver((mutations) => {
+            const hasNewLi = mutations.some((m) => {
+                return Array.from(m.addedNodes).some((n) => {
+                    return n.tagName === "LI";
                 });
-                if (!hasNewLi) return;
+            });
+            if (hasNewLi) {
                 clearActive();
-            }).observe(container, { childList: true, subtree: true });
+            }
+        }).observe(container, { childList: true, subtree: true });
+
+        function isSearchInput(el) {
+            return el && (el === sidebarInput || el === pageInput);
         }
 
-        // Handle arrow-key navigation and Enter to open the active
-        // result. Down from a search input moves to the first result.
-        function initNavigationKeys(searchInput, getResults, setActive, clearActive) {
-            // The search-results page has its own prominent input
-            // (.search-page-input). Treat both as "search inputs" so
-            // pressing Enter in either submits the form normally and
-            // doesn't get hijacked into "open the active result".
-            function isSearchInput(el) {
-                return el && (
-                    el === searchInput ||
-                    el.classList.contains("search-page-input")
-                );
+        document.addEventListener("keydown", (e) => {
+            if (!getResults().length) {
+                return;
             }
-            document.addEventListener("keydown", function (e) {
-                if (!getResults().length) return;
-                if (isSearchInput(document.activeElement)) {
-                    if (e.key !== "ArrowDown") return;
-                    e.preventDefault();
-                    document.activeElement.blur();
-                    setActive(0);
+            if (isSearchInput(document.activeElement)) {
+                if (e.key !== "ArrowDown") {
                     return;
                 }
-                if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    setActive(activeIndex === -1 ? 0 : activeIndex + 1);
+                e.preventDefault();
+                document.activeElement.blur();
+                setActive(0);
+                return;
+            }
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setActive(activeIndex === -1 ? 0 : activeIndex + 1);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                if (activeIndex > 0) {
+                    setActive(activeIndex - 1);
                 }
-                else if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    if (activeIndex > 0)
-                        setActive(activeIndex - 1);
+            } else if (e.key === "Enter" && activeIndex >= 0) {
+                e.preventDefault();
+                const link = getResults()[activeIndex].querySelector("a");
+                if (link) {
+                    link.click();
                 }
-                else if (e.key === "Enter" && activeIndex >= 0) {
-                    e.preventDefault();
-                    var link = getResults()[activeIndex].querySelector("a");
-                    if (link)
-                        link.click();
-                }
-            });
-        }
-    }
-
-    disableSphinxShortcut();
-    initCtrlK(searchInput);
-    initCtrlKBadge(searchInput);
-    initFocusBlur(searchInput);
-    initResultsNavigation(searchInput);
-});
+            }
+        });
+    })();
+})();

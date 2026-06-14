@@ -97,8 +97,6 @@ DEV_DEPS = [
     "pypinfo",
     "pytest-cov",
     "requests",
-    "sphinx",
-    "sphinx_rtd_theme",
     "twine",
     "validate-pyproject[all]",
     "virtualenv",
