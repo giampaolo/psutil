@@ -1,0 +1,88 @@
+.footer {
+    margin-top: 0.5em;
+    padding: 1em 0 16px;
+    border-top: 1px solid var(--border);
+}
+
+/* Align footer with the article column, not the wider .main (which
+   spans the right TOC too). Only applies when the right TOC is
+   visible (>= 1280px) and the page actually has a TOC. */
+@media (min-width: 1280px) {
+    .article-with-toc:not(.no-toc) ~ .footer {
+        width: calc(100% - var(--right-sidebar-width) - 32px);
+    }
+}
+
+.footer-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.footer-text {
+    color: var(--text-muted);
+    opacity: 0.7;
+    line-height: 1.4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em 0.7em;
+}
+
+/* Middot between items, attached to each item except the last so a
+   wrapped row never starts with an orphan separator. */
+.footer-text > span:not(:last-child)::after {
+    content: "·";
+    margin-left: 0.7em;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.footer-text a,
+.footer-text a:visited {
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 3px;
+}
+
+.footer-text a:hover {
+    color: var(--accent);
+    text-decoration-color: currentColor;
+}
+
+/* Easter egg: the © symbol links to the 404 page. No underline. */
+.footer-text a.footer-egg,
+.footer-text a.footer-egg:visited {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* RSS icon, anchored to the right of the footer row. */
+.footer-rss,
+.footer-rss:visited {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-muted);
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.footer-text a.footer-egg:hover,
+.footer-rss:hover {
+    color: var(--accent);
+}
+
+/* RSS glyph from a single svg file, colored via mask so it follows
+   currentColor (muted, accent on hover). Shared with the blog banner. */
+.rss-icon {
+    display: inline-block;
+    background-color: currentColor;
+    -webkit-mask: url(../images/rss.svg) center / contain no-repeat;
+    mask: url(../images/rss.svg) center / contain no-repeat;
+}
+
+.footer-rss .rss-icon {
+    width: 1.4em;
+    height: 1.4em;
+}

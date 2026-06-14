@@ -18,7 +18,7 @@ import time
 
 _HERE = pathlib.Path(__file__).resolve().parent
 _ROOT_DIR = _HERE.parent
-sys.path.insert(0, str(_HERE / '_ext'))  # needed to load local extensions
+sys.path.insert(0, str(_HERE / "_ext"))  # needed to load local extensions
 
 
 # Load _bootstrap.py (at the repo root) without putting the repo
@@ -112,7 +112,6 @@ manpages_url = "https://manpages.debian.org/{path}"
 # Paths
 # =====================================================================
 
-html_static_path = ["_static"]
 exclude_patterns = ["_build"]
 rst_prolog = ".. currentmodule:: psutil\n"  # Prepended to every .rst file
 
@@ -156,44 +155,57 @@ copybutton_exclude = ".linenos, .gp"
 # Theming
 # =====================================================================
 
-html_theme = "sphinx_rtd_theme"
+# Custom psutil-sphinx-theme, built on top of Sphinx's `basic` theme.
 
-if html_theme == "sphinx_rtd_theme":
-    html_theme_options = {
-        "collapse_navigation": False,
-        "navigation_depth": 1,
-        "titles_only": True,
-        "flyout_display": "attached",
-        "version_selector": False,
-        "language_selector": False,
-    }
-    templates_path = ["_templates", "_static/images"]
-    pygments_style = "tango"  # https://pygments.org/styles/
-    html_css_files = [
-        (
-            "https://fonts.googleapis.com/css2"
-            "?family=Inter:wght@400;500;600;700"
-            "&family=JetBrains+Mono:wght@400;600"
-            "&family=Merriweather:ital,wght@0,400;0,700;1,400"
-            "&display=swap"
-        ),
-        "css/custom.css",
-        "css/code.css",
-        "css/home.css",
-        "css/blog.css",
-        "css/right-toc.css",
-        "css/prev-next.css",
-    ]
-    html_js_files = [
-        "js/highlight-repl.js",
-        "js/external-urls.js",
-        ("js/theme-toggle.js", {"defer": "defer"}),
-        ("js/sidebar-close.js", {"defer": "defer"}),
-        ("js/search-shortcuts.js", {"defer": "defer"}),
-        ("js/right-toc.js", {"defer": "defer"}),
-        ("js/github-meta.js", {"defer": "defer"}),
-        ("js/home-install-copy.js", {"defer": "defer"}),
-    ]
+html_theme = "basic"
+html_theme_options = {
+    "globaltoc_maxdepth": 1,
+    "globaltoc_collapse": False,
+    "globaltoc_includehidden": True,
+}
+html_static_path = ["_static"]
+templates_path = ["_templates"]
+pygments_style = "tango"  # base palette (overridden by css/code.css)
+
+
+def _css_files():
+    css_dir = _HERE / "_static" / "css"
+    files = sorted(p.name for p in css_dir.glob("*.css"))
+    head = ["base.css", "typography.css"]
+    tail = ["home.css"]
+    middle = [f for f in files if f not in head + tail]
+    return [f"css/{name}" for name in head + middle + tail if name in files]
+
+
+html_css_files = [
+    # External: fonts + FontAwesome
+    (
+        "https://fonts.googleapis.com/css2"
+        "?family=Inter:wght@400;500;600;700"
+        "&family=JetBrains+Mono:wght@400;600"
+        "&family=Merriweather:ital,wght@0,400;0,700;1,400"
+        "&display=swap"
+    ),
+    (
+        "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css",
+        {
+            "integrity": (
+                "sha384-EXatlQyrOJgDaM9/a74ArMzy7/2bTMSrZj8ID1IPeVmc3GncfCugefCFWSLj8JL/"
+            ),
+            "crossorigin": "anonymous",
+        },
+    ),
+    *_css_files(),
+]
+
+
+def _js_files():
+    js_dir = _HERE / "_static" / "js"
+    files = sorted(p.name for p in js_dir.glob("*.js"))
+    return [(f"js/{name}", {"defer": "defer"}) for name in files]
+
+
+html_js_files = _js_files()
 
 # =====================================================================
 # Blog (ablog package)
@@ -240,6 +252,20 @@ ogp_social_cards = {"image": _logo, "image_mini": _logo}
 # the default {lang}{version} prefix (we don't use either in URLs).
 sitemap_url_scheme = "{link}"
 sitemap_show_lastmod = True
+sitemap_excludes = [
+    "search.html",
+    "genindex.html",
+    "py-modindex.html",
+    "_modules/*",
+    "blog/archive.html",
+    "blog/drafts.html",
+    "blog/tag.html",
+    "blog/tag/*",
+    "blog/category.html",
+    "blog/category/*",
+    "blog/author.html",
+    "blog/author/*",
+]
 # Suppress sphinx-sitemap warning (turned into error by
 # --fail-on-warning) occurring on CI.
 suppress_warnings = ["git.too_shallow"]

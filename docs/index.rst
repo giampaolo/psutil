@@ -12,7 +12,7 @@
    <script>document.body.classList.add('home-page');</script>
 
    <div class="hero">
-     <div class="hero-title"><img src="_static/images/logo-psutil.svg" class="hero-logo" alt="psutil logo"><span>psutil<span/></div>
+     <h1 class="hero-title"><img src="_static/images/logo-psutil.svg" class="hero-logo" alt="psutil logo"><span>psutil</span></h1>
      <div class="hero-subtitle">Process and System Utilities for Python</div>
    </div>
 
@@ -22,8 +22,8 @@
    processes and system utilization in Python. It is useful mainly for system
    monitoring, profiling, limiting process resources, and managing running
    processes. Psutil implements many functionalities offered by UNIX command
-   line tool such as *ps, top, free, iotop, netstat, ifconfig, lsof* and others
-   (see :doc:`shell equivalents <shell-equivalents>`).
+   line tool such as *ps, top, free, iotop, netstat, ifconfig, lsof* and
+   others.
 
 .. ============================================================================
 .. Install one-liner
@@ -83,7 +83,7 @@
        <div class="home-feature-title">Memory</div>
      </a>
      <a class="home-feature-card" href="api.html#disks">
-       <i class="fa fa-hdd-o home-icon-fa"></i>
+       <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="Disks">
        <div class="home-feature-title">Disks</div>
      </a>
      <a class="home-feature-card" href="api.html#network">
@@ -91,7 +91,7 @@
        <div class="home-feature-title">Network</div>
      </a>
      <a class="home-feature-card" href="api.html#sensors">
-       <i class="fa fa-thermometer-half home-icon-fa"></i>
+       <img class="home-icon-svg" src="_static/images/icon-sensors.svg" alt="Sensors">
        <div class="home-feature-title">Sensors</div>
      </a>
      <a class="home-feature-card" href="api.html#processes">
@@ -226,13 +226,14 @@
 
 .. raw:: html
 
+   <div class="home-section-label">Stats</div>
    <div class="home-stats">
      <a class="home-stat" href="https://clickpy.clickhouse.com/dashboard/psutil">
-       <span class="home-stat-num">330+ million</span>
+       <span class="home-stat-num">340+ million</span>
        <span class="home-stat-label">downloads per month</span>
      </a>
      <a class="home-stat" href="https://github.com/giampaolo/psutil/network/dependents">
-       <span class="home-stat-num">760,000+</span>
+       <span class="home-stat-num">770,000+</span>
        <span class="home-stat-label">GitHub repositories</span>
      </a>
      <a class="home-stat" href="timeline.html">

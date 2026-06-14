@@ -314,6 +314,7 @@ Memory
   .. list-table::
      :header-rows: 1
      :widths: 9 15 14 14 26
+     :class: wide-table
 
      * - Field
        - Linux
@@ -2666,7 +2667,7 @@ Process I/O priority constants
 Represent the I/O priority class of a process (Linux and Windows only). They
 can be used in conjunction with :meth:`Process.ionice` (*ioclass* argument).
 
-Linux (see :manpage:`ioprio_get(2)`):
+- Linux (see :manpage:`ioprio_get(2)`):
 
   .. data:: IOPRIO_CLASS_RT
 
@@ -2684,7 +2685,7 @@ Linux (see :manpage:`ioprio_get(2)`):
 
      No priority set (default; treated as :data:`IOPRIO_CLASS_BE`).
 
-Windows:
+- Windows:
 
   .. data:: IOPRIO_VERYLOW
   .. data:: IOPRIO_LOW
@@ -2712,7 +2713,7 @@ explained in :func:`resource.getrlimit` documentation.
    these constants are now :class:`ProcessRlimit` enum members (were plain
    integers). See :ref:`migration guide <migration-8.0>`.
 
-Linux / FreeBSD:
+- Linux / FreeBSD:
 
   .. data:: RLIM_INFINITY
   .. data:: RLIMIT_AS
@@ -2726,7 +2727,7 @@ Linux / FreeBSD:
   .. data:: RLIMIT_RSS
   .. data:: RLIMIT_STACK
 
-Linux specific:
+- Linux specific:
 
   .. data:: RLIMIT_LOCKS
   .. data:: RLIMIT_MSGQUEUE
@@ -2735,7 +2736,7 @@ Linux specific:
   .. data:: RLIMIT_RTTIME
   .. data:: RLIMIT_SIGPENDING
 
-FreeBSD specific:
+- FreeBSD specific:
 
   .. data:: RLIMIT_SWAP
 

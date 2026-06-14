@@ -5,11 +5,16 @@
 """Bridge ablog and sphinxext-opengraph for social-card metadata."""
 
 import html
+import re
 
 import sphinxext.opengraph
 
 BLOG_DESCRIPTION = "Psutil blog: releases, deep dives, war stories"
+HOME_OG_TITLE = "psutil: Process and System Utilities for Python"
 DESCRIPTION_OVERRIDE = {}
+
+VIEWPORT_RE = re.compile(r'\s*<meta name="viewport"[^>]*>', re.IGNORECASE)
+OG_TITLE_RE = re.compile(r'(<meta property="og:title" content=")[^"]*(")')
 
 original_get_description = sphinxext.opengraph.get_description
 
@@ -66,12 +71,27 @@ def emit_blog_index_meta(app, pagename, templatename, context, doctree):
         ("property", "og:site_name", project),
         ("property", "og:description", BLOG_DESCRIPTION),
         ("property", "og:image", base + "_static/images/logo-psutil.png"),
-        ("name", "twitter:card", "summary_large_image"),
+        ("property", "og:image:alt", project + " logo"),
+        ("name", "twitter:card", "summary"),
     ]
     tags = "\n".join(
         f'<meta {attr}="{key}" content="{val}" />' for attr, key, val in fields
     )
     context["metatags"] = context.get("metatags", "") + tags + "\n"
+
+
+def finalize_head(app, pagename, templatename, context, doctree):
+    tags = context.get("metatags")
+    if not tags:
+        return
+    deduped = VIEWPORT_RE.sub("", tags)
+    if pagename == app.config.master_doc:
+        deduped = OG_TITLE_RE.sub(
+            r"\g<1>" + html.escape(HOME_OG_TITLE, quote=True) + r"\g<2>",
+            deduped,
+        )
+    if deduped != tags:
+        context["metatags"] = deduped
 
 
 def setup(app):
@@ -81,6 +101,7 @@ def setup(app):
     app.connect("html-page-context", capture_post_summary, priority=300)
     app.connect("html-page-context", set_og_type_article, priority=400)
     app.connect("html-page-context", emit_blog_index_meta)
+    app.connect("html-page-context", finalize_head, priority=600)
     return {
         "version": "0.1",
         "parallel_read_safe": True,

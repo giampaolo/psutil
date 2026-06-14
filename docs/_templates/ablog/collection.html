@@ -1,5 +1,5 @@
 {#-
-  Override of ablog/collection.html — renders blog.html (all posts),
+  Override of ablog/collection.html. Renders blog.html (all posts),
   tag pages, year archives. Card-style listing inspired by
   blog.python.org.
 -#}
@@ -33,7 +33,7 @@
     {% set ns = namespace(featured=false) %}
     {% for tag in post.tags or [] %}{% if tag|string == 'featured' %}{% set ns.featured = true %}{% endif %}{% endfor %}
     {% set featured = ns.featured %}
-    <li class="blog-card{% if featured %} is-featured{% endif %}">
+    <li class="blog-card">
       <div class="blog-card-head">
         <span class="blog-card-meta">
           {% if post.published %}

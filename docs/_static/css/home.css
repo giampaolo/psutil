@@ -1,22 +1,14 @@
-/*
-   Styles for the home page (index.rst) and the sponsors section
-   (_sponsors.html, included by index.rst and funding.rst).
-
-   Loaded after custom.css, which defines the :root CSS variables
-   and [data-theme="dark"] overrides used here.
-*/
-
 /* ================================================================== */
 /* Layout                                                             */
 /* ================================================================== */
 
-.home-page .right-toc {
-    display: none !important;
+.home-page .right-sidebar {
+    display: none;
 }
 
 /* Hide next/prev buttons */
-.home-page .rst-footer-buttons {
-    display: none !important;
+.home-page .prev-next {
+    display: none;
 }
 
 /* ================================================================== */
@@ -29,12 +21,12 @@
 }
 
 .home-page .hero-title {
-    font-family: var(--font-hero);
+    font-family: var(--font-body);
     font-size: 3.5rem;
     font-weight: 700;
     color: var(--headings);
     line-height: 1.1;
-    margin-bottom: 0.3em;
+    margin: 0 0 0.3em;
     font-variant-ligatures: none;
     letter-spacing: 0.02em;
     display: flex;
@@ -54,7 +46,7 @@
 }
 
 .home-page .hero-subtitle {
-    font-family: var(--font-hero-subtext);
+    font-family: var(--font-body);
     font-size: 1.15rem;
     color: var(--text-muted);
     margin-bottom: 0.9em;
@@ -62,7 +54,7 @@
 
 .home-page .home-intro {
     max-width: 720px;
-    margin: 0 auto;
+    margin: 0.4em auto 0;
 }
 
 .home-page .home-intro p {
@@ -80,7 +72,7 @@
     gap: 0.6em;
     width: max-content;
     max-width: 100%;
-    margin: 1.6em auto 0;
+    margin: 2.5em auto 0;
     padding: 0.45em 0.55em 0.45em 0.85em;
     background: transparent;
     border: 1px solid var(--border);
@@ -212,7 +204,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.9em;
+    gap: 0.4em;
     margin: 2.5em 0 0;
 }
 
@@ -248,7 +240,7 @@
     font-size: 0.82rem;
     color: var(--text-muted);
     background: var(--surface-sunken);
-    text-decoration: none !important;
+    text-decoration: none;
     transition: border-color var(--theme-transition),
                 color var(--theme-transition),
                 background var(--theme-transition);
@@ -258,7 +250,7 @@
     border-color: var(--text-muted);
     color: var(--content-text);
     background: var(--surface-raised);
-    text-decoration: none !important;
+    text-decoration: none;
 }
 
 /* ================================================================== */
@@ -270,7 +262,11 @@
     justify-content: center;
     flex-wrap: wrap;
     gap: 56px;
-    margin: 3em 0 1.5em;
+    margin: 1em 0em 1.5em;
+}
+
+.home-page .home-section-label:has(+ .home-stats) {
+    margin-top: 4em;
 }
 
 /* Quiet stats: just numbers + labels, no boxes. The figures speak;
@@ -281,7 +277,7 @@
     flex-direction: column;
     align-items: center;
     color: var(--content-text);
-    text-decoration: none !important;
+    text-decoration: none;
     transition: color var(--theme-transition);
 }
 
@@ -335,9 +331,6 @@
         width: 1.6rem;
         height: 1.6rem;
     }
-    .home-page .home-icon-fa {
-        font-size: 1.6rem;
-    }
     .home-page .home-feature-title {
         font-size: 0.8rem;
     }
@@ -350,7 +343,7 @@
     padding: 20px 14px;
     text-align: center;
     background: var(--card-bg);
-    text-decoration: none !important;
+    text-decoration: none;
     transition: box-shadow 0.15s, border-color 0.15s;
     display: block;
 }
@@ -362,7 +355,6 @@
 
 /* Hover-revealed arrow signals "this is a nav link, click to jump." */
 .home-page .home-feature-card::after {
-    content: "↗";
     position: absolute;
     top: 8px;
     right: 10px;
@@ -391,6 +383,20 @@
     margin: 2.5em 0 0.9em;
 }
 
+/* Section-label owns the caption-to-content gap; zero out the
+ * next sibling's top margin so they don't stack. */
+.home-page .home-section-label + .home-stats,
+.home-page .home-section-label + .home-quickstart,
+.home-page .home-section-label + .sponsor-table {
+    margin-top: 0;
+}
+
+/* Extra breathing room above "Try it" so it anchors as the page's
+ * interactive moment rather than blending with neighboring labels. */
+.home-page .home-section-label:has(+ .home-quickstart) {
+    margin-top: 4em;
+}
+
 .home-page .home-icon-svg {
     width: 2.2rem;
     height: 2.2rem;
@@ -402,13 +408,6 @@
     filter: brightness(1.45) saturate(0.7);
 }
 
-.home-page .home-icon-fa {
-    font-size: 2.2rem;
-    color: var(--links);
-    display: block;
-    margin-bottom: 10px;
-}
-
 .home-page .home-feature-title {
     font-weight: 700;
     font-size: 0.95rem;
@@ -416,190 +415,13 @@
     color: var(--headings);
 }
 
-.home-page .home-feature-apis {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    font-family: var(--code-font);
-    line-height: 1.9;
-}
-
-/* ================================================================== */
-/* Description cards                                                  */
-/* ================================================================== */
-
-.home-page .home-desc-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    align-items: stretch;
-    gap: 1rem;
-    margin: 2rem 0;
-}
-
-@media (max-width: 700px) {
-    .home-page .home-desc-cards {
-        grid-template-columns: 1fr;
-    }
-}
-
-.home-page .home-desc-card {
-    border: 1px solid #e1e4e8;
-    border-radius: 8px;
-    padding: 1.1rem 1.3rem;
-    background: var(--card-bg);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-    display: flex;
-    flex-direction: column;
-}
-
-[data-theme="dark"] .home-page .home-desc-card {
-    border-color: #2e2e2e;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-}
-
-.home-page .home-desc-card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: -1.1rem -1.3rem 0.75rem;
-    padding: 0.55rem 1.3rem;
-    background: var(--surface-raised);
-    border-bottom: 1px solid var(--card-border);
-    border-radius: 8px 8px 0 0;
-}
-
-.home-page .home-desc-card-icon {
-    font-size: 1.1rem;
-    flex-shrink: 0;
-    padding-right: 0.35rem;
-    line-height: 1;
-    padding-top: 2px;
-}
-
-.home-page .home-desc-card:nth-child(1) .home-desc-card-icon { color: #2a6a90; }
-.home-page .home-desc-card:nth-child(2) .home-desc-card-icon { color: #8a7550; }
-.home-page .home-desc-card:nth-child(3) .home-desc-card-icon { color: #5d6d7e; }
-
-.home-page .home-desc-card:nth-child(1),
-.home-page .home-desc-card:nth-child(2),
-.home-page .home-desc-card:nth-child(3) {
-    position: relative;
-    overflow: hidden;
-}
-
-.home-page .home-desc-card:nth-child(1),
-.home-page .home-desc-card:nth-child(3) {
-    background: #f0f6fb;
-}
-
-.home-page .home-desc-card:nth-child(2) {
-    background: #faf5ec;
-}
-
-[data-theme="dark"] .home-page .home-desc-card:nth-child(1),
-[data-theme="dark"] .home-page .home-desc-card:nth-child(3) {
-    background: #253344;
-}
-
-[data-theme="dark"] .home-page .home-desc-card:nth-child(2) {
-    background: #2e2920;
-}
-
-.home-page .home-desc-card:nth-child(1) .home-desc-card-header {
-    background: linear-gradient(to bottom, #6aafd4, #4a90b8);
-    border-bottom-color: #3a7aa0;
-}
-
-.home-page .home-desc-card:nth-child(2) .home-desc-card-header {
-    background: linear-gradient(to bottom, #d9c49a, #b8a078);
-    border-bottom-color: #8a7550;
-}
-
-.home-page .home-desc-card:nth-child(3) .home-desc-card-header {
-    background: linear-gradient(to bottom, #a0b0bc, #7a8fa0);
-    border-bottom-color: #637888;
-}
-
-.home-page .home-desc-card:nth-child(1)::before,
-.home-page .home-desc-card:nth-child(2)::before,
-.home-page .home-desc-card:nth-child(3)::before {
-    font-family: 'FontAwesome';
-    font-size: 7rem;
-    position: absolute;
-    bottom: -0.75rem;
-    right: 0.5rem;
-    opacity: 0.07;
-    pointer-events: none;
-    line-height: 1;
-}
-
-.home-page .home-desc-card:nth-child(1)::before {
-    content: '\f085';
-    color: #2a6a90;
-}
-
-.home-page .home-desc-card:nth-child(2)::before {
-    content: '\f080';
-    color: #8a7550;
-}
-
-.home-page .home-desc-card:nth-child(3)::before {
-    content: '\f0ac';
-    color: #5d6d7e;
-}
-
-.home-page .home-desc-card-header .home-desc-card-title {
-    color: #fff;
-    text-shadow:
-        0 0 2px rgba(0, 0, 0, 0.4),
-        0 1px 4px rgba(0, 0, 0, 0.5);
-    -webkit-text-stroke: 0.3px rgba(0, 0, 0, 0.25);
-}
-
-.home-page .home-desc-card-header .home-desc-card-icon {
-    color: #fff;
-    text-shadow: none;
-    -webkit-text-stroke: 0;
-    font-size: 1.2rem;
-}
-
-.home-page .home-desc-card-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--headings);
-}
-
-.home-page .home-desc-card p {
-    font-size: 0.88rem;
-    color: var(--content-text);
-    margin: 0 0 0.75rem;
-    line-height: 1.6;
-    flex-grow: 1;
-}
-
-.home-page .home-desc-card-link {
-    display: inline-block;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--links);
-    text-decoration: none;
-    margin-top: auto;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border);
-    width: 100%;
-}
-
-.home-page .home-desc-card-link:hover {
-    text-decoration: underline;
-    color: var(--links);
-}
-
 /* ================================================================== */
 /* Sponsors (shared with funding.rst)                                 */
 /* ================================================================== */
 
 .home-page #sponsors {
-    margin: 1.5rem -24px 20px;
-    padding: 1.5rem 24px 2rem;
+    margin: 1.5rem -56px 20px;
+    padding: 1.5rem 56px 2rem;
     background: #f8f9fa;
     border-top: 1px solid var(--border);
     text-align: center;
@@ -607,22 +429,6 @@
 
 .home-page #sponsors > .home-section-label {
     margin-top: 1.2em;
-}
-
-@media (max-width: 768px) {
-    .home-page #sponsors {
-        margin-left: -12px;
-        margin-right: -12px;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-}
-
-@media (min-width: 1280px) {
-    body.home-page:not(:has(aside.right-toc)) #sponsors {
-        margin-left: -24px;
-        margin-right: -52px;
-    }
 }
 
 [data-theme="dark"] .home-page #sponsors {
@@ -634,8 +440,8 @@
 }
 
 .sponsor-table {
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin-left: auto;
+    margin-right: auto;
     max-width: 100%;
 }
 
@@ -658,17 +464,8 @@ table.sponsor-table {
 table.sponsor-table,
 table.sponsor-table tr,
 table.sponsor-table td {
-    background: transparent !important;
-    border: none !important;
-}
-
-.sponsor-logo {
-    filter: grayscale(100%) opacity(100%);
-    transition: filter 0.2s;
-}
-
-.sponsor-logo:hover {
-    filter: grayscale(0%) opacity(100%);
+    background: transparent;
+    border: none;
 }
 
 .sponsor-cta-wrap {
@@ -706,126 +503,8 @@ a.sponsor-cta:hover {
 }
 
 /* ================================================================== */
-/* Release callout strip (under the hero)                             */
-/* ================================================================== */
-
-.home-page a.home-release-callout,
-.home-page a.home-release-callout:visited {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 0.5em auto 2em;
-    max-width: 640px;
-    padding: 0.55em 1em;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface-sunken);
-    color: var(--content-text) !important;
-    font-size: 0.9rem;
-    text-decoration: none !important;
-    transition: border-color var(--theme-transition),
-                background var(--theme-transition);
-}
-
-.home-page a.home-release-callout:hover {
-    border-color: var(--links);
-    background: var(--surface-raised);
-}
-
-.home-release-callout-tag {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--links);
-    color: #fff;
-}
-
-.home-release-callout-arrow {
-    font-size: 0.75em;
-    color: var(--text-muted);
-    transition: transform 0.15s ease;
-}
-
-.home-page a.home-release-callout:hover .home-release-callout-arrow {
-    transform: translateX(3px);
-    color: var(--links);
-}
-
-/* ================================================================== */
-/* Latest from the blog                                               */
-/* ================================================================== */
-
-.home-page .home-blog-feature {
-    max-width: 640px;
-    margin: 1em auto 2em;
-    padding: 1em 1.5em;
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    background: var(--surface-sunken);
-    text-align: center;
-}
-
-.home-page .home-blog-feature .rubric {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin: 0 0 0.4em;
-    border: none;
-    padding: 0;
-}
-
-/* Drop the bullet on the single post item; the card is the marker. */
-.home-page .home-blog-feature ul.postlist {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.home-page .home-blog-feature ul.postlist > li {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.home-page .home-blog-feature .ablog-post-title {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--content-text);
-    line-height: 1.35;
-}
-
-.home-page .home-blog-feature .ablog-post-title a,
-.home-page .home-blog-feature .ablog-post-title a:visited {
-    color: var(--links);
-    text-decoration: none;
-}
-
-.home-page .home-blog-feature .ablog-post-title a:hover {
-    text-decoration: underline;
-}
-
-/* ================================================================== */
 /* Quickstart tabs (sphinx-design)                                    */
 /* ================================================================== */
-
-.home-page .home-quickstart {
-    padding: 0 1.5em 0.6em;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--card-bg);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-}
-
-[data-theme="dark"] .home-page .home-quickstart {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-}
 
 .home-page .home-quickstart .sd-tab-set {
     margin: 0;
@@ -833,7 +512,7 @@ a.sponsor-cta:hover {
 
 .home-page .home-quickstart .sd-tab-content {
     padding: 0.5rem 0 0;
-    box-shadow: 0 -0.0625rem var(--sd-color-tabs-overline);
+    box-shadow: 0 -0.0625rem var(--border);
 }
 
 /* "See more →" link below each tab's code block. */
@@ -862,22 +541,22 @@ a.sponsor-cta:hover {
 
 /* Inactive tabs: lighter than default so the current tab pops. */
 .home-quickstart .sd-tab-label {
-    color: var(--text-muted) !important;
+    color: var(--text-muted);
     opacity: 0.7;
-    font-weight: 500 !important;
+    font-weight: 500;
     transition: opacity 0.15s, color 0.15s;
 }
 
 .home-quickstart .sd-tab-label:hover {
     opacity: 1;
-    color: var(--content-text) !important;
+    color: var(--content-text);
 }
 
 /* Active tab: bolder weight + full opacity so it carries the page. */
 .home-quickstart input:checked + .sd-tab-label {
-    color: var(--links) !important;
+    color: var(--links);
     opacity: 1;
-    font-weight: 700 !important;
+    font-weight: 700;
 }
 
 /* ================================================================== */
@@ -888,17 +567,23 @@ a.sponsor-cta:hover {
 
 .home-quickstart .highlight {
     position: relative;
-    padding-top: 42px !important;  /* beat RTD's .rst-content nested rule */
+    padding: 42px 18px 10px;
 }
 
 .home-quickstart .highlight pre {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.home-quickstart .highlight,
+.home-quickstart .highlight pre {
+    font-size: 14px !important;
+    line-height: 1.65 !important;
 }
 
 .home-quickstart .highlight button.copybtn {
-    top: 36px !important;
-    right: 8px !important;
+    top: 36px;
+    right: 8px;
 }
 
 .home-quickstart .highlight::before {
@@ -910,15 +595,31 @@ a.sponsor-cta:hover {
     height: 28px;
     border-top-left-radius: var(--border-radius);
     border-top-right-radius: var(--border-radius);
-    background-color: #e4e8ec;
+    background-color: #dde2e8;
     background-image:
         radial-gradient(circle at 14px 14px, #d49995 4px, transparent 4.5px),
         radial-gradient(circle at 30px 14px, #d4b685 4px, transparent 4.5px),
         radial-gradient(circle at 46px 14px, #9bc7a0 4px, transparent 4.5px);
     border-bottom: 1px solid var(--border);
+    pointer-events: none;
 }
 
 [data-theme="dark"] .home-quickstart .highlight::before {
     background-color: #1d1d1d;
     border-bottom-color: #3a3a3a;
+}
+
+.home-quickstart .highlight::after {
+    content: "python";
+    position: absolute;
+    top: 0;
+    right: 12px;
+    height: 28px;
+    line-height: 28px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    opacity: 0.7;
+    pointer-events: none;
 }

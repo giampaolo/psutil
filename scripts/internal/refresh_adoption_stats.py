@@ -129,13 +129,6 @@ def main():
             ),
             rf"\g<1>{new_repos}\g<2>",
         ),
-        (
-            re.compile(
-                r'(<span class="home-stat-num">)[\d,]+\+(</span>\s*\n\s*'
-                r'<span class="home-stat-label">packages)'
-            ),
-            rf"\g<1>{new_packages}\g<2>",
-        ),
     ]
 
     # Apply each sub to each file and count global matches per pattern.

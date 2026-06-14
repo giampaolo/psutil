@@ -1,22 +1,33 @@
-<header class="top-bar">
-  <div class="top-bar-inner">
-    <button class="top-bar-hamburger" data-toggle="wy-nav-top" aria-label="Open navigation">
-      <i class="fa fa-bars"></i>
+{#-
+  Top bar: logo on the left, action cluster (Blog, theme toggle,
+  GitHub stars, PyPI version) on the right. Fixed at the top of the
+  viewport. Styled by static/css/topbar.css.
+-#}
+<header class="topbar no-visited" role="banner">
+  <div class="topbar-inner">
+    <button class="topbar-hamburger" id="sidebar-toggle"
+            type="button" aria-label="Toggle navigation" aria-expanded="false">
+      <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
-    <a class="top-bar-logo" href="{{ pathto(master_doc) }}">
-      <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" alt="psutil logo">
+    <a class="topbar-logo" href="{{ pathto(master_doc) }}">
+      <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" alt="">
       <span>psutil</span>
     </a>
-    <div class="top-bar-actions">
-      <a class="top-bar-text" href="{{ pathto('blog') }}">Blog</a>
-      <button id="theme-toggle" class="top-bar-btn" title="Toggle dark mode (Shift+D)">
-        <i class="fa fa-moon-o" id="theme-icon"></i>
+    <nav class="topbar-actions" aria-label="Site actions">
+      <a class="topbar-text" href="{{ pathto('blog') }}">Blog</a>
+      <button class="topbar-btn" id="theme-toggle"
+              type="button" title="Toggle dark mode (shift+D)" aria-label="Toggle theme">
+        <i class="fa-regular fa-moon" aria-hidden="true"></i>
       </button>
-      <a class="top-bar-link top-bar-github" href="https://github.com/giampaolo/psutil" title="GitHub" target="_blank" rel="noopener">
-        <i class="fa fa-github"></i>
-        <span class="github-stars" id="github-stars" data-repo="giampaolo/psutil"></span>
+      <a class="topbar-link topbar-github"
+         href="https://github.com/giampaolo/psutil"
+         target="_blank" rel="noopener" title="GitHub" aria-label="GitHub repository">
+        <i class="fa-brands fa-github" aria-hidden="true"></i>
+        <span class="topbar-stars" data-repo="giampaolo/psutil"></span>
       </a>
-      <a class="top-bar-version" id="github-version" data-repo="giampaolo/psutil" href="https://pypi.org/project/psutil" title="PyPI" target="_blank" rel="noopener"></a>
-    </div>
+      <a class="topbar-version" data-repo="giampaolo/psutil"
+         href="https://pypi.org/project/psutil"
+         target="_blank" rel="noopener" title="PyPI" aria-label="PyPI release"></a>
+    </nav>
   </div>
 </header>
