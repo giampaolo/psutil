@@ -174,17 +174,17 @@ tt {
 [data-theme="light"] .highlight .sx,
 [data-theme="light"] .highlight .sr,
 [data-theme="light"] .highlight .ss,
-[data-theme="light"] .highlight .se   { color: #6b8e4e; }  /* strings: muted olive */
+[data-theme="light"] .highlight .se   { color: #4f6b39; }  /* strings: muted olive */
 [data-theme="light"] .highlight-pycon .pycon-field  { color: #4d4d4d; background: #eff1f3}
-[data-theme="light"] .highlight .gp                 { color: #8a8a8a; }  /* >>> prompt: muted */
+[data-theme="light"] .highlight .gp                 { color: #6a6a6a; }  /* >>> prompt: muted */
 [data-theme="light"] .highlight .c,
 [data-theme="light"] .highlight .ch,
 [data-theme="light"] .highlight .cm,
 [data-theme="light"] .highlight .cp,
 [data-theme="light"] .highlight .cpf,
 [data-theme="light"] .highlight .c1,
-[data-theme="light"] .highlight .cs  { color: #6a737d; font-style: normal; }  /* comments: muted gray */
-[data-theme="light"] .highlight .go                 { color: #8a8a8a; }  /* output dimmer than code */
+[data-theme="light"] .highlight .cs  { color: #5b636d; font-style: normal; }  /* comments: muted gray */
+[data-theme="light"] .highlight .go                 { color: #6a6a6a; }  /* output dimmer than code */
 
 /* ----------------- REPL dark theme ---------------- */
 

@@ -49,7 +49,7 @@
        are constant across light/dark mode (only --bg-sidebar shifts
        between the two). */
     --sidebar-fg: #d9d9d9;
-    --sidebar-caption: #7a9ab2;
+    --sidebar-caption: #8aa8c0;
     --sidebar-active-bg: #f0f0f0;
     --sidebar-active-fg: #1a1a1a;
 
@@ -162,7 +162,7 @@
 
     /* Text. */
     --text: #c8c8c8;
-    --text-muted: #909090;
+    --text-muted: #9b9b9b;
     --text-secondary: #d1d1d1;
     --headings: #e0e0e0;
     --ntuple-color: #6db99a;

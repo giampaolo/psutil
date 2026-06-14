@@ -23,7 +23,6 @@
 
 .footer-text {
     color: var(--text-muted);
-    opacity: 0.7;
     line-height: 1.4;
     display: flex;
     flex-wrap: wrap;
