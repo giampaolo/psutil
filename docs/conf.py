@@ -171,21 +171,14 @@ pygments_style = "tango"  # base palette (overridden by css/code.css)
 def _css_files():
     css_dir = _HERE / "_static" / "css"
     files = sorted(p.name for p in css_dir.glob("*.css"))
-    head = ["base.css", "typography.css"]
+    head = ["base.css", "fonts.css", "typography.css"]
     tail = ["home.css"]
     middle = [f for f in files if f not in head + tail]
     return [f"css/{name}" for name in head + middle + tail if name in files]
 
 
 html_css_files = [
-    # External: fonts + FontAwesome
-    (
-        "https://fonts.googleapis.com/css2"
-        "?family=Inter:wght@400;500;600;700"
-        "&family=JetBrains+Mono:wght@400;600"
-        "&family=Merriweather:ital,wght@0,400;0,700;1,400"
-        "&display=swap"
-    ),
+    # External: FontAwesome. (Web fonts are self-hosted in css/fonts.css.)
     (
         "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css",
         {
