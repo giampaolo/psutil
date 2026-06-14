@@ -1,0 +1,72 @@
+/*
+ * FontAwesome 7.2.0, subset to the glyphs this theme actually uses
+ * (see _static/fonts/fa-*-subset.woff2). Don't depend on a third-party
+ * CDN. FontAwesome Free is CC BY 4.0 / SIL OFL 1.1.
+ */
+
+@font-face {
+    font-family: "Font Awesome 7 Free";
+    font-style: normal;
+    font-weight: 900;
+    font-display: block;
+    src: url(../fonts/fa-solid-subset.woff2) format("woff2");
+}
+
+@font-face {
+    font-family: "Font Awesome 7 Free";
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url(../fonts/fa-regular-subset.woff2) format("woff2");
+}
+
+@font-face {
+    font-family: "Font Awesome 7 Brands";
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url(../fonts/fa-brands-subset.woff2) format("woff2");
+}
+
+/* Family-name vars consumed by doc-icons.css / left-sidebar.css. */
+:root {
+    --fa-family-classic: "Font Awesome 7 Free";
+    --fa-family-brands: "Font Awesome 7 Brands";
+}
+
+/* Base icon rendering (replaces FontAwesome's core rules). */
+.fa-solid,
+.fa-regular,
+.fa-brands {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    line-height: 1;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.fa-solid {
+    font-family: "Font Awesome 7 Free";
+    font-weight: 900;
+}
+
+.fa-regular {
+    font-family: "Font Awesome 7 Free";
+    font-weight: 400;
+}
+
+.fa-brands {
+    font-family: "Font Awesome 7 Brands";
+    font-weight: 400;
+}
+
+/* Glyphs referenced by class (the doc-icons set their codepoint via
+   --doc-icon and don't need entries here). */
+.fa-bars::before { content: "\f0c9"; }
+.fa-chevron-up::before { content: "\f077"; }
+.fa-magnifying-glass::before { content: "\f002"; }
+.fa-sun::before { content: "\f185"; }
+.fa-moon::before { content: "\f186"; }
+.fa-github::before { content: "\f09b"; }
