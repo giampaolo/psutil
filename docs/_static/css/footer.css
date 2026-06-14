@@ -1,15 +1,17 @@
+/* Footer sits in the content column (grid col 2) of .page, below the
+   main row. Padding matches .main so it lines up with the article. */
 .footer {
+    grid-column: 2;
     margin-top: 0.5em;
-    padding: 1em 0 16px;
+    padding: 1em 24px 16px;
     border-top: 1px solid var(--border);
 }
 
-/* Align footer with the article column, not the wider .main (which
-   spans the right TOC too). Only applies when the right TOC is
-   visible (>= 1280px) and the page actually has a TOC. */
-@media (min-width: 1280px) {
-    .article-with-toc:not(.no-toc) ~ .footer {
-        width: calc(100% - var(--right-sidebar-width) - 32px);
+/* Mobile: single-column grid, so the footer is in column 1. */
+@media (max-width: 1024px) {
+    .footer {
+        grid-column: 1;
+        padding: 1em 16px 16px;
     }
 }
 

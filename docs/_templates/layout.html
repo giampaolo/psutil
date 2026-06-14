@@ -93,7 +93,7 @@
     {% include "breadcrumbs.html" %}
     <div class="article-with-toc{% if not _has_toc %} no-toc{% endif %}">
       <div class="article-column">
-        <article class="article" role="main">
+        <article class="article">
           {% block body %}{% endblock %}
         </article>
         {% include "prev-next.html" %}
@@ -101,8 +101,9 @@
 
       {% if _has_toc %}{% include "toc.html" %}{% endif %}
     </div>
-
-    {% include "footer.html" %}
   </main>
+
+  {# Footer lives outside <main> so its contentinfo landmark is top-level. #}
+  {% include "footer.html" %}
 </div>
 {% endblock %}

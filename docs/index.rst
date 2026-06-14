@@ -75,27 +75,27 @@
    <div class="home-section-label">Explore the API</div>
    <div class="home-feature-cards">
      <a class="home-feature-card" href="api.html#cpu">
-       <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="CPU">
+       <img class="home-icon-svg" src="_static/images/icon-cpu.svg" alt="">
        <div class="home-feature-title">CPU</div>
      </a>
      <a class="home-feature-card" href="api.html#memory">
-       <img class="home-icon-svg" src="_static/images/icon-memory.svg" alt="Memory">
+       <img class="home-icon-svg" src="_static/images/icon-memory.svg" alt="">
        <div class="home-feature-title">Memory</div>
      </a>
      <a class="home-feature-card" href="api.html#disks">
-       <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="Disks">
+       <img class="home-icon-svg" src="_static/images/icon-disks.svg" alt="">
        <div class="home-feature-title">Disks</div>
      </a>
      <a class="home-feature-card" href="api.html#network">
-       <img class="home-icon-svg" src="_static/images/icon-network.svg" alt="Network">
+       <img class="home-icon-svg" src="_static/images/icon-network.svg" alt="">
        <div class="home-feature-title">Network</div>
      </a>
      <a class="home-feature-card" href="api.html#sensors">
-       <img class="home-icon-svg" src="_static/images/icon-sensors.svg" alt="Sensors">
+       <img class="home-icon-svg" src="_static/images/icon-sensors.svg" alt="">
        <div class="home-feature-title">Sensors</div>
      </a>
      <a class="home-feature-card" href="api.html#processes">
-       <img class="home-icon-svg" src="_static/images/icon-processes.svg" alt="Processes">
+       <img class="home-icon-svg" src="_static/images/icon-processes.svg" alt="">
        <div class="home-feature-title">Processes</div>
      </a>
    </div>
