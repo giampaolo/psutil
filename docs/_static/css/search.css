@@ -80,7 +80,8 @@ body.search-focused .search-kbd {
 }
 
 .search-kbd kbd,
-.shortcut-flyout-list kbd {
+.shortcut-flyout-list kbd,
+.kbd-shortcuts kbd {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -96,8 +97,10 @@ body.search-focused .search-kbd {
     border-radius: 3px;
 }
 
-/* helper flyout showing up on '?' */
-.shortcut-flyout-list kbd {
+/* Bigger pills: the '?' help flyout and the shortcuts table on the
+   "About this site" page (these read as body content, not a hint). */
+.shortcut-flyout-list kbd,
+.kbd-shortcuts kbd {
     padding: 4px 7px;
     font-size: 12px;
 }

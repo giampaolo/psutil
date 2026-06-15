@@ -14,20 +14,21 @@ Keyboard shortcuts
 .. list-table::
    :widths: 30 70
    :header-rows: 1
+   :class: kbd-shortcuts
 
    * - Key
      - Action
-   * - Ctrl+K
+   * - :kbd:`Ctrl+K`
      - Open search
-   * - Shift+D
+   * - :kbd:`Shift+D`
      - Toggle dark / light mode
-   * - ↑ / ↓
+   * - :kbd:`↑` / :kbd:`↓`
      - Navigate search results
-   * - Enter
+   * - :kbd:`Enter`
      - Open highlighted search result
-   * - Escape
+   * - :kbd:`Escape`
      - Close search / dialog
-   * - ?
+   * - :kbd:`?`
      - Show this help
 
 Search
