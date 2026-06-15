@@ -289,6 +289,19 @@ ul.search > li,
     background: transparent;
 }
 
+/* about.html page */
+.about-shot {
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    width: auto;
+    height: auto;
+    margin: 0.4em 0 1.4em;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 /* Keyboard focus ring on interactive controls (both themes). The
    browser default is nearly invisible on the dark topbar/sidebar. */
 .topbar-link:focus-visible,
