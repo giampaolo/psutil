@@ -6,12 +6,6 @@
     overflow-y: auto;
     background: var(--bg-sidebar);
     color: var(--sidebar-fg);
-    /* Hide the scroll bar (Firefox + WebKit). Scrolling still works. */
-    scrollbar-width: none;
-}
-
-.left-sidebar::-webkit-scrollbar {
-    display: none;
 }
 
 /* ---- Captions ("Documentation", "Reference", ...) ------------------- */
@@ -90,12 +84,14 @@
     }
 }
 
-/* Touch devices: taller nav rows for comfortable tapping (WCAG 2.5.5). */
+/* Touch devices: taller nav rows for comfortable tapping. 36px keeps
+   them well above the WCAG 2.5.8 (AA) 24px floor without the airy gaps
+   the AAA 44px target leaves around single-line items. */
 @media (pointer: coarse) {
     .left-sidebar a {
         display: flex;
         align-items: center;
-        min-height: 44px;
+        min-height: 36px;
     }
 }
 
