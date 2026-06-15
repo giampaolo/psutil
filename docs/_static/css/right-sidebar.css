@@ -10,16 +10,15 @@
 }
 
 @media (min-width: 1280px) {
-    /* Fixed (not sticky): the TOC must never move on scroll. */
     .right-sidebar {
         display: block;
-        position: fixed;
+        position: sticky;
         top: calc(var(--topbar-height) + 20px);
-        right: max(0px, calc((100vw - var(--layout-width)) / 2));
-        width: calc(var(--right-sidebar-width) - 16px);
+        align-self: start;
         max-height: calc(100vh - var(--topbar-height) - 36px);
         overflow-y: auto;
         padding: 0 16px;
+        margin-right: -24px;
         border-left: 1px solid #ccc;
         box-sizing: border-box;
         font-size: 0.85rem;
