@@ -64,9 +64,12 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Improved overall doc clarity and shortened long sentences.
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
-  - Search: ``Ctrl+K`` to focus the search box (replaces ``/``).
-  - Search: ``Up``/``Down`` arrow keys navigate results; ``Enter`` opens the
-    selected result.
+  - Keyboard shortcuts:
+    - ``?``: show helper
+    - ``Shift + D``: toggle dark/light mode.
+    - ``Ctrl+K`` to focus the search box.
+    - ``Up``/``Down`` arrow keys navigate search results; ``Enter`` opens the
+      selected result.
   - Search results are styled as cards with subtle borders and shadows.
   - Identifiers in code blocks (e.g. ``psutil.Process()``, ``p.cpu_percent()``)
     are now clickable and link to their API reference entry on click, via

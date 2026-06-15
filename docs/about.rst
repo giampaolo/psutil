@@ -85,14 +85,15 @@ to open one.
    :alt: The search results page, with matches and context snippets
    :class: about-shot
 
-Permalink anchors
------------------
+TOC / On this page
+------------------
 
-Hover over any heading and a small link icon appears next to it. Click it to
-jump there, or copy it to share a link that points straight to that section.
+Wide screens show an "On this page" sidebar on the right, listing the current
+page's sections. As you scroll it highlights the section you're in, and
+clicking an entry jumps straight to it.
 
-.. image:: /_static/images/about/permalink.png
-   :alt: Permalink icon on hover
+.. image:: /_static/images/about/toc.png
+   :alt: The "On this page" outline with the current section highlighted
    :class: about-shot
 
 Reading on mobile
