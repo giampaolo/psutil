@@ -207,8 +207,10 @@ ol.blog-cards > li.blog-card {
     color: var(--text);
 }
 
+/* Match the article banner's effective size (0.78em inside a 0.9em
+   banner = 0.702em) so the listing badge is identical to it. */
 .blog-card-titlerow .post-meta-featured {
-    font-size: 0.7em;
+    font-size: 0.702em;
 }
 
 .blog-card-summary {
@@ -283,11 +285,6 @@ ol.blog-cards > li.blog-card {
     color: var(--text-muted);
     opacity: 0.6;
     margin: 0 0.5em 0 0.15em;
-}
-
-.post-meta-banner > .post-meta-tags::before {
-    content: none;
-    margin: 0;
 }
 
 .post-meta-featured,

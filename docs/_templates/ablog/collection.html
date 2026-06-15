@@ -46,7 +46,7 @@
           <h2 class="blog-card-title">
             <a href="{{ postlink(post) }}">{{ post.title }}</a>
           </h2>
-          {% if featured %}<a class="post-meta-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a>{% endif %}
+          {% if featured %}<span class="post-meta-featured-wrap"><a class="post-meta-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a></span>{% endif %}
         </div>
       </div>
       {% if post.excerpt %}
