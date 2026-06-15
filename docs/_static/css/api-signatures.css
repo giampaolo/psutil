@@ -33,16 +33,12 @@
     margin-top: 0;
     margin-bottom: 10px;
     font-weight: 500;
-    display: inline-block;
+    display: block;
     line-height: 1.5;
     position: relative;
 }
 
 .article dl:not(.docutils):not(.glossary) > dt a.headerlink {
-    position: absolute;
-    right: -1.4rem;
-    top: 50%;
-    transform: translateY(-50%);
     margin-left: 0.4rem;
     padding: 0;
 }

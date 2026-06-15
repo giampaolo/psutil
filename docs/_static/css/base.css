@@ -316,6 +316,29 @@ ul.search > li,
     margin: 0;
 }
 
+/* Flash when clicking on a link / anchor */
+@keyframes anchor-flash {
+    from {
+        background-color: var(--accent-ring);
+    }
+}
+
+:target > h1,
+:target > h2,
+:target > h3,
+:target > h4,
+:target > h5,
+:target > h6,
+:target + h1,
+:target + h2,
+:target + h3,
+:target + h4,
+:target + h5,
+:target + h6,
+dt:target {
+    animation: anchor-flash 1.8s ease-out;
+}
+
 /* Keyboard focus ring on interactive controls (both themes). The
    browser default is nearly invisible on the dark topbar/sidebar. */
 .topbar-link:focus-visible,
