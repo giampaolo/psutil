@@ -2,7 +2,8 @@
 
 body {
     font-family: var(--font-body);
-    background: var(--bg-page);
+    /* fix flashing */
+    background: var(--bg);
     color: var(--text);
     font-size: 16px;
     line-height: 1.65;

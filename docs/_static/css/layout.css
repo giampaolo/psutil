@@ -1,13 +1,11 @@
 body {
     margin: 0;
-    overflow-x: clip;
 }
 
 html {
     /* Extra room below the topbar height so anchored headings clear
        the topbar's drop shadow instead of landing inside it. */
     scroll-padding-top: calc(var(--topbar-height) + 0.5rem);
-    overflow-x: clip;
 }
 
 /* ---- Topbar (fixed at the top of the viewport) ---------------------- */
