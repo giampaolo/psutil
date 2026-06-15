@@ -17,4 +17,7 @@ see also https://openfontlicense.org.
   https://github.com/SorkinType/Merriweather
 
 Files were generated from the Google Fonts css2 API (latin unicode-range
-only). To refresh, re-run the download step or use google-webfonts-helper.
+only), then trimmed of unused OpenType features with pyftsubset:
+
+  pyftsubset FONT.woff2 --unicodes='*' --layout-features='kern,liga,tnum' \
+    --no-hinting --flavor=woff2 --output-file=FONT.woff2
