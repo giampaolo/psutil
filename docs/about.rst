@@ -130,18 +130,17 @@ Other internal optimizations
 ----------------------------
 
 - Fonts and icons are served directly from this site, not from third-party CDNs
-  (e.g. Google fonts). This way docs renders the same from all countries (e.g.
-  mainland China). Each font is subsetted to just the glyphs used here, so the
-  download stays small.
+  such as Google Fonts. This means the docs renders the same from all countries
+  (e.g. mainland China). Each font includes only the glyphs used by the site,
+  keeping page weight small.
 
 - Links to this site shared on social medias show rich preview cards.
 
 - Every page declares a canonical URL and is listed in a generated
   ``sitemap.xml``, so search engines can discover and index the whole site.
 
-- Every Python code snippet is syntax-checked when the docs are built.
-
-- Broken links and unresolved API cross-references make the build fail.
+- The docs build is strict: Python code snippets are syntax-checked, and broken
+  links or unresolved API cross-references make the build fail.
 
 Linking from your own docs
 --------------------------
