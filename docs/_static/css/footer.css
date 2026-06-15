@@ -88,7 +88,11 @@
 }
 
 .footer-pypi {
-    font-size: 1.5em;
+    font-size: 1.4em;
+}
+
+.footer-rss {
+    font-size: 0.9em;
 }
 
 .footer-pypi:hover,

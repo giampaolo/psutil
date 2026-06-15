@@ -68,6 +68,12 @@ div.deprecated {
     margin: 1em 0;
 }
 
+div.versionadded p,
+div.versionchanged p,
+div.deprecated p {
+    margin: 0;
+}
+
 div.versionadded {
     border-left-color: var(--versionadded-border);
 }
