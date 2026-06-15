@@ -34,6 +34,10 @@
     justify-content: center;
 }
 
+[data-theme="dark"] .home-page .hero-title {
+    color: #fff;
+}
+
 .home-page .hero-logo {
     height: 55px;
     width: auto;
