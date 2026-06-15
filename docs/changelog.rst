@@ -65,6 +65,7 @@ Doc improvements (:gh:`2761`, :gh:`2757`, :gh:`2760`, :gh:`2745`, :gh:`2763`,
   - Show a clickable COPY button to copy code snippets.
   - Show ``psutil.`` prefix for all APIs.
   - Keyboard shortcuts:
+
     - ``?``: show helper
     - ``Shift + D``: toggle dark/light mode.
     - ``Ctrl+K`` to focus the search box.

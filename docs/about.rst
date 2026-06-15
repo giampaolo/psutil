@@ -131,9 +131,36 @@ Other internal optimizations
 
 - Fonts and icons are served directly from this site, not from third-party CDNs
   (e.g. Google fonts). This way docs renders the same from all countries (e.g.
-  mainland China).
+  mainland China). Each font is subsetted to just the glyphs used here, so the
+  download stays small.
 
 - Links to this site shared on social medias show rich preview cards.
 
 - Every page declares a canonical URL and is listed in a generated
   ``sitemap.xml``, so search engines can discover and index the whole site.
+
+- Every Python code snippet is syntax-checked when the docs are built.
+
+- Broken links and unresolved API cross-references make the build fail.
+
+Linking from your own docs
+--------------------------
+
+Other Sphinx projects can cross-reference psutil's API directly through the
+`intersphinx <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_
+extension. Add psutil to ``intersphinx_mapping`` in your ``conf.py``:
+
+.. code-block:: python
+
+   intersphinx_mapping = {
+       "psutil": ("https://psutil.readthedocs.io/latest/", None),
+   }
+
+You can then reference any psutil object and it links straight here, e.g.:
+
+.. code-block:: rst
+
+   See :func:`psutil.cpu_times` function.
+
+This will automatically turn ``psutil.cpu_times`` into a link pointing to this
+site.

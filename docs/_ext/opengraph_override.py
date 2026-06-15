@@ -99,11 +99,7 @@ def emit_blog_index_meta(app, pagename, templatename, context, doctree):
     tags = "\n".join(
         f'<meta {attr}="{key}" content="{val}" />' for attr, key, val in fields
     )
-    # ablog skips the atom <link> on the no-doctree collection page; add it.
-    tags += (
-        '\n<link rel="alternate" type="application/atom+xml" '
-        f'href="{app.config.blog_path}/atom.xml" title="{feed_title}" />'
-    )
+    context["feed_title"] = feed_title
     context["metatags"] = context.get("metatags", "") + tags + "\n"
 
 
