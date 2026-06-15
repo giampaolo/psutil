@@ -30,17 +30,6 @@ Keyboard shortcuts
    * - :kbd:`?`
      - Show this help
 
-Search
-------
-
-Press :kbd:`Ctrl+K` to jump straight to the search box. Once results appear,
-use the :kbd:`↑` and :kbd:`↓` arrow keys to move through them and :kbd:`Enter`
-to open one.
-
-.. image:: /_static/images/about/search.png
-   :alt: The sidebar search box showing its Ctrl+K hint
-   :class: about-shot
-
 Dark mode
 ---------
 
@@ -51,6 +40,27 @@ Dark mode
 By default the site matches your operating system's light or dark setting.
 Click the |moon| icon in the top-right corner, or press :kbd:`Shift+D`
 anywhere, to override it. Your choice is saved and restored on your next visit.
+
+.. container:: about-shot-pair
+
+   .. image:: /_static/images/about/darkmode-light.png
+      :alt: A docs page in light mode
+      :class: about-shot
+
+   .. image:: /_static/images/about/darkmode-dark.png
+      :alt: The same page in dark mode
+      :class: about-shot
+
+Search
+------
+
+Press :kbd:`Ctrl+K` to jump straight to the search box. Once results appear,
+use the :kbd:`↑` and :kbd:`↓` arrow keys to move through them and :kbd:`Enter`
+to open one.
+
+.. image:: /_static/images/about/search.png
+   :alt: The search results page, with matches and context snippets
+   :class: about-shot
 
 Copy buttons
 ------------
