@@ -86,7 +86,7 @@ extensions = _third_party_exts + _local_exts
 project = PROJECT_NAME
 author = AUTHOR
 version = release = VERSION
-copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
+copyright = f"2009-{THIS_YEAR} {AUTHOR}"  # shown in the footer
 
 # =====================================================================
 # Cross-references and external links

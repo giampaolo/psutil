@@ -58,19 +58,47 @@
     text-decoration: none;
 }
 
-/* RSS icon, anchored to the right of the footer row. */
+/* PyPI + RSS icon links, grouped at the right of the footer row. */
+.footer-icons {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.footer-pypi,
+.footer-pypi:visited,
+.footer-github,
+.footer-github:visited,
 .footer-rss,
 .footer-rss:visited {
-    margin-left: auto;
     display: inline-flex;
     align-items: center;
     color: var(--text-muted);
     text-decoration: none;
-    flex-shrink: 0;
+    opacity: 0.75;
+    transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-.footer-text a.footer-egg:hover,
+/* FontAwesome glyphs, sized to roughly match the RSS icon. The python
+   logo's ink is shorter than the others, so nudge it up to match. */
+.footer-github {
+    font-size: 1.3em;
+}
+
+.footer-pypi {
+    font-size: 1.5em;
+}
+
+.footer-pypi:hover,
+.footer-github:hover,
 .footer-rss:hover {
+    color: var(--accent);
+    opacity: 1;
+}
+
+.footer-text a.footer-egg:hover {
     color: var(--accent);
 }
 
