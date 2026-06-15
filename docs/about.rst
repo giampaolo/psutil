@@ -5,8 +5,10 @@
 About this site
 ===============
 
-This site is built with `Sphinx <https://www.sphinx-doc.org/>`__ on top of its
-built-in ``basic`` theme, with a custom layout and a number of additions.
+This site is built with `Sphinx <https://www.sphinx-doc.org/>`__, on top of its
+built-in ``basic`` theme. From there it has been heavily customized: the
+layout, navigation, search, dark mode, code blocks, mobile behavior, and many
+small details were rebuilt or extended specifically for these docs.
 
 Keyboard shortcuts
 ------------------
@@ -127,7 +129,20 @@ receive notifications of new blog posts from your reader.
 Other internal optimizations
 ----------------------------
 
-A few things under the hood: the fonts and icons are self-hosted, so there are
-no third-party CDN requests, and the docs render fully even on restrictive
-networks. The pages target WCAG AA contrast, are fully keyboard-navigable, and
-honor your "reduce motion" setting.
+The site also does a few quiet things to make the docs faster and easier to
+use.
+
+- Fonts and icons are served directly from this site, not from third-party
+  CDNs. This means the docs renders the same on restricted networks (e.g.
+  mainland China).
+
+- The documentation build is intentionally strict. Broken internal links are
+  caught before publishing, warnings fail the build, and Python examples are
+  checked so that obvious mistakes do not slip into the docs.
+
+- The pages are designed to be comfortable to read and navigate: colors aim for
+  WCAG AA contrast, everything can be used from the keyboard, and animations
+  respect your "reduce motion" preference.
+
+- Links shared on social media show rich preview cards, and the site includes a
+  sitemap and canonical URLs so search engines can index the docs cleanly.

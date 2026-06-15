@@ -1,5 +1,5 @@
 {#-
-  Footer: copyright + last-updated + Tips + Edit-on-GitHub on the
+  Footer: copyright + last-updated + About + Edit-on-GitHub on the
   left, RSS feed icon (when ablog is loaded) on the right. Styled by
   static/css/footer.css.
 -#}
@@ -15,7 +15,7 @@
         rel="noopener noreferrer" target="_blank"
         title="View commit history on GitHub">{{ last_updated|e }}</a></span>
       {%- endif %}
-      <span><a href="{{ pathto('about') }}">Tips</a></span>
+      <span><a href="{{ pathto('about') }}">About</a></span>
       {%- if pagename not in ("search", "genindex", "py-modindex") %}
       <span><a href="https://github.com/giampaolo/psutil/edit/master/docs/{{ pagename }}.rst"
                rel="noopener noreferrer" target="_blank">Edit on GitHub</a></span>
