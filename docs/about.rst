@@ -81,6 +81,10 @@ are clickable. Hover over one of those to see the highlight, then click to jump
 to the corresponding API reference doc. This is powered by
 `sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
 
+.. image:: /_static/images/about/clickable.png
+   :alt: A hovered identifier in a code block, highlighted and linking to the API reference
+   :class: about-shot
+
 Permalink anchors
 -----------------
 
