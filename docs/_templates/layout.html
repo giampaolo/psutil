@@ -83,8 +83,7 @@
 {% block content %}
 <div class="page">
   {% include "sidebar.html" %}
-
-  <main class="main" id="main-content">
+  <main class="main" id="main-content" role="main">
     {% include "breadcrumbs.html" %}
     <div class="article-with-toc{% if not _has_toc %} no-toc{% endif %}">
       <div class="article-column">
