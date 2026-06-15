@@ -51,15 +51,16 @@ anywhere, to override it. Your choice is saved and restored on your next visit.
       :alt: The same page in dark mode
       :class: about-shot
 
-Search
-------
+Clickable API references
+------------------------
 
-Press :kbd:`Ctrl+K` to jump straight to the search box. Once results appear,
-use the :kbd:`↑` and :kbd:`↓` arrow keys to move through them and :kbd:`Enter`
-to open one.
+Identifiers in code blocks (e.g. ``p = psutil.Process()``, ``p.cpu_percent()``)
+are clickable. Hover over one of those to see the highlight, then click to jump
+to the corresponding API reference doc. This is powered by
+`sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
 
-.. image:: /_static/images/about/search.png
-   :alt: The search results page, with matches and context snippets
+.. image:: /_static/images/about/clickable.png
+   :alt: A hovered identifier in a code block, highlighted and linking to the API reference
    :class: about-shot
 
 Copy buttons
@@ -73,16 +74,15 @@ the prompts and the output, so you can paste it straight into a shell.
    :alt: A code block with its copy button in the top-right corner
    :class: about-shot
 
-Clickable API references
-------------------------
+Search
+------
 
-Identifiers in code blocks (e.g. ``p = psutil.Process()``, ``p.cpu_percent()``)
-are clickable. Hover over one of those to see the highlight, then click to jump
-to the corresponding API reference doc. This is powered by
-`sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
+Press :kbd:`Ctrl+K` to jump straight to the search box. Once results appear,
+use the :kbd:`↑` and :kbd:`↓` arrow keys to move through them and :kbd:`Enter`
+to open one.
 
-.. image:: /_static/images/about/clickable.png
-   :alt: A hovered identifier in a code block, highlighted and linking to the API reference
+.. image:: /_static/images/about/search.png
+   :alt: The search results page, with matches and context snippets
    :class: about-shot
 
 Permalink anchors
