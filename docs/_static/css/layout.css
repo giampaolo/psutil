@@ -211,14 +211,14 @@ html {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     padding: 0;
     border: 0;
     border-radius: 999px;
     background: var(--bg-topbar);
     color: var(--text-on-dark);
-    font-size: 11px;
+    font-size: 13px;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     /* Visible state below uses opacity 0.55, muted at rest so it
@@ -237,15 +237,15 @@ html {
 }
 
 /* Dark mode: --bg-topbar (#181818) blends into the page bg. Use a
-   lifted-surface gray so the button stays readable. */
+   lighter gray + full opacity so the button stands out. */
 [data-theme="dark"] .back-to-top {
-    background: #3a3a3a;
-    color: #f0f0f0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    background: #525252;
+    color: #f5f5f5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .back-to-top.is-visible {
-    opacity: 0.85;
+    opacity: 1;
 }
 
 /* Mobile: bump size + opacity. The 28px gap-tucked button is way
@@ -277,9 +277,9 @@ html {
 @media (min-width: 1280px) {
     .back-to-top {
         right: calc(
-            (100vw - var(--layout-width)) / 2
+            max(0px, (100vw - var(--layout-width)) / 2)
             + var(--right-sidebar-width)
-            + 2px
+            + 44px
         );
     }
 }

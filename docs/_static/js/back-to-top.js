@@ -10,6 +10,7 @@
     btn.type = "button";
     btn.className = "back-to-top";
     btn.setAttribute("aria-label", "Back to top");
+    btn.title = "Back to top";
     // Hidden at rest via opacity, which doesn't remove it from the tab
     // order; keep it unfocusable until the scroll handler shows it.
     btn.tabIndex = -1;

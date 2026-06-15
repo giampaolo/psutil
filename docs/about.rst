@@ -44,11 +44,11 @@ anywhere, to override it. Your choice is saved and restored on your next visit.
 .. container:: about-shot-pair
 
    .. image:: /_static/images/about/darkmode-light.png
-      :alt: A docs page in light mode
+      :alt: Light mode
       :class: about-shot
 
    .. image:: /_static/images/about/darkmode-dark.png
-      :alt: The same page in dark mode
+      :alt: Dark mode
       :class: about-shot
 
 Clickable API references
@@ -60,7 +60,7 @@ to the corresponding API reference doc. This is powered by
 `sphinx-codeautolink <https://sphinx-codeautolink.readthedocs.io/>`__.
 
 .. image:: /_static/images/about/clickable.png
-   :alt: A hovered identifier in a code block, highlighted and linking to the API reference
+   :alt: Clickable API reference
    :class: about-shot
 
 Copy buttons
@@ -71,7 +71,7 @@ hover. For interactive (``>>>``) examples it copies just the code, leaving out
 the prompts and the output, so you can paste it straight into a shell.
 
 .. image:: /_static/images/about/copy.png
-   :alt: A code block with its copy button in the top-right corner
+   :alt: Copy button
    :class: about-shot
 
 Search
@@ -82,7 +82,7 @@ use the :kbd:`↑` and :kbd:`↓` arrow keys to move through them and :kbd:`Ente
 to open one.
 
 .. image:: /_static/images/about/search.png
-   :alt: The search results page, with matches and context snippets
+   :alt: Search results
    :class: about-shot
 
 TOC / On this page
@@ -93,7 +93,17 @@ page's sections. As you scroll it highlights the section you're in, and
 clicking an entry jumps straight to it.
 
 .. image:: /_static/images/about/toc.png
-   :alt: The "On this page" outline with the current section highlighted
+   :alt: On this page outline
+   :class: about-shot
+
+Back to top
+-----------
+
+On a long page, start scrolling back up and a small button will appear in the
+bottom-right corner. Click it to go back to the top of the page.
+
+.. image:: /_static/images/about/backtotop.png
+   :alt: Back-to-top button
    :class: about-shot
 
 Reading on mobile
@@ -104,7 +114,7 @@ it to open the menu, then swipe left anywhere on the page (or tap outside it)
 to close it again.
 
 .. image:: /_static/images/about/mobile.png
-   :alt: Left sidebar on mobile
+   :alt: Mobile sidebar
    :class: about-shot
 
 Blog
