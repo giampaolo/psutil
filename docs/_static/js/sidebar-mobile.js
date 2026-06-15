@@ -54,30 +54,75 @@
 
     backdrop.addEventListener("click", close);
 
-    let startX = null;
+    let dragStartX = null;
+    let dragStartY = null;
+    let dragging = false;
+    const SWIPE_CLOSE_PX = 40;
 
-    sidebar.addEventListener(
+    document.addEventListener(
         "touchstart",
         (e) => {
-            startX = e.touches[0].clientX;
+            if (!body.classList.contains("sidebar-open")) {
+                return;
+            }
+            dragStartX = e.touches[0].clientX;
+            dragStartY = e.touches[0].clientY;
+            dragging = false;
         },
         { passive: true }
     );
 
-    sidebar.addEventListener(
-        "touchend",
+    document.addEventListener(
+        "touchmove",
         (e) => {
-            if (startX === null) {
+            if (dragStartX === null) {
                 return;
             }
-            const dx = e.changedTouches[0].clientX - startX;
-            startX = null;
-            if (dx < -40) {
-                close();
+            const dx = e.touches[0].clientX - dragStartX;
+            const dy = e.touches[0].clientY - dragStartY;
+            if (!dragging) {
+                // Let vertical scrolls through; only engage on a clear
+                // leftward drag.
+                if (Math.abs(dx) <= Math.abs(dy)) {
+                    dragStartX = null;
+                    return;
+                }
+                if (dx > -8) {
+                    return;
+                }
+                dragging = true;
             }
+            // Follow the finger 1:1, no transition so it tracks live.
+            sidebar.style.transition = "none";
+            sidebar.style.transform = "translateX(" + Math.min(0, dx) + "px)";
         },
         { passive: true }
     );
+
+    document.addEventListener("touchend", (e) => {
+        if (dragStartX === null) {
+            return;
+        }
+        const dx = e.changedTouches[0].clientX - dragStartX;
+        dragStartX = null;
+        if (!dragging) {
+            // A quick flick with no visible drag still closes (CSS
+            // transition animates it).
+            if (dx < -SWIPE_CLOSE_PX) {
+                close();
+            }
+            return;
+        }
+        dragging = false;
+        const willClose = dx < -SWIPE_CLOSE_PX;
+        requestAnimationFrame(() => {
+            sidebar.style.transition = "";
+            sidebar.style.transform = "";
+            if (willClose) {
+                close();
+            }
+        });
+    });
 
     sidebar.addEventListener("click", (e) => {
         const link = e.target.closest("a");
