@@ -19,8 +19,6 @@
         width: calc(var(--right-sidebar-width) - 16px);
         max-height: calc(100vh - var(--topbar-height) - 36px);
         overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--scrollbar-thumb) transparent;
         padding: 0 16px;
         border-left: 1px solid #ccc;
         box-sizing: border-box;
@@ -30,19 +28,6 @@
 
     [data-theme="dark"] .right-sidebar {
         border-left-color: #3a3a3a;
-    }
-
-    .right-sidebar::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .right-sidebar::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: 4px;
-    }
-
-    .right-sidebar::-webkit-scrollbar-track {
-        background: transparent;
     }
 }
 

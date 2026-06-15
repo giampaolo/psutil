@@ -111,6 +111,7 @@
     --table-header-text: var(--text);
     --table-row-odd: #f8f9fa;
     --table-row-even: #ffffff;
+    --table-border: var(--border);
 
     /* ================================================================== */
     /* Fonts                                                              */
@@ -214,6 +215,7 @@
     --table-header-bg: #2d2d2d;
     --table-row-odd: #222222;
     --table-row-even: #272727;
+    --table-border: #424242;
 }
 
 /* ====================================================================== */
@@ -264,6 +266,27 @@ ul.search > li,
 .no-visited:visited,
 .no-visited a:visited {
     color: inherit;
+}
+
+/* Thin, theme-aware scrollbars for every scrollable region (code
+   blocks, the TOC, tables, ...). */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 /* Keyboard focus ring on interactive controls (both themes). The
