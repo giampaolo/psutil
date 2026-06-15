@@ -1,3 +1,7 @@
+// Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // Dim the rest of the page while the sidebar search input is focused.
 // search.css handles the visual fade. Skipped on touch devices.
 

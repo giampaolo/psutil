@@ -14,7 +14,7 @@
 .article table.docutils th,
 .article table.docutils td {
     padding: 6px 10px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--table-border);
     vertical-align: top;
     text-align: left;
     white-space: normal;
@@ -66,6 +66,12 @@ div.deprecated {
     border-left: 3px solid;
     padding: 0 1rem;
     margin: 1em 0;
+}
+
+div.versionadded p,
+div.versionchanged p,
+div.deprecated p {
+    margin: 0;
 }
 
 div.versionadded {

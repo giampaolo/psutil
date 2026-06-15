@@ -86,7 +86,7 @@ extensions = _third_party_exts + _local_exts
 project = PROJECT_NAME
 author = AUTHOR
 version = release = VERSION
-copyright = f"2009-{THIS_YEAR}, {AUTHOR}"  # shown in the footer
+copyright = f"2009-{THIS_YEAR} {AUTHOR}"  # shown in the footer
 
 # =====================================================================
 # Cross-references and external links
@@ -171,32 +171,13 @@ pygments_style = "tango"  # base palette (overridden by css/code.css)
 def _css_files():
     css_dir = _HERE / "_static" / "css"
     files = sorted(p.name for p in css_dir.glob("*.css"))
-    head = ["base.css", "typography.css"]
+    head = ["base.css", "fonts.css", "fontawesome.css", "typography.css"]
     tail = ["home.css"]
     middle = [f for f in files if f not in head + tail]
     return [f"css/{name}" for name in head + middle + tail if name in files]
 
 
-html_css_files = [
-    # External: fonts + FontAwesome
-    (
-        "https://fonts.googleapis.com/css2"
-        "?family=Inter:wght@400;500;600;700"
-        "&family=JetBrains+Mono:wght@400;600"
-        "&family=Merriweather:ital,wght@0,400;0,700;1,400"
-        "&display=swap"
-    ),
-    (
-        "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css",
-        {
-            "integrity": (
-                "sha384-EXatlQyrOJgDaM9/a74ArMzy7/2bTMSrZj8ID1IPeVmc3GncfCugefCFWSLj8JL/"
-            ),
-            "crossorigin": "anonymous",
-        },
-    ),
-    *_css_files(),
-]
+html_css_files = _css_files()
 
 
 def _js_files():
@@ -256,6 +237,7 @@ sitemap_excludes = [
     "search.html",
     "genindex.html",
     "py-modindex.html",
+    "404.html",
     "_modules/*",
     "blog/archive.html",
     "blog/drafts.html",

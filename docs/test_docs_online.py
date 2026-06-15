@@ -1,0 +1,88 @@
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+"""Smoke tests against the live docs site.
+
+Run with:
+
+  PSUTIL_DOCS_ONLINE=1 python3 -m pytest docs/test_docs_online.py
+"""
+
+import os
+import pathlib
+import re
+import sys
+import urllib.request
+from urllib.parse import urlsplit
+
+import pytest
+
+HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import conf  # noqa: E402
+
+BASE = conf.html_baseurl.rstrip("/") + "/"
+_parts = urlsplit(BASE)
+ORIGIN = f"{_parts.scheme}://{_parts.netloc}/"
+
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("PSUTIL_DOCS_ONLINE"),
+    reason="set PSUTIL_DOCS_ONLINE=1 to run live-site smoke tests",
+)
+
+
+def fetch(url):
+    req = urllib.request.Request(
+        url, headers={"User-Agent": "psutil-docs-test"}
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.status, resp.read()
+
+
+class TestLiveSite:
+
+    def test_homepage_ok(self):
+        status, _ = fetch(BASE)
+        assert status == 200
+
+    def test_key_endpoints_reachable(self, subtests):
+        urls = [
+            BASE + "sitemap.xml",
+            BASE + "objects.inv",
+            BASE + "blog/atom.xml",
+            ORIGIN + "robots.txt",
+        ]
+        for url in urls:
+            with subtests.test(url=url):
+                status, _ = fetch(url)
+                assert status == 200
+
+    def test_sitemap_has_many_urls(self):
+        _, body = fetch(BASE + "sitemap.xml")
+        assert body.count(b"<url>") >= 20
+
+    def test_fonts_are_self_hosted(self, subtests):
+        for name in ("inter-400.woff2", "fa-solid-subset.woff2"):
+            with subtests.test(font=name):
+                status, _ = fetch(BASE + "_static/fonts/" + name)
+                assert status == 200
+
+    def test_homepage_canonical_matches_baseurl(self):
+        _, body = fetch(BASE)
+        m = re.search(
+            r'<link rel="canonical" href="([^"]+)"',
+            body.decode("utf-8", "replace"),
+        )
+        assert m
+        assert m.group(1).startswith(BASE)
+
+    def test_homepage_has_og_tags(self, subtests):
+        html = fetch(BASE)[1].decode("utf-8", "replace")
+        for prop in ("og:title", "og:image"):
+            with subtests.test(prop=prop):
+                assert f'property="{prop}"' in html
+
+    def test_search_index_reachable(self):
+        status, _ = fetch(BASE + "searchindex.js")
+        assert status == 200

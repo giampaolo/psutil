@@ -1,3 +1,7 @@
+// Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // Flips data-theme on <html> between "light" and "dark" and persists
 // the choice in localStorage. Initial application happens inline in
 // layout.html (extrahead) so there is no flash on page load. Keep the

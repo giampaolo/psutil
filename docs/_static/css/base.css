@@ -16,7 +16,7 @@
     --topbar-height: 44px;
     --left-sidebar-width: 260px;
     --right-sidebar-width: 230px;
-    --content-max-width: 1152px;
+    --content-max-width: 1240px;
     --layout-width: calc(var(--left-sidebar-width) + var(--content-max-width));
 
     /* ================================================================== */
@@ -31,7 +31,7 @@
     --bg-input: #ffffff;
     --bg-key: #f0f0f0;
     --kbd-bg: #f3f3f3;
-    --kbd-text: #777;
+    --kbd-text: #6a6a6a;
     --kbd-border: #c8c8c8;
     --bg-search-highlight: #e1edf5;
     --bg-hover: rgba(0, 0, 0, 0.04);
@@ -49,7 +49,7 @@
        are constant across light/dark mode (only --bg-sidebar shifts
        between the two). */
     --sidebar-fg: #d9d9d9;
-    --sidebar-caption: #7a9ab2;
+    --sidebar-caption: #8aa8c0;
     --sidebar-active-bg: #f0f0f0;
     --sidebar-active-fg: #1a1a1a;
 
@@ -63,8 +63,7 @@
     --border-radius: 6px;
     --border-radius-code: 3px;
 
-    /* Accent (active state, focus, links). */
-    --accent: #2980b9;
+    --accent: #2371a8;
     --accent-ring: rgba(40, 100, 180, 0.25);
 
     /* Inline API links (cross-refs to symbols). */
@@ -112,6 +111,7 @@
     --table-header-text: var(--text);
     --table-row-odd: #f8f9fa;
     --table-row-even: #ffffff;
+    --table-border: var(--border);
 
     /* ================================================================== */
     /* Fonts                                                              */
@@ -162,7 +162,7 @@
 
     /* Text. */
     --text: #c8c8c8;
-    --text-muted: #909090;
+    --text-muted: #9b9b9b;
     --text-secondary: #d1d1d1;
     --headings: #e0e0e0;
     --ntuple-color: #6db99a;
@@ -215,6 +215,7 @@
     --table-header-bg: #2d2d2d;
     --table-row-odd: #222222;
     --table-row-even: #272727;
+    --table-border: #424242;
 }
 
 /* ====================================================================== */
@@ -265,6 +266,77 @@ ul.search > li,
 .no-visited:visited,
 .no-visited a:visited {
     color: inherit;
+}
+
+/* Thin, theme-aware scrollbars for every scrollable region (code
+   blocks, the TOC, tables, ...). */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* about.html page */
+.about-shot {
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    width: auto;
+    height: auto;
+    margin: 0.4em 0 1.4em;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Two screenshots side by side (light vs dark); wrap on narrow columns. */
+.about-shot-pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0.4em 0 1.4em;
+}
+
+.about-shot-pair .about-shot {
+    flex: 1 1 240px;
+    min-width: 0;
+    margin: 0;
+}
+
+/* Flash when clicking on a link / anchor */
+@keyframes anchor-flash {
+    from {
+        background-color: var(--accent-ring);
+    }
+}
+
+:target > h1,
+:target > h2,
+:target > h3,
+:target > h4,
+:target > h5,
+:target > h6,
+:target + h1,
+:target + h2,
+:target + h3,
+:target + h4,
+:target + h5,
+:target + h6,
+dt:target {
+    animation: anchor-flash 1.8s ease-out;
 }
 
 /* Keyboard focus ring on interactive controls (both themes). The

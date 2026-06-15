@@ -1,3 +1,7 @@
+// Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // Shows a helper when pressing "?" anywhere outside a form field, listing
 // the site's keyboard shortcuts. Esc / click on backdrop / second "?"
 // closes it.

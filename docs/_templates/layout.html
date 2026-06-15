@@ -18,15 +18,10 @@
 {% block extrahead %}
 {{ super() }}
 
-{# Keep the auto-generated index pages out of search results. #}
-{%- if pagename in ['genindex', 'py-modindex'] %}
+{# Keep the auto-generated index + 404 pages out of search results. #}
+{%- if pagename in ['genindex', 'py-modindex', '404'] %}
 <meta name="robots" content="noindex">
 {%- endif %}
-
-{# Warm up the external font + icon CDN connections early. #}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
 {# Larger icon for iOS home-screen / share sheet. #}
 <link rel="apple-touch-icon" href="{{ pathto('_static/images/logo-psutil.png', 1) }}">
@@ -88,12 +83,11 @@
 {% block content %}
 <div class="page">
   {% include "sidebar.html" %}
-
-  <main class="main" id="main-content">
+  <main class="main" id="main-content" role="main">
     {% include "breadcrumbs.html" %}
     <div class="article-with-toc{% if not _has_toc %} no-toc{% endif %}">
       <div class="article-column">
-        <article class="article" role="main">
+        <article class="article">
           {% block body %}{% endblock %}
         </article>
         {% include "prev-next.html" %}
@@ -101,8 +95,9 @@
 
       {% if _has_toc %}{% include "toc.html" %}{% endif %}
     </div>
-
-    {% include "footer.html" %}
   </main>
+
+  {# Footer lives outside <main> so its contentinfo landmark is top-level. #}
+  {% include "footer.html" %}
 </div>
 {% endblock %}

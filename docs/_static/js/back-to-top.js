@@ -1,3 +1,7 @@
+// Copyright (c) 2009 Giampaolo Rodola. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 // Floating "back to top" button. Appears when the user has scrolled
 // down and is moving back up; hidden again at the top of the page.
 
@@ -6,6 +10,7 @@
     btn.type = "button";
     btn.className = "back-to-top";
     btn.setAttribute("aria-label", "Back to top");
+    btn.title = "Back to top";
     // Hidden at rest via opacity, which doesn't remove it from the tab
     // order; keep it unfocusable until the scroll handler shows it.
     btn.tabIndex = -1;

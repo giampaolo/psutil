@@ -1,15 +1,17 @@
+/* Footer sits in the content column (grid col 2) of .page, below the
+   main row. Padding matches .main so it lines up with the article. */
 .footer {
+    grid-column: 2;
     margin-top: 0.5em;
-    padding: 1em 0 16px;
+    padding: 1em 24px 16px;
     border-top: 1px solid var(--border);
 }
 
-/* Align footer with the article column, not the wider .main (which
-   spans the right TOC too). Only applies when the right TOC is
-   visible (>= 1280px) and the page actually has a TOC. */
-@media (min-width: 1280px) {
-    .article-with-toc:not(.no-toc) ~ .footer {
-        width: calc(100% - var(--right-sidebar-width) - 32px);
+/* Mobile: single-column grid, so the footer is in column 1. */
+@media (max-width: 1024px) {
+    .footer {
+        grid-column: 1;
+        padding: 1em 16px 16px;
     }
 }
 
@@ -21,7 +23,6 @@
 
 .footer-text {
     color: var(--text-muted);
-    opacity: 0.7;
     line-height: 1.4;
     display: flex;
     flex-wrap: wrap;
@@ -57,19 +58,51 @@
     text-decoration: none;
 }
 
-/* RSS icon, anchored to the right of the footer row. */
+/* PyPI + RSS icon links, grouped at the right of the footer row. */
+.footer-icons {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.footer-pypi,
+.footer-pypi:visited,
+.footer-github,
+.footer-github:visited,
 .footer-rss,
 .footer-rss:visited {
-    margin-left: auto;
     display: inline-flex;
     align-items: center;
     color: var(--text-muted);
     text-decoration: none;
-    flex-shrink: 0;
+    opacity: 0.75;
+    transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-.footer-text a.footer-egg:hover,
+/* FontAwesome glyphs, sized to roughly match the RSS icon. The python
+   logo's ink is shorter than the others, so nudge it up to match. */
+.footer-github {
+    font-size: 1.3em;
+}
+
+.footer-pypi {
+    font-size: 1.4em;
+}
+
+.footer-rss {
+    font-size: 0.9em;
+}
+
+.footer-pypi:hover,
+.footer-github:hover,
 .footer-rss:hover {
+    color: var(--accent);
+    opacity: 1;
+}
+
+.footer-text a.footer-egg:hover {
     color: var(--accent);
 }
 

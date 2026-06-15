@@ -80,11 +80,12 @@ body.search-focused .search-kbd {
 }
 
 .search-kbd kbd,
-.shortcut-flyout-list kbd {
+.shortcut-flyout-list kbd,
+.article kbd {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 5px;
+    padding: 3px 5px 1px;
     font-family: var(--font-body);
     font-size: 10px;
     font-weight: 500;
@@ -96,10 +97,13 @@ body.search-focused .search-kbd {
     border-radius: 3px;
 }
 
-/* helper flyout showing up on '?' */
-.shortcut-flyout-list kbd {
+/* Bigger pills: the '?' help flyout and the keyboard keys in prose /
+   tables on the "About this site" page (body content, not a hint). */
+.shortcut-flyout-list kbd,
+.article kbd {
     padding: 4px 7px;
     font-size: 12px;
+    vertical-align: baseline;
 }
 
 /* ====================================================================== */

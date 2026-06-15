@@ -20,3 +20,8 @@ document.querySelectorAll(".highlight-pycon .go").forEach((span) => {
         '<span class="pycon-number">$&</span>');
     span.innerHTML = html;
 });
+
+// Disable title showing up on hover.
+document.querySelectorAll("a.sphinx-codeautolink-a[title]").forEach((a) => {
+    a.removeAttribute("title");
+});

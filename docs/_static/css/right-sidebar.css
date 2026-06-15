@@ -10,18 +10,15 @@
 }
 
 @media (min-width: 1280px) {
-    /* Fixed (not sticky): the TOC must never move on scroll. */
     .right-sidebar {
         display: block;
-        position: fixed;
+        position: sticky;
         top: calc(var(--topbar-height) + 20px);
-        right: max(0px, calc((100vw - var(--layout-width)) / 2));
-        width: calc(var(--right-sidebar-width) - 16px);
+        align-self: start;
         max-height: calc(100vh - var(--topbar-height) - 36px);
         overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: var(--scrollbar-thumb) transparent;
         padding: 0 16px;
+        margin-right: -24px;
         border-left: 1px solid #ccc;
         box-sizing: border-box;
         font-size: 0.85rem;
@@ -30,19 +27,6 @@
 
     [data-theme="dark"] .right-sidebar {
         border-left-color: #3a3a3a;
-    }
-
-    .right-sidebar::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .right-sidebar::-webkit-scrollbar-thumb {
-        background: var(--scrollbar-thumb);
-        border-radius: 4px;
-    }
-
-    .right-sidebar::-webkit-scrollbar-track {
-        background: transparent;
     }
 }
 
@@ -58,7 +42,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    padding: 0 0 0.6rem 0;
+    padding: 0 0 0.6rem 8px;
 }
 
 /* {{ toc }} renders the H1 as the root <li> wrapping all sections.
@@ -98,7 +82,7 @@
 .right-sidebar a:visited {
     display: block;
     padding: 0.2rem 8px;
-    margin: 0 6px;
+    margin: 0 6px 0 0;
     color: var(--text-muted);
     text-decoration: none;
     overflow-wrap: anywhere;
@@ -148,24 +132,14 @@
     margin-top: 0.5rem;
 }
 
-/* Per-depth left padding on the anchor (replaces the ul-ul indent
-   above) so the active bar, which sits at x=0 of the anchor, stays
-   at the column edge regardless of depth. Steps of 10px keep deeper
-   levels from eating column width. */
-.right-sidebar > ul > li:first-child > ul > li > ul > li > a {
-    padding-left: 18px;
-}
-
 .right-sidebar > ul > li:first-child > ul > li > ul > li > ul > li > a {
     font-size: 0.85rem;
     font-weight: 400;
-    padding-left: 28px;
 }
 
 .right-sidebar > ul > li:first-child > ul > li > ul > li > ul > li > ul > li > a {
     font-size: 0.8rem;
     font-weight: 400;
-    padding-left: 38px;
 }
 
 /* Glossary TOC: populated by _ext/glossary_toc.py. */

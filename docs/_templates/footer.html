@@ -1,8 +1,3 @@
-{#-
-  Footer: copyright + last-updated + Tips + Edit-on-GitHub on the
-  left, RSS feed icon (when ablog is loaded) on the right. Styled by
-  static/css/footer.css.
--#}
 <footer class="footer" role="contentinfo">
   <div class="footer-content">
     <div class="footer-text">
@@ -15,17 +10,31 @@
         rel="noopener noreferrer" target="_blank"
         title="View commit history on GitHub">{{ last_updated|e }}</a></span>
       {%- endif %}
-      <span><a href="{{ pathto('about') }}">Tips</a></span>
+      <span><a href="{{ pathto('about') }}"
+               title="About this documentation site">About</a></span>
       {%- if pagename not in ("search", "genindex", "py-modindex") %}
       <span><a href="https://github.com/giampaolo/psutil/edit/master/docs/{{ pagename }}.rst"
-               rel="noopener noreferrer" target="_blank">Edit on GitHub</a></span>
+               rel="noopener noreferrer" target="_blank"
+               title="Edit this page on GitHub">Edit on GitHub</a></span>
       {%- endif %}
     </div>
-    {%- if ablog is defined %}
-    <a class="footer-rss" href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
-       title="Subscribe to blog (Atom feed)" aria-label="Subscribe to blog">
-      <span class="rss-icon"></span>
-    </a>
-    {%- endif %}
+    <div class="footer-icons">
+      <a class="footer-github" href="https://github.com/giampaolo/psutil"
+         title="psutil on GitHub" aria-label="psutil on GitHub"
+         rel="noopener noreferrer" target="_blank">
+        <i class="fa-brands fa-github" aria-hidden="true"></i>
+      </a>
+      <a class="footer-pypi" href="https://pypi.org/project/psutil/"
+         title="psutil on PyPI" aria-label="psutil on PyPI"
+         rel="noopener noreferrer" target="_blank">
+        <i class="fa-brands fa-python" aria-hidden="true"></i>
+      </a>
+      {%- if ablog is defined %}
+      <a class="footer-rss" href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
+         title="Subscribe to blog (Atom feed)" aria-label="Subscribe to blog">
+        <span class="rss-icon"></span>
+      </a>
+      {%- endif %}
+    </div>
   </div>
 </footer>

@@ -41,6 +41,9 @@ check-codeautolink:  ## Report sphinx-codeautolink resolution failures (non-fata
 test:  ## Run doc sanity tests.
 	$(PYTHON) -m pytest test_docs.py $(ARGS)
 
+test-online-doc:  ## Smoke tests against the live docs site.
+	PSUTIL_DOCS_ONLINE=1 $(PYTHON) -m pytest test_docs_online.py -v
+
 # --- tools
 
 blog-post:  ## Create a new blog post skeleton

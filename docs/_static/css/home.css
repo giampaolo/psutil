@@ -34,6 +34,10 @@
     justify-content: center;
 }
 
+[data-theme="dark"] .home-page .hero-title {
+    color: #fff;
+}
+
 .home-page .hero-logo {
     height: 55px;
     width: auto;
@@ -480,7 +484,6 @@ a.sponsor-cta:visited {
     text-decoration: underline dashed;
     text-decoration-color: var(--border);
     text-underline-offset: 3px;
-    opacity: 0.8;
     transition: color var(--theme-transition),
                 opacity var(--theme-transition),
                 text-decoration-color var(--theme-transition);
@@ -542,7 +545,6 @@ a.sponsor-cta:hover {
 /* Inactive tabs: lighter than default so the current tab pops. */
 .home-quickstart .sd-tab-label {
     color: var(--text-muted);
-    opacity: 0.7;
     font-weight: 500;
     transition: opacity 0.15s, color 0.15s;
 }

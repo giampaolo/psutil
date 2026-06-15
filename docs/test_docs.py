@@ -557,3 +557,76 @@ class TestBlogPosts:
                     assert "post-meta-featured" in html
                 else:
                     assert "post-meta-featured" not in html
+
+
+@pytest.mark.usefixtures("build_html")
+class TestNoExternalAssets:
+    """Stylesheets and fonts are self-hosted, not pulled from a CDN."""
+
+    ASSET_LINK_RE = re.compile(
+        r'<link\b[^>]*\brel="(?:stylesheet|preload)"[^>]*>', re.IGNORECASE
+    )
+    HREF_RE = re.compile(r'\bhref="([^"]+)"')
+
+    @staticmethod
+    def is_external(url):
+        return url.startswith(("http://", "https://", "//"))
+
+    def test_no_external_stylesheets(self, subtests):
+        # Analytics <script>s are deliberately external; only links count.
+        for page in all_html_pages():
+            urls = []
+            for tag in self.ASSET_LINK_RE.findall(page.read_text()):
+                urls += self.HREF_RE.findall(tag)
+            external = [u for u in urls if self.is_external(u)]
+            with subtests.test(page=page.relative_to(HTML_DIR)):
+                assert external == []
+
+    def test_no_external_css_urls(self, subtests):
+        css_dir = HTML_DIR / "_static" / "css"
+        for css in sorted(css_dir.glob("*.css")):
+            urls = re.findall(r'url\(\s*["\']?([^"\')]+)', css.read_text())
+            external = [u for u in urls if self.is_external(u)]
+            with subtests.test(css=css.name):
+                assert external == []
+
+
+@pytest.mark.usefixtures("build_html")
+class TestFonts:
+    """Every @font-face points at a font file that ships in the build."""
+
+    def test_font_face_files_exist(self, subtests):
+        css_dir = HTML_DIR / "_static" / "css"
+        face_re = re.compile(r"@font-face\s*\{[^}]*\}", re.DOTALL)
+        url_re = re.compile(r'url\(\s*["\']?([^"\')]+)')
+        found = 0
+        for css in sorted(css_dir.glob("*.css")):
+            for block in face_re.findall(css.read_text()):
+                for url in url_re.findall(block):
+                    found += 1
+                    resolved = (css.parent / url).resolve()
+                    with subtests.test(css=css.name, url=url):
+                        assert resolved.is_file()
+        assert found > 0
+
+
+@pytest.mark.usefixtures("build_html")
+class TestNoIndex:
+    """Utility pages are noindex'd (layout.html); content pages aren't."""
+
+    NOINDEX_RE = re.compile(
+        r'<meta[^>]*name="robots"[^>]*content="noindex"', re.IGNORECASE
+    )
+
+    def test_utility_pages_noindex(self, subtests):
+        for name in ("genindex.html", "py-modindex.html", "404.html"):
+            path = HTML_DIR / name
+            if not path.is_file():
+                continue
+            with subtests.test(page=name):
+                assert self.NOINDEX_RE.search(path.read_text())
+
+    def test_content_pages_indexable(self, subtests):
+        for name in ("index.html", "api.html", "install.html"):
+            with subtests.test(page=name):
+                assert not self.NOINDEX_RE.search(read_html(name))
