@@ -125,3 +125,15 @@ Blog
 New releases and deep-dives are written up on the :doc:`blog <blog>`. Blog
 provides a RSS feed (the icon at the top of the blog page) so you can receive
 notifications of new blog posts from your reader.
+
+Other internal optimizations
+----------------------------
+
+- Fonts and icons are served directly from this site, not from third-party CDNs
+  (e.g. Google fonts). This way docs renders the same from all countries (e.g.
+  mainland China).
+
+- Links to this site shared on social medias show rich preview cards.
+
+- Every page declares a canonical URL and is listed in a generated
+  ``sitemap.xml``, so search engines can discover and index the whole site.
