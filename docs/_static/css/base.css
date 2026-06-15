@@ -16,7 +16,7 @@
     --topbar-height: 44px;
     --left-sidebar-width: 260px;
     --right-sidebar-width: 230px;
-    --content-max-width: 1152px;
+    --content-max-width: 1240px;
     --layout-width: calc(var(--left-sidebar-width) + var(--content-max-width));
 
     /* ================================================================== */
