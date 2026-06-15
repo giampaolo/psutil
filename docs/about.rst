@@ -123,26 +123,5 @@ Blog
 ----
 
 New releases and deep-dives are written up on the :doc:`blog <blog>`. Blog
-provides a **RSS feed** (the icon at the top of the blog page) so you can
-receive notifications of new blog posts from your reader.
-
-Other internal optimizations
-----------------------------
-
-The site also does a few quiet things to make the docs faster and easier to
-use.
-
-- Fonts and icons are served directly from this site, not from third-party
-  CDNs. This means the docs renders the same on restricted networks (e.g.
-  mainland China).
-
-- The documentation build is intentionally strict. Broken internal links are
-  caught before publishing, warnings fail the build, and Python examples are
-  checked so that obvious mistakes do not slip into the docs.
-
-- The pages are designed to be comfortable to read and navigate: colors aim for
-  WCAG AA contrast, everything can be used from the keyboard, and animations
-  respect your "reduce motion" preference.
-
-- Links shared on social media show rich preview cards, and the site includes a
-  sitemap and canonical URLs so search engines can index the docs cleanly.
+provides a RSS feed (the icon at the top of the blog page) so you can receive
+notifications of new blog posts from your reader.
