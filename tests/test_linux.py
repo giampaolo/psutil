@@ -9,6 +9,7 @@
 import collections
 import contextlib
 import errno
+import glob
 import io
 import os
 import platform
@@ -931,6 +932,67 @@ class TestCpuFreq(LinuxTestCase):
                 ):
                     freq = psutil.cpu_freq()
                     assert freq.current == 200
+
+    @pytest.mark.skipif(not HAS_CPU_FREQ, reason="not supported")
+    def test_emulate_offline_cpus(self):
+        # Offline CPU cores must not be taken into account, else they
+        # drag down the average frequency. See:
+        # https://github.com/giampaolo/psutil/issues/2628
+        policies = [
+            f"/sys/devices/system/cpu/cpufreq/policy{n}" for n in range(4)
+        ]
+
+        def exists_mock(path):
+            # Make sure the sysfs-based implementation is used.
+            if path.startswith("/sys/devices/system/cpu/"):
+                return True
+            return orig_exists(path)
+
+        def glob_mock(pattern):
+            if pattern == "/sys/devices/system/cpu/cpufreq/policy[0-9]*":
+                return list(policies)
+            return orig_glob(pattern)
+
+        def open_mock(name, *args, **kwargs):
+            # Only CPUs 0 and 1 are online; 2 and 3 are offline.
+            if name == '/proc/cpuinfo':
+                return io.BytesIO(b"cpu MHz\t: 200\ncpu MHz\t: 400")
+            elif "/policy0/" in name or "/policy1/" in name:
+                if name.endswith('/scaling_cur_freq'):
+                    cur = b"200000" if "/policy0/" in name else b"400000"
+                    return io.BytesIO(cur)
+                elif name.endswith('/scaling_min_freq'):
+                    return io.BytesIO(b"100000")
+                elif name.endswith('/scaling_max_freq'):
+                    return io.BytesIO(b"300000")
+            elif "/policy2/" in name or "/policy3/" in name:
+                # Offline cores have no frequency files.
+                if name.endswith(('/scaling_cur_freq', '/cpuinfo_cur_freq')):
+                    raise FileNotFoundError
+            elif name.endswith('/online'):
+                # CPUs 2 and 3 are offline.
+                return io.StringIO("0\n")
+            return orig_open(name, *args, **kwargs)
+
+        orig_exists = os.path.exists
+        orig_glob = glob.glob
+        orig_open = open
+        try:
+            with mock.patch("os.path.exists", side_effect=exists_mock):
+                reload_module(psutil._pslinux)
+                with mock.patch("glob.glob", side_effect=glob_mock):
+                    with mock.patch("builtins.open", side_effect=open_mock):
+                        percpu = psutil.cpu_freq(percpu=True)
+                        assert len(percpu) == 2
+                        assert [f.current for f in percpu] == [200.0, 400.0]
+
+                        freq = psutil.cpu_freq()
+                        assert freq.current == 300.0
+                        assert freq.min == 100.0
+                        assert freq.max == 300.0
+        finally:
+            reload_module(psutil._pslinux)
+            reload_module(psutil)
 
 
 class TestCpuTimes(LinuxTestCase):

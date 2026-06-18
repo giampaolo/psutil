@@ -232,6 +232,9 @@ Others:
   per-value by magnitude, and filters CPU clusters from GPU/NPU tables via a
   per-table fmax threshold. Works uniformly from M1 through M5 Max. (patch by
   Bert Pluymers)
+- :gh:`2628`, [Linux]: :func:`cpu_freq` no longer takes offline CPU cores into
+  account. They were reported with all-zero frequencies, which dragged down the
+  average ``current``, ``min`` and ``max`` values.
 - :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
   ``broadcast`` field of network interfaces instead of the correct broadcast
   address.

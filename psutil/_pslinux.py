@@ -622,9 +622,11 @@ if os.path.exists("/sys/devices/system/cpu/cpufreq/policy0") or os.path.exists(
                 curr = bcat(pjoin(path, "cpuinfo_cur_freq"), fallback=None)
                 if curr is None:
                     online_path = f"/sys/devices/system/cpu/cpu{i}/online"
-                    # if cpu core is offline, set to all zeroes
+                    # If the CPU core is offline skip it instead of
+                    # reporting it as all zeroes, otherwise it drags
+                    # down the average frequency. See:
+                    # https://github.com/giampaolo/psutil/issues/2628
                     if cat(online_path, fallback=None) == "0\n":
-                        ret.append(ntp.scpufreq(0.0, 0.0, 0.0))
                         continue
                     msg = "can't find current frequency file"
                     raise NotImplementedError(msg)
