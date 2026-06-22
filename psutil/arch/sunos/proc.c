@@ -212,7 +212,7 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
             goto error;
 
         py_envval = PyUnicode_DecodeFSDefault(dm + 1);
-        if (!py_enval)
+        if (!py_envval)
             goto error;
 
         if (PyDict_SetItem(py_retdict, py_envname, py_envval) < 0)
