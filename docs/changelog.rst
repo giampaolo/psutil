@@ -262,6 +262,9 @@ Others:
 - :gh:`2822`, [BSD]: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` if the process about to exit. It now
   raises :exc:`NoSuchProcess` instead.
+- :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
+  could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
+  ``errno == 0``. They now raise :exc:`AccessDenied` instead.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
