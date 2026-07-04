@@ -7,6 +7,7 @@
 """Linux specific tests."""
 
 import collections
+import tracemalloc
 import contextlib
 import errno
 import io
@@ -1513,6 +1514,22 @@ class TestRootFsDeviceFinder(LinuxTestCase):
                 assert part.device == RootFsDeviceFinder().find()
             else:
                 assert part.device == "/dev/root"
+
+    def test_disk_partitions_bad_arg_no_leak(self):
+        # Regression for issue #2856: parse failure must not leak py_retlist.
+        tracemalloc.start()
+        snap1 = tracemalloc.take_snapshot()
+        for _ in range(100):
+            try:
+                psutil._pslinux.cext.disk_partitions(123)
+            except TypeError:
+                pass
+        snap2 = tracemalloc.take_snapshot()
+        tracemalloc.stop()
+        # An empty PyList is ~56 bytes per leak; allow some headroom
+        # for unrelated drift but catch a per-call regression.
+        growth = sum(d.size_diff for d in snap2.compare_to(snap1, 'filename'))
+        self.assertLess(growth, 256)
 
 
 # =====================================================================

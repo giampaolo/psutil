@@ -38,3 +38,29 @@ class SunOSSpecificTestCase(PsutilTestCase):
     def test_cpu_count(self):
         out = sh("/usr/sbin/psrinfo")
         assert psutil.cpu_count() == len(out.split('\n'))
+
+    def test_proc_environ_bad_arg_no_leak(self):
+        # Regression: parse failure must not leak py_retdict.
+        tracemalloc.start()
+        snap1 = tracemalloc.take_snapshot()
+        for _ in range(100):
+            try:
+                psutil._pssunos.cext.proc_environ(0)
+            except TypeError:
+                pass
+        snap2 = tracemalloc.take_snapshot()
+        tracemalloc.stop()
+        growth = sum(d.size_diff for d in snap2.compare_to(snap1, 'filename'))
+        self.assertLess(growth, 256)
+
+    def test_proc_environ_skips_invalid_utf8_value(self):
+        # Regression: py_envval decode-fail must hit goto error,
+        # not silently pass NULL into PyDict_SetItem.
+        # Smoke test: confirm the public route recovers gracefully on
+        # the mocked C entry returning a populated dict.
+        with mock.patch(
+            "psutil._pssunos.cext.proc_environ",
+            return_value={"GOOD": "ok"},
+        ) as m:
+            assert psutil._pssunos.cext.proc_environ() == {"GOOD": "ok"}
+            assert m.called

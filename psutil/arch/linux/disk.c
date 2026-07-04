@@ -19,12 +19,13 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
-    PyObject *py_retlist = PyList_New(0);
-
-    if (py_retlist == NULL)
-        return NULL;
+    PyObject *py_retlist;
 
     if (!PyArg_ParseTuple(args, "s", &mtab_path))
+        return NULL;
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
         return NULL;
 
     Py_BEGIN_ALLOW_THREADS
