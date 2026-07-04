@@ -109,6 +109,7 @@ Code contributors by year
 
 * `Amaan Qureshi`_ - :gh:`2770`
 * `Felix Yan`_ - :gh:`2732`
+* `Karl Hill`_ - :gh:`2857`
 * `Santhosh Raju`_ - :gh:`2805`
 * `Sergey Fedorov`_ - :gh:`2701`
 * :user:`Tobias Klauser <tklauser>` - :gh:`2711`
@@ -517,6 +518,7 @@ Code contributors by year
 .. _`Josiah Carlson`: https://github.com/josiahcarlson
 .. _`Julien Lebot`: https://github.com/julien-lebot
 .. _`Kamil Rytarowski`: https://github.com/krytarowski
+.. _`Karl Hill`: https://github.com/karlhillx
 .. _`karthik`: https://github.com/karthikrev
 .. _`Koen Kooi`: https://github.com/koenkooi
 .. _`Landry Breuil`: https://github.com/landryb

@@ -262,6 +262,13 @@ Others:
 - :gh:`2822`, [BSD]: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` if the process about to exit. It now
   raises :exc:`NoSuchProcess` instead.
+- :gh:`2857`, [Linux], [SunOS]: fix refcount leak in ``disk_partitions()``
+  (Linux) and ``proc_environ()`` (SunOS) when ``PyArg_ParseTuple`` fails: parse
+  arguments before allocating the result container, matching the pattern used
+  in the other 26 call sites. Also fix a copy-paste typo in SunOS
+  ``proc_environ()`` where the post-decode NULL check examined the wrong
+  variable (``py_envname`` instead of ``py_envval``), which could let a NULL
+  value reach ``PyDict_SetItem``.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
