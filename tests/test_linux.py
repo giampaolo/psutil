@@ -7,7 +7,6 @@
 """Linux specific tests."""
 
 import collections
-import tracemalloc
 import contextlib
 import errno
 import io
@@ -19,6 +18,7 @@ import socket
 import struct
 import textwrap
 import time
+import tracemalloc
 import warnings
 from unittest import mock
 
@@ -1517,19 +1517,21 @@ class TestRootFsDeviceFinder(LinuxTestCase):
 
     def test_disk_partitions_bad_arg_no_leak(self):
         # Regression for issue #2856: parse failure must not leak py_retlist.
+        # Empty PyList is ~56 bytes; allow ample headroom for unrelated
+        # tracemalloc drift, but catch a per-call allocation pattern.
         tracemalloc.start()
         snap1 = tracemalloc.take_snapshot()
-        for _ in range(100):
+        for _ in range(200):
             try:
                 psutil._pslinux.cext.disk_partitions(123)
             except TypeError:
                 pass
         snap2 = tracemalloc.take_snapshot()
         tracemalloc.stop()
-        # An empty PyList is ~56 bytes per leak; allow some headroom
-        # for unrelated drift but catch a per-call regression.
         growth = sum(d.size_diff for d in snap2.compare_to(snap1, 'filename'))
-        self.assertLess(growth, 256)
+        # A real leak here is ~56 * 200 = 11200 bytes; 4096 leaves room
+        # for tracemalloc's own overhead while still catching a leak.
+        assert growth < 4096, growth
 
 
 # =====================================================================
