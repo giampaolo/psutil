@@ -6,28 +6,28 @@
 <header class="topbar no-visited" role="banner">
   <div class="topbar-inner">
     <button class="topbar-hamburger" id="sidebar-toggle"
-            type="button" aria-label="Toggle navigation" aria-expanded="false">
+            type="button" aria-label="{{ _('Toggle navigation') }}" aria-expanded="false">
       <i class="fa-solid fa-bars" aria-hidden="true"></i>
     </button>
     <a class="topbar-logo" href="{{ pathto(master_doc) }}">
       <img src="{{ pathto('_static/images/logo-psutil.svg', 1) }}" alt="">
       <span>psutil</span>
     </a>
-    <nav class="topbar-actions" aria-label="Site actions">
-      <a class="topbar-text" href="{{ pathto('blog') }}">Blog</a>
+    <nav class="topbar-actions" aria-label="{{ _('Site actions') }}">
+      <a class="topbar-text" href="{{ pathto('blog') }}">{{ _('Blog') }}</a>
       <button class="topbar-btn" id="theme-toggle"
-              type="button" title="Toggle dark mode (shift+D)" aria-label="Toggle theme">
+              type="button" title="{{ _('Toggle dark mode (shift+D)') }}" aria-label="{{ _('Toggle theme') }}">
         <i class="fa-regular fa-moon" aria-hidden="true"></i>
       </button>
       <a class="topbar-link topbar-github"
          href="https://github.com/giampaolo/psutil"
-         target="_blank" rel="noopener" title="GitHub" aria-label="GitHub repository">
+         target="_blank" rel="noopener" title="{{ _('GitHub') }}" aria-label="{{ _('GitHub repository') }}">
         <i class="fa-brands fa-github" aria-hidden="true"></i>
         <span class="topbar-stars" data-repo="giampaolo/psutil"></span>
       </a>
       <a class="topbar-version" data-repo="giampaolo/psutil"
          href="https://pypi.org/project/psutil"
-         target="_blank" rel="noopener" title="PyPI" aria-label="PyPI release"></a>
+         target="_blank" rel="noopener" title="{{ _('PyPI') }}" aria-label="{{ _('PyPI release') }}"></a>
     </nav>
   </div>
 </header>

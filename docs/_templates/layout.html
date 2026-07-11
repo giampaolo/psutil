@@ -10,7 +10,7 @@
 
 {% block htmltitle %}
 {%- if pagename == master_doc -%}
-<title>psutil: Process and System Utilities for Python</title>
+<title>{{ _('psutil: Process and System Utilities for Python') }}</title>
 {%- else -%}
 {{ super() }}
 {%- endif -%}

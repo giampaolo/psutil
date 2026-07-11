@@ -18,7 +18,7 @@
   <div class="blog-listing-header">
     <h1 class="blog-listing-title">
       {%- if pagename == ablog.blog_path -%}
-      <span class="blog-listing-title-value">All posts</span>
+      <span class="blog-listing-title-value">{{ _('All posts') }}</span>
       {%- else -%}
       {%- set is_tag = '/tag/' in pagename -%}
       {%- set lq = '“' if is_tag else '' -%}
@@ -39,14 +39,14 @@
           {% if post.published %}
             <time datetime="{{ post.date.strftime('%Y-%m-%d') }}">{{ month_abbr[post.date.month - 1] }} {{ post.date.day }}, {{ post.date.year }}</time>
           {% else %}
-            <span class="blog-card-draft">Draft</span>
+            <span class="blog-card-draft">{{ _('Draft') }}</span>
           {% endif %}
         </span>
         <div class="blog-card-titlerow">
           <h2 class="blog-card-title">
             <a href="{{ postlink(post) }}">{{ post.title }}</a>
           </h2>
-          {% if featured %}<span class="post-meta-featured-wrap"><a class="post-meta-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">Featured</a></span>{% endif %}
+          {% if featured %}<span class="post-meta-featured-wrap"><a class="post-meta-featured" href="{{ pathto(ablog.blog_path ~ '/tag/featured') }}">{{ _('Featured') }}</a></span>{% endif %}
         </div>
       </div>
       {% if post.excerpt %}

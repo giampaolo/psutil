@@ -5,33 +5,33 @@
       <span><a class="footer-egg" href="{{ pathto('404') }}" title="🥚">&copy;</a> {{ copyright|e }}</span>
       {%- endif %}
       {%- if last_updated %}
-      <span>Updated: <a
+      <span>{{ _('Updated: ') }}<a
         href="https://github.com/giampaolo/psutil/commits/master/docs/{{ pagename }}.rst"
         rel="noopener noreferrer" target="_blank"
-        title="View commit history on GitHub">{{ last_updated|e }}</a></span>
+        title="{{ _('View commit history on GitHub') }}">{{ last_updated|e }}</a></span>
       {%- endif %}
       <span><a href="{{ pathto('about') }}"
-               title="About this documentation site">About</a></span>
+               title="{{ _('About this documentation site') }}">{{ _('About') }}</a></span>
       {%- if pagename not in ("search", "genindex", "py-modindex") %}
       <span><a href="https://github.com/giampaolo/psutil/edit/master/docs/{{ pagename }}.rst"
                rel="noopener noreferrer" target="_blank"
-               title="Edit this page on GitHub">Edit on GitHub</a></span>
+               title="{{ _('Edit this page on GitHub') }}">{{ _('Edit on GitHub') }}</a></span>
       {%- endif %}
     </div>
     <div class="footer-icons">
       <a class="footer-github" href="https://github.com/giampaolo/psutil"
-         title="psutil on GitHub" aria-label="psutil on GitHub"
+         title="{{ _('psutil on GitHub') }}" aria-label="{{ _('psutil on GitHub') }}"
          rel="noopener noreferrer" target="_blank">
         <i class="fa-brands fa-github" aria-hidden="true"></i>
       </a>
       <a class="footer-pypi" href="https://pypi.org/project/psutil/"
-         title="psutil on PyPI" aria-label="psutil on PyPI"
+         title="{{ _('psutil on PyPI') }}" aria-label="{{ _('psutil on PyPI') }}"
          rel="noopener noreferrer" target="_blank">
         <i class="fa-brands fa-python" aria-hidden="true"></i>
       </a>
       {%- if ablog is defined %}
       <a class="footer-rss" href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
-         title="Subscribe to blog (Atom feed)" aria-label="Subscribe to blog">
+         title="{{ _('Subscribe to blog (Atom feed)') }}" aria-label="{{ _('Subscribe to blog') }}">
         <span class="rss-icon"></span>
       </a>
       {%- endif %}
