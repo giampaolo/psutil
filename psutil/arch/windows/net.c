@@ -15,28 +15,44 @@
 #include "../../arch/all/init.h"
 
 
+// May not be defined in older SDKs.
+#ifndef GAA_FLAG_SKIP_DNS_INFO
+#define GAA_FLAG_SKIP_DNS_INFO 0x0800
+#endif
+
+// Skip everything GetAdaptersAddresses() can skip, except friendly
+// names. To be used when only the NICs' indexes / names are needed.
+#define PSUTIL_GAA_FLAGS_SKIP_ALL                                            \
+    (GAA_FLAG_SKIP_UNICAST | GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST \
+     | GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_SKIP_DNS_INFO)
+
+
 static PIP_ADAPTER_ADDRESSES
-psutil_get_nic_addresses(void) {
-    ULONG bufferLength = 0;
-    PIP_ADAPTER_ADDRESSES buffer;
+psutil_get_nic_addresses(ULONG flags) {
+    // A 15KB buffer is recommended by MSDN as it's usually big enough
+    // to make GetAdaptersAddresses() succeed at the first call, saving
+    // an extra (expensive) syscall to determine the required size.
+    ULONG bufferLength = 15 * 1024;
+    PIP_ADAPTER_ADDRESSES buffer = NULL;
+    ULONG ret;
+    int attempts = 0;
 
-    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &bufferLength)
-        != ERROR_BUFFER_OVERFLOW)
-    {
-        psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
-        return NULL;
-    }
+    do {
+        free(buffer);
+        buffer = malloc(bufferLength);
+        if (buffer == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        memset(buffer, 0, bufferLength);
+        // On ERROR_BUFFER_OVERFLOW `bufferLength` is set to the
+        // required size, so retry with a bigger buffer.
+        ret = GetAdaptersAddresses(
+            AF_UNSPEC, flags, NULL, buffer, &bufferLength
+        );
+    } while (ret == ERROR_BUFFER_OVERFLOW && ++attempts < 3);
 
-    buffer = malloc(bufferLength);
-    if (buffer == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    memset(buffer, 0, bufferLength);
-
-    if (GetAdaptersAddresses(AF_UNSPEC, 0, NULL, buffer, &bufferLength)
-        != ERROR_SUCCESS)
-    {
+    if (ret != ERROR_SUCCESS) {
         free(buffer);
         psutil_runtime_error("GetAdaptersAddresses() syscall failed.");
         return NULL;
@@ -61,7 +77,11 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
     if (py_retdict == NULL)
         return NULL;
-    pAddresses = psutil_get_nic_addresses();
+    // Only the NICs' `IfIndex` and `FriendlyName` are used, so tell
+    // GetAdaptersAddresses() to skip collecting everything else. This
+    // makes it considerably faster, see:
+    // https://github.com/giampaolo/psutil/issues/2695
+    pAddresses = psutil_get_nic_addresses(PSUTIL_GAA_FLAGS_SKIP_ALL);
     if (pAddresses == NULL)
         goto error;
 
@@ -156,7 +176,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses();
+    pAddresses = psutil_get_nic_addresses(0);
     if (pAddresses == NULL)
         goto error;
     pCurrAddresses = pAddresses;
@@ -354,7 +374,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
 
-    pAddresses = psutil_get_nic_addresses();
+    // Only the NICs' `FriendlyName` and `Description` are used, so
+    // tell GetAdaptersAddresses() to skip collecting everything else.
+    pAddresses = psutil_get_nic_addresses(PSUTIL_GAA_FLAGS_SKIP_ALL);
     if (pAddresses == NULL)
         goto error;
 
