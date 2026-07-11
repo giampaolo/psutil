@@ -173,6 +173,12 @@ New APIs:
 
 Others:
 
+- :gh:`2695`, [Windows]: :func:`net_io_counters` is ~5x faster.
+  ``GetAdaptersAddresses()`` is now invoked once instead of twice, and it
+  skips collecting unicast / anycast / multicast / DNS details, which were
+  retrieved but never used. :func:`net_if_stats` (~2.5x) and
+  :func:`net_if_addrs` (~2x) also got faster. (patch by
+  :user:`Arman Luthra <Arman-Luthra>`)
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
   has been normalized on all platforms, and the first 3 fields are now always
   :field:`user`, :field:`system`, :field:`idle`. See compatibility notes below.

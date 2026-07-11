@@ -108,6 +108,7 @@ Code contributors by year
 ~~~~
 
 * `Amaan Qureshi`_ - :gh:`2770`
+* :user:`Arman Luthra <Arman-Luthra>` - :gh:`2695`
 * `Felix Yan`_ - :gh:`2732`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * `Santhosh Raju`_ - :gh:`2805`
