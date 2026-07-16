@@ -190,6 +190,7 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     CFTypeRef eCoreRef = NULL;
     size_t pCoreLength = 0;
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
+    PyObject *py_ret = NULL;
 
     if (!psutil_find_pmgr_entry(&entry)) {
         psutil_runtime_error("'pmgr' entry not found in AppleARMIODevice");
@@ -219,6 +220,13 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = (pMin < eMin) ? pMin : eMin;
     curr = max;
 
+    py_ret = Py_BuildValue(
+        "KKK",
+        (unsigned long long)(curr / 1000 / 1000),
+        (unsigned long long)(min / 1000 / 1000),
+        (unsigned long long)(max / 1000 / 1000)
+    );
+
 cleanup:
     if (pCoreRef)
         CFRelease(pCoreRef);
@@ -227,12 +235,7 @@ cleanup:
     if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
 
-    return Py_BuildValue(
-        "KKK",
-        (unsigned long long)(curr / 1000 / 1000),
-        (unsigned long long)(min / 1000 / 1000),
-        (unsigned long long)(max / 1000 / 1000)
-    );
+    return py_ret;
 }
 
 #else  // not ARM64 / ARCH64
