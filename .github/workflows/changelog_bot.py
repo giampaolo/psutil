@@ -312,7 +312,7 @@ def insert_changelog_entry(section, entry):
         print(
             f"Changelog entry for {gh_ref.group(0)} already exists, skipping"
         )
-        return
+        return "skipped"
 
     header = f"**{section}**"
     header_idx = next(
@@ -369,6 +369,7 @@ def insert_changelog_entry(section, entry):
     lines[version_idx:next_version_idx] = new_block
     with open(CHANGELOG_FILE, "w") as f:
         f.writelines(lines)
+    return "inserted"
 
 
 def update_credits(credits_entry):
@@ -449,17 +450,19 @@ def update_credits(credits_entry):
                 if k > new_key:
                     insert_idx = i
                     break
-        if not skip:
-            # Don't back up past the blank line after the year
-            # underline (year_idx + 2 = "~~~~\n", + 3 = first
-            # content line).
-            min_idx = year_idx + 3
-            while insert_idx > min_idx and not lines[insert_idx - 1].strip():
-                insert_idx -= 1
-            lines.insert(insert_idx, f"{credits_entry}\n")
+        if skip:
+            return "skipped"
+        # Don't back up past the blank line after the year
+        # underline (year_idx + 2 = "~~~~\n", + 3 = first
+        # content line).
+        min_idx = year_idx + 3
+        while insert_idx > min_idx and not lines[insert_idx - 1].strip():
+            insert_idx -= 1
+        lines.insert(insert_idx, f"{credits_entry}\n")
 
     with open(CREDITS_FILE, "w") as f:
         f.writelines(lines)
+    return "inserted"
 
 
 def post_comment(body):
@@ -505,20 +508,35 @@ def main():
     credits_entry = result["credits_entry"]
     print(f"Section: {section}")
     print(f"Entry:   {changelog_entry}")
-    insert_changelog_entry(section, changelog_entry)
-    print(f"Inserted entry into {CHANGELOG_FILE}")
-    comment = (
-        f"`{CHANGELOG_FILE}` entry added under **{section}**:\n\n"
-        f"```rst\n{changelog_entry}\n```"
-    )
+    cl_status = insert_changelog_entry(section, changelog_entry)
+    if cl_status == "inserted":
+        print(f"Inserted entry into {CHANGELOG_FILE}")
+        comment = (
+            f"`{CHANGELOG_FILE}` entry added under **{section}**:\n\n"
+            f"```rst\n{changelog_entry}\n```"
+        )
+    else:
+        print(f"Changelog entry already present, left {CHANGELOG_FILE} as is")
+        comment = (
+            f"`{CHANGELOG_FILE}` **not** modified: an entry for this issue "
+            "already exists. Proposed entry was:\n\n"
+            f"```rst\n{changelog_entry}\n```"
+        )
     if credits_entry:
         print(f"Credits: {credits_entry}")
-        update_credits(credits_entry)
-        print(f"Updated {CREDITS_FILE}")
-        comment += (
-            f"\n\n`{CREDITS_FILE}` entry added:\n\n"
-            f"```rst\n{credits_entry}\n```"
-        )
+        cr_status = update_credits(credits_entry)
+        if cr_status == "inserted":
+            print(f"Updated {CREDITS_FILE}")
+            comment += (
+                f"\n\n`{CREDITS_FILE}` entry added:\n\n"
+                f"```rst\n{credits_entry}\n```"
+            )
+        else:
+            print(f"Credits entry already present, left {CREDITS_FILE} as is")
+            comment += (
+                f"\n\n`{CREDITS_FILE}` **not** modified: an entry for this "
+                "contributor already exists."
+            )
     post_comment(comment)
     print("Posted confirmation comment on PR")
 
