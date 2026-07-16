@@ -90,6 +90,7 @@ ignore = [
     "RUF028",  # This suppression comment is invalid
     "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "RUF067",  # `__init__` module should only contain docstrings and re-exports
+    "RUF105",  # noqa comment used instead of ruff:ignore (we prefer noqa)
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
