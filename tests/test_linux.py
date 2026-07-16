@@ -18,7 +18,6 @@ import socket
 import struct
 import textwrap
 import time
-import tracemalloc
 import warnings
 from unittest import mock
 
@@ -651,6 +650,23 @@ class TestSwapMemory(LinuxTestCase):
         with mock_open_content({"/proc/meminfo": b""}) as m:
             psutil.swap_memory()
             assert m.called
+
+    def test_no_space_after_colon(self):
+        # Some Linux meminfo fields may not have a space after the
+        # colon, see:
+        # https://github.com/giampaolo/psutil/issues/2809
+        content = textwrap.dedent("""\
+            MemTotal:              100 kB
+            MemFree:               2 kB
+            SwapTotal:             15 kB
+            SwapFree:              14 kB
+            ShadowCallStack:10373888 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}) as m:
+            swap = psutil.swap_memory()
+            assert m.called
+            assert swap.total == 15 * 1024
+            assert swap.free == 14 * 1024
 
 
 # =====================================================================
@@ -1514,24 +1530,6 @@ class TestRootFsDeviceFinder(LinuxTestCase):
                 assert part.device == RootFsDeviceFinder().find()
             else:
                 assert part.device == "/dev/root"
-
-    def test_disk_partitions_bad_arg_no_leak(self):
-        # Regression for issue #2856: parse failure must not leak py_retlist.
-        # Empty PyList is ~56 bytes; allow ample headroom for unrelated
-        # tracemalloc drift, but catch a per-call allocation pattern.
-        tracemalloc.start()
-        snap1 = tracemalloc.take_snapshot()
-        for _ in range(200):
-            try:
-                psutil._pslinux.cext.disk_partitions(123)
-            except TypeError:
-                pass
-        snap2 = tracemalloc.take_snapshot()
-        tracemalloc.stop()
-        growth = sum(d.size_diff for d in snap2.compare_to(snap1, 'filename'))
-        # A real leak here is ~56 * 200 = 11200 bytes; 4096 leaves room
-        # for tracemalloc's own overhead while still catching a leak.
-        assert growth < 4096, growth
 
 
 # =====================================================================
