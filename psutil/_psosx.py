@@ -125,16 +125,17 @@ def cpu_stats():
     return ntp.scpustats(ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-if cext.has_cpu_freq():  # not always available on ARM64
-
-    def cpu_freq():
-        """Return CPU frequency.
-        On macOS per-cpu frequency is not supported.
-        Also, the returned frequency never changes, see:
-        https://arstechnica.com/civis/viewtopic.php?f=19&t=465002.
-        """
-        curr, min_, max_ = cext.cpu_freq()
-        return [ntp.scpufreq(curr, min_, max_)]
+def cpu_freq():
+    """Return CPU frequency.
+    On macOS per-cpu frequency is not supported.
+    Also, the returned frequency never changes, see:
+    https://arstechnica.com/civis/viewtopic.php?f=19&t=465002.
+    """
+    ret = cext.cpu_freq()
+    if ret is None:  # not available on virtualized ARM64, see #2382
+        return []
+    curr, min_, max_ = ret
+    return [ntp.scpufreq(curr, min_, max_)]
 
 
 # =====================================================================
