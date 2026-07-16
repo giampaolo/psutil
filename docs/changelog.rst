@@ -211,6 +211,11 @@ Others:
 
 **Bug fixes**
 
+- :gh:`2859`, [Windows]: :func:`net_connections` /
+  :meth:`Process.net_connections` could crash with an invalid
+  ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
+  allocated. The error path now uses ``Py_XDECREF`` (including the temporary
+  address-family / socket-type objects).
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
@@ -272,6 +277,13 @@ Others:
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
+- :gh:`2857`, [Linux], [SunOS]: fix refcount leak in ``disk_partitions()``
+  (Linux) and ``proc_environ()`` (SunOS) when ``PyArg_ParseTuple`` fails: parse
+  arguments before allocating the result container, matching the pattern used
+  in the other 26 call sites. Also fix a copy-paste typo in SunOS
+  ``proc_environ()`` where the post-decode NULL check examined the wrong
+  variable (``py_envname`` instead of ``py_envval``), which could let a NULL
+  value reach ``PyDict_SetItem``.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^

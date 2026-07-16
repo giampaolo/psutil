@@ -176,13 +176,14 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     int i = 0;
     PyObject *py_envname = NULL;
     PyObject *py_envval = NULL;
-    PyObject *py_retdict = PyDict_New();
-
-    if (!py_retdict)
-        return PyErr_NoMemory();
+    PyObject *py_retdict;
 
     if (!PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
+
+    py_retdict = PyDict_New();
+    if (!py_retdict)
+        return PyErr_NoMemory();
 
     str_format(path, sizeof(path), "%s/%i/psinfo", procfs_path, pid);
     if (!psutil_file_to_struct(path, (void *)&info, sizeof(info)))
