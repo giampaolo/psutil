@@ -90,6 +90,7 @@ ignore = [
     "RUF028",  # This suppression comment is invalid
     "RUF031",  # [*] Avoid parentheses for tuples in subscripts
     "RUF067",  # `__init__` module should only contain docstrings and re-exports
+    "RUF105",  # noqa comment used instead of ruff:ignore (we prefer noqa)
     "S",  # flake8-bandit
     "SIM102",  # Use a single `if` statement instead of nested `if` statements
     "SIM105",  # Use `contextlib.suppress(OSError)` instead of `try`-`except`-`pass`
@@ -111,7 +112,15 @@ ignore = [
 # T201 == print()
 # T203 == pprint()
 # TRY003 == raise-vanilla-args
-".github/workflows/*" = ["B904", "EM101", "EM102", "EM103", "T201", "T203"]
+".github/workflows/*" = [
+    "B904",
+    "EM101",
+    "EM102",
+    "EM103",
+    "T201",
+    "T203",
+    "TRY003",
+]
 "**/test_*.py" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "RUF069", "TRY003"]
 "tests/__init__.py" = ["B904", "EM101", "EM102", "EM103", "PLC1901", "RUF069", "TRY003"]
 "tests/test_sudo.py" = ["PT009"]

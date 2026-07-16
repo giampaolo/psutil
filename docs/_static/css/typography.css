@@ -148,6 +148,7 @@ body {
     margin-left: 0.3em;
     vertical-align: super;
     opacity: 0.6;
+    display: inline-block;
 }
 
 /* Pull the icon flush against trailing inline code to avoid a gap. */

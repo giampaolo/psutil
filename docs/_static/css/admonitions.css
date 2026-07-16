@@ -49,6 +49,10 @@ div.seealso a.reference {
     text-underline-offset: 2px;
 }
 
+div.seealso a.reference:has(code) {
+    text-decoration: none;
+}
+
 div.seealso a.reference:hover {
     color: var(--adm-seealso-hover);
 }

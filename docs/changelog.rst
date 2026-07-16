@@ -211,6 +211,10 @@ Others:
 
 **Bug fixes**
 
+- :gh:`2859`, [Windows]: :func:`net_connections` / :meth:`Process.net_connections` could crash with an invalid
+  ``Py_DECREF(NULL)`` when argument parsing failed before the result list
+  was allocated. The error path now uses ``Py_XDECREF`` (including the
+  temporary address-family / socket-type objects).
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
