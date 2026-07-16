@@ -1,33 +1,40 @@
-<footer>
-  {%- if (theme_prev_next_buttons_location == 'bottom' or theme_prev_next_buttons_location == 'both') and (next or prev) %}
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-      {%- if prev %}
-        <a href="{{ prev.link|e }}" class="btn btn-neutral float-left" title="{{ prev.title|striptags|e }}" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+<footer class="footer" role="contentinfo">
+  <div class="footer-content">
+    <div class="footer-text">
+      {%- if show_copyright %}
+      <span><a class="footer-egg" href="{{ pathto('404') }}" title="🥚">&copy;</a> {{ copyright|e }}</span>
       {%- endif %}
-      {%- if next %}
-        <a href="{{ next.link|e }}" class="btn btn-neutral float-right" title="{{ next.title|striptags|e }}" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+      {%- if last_updated %}
+      <span>Updated: <a
+        href="https://github.com/giampaolo/psutil/commits/master/docs/{{ pagename }}.rst"
+        rel="noopener noreferrer" target="_blank"
+        title="View commit history on GitHub">{{ last_updated|e }}</a></span>
+      {%- endif %}
+      <span><a href="{{ pathto('about') }}"
+               title="About this documentation site">About</a></span>
+      {%- if pagename not in ("search", "genindex", "py-modindex") %}
+      <span><a href="https://github.com/giampaolo/psutil/edit/master/docs/{{ pagename }}.rst"
+               rel="noopener noreferrer" target="_blank"
+               title="Edit this page on GitHub">Edit on GitHub</a></span>
       {%- endif %}
     </div>
-  {%- endif %}
-
-  <hr/>
-
-  <div role="contentinfo" class="footer-row">
-  {%- block contentinfo %}
-    <p>
-    {%- if show_copyright %}&#169; Copyright {{ copyright }}.{%- endif %}
-    {%- if last_updated %} Last updated on: <i>{{ last_updated }}</i>.{%- endif %}
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>.
-    </p>
     <div class="footer-icons">
-      <a href="https://github.com/giampaolo/psutil" title="GitHub" target="_blank" class="footer-icon">
-        {% include "footer-icon-github.svg" %}
+      <a class="footer-github" href="https://github.com/giampaolo/psutil"
+         title="psutil on GitHub" aria-label="psutil on GitHub"
+         rel="noopener noreferrer" target="_blank">
+        <i class="fa-brands fa-github" aria-hidden="true"></i>
       </a>
-      <a href="https://pypi.org/project/psutil" title="PyPI" target="_blank" class="footer-icon">
-        {% include "footer-icon-pypi.svg" %}
+      <a class="footer-pypi" href="https://pypi.org/project/psutil/"
+         title="psutil on PyPI" aria-label="psutil on PyPI"
+         rel="noopener noreferrer" target="_blank">
+        <i class="fa-brands fa-python" aria-hidden="true"></i>
       </a>
+      {%- if ablog is defined %}
+      <a class="footer-rss" href="{{ pathto(ablog.blog_path ~ '/atom', 1) }}.xml"
+         title="Subscribe to blog (Atom feed)" aria-label="Subscribe to blog">
+        <span class="rss-icon"></span>
+      </a>
+      {%- endif %}
     </div>
-  {%- endblock %}
   </div>
-
 </footer>

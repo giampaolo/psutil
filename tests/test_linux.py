@@ -672,6 +672,23 @@ class TestSwapMemory(LinuxTestCase):
             psutil.swap_memory()
             assert m.called
 
+    def test_no_space_after_colon(self):
+        # Some Linux meminfo fields may not have a space after the
+        # colon, see:
+        # https://github.com/giampaolo/psutil/issues/2809
+        content = textwrap.dedent("""\
+            MemTotal:              100 kB
+            MemFree:               2 kB
+            SwapTotal:             15 kB
+            SwapFree:              14 kB
+            ShadowCallStack:10373888 kB
+            """).encode()
+        with mock_open_content({"/proc/meminfo": content}) as m:
+            swap = psutil.swap_memory()
+            assert m.called
+            assert swap.total == 15 * 1024
+            assert swap.free == 14 * 1024
+
 
 # =====================================================================
 # --- system CPU

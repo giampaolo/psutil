@@ -1,0 +1,360 @@
+/*
+ * psutil-sphinx-theme: design tokens.
+ *
+ * All shared variables (colors, fonts, layout dimensions) live here
+ * so per-component CSS files (layout.css, topbar.css, *.css) consume
+ * vars instead of hardcoded values. Loaded first so the cascade has
+ * the tokens available before any rule references them.
+ */
+
+:root {
+
+    /* ================================================================== */
+    /* Layout                                                             */
+    /* ================================================================== */
+
+    --topbar-height: 44px;
+    --left-sidebar-width: 260px;
+    --right-sidebar-width: 230px;
+    --content-max-width: 1240px;
+    --layout-width: calc(var(--left-sidebar-width) + var(--content-max-width));
+
+    /* ================================================================== */
+    /* Colors                                                             */
+    /* ================================================================== */
+
+    /* Surfaces (backgrounds). */
+    --bg: #ffffff;
+    --bg-page: #efefef;
+    --bg-sidebar: #343131;
+    --bg-topbar: #2a2828;
+    --bg-input: #ffffff;
+    --bg-key: #f0f0f0;
+    --kbd-bg: #f3f3f3;
+    --kbd-text: #6a6a6a;
+    --kbd-border: #c8c8c8;
+    --bg-search-highlight: #e1edf5;
+    --bg-hover: rgba(0, 0, 0, 0.04);
+    --bg-hover-on-dark: rgba(255, 255, 255, 0.08);
+
+    /* Text. */
+    --text: #404040;
+    --text-muted: #555555;
+    --text-secondary: #555555;
+    --text-on-dark: #d1d1d1;
+    --headings: #404040;
+    --ntuple-color: #333333;
+
+    /* Sidebar: left nav is always on a dark surface; tokens here
+       are constant across light/dark mode (only --bg-sidebar shifts
+       between the two). */
+    --sidebar-fg: #d9d9d9;
+    --sidebar-caption: #8aa8c0;
+    --sidebar-active-bg: #f0f0f0;
+    --sidebar-active-fg: #1a1a1a;
+
+    /* Inline code (`literals`). */
+    --inline-code-bg: rgba(175, 184, 193, 0.17);
+    --inline-code-text: inherit;
+
+    /* Borders. */
+    --border: #dddddd;
+    --scrollbar-thumb: #c1c1c1;
+    --border-radius: 6px;
+    --border-radius-code: 3px;
+
+    --accent: #2371a8;
+    --accent-ring: rgba(40, 100, 180, 0.25);
+
+    /* Inline API links (cross-refs to symbols). */
+    --links-api: #336699;
+    --links-api-underline: #336699;
+
+    /* Function/method signature box ("psutil.cpu_times(percpu=False)"). */
+    --func-sig-bg: #f0f4f7;
+    --func-sig-border: #336699;
+    --func-sig-text: #404040;
+    --func-sig-name: #404040;
+    --func-sig-param: #555555;
+
+    /* Lifted-surface accent (cards, sponsor logos). */
+    --surface-raised: #f0f4f7;
+
+    /* Admonitions (Note / Tip / Warning / Important / See also). */
+    --adm-padding-y: 5px;
+    --adm-title: black;
+    --adm-note-bg: #f5f5f5;
+    --adm-note-border: #ccc;
+    --adm-note-accent-border: #2980b9;
+    --adm-tip-bg: #f0faf0;
+    --adm-tip-border: #8aba8a;
+    --adm-warning-bg: #fff0f0;
+    --adm-warning-border: #e8a0a0;
+    --adm-important-bg: #fdf3dc;
+    --adm-important-border: #d4a23e;
+    --adm-seealso-bg: #f3f9fe;
+    --adm-seealso-border: #b0cfe8;
+    --adm-seealso-accent-border: #336699;
+    --adm-seealso-link: #2a6099;
+    --adm-seealso-hover: #2980b9;
+
+    /* Version directives (versionadded / versionchanged / deprecated). */
+    --versionadded-border: #4fc464;
+    --versionadded-color: #296433;
+    --versionchanged-border: #f4e34c;
+    --versionchanged-color: #854826;
+    --deprecated-border: #f44c4e;
+    --deprecated-color: #9f3133;
+
+    /* Tables. */
+    --table-header-bg: #f0f4f7;
+    --table-header-text: var(--text);
+    --table-row-odd: #f8f9fa;
+    --table-row-even: #ffffff;
+    --table-border: var(--border);
+
+    /* ================================================================== */
+    /* Fonts                                                              */
+    /* ================================================================== */
+
+    --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --code-line-height: 1.5;
+
+    /* ================================================================== */
+    /* Aliases (semantic names used by component files)                   */
+    /* ================================================================== */
+
+    --content-text: var(--text);
+    --code-font: var(--font-mono);
+    --links: var(--accent);
+    --surface-sunken: var(--bg-key);
+    --card-bg: var(--bg);
+    --card-border: var(--border);
+    --theme-transition: 0.2s ease;
+}
+
+/* ====================================================================== */
+/* Dark mode                                                              */
+/* ====================================================================== */
+
+/*
+ * Dark theme overrides only the color tokens. Layout / fonts are
+ * mode-agnostic. data-theme is set on <html> by extrahead's inline
+ * script + theme-toggle.js.
+ */
+
+[data-theme="dark"] {
+    /* Surfaces. */
+    --bg: #1a1a1a;
+    --bg-page: #0e0e0e;
+    --bg-sidebar: #212121;
+    --bg-topbar: #181818;
+    --bg-input: #2a2a2a;
+    --bg-key: #2a2a2a;
+    --kbd-bg: #3a3a3a;
+    --kbd-text: #d4d4d4;
+    --kbd-border: #5a5a5a;
+    --bg-search-highlight: rgba(225, 237, 245, 0.15);
+    --bg-hover: rgba(255, 255, 255, 0.06);
+    --sidebar-active-bg: #404040;
+    --sidebar-active-fg: #fff;
+
+    /* Text. */
+    --text: #c8c8c8;
+    --text-muted: #9b9b9b;
+    --text-secondary: #d1d1d1;
+    --headings: #e0e0e0;
+    --ntuple-color: #6db99a;
+
+    /* Borders. */
+    --border: #2e2e2e;
+    --scrollbar-thumb: #4a4a4a;
+
+    /* Accent: lighter blue for sufficient contrast on dark. */
+    --accent: #6ab0de;
+    --accent-ring: rgba(106, 176, 222, 0.35);
+
+    /* API links + signature box. */
+    --links-api: #7ecfff;
+    --links-api-underline: #7ecfff;
+    --func-sig-bg: #2c2c2c;
+    --func-sig-border: #7ecfff;
+    --func-sig-text: #e0e0e0;
+    --func-sig-name: #e0e0e0;
+    --func-sig-param: #d1d1d1;
+    --surface-raised: #2c2c2c;
+
+    /* Inline code. */
+    --inline-code-bg: rgba(255, 255, 255, 0.08);
+    --inline-code-text: #e6e6e6;
+
+    /* Admonitions: dark mode overrides. */
+    --adm-title: #ddd;
+    --adm-note-bg: #2a2a2a;
+    --adm-note-border: #4a4a4a;
+    --adm-note-accent-border: #6ab0de;
+    --adm-tip-bg: #1a2a1a;
+    --adm-tip-border: #3a6a3a;
+    --adm-warning-bg: #472424;
+    --adm-warning-border: #8a3030;
+    --adm-important-bg: #2a200d;
+    --adm-important-border: #6e5328;
+    --adm-seealso-bg: #1d2e40;
+    --adm-seealso-border: #2d5280;
+    --adm-seealso-accent-border: #5599cc;
+    --adm-seealso-link: #90c8ee;
+    --adm-seealso-hover: #8bbfe0;
+
+    /* Version directives: dark mode overrides. */
+    --versionadded-color: #5ec46e;
+    --versionchanged-color: #b0873a;
+    --deprecated-color: #d06060;
+
+    /* Tables: dark mode overrides. */
+    --table-header-bg: #2d2d2d;
+    --table-row-odd: #222222;
+    --table-row-even: #272727;
+    --table-border: #424242;
+}
+
+/* ====================================================================== */
+/* Theme transition                                                       */
+/* ====================================================================== */
+
+body,
+.page,
+.article,
+.right-sidebar,
+.right-sidebar-title,
+.topbar,
+.footer,
+.search-page-form,
+ul.search > li,
+.shortcut-flyout-panel {
+    transition:
+        background-color var(--theme-transition),
+        color var(--theme-transition),
+        border-color var(--theme-transition);
+}
+
+.no-transition,
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+    transition: none !important;
+}
+
+/* Honor the OS "reduce motion" setting: drop transitions, animations
+   and smooth scrolling everywhere. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ====================================================================== */
+/* Utilities                                                              */
+/* ====================================================================== */
+
+/* .no-visited: suppresses the browser-default purple ":visited" color */
+.no-visited:visited,
+.no-visited a:visited {
+    color: inherit;
+}
+
+/* Thin, theme-aware scrollbars for every scrollable region (code
+   blocks, the TOC, tables, ...). */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* about.html page */
+.about-shot {
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    width: auto;
+    height: auto;
+    margin: 0.4em 0 1.4em;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Two screenshots side by side (light vs dark); wrap on narrow columns. */
+.about-shot-pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0.4em 0 1.4em;
+}
+
+.about-shot-pair .about-shot {
+    flex: 1 1 240px;
+    min-width: 0;
+    margin: 0;
+}
+
+/* Flash when clicking on a link / anchor */
+@keyframes anchor-flash {
+    from {
+        background-color: var(--accent-ring);
+    }
+}
+
+:target > h1,
+:target > h2,
+:target > h3,
+:target > h4,
+:target > h5,
+:target > h6,
+:target + h1,
+:target + h2,
+:target + h3,
+:target + h4,
+:target + h5,
+:target + h6,
+dt:target {
+    animation: anchor-flash 1.8s ease-out;
+}
+
+/* Keyboard focus ring on interactive controls (both themes). The
+   browser default is nearly invisible on the dark topbar/sidebar. */
+.topbar-link:focus-visible,
+.topbar-btn:focus-visible,
+.topbar-hamburger:focus-visible,
+.topbar-text:focus-visible,
+.topbar-version:focus-visible,
+.topbar-logo:focus-visible,
+.left-sidebar a:focus-visible,
+.right-sidebar a:focus-visible,
+.home-feature-card:focus-visible,
+.home-platform-pill:focus-visible,
+.home-stat:focus-visible,
+.prev-next a:focus-visible,
+.blog-card-title a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--border-radius);
+}

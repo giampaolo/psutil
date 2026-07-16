@@ -1,0 +1,180 @@
+/*
+ * psutil-sphinx-theme: right sidebar (per-page TOC).
+ *
+ * Hidden below 1280px. Sticky inside its grid cell at wider widths.
+ * Sizes / spacing kept faithful to the previous psutil site.
+ */
+
+.right-sidebar {
+    display: none;
+}
+
+@media (min-width: 1280px) {
+    .right-sidebar {
+        display: block;
+        position: sticky;
+        top: calc(var(--topbar-height) + 20px);
+        align-self: start;
+        max-height: calc(100vh - var(--topbar-height) - 36px);
+        overflow-y: auto;
+        padding: 0 16px;
+        margin-right: -24px;
+        border-left: 1px solid #ccc;
+        box-sizing: border-box;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    [data-theme="dark"] .right-sidebar {
+        border-left-color: #3a3a3a;
+    }
+}
+
+/* ---- Title ("On this page") ---------------------------------------- */
+
+.right-sidebar-title {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0 0 0.6rem 8px;
+}
+
+/* {{ toc }} renders the H1 as the root <li> wrapping all sections.
+   Sphinx has no config to skip it; alternatives are a custom doctree
+   walker (Furo's approach) or this 2-rule CSS hide. */
+.right-sidebar > ul > li:first-child > a {
+    display: none;
+}
+.right-sidebar > ul > li:first-child > ul {
+    padding-left: 0;
+}
+
+/* ---- List structure ------------------------------------------------ */
+
+.right-sidebar ul,
+.right-sidebar li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.right-sidebar li {
+    margin: 4px 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Nested uls don't add indent; indent is applied per-anchor instead,
+   so the active bar stays at column-edge regardless of depth. */
+.right-sidebar ul ul {
+    padding-left: 0;
+}
+
+/* ---- Anchors ------------------------------------------------------- */
+
+.right-sidebar a,
+.right-sidebar a:visited {
+    display: block;
+    padding: 0.2rem 8px;
+    margin: 0 6px 0 0;
+    color: var(--text-muted);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.right-sidebar a:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.right-sidebar a code {
+    font-weight: inherit;
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+/* H2 entries are emphasized; H3 styled as quiet group captions; H4 as items. */
+.right-sidebar > ul > li:first-child > ul > li > a {
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+/* Flat TOC: if only H2s, no H3+ anywhere) drop the bold. */
+.right-sidebar > ul > li:first-child > ul:not(:has(li > ul)) > li > a {
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.right-sidebar > ul > li:first-child > ul > li + li {
+    margin-top: 0.5rem;
+}
+
+.right-sidebar > ul > li:first-child > ul > li > ul > li:has(> ul) > a,
+.right-sidebar > ul > li:first-child > ul > li > ul > li:has(> ul) > a:visited {
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Suppress the accent-blue hover flash on group rows (labels, not
+   primary navigation targets). */
+.right-sidebar > ul > li:first-child > ul > li > ul > li:has(> ul) > a:hover {
+    color: var(--text);
+}
+
+.right-sidebar > ul > li:first-child > ul > li > ul > li:has(> ul) {
+    margin-top: 0.5rem;
+}
+
+.right-sidebar > ul > li:first-child > ul > li > ul > li > ul > li > a {
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.right-sidebar > ul > li:first-child > ul > li > ul > li > ul > li > ul > li > a {
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+/* Glossary TOC: populated by _ext/glossary_toc.py. */
+.right-sidebar ul.glossary-toc li {
+    margin: 2px 0;
+}
+.right-sidebar ul.glossary-toc a {
+    font-size: 0.85rem;
+    padding: 0.15rem 0 0.15rem 8px;
+}
+
+.right-sidebar ul.blog-tags li {
+    margin: 2px 0;
+}
+
+.right-sidebar ul.blog-tags a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    font-size: 0.9rem;
+    padding: 0.15rem 0 0.15rem 8px;
+}
+
+.right-sidebar .blog-tag-count {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+}
+
+/* ---- Active state (driven by js/right-toc.js) ---------------------- */
+
+.right-sidebar li.scroll-current-leaf > a,
+.right-sidebar li.scroll-current-leaf > a:visited {
+    color: var(--text);
+    background: var(--surface-raised);
+    border-radius: var(--border-radius);
+}

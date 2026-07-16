@@ -1,5 +1,3 @@
-.. currentmodule:: psutil
-
 Credits
 =======
 
@@ -24,8 +22,8 @@ Top contributors
 Donations
 ---------
 
-The following individuals and organizations have supported psutil
-development through donations.
+The following individuals and organizations have supported psutil development
+through donations.
 
 Companies:
 
@@ -111,7 +109,11 @@ Code contributors by year
 
 * `Amaan Qureshi`_ - :gh:`2770`
 * `Felix Yan`_ - :gh:`2732`
+* :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
+* :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
+* `Santhosh Raju`_ - :gh:`2805`
 * `Sergey Fedorov`_ - :gh:`2701`
+* :user:`Tobias Klauser <tklauser>` - :gh:`2711`
 
 2025
 ~~~~
@@ -123,7 +125,9 @@ Code contributors by year
 * `Irene Sheen`_ - :gh:`2606`
 * `Isaac K. Ko`_ - :gh:`2612`
 * `Jonathan Kohler`_ - :gh:`2527`
-* `Lysandros Nikolaou`_ - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`, :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659` (wheels for free-threaded Python)
+* `Lysandros Nikolaou`_ - :gh:`2565`, :gh:`2588`, :gh:`2589`, :gh:`2590`,
+  :gh:`2591`, :gh:`2609`, :gh:`2615`, :gh:`2627`, :gh:`2659` (wheels for
+  free-threaded Python)
 * `Marcel Telka`_ - :gh:`2469`, :gh:`2545`, :gh:`2546`, :gh:`2592`, :gh:`2594`
 * `Matthieu Darbois`_ - :gh:`2503`, :gh:`2581` (Windows ARM64 wheels)
 * `Sergey Fedorov`_ - :gh:`2694`
@@ -135,18 +139,21 @@ Code contributors by year
 
 * `Aleksey Lobanov`_ - :gh:`2457`
 * `Cristian Vîjdea`_ - :gh:`2442`
-* `Matthieu Darbois`_ - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`, :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486` (macOS and Linux ARM64 wheels)
+* `Matthieu Darbois`_ - :gh:`2370`, :gh:`2375`, :gh:`2417`, :gh:`2425`,
+  :gh:`2429`, :gh:`2450`, :gh:`2479`, :gh:`2486` (macOS and Linux ARM64 wheels)
 * `Mayank Jha`_ - :gh:`2379`
 * `Oliver Tomé`_ - :gh:`2222`
 * `Ryan Carsten Schmidt`_ - :gh:`2361`, :gh:`2364`, :gh:`2365`
-* `Sam Gross`_ - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428` (free-threading Python)
+* `Sam Gross`_ - :gh:`2401`, :gh:`2402`, :gh:`2427`, :gh:`2428` (free-threading
+  Python)
 * `Shade Gladden`_ - :gh:`2376`
 
 2023
 ~~~~
 
 * `Amir Rossert`_ - :gh:`2346`
-* `Matthieu Darbois`_ - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`, :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
+* `Matthieu Darbois`_ - :gh:`2211`, :gh:`2216`, :gh:`2246`, :gh:`2247`,
+  :gh:`2252`, :gh:`2269`, :gh:`2270`, :gh:`2315`
 * `Po-Chuan Hsieh`_ - :gh:`2186`, :gh:`1646`
 * `Thomas Klausner`_ - :gh:`2241`
 * `Xuehai Pan`_ - :gh:`2266`
@@ -163,7 +170,9 @@ Code contributors by year
 * `Hiroyuki Tanaka`_ - :gh:`2086`
 * `Hugo van Kemenade`_ - :gh:`2099` (Drop Python 2.6 support)
 * `Lawrence D'Anna`_ - :gh:`2010`
-* `Matthieu Darbois`_ - :gh:`1954`, :gh:`2021`, :gh:`2039`, :gh:`2040`, :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`, :gh:`2153`, :gh:`2155`, :gh:`2168`
+* `Matthieu Darbois`_ - :gh:`1954`, :gh:`2021`, :gh:`2039`, :gh:`2040`,
+  :gh:`2102`, :gh:`2111`, :gh:`2142`, :gh:`2145`, :gh:`2146`, :gh:`2147`,
+  :gh:`2153`, :gh:`2155`, :gh:`2168`
 * `Steve Dower`_ - :gh:`2080`
 * `Thomas Klausner`_ - :gh:`2088`, :gh:`2128`
 * Torsten Blum - :gh:`2114`
@@ -209,7 +218,8 @@ Code contributors by year
 * `qcha0`_ - :gh:`1491`
 * `Alex Manuskin`_ - :gh:`1487`
 * `Ammar Askar`_ - :gh:`1485` (:func:`getloadavg` on Windows)
-* `Arnon Yaari`_ - :gh:`607`, :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`, :gh:`1507`, :gh:`1533`
+* `Arnon Yaari`_ - :gh:`607`, :gh:`1349`, :gh:`1409`, :gh:`1500`, :gh:`1505`,
+  :gh:`1507`, :gh:`1533`
 * `Athos Ribeiro`_ - :gh:`1585`
 * `Benjamin Drung`_ - :gh:`1462`
 * `Bernát Gábor`_ - :gh:`1565`
@@ -223,12 +233,13 @@ Code contributors by year
 * `Nathan Houghton`_ - :gh:`1619`
 * `Samer Masterson`_ - :gh:`1480`
 * `Xiaoling Bao`_ - :gh:`1223`
-* Mozilla Foundation - Sample code for process USS memory
+* Mozilla Foundation - Sample code for process :term:`USS` memory
 
 2018
 ~~~~
 
-* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369` (:func:`sensors_temperatures` for macOS, FreeBSD, Linux)
+* `Alex Manuskin`_ - :gh:`1284`, :gh:`1345`, :gh:`1350`, :gh:`1369`
+  (:func:`sensors_temperatures` for macOS, FreeBSD, Linux)
 * `Arnon Yaari`_ - :gh:`1214`
 * `Dan Vinakovsky`_ - :gh:`1216`
 * `Denis Krienbühl`_ - :gh:`1260`
@@ -250,7 +261,8 @@ Code contributors by year
 * `Akos Kiss`_ - :gh:`1150`
 * `Alexander Hasselhuhn`_ - :gh:`1022`
 * `Antoine Pitrou`_ - :gh:`1186`
-* `Arnon Yaari`_ - :gh:`1130`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1164`, :gh:`1174`, :gh:`1177`, :gh:`1123` (AIX implementation)
+* `Arnon Yaari`_ - :gh:`1130`, :gh:`1137`, :gh:`1145`, :gh:`1156`, :gh:`1164`,
+  :gh:`1174`, :gh:`1177`, :gh:`1123` (AIX implementation)
 * `Baruch Siach`_ - :gh:`872`
 * `Danek Duvall`_ - :gh:`1002`
 * `Gleb Smirnoff`_ - :gh:`1070`, :gh:`1076`, :gh:`1079`
@@ -270,8 +282,10 @@ Code contributors by year
 * `Andre Caron`_ - :gh:`880`
 * `Arcadiy Ivanov`_ - :gh:`919`
 * `ewedlund`_ - :gh:`874`
+* `Eric Rahm`_ - :gh:`745`, :gh:`746` (:term:`USS` memory on macOS and Windows)
 * `Farhan Khan`_ - :gh:`823`
-* `Frank Benkstein`_ - :gh:`732`, :gh:`733`, :gh:`736`, :gh:`738`, :gh:`739`, :gh:`740`
+* `Frank Benkstein`_ - :gh:`732`, :gh:`733`, :gh:`736`, :gh:`738`, :gh:`739`,
+  :gh:`740`
 * `Ilya Georgievsky`_ - :gh:`870`
 * `Jake Omann`_ - :gh:`816`, :gh:`775`, :gh:`1874`
 * `Jeremy Humble`_ - :gh:`863`
@@ -302,7 +316,9 @@ Code contributors by year
 * `Steven Winfield`_ - :gh:`672`
 * `Sylvain Mouquet`_ - :gh:`565`
 * `Árni Már Jónsson`_ - :gh:`634`
-* `Ryo Onodera`_: `e124acba <https://github.com/giampaolo/psutil/commit/e124acba>`_ (NetBSD implementation)
+* `Ryo Onodera`_:
+  `e124acba <https://github.com/giampaolo/psutil/commit/e124acba>`_ (NetBSD
+  implementation)
 
 2014
 ~~~~
@@ -321,7 +337,8 @@ Code contributors by year
 
 * Arfrever.FTA - :gh:`404`
 * danudey - :gh:`386`
-* Jason Kirtland - backward compatible implementation of collections.defaultdict
+* Jason Kirtland - backward compatible implementation of
+  collections.defaultdict
 * John Baldwin - :gh:`370`
 * John Pankov - :gh:`435`
 * `Josiah Carlson`_ - :gh:`451`, :gh:`452`
@@ -342,7 +359,8 @@ Code contributors by year
 2011
 ~~~~
 
-* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260` (:func:`net_io_counters` and :func:`disk_io_counters` on macOS)
+* Jeremy Whitlock - :gh:`125`, :gh:`150`, :gh:`206`, :gh:`217`, :gh:`260`
+  (:func:`net_io_counters` and :func:`disk_io_counters` on macOS)
 
 2010
 ~~~~
@@ -353,16 +371,29 @@ Code contributors by year
 2009
 ~~~~
 
-* Yan Raber: `c861c08b <https://github.com/giampaolo/psutil/commit/c861c08b>`_ (Windows :func:`cpu_times`), `15159111 <https://github.com/giampaolo/psutil/commit/15159111>`_ (Windows :meth:`Process.username`)
-* `Jay Loden`_ - `79128baa <https://github.com/giampaolo/psutil/commit/79128baa>`_ (first commit of FreeBSD implementation)
+* Yan Raber: `c861c08b <https://github.com/giampaolo/psutil/commit/c861c08b>`_
+  (Windows :func:`cpu_times`),
+  `15159111 <https://github.com/giampaolo/psutil/commit/15159111>`_ (Windows
+  :meth:`Process.username`)
+* `Jay Loden`_ -
+  `79128baa <https://github.com/giampaolo/psutil/commit/79128baa>`_ (first
+  commit of FreeBSD implementation)
 
 2008
 ~~~~
 
-* `Jay Loden`_ - `efe9236a <https://github.com/giampaolo/psutil/commit/efe9236a>`_ (first commit of macOS implementation)
-* Dave Daeschler - `71875761 <https://github.com/giampaolo/psutil/commit/71875761>`_ (first commit of Windows implementation)
-* `Giampaolo Rodola`_ - `6296c2ab <https://github.com/giampaolo/psutil/commit/6296c2ab>`_ (first commit of Linux implementation)
-* `Giampaolo Rodola`_ - `8472a17f <https://github.com/giampaolo/psutil/commit/8472a17f>`_ (inception / initial directory structure)
+* `Jay Loden`_ -
+  `efe9236a <https://github.com/giampaolo/psutil/commit/efe9236a>`_ (first
+  commit of macOS implementation)
+* Dave Daeschler -
+  `71875761 <https://github.com/giampaolo/psutil/commit/71875761>`_ (first
+  commit of Windows implementation)
+* `Giampaolo Rodola`_ -
+  `6296c2ab <https://github.com/giampaolo/psutil/commit/6296c2ab>`_ (first
+  commit of Linux implementation)
+* `Giampaolo Rodola`_ -
+  `8472a17f <https://github.com/giampaolo/psutil/commit/8472a17f>`_ (inception
+  / initial directory structure)
 
 .. People Donors
 .. ============================================================================
@@ -448,6 +479,7 @@ Code contributors by year
 .. _`Denis Krienbühl`: https://github.com/href
 .. _`EccoTheFlintstone`: https://github.com/EccoTheFlintstone
 .. _`Eli Wenig`: https://github.com/elisw93
+.. _`Eric Rahm`: https://github.com/EricRahm
 .. _`Erwan Le Pape`: https://github.com/erwan-le-pape
 .. _`ewedlund`: https://github.com/ewedlund
 .. _`Fabian Groffen`: https://github.com/fabian
@@ -526,6 +558,7 @@ Code contributors by year
 .. _`Saeed Rasooli`: https://github.com/ilius
 .. _`Sam Gross`: https://github.com/colesbury
 .. _`Samer Masterson`: https://github.com/samertm
+.. _`Santhosh Raju`: https://github.com/fraggerfox
 .. _`Sebastian Saip`: https://github.com/ssaip
 .. _`Sebastian-Gabriel Brestin`: https://github.com/bsebi
 .. _`Sergey Fedorov`: https://github.com/barracuda156
@@ -539,10 +572,11 @@ Code contributors by year
 .. _`Sylvain Mouquet`: https://github.com/sylvainmouquet
 .. _`Syohei YOSHIDA`: https://github.com/syohex
 .. _`Thiago Borges Abdnur`: https://github.com/bolaum
-.. _`Thomas Klausner`: https://github.com/tklauser
+.. _`Thomas Klausner`: https://github.com/0-wiz-0
 .. _`Tim Schlueter`: https://github.com/modelrockettier
 .. _`Timmy Konick`: https://github.com/tijko
 .. _`Vincent A. Arcila`: https://github.com/jandrovins
+.. _`vser1`: https://github.com/vser1
 .. _`Wen Jia Liu (wj32)`: https://github.com/wj32
 .. _`Wilfried Goesgens`: https://github.com/dothebart
 .. _`Will Hawes`: https://github.com/wdh
@@ -553,4 +587,3 @@ Code contributors by year
 .. _`Yannick Gingras`: https://github.com/ygingras
 .. _`Yaolong Huang`: http://airekans.github.io/
 .. _`Árni Már Jónsson`: https://github.com/arnimarj
-.. _`vser1`: https://github.com/vser1

@@ -7,14 +7,20 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.11"
+    python: "3.12"
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
+  fail_on_warning: true
 
 # RTD recommends specifying your dependencies to enable reproducible builds:
 # https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 python:
   install:
     - requirements: docs/requirements.txt
+    # Install psutil from the checkout so `import psutil` works at
+    # build time. sphinx-codeautolink needs this to resolve instance
+    # method calls (e.g. `p.name()`) in code blocks.
+    - method: pip
+      path: .

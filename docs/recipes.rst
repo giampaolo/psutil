@@ -1,5 +1,3 @@
-.. currentmodule:: psutil
-
 Recipes
 =======
 
@@ -8,10 +6,6 @@ recipe focuses on a single problem and provides a minimal solution which can be
 adapted to real-world code. The examples are intentionally short and avoid
 unnecessary abstractions so that the underlying psutil APIs are easy to
 understand. Most of them are not meant to be used in production.
-
-.. contents::
-   :local:
-   :depth: 3
 
 Processes
 ---------
@@ -271,8 +265,8 @@ Kill a process tree (including grandchildren):
 
 -------------------------------------------------------------------------------
 
-Terminate a process gracefully, falling back to ``SIGKILL`` if it does not
-exit within the timeout:
+Terminate a process gracefully, falling back to ``SIGKILL`` if it does not exit
+within the timeout:
 
 .. code-block:: python
 
@@ -309,8 +303,8 @@ Temporarily pause and resume a process using a context manager:
 
 -------------------------------------------------------------------------------
 
-CPU throttle: limit a process's CPU usage to a target percentage by
-alternating :meth:`Process.suspend` and :meth:`Process.resume`:
+CPU throttle: limit a process's CPU usage to a target percentage by alternating
+:meth:`Process.suspend` and :meth:`Process.resume`:
 
 .. code-block:: python
 
@@ -364,7 +358,6 @@ Restart a process automatically if it dies:
   if __name__ == "__main__":
       watchdog(["python3", "script.py"])
 
-
 System
 ------
 
@@ -417,8 +410,8 @@ Memory
 Show real-time swap activity *(Linux, BSD)*. ``sout`` (:term:`swap-out`) is the
 key metric: a non-zero and growing rate means the OS is moving memory from RAM
 to disk because RAM is full. ``sin`` (:term:`swap-in`) alone is not alarming;
-it just means the system is moving previously evicted pages back into RAM.
-High ``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
+it just means the system is moving previously evicted pages back into RAM. High
+``sin`` and ``sout`` together may indicate heavy swapping (:term:`thrashing`).
 
 .. code-block:: python
 

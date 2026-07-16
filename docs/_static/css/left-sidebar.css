@@ -1,0 +1,115 @@
+.left-sidebar {
+    position: sticky;
+    top: var(--topbar-height);
+    align-self: start;
+    height: calc(100vh - var(--topbar-height));
+    overflow-y: auto;
+    background: var(--bg-sidebar);
+    color: var(--sidebar-fg);
+}
+
+/* ---- Captions ("Documentation", "Reference", ...) ------------------- */
+
+.left-sidebar p.caption {
+    margin: 16px 0 4px;
+    padding: 0 1.618em;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sidebar-caption);
+}
+
+.left-sidebar p.caption:first-of-type {
+    margin-top: 0;
+}
+
+/* ---- List structure ------------------------------------------------- */
+
+.left-sidebar ul,
+.left-sidebar li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---- Items ---------------------------------------------------------- */
+
+.left-sidebar a,
+.left-sidebar a:visited {
+    display: block;
+    padding: 0.32em 1.2em;
+    line-height: 1.4;
+    color: var(--sidebar-fg);
+    text-decoration: none;
+}
+
+.left-sidebar li.toctree-l1 > a {
+    text-transform: capitalize;
+}
+
+.left-sidebar a:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Active item ---------------------------------------------------- */
+
+.left-sidebar li.current > a,
+.left-sidebar li.current > a:visited {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active-fg);
+    box-shadow:
+        inset 3px 0 0 var(--bg-sidebar),
+        inset -3px 0 0 var(--bg-sidebar);
+}
+
+/* ---- Mobile: off-canvas drawer ------------------------------------- */
+
+@media (max-width: 1024px) {
+    .left-sidebar {
+        position: fixed;
+        top: var(--topbar-height);
+        left: 0;
+        z-index: 90;
+        width: var(--left-sidebar-width);
+        max-width: 85vw;
+        height: calc(100vh - var(--topbar-height));
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+    }
+
+    body.sidebar-open .left-sidebar {
+        transform: translateX(0);
+        box-shadow: 4px 0 16px rgba(0, 0, 0, 0.35);
+    }
+}
+
+/* Touch devices: taller nav rows for comfortable tapping. 36px keeps
+   them well above the WCAG 2.5.8 (AA) 24px floor without the airy gaps
+   the AAA 44px target leaves around single-line items. */
+@media (pointer: coarse) {
+    .left-sidebar a {
+        display: flex;
+        align-items: center;
+        min-height: 36px;
+    }
+}
+
+/* ---- Per-item icons (Font Awesome) ---------------------------------- */
+
+.left-sidebar li.toctree-l1 > a::before {
+    font-family: var(--doc-icon-font, var(--fa-family-classic));
+    font-weight: var(--doc-icon-weight, 900);
+    display: inline-block;
+    width: 1.3em;
+    margin-right: 0.7em;
+    font-size: 0.85em;
+    text-align: center;
+    color: var(--sidebar-caption);
+    opacity: 0.85;
+    content: var(--doc-icon, "");
+}
+
+.left-sidebar li.current > a::before {
+    color: var(--sidebar-active-fg);
+}

@@ -178,17 +178,25 @@ psutil maintains a list of contributors in docs/credits.rst under
 Generate a credits entry unless the author is @giampaolo, in which
 case set credits_entry to null.
 
-Use the contributor's full name from their GitHub profile ({author_name})
-unless it is not set, in which case fall back to their username (@{author}).
+Use the `:user:` role to link to the contributor's GitHub profile.
+There are two forms depending on whether the author has set a full
+name on GitHub:
 
-The format used in docs/credits.rst is:
+- Full name available ({author_name} differs from {author}):
+  use `:user:`{author_name} <{author}>``. Renders the full name
+  with no `@` prefix; the link target is github.com/{author}.
 
-* `Name or username`_ - :gh:`ISSUE_NUMBER`
+- Full name not set (falls back to {author}):
+  use `:user:`{author}``. Renders as `@{author}`.
+
+The credits line format is:
+
+* :user:`<NAME OR HANDLE>` - :gh:`ISSUE_NUMBER`
 
 Examples:
 
-* `Sergey Fedorov`_ - :gh:`2701`
-* `someuser`_ - :gh:`2710`
+* :user:`Sergey Fedorov <sergeyfedorov>` - :gh:`2701`
+* :user:`someuser` - :gh:`2710`
 
 Use the same issue number used in the changelog entry.
 """
@@ -363,8 +371,8 @@ def insert_changelog_entry(section, entry):
         f.writelines(lines)
 
 
-def update_credits(credits_entry, author, author_name):
-    """Insert credits entry and link definition into CREDITS_FILE."""
+def update_credits(credits_entry):
+    """Insert credits entry into CREDITS_FILE under the current year."""
     with open(CREDITS_FILE) as f:
         lines = f.readlines()
 
@@ -372,7 +380,10 @@ def update_credits(credits_entry, author, author_name):
     year_re = re.compile(r"^\d{4}$")
 
     def sort_key(e):
-        m = re.match(r"\*\s+`([^`]+)`_", e.strip())
+        # Match ":user:`Name <handle>`" (full-name form) or
+        # ":user:`handle`" (handle-only). Sort by the leading text
+        # (the display name), case-insensitive.
+        m = re.match(r"\*\s+:user:`([^<`]+?)(?:\s*<[^>]+>)?`", e.strip())
         return m.group(1).lower() if m else e.strip().lower()
 
     # Insert year entry
@@ -447,31 +458,6 @@ def update_credits(credits_entry, author, author_name):
                 insert_idx -= 1
             lines.insert(insert_idx, f"{credits_entry}\n")
 
-    # Insert link definition if missing
-    target = f".. _`{author_name}`:"
-    if not any(ln.startswith(target) for ln in lines):
-        link_section = next(
-            (
-                i
-                for i, ln in enumerate(lines)
-                if ln.rstrip() == ".. Code contributors"
-            ),
-            None,
-        )
-        if link_section is None:
-            sys.exit(
-                "Could not find code contributors link section in"
-                f" {CREDITS_FILE}"
-            )
-        definition = f".. _`{author_name}`: https://github.com/{author}\n"
-        insert_idx = len(lines)
-        for i in range(link_section, len(lines)):
-            m = re.match(r"\.\. _`([^`]+)`:", lines[i])
-            if m and m.group(1).lower() > author_name.lower():
-                insert_idx = i
-                break
-        lines.insert(insert_idx, definition)
-
     with open(CREDITS_FILE, "w") as f:
         f.writelines(lines)
 
@@ -527,7 +513,7 @@ def main():
     )
     if credits_entry:
         print(f"Credits: {credits_entry}")
-        update_credits(credits_entry, pr["author"], pr["author_name"])
+        update_credits(credits_entry)
         print(f"Updated {CREDITS_FILE}")
         comment += (
             f"\n\n`{CREDITS_FILE}` entry added:\n\n"

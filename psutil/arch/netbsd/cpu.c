@@ -25,17 +25,19 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
 
+    // https://man.netbsd.org/man9/uvm.9
     if (psutil_sysctl(uvmexp_mib, 2, &uv, sizeof(uv)) != 0)
         return NULL;
+
     return Py_BuildValue(
-        "IIIIIII",
-        uv.swtch,  // ctx switches
-        uv.intrs,  // interrupts - XXX always 0, will be determined via /proc
-        uv.softs,  // soft interrupts
-        uv.syscalls,  // syscalls - XXX always 0
-        uv.traps,  // traps
-        uv.faults,  // faults
-        uv.forks  // forks
+        "KKKKKKK",
+        (uint64_t)uv.swtch,  // ctx switches
+        (uint64_t)uv.intrs,  // interrupts
+        (uint64_t)uv.softs,  // soft interrupts
+        (uint64_t)uv.syscalls,  // syscalls
+        (uint64_t)uv.traps,  // traps
+        (uint64_t)uv.faults,  // faults
+        (uint64_t)uv.forks  // forks
     );
 }
 

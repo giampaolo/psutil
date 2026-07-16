@@ -38,17 +38,19 @@ jobs:
           PR_NUMBER=${{ github.event.issue.number }}
           PR_JSON=$(gh pr view $PR_NUMBER \
             --repo ${{ github.repository }} \
-            --json headRefName,headRepository,headRepositoryOwner)
+            --json headRefName,headRepository,headRepositoryOwner,headRefOid)
           HEAD_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
           HEAD_OWNER=$(echo "$PR_JSON" | jq -r '.headRepositoryOwner.login')
           HEAD_REPO=$(echo "$PR_JSON" | jq -r '.headRepository.name')
+          HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
           echo "branch=$HEAD_BRANCH" >> "$GITHUB_OUTPUT"
           echo "head_repo=$HEAD_OWNER/$HEAD_REPO" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Checkout PR branch
         uses: actions/checkout@v5
         with:
-          ref: refs/pull/${{ github.event.issue.number }}/head
+          ref: ${{ steps.pr-info.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
@@ -58,7 +60,11 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          python .github/workflows/changelog_bot.py \
+          # Run the trusted script from master, not the PR's copy, so a
+          # malicious PR can't get arbitrary code executed on the runner.
+          git fetch --depth 1 origin master
+          git show origin/master:.github/workflows/changelog_bot.py > /tmp/changelog_bot.py
+          python /tmp/changelog_bot.py \
             --pr-number ${{ github.event.issue.number }} \
             --repo ${{ github.repository }} \
             --token ${{ secrets.GITHUB_TOKEN }}

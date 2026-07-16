@@ -169,24 +169,7 @@ def cpu_stats():
         # Note: the C ext is returning some metrics we are not exposing:
         # traps.
         ctxsw, intrs, soft_intrs, syscalls, _traps = cext.cpu_stats()
-    elif NETBSD:
-        # XXX
-        # Note about intrs: the C extension returns 0. intrs
-        # can be determined via /proc/stat; it has the same value as
-        # soft_intrs thought so the kernel is faking it (?).
-        #
-        # Note about syscalls: the C extension always sets it to 0 (?).
-        #
-        # Note: the C ext is returning some metrics we are not exposing:
-        # traps, faults and forks.
-        ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
-            cext.cpu_stats()
-        )
-        with open('/proc/stat', 'rb') as f:
-            for line in f:
-                if line.startswith(b'intr'):
-                    intrs = int(line.split()[1])
-    elif OPENBSD:
+    elif NETBSD or OPENBSD:
         # Note: the C ext is returning some metrics we are not exposing:
         # traps, faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, _traps, _faults, _forks = (
@@ -556,15 +539,13 @@ class Process:
             try:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
-                if err.errno == errno.EINVAL:
+                if err.errno in {errno.EINVAL, errno.EFAULT}:
+                    debug(f"cmdline(): ignoring {err!r}")
                     pid, name, ppid = self.pid, self._name, self._ppid
                     if cext.proc_is_zombie(self.pid):
                         raise ZombieProcess(pid, name, ppid) from err
                     if not pid_exists(self.pid):
                         raise NoSuchProcess(pid, name, ppid) from err
-                    # XXX: this happens with unicode tests. It means the C
-                    # routine is unable to decode invalid unicode chars.
-                    debug(f"ignoring {err!r} and returning an empty list")
                     return []
                 else:
                     raise

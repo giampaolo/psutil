@@ -375,8 +375,11 @@ def swap_memory():
     mems = {}
     with open_binary(f"{get_procfs_path()}/meminfo") as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            # Note: some fields (e.g. "ShadowCallStack:10373888 kB")
+            # may not have a space after the colon, see:
+            # https://github.com/giampaolo/psutil/issues/2809
+            key, value = line.split(b':', 1)
+            mems[key + b':'] = int(value.split()[0]) * 1024
     # We prefer /proc/meminfo over sysinfo() syscall so that
     # psutil.PROCFS_PATH can be used in order to allow retrieval
     # for linux containers, see:
