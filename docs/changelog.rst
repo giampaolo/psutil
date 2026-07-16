@@ -211,6 +211,11 @@ Others:
 
 **Bug fixes**
 
+- :gh:`2859`, [Windows]: :func:`net_connections` /
+  :meth:`Process.net_connections` could crash with an invalid
+  ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
+  allocated. The error path now uses ``Py_XDECREF`` (including the temporary
+  address-family / socket-type objects).
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
@@ -249,6 +254,10 @@ Others:
 - :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
+- :gh:`2809`, [Linux]: :func:`swap_memory` raises ``ValueError`` if
+  :proc:`/proc/meminfo` contains a field with no space after the colon, e.g.
+  ``ShadowCallStack:10373888 kB``, which occurs on arm64 when shadow call
+  stacks exceed 10 GB.
 - :gh:`2811`, [OpenBSD]: :func:`virtual_memory` :field:`shared` field returned
   pages instead of bytes, plus it was overvalued (summed shared ``virtual`` +
   ``real``, now we only return ``real``).
@@ -262,6 +271,9 @@ Others:
 - :gh:`2822`, [BSD]: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` if the process about to exit. It now
   raises :exc:`NoSuchProcess` instead.
+- :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
+  could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
+  ``errno == 0``. They now raise :exc:`AccessDenied` instead.
 - :gh:`2857`, [Linux], [SunOS]: fix refcount leak in ``disk_partitions()``
   (Linux) and ``proc_environ()`` (SunOS) when ``PyArg_ParseTuple`` fails: parse
   arguments before allocating the result container, matching the pattern used

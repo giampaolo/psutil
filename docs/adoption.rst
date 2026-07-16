@@ -7,10 +7,10 @@ Who uses psutil
 
 psutil is among the
 `top 100 <https://clickpy.clickhouse.com/dashboard/psutil>`__ most-downloaded
-packages on PyPI, with **340+ million** downloads per month, **770,000+**
+packages on PyPI, with **370+ million** downloads per month and **780,000+**
 `GitHub repositories <https://github.com/giampaolo/psutil/network/dependents>`__
-using it, and **16,000+** packages depending on it. The projects below are a
-small sample of notable software that depends on psutil.
+using it. The projects below are a small sample of notable software that
+depends on psutil.
 
 See also :doc:`alternatives` for related Python libraries and equivalents in
 other languages.
