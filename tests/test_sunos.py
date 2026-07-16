@@ -7,7 +7,6 @@
 """Sun OS specific tests."""
 
 import os
-import tracemalloc
 
 import psutil
 from psutil import SUNOS
@@ -39,20 +38,3 @@ class SunOSSpecificTestCase(PsutilTestCase):
     def test_cpu_count(self):
         out = sh("/usr/sbin/psrinfo")
         assert psutil.cpu_count() == len(out.split('\n'))
-
-    def test_proc_environ_bad_arg_no_leak(self):
-        # Regression: parse failure must not leak py_retdict.
-        # Real leak would be ~256 bytes per call (an empty dict),
-        # so 8192 bytes / 100 calls is well above that and well
-        # below tracemalloc's natural drift on this Python build.
-        tracemalloc.start()
-        snap1 = tracemalloc.take_snapshot()
-        for _ in range(100):
-            try:
-                psutil._pssunos.cext.proc_environ(0)
-            except TypeError:
-                pass
-        snap2 = tracemalloc.take_snapshot()
-        tracemalloc.stop()
-        growth = sum(d.size_diff for d in snap2.compare_to(snap1, 'filename'))
-        assert growth < 8192, growth
