@@ -271,6 +271,9 @@ Others:
 - :gh:`2822`, [BSD]: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` if the process about to exit. It now
   raises :exc:`NoSuchProcess` instead.
+- :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
+  frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
+  chips). It now raises :exc:`RuntimeError` instead.
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.

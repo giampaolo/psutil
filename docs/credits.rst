@@ -114,7 +114,7 @@ Code contributors by year
 * :user:`Felix Yan <felixonmars>` - :gh:`2732`
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
 * :user:`Karl Hill <https://github.com/karlhillx>` - :gh:`2857`
-* :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
+* :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`, :gh:`2841`
 * :user:`Santhosh Raju <fraggerfox>` - :gh:`2805`
 * :user:`Sergey Fedorov <barracuda156>` - :gh:`2701`
 * :user:`Tobias Klauser <tklauser>` - :gh:`2711`
