@@ -76,7 +76,8 @@ jobs:
             --pr-number "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
             --token "${{ secrets.GITHUB_TOKEN }}" \
-            --comment-file "$RUNNER_TEMP/changelog_comment.md"
+            --comment-file "$RUNNER_TEMP/changelog_comment.md" \
+            --error-file "$RUNNER_TEMP/changelog_error.md"
 
       - name: Commit and push if changelog changed
         id: push
@@ -101,7 +102,10 @@ jobs:
           fi
 
       - name: Post confirmation comment
+        # Best-effort: a comment hiccup must not mislabel a landed
+        # push as a failure.
         if: success()
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.issue.number }}
@@ -117,6 +121,16 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          gh pr comment "$PR_NUMBER" \
-            --repo "${{ github.repository }}" \
-            --body "⚠️ The /changelog bot failed. See the run log: $RUN_URL"
+          # A validation error leaves a specific message; anything else
+          # (e.g. a failed push) only gets the generic pointer, never a
+          # stale success body.
+          ERROR_FILE="$RUNNER_TEMP/changelog_error.md"
+          if [ -s "$ERROR_FILE" ]; then
+            gh pr comment "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --body-file "$ERROR_FILE"
+          else
+            gh pr comment "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --body "⚠️ The /changelog bot failed. See the run log: $RUN_URL"
+          fi
