@@ -216,6 +216,11 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
+  returns ``None`` when CPU frequency can't be determined. Previously it was
+  left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
+  entry or its frequency data was unavailable, e.g. on virtualized ARM64 like
+  CI runners.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
@@ -268,7 +273,7 @@ Others:
   raises :exc:`NoSuchProcess` instead.
 - :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
   frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
-  chips). It now raises :exc:`RuntimeError` instead.
+  chips). It now returns ``None`` instead (see :gh:`2382`).
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
