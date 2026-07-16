@@ -21,6 +21,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 
 import anthropic
@@ -29,11 +30,13 @@ import anthropic
 PR_NUMBER = None
 REPO = None
 TOKEN = None
+COMMENT_FILE = None
 
 CHANGELOG_FILE = "docs/changelog.rst"
 CREDITS_FILE = "docs/credits.rst"
 MAX_DIFF_CHARS = 20_000
-MAX_TOKENS = 1024
+MAX_TOKENS = 2048
+HTTP_TIMEOUT = 30
 
 PROMPT = """\
 You are helping maintain the official changelog for psutil, a Python
@@ -237,8 +240,13 @@ def gh_request(path, accept="application/vnd.github+json"):
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with urllib.request.urlopen(req) as resp:
-        return resp.read()
+    try:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
+            return resp.read()
+    except urllib.error.HTTPError as err:
+        # Surface GitHub's error body; a bare "HTTP Error 404" hides it.
+        body = err.read().decode("utf-8", errors="replace")
+        sys.exit(f"GitHub API {err.code} for {path}: {body}")
 
 
 def fetch_pr_metadata():
@@ -273,6 +281,8 @@ def ask_claude(pr, diff):
         diff=diff[:MAX_DIFF_CHARS],
     )
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        sys.exit("ANTHROPIC_API_KEY is not set")
     client = anthropic.Anthropic(api_key=api_key)
     message = client.messages.create(
         model="claude-sonnet-4-6",
@@ -281,7 +291,13 @@ def ask_claude(pr, diff):
         tool_choice={"type": "tool", "name": "submit"},
         messages=[{"role": "user", "content": prompt}],
     )
-    tool_use = next(b for b in message.content if b.type == "tool_use")
+    if message.stop_reason == "max_tokens":
+        sys.exit("Claude response was truncated (raise MAX_TOKENS)")
+    tool_use = next((b for b in message.content if b.type == "tool_use"), None)
+    if tool_use is None:
+        sys.exit(
+            f"Claude returned no tool call (stop_reason={message.stop_reason})"
+        )
     return tool_use.input
 
 
@@ -465,35 +481,39 @@ def update_credits(credits_entry):
     return "inserted"
 
 
-def post_comment(body):
-    url = f"https://api.github.com/repos/{REPO}/issues/{PR_NUMBER}/comments"
-    data = json.dumps({"body": body}).encode()
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={
-            "Authorization": f"Bearer {TOKEN}",
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    with urllib.request.urlopen(req):
-        pass
+def write_comment(body):
+    """Write the PR comment body for the workflow to post after push.
+
+    Posting happens in a later workflow step, gated on the push
+    succeeding, so a failed push can't leave a false "entry added"
+    comment.
+    """
+    print(body)
+    if COMMENT_FILE:
+        with open(COMMENT_FILE, "w") as f:
+            f.write(body)
+        print(f"Wrote comment body to {COMMENT_FILE}")
 
 
 def parse_cli():
-    global PR_NUMBER, REPO, TOKEN
+    global PR_NUMBER, REPO, TOKEN, COMMENT_FILE
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--pr-number", type=int, required=True)
     p.add_argument(
         "--repo", type=str, required=True, help="e.g. giampaolo/psutil"
     )
     p.add_argument("--token", type=str, required=True, help="GitHub token")
+    p.add_argument(
+        "--comment-file",
+        type=str,
+        default=None,
+        help="Write the PR comment body here instead of posting it",
+    )
     args = p.parse_args()
     PR_NUMBER = args.pr_number
     REPO = args.repo
     TOKEN = args.token
+    COMMENT_FILE = args.comment_file
 
 
 def main():
@@ -537,8 +557,7 @@ def main():
                 f"\n\n`{CREDITS_FILE}` **not** modified: an entry for this "
                 "contributor already exists."
             )
-    post_comment(comment)
-    print("Posted confirmation comment on PR")
+    write_comment(comment)
 
 
 if __name__ == "__main__":
