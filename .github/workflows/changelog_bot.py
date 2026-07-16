@@ -358,19 +358,80 @@ def create_section(block, section):
     return block[:insert_at] + [*new, ""] + block[insert_at:]
 
 
-def append_to_section(block, section, entry_lines):
+def entry_number(line):
+    m = re.match(r"- :gh:`(\d+)`", line)
+    return int(m.group(1)) if m else None
+
+
+def insert_in_section(block, section, entry_lines):
     hdr = section_header_idx(block, section)
     if hdr is None:
         block = create_section(block, section)
         hdr = section_header_idx(block, section)
     boundary = next_header_idx(block, hdr)
-    insert_at = boundary
-    # Stop at hdr + 2, not hdr + 1, so the blank line under the header
-    # survives: an empty (just-created) section would otherwise glue
-    # its first entry to the header.
-    while insert_at > hdr + 2 and not block[insert_at - 1].strip():
-        insert_at -= 1
+    # End of the section's content, before any trailing blank lines.
+    end = boundary
+    while end > hdr + 2 and not block[end - 1].strip():
+        end -= 1
+    # Start of the last contiguous run of entries. A blank line or a
+    # pseudo-header (e.g. "New APIs:") ends a run, so we stay out of
+    # earlier groups.
+    run_start = end
+    while run_start > hdr + 2:
+        if not block[run_start - 1].startswith(("- ", "  ")):
+            break
+        run_start -= 1
+    # Insert after the last entry in the run whose number is < ours, so
+    # #123 comes before #124. Robust to a leading out-of-order entry
+    # (we compare numbers, not positions).
+    gh = entry_number(entry_lines[0])
+    insert_at = run_start
+    i = run_start
+    while i < end:
+        num = entry_number(block[i])
+        j = i + 1
+        while j < end and block[j].startswith("  "):  # skip continuations
+            j += 1
+        if num is not None and gh is not None and num < gh:
+            insert_at = j
+        i = j
     return block[:insert_at] + list(entry_lines) + block[insert_at:]
+
+
+def check_entry_ordered(text, gh):
+    """Verify the new :gh:`gh` entry sits between a lower and a higher
+    numbered entry in its run. Raises ValidationError otherwise. A
+    blank line or a pseudo-header (e.g. "New APIs:") ends a run, so an
+    earlier group's numbers don't count.
+    """
+    block = changelog_context(text).splitlines()
+    idx = next(
+        (i for i, ln in enumerate(block) if ln.startswith(f"- :gh:`{gh}`")),
+        None,
+    )
+    if idx is None:
+        return
+
+    def run_neighbor(indices):
+        for i in indices:
+            ln = block[i]
+            num = entry_number(ln)
+            if num is not None:
+                return num
+            if not ln.startswith(("- ", "  ")):  # blank / pseudo-header
+                return None
+        return None
+
+    prev = run_neighbor(range(idx - 1, -1, -1))
+    nxt = run_neighbor(range(idx + 1, len(block)))
+    if prev is not None and prev > gh:
+        raise ValidationError(
+            f"changelog: :gh:`{gh}` is out of order (after :gh:`{prev}`)"
+        )
+    if nxt is not None and nxt < gh:
+        raise ValidationError(
+            f"changelog: :gh:`{gh}` is out of order (before :gh:`{nxt}`)"
+        )
 
 
 def prepend_dev_block(lines, start):
@@ -387,7 +448,7 @@ def insert_entry(text, section, entry_text):
     if not is_dev:
         lines, start, end = prepend_dev_block(lines, start)
     block = lines[start:end]
-    block = append_to_section(block, section, entry_text.splitlines())
+    block = insert_in_section(block, section, entry_text.splitlines())
     lines[start:end] = block
     return "\n".join(lines) + "\n"
 
@@ -506,11 +567,9 @@ def apply_changelog_decision(text, decision, allowed_issues):
                 raise ValidationError(
                     f"an entry for :gh:`{gh}` already exists; amend it instead"
                 )
-        return (
-            insert_entry(text, decision["section"], entry_text),
-            "inserted",
-            gh,
-        )
+        new_text = insert_entry(text, decision["section"], entry_text)
+        check_entry_ordered(new_text, gh)
+        return new_text, "inserted", gh
 
     if action == "amend":
         if not is_dev:
@@ -666,7 +725,8 @@ def apply_credit(text, author, author_name, gh, year):
                 entry[-1] = entry[-1].rstrip() + ","
                 entry.append(f"  :gh:`{gh}`")
             lines[i:j] = entry
-            return "\n".join(lines) + "\n", "appended"
+            result = resort_credits_year("\n".join(lines) + "\n", year)
+            return result, "appended"
 
     new_line = credit_line(author, author_name, gh)
     key = credits_sort_key(new_line)
@@ -679,7 +739,58 @@ def apply_credit(text, author, author_name, gh, year):
     while insert_idx > min_idx and not lines[insert_idx - 1].strip():
         insert_idx -= 1
     lines.insert(insert_idx, new_line)
-    return "\n".join(lines) + "\n", "added"
+    result = resort_credits_year("\n".join(lines) + "\n", year)
+    return result, "added"
+
+
+def resort_credits_year(text, year):
+    """Sort the year's credit entries alphabetically, keeping each
+    entry's wrapped continuation lines with it.
+    """
+    lines = text.splitlines()
+    year_re = re.compile(r"^\d{4}$")
+    section_idx = next(
+        (
+            i
+            for i, ln in enumerate(lines)
+            if ln.strip() == "Code contributors by year"
+        ),
+        None,
+    )
+    if section_idx is None:
+        return text
+    year_idx = next(
+        (
+            i
+            for i in range(section_idx, len(lines))
+            if lines[i].strip() == year
+        ),
+        None,
+    )
+    if year_idx is None:
+        return text
+    start = year_idx + 2
+    while start < len(lines) and not lines[start].strip():
+        start += 1
+    end = next(
+        (
+            i
+            for i in range(year_idx + 2, len(lines))
+            if year_re.match(lines[i].strip())
+        ),
+        len(lines),
+    )
+    while end > start and not lines[end - 1].strip():
+        end -= 1
+    entries = []
+    for ln in lines[start:end]:
+        if ln.startswith("* ") or not entries:
+            entries.append([ln])
+        else:
+            entries[-1].append(ln)
+    entries.sort(key=lambda e: credits_sort_key(e[0]))
+    lines[start:end] = [ln for entry in entries for ln in entry]
+    return "\n".join(lines) + "\n"
 
 
 def write_file(path, body):

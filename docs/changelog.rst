@@ -211,11 +211,6 @@ Others:
 
 **Bug fixes**
 
-- :gh:`2859`, [Windows]: :func:`net_connections` /
-  :meth:`Process.net_connections` could crash with an invalid
-  ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
-  allocated. The error path now uses ``Py_XDECREF`` (including the temporary
-  address-family / socket-type objects).
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
@@ -233,13 +228,13 @@ Others:
   number due to a C type precision issue.
 - :gh:`2732`, [Linux]: :func:`net_if_stats`: handle ``EBUSY`` from
   ``ioctl(SIOCETHTOOL)``.
-- :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
-  :exc:`ValueError` on s390x architecture, where :proc:`/proc/cpuinfo` uses
-  spaces before the colon separator instead of a tab.
 - :gh:`2744`, [NetBSD]: fix possible double ``free()`` in :func:`swap_memory`.
 - :gh:`2746`, [FreeBSD]: :meth:`Process.memory_maps`, :field:`rss` and
   :field:`private` fields are erroneously reported in memory pages instead of
   bytes. Other platforms (Linux, macOS, Windows) return bytes.
+- :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
+  :exc:`ValueError` on s390x architecture, where :proc:`/proc/cpuinfo` uses
+  spaces before the colon separator instead of a tab.
 - :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with :field:`family` ==
@@ -281,6 +276,11 @@ Others:
   ``proc_environ()`` where the post-decode NULL check examined the wrong
   variable (``py_envname`` instead of ``py_envval``), which could let a NULL
   value reach ``PyDict_SetItem``.
+- :gh:`2859`, [Windows]: :func:`net_connections` /
+  :meth:`Process.net_connections` could crash with an invalid
+  ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
+  allocated. The error path now uses ``Py_XDECREF`` (including the temporary
+  address-family / socket-type objects).
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
