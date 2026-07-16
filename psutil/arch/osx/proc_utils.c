@@ -101,7 +101,7 @@ psutil_sysctl_procargs(pid_t pid, char *procargs, size_t *argmax) {
             // see: https://github.com/giampaolo/psutil/issues/2708
             psutil_debug("sysctl(KERN_PROCARGS2) -> errno 0");
             psutil_oserror_ad("sysctl(KERN_PROCARGS2) -> errno 0");
-            return 0;
+            return -1;
         }
         psutil_oserror_wsyscall("sysctl(KERN_PROCARGS2)");
         return -1;

@@ -143,7 +143,7 @@ def swap_memory():
     total_phys = info["PhysicalTotal"] * pagesize
     # CommitLimit == Maximum pages that can be committed into RAM +
     # page file (swap). In the context of swap, it's the total "system
-    # memory" (physical + virtual), thus substract the physical part
+    # memory" (physical + virtual), thus subtract the physical part
     # from it to get the "total swap".
     total_system = info["CommitLimit"] * pagesize  # physical + swap
     total = total_system - total_phys

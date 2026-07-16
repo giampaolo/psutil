@@ -1,0 +1,17 @@
+{#-
+  Left sidebar: search box at top, then global table of contents
+  (toctree). Sticky to the viewport, scrolls independently of the
+  main column. Styled by static/css/left-sidebar.css.
+-#}
+<nav class="left-sidebar no-visited" aria-label="Main navigation">
+  <div class="search-box">
+    <form action="{{ pathto('search') }}" method="get" role="search">
+      <input id="search-input" type="text" name="q"
+             placeholder="Search" aria-label="Search docs"
+             autocomplete="off" autocorrect="off"
+             autocapitalize="off" spellcheck="false">
+      <span class="search-kbd" aria-hidden="true"><kbd>Ctrl</kbd>+<kbd>K</kbd></span>
+    </form>
+  </div>
+  {% include "globaltoc.html" %}
+</nav>

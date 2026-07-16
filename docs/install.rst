@@ -11,6 +11,12 @@ need a C compiler. Install psutil with:
 
     pip install psutil
 
+Or with `uv <https://docs.astral.sh/uv/>`_:
+
+.. code-block:: none
+
+    uv add psutil
+
 If wheels are not available for your platform or architecture, or you wish to
 build & install psutil from sources, keep reading.
 
@@ -86,8 +92,8 @@ Windows
       pip install --no-binary :all: psutil
 
 - If you want to clone psutil's Git repository and build / develop locally,
-  first install `Git for Windows`_ and launch a Git Bash shell. This provides
-  a Unix-like environment where ``make`` works.
+  first install `Git for Windows`_ and launch a Git Bash shell. This provides a
+  Unix-like environment where ``make`` works.
 - Once inside Git Bash, you can run the usual ``make`` commands:
 
   .. code-block:: none

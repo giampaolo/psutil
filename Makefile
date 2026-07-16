@@ -132,6 +132,9 @@ test-unicode:  ## Test APIs dealing with strings.
 test-contracts:  ## APIs sanity tests.
 	$(RUN_TEST) tests/test_contracts.py $(ARGS)
 
+test-docs:  ## Run doc sanity tests (outside testpaths, run on demand).
+	$(MAKE) -C docs test ARGS="$(ARGS)"
+
 test-type-hints:  ## Test type hints
 	$(RUN_TEST) tests/test_type_hints.py $(ARGS)
 
@@ -186,8 +189,9 @@ dprint:
 	@$(DPRINT) check
 
 lint-rst:  ## Run linter for .rst files.
-	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_check_dead_refs.py
-	@$(call _ls,'*.rst') | xargs sphinx-lint
+	@$(call _ls,'*.rst') | xargs python3 scripts/internal/rst_unused_targets.py
+	@$(call _ls,'*.rst') | xargs sphinx-lint --enable all --disable line-too-long
+	@$(call _ls,'*.rst') | xargs rstwrap --check
 
 lint-toml:  ## Run linter for pyproject.toml.
 	@$(call _ls,'*.toml') | xargs toml-sort --check
@@ -223,6 +227,9 @@ fix-c:
 
 fix-toml:  ## Fix pyproject.toml
 	@git ls-files '*.toml' | xargs toml-sort
+
+fix-rst:
+	@git ls-files '*.rst' | xargs rstwrap
 
 fix-dprint:
 	@$(DPRINT) fmt

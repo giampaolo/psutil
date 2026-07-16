@@ -1,5 +1,3 @@
-.. currentmodule:: psutil
-
 Performance
 ===========
 
@@ -50,9 +48,9 @@ process, use :meth:`Process.oneshot`.
 Use process_iter() with an attrs list
 --------------------------------------
 
-If you iterate over multiple PIDs, always use :func:`process_iter`.
-It accepts an ``attrs`` argument that pre-fetches only the requested attributes
-in a single pass, minimizing system calls by fetching multiple attributes at once.
+If you iterate over multiple PIDs, always use :func:`process_iter`. It accepts
+an ``attrs`` argument that pre-fetches only the requested attributes in a
+single pass, minimizing system calls by fetching multiple attributes at once.
 This is faster than calling individual methods in a loop.
 
 Slow:
@@ -77,12 +75,11 @@ Fast:
       print(p.pid, p.name(), p.status())  # return cached values, never raise
 
 :func:`process_iter(attrs=...) <psutil.process_iter>` is effectively equivalent
-to using :meth:`Process.oneshot` on each process.
-Using :func:`process_iter` also saves you from **race conditions** (e.g. if a
-process disappears while iterating), since :exc:`NoSuchProcess` and
-:exc:`AccessDenied` exceptions are handled internally.
-A typical use case is to fetch all process attrs except the slow ones (see
-:ref:`perf-api-speed` table below):
+to using :meth:`Process.oneshot` on each process. Using :func:`process_iter`
+also saves you from **race conditions** (e.g. if a process disappears while
+iterating), since :exc:`NoSuchProcess` and :exc:`AccessDenied` exceptions are
+handled internally. A typical use case is to fetch all process attrs except the
+slow ones (see :ref:`perf-api-speed` table below):
 
 .. code-block:: python
 
@@ -91,14 +88,114 @@ A typical use case is to fetch all process attrs except the slow ones (see
   for p in psutil.process_iter(psutil.Process.attrs - {"memory_footprint", "memory_maps"}):
       ...
 
+.. _perf-oneshot-methods:
+
+Methods sped up by oneshot()
+----------------------------
+
+The table below lists methods that benefit from :meth:`Process.oneshot`,
+grouped by platform. Methods separated by an empty row share the same
+underlying system call. The *speedup* row estimates the gain when all listed
+methods are called together (best case), as measured by
+:src:`scripts/internal/bench_oneshot.py`.
+
+.. list-table::
+   :header-rows: 1
+   :class: wide-table
+
+   * - Linux
+     - Windows
+     - macOS
+     - BSD
+   * - :meth:`~Process.cpu_num`
+     - :meth:`~Process.cpu_percent`
+     - :meth:`~Process.cpu_percent`
+     - :meth:`~Process.cpu_num`
+   * - :meth:`~Process.cpu_percent`
+     - :meth:`~Process.cpu_times`
+     - :meth:`~Process.cpu_times`
+     - :meth:`~Process.cpu_percent`
+   * - :meth:`~Process.cpu_times`
+     - :meth:`~Process.io_counters`
+     - :meth:`~Process.memory_info`
+     - :meth:`~Process.cpu_times`
+   * - :meth:`~Process.create_time`
+     - :meth:`~Process.memory_info`
+     - :meth:`~Process.memory_percent`
+     - :meth:`~Process.create_time`
+   * - :meth:`~Process.name`
+     - :meth:`~Process.memory_info_ex`
+     - :meth:`~Process.num_ctx_switches`
+     - :meth:`~Process.gids`
+   * - :meth:`~Process.page_faults`
+     - :meth:`~Process.num_ctx_switches`
+     - :meth:`~Process.num_threads`
+     - :meth:`~Process.io_counters`
+   * - :meth:`~Process.ppid`
+     - :meth:`~Process.num_handles`
+     -
+     - :meth:`~Process.name`
+   * - :meth:`~Process.status`
+     - :meth:`~Process.num_threads`
+     - :meth:`~Process.create_time`
+     - :meth:`~Process.memory_info`
+   * - :meth:`~Process.terminal`
+     -
+     - :meth:`~Process.gids`
+     - :meth:`~Process.memory_percent`
+   * -
+     - :meth:`~Process.exe`
+     - :meth:`~Process.name`
+     - :meth:`~Process.num_ctx_switches`
+   * - :meth:`~Process.gids`
+     - :meth:`~Process.name`
+     - :meth:`~Process.ppid`
+     - :meth:`~Process.ppid`
+   * - :meth:`~Process.memory_info_ex`
+     -
+     - :meth:`~Process.status`
+     - :meth:`~Process.status`
+   * - :meth:`~Process.num_ctx_switches`
+     -
+     - :meth:`~Process.terminal`
+     - :meth:`~Process.terminal`
+   * - :meth:`~Process.num_threads`
+     -
+     - :meth:`~Process.terminal`
+     - :meth:`~Process.terminal`
+   * - :meth:`~Process.uids`
+     -
+     - :meth:`~Process.uids`
+     - :meth:`~Process.uids`
+   * - :meth:`~Process.username`
+     -
+     - :meth:`~Process.username`
+     - :meth:`~Process.username`
+   * -
+     -
+     -
+     -
+   * - :meth:`~Process.memory_footprint`
+     -
+     -
+     -
+   * - :meth:`~Process.memory_maps`
+     -
+     -
+     -
+   * - *speedup: +1.8x*
+     - *speedup: +1.8x / +6.5x*
+     - *speedup: +1.9x*
+     - *speedup: +2.0x*
+
 .. _perf-oneshot-bench:
 
 Measuring oneshot() speedup
 ---------------------------
 
-`scripts/internal/bench_oneshot.py`_ measures :meth:`Process.oneshot` speedup.
-It also shows which APIs share the same internal kernel routines. E.g. on
-Linux:
+:src:`scripts/internal/bench_oneshot.py` measures :meth:`Process.oneshot`
+speedup. It also shows which APIs share the same internal kernel routines. E.g.
+on Linux:
 
 .. code-block:: none
 
@@ -132,9 +229,9 @@ Linux:
 Measuring APIs speed
 --------------------
 
-`scripts/internal/print_api_speed.py`_ shows the relative cost of each API call.
-This helps you understand which operations are more expensive.
-E.g. on Linux:
+:src:`scripts/internal/print_api_speed.py` shows the relative cost of each API
+call. This helps you understand which operations are more expensive. E.g. on
+Linux:
 
 .. code-block:: none
 
@@ -203,5 +300,3 @@ E.g. on Linux:
   memory_footprint                 300      0.02241
   memory_maps                      300      0.30282
 
-.. _`scripts/internal/bench_oneshot.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/bench_oneshot.py
-.. _`scripts/internal/print_api_speed.py`: https://github.com/giampaolo/psutil/blob/master/scripts/internal/print_api_speed.py

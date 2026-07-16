@@ -539,15 +539,13 @@ class Process:
             try:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
-                if err.errno == errno.EINVAL:
+                if err.errno in {errno.EINVAL, errno.EFAULT}:
+                    debug(f"cmdline(): ignoring {err!r}")
                     pid, name, ppid = self.pid, self._name, self._ppid
                     if cext.proc_is_zombie(self.pid):
                         raise ZombieProcess(pid, name, ppid) from err
                     if not pid_exists(self.pid):
                         raise NoSuchProcess(pid, name, ppid) from err
-                    # XXX: this happens with unicode tests. It means the C
-                    # routine is unable to decode invalid unicode chars.
-                    debug(f"ignoring {err!r} and returning an empty list")
                     return []
                 else:
                     raise

@@ -1,0 +1,53 @@
+/* Print / PDF: strip top bar and other useless parts. */
+
+@media print {
+    .topbar,
+    .left-sidebar,
+    .right-sidebar,
+    .sidebar-backdrop,
+    .back-to-top,
+    .prev-next,
+    .shortcut-flyout {
+        display: none !important;
+    }
+
+    .page {
+        display: block;
+        max-width: none;
+        margin: 0;
+        padding-top: 0;
+    }
+
+    .main {
+        padding: 0;
+    }
+
+    .article-with-toc {
+        display: block;
+        padding: 0;
+        min-height: 0;
+    }
+
+    body,
+    .article {
+        color: #000;
+        background: #fff;
+    }
+
+    .article a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.85em;
+        word-break: break-all;
+    }
+
+    .highlight {
+        border: 1px solid #ccc !important;
+        background: #fff !important;
+    }
+
+    pre,
+    .highlight {
+        white-space: pre-wrap;
+        overflow: visible;
+    }
+}

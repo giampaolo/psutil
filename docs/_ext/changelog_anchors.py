@@ -25,7 +25,7 @@ def add_version_anchors(app, doctree):
     labels = app.env.domaindata.setdefault('std', {}).setdefault('labels', {})
     anonlabels = app.env.domaindata['std'].setdefault('anonlabels', {})
 
-    for node in doctree.traverse(nodes.section):
+    for node in doctree.findall(nodes.section):
         title = node.next_node(nodes.title)
         if not title:
             continue
