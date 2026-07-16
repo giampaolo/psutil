@@ -110,6 +110,7 @@ Code contributors by year
 * `Amaan Qureshi`_ - :gh:`2770`
 * `Felix Yan`_ - :gh:`2732`
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
+* :user:`Hanson Wang <hansonw>` - :gh:`2809`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * `Santhosh Raju`_ - :gh:`2805`
 * `Sergey Fedorov`_ - :gh:`2701`
