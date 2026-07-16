@@ -109,6 +109,7 @@ Code contributors by year
 
 * `Amaan Qureshi`_ - :gh:`2770`
 * `Felix Yan`_ - :gh:`2732`
+* :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * `Santhosh Raju`_ - :gh:`2805`
