@@ -91,10 +91,10 @@ __GetExtendedUdpTable(ULONG family) {
 
 
 #define psutil_conn_decref_objs() \
-    Py_DECREF(_AF_INET);          \
-    Py_DECREF(_AF_INET6);         \
-    Py_DECREF(_SOCK_STREAM);      \
-    Py_DECREF(_SOCK_DGRAM);
+    Py_XDECREF(_AF_INET);         \
+    Py_XDECREF(_AF_INET6);        \
+    Py_XDECREF(_SOCK_STREAM);     \
+    Py_XDECREF(_SOCK_DGRAM);
 
 
 /*
@@ -452,7 +452,7 @@ error:
     psutil_conn_decref_objs();
     Py_XDECREF(py_addr_tuple_local);
     Py_XDECREF(py_addr_tuple_remote);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     if (table != NULL)
         free(table);
     return NULL;
