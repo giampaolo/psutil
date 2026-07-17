@@ -118,6 +118,7 @@ Code contributors by year
 * :user:`Karl Hill <karlhillx>` - :gh:`2857`
 * :user:`Kataoka Katsuki <kataokatsuki>` - :gh:`2854`
 * :user:`Santhosh Raju <fraggerfox>` - :gh:`2805`
+* :user:`Sebastian Cao <cycsmail>` - :gh:`2628`
 * :user:`Sergey Fedorov <barracuda156>` - :gh:`2701`
 * :user:`Tobias Klauser <tklauser>` - :gh:`2711`
 
