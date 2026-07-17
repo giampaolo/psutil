@@ -187,6 +187,18 @@ class TestProcessIter(PsutilTestCase):
             assert p.status()
             break
 
+    def test_zombie_process_is_not_skipped(self):
+        # ZombieProcess is a subclass of NoSuchProcess; make sure
+        # process_iter() yields the process rather than removing it from
+        # the cache as if it had disappeared.
+        list(psutil.process_iter())  # populate the pmap cache
+        p = psutil._pmap[os.getpid()]
+        with mock.patch.object(
+            p, "as_dict", side_effect=psutil.ZombieProcess(p.pid)
+        ):
+            pids = [x.pid for x in psutil.process_iter(attrs=["name"])]
+        assert p.pid in pids
+
     def test_cache_clear(self):
         list(psutil.process_iter())  # populate cache
         assert psutil._pmap

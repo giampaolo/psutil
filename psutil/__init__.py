@@ -1747,6 +1747,9 @@ def process_iter(
                         attrs=attrs, ad_value=ad_value
                     )
                 yield proc
+            except ZombieProcess:
+                if proc is not None:
+                    yield proc  # zombie processes are still valid
             except NoSuchProcess:
                 remove(pid)
     finally:
