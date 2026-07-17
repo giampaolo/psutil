@@ -61,7 +61,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
-        run: pip install anthropic
+        run: pip install anthropic rstwrap
 
       - name: Run changelog bot
         env:
@@ -92,11 +92,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          make fix-rst
           git add docs/changelog.rst docs/credits.rst
           if git diff --cached --quiet; then
             echo "No changes, skipping commit"
           else
-            git commit -m "Update changelog for PR #$PR_NUMBER"
+            git commit --no-verify -m "Update changelog for PR #$PR_NUMBER"
             PUSH_URL="https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git"
             git push "$PUSH_URL" "HEAD:refs/heads/${HEAD_BRANCH}"
           fi

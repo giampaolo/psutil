@@ -126,7 +126,6 @@ Adding a new API
   :src:`tests/test_process.py`.
 - Add a platform-specific test in ``tests/test_{platform}.py``.
 - Update :src:`docs/api.rst`.
-- Update :src:`docs/changelog.rst` and :src:`docs/credits.rst`.
 - Open a pull request.
 
 Make a pull request
