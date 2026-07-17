@@ -124,6 +124,7 @@ Code contributors by year
 * :user:`Sebastian Cao <cycsmail>` - :gh:`2628`
 * :user:`Sergey Fedorov <barracuda156>` - :gh:`2701`
 * :user:`Tobias Klauser <tklauser>` - :gh:`2711`
+* :user:`Marcel Telka <mtelka>` - :gh:`2687`
 
 2025
 ~~~~

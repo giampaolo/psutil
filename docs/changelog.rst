@@ -173,6 +173,7 @@ New APIs:
 
 Others:
 
+- :gh:`2687`, [SunOS]: :func:`users` fails with ``ValueError``.
 - :gh:`2747`: the field order of the named tuple returned by :func:`cpu_times`
   has been normalized on all platforms, and the first 3 fields are now always
   :field:`user`, :field:`system`, :field:`idle`. See compatibility notes below.
