@@ -311,7 +311,7 @@ Others:
   with a segfault when ``PyLong_FromLong()`` returned NULL under memory
   pressure; the NULL is now checked and a proper :exc:`MemoryError` is raised
   instead.
-- :gh:`XXXX`, [Linux]: :meth:`Process.rlimit` returned ``RLIM_INFINITY`` as the
+- :gh:`2871`, [Linux]: :meth:`Process.rlimit` returned ``RLIM_INFINITY`` as the
   unsigned ``2**64-1`` instead of ``-1`` on Python 3.15+, which changed
   ``resource.prlimit()`` accordingly. psutil now maps it back to
   :data:`psutil.RLIM_INFINITY` so the value stays consistent across Python
