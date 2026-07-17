@@ -211,19 +211,30 @@ Others:
 
 **Bug fixes**
 
-- :gh:`2859`, [Windows]: :func:`net_connections` /
-  :meth:`Process.net_connections` could crash with an invalid
-  ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
-  allocated. The error path now uses ``Py_XDECREF`` (including the temporary
-  address-family / socket-type objects).
 - :gh:`1007`, [Windows]: :func:`boot_time` no longer fluctuates by ~1 second
   across calls or across processes. It is now read atomically from the kernel
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
+  returns ``None`` when CPU frequency can't be determined. Previously it was
+  left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
+  entry or its frequency data was unavailable, e.g. on virtualized ARM64 like
+  CI runners.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+- :gh:`2642`, [macOS]: fix :func:`cpu_freq` on Apple Silicon. On M4+ it
+  returned values ~1000x too small because the ``voltage-statesN-sram``
+  IORegistry tables switched from Hz to kHz; on M5-family chips it failed
+  because the hardcoded table indexes were renumbered. The implementation now
+  enumerates CPU ``voltage-states*-sram`` tables dynamically, detects the unit
+  per-value by magnitude, and filters CPU clusters from GPU/NPU tables via a
+  per-table fmax threshold. Works uniformly from M1 through M5 Max. (patch by
+  Bert Pluymers)
+- :gh:`2628`, [Linux]: :func:`cpu_freq` no longer takes offline CPU cores into
+  account. They were reported with all-zero frequencies, which dragged down the
+  average ``current``, ``min`` and ``max`` values.
 - :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
   ``broadcast`` field of network interfaces instead of the correct broadcast
   address.
@@ -233,13 +244,13 @@ Others:
   number due to a C type precision issue.
 - :gh:`2732`, [Linux]: :func:`net_if_stats`: handle ``EBUSY`` from
   ``ioctl(SIOCETHTOOL)``.
-- :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
-  :exc:`ValueError` on s390x architecture, where :proc:`/proc/cpuinfo` uses
-  spaces before the colon separator instead of a tab.
 - :gh:`2744`, [NetBSD]: fix possible double ``free()`` in :func:`swap_memory`.
 - :gh:`2746`, [FreeBSD]: :meth:`Process.memory_maps`, :field:`rss` and
   :field:`private` fields are erroneously reported in memory pages instead of
   bytes. Other platforms (Linux, macOS, Windows) return bytes.
+- :gh:`2770`, [Linux]: fix :func:`cpu_count` (``logical=False``) raising
+  :exc:`ValueError` on s390x architecture, where :proc:`/proc/cpuinfo` uses
+  spaces before the colon separator instead of a tab.
 - :gh:`2778`, [UNIX]: :func:`net_if_addrs` skips interfaces with no addresses,
   which are typically virtual IPv4/IPv6 tunnel interfaces. Now they are
   included in the returned dict with :field:`family` ==
@@ -251,10 +262,13 @@ Others:
 - :gh:`2791`, [FreeBSD]: relax ``psutil_sysctl()`` / ``psutil_sysctlbyname()``
   to allow the kernel to return fewer bytes than the buffer (normal for
   variable-length ``sysctl`` data).
+- :gh:`2793`: :func:`process_iter` was silently dropping zombie processes
+  because :exc:`ZombieProcess` (a subclass of :exc:`NoSuchProcess`) was caught
+  by the wrong ``except`` clause. Zombie processes are now yielded correctly.
 - :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
-- :gh:`2809`, [Linux]: :func:`virtual_memory` raises ``ValueError`` if
+- :gh:`2809`, [Linux]: :func:`swap_memory` raises ``ValueError`` if
   :proc:`/proc/meminfo` contains a field with no space after the colon, e.g.
   ``ShadowCallStack:10373888 kB``, which occurs on arm64 when shadow call
   stacks exceed 10 GB.
@@ -271,9 +285,28 @@ Others:
 - :gh:`2822`, [BSD]: :meth:`Process.cmdline` on NetBSD could raise
   ``OSError: [Errno 14] Bad address`` if the process about to exit. It now
   raises :exc:`NoSuchProcess` instead.
+- :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
+  frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
+  chips). It now returns ``None`` instead (see :gh:`2382`).
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
+- :gh:`2857`, [Linux], [SunOS]: fix refcount leak in ``disk_partitions()``
+  (Linux) and ``proc_environ()`` (SunOS) when ``PyArg_ParseTuple`` fails: parse
+  arguments before allocating the result container, matching the pattern used
+  in the other 26 call sites. Also fix a copy-paste typo in SunOS
+  ``proc_environ()`` where the post-decode NULL check examined the wrong
+  variable (``py_envname`` instead of ``py_envval``), which could let a NULL
+  value reach ``PyDict_SetItem``.
+- :gh:`2859`, [Windows]: :func:`net_connections` /
+  :meth:`Process.net_connections` could crash with an invalid
+  ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
+  allocated. The error path now uses ``Py_XDECREF`` (including the temporary
+  address-family / socket-type objects).
+- :gh:`2860`, [Linux]: :meth:`Process.cpu_affinity` could crash the interpreter
+  with a segfault when ``PyLong_FromLong()`` returned NULL under memory
+  pressure; the NULL is now checked and a proper :exc:`MemoryError` is raised
+  instead.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
