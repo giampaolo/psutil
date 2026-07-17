@@ -259,9 +259,9 @@ Others:
   :func:`net_if_stats` which do return these interface names.
 - :gh:`2782`, [FreeBSD]: :func:`cpu_count` ``logical=False`` return None on
   systems without hyper threading.
-- :gh:`2789`, [AIX]: fix compilation error caused by a typo (accidental
-  space) in ``psutil_net_io_counters()``, introduced during a previous
-  code reformatting.
+- :gh:`2789`, [AIX]: fix compilation error caused by a typo (accidental space)
+  in ``psutil_net_io_counters()``, introduced during a previous code
+  reformatting.
 - :gh:`2791`, [FreeBSD]: relax ``psutil_sysctl()`` / ``psutil_sysctlbyname()``
   to allow the kernel to return fewer bytes than the buffer (normal for
   variable-length ``sysctl`` data).
