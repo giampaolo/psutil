@@ -34,7 +34,7 @@ jobs:
     # if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/freebsd-vm@v1
         with:
@@ -46,7 +46,7 @@ jobs:
     # if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/openbsd-vm@v1
         with:
@@ -58,7 +58,7 @@ jobs:
     # if: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Run tests
         uses: vmactions/netbsd-vm@v1
         with:
