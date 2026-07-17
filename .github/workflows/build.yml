@@ -9,7 +9,10 @@
 # * https://github.com/actions/setup-python
 # * https://github.com/actions/upload-artifact
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
 name: build
 concurrency:
   # Cancel build if a new one starts, but don't interrupt all jobs on the first
