@@ -216,6 +216,11 @@ CPU
   If :field:`min` and :field:`max` cannot be determined they are set to
   ``0.0``.
 
+  On some systems the CPU frequency cannot be determined at all (e.g. certain
+  virtual machines, containers or CPU architectures). In that case this returns
+  ``None``, or an empty list if *percpu* is ``True``. This can happen on Linux,
+  macOS and FreeBSD; on Windows and OpenBSD a value is always returned.
+
   .. code-block:: pycon
 
      >>> import psutil
@@ -236,6 +241,10 @@ CPU
 
   .. versionchanged:: 5.9.1
      added OpenBSD support.
+
+  .. versionchanged:: 8.0.0
+     on macOS ARM64 this may return ``None`` when CPU frequency data is
+     unavailable (e.g. on virtual machines), instead of raising.
 
 .. function:: getloadavg()
 

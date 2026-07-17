@@ -216,9 +216,22 @@ Others:
   via ``NtQuerySystemInformation(SystemTimeOfDayInformation)``, replacing the
   old ``time.time() - uptime()`` computation that sampled two counters from
   Python and produced sub-second differences.
+- :gh:`2382`, [macOS]: :func:`cpu_freq` is now always defined on ARM64 and
+  returns ``None`` when CPU frequency can't be determined. Previously it was
+  left undefined (or raised :exc:`RuntimeError`) when the ``pmgr`` IORegistry
+  entry or its frequency data was unavailable, e.g. on virtualized ARM64 like
+  CI runners.
 - :gh:`2411` [macOS]: :meth:`Process.cpu_times` and :meth:`Process.cpu_percent`
   calculation on macOS x86_64 (arm64 is fine) was highly inaccurate (41.67x
   lower).
+- :gh:`2642`, [macOS]: fix :func:`cpu_freq` on Apple Silicon. On M4+ it
+  returned values ~1000x too small because the ``voltage-statesN-sram``
+  IORegistry tables switched from Hz to kHz; on M5-family chips it failed
+  because the hardcoded table indexes were renumbered. The implementation now
+  enumerates CPU ``voltage-states*-sram`` tables dynamically, detects the unit
+  per-value by magnitude, and filters CPU clusters from GPU/NPU tables via a
+  per-table fmax threshold. Works uniformly from M1 through M5 Max. (patch by
+  Bert Pluymers)
 - :gh:`2711`, [Windows]: :func:`net_if_addrs` was returning ``None`` for the
   ``broadcast`` field of network interfaces instead of the correct broadcast
   address.
@@ -268,7 +281,7 @@ Others:
   raises :exc:`NoSuchProcess` instead.
 - :gh:`2841`, [macOS]: :func:`cpu_freq` could raise :exc:`SystemError` when CPU
   frequency data is missing or invalid in the IORegistry (e.g. on Apple M5
-  chips). It now raises :exc:`RuntimeError` instead.
+  chips). It now returns ``None`` instead (see :gh:`2382`).
 - :gh:`2854`, [macOS]: :meth:`Process.cmdline` and :meth:`Process.environ`
   could raise :exc:`SystemError` after ``sysctl(KERN_PROCARGS2)`` failed with
   ``errno == 0``. They now raise :exc:`AccessDenied` instead.
@@ -284,6 +297,10 @@ Others:
   ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
   allocated. The error path now uses ``Py_XDECREF`` (including the temporary
   address-family / socket-type objects).
+- :gh:`2860`, [Linux]: :meth:`Process.cpu_affinity` could crash the interpreter
+  with a segfault when ``PyLong_FromLong()`` returned NULL under memory
+  pressure; the NULL is now checked and a proper :exc:`MemoryError` is raised
+  instead.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
