@@ -1,6 +1,6 @@
 # Fired by Github Actions every time an issue, PR or comment is created.
 
-name: issues
+name: triage-bot
 on:
   issues:
     types: [opened]
@@ -30,4 +30,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/issues.py
+          PYTHONUNBUFFERED=1 PYTHONWARNINGS=always python3 .github/workflows/triage_bot.py
