@@ -1,6 +1,5 @@
 include .clang-format
 include .dprint.jsonc
-include .gitattributes
 include .gitignore
 include CONTRIBUTING.md
 include HISTORY.rst
