@@ -29,6 +29,5 @@
 - If you wish to implement a new feature or add support for a new platform it's
   better to **discuss it first**, either on the issue tracker, the forum or via
   private email.
-- If you can, remember to update
-  [changelog.rst](https://github.com/giampaolo/psutil/blob/master/docs/changelog.rst)
-  and [CREDITS](https://github.com/giampaolo/psutil/blob/master/CREDITS) file.
+- No need to touch the changelog or credits files. A bot automatically adds
+  those entries for you before merging.
