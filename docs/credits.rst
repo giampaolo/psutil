@@ -109,8 +109,8 @@ Code contributors by year
 2026
 ~~~~
 
-* :user:`Amaan Qureshi <amaanq>` - :gh:`2770`
 * :user:`Alex Chen <l46983284-cpu>` - :gh:`2859`
+* :user:`Amaan Qureshi <amaanq>` - :gh:`2770`
 * :user:`Felix Yan <felixonmars>` - :gh:`2732`
 * :user:`Gabriel Changamire <gabrielchangamire-arch>` - :gh:`2809`
 * :user:`Hanson Wang <hansonw>` - :gh:`2809`
