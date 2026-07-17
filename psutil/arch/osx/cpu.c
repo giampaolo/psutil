@@ -170,19 +170,6 @@ psutil_find_pmgr_entry(io_registry_entry_t *out_entry) {
     return 0;
 }
 
-// Python wrapper: return True/False.
-PyObject *
-psutil_has_cpu_freq(PyObject *self, PyObject *args) {
-    io_registry_entry_t entry = IO_OBJECT_NULL;
-    int ok = psutil_find_pmgr_entry(&entry);
-    if (entry != IO_OBJECT_NULL)
-        IOObjectRelease(entry);
-    if (ok)
-        Py_RETURN_TRUE;
-    Py_RETURN_FALSE;
-}
-
-
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
     io_registry_entry_t entry = IO_OBJECT_NULL;
@@ -190,10 +177,13 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     CFTypeRef eCoreRef = NULL;
     size_t pCoreLength = 0;
     uint32_t pMin = 0, eMin = 0, min = 0, max = 0, curr = 0;
+    PyObject *py_ret = NULL;
 
+    // No 'pmgr' entry (e.g. virtualized ARM64); frequency is
+    // undeterminable, so return None (see #2382).
     if (!psutil_find_pmgr_entry(&entry)) {
-        psutil_runtime_error("'pmgr' entry not found in AppleARMIODevice");
-        return NULL;
+        psutil_debug("'pmgr' entry not found in AppleARMIODevice");
+        Py_RETURN_NONE;
     }
 
     pCoreRef = IORegistryEntryCreateCFProperty(
@@ -207,7 +197,10 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
         || CFGetTypeID(eCoreRef) != CFDataGetTypeID()
         || CFDataGetLength(pCoreRef) < 8 || CFDataGetLength(eCoreRef) < 4)
     {
-        psutil_runtime_error("invalid CPU frequency data");
+        // Data missing or malformed; treat as undeterminable.
+        psutil_debug("invalid CPU frequency data");
+        Py_INCREF(Py_None);
+        py_ret = Py_None;
         goto cleanup;
     }
 
@@ -219,6 +212,13 @@ psutil_cpu_freq(PyObject *self, PyObject *args) {
     min = (pMin < eMin) ? pMin : eMin;
     curr = max;
 
+    py_ret = Py_BuildValue(
+        "KKK",
+        (unsigned long long)(curr / 1000 / 1000),
+        (unsigned long long)(min / 1000 / 1000),
+        (unsigned long long)(max / 1000 / 1000)
+    );
+
 cleanup:
     if (pCoreRef)
         CFRelease(pCoreRef);
@@ -227,20 +227,10 @@ cleanup:
     if (entry != IO_OBJECT_NULL)
         IOObjectRelease(entry);
 
-    return Py_BuildValue(
-        "KKK",
-        (unsigned long long)(curr / 1000 / 1000),
-        (unsigned long long)(min / 1000 / 1000),
-        (unsigned long long)(max / 1000 / 1000)
-    );
+    return py_ret;
 }
 
 #else  // not ARM64 / ARCH64
-
-PyObject *
-psutil_has_cpu_freq(PyObject *self, PyObject *args) {
-    Py_RETURN_TRUE;
-}
 
 PyObject *
 psutil_cpu_freq(PyObject *self, PyObject *args) {
