@@ -9,3 +9,7 @@ updates:
       github-actions:
         patterns:
           - "*"
+    # Stay on cibuildwheel 3.x: 4.x drops prebuilt 3.13 free-threaded wheels.
+    ignore:
+      - dependency-name: "pypa/cibuildwheel"
+        update-types: ["version-update:semver-major"]
