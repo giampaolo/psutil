@@ -289,6 +289,10 @@ Others:
   ``Py_DECREF(NULL)`` when argument parsing failed before the result list was
   allocated. The error path now uses ``Py_XDECREF`` (including the temporary
   address-family / socket-type objects).
+- :gh:`2860`, [Linux]: :meth:`Process.cpu_affinity` could crash the interpreter
+  with a segfault when ``PyLong_FromLong()`` returned NULL under memory
+  pressure; the NULL is now checked and a proper :exc:`MemoryError` is raised
+  instead.
 
 7.2.2 — 2026-01-28
 ^^^^^^^^^^^^^^^^^^
