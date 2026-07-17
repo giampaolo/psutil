@@ -262,6 +262,9 @@ Others:
 - :gh:`2791`, [FreeBSD]: relax ``psutil_sysctl()`` / ``psutil_sysctlbyname()``
   to allow the kernel to return fewer bytes than the buffer (normal for
   variable-length ``sysctl`` data).
+- :gh:`2793`: :func:`process_iter` was silently dropping zombie processes
+  because :exc:`ZombieProcess` (a subclass of :exc:`NoSuchProcess`) was caught
+  by the wrong ``except`` clause. Zombie processes are now yielded correctly.
 - :gh:`2795`, [FreeBSD]: fix :func:`cpu_freq` failing with
   ``RuntimeError: sysctlbyname('dev.cpu.0.freq_levels') size mismatch`` on some
   systems.
