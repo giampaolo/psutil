@@ -1,0 +1,3 @@
+# Keep both sides' entries on merge instead of conflicting.
+docs/changelog.rst merge=union
+docs/credits.rst merge=union

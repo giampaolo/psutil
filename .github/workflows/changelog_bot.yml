@@ -72,9 +72,6 @@ jobs:
           # malicious PR can't get arbitrary code executed on the runner.
           git fetch --depth 1 origin master
           git show origin/master:.github/workflows/changelog_bot.py > /tmp/changelog_bot.py
-          # Rebase changelog/credits on master so the pushed entry is a
-          # minimal, conflict-free diff (overwrites any author edits there).
-          git checkout origin/master -- docs/changelog.rst docs/credits.rst
           python /tmp/changelog_bot.py \
             --pr-number "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
