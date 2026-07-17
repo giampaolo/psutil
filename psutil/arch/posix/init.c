@@ -94,10 +94,8 @@ psutil_posix_add_methods(PyObject *mod) {
 // Add POSIX constants to main OS module.
 int
 psutil_posix_add_constants(PyObject *mod) {
-    if (!mod) {
-        PyErr_BadInternalCall();
+    if (!mod)
         return -1;
-    }
 
 #if defined(PSUTIL_BSD) || defined(PSUTIL_OSX) || defined(PSUTIL_SUNOS) \
     || defined(PSUTIL_AIX)
