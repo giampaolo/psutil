@@ -2445,6 +2445,20 @@ class TestProcess(LinuxTestCase):
         mem = psutil.Process().memory_info_ex()
         assert mem.rss == mem.rss_anon + mem.rss_file + mem.rss_shmem
 
+    def test_rlimit_infinity_normalized(self):
+        # Python 3.15 changed resource.prlimit() to return RLIM_INFINITY
+        # as the unsigned 2**64-1 instead of -1; psutil maps it back.
+        unsigned = 2**64 - 1
+        p = psutil.Process()
+        with mock.patch(
+            "psutil._pslinux.resource.prlimit",
+            return_value=(unsigned, unsigned),
+        ) as m:
+            soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+            assert m.called
+        assert soft == psutil.RLIM_INFINITY
+        assert hard == psutil.RLIM_INFINITY
+
 
 class TestProcessAgainstStatus(LinuxTestCase):
     """/proc/pid/stat and /proc/pid/status have many values in common.

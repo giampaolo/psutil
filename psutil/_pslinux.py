@@ -66,6 +66,10 @@ PAGESIZE = cext.getpagesize()
 LITTLE_ENDIAN = sys.byteorder == 'little'
 UNSET = object()
 
+# Python 3.15 changed resource.prlimit() to return RLIM_INFINITY as the
+# unsigned 2**64-1 instead of -1; used to map it back to -1.
+RLIM_INFINITY_UNSIGNED = cext.RLIM_INFINITY & 0xFFFFFFFFFFFFFFFF
+
 # "man iostat" states that sectors are equivalent with blocks and have
 # a size of 512 bytes. Despite this value can be queried at runtime
 # via /sys/block/{DISK}/queue/hw_sector_size and results may vary
@@ -2162,7 +2166,14 @@ class Process:
             try:
                 if limits is None:
                     # get
-                    return resource.prlimit(self.pid, resource_)
+                    soft, hard = resource.prlimit(self.pid, resource_)
+                    # Python 3.15 returns RLIM_INFINITY as the unsigned
+                    # 2**64-1 instead of -1; map it back for consistency.
+                    if soft == RLIM_INFINITY_UNSIGNED:
+                        soft = cext.RLIM_INFINITY
+                    if hard == RLIM_INFINITY_UNSIGNED:
+                        hard = cext.RLIM_INFINITY
+                    return soft, hard
                 else:
                     # set
                     if len(limits) != 2:
