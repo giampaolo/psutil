@@ -59,8 +59,6 @@ jobs:
         with:
           ref: ${{ steps.pr-info.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Full history so we can compute the merge-base with master.
-          fetch-depth: 0
 
       - name: Install dependencies
         run: pip install anthropic rstwrap
@@ -72,22 +70,8 @@ jobs:
         run: |
           # Run the trusted script from master, not the PR's copy, so a
           # malicious PR can't get arbitrary code executed on the runner.
-          git fetch origin master
+          git fetch --depth 1 origin master
           git show origin/master:.github/workflows/changelog_bot.py > /tmp/changelog_bot.py
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # changelog.rst/credits.rst are bot-owned. To keep the PR
-          # mergeable via the GitHub button: drop the PR's changes to
-          # these two files, update the branch to master, then add the
-          # entry on top so it applies against master with no conflict.
-          git checkout origin/master -- docs/changelog.rst docs/credits.rst
-          git commit -q -m "Sync changelog/credits to master" \
-            -- docs/changelog.rst docs/credits.rst || true
-          if ! git merge --no-edit origin/master; then
-            git merge --abort
-            printf '%s\n' "⚠️ This PR conflicts with master outside \`changelog.rst\`/\`credits.rst\` (code). Resolve them, then re-run \`/changelog\`." > "$RUNNER_TEMP/changelog_error.md"
-            exit 1
-          fi
           python /tmp/changelog_bot.py \
             --pr-number "$PR_NUMBER" \
             --repo "${{ github.repository }}" \
@@ -106,14 +90,17 @@ jobs:
           HEAD_REPO: ${{ steps.pr-info.outputs.head_repo }}
           HEAD_BRANCH: ${{ steps.pr-info.outputs.branch }}
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           make fix-rst
           git add docs/changelog.rst docs/credits.rst
-          git diff --cached --quiet \
-            || git commit --no-verify -m "Update changelog for PR #$PR_NUMBER"
-          # Push whatever advanced the branch: the entry and/or the
-          # master-sync + merge commits from the previous step.
-          PUSH_URL="https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git"
-          git push "$PUSH_URL" "HEAD:refs/heads/${HEAD_BRANCH}"
+          if git diff --cached --quiet; then
+            echo "No changes, skipping commit"
+          else
+            git commit --no-verify -m "Update changelog for PR #$PR_NUMBER"
+            PUSH_URL="https://x-access-token:${GH_TOKEN}@github.com/${HEAD_REPO}.git"
+            git push "$PUSH_URL" "HEAD:refs/heads/${HEAD_BRANCH}"
+          fi
 
       - name: Post confirmation comment
         # Best-effort: a comment hiccup must not mislabel a landed
